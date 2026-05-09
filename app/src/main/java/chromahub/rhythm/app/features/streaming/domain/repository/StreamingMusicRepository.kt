@@ -50,6 +50,16 @@ interface StreamingMusicRepository : MusicRepository {
      * Get featured/editorial playlists.
      */
     suspend fun getFeaturedPlaylists(limit: Int = 20): List<StreamingPlaylist>
+
+    /**
+     * Sync playlists from the active streaming provider.
+     */
+    suspend fun syncPlaylists(): List<StreamingPlaylist>
+
+    /**
+     * Sync the provider library catalog so songs, albums, and artists are derived from real track data.
+     */
+    suspend fun syncCatalog(limit: Int = 5_000): List<StreamingSong>
     
     /**
      * Get browse categories/genres.
@@ -191,4 +201,15 @@ interface StreamingMusicRepository : MusicRepository {
      * Get all downloaded songs.
      */
     fun getDownloadedSongs(): Flow<List<StreamingSong>>
+    
+    /**
+     * Get random songs from the service.
+     */
+    suspend fun getRandomSongs(limit: Int = 50): List<StreamingSong>
+    
+    /**
+     * Get album list with optional type filtering.
+     * @param type Type of album list: "newest", "recent", "random", "alphabetical", "frequent"
+     */
+    suspend fun getAlbumList(type: String = "newest", limit: Int = 50): List<StreamingAlbum>
 }

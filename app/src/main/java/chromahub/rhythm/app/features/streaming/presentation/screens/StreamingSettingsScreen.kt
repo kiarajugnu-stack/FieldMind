@@ -50,6 +50,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import chromahub.rhythm.app.R
+import chromahub.rhythm.app.core.domain.model.StreamingQuality
 import chromahub.rhythm.app.core.utils.NetworkUtils
 import chromahub.rhythm.app.features.local.presentation.screens.settings.TunerAnimatedSwitch
 import chromahub.rhythm.app.features.streaming.presentation.model.StreamingServiceOptions
@@ -304,7 +305,7 @@ fun StreamingSettingsScreen(
             onDismiss = { showQualitySheet = false },
             onSelect = { quality ->
                 HapticUtils.performHapticFeedback(context, hapticFeedback, HapticFeedbackType.TextHandleMove)
-                appSettings.setStreamingQuality(quality)
+                viewModel.setStreamingQuality(StreamingQuality.valueOf(quality))
                 showQualitySheet = false
             }
         )

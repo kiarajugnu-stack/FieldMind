@@ -7,6 +7,7 @@ import chromahub.rhythm.app.core.domain.model.SourceType
 
 /**
  * Represents an artist from a streaming service.
+ * Data comes directly from provider APIs (Jellyfin/Subsonic).
  */
 data class StreamingArtist(
     override val id: String,
@@ -15,26 +16,22 @@ data class StreamingArtist(
     override val songCount: Int,
     override val albumCount: Int,
     override val sourceType: SourceType,
+    
+    // Optional metadata from provider
     val externalId: String? = null,
+    val bio: String? = null,
     val genres: List<String> = emptyList(),
     val followers: Long? = null,
     val popularity: Int? = null,
-    val bio: String? = null,
+    
+    // Loaded relationships (may be incomplete)
     private val topTracks: List<StreamingSong> = emptyList(),
     private val albums: List<StreamingAlbum> = emptyList()
 ) : ArtistItem {
     
     override suspend fun getSongs(): List<PlayableItem> = topTracks
-    
     override suspend fun getAlbums(): List<AlbumItem> = albums
     
-    /**
-     * Get top tracks if already loaded.
-     */
     fun getTopTracks(): List<StreamingSong> = topTracks
-    
-    /**
-     * Get albums list if already loaded.
-     */
     fun getAlbumsList(): List<StreamingAlbum> = albums
 }

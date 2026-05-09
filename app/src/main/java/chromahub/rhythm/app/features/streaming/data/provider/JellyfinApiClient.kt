@@ -9,6 +9,7 @@ import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONObject
 import java.util.concurrent.TimeUnit
@@ -96,6 +97,31 @@ class JellyfinApiClient(context: Context) {
         }
     }
 
+    suspend fun searchAlbums(query: String, limit: Int = 30): Result<List<ProviderAlbum>> {
+        val cred = credentials ?: return Result.failure(IllegalStateException("Jellyfin service is not connected"))
+
+        val params = buildLibraryBrowseParams(
+            includeItemTypes = "MusicAlbum",
+            query = query,
+            limit = limit,
+            fields = "Overview,ArtistItems,Artists,AlbumArtist,ProductionYear,ImageTags,RunTimeTicks,ParentId"
+        )
+
+        return requestJson("/Users/${cred.userId}/Items", params).map { response ->
+            parseAlbumItems(response)
+        }
+    }
+
+    suspend fun searchArtists(query: String, limit: Int = 30): Result<List<ProviderArtist>> {
+        val cred = credentials ?: return Result.failure(IllegalStateException("Jellyfin service is not connected"))
+
+        val params = buildArtistBrowseParams(query = query, limit = limit)
+
+        return requestJson("/Artists", params).map { response ->
+            parseArtistItems(response)
+        }
+    }
+
     suspend fun fetchLibrarySongs(limit: Int = 5_000): Result<List<ProviderSong>> {
         val cred = credentials ?: return Result.failure(IllegalStateException("Jellyfin service is not connected"))
 
@@ -128,6 +154,249 @@ class JellyfinApiClient(context: Context) {
                 Result.failure(e)
             }
         }
+    }
+
+    suspend fun getPlaylists(limit: Int = 100): Result<List<ProviderPlaylist>> {
+        val cred = credentials ?: return Result.failure(IllegalStateException("Jellyfin service is not connected"))
+
+        val params = buildPlaylistBrowseParams(limit = limit)
+
+        return requestJson("/Users/${cred.userId}/Items", params).map { response ->
+            parsePlaylistItems(response)
+        }
+    }
+
+    suspend fun searchPlaylists(query: String, limit: Int = 30): Result<List<ProviderPlaylist>> {
+        val cred = credentials ?: return Result.failure(IllegalStateException("Jellyfin service is not connected"))
+
+        val params = buildPlaylistBrowseParams(query = query, limit = limit)
+
+        return requestJson("/Users/${cred.userId}/Items", params).map { response ->
+            parsePlaylistItems(response)
+        }
+    }
+
+    suspend fun getPlaylistSongs(playlistId: String, limit: Int = 500): Result<List<ProviderSong>> {
+        val cred = credentials ?: return Result.failure(IllegalStateException("Jellyfin service is not connected"))
+        if (playlistId.isBlank()) {
+            return Result.failure(IllegalArgumentException("Playlist id is required"))
+        }
+
+        return withContext(Dispatchers.IO) {
+            try {
+                val pageSize = limit.coerceIn(1, 100)
+                var startIndex = 0
+                val songs = LinkedHashMap<String, ProviderSong>()
+
+                while (songs.size < limit) {
+                    val params = buildAudioBrowseParams(
+                        query = null,
+                        limit = minOf(pageSize, limit - songs.size),
+                        startIndex = startIndex
+                    )
+                    val response = requestJson("/Playlists/$playlistId/Items", params).getOrThrow()
+                    val pageSongs = parseAudioItems(response)
+
+                    if (pageSongs.isEmpty()) break
+
+                    pageSongs.forEach { song -> songs.putIfAbsent(song.providerId, song) }
+
+                    if (pageSongs.size < params["Limit"]?.toIntOrNull().orZero()) break
+                    startIndex += pageSongs.size
+                }
+
+                Result.success(songs.values.take(limit).toList())
+            } catch (e: Exception) {
+                Log.e(TAG, "Jellyfin playlist fetch failed for playlistId=$playlistId", e)
+                Result.failure(e)
+            }
+        }
+    }
+
+    suspend fun getAlbumSongs(albumQuery: String, artistQuery: String? = null, limit: Int = 500): Result<List<ProviderSong>> {
+        val cred = credentials ?: return Result.failure(IllegalStateException("Jellyfin service is not connected"))
+
+        val params = buildAudioBrowseParams(
+            query = listOfNotNull(albumQuery.takeIf { it.isNotBlank() }, artistQuery?.takeIf { it.isNotBlank() }).joinToString(" ").ifBlank { null },
+            limit = limit
+        )
+
+        return requestJson("/Users/${cred.userId}/Items", params).map { response ->
+            parseAudioItems(response)
+        }
+    }
+
+    suspend fun getArtistTopTracks(artistQuery: String, limit: Int = 20): Result<List<ProviderSong>> {
+        return searchSongs(artistQuery, limit)
+    }
+
+    suspend fun getArtistAlbums(artistQuery: String, limit: Int = 50): Result<List<ProviderAlbum>> {
+        return searchAlbums(artistQuery, limit)
+    }
+
+    suspend fun getRelatedArtists(artistId: String, limit: Int = 10): Result<List<ProviderArtist>> {
+        val cred = credentials ?: return Result.failure(IllegalStateException("Jellyfin service is not connected"))
+        if (artistId.isBlank()) {
+            return Result.failure(IllegalArgumentException("Artist id is required"))
+        }
+
+        val params = buildLibraryBrowseParams(
+            includeItemTypes = "MusicArtist",
+            limit = limit.coerceIn(1, 100),
+            fields = "Overview,SongCount,AlbumCount,ImageTags"
+        )
+
+        return requestJson("/Artists/$artistId/Similar", params).map { response ->
+            parseArtistItems(response)
+        }
+    }
+
+    suspend fun getRelatedTracks(songId: String, limit: Int = 20): Result<List<ProviderSong>> {
+        val cred = credentials ?: return Result.failure(IllegalStateException("Jellyfin service is not connected"))
+        if (songId.isBlank()) {
+            return Result.failure(IllegalArgumentException("Song id is required"))
+        }
+
+        val baseParams = buildAudioBrowseParams(
+            query = null,
+            limit = limit.coerceIn(1, 100)
+        ).toMutableMap()
+        baseParams["Fields"] = "Artists,Album,ImageTags,RunTimeTicks,MediaSources"
+
+        return requestJson("/Items/$songId/Similar", baseParams).map { response ->
+            parseAudioItems(response)
+        }
+    }
+
+    suspend fun getRandomSongs(limit: Int = 50): Result<List<ProviderSong>> {
+        val cred = credentials ?: return Result.failure(IllegalStateException("Jellyfin service is not connected"))
+
+        val params = buildAudioBrowseParams(
+            query = null,
+            limit = limit.coerceIn(1, 100)
+        ).toMutableMap()
+        params["SortBy"] = "Random"
+
+        return requestJson("/Users/${cred.userId}/Items", params).map { response ->
+            parseAudioItems(response)
+        }
+    }
+
+    suspend fun getAlbumList(type: String = "newest", limit: Int = 50): Result<List<ProviderAlbum>> {
+        val cred = credentials ?: return Result.failure(IllegalStateException("Jellyfin service is not connected"))
+
+        val sortBy = when (type.lowercase()) {
+            "newest" -> "PremiereDate"
+            "recent" -> "DateCreated"
+            "random" -> "Random"
+            "alphabetical" -> "Name"
+            "frequent" -> "PlayCount"
+            else -> "PremiereDate"
+        }
+
+        val params = buildLibraryBrowseParams(
+            includeItemTypes = "MusicAlbum",
+            query = null,
+            limit = limit.coerceIn(1, 100),
+            fields = "Overview,ArtistItems,Artists,AlbumArtist,ProductionYear,ImageTags,RunTimeTicks,ParentId"
+        ).toMutableMap()
+        params["SortBy"] = sortBy
+
+        return requestJson("/Users/${cred.userId}/Items", params).map { response ->
+            parseAlbumItems(response)
+        }
+    }
+
+    suspend fun createPlaylist(
+        name: String,
+        songIds: List<String> = emptyList(),
+        description: String? = null,
+        isPublic: Boolean = true
+    ): Result<ProviderPlaylist> {
+        val cred = credentials ?: return Result.failure(IllegalStateException("Jellyfin service is not connected"))
+        if (name.isBlank()) {
+            return Result.failure(IllegalArgumentException("Playlist name is required"))
+        }
+
+        return withContext(Dispatchers.IO) {
+            try {
+                val bodyJson = JSONObject().apply {
+                    put("Name", name.trim())
+                    put("Ids", songIds)
+                    put("UserId", cred.userId)
+                    put("MediaType", "Audio")
+                    put("IsPublic", isPublic)
+                    if (!description.isNullOrBlank()) {
+                        put("Overview", description.trim())
+                    }
+                }
+
+                requestJson(
+                    path = "/Playlists",
+                    method = "POST",
+                    body = bodyJson.toString().toRequestBody("application/json".toMediaType())
+                ).map { response ->
+                    val playlistId = response.optString("Id", response.optString("PlaylistId", ""))
+                    if (playlistId.isBlank()) {
+                        throw IllegalStateException("Invalid Jellyfin playlist creation response")
+                    }
+
+                    ProviderPlaylist(
+                        providerId = playlistId,
+                        name = name.trim(),
+                        description = description?.trim()?.takeIf { it.isNotBlank() },
+                        artworkUrl = buildImageUrl(playlistId),
+                        songCount = songIds.size,
+                        owner = cred.username,
+                        isPublic = isPublic
+                    )
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Jellyfin playlist creation failed", e)
+                Result.failure(e)
+            }
+        }
+    }
+
+    suspend fun addSongsToPlaylist(playlistId: String, songIds: List<String>): Result<Boolean> {
+        val cred = credentials ?: return Result.failure(IllegalStateException("Jellyfin service is not connected"))
+        if (playlistId.isBlank()) {
+            return Result.failure(IllegalArgumentException("Playlist id is required"))
+        }
+        if (songIds.isEmpty()) {
+            return Result.failure(IllegalArgumentException("At least one song id is required"))
+        }
+
+        val params = mapOf(
+            "ids" to songIds.joinToString(","),
+            "userId" to cred.userId
+        )
+
+        return request(
+            path = "/Playlists/$playlistId/Items",
+            params = params,
+            method = "POST"
+        ).map { true }
+    }
+
+    suspend fun removeSongsFromPlaylist(playlistId: String, songIds: List<String>): Result<Boolean> {
+        credentials ?: return Result.failure(IllegalStateException("Jellyfin service is not connected"))
+        if (playlistId.isBlank()) {
+            return Result.failure(IllegalArgumentException("Playlist id is required"))
+        }
+        if (songIds.isEmpty()) {
+            return Result.failure(IllegalArgumentException("At least one song id is required"))
+        }
+
+        val params = mapOf(
+            "entryIds" to songIds.joinToString(",")
+        )
+
+        return request(
+            path = "/Playlists/$playlistId/Items",
+            params = params,
+            method = "DELETE"
+        ).map { true }
     }
 
     fun buildStreamUrl(itemId: String, maxBitRateKbps: Int = 0): String? {
@@ -196,7 +465,12 @@ class JellyfinApiClient(context: Context) {
         }
     }
 
-    private suspend fun request(path: String, params: Map<String, String> = emptyMap()): Result<String> {
+    private suspend fun request(
+        path: String,
+        params: Map<String, String> = emptyMap(),
+        method: String = "GET",
+        body: RequestBody? = null
+    ): Result<String> {
         val cred = credentials ?: return Result.failure(IllegalStateException("Credentials not set"))
 
         return withContext(Dispatchers.IO) {
@@ -206,12 +480,23 @@ class JellyfinApiClient(context: Context) {
                     urlBuilder.addQueryParameter(key, value)
                 }
 
-                val request = Request.Builder()
+                val requestBuilder = Request.Builder()
                     .url(urlBuilder.build())
                     .header("Authorization", buildAuthorizationHeader(token = cred.accessToken))
                     .header("Accept", "application/json")
-                    .get()
-                    .build()
+                when (method.uppercase()) {
+                    "POST" -> requestBuilder.post(body ?: "".toRequestBody("text/plain".toMediaType()))
+                    "DELETE" -> {
+                        if (body != null) {
+                            requestBuilder.delete(body)
+                        } else {
+                            requestBuilder.delete()
+                        }
+                    }
+                    else -> requestBuilder.get()
+                }
+
+                val request = requestBuilder.build()
 
                 okHttpClient.newCall(request).execute().use { response ->
                     val body = response.body?.string().orEmpty()
@@ -227,8 +512,13 @@ class JellyfinApiClient(context: Context) {
         }
     }
 
-    private suspend fun requestJson(path: String, params: Map<String, String> = emptyMap()): Result<JSONObject> {
-        return request(path, params).map { JSONObject(it) }
+    private suspend fun requestJson(
+        path: String,
+        params: Map<String, String> = emptyMap(),
+        method: String = "GET",
+        body: RequestBody? = null
+    ): Result<JSONObject> {
+        return request(path, params, method, body).map { JSONObject(it) }
     }
 
     private fun buildAudioBrowseParams(
@@ -291,6 +581,163 @@ class JellyfinApiClient(context: Context) {
         }
 
         return song.optString("AlbumArtist", "Unknown artist")
+    }
+
+    private fun buildPlaylistBrowseParams(
+        query: String? = null,
+        limit: Int = 100,
+        startIndex: Int = 0
+    ): Map<String, String> {
+        return buildMap {
+            if (!query.isNullOrBlank()) {
+                put("SearchTerm", query)
+            }
+            put("IncludeItemTypes", "Playlist")
+            put("Recursive", "true")
+            put("Fields", "Overview,RunTimeTicks,ItemCounts")
+            put("Limit", limit.coerceIn(1, 100).toString())
+            if (startIndex > 0) {
+                put("StartIndex", startIndex.toString())
+            }
+        }
+    }
+
+    private fun buildLibraryBrowseParams(
+        includeItemTypes: String,
+        query: String? = null,
+        limit: Int = 30,
+        startIndex: Int = 0,
+        fields: String = "Overview,RunTimeTicks,ItemCounts"
+    ): Map<String, String> {
+        return buildMap {
+            if (!query.isNullOrBlank()) {
+                put("SearchTerm", query)
+            }
+            put("IncludeItemTypes", includeItemTypes)
+            put("Recursive", "true")
+            put("Fields", fields)
+            put("Limit", limit.coerceIn(1, 100).toString())
+            if (startIndex > 0) {
+                put("StartIndex", startIndex.toString())
+            }
+        }
+    }
+
+    private fun buildArtistBrowseParams(
+        query: String? = null,
+        limit: Int = 30,
+        startIndex: Int = 0
+    ): Map<String, String> {
+        return buildMap {
+            if (!query.isNullOrBlank()) {
+                put("searchTerm", query)
+            }
+            put("limit", limit.coerceIn(1, 100).toString())
+            if (startIndex > 0) {
+                put("startIndex", startIndex.toString())
+            }
+            put("enableImages", "true")
+            put("enableUserData", "true")
+            put("fields", "PrimaryImageAspectRatio,SongCount,AlbumCount,ImageTags")
+        }
+    }
+
+    private fun parseAlbumItems(response: JSONObject): List<ProviderAlbum> {
+        val items = response.optJSONArray("Items")
+        return buildList {
+            for (i in 0 until (items?.length() ?: 0)) {
+                val album = items?.optJSONObject(i) ?: continue
+                val id = album.optString("Id", "")
+                if (id.isBlank()) continue
+
+                add(
+                    ProviderAlbum(
+                        providerId = id,
+                        title = album.optString("Name", "Unknown album"),
+                        artist = parseAlbumArtist(album),
+                        artworkUrl = buildImageUrl(id),
+                        songCount = album.optJSONObject("ItemCounts")?.optInt("MusicCount", 0)
+                            ?: album.optInt("SongCount", 0),
+                        year = album.optInt("ProductionYear").takeIf { it > 0 },
+                        description = album.optString("Overview", null)?.takeIf { it.isNotBlank() }
+                    )
+                )
+            }
+        }
+    }
+
+    private fun parseArtistItems(response: JSONObject): List<ProviderArtist> {
+        val items = response.optJSONArray("Items") ?: response.optJSONArray("artists") ?: response.optJSONArray("Items")
+        return buildList {
+            for (i in 0 until (items?.length() ?: 0)) {
+                val artist = items?.optJSONObject(i) ?: continue
+                val id = artist.optString("Id", artist.optString("id", ""))
+                if (id.isBlank()) continue
+
+                add(
+                    ProviderArtist(
+                        providerId = id,
+                        name = artist.optString("Name", artist.optString("name", "Unknown artist")),
+                        artworkUrl = buildImageUrl(id),
+                        songCount = artist.optInt("SongCount", artist.optInt("songCount", 0)),
+                        albumCount = artist.optInt("AlbumCount", artist.optInt("albumCount", 0)),
+                        description = artist.optString("Overview", null)?.takeIf { it.isNotBlank() }
+                    )
+                )
+            }
+        }
+    }
+
+    private fun parseAlbumArtist(album: JSONObject): String {
+        val albumArtist = album.optString("AlbumArtist", "").takeIf { it.isNotBlank() }
+        if (albumArtist != null) {
+            return albumArtist
+        }
+
+        val artists = album.optJSONArray("Artists")
+        if (artists != null && artists.length() > 0) {
+            val firstArtist = artists.optString(0).takeIf { it.isNotBlank() }
+            if (firstArtist != null) {
+                return firstArtist
+            }
+        }
+
+        val artistItems = album.optJSONArray("ArtistItems")
+        if (artistItems != null && artistItems.length() > 0) {
+            val firstArtist = artistItems.optJSONObject(0)?.optString("Name", "").orEmpty()
+            if (firstArtist.isNotBlank()) {
+                return firstArtist
+            }
+        }
+
+        return "Unknown artist"
+    }
+
+    private fun parsePlaylistItems(response: JSONObject): List<ProviderPlaylist> {
+        val items = response.optJSONArray("Items")
+        return buildList {
+            for (i in 0 until (items?.length() ?: 0)) {
+                val playlist = items?.optJSONObject(i) ?: continue
+                val id = playlist.optString("Id", "")
+                if (id.isBlank()) continue
+
+                val name = playlist.optString("Name", "Unknown playlist")
+                val description = playlist.optString("Overview", null)?.takeIf { it.isNotBlank() }
+                val itemCounts = playlist.optJSONObject("ItemCounts")
+                val songCount = itemCounts?.optInt("MusicCount", 0) ?: 0
+
+                add(
+                    ProviderPlaylist(
+                        providerId = id,
+                        name = name,
+                        description = description,
+                        artworkUrl = buildImageUrl(id),
+                        songCount = songCount,
+                        isPublic = true
+                    )
+                )
+            }
+        }
     }
 
     private fun Int?.orZero(): Int = this ?: 0

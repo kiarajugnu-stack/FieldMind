@@ -1071,7 +1071,9 @@ fun PlayerScreen(
                 Toast.makeText(context, "${song.title} added to blacklist", Toast.LENGTH_SHORT).show()
             },
             currentSong = song,
-            isPlaying = isPlaying
+            isPlaying = isPlaying,
+            songs = songs,
+            albums = albums
         )
     }
 

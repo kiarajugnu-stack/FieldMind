@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -34,7 +35,9 @@ import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material.icons.filled.WavingHand
 import androidx.compose.material.icons.rounded.CloudOff
+import androidx.compose.material.icons.rounded.Album
 import androidx.compose.material.icons.rounded.Headphones
+import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.NewReleases
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.Search
@@ -156,6 +159,8 @@ fun StreamingContentHomeScreen(
     val recommendations by viewModel.recommendations.collectAsState()
     val newReleases by viewModel.newReleases.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
+    val hasLoadedHomeContent by viewModel.hasLoadedHomeContent.collectAsState()
+    val error by viewModel.error.collectAsState()
     val sectionOrder by appSettings.streamingHomeSectionOrder.collectAsState()
     val showGreetingSection by appSettings.streamingHomeShowGreeting.collectAsState()
     val showRhythmGuardSection by appSettings.streamingHomeShowRhythmGuard.collectAsState()
@@ -185,6 +190,7 @@ fun StreamingContentHomeScreen(
     val serviceIdForConfig = selectedServiceId.ifBlank { fallbackServiceId }
 
     val isSelectedServiceConnected = sessions[selectedServiceId]?.isConnected == true
+    val homeErrorMessage = error?.takeIf { it.isNotBlank() }
 
     val hasAnyWidgetContent =
         recommendations.isNotEmpty() ||
@@ -322,41 +328,129 @@ fun StreamingContentHomeScreen(
             contentPadding = PaddingValues(bottom = 24.dp)
         ) {
 
-            if (!isSelectedServiceConnected) {
-                item {
-                    StreamingDisconnectedStateCard(
-                        selectedServiceName = selectedServiceName,
-                        onConfigureService = {
-                            HapticUtils.performHapticFeedback(
-                                context,
-                                haptics,
-                                HapticFeedbackType.LongPress
-                            )
-                            if (serviceIdForConfig.isNotBlank()) {
-                                onConfigureService(serviceIdForConfig)
-                            } else {
-                                onNavigateToSettings()
-                            }
-                        },
-                        onOpenSettings = {
-                            HapticUtils.performHapticFeedback(
-                                context,
-                                haptics,
-                                HapticFeedbackType.TextHandleMove
-                            )
-                            onNavigateToSettings()
-                        }
-                    )
-                }
-            } else {
-                if (isLoading && !hasAnyWidgetContent) {
+            when {
+                !isSelectedServiceConnected -> {
                     item {
-                        StreamingLoadingCard()
+                        StreamingHomeStateCard(
+                            title = stringResource(id = R.string.streaming_home_selected_service_unavailable),
+                            subtitle = stringResource(
+                                id = R.string.streaming_home_connect_selected_service,
+                                selectedServiceName
+                            ),
+                            icon = Icons.Rounded.CloudOff,
+                            iconContainerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.45f),
+                            iconTint = MaterialTheme.colorScheme.onErrorContainer,
+                            actionText = stringResource(id = R.string.streaming_manage_service),
+                            onAction = {
+                                HapticUtils.performHapticFeedback(
+                                    context,
+                                    haptics,
+                                    HapticFeedbackType.LongPress
+                                )
+                                if (serviceIdForConfig.isNotBlank()) {
+                                    onConfigureService(serviceIdForConfig)
+                                } else {
+                                    onNavigateToSettings()
+                                }
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 20.dp)
+                        )
                     }
                 }
 
-                visibleSections.forEach { sectionId ->
-                    when (sectionId) {
+                isSelectedServiceConnected && (isLoading || !hasLoadedHomeContent) -> {
+                    item {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxHeight()
+                                .fillMaxWidth()
+                                .padding(vertical = 24.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            StreamingHomeStateCard(
+                                title = stringResource(id = R.string.streaming_library_syncing),
+                                subtitle = stringResource(id = R.string.streaming_home_widget_empty_hint),
+                                icon = Icons.Filled.History,
+                                iconContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                                iconTint = MaterialTheme.colorScheme.onPrimaryContainer,
+                                showProgressIndicator = true,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 20.dp)
+                            )
+                        }
+                    }
+                }
+
+                !homeErrorMessage.isNullOrBlank() && !hasAnyWidgetContent -> {
+                    item {
+                        StreamingHomeStateCard(
+                            title = stringResource(id = R.string.streaming_home_selected_service_unavailable),
+                            subtitle = homeErrorMessage,
+                            icon = Icons.Rounded.Info,
+                            iconContainerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.45f),
+                            iconTint = MaterialTheme.colorScheme.onErrorContainer,
+                            actionText = stringResource(id = R.string.streaming_manage_service),
+                            onAction = {
+                                HapticUtils.performHapticFeedback(
+                                    context,
+                                    haptics,
+                                    HapticFeedbackType.LongPress
+                                )
+                                if (serviceIdForConfig.isNotBlank()) {
+                                    onConfigureService(serviceIdForConfig)
+                                } else {
+                                    onNavigateToSettings()
+                                }
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 20.dp)
+                        )
+                    }
+                }
+
+                isSelectedServiceConnected && !hasAnyWidgetContent -> {
+                    item {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxHeight()
+                                .fillMaxWidth()
+                                .padding(vertical = 24.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            StreamingHomeStateCard(
+                                title = stringResource(id = R.string.streaming_home_no_content_title),
+                                subtitle = stringResource(id = R.string.streaming_home_no_content_hint),
+                                icon = Icons.Rounded.Album,
+                                iconContainerColor = MaterialTheme.colorScheme.secondaryContainer,
+                                iconTint = MaterialTheme.colorScheme.onSecondaryContainer,
+                                actionText = stringResource(id = R.string.streaming_manage_service),
+                                onAction = {
+                                    HapticUtils.performHapticFeedback(
+                                        context,
+                                        haptics,
+                                        HapticFeedbackType.LongPress
+                                    )
+                                    if (serviceIdForConfig.isNotBlank()) {
+                                        onConfigureService(serviceIdForConfig)
+                                    } else {
+                                        onNavigateToSettings()
+                                    }
+                                },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 20.dp)
+                            )
+                        }
+                    }
+                }
+
+                else -> {
+                    visibleSections.forEach { sectionId ->
+                        when (sectionId) {
                         STREAMING_SECTION_GREETING -> {
                             item(key = "streaming_section_greeting") {
                                 StreamingGreetingWidgetCard(
@@ -585,6 +679,7 @@ fun StreamingContentHomeScreen(
                             }
                         }
 
+                        }
                     }
                 }
             }
@@ -598,13 +693,19 @@ fun StreamingContentHomeScreen(
 }
 
 @Composable
-private fun StreamingDisconnectedStateCard(
-    selectedServiceName: String,
-    onConfigureService: () -> Unit,
-    onOpenSettings: () -> Unit
+private fun StreamingHomeStateCard(
+    title: String,
+    subtitle: String,
+    icon: ImageVector,
+    iconContainerColor: Color,
+    iconTint: Color,
+    showProgressIndicator: Boolean = false,
+    actionText: String? = null,
+    onAction: (() -> Unit)? = null,
+    modifier: Modifier = Modifier
 ) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier,
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerLow
         ),
@@ -614,59 +715,73 @@ private fun StreamingDisconnectedStateCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp)
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Surface(
-                color = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.45f),
-                shape = MaterialTheme.shapes.large,
-                modifier = Modifier.size(52.dp)
+                shape = CircleShape,
+                color = iconContainerColor,
+                modifier = Modifier.size(44.dp)
             ) {
-                Icon(
-                    imageVector = Icons.Rounded.CloudOff,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onErrorContainer,
-                    modifier = Modifier.padding(14.dp)
-                )
+                Box(contentAlignment = Alignment.Center) {
+                    if (showProgressIndicator) {
+                        androidx.compose.material3.ContainedLoadingIndicator()
+                    } else {
+                        Icon(
+                            imageVector = icon,
+                            contentDescription = null,
+                            tint = iconTint,
+                            modifier = Modifier.size(22.dp)
+                        )
+                    }
+                }
             }
 
             Text(
-                text = stringResource(id = R.string.streaming_home_selected_service_unavailable),
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold
+                text = title,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
+                textAlign = TextAlign.Center
             )
 
             Text(
-                text = stringResource(
-                    id = R.string.streaming_home_connect_selected_service,
-                    selectedServiceName
-                ),
+                text = subtitle,
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center
             )
 
-            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            if (actionText != null && onAction != null) {
                 Button(
-                    onClick = onConfigureService,
+                    onClick = onAction,
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text(text = stringResource(id = R.string.streaming_manage_service))
-                }
-
-                OutlinedButton(
-                    onClick = onOpenSettings,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Icon(
-                        imageVector = Icons.Rounded.Settings,
-                        contentDescription = null,
-                        modifier = Modifier.size(18.dp)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(text = stringResource(id = R.string.streaming_home_open_settings))
+                    Text(text = actionText)
                 }
             }
         }
     }
+}
+
+@Composable
+private fun StreamingDisconnectedStateCard(
+    selectedServiceName: String,
+    onConfigureService: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    StreamingHomeStateCard(
+        title = stringResource(id = R.string.streaming_home_selected_service_unavailable),
+        subtitle = stringResource(
+            id = R.string.streaming_home_connect_selected_service,
+            selectedServiceName
+        ),
+        icon = Icons.Rounded.CloudOff,
+        iconContainerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.45f),
+        iconTint = MaterialTheme.colorScheme.onErrorContainer,
+        actionText = stringResource(id = R.string.streaming_manage_service),
+        onAction = onConfigureService,
+        modifier = modifier
+    )
 }
 
 @Composable
@@ -1206,30 +1321,35 @@ private fun androidx.compose.material3.carousel.CarouselItemScope.StreamingRecom
 }
 
 @Composable
-private fun StreamingLoadingCard() {
+private fun StreamingLoadingCard(modifier: Modifier = Modifier) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier,
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainer
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
         ),
         elevation = noShadowCardElevation()
     ) {
-        Row(
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
-            verticalAlignment = Alignment.CenterVertically
+                .padding(20.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
-            Icon(
-                imageVector = Icons.Rounded.Refresh,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary
-            )
+            androidx.compose.material3.ContainedLoadingIndicator()
+
             Text(
                 text = stringResource(id = R.string.streaming_status_loading),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
+                textAlign = TextAlign.Center
+            )
+
+            Text(
+                text = stringResource(id = R.string.streaming_library_syncing),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center
             )
         }
     }

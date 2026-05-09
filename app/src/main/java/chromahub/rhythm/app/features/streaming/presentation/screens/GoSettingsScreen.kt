@@ -18,6 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import chromahub.rhythm.app.core.domain.model.StreamingQuality
 import chromahub.rhythm.app.shared.data.model.AppSettings
 import chromahub.rhythm.app.features.streaming.presentation.viewmodel.StreamingMusicViewModel
 import chromahub.rhythm.app.shared.presentation.components.common.CollapsibleHeaderScreen
@@ -36,6 +37,8 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.ui.unit.dp
 import chromahub.rhythm.app.features.streaming.presentation.model.StreamingServiceOptions
+import chromahub.rhythm.app.util.AppRestarter
+import chromahub.rhythm.app.features.local.presentation.components.dialogs.AppRestartDialog
 import chromahub.rhythm.app.core.utils.NetworkUtils
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
@@ -99,6 +102,8 @@ fun GoSettingsScreen(
 
     var showServiceSheet by remember { mutableStateOf(false) }
     var showQualitySheet by remember { mutableStateOf(false) }
+    var showRestartDialog by remember { mutableStateOf(false) }
+    var restartDialogMessage by remember { mutableStateOf("") }
 
     CollapsibleHeaderScreen(
         title = "Go Settings",
@@ -240,15 +245,27 @@ fun GoSettingsScreen(
         )
     }
 
-    if (showQualitySheet) {
+            if (showQualitySheet) {
         QualitySelectionBottomSheet(
             selectedQuality = streamingQuality.uppercase(),
             onDismiss = { showQualitySheet = false },
             onSelect = { quality ->
                 HapticUtils.performHapticFeedback(context, haptics, androidx.compose.ui.hapticfeedback.HapticFeedbackType.LongPress)
-                appSettings.setStreamingQuality(quality)
+                viewModel.setStreamingQuality(StreamingQuality.valueOf(quality))
+                // Show restart dialog consistent with other settings that require app restart
+                restartDialogMessage = "Streaming quality changed. Restart the app to apply the new audio settings."
+                showRestartDialog = true
                 showQualitySheet = false
             }
+        )
+    }
+
+    if (showRestartDialog) {
+        AppRestartDialog(
+            onDismiss = { showRestartDialog = false },
+            onRestart = { AppRestarter.restartApp(context) },
+            onContinue = { /* continue without restart */ },
+            message = restartDialogMessage
         )
     }
 }

@@ -175,8 +175,8 @@ dependencies {
     
     // Material 3 dependencies
     implementation(platform(libs.androidx.compose.bom))
-    implementation("androidx.compose.material3:material3-android:1.5.0-alpha18")
-    implementation("androidx.compose.material3:material3-window-size-class-android:1.5.0-alpha18")
+    implementation("androidx.compose.material3:material3-android:1.5.0-alpha19")
+    implementation("androidx.compose.material3:material3-window-size-class-android:1.5.0-alpha19")
     implementation("com.google.android.material:material:1.13.0-alpha05")
 
     // Media3 dependencies
@@ -195,7 +195,7 @@ dependencies {
     implementation("androidx.glance:glance-material3:1.1.1")
     
     // Physics-based animations
-    implementation("androidx.compose.animation:animation:1.10.6")
+    implementation("androidx.compose.animation:animation:1.11.1")
     //noinspection GradleDependency
     implementation("androidx.compose.animation:animation-graphics:1.8.3")
     implementation(libs.androidx.compose.animation.core)

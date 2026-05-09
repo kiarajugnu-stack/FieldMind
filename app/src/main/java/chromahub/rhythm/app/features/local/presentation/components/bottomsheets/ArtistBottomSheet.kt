@@ -82,7 +82,9 @@ fun ArtistBottomSheet(
     onShowSongInfo: (Song) -> Unit = {},
     onAddToBlacklist: (Song) -> Unit = {},
     currentSong: Song? = null,
-    isPlaying: Boolean = false
+    isPlaying: Boolean = false,
+    songs: List<Song>? = null,
+    albums: List<Album>? = null
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -101,6 +103,8 @@ fun ArtistBottomSheet(
     // Get songs and albums from viewModel
     val allSongs by viewModel.songs.collectAsState()
     val allAlbums by viewModel.albums.collectAsState()
+    val displaySongs = songs ?: allSongs
+    val displayAlbums = albums ?: allAlbums
     
     // Helper function to split artist names
     val splitArtistNames: (String) -> List<String> = remember {
@@ -144,8 +148,8 @@ fun ArtistBottomSheet(
     }
     
     // Filter songs and albums for this artist based on grouping preference
-    val artistSongs = remember(allSongs, artist, groupByAlbumArtist, artistSeparatorEnabled, artistSeparatorDelimiters) {
-        allSongs.filter { song ->
+    val artistSongs = remember(displaySongs, artist, groupByAlbumArtist, artistSeparatorEnabled, artistSeparatorDelimiters) {
+        displaySongs.filter { song ->
             if (groupByAlbumArtist) {
                 // Match split album artist names, falling back to split track artists.
                 val explicitAlbumArtist = song.albumArtist?.trim().orEmpty()
@@ -162,11 +166,11 @@ fun ArtistBottomSheet(
         }
     }
     
-    val artistAlbums = remember(allAlbums, allSongs, artist, groupByAlbumArtist, artistSeparatorEnabled, artistSeparatorDelimiters) {
+    val artistAlbums = remember(displayAlbums, displaySongs, artist, groupByAlbumArtist, artistSeparatorEnabled, artistSeparatorDelimiters) {
         if (groupByAlbumArtist) {
             // When grouping by album artist, check if any song in the album has matching album artist
-            allAlbums.filter { album ->
-                allSongs.any { song ->
+            displayAlbums.filter { album ->
+                displaySongs.any { song ->
                     val explicitAlbumArtist = song.albumArtist?.trim().orEmpty()
                     val songArtistNames = if (explicitAlbumArtist.isNotBlank() && !explicitAlbumArtist.equals("<unknown>", ignoreCase = true)) {
                         splitArtistNames(explicitAlbumArtist)
@@ -181,8 +185,8 @@ fun ArtistBottomSheet(
             }
         } else {
             // When not grouping, check if artist appears in any song's track artist field for this album
-            allAlbums.filter { album ->
-                allSongs.any { song ->
+            displayAlbums.filter { album ->
+                displaySongs.any { song ->
                     song.album == album.title &&
                     song.albumId == album.id &&
                     splitArtistNames(song.artist).any { it.equals(artist.name, ignoreCase = true) }

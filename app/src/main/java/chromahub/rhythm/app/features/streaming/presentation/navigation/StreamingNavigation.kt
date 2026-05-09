@@ -1101,6 +1101,7 @@ fun StreamingNavigation(
                     onAddSongsToPlaylist = {},
                     onSkipNext = { streamingMusicViewModel.skipToNext() },
                     onSearchClick = { navigateToTopLevel(StreamingScreen.Search.route) },
+                    isStreamingPlaylist = true,
                     onPlayNext = {},
                     onAddToQueue = { localSong ->
                         playlistTracksById[localSong.id]?.let { streamingSong ->
@@ -1156,6 +1157,21 @@ fun StreamingNavigation(
                     )
                 }
             ) {
+                val playerSongs = remember(currentSong, queueState.songs) {
+                    val queueSongs = queueState.songs
+                    if (queueSongs.isNotEmpty()) {
+                        queueSongs
+                    } else {
+                        currentSong?.let { listOf(it) }.orEmpty()
+                    }
+                }
+                val playerAlbums = remember(currentSong, playerSongs) {
+                    buildStreamingPlayerAlbums(currentSong, playerSongs)
+                }
+                val playerArtists = remember(currentSong, playerSongs, playerAlbums) {
+                    buildStreamingPlayerArtists(currentSong, playerSongs, playerAlbums)
+                }
+
                 PlayerScreen(
                     song = currentSong,
                     isPlaying = isPlaying,
@@ -1206,9 +1222,9 @@ fun StreamingNavigation(
                     onClearQueue = { localMusicViewModel.clearQueue() },
                     isMediaLoading = isMediaLoading,
                     isSeeking = isSeeking,
-                    songs = songs,
-                    albums = albums,
-                    artists = artists,
+                    songs = playerSongs,
+                    albums = playerAlbums,
+                    artists = playerArtists,
                     onPlayAlbumSongs = { albumSongs -> localMusicViewModel.playSongs(albumSongs) },
                     onShuffleAlbumSongs = { albumSongs -> localMusicViewModel.playShuffled(albumSongs) },
                     onPlayArtistSongs = { artistSongs -> localMusicViewModel.playSongs(artistSongs) },
@@ -1401,6 +1417,55 @@ private fun inferArtistNameFromId(artistId: String): String {
         .trim()
 
     return normalized.ifBlank { decoded }
+}
+
+private fun buildStreamingPlayerAlbums(
+    currentSong: Song?,
+    queueSongs: List<Song>
+): List<Album> {
+    val baseSong = currentSong ?: queueSongs.firstOrNull() ?: return emptyList()
+    val matchingSongs = queueSongs.filter {
+        it.album.equals(baseSong.album, ignoreCase = true) &&
+            it.artist.equals(baseSong.artist, ignoreCase = true)
+    }
+    val albumSongs = if (matchingSongs.isNotEmpty()) matchingSongs else listOf(baseSong)
+
+    return listOf(
+        Album(
+            id = "streaming-player:album:${baseSong.artist.lowercase()}:${baseSong.album.lowercase()}",
+            title = baseSong.album,
+            artist = baseSong.albumArtist?.takeIf { it.isNotBlank() } ?: baseSong.artist,
+            artworkUri = baseSong.artworkUri,
+            songs = albumSongs,
+            numberOfSongs = albumSongs.size
+        )
+    )
+}
+
+private fun buildStreamingPlayerArtists(
+    currentSong: Song?,
+    queueSongs: List<Song>,
+    playerAlbums: List<Album>
+): List<Artist> {
+    val baseSong = currentSong ?: queueSongs.firstOrNull() ?: return emptyList()
+    val artistName = baseSong.albumArtist?.takeIf { it.isNotBlank() } ?: baseSong.artist
+    val matchingSongs = queueSongs.filter {
+        it.artist.equals(baseSong.artist, ignoreCase = true) ||
+            (!baseSong.albumArtist.isNullOrBlank() && it.albumArtist.equals(baseSong.albumArtist, ignoreCase = true))
+    }
+    val artistSongs = if (matchingSongs.isNotEmpty()) matchingSongs else listOf(baseSong)
+
+    return listOf(
+        Artist(
+            id = "streaming-player:artist:${artistName.lowercase()}",
+            name = artistName,
+            artworkUri = baseSong.artworkUri,
+            albums = playerAlbums,
+            songs = artistSongs,
+            numberOfAlbums = playerAlbums.size,
+            numberOfTracks = artistSongs.size
+        )
+    )
 }
 
 @Composable

@@ -218,8 +218,12 @@ fun ArtistDetailScreen(
         artist = artist,
         artworkUri = artist?.artworkUri?.toString(),
         artistName = artistName,
-        artistSongsCount = artistSongs.size,
-        artistAlbumsCount = artistAlbums.size,
+        artistSongsCount = artistSongs.size.takeIf { it > 0 }
+            ?: artist?.numberOfTracks
+            ?: 0,
+        artistAlbumsCount = artistAlbums.size.takeIf { it > 0 }
+            ?: artist?.numberOfAlbums
+            ?: 0,
         showBackButton = true,
         onBackClick = {
             HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)

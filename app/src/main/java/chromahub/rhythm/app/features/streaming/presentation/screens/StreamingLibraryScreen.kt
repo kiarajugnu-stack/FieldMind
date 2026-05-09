@@ -38,6 +38,7 @@ import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.automirrored.rounded.QueueMusic
 import androidx.compose.material.icons.rounded.Shuffle
+import androidx.compose.material.icons.rounded.TrendingUp
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -97,6 +98,7 @@ import chromahub.rhythm.app.shared.data.model.Playlist
 import chromahub.rhythm.app.shared.data.model.Song
 import chromahub.rhythm.app.shared.presentation.components.common.CollapsibleHeaderScreen
 import chromahub.rhythm.app.shared.presentation.components.common.TabAnimation
+import chromahub.rhythm.app.util.ArtistSeparator
 import chromahub.rhythm.app.util.HapticUtils
 import chromahub.rhythm.app.util.M3ImageUtils
 import kotlinx.coroutines.launch
@@ -147,14 +149,17 @@ private enum class StreamingAlbumSortOrder(
 
 private enum class StreamingArtistSortOrder(
     @param:StringRes val labelRes: Int,
-    val ascending: Boolean,
-    val icon: ImageVector
+    val icon: ImageVector,
+    val ascending: Boolean
 ) {
-    NAME_ASC(R.string.sort_name, true, Icons.Rounded.Person),
-    NAME_DESC(R.string.sort_name, false, Icons.Rounded.Person),
-    SONG_COUNT_ASC(R.string.sort_song_count, true, Icons.AutoMirrored.Rounded.QueueMusic),
-    SONG_COUNT_DESC(R.string.sort_song_count, false, Icons.AutoMirrored.Rounded.QueueMusic),
-    ALBUM_COUNT_DESC(R.string.bottomsheet_albums, false, Icons.Rounded.Album)
+    NAME_ASC(R.string.sort_name, Icons.Rounded.Person, true),
+    NAME_DESC(R.string.sort_name, Icons.Rounded.Person, false),
+    SONG_COUNT_ASC(R.string.sort_song_count, Icons.AutoMirrored.Rounded.QueueMusic, true),
+    SONG_COUNT_DESC(R.string.sort_song_count, Icons.AutoMirrored.Rounded.QueueMusic, false),
+    ALBUM_COUNT_ASC(R.string.bottomsheet_albums, Icons.Rounded.Album, true),
+    ALBUM_COUNT_DESC(R.string.bottomsheet_albums, Icons.Rounded.Album, false),
+    POPULARITY_DESC(R.string.bottomsheet_sort_by, Icons.Rounded.TrendingUp, false),
+    POPULARITY_ASC(R.string.bottomsheet_sort_by, Icons.Rounded.TrendingUp, true)
 }
 
 private enum class StreamingPlaylistSortOrder(
@@ -186,6 +191,8 @@ fun StreamingLibraryScreen(
     val selectedService by appSettings.streamingService.collectAsState()
     val sessions by viewModel.serviceSessions.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
+    val hasLoadedLibrary by viewModel.hasLoadedLibrary.collectAsState()
+    val error by viewModel.error.collectAsState()
     val currentStreamingSong by viewModel.currentSong.collectAsState()
 
     val likedSongs by viewModel.likedSongs.collectAsState()
@@ -196,6 +203,7 @@ fun StreamingLibraryScreen(
     val featuredPlaylists by viewModel.featuredPlaylists.collectAsState()
     val recommendations by viewModel.recommendations.collectAsState()
     val newReleases by viewModel.newReleases.collectAsState()
+    val groupByAlbumArtist by appSettings.groupByAlbumArtist.collectAsState()
 
     val resolvedServiceId = remember(selectedService, sessions) {
         when {
@@ -233,12 +241,9 @@ fun StreamingLibraryScreen(
             newReleases
         }
     }
-    val libraryArtists = remember(followedArtists, librarySongs) {
-        if (followedArtists.isNotEmpty()) {
-            followedArtists
-        } else {
-            deriveArtistsFromSongs(librarySongs)
-        }
+    val libraryArtists = remember(followedArtists) {
+        // Display only provider artists - no derivation or merging
+        followedArtists
     }
     val libraryPlaylists = remember(savedPlaylists, featuredPlaylists) {
         (savedPlaylists + featuredPlaylists).distinctBy { it.id }
@@ -302,7 +307,10 @@ fun StreamingLibraryScreen(
             StreamingArtistSortOrder.NAME_DESC -> libraryArtists.sortedByDescending { it.name.lowercase() }
             StreamingArtistSortOrder.SONG_COUNT_ASC -> libraryArtists.sortedBy { it.songCount }
             StreamingArtistSortOrder.SONG_COUNT_DESC -> libraryArtists.sortedByDescending { it.songCount }
+            StreamingArtistSortOrder.ALBUM_COUNT_ASC -> libraryArtists.sortedBy { it.albumCount }
             StreamingArtistSortOrder.ALBUM_COUNT_DESC -> libraryArtists.sortedByDescending { it.albumCount }
+            StreamingArtistSortOrder.POPULARITY_DESC -> libraryArtists.sortedByDescending { it.popularity ?: Int.MIN_VALUE }
+            StreamingArtistSortOrder.POPULARITY_ASC -> libraryArtists.sortedBy { it.popularity ?: Int.MIN_VALUE }
         }
     }
     val sortedPlaylists = remember(libraryPlaylists, playlistSortOrder) {
@@ -326,12 +334,33 @@ fun StreamingLibraryScreen(
     val localArtists = remember(sortedArtists, localSongs, localAlbums) {
         sortedArtists.map { it.toLibraryArtist(localSongs, localAlbums) }
     }
-    val localPlaylists = remember(sortedPlaylists, localSongsById) {
-        sortedPlaylists.map { it.toLibraryPlaylist(localSongsById) }
+    val localPlaylists = remember(sortedPlaylists) {
+        sortedPlaylists.map { it.toLibraryPlaylist() }
+    }
+    val localPlaylistsById = remember(localPlaylists, sortedPlaylists) {
+        sortedPlaylists.associateBy { it.id }
     }
     val currentLocalSong = remember(activeSongId, localSongsById, currentStreamingSong) {
         activeSongId?.let(localSongsById::get) ?: currentStreamingSong?.toLibrarySong()
     }
+    val hasLibraryContent = remember(
+        localSongs,
+        localAlbums,
+        localArtists,
+        localPlaylists,
+        recommendations,
+        newReleases,
+        featuredPlaylists
+    ) {
+        localSongs.isNotEmpty() ||
+            localAlbums.isNotEmpty() ||
+            localArtists.isNotEmpty() ||
+            localPlaylists.isNotEmpty() ||
+            recommendations.isNotEmpty() ||
+            newReleases.isNotEmpty() ||
+            featuredPlaylists.isNotEmpty()
+    }
+    val libraryErrorMessage = error?.takeIf { it.isNotBlank() }
 
     val mapLocalSongsToStreaming: (List<Song>) -> List<StreamingSong> = remember(sortedSongsById) {
         { localQueue ->
@@ -628,25 +657,78 @@ fun StreamingLibraryScreen(
                     color = MaterialTheme.colorScheme.surfaceContainer,
                     shadowElevation = 0.dp
                 ) {
-                if (!isSelectedServiceConnected) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(14.dp)
-                    ) {
-                        StreamingLibraryDisconnectedCard(
-                            selectedServiceName = selectedServiceName,
-                            onConfigureService = { onConfigureService(configureTargetServiceId) },
-                            modifier = Modifier.align(Alignment.TopCenter)
-                        )
+                when {
+                    !isSelectedServiceConnected -> {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(14.dp)
+                        ) {
+                            StreamingLibraryDisconnectedCard(
+                                selectedServiceName = selectedServiceName,
+                                onConfigureService = { onConfigureService(configureTargetServiceId) },
+                                modifier = Modifier.align(Alignment.TopCenter)
+                            )
+                        }
                     }
-                } else {
-                    HorizontalPager(
-                        state = pagerState,
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(top = 10.dp)
-                    ) { page ->
+
+                    (isLoading || !hasLoadedLibrary) && !hasLibraryContent -> {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(14.dp)
+                        ) {
+                            StreamingLibraryLoadingCard(
+                                modifier = Modifier.align(Alignment.Center)
+                            )
+                        }
+                    }
+
+                    !libraryErrorMessage.isNullOrBlank() && !hasLibraryContent -> {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(14.dp)
+                        ) {
+                            StreamingLibraryStateCard(
+                                title = stringResource(id = R.string.streaming_home_selected_service_unavailable),
+                                subtitle = libraryErrorMessage,
+                                icon = Icons.Rounded.Info,
+                                iconContainerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.45f),
+                                iconTint = MaterialTheme.colorScheme.onErrorContainer,
+                                actionText = stringResource(id = R.string.streaming_manage_service),
+                                onAction = { onConfigureService(configureTargetServiceId) },
+                                modifier = Modifier.align(Alignment.Center)
+                            )
+                        }
+                    }
+
+                    !hasLibraryContent -> {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(14.dp)
+                        ) {
+                            StreamingLibraryStateCard(
+                                title = stringResource(id = R.string.streaming_library_empty),
+                                subtitle = stringResource(id = R.string.streaming_home_widget_empty_hint),
+                                icon = Icons.Rounded.Album,
+                                iconContainerColor = MaterialTheme.colorScheme.secondaryContainer,
+                                iconTint = MaterialTheme.colorScheme.onSecondaryContainer,
+                                actionText = stringResource(id = R.string.streaming_manage_service),
+                                onAction = { onConfigureService(configureTargetServiceId) },
+                                modifier = Modifier.align(Alignment.Center)
+                            )
+                        }
+                    }
+
+                    else -> {
+                        HorizontalPager(
+                            state = pagerState,
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(top = 10.dp)
+                        ) { page ->
                         when (tabs[page]) {
                             StreamingLibraryTab.SONGS -> {
                                 SingleCardSongsContent(
@@ -985,14 +1067,14 @@ fun StreamingLibraryScreen(
                                 SingleCardPlaylistsContent(
                                     playlists = localPlaylists,
                                     onPlaylistClick = { localPlaylist ->
-                                        val resolvedPlaylist = sortedPlaylists.firstOrNull { it.id == localPlaylist.id }
-                                        resolvedPlaylist?.let(onNavigateToPlaylist)
+                                        localPlaylistsById[localPlaylist.id]?.let(onNavigateToPlaylist)
                                     },
                                     haptics = haptics,
                                     appSettings = appSettings,
                                     onRefreshClick = { viewModel.loadLibrary() }
                                 )
                             }
+                        }
                         }
                     }
                 }
@@ -1086,13 +1168,13 @@ private fun StreamingSongsTabPage(
 
         if (isLoading && songs.isEmpty()) {
             item {
-                Row(
+                Box(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(vertical = 18.dp),
-                    horizontalArrangement = Arrangement.Center
+                    contentAlignment = Alignment.Center
                 ) {
-                    CircularProgressIndicator()
+                    StreamingLibraryLoadingCard()
                 }
             }
         } else if (songs.isEmpty()) {
@@ -1137,13 +1219,13 @@ private fun StreamingAlbumsTabPage(
 
         if (isLoading && albums.isEmpty()) {
             item {
-                Row(
+                Box(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(vertical = 18.dp),
-                    horizontalArrangement = Arrangement.Center
+                    contentAlignment = Alignment.Center
                 ) {
-                    CircularProgressIndicator()
+                    StreamingLibraryLoadingCard()
                 }
             }
         } else if (albums.isEmpty()) {
@@ -1185,13 +1267,13 @@ private fun StreamingArtistsTabPage(
 
         if (isLoading && artists.isEmpty()) {
             item {
-                Row(
+                Box(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(vertical = 18.dp),
-                    horizontalArrangement = Arrangement.Center
+                    contentAlignment = Alignment.Center
                 ) {
-                    CircularProgressIndicator()
+                    StreamingLibraryLoadingCard()
                 }
             }
         } else if (artists.isEmpty()) {
@@ -1236,13 +1318,13 @@ private fun StreamingPlaylistsTabPage(
 
         if (isLoading && playlists.isEmpty()) {
             item {
-                Row(
+                Box(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(vertical = 18.dp),
-                    horizontalArrangement = Arrangement.Center
+                    contentAlignment = Alignment.Center
                 ) {
-                    CircularProgressIndicator()
+                    StreamingLibraryLoadingCard()
                 }
             }
         } else if (playlists.isEmpty()) {
@@ -1432,6 +1514,91 @@ private fun StreamingLibraryDisconnectedCard(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text(text = stringResource(id = R.string.streaming_manage_service))
+            }
+        }
+    }
+}
+
+@Composable
+private fun StreamingLibraryLoadingCard(
+    modifier: Modifier = Modifier
+) {
+    StreamingLibraryStateCard(
+        title = stringResource(id = R.string.streaming_library_syncing),
+        subtitle = stringResource(id = R.string.streaming_home_widget_empty_hint),
+        icon = Icons.Rounded.History,
+        iconContainerColor = MaterialTheme.colorScheme.primaryContainer,
+        iconTint = MaterialTheme.colorScheme.onPrimaryContainer,
+        showProgressIndicator = true,
+        modifier = modifier
+    )
+}
+
+@Composable
+private fun StreamingLibraryStateCard(
+    title: String,
+    subtitle: String,
+    icon: ImageVector,
+    iconContainerColor: Color,
+    iconTint: Color,
+    showProgressIndicator: Boolean = false,
+    actionText: String? = null,
+    onAction: (() -> Unit)? = null,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainer
+        ),
+        modifier = modifier.fillMaxWidth()
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            Surface(
+                shape = CircleShape,
+                color = iconContainerColor,
+                modifier = Modifier.size(44.dp)
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    if (showProgressIndicator) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(20.dp),
+                            strokeWidth = 2.dp,
+                            color = iconTint
+                        )
+                    } else {
+                        Icon(
+                            imageVector = icon,
+                            contentDescription = null,
+                            tint = iconTint,
+                            modifier = Modifier.size(22.dp)
+                        )
+                    }
+                }
+            }
+
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold
+            )
+            Text(
+                text = subtitle,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+
+            if (actionText != null && onAction != null) {
+                Button(
+                    onClick = onAction,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(text = actionText)
+                }
             }
         }
     }
@@ -1739,6 +1906,17 @@ private fun StreamingSong.toLibrarySong(): Song {
     )
 }
 
+private fun StreamingPlaylist.toLibraryPlaylist(): Playlist {
+    return Playlist(
+        id = id,
+        name = name,
+        songs = getTracks().map { it.toLibrarySong() },
+        dateCreated = externalId?.hashCode()?.toLong() ?: id.hashCode().toLong(),
+        dateModified = snapshotId?.hashCode()?.toLong() ?: songCount.toLong(),
+        artworkUri = artworkUri?.takeIf { it.isNotBlank() }?.let(Uri::parse)
+    )
+}
+
 private fun StreamingAlbum.toLibraryAlbum(librarySongs: List<Song>): Album {
     val matchingSongs = if (librarySongs.isNotEmpty()) {
         librarySongs.filter {
@@ -1787,85 +1965,52 @@ private fun StreamingArtist.toLibraryArtist(
     )
 }
 
-private fun StreamingPlaylist.toLibraryPlaylist(
-    librarySongsById: Map<String, Song>
-): Playlist {
-    val mappedSongs = getTracks()
-        .map { track -> librarySongsById[track.id] ?: track.toLibrarySong() }
-        .distinctBy { it.id }
-
-    return Playlist(
-        id = id,
-        name = name,
-        songs = mappedSongs,
-        artworkUri = artworkUri?.takeIf { it.isNotBlank() }?.let(Uri::parse)
-    )
-}
-
-private fun deriveArtistsFromSongs(songs: List<StreamingSong>): List<StreamingArtist> {
+private fun deriveArtistsFromSongs(
+    songs: List<StreamingSong>,
+    separatorEnabled: Boolean,
+    separatorDelimiters: String
+): List<StreamingArtist> {
     if (songs.isEmpty()) {
         return emptyList()
     }
 
     return songs
         .filter { it.artist.isNotBlank() }
-        .groupBy { song -> "${song.sourceType.name}:${song.artist.lowercase()}" }
+        .flatMap { song ->
+            val artistNames = ArtistSeparator.splitArtists(
+                artistString = song.artist,
+                delimiters = separatorDelimiters,
+                enabled = separatorEnabled
+            )
+
+            if (artistNames.isEmpty()) {
+                listOf(song to song.artist.trim())
+            } else {
+                artistNames.mapNotNull { artistName ->
+                    artistName.trim().takeIf { it.isNotBlank() }?.let { trimmedName ->
+                        song to trimmedName
+                    }
+                }
+            }
+        }
+        .groupBy { (song, artistName) -> "${song.sourceType.name}:${artistName.lowercase()}" }
         .values
         .sortedByDescending { artistSongs -> artistSongs.size }
         .take(40)
         .map { artistSongs ->
-            val firstSong = artistSongs.first()
+            val firstSong = artistSongs.first().first
+            val artistName = artistSongs.first().second
+            val artistTracks = artistSongs.map { it.first }
             StreamingArtist(
-                id = "ui-derived:${firstSong.sourceType.name}:artist:${firstSong.artist.lowercase()}",
-                name = firstSong.artist,
-                artworkUri = artistSongs.firstNotNullOfOrNull { it.artworkUri },
-                songCount = artistSongs.size,
-                albumCount = artistSongs.map { it.album }.distinct().size,
+                id = "ui-derived:${firstSong.sourceType.name}:artist:${artistName.lowercase()}",
+                name = artistName,
+                artworkUri = artistTracks.firstNotNullOfOrNull { it.artworkUri },
+                songCount = artistTracks.size,
+                albumCount = artistTracks.map { it.album }.distinct().size,
                 sourceType = firstSong.sourceType,
-                topTracks = artistSongs.take(20)
+                topTracks = artistTracks.take(20)
             )
         }
-}
-
-private fun derivePlaylistsFromSongs(songs: List<StreamingSong>): List<StreamingPlaylist> {
-    if (songs.isEmpty()) {
-        return emptyList()
-    }
-
-    val sourceType = songs.first().sourceType
-    val libraryMix = StreamingPlaylist(
-        id = "ui-derived:${sourceType.name}:playlist:library-mix",
-        name = "Library Mix",
-        description = "Auto mix from your streaming catalog",
-        artworkUri = songs.firstNotNullOfOrNull { it.artworkUri },
-        songCount = songs.size,
-        isEditable = false,
-        sourceType = sourceType,
-        tracks = songs.take(120)
-    )
-
-    val artistMixes = songs
-        .filter { it.artist.isNotBlank() }
-        .groupBy { it.artist }
-        .values
-        .filter { it.size >= 2 }
-        .sortedByDescending { it.size }
-        .take(7)
-        .map { artistSongs ->
-            val firstSong = artistSongs.first()
-            StreamingPlaylist(
-                id = "ui-derived:${sourceType.name}:playlist:artist:${firstSong.artist.lowercase()}",
-                name = "${firstSong.artist} Mix",
-                description = "Auto playlist from service tracks",
-                artworkUri = artistSongs.firstNotNullOfOrNull { it.artworkUri },
-                songCount = artistSongs.size,
-                isEditable = false,
-                sourceType = sourceType,
-                tracks = artistSongs.take(60)
-            )
-        }
-
-    return listOf(libraryMix) + artistMixes
 }
 
 private fun formatCompactDuration(durationMs: Long): String {

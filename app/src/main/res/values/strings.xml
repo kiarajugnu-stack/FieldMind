@@ -218,7 +218,7 @@
     <string name="restart_recommended">Restart Recommended</string>
     <string name="restart_default_playlists_message">To apply changes to default playlists, we recommend restarting the app. You can continue using the app, but some playlists may not appear correctly until restart.</string>
     <string name="restart_now">Restart Now</string>
-    <string name="continue_without_restart">Continue Without Restart</string>
+    <string name="continue_without_restart">Restart Later</string>
     
     <!-- Settings - Media Scan -->
     <string name="settings_media_scan">Media Scan</string>
@@ -2699,7 +2699,7 @@
     <string name="streaming_service_setup_connected_as">Connected as %1$s</string>
     <string name="streaming_dashboard_subtitle">Showing streaming content for %1$s.</string>
     <string name="streaming_home_selected_service_unavailable">Selected service is not connected</string>
-    <string name="streaming_home_connect_selected_service">Connect %1$s to unlock Home and Search.</string>
+    <string name="streaming_home_connect_selected_service">Connect %1$s to load Home and Search.</string>
     <string name="streaming_home_open_settings">Open Streaming Settings</string>
     <string name="streaming_home_connected_service">Connected service: %1$s</string>
     <string name="streaming_home_for_service">For %1$s</string>
@@ -2715,7 +2715,11 @@
     <string name="streaming_home_widget_playlists_title">Featured Playlists</string>
     <string name="streaming_home_widget_playlists_subtitle">Playlist picks from %1$s</string>
     <string name="streaming_home_widget_playlists_empty">No featured playlists found</string>
-    <string name="streaming_home_widget_empty_hint">Try refreshing after syncing your streaming library.</string>
+    <string name="streaming_home_widget_empty_hint">This may take a moment after you connect or refresh.</string>
+    <string name="streaming_library_syncing">Loading your streaming feed…</string>
+    <string name="streaming_library_empty">No library content yet</string>
+    <string name="streaming_home_no_content_title">No home content yet</string>
+    <string name="streaming_home_no_content_hint">Try refreshing after your service finishes syncing.</string>
     <string name="streaming_home_widget_playlist_track_count">%1$d tracks</string>
     <string name="streaming_library_overview_title">%1$s Library</string>
     <string name="streaming_library_overview_stats">%1$d songs · %2$d albums · %3$d artists · %4$d playlists</string>

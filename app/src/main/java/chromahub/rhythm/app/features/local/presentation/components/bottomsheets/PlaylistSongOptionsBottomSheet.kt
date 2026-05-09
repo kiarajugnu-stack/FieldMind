@@ -66,6 +66,7 @@ fun PlaylistSongOptionsBottomSheet(
     onShowSongInfo: () -> Unit,
     onGoToAlbum: () -> Unit,
     onGoToArtist: () -> Unit,
+    showRemoveFromPlaylist: Boolean = true,
     haptics: HapticFeedback
 ) {
     val context = LocalContext.current
@@ -253,18 +254,20 @@ fun PlaylistSongOptionsBottomSheet(
                         }
                     }
                     
-                    // Row 4: Remove from playlist (full width, error color)
-                    SongOptionGridItem(
-                        icon = RhythmIcons.Remove,
-                        text = "Remove from playlist",
-                        containerColor = MaterialTheme.colorScheme.errorContainer,
-                        iconColor = MaterialTheme.colorScheme.error,
-                        onClick = {
-                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
-                            onRemoveFromPlaylist()
-                        },
-                        modifier = Modifier.fillMaxWidth()
-                    )
+                    if (showRemoveFromPlaylist) {
+                        // Row 4: Remove from playlist (full width, error color)
+                        SongOptionGridItem(
+                            icon = RhythmIcons.Remove,
+                            text = "Remove from playlist",
+                            containerColor = MaterialTheme.colorScheme.errorContainer,
+                            iconColor = MaterialTheme.colorScheme.error,
+                            onClick = {
+                                HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                onRemoveFromPlaylist()
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
                     
                     Spacer(modifier = Modifier.height(8.dp))
                 }

@@ -4,7 +4,6 @@ import android.content.Context
 import android.util.Log
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -98,6 +97,105 @@ class SubsonicApiClient(context: Context) {
         }
     }
 
+    suspend fun searchAlbums(query: String, limit: Int = 30): Result<List<ProviderAlbum>> {
+        if (!isConnected()) {
+            return Result.failure(IllegalStateException("Subsonic service is not connected"))
+        }
+
+        val params = mapOf(
+            "query" to query,
+            "artistCount" to "0",
+            "songCount" to "0",
+            "albumCount" to limit.coerceIn(1, 100).toString()
+        )
+
+        return requestAndParse("search3", params).map { response ->
+            parseAlbumList(response.optJSONObject("searchResult3")?.optJSONArray("album"))
+        }
+    }
+
+    suspend fun searchArtists(query: String, limit: Int = 30): Result<List<ProviderArtist>> {
+        if (!isConnected()) {
+            return Result.failure(IllegalStateException("Subsonic service is not connected"))
+        }
+
+        val params = mapOf(
+            "query" to query,
+            "albumCount" to "0",
+            "songCount" to "0",
+            "artistCount" to limit.coerceIn(1, 100).toString()
+        )
+
+        return requestAndParse("search3", params).map { response ->
+            parseArtistList(response.optJSONObject("searchResult3")?.optJSONArray("artist"))
+        }
+    }
+
+    suspend fun getSimilarTracks(songId: String, limit: Int = 20): Result<List<ProviderSong>> {
+        if (!isConnected()) {
+            return Result.failure(IllegalStateException("Subsonic service is not connected"))
+        }
+        if (songId.isBlank()) {
+            return Result.failure(IllegalArgumentException("Song id is required"))
+        }
+
+        val params = mapOf(
+            "id" to songId,
+            "count" to limit.coerceIn(1, 100).toString()
+        )
+
+        return requestAndParse("getSimilarSongs2", params).map { response ->
+            parseSongList(response.optJSONObject("similarSongs2")?.optJSONArray("song") ?: response.optJSONObject("similarSongs")?.optJSONArray("song"))
+        }
+    }
+
+    suspend fun getSimilarArtists(artistId: String, limit: Int = 10): Result<List<ProviderArtist>> {
+        if (!isConnected()) {
+            return Result.failure(IllegalStateException("Subsonic service is not connected"))
+        }
+        if (artistId.isBlank()) {
+            return Result.failure(IllegalArgumentException("Artist id is required"))
+        }
+
+        val params = mapOf(
+            "id" to artistId,
+            "count" to limit.coerceIn(1, 100).toString()
+        )
+
+        return requestAndParse("getArtistInfo2", params).map { response ->
+            parseArtistId3List(response.optJSONObject("artistInfo2")?.optJSONArray("similarArtist"))
+        }
+    }
+
+    suspend fun getRandomSongs(limit: Int = 50): Result<List<ProviderSong>> {
+        if (!isConnected()) {
+            return Result.failure(IllegalStateException("Subsonic service is not connected"))
+        }
+
+        val params = mapOf(
+            "size" to limit.coerceIn(1, 500).toString()
+        )
+
+        return requestAndParse("getRandomSongs", params).map { response ->
+            parseSongList(response.optJSONArray("randomSongs"))
+        }
+    }
+
+    suspend fun getAlbumList(type: String = "newest", limit: Int = 50): Result<List<ProviderAlbum>> {
+        if (!isConnected()) {
+            return Result.failure(IllegalStateException("Subsonic service is not connected"))
+        }
+
+        val params = mapOf(
+            "type" to type,
+            "size" to limit.coerceIn(1, 500).toString()
+        )
+
+        return requestAndParse("getAlbumList", params).map { response ->
+            parseAlbumList(response.optJSONObject("albumList")?.optJSONArray("album"))
+        }
+    }
+
     suspend fun fetchLibrarySongs(limit: Int = 5_000): Result<List<ProviderSong>> {
         if (!isConnected()) {
             return Result.failure(IllegalStateException("Subsonic service is not connected"))
@@ -153,6 +251,126 @@ class SubsonicApiClient(context: Context) {
                 Log.e(TAG, "Subsonic library fetch failed", e)
                 Result.failure(e)
             }
+        }
+    }
+
+    suspend fun getPlaylists(limit: Int = 100): Result<List<ProviderPlaylist>> {
+        if (!isConnected()) {
+            return Result.failure(IllegalStateException("Subsonic service is not connected"))
+        }
+
+        val params = mapOf(
+            "u" to credentials!!.username,
+            "v" to API_VERSION,
+            "c" to CLIENT_ID
+        )
+
+        return requestAndParse("getPlaylists", params).map { response ->
+            parsePlaylistList(response.optJSONObject("playlists")?.optJSONArray("playlist"), limit)
+        }
+    }
+
+    suspend fun searchPlaylists(query: String, limit: Int = 30): Result<List<ProviderPlaylist>> {
+        if (!isConnected()) {
+            return Result.failure(IllegalStateException("Subsonic service is not connected"))
+        }
+
+        return getPlaylists(limit).map { playlists ->
+            playlists.filter {
+                it.name.contains(query, ignoreCase = true) ||
+                    (it.description?.contains(query, ignoreCase = true) == true)
+            }
+        }
+    }
+
+    suspend fun getPlaylistSongs(playlistId: String, limit: Int = 500): Result<List<ProviderSong>> {
+        if (!isConnected()) {
+            return Result.failure(IllegalStateException("Subsonic service is not connected"))
+        }
+        if (playlistId.isBlank()) {
+            return Result.failure(IllegalArgumentException("Playlist id is required"))
+        }
+
+        return requestAndParse("getPlaylist", mapOf("id" to playlistId)).map { response ->
+            val entries = response.optJSONObject("playlist")?.optJSONArray("entry")
+            parseSongList(entries).take(limit)
+        }
+    }
+
+    suspend fun getAlbumSongs(albumQuery: String, artistQuery: String? = null, limit: Int = 500): Result<List<ProviderSong>> {
+        if (!isConnected()) {
+            return Result.failure(IllegalStateException("Subsonic service is not connected"))
+        }
+
+        val albums = searchAlbums(albumQuery, limit = 20).getOrDefault(emptyList())
+        val album = albums.firstOrNull { candidate ->
+            candidate.title.equals(albumQuery, ignoreCase = true) &&
+                (artistQuery.isNullOrBlank() || candidate.artist.equals(artistQuery, ignoreCase = true))
+        } ?: albums.firstOrNull() ?: return Result.success(emptyList())
+
+        return requestAndParse("getAlbum", mapOf("id" to album.providerId)).map { response ->
+            parseSongList(response.optJSONObject("album")?.optJSONArray("song")).take(limit)
+        }
+    }
+
+    suspend fun getArtistTopTracks(artistQuery: String, limit: Int = 20): Result<List<ProviderSong>> {
+        if (!isConnected()) {
+            return Result.failure(IllegalStateException("Subsonic service is not connected"))
+        }
+
+        return searchSongs(artistQuery, limit)
+    }
+
+    suspend fun getArtistAlbums(artistQuery: String, limit: Int = 50): Result<List<ProviderAlbum>> {
+        if (!isConnected()) {
+            return Result.failure(IllegalStateException("Subsonic service is not connected"))
+        }
+
+        return searchArtists(artistQuery, limit = 20).map { artists ->
+            val artist = artists.firstOrNull { it.name.equals(artistQuery, ignoreCase = true) } ?: artists.firstOrNull()
+                ?: return@map emptyList()
+
+            requestAndParse("getArtist", mapOf("id" to artist.providerId)).getOrNull()
+                ?.optJSONObject("artist")
+                ?.optJSONArray("album")
+                ?.let { parseAlbumList(it).take(limit) }
+                .orEmpty()
+        }
+    }
+
+    suspend fun getRelatedArtists(artistId: String, limit: Int = 10): Result<List<ProviderArtist>> {
+        if (!isConnected()) {
+            return Result.failure(IllegalStateException("Subsonic service is not connected"))
+        }
+        if (artistId.isBlank()) {
+            return Result.failure(IllegalArgumentException("Artist id is required"))
+        }
+
+        val params = mapOf(
+            "id" to artistId,
+            "count" to limit.coerceIn(1, 100).toString()
+        )
+
+        return requestAndParse("getArtistInfo2", params).map { response ->
+            parseArtistId3List(response.optJSONObject("artistInfo2")?.optJSONArray("similarArtist"))
+        }
+    }
+
+    suspend fun getRelatedTracks(songId: String, limit: Int = 20): Result<List<ProviderSong>> {
+        if (!isConnected()) {
+            return Result.failure(IllegalStateException("Subsonic service is not connected"))
+        }
+        if (songId.isBlank()) {
+            return Result.failure(IllegalArgumentException("Song id is required"))
+        }
+
+        val params = mapOf(
+            "id" to songId,
+            "count" to limit.coerceIn(1, 100).toString()
+        )
+
+        return requestAndParse("getSimilarSongs2", params).map { response ->
+            parseSongList(response.optJSONObject("similarSongs2")?.optJSONArray("song") ?: response.optJSONObject("similarSongs")?.optJSONArray("song"))
         }
     }
 
@@ -256,7 +474,7 @@ class SubsonicApiClient(context: Context) {
 
     private fun buildApiUrl(cred: Credentials, endpoint: String, params: Map<String, String>): String {
         val (token, salt) = generateAuthParams(cred.password)
-        val parsedUrl = "${cred.serverUrl}/rest/$endpoint.view".toHttpUrlOrNull() 
+        val parsedUrl = "${cred.serverUrl}/rest/$endpoint.view".toHttpUrlOrNull()
             ?: throw IllegalStateException("Invalid API URL: ${cred.serverUrl}")
         val builder = parsedUrl.newBuilder()
             .addQueryParameter("u", cred.username)
@@ -289,6 +507,94 @@ class SubsonicApiClient(context: Context) {
                         album = song.optString("album", "Unknown album"),
                         durationMs = song.optLong("duration", 0L) * 1000L,
                         artworkUrl = coverArtId?.let { buildCoverArtUrl(it, 500) }
+                    )
+                )
+            }
+        }
+    }
+
+    private fun parseAlbumList(albums: org.json.JSONArray?): List<ProviderAlbum> {
+        return buildList {
+            for (i in 0 until (albums?.length() ?: 0)) {
+                val album = albums?.optJSONObject(i) ?: continue
+                val id = album.optString("id", "")
+                if (id.isBlank()) continue
+
+                add(
+                    ProviderAlbum(
+                        providerId = id,
+                        title = album.optString("name", album.optString("album", "Unknown album")),
+                        artist = album.optString("artist", "Unknown artist"),
+                        artworkUrl = album.optString("coverArt", null)?.takeIf { it.isNotBlank() }?.let { buildCoverArtUrl(it, 500) },
+                        songCount = album.optInt("songCount", 0),
+                        year = album.optInt("year").takeIf { it > 0 },
+                        description = album.optString("comment", null)?.takeIf { it.isNotBlank() }
+                    )
+                )
+            }
+        }
+    }
+
+    private fun parseArtistList(artists: org.json.JSONArray?): List<ProviderArtist> {
+        return buildList {
+            for (i in 0 until (artists?.length() ?: 0)) {
+                val artist = artists?.optJSONObject(i) ?: continue
+                val id = artist.optString("id", "")
+                if (id.isBlank()) continue
+
+                add(
+                    ProviderArtist(
+                        providerId = id,
+                        name = artist.optString("name", "Unknown artist"),
+                        artworkUrl = artist.optString("coverArt", null)?.takeIf { it.isNotBlank() }?.let { buildCoverArtUrl(it, 500) },
+                        songCount = artist.optInt("songCount", 0),
+                        albumCount = artist.optInt("albumCount", 0),
+                        description = artist.optString("biography", null)?.takeIf { it.isNotBlank() }
+                    )
+                )
+            }
+        }
+    }
+
+    private fun parseArtistId3List(artists: org.json.JSONArray?): List<ProviderArtist> {
+        return buildList {
+            for (i in 0 until (artists?.length() ?: 0)) {
+                val artist = artists?.optJSONObject(i) ?: continue
+                val id = artist.optString("id", "")
+                val name = artist.optString("name", "")
+                if (id.isBlank() && name.isBlank()) continue
+
+                add(
+                    ProviderArtist(
+                        providerId = id.ifBlank { name },
+                        name = name.ifBlank { id },
+                        artworkUrl = artist.optString("coverArt", null)?.takeIf { it.isNotBlank() }?.let { buildCoverArtUrl(it, 500) },
+                        songCount = artist.optInt("songCount", 0),
+                        albumCount = artist.optInt("albumCount", 0),
+                        description = null
+                    )
+                )
+            }
+        }
+    }
+
+    private fun parsePlaylistList(playlists: org.json.JSONArray?, limit: Int = 100): List<ProviderPlaylist> {
+        return buildList {
+            for (i in 0 until minOf(limit, playlists?.length() ?: 0)) {
+                val playlist = playlists?.optJSONObject(i) ?: continue
+                val id = playlist.optString("id", "")
+                if (id.isBlank()) continue
+
+                val coverArtId = playlist.optString("coverArt").takeIf { it.isNotBlank() }
+                add(
+                    ProviderPlaylist(
+                        providerId = id,
+                        name = playlist.optString("name", "Unknown playlist"),
+                        description = playlist.optString("comment", null)?.takeIf { it.isNotBlank() },
+                        artworkUrl = coverArtId?.let { buildCoverArtUrl(it, 500) },
+                        songCount = playlist.optInt("songCount", 0),
+                        owner = playlist.optString("owner", null)?.takeIf { it.isNotBlank() },
+                        isPublic = playlist.optBoolean("public", true)
                     )
                 )
             }
