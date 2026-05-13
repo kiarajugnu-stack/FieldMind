@@ -3177,8 +3177,11 @@ private val _autoCheckForUpdates = MutableStateFlow(prefs.getBoolean(KEY_AUTO_CH
     }
     
     fun isFolderWhitelisted(folderPath: String): Boolean {
+        val normalizedFolderPath = folderPath.replace("\\", "/").trimEnd('/')
         return _whitelistedFolders.value.any { whitelistedPath ->
-            folderPath.startsWith(whitelistedPath, ignoreCase = true)
+            val normalizedWhitelistedPath = whitelistedPath.replace("\\", "/").trimEnd('/')
+            normalizedFolderPath == normalizedWhitelistedPath ||
+                normalizedFolderPath.startsWith("$normalizedWhitelistedPath/", ignoreCase = true)
         }
     }
     

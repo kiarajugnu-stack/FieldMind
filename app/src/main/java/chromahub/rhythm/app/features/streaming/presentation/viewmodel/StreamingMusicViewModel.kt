@@ -19,6 +19,7 @@ import chromahub.rhythm.app.features.streaming.domain.model.StreamingPlaylist
 import chromahub.rhythm.app.features.streaming.domain.model.StreamingServiceId
 import chromahub.rhythm.app.features.streaming.domain.model.StreamingServiceRules
 import chromahub.rhythm.app.features.streaming.domain.model.StreamingSong
+import chromahub.rhythm.app.features.streaming.infrastructure.notification.StreamingNotificationManager
 import chromahub.rhythm.app.shared.data.model.AppSettings
 import chromahub.rhythm.app.util.ArtistSeparator
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -38,6 +39,7 @@ class StreamingMusicViewModel(application: Application) : AndroidViewModel(appli
     private val serviceSessionRepository = StreamingServiceSessionRepository(application)
     private val repository = StreamingMusicModule.provideStreamingMusicRepository(application)
     private val providerRepository = repository as? StreamingMusicRepositoryImpl
+    private val notificationManager = StreamingNotificationManager(application)
     private var playbackHandler: ((List<StreamingSong>, Int) -> Unit)? = null
     private var seekProgressHandler: ((Float) -> Unit)? = null
     private var seekPositionHandler: ((Long) -> Unit)? = null
@@ -242,8 +244,12 @@ class StreamingMusicViewModel(application: Application) : AndroidViewModel(appli
                 }
                 checkAndSyncAuthentication(normalizedServiceId)
                 loadHomeContent()
+                
+                // Show success notification
+                notificationManager.notifyAuthenticationSuccess(getSourceTypeName(sourceTypeFromServiceId(normalizedServiceId)))
             } catch (e: Exception) {
                 _error.value = "Connection failed: ${e.message}"
+                notificationManager.notifyAuthenticationFailed(getSourceTypeName(_currentService.value))
             } finally {
                 _isLoading.value = false
             }
@@ -840,6 +846,7 @@ class StreamingMusicViewModel(application: Application) : AndroidViewModel(appli
             try {
                 repository.likeSong(song.id)
                 _likedSongs.value = repository.getLikedSongs().first()
+                notificationManager.notifyLikeSong(getSourceTypeName(_currentService.value))
             } catch (e: Exception) {
                 _error.value = "Failed to save song: ${e.message}"
             }
@@ -854,6 +861,7 @@ class StreamingMusicViewModel(application: Application) : AndroidViewModel(appli
             try {
                 repository.unlikeSong(song.id)
                 _likedSongs.value = repository.getLikedSongs().first()
+                notificationManager.notifyUnlikeSong(getSourceTypeName(_currentService.value))
             } catch (e: Exception) {
                 _error.value = "Failed to remove song: ${e.message}"
             }
@@ -868,6 +876,7 @@ class StreamingMusicViewModel(application: Application) : AndroidViewModel(appli
             try {
                 repository.likeSong(songId)
                 _likedSongs.value = repository.getLikedSongs().first()
+                notificationManager.notifyLikeSong(getSourceTypeName(_currentService.value))
             } catch (e: Exception) {
                 _error.value = "Failed to save song: ${e.message}"
             }
@@ -882,6 +891,7 @@ class StreamingMusicViewModel(application: Application) : AndroidViewModel(appli
             try {
                 repository.createPlaylist(name)
                 _savedPlaylists.value = repository.getPlaylists().first().filterIsInstance<StreamingPlaylist>()
+                notificationManager.notifyPlaylistCreated(name, getSourceTypeName(_currentService.value))
             } catch (e: Exception) {
                 _error.value = "Failed to create playlist: ${e.message}"
             }
@@ -899,6 +909,7 @@ class StreamingMusicViewModel(application: Application) : AndroidViewModel(appli
                 val success = repository.renamePlaylist(playlist.id, newName)
                 if (success) {
                     _savedPlaylists.value = repository.getPlaylists().first().filterIsInstance<StreamingPlaylist>()
+                    notificationManager.notifyPlaylistUpdated(newName, getSourceTypeName(_currentService.value))
                 } else {
                     _error.value = "Failed to rename playlist"
                 }
@@ -968,6 +979,7 @@ class StreamingMusicViewModel(application: Application) : AndroidViewModel(appli
                 val success = repository.deletePlaylist(playlist.id)
                 if (success) {
                     _savedPlaylists.value = repository.getPlaylists().first().filterIsInstance<StreamingPlaylist>()
+                    notificationManager.notifyPlaylistDeleted(playlist.name, getSourceTypeName(_currentService.value))
                 } else {
                     _error.value = "Failed to remove playlist"
                 }
@@ -1287,6 +1299,22 @@ class StreamingMusicViewModel(application: Application) : AndroidViewModel(appli
             normalized
         } else {
             StreamingServiceId.SUBSONIC
+        }
+    }
+    
+    /**
+     * Get display name for SourceType
+     */
+    private fun getSourceTypeName(sourceType: SourceType): String {
+        return when (sourceType) {
+            SourceType.SUBSONIC -> "Subsonic"
+            SourceType.JELLYFIN -> "Jellyfin"
+            SourceType.SPOTIFY -> "Spotify"
+            SourceType.APPLE_MUSIC -> "Apple Music"
+            SourceType.YOUTUBE_MUSIC -> "YouTube Music"
+            SourceType.DEEZER -> "Deezer"
+            SourceType.LOCAL -> "Local"
+            SourceType.UNKNOWN -> "Unknown"
         }
     }
 

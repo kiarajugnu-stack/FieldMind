@@ -139,37 +139,86 @@
     <string name="notification_operations_channel_name">Rhythm Library</string>
     <string name="notification_operations_channel_desc">Progress and results for library scans and playlist actions</string>
     <string name="notification_media_scan_title">Rhythm Library Scan</string>
-    <string name="notification_media_scan_stage_songs">Scanning audio files</string>
-    <string name="notification_media_scan_stage_saving">Saving your library</string>
-    <string name="notification_media_scan_stage_finishing">Completing scan</string>
-    <string name="notification_media_scan_complete_summary">Scan complete: %1$d songs, %2$d albums, %3$d artists</string>
-    <string name="notification_media_scan_complete_pending_setup">Scan complete. Rhythm is finishing library setup.</string>
+    <string name="notification_media_scan_stage_songs">🔍 Scanning audio files…</string>
+    <string name="notification_media_scan_stage_saving">💾 Saving your library…</string>
+    <string name="notification_media_scan_stage_finishing">✨ Completing scan…</string>
+    <string name="notification_media_scan_complete_summary">✓ Found %1$d songs • %2$d albums • %3$d artists</string>
+    <string name="notification_media_scan_complete_pending_setup">✓ Scan complete! Rhythm is setting up your library…</string>
     <string name="notification_media_scan_cancelled">Scan cancelled.</string>
-    <string name="notification_media_scan_failed">Scan could not be completed. Please try again.</string>
+    <string name="notification_media_scan_failed">⚠ Scan failed. Please check permissions and try again.</string>
     <string name="notification_playlist_export_title">Rhythm Library Export</string>
     <string name="notification_playlist_import_title">Rhythm Library Import</string>
     <string name="notification_library_setup_title">Rhythm Library Setup</string>
-    <string name="notification_library_setup_complete_summary">Library setup complete: %1$d songs, %2$d albums, %3$d artists</string>
+    <string name="notification_library_setup_complete_summary">✓ Library ready! %1$d songs • %2$d albums • %3$d artists</string>
     <string name="notification_playlist_not_found">Playlist export failed. The playlist was not found.</string>
     <string name="notification_no_playlists_to_export">No playlists are available for export.</string>
     <string name="notification_operation_timed_out">This request took too long. Please try again.</string>
-    <string name="notification_playlist_export_complete">Playlist export completed.</string>
-    <string name="notification_playlist_export_all_complete">Export completed for %1$d playlists.</string>
-    <string name="notification_playlist_export_failed">Playlist export failed. Please try again.</string>
-    <string name="notification_playlist_import_complete">Imported "%1$s" with %2$d songs.</string>
-    <string name="notification_playlist_import_failed">Playlist import failed. Please check the file and try again.</string>
+    <string name="notification_playlist_export_complete">✓ Playlist exported!</string>
+    <string name="notification_playlist_export_all_complete">✓ Exported %1$d playlists!</string>
+    <string name="notification_playlist_export_failed">⚠ Export failed. Try again.</string>
+    <string name="notification_playlist_import_complete">✓ Imported \"%1$s\" with %2$d songs!</string>
+    <string name="notification_playlist_import_failed">⚠ Import failed. Check the file format.</string>
     <string name="notification_updater_channel_name">Rhythm Updater</string>
     <string name="notification_updater_channel_desc">Download status for app updates</string>
     <string name="notification_updater_title">Rhythm Updater</string>
-    <string name="notification_updater_downloading">Downloading update: %1$d%%</string>
-    <string name="notification_updater_download_complete">Update downloaded. Tap to install.</string>
-    <string name="notification_updater_available_title">Rhythm Updater: Update available</string>
-    <string name="notification_updater_available_text">A new version is ready. Tap to review and install.</string>
+    <string name="notification_updater_downloading">⬇ Downloading: %1$d%%</string>
+    <string name="notification_updater_download_complete">✓ Ready to install. Tap to update.</string>
+    <string name="notification_updater_available_title">Update Available!</string>
+    <string name="notification_updater_available_text">🆕 A new version of Rhythm is here.</string>
     <string name="notification_sleep_timer_channel_name">Rhythm Sleep Timer</string>
     <string name="notification_sleep_timer_channel_desc">Countdown and status for sleep timer actions</string>
     <string name="notification_sleep_timer_title">Rhythm Sleep Timer</string>
-    <string name="notification_sleep_timer_pause_in">Playback will pause in %1$s.</string>
-    <string name="notification_sleep_timer_stop_in">Playback will stop in %1$s.</string>
+    <string name="notification_sleep_timer_pause_in">⏸ Pausing in %1$s</string>
+    <string name="notification_sleep_timer_stop_in">⏹ Stopping in %1$s</string>
+    
+    <!-- Streaming Notifications -->
+    <string name="notification_streaming_channel_name">Rhythm Go</string>
+    <string name="notification_streaming_channel_desc">Streaming service status and sync updates</string>
+    
+    <!-- Streaming Authentication -->
+    <string name="notification_streaming_auth_title">Streaming Connected</string>
+    <string name="notification_streaming_auth_connected">🎵 %1$s is ready to play! Your library is syncing in the background.</string>
+    <string name="notification_streaming_auth_failed">Connection failed for %1$s. Tap to retry setup.</string>
+    <string name="notification_streaming_auth_expired">Session expired for %1$s. Tap to reconnect.</string>
+    
+    <!-- Streaming Library Sync -->
+    <string name="notification_streaming_sync_title">Syncing Your Library</string>
+    <string name="notification_streaming_sync_started">Syncing with %1$s…</string>
+    <string name="notification_streaming_sync_progress">Syncing: %1$d songs • %2$d albums • %3$d artists</string>
+    <string name="notification_streaming_sync_complete">✓ Synced %1$d songs from %2$s!</string>
+    <string name="notification_streaming_sync_failed">Sync failed. Check your connection and try again.</string>
+    
+    <!-- Streaming Liked Songs -->
+    <string name="notification_streaming_liked_title">Liked Songs Updated</string>
+    <string name="notification_streaming_liked_added">♥ Added to liked songs on %1$s</string>
+    <string name="notification_streaming_liked_removed">Removed from liked songs on %1$s</string>
+    
+    <!-- Streaming Playlist Operations -->
+    <string name="notification_streaming_playlist_title">Playlist Updated</string>
+    <string name="notification_streaming_playlist_created">New playlist \"%1$s\" created on %2$s</string>
+    <string name="notification_streaming_playlist_updated">Playlist \"%1$s\" updated on %2$s</string>
+    <string name="notification_streaming_playlist_deleted">Playlist \"%1$s\" deleted from %2$s</string>
+    <string name="notification_streaming_playlist_song_added">Added song to \"%1$s\"</string>
+    <string name="notification_streaming_playlist_song_removed">Removed song from \"%1$s\"</string>
+    
+    <!-- Streaming Network/Quality -->
+    <string name="notification_streaming_quality_title">Streaming Quality</string>
+    <string name="notification_streaming_quality_switched">Quality switched to %1$s due to network changes</string>
+    <string name="notification_streaming_network_slow">Network is slow. Stream quality reduced.</string>
+    <string name="notification_streaming_buffering">Buffering… Playing from %1$s</string>
+    <string name="notification_streaming_buffering_complete">Ready to play!</string>
+    
+    <!-- Streaming Offline -->
+    <string name="notification_streaming_offline_title">Offline Mode</string>
+    <string name="notification_streaming_offline_sync">Syncing offline cache with %1$s…</string>
+    <string name="notification_streaming_offline_sync_complete">✓ Offline cache ready with %1$d songs</string>
+    <string name="notification_streaming_offline_cache_cleared">Cache cleared. Saved %1$s of space.</string>
+    
+    <!-- Streaming Errors -->
+    <string name="notification_streaming_error_title">Streaming Issue</string>
+    <string name="notification_streaming_error_generic">Streaming error on %1$s. Tap for details.</string>
+    <string name="notification_streaming_error_no_internet">No internet. Switch to offline mode to continue listening.</string>
+    <string name="notification_streaming_error_account_issue">Account issue with %1$s. Please reconnect.</string>
     
     <!-- Dialogs -->
     <string name="dialog_cleanup_empty_playlists_title">Cleanup Empty Playlists?</string>

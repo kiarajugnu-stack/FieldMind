@@ -479,7 +479,17 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
         }
         
         // Check if filter settings changed (to clear cache)
-        val currentSettings = "$mediaScanMode-${blacklistedIds.size}-${blacklistedFolders.size}-${whitelistedIds.size}-${whitelistedFolders.size}"
+        val currentSettings = buildString {
+            append(mediaScanMode)
+            append('|')
+            append(blacklistedIds.sorted().joinToString(","))
+            append('|')
+            append(blacklistedFolders.sorted().joinToString(","))
+            append('|')
+            append(whitelistedIds.sorted().joinToString(","))
+            append('|')
+            append(whitelistedFolders.sorted().joinToString(","))
+        }
         if (currentSettings != lastFilterSettings) {
             filterCache.clear()
             lastFilterSettings = currentSettings
@@ -1584,12 +1594,13 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
                 val losslessArtwork = appSettings.losslessArtwork.value
                 val updatedNewSongs = repository.extractEmbeddedArtworkForSongs(newSongs, losslessArtwork)
                 
-                _songs.value = _songs.value + updatedNewSongs
+                val mergedSongs = _songs.value + updatedNewSongs
+                _songs.value = mergedSongs
                 _albums.value = repository.loadAlbums()
                 _artists.value = repository.loadArtists()
                 
-                // Persist newly discovered songs to disk cache
-                repository.persistSongCacheToDisk()
+                // Keep the repository's in-memory cache aligned before persisting to Room.
+                repository.updateAndPersistSongs(mergedSongs)
                 
                 // Update last scan time
                 appSettings.setLastScanTimestamp(System.currentTimeMillis())
