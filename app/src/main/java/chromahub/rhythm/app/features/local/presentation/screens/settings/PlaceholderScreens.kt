@@ -42,6 +42,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.*
+import androidx.compose.material.icons.automirrored.rounded.*
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material.icons.rounded.*
@@ -711,7 +712,6 @@ fun NotificationsSettingsScreen(onBackClick: () -> Unit) {
         )
 
         val lazyListState = rememberSaveable(
-            key = "notifications_settings_scroll_state",
             saver = LazyListStateSaver
         ) {
             androidx.compose.foundation.lazy.LazyListState()
@@ -1236,7 +1236,7 @@ fun QueuePlaybackSettingsScreen(onBackClick: () -> Unit) {
                                     modifier = Modifier.fillMaxSize()
                                 ) {
                                     Icon(
-                                        imageVector = Icons.Default.Help,
+                                        imageVector = Icons.AutoMirrored.Filled.Help,
                                         contentDescription = null,
                                         tint = if (playlistClickBehavior == "ask")
                                             MaterialTheme.colorScheme.onPrimary
@@ -1539,12 +1539,12 @@ fun QueuePlaybackSettingsScreen(onBackClick: () -> Unit) {
                         "replace" to Triple(
                             context.getString(R.string.list_queue_behavior_replace_title),
                             context.getString(R.string.list_queue_behavior_replace_desc),
-                            Icons.Default.PlaylistPlay
+                            Icons.AutoMirrored.Filled.PlaylistPlay
                         ),
                         "ask" to Triple(
                             context.getString(R.string.list_queue_behavior_ask_title),
                             context.getString(R.string.list_queue_behavior_ask_desc),
-                            Icons.Default.Help
+                            Icons.AutoMirrored.Filled.Help
                         ),
                         "play_next" to Triple(
                             context.getString(R.string.list_queue_behavior_play_next_title),
@@ -1554,7 +1554,7 @@ fun QueuePlaybackSettingsScreen(onBackClick: () -> Unit) {
                         "add_to_end" to Triple(
                             context.getString(R.string.list_queue_behavior_add_end_title),
                             context.getString(R.string.list_queue_behavior_add_end_desc),
-                            Icons.Default.PlaylistAdd
+                            Icons.AutoMirrored.Filled.PlaylistAdd
                         )
                     )
 
@@ -1771,7 +1771,7 @@ fun QueuePlaybackSettingsScreen(onBackClick: () -> Unit) {
                                     modifier = Modifier.fillMaxSize()
                                 ) {
                                     Icon(
-                                        imageVector = Icons.Default.Help,
+                                        imageVector = Icons.AutoMirrored.Filled.Help,
                                         contentDescription = null,
                                         tint = if (showQueueDialog)
                                             MaterialTheme.colorScheme.onPrimary
@@ -1858,7 +1858,7 @@ fun QueuePlaybackSettingsScreen(onBackClick: () -> Unit) {
                                     modifier = Modifier.fillMaxSize()
                                 ) {
                                     Icon(
-                                        imageVector = Icons.Default.PlaylistAdd,
+                                        imageVector = Icons.AutoMirrored.Filled.PlaylistAdd,
                                         contentDescription = null,
                                         tint = if (!showQueueDialog)
                                             MaterialTheme.colorScheme.onPrimary
@@ -2039,7 +2039,7 @@ fun PlaylistsSettingsScreen(onBackClick: () -> Unit) {
             items = if (userPlaylists.isNotEmpty()) {
                 userPlaylists.map { playlist ->
                     SettingItem(
-                        Icons.Default.QueueMusic,
+                        Icons.AutoMirrored.Filled.QueueMusic,
                         playlist.name,
                         "${playlist.songs.size} songs",
                         onClick = null, // No navigation
@@ -2071,7 +2071,6 @@ fun PlaylistsSettingsScreen(onBackClick: () -> Unit) {
         }
     ) { modifier ->
         val lazyListState = rememberSaveable(
-            key = "playlists_settings_scroll_state",
             saver = LazyListStateSaver
         ) {
             androidx.compose.foundation.lazy.LazyListState()
@@ -2618,7 +2617,6 @@ fun MediaScanSettingsScreen(onBackClick: () -> Unit) {
         onBackClick = onBackClick
     ) { modifier ->
         val lazyListState = rememberSaveable(
-            key = "media_scan_settings_scroll_state",
             saver = LazyListStateSaver
         ) {
             androidx.compose.foundation.lazy.LazyListState()
@@ -3381,7 +3379,6 @@ fun ArtistSeparatorsSettingsScreen(onBackClick: () -> Unit) {
         )
 
         val lazyListState = rememberSaveable(
-            key = "artist_separators_scroll_state",
             saver = LazyListStateSaver
         ) {
             androidx.compose.foundation.lazy.LazyListState()
@@ -3801,7 +3798,7 @@ fun ArtistSeparatorsSettingsScreen(onBackClick: () -> Unit) {
                             colors = ButtonDefaults.outlinedButtonColors(
                                 contentColor = MaterialTheme.colorScheme.primary
                             ),
-                            border = ButtonDefaults.outlinedButtonBorder.copy(
+                            border = ButtonDefaults.outlinedButtonBorder(enabled = true).copy(
                                 width = 1.5.dp
                             )
                         ) {
@@ -4037,7 +4034,6 @@ fun AboutScreen(
         onBackClick = onBackClick
     ) { modifier ->
         val lazyListState = rememberSaveable(
-            key = "about_screen_scroll_state",
             saver = LazyListStateSaver
         ) {
             androidx.compose.foundation.lazy.LazyListState()
@@ -4384,7 +4380,7 @@ fun AboutScreen(
                         context = context,
                         hapticFeedback = haptics,
                         item = SettingItem(
-                            icon = Icons.Rounded.Chat,
+                            icon = Icons.AutoMirrored.Rounded.Chat,
                             title = "Discord Community",
                             description = "discord.gg/XjPyUYPQYc",
                             onClick = { openUrl("https://discord.gg/XjPyUYPQYc") }
@@ -4394,7 +4390,7 @@ fun AboutScreen(
                         context = context,
                         hapticFeedback = haptics,
                         item = SettingItem(
-                            icon = Icons.Rounded.Send,
+                            icon = Icons.AutoMirrored.Rounded.Send,
                             title = "Telegram Support",
                             description = "t.me/RhythmSupport",
                             onClick = { openUrl("https://t.me/RhythmSupport") }
@@ -4745,7 +4741,6 @@ fun UpdatesSettingsScreen(onBackClick: () -> Unit) {
 //        }
     ) { modifier ->
         val lazyListState = rememberSaveable(
-            key = "updates_settings_scroll_state",
             saver = LazyListStateSaver
         ) {
             androidx.compose.foundation.lazy.LazyListState()
@@ -15711,7 +15706,6 @@ fun HomeScreenCustomizationSettingsScreen(onBackClick: () -> Unit) {
         }
     ) { modifier ->
         val lazyListState = rememberSaveable(
-            key = "home_screen_settings_scroll_state",
             saver = LazyListStateSaver
         ) {
             androidx.compose.foundation.lazy.LazyListState()
@@ -16384,7 +16378,7 @@ fun HomeScreenCustomizationSettingsScreen(onBackClick: () -> Unit) {
                             text = "Discover carousel showcases featured albums"
                         )
                         HomeScreenTipItem(
-                            icon = Icons.Default.TrendingUp,
+                            icon = Icons.AutoMirrored.Filled.TrendingUp,
                             text = "Statistics update based on listening habits"
                         )
                     }
@@ -17103,7 +17097,7 @@ fun ExpressiveShapesSettingsScreen(onBackClick: () -> Unit) {
                                         "ALBUM_ART" -> Icons.Default.Album
                                         "PLAYER_ART" -> Icons.Default.MusicNote
                                         "SONG_ART" -> Icons.Default.AudioFile
-                                        "PLAYLIST_ART" -> Icons.Default.QueueMusic
+                                        "PLAYLIST_ART" -> Icons.AutoMirrored.Filled.QueueMusic
                                         "ARTIST_ART" -> Icons.Default.Person
                                         "PLAYER_CONTROLS" -> Icons.Default.PlayCircle
                                         "MINI_PLAYER" -> Icons.Default.MusicNote

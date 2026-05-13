@@ -175,7 +175,7 @@ class AppUpdaterViewModel(application: Application) : AndroidViewModel(applicati
             knownIssues = emptyList(),
             downloadUrl = "",
             isPreRelease = BuildConfig.VERSION_NAME.contains("Beta", ignoreCase = true),
-            buildNumber = BuildConfig.VERSION_CODE % 1000 // Extract build number from version code
+            buildNumber = extractBuildNumber(BuildConfig.VERSION_NAME)
         )
     )
     val currentVersion: StateFlow<AppVersion> = _currentVersion.asStateFlow()
@@ -481,7 +481,7 @@ class AppUpdaterViewModel(application: Application) : AndroidViewModel(applicati
                 minor = minor.coerceAtLeast(0),
                 patch = patch.coerceAtLeast(0),
                 subpatch = subpatch.coerceAtLeast(0),
-                buildNumber = buildNumber.coerceAtLeast(0),
+                buildNumber = (buildNumber.takeIf { it > 0 } ?: extractBuildNumber(cleaned, versionParts)).coerceAtLeast(0),
                 isPreRelease = isPreRelease
             )
         } catch (e: Exception) {
@@ -489,6 +489,32 @@ class AppUpdaterViewModel(application: Application) : AndroidViewModel(applicati
             // Return a default semantic version instead of crashing
             return SemanticVersion(0, 0, 0, 0, 0, false)
         }
+    }
+
+    private fun extractBuildNumber(versionString: String, versionParts: List<String>? = null): Int {
+        val cleaned = versionString.trim().removePrefix("v")
+        val buildRegex = Regex("(?:b|build)-(\\d+)", RegexOption.IGNORE_CASE)
+        val explicitBuildNumber = buildRegex.find(cleaned)?.groupValues?.get(1)?.toIntOrNull()
+        if (explicitBuildNumber != null) {
+            return explicitBuildNumber
+        }
+
+        val parts = versionParts ?: cleaned.split(" ")[0].split("-")[0].split("_")[0].split(".")
+        return parts.getOrNull(3)?.toIntOrNull() ?: 0
+    }
+
+    private fun calculateVersionCode(versionString: String): Int {
+        val cleaned = versionString.trim().removePrefix("v")
+        val versionBase = cleaned.split(" ")[0].split("-")[0].split("_")[0]
+        val versionParts = versionBase.split(".")
+        val codeString = buildString {
+            append(versionParts.getOrNull(0)?.toIntOrNull() ?: 0)
+            append(versionParts.getOrNull(1)?.toIntOrNull() ?: 0)
+            append(versionParts.getOrNull(2)?.toIntOrNull() ?: 0)
+            append(versionParts.getOrNull(3)?.toIntOrNull() ?: extractBuildNumber(cleaned, versionParts))
+        }
+
+        return codeString.toIntOrNull() ?: 0
     }
     
     /**
@@ -564,15 +590,11 @@ class AppUpdaterViewModel(application: Application) : AndroidViewModel(applicati
         
         // Format APK size for display if available
         val apkSize = apkAsset?.size ?: 0
+        val versionName = release.name.ifEmpty { release.tag_name }
         
         return AppVersion(
-            versionName = release.name.ifEmpty { release.tag_name },
-            versionCode = semanticVersion.let {
-                // Using a more robust versionCode calculation: major * 10M + minor * 100K + patch * 1K + buildNumber
-                // This allows for 2 digits for major, minor, patch, and 3-4 digits for build number,
-                // ensuring uniqueness and monotonicity.
-                it.major * 10000000 + it.minor * 100000 + it.patch * 1000 + it.buildNumber
-            },
+            versionName = versionName,
+            versionCode = calculateVersionCode(versionName),
             releaseDate = releaseDateString,
             whatsNew = releaseContent.whatsNew,
             knownIssues = releaseContent.knownIssues,
@@ -720,10 +742,13 @@ class AppUpdaterViewModel(application: Application) : AndroidViewModel(applicati
                 return@launch
             }
 
-            val latestVersion = _latestVersion.value
-            val downloadUrl = latestVersion?.downloadUrl
+            val latestVersion = _latestVersion.value ?: run {
+                _error.value = "No update information available"
+                return@launch
+            }
+            val downloadUrl = latestVersion.downloadUrl
             
-            if (downloadUrl.isNullOrBlank()) {
+            if (downloadUrl.isBlank()) {
                 _error.value = "No download URL available"
                 return@launch
             }
@@ -732,7 +757,7 @@ class AppUpdaterViewModel(application: Application) : AndroidViewModel(applicati
             _error.value = null
             
             // If it's not an APK file, open in browser
-            if (latestVersion?.apkAssetName.isNullOrEmpty()) {
+            if (latestVersion.apkAssetName.isNullOrEmpty()) {
                 openInBrowser(downloadUrl)
                 return@launch
             }
@@ -744,7 +769,7 @@ class AppUpdaterViewModel(application: Application) : AndroidViewModel(applicati
             }
             
             // Start or resume download
-            downloadApkInApp(downloadUrl, latestVersion?.apkAssetName ?: "rhythm-update.apk", expectedSize = latestVersion?.apkSize ?: 0)
+            downloadApkInApp(downloadUrl, latestVersion.apkAssetName, expectedSize = latestVersion.apkSize)
         }
     }
     
@@ -898,12 +923,8 @@ class AppUpdaterViewModel(application: Application) : AndroidViewModel(applicati
                 if (existingLength > 0 && activeDownload != null) {
                     Log.d(TAG, "Resuming download from byte $existingLength")
                     requestBuilder.header("Range", "bytes=$existingLength-")
-                    if (activeDownload?.etag != null) {
-                        requestBuilder.header("If-Match", activeDownload?.etag!!)
-                    }
-                    if (activeDownload?.lastModified != null) {
-                        requestBuilder.header("If-Unmodified-Since", activeDownload?.lastModified!!)
-                    }
+                    activeDownload?.etag?.let { requestBuilder.header("If-Match", it) }
+                    activeDownload?.lastModified?.let { requestBuilder.header("If-Unmodified-Since", it) }
                 }
                 
                 val request = requestBuilder.build()
@@ -944,7 +965,7 @@ class AppUpdaterViewModel(application: Application) : AndroidViewModel(applicati
                         
                         try {
                             // Get content length and resume info
-                            val contentLength = response.body?.contentLength() ?: -1L
+                            val contentLength = response.body.contentLength()
                             val totalLength = if (response.code == 206) {
                                 val range = response.header("Content-Range")
                                 range?.substringAfter("/")?.toLongOrNull() ?: contentLength
@@ -973,17 +994,7 @@ class AppUpdaterViewModel(application: Application) : AndroidViewModel(applicati
                             val outputStream = FileOutputStream(file, existingLength > 0)
                             
                             // Get input stream
-                            val inputStream = response.body?.byteStream()
-                            
-                            if (inputStream == null) {
-                                viewModelScope.launch {
-                                    _isDownloading.value = false
-                                    _error.value = "Download failed: Empty response"
-                                    activeDownload = null
-                                    activeCall = null
-                                }
-                                return
-                            }
+                            val inputStream = response.body.byteStream()
                             
                             // Create buffer
                             val buffer = ByteArray(8192)

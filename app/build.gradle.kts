@@ -2,7 +2,6 @@ import java.util.Properties
 
 plugins {
     alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.ksp)
     id("kotlin-parcelize")
@@ -17,8 +16,8 @@ android {
         applicationId = "chromahub.rhythm.app"
         minSdk = 26
         targetSdk = 37
-        versionCode = 48371998
-        versionName = "4.8.371.998 Beta"
+        versionCode = 483721001
+        versionName = "4.8.372.1001 Beta"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -147,25 +146,27 @@ android {
         }
     }
 
-    applicationVariants.all {
-        outputs.all {
-            (this as com.android.build.gradle.internal.api.BaseVariantOutputImpl).outputFileName =
-                "Rhythm-${defaultConfig.versionName}-${name}.apk"
+}
+
+androidComponents {
+    onVariants { variant ->
+        variant.outputs.forEach { output ->
+            output.outputFileName.set("Rhythm-${android.defaultConfig.versionName}-${variant.name}.apk")
         }
     }
 }
 
 dependencies {
     // Desugaring library
-    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")
+    coreLibraryDesugaring(libs.androidx.desugar.jdk.libs)
 
     // Core Android dependencies
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.core.splashscreen)
-    implementation("androidx.core:core:1.18.0") // Downgrade core dependency for compatibility
+    implementation(libs.androidx.core)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
-    implementation("androidx.appcompat:appcompat:1.7.1") // For AppCompatDelegate locale support
+    implementation(libs.androidx.appcompat)
     
     // Compose dependencies
     implementation(platform(libs.androidx.compose.bom))
@@ -175,69 +176,69 @@ dependencies {
     
     // Material 3 dependencies
     implementation(platform(libs.androidx.compose.bom))
-    implementation("androidx.compose.material3:material3-android:1.5.0-alpha19")
-    implementation("androidx.compose.material3:material3-window-size-class-android:1.5.0-alpha19")
-    implementation("com.google.android.material:material:1.13.0-alpha05")
+    implementation(libs.androidx.material3.android)
+    implementation(libs.androidx.material3.window.size)
+    implementation(libs.com.google.android.material)
 
     // Media3 dependencies
-    implementation("androidx.media3:media3-exoplayer:1.10.0")
-    implementation("androidx.media3:media3-exoplayer-dash:1.10.0")
-    implementation("androidx.media3:media3-ui:1.10.0")
-    implementation("androidx.media3:media3-session:1.10.0")
-    implementation("org.jellyfin.media3:media3-ffmpeg-decoder:1.9.0+1")
+    implementation(libs.androidx.media3.exoplayer)
+    implementation(libs.androidx.media3.exoplayer.dash)
+    implementation(libs.androidx.media3.ui)
+    implementation(libs.androidx.media3.session)
+    implementation(libs.org.jellyfin.media3.ffmpeg.decoder)
     
     // Icons
-    implementation("androidx.compose.material:material-icons-extended:1.7.8")
-    implementation("androidx.palette:palette-ktx:1.0.0")
+    implementation(libs.androidx.compose.material.icons.extended)
+    implementation(libs.androidx.palette.ktx)
     
     // Glance for modern widgets
-    implementation("androidx.glance:glance-appwidget:1.1.1")
-    implementation("androidx.glance:glance-material3:1.1.1")
+    implementation(libs.androidx.glance.appwidget)
+    implementation(libs.androidx.glance.material3)
     
     // Physics-based animations
-    implementation("androidx.compose.animation:animation:1.11.1")
+    implementation(libs.androidx.compose.animation)
     //noinspection GradleDependency
-    implementation("androidx.compose.animation:animation-graphics:1.8.3")
+    implementation(libs.androidx.compose.animation.graphics)
     implementation(libs.androidx.compose.animation.core)
     
     // Navigation
-    implementation("androidx.navigation:navigation-compose:2.9.8")
+    implementation(libs.androidx.navigation.compose)
     
     // Permissions
-    implementation("com.google.accompanist:accompanist-permissions:0.37.3")
+    implementation(libs.com.google.accompanist.accompanist.permissions)
     
     // Fragment
-    implementation("androidx.fragment:fragment-ktx:1.8.9")
+    implementation(libs.androidx.fragment.ktx)
     
     // MediaRouter
-    implementation("androidx.mediarouter:mediarouter:1.8.1")
+    implementation(libs.androidx.mediarouter)
     
     // Ktor for HTTP server (Cast media serving)
-    implementation("io.ktor:ktor-server-core:3.4.3")
-    implementation("io.ktor:ktor-server-netty:3.4.3")
+    implementation(libs.io.ktor.server.core)
+    implementation(libs.io.ktor.server.netty)
     
     // Coil for image loading
-    implementation("io.coil-kt:coil-compose:2.7.0")
+    implementation(libs.io.coil.kt.coil.compose)
     
     // Audio metadata editing
-    implementation("net.jthink:jaudiotagger:3.0.1")
+    implementation(libs.net.jthink.jaudiotagger)
     
     // Network
-    implementation("com.squareup.retrofit2:retrofit:3.0.0")
-    implementation("com.squareup.retrofit2:converter-gson:3.0.0")
-    implementation("com.squareup.okhttp3:okhttp:5.3.2")
-    implementation("com.squareup.okhttp3:logging-interceptor:5.3.2")
-    implementation("com.google.code.gson:gson:2.14.0")
+    implementation(libs.com.squareup.retrofit2.retrofit)
+    implementation(libs.com.squareup.retrofit2.converter.gson)
+    implementation(libs.com.squareup.okhttp3.okhttp)
+    implementation(libs.com.squareup.okhttp3.logging.interceptor)
+    implementation(libs.com.google.code.gson.gson)
 //    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
 //    implementation("com.jakewharton.retrofit:retrofit2-kotlinx-serialization-converter:1.0.0")
 
     // Coroutines for async operations
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2")
+    implementation(libs.org.jetbrains.kotlinx.coroutines.core)
+    implementation(libs.org.jetbrains.kotlinx.coroutines.android)
     implementation(libs.androidx.foundation.layout)
     
     // WorkManager for background tasks
-    implementation("androidx.work:work-runtime-ktx:2.11.2")
+    implementation(libs.androidx.work.runtime.ktx)
     
     // Room database
     implementation(libs.androidx.room.runtime)
@@ -254,7 +255,7 @@ dependencies {
     debugImplementation(libs.androidx.ui.test.manifest)
     
     // LeakCanary for memory leak detection (debug builds only)
-    debugImplementation("com.squareup.leakcanary:leakcanary-android:2.14")
+    debugImplementation(libs.com.squareup.leakcanary.leakcanary.android)
 }
 
 fun getProperties(fileName: String): Properties? {

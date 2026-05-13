@@ -27,6 +27,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.TrendingUp
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -562,7 +563,7 @@ private fun QuickStatsRow(stats: PlaybackStatsRepository.PlaybackStatsSummary) {
                 modifier = Modifier.weight(1f)
             )
             QuickStatChip(
-                icon = Icons.Outlined.TrendingUp,
+                icon = Icons.AutoMirrored.Outlined.TrendingUp,
                 value = formatDuration(stats.averageDailyDurationMs),
                 label = "Avg / Day",
                 modifier = Modifier.weight(1f)

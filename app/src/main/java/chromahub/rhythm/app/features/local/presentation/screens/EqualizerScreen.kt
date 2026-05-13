@@ -218,6 +218,7 @@ import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.windowInsetsBottomHeight
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.ShowChart
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -416,7 +417,7 @@ fun EqualizerScreen(
         EqualizerPreset("Vocal", Icons.Rounded.RecordVoiceOver, listOf(-1.0f, 0.5f, 1.5f, 2.8f, 4.5f, 5.0f, 4.0f, 2.5f, 1.5f, 0.5f)),
         EqualizerPreset("Bass Boost", Icons.Rounded.Speaker, listOf(6.0f, 5.0f, 3.5f, 1.5f, 0f, 0f, 0f, 0f, 0f, 0f)),
         EqualizerPreset("Treble Boost", Icons.Rounded.Waves, listOf(0f, 0f, 0f, 0f, 0f, 0.5f, 1.5f, 3.0f, 5.0f, 6.0f)),
-        EqualizerPreset("V-Shape", Icons.Rounded.ShowChart, listOf(5.5f, 4.0f, 1.5f, -1.0f, -2.5f, -2.5f, -0.5f, 2.0f, 4.5f, 5.5f)),
+        EqualizerPreset("V-Shape", Icons.AutoMirrored.Rounded.ShowChart, listOf(5.5f, 4.0f, 1.5f, -1.0f, -2.5f, -2.5f, -0.5f, 2.0f, 4.5f, 5.5f)),
         EqualizerPreset("Harman", Icons.Rounded.Headphones, listOf(3.5f, 2.0f, 0.5f, -1.0f, 0f, 0.5f, 1.5f, 2.0f, 2.5f, 1.0f))
     )
 
@@ -632,7 +633,6 @@ fun EqualizerScreen(
         }
     ) { modifier ->
         val lazyListState = rememberSaveable(
-            key = "equalizer_settings_scroll_state",
             saver = LazyListStateSaver
         ) {
             androidx.compose.foundation.lazy.LazyListState()

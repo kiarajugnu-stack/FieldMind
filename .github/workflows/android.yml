@@ -49,13 +49,13 @@ jobs:
         PRIVATE_PROPERTIES: ${{ secrets.PRIVATE_PROPERTIES }}
       run: |
         if [ -n "$PRIVATE_PROPERTIES" ]; then
-          echo $PRIVATE_PROPERTIES | base64 -di > ./private.properties
+          printf '%s' "$PRIVATE_PROPERTIES" | base64 -di > ./private.properties
         else
           touch ./private.properties
         fi
 
     - name: Build with Gradle (GitHub flavor only)
-      run: ./gradlew assembleGithub
+      run: ./gradlew assembleGithubRelease assembleGithubDebug
 
     - name: Generate build info
       if: github.event_name == 'pull_request'
@@ -70,7 +70,7 @@ jobs:
       with:
         name: rhythm-pr-${{ github.event.pull_request.number }}
         path: |
-          app/build/outputs/apk/githubRelease/Rhythm-*-githubRelease.apk
-          app/build/outputs/apk/githubDebug/Rhythm-*-githubDebug.apk
+          app/build/outputs/apk/github/release/*.apk
+          app/build/outputs/apk/github/debug/*.apk
           build_info.txt
         retention-days: 14

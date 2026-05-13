@@ -54,6 +54,7 @@ import chromahub.rhythm.app.shared.data.model.LyricsSourcePreference
 import chromahub.rhythm.app.shared.data.model.UserAudioDevice
 import chromahub.rhythm.app.shared.data.model.PlaybackLocation
 import chromahub.rhythm.app.core.domain.model.PlayableItem
+import chromahub.rhythm.app.core.domain.model.SourceType
 import java.lang.ref.WeakReference
 import chromahub.rhythm.app.util.AudioFormatDetector
 import chromahub.rhythm.app.util.LyricsParser
@@ -5548,7 +5549,20 @@ class MusicRepository(context: Context) {
 
             Log.d(TAG, "Found ${albumSongs.size} songs for album: ${album.title}")
 
-            return@withContext albumSongs.map { it as PlayableItem }
+            return@withContext albumSongs.map { song ->
+                object : PlayableItem {
+                    override val id: String = song.id
+                    override val title: String = song.title
+                    override val artist: String = song.artist
+                    override val album: String = song.album
+                    override val duration: Long = song.duration
+                    override val artworkUri: String? = song.artworkUri?.toString()
+
+                    override fun getPlaybackUri(): String = song.uri.toString()
+
+                    override val sourceType: SourceType = SourceType.LOCAL
+                }
+            }
         } catch (e: Exception) {
             Log.e(TAG, "Error getting songs for album $albumId", e)
             emptyList()

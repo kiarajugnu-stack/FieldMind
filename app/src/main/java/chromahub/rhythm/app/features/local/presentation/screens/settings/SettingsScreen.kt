@@ -76,7 +76,6 @@ import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Public
-import androidx.compose.material.icons.filled.QueueMusic
 import androidx.compose.material.icons.filled.Reorder
 import androidx.compose.material.icons.filled.Science
 import androidx.compose.material.icons.filled.Security
@@ -320,7 +319,7 @@ fun SettingsScreen(
             SettingGroup(
                 title = context.getString(R.string.settings_section_queue_playback),
                 items = buildList {
-                    add(SettingItem(Icons.Default.QueueMusic, context.getString(R.string.settings_queue_playback_title), context.getString(R.string.settings_queue_playback_desc), onClick = { onNavigateTo(SettingsRoutes.QUEUE_PLAYBACK) }))
+                    add(SettingItem(Icons.AutoMirrored.Filled.QueueMusic, context.getString(R.string.settings_queue_playback_title), context.getString(R.string.settings_queue_playback_desc), onClick = { onNavigateTo(SettingsRoutes.QUEUE_PLAYBACK) }))
                     // Sleep Timer is available in both LOCAL and STREAMING modes
                     add(SettingItem(Icons.Default.AccessTime, context.getString(R.string.sleep_timer), context.getString(R.string.sleep_timer_set_control), onClick = { onNavigateTo(SettingsRoutes.SLEEP_TIMER) }))
                 }
@@ -408,7 +407,6 @@ fun SettingsScreen(
         ).filterNotNull() // Filter out null groups (for streaming mode)
 
         val lazyListState = scrollState ?: rememberSaveable(
-            key = "settings_scroll_state",
             saver = LazyListStateSaver
         ) {
             LazyListState()
@@ -962,7 +960,6 @@ fun SettingsScreenWrapper(
 
     // Hoist the main settings scroll state to persist across navigation
     val mainSettingsScrollState = rememberSaveable(
-        key = "main_settings_scroll_state",
         saver = LazyListStateSaver
     ) {
         LazyListState()
@@ -1533,7 +1530,7 @@ fun SettingsTipsRow(
                 add(
                     SettingsTipData(
                         id = "queue_playback",
-                        icon = Icons.Default.QueueMusic,
+                        icon = Icons.AutoMirrored.Filled.QueueMusic,
                         title = "Queue Playback",
                         text = descs.random(random),
                         route = SettingsRoutes.QUEUE_PLAYBACK

@@ -2,6 +2,9 @@
 
 package chromahub.rhythm.app.features.local.presentation.components.bottomsheets
 
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.widget.Toast
@@ -99,7 +102,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.AnnotatedString
@@ -171,7 +173,7 @@ fun DeviceConfigurationBottomSheet(
     var importText by remember { mutableStateOf("") }
     var importError by remember { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
-    val clipboardManager = LocalClipboardManager.current
+    val clipboardManager = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
     
     // File picker launcher
     val filePickerLauncher = rememberLauncherForActivityResult(
@@ -427,8 +429,7 @@ fun DeviceConfigurationBottomSheet(
                         items(userDevices, key = { it.id }) { device ->
                             DeviceCard(
                                 device = device,
-                                isActive = device.autoEQProfileName == currentAutoEQProfile && 
-                                    device.autoEQProfileName != null && currentAutoEQProfile.isNotEmpty(),
+                                isActive = device.autoEQProfileName == currentAutoEQProfile && currentAutoEQProfile.isNotEmpty(),
                                 onSelect = {
                                     HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
                                     musicViewModel.setActiveAudioDevice(device)
@@ -616,8 +617,8 @@ fun DeviceConfigurationBottomSheet(
                         }
                         FilledTonalButton(
                             onClick = {
-                                clipboardManager.getText()?.text?.let { 
-                                    importText = it
+                                clipboardManager.primaryClip?.getItemAt(0)?.text?.let {
+                                    importText = it.toString()
                                 }
                             },
                             modifier = Modifier.weight(1f),
@@ -790,7 +791,7 @@ fun DeviceConfigurationBottomSheet(
                         ) {
                             FilledTonalButton(
                                 onClick = {
-                                    clipboardManager.setText(AnnotatedString(exportText))
+                                    clipboardManager.setPrimaryClip(ClipData.newPlainText("exported text", exportText))
                                     Toast.makeText(context, "Copied to clipboard", Toast.LENGTH_SHORT).show()
                                 },
                                 modifier = Modifier.weight(1f),
@@ -1128,7 +1129,7 @@ private fun AddEditDeviceDialog(
                 onClick = {
                     if (deviceName.isNotBlank()) {
                         val device = if (isEditing) {
-                            existingDevice!!.copy(
+                            existingDevice.copy(
                                 name = deviceName,
                                 brand = deviceBrand,
                                 type = selectedType

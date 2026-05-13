@@ -6,6 +6,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.Message
 import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -46,7 +47,7 @@ fun BetaProgramPopup(onDismiss: () -> Unit) {
             description = "Your feedback directly influences development"
         ),
         BetaFeature(
-            icon = Icons.Rounded.Message,
+            icon = Icons.AutoMirrored.Rounded.Message,
             title = "Direct Feedback",
             description = "Communicate directly with the development team"
         ),

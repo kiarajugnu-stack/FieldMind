@@ -14,8 +14,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.PlaylistAdd
-import androidx.compose.material.icons.filled.PlaylistPlay
+import androidx.compose.material.icons.automirrored.filled.PlaylistAdd
+import androidx.compose.material.icons.automirrored.filled.PlaylistPlay
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -172,7 +172,7 @@ fun QueueActionDialog(
         onDismissRequest = onDismiss,
         icon = {
             Icon(
-                imageVector = Icons.Default.PlaylistPlay,
+                imageVector = Icons.AutoMirrored.Filled.PlaylistPlay,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.primary
             )
@@ -219,7 +219,7 @@ fun QueueActionDialog(
                         ) {
                             Box(contentAlignment = Alignment.Center) {
                                 Icon(
-                                    imageVector = Icons.Default.PlaylistPlay,
+                                    imageVector = Icons.AutoMirrored.Filled.PlaylistPlay,
                                     contentDescription = null,
                                     tint = MaterialTheme.colorScheme.onPrimary,
                                     modifier = Modifier.size(20.dp)
@@ -264,7 +264,7 @@ fun QueueActionDialog(
                         ) {
                             Box(contentAlignment = Alignment.Center) {
                                 Icon(
-                                    imageVector = Icons.Default.PlaylistAdd,
+                                    imageVector = Icons.AutoMirrored.Filled.PlaylistAdd,
                                     contentDescription = null,
                                     tint = MaterialTheme.colorScheme.onSecondary,
                                     modifier = Modifier.size(20.dp)
@@ -327,7 +327,7 @@ fun QueueListActionDialog(
         onDismissRequest = onDismiss,
         icon = {
             Icon(
-                imageVector = Icons.Default.PlaylistPlay,
+                imageVector = Icons.AutoMirrored.Filled.PlaylistPlay,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.primary
             )
@@ -379,7 +379,7 @@ fun QueueListActionDialog(
                         ) {
                             Box(contentAlignment = Alignment.Center) {
                                 Icon(
-                                    imageVector = Icons.Default.PlaylistPlay,
+                                    imageVector = Icons.AutoMirrored.Filled.PlaylistPlay,
                                     contentDescription = null,
                                     tint = MaterialTheme.colorScheme.onPrimary,
                                     modifier = Modifier.size(20.dp)
@@ -467,7 +467,7 @@ fun QueueListActionDialog(
                         ) {
                             Box(contentAlignment = Alignment.Center) {
                                 Icon(
-                                    imageVector = Icons.Default.PlaylistAdd,
+                                    imageVector = Icons.AutoMirrored.Filled.PlaylistAdd,
                                     contentDescription = null,
                                     tint = MaterialTheme.colorScheme.onTertiary,
                                     modifier = Modifier.size(20.dp)

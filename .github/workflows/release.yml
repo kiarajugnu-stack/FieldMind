@@ -33,9 +33,9 @@ jobs:
         run: |
           mkdir -p config/signing
           mkdir -p .config
-          echo $SIGNING_KEYSTORE | base64 -di > ./config/signing/rhythm_keystore.jks
-          echo $SIGNING_PROPERTIES | base64 -di > ./.config/keystore.properties
-          echo $PRIVATE_PROPERTIES | base64 -di > ./config/signing/private.properties
+          printf '%s' "$SIGNING_KEYSTORE" | base64 -di > ./config/signing/rhythm_keystore.jks
+          printf '%s' "$SIGNING_PROPERTIES" | base64 -di > ./.config/keystore.properties
+          printf '%s' "$PRIVATE_PROPERTIES" | base64 -di > ./config/signing/private.properties
 
       - name: Make Gradle executable
         run: chmod +x ./gradlew

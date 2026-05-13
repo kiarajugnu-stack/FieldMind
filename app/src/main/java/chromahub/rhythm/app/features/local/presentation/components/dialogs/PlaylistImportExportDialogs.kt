@@ -685,7 +685,7 @@ private fun getFormatIcon(format: PlaylistImportExportUtils.PlaylistExportFormat
     return when (format) {
         PlaylistImportExportUtils.PlaylistExportFormat.JSON -> Icons.Rounded.Code
         PlaylistImportExportUtils.PlaylistExportFormat.M3U,
-        PlaylistImportExportUtils.PlaylistExportFormat.M3U8 -> Icons.Rounded.PlaylistPlay
+        PlaylistImportExportUtils.PlaylistExportFormat.M3U8 -> Icons.AutoMirrored.Rounded.PlaylistPlay
         PlaylistImportExportUtils.PlaylistExportFormat.PLS -> Icons.AutoMirrored.Rounded.QueueMusic
     }
 }
