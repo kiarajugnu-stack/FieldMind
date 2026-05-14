@@ -31,6 +31,7 @@ import com.google.gson.Gson
 import java.net.URLEncoder
 import java.security.MessageDigest
 import java.util.Locale
+import java.util.Collections
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
@@ -156,8 +157,9 @@ class MusicRepository(context: Context) {
             Log.d(TAG, "Persisting ${songs.size} songs to disk cache")
             val songsWithMetadata = songs.count { it.bitrate != null && it.sampleRate != null && it.channels != null && it.codec != null }
             Log.d(TAG, "Songs with complete metadata: $songsWithMetadata/${songs.size}")
+            val previousSongs = cachedSongs
             repositoryScope.launch {
-                saveSongsToRoom(songs, clearArtistCache = false) // Don't clear artist cache when persisting metadata
+                saveSongsToRoom(songs, clearArtistCache = false, previousSongs = previousSongs) // Don't clear artist cache when persisting metadata
             }
         } ?: Log.w(TAG, "No cached songs to persist to disk")
     }
@@ -167,14 +169,21 @@ class MusicRepository(context: Context) {
      * Call this when the ViewModel modifies (e.g. merges metadata) into the song list.
      */
     fun updateAndPersistSongs(songs: List<Song>) {
-        cachedSongs = songs
-        cacheTimestamp = System.currentTimeMillis()
+        val previousSongs = cachedSongs
+        if (previousSongs == songs) {
+            Log.d(TAG, "Skipping Room save because the song snapshot is unchanged")
+            return
+        }
         repositoryScope.launch {
-            saveSongsToRoom(songs, clearArtistCache = false) // Don't clear artist cache for metadata updates
+            saveSongsToRoom(songs, clearArtistCache = false, previousSongs = previousSongs) // Don't clear artist cache for metadata updates
         }
     }
 
-    private suspend fun saveSongsToRoom(songs: List<Song>, clearArtistCache: Boolean = true) {
+    private suspend fun saveSongsToRoom(
+        songs: List<Song>,
+        clearArtistCache: Boolean = true,
+        previousSongs: List<Song>? = cachedSongs
+    ) {
         try {
             val entities = songs.map { song ->
                 SongEntity(
@@ -199,27 +208,93 @@ class MusicRepository(context: Context) {
                     discNumber = song.discNumber
                 )
             }
-            
-            val songsWithMetadata = songs.count { it.bitrate != null && it.sampleRate != null && it.channels != null && it.codec != null }
-            Log.d(TAG, "Saving ${songs.size} songs to Room (${songsWithMetadata} with metadata, clearArtistCache=$clearArtistCache)")
 
-            val relationshipSets = buildSongArtistRelationshipSets(songs)
-            roomDb.withTransaction {
-                songDao.replaceAll(entities)
-                roomDb.songArtistDao().replaceAll(relationshipSets.albumArtistRelationships, true)
-                roomDb.songArtistDao().replaceAll(relationshipSets.trackArtistRelationships, false)
+            val songsWithMetadata =
+                songs.count { it.bitrate != null && it.sampleRate != null && it.channels != null && it.codec != null }
+            Log.d(
+                TAG,
+                "Saving ${songs.size} songs to Room (${songsWithMetadata} with metadata, clearArtistCache=$clearArtistCache)"
+            )
+
+            val canUseIncrementalUpdate =
+                !clearArtistCache &&
+                        previousSongs != null &&
+                        previousSongs.size == songs.size &&
+                        previousSongs.map { it.id }.toSet() == songs.map { it.id }.toSet()
+
+            if (canUseIncrementalUpdate) {
+                val previousById = previousSongs!!.associateBy { it.id }
+                val changedSongs = songs.filter { previousById[it.id] != it }
+
+                if (changedSongs.isEmpty()) {
+                    Log.d(TAG, "Skipping Room save because the incremental snapshot is unchanged")
+                    return
+                }
+
+                val changedEntities = changedSongs.map { song ->
+                    SongEntity(
+                        id = song.id,
+                        title = song.title,
+                        artist = song.artist,
+                        album = song.album,
+                        albumId = song.albumId,
+                        duration = song.duration,
+                        uri = song.uri.toString(),
+                        artworkUri = song.artworkUri?.toString(),
+                        trackNumber = song.trackNumber,
+                        year = song.year,
+                        genre = song.genre,
+                        dateAdded = song.dateAdded,
+                        dateModified = song.dateModified,
+                        albumArtist = song.albumArtist,
+                        bitrate = song.bitrate,
+                        sampleRate = song.sampleRate,
+                        channels = song.channels,
+                        codec = song.codec,
+                        discNumber = song.discNumber
+                    )
+                }
+                val changedSongIds = changedSongs.map { it.id }
+                val relationshipSets = buildSongArtistRelationshipSets(changedSongs)
+
+                roomDb.withTransaction {
+                    songDao.upsertAll(changedEntities)
+                    roomDb.songArtistDao().deleteBySongIds(changedSongIds)
+                    roomDb.songArtistDao().insertAll(relationshipSets.albumArtistRelationships)
+                    roomDb.songArtistDao().insertAll(relationshipSets.trackArtistRelationships)
+                }
+
+                Log.d(
+                    TAG,
+                    "Saved ${changedSongs.size} changed songs to Room database (incremental metadata update)"
+                )
+            } else {
+                val relationshipSets = buildSongArtistRelationshipSets(songs)
+                roomDb.withTransaction {
+                    songDao.replaceAll(entities)
+                    roomDb.songArtistDao()
+                        .replaceAll(relationshipSets.albumArtistRelationships, true)
+                    roomDb.songArtistDao()
+                        .replaceAll(relationshipSets.trackArtistRelationships, false)
+
+                    if (clearArtistCache) {
+                        // Clear artist cache since songs have changed
+                        roomDb.artistDao().deleteAll()
+                    }
+                }
 
                 if (clearArtistCache) {
-                    // Clear artist cache since songs have changed
-                    roomDb.artistDao().deleteAll()
+                    Log.d(
+                        TAG,
+                        "Saved ${songs.size} songs to Room database and cleared artist cache"
+                    )
+                } else {
+                    Log.d(TAG, "Saved ${songs.size} songs to Room database (kept artist cache)")
                 }
             }
 
-            if (clearArtistCache) {
-                Log.d(TAG, "Saved ${songs.size} songs to Room database and cleared artist cache")
-            } else {
-                Log.d(TAG, "Saved ${songs.size} songs to Room database (kept artist cache)")
-            }
+            cachedSongs = songs
+            cacheTimestamp = System.currentTimeMillis()
         } catch (e: Exception) {
             Log.e(TAG, "Failed to save songs to Room database", e)
         }
@@ -468,21 +543,21 @@ class MusicRepository(context: Context) {
     }
 
     // LRU caches for artist images, album artwork, and lyrics to avoid memory leaks
-    private val artistImageCache = object : LinkedHashMap<String, Uri?>(16, 0.75f, true) {
+    private val artistImageCache = Collections.synchronizedMap(object : LinkedHashMap<String, Uri?>(16, 0.75f, true) {
         override fun removeEldestEntry(eldest: Map.Entry<String, Uri?>?): Boolean {
             return size > MAX_ARTIST_CACHE_SIZE
         }
-    }
-    private val albumImageCache = object : LinkedHashMap<String, Uri?>(32, 0.75f, true) {
+    })
+    private val albumImageCache = Collections.synchronizedMap(object : LinkedHashMap<String, Uri?>(32, 0.75f, true) {
         override fun removeEldestEntry(eldest: Map.Entry<String, Uri?>?): Boolean {
             return size > MAX_ALBUM_CACHE_SIZE
         }
-    }
-    private val lyricsCache = object : LinkedHashMap<String, LyricsData>(50, 0.75f, true) {
+    })
+    private val lyricsCache = Collections.synchronizedMap(object : LinkedHashMap<String, LyricsData>(50, 0.75f, true) {
         override fun removeEldestEntry(eldest: Map.Entry<String, LyricsData>?): Boolean {
             return size > MAX_LYRICS_CACHE_SIZE
         }
-    }
+    })
     
     // Rate limiting for API calls
     private val lastApiCalls = mutableMapOf<String, Long>()
@@ -819,14 +894,10 @@ class MusicRepository(context: Context) {
                 Log.d(TAG, "Loaded ${songs.size} songs in ${duration}ms")
                 Log.d(TAG, "Filtering stats - Duplicates: $duplicatesFound, Format: $filteredByFormat, Quality: $filteredByQuality, Errors: ${errors.size}")
                 
-                // Update cache
-                cachedSongs = songs
-                cacheTimestamp = System.currentTimeMillis()
-                
                 // Persist to Room synchronously so other initialization tasks can safely use the DB
                 Log.d(TAG, "Persisting ${songs.size} songs to disk cache synchronously before proceeding")
                 _scanProgress.value = ScanProgress(songs.size, count, "Saving Database", 0)
-                saveSongsToRoom(songs, clearArtistCache = true)
+                saveSongsToRoom(songs, clearArtistCache = true, previousSongs = cachedSongs)
                 
                 // Update scan progress to complete
                 _scanProgress.value = ScanProgress(songs.size, count, "Complete", duration)

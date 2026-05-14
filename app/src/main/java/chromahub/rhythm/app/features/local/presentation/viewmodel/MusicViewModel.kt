@@ -251,6 +251,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
     private var lastBroadcastLyricLine: String? = null
     private var lastAppliedBluetoothLyricSongId: String? = null
     private var lastAppliedBluetoothLyricLine: String? = null
+    private var pendingQueueRestore: Pair<List<String>, Int>? = null
     
     // Scan job for cancellation support
     private var scanJob: Job? = null
@@ -1077,17 +1078,9 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
         }
 
         // Step 3: Initialize media controller (non-blocking, will connect async)
+        // Playback/session setup must happen on every launch, even when metadata work is already complete.
         try {
-            val songsWithMetadata = songs.value.count {
-                it.bitrate != null && it.sampleRate != null && it.channels != null && it.codec != null
-            }
-            val hasMissingMetadata = songsWithMetadata < songs.value.size
-
-            if (!appSettings.audioMetadataExtractionCompleted.value || hasMissingMetadata) {
-                initializeController()
-            } else {
-                Log.d(TAG, "Audio metadata already extracted for current library, skipping startup pass")
-            }
+            initializeController()
         } catch (e: Exception) {
             Log.e(TAG, "Error initializing media controller", e)
         }
@@ -1275,12 +1268,15 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
                     // Validate the saved index
                     val validIndex = savedIndex.coerceIn(0, restoredSongs.size - 1)
                     val savedPosition = appSettings.savedPlaybackPosition.value
+                    val restoredSongIds = restoredSongs.map { it.id }
                     
                     Log.d(TAG, "Successfully restored queue with ${restoredSongs.size} songs at index $validIndex, position: ${savedPosition}ms")
                     
                     // Restore the queue to MediaController
                     withContext(Dispatchers.Main) {
                         mediaController?.let { controller ->
+                            pendingQueueRestore = null
+
                             // Clear existing queue
                             controller.clearMediaItems()
                             
@@ -1314,12 +1310,19 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
                             Log.d(TAG, "Queue restored successfully, ready to continue playback from ${savedPosition}ms")
                         } ?: run {
                             Log.w(TAG, "MediaController not available yet, queue will be restored when controller is ready")
-                            // Store for later restoration when controller becomes available
+                            // Store for later restoration when controller becomes available.
+                            // Keep UI state populated so the player screen does not fall back to empty content.
+                            pendingQueueRestore = restoredSongIds to validIndex
                             _currentQueue.value = Queue(restoredSongs, validIndex)
+                            _currentSong.value = restoredSongs.getOrNull(validIndex)
+                            _isFavorite.value = _currentSong.value?.let { song ->
+                                _favoriteSongs.value.contains(song.id)
+                            } ?: false
                         }
                     }
                 } else {
                     Log.w(TAG, "No valid songs found in saved queue, starting with empty queue")
+                    pendingQueueRestore = null
                     _currentQueue.value = Queue(emptyList(), -1)
                     appSettings.clearSavedQueue()
                 }
@@ -1342,21 +1345,18 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
                 return
             }
             
-            // Check if we already have a queue (might have been restored elsewhere)
-            if (_currentQueue.value.songs.isNotEmpty()) {
-                Log.d(TAG, "Queue already populated, skipping restoration")
-                return
-            }
-            
-            // Try to restore saved queue from persistence
-            val savedQueueIds = appSettings.savedQueue.value
-            val savedIndex = appSettings.savedQueueIndex.value
+            // Prefer a pending restore that was deferred because the controller was not ready yet.
+            val pendingRestore = pendingQueueRestore
+            val savedQueueIds = pendingRestore?.first ?: appSettings.savedQueue.value
+            val savedIndex = pendingRestore?.second ?: appSettings.savedQueueIndex.value
             
             if (savedQueueIds.isNotEmpty() && savedIndex >= 0) {
                 Log.d(TAG, "Restoring saved queue after controller ready: ${savedQueueIds.size} songs, index: $savedIndex")
+                pendingQueueRestore = null
                 restoreSavedQueue(savedQueueIds, savedIndex)
             } else {
                 Log.d(TAG, "No saved queue to restore")
+                pendingQueueRestore = null
             }
         } catch (e: Exception) {
             Log.e(TAG, "Error in restoreQueueAfterControllerReady", e)
@@ -1515,8 +1515,8 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
                         kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
                             _songs.value = updatedSongs
                         }
-                        // Persist extracted artwork URIs to disk cache
-                        repository.persistSongCacheToDisk()
+                        // Persist the updated song snapshot so the repository cache stays aligned.
+                        repository.updateAndPersistSongs(updatedSongs)
                         Log.d(TAG, "Background embedded art extraction complete for ${currentSongs.size} songs")
                     }
                 }
@@ -1671,7 +1671,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
             _songs.value = mergedSongs
             _albums.value = freshAlbums
             _artists.value = freshArtists
-            repository.persistSongCacheToDisk()
+            repository.updateAndPersistSongs(mergedSongs)
             appSettings.setLastScanTimestamp(System.currentTimeMillis())
             Log.d(TAG, "MediaStore refresh complete: $currentCount -> ${mergedSongs.size} songs")
         } catch (e: Exception) {
@@ -1702,8 +1702,8 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
                 onComplete = { updatedSongs ->
                     // Update the songs state with the new genre information FIRST
                     _songs.value = updatedSongs
-                    // Persist genre data to disk cache
-                    repository.persistSongCacheToDisk()
+                    // Persist genre data with the updated snapshot so future launches reuse it.
+                    repository.updateAndPersistSongs(updatedSongs)
                     // Then mark detection as complete AFTER songs are updated to prevent race condition
                     viewModelScope.launch {
                         delay(100) // Small delay to ensure songs state propagates
@@ -1887,7 +1887,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
                                 kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
                                     _songs.value = updatedSongs
                                 }
-                                repository.persistSongCacheToDisk()
+                                repository.updateAndPersistSongs(updatedSongs)
                                 Log.d(TAG, "Re-extracted embedded art for ${currentSongs.size} songs after library refresh")
                             }
                         }

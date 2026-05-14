@@ -15,8 +15,14 @@ interface SongDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAll(songs: List<SongEntity>)
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun upsertAll(songs: List<SongEntity>)
+
     @Query("DELETE FROM songs")
     suspend fun deleteAll()
+
+    @Query("DELETE FROM songs WHERE id IN (:songIds)")
+    suspend fun deleteByIds(songIds: List<String>)
 
     @Query("SELECT COUNT(*) FROM songs")
     suspend fun getCount(): Int
