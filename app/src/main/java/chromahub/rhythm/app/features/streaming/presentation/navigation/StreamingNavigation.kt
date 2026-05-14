@@ -51,6 +51,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -197,9 +198,16 @@ fun StreamingNavigation(
     val isEqualizerRoute = currentRoute == Screen.Equalizer.route
     val isQueuePlaybackRoute = currentRoute == Screen.TunerQueuePlayback.route
     val isSettingsRoute = currentRoute == Screen.Settings.route
-    
-    // MiniPlayer should show on all screens except Player, Equalizer, and QueuePlayback
-    val showMiniPlayer = currentSong != null && !isPlayerRoute && !isEqualizerRoute && !isQueuePlaybackRoute
+
+    var isMiniPlayerDismissed by rememberSaveable { mutableStateOf(false) }
+
+    LaunchedEffect(currentSong?.id) {
+        if (currentSong == null) {
+            isMiniPlayerDismissed = false
+        }
+    }
+
+    val showMiniPlayer = currentSong != null && !isMiniPlayerDismissed && !isPlayerRoute && !isEqualizerRoute && !isQueuePlaybackRoute
     
     // Bottom nav only shows on main navigation screens (Home, Library, Search)
     val showBottomNav = hasConnectedService && !isPlayerRoute && !isEqualizerRoute && !isQueuePlaybackRoute && !isSettingsRoute && (
@@ -441,8 +449,7 @@ fun StreamingNavigation(
                                 onSkipNext = { localMusicViewModel.skipToNext() },
                                 onSkipPrevious = { localMusicViewModel.skipToPrevious() },
                                 onDismiss = { 
-                                    localMusicViewModel.clearCurrentSong()
-                                    streamingMusicViewModel.clearCurrentSong()
+                                    isMiniPlayerDismissed = true
                                 },
                                 isMediaLoading = isMediaLoading,
                                 modifier = Modifier.align(Alignment.BottomEnd)

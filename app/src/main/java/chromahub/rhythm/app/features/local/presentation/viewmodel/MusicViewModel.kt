@@ -1349,6 +1349,12 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
             val pendingRestore = pendingQueueRestore
             val savedQueueIds = pendingRestore?.first ?: appSettings.savedQueue.value
             val savedIndex = pendingRestore?.second ?: appSettings.savedQueueIndex.value
+            val hasActiveQueue = _currentQueue.value.songs.isNotEmpty() && _currentQueue.value.currentIndex >= 0
+
+            if (pendingRestore == null && hasActiveQueue) {
+                Log.d(TAG, "Active queue already present, skipping persisted queue restore")
+                return
+            }
             
             if (savedQueueIds.isNotEmpty() && savedIndex >= 0) {
                 Log.d(TAG, "Restoring saved queue after controller ready: ${savedQueueIds.size} songs, index: $savedIndex")

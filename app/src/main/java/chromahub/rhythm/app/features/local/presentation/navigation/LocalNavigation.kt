@@ -81,6 +81,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.ui.Alignment
@@ -421,8 +422,16 @@ fun LocalNavigation(
         currentRoute.substringBefore("?") == Screen.Library.route.substringBefore("?")
     }
 
+    var isMiniPlayerDismissed by rememberSaveable { mutableStateOf(false) }
+
+    LaunchedEffect(currentSong?.id) {
+        if (currentSong == null) {
+            isMiniPlayerDismissed = false
+        }
+    }
+
     // Provide dynamic mini-player padding with comprehensive navigation handling
-    val showMiniPlayer = currentSong != null &&
+    val showMiniPlayer = currentSong != null && !isMiniPlayerDismissed &&
         currentRoute != Screen.Player.route &&
         currentRoute != Screen.Search.route
     val showNavBar = remember(currentRoute) {
@@ -510,6 +519,7 @@ fun LocalNavigation(
                     onPlayerClick = onPlayerClick,
                     onSkipNext = onSkipNext,
                     onSkipPrevious = onSkipPrevious,
+                    onMiniPlayerDismiss = { isMiniPlayerDismissed = true },
                     showMiniPlayer = showMiniPlayer,
                     showBottomNav = false, // Hide nav bar in content for tablet
                     isTablet = true,
@@ -565,6 +575,7 @@ fun LocalNavigation(
                 onPlayerClick = onPlayerClick,
                 onSkipNext = onSkipNext,
                 onSkipPrevious = onSkipPrevious,
+                onMiniPlayerDismiss = { isMiniPlayerDismissed = true },
                 showMiniPlayer = showMiniPlayer,
                 showBottomNav = showBottomNav,
                 isTablet = false,
@@ -635,6 +646,7 @@ private fun LocalNavigationContent(
     onPlayerClick: () -> Unit,
     onSkipNext: () -> Unit,
     onSkipPrevious: () -> Unit,
+    onMiniPlayerDismiss: () -> Unit,
     showMiniPlayer: Boolean,
     showBottomNav: Boolean,
     isTablet: Boolean,
@@ -819,8 +831,7 @@ private fun LocalNavigationContent(
                             onSkipNext = onSkipNext,
                             onSkipPrevious = onSkipPrevious,
                             onDismiss = {
-                                // Clear the current song to hide the mini player
-                                viewModel.clearCurrentSong()
+                                onMiniPlayerDismiss()
                             },
                             isMediaLoading = viewModel.isBuffering.collectAsState().value,
                             modifier = Modifier.align(Alignment.BottomEnd) // Align to bottom-end (right side)
