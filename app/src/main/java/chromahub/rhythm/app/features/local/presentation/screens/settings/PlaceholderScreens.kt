@@ -112,6 +112,8 @@ import chromahub.rhythm.app.ui.utils.LazyListStateSaver
 import chromahub.rhythm.app.features.local.presentation.viewmodel.MusicViewModel
 import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveShapeProvider
 import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveShapes
+import chromahub.rhythm.app.shared.presentation.components.common.buildSplashBackdropShapes
+import chromahub.rhythm.app.shared.presentation.components.common.SplashBackgroundOrbs
 import chromahub.rhythm.app.shared.presentation.viewmodel.AppUpdaterViewModel
 import chromahub.rhythm.app.ui.theme.getFontPreviewStyle
 import kotlinx.coroutines.delay
@@ -4056,6 +4058,11 @@ fun AboutScreen(
                 val expressiveShapesEnabled by appSettings.expressiveShapesEnabled.collectAsState()
                 val expressiveShapeA by appSettings.expressiveShapeSongArt.collectAsState()
                 val expressiveShapeB by appSettings.expressiveShapePlayerArt.collectAsState()
+                val expressiveShapeC by appSettings.expressiveShapeAlbumArt.collectAsState()
+                val expressiveShapeD by appSettings.expressiveShapePlaylistArt.collectAsState()
+                val expressiveShapeE by appSettings.expressiveShapeArtistArt.collectAsState()
+                val expressiveShapeF by appSettings.expressiveShapePlayerControls.collectAsState()
+                val expressiveShapeG by appSettings.expressiveShapeMiniPlayer.collectAsState()
 
                 Box(
                     modifier = Modifier
@@ -4063,28 +4070,51 @@ fun AboutScreen(
                         .padding(vertical = 12.dp),
                     contentAlignment = Alignment.Center
                 ) {
-                    if (expressiveShapesEnabled) {
-                        // Simple two-shape backdrop similar to splash but lightweight
-                        Surface(
-                            modifier = Modifier
-                                .align(Alignment.TopStart)
-                                .offset(x = (-12).dp, y = (-8).dp)
-                                .size(110.dp)
-                                .graphicsLayer { alpha = 0.14f },
-                            shape = ExpressiveShapeProvider.getShapeById(expressiveShapeA, ExpressiveShapes.Large),
-                            color = MaterialTheme.colorScheme.primary
-                        ) {}
+                        if (expressiveShapesEnabled) {
+                            val configuration = androidx.compose.ui.platform.LocalConfiguration.current
+                            val screenWidthDp = configuration.screenWidthDp
+                            val screenHeightDp = configuration.screenHeightDp
+                            val expressivePreset by appSettings.expressiveShapePreset.collectAsState()
+                            val seed = System.nanoTime().toInt()
+                            val primaryBackdropColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.9f)
+                            val secondaryBackdropColor = MaterialTheme.colorScheme.secondary.copy(alpha = 0.82f)
+                            val tertiaryBackdropColor = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.7f)
+                            val neutralBackdropColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f)
 
-                        Surface(
-                            modifier = Modifier
-                                .align(Alignment.TopEnd)
-                                .offset(x = 16.dp, y = (-4).dp)
-                                .size(92.dp)
-                                .graphicsLayer { alpha = 0.12f },
-                            shape = ExpressiveShapeProvider.getShapeById(expressiveShapeB, ExpressiveShapes.Medium),
-                            color = MaterialTheme.colorScheme.secondary
-                        ) {}
-                    }
+                            val aboutBackdropShapes = remember(
+                                seed,
+                                expressiveShapeA,
+                                expressiveShapeB,
+                                expressiveShapeC,
+                                expressiveShapeD,
+                                expressiveShapeE,
+                                expressiveShapeF,
+                                expressiveShapeG,
+                                expressivePreset
+                            ) {
+                                buildSplashBackdropShapes(
+                                    seed = seed,
+                                    shapeIds = listOf(
+                                        expressiveShapeA,
+                                        expressiveShapeB,
+                                        expressiveShapeC,
+                                        expressiveShapeD,
+                                        expressiveShapeE,
+                                        expressiveShapeF,
+                                        expressiveShapeG
+                                    ),
+                                    preset = expressivePreset,
+                                    screenWidthDp = screenWidthDp,
+                                    screenHeightDp = screenHeightDp,
+                                    primaryColor = primaryBackdropColor,
+                                    secondaryColor = secondaryBackdropColor,
+                                    tertiaryColor = tertiaryBackdropColor,
+                                    neutralColor = neutralBackdropColor
+                                )
+                            }
+
+                            SplashBackgroundOrbs(shapes = aboutBackdropShapes)
+                        }
 
                     Column(
                         modifier = Modifier
@@ -12121,7 +12151,7 @@ fun ThemeCustomizationSettingsScreen(onBackClick: () -> Unit) {
         listOf(
             ColorSchemeOption(
                 name = "Default",
-                displayName = "Default Purple",
+                displayName = "Rhythm Default",
                 description = "The classic Rhythm experience with vibrant purple tones",
                 primaryColor = Color(0xFF5C4AD5),
                 secondaryColor = Color(0xFF5D5D6B),
@@ -15819,7 +15849,6 @@ fun HomeScreenCustomizationSettingsScreen(onBackClick: () -> Unit) {
     var showHomeSectionOrderSheet by remember { mutableStateOf(false) }
 
     // Collect all home screen settings
-    val showGreeting by appSettings.homeShowGreeting.collectAsState()
     val showRecentlyPlayed by appSettings.homeShowRecentlyPlayed.collectAsState()
     val showDiscoverCarousel by appSettings.homeShowDiscoverCarousel.collectAsState()
     val showArtists by appSettings.homeShowArtists.collectAsState()
@@ -15827,16 +15856,12 @@ fun HomeScreenCustomizationSettingsScreen(onBackClick: () -> Unit) {
     val showRecentlyAdded by appSettings.homeShowRecentlyAdded.collectAsState()
     val showRecommended by appSettings.homeShowRecommended.collectAsState()
     val showListeningStats by appSettings.homeShowListeningStats.collectAsState()
-    val discoverAutoScroll by appSettings.homeDiscoverAutoScroll.collectAsState()
-    val discoverAutoScrollInterval by appSettings.homeDiscoverAutoScrollInterval.collectAsState()
     val discoverItemCount by appSettings.homeDiscoverItemCount.collectAsState()
     val recentlyPlayedCount by appSettings.homeRecentlyPlayedCount.collectAsState()
     val artistsCount by appSettings.homeArtistsCount.collectAsState()
     val newReleasesCount by appSettings.homeNewReleasesCount.collectAsState()
     val recentlyAddedCount by appSettings.homeRecentlyAddedCount.collectAsState()
     val recommendedCount by appSettings.homeRecommendedCount.collectAsState()
-    val carouselHeight by appSettings.homeCarouselHeight.collectAsState()
-    val discoverCarouselStyle by appSettings.homeDiscoverCarouselStyle.collectAsState()
 
     // Discover Widget visibility settings
     val discoverShowAlbumName by appSettings.homeDiscoverShowAlbumName.collectAsState()
@@ -15988,36 +16013,6 @@ fun HomeScreenCustomizationSettingsScreen(onBackClick: () -> Unit) {
 
                 Material3SettingsGroup(
                     items = headerItems,
-                    containerColor = MaterialTheme.colorScheme.surfaceContainer
-                )
-            }
-
-            // ==================== GREETING SETTINGS ====================
-            item(key = "greeting_settings_header", contentType = "section_header") {
-                Spacer(modifier = Modifier.height(24.dp))
-                Text(
-                    text = "Greeting",
-                    style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
-                    color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
-                )
-            }
-
-            item(key = "greeting_toggle_card", contentType = "settings_card") {
-                Material3SettingsGroup(
-                    items = listOf(
-                        toMaterial3SettingsItem(
-                            context = context,
-                            hapticFeedback = haptic,
-                            item = SettingItem(
-                                icon = Icons.Rounded.Face,
-                                title = context.getString(R.string.settings_show_greeting),
-                                description = context.getString(R.string.settings_show_greeting_desc),
-                                toggleState = showGreeting,
-                                onToggleChange = { appSettings.setHomeShowGreeting(it) }
-                            )
-                        )
-                    ),
                     containerColor = MaterialTheme.colorScheme.surfaceContainer
                 )
             }
@@ -16272,6 +16267,8 @@ fun HomeScreenCustomizationSettingsScreen(onBackClick: () -> Unit) {
             item(key = "discover_carousel_settings", contentType = "settings_card") {
                 AnimatedVisibility(visible = showDiscoverCarousel) {
                     Column {
+                        val isDiscoverImmersiveMode = true
+
                         Spacer(modifier = Modifier.height(24.dp))
                         Text(
                             text = context.getString(R.string.settings_discover_carousel),
@@ -16280,42 +16277,57 @@ fun HomeScreenCustomizationSettingsScreen(onBackClick: () -> Unit) {
                             modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
                         )
 
-                        val discoverToggleItems = listOf(
-                            SettingItem(
-                                Icons.Rounded.PlayCircle,
-                                "Auto-Scroll",
-                                "Automatically cycle through albums",
-                                toggleState = discoverAutoScroll,
-                                onToggleChange = { appSettings.setHomeDiscoverAutoScroll(it) }
-                            ),
+                        if (isDiscoverImmersiveMode) {
+                            Text(
+                                text = "Immersive mode is active. Only supported discover controls are shown.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 8.dp)
+                            )
+                        }
+
+                        val discoverToggleItems = buildList {
+                            add(
                             SettingItem(
                                 Icons.Rounded.Album,
                                 "Album Name",
                                 "Show album title on card",
                                 toggleState = discoverShowAlbumName,
                                 onToggleChange = { appSettings.setHomeDiscoverShowAlbumName(it) }
-                            ),
+                            )
+                            )
+
+                            add(
                             SettingItem(
                                 Icons.Rounded.Person,
                                 "Artist Name",
                                 "Show artist name on card",
                                 toggleState = discoverShowArtistName,
                                 onToggleChange = { appSettings.setHomeDiscoverShowArtistName(it) }
-                            ),
+                            )
+                            )
+
+                            add(
                             SettingItem(
                                 Icons.Rounded.CalendarToday,
                                 "Release Year",
                                 "Show album release year",
                                 toggleState = discoverShowYear,
                                 onToggleChange = { appSettings.setHomeDiscoverShowYear(it) }
-                            ),
+                            )
+                            )
+
+                            add(
                             SettingItem(
                                 Icons.Rounded.PlayArrow,
                                 "Play Button",
                                 "Show quick play button",
                                 toggleState = discoverShowPlayButton,
                                 onToggleChange = { appSettings.setHomeDiscoverShowPlayButton(it) }
-                            ),
+                            )
+                            )
+
+                            add(
                             SettingItem(
                                 Icons.Rounded.Gradient,
                                 "Gradient Overlay",
@@ -16323,87 +16335,15 @@ fun HomeScreenCustomizationSettingsScreen(onBackClick: () -> Unit) {
                                 toggleState = discoverShowGradient,
                                 onToggleChange = { appSettings.setHomeDiscoverShowGradient(it) }
                             )
-                        )
+                            )
+                        }
 
                         val discoverItems = buildList {
-                            add(
-                                toMaterial3SettingsItem(
-                                    context = context,
-                                    hapticFeedback = haptic,
-                                    item = SettingItem(
-                                        icon = Icons.Rounded.ViewCarousel,
-                                        title = "Carousel Style",
-                                        description = context.getString(R.string.settings_choose_album_display)
-                                    ),
-                                    description = {
-                                        Column(
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .padding(top = 8.dp),
-                                            verticalArrangement = Arrangement.spacedBy(12.dp)
-                                        ) {
-                                            Text(
-                                                text = context.getString(R.string.settings_choose_album_display),
-                                                style = MaterialTheme.typography.bodyMedium,
-                                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                                            )
-                                            ExpressiveButtonGroup(
-                                                items = listOf("Default", "Hero"),
-                                                selectedIndex = discoverCarouselStyle,
-                                                onItemClick = { index ->
-                                                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
-                                                    appSettings.setHomeDiscoverCarouselStyle(index)
-                                                },
-                                                modifier = Modifier.fillMaxWidth()
-                                            )
-                                        }
-                                    }
-                                )
-                            )
-
                             addAll(
                                 discoverToggleItems.map { item ->
                                     toMaterial3SettingsItem(context = context, item = item, hapticFeedback = haptic)
                                 }
                             )
-
-                            if (discoverAutoScroll) {
-                                add(
-                                    toMaterial3SettingsItem(
-                                        context = context,
-                                        hapticFeedback = haptic,
-                                        item = SettingItem(
-                                            icon = Icons.Rounded.Timer,
-                                            title = "Auto-Scroll Interval",
-                                            description = "$discoverAutoScrollInterval seconds"
-                                        ),
-                                        description = {
-                                            Column(
-                                                modifier = Modifier
-                                                    .fillMaxWidth()
-                                                    .padding(top = 8.dp),
-                                                verticalArrangement = Arrangement.spacedBy(8.dp)
-                                            ) {
-                                                Text(
-                                                    text = "$discoverAutoScrollInterval seconds",
-                                                    style = MaterialTheme.typography.bodyMedium,
-                                                    color = MaterialTheme.colorScheme.primary
-                                                )
-                                                Slider(
-                                                    value = discoverAutoScrollInterval.toFloat(),
-                                                    onValueChange = {
-                                                        HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
-                                                        appSettings.setHomeDiscoverAutoScrollInterval(it.toInt())
-                                                    },
-                                                    valueRange = 2f..15f,
-                                                    steps = 12,
-                                                    modifier = Modifier.fillMaxWidth()
-                                                )
-                                            }
-                                        }
-                                    )
-                                )
-                            }
 
                             add(
                                 toMaterial3SettingsItem(
@@ -16441,41 +16381,6 @@ fun HomeScreenCustomizationSettingsScreen(onBackClick: () -> Unit) {
                                 )
                             )
 
-                            add(
-                                toMaterial3SettingsItem(
-                                    context = context,
-                                    hapticFeedback = haptic,
-                                    item = SettingItem(
-                                        icon = Icons.Rounded.Height,
-                                        title = "Carousel Height",
-                                        description = "${carouselHeight}dp"
-                                    ),
-                                    description = {
-                                        Column(
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .padding(top = 8.dp),
-                                            verticalArrangement = Arrangement.spacedBy(8.dp)
-                                        ) {
-                                            Text(
-                                                text = "${carouselHeight}dp",
-                                                style = MaterialTheme.typography.bodyMedium,
-                                                color = MaterialTheme.colorScheme.primary
-                                            )
-                                            Slider(
-                                                value = carouselHeight.toFloat(),
-                                                onValueChange = {
-                                                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
-                                                    appSettings.setHomeCarouselHeight(it.toInt())
-                                                },
-                                                valueRange = 180f..320f,
-                                                steps = 13,
-                                                modifier = Modifier.fillMaxWidth()
-                                            )
-                                        }
-                                    }
-                                )
-                            )
                         }
 
                         Spacer(modifier = Modifier.height(8.dp))
@@ -17022,7 +16927,54 @@ fun ExpressiveShapesSettingsScreen(onBackClick: () -> Unit) {
     CollapsibleHeaderScreen(
         title = context.getString(R.string.settings_expressive_shapes),
         showBackButton = true,
-        onBackClick = onBackClick
+        onBackClick = onBackClick,
+        headerContent = {
+            Card(
+                colors = CardDefaults.cardColors(
+                    containerColor = if (expressiveShapesEnabled)
+                        MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
+                    else
+                        MaterialTheme.colorScheme.surfaceContainer
+                ),
+                shape = RoundedCornerShape(40.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp)
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(20.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Interests,
+                        contentDescription = null,
+                        tint = if (expressiveShapesEnabled) {
+                            MaterialTheme.colorScheme.primary
+                        } else {
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                        },
+                        modifier = Modifier.size(32.dp)
+                    )
+                    Spacer(modifier = Modifier.width(16.dp))
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = if (expressiveShapesEnabled) "Active" else "Disabled",
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                    TunerAnimatedSwitch(
+                        checked = expressiveShapesEnabled,
+                        onCheckedChange = { enabled ->
+                            HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
+                            appSettings.setExpressiveShapesEnabled(enabled)
+                        }
+                    )
+                }
+            }
+        }
     ) { modifier ->
         LazyColumn(
             modifier = modifier
@@ -17031,54 +16983,6 @@ fun ExpressiveShapesSettingsScreen(onBackClick: () -> Unit) {
                 .padding(horizontal = 24.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Enable/Disable Card
-            item(key = "expressive_shapes_toggle") {
-                Spacer(modifier = Modifier.height(8.dp))
-                Card(
-                    colors = CardDefaults.cardColors(
-                        containerColor = if (expressiveShapesEnabled)
-                            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
-                        else
-                            MaterialTheme.colorScheme.surfaceContainer
-                    ),
-                    shape = RoundedCornerShape(40.dp),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(20.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Interests,
-                            contentDescription = null,
-                            tint = if (expressiveShapesEnabled) {
-                                MaterialTheme.colorScheme.primary
-                            } else {
-                                MaterialTheme.colorScheme.onSurfaceVariant
-                            },
-                            modifier = Modifier.size(32.dp)
-                        )
-                        Spacer(modifier = Modifier.width(16.dp))
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = if (expressiveShapesEnabled) "Active" else "Disabled",
-                                style = MaterialTheme.typography.titleLarge,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
-                        TunerAnimatedSwitch(
-                            checked = expressiveShapesEnabled,
-                            onCheckedChange = { enabled ->
-                                HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
-                                appSettings.setExpressiveShapesEnabled(enabled)
-                            }
-                        )
-                    }
-                }
-            }
-
             // Preset Selection with animation
             item(key = "preset_section") {
                 AnimatedVisibility(

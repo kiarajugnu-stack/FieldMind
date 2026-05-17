@@ -26,6 +26,9 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.foundation.gestures.animateScrollBy
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.draw.clip
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.RepeatMode
@@ -59,6 +62,9 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.ui.draw.shadow
+import androidx.compose.material3.carousel.HorizontalUncontainedCarousel
+import androidx.compose.material3.carousel.rememberCarouselState
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -66,10 +72,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.carousel.HorizontalCenteredHeroCarousel
-import androidx.compose.material3.carousel.HorizontalUncontainedCarousel
-import androidx.compose.material3.carousel.rememberCarouselState
-import androidx.compose.material3.carousel.CarouselDefaults
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.FilterList
 import androidx.compose.material.icons.rounded.Search
@@ -95,7 +97,6 @@ import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Button
-import androidx.compose.material.icons.rounded.PlayArrow // Or your specific icon
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.OutlinedButton
@@ -202,7 +203,6 @@ import chromahub.rhythm.app.util.M3ImageUtils
 import chromahub.rhythm.app.shared.presentation.viewmodel.AppVersion
 import chromahub.rhythm.app.features.local.presentation.viewmodel.MusicViewModel
 import chromahub.rhythm.app.features.local.presentation.components.dialogs.CreatePlaylistDialog
-import chromahub.rhythm.app.features.local.presentation.components.bottomsheets.AddToPlaylistBottomSheet
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
@@ -248,7 +248,7 @@ fun HomeScreen(
     val haptics = LocalHapticFeedback.current
     val context = LocalContext.current
     val appSettings = remember { AppSettings.getInstance(context) }
-    
+
     // Home header customization
     val headerDisplayMode by appSettings.homeHeaderDisplayMode.collectAsState()
     val showAppIcon by appSettings.homeShowAppIcon.collectAsState()
@@ -264,16 +264,16 @@ fun HomeScreen(
     var selectedSongForPlaylist by remember { mutableStateOf<Song?>(null) }
     val addToPlaylistSheetState = rememberModalBottomSheetState()
     var showCreatePlaylistDialog by remember { mutableStateOf(false) }
-    
+
     // Song info bottom sheet state
     var showSongInfoSheet by remember { mutableStateOf(false) }
-    
+
     // Home section order bottom sheet state
     var showHomeSectionOrderSheet by remember { mutableStateOf(false) }
-    
+
     // Pending write request for metadata editing (Android 11+)
     val pendingWriteRequest by musicViewModel.pendingWriteRequest.collectAsState()
-    
+
     // Write permission launcher for Android 11+ metadata editing
     val writePermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartIntentSenderForResult()
@@ -292,27 +292,26 @@ fun HomeScreen(
             Toast.makeText(context, "Permission denied. Changes saved to library only.", Toast.LENGTH_LONG).show()
         }
     }
-    
+
     // Select featured content from all albums (enhanced selection)
-    // Note: Don't limit here, let the carousel use discoverItemCount setting
     val featuredContent = remember(albums) {
         albums.shuffled()
     }
-    
-    // Get all unique artists (already handled by repository based on user preference)
+
+    // Get all unique artists
     val availableArtists = remember(artists) {
         artists.sortedBy { it.name }
     }
-    
-    val quickPicks = songs.take(8) // Increased for better variety
+
+    val quickPicks = songs.take(8)
     val topArtists = availableArtists
-    
+
     // Enhanced filtering for new releases
     val currentYear = Calendar.getInstance().get(Calendar.YEAR)
     val currentYearReleases = remember(albums, currentYear) {
         albums.filter { it.year == currentYear }
             .ifEmpty {
-                albums.sortedByDescending { it.year }.take(6) // Increased count
+                albums.sortedByDescending { it.year }.take(6)
             }
     }
 
@@ -323,7 +322,7 @@ fun HomeScreen(
             .sortedByDescending { it.dateAdded }
     }
 
-    // Enhanced recently added albums (for unified styling with new releases)
+    // Enhanced recently added albums
     val recentlyAddedAlbums = remember(albums, songs) {
         val oneMonthAgo = Calendar.getInstance().apply { add(Calendar.MONTH, -1) }.timeInMillis
         val recentSongIds = songs.filter { it.dateAdded >= oneMonthAgo }.map { it.id }.toSet()
@@ -490,7 +489,7 @@ fun HomeScreen(
             }
         )
     }
-    
+
     if (showHomeSectionOrderSheet) {
         HomeSectionOrderBottomSheet(
             onDismiss = { showHomeSectionOrderSheet = false },
@@ -602,15 +601,14 @@ private fun ModernScrollableContent(
     val windowSizeClass = calculateWindowSizeClass(context as android.app.Activity)
     val widthSizeClass = windowSizeClass.widthSizeClass
     val heightSizeClass = windowSizeClass.heightSizeClass
-    val isTablet = widthSizeClass == WindowWidthSizeClass.Medium || 
-                   widthSizeClass == WindowWidthSizeClass.Expanded
+    val isTablet = widthSizeClass == WindowWidthSizeClass.Medium ||
+            widthSizeClass == WindowWidthSizeClass.Expanded
     val scrollState = rememberScrollState()
     val allSongs by musicViewModel.filteredSongs.collectAsState()
-    
+
     // Home Screen Customization Settings
     val appSettings = AppSettings.getInstance(context)
     val sectionOrder by appSettings.homeSectionOrder.collectAsState()
-    val showGreeting by appSettings.homeShowGreeting.collectAsState()
     val showRecentlyPlayed by appSettings.homeShowRecentlyPlayed.collectAsState()
     val showDiscoverCarousel by appSettings.homeShowDiscoverCarousel.collectAsState()
     val showArtists by appSettings.homeShowArtists.collectAsState()
@@ -618,28 +616,25 @@ private fun ModernScrollableContent(
     val showRecentlyAdded by appSettings.homeShowRecentlyAdded.collectAsState()
     val showRecommended by appSettings.homeShowRecommended.collectAsState()
     val showListeningStats by appSettings.homeShowListeningStats.collectAsState()
-    val discoverAutoScroll by appSettings.homeDiscoverAutoScroll.collectAsState()
-    val discoverAutoScrollInterval by appSettings.homeDiscoverAutoScrollInterval.collectAsState()
     val discoverItemCount by appSettings.homeDiscoverItemCount.collectAsState()
     val recentlyPlayedCount by appSettings.homeRecentlyPlayedCount.collectAsState()
     val artistsCount by appSettings.homeArtistsCount.collectAsState()
     val newReleasesCount by appSettings.homeNewReleasesCount.collectAsState()
     val recentlyAddedCount by appSettings.homeRecentlyAddedCount.collectAsState()
     val recommendedCount by appSettings.homeRecommendedCount.collectAsState()
-    val carouselHeight by appSettings.homeCarouselHeight.collectAsState()
     val discoverCarouselStyle by appSettings.homeDiscoverCarouselStyle.collectAsState()
-    
+
     // Discover widget card content visibility settings
     val discoverShowAlbumName by appSettings.homeDiscoverShowAlbumName.collectAsState()
     val discoverShowArtistName by appSettings.homeDiscoverShowArtistName.collectAsState()
     val discoverShowYear by appSettings.homeDiscoverShowYear.collectAsState()
     val discoverShowPlayButton by appSettings.homeDiscoverShowPlayButton.collectAsState()
     val discoverShowGradient by appSettings.homeDiscoverShowGradient.collectAsState()
-    
+
     // Enhanced artist computation
     val availableArtists = remember(allSongs, topArtists) {
         val collaborationSeparators = listOf(
-            ", ", ",", " & ", " and ", "&", " feat. ", " featuring ", " ft. ", 
+            ", ", ",", " & ", " and ", "&", " feat. ", " featuring ", " ft. ",
             " with ", " x ", " X ", " + ", " vs ", " VS ", " / ", ";", " · "
         )
 
@@ -653,12 +648,12 @@ private fun ModernScrollableContent(
         }
 
         val extractedArtistNames = allSongs.asSequence()
-            .flatMap { song -> 
+            .flatMap { song ->
                 var artistString = song.artist
                 collaborationSeparators.forEach { separator ->
                     artistString = artistString.replace(separator, "||")
                 }
-                
+
                 artistString.split("||")
                     .map { it.trim() }
                     .map { name ->
@@ -671,56 +666,28 @@ private fun ModernScrollableContent(
             }
             .filter { it.length > 1 }
             .distinct()
-        
+
         extractedArtistNames
             .mapNotNull { artistName ->
                 filteredTopArtists.find { it.name.equals(artistName, ignoreCase = true) }
-                    ?: filteredTopArtists.find { 
-                        it.name.equals(artistName, ignoreCase = true) || 
-                        (artistName.length > 3 && it.name.contains(artistName, ignoreCase = true))
+                    ?: filteredTopArtists.find {
+                        it.name.equals(artistName, ignoreCase = true) ||
+                                (artistName.length > 3 && it.name.contains(artistName, ignoreCase = true))
                     }
             }
             .distinct()
             .sortedBy { it.name }
             .toList()
     }
-    
+
     // Featured albums with auto-refresh - ensure proper count handling
-    var currentFeaturedAlbums by remember(featuredContent, discoverItemCount) { 
+    var currentFeaturedAlbums by remember(featuredContent, discoverItemCount) {
         mutableStateOf(
-            if (featuredContent.isEmpty()) listOf() 
+            if (featuredContent.isEmpty()) listOf()
             else featuredContent.take(discoverItemCount)
         )
     }
-    
-    // Calculate safe item count for carousel
-    val carouselItemCount = maxOf(1, minOf(currentFeaturedAlbums.size, discoverItemCount))
-    
-    // Safe carousel state initialization using remember (not rememberSaveable)
-    // to prevent crash from invalid state restoration of currentPageOffsetFraction
-    val featuredCarouselState = key(carouselItemCount) {
-        remember {
-            androidx.compose.material3.carousel.CarouselState(
-                currentItem = 0,
-                currentItemOffsetFraction = 0f,
-                itemCount = { carouselItemCount }
-            )
-        }
-    }
-    
-    // Reset carousel when item count changes to prevent state restoration crash
-    LaunchedEffect(currentFeaturedAlbums.size, discoverItemCount) {
-        val newItemCount = maxOf(1, minOf(currentFeaturedAlbums.size, discoverItemCount))
-        // Only scroll if current position is invalid
-        if (featuredCarouselState.currentItem >= newItemCount) {
-            try {
-                featuredCarouselState.scrollToItem(0)
-            } catch (e: Exception) {
-                android.util.Log.w("HomeScreen", "Carousel reset error: ${e.message}")
-            }
-        }
-    }
-    
+
     // Auto-refresh featured content periodically - respect discoverItemCount setting
     LaunchedEffect(albums, discoverItemCount) {
         while (true) {
@@ -734,12 +701,12 @@ private fun ModernScrollableContent(
             }
         }
     }
-    
-    // Get festive theme settings (using appSettings already declared above)
+
+    // Get festive theme settings
     val festiveEnabled by appSettings.festiveThemeEnabled.collectAsState()
     val festiveTypeString by appSettings.festiveThemeType.collectAsState()
     val festiveAutoDetect by appSettings.festiveThemeAutoDetect.collectAsState()
-    
+
     // Determine active festive theme
     val activeFestiveTheme = remember(festiveEnabled, festiveTypeString, festiveAutoDetect) {
         if (festiveEnabled) {
@@ -757,79 +724,24 @@ private fun ModernScrollableContent(
             FestiveThemeType.NONE
         }
     }
-    
-    // Time-based greeting with festive override
-    val greeting = remember(activeFestiveTheme) {
-        when (activeFestiveTheme) {
-            FestiveThemeType.CHRISTMAS -> context.getString(R.string.home_greeting_christmas)
-            FestiveThemeType.NEW_YEAR -> context.getString(R.string.home_greeting_new_year)
-            FestiveThemeType.HALLOWEEN -> context.getString(R.string.home_greeting_halloween)
-            FestiveThemeType.VALENTINES -> context.getString(R.string.home_greeting_valentines)
-            else -> {
-                val hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY)
-                when {
-                    hour in 0..4 -> context.getString(R.string.home_greeting_night)      // Late night: 12 AM - 4:59 AM
-                    hour in 5..11 -> context.getString(R.string.home_greeting_morning)   // Morning: 5 AM - 11:59 AM
-                    hour in 12..16 -> context.getString(R.string.home_greeting_afternoon) // Afternoon: 12 PM - 4:59 PM
-                    hour in 17..20 -> context.getString(R.string.home_greeting_evening)   // Evening: 5 PM - 8:59 PM
-                    else -> context.getString(R.string.home_greeting_night)              // Night: 9 PM - 11:59 PM
-                }
-            }
-        }
-    }
-    
-    // Enhanced auto-scroll for featured carousel with smooth animations
-    LaunchedEffect(carouselItemCount, discoverAutoScroll, discoverAutoScrollInterval) {
-        if (discoverAutoScroll && carouselItemCount > 1) {
-            while (true) {
-                delay(discoverAutoScrollInterval * 1000L) // Use settings interval
-                try {
-                    // Calculate next item safely within the carousel bounds
-                    val currentItem = featuredCarouselState.currentItem
-                    val nextItem = (currentItem + 1) % carouselItemCount
-                    
-                    // Only scroll if we have valid items and within bounds
-                    if (nextItem < carouselItemCount && currentItem < carouselItemCount) {
-                        featuredCarouselState.animateScrollToItem(nextItem)
-                    }
-                } catch (e: Exception) {
-                    // Handle any scroll exceptions gracefully
-                    android.util.Log.w("HomeScreen", "Carousel autoscroll error: ${e.message}")
-                }
-            }
-        }
-    }
-    
-    // Remember lazy list state for performance optimization (Compose 1.10)
+
     val lazyListState = rememberLazyListState()
-    
-    // Visibility tracking for performance optimization (Compose 1.8+)
-    // Track first visible item for analytics and prefetching optimization
-    val firstVisibleItemIndex by remember { derivedStateOf { lazyListState.firstVisibleItemIndex } }
-    val isScrollInProgress by remember { derivedStateOf { lazyListState.isScrollInProgress } }
-    
-    // Prefetch optimization: when user stops scrolling near end, prepare next items
-    LaunchedEffect(firstVisibleItemIndex, isScrollInProgress) {
-        if (!isScrollInProgress && firstVisibleItemIndex > 0) {
-            // User has scrolled and stopped - good time for analytics or prefetching
-            // This can be extended to log visible sections for personalization
-        }
+
+    // Determine padding to apply individually to non-full-bleed sections
+    val horizontalPadding = when (widthSizeClass) {
+        WindowWidthSizeClass.Compact -> 20.dp
+        WindowWidthSizeClass.Medium -> 48.dp
+        WindowWidthSizeClass.Expanded -> 64.dp
+        else -> 20.dp
     }
-    
+
     Surface(
         modifier = modifier,
         color = MaterialTheme.colorScheme.background
     ) {
         LazyColumn(
             state = lazyListState,
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = when (widthSizeClass) {
-                    WindowWidthSizeClass.Compact -> 20.dp
-                    WindowWidthSizeClass.Medium -> 48.dp  // Increased for tablets
-                    WindowWidthSizeClass.Expanded -> 64.dp  // More padding for large tablets
-                    else -> 20.dp
-                }),
+            modifier = Modifier.fillMaxSize(),
             verticalArrangement = Arrangement.spacedBy(when (widthSizeClass) {
                 WindowWidthSizeClass.Compact -> when (heightSizeClass) {
                     WindowHeightSizeClass.Compact -> 32.dp // Landscape phone - tighter spacing
@@ -845,35 +757,27 @@ private fun ModernScrollableContent(
                 }
                 else -> 40.dp
             }),
-            contentPadding = PaddingValues(bottom = 24.dp) // No top padding to connect with topbar
+            contentPadding = PaddingValues(bottom = 24.dp)
         ) {
             // Render sections dynamically based on sectionOrder
             sectionOrder.forEach { sectionId ->
                 when (sectionId) {
                     "GREETING" -> {
-                        if (showGreeting) {
-                            item(key = "section_greeting") {
-                                Box(modifier = Modifier.padding(top = 16.dp)) {
-                                    ModernWelcomeSection(
-                                        greeting = greeting,
-                                        festiveTheme = activeFestiveTheme,
-                                        onSearchClick = onSearchClick
-                                    )
-                                }
-                            }
-                        }
+                        // Greeting widget is intentionally removed from home.
                     }
                     "RECENTLY_PLAYED" -> {
                         if (showRecentlyPlayed) {
                             item(key = "section_recently_played") {
-                                ModernRecentlyPlayedSection(
-                                    recentlyPlayed = recentlyPlayed.take(recentlyPlayedCount),
-                                    onSongClick = onSongClick,
-                                    musicViewModel = musicViewModel,
-                                    coroutineScope = coroutineScope,
-                                    widthSizeClass = widthSizeClass,
-                                    heightSizeClass = heightSizeClass
-                                )
+                                Box(modifier = Modifier.padding(horizontal = horizontalPadding)) {
+                                    ModernRecentlyPlayedSection(
+                                        recentlyPlayed = recentlyPlayed.take(recentlyPlayedCount),
+                                        onSongClick = onSongClick,
+                                        musicViewModel = musicViewModel,
+                                        coroutineScope = coroutineScope,
+                                        widthSizeClass = widthSizeClass,
+                                        heightSizeClass = heightSizeClass
+                                    )
+                                }
                             }
                         }
                     }
@@ -881,42 +785,29 @@ private fun ModernScrollableContent(
                         if (showDiscoverCarousel) {
                             item(key = "section_discover") {
                                 Column {
-                                    if (showGreeting) {
-                                        ModernSectionTitle(
-                                            title = context.getString(R.string.home_discover_albums),
-                                            subtitle = context.getString(R.string.home_explore_music),
-                                            viewAllAction = onViewAllAlbums
-                                        )
-                                        Spacer(modifier = Modifier.height(20.dp))
-                                    }
                                     if (currentFeaturedAlbums.isNotEmpty()) {
-                                        // Use larger carousel for tablets
-                                        val tabletCarouselHeight = when (widthSizeClass) {
-                                            WindowWidthSizeClass.Medium -> carouselHeight + 60  // +60dp for medium tablets
-                                            WindowWidthSizeClass.Expanded -> carouselHeight + 100  // +100dp for large tablets
-                                            else -> carouselHeight
-                                        }
+                                        // NO horizontal padding applied here to allow full-bleed hero layout!
                                         ModernFeaturedSection(
                                             albums = currentFeaturedAlbums,
-                                            carouselState = featuredCarouselState,
                                             onAlbumClick = onAlbumClick,
                                             showAlbumName = discoverShowAlbumName,
                                             showArtistName = discoverShowArtistName,
                                             showYear = discoverShowYear,
                                             showPlayButton = discoverShowPlayButton,
                                             showGradient = discoverShowGradient,
-                                            carouselHeight = tabletCarouselHeight,
                                             carouselStyle = discoverCarouselStyle,
                                             widthSizeClass = widthSizeClass,
                                             heightSizeClass = heightSizeClass
                                         )
                                     } else {
-                                        ModernEmptyState(
-                                            icon = Icons.Rounded.Album,
-                                            title = context.getString(R.string.home_no_featured_albums),
-                                            subtitle = context.getString(R.string.home_no_featured_albums_desc),
-                                            iconSize = 48.dp
-                                        )
+                                        Box(modifier = Modifier.padding(horizontal = horizontalPadding)) {
+                                            ModernEmptyState(
+                                                icon = Icons.Rounded.Album,
+                                                title = context.getString(R.string.home_no_featured_albums),
+                                                subtitle = context.getString(R.string.home_no_featured_albums_desc),
+                                                iconSize = 48.dp
+                                            )
+                                        }
                                     }
                                 }
                             }
@@ -925,29 +816,31 @@ private fun ModernScrollableContent(
                     "ARTISTS" -> {
                         if (showArtists) {
                             item(key = "section_artists") {
-                                if (availableArtists.isNotEmpty()) {
-                                    ModernArtistsSection(
-                                        artists = availableArtists.take(artistsCount),
-                                        songs = allSongs,
-                                        onArtistClick = onArtistClick,
-                                        onViewAllArtists = onViewAllArtists,
-                                        widthSizeClass = widthSizeClass,
-                                        heightSizeClass = heightSizeClass
-                                    )
-                                } else {
-                                    Column {
-                                        ModernSectionTitle(
-                                            title = context.getString(R.string.home_artists),
-                                            subtitle = context.getString(R.string.home_explore_musicians),
-                                            viewAllAction = onViewAllArtists
+                                Box(modifier = Modifier.padding(horizontal = horizontalPadding)) {
+                                    if (availableArtists.isNotEmpty()) {
+                                        ModernArtistsSection(
+                                            artists = availableArtists.take(artistsCount),
+                                            songs = allSongs,
+                                            onArtistClick = onArtistClick,
+                                            onViewAllArtists = onViewAllArtists,
+                                            widthSizeClass = widthSizeClass,
+                                            heightSizeClass = heightSizeClass
                                         )
-                                        Spacer(modifier = Modifier.height(20.dp))
-                                        ModernEmptyState(
-                                            icon = Icons.Rounded.Person,
-                                            title = context.getString(R.string.home_no_artists),
-                                            subtitle = context.getString(R.string.home_no_artists_desc),
-                                            iconSize = 48.dp
-                                        )
+                                    } else {
+                                        Column {
+                                            ModernSectionTitle(
+                                                title = context.getString(R.string.home_artists),
+                                                subtitle = context.getString(R.string.home_explore_musicians),
+                                                viewAllAction = onViewAllArtists
+                                            )
+                                            Spacer(modifier = Modifier.height(20.dp))
+                                            ModernEmptyState(
+                                                icon = Icons.Rounded.Person,
+                                                title = context.getString(R.string.home_no_artists),
+                                                subtitle = context.getString(R.string.home_no_artists_desc),
+                                                iconSize = 48.dp
+                                            )
+                                        }
                                     }
                                 }
                             }
@@ -956,101 +849,100 @@ private fun ModernScrollableContent(
                     "NEW_RELEASES" -> {
                         if (showNewReleases) {
                             item(key = "section_new_releases") {
-                                Column {
-                                    ModernSectionTitle(
-                                        title = context.getString(R.string.home_new_releases),
-                                        subtitle = context.getString(R.string.home_fresh_music),
-                                        onPlayAll = {
-                                            coroutineScope.launch {
-                                                val allNewReleaseSongs = newReleases.flatMap { album ->
-                                                    musicViewModel.getMusicRepository().getSongsForAlbumLocal(album.id)
+                                Box(modifier = Modifier.padding(horizontal = horizontalPadding)) {
+                                    Column {
+                                        ModernSectionTitle(
+                                            title = context.getString(R.string.home_new_releases),
+                                            subtitle = context.getString(R.string.home_fresh_music),
+                                            onPlayAll = {
+                                                coroutineScope.launch {
+                                                    val allNewReleaseSongs = newReleases.flatMap { album ->
+                                                        musicViewModel.getMusicRepository().getSongsForAlbumLocal(album.id)
+                                                    }
+                                                    if (allNewReleaseSongs.isNotEmpty()) {
+                                                        musicViewModel.playQueueWithUserRule(allNewReleaseSongs, sourceLabel = "Home New Releases")
+                                                    }
                                                 }
-                                                if (allNewReleaseSongs.isNotEmpty()) {
-                                                    musicViewModel.playQueueWithUserRule(allNewReleaseSongs, sourceLabel = "Home New Releases")
+                                            },
+                                            onShufflePlay = {
+                                                coroutineScope.launch {
+                                                    val allNewReleaseSongs = newReleases.flatMap { album ->
+                                                        musicViewModel.getMusicRepository().getSongsForAlbumLocal(album.id)
+                                                    }
+                                                    if (allNewReleaseSongs.isNotEmpty()) {
+                                                        musicViewModel.playShuffled(allNewReleaseSongs)
+                                                    }
                                                 }
                                             }
-                                        },
-                                        onShufflePlay = {
-                                            coroutineScope.launch {
-                                                val allNewReleaseSongs = newReleases.flatMap { album ->
-                                                    musicViewModel.getMusicRepository().getSongsForAlbumLocal(album.id)
+                                        )
+                                        Spacer(modifier = Modifier.height(20.dp))
+                                        if (newReleases.isNotEmpty()) {
+                                            val isTablet = widthSizeClass != WindowWidthSizeClass.Compact
+                                            if (isTablet) {
+                                                val gridColumns = when (widthSizeClass) {
+                                                    WindowWidthSizeClass.Medium -> 3
+                                                    WindowWidthSizeClass.Expanded -> 4
+                                                    else -> 2
                                                 }
-                                                if (allNewReleaseSongs.isNotEmpty()) {
-                                                    musicViewModel.playShuffled(allNewReleaseSongs)
+                                                val gridState = rememberLazyGridState()
+                                                val estimatedRows = (newReleases.take(newReleasesCount).size + gridColumns - 1) / gridColumns
+                                                val cardHeight = when (widthSizeClass) {
+                                                    WindowWidthSizeClass.Medium -> 300.dp
+                                                    WindowWidthSizeClass.Expanded -> 330.dp
+                                                    else -> 240.dp
                                                 }
-                                            }
-                                        }
-                                    )
-                                    Spacer(modifier = Modifier.height(20.dp))
-                                    if (newReleases.isNotEmpty()) {
-                                        val isTablet = widthSizeClass != WindowWidthSizeClass.Compact
-                                        if (isTablet) {
-                                            // Enhanced grid layout for tablets with better column distribution
-                                            val gridColumns = when (widthSizeClass) {
-                                                WindowWidthSizeClass.Medium -> 3  // 3 columns for medium tablets
-                                                WindowWidthSizeClass.Expanded -> 4  // 4 columns for large tablets
-                                                else -> 2
-                                            }
-                                            val gridState = rememberLazyGridState()
-                                            // Calculate dynamic height based on content and columns
-                                            val estimatedRows = (newReleases.take(newReleasesCount).size + gridColumns - 1) / gridColumns
-                                            val cardHeight = when (widthSizeClass) {
-                                                WindowWidthSizeClass.Medium -> 300.dp
-                                                WindowWidthSizeClass.Expanded -> 330.dp
-                                                else -> 240.dp
-                                            }
-                                            val gridHeight = (cardHeight.value * minOf(estimatedRows, 2) + 20f * (minOf(estimatedRows, 2) - 1)).dp
+                                                val gridHeight = (cardHeight.value * minOf(estimatedRows, 2) + 20f * (minOf(estimatedRows, 2) - 1)).dp
 
-                                            LazyVerticalGrid(
-                                                columns = GridCells.Fixed(gridColumns),
-                                                state = gridState,
-                                                horizontalArrangement = Arrangement.spacedBy(24.dp), // More spacing for tablets
-                                                verticalArrangement = Arrangement.spacedBy(24.dp),   // More spacing for tablets
-                                                modifier = Modifier.height(gridHeight),
-                                                contentPadding = PaddingValues(horizontal = 8.dp)
-                                            ) {
-                                                items(
-                                                    items = newReleases.take(newReleasesCount),
-                                                    key = { "newrelease_${it.id}" },
-                                                    contentType = { "album" }
-                                                ) { album ->
-                                                    ModernAlbumCard(
-                                                        album = album,
-                                                        onClick = { onAlbumClick(album) },
-                                                        widthSizeClass = widthSizeClass,
-                                                        heightSizeClass = heightSizeClass
-                                                    )
+                                                LazyVerticalGrid(
+                                                    columns = GridCells.Fixed(gridColumns),
+                                                    state = gridState,
+                                                    horizontalArrangement = Arrangement.spacedBy(24.dp),
+                                                    verticalArrangement = Arrangement.spacedBy(24.dp),
+                                                    modifier = Modifier.height(gridHeight),
+                                                    contentPadding = PaddingValues(horizontal = 8.dp)
+                                                ) {
+                                                    items(
+                                                        items = newReleases.take(newReleasesCount),
+                                                        key = { "newrelease_${it.id}" },
+                                                        contentType = { "album" }
+                                                    ) { album ->
+                                                        ModernAlbumCard(
+                                                            album = album,
+                                                            onClick = { onAlbumClick(album) },
+                                                            widthSizeClass = widthSizeClass,
+                                                            heightSizeClass = heightSizeClass
+                                                        )
+                                                    }
+                                                }
+                                            } else {
+                                                val newReleasesListState = rememberLazyListState()
+                                                LazyRow(
+                                                    state = newReleasesListState,
+                                                    contentPadding = PaddingValues(horizontal = 8.dp),
+                                                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                                                ) {
+                                                    items(
+                                                        items = newReleases.take(newReleasesCount),
+                                                        key = { "newrelease_${it.id}" },
+                                                        contentType = { "album" }
+                                                    ) { album ->
+                                                        ModernAlbumCard(
+                                                            album = album,
+                                                            onClick = { onAlbumClick(album) },
+                                                            widthSizeClass = widthSizeClass,
+                                                            heightSizeClass = heightSizeClass
+                                                        )
+                                                    }
                                                 }
                                             }
                                         } else {
-                                            // Horizontal scroll for phones
-                                            val newReleasesListState = rememberLazyListState()
-                                            LazyRow(
-                                                state = newReleasesListState,
-                                                contentPadding = PaddingValues(horizontal = 8.dp),
-                                                horizontalArrangement = Arrangement.spacedBy(16.dp)
-                                            ) {
-                                                items(
-                                                    items = newReleases.take(newReleasesCount),
-                                                    key = { "newrelease_${it.id}" },
-                                                    contentType = { "album" }
-                                                ) { album ->
-                                                    ModernAlbumCard(
-                                                        album = album,
-                                                        onClick = { onAlbumClick(album) },
-                                                        widthSizeClass = widthSizeClass,
-                                                        heightSizeClass = heightSizeClass
-                                                    )
-                                                }
-                                            }
+                                            ModernEmptyState(
+                                                icon = Icons.Rounded.NewReleases,
+                                                title = context.getString(R.string.home_no_new_releases),
+                                                subtitle = context.getString(R.string.home_no_new_releases_desc),
+                                                iconSize = 48.dp
+                                            )
                                         }
-                                    } else {
-                                        ModernEmptyState(
-                                            icon = Icons.Rounded.NewReleases,
-                                            title = context.getString(R.string.home_no_new_releases),
-                                            subtitle = context.getString(R.string.home_no_new_releases_desc),
-                                            iconSize = 48.dp
-                                        )
                                     }
                                 }
                             }
@@ -1059,91 +951,90 @@ private fun ModernScrollableContent(
                     "RECENTLY_ADDED" -> {
                         if (showRecentlyAdded) {
                             item(key = "section_recently_added") {
-                                Column {
-                                    ModernSectionTitle(
-                                        title = context.getString(R.string.home_recently_added),
-                                        subtitle = context.getString(R.string.home_latest_additions),
-                                        onPlayAll = {
-                                            if (recentlyAddedSongs.isNotEmpty()) {
-                                                musicViewModel.playQueueWithUserRule(recentlyAddedSongs, sourceLabel = "Home Recently Added")
+                                Box(modifier = Modifier.padding(horizontal = horizontalPadding)) {
+                                    Column {
+                                        ModernSectionTitle(
+                                            title = context.getString(R.string.home_recently_added),
+                                            subtitle = context.getString(R.string.home_latest_additions),
+                                            onPlayAll = {
+                                                if (recentlyAddedSongs.isNotEmpty()) {
+                                                    musicViewModel.playQueueWithUserRule(recentlyAddedSongs, sourceLabel = "Home Recently Added")
+                                                }
+                                            },
+                                            onShufflePlay = {
+                                                if (recentlyAddedSongs.isNotEmpty()) {
+                                                    musicViewModel.playShuffled(recentlyAddedSongs)
+                                                }
                                             }
-                                        },
-                                        onShufflePlay = {
-                                            if (recentlyAddedSongs.isNotEmpty()) {
-                                                musicViewModel.playShuffled(recentlyAddedSongs)
-                                            }
-                                        }
-                                    )
-                                    Spacer(modifier = Modifier.height(20.dp))
-                                    if (recentlyAddedAlbums.isNotEmpty()) {
-                                        val isTablet = widthSizeClass != WindowWidthSizeClass.Compact
-                                        if (isTablet) {
-                                            // Enhanced grid layout for tablets with better column distribution
-                                            val gridColumns = when (widthSizeClass) {
-                                                WindowWidthSizeClass.Medium -> 3  // 3 columns for medium tablets
-                                                WindowWidthSizeClass.Expanded -> 4  // 4 columns for large tablets
-                                                else -> 2
-                                            }
-                                            val gridState = rememberLazyGridState()
-                                            // Calculate dynamic height based on content and columns
-                                            val estimatedRows = (recentlyAddedAlbums.take(recentlyAddedCount).size + gridColumns - 1) / gridColumns
-                                            val cardHeight = when (widthSizeClass) {
-                                                WindowWidthSizeClass.Medium -> 300.dp
-                                                WindowWidthSizeClass.Expanded -> 330.dp
-                                                else -> 240.dp
-                                            }
-                                            val gridHeight = (cardHeight.value * minOf(estimatedRows, 2) + 24f * (minOf(estimatedRows, 2) - 1)).dp
+                                        )
+                                        Spacer(modifier = Modifier.height(20.dp))
+                                        if (recentlyAddedAlbums.isNotEmpty()) {
+                                            val isTablet = widthSizeClass != WindowWidthSizeClass.Compact
+                                            if (isTablet) {
+                                                val gridColumns = when (widthSizeClass) {
+                                                    WindowWidthSizeClass.Medium -> 3
+                                                    WindowWidthSizeClass.Expanded -> 4
+                                                    else -> 2
+                                                }
+                                                val gridState = rememberLazyGridState()
+                                                val estimatedRows = (recentlyAddedAlbums.take(recentlyAddedCount).size + gridColumns - 1) / gridColumns
+                                                val cardHeight = when (widthSizeClass) {
+                                                    WindowWidthSizeClass.Medium -> 300.dp
+                                                    WindowWidthSizeClass.Expanded -> 330.dp
+                                                    else -> 240.dp
+                                                }
+                                                val gridHeight = (cardHeight.value * minOf(estimatedRows, 2) + 24f * (minOf(estimatedRows, 2) - 1)).dp
 
-                                            LazyVerticalGrid(
-                                                columns = GridCells.Fixed(gridColumns),
-                                                state = gridState,
-                                                horizontalArrangement = Arrangement.spacedBy(24.dp), // More spacing for tablets
-                                                verticalArrangement = Arrangement.spacedBy(24.dp),   // More spacing for tablets
-                                                modifier = Modifier.height(gridHeight),
-                                                contentPadding = PaddingValues(horizontal = 8.dp)
-                                            ) {
-                                                items(
-                                                    items = recentlyAddedAlbums.take(recentlyAddedCount),
-                                                    key = { "recentalbum_${it.id}" },
-                                                    contentType = { "album" }
-                                                ) { album ->
-                                                    ModernAlbumCard(
-                                                        album = album,
-                                                        onClick = { onAlbumClick(album) },
-                                                        widthSizeClass = widthSizeClass,
-                                                        heightSizeClass = heightSizeClass
-                                                    )
+                                                LazyVerticalGrid(
+                                                    columns = GridCells.Fixed(gridColumns),
+                                                    state = gridState,
+                                                    horizontalArrangement = Arrangement.spacedBy(24.dp),
+                                                    verticalArrangement = Arrangement.spacedBy(24.dp),
+                                                    modifier = Modifier.height(gridHeight),
+                                                    contentPadding = PaddingValues(horizontal = 8.dp)
+                                                ) {
+                                                    items(
+                                                        items = recentlyAddedAlbums.take(recentlyAddedCount),
+                                                        key = { "recentalbum_${it.id}" },
+                                                        contentType = { "album" }
+                                                    ) { album ->
+                                                        ModernAlbumCard(
+                                                            album = album,
+                                                            onClick = { onAlbumClick(album) },
+                                                            widthSizeClass = widthSizeClass,
+                                                            heightSizeClass = heightSizeClass
+                                                        )
+                                                    }
+                                                }
+                                            } else {
+                                                val recentlyAddedListState = rememberLazyListState()
+                                                LazyRow(
+                                                    state = recentlyAddedListState,
+                                                    contentPadding = PaddingValues(horizontal = 8.dp),
+                                                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                                                ) {
+                                                    items(
+                                                        items = recentlyAddedAlbums.take(recentlyAddedCount),
+                                                        key = { "recentalbum_${it.id}" },
+                                                        contentType = { "album" }
+                                                    ) { album ->
+                                                        ModernAlbumCard(
+                                                            album = album,
+                                                            onClick = { onAlbumClick(album) },
+                                                            widthSizeClass = widthSizeClass,
+                                                            heightSizeClass = heightSizeClass
+                                                        )
+                                                    }
                                                 }
                                             }
                                         } else {
-                                            // Horizontal scroll for phones
-                                            val recentlyAddedListState = rememberLazyListState()
-                                            LazyRow(
-                                                state = recentlyAddedListState,
-                                                contentPadding = PaddingValues(horizontal = 8.dp),
-                                                horizontalArrangement = Arrangement.spacedBy(16.dp)
-                                            ) {
-                                                items(
-                                                    items = recentlyAddedAlbums.take(recentlyAddedCount),
-                                                    key = { "recentalbum_${it.id}" },
-                                                    contentType = { "album" }
-                                                ) { album ->
-                                                    ModernAlbumCard(
-                                                        album = album,
-                                                        onClick = { onAlbumClick(album) },
-                                                        widthSizeClass = widthSizeClass,
-                                                        heightSizeClass = heightSizeClass
-                                                    )
-                                                }
-                                            }
+                                            ModernEmptyState(
+                                                icon = Icons.Rounded.LibraryAdd,
+                                                title = context.getString(R.string.home_no_recently_added),
+                                                subtitle = context.getString(R.string.home_no_recently_added_desc),
+                                                iconSize = 48.dp
+                                            )
                                         }
-                                    } else {
-                                        ModernEmptyState(
-                                            icon = Icons.Rounded.LibraryAdd,
-                                            title = context.getString(R.string.home_no_recently_added),
-                                            subtitle = context.getString(R.string.home_no_recently_added_desc),
-                                            iconSize = 48.dp
-                                        )
                                     }
                                 }
                             }
@@ -1152,41 +1043,42 @@ private fun ModernScrollableContent(
                     "RECOMMENDED" -> {
                         if (showRecommended) {
                             item(key = "section_recommended") {
-                                val recommendedSongs = remember(recentlyPlayed, songs, recommendedCount) {
-                                    // Generate recommendations based on recently played songs
-                                    if (recentlyPlayed.isNotEmpty()) {
-                                        val playedArtists = recentlyPlayed.map { it.artist }.distinct()
-                                        val playedAlbums = recentlyPlayed.map { it.album }.distinct()
-                                        
-                                        // Find songs from similar artists or albums
-                                        songs.filter { song ->
-                                            (song.artist in playedArtists || song.album in playedAlbums) &&
-                                            !recentlyPlayed.contains(song)
-                                        }.shuffled().take(recommendedCount)
-                                    } else {
-                                        // Fallback to random popular songs if no history
-                                        songs.shuffled().take(recommendedCount)
+                                Box(modifier = Modifier.padding(horizontal = horizontalPadding)) {
+                                    val recommendedSongs = remember(recentlyPlayed, songs, recommendedCount) {
+                                        if (recentlyPlayed.isNotEmpty()) {
+                                            val playedArtists = recentlyPlayed.map { it.artist }.distinct()
+                                            val playedAlbums = recentlyPlayed.map { it.album }.distinct()
+
+                                            songs.filter { song ->
+                                                (song.artist in playedArtists || song.album in playedAlbums) &&
+                                                        !recentlyPlayed.contains(song)
+                                            }.shuffled().take(recommendedCount)
+                                        } else {
+                                            songs.shuffled().take(recommendedCount)
+                                        }
                                     }
+
+                                    ModernRecommendedSection(
+                                        recommendedSongs = recommendedSongs,
+                                        onSongClick = onSongClick
+                                    )
                                 }
-                                
-                                ModernRecommendedSection(
-                                    recommendedSongs = recommendedSongs,
-                                    onSongClick = onSongClick
-                                )
                             }
                         }
                     }
                     "STATS" -> {
                         if (showListeningStats) {
                             item(key = "section_stats") {
-                                Column {
-                                    ModernSectionTitle(
-                                        title = context.getString(R.string.home_listening_stats),
-                                        subtitle = context.getString(R.string.home_listening_stats_subtitle),
-                                        viewAllAction = onNavigateToStats
-                                    )
-                                    Spacer(modifier = Modifier.height(20.dp))
-                                    ModernListeningStatsSection(onClick = onNavigateToStats, showHeader = false)
+                                Box(modifier = Modifier.padding(horizontal = horizontalPadding)) {
+                                    Column {
+                                        ModernSectionTitle(
+                                            title = context.getString(R.string.home_listening_stats),
+                                            subtitle = context.getString(R.string.home_listening_stats_subtitle),
+                                            viewAllAction = onNavigateToStats
+                                        )
+                                        Spacer(modifier = Modifier.height(20.dp))
+                                        ModernListeningStatsSection(onClick = onNavigateToStats, showHeader = false)
+                                    }
                                 }
                             }
                         }
@@ -1214,13 +1106,13 @@ private fun ModernWelcomeSection(
     val viewModel = viewModel<chromahub.rhythm.app.viewmodel.MusicViewModel>()
     val recentlyPlayed by viewModel.recentlyPlayed.collectAsState()
     val haptic = LocalHapticFeedback.current
-    
+
     // Responsive font sizes
     val configuration = LocalConfiguration.current
     val screenWidthDp = configuration.screenWidthDp
     val isCompactWidth = screenWidthDp < 400
     val isTablet = screenWidthDp >= 600
-    
+
     val greetingFontSize = when {
         isCompactWidth -> 28.sp
         isTablet -> 36.sp
@@ -1236,7 +1128,7 @@ private fun ModernWelcomeSection(
         isTablet -> 14.sp
         else -> 12.sp
     }
-    
+
     // Enhanced time-based quotes with proper time ranges
     val timeBasedQuote = remember {
         val hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY)
@@ -1273,7 +1165,7 @@ private fun ModernWelcomeSection(
             )
         }.random()
     }
-    
+
     val personalizedMessage = remember(recentlyPlayed) {
         if (recentlyPlayed.isNotEmpty()) {
             val recentSong = recentlyPlayed.firstOrNull()?.title
@@ -1286,7 +1178,7 @@ private fun ModernWelcomeSection(
             context.getString(R.string.home_discover_next_favorite)
         }
     }
-    
+
     val timeBasedTheme = remember(festiveTheme) {
         when (festiveTheme) {
             FestiveThemeType.CHRISTMAS -> Triple("🎄", "christmas", "🎅")
@@ -1309,9 +1201,9 @@ private fun ModernWelcomeSection(
     ExpressiveCard(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { 
+            .clickable {
                 HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
-                onSearchClick() 
+                onSearchClick()
             },
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.primaryContainer
@@ -1323,14 +1215,14 @@ private fun ModernWelcomeSection(
             Row(
                 modifier = Modifier
                     .align(Alignment.TopEnd)
-                    .padding(18.dp), // Reduced padding
-                horizontalArrangement = Arrangement.spacedBy(8.dp) // Reduced spacing
+                    .padding(18.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                repeat(3) { // Reduced from 3 to 2 decorative elements
+                repeat(3) {
                     Text(
                         text = timeBasedTheme.third,
-                        style = MaterialTheme.typography.titleLarge, // Reduced from headlineSmall
-                        modifier = Modifier.alpha(0.12f) // Slightly more transparent
+                        style = MaterialTheme.typography.titleLarge,
+                        modifier = Modifier.alpha(0.12f)
                     )
                 }
             }
@@ -1338,12 +1230,12 @@ private fun ModernWelcomeSection(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(24.dp) 
+                    .padding(24.dp)
             ) {
                 // Main greeting
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.padding(bottom = 0.dp) // Reduced spacing
+                    modifier = Modifier.padding(bottom = 0.dp)
                 ) {
                     val infiniteTransition = rememberInfiniteTransition(label = "emoji_pulse")
                     val emojiScale by infiniteTransition.animateFloat(
@@ -1355,7 +1247,7 @@ private fun ModernWelcomeSection(
                         ),
                         label = "emoji_scale"
                     )
-                    
+
                     Text(
                         text = timeBasedTheme.first,
                         style = MaterialTheme.typography.headlineLarge,
@@ -1366,7 +1258,7 @@ private fun ModernWelcomeSection(
                                 scaleY = emojiScale
                             }
                     )
-                    
+
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
                             text = greeting,
@@ -1379,7 +1271,7 @@ private fun ModernWelcomeSection(
                             text = timeBasedQuote,
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f),
-                            modifier = Modifier.padding(top = 5.dp) // Reduced spacing
+                            modifier = Modifier.padding(top = 5.dp)
                         )
                     }
 
@@ -1393,7 +1285,7 @@ private fun ModernWelcomeSection(
                             containerColor = MaterialTheme.colorScheme.surface,
                             contentColor = MaterialTheme.colorScheme.onSurface
                         ),
-                        modifier = Modifier.size(46.dp) // Larger, more prominent
+                        modifier = Modifier.size(46.dp)
                     ) {
                         Icon(
                             imageVector = Icons.Rounded.Search,
@@ -1403,51 +1295,10 @@ private fun ModernWelcomeSection(
                     }
                 }
                 Spacer(modifier = Modifier.height(8.dp))
-//
-//                // Quote section with Material 3 Expressive design
-//                Surface(
-//                    color = MaterialTheme.colorScheme.primary,
-//                    shape = RoundedCornerShape(24.dp), // More rounded
-//                    modifier = Modifier.fillMaxWidth()
-//                ) {
-//                    Row(
-//                        modifier = Modifier.padding(16.dp), // Reduced padding
-//                        verticalAlignment = Alignment.CenterVertically
-//                    ) {
-//                        Surface(
-//                            shape = CircleShape,
-//                            color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.3f),
-//                            modifier = Modifier.size(32.dp) // Reduced size
-//                        ) {
-//                            Box(
-//                                contentAlignment = Alignment.Center,
-//                                modifier = Modifier.fillMaxSize()
-//                            ) {
-//                                Text(
-//                                    text = "💭",
-//                                    style = MaterialTheme.typography.bodyLarge // Reduced size
-//                                )
-//                            }
-//                        }
-//
-//                        Spacer(modifier = Modifier.width(12.dp)) // Reduced spacing
-//
-//                        Text(
-//                            text = timeBasedQuote,
-//                            style = MaterialTheme.typography.bodyMedium, // Larger text for readability
-//                            fontWeight = FontWeight.Medium,
-//                            color = MaterialTheme.colorScheme.inverseOnSurface,
-//                            lineHeight = 22.sp, // Better line height
-//                            modifier = Modifier.weight(1f)
-//                        )
-//                    }
-//                }
             }
         }
     }
 }
-
-
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -1479,16 +1330,16 @@ private fun ModernRecentlyPlayedSection(
                 }
             }
         )
-        
+
         Spacer(modifier = Modifier.height(20.dp))
-        
+
         if (recentlyPlayed.isNotEmpty()) {
             val isTablet = widthSizeClass != WindowWidthSizeClass.Compact
             if (isTablet) {
                 // Grid layout for tablets - better use of space
                 val gridColumns = when (widthSizeClass) {
-                    WindowWidthSizeClass.Medium -> 2  // 2 columns for medium tablets
-                    WindowWidthSizeClass.Expanded -> 3  // 3 columns for large tablets
+                    WindowWidthSizeClass.Medium -> 2
+                    WindowWidthSizeClass.Expanded -> 3
                     else -> 2
                 }
                 val gridState = rememberLazyGridState()
@@ -1497,7 +1348,7 @@ private fun ModernRecentlyPlayedSection(
                     state = gridState,
                     horizontalArrangement = Arrangement.spacedBy(16.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp),
-                    modifier = Modifier.height(300.dp)  // Fixed height for grid
+                    modifier = Modifier.height(300.dp)
                 ) {
                     items(
                         items = recentlyPlayed,
@@ -1558,27 +1409,25 @@ private fun ModernRecentSongCard(
 
     val (cardWidth, cardHeight) = when (widthSizeClass) {
         WindowWidthSizeClass.Compact -> when (heightSizeClass) {
-            WindowHeightSizeClass.Compact -> 160.dp to 70.dp // Landscape phone - smaller
-            else -> 180.dp to 80.dp // Portrait phone
+            WindowHeightSizeClass.Compact -> 160.dp to 70.dp
+            else -> 180.dp to 80.dp
         }
         WindowWidthSizeClass.Medium -> when (heightSizeClass) {
-            WindowHeightSizeClass.Compact -> Dp.Unspecified to 90.dp // Full width for grid
-            else -> Dp.Unspecified to 95.dp // Full width for grid
+            WindowHeightSizeClass.Compact -> Dp.Unspecified to 90.dp
+            else -> Dp.Unspecified to 95.dp
         }
         WindowWidthSizeClass.Expanded -> when (heightSizeClass) {
-            WindowHeightSizeClass.Compact -> Dp.Unspecified to 100.dp // Full width for grid
-            else -> Dp.Unspecified to 100.dp // Full width for grid
+            WindowHeightSizeClass.Compact -> Dp.Unspecified to 100.dp
+            else -> Dp.Unspecified to 100.dp
         }
         else -> 180.dp to 80.dp
     }
-    
+
     val cardModifier = if (cardWidth == Dp.Unspecified) {
-        // Full width for grid layout on tablets
         Modifier
             .fillMaxWidth()
             .height(cardHeight)
     } else {
-        // Fixed width for horizontal scroll on phones
         Modifier
             .width(cardWidth)
             .height(cardHeight)
@@ -1604,19 +1453,18 @@ private fun ModernRecentSongCard(
         Row(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(16.dp), // More padding
+                .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Track artwork with expressive shape from settings
             M3ImageUtils.TrackImage(
                 imageUrl = song.artworkUri,
                 trackName = song.title,
                 modifier = Modifier.size(52.dp),
                 applyExpressiveShape = true
             )
-            
+
             Spacer(modifier = Modifier.width(12.dp))
-            
+
             Column(
                 modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.Center
@@ -1629,9 +1477,9 @@ private fun ModernRecentSongCard(
                     overflow = TextOverflow.Ellipsis,
                     color = MaterialTheme.colorScheme.onSurface
                 )
-                
+
                 Spacer(modifier = Modifier.height(2.dp))
-                
+
                 Text(
                     text = song.artist,
                     style = MaterialTheme.typography.bodySmall,
@@ -1640,12 +1488,10 @@ private fun ModernRecentSongCard(
                     overflow = TextOverflow.Ellipsis
                 )
             }
-            
-            // Play indicator
+
             Icon(
                 imageVector = Icons.Rounded.PlayArrow,
                 contentDescription = context.getString(R.string.cd_play),
-                
                 modifier = Modifier.size(16.dp)
             )
         }
@@ -1677,7 +1523,7 @@ private fun ModernSectionTitle(
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onBackground
             )
-            
+
             subtitle?.let {
                 Text(
                     text = it,
@@ -1687,15 +1533,12 @@ private fun ModernSectionTitle(
                 )
             }
         }
-        
-        // Material 3 Expressive Button Group for Play/Shuffle
+
         Row(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Play/Shuffle Button Group with expressive design
             if (onPlayAll != null || onShufflePlay != null) {
-                // Using proper ExpressiveButtonGroup component
                 ExpressiveButtonGroup(
                     style = ButtonGroupStyle.Tonal
                 ) {
@@ -1721,7 +1564,7 @@ private fun ModernSectionTitle(
                             )
                         }
                     }
-                    
+
                     onShufflePlay?.let { shuffleAction ->
                         ExpressiveGroupButton(
                             onClick = {
@@ -1749,7 +1592,6 @@ private fun ModernSectionTitle(
                 }
             }
 
-            // View All Button (Secondary Action) - Prominent size
             viewAllAction?.let {
                 var isPressed by remember { mutableStateOf(false) }
                 val scale by animateFloatAsState(
@@ -1760,7 +1602,7 @@ private fun ModernSectionTitle(
                     ),
                     label = "viewAllScale"
                 )
-                
+
                 ExpressiveOutlinedButton(
                     onClick = {
                         HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
@@ -1801,283 +1643,183 @@ private fun ModernSectionTitle(
         }
     }
 }
-
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 private fun ModernFeaturedSection(
     albums: List<Album>,
-    carouselState: androidx.compose.material3.carousel.CarouselState,
     onAlbumClick: (Album) -> Unit,
     showAlbumName: Boolean = true,
     showArtistName: Boolean = true,
     showYear: Boolean = true,
     showPlayButton: Boolean = true,
     showGradient: Boolean = true,
-    carouselHeight: Int = 260,
-    carouselStyle: Int = 0, // 0=Hero, 1=MultiBrowse, 2=Uncontained
+    carouselStyle: Int = 0,
     widthSizeClass: WindowWidthSizeClass = WindowWidthSizeClass.Compact,
     heightSizeClass: WindowHeightSizeClass = WindowHeightSizeClass.Medium
 ) {
-    val scope = rememberCoroutineScope()
     val context = LocalContext.current
     val haptic = LocalHapticFeedback.current
-    
-    Column(modifier = Modifier.fillMaxWidth()) {
-        when (carouselStyle) {
-            0 -> {
-                // Default - Centered Hero Carousel with 2 side peeks
-                HorizontalCenteredHeroCarousel(
-                    state = carouselState,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(when (widthSizeClass) {
-                            WindowWidthSizeClass.Compact -> carouselHeight.dp
-                            WindowWidthSizeClass.Medium -> (carouselHeight + 40).dp
-                            WindowWidthSizeClass.Expanded -> when (heightSizeClass) {
-                                WindowHeightSizeClass.Compact -> (carouselHeight + 20).dp // Landscape tablet
-                                else -> (carouselHeight + 40).dp // Portrait tablet
-                            }
-                            else -> carouselHeight.dp
-                        })
-                        .padding(vertical = 8.dp),
-                    itemSpacing = 8.dp,
-                    contentPadding = PaddingValues(horizontal = 0.dp),
-                    flingBehavior = CarouselDefaults.singleAdvanceFlingBehavior(state = carouselState)
-                ) { itemIndex ->
-                    val album = albums[itemIndex]
-                    HeroCarouselCard(
-                        album = album,
-                        onClick = { onAlbumClick(album) },
-                        modifier = Modifier.maskClip(MaterialTheme.shapes.extraLarge),
-                        showAlbumName = showAlbumName,
-                        showArtistName = showArtistName,
-                        showYear = showYear,
-                        showPlayButton = showPlayButton,
-                        showGradient = showGradient,
-                        itemIndex = itemIndex,
-                        currentItem = carouselState.currentItem
-                    )
-                }
-            }
-            else -> {
-                // Hero - Uncontained Carousel with 1 peek (larger centered item)
-                HorizontalUncontainedCarousel(
-                    state = carouselState,
-                    itemWidth = 300.dp,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(when (widthSizeClass) {
-                            WindowWidthSizeClass.Compact -> carouselHeight.dp
-                            WindowWidthSizeClass.Medium -> (carouselHeight + 40).dp
-                            WindowWidthSizeClass.Expanded -> when (heightSizeClass) {
-                                WindowHeightSizeClass.Compact -> (carouselHeight + 20).dp // Landscape tablet
-                                else -> (carouselHeight + 40).dp // Portrait tablet
-                            }
-                            else -> carouselHeight.dp
-                        })
-                        .padding(vertical = 8.dp),
-                    itemSpacing = 8.dp,
-                    contentPadding = PaddingValues(horizontal = 0.dp),
-                    flingBehavior = CarouselDefaults.singleAdvanceFlingBehavior(state = carouselState)
-                ) { itemIndex ->
-                    val album = albums[itemIndex]
-                    HeroCarouselCard(
-                        album = album,
-                        onClick = { onAlbumClick(album) },
-                        modifier = Modifier.maskClip(MaterialTheme.shapes.extraLarge),
-                        showAlbumName = showAlbumName,
-                        showArtistName = showArtistName,
-                        showYear = showYear,
-                        showPlayButton = showPlayButton,
-                        showGradient = showGradient,
-                        itemIndex = itemIndex,
-                        currentItem = carouselState.currentItem
-                    )
-                }
-            }
+    val viewModel = viewModel<chromahub.rhythm.app.viewmodel.MusicViewModel>()
+
+    val configuration = LocalConfiguration.current
+    val screenWidth = configuration.screenWidthDp.dp
+
+    // Perfect fit for any display size
+    val headerHeight = when (heightSizeClass) {
+        WindowHeightSizeClass.Compact -> 280.dp
+        else -> when (widthSizeClass) {
+            WindowWidthSizeClass.Medium -> 500.dp
+            WindowWidthSizeClass.Expanded -> 600.dp
+            else -> screenWidth
         }
-        
-        // Modern page indicators
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 16.dp),
-            horizontalArrangement = Arrangement.Center
-        ) {
-            repeat(albums.size) { index ->
-                val isSelected = index == carouselState.currentItem
-                
-                val width by animateFloatAsState(
-                    targetValue = if (isSelected) 24f else 8f,
-                    animationSpec = spring(
-                        dampingRatio = Spring.DampingRatioMediumBouncy,
-                        stiffness = Spring.StiffnessLow
-                    ),
-                    label = "indicator_width"
-                )
-                
-                val color = if (isSelected) 
-                    MaterialTheme.colorScheme.primary 
-                else 
-                    MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f)
-                
-                Box(
-                    modifier = Modifier
-                        .padding(horizontal = 4.dp)
-                        .width(width.dp)
-                        .height(8.dp)
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(color)
-                        .clickable { 
-                            HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
-                            scope.launch {
-                                carouselState.animateScrollToItem(index)
-                            }
-                        }
-                )
+    }
+
+    val carouselState = rememberCarouselState { albums.size }
+
+    // Auto-scroll one album at a time so the active item always snaps correctly.
+    LaunchedEffect(albums.size) {
+        if (albums.size > 1) {
+            while (true) {
+                delay(4500)
+                val currentItem = carouselState.currentItem
+                val nextItem = (currentItem + 1) % albums.size
+                carouselState.animateScrollToItem(nextItem)
             }
         }
     }
-}
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun androidx.compose.material3.carousel.CarouselItemScope.HeroCarouselCard(
-    album: Album,
-    onClick: (Album) -> Unit,
-    modifier: Modifier = Modifier,
-    showAlbumName: Boolean = true,
-    showArtistName: Boolean = true,
-    showYear: Boolean = true,
-    showPlayButton: Boolean = true,
-    showGradient: Boolean = true,
-    itemIndex: Int = 0,
-    currentItem: Int = 0
-) {
-    val context = LocalContext.current
-    val viewModel = viewModel<chromahub.rhythm.app.viewmodel.MusicViewModel>()
-    val haptic = LocalHapticFeedback.current
-    
-    // Hide text content on peeked items (not the current centered item)
-    val isPeeked = itemIndex != currentItem
-    
-    Card(
-        onClick = {
-            HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
-            onClick(album)
-        },
-        modifier = modifier
-            .fillMaxSize(),
-        shape = MaterialTheme.shapes.extraLarge,
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainer
-        )
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(headerHeight)
     ) {
-        Box(modifier = Modifier.fillMaxSize()) {
-            // Album artwork background - use M3ImageUtils.AlbumArt
-            M3ImageUtils.AlbumArt(
-                imageUrl = album.artworkUri,
-                albumName = album.title,
-                modifier = Modifier.fillMaxSize(),
-                applyExpressiveShape = false
-            )
-            
-            // Enhanced gradient overlays for better text readability
-            if (showGradient) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(
-                            Brush.verticalGradient(
-                                colors = listOf(
-                                    Color.Transparent,
-                                    Color.Transparent,
-                                    MaterialTheme.colorScheme.surface.copy(alpha = 0.3f),
-                                    MaterialTheme.colorScheme.surface.copy(alpha = 0.7f),
-                                    MaterialTheme.colorScheme.surface.copy(alpha = 0.9f)
-                                ),
-                                startY = 0f,
-                                endY = Float.POSITIVE_INFINITY
-                            )
-                        )
+        HorizontalUncontainedCarousel(
+            state = carouselState,
+            itemWidth = screenWidth,
+            itemSpacing = 0.dp,
+            contentPadding = PaddingValues(0.dp),
+            modifier = Modifier.fillMaxSize()
+        ) { page ->
+            val album = albums[page]
+
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .clip(RectangleShape)
+                    .clickable {
+                        HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                        onAlbumClick(album)
+                    }
+            ) {
+                // Background Artwork
+                M3ImageUtils.AlbumArt(
+                    imageUrl = album.artworkUri,
+                    albumName = album.title,
+                    modifier = Modifier.fillMaxSize(),
+                    applyExpressiveShape = false
                 )
-            }
-            
-            // Content - only show if at least one element is visible and not in peek mode
-            if (!isPeeked && (showAlbumName || showArtistName || showYear || showPlayButton)) {
+
+                // Heavy gradient using theme background
+                if (showGradient) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(
+                                Brush.verticalGradient(
+                                    colors = listOf(
+                                        MaterialTheme.colorScheme.background, // Blend top edge
+                                        MaterialTheme.colorScheme.background.copy(alpha = 0.6f),
+                                        Color.Transparent,
+                                        Color.Transparent,
+                                        MaterialTheme.colorScheme.background.copy(alpha = 0.6f),
+                                        MaterialTheme.colorScheme.background.copy(alpha = 0.95f),
+                                        MaterialTheme.colorScheme.background // Blend bottom edge
+                                    ),
+                                    startY = 0f,
+                                    endY = Float.POSITIVE_INFINITY
+                                )
+                            )
+                    )
+                }
+
+                // Bottom Content Overlays using theme typography colors
                 Column(
                     modifier = Modifier
                         .align(Alignment.BottomStart)
                         .fillMaxWidth()
-                        .padding(20.dp)
+                        .padding(24.dp)
                 ) {
                     if (showAlbumName) {
                         Text(
                             text = album.title,
-                            style = MaterialTheme.typography.headlineSmall,
+                            style = MaterialTheme.typography.displaySmall,
                             fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurface,
-                            maxLines = 2,
+                            color = MaterialTheme.colorScheme.onBackground,
+                            maxLines = 1,
                             overflow = TextOverflow.Ellipsis
                         )
                     }
-                    
+
                     if (showArtistName) {
+                        Spacer(modifier = Modifier.height(4.dp))
                         Text(
                             text = album.artist,
                             style = MaterialTheme.typography.titleMedium,
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.9f),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                             maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                            modifier = Modifier.padding(top = if (showAlbumName) 4.dp else 0.dp)
+                            overflow = TextOverflow.Ellipsis
                         )
                     }
-                    
-                    if (showYear || showPlayButton) {
-                        Spacer(modifier = Modifier.height(12.dp))
+
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    // Row to handle Play Button on the left and Year on the right
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
                         
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            if (showYear && album.year > 0) {
-                                Surface(
-                                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.8f),
-                                    shape = ExpressiveShapes.Full
-                                ) {
-                                    Text(
-                                        text = album.year.toString(),
-                                        style = MaterialTheme.typography.labelLarge,
-                                        fontWeight = FontWeight.Bold,
-                                        color = MaterialTheme.colorScheme.onPrimary,
-                                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
-                                    )
-                                }
+                        if (showPlayButton) {
+                            Button(
+                                onClick = {
+                                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
+                                    viewModel.playAlbum(album)
+                                },
+                                shape = RoundedCornerShape(percent = 50),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                                ),
+                                contentPadding = PaddingValues(horizontal = 32.dp, vertical = 16.dp),
+                                modifier = Modifier.height(56.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Rounded.PlayArrow,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(24.dp)
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = context.getString(R.string.action_play),
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.ExtraBold
+                                )
                             }
+                        } else {
+                            // Empty spacer to push year to the right if the play button is hidden
+                            Spacer(modifier = Modifier.width(8.dp))
+                        }
 
-                            Spacer(modifier = Modifier.weight(1f))
-
-                            // Enhanced play button
-                            if (showPlayButton) {
-                                ExpressiveFilledIconButton(
-                                    onClick = {
-                                        HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
-                                        viewModel.playAlbum(album)
-                                        onClick(album)
-                                    },
-                                    modifier = Modifier.size(48.dp),
-                                    colors = IconButtonDefaults.filledIconButtonColors(
-                                        containerColor = MaterialTheme.colorScheme.primary,
-                                        contentColor = MaterialTheme.colorScheme.onPrimary
-                                    )
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Rounded.PlayArrow,
-                                        contentDescription = context.getString(R.string.cd_play_album),
-                                        modifier = Modifier.size(24.dp)
-                                    )
-                                }
-                            }
+                        // Display the Year on the bottom right
+                        if (showYear && album.year > 0) {
+                            Text(
+                                text = album.year.toString(),
+                                style = MaterialTheme.typography.headlineMedium,
+                                fontWeight = FontWeight.Black,
+                                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.35f), // Looks like a subtle watermark
+                                modifier = Modifier.padding(end = 8.dp)
+                            )
                         }
                     }
                 }
@@ -2104,15 +1846,14 @@ private fun ModernArtistsSection(
             subtitle = context.getString(R.string.home_top_artists_subtitle),
             viewAllAction = onViewAllArtists
         )
-        
+
         Spacer(modifier = Modifier.height(16.dp))
-        
+
         val isTablet = widthSizeClass != WindowWidthSizeClass.Compact
         if (isTablet) {
-            // Grid layout for tablets - better display of artists
             val gridColumns = when (widthSizeClass) {
-                WindowWidthSizeClass.Medium -> 4  // 4 columns for medium tablets
-                WindowWidthSizeClass.Expanded -> 6  // 6 columns for large tablets
+                WindowWidthSizeClass.Medium -> 4
+                WindowWidthSizeClass.Expanded -> 6
                 else -> 3
             }
             val gridState = rememberLazyGridState()
@@ -2121,7 +1862,7 @@ private fun ModernArtistsSection(
                 state = gridState,
                 horizontalArrangement = Arrangement.spacedBy(20.dp),
                 verticalArrangement = Arrangement.spacedBy(20.dp),
-                modifier = Modifier.height(320.dp)  // Fixed height for artist grid
+                modifier = Modifier.height(320.dp)
             ) {
                 items(
                     items = artists,
@@ -2138,7 +1879,6 @@ private fun ModernArtistsSection(
                 }
             }
         } else {
-            // Horizontal scroll for phones
             val artistsListState = rememberLazyListState()
             LazyRow(
                 state = artistsListState,
@@ -2174,39 +1914,37 @@ private fun ModernArtistCard(
     val context = LocalContext.current
     val viewModel = viewModel<chromahub.rhythm.app.viewmodel.MusicViewModel>()
     val haptic = LocalHapticFeedback.current
-    
+
     val cardSize = when (widthSizeClass) {
         WindowWidthSizeClass.Compact -> when (heightSizeClass) {
-            WindowHeightSizeClass.Compact -> 100.dp // Landscape phone
-            else -> 120.dp // Portrait phone
+            WindowHeightSizeClass.Compact -> 100.dp
+            else -> 120.dp
         }
         WindowWidthSizeClass.Medium -> when (heightSizeClass) {
-            WindowHeightSizeClass.Compact -> 110.dp // Landscape tablet - larger for grid
-            else -> 120.dp // Portrait tablet - larger for grid
+            WindowHeightSizeClass.Compact -> 110.dp
+            else -> 120.dp
         }
         WindowWidthSizeClass.Expanded -> when (heightSizeClass) {
-            WindowHeightSizeClass.Compact -> 115.dp // Landscape large tablet
-            else -> 125.dp // Portrait large tablet
+            WindowHeightSizeClass.Compact -> 115.dp
+            else -> 125.dp
         }
         else -> 120.dp
     }
-    
+
     val isTablet = widthSizeClass != WindowWidthSizeClass.Compact
     val columnModifier = if (isTablet) {
-        // Full width for grid layout on tablets
         Modifier
             .fillMaxWidth()
-            .clickable { 
+            .clickable {
                 HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
-                onClick() 
+                onClick()
             }
     } else {
-        // Fixed width for horizontal scroll on phones
         Modifier
             .width(cardSize)
-            .clickable { 
+            .clickable {
                 HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
-                onClick() 
+                onClick()
             }
     }
 
@@ -2215,13 +1953,12 @@ private fun ModernArtistCard(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Box(modifier = Modifier.size(cardSize)) {
-            // Use M3ImageUtils.ArtistImage which applies expressive shape from settings
             M3ImageUtils.ArtistImage(
                 imageUrl = artist.artworkUri,
                 artistName = artist.name,
                 modifier = Modifier.fillMaxSize()
             )
-            
+
             ExpressiveFilledIconButton(
                 onClick = {
                     HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
@@ -2244,13 +1981,14 @@ private fun ModernArtistCard(
                 )
             }
         }
-        
+
         Spacer(modifier = Modifier.height(10.dp))
-        
+
         Text(
             text = artist.name,
             style = MaterialTheme.typography.titleSmall,
             fontWeight = FontWeight.SemiBold,
+            minLines = 2,
             maxLines = 2,
             overflow = TextOverflow.Ellipsis,
             textAlign = TextAlign.Center,
@@ -2270,24 +2008,23 @@ private fun ModernAlbumCard(
     val context = LocalContext.current
     val viewModel = viewModel<chromahub.rhythm.app.viewmodel.MusicViewModel>()
     val haptic = LocalHapticFeedback.current
-    
+
     val (cardWidth, cardHeight) = when (widthSizeClass) {
         WindowWidthSizeClass.Compact -> when (heightSizeClass) {
-            WindowHeightSizeClass.Compact -> 140.dp to 210.dp // Landscape phone
-            else -> 160.dp to 240.dp // Portrait phone
+            WindowHeightSizeClass.Compact -> 140.dp to 210.dp
+            else -> 160.dp to 240.dp
         }
         WindowWidthSizeClass.Medium -> when (heightSizeClass) {
-            WindowHeightSizeClass.Compact -> 180.dp to 270.dp // Landscape tablet - larger cards
-            else -> 200.dp to 300.dp // Portrait tablet - larger cards
+            WindowHeightSizeClass.Compact -> 180.dp to 270.dp
+            else -> 200.dp to 300.dp
         }
         WindowWidthSizeClass.Expanded -> when (heightSizeClass) {
-            WindowHeightSizeClass.Compact -> 200.dp to 300.dp // Landscape large tablet - even larger
-            else -> 220.dp to 330.dp // Portrait large tablet - even larger
+            WindowHeightSizeClass.Compact -> 200.dp to 300.dp
+            else -> 220.dp to 330.dp
         }
         else -> 160.dp to 240.dp
     }
 
-    // Enhanced Expressive Card with elevated styling
     ExpressiveElevatedCard(
         onClick = {
             HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
@@ -2295,14 +2032,14 @@ private fun ModernAlbumCard(
         },
         modifier = Modifier
             .width(cardWidth)
-            .height(cardHeight) // Fixed height to prevent layout issues
+            .height(cardHeight)
             .shadow(
-                elevation = 12.dp, // Increased elevation for more depth
-                shape = ExpressiveShapes.SquircleLarge, // Using squircle shape for modern look
+                elevation = 12.dp,
+                shape = ExpressiveShapes.SquircleLarge,
                 ambientColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
                 spotColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.18f)
             ),
-        shape = ExpressiveShapes.SquircleLarge, // More organic shape
+        shape = ExpressiveShapes.SquircleLarge,
         colors = CardDefaults.elevatedCardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
         )
@@ -2310,12 +2047,11 @@ private fun ModernAlbumCard(
         Column(modifier = Modifier.padding(
             when (widthSizeClass) {
                 WindowWidthSizeClass.Compact -> 12.dp
-                WindowWidthSizeClass.Medium -> 16.dp  // More padding for tablets
-                WindowWidthSizeClass.Expanded -> 20.dp // Even more padding for large tablets
+                WindowWidthSizeClass.Medium -> 16.dp
+                WindowWidthSizeClass.Expanded -> 20.dp
                 else -> 12.dp
             }
         )) {
-            // Album artwork - use M3ImageUtils.AlbumArt with expressive shape from settings
             Box {
                 M3ImageUtils.AlbumArt(
                     imageUrl = album.artworkUri,
@@ -2325,8 +2061,7 @@ private fun ModernAlbumCard(
                         .aspectRatio(1f),
                     shape = rememberExpressiveShapeFor(ExpressiveShapeTarget.ALBUM_ART)
                 )
-                
-                // Play button overlay
+
                 Box(
                     modifier = Modifier
                         .align(Alignment.BottomEnd)
@@ -2372,24 +2107,24 @@ private fun ModernAlbumCard(
                     }
                 }
             }
-            
+
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(1f) // Take remaining space
+                    .weight(1f)
                     .padding(
                         when (widthSizeClass) {
                             WindowWidthSizeClass.Compact -> 12.dp
-                            WindowWidthSizeClass.Medium -> 16.dp  // More padding for tablets
-                            WindowWidthSizeClass.Expanded -> 20.dp // Even more padding for large tablets
+                            WindowWidthSizeClass.Medium -> 16.dp
+                            WindowWidthSizeClass.Expanded -> 20.dp
                             else -> 12.dp
                         }
                     ),
                 verticalArrangement = Arrangement.spacedBy(
                     when (widthSizeClass) {
                         WindowWidthSizeClass.Compact -> 4.dp
-                        WindowWidthSizeClass.Medium -> 6.dp  // More spacing for tablets
-                        WindowWidthSizeClass.Expanded -> 8.dp // Even more spacing for large tablets
+                        WindowWidthSizeClass.Medium -> 6.dp
+                        WindowWidthSizeClass.Expanded -> 8.dp
                         else -> 4.dp
                     }
                 )
@@ -2398,8 +2133,8 @@ private fun ModernAlbumCard(
                     text = album.title,
                     style = when (widthSizeClass) {
                         WindowWidthSizeClass.Compact -> MaterialTheme.typography.titleSmall
-                        WindowWidthSizeClass.Medium -> MaterialTheme.typography.titleMedium  // Larger text for tablets
-                        WindowWidthSizeClass.Expanded -> MaterialTheme.typography.titleMedium // Larger text for large tablets
+                        WindowWidthSizeClass.Medium -> MaterialTheme.typography.titleMedium
+                        WindowWidthSizeClass.Expanded -> MaterialTheme.typography.titleMedium
                         else -> MaterialTheme.typography.titleSmall
                     },
                     fontWeight = FontWeight.SemiBold,
@@ -2408,18 +2143,18 @@ private fun ModernAlbumCard(
                     color = MaterialTheme.colorScheme.onSurface,
                     lineHeight = when (widthSizeClass) {
                         WindowWidthSizeClass.Compact -> 18.sp
-                        WindowWidthSizeClass.Medium -> 22.sp  // Better line height for tablets
-                        WindowWidthSizeClass.Expanded -> 24.sp // Better line height for large tablets
+                        WindowWidthSizeClass.Medium -> 22.sp
+                        WindowWidthSizeClass.Expanded -> 24.sp
                         else -> 18.sp
                     }
                 )
-                
+
                 Text(
                     text = album.artist,
                     style = when (widthSizeClass) {
                         WindowWidthSizeClass.Compact -> MaterialTheme.typography.bodySmall
-                        WindowWidthSizeClass.Medium -> MaterialTheme.typography.bodyMedium  // Larger text for tablets
-                        WindowWidthSizeClass.Expanded -> MaterialTheme.typography.bodyMedium // Larger text for large tablets
+                        WindowWidthSizeClass.Medium -> MaterialTheme.typography.bodyMedium
+                        WindowWidthSizeClass.Expanded -> MaterialTheme.typography.bodyMedium
                         else -> MaterialTheme.typography.bodySmall
                     },
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -2439,17 +2174,16 @@ private fun ModernSongCard(
     val context = LocalContext.current
     val haptic = LocalHapticFeedback.current
 
-    // Enhanced Expressive Card with improved visual depth
     ExpressiveElevatedCard(
         onClick = {
             HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
             onClick()
         },
         modifier = Modifier
-            .width(190.dp) // Slightly wider
-            .height(270.dp) // Slightly taller for better proportions
+            .width(190.dp)
+            .height(270.dp)
             .shadow(
-                elevation = 10.dp, // Increased elevation
+                elevation = 10.dp,
                 shape = ExpressiveShapes.SquircleLarge,
                 ambientColor = MaterialTheme.colorScheme.secondary.copy(alpha = 0.10f),
                 spotColor = MaterialTheme.colorScheme.secondary.copy(alpha = 0.15f)
@@ -2457,7 +2191,7 @@ private fun ModernSongCard(
         colors = CardDefaults.elevatedCardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
         ),
-        shape = ExpressiveShapes.SquircleLarge // More organic squircle shape
+        shape = ExpressiveShapes.SquircleLarge
     ) {
         Column(
             modifier = Modifier
@@ -2466,14 +2200,13 @@ private fun ModernSongCard(
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Surface(
-                shape = ExpressiveShapes.SquircleMedium, // Squircle shape for artwork
+                shape = ExpressiveShapes.SquircleMedium,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(1f), // Take most of the space
+                    .weight(1f),
                 color = MaterialTheme.colorScheme.surfaceVariant
             ) {
                 Box(modifier = Modifier.fillMaxSize()) {
-                    // Background gradient for better aesthetics
                     M3ImageUtils.TrackImage(
                         imageUrl = song.artworkUri,
                         trackName = song.title,
@@ -2482,25 +2215,24 @@ private fun ModernSongCard(
                     )
                 }
             }
-            
-            // Text section with fixed height
+
             Column(
-                modifier = Modifier.height(60.dp), // Fixed height for text
+                modifier = Modifier.height(60.dp),
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 Text(
                     text = song.title,
-                    style = MaterialTheme.typography.titleSmall, // Smaller text
+                    style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.SemiBold,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
                     color = MaterialTheme.colorScheme.onSurface,
-                    lineHeight = 16.sp // Compact line height
+                    lineHeight = 16.sp
                 )
-                
+
                 Text(
                     text = song.artist,
-                    style = MaterialTheme.typography.bodySmall, // Smaller text
+                    style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
@@ -2519,9 +2251,8 @@ private fun ModernListeningStatsSection(
     val viewModel = viewModel<chromahub.rhythm.app.viewmodel.MusicViewModel>()
     val songs by viewModel.songs.collectAsState()
 
-    // Load stats from PlaybackStatsRepository (matching ListeningStatsScreen)
     var statsSummary by remember { mutableStateOf<chromahub.rhythm.app.shared.data.repository.PlaybackStatsRepository.PlaybackStatsSummary?>(null) }
-    
+
     LaunchedEffect(songs) {
         statsSummary = viewModel.loadPlaybackStats(chromahub.rhythm.app.shared.data.repository.StatsTimeRange.ALL_TIME)
     }
@@ -2540,7 +2271,6 @@ private fun ModernListeningStatsSection(
         statsSummary?.uniqueArtists ?: 0
     }
 
-    // Enhanced stats card with expressive design and animations
     ExpressiveElevatedCard(
         onClick = onClick,
         modifier = Modifier.fillMaxWidth(),
@@ -2553,12 +2283,10 @@ private fun ModernListeningStatsSection(
             modifier = Modifier.padding(24.dp)
         ) {
             if (showHeader) {
-                // Header with animated icon and title
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    // Animated icon container with gradient background
                     Box(
                         modifier = Modifier
                             .size(56.dp)
@@ -2571,12 +2299,11 @@ private fun ModernListeningStatsSection(
                                 ),
                                 shape = ExpressiveShapes.SquircleMedium
                             ),
-                            contentAlignment = Alignment.Center
+                        contentAlignment = Alignment.Center
                     ) {
                         Icon(
                             imageVector = Icons.Rounded.BarChart,
                             contentDescription = null,
-                            
                             modifier = Modifier.size(28.dp)
                         )
                     }
@@ -2597,7 +2324,6 @@ private fun ModernListeningStatsSection(
                         )
                     }
 
-                    // Expressive navigation arrow
                     ExpressiveLargeIconButton(
                         onClick = onClick,
                         modifier = Modifier.size(40.dp)
@@ -2614,7 +2340,6 @@ private fun ModernListeningStatsSection(
                 Spacer(modifier = Modifier.height(32.dp))
             }
 
-            // Expressive stats grid with animated counters
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(20.dp)
@@ -2662,7 +2387,6 @@ private fun ExpressiveStatItem(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        // Expressive icon with animated background
         Surface(
             shape = ExpressiveShapes.SquircleMedium,
             color = accentColor.copy(alpha = 0.12f),
@@ -2681,7 +2405,6 @@ private fun ExpressiveStatItem(
             }
         }
 
-        // Animated counter value with expressive styling
         ExpressiveAnimatedCounter(
             value = value,
             style = MaterialTheme.typography.headlineMedium.copy(
@@ -2691,7 +2414,6 @@ private fun ExpressiveStatItem(
             suffix = suffix
         )
 
-        // Label with improved typography
         Text(
             text = label,
             style = MaterialTheme.typography.bodySmall,
@@ -2764,8 +2486,6 @@ private fun ModernStatCard(
     }
 }
 
-
-
 @Composable
 private fun ModernRecommendedSection(
     recommendedSongs: List<Song>,
@@ -2779,9 +2499,9 @@ private fun ModernRecommendedSection(
             title = context.getString(R.string.home_recommended_title),
             subtitle = context.getString(R.string.home_recommended_subtitle)
         )
-        
+
         Spacer(modifier = Modifier.height(20.dp))
-        
+
         if (recommendedSongs.isNotEmpty()) {
             Surface(
                 color = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.7f),
@@ -2796,7 +2516,7 @@ private fun ModernRecommendedSection(
                             song = song,
                             onClick = { onSongClick(song) }
                         )
-                        
+
                         if (index != recommendedSongs.lastIndex) {
                             Spacer(modifier = Modifier.height(12.dp))
                         }
@@ -2821,7 +2541,7 @@ private fun RecommendedSongItem(
 ) {
     val context = LocalContext.current
     val haptics = LocalHapticFeedback.current
-    
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -2829,7 +2549,7 @@ private fun RecommendedSongItem(
                 HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
                 onClick()
             })
-            .padding(vertical = 12.dp), // Increased vertical padding
+            .padding(vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         M3ImageUtils.TrackImage(
@@ -2838,9 +2558,9 @@ private fun RecommendedSongItem(
             modifier = Modifier.size(52.dp),
             applyExpressiveShape = true
         )
-        
+
         Spacer(modifier = Modifier.width(16.dp))
-        
+
         Column(
             modifier = Modifier.weight(1f)
         ) {
@@ -2852,7 +2572,7 @@ private fun RecommendedSongItem(
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
-            
+
             Text(
                 text = "${song.artist} • ${song.album}",
                 style = MaterialTheme.typography.bodyMedium,
@@ -2861,7 +2581,7 @@ private fun RecommendedSongItem(
                 overflow = TextOverflow.Ellipsis
             )
         }
-        
+
         ExpressiveFilledIconButton(
             onClick = {
                 HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
@@ -2887,26 +2607,25 @@ private fun ModernEmptyState(
     icon: ImageVector,
     title: String,
     subtitle: String,
-    iconSize: Dp = 64.dp // Increased icon size
+    iconSize: Dp = 64.dp
 ) {
     ExpressiveElevatedCard(
         modifier = Modifier
             .fillMaxWidth()
-            .height(220.dp) // Increased height for better visual presence
+            .height(220.dp)
             .padding(horizontal = 8.dp),
         colors = CardDefaults.elevatedCardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerLow
         ),
-        shape = ExpressiveShapes.SquircleLarge // Squircle shape for modern look
+        shape = ExpressiveShapes.SquircleLarge
     ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(28.dp), // Increased padding
+                .padding(28.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            // Icon with subtle background
             Surface(
                 shape = ExpressiveShapes.SquircleMedium,
                 color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f),
@@ -2919,29 +2638,28 @@ private fun ModernEmptyState(
                     Icon(
                         imageVector = icon,
                         contentDescription = null,
-                        
                         modifier = Modifier.size(iconSize)
                     )
                 }
             }
-            
-            Spacer(modifier = Modifier.height(16.dp)) // Increased spacing
-            
+
+            Spacer(modifier = Modifier.height(16.dp))
+
             Text(
                 text = title,
-                style = MaterialTheme.typography.titleLarge, // Larger title
+                style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface
             )
-            
-            Spacer(modifier = Modifier.height(8.dp)) // Increased spacing
-            
+
+            Spacer(modifier = Modifier.height(8.dp))
+
             Text(
                 text = subtitle,
-                style = MaterialTheme.typography.bodyLarge, // Larger subtitle
+                style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,
-                modifier = Modifier.padding(horizontal = 16.dp) // Added horizontal padding for subtitle
+                modifier = Modifier.padding(horizontal = 16.dp)
             )
         }
     }

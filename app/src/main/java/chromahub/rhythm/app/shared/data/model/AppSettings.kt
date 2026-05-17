@@ -609,7 +609,7 @@ class AppSettings private constructor(context: Context) {
     private val _amoledTheme = MutableStateFlow(prefs.getBoolean(KEY_AMOLED_THEME, false))
     val amoledTheme: StateFlow<Boolean> = _amoledTheme.asStateFlow()
     
-    private val _useDynamicColors = MutableStateFlow(prefs.getBoolean(KEY_USE_DYNAMIC_COLORS, false))
+    private val _useDynamicColors = MutableStateFlow(prefs.getBoolean(KEY_USE_DYNAMIC_COLORS, true))
     val useDynamicColors: StateFlow<Boolean> = _useDynamicColors.asStateFlow()
     
     // Artist Separator Settings
@@ -628,7 +628,7 @@ class AppSettings private constructor(context: Context) {
     private val _customFont = MutableStateFlow(prefs.getString(KEY_CUSTOM_FONT, "Geom") ?: "Geom")
     val customFont: StateFlow<String> = _customFont.asStateFlow()
     
-    private val _colorSource = MutableStateFlow(prefs.getString(KEY_COLOR_SOURCE, "CUSTOM") ?: "CUSTOM")
+    private val _colorSource = MutableStateFlow(prefs.getString(KEY_COLOR_SOURCE, "MONET") ?: "MONET")
     val colorSource: StateFlow<String> = _colorSource.asStateFlow()
     
     private val _extractedAlbumColors = MutableStateFlow(prefs.getString(KEY_EXTRACTED_ALBUM_COLORS, null))
@@ -4825,13 +4825,14 @@ private val _autoCheckForUpdates = MutableStateFlow(prefs.getBoolean(KEY_AUTO_CH
     
     // Default section order for home screen
     private val defaultHomeSectionOrder = listOf(
-        "GREETING", "DISCOVER", "RECENTLY_PLAYED", "ARTISTS", 
+        "DISCOVER", "RECENTLY_PLAYED", "ARTISTS",
         "NEW_RELEASES", "RECENTLY_ADDED", "RECOMMENDED", "STATS", "MOOD"
     )
     private val _homeSectionOrder = MutableStateFlow(
         prefs.getString(KEY_HOME_SECTION_ORDER, null)
             ?.split(",")
-            ?.filter { it.isNotBlank() }
+            ?.map(String::trim)
+            ?.filter { it.isNotBlank() && it != "GREETING" }
             ?.takeIf { it.isNotEmpty() }
             ?: defaultHomeSectionOrder
     )
@@ -4842,7 +4843,7 @@ private val _autoCheckForUpdates = MutableStateFlow(prefs.getBoolean(KEY_AUTO_CH
     }
 
     private val defaultStreamingHomeSectionOrder = listOf(
-        "GREETING", "DISCOVER", "RECENTLY_PLAYED", "ARTISTS", "RHYTHM_GUARD", "RHYTHM_STATS", "NEW_RELEASES"
+        "DISCOVER", "RECENTLY_PLAYED", "ARTISTS", "RHYTHM_GUARD", "RHYTHM_STATS", "NEW_RELEASES"
     )
 
     private fun normalizeStreamingHomeSectionOrder(rawSections: List<String>): List<String> {
@@ -4853,6 +4854,7 @@ private val _autoCheckForUpdates = MutableStateFlow(prefs.getBoolean(KEY_AUTO_CH
                     "STATS" -> "RHYTHM_STATS"
                     "PLAYLISTS" -> "DISCOVER"
                     "RECOMMENDED" -> "DISCOVER"
+                    "GREETING" -> "DISCOVER"
                     else -> it
                 }
             }

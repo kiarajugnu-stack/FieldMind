@@ -247,6 +247,17 @@ fun SettingsScreen(
                 onBackClick()
             }
         }
+        ,
+        headerContent = {
+            // Settings search moved into header
+            SettingsSearchBar(
+                query = searchQuery,
+                onQueryChange = { searchQuery = it },
+                modifier = Modifier
+                    .padding(horizontal = if (isTablet) 32.dp else 24.dp)
+                    .padding(top = 8.dp, bottom = 8.dp)
+            )
+        }
     ) { modifier ->
         val settingGroups = listOf(
             // 1. Look & Feel
@@ -412,21 +423,12 @@ fun SettingsScreen(
             LazyListState()
         }
         
-        // Main content with search
+        // Main content
         Column(
             modifier = modifier
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.background)
         ) {
-            // Search Bar
-            SettingsSearchBar(
-                query = searchQuery,
-                onQueryChange = { searchQuery = it },
-                modifier = Modifier
-                    .padding(horizontal = if (isTablet) 32.dp else 24.dp)
-                    .padding(top = 8.dp, bottom = 8.dp)
-            )
-            
             // Show search results or normal settings
             if (isSearchActive) {
                 SettingsSearchResults(

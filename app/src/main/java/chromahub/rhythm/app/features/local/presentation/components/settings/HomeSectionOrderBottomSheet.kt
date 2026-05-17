@@ -93,7 +93,6 @@ fun HomeSectionOrderBottomSheet(
     val sectionOrder by appSettings.homeSectionOrder.collectAsState()
     
     // Collect all visibility states
-    val showGreeting by appSettings.homeShowGreeting.collectAsState()
     val showRecentlyPlayed by appSettings.homeShowRecentlyPlayed.collectAsState()
     val showDiscoverCarousel by appSettings.homeShowDiscoverCarousel.collectAsState()
     val showArtists by appSettings.homeShowArtists.collectAsState()
@@ -102,13 +101,12 @@ fun HomeSectionOrderBottomSheet(
     val showRecommended by appSettings.homeShowRecommended.collectAsState()
     val showListeningStats by appSettings.homeShowListeningStats.collectAsState()
     
-    // Fixed sections: GREETING always first, DISCOVER always second (not reorderable)
+    // Fixed sections: DISCOVER always first (not reorderable)
     val fixedSections = setOf("GREETING", "DISCOVER", "MOOD")
     var reorderableList by remember { mutableStateOf(sectionOrder.filter { it !in fixedSections }.toList()) }
     var visibilityMap by remember {
         mutableStateOf(
             mapOf(
-                "GREETING" to showGreeting,
                 "RECENTLY_PLAYED" to showRecentlyPlayed,
                 "DISCOVER" to showDiscoverCarousel,
                 "ARTISTS" to showArtists,
@@ -150,7 +148,7 @@ fun HomeSectionOrderBottomSheet(
         containerColor = MaterialTheme.colorScheme.surfaceContainer,
         modifier = Modifier.fillMaxWidth()
     ) {
-        val totalSectionCards = reorderableList.size + 2
+        val totalSectionCards = reorderableList.size + 1
 
         Column(modifier = Modifier.fillMaxWidth()) {
             LazyColumn(
@@ -198,90 +196,7 @@ fun HomeSectionOrderBottomSheet(
                 Spacer(modifier = Modifier.height(24.dp))
             }
             
-            // Fixed Greeting section (always first, not reorderable)
-            item(key = "fixed_greeting") {
-                val (greetingName, greetingIcon) = getSectionInfo("GREETING")
-                val isGreetingVisible = visibilityMap["GREETING"] ?: true
-
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 4.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceContainerHighest
-                    ),
-                    shape = groupedBottomSheetItemShape(0, totalSectionCards)
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(16.dp),
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            Surface(
-                                shape = CircleShape,
-                                color = MaterialTheme.colorScheme.tertiaryContainer,
-                                modifier = Modifier.size(36.dp)
-                            ) {
-                                Box(contentAlignment = Alignment.Center) {
-                                    Icon(
-                                        imageVector = Icons.Default.PushPin,
-                                        contentDescription = null,
-
-                                        modifier = Modifier.size(18.dp)
-                                    )
-                                }
-                            }
-
-                            Icon(
-                                imageVector = greetingIcon,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.size(24.dp)
-                            )
-
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    text = greetingName,
-                                    style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.Medium,
-                                    color = MaterialTheme.colorScheme.onSurface
-                                )
-                                Text(
-                                    text = "Fixed position",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-                        }
-
-                        IconButton(
-                            onClick = {
-                                HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
-                                visibilityMap = visibilityMap.toMutableMap().apply {
-                                    this["GREETING"] = !isGreetingVisible
-                                }
-                            },
-                            modifier = Modifier.size(40.dp)
-                        ) {
-                            Icon(
-                                imageVector = if (isGreetingVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
-                                contentDescription = if (isGreetingVisible) "Hide greeting" else "Show greeting",
-                                tint = if (isGreetingVisible) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
-                                modifier = Modifier.size(20.dp)
-                            )
-                        }
-                    }
-                }
-            }
-
-            // Fixed Discover Carousel section (always second, not reorderable)
+            // Fixed Discover Carousel section (always first, not reorderable)
             item(key = "fixed_discover") {
                 val (discoverName, discoverIcon) = getSectionInfo("DISCOVER")
                 val isDiscoverVisible = visibilityMap["DISCOVER"] ?: true
@@ -293,7 +208,7 @@ fun HomeSectionOrderBottomSheet(
                     colors = CardDefaults.cardColors(
                         containerColor = MaterialTheme.colorScheme.surfaceContainerHighest
                     ),
-                    shape = groupedBottomSheetItemShape(1, totalSectionCards)
+                    shape = groupedBottomSheetItemShape(0, totalSectionCards)
                 ) {
                     Row(
                         modifier = Modifier
@@ -381,7 +296,7 @@ fun HomeSectionOrderBottomSheet(
                     colors = CardDefaults.cardColors(
                         containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
                     ),
-                    shape = groupedBottomSheetItemShape(index + 2, totalSectionCards)
+                    shape = groupedBottomSheetItemShape(index + 1, totalSectionCards)
                 ) {
                     Row(
                         modifier = Modifier
@@ -538,7 +453,6 @@ fun HomeSectionOrderBottomSheet(
                         )
                         reorderableList = defaultOrder
                         visibilityMap = mapOf(
-                            "GREETING" to true,
                             "RECENTLY_PLAYED" to true,
                             "DISCOVER" to true,
                             "ARTISTS" to true,
@@ -566,12 +480,11 @@ fun HomeSectionOrderBottomSheet(
                     onClick = {
                         HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
 
-                        // Save section order (GREETING first, DISCOVER second, then user-ordered sections)
-                        val finalOrder = listOf("GREETING", "DISCOVER") + reorderableList
+                        // Save section order (DISCOVER first, then user-ordered sections)
+                        val finalOrder = listOf("DISCOVER") + reorderableList
                         appSettings.setHomeSectionOrder(finalOrder)
 
                         // Save visibility for each section.
-                        appSettings.setHomeShowGreeting(visibilityMap["GREETING"] ?: true)
                         appSettings.setHomeShowRecentlyPlayed(visibilityMap["RECENTLY_PLAYED"] ?: true)
                         appSettings.setHomeShowDiscoverCarousel(visibilityMap["DISCOVER"] ?: true)
                         appSettings.setHomeShowArtists(visibilityMap["ARTISTS"] ?: true)

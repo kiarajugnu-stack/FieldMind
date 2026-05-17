@@ -116,6 +116,44 @@ fun GoSettingsScreen(
                 delay(380)
                 onBackClick()
             }
+        },
+        headerContent = {
+            Card(
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+                shape = RoundedCornerShape(40.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp)
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(20.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.CloudQueue,
+                        contentDescription = null,
+                        tint = if (appMode == "STREAMING") MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(32.dp)
+                    )
+                    Spacer(modifier = Modifier.width(16.dp))
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = if (appMode == "STREAMING") "Active" else "Disabled",
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                    TunerAnimatedSwitch(
+                        checked = appMode == "STREAMING",
+                        onCheckedChange = { enabled ->
+                            HapticUtils.performHapticFeedback(context, haptics, androidx.compose.ui.hapticfeedback.HapticFeedbackType.LongPress)
+                            if (enabled) appSettings.setAppMode("STREAMING") else appSettings.setAppMode("LOCAL")
+                        }
+                    )
+                }
+            }
         }
     ) { modifier ->
         LazyColumn(
@@ -129,43 +167,6 @@ fun GoSettingsScreen(
                 },
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
-            item {
-                Card(
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
-                    shape = RoundedCornerShape(40.dp),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(20.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.CloudQueue,
-                            contentDescription = null,
-                            tint = if (appMode == "STREAMING") MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.size(32.dp)
-                        )
-                        Spacer(modifier = Modifier.width(16.dp))
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = if (appMode == "STREAMING") "Active" else "Disabled",
-                                style = MaterialTheme.typography.titleLarge,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
-                        TunerAnimatedSwitch(
-                            checked = appMode == "STREAMING",
-                            onCheckedChange = { enabled ->
-                                HapticUtils.performHapticFeedback(context, haptics, androidx.compose.ui.hapticfeedback.HapticFeedbackType.LongPress)
-                                if (enabled) appSettings.setAppMode("STREAMING") else appSettings.setAppMode("LOCAL")
-                            }
-                        )
-                    }
-                }
-            }
-
             item {
                 Material3SettingsGroup(
                     title = "Services",

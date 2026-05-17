@@ -151,7 +151,6 @@ private const val STREAMING_SECTION_ARTISTS = "ARTISTS"
 private const val STREAMING_SECTION_NEW_RELEASES = "NEW_RELEASES"
 
 private val defaultStreamingHomeSections = listOf(
-    STREAMING_SECTION_GREETING,
     STREAMING_SECTION_DISCOVER,
     STREAMING_SECTION_RECENTLY_PLAYED,
     STREAMING_SECTION_ARTISTS,
@@ -189,7 +188,6 @@ fun StreamingContentHomeScreen(
     val hasLoadedLibrary by viewModel.hasLoadedLibrary.collectAsState()
     val error by viewModel.error.collectAsState()
     val sectionOrder by appSettings.streamingHomeSectionOrder.collectAsState()
-    val showGreetingSection by appSettings.streamingHomeShowGreeting.collectAsState()
     val showRhythmGuardSection by appSettings.streamingHomeShowRhythmGuard.collectAsState()
     val showRhythmStatsSection by appSettings.streamingHomeShowRhythmStats.collectAsState()
     val showDiscoverSection by appSettings.streamingHomeShowRecommended.collectAsState()
@@ -258,7 +256,6 @@ fun StreamingContentHomeScreen(
             ).distinct()
     }
     val sectionVisibility = remember(
-        showGreetingSection,
         showDiscoverSection,
         showRhythmGuardSection,
         showRhythmStatsSection,
@@ -267,7 +264,6 @@ fun StreamingContentHomeScreen(
         showNewReleasesSection
     ) {
         mapOf(
-            STREAMING_SECTION_GREETING to showGreetingSection,
             STREAMING_SECTION_DISCOVER to showDiscoverSection,
             STREAMING_SECTION_RHYTHM_GUARD to showRhythmGuardSection,
             STREAMING_SECTION_RHYTHM_STATS to showRhythmStatsSection,
@@ -277,7 +273,7 @@ fun StreamingContentHomeScreen(
         )
     }
     val orderedSections = remember(resolvedSectionOrder) {
-        val fixedTopSections = listOf(STREAMING_SECTION_GREETING, STREAMING_SECTION_DISCOVER)
+        val fixedTopSections = listOf(STREAMING_SECTION_DISCOVER)
         fixedTopSections + resolvedSectionOrder.filterNot { it in fixedTopSections }
     }
     val visibleSections = remember(orderedSections, sectionVisibility) {
@@ -320,8 +316,6 @@ fun StreamingContentHomeScreen(
     }
     val rhythmGuardTimeoutRemainingMs = (rhythmGuardTimeoutUntilMs - System.currentTimeMillis()).coerceAtLeast(0L)
     val isRhythmGuardTimeoutActive = rhythmGuardTimeoutRemainingMs > 0L
-    val greetingMessage = rememberGreetingMessage(context)
-    val greetingQuote = rememberGreetingQuote(context)
 
     LaunchedEffect(selectedServiceId, isSelectedServiceConnected, hasLoadedHomeContent) {
         if (isSelectedServiceConnected && !hasLoadedHomeContent) {
@@ -532,51 +526,9 @@ fun StreamingContentHomeScreen(
                 else -> {
                     visibleSections.forEach { sectionId ->
                         when (sectionId) {
-                        STREAMING_SECTION_GREETING -> {
-                            item(key = "streaming_section_greeting") {
-                                StreamingGreetingWidgetCard(
-                                    greeting = greetingMessage,
-                                    quote = greetingQuote,
-                                    selectedServiceName = selectedServiceName,
-                                    onNavigateToSearch = onNavigateToSearch
-                                )
-                            }
-                        }
-
                         STREAMING_SECTION_DISCOVER -> {
                             item(key = "streaming_section_discover") {
                                 Column(verticalArrangement = Arrangement.spacedBy(20.dp)) {
-                                    if (showGreetingSection) {
-                                    StreamingWidgetSectionTitle(
-                                        title = stringResource(id = R.string.home_section_discover),
-                                        subtitle = stringResource(
-                                            id = R.string.streaming_home_widget_recommended_subtitle,
-                                            selectedServiceName
-                                        ),
-                                        onPlayAll = recommendationWidgetSongs.takeIf { it.isNotEmpty() }
-                                            ?.let { songs ->
-                                                {
-                                                    HapticUtils.performHapticFeedback(
-                                                        context,
-                                                        haptics,
-                                                        HapticFeedbackType.LongPress
-                                                    )
-                                                    viewModel.playQueue(songs, startIndex = 0, shuffle = false)
-                                                }
-                                            },
-                                        onShufflePlay = recommendationWidgetSongs.takeIf { it.size > 1 }
-                                            ?.let { songs ->
-                                                {
-                                                    HapticUtils.performHapticFeedback(
-                                                        context,
-                                                        haptics,
-                                                        HapticFeedbackType.LongPress
-                                                    )
-                                                    viewModel.playQueue(songs, startIndex = 0, shuffle = true)
-                                                }
-                                            }
-                                    )
-                                }
 
                                     if (recommendationWidgetSongs.isEmpty()) {
                                     StreamingSectionEmptyCard(
@@ -1987,61 +1939,6 @@ private fun noShadowCardElevation() = CardDefaults.cardElevation(
     hoveredElevation = 0.dp,
     draggedElevation = 0.dp
 )
-
-@Composable
-private fun rememberGreetingMessage(context: android.content.Context): String {
-    val hourOfDay = remember { Calendar.getInstance().get(Calendar.HOUR_OF_DAY) }
-    val greetingRes = when (hourOfDay) {
-        in 5..11 -> R.string.home_greeting_morning
-        in 12..16 -> R.string.home_greeting_afternoon
-        in 17..21 -> R.string.home_greeting_evening
-        else -> R.string.home_greeting_night
-    }
-    return context.getString(greetingRes)
-}
-
-@Composable
-private fun rememberGreetingQuote(context: android.content.Context): String {
-    val hourOfDay = remember { Calendar.getInstance().get(Calendar.HOUR_OF_DAY) }
-    return remember(hourOfDay) {
-        when (hourOfDay) {
-            in 0..4 -> listOf(
-                context.getString(R.string.home_quote_late_night_1),
-                context.getString(R.string.home_quote_late_night_2),
-                context.getString(R.string.home_quote_late_night_3),
-                context.getString(R.string.home_quote_late_night_4)
-            )
-
-            in 5..11 -> listOf(
-                context.getString(R.string.home_quote_morning_1),
-                context.getString(R.string.home_quote_morning_2),
-                context.getString(R.string.home_quote_morning_3),
-                context.getString(R.string.home_quote_morning_4)
-            )
-
-            in 12..16 -> listOf(
-                context.getString(R.string.home_quote_afternoon_1),
-                context.getString(R.string.home_quote_afternoon_2),
-                context.getString(R.string.home_quote_afternoon_3),
-                context.getString(R.string.home_quote_afternoon_4)
-            )
-
-            in 17..20 -> listOf(
-                context.getString(R.string.home_quote_evening_1),
-                context.getString(R.string.home_quote_evening_2),
-                context.getString(R.string.home_quote_evening_3),
-                context.getString(R.string.home_quote_evening_4)
-            )
-
-            else -> listOf(
-                context.getString(R.string.home_quote_night_1),
-                context.getString(R.string.home_quote_night_2),
-                context.getString(R.string.home_quote_night_3),
-                context.getString(R.string.home_quote_night_4)
-            )
-        }.random()
-    }
-}
 
 private fun formatListeningDurationShort(durationMs: Long): String {
     if (durationMs <= 0L) return "0m"

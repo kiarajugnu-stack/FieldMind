@@ -17,8 +17,8 @@ android {
         applicationId = "chromahub.rhythm.app"
         minSdk = 26
         targetSdk = 37
-        versionCode = 483731004
-        versionName = "4.8.373.1004 Beta"
+        versionCode = 493751006
+        versionName = "4.9.375.1006 Beta"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -166,6 +166,7 @@ androidComponents {
 }
 
 dependencies {
+    implementation(libs.androidx.compose.ui.unit)
     // Desugaring library
     coreLibraryDesugaring(libs.androidx.desugar.jdk.libs)
 

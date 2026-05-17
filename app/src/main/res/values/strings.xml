@@ -711,7 +711,7 @@
     <string name="onboarding_media_scan_title">Filter Your Music Library</string>
     <string name="onboarding_media_scan_desc">Control which audio files appear in your library. Use Blacklist mode to hide unwanted files (ringtones, notifications), or Whitelist mode to only show specific music folders.</string>
     <string name="onboarding_media_scan_configure">Configure Media Scanning</string>
-    <string name="onboarding_media_scan_current_mode">Choose Blacklist or Whitelist mode • Current: %1$s</string>
+    <string name="onboarding_media_scan_current_mode">Choose Blacklist or Whitelist mode</string>
     <string name="onboarding_media_scan_settings">Media Scanning Settings</string>
     <string name="onboarding_media_scan_blacklist">Blacklist Mode: Hide specific songs and folders (ringtones, notifications)</string>
     <string name="onboarding_media_scan_whitelist">Whitelist Mode: Show only songs from selected folders</string>
@@ -802,7 +802,7 @@
     <string name="onboarding_checking_updates">Checking for Updates…</string>
     <string name="onboarding_update_available">Update Available</string>
     <string name="onboarding_stay_up_to_date">Stay Up to Date</string>
-    <string name="onboarding_update_default_desc">Get the latest features, improvements, and bug fixes automatically from GitHub. Choose between Stable releases (recommended) or Beta builds for early access to new features. No Google Play required.</string>
+    <string name="onboarding_update_default_desc">Get the latest features, improvements, and bug fixes automatically from GitHub.</string>
     <string name="onboarding_enable_updates_title">Enable Updates</string>
     <string name="onboarding_enable_updates_desc">Allow the app to check for and download updates</string>
     <string name="onboarding_periodic_check_title">Periodic Check</string>
@@ -892,13 +892,13 @@
     <string name="onboarding_integrations_desc">Enhance your listening experience by connecting to external services. Get album art, lyrics, scrobble your plays, and share what you\'re listening to.</string>
     <string name="onboarding_integrations_apis">API Services</string>
     <string name="onboarding_integrations_social">Social Features</string>
-    <string name="onboarding_integration_deezer">Deezer API</string>
+    <string name="onboarding_integration_deezer">Deezer</string>
     <string name="onboarding_integration_deezer_desc">Fetch high-quality album artwork and metadata</string>
-    <string name="onboarding_integration_lrclib">LrcLib API</string>
+    <string name="onboarding_integration_lrclib">LrcLib</string>
     <string name="onboarding_integration_lrclib_desc">Download synchronized lyrics for your songs</string>
     <string name="onboarding_integration_ytmusic">YouTube Music</string>
     <string name="onboarding_integration_ytmusic_desc">Access metadata and recommendations from YouTube Music</string>
-    <string name="onboarding_integration_spotify">Spotify API</string>
+    <string name="onboarding_integration_spotify">Canvas</string>
     <string name="onboarding_integration_spotify_desc">Fetch album art and metadata from Spotify</string>
     <string name="onboarding_integration_scrobbling">Last.fm Scrobbling</string>
     <string name="onboarding_integration_scrobbling_desc">Track your listening history on Last.fm</string>

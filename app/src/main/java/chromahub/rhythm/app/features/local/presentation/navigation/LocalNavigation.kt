@@ -424,16 +424,16 @@ fun LocalNavigation(
 
     var isMiniPlayerDismissed by rememberSaveable { mutableStateOf(false) }
 
-    LaunchedEffect(currentSong?.id) {
-        if (currentSong == null) {
+    LaunchedEffect(currentSong?.id, isPlaying) {
+        // Re-show mini-player when playback becomes active, including replaying the same song.
+        if (currentSong != null && isPlaying) {
             isMiniPlayerDismissed = false
         }
     }
 
     // Provide dynamic mini-player padding with comprehensive navigation handling
     val showMiniPlayer = currentSong != null && !isMiniPlayerDismissed &&
-        currentRoute != Screen.Player.route &&
-        currentRoute != Screen.Search.route
+        currentRoute != Screen.Player.route
     val showNavBar = remember(currentRoute) {
         currentRoute == Screen.Home.route ||
             isLibraryRoute ||

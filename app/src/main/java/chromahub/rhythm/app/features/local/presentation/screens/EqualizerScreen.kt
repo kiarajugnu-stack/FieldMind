@@ -632,6 +632,59 @@ fun EqualizerScreen(
                     )
                 }
             }
+        },
+        headerContent = {
+            // Equalizer Enable/Disable Card (moved to header)
+            Card(
+                colors = CardDefaults.cardColors(
+                    containerColor = if (isEqualizerEnabled)
+                        MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
+                    else
+                        MaterialTheme.colorScheme.surfaceContainer
+                ),
+                shape = RoundedCornerShape(40.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp)
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(20.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.Equalizer,
+                        contentDescription = null,
+                        tint = if (isEqualizerEnabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(32.dp)
+                    )
+                    Spacer(modifier = Modifier.width(16.dp))
+                    Column(modifier = Modifier.weight(1f)) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Text(
+                                text = when {
+                                    isEqualizerEnabled -> "Active"
+                                    else -> "Disabled"
+                                },
+                                style = MaterialTheme.typography.titleLarge,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+                    TunerAnimatedSwitch(
+                        checked = isEqualizerEnabled,
+                        onCheckedChange = { enabled ->
+                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                            isEqualizerEnabled = enabled
+                            viewModel.setEqualizerEnabled(enabled)
+                        }
+                    )
+                }
+            }
         }
     ) { modifier ->
         val lazyListState = rememberSaveable(
@@ -650,57 +703,6 @@ fun EqualizerScreen(
             contentPadding = PaddingValues(24.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Equalizer Enable/Disable Card
-            item {
-                Card(
-                    colors = CardDefaults.cardColors(
-                        containerColor = if (isEqualizerEnabled)
-                            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
-                        else
-                            MaterialTheme.colorScheme.surfaceContainer
-                    ),
-                    shape = RoundedCornerShape(40.dp),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(20.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Rounded.Equalizer,
-                            contentDescription = null,
-                            tint = if (isEqualizerEnabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.size(32.dp)
-                        )
-                        Spacer(modifier = Modifier.width(16.dp))
-                        Column(modifier = Modifier.weight(1f)) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                Text(
-                                    text = when {
-                                        isEqualizerEnabled -> "Active"
-                                        else -> "Disabled"
-                                    },
-                                    style = MaterialTheme.typography.titleLarge,
-                                    fontWeight = FontWeight.Bold
-                                )
-                            }
-                        }
-                        TunerAnimatedSwitch(
-                            checked = isEqualizerEnabled,
-                            onCheckedChange = { enabled ->
-                                HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
-                                isEqualizerEnabled = enabled
-                                viewModel.setEqualizerEnabled(enabled)
-                            }
-                        )
-                    }
-                }
-            }
 
             // Presets Section with animation
             item {

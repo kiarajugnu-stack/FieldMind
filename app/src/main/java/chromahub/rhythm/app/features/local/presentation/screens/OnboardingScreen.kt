@@ -5,6 +5,7 @@ import android.os.Build
 import android.provider.Settings
 import androidx.compose.material.icons.filled.*
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.animateColorAsState
@@ -120,12 +121,14 @@ import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+ 
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
+ 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -166,8 +169,8 @@ import chromahub.rhythm.app.shared.data.model.ArtistViewType
 import chromahub.rhythm.app.shared.data.model.AppSettings
 import chromahub.rhythm.app.shared.presentation.components.common.DataProcessingLoader
 import chromahub.rhythm.app.shared.presentation.components.common.InitializationLoader
-import chromahub.rhythm.app.shared.presentation.components.common.NetworkOperationLoader
 import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveButtonGroup
+import chromahub.rhythm.app.shared.presentation.components.common.M3LinearLoader
 import chromahub.rhythm.app.shared.presentation.components.Material3SettingsGroup
 import chromahub.rhythm.app.shared.presentation.components.Material3SettingsItem
 import chromahub.rhythm.app.shared.presentation.components.icons.RhythmIcons
@@ -191,6 +194,7 @@ import androidx.compose.ui.draw.rotate
 import java.util.Locale
 import kotlin.math.absoluteValue
 import android.app.Activity
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi
 import androidx.compose.material3.windowsizeclass.WindowSizeClass
 import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
@@ -301,6 +305,8 @@ fun OnboardingScreen(
             .background(MaterialTheme.colorScheme.surface)
             .let { if (isTablet) it.width(contentMaxWidth) else it }
     ) {
+        // Top app bar removed to provide a clean, full-screen onboarding experience.
+
         // Single onboarding card container for all pager content
         OnboardingCard(
             isTablet = isTablet,
@@ -336,9 +342,12 @@ fun OnboardingScreen(
                 }
                 // Container for step-specific content - positioned at top within pager page
                 Box(
-                    modifier = Modifier.fillMaxSize().padding(top=54.dp, start = horizontalPadding, end = horizontalPadding, bottom = cardPadding),
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .statusBarsPadding()
+                        .padding(top = 30.dp, start = horizontalPadding, end = horizontalPadding, bottom = 0.dp),
                     contentAlignment = Alignment.TopCenter
-                ) {
+                )    {
                     // Use key to preserve composable state across recompositions
                     androidx.compose.runtime.key(step) {
                         when (step) {
@@ -1661,6 +1670,49 @@ fun OnboardingScreen(
     }
 }
 
+@Composable
+private fun OnboardingTopBackButton(onBackClick: () -> Unit) {
+    val scope = rememberCoroutineScope()
+    val buttonScale = remember { Animatable(1f) }
+
+    IconButton(
+        onClick = {
+            scope.launch {
+                buttonScale.animateTo(0.92f, animationSpec = tween(100))
+                buttonScale.animateTo(
+                    1f,
+                    animationSpec = spring(
+                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                        stiffness = Spring.StiffnessHigh
+                    )
+                )
+            }
+            onBackClick()
+        },
+        modifier = Modifier
+            .fillMaxHeight()
+            .padding(start = 12.dp)
+            .graphicsLayer {
+                scaleX = buttonScale.value
+                scaleY = buttonScale.value
+            }
+    ) {
+        Box(
+            modifier = Modifier
+                .size(40.dp)
+                .clip(RoundedCornerShape(50))
+                .background(MaterialTheme.colorScheme.surfaceContainerHigh),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                contentDescription = "Back",
+                tint = MaterialTheme.colorScheme.onSurface
+            )
+        }
+    }
+}
+
 /**
  * Unified card container for all onboarding steps (except welcome)
  * Provides consistent Material You styling with rounded corners and elevated surface
@@ -1672,12 +1724,12 @@ private fun OnboardingCard(
     content: @Composable ColumnScope.() -> Unit
 ) {
     val contentMaxWidth = 600.dp
-    val cardPadding = if (isTablet) 20.dp else 18.dp
+    val cardPadding = if (isTablet) 20.dp else 10.dp
 
     Surface(
-        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+        color = MaterialTheme.colorScheme.surface,
         shape = MaterialTheme.shapes.extraLarge,
-        tonalElevation = if (isTablet) 4.dp else 2.dp,
+        tonalElevation = if (isTablet) 0.dp else 0.dp,
         modifier = modifier
             .fillMaxWidth()
             .let { if (isTablet) it.width(contentMaxWidth) else it }
@@ -1694,6 +1746,25 @@ private fun OnboardingCard(
             modifier = Modifier.padding(cardPadding),
             horizontalAlignment = Alignment.CenterHorizontally,
             content = content
+        )
+    }
+}
+
+@Composable
+private fun OnboardingStepHeaderIcon(
+    imageVector: ImageVector,
+    tint: Color,
+    iconSize: androidx.compose.ui.unit.Dp
+) {
+    Box(
+        modifier = Modifier.fillMaxWidth(),
+        contentAlignment = Alignment.Center
+    ) {
+        Icon(
+            imageVector = imageVector,
+            contentDescription = null,
+            tint = tint,
+            modifier = Modifier.size(iconSize)
         )
     }
 }
@@ -2149,28 +2220,19 @@ fun EnhancedPermissionContent(
                     visible = true,
                     enter = scaleIn() + fadeIn()
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .size(96.dp)
-                            .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = when (permissionScreenState) {
-                                PermissionScreenState.PermissionsGranted -> Icons.Filled.Check
-                                PermissionScreenState.RedirectToSettings -> Icons.Filled.Security
-                                else -> Icons.Filled.Security
-                            },
-                            contentDescription = "Permissions",
-                            tint = when (permissionScreenState) {
-                                PermissionScreenState.PermissionsGranted -> MaterialTheme.colorScheme.primary
-                                PermissionScreenState.RedirectToSettings -> MaterialTheme.colorScheme.error
-                                else -> MaterialTheme.colorScheme.primary
-                            },
-                            modifier = Modifier.size(48.dp)
-                        )
-                    }
+                    OnboardingStepHeaderIcon(
+                        imageVector = when (permissionScreenState) {
+                            PermissionScreenState.PermissionsGranted -> Icons.Filled.Check
+                            PermissionScreenState.RedirectToSettings -> Icons.Filled.Security
+                            else -> Icons.Filled.Security
+                        },
+                        tint = when (permissionScreenState) {
+                            PermissionScreenState.PermissionsGranted -> MaterialTheme.colorScheme.primary
+                            PermissionScreenState.RedirectToSettings -> MaterialTheme.colorScheme.error
+                            else -> MaterialTheme.colorScheme.primary
+                        },
+                        iconSize = 72.dp
+                    )
                 }
 
                 Text(
@@ -2349,28 +2411,19 @@ fun EnhancedPermissionContent(
                 visible = true,
                 enter = scaleIn() + fadeIn()
             ) {
-                Box(
-                    modifier = Modifier
-                        .size(80.dp)
-                        .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = when (permissionScreenState) {
-                            PermissionScreenState.PermissionsGranted -> Icons.Filled.Check
-                            PermissionScreenState.RedirectToSettings -> Icons.Filled.Security
-                            else -> Icons.Filled.Security
-                        },
-                        contentDescription = "Permissions",
-                        tint = when (permissionScreenState) {
-                            PermissionScreenState.PermissionsGranted -> MaterialTheme.colorScheme.primary
-                            PermissionScreenState.RedirectToSettings -> MaterialTheme.colorScheme.error
-                            else -> MaterialTheme.colorScheme.primary
-                        },
-                        modifier = Modifier.size(40.dp)
-                    )
-                }
+                OnboardingStepHeaderIcon(
+                    imageVector = when (permissionScreenState) {
+                        PermissionScreenState.PermissionsGranted -> Icons.Filled.Check
+                        PermissionScreenState.RedirectToSettings -> Icons.Filled.Security
+                        else -> Icons.Filled.Security
+                    },
+                    tint = when (permissionScreenState) {
+                        PermissionScreenState.PermissionsGranted -> MaterialTheme.colorScheme.primary
+                        PermissionScreenState.RedirectToSettings -> MaterialTheme.colorScheme.error
+                        else -> MaterialTheme.colorScheme.primary
+                    },
+                    iconSize = 56.dp
+                )
             }
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -2848,20 +2901,11 @@ fun EnhancedBackupRestoreContent(
                     visible = true,
                     enter = scaleIn() + fadeIn()
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .size(96.dp)
-                            .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.Backup,
-                            contentDescription = "Backup & Restore",
-                            
-                            modifier = Modifier.size(48.dp)
-                        )
-                    }
+                    OnboardingStepHeaderIcon(
+                        imageVector = Icons.Filled.Backup,
+                        tint = MaterialTheme.colorScheme.primary,
+                        iconSize = 72.dp
+                    )
                 }
 
                 Text(
@@ -3053,20 +3097,11 @@ fun EnhancedBackupRestoreContent(
                     visible = true,
                     enter = scaleIn() + fadeIn()
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .size(80.dp)
-                            .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.Backup,
-                            contentDescription = "Backup & Restore",
-                            
-                            modifier = Modifier.size(40.dp)
-                        )
-                    }
+                    OnboardingStepHeaderIcon(
+                        imageVector = Icons.Filled.Backup,
+                        tint = MaterialTheme.colorScheme.primary,
+                        iconSize = 56.dp
+                    )
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
@@ -3510,20 +3545,11 @@ fun EnhancedAudioPlaybackContent(
                     visible = true,
                     enter = scaleIn() + fadeIn()
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .size(96.dp)
-                            .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = RhythmIcons.Player.VolumeUp,
-                            contentDescription = "Audio & Playback Settings",
-                            
-                            modifier = Modifier.size(48.dp)
-                        )
-                    }
+                    OnboardingStepHeaderIcon(
+                        imageVector = RhythmIcons.Player.VolumeUp,
+                        tint = MaterialTheme.colorScheme.primary,
+                        iconSize = 72.dp
+                    )
                 }
 
                 Text(
@@ -3678,20 +3704,11 @@ fun EnhancedAudioPlaybackContent(
                 visible = true,
                 enter = scaleIn() + fadeIn()
             ) {
-                Box(
-                    modifier = Modifier
-                        .size(80.dp)
-                        .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = RhythmIcons.Player.VolumeUp,
-                        contentDescription = "Audio & Playback Settings",
-                        
-                        modifier = Modifier.size(40.dp)
-                    )
-                }
+                OnboardingStepHeaderIcon(
+                    imageVector = RhythmIcons.Player.VolumeUp,
+                    tint = MaterialTheme.colorScheme.primary,
+                    iconSize = 56.dp
+                )
             }
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -3870,20 +3887,11 @@ fun EnhancedLibrarySetupContent(
                     visible = true,
                     enter = scaleIn() + fadeIn()
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .size(96.dp)
-                            .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.LibraryMusic,
-                            contentDescription = "Library Setup",
-                            
-                            modifier = Modifier.size(48.dp)
-                        )
-                    }
+                    OnboardingStepHeaderIcon(
+                        imageVector = Icons.Filled.LibraryMusic,
+                        tint = MaterialTheme.colorScheme.primary,
+                        iconSize = 72.dp
+                    )
                 }
 
                 Text(
@@ -3993,20 +4001,11 @@ fun EnhancedLibrarySetupContent(
                 visible = true,
                 enter = scaleIn() + fadeIn()
             ) {
-                Box(
-                    modifier = Modifier
-                        .size(80.dp)
-                        .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Filled.LibraryMusic,
-                        contentDescription = "Library Setup",
-                        
-                        modifier = Modifier.size(40.dp)
-                    )
-                }
+                OnboardingStepHeaderIcon(
+                    imageVector = Icons.Filled.LibraryMusic,
+                    tint = MaterialTheme.colorScheme.primary,
+                    iconSize = 56.dp
+                )
             }
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -4178,33 +4177,31 @@ private fun FolderManagementCard(
     val context = LocalContext.current
     val haptic = LocalHapticFeedback.current
     val currentFolders = if (isBlacklistMode) blacklistedFolders else whitelistedFolders
+    val currentModeLabel = if (isBlacklistMode) "Blacklist" else "Whitelist"
 
     val folderItems = buildList {
         add(
             Material3SettingsItem(
-                icon = if (isBlacklistMode) Icons.Default.Block else Icons.Default.CheckCircle,
-                title = { Text(if (isBlacklistMode) "Blacklist Mode" else "Whitelist Mode") },
+                icon = Icons.Filled.FilterList,
+                title = { Text("Media Scan Mode") },
                 description = {
-                    Text(
-                        if (isBlacklistMode) {
-                            "Exclude selected folders from library"
-                        } else {
-                            "Only include selected folders in library"
-                        }
-                    )
-                },
-                trailingContent = {
-                    OnboardingAnimatedSwitch(
-                        checked = isBlacklistMode,
-                        onCheckedChange = {
-                            HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
-                            onModeChange(it)
-                        }
-                    )
-                },
-                onClick = {
-                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
-                    onModeChange(!isBlacklistMode)
+                    Column(modifier = Modifier.fillMaxWidth().padding(top = 8.dp)) {
+                        Text(
+                            text = context.getString(R.string.onboarding_media_scan_current_mode),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Spacer(modifier = Modifier.height(12.dp))
+                        ExpressiveButtonGroup(
+                            items = listOf("Blacklist", "Whitelist"),
+                            selectedIndex = if (isBlacklistMode) 0 else 1,
+                            onItemClick = { index ->
+                                HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                                onModeChange(index == 0)
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
                 }
             )
         )
@@ -4629,20 +4626,11 @@ fun EnhancedThemingContent(
                     visible = true,
                     enter = scaleIn() + fadeIn()
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .size(96.dp)
-                            .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.Palette,
-                            contentDescription = "Theming",
-                            
-                            modifier = Modifier.size(48.dp)
-                        )
-                    }
+                    OnboardingStepHeaderIcon(
+                        imageVector = Icons.Filled.Palette,
+                        tint = MaterialTheme.colorScheme.primary,
+                        iconSize = 72.dp
+                    )
                 }
 
                 Text(
@@ -4959,20 +4947,11 @@ fun EnhancedThemingContent(
                 visible = true,
                 enter = scaleIn() + fadeIn()
             ) {
-                Box(
-                    modifier = Modifier
-                        .size(80.dp)
-                        .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Filled.Palette,
-                        contentDescription = "Theming",
-                        
-                        modifier = Modifier.size(40.dp)
-                    )
-                }
+                OnboardingStepHeaderIcon(
+                    imageVector = Icons.Filled.Palette,
+                    tint = MaterialTheme.colorScheme.primary,
+                    iconSize = 56.dp
+                )
             }
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -5656,19 +5635,11 @@ fun EnhancedRhythmGuardContent(
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 AnimatedVisibility(visible = true, enter = scaleIn() + fadeIn()) {
-                    Box(
-                        modifier = Modifier
-                            .size(96.dp)
-                            .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.Security,
-                            contentDescription = null,
-                            modifier = Modifier.size(48.dp)
-                        )
-                    }
+                    OnboardingStepHeaderIcon(
+                        imageVector = Icons.Filled.Security,
+                        tint = MaterialTheme.colorScheme.primary,
+                        iconSize = 72.dp
+                    )
                 }
 
                 Text(
@@ -5735,19 +5706,11 @@ fun EnhancedRhythmGuardContent(
                 .verticalScroll(scrollState)
         ) {
             AnimatedVisibility(visible = true, enter = scaleIn() + fadeIn()) {
-                Box(
-                    modifier = Modifier
-                        .size(80.dp)
-                        .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Filled.Security,
-                        contentDescription = null,
-                        modifier = Modifier.size(40.dp)
-                    )
-                }
+                OnboardingStepHeaderIcon(
+                    imageVector = Icons.Filled.Security,
+                    tint = MaterialTheme.colorScheme.primary,
+                    iconSize = 56.dp
+                )
             }
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -5816,19 +5779,11 @@ fun EnhancedFullTourPromptContent(
             .verticalScroll(rememberScrollState())
     ) {
         AnimatedVisibility(visible = true, enter = scaleIn() + fadeIn()) {
-            Box(
-                modifier = Modifier
-                    .size(if (isTablet) 96.dp else 80.dp)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f)),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = Icons.Filled.AutoAwesome,
-                    contentDescription = null,
-                    modifier = Modifier.size(if (isTablet) 48.dp else 40.dp)
-                )
-            }
+            OnboardingStepHeaderIcon(
+                imageVector = Icons.Filled.AutoAwesome,
+                tint = MaterialTheme.colorScheme.secondary,
+                iconSize = if (isTablet) 72.dp else 56.dp
+            )
         }
 
         Spacer(modifier = Modifier.height(24.dp))
@@ -6056,55 +6011,23 @@ fun EnhancedUpdaterContent(
                     visible = true,
                     enter = scaleIn() + fadeIn()
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .size(96.dp)
-                            .clip(CircleShape)
-                            .background(
-                                when {
-                                    error != null -> MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f)
-                                    downloadedFile != null -> MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.3f)
-                                    updateAvailable -> MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
-                                    else -> MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
-                                }
-                            ),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        if (isCheckingForUpdates) {
-                            NetworkOperationLoader(
-                                modifier = Modifier
-                                    .size(48.dp)
-                                    .alpha(glowAlpha)
-                            )
-                        } else {
-                            Icon(
-                                imageVector = when {
-                                    error != null -> Icons.Filled.BugReport
-                                    downloadedFile != null -> Icons.Filled.CheckCircle
-                                    updateAvailable -> RhythmIcons.Download
-                                    isDownloading -> Icons.Filled.Autorenew
-                                    else -> Icons.Filled.SystemUpdate
-                                },
-                                contentDescription = "App Updates",
-                                tint = when {
-                                    error != null -> MaterialTheme.colorScheme.error
-                                    downloadedFile != null -> MaterialTheme.colorScheme.tertiary
-                                    updateAvailable -> MaterialTheme.colorScheme.primary
-                                    isDownloading -> MaterialTheme.colorScheme.secondary
-                                    else -> MaterialTheme.colorScheme.primary
-                                },
-                                modifier = Modifier
-                                    .size(48.dp)
-//                                    .rotate(if (isDownloading) rotationAngle else 0f)
-                                    .scale(
-                                        when {
-                                            downloadedFile != null -> successScale.value
-                                            else -> 1f
-                                        }
-                                    )
-                            )
-                        }
-                    }
+                    OnboardingStepHeaderIcon(
+                        imageVector = when {
+                            error != null -> Icons.Filled.BugReport
+                            downloadedFile != null -> Icons.Filled.CheckCircle
+                            updateAvailable -> RhythmIcons.Download
+                            isDownloading -> Icons.Filled.Autorenew
+                            else -> Icons.Filled.SystemUpdate
+                        },
+                        tint = when {
+                            error != null -> MaterialTheme.colorScheme.error
+                            downloadedFile != null -> MaterialTheme.colorScheme.tertiary
+                            updateAvailable -> MaterialTheme.colorScheme.primary
+                            isDownloading -> MaterialTheme.colorScheme.secondary
+                            else -> MaterialTheme.colorScheme.primary
+                        },
+                        iconSize = 72.dp
+                    )
                 }
 
                 // Title shows status
@@ -6128,6 +6051,16 @@ fun EnhancedUpdaterContent(
                     },
                     modifier = Modifier.padding(bottom = 12.dp)
                 )
+
+                if (isCheckingForUpdates || isDownloading) {
+                    M3LinearLoader(
+                        progress = if (isDownloading) downloadProgress / 100f else null,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(10.dp)
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                }
 
                 // Description shows version info or default text
                 Text(
@@ -6232,15 +6165,44 @@ fun EnhancedUpdaterContent(
                     containerColor = MaterialTheme.colorScheme.surfaceContainer
                 )
 
-                // Animated visibility for other update options based on updatesEnabled
-                AnimatedVisibility(
+                androidx.compose.animation.AnimatedVisibility(
                     visible = updatesEnabled,
-                    enter = expandVertically() + fadeIn(),
-                    exit = shrinkVertically() + fadeOut()
+                    enter = fadeIn() + expandVertically(),
+                    exit = fadeOut() + shrinkVertically()
                 ) {
                     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                         Material3SettingsGroup(
                             items = listOf(
+                                Material3SettingsItem(
+                                    icon = when (updateChannel) {
+                                        "stable" -> Icons.Filled.Public
+                                        "beta" -> Icons.Filled.BugReport
+                                        else -> Icons.Filled.Public
+                                    },
+                                    title = { Text(context.getString(R.string.onboarding_update_channel_title)) },
+                                    description = {
+                                        Column(modifier = Modifier.fillMaxWidth().padding(top = 8.dp)) {
+                                            Text(
+                                                text = context.getString(R.string.onboarding_update_channel_desc),
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+                                            Spacer(modifier = Modifier.height(12.dp))
+                                            ExpressiveButtonGroup(
+                                                items = listOf(
+                                                    context.getString(R.string.option_stable),
+                                                    context.getString(R.string.option_beta)
+                                                ),
+                                                selectedIndex = if (updateChannel == "beta") 1 else 0,
+                                                onItemClick = { index ->
+                                                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                                                    scope.launch { appSettings.setUpdateChannel(if (index == 0) "stable" else "beta") }
+                                                },
+                                                modifier = Modifier.fillMaxWidth()
+                                            )
+                                        }
+                                    }
+                                ),
                                 Material3SettingsItem(
                                     icon = Icons.Filled.Autorenew,
                                     title = { Text(context.getString(R.string.onboarding_periodic_check_title)) },
@@ -6250,17 +6212,13 @@ fun EnhancedUpdaterContent(
                                             checked = autoCheckForUpdates,
                                             onCheckedChange = { enabled ->
                                                 HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
-                                                scope.launch {
-                                                    appSettings.setAutoCheckForUpdates(enabled)
-                                                }
+                                                scope.launch { appSettings.setAutoCheckForUpdates(enabled) }
                                             }
                                         )
                                     },
                                     onClick = {
                                         HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
-                                        scope.launch {
-                                            appSettings.setAutoCheckForUpdates(!autoCheckForUpdates)
-                                        }
+                                        scope.launch { appSettings.setAutoCheckForUpdates(!autoCheckForUpdates) }
                                     }
                                 ),
                                 Material3SettingsItem(
@@ -6272,17 +6230,13 @@ fun EnhancedUpdaterContent(
                                             checked = updateNotificationsEnabled,
                                             onCheckedChange = { enabled ->
                                                 HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
-                                                scope.launch {
-                                                    appSettings.setUpdateNotificationsEnabled(enabled)
-                                                }
+                                                scope.launch { appSettings.setUpdateNotificationsEnabled(enabled) }
                                             }
                                         )
                                     },
                                     onClick = {
                                         HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
-                                        scope.launch {
-                                            appSettings.setUpdateNotificationsEnabled(!updateNotificationsEnabled)
-                                        }
+                                        scope.launch { appSettings.setUpdateNotificationsEnabled(!updateNotificationsEnabled) }
                                     }
                                 ),
                                 Material3SettingsItem(
@@ -6294,90 +6248,17 @@ fun EnhancedUpdaterContent(
                                             checked = useSmartUpdatePolling,
                                             onCheckedChange = { enabled ->
                                                 HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
-                                                scope.launch {
-                                                    appSettings.setUseSmartUpdatePolling(enabled)
-                                                }
+                                                scope.launch { appSettings.setUseSmartUpdatePolling(enabled) }
                                             }
                                         )
                                     },
                                     onClick = {
                                         HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
-                                        scope.launch {
-                                            appSettings.setUseSmartUpdatePolling(!useSmartUpdatePolling)
-                                        }
+                                        scope.launch { appSettings.setUseSmartUpdatePolling(!useSmartUpdatePolling) }
                                     }
                                 )
                             ),
                             containerColor = MaterialTheme.colorScheme.surfaceContainer
-                        )
-
-                        // Check Interval dropdown
-                        SettingsDropdownItem(
-                            title = context.getString(R.string.onboarding_check_interval_title),
-                            description = context.getString(R.string.onboarding_check_interval_desc),
-                            selectedOption = when (updateCheckIntervalHours) {
-                                1 -> context.getString(R.string.option_every_hour)
-                                3 -> context.getString(R.string.option_every_3_hours)
-                                6 -> context.getString(R.string.option_every_6_hours)
-                                12 -> context.getString(R.string.option_every_12_hours)
-                                24 -> context.getString(R.string.option_daily)
-                                else -> context.getString(R.string.option_every_6_hours)
-                            },
-                            icon = Icons.Filled.Schedule,
-                            options = listOf(
-                                context.getString(R.string.option_every_hour),
-                                context.getString(R.string.option_every_3_hours),
-                                context.getString(R.string.option_every_6_hours),
-                                context.getString(R.string.option_every_12_hours),
-                                context.getString(R.string.option_daily)
-                            ),
-                            onOptionSelected = { selectedOption ->
-                                val everyHour = context.getString(R.string.option_every_hour)
-                                val every3Hours = context.getString(R.string.option_every_3_hours)
-                                val every6Hours = context.getString(R.string.option_every_6_hours)
-                                val every12Hours = context.getString(R.string.option_every_12_hours)
-                                val daily = context.getString(R.string.option_daily)
-                                val hours = when (selectedOption) {
-                                    everyHour -> 1
-                                    every3Hours -> 3
-                                    every6Hours -> 6
-                                    every12Hours -> 12
-                                    daily -> 24
-                                    else -> 6
-                                }
-                                scope.launch {
-                                    appSettings.setUpdateCheckIntervalHours(hours)
-                                }
-                            }
-                        )
-
-                        // Update channel selection dropdown
-                        SettingsDropdownItem(
-                            title = context.getString(R.string.onboarding_update_channel_title),
-                            description = context.getString(R.string.onboarding_update_channel_desc),
-                            selectedOption = when (updateChannel) {
-                                "stable" -> context.getString(R.string.option_stable)
-                                "beta" -> context.getString(R.string.option_beta)
-                                else -> context.getString(R.string.option_stable)
-                            },
-                            icon = when (updateChannel) {
-                                "stable" -> Icons.Filled.Public
-                                "beta" -> Icons.Filled.BugReport
-                                else -> Icons.Filled.Public
-                            },
-                            options = listOf(context.getString(R.string.option_stable), context.getString(R.string.option_beta)),
-                            onOptionSelected = { selectedOption ->
-                                val stableOption = context.getString(R.string.option_stable)
-                                val betaOption = context.getString(R.string.option_beta)
-                                val channel = when (selectedOption) {
-                                    stableOption -> "stable"
-                                    betaOption -> "beta"
-                                    else -> "stable"
-                                }
-                                scope.launch {
-                                    appSettings.setUpdateChannel(channel)
-                                }
-                            }
                         )
                     }
                 }
@@ -6396,55 +6277,23 @@ fun EnhancedUpdaterContent(
                 visible = true,
                 enter = scaleIn() + fadeIn()
             ) {
-                Box(
-                    modifier = Modifier
-                        .size(80.dp)
-                        .clip(CircleShape)
-                        .background(
-                            when {
-                                error != null -> MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f)
-                                downloadedFile != null -> MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.3f)
-                                updateAvailable -> MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
-                                else -> MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
-                            }
-                        ),
-                    contentAlignment = Alignment.Center
-                ) {
-                    if (isCheckingForUpdates) {
-                        NetworkOperationLoader(
-                            modifier = Modifier
-                                .size(40.dp)
-                                .alpha(glowAlpha)
-                        )
-                    } else {
-                        Icon(
-                            imageVector = when {
-                                error != null -> Icons.Filled.BugReport
-                                downloadedFile != null -> Icons.Filled.CheckCircle
-                                updateAvailable -> RhythmIcons.Download
-                                isDownloading -> Icons.Filled.Autorenew
-                                else -> Icons.Filled.SystemUpdate
-                            },
-                            contentDescription = "App Updates",
-                            tint = when {
-                                error != null -> MaterialTheme.colorScheme.error
-                                downloadedFile != null -> MaterialTheme.colorScheme.tertiary
-                                updateAvailable -> MaterialTheme.colorScheme.primary
-                                isDownloading -> MaterialTheme.colorScheme.secondary
-                                else -> MaterialTheme.colorScheme.primary
-                            },
-                            modifier = Modifier
-                                .size(40.dp)
-//                                .rotate(if (isDownloading) rotationAngle else 0f)
-                                .scale(
-                                    when {
-                                        downloadedFile != null -> successScale.value
-                                        else -> 1f
-                                    }
-                                )
-                        )
-                    }
-                }
+                OnboardingStepHeaderIcon(
+                    imageVector = when {
+                        error != null -> Icons.Filled.BugReport
+                        downloadedFile != null -> Icons.Filled.CheckCircle
+                        updateAvailable -> RhythmIcons.Download
+                        isDownloading -> Icons.Filled.Autorenew
+                        else -> Icons.Filled.SystemUpdate
+                    },
+                    tint = when {
+                        error != null -> MaterialTheme.colorScheme.error
+                        downloadedFile != null -> MaterialTheme.colorScheme.tertiary
+                        updateAvailable -> MaterialTheme.colorScheme.primary
+                        isDownloading -> MaterialTheme.colorScheme.secondary
+                        else -> MaterialTheme.colorScheme.primary
+                    },
+                    iconSize = 56.dp
+                )
             }
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -6491,6 +6340,16 @@ fun EnhancedUpdaterContent(
                 },
                 modifier = Modifier.padding(bottom = 24.dp)
             )
+
+            if (isCheckingForUpdates || isDownloading) {
+                M3LinearLoader(
+                    progress = if (isDownloading) downloadProgress / 100f else null,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(10.dp)
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+            }
 
             // Update Actions UI - Only buttons and progress
             val showUpdateActions = isDownloading || updateAvailable || downloadedFile != null || error != null
@@ -6562,15 +6421,44 @@ fun EnhancedUpdaterContent(
                     containerColor = MaterialTheme.colorScheme.surfaceContainer
                 )
 
-                // Animated visibility for other update options based on updatesEnabled
-                AnimatedVisibility(
+                androidx.compose.animation.AnimatedVisibility(
                     visible = updatesEnabled,
-                    enter = expandVertically() + fadeIn(),
-                    exit = shrinkVertically() + fadeOut()
+                    enter = fadeIn() + expandVertically(),
+                    exit = fadeOut() + shrinkVertically()
                 ) {
                     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                         Material3SettingsGroup(
                             items = listOf(
+                                Material3SettingsItem(
+                                    icon = when (updateChannel) {
+                                        "stable" -> Icons.Filled.Public
+                                        "beta" -> Icons.Filled.BugReport
+                                        else -> Icons.Filled.Public
+                                    },
+                                    title = { Text(context.getString(R.string.onboarding_update_channel_title)) },
+                                    description = {
+                                        Column(modifier = Modifier.fillMaxWidth().padding(top = 8.dp)) {
+                                            Text(
+                                                text = context.getString(R.string.onboarding_update_channel_desc),
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+                                            Spacer(modifier = Modifier.height(12.dp))
+                                            ExpressiveButtonGroup(
+                                                items = listOf(
+                                                    context.getString(R.string.option_stable),
+                                                    context.getString(R.string.option_beta)
+                                                ),
+                                                selectedIndex = if (updateChannel == "beta") 1 else 0,
+                                                onItemClick = { index ->
+                                                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                                                    scope.launch { appSettings.setUpdateChannel(if (index == 0) "stable" else "beta") }
+                                                },
+                                                modifier = Modifier.fillMaxWidth()
+                                            )
+                                        }
+                                    }
+                                ),
                                 Material3SettingsItem(
                                     icon = Icons.Filled.Autorenew,
                                     title = { Text(context.getString(R.string.onboarding_periodic_check_title)) },
@@ -6580,17 +6468,13 @@ fun EnhancedUpdaterContent(
                                             checked = autoCheckForUpdates,
                                             onCheckedChange = { enabled ->
                                                 HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
-                                                scope.launch {
-                                                    appSettings.setAutoCheckForUpdates(enabled)
-                                                }
+                                                scope.launch { appSettings.setAutoCheckForUpdates(enabled) }
                                             }
                                         )
                                     },
                                     onClick = {
                                         HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
-                                        scope.launch {
-                                            appSettings.setAutoCheckForUpdates(!autoCheckForUpdates)
-                                        }
+                                        scope.launch { appSettings.setAutoCheckForUpdates(!autoCheckForUpdates) }
                                     }
                                 ),
                                 Material3SettingsItem(
@@ -6602,17 +6486,13 @@ fun EnhancedUpdaterContent(
                                             checked = updateNotificationsEnabled,
                                             onCheckedChange = { enabled ->
                                                 HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
-                                                scope.launch {
-                                                    appSettings.setUpdateNotificationsEnabled(enabled)
-                                                }
+                                                scope.launch { appSettings.setUpdateNotificationsEnabled(enabled) }
                                             }
                                         )
                                     },
                                     onClick = {
                                         HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
-                                        scope.launch {
-                                            appSettings.setUpdateNotificationsEnabled(!updateNotificationsEnabled)
-                                        }
+                                        scope.launch { appSettings.setUpdateNotificationsEnabled(!updateNotificationsEnabled) }
                                     }
                                 ),
                                 Material3SettingsItem(
@@ -6624,90 +6504,17 @@ fun EnhancedUpdaterContent(
                                             checked = useSmartUpdatePolling,
                                             onCheckedChange = { enabled ->
                                                 HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
-                                                scope.launch {
-                                                    appSettings.setUseSmartUpdatePolling(enabled)
-                                                }
+                                                scope.launch { appSettings.setUseSmartUpdatePolling(enabled) }
                                             }
                                         )
                                     },
                                     onClick = {
                                         HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
-                                        scope.launch {
-                                            appSettings.setUseSmartUpdatePolling(!useSmartUpdatePolling)
-                                        }
+                                        scope.launch { appSettings.setUseSmartUpdatePolling(!useSmartUpdatePolling) }
                                     }
                                 )
                             ),
                             containerColor = MaterialTheme.colorScheme.surfaceContainer
-                        )
-
-                        // Check Interval dropdown
-                        SettingsDropdownItem(
-                            title = context.getString(R.string.onboarding_check_interval_title),
-                            description = context.getString(R.string.onboarding_check_interval_desc),
-                            selectedOption = when (updateCheckIntervalHours) {
-                                1 -> context.getString(R.string.option_every_hour)
-                                3 -> context.getString(R.string.option_every_3_hours)
-                                6 -> context.getString(R.string.option_every_6_hours)
-                                12 -> context.getString(R.string.option_every_12_hours)
-                                24 -> context.getString(R.string.option_daily)
-                                else -> context.getString(R.string.option_every_6_hours)
-                            },
-                            icon = Icons.Filled.Schedule,
-                            options = listOf(
-                                context.getString(R.string.option_every_hour),
-                                context.getString(R.string.option_every_3_hours),
-                                context.getString(R.string.option_every_6_hours),
-                                context.getString(R.string.option_every_12_hours),
-                                context.getString(R.string.option_daily)
-                            ),
-                            onOptionSelected = { selectedOption ->
-                                val everyHour = context.getString(R.string.option_every_hour)
-                                val every3Hours = context.getString(R.string.option_every_3_hours)
-                                val every6Hours = context.getString(R.string.option_every_6_hours)
-                                val every12Hours = context.getString(R.string.option_every_12_hours)
-                                val daily = context.getString(R.string.option_daily)
-                                val hours = when (selectedOption) {
-                                    everyHour -> 1
-                                    every3Hours -> 3
-                                    every6Hours -> 6
-                                    every12Hours -> 12
-                                    daily -> 24
-                                    else -> 6
-                                }
-                                scope.launch {
-                                    appSettings.setUpdateCheckIntervalHours(hours)
-                                }
-                            }
-                        )
-
-                        // Update channel selection dropdown
-                        SettingsDropdownItem(
-                            title = context.getString(R.string.onboarding_update_channel_title),
-                            description = context.getString(R.string.onboarding_update_channel_desc),
-                            selectedOption = when (updateChannel) {
-                                "stable" -> context.getString(R.string.option_stable)
-                                "beta" -> context.getString(R.string.option_beta)
-                                else -> context.getString(R.string.option_stable)
-                            },
-                            icon = when (updateChannel) {
-                                "stable" -> Icons.Filled.Public
-                                "beta" -> Icons.Filled.BugReport
-                                else -> Icons.Filled.Public
-                            },
-                            options = listOf(context.getString(R.string.option_stable), context.getString(R.string.option_beta)),
-                            onOptionSelected = { selectedOption ->
-                                val stableOption = context.getString(R.string.option_stable)
-                                val betaOption = context.getString(R.string.option_beta)
-                                val channel = when (selectedOption) {
-                                    stableOption -> "stable"
-                                    betaOption -> "beta"
-                                    else -> "stable"
-                                }
-                                scope.launch {
-                                    appSettings.setUpdateChannel(channel)
-                                }
-                            }
                         )
                     }
                 }
@@ -6751,7 +6558,7 @@ fun EnhancedUpdateOption(
                     .size(40.dp)
                     .clip(CircleShape)
                     .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)),
-                contentAlignment = Alignment.Center
+                    contentAlignment = Alignment.Center
             ) {
                 Icon(
                     imageVector = icon,
@@ -7206,20 +7013,11 @@ fun EnhancedMediaScanContent(
                     visible = true,
                     enter = scaleIn() + fadeIn()
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .size(96.dp)
-                            .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.FilterList,
-                            contentDescription = "Media Scan Filtering",
-                            
-                            modifier = Modifier.size(48.dp)
-                        )
-                    }
+                    OnboardingStepHeaderIcon(
+                        imageVector = Icons.Filled.FilterList,
+                        tint = MaterialTheme.colorScheme.primary,
+                        iconSize = 72.dp
+                    )
                 }
 
                 Text(
@@ -7335,20 +7133,11 @@ fun EnhancedMediaScanContent(
                 visible = true,
                 enter = scaleIn() + fadeIn()
             ) {
-                Box(
-                    modifier = Modifier
-                        .size(80.dp)
-                        .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Filled.FilterList,
-                        contentDescription = "Media Scan Filtering",
-                        
-                        modifier = Modifier.size(40.dp)
-                    )
-                }
+                OnboardingStepHeaderIcon(
+                    imageVector = Icons.Filled.FilterList,
+                    tint = MaterialTheme.colorScheme.primary,
+                    iconSize = 56.dp
+                )
             }
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -7690,20 +7479,11 @@ fun EnhancedSetupFinishedContent(
                         animationSpec = tween(1000)
                     )
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .size(96.dp)
-                            .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.CheckCircle,
-                            contentDescription = "Setup Complete",
-                            
-                            modifier = Modifier.size(48.dp)
-                        )
-                    }
+                    OnboardingStepHeaderIcon(
+                        imageVector = Icons.Filled.CheckCircle,
+                        tint = MaterialTheme.colorScheme.primary,
+                        iconSize = 72.dp
+                    )
                 }
 
                 Text(
@@ -7870,20 +7650,11 @@ fun EnhancedSetupFinishedContent(
                     animationSpec = tween(1000)
                 )
             ) {
-                Box(
-                    modifier = Modifier
-                        .size(80.dp)
-                        .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Filled.CheckCircle,
-                        contentDescription = "Setup Complete",
-                        
-                        modifier = Modifier.size(40.dp)
-                    )
-                }
+                OnboardingStepHeaderIcon(
+                    imageVector = Icons.Filled.CheckCircle,
+                    tint = MaterialTheme.colorScheme.primary,
+                    iconSize = 56.dp
+                )
             }
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -8359,20 +8130,11 @@ fun EnhancedNotificationsContent(
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 AnimatedVisibility(visible = true, enter = scaleIn() + fadeIn()) {
-                    Box(
-                        modifier = Modifier
-                            .size(96.dp)
-                            .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.Notifications,
-                            contentDescription = "Notifications",
-                            
-                            modifier = Modifier.size(48.dp)
-                        )
-                    }
+                    OnboardingStepHeaderIcon(
+                        imageVector = Icons.Filled.Notifications,
+                        tint = MaterialTheme.colorScheme.primary,
+                        iconSize = 72.dp
+                    )
                 }
 
                 Text(
@@ -8422,20 +8184,11 @@ fun EnhancedNotificationsContent(
                 .verticalScroll(scrollState)
         ) {
             AnimatedVisibility(visible = true, enter = scaleIn() + fadeIn()) {
-                Box(
-                    modifier = Modifier
-                        .size(80.dp)
-                        .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Filled.Notifications,
-                        contentDescription = "Notifications",
-                        
-                        modifier = Modifier.size(40.dp)
-                    )
-                }
+                OnboardingStepHeaderIcon(
+                    imageVector = Icons.Filled.Notifications,
+                    tint = MaterialTheme.colorScheme.primary,
+                    iconSize = 56.dp
+                )
             }
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -8545,20 +8298,11 @@ fun EnhancedGesturesContent(
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 AnimatedVisibility(visible = true, enter = scaleIn() + fadeIn()) {
-                    Box(
-                        modifier = Modifier
-                            .size(96.dp)
-                            .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.Gesture,
-                            contentDescription = "Gestures",
-                            
-                            modifier = Modifier.size(48.dp)
-                        )
-                    }
+                    OnboardingStepHeaderIcon(
+                        imageVector = Icons.Filled.Gesture,
+                        tint = MaterialTheme.colorScheme.primary,
+                        iconSize = 72.dp
+                    )
                 }
 
                 Text(
@@ -8615,20 +8359,11 @@ fun EnhancedGesturesContent(
                 .verticalScroll(scrollState)
         ) {
             AnimatedVisibility(visible = true, enter = scaleIn() + fadeIn()) {
-                Box(
-                    modifier = Modifier
-                        .size(80.dp)
-                        .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Filled.Gesture,
-                        contentDescription = "Gestures",
-                        
-                        modifier = Modifier.size(40.dp)
-                    )
-                }
+                OnboardingStepHeaderIcon(
+                    imageVector = Icons.Filled.Gesture,
+                    tint = MaterialTheme.colorScheme.primary,
+                    iconSize = 56.dp
+                )
             }
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -8870,20 +8605,11 @@ fun EnhancedWidgetsContent(
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 AnimatedVisibility(visible = true, enter = scaleIn() + fadeIn()) {
-                    Box(
-                        modifier = Modifier
-                            .size(96.dp)
-                            .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.Widgets,
-                            contentDescription = "Widgets",
-                            
-                            modifier = Modifier.size(48.dp)
-                        )
-                    }
+                    OnboardingStepHeaderIcon(
+                        imageVector = Icons.Filled.Widgets,
+                        tint = MaterialTheme.colorScheme.primary,
+                        iconSize = 72.dp
+                    )
                 }
 
                 Text(
@@ -8938,20 +8664,11 @@ fun EnhancedWidgetsContent(
                 .verticalScroll(scrollState)
         ) {
             AnimatedVisibility(visible = true, enter = scaleIn() + fadeIn()) {
-                Box(
-                    modifier = Modifier
-                        .size(80.dp)
-                        .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Filled.Widgets,
-                        contentDescription = "Widgets",
-                        
-                        modifier = Modifier.size(40.dp)
-                    )
-                }
+                OnboardingStepHeaderIcon(
+                    imageVector = Icons.Filled.Widgets,
+                    tint = MaterialTheme.colorScheme.primary,
+                    iconSize = 56.dp
+                )
             }
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -9170,20 +8887,11 @@ fun EnhancedIntegrationsContent(
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 AnimatedVisibility(visible = true, enter = scaleIn() + fadeIn()) {
-                    Box(
-                        modifier = Modifier
-                            .size(96.dp)
-                            .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.Api,
-                            contentDescription = "Integrations",
-                            
-                            modifier = Modifier.size(48.dp)
-                        )
-                    }
+                    OnboardingStepHeaderIcon(
+                        imageVector = Icons.Filled.Api,
+                        tint = MaterialTheme.colorScheme.primary,
+                        iconSize = 72.dp
+                    )
                 }
 
                 Text(
@@ -9251,20 +8959,11 @@ fun EnhancedIntegrationsContent(
                 .verticalScroll(scrollState)
         ) {
             AnimatedVisibility(visible = true, enter = scaleIn() + fadeIn()) {
-                Box(
-                    modifier = Modifier
-                        .size(80.dp)
-                        .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Filled.Api,
-                        contentDescription = "Integrations",
-                        
-                        modifier = Modifier.size(40.dp)
-                    )
-                }
+                OnboardingStepHeaderIcon(
+                    imageVector = Icons.Filled.Api,
+                    tint = MaterialTheme.colorScheme.primary,
+                    iconSize = 56.dp
+                )
             }
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -9527,20 +9226,11 @@ fun EnhancedRhythmStatsContent(
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 AnimatedVisibility(visible = true, enter = scaleIn() + fadeIn()) {
-                    Box(
-                        modifier = Modifier
-                            .size(96.dp)
-                            .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.AutoGraph,
-                            contentDescription = "Rhythm Stats",
-                            
-                            modifier = Modifier.size(48.dp)
-                        )
-                    }
+                    OnboardingStepHeaderIcon(
+                        imageVector = Icons.Filled.AutoGraph,
+                        tint = MaterialTheme.colorScheme.primary,
+                        iconSize = 72.dp
+                    )
                 }
 
                 Text(
@@ -9591,20 +9281,11 @@ fun EnhancedRhythmStatsContent(
                 .verticalScroll(scrollState)
         ) {
             AnimatedVisibility(visible = true, enter = scaleIn() + fadeIn()) {
-                Box(
-                    modifier = Modifier
-                        .size(80.dp)
-                        .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Filled.AutoGraph,
-                        contentDescription = "Rhythm Stats",
-                        
-                        modifier = Modifier.size(40.dp)
-                    )
-                }
+                OnboardingStepHeaderIcon(
+                    imageVector = Icons.Filled.AutoGraph,
+                    tint = MaterialTheme.colorScheme.primary,
+                    iconSize = 56.dp
+                )
             }
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -9781,11 +9462,13 @@ private fun StatsFeaturesAndInfoCard() {
 fun OnboardingAnimatedSwitch(
     checked: Boolean,
     onCheckedChange: (Boolean) -> Unit,
+    enabled: Boolean = true,
     modifier: Modifier = Modifier
 ) {
     chromahub.rhythm.app.features.local.presentation.screens.settings.TunerAnimatedSwitch(
         checked = checked,
         onCheckedChange = onCheckedChange,
+        enabled = enabled,
         modifier = modifier
     )
 }

@@ -71,7 +71,6 @@ import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveGrou
 import chromahub.rhythm.app.util.HapticUtils
 import kotlinx.coroutines.launch
 
-private const val STREAMING_SECTION_GREETING = "GREETING"
 private const val STREAMING_SECTION_DISCOVER = "DISCOVER"
 private const val STREAMING_SECTION_ARTISTS = "ARTISTS"
 private const val STREAMING_SECTION_RHYTHM_GUARD = "RHYTHM_GUARD"
@@ -106,7 +105,6 @@ fun StreamingHomeSectionOrderBottomSheet(
     val haptics = LocalHapticFeedback.current
 
     val sectionOrder by appSettings.streamingHomeSectionOrder.collectAsState()
-    val showGreeting by appSettings.streamingHomeShowGreeting.collectAsState()
     val showDiscover by appSettings.streamingHomeShowRecommended.collectAsState()
     val showArtists by appSettings.streamingHomeShowArtists.collectAsState()
     val showRhythmGuard by appSettings.streamingHomeShowRhythmGuard.collectAsState()
@@ -114,12 +112,11 @@ fun StreamingHomeSectionOrderBottomSheet(
     val showRecentlyPlayed by appSettings.streamingHomeShowRecentlyPlayed.collectAsState()
     val showNewReleases by appSettings.streamingHomeShowNewReleases.collectAsState()
 
-    val fixedSections = setOf(STREAMING_SECTION_GREETING, STREAMING_SECTION_DISCOVER)
+    val fixedSections = setOf("GREETING", STREAMING_SECTION_DISCOVER)
     var reorderableList by remember(sectionOrder) {
         mutableStateOf(sectionOrder.filter { it !in fixedSections }.toList())
     }
     var visibilityMap by remember(
-        showGreeting,
         showDiscover,
         showArtists,
         showRhythmGuard,
@@ -129,7 +126,6 @@ fun StreamingHomeSectionOrderBottomSheet(
     ) {
         mutableStateOf(
             mapOf(
-                STREAMING_SECTION_GREETING to showGreeting,
                 STREAMING_SECTION_DISCOVER to showDiscover,
                 STREAMING_SECTION_ARTISTS to showArtists,
                 STREAMING_SECTION_RHYTHM_GUARD to showRhythmGuard,
@@ -145,7 +141,6 @@ fun StreamingHomeSectionOrderBottomSheet(
 
     fun getSectionInfo(sectionId: String): Pair<String, ImageVector> {
         return when (sectionId) {
-            STREAMING_SECTION_GREETING -> context.getString(R.string.home_section_greeting) to Icons.Default.WavingHand
             STREAMING_SECTION_DISCOVER -> context.getString(R.string.home_section_discover) to Icons.Default.Recommend
             STREAMING_SECTION_ARTISTS -> context.getString(R.string.home_top_artists) to Icons.Rounded.Person
             STREAMING_SECTION_RHYTHM_GUARD -> context.getString(R.string.settings_rhythm_guard) to Icons.Default.Security
@@ -166,7 +161,7 @@ fun StreamingHomeSectionOrderBottomSheet(
         containerColor = MaterialTheme.colorScheme.surfaceContainer,
         modifier = Modifier.fillMaxWidth()
     ) {
-        val totalSectionCards = reorderableList.size + 2
+        val totalSectionCards = reorderableList.size + 1
 
         Column(modifier = Modifier.fillMaxWidth()) {
             LazyColumn(
@@ -213,85 +208,6 @@ fun StreamingHomeSectionOrderBottomSheet(
                     Spacer(modifier = Modifier.height(24.dp))
                 }
 
-                item(key = STREAMING_SECTION_GREETING) {
-                    val (sectionName, sectionIcon) = getSectionInfo(STREAMING_SECTION_GREETING)
-                    val isVisible = visibilityMap[STREAMING_SECTION_GREETING] ?: true
-
-                    Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 4.dp),
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHighest),
-                        shape = groupedBottomSheetItemShape(0, totalSectionCards)
-                    ) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(16.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(16.dp),
-                                modifier = Modifier.weight(1f)
-                            ) {
-                                Surface(
-                                    shape = CircleShape,
-                                    color = MaterialTheme.colorScheme.tertiaryContainer,
-                                    modifier = Modifier.size(36.dp)
-                                ) {
-                                    Box(contentAlignment = Alignment.Center) {
-                                        Icon(
-                                            imageVector = Icons.Default.PushPin,
-                                            contentDescription = null,
-                                            modifier = Modifier.size(18.dp)
-                                        )
-                                    }
-                                }
-
-                                Icon(
-                                    imageVector = sectionIcon,
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    modifier = Modifier.size(24.dp)
-                                )
-
-                                Column(modifier = Modifier.weight(1f)) {
-                                    Text(
-                                        text = sectionName,
-                                        style = MaterialTheme.typography.titleMedium,
-                                        fontWeight = FontWeight.Medium,
-                                        color = MaterialTheme.colorScheme.onSurface
-                                    )
-                                    Text(
-                                        text = "Fixed position",
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                }
-                            }
-
-                            IconButton(
-                                onClick = {
-                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
-                                    visibilityMap = visibilityMap.toMutableMap().apply {
-                                        this[STREAMING_SECTION_GREETING] = !isVisible
-                                    }
-                                },
-                                modifier = Modifier.size(40.dp)
-                            ) {
-                                Icon(
-                                    imageVector = if (isVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
-                                    contentDescription = if (isVisible) "Hide section" else "Show section",
-                                    tint = if (isVisible) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
-                                    modifier = Modifier.size(20.dp)
-                                )
-                            }
-                        }
-                    }
-                }
-
                 item(key = STREAMING_SECTION_DISCOVER) {
                     val (sectionName, sectionIcon) = getSectionInfo(STREAMING_SECTION_DISCOVER)
                     val isVisible = visibilityMap[STREAMING_SECTION_DISCOVER] ?: true
@@ -301,7 +217,7 @@ fun StreamingHomeSectionOrderBottomSheet(
                             .fillMaxWidth()
                             .padding(vertical = 4.dp),
                         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHighest),
-                        shape = groupedBottomSheetItemShape(1, totalSectionCards)
+                        shape = groupedBottomSheetItemShape(0, totalSectionCards)
                     ) {
                         Row(
                             modifier = Modifier
@@ -385,7 +301,7 @@ fun StreamingHomeSectionOrderBottomSheet(
                             .padding(vertical = 4.dp)
                             .animateItem(),
                         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
-                        shape = groupedBottomSheetItemShape(index + 2, totalSectionCards)
+                        shape = groupedBottomSheetItemShape(index + 1, totalSectionCards)
                     ) {
                         Row(
                             modifier = Modifier
@@ -531,7 +447,6 @@ fun StreamingHomeSectionOrderBottomSheet(
                             HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
                             reorderableList = defaultStreamingReorderableSections
                             visibilityMap = mapOf(
-                                STREAMING_SECTION_GREETING to true,
                                 STREAMING_SECTION_DISCOVER to true,
                                 STREAMING_SECTION_ARTISTS to true,
                                 STREAMING_SECTION_RHYTHM_GUARD to true,
@@ -556,9 +471,8 @@ fun StreamingHomeSectionOrderBottomSheet(
                     ExpressiveGroupButton(
                         onClick = {
                             HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
-                            val finalOrder = listOf(STREAMING_SECTION_GREETING, STREAMING_SECTION_DISCOVER) + reorderableList
+                            val finalOrder = listOf(STREAMING_SECTION_DISCOVER) + reorderableList
                             appSettings.setStreamingHomeSectionOrder(finalOrder)
-                            appSettings.setStreamingHomeShowGreeting(visibilityMap[STREAMING_SECTION_GREETING] ?: true)
                             appSettings.setStreamingHomeShowRecommended(visibilityMap[STREAMING_SECTION_DISCOVER] ?: true)
                             appSettings.setStreamingHomeShowArtists(visibilityMap[STREAMING_SECTION_ARTISTS] ?: true)
                             appSettings.setStreamingHomeShowRhythmGuard(visibilityMap[STREAMING_SECTION_RHYTHM_GUARD] ?: true)

@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -46,6 +47,7 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.foundation.layout.size
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import chromahub.rhythm.app.ui.theme.RhythmTheme
 import androidx.compose.ui.graphics.Color
@@ -70,6 +72,8 @@ fun CollapsibleHeaderScreen(
     onBackClick: () -> Unit = {},
     actions: @Composable () -> Unit = {},
     filterDropdown: @Composable () -> Unit = {}, // New parameter for the filter dropdown
+    headerContent: (@Composable () -> Unit)? = null,
+    headerContentSpacing: Dp = 8.dp,
     scrollBehaviorKey: String? = null, // Key for preserving scroll behavior state
     showAppIcon: Boolean = false,
     iconVisibilityMode: Int = 0, // 0=Both, 1=Expanded Only, 2=Collapsed Only
@@ -117,6 +121,13 @@ fun CollapsibleHeaderScreen(
         animationSpec = tween(durationMillis = 450),
         label = "contentOffset"
     )
+
+    val headerBlendHeight = 24.dp
+    val headerBlendBaseColor = if (containerColor == Color.Transparent) {
+        MaterialTheme.colorScheme.surface
+    } else {
+        containerColor
+    }
 
     val lazyListState = rememberLazyListState()
 
@@ -241,7 +252,25 @@ fun CollapsibleHeaderScreen(
                         scrolledContainerColor = containerColor
                     )
                 )
-//                Spacer(modifier = Modifier.height(1.dp))
+                if (headerContent != null) {
+                    Spacer(modifier = Modifier.height(headerContentSpacing))
+                    headerContent()
+                }
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(headerBlendHeight)
+                        .background(
+                            Brush.verticalGradient(
+                                colors = listOf(
+                                    headerBlendBaseColor,
+                                    headerBlendBaseColor.copy(alpha = 0.72f),
+                                    headerBlendBaseColor.copy(alpha = 0.32f),
+                                    Color.Transparent
+                                )
+                            )
+                        )
+                )
             }
         }
     ) { paddingValues ->
@@ -249,6 +278,7 @@ fun CollapsibleHeaderScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
+                .offset(y = -headerBlendHeight)
                 .graphicsLayer {
                     alpha = contentAlpha
                     translationY = contentOffset
@@ -318,6 +348,13 @@ fun ArtistCollapsibleHeaderScreen(
         animationSpec = tween(durationMillis = 450),
         label = "contentOffset"
     )
+
+    val headerBlendHeight = 24.dp
+    val headerBlendBaseColor = if (containerColor == Color.Transparent) {
+        MaterialTheme.colorScheme.surface
+    } else {
+        containerColor
+    }
 
     val lazyListState = rememberLazyListState()
 
@@ -518,6 +555,21 @@ fun ArtistCollapsibleHeaderScreen(
                             scrolledContainerColor = containerColor
                         )
                     )
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(headerBlendHeight)
+                            .background(
+                                Brush.verticalGradient(
+                                    colors = listOf(
+                                        headerBlendBaseColor,
+                                        headerBlendBaseColor.copy(alpha = 0.72f),
+                                        headerBlendBaseColor.copy(alpha = 0.32f),
+                                        Color.Transparent
+                                    )
+                                )
+                            )
+                    )
                 }
             }
         ) { paddingValues ->
@@ -525,6 +577,7 @@ fun ArtistCollapsibleHeaderScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(paddingValues)
+                    .offset(y = -headerBlendHeight)
                     .graphicsLayer {
                         alpha = contentAlpha
                         translationY = contentOffset

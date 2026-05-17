@@ -1189,6 +1189,179 @@ fun PlaylistDetailScreen(
                     }
                 }
             }
+        },
+        headerContent = {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(MaterialTheme.colorScheme.background)
+                    .padding(horizontal = 16.dp)
+                    .graphicsLayer { 
+                        shadowElevation = 0f
+                        clip = false
+                    }
+            ) {
+                AnimatedVisibility(
+                    visible = showSearchBar && !isTablet,
+                    enter = expandVertically(
+                        animationSpec = spring(
+                            dampingRatio = Spring.DampingRatioMediumBouncy,
+                            stiffness = Spring.StiffnessMedium
+                        )
+                    ) + fadeIn(
+                        animationSpec = tween(durationMillis = 300)
+                    ),
+                    exit = shrinkVertically(
+                        animationSpec = spring(
+                            dampingRatio = Spring.DampingRatioMediumBouncy,
+                            stiffness = Spring.StiffnessMedium
+                        )
+                    ) + fadeOut(
+                        animationSpec = tween(durationMillis = 200)
+                    )
+                ) {
+                    SettingsSearchBar(
+                        query = searchQuery,
+                        onQueryChange = { searchQuery = it },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 6.dp, vertical = 8.dp),
+                        focusRequester = searchFocusRequester,
+                        hint = "Find a track in this playlist"
+                    )
+                }
+                
+                // Button Group for Play All and Shuffle - Sticky (hidden when empty)
+                AnimatedVisibility(
+                    visible = playlist.songs.isNotEmpty() && !isTablet,
+                    enter = expandVertically(
+                        animationSpec = spring(
+                            dampingRatio = Spring.DampingRatioMediumBouncy,
+                            stiffness = Spring.StiffnessMedium
+                        )
+                    ) + fadeIn(
+                        animationSpec = tween(durationMillis = 300)
+                    ),
+                    exit = shrinkVertically(
+                        animationSpec = spring(
+                            dampingRatio = Spring.DampingRatioMediumBouncy,
+                            stiffness = Spring.StiffnessMedium
+                        )
+                    ) + fadeOut(
+                        animationSpec = tween(durationMillis = 200)
+                    )
+                ) {
+                var shufflePressed by remember { mutableStateOf(false) }
+                var playAllPressed by remember { mutableStateOf(false) }
+                
+                val shuffleScale by animateFloatAsState(
+                    targetValue = if (shufflePressed) 0.96f else 1f,
+                    animationSpec = spring(
+                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                        stiffness = Spring.StiffnessMedium
+                    ),
+                    label = "shuffleScale"
+                )
+                
+                val playAllScale by animateFloatAsState(
+                    targetValue = if (playAllPressed) 0.96f else 1f,
+                    animationSpec = spring(
+                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                        stiffness = Spring.StiffnessMedium
+                    ),
+                    label = "playAllScale"
+                )
+                
+                LaunchedEffect(shufflePressed) {
+                    if (shufflePressed) {
+                        delay(150)
+                        shufflePressed = false
+                    }
+                }
+                
+                LaunchedEffect(playAllPressed) {
+                    if (playAllPressed) {
+                        delay(150)
+                        playAllPressed = false
+                    }
+                }
+                
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 15.dp)
+                        .padding(vertical = 12.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    // Play All Button - Equal sizing with text
+                    Button(
+                        onClick = {
+                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                            playAllPressed = true
+                            onPlayAll()
+                        },
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(52.dp)
+                            .graphicsLayer {
+                                scaleX = playAllScale
+                                scaleY = playAllScale
+                            },
+                        shape = ButtonGroupDefaults.connectedLeadingButtonShapes().shape,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.primary,
+                            contentColor = MaterialTheme.colorScheme.onPrimary
+                        ),
+                        contentPadding = PaddingValues(horizontal = 16.dp)
+                    ) {
+                        Icon(
+                            imageVector = RhythmIcons.Play,
+                            contentDescription = null,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            "Play All",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                    
+                    FilledTonalButton(
+                        onClick = {
+                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                            shufflePressed = true
+                            onShufflePlay()
+                        },
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(52.dp)
+                            .graphicsLayer {
+                                scaleX = shuffleScale
+                                scaleY = shuffleScale
+                            },
+                        shape = ButtonGroupDefaults.connectedTrailingButtonShapes().shape,
+                        colors = ButtonDefaults.filledTonalButtonColors(
+                            containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                            contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                        ),
+                        contentPadding = PaddingValues(horizontal = 16.dp)
+                    ) {
+                        Icon(
+                            imageVector = RhythmIcons.Shuffle,
+                            contentDescription = null,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            "Shuffle",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                }
+                }
+            }
         }
     ) { modifier ->
         if (isTablet && !isCompactHeight) {
@@ -1903,7 +2076,7 @@ fun PlaylistDetailScreen(
                     .padding(horizontal = 16.dp)
                     .nestedScroll(exitAlwaysScrollBehavior),
                 contentPadding = PaddingValues(
-                    top = if (playlist.songs.isNotEmpty()) 90.dp else 16.dp,
+//                    top = if (playlist.songs.isNotEmpty()) 90.dp else 16.dp,
                     bottom = (LocalMiniPlayerPadding.current.calculateBottomPadding() + 20.dp).coerceAtLeast(120.dp)
                 )
             ) {
@@ -2273,180 +2446,6 @@ fun PlaylistDetailScreen(
                 }
                 item { // Extra bottom space for mini player
                     Spacer(modifier = Modifier.height(16.dp)) // Simple spacing
-                }
-            }
-            
-            // Sticky header section for search and play/shuffle buttons - layered on top
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(MaterialTheme.colorScheme.background)
-                    .padding(horizontal = 16.dp)
-                    .graphicsLayer { 
-                        shadowElevation = 0f
-                        clip = false
-                    }
-            ) {
-                AnimatedVisibility(
-                    visible = showSearchBar,
-                    enter = expandVertically(
-                        animationSpec = spring(
-                            dampingRatio = Spring.DampingRatioMediumBouncy,
-                            stiffness = Spring.StiffnessMedium
-                        )
-                    ) + fadeIn(
-                        animationSpec = tween(durationMillis = 300)
-                    ),
-                    exit = shrinkVertically(
-                        animationSpec = spring(
-                            dampingRatio = Spring.DampingRatioMediumBouncy,
-                            stiffness = Spring.StiffnessMedium
-                        )
-                    ) + fadeOut(
-                        animationSpec = tween(durationMillis = 200)
-                    )
-                ) {
-                    SettingsSearchBar(
-                        query = searchQuery,
-                        onQueryChange = { searchQuery = it },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 6.dp, vertical = 8.dp),
-                        focusRequester = searchFocusRequester,
-                        hint = "Find a track in this playlist"
-                    )
-                }
-                
-                // Button Group for Play All and Shuffle - Sticky (hidden when empty)
-                AnimatedVisibility(
-                    visible = playlist.songs.isNotEmpty(),
-                    enter = expandVertically(
-                        animationSpec = spring(
-                            dampingRatio = Spring.DampingRatioMediumBouncy,
-                            stiffness = Spring.StiffnessMedium
-                        )
-                    ) + fadeIn(
-                        animationSpec = tween(durationMillis = 300)
-                    ),
-                    exit = shrinkVertically(
-                        animationSpec = spring(
-                            dampingRatio = Spring.DampingRatioMediumBouncy,
-                            stiffness = Spring.StiffnessMedium
-                        )
-                    ) + fadeOut(
-                        animationSpec = tween(durationMillis = 200)
-                    )
-                ) {
-                var shufflePressed by remember { mutableStateOf(false) }
-                var playAllPressed by remember { mutableStateOf(false) }
-                
-                val shuffleScale by animateFloatAsState(
-                    targetValue = if (shufflePressed) 0.96f else 1f,
-                    animationSpec = spring(
-                        dampingRatio = Spring.DampingRatioMediumBouncy,
-                        stiffness = Spring.StiffnessMedium
-                    ),
-                    label = "shuffleScale"
-                )
-                
-                val playAllScale by animateFloatAsState(
-                    targetValue = if (playAllPressed) 0.96f else 1f,
-                    animationSpec = spring(
-                        dampingRatio = Spring.DampingRatioMediumBouncy,
-                        stiffness = Spring.StiffnessMedium
-                    ),
-                    label = "playAllScale"
-                )
-                
-                LaunchedEffect(shufflePressed) {
-                    if (shufflePressed) {
-                        delay(150)
-                        shufflePressed = false
-                    }
-                }
-                
-                LaunchedEffect(playAllPressed) {
-                    if (playAllPressed) {
-                        delay(150)
-                        playAllPressed = false
-                    }
-                }
-                
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 15.dp)
-                        .padding(vertical = 12.dp),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                ) {
-                    // Play All Button - Equal sizing with text
-                    Button(
-                        onClick = {
-                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
-                            playAllPressed = true
-                            onPlayAll()
-                        },
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(52.dp)
-                            .graphicsLayer {
-                                scaleX = playAllScale
-                                scaleY = playAllScale
-                            },
-                        shape = ButtonGroupDefaults.connectedLeadingButtonShapes().shape,
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.primary,
-                            contentColor = MaterialTheme.colorScheme.onPrimary
-                        ),
-                        contentPadding = PaddingValues(horizontal = 16.dp)
-                    ) {
-                        Icon(
-                            imageVector = RhythmIcons.Play,
-                            contentDescription = null,
-                            modifier = Modifier.size(20.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            "Play All",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-                    
-                    // Shuffle Button - Equal sizing with text
-                    FilledTonalButton(
-                        onClick = {
-                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
-                            shufflePressed = true
-                            onShufflePlay()
-                        },
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(52.dp)
-                            .graphicsLayer {
-                                scaleX = shuffleScale
-                                scaleY = shuffleScale
-                            },
-                        shape = ButtonGroupDefaults.connectedTrailingButtonShapes().shape,
-                        colors = ButtonDefaults.filledTonalButtonColors(
-                            containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                            contentColor = MaterialTheme.colorScheme.onSecondaryContainer
-                        ),
-                        contentPadding = PaddingValues(horizontal = 16.dp)
-                    ) {
-                        Icon(
-                            imageVector = RhythmIcons.Shuffle,
-                            contentDescription = null,
-                            modifier = Modifier.size(20.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            "Shuffle",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Medium
-                        )
-                    }
-                }
                 }
             }
             
