@@ -49,6 +49,8 @@ import chromahub.rhythm.app.features.local.presentation.viewmodel.MusicViewModel
 import chromahub.rhythm.app.shared.data.model.Artist
 import chromahub.rhythm.app.shared.data.repository.PlaybackStatsRepository
 import chromahub.rhythm.app.shared.data.repository.StatsTimeRange
+import chromahub.rhythm.app.shared.presentation.components.Material3SettingsGroup
+import chromahub.rhythm.app.shared.presentation.components.Material3SettingsItem
 import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveShapeTarget
 import chromahub.rhythm.app.shared.presentation.components.common.CollapsibleHeaderScreen
 import chromahub.rhythm.app.shared.presentation.components.common.TabAnimation
@@ -335,118 +337,105 @@ private fun ListeningOverviewCard(stats: PlaybackStatsRepository.PlaybackStatsSu
 // ---------------------------------------------------------------------------
 
 @Composable
-private fun TopSongsCard(stats: PlaybackStatsRepository.PlaybackStatsSummary) {
+private fun TopSongsList(stats: PlaybackStatsRepository.PlaybackStatsSummary) {
     if (stats.topSongs.isEmpty()) return
 
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(28.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh)
-    ) {
-        Column(
-            modifier = Modifier.padding(24.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            Text(
-                text = "Top Songs",
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface
-            )
+    val items = stats.topSongs.take(5).mapIndexed { index, song ->
+        val songArtShape = rememberExpressiveShapeFor(
+            ExpressiveShapeTarget.SONG_ART,
+            fallbackShape = RoundedCornerShape(16.dp)
+        )
 
-            stats.topSongs.take(5).forEachIndexed { index, song ->
-                val songArtShape = rememberExpressiveShapeFor(
-                    ExpressiveShapeTarget.SONG_ART,
-                    fallbackShape = RoundedCornerShape(16.dp)
-                )
-
+        Material3SettingsItem(
+            leadingContent = {
                 Surface(
-                    shape = RoundedCornerShape(20.dp),
-                    color = MaterialTheme.colorScheme.surfaceContainerLow
+                    shape = songArtShape,
+                    color = if (index == 0) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondary.copy(alpha = 0.3f),
+                    contentColor = if (index == 0) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.secondary
                 ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(14.dp),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp),
-                        verticalAlignment = Alignment.CenterVertically
+                    Box(
+                        modifier = Modifier.size(40.dp),
+                        contentAlignment = Alignment.Center
                     ) {
-                        // Rank badge
-                        Surface(
-                            shape = songArtShape,
-                            color = if (index == 0) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondary.copy(alpha = 0.3f),
-                            contentColor = if (index == 0) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.secondary
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(40.dp),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                if (song.albumArtUri != null) {
-                                    AsyncImage(
-                                        model = ImageRequest.Builder(LocalContext.current)
-                                            .data(song.albumArtUri)
-                                            .crossfade(true)
-                                            .build(),
-                                        contentDescription = null,
-                                        modifier = Modifier.fillMaxSize()
-                                    )
-                                } else {
-                                    Text(
-                                        text = (index + 1).toString(),
-                                        style = MaterialTheme.typography.labelLarge,
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                }
-                            }
-                        }
-
-                        Column(
-                            modifier = Modifier.weight(1f),
-                            verticalArrangement = Arrangement.spacedBy(2.dp)
-                        ) {
-                            Text(
-                                text = song.title,
-                                style = MaterialTheme.typography.titleSmall,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onSurface,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
+                        if (song.albumArtUri != null) {
+                            AsyncImage(
+                                model = ImageRequest.Builder(LocalContext.current)
+                                    .data(song.albumArtUri)
+                                    .crossfade(true)
+                                    .build(),
+                                contentDescription = null,
+                                modifier = Modifier.fillMaxSize()
                             )
+                        } else {
                             Text(
-                                text = song.artist,
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
-                        }
-
-                        Column(
-                            horizontalAlignment = Alignment.End,
-                            verticalArrangement = Arrangement.spacedBy(2.dp)
-                        ) {
-                            Text(
-                                text = formatDuration(song.totalDurationMs),
+                                text = (index + 1).toString(),
                                 style = MaterialTheme.typography.labelLarge,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
-                            Text(
-                                text = "${song.playCount} plays",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                fontWeight = FontWeight.Bold
                             )
                         }
                     }
                 }
+            },
+            title = {
+                Text(
+                    text = song.title,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            },
+            description = {
+                Text(
+                    text = song.artist,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            },
+            trailingContent = {
+                Column(
+                    horizontalAlignment = Alignment.End,
+                    verticalArrangement = Arrangement.spacedBy(2.dp)
+                ) {
+                    Text(
+                        text = formatDuration(song.totalDurationMs),
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Text(
+                        text = "${song.playCount} plays",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
-        }
+        )
+    }
+
+    Column(
+        modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        Text(
+            text = "Top Songs",
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+
+        Material3SettingsGroup(
+            items = items,
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+        )
     }
 }
 
 @Composable
-private fun TopArtistsCard(
+private fun TopArtistsList(
     stats: PlaybackStatsRepository.PlaybackStatsSummary,
     artists: List<Artist>
 ) {
@@ -458,57 +447,51 @@ private fun TopArtistsCard(
         fallbackShape = RoundedCornerShape(16.dp)
     )
 
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(28.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh)
+    Column(
+        modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        Column(
-            modifier = Modifier.padding(24.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+        Text(
+            text = "Top Artists",
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+
+        LazyRow(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            contentPadding = PaddingValues(horizontal = 0.dp)
         ) {
-            Text(
-                text = "Top Artists",
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface
-            )
+            items(stats.topArtists.take(5)) { artist ->
+                val libraryArtist = artistByName[artist.artist]
 
-            LazyRow(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
-                contentPadding = PaddingValues(horizontal = 0.dp)
-            ) {
-                items(stats.topArtists.take(5)) { artist ->
-                    val libraryArtist = artistByName[artist.artist]
-
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Surface(
+                        shape = artistArtShape,
+                        color = MaterialTheme.colorScheme.secondaryContainer,
+                        modifier = Modifier.size(84.dp)
                     ) {
-                        Surface(
-                            shape = artistArtShape,
-                            color = MaterialTheme.colorScheme.secondaryContainer,
-                            modifier = Modifier.size(84.dp)
-                        ) {
-                            M3ImageUtils.ArtistImage(
-                                imageUrl = libraryArtist?.artworkUri,
-                                artistName = artist.artist,
-                                modifier = Modifier.fillMaxSize(),
-                                applyExpressiveShape = false
-                            )
-                        }
-                        Text(
-                            text = artist.artist,
-                            style = MaterialTheme.typography.labelMedium,
-                            fontWeight = FontWeight.Medium,
-                            color = MaterialTheme.colorScheme.onSurface,
-                            textAlign = TextAlign.Center,
-                            maxLines = 2,
-                            overflow = TextOverflow.Ellipsis,
-                            modifier = Modifier.width(80.dp)
+                        M3ImageUtils.ArtistImage(
+                            imageUrl = libraryArtist?.artworkUri,
+                            artistName = artist.artist,
+                            modifier = Modifier.fillMaxSize(),
+                            applyExpressiveShape = false
                         )
                     }
+                    Text(
+                        text = artist.artist,
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        textAlign = TextAlign.Center,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.width(80.dp)
+                    )
                 }
             }
         }
@@ -573,10 +556,11 @@ private fun CategoryMetricsSection(
                     )
                 )
             }
+        }
 
         when (selectedDimension) {
-            CategoryDimension.SONG -> TopSongsCard(stats = stats)
-                CategoryDimension.ARTIST -> TopArtistsCard(stats = stats, artists = artists)
+            CategoryDimension.SONG -> TopSongsList(stats = stats)
+            CategoryDimension.ARTIST -> TopArtistsList(stats = stats, artists = artists)
             else -> {
                 val entries = when (selectedDimension) {
                     CategoryDimension.ALBUM -> stats.topAlbums.map {
@@ -588,109 +572,103 @@ private fun CategoryMetricsSection(
                     else -> emptyList()
                 }.filter { it.plays > 0 || it.durationMs > 0 }
 
-                Card(
-                    shape = RoundedCornerShape(28.dp),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh)
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 8.dp)
+                        .animateContentSize(),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    Column(
-                        modifier = Modifier.padding(20.dp).animateContentSize(),
-                        verticalArrangement = Arrangement.spacedBy(16.dp)
-                    ) {
+                    Text(
+                        text = "Top ${selectedDimension.displayName}",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+
+                    if (entries.isEmpty()) {
                         Text(
-                            text = "Top ${selectedDimension.displayName}",
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurface
+                            "No data available for this category yet.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
+                    } else {
+                        val maxVal = entries.maxOf { if (it.durationMs > 0) it.durationMs.toFloat() else it.plays.toFloat() }.coerceAtLeast(1f)
 
-                        if (entries.isEmpty()) {
-                            Text(
-                                "No data available for this category yet.",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        } else {
-                            val maxVal = entries.maxOf { if (it.durationMs > 0) it.durationMs.toFloat() else it.plays.toFloat() }.coerceAtLeast(1f)
+                        val settingsItems = entries.take(8).mapIndexed { index, entry ->
+                            val isTop = index == 0
+                            val rawVal = if (entry.durationMs > 0) entry.durationMs.toFloat() else entry.plays.toFloat()
+                            val progress = (rawVal / maxVal).coerceIn(0f, 1f)
 
-                            entries.take(8).forEachIndexed { index, entry ->
-                                val isTop = index == 0
-                                val rawVal = if (entry.durationMs > 0) entry.durationMs.toFloat() else entry.plays.toFloat()
-                                val progress = (rawVal / maxVal).coerceIn(0f, 1f)
+                            val accentColor = if (isTop) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondary
+                            val accentOnColor = if (isTop) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSecondary
 
-                                val rowColor = if (isTop) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.45f)
-                                else MaterialTheme.colorScheme.surfaceContainerLow
-                                val accentColor = if (isTop) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondary
-                                val accentOnColor = if (isTop) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSecondary
-
-                                Surface(
-                                    shape = RoundedCornerShape(22.dp),
-                                    color = rowColor
-                                ) {
-                                    Column(
-                                        modifier = Modifier.padding(14.dp),
-                                        verticalArrangement = Arrangement.spacedBy(10.dp)
-                                    ) {
-                                        Row(
-                                            modifier = Modifier.fillMaxWidth(),
-                                            horizontalArrangement = Arrangement.spacedBy(12.dp),
-                                            verticalAlignment = Alignment.CenterVertically
-                                        ) {
-                                            CategoryRankBadge(
-                                                rank = index + 1,
-                                                accentColor = accentColor,
-                                                accentOnColor = accentOnColor,
-                                                highlighted = isTop
-                                            )
-                                            Column(
-                                                modifier = Modifier.weight(1f),
-                                                verticalArrangement = Arrangement.spacedBy(2.dp)
-                                            ) {
-                                                Text(
-                                                    text = entry.label,
-                                                    style = MaterialTheme.typography.titleSmall,
-                                                    color = MaterialTheme.colorScheme.onSurface,
-                                                    maxLines = 1,
-                                                    overflow = TextOverflow.Ellipsis
-                                                )
-                                                Text(
-                                                    text = entry.supporting,
-                                                    style = MaterialTheme.typography.bodySmall,
-                                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                                    maxLines = 1,
-                                                    overflow = TextOverflow.Ellipsis
-                                                )
-                                            }
-                                            Column(horizontalAlignment = Alignment.End) {
-                                                if (entry.durationMs > 0) {
-                                                    Text(
-                                                        text = formatDuration(entry.durationMs),
-                                                        style = MaterialTheme.typography.labelMedium,
-                                                        fontWeight = FontWeight.Bold,
-                                                        color = MaterialTheme.colorScheme.onSurface
-                                                    )
-                                                }
-                                                Text(
-                                                    text = "${entry.plays} plays",
-                                                    style = MaterialTheme.typography.labelSmall,
-                                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                                )
-                                            }
-                                        }
-
+                            Material3SettingsItem(
+                                isHighlighted = isTop,
+                                leadingContent = {
+                                    CategoryRankBadge(
+                                        rank = index + 1,
+                                        accentColor = accentColor,
+                                        accentOnColor = accentOnColor,
+                                        highlighted = isTop
+                                    )
+                                },
+                                title = {
+                                    Text(
+                                        text = entry.label,
+                                        style = MaterialTheme.typography.titleSmall,
+                                        color = MaterialTheme.colorScheme.onSurface,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                },
+                                description = {
+                                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                        Text(
+                                            text = entry.supporting,
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis
+                                        )
                                         LinearProgressIndicator(
                                             progress = { progress },
-                                            modifier = Modifier.fillMaxWidth().height(8.dp).clip(CircleShape),
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .height(6.dp)
+                                                .clip(CircleShape),
                                             color = accentColor,
                                             trackColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
                                         )
                                     }
+                                },
+                                trailingContent = {
+                                    Column(horizontalAlignment = Alignment.End) {
+                                        if (entry.durationMs > 0) {
+                                            Text(
+                                                text = formatDuration(entry.durationMs),
+                                                style = MaterialTheme.typography.labelMedium,
+                                                fontWeight = FontWeight.Bold,
+                                                color = MaterialTheme.colorScheme.onSurface
+                                            )
+                                        }
+                                        Text(
+                                            text = "${entry.plays} plays",
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
                                 }
-                            }
+                            )
                         }
+
+                        Material3SettingsGroup(
+                            items = settingsItems,
+                            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+                        )
                     }
                 }
             }
-        }
         }
     }
 }

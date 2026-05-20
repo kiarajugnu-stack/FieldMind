@@ -21,6 +21,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -71,6 +72,7 @@ import chromahub.rhythm.app.shared.presentation.components.common.M3PlaceholderT
 import chromahub.rhythm.app.shared.presentation.components.dialogs.SwitchModeDialog
 import chromahub.rhythm.app.shared.presentation.components.icons.RhythmIcons
 import chromahub.rhythm.app.ui.LocalMiniPlayerPadding
+import chromahub.rhythm.app.util.GenreUtils
 import chromahub.rhythm.app.util.HapticUtils
 import chromahub.rhythm.app.util.ImageUtils
 import chromahub.rhythm.app.util.M3ImageUtils
@@ -152,6 +154,21 @@ fun UniversalSearchScreen(
     val isStreamingLoading by streamingViewModel.isLoading.collectAsState()
     val streamingLikedSongs by streamingViewModel.likedSongs.collectAsState()
 
+    val isGenreDetectionComplete by localViewModel.isGenreDetectionComplete.collectAsState()
+
+    val genres = remember(localSongs) {
+        localSongs
+            .flatMap { song -> GenreUtils.splitGenres(song.genre) }
+            .distinctBy { it.lowercase() }
+            .sortedBy { it.lowercase() }
+    }
+
+    val genreSongCounts = remember(genres, localSongs) {
+        genres.associateWith { genre ->
+            localSongs.count { song -> GenreUtils.matchesGenre(song.genre, genre) }
+        }
+    }
+
     LaunchedEffect(query) {
         if (query.isNotBlank() && streamingQuery != query) {
             streamingViewModel.search(query)
@@ -160,7 +177,15 @@ fun UniversalSearchScreen(
 
     val matchedLocalSongs = remember(query, localSongs, filterSongs) {
         if (!filterSongs || query.isBlank()) emptyList()
-        else localSongs.filter { it.title.contains(query, true) || it.artist.contains(query, true) }
+        else {
+            val lowerQuery = query.lowercase()
+            localSongs.filter {
+                it.title.lowercase().contains(lowerQuery) ||
+                        it.artist.lowercase().contains(lowerQuery) ||
+                        it.album.lowercase().contains(lowerQuery) ||
+                        GenreUtils.matchesGenreQuery(it.genre, lowerQuery)
+            }
+        }
     }
     val matchedLocalAlbums = remember(query, localAlbums, filterAlbums) {
         if (!filterAlbums || query.isBlank()) emptyList()
@@ -355,6 +380,18 @@ fun UniversalSearchScreen(
                             }
                         }
                     }
+
+                    item(key = "genre_browse") {
+                        UniversalGenreBrowseSection(
+                            genres = genres,
+                            genreSongCounts = genreSongCounts,
+                            isGenreDetectionComplete = isGenreDetectionComplete,
+                            onGenreClick = { genre ->
+                                HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                                query = genre
+                            }
+                        )
+                    }
                 }
             } else {
                 LazyColumn(
@@ -376,12 +413,42 @@ fun UniversalSearchScreen(
                     } else if (!hasResults && !isStreamingLoading) {
                         item(key = "no_results") {
                             Column(
-                                modifier = Modifier.fillMaxWidth().padding(vertical = 48.dp).animateItem(),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 64.dp)
+                                    .animateItem(),
                                 horizontalAlignment = Alignment.CenterHorizontally
                             ) {
-                                Icon(RhythmIcons.Search, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f), modifier = Modifier.size(64.dp))
-                                Spacer(modifier = Modifier.height(16.dp))
-                                Text("No results found for \"$query\"", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Surface(
+                                    shape = CircleShape,
+                                    color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.2f),
+                                    modifier = Modifier.size(120.dp)
+                                ) {
+                                    Box(contentAlignment = Alignment.Center) {
+                                        Icon(
+                                            imageVector = RhythmIcons.Search,
+                                            contentDescription = null,
+                                            tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f),
+                                            modifier = Modifier.size(60.dp)
+                                        )
+                                    }
+                                }
+                                Spacer(modifier = Modifier.height(24.dp))
+                                Text(
+                                    text = "No Results Found",
+                                    style = MaterialTheme.typography.headlineSmall,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.onSurface,
+                                    textAlign = TextAlign.Center
+                                )
+                                Spacer(modifier = Modifier.height(12.dp))
+                                Text(
+                                    text = "We couldn't find anything matching \"$query\".",
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    textAlign = TextAlign.Center,
+                                    modifier = Modifier.padding(horizontal = 32.dp)
+                                )
                             }
                         }
                     } else {
@@ -1713,5 +1780,159 @@ private fun UniversalSongOptionGridItem(
                 color = MaterialTheme.colorScheme.onSurface
             )
         }
+    }
+}
+
+@Composable
+private fun UniversalGenreBrowseSection(
+    genres: List<String>,
+    genreSongCounts: Map<String, Int>,
+    isGenreDetectionComplete: Boolean,
+    onGenreClick: (String) -> Unit
+) {
+    val context = LocalContext.current
+    val isActuallyLoading = !isGenreDetectionComplete && genres.isEmpty()
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 12.dp)
+            .animateContentSize(spring(stiffness = Spring.StiffnessMediumLow))
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.padding(horizontal = 4.dp).padding(bottom = 16.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Rounded.AutoAwesome,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.tertiary,
+                modifier = Modifier.size(32.dp)
+            )
+            Text(
+                text = "Browse by Genre",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Black,
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.padding(start = 12.dp)
+            )
+        }
+
+        if (isActuallyLoading) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 32.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                WavyLoader(color = MaterialTheme.colorScheme.tertiary)
+            }
+        } else if (genres.isNotEmpty()) {
+            val rows = remember(genres) { genres.chunked(2) }
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                rows.forEachIndexed { rowIndex, rowGenres ->
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        rowGenres.forEachIndexed { colIndex, genre ->
+                            val itemIndex = rowIndex * 2 + colIndex
+                            UniversalGenreBrowseItemCard(
+                                genre = genre,
+                                songCount = genreSongCounts[genre] ?: 0,
+                                index = itemIndex,
+                                onClick = { onGenreClick(genre) },
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+                        if (rowGenres.size == 1) {
+                            Spacer(modifier = Modifier.weight(1f))
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun UniversalGenreBrowseItemCard(
+    genre: String,
+    songCount: Int,
+    index: Int,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val shape = remember(index) {
+        when (index % 4) {
+            0 -> RoundedCornerShape(topStart = 32.dp, topEnd = 12.dp, bottomEnd = 32.dp, bottomStart = 12.dp)
+            1 -> RoundedCornerShape(topStart = 12.dp, topEnd = 32.dp, bottomEnd = 12.dp, bottomStart = 32.dp)
+            2 -> RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp, bottomEnd = 12.dp, bottomStart = 12.dp)
+            else -> RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp, bottomEnd = 32.dp, bottomStart = 32.dp)
+        }
+    }
+
+    val colorPair = when (index % 3) {
+        0 -> MaterialTheme.colorScheme.primaryContainer to MaterialTheme.colorScheme.onPrimaryContainer
+        1 -> MaterialTheme.colorScheme.secondaryContainer to MaterialTheme.colorScheme.onSecondaryContainer
+        else -> MaterialTheme.colorScheme.tertiaryContainer to MaterialTheme.colorScheme.onTertiaryContainer
+    }
+
+    Card(
+        onClick = onClick,
+        shape = shape,
+        colors = CardDefaults.cardColors(containerColor = colorPair.first),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+        modifier = modifier.height(115.dp)
+    ) {
+        Box(modifier = Modifier.fillMaxSize()) {
+            Icon(
+                imageVector = universalGenreIconFor(genre),
+                contentDescription = null,
+                tint = colorPair.second.copy(alpha = 0.06f),
+                modifier = Modifier
+                    .size(96.dp)
+                    .align(Alignment.BottomEnd)
+                    .offset(x = 24.dp, y = 24.dp)
+                    .graphicsLayer { rotationZ = -18f }
+            )
+
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.Bottom
+            ) {
+                Text(
+                    text = genre,
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Black,
+                    color = colorPair.second,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Text(
+                    text = "$songCount songs",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = colorPair.second.copy(alpha = 0.75f),
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
+        }
+    }
+}
+
+private fun universalGenreIconFor(genre: String): ImageVector {
+    val normalized = genre.lowercase()
+    return when {
+        normalized.contains("hip hop") || normalized.contains("hip-hop") || normalized.contains("rap") || normalized.contains("trap") -> Icons.Default.Mic
+        normalized.contains("rock") || normalized.contains("metal") || normalized.contains("punk") || normalized.contains("grunge") -> RhythmIcons.Music.Audiotrack
+        normalized.contains("electronic") || normalized.contains("edm") || normalized.contains("house") || normalized.contains("techno") || normalized.contains("trance") || normalized.contains("synth") -> RhythmIcons.Player.Equalizer
+        normalized.contains("classical") || normalized.contains("instrumental") || normalized.contains("orchestra") || normalized.contains("opera") -> RhythmIcons.Music.Album
+        normalized.contains("jazz") || normalized.contains("blues") || normalized.contains("soul") || normalized.contains("r&b") || normalized.contains("funk") -> RhythmIcons.Music.MusicNote
+        normalized.contains("ambient") || normalized.contains("chill") || normalized.contains("lofi") || normalized.contains("lo-fi") || normalized.contains("acoustic") -> RhythmIcons.Devices.Headphones
+        normalized.contains("pop") || normalized.contains("dance") || normalized.contains("disco") || normalized.contains("k-pop") || normalized.contains("j-pop") -> RhythmIcons.Music.MusicNote
+        normalized.contains("country") || normalized.contains("folk") -> RhythmIcons.Music.Audiotrack
+        else -> RhythmIcons.Music.MusicNote
     }
 }
