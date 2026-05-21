@@ -28,6 +28,9 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
+import android.net.Uri
+import chromahub.rhythm.app.shared.data.model.Song
+import chromahub.rhythm.app.features.local.presentation.viewmodel.MusicViewModel
 
 /**
  * ViewModel for managing streaming music playback and library.
@@ -1332,6 +1335,115 @@ class StreamingMusicViewModel(application: Application) : AndroidViewModel(appli
         return normalizedId.contains(normalizedIdFormat) ||
             normalizedId.contains(normalizedArtist.replace(" ", "_")) ||
             normalizedId.contains(normalizedArtist.replace(" ", "-"))
+    }
+
+    /**
+     * Play the streaming song next in the active local playback queue.
+     */
+    fun playNext(song: StreamingSong, localViewModel: MusicViewModel) {
+        viewModelScope.launch {
+            try {
+                if (!checkAndSyncAuthentication()) {
+                    _error.value = "Connect to a streaming service first"
+                    return@launch
+                }
+                val resolvedUrl = repository.getStreamingUrl(song.id)
+                    ?: song.streamingUrl
+                    ?: song.previewUrl
+
+                val updatedSong = if (resolvedUrl.isNullOrBlank()) {
+                    song
+                } else {
+                    song.copy(streamingUrl = resolvedUrl)
+                }
+
+                if (updatedSong.streamingUrl.isNullOrBlank()) {
+                    _error.value = "Unable to resolve stream URL for this song"
+                    android.widget.Toast.makeText(context, "Failed to play next: Unable to resolve URL", android.widget.Toast.LENGTH_SHORT).show()
+                    return@launch
+                }
+
+                // Sync VM queue state flow representation if needed
+                val currentQueue = _queue.value.toMutableList()
+                val currentSongId = _currentSong.value?.id
+                val currentIndex = currentQueue.indexOfFirst { it.id == currentSongId }
+                val insertIndex = if (currentIndex >= 0) currentIndex + 1 else 0
+                if (insertIndex in 0..currentQueue.size) {
+                    currentQueue.add(insertIndex, updatedSong)
+                } else {
+                    currentQueue.add(updatedSong)
+                }
+                _queue.value = currentQueue
+
+                // Delegate to localViewModel
+                val localSong = updatedSong.toLocalSong()
+                localViewModel.playNext(localSong)
+            } catch (e: Exception) {
+                android.util.Log.e("StreamingMusicViewModel", "Error in playNext for streaming song", e)
+                _error.value = "Failed to play next: ${e.message}"
+            }
+        }
+    }
+
+    /**
+     * Add the streaming song to the end of the active local playback queue.
+     */
+    fun addSongToQueue(song: StreamingSong, localViewModel: MusicViewModel) {
+        viewModelScope.launch {
+            try {
+                if (!checkAndSyncAuthentication()) {
+                    _error.value = "Connect to a streaming service first"
+                    return@launch
+                }
+                val resolvedUrl = repository.getStreamingUrl(song.id)
+                    ?: song.streamingUrl
+                    ?: song.previewUrl
+
+                val updatedSong = if (resolvedUrl.isNullOrBlank()) {
+                    song
+                } else {
+                    song.copy(streamingUrl = resolvedUrl)
+                }
+
+                if (updatedSong.streamingUrl.isNullOrBlank()) {
+                    _error.value = "Unable to resolve stream URL for this song"
+                    android.widget.Toast.makeText(context, "Failed to add to queue: Unable to resolve URL", android.widget.Toast.LENGTH_SHORT).show()
+                    return@launch
+                }
+
+                // Sync VM queue state flow representation if needed
+                val currentQueue = _queue.value.toMutableList()
+                currentQueue.add(updatedSong)
+                _queue.value = currentQueue
+
+                // Delegate to localViewModel
+                val localSong = updatedSong.toLocalSong()
+                localViewModel.addSongToQueue(localSong)
+            } catch (e: Exception) {
+                android.util.Log.e("StreamingMusicViewModel", "Error in addSongToQueue for streaming song", e)
+                _error.value = "Failed to add to queue: ${e.message}"
+            }
+        }
+    }
+
+    private fun StreamingSong.toLocalSong(): Song {
+        val playbackUri = when {
+            !streamingUrl.isNullOrBlank() -> Uri.parse(streamingUrl)
+            !previewUrl.isNullOrBlank() -> Uri.parse(previewUrl)
+            else -> Uri.parse("streaming://track/$id")
+        }
+
+        return Song(
+            id = id,
+            title = title,
+            artist = artist,
+            album = album,
+            albumId = albumId.orEmpty(),
+            duration = duration,
+            uri = playbackUri,
+            artworkUri = artworkUri?.takeIf { it.isNotBlank() }?.let(Uri::parse),
+            albumArtist = albumArtist
+        )
     }
 }
 

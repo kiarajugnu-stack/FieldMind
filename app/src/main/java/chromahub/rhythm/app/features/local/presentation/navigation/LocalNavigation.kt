@@ -1338,6 +1338,36 @@ private fun LocalNavigationContent(
                     }
                 ) {
                     val streamingViewModel: chromahub.rhythm.app.features.streaming.presentation.viewmodel.StreamingMusicViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
+
+                    var showAlbumBottomSheet by remember { mutableStateOf(false) }
+                    var selectedAlbumForSheet by remember { mutableStateOf<chromahub.rhythm.app.shared.data.model.Album?>(null) }
+                    val albumBottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false)
+                    val favoriteSongs by viewModel.favoriteSongs.collectAsState()
+                    val context = LocalContext.current
+
+                    var showAddToPlaylistSheet by remember { mutableStateOf(false) }
+                    var selectedSongForPlaylist by remember { mutableStateOf<chromahub.rhythm.app.shared.data.model.Song?>(null) }
+                    var showSongInfoSheet by remember { mutableStateOf(false) }
+                    var selectedSongForInfo by remember { mutableStateOf<chromahub.rhythm.app.shared.data.model.Song?>(null) }
+
+                    val writePermissionLauncher = rememberLauncherForActivityResult(
+                        contract = androidx.activity.result.contract.ActivityResultContracts.StartIntentSenderForResult()
+                    ) { result: ActivityResult ->
+                        if (result.resultCode == android.app.Activity.RESULT_OK) {
+                            viewModel.completeMetadataWriteAfterPermission(
+                                onSuccess = {
+                                    android.widget.Toast.makeText(context, "Metadata saved successfully!", android.widget.Toast.LENGTH_SHORT).show()
+                                },
+                                onError = { errorMessage ->
+                                    android.widget.Toast.makeText(context, errorMessage, android.widget.Toast.LENGTH_LONG).show()
+                                }
+                            )
+                        } else {
+                            viewModel.cancelPendingMetadataWrite()
+                            android.widget.Toast.makeText(context, "Permission denied. Changes saved to library only.", android.widget.Toast.LENGTH_LONG).show()
+                        }
+                    }
+
                     chromahub.rhythm.app.shared.presentation.screens.UniversalSearchScreen(
                         localViewModel = viewModel,
                         streamingViewModel = streamingViewModel,
@@ -1345,19 +1375,128 @@ private fun LocalNavigationContent(
                             viewModel.playSongFromSearch(song, songs)
                             navController.navigate(Screen.Player.route)
                         },
-                        onLocalAlbumClick = onPlayAlbum,
+                        onLocalAlbumClick = { album ->
+                            selectedAlbumForSheet = album
+                            showAlbumBottomSheet = true
+                        },
                         onLocalArtistClick = { artist -> navController.navigate(Screen.ArtistDetail.createRoute(artist.name)) },
                         onLocalPlaylistClick = { playlist -> navController.navigate(Screen.PlaylistDetail.createRoute(playlist.id)) },
                         onStreamingSongClick = { song ->
                             streamingViewModel.playSong(song)
                             navController.navigate(Screen.Player.route)
                         },
-                        onStreamingAlbumClick = { streamingViewModel.playAlbum(it) },
-                        onStreamingArtistClick = { /* Could add streaming artist route later */ },
-                        onStreamingPlaylistClick = { streamingViewModel.playPlaylist(it) },
+                        onStreamingAlbumClick = { streamingAlbum ->
+                            appSettings.setInitialStreamingRoute("streaming_search")
+                        },
+                        onStreamingArtistClick = { artist ->
+                            appSettings.setInitialStreamingRoute("streaming_artist/${Uri.encode(artist.id)}?artistName=${Uri.encode(artist.name)}")
+                        },
+                        onStreamingPlaylistClick = { playlist ->
+                            appSettings.setInitialStreamingRoute("streaming_playlist/${Uri.encode(playlist.id)}")
+                        },
                         onBack = { navigateToLanding() }
                     )
+
+                    // local album sheet
+                    if (showAlbumBottomSheet && selectedAlbumForSheet != null) {
+                        AlbumBottomSheet(
+                            album = selectedAlbumForSheet!!,
+                            onDismiss = {
+                                showAlbumBottomSheet = false
+                                selectedAlbumForSheet = null
+                            },
+                            onSongClick = onPlaySong,
+                            onPlayAll = { songs -> viewModel.playSongs(songs) },
+                            onShufflePlay = { songs -> viewModel.playShuffled(songs) },
+                            onAddToQueue = { song -> viewModel.addSongToQueue(song) },
+                            onAddSongToPlaylist = { song ->
+                                selectedSongForPlaylist = song
+                                showAddToPlaylistSheet = true
+                            },
+                            onPlayerClick = { navController.navigate(Screen.Player.route) },
+                            sheetState = albumBottomSheetState,
+                            haptics = LocalHapticFeedback.current,
+                            onPlayNext = { song -> viewModel.playNext(song) },
+                            onToggleFavorite = { song -> viewModel.toggleFavorite(song) },
+                            favoriteSongs = favoriteSongs,
+                            onShowSongInfo = { song ->
+                                selectedSongForInfo = song
+                                showSongInfoSheet = true
+                            },
+                            onAddToBlacklist = { song -> appSettings.addToBlacklist(song.id) },
+                            currentSong = currentSong,
+                            isPlaying = isPlaying
+                        )
+                    }
+
+                    // playlist & song info sheets if triggered from the album bottom sheet
+                    if (showAddToPlaylistSheet && selectedSongForPlaylist != null) {
+                        AddToPlaylistBottomSheet(
+                            song = selectedSongForPlaylist!!,
+                            playlists = playlists,
+                            onDismissRequest = {
+                                showAddToPlaylistSheet = false
+                                selectedSongForPlaylist = null
+                            },
+                            onAddToPlaylist = { playlist ->
+                                viewModel.addSongToPlaylist(selectedSongForPlaylist!!, playlist.id) { message ->
+                                    coroutineScope.launch {
+                                        snackbarHostState.showSnackbar(message)
+                                    }
+                                }
+                                showAddToPlaylistSheet = false
+                                selectedSongForPlaylist = null
+                            },
+                            onCreateNewPlaylist = {
+                                showAddToPlaylistSheet = false
+                                selectedSongForPlaylist = null
+                            }
+                        )
+                    }
+
+                    if (showSongInfoSheet && selectedSongForInfo != null) {
+                        SongInfoBottomSheet(
+                            song = selectedSongForInfo!!,
+                            onDismiss = {
+                                showSongInfoSheet = false
+                                selectedSongForInfo = null
+                            },
+                            appSettings = appSettings,
+                            onEditSong = { title, artist, album, genre, year, trackNumber, artworkUri, removeArtwork ->
+                                viewModel.saveMetadataChanges(
+                                    song = selectedSongForInfo!!,
+                                    title = title,
+                                    artist = artist,
+                                    album = album,
+                                    genre = genre,
+                                    year = year,
+                                    trackNumber = trackNumber,
+                                    artworkUri = artworkUri,
+                                    removeArtwork = removeArtwork,
+                                    onSuccess = { fileWriteSucceeded ->
+                                        if (fileWriteSucceeded) {
+                                            android.widget.Toast.makeText(context, "Metadata saved successfully to file!", android.widget.Toast.LENGTH_SHORT).show()
+                                        }
+                                    },
+                                    onError = { errorMessage ->
+                                        android.widget.Toast.makeText(context, errorMessage, android.widget.Toast.LENGTH_LONG).show()
+                                    },
+                                    onPermissionRequired = { pendingRequest ->
+                                        try {
+                                            val intentSenderRequest = androidx.activity.result.IntentSenderRequest.Builder(
+                                                pendingRequest.intentSender
+                                            ).build()
+                                            writePermissionLauncher.launch(intentSenderRequest)
+                                        } catch (e: Exception) {
+                                            android.widget.Toast.makeText(context, "Permission required to modify file metadata", android.widget.Toast.LENGTH_SHORT).show()
+                                        }
+                                    }
+                                )
+                            }
+                        )
+                    }
                 }
+
 
                 composable(
                     Screen.Settings.route,

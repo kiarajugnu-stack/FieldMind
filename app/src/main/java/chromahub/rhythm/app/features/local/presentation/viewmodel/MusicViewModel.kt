@@ -2339,21 +2339,29 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
             var preservedMissing = 0
 
             val updatedSongs = playlist.songs.mapNotNull { playlistSong ->
-                val directMatch = currentSongsMap[playlistSong.id]
-                val resolvedSong = directMatch ?: currentSongsByStableKey[playlistSongStableKey(playlistSong)]?.firstOrNull()
+                val isStreaming = playlistSong.uri.toString().startsWith("http://") || 
+                                  playlistSong.uri.toString().startsWith("https://") || 
+                                  playlistSong.uri.toString().startsWith("streaming://")
+                
+                if (isStreaming) {
+                    playlistSong
+                } else {
+                    val directMatch = currentSongsMap[playlistSong.id]
+                    val resolvedSong = directMatch ?: currentSongsByStableKey[playlistSongStableKey(playlistSong)]?.firstOrNull()
 
-                when {
-                    resolvedSong != null && filteredSongsSet.contains(resolvedSong.id) -> {
-                        if (directMatch == null && resolvedSong.id != playlistSong.id) {
-                            remappedByStableKey++
+                    when {
+                        resolvedSong != null && filteredSongsSet.contains(resolvedSong.id) -> {
+                            if (directMatch == null && resolvedSong.id != playlistSong.id) {
+                                remappedByStableKey++
+                            }
+                            resolvedSong
                         }
-                        resolvedSong
+                        preserveMissingSongs -> {
+                            preservedMissing++
+                            playlistSong
+                        }
+                        else -> null
                     }
-                    preserveMissingSongs -> {
-                        preservedMissing++
-                        playlistSong
-                    }
-                    else -> null
                 }
             }
 
@@ -6003,7 +6011,11 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
     fun addSongToPlaylist(song: Song, playlistId: String, showSnackbar: (String) -> Unit) {
         // Check if song is filtered out (blacklisted or not whitelisted)
         val filteredSongsSet = filteredSongs.value.map { it.id }.toSet()
-        if (!filteredSongsSet.contains(song.id)) {
+        val isStreaming = song.uri.toString().startsWith("http://") || 
+                          song.uri.toString().startsWith("https://") || 
+                          song.uri.toString().startsWith("streaming://") ||
+                          _songs.value.none { it.id == song.id }
+        if (!isStreaming && !filteredSongsSet.contains(song.id)) {
             showSnackbar("Cannot add ${song.title} - song is filtered out")
             return
         }
@@ -6050,7 +6062,11 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
                 
                 // Filter songs that are not filtered out and not already in playlist
                 val songsToAdd = songs.filter { song ->
-                    filteredSongsSet.contains(song.id) && !existingSongIds.contains(song.id)
+                    val isStreaming = song.uri.toString().startsWith("http://") || 
+                                      song.uri.toString().startsWith("https://") || 
+                                      song.uri.toString().startsWith("streaming://") ||
+                                      _songs.value.none { it.id == song.id }
+                    (isStreaming || filteredSongsSet.contains(song.id)) && !existingSongIds.contains(song.id)
                 }
                 
                 successCount = songsToAdd.size
@@ -7179,7 +7195,6 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
      * Add a song to the queue
      */
     fun addSongToQueue(song: Song) {
-        android.widget.Toast.makeText(getApplication<android.app.Application>().applicationContext, "Added to queue: ${song.title}", android.widget.Toast.LENGTH_SHORT).show()
         Log.d(TAG, "Adding song to queue: ${song.title}")
         
         // Clear any previous error
@@ -7240,14 +7255,18 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
                 saveQueueToPersistence()
                 
                 Log.d(TAG, "Successfully added '${song.title}' to queue. Queue now has ${controller.mediaItemCount} songs in MediaController")
+                android.widget.Toast.makeText(getApplication<android.app.Application>().applicationContext, "Added to queue: ${song.title}", android.widget.Toast.LENGTH_SHORT).show()
             } catch (e: Exception) {
                 Log.e(TAG, "Error adding song to queue", e)
-                _queueOperationError.value = "Failed to add '${song.title}' to queue: ${e.message}"
+                val errorMsg = "Failed to add '${song.title}' to queue: ${e.message}"
+                _queueOperationError.value = errorMsg
+                android.widget.Toast.makeText(getApplication<android.app.Application>().applicationContext, errorMsg, android.widget.Toast.LENGTH_SHORT).show()
             }
         } ?: run {
             val errorMsg = "Cannot add song to queue - media controller is null"
             Log.e(TAG, errorMsg)
             _queueOperationError.value = errorMsg
+            android.widget.Toast.makeText(getApplication<android.app.Application>().applicationContext, "Failed to add to queue: Player not initialized", android.widget.Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -7255,7 +7274,6 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
      * Add a song to play next (right after the current song in the queue)
      */
     fun playNext(song: Song) {
-        android.widget.Toast.makeText(getApplication<android.app.Application>().applicationContext, "Playing next: ${song.title}", android.widget.Toast.LENGTH_SHORT).show()
         Log.d(TAG, "Adding song to play next: ${song.title}")
         
         // Clear any previous error
@@ -7318,14 +7336,18 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
                 if (controller.mediaItemCount != _currentQueue.value.songs.size) {
                     Log.w(TAG, "Queue size mismatch after playNext - MediaController: ${controller.mediaItemCount}, ViewModel: ${_currentQueue.value.songs.size}")
                 }
+                android.widget.Toast.makeText(getApplication<android.app.Application>().applicationContext, "Playing next: ${song.title}", android.widget.Toast.LENGTH_SHORT).show()
             } catch (e: Exception) {
                 Log.e(TAG, "Error adding song to play next", e)
-                _queueOperationError.value = "Failed to add '${song.title}' to play next: ${e.message}"
+                val errorMsg = "Failed to add '${song.title}' to play next: ${e.message}"
+                _queueOperationError.value = errorMsg
+                android.widget.Toast.makeText(getApplication<android.app.Application>().applicationContext, errorMsg, android.widget.Toast.LENGTH_SHORT).show()
             }
         } ?: run {
             val errorMsg = "Cannot add song to play next - media controller is null"
             Log.e(TAG, errorMsg)
             _queueOperationError.value = errorMsg
+            android.widget.Toast.makeText(getApplication<android.app.Application>().applicationContext, "Failed to play next: Player not initialized", android.widget.Toast.LENGTH_SHORT).show()
         }
     }
 

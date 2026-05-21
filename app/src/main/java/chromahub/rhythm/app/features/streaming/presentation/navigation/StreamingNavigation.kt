@@ -353,7 +353,9 @@ fun StreamingNavigation(
                 StreamingScreen.GoSettings.route,
                 StreamingScreen.ServiceSetup.route,
                 StreamingScreen.RhythmStats.route,
-                StreamingScreen.RhythmGuard.route
+                StreamingScreen.RhythmGuard.route,
+                StreamingScreen.ArtistDetail.route,
+                StreamingScreen.PlaylistDetail.route
             ).any { validRoute ->
                 pendingRoute == validRoute || pendingRoute.startsWith(validRoute.substringBefore("{"))
             }
@@ -783,6 +785,11 @@ fun StreamingNavigation(
                         )
                 }
             ) {
+                var showAlbumBottomSheet by remember { mutableStateOf(false) }
+                var selectedAlbumForSheet by remember { mutableStateOf<chromahub.rhythm.app.features.streaming.domain.model.StreamingAlbum?>(null) }
+                val albumSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false)
+                val scope = rememberCoroutineScope()
+
                 chromahub.rhythm.app.shared.presentation.screens.UniversalSearchScreen(
                     localViewModel = localMusicViewModel,
                     streamingViewModel = streamingMusicViewModel,
@@ -790,14 +797,33 @@ fun StreamingNavigation(
                         localMusicViewModel.playSongFromSearch(song, emptyList())
                         navController.navigate(StreamingScreen.Player.route)
                     },
-                    onLocalAlbumClick = { /* Could add route */ },
-                    onLocalArtistClick = { /* Could add route */ },
-                    onLocalPlaylistClick = { /* Could add route */ },
+                    onLocalAlbumClick = { album ->
+                        appSettings.setInitialStreamingRoute("library?tab=albums")
+                    },
+                    onLocalArtistClick = { artist ->
+                        appSettings.setInitialStreamingRoute("artist/${Uri.encode(artist.name)}")
+                    },
+                    onLocalPlaylistClick = { playlist ->
+                        appSettings.setInitialStreamingRoute("playlist/${Uri.encode(playlist.id)}")
+                    },
                     onStreamingSongClick = { song ->
                         streamingMusicViewModel.playSong(song)
                         navController.navigate(StreamingScreen.Player.route)
                     },
-                    onStreamingAlbumClick = { streamingMusicViewModel.playAlbum(it) },
+                    onStreamingAlbumClick = { streamingAlbum ->
+                        if (streamingAlbum.tracks.isEmpty()) {
+                            selectedAlbumForSheet = streamingAlbum
+                            scope.launch {
+                                val tracks = streamingMusicViewModel.getAlbumSongs(streamingAlbum)
+                                if (tracks.isNotEmpty()) {
+                                    selectedAlbumForSheet = streamingAlbum.copy(tracks = tracks)
+                                }
+                            }
+                        } else {
+                            selectedAlbumForSheet = streamingAlbum
+                        }
+                        showAlbumBottomSheet = true
+                    },
                     onStreamingArtistClick = { artist ->
                         navController.navigate(
                             StreamingScreen.ArtistDetail.createRoute(artist.id, artist.name)
@@ -805,9 +831,59 @@ fun StreamingNavigation(
                             launchSingleTop = true
                         }
                     },
-                    onStreamingPlaylistClick = { streamingMusicViewModel.playPlaylist(it) },
+                    onStreamingPlaylistClick = { playlist ->
+                        navController.navigate(
+                            StreamingScreen.PlaylistDetail.createRoute(playlist.id)
+                        ) {
+                            launchSingleTop = true
+                        }
+                    },
                     onBack = { navController.popBackStack() }
                 )
+
+                if (showAlbumBottomSheet && selectedAlbumForSheet != null) {
+                    val albumForSheet = selectedAlbumForSheet!!
+                    val streamingTracks = albumForSheet.tracks
+                    val libraryAlbum = albumForSheet.toLibraryAlbum(emptyList())
+
+                    AlbumBottomSheet(
+                        album = libraryAlbum,
+                        onDismiss = {
+                            showAlbumBottomSheet = false
+                            selectedAlbumForSheet = null
+                        },
+                        onSongClick = { song ->
+                            val streamingSong = streamingTracks.firstOrNull { it.id == song.id }
+                            streamingSong?.let { ss ->
+                                streamingMusicViewModel.playQueue(queue = listOf(ss), startIndex = 0, shuffle = false)
+                            }
+                        },
+                        onPlayAll = { songs ->
+                            if (streamingTracks.isNotEmpty()) {
+                                streamingMusicViewModel.playQueue(queue = streamingTracks, startIndex = 0, shuffle = false)
+                            }
+                        },
+                        onShufflePlay = { songs ->
+                            if (streamingTracks.isNotEmpty()) {
+                                val startIndex = (0 until streamingTracks.size).random()
+                                streamingMusicViewModel.playQueue(queue = streamingTracks, startIndex = startIndex, shuffle = true)
+                            }
+                        },
+                        onAddToQueue = { },
+                        onAddSongToPlaylist = { },
+                        onPlayerClick = { },
+                        sheetState = albumSheetState,
+                        haptics = haptic,
+                        showPlayNextAction = false,
+                        showAddToQueueAction = false,
+                        showToggleFavoriteAction = false,
+                        showAddToPlaylistAction = false,
+                        showSongInfoAction = false,
+                        showAddToBlacklistAction = false,
+                        currentSong = null,
+                        isPlaying = false
+                    )
+                }
             }
 
             composable(

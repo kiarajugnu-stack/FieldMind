@@ -851,10 +851,8 @@ fun UniversalSearchScreen(
                     handleAction(if (isLocal) "LOCAL" else "STREAMING") {
                         if (isLocal) {
                             localViewModel.playNext(songObj as Song)
-                            Toast.makeText(context, "${(songObj as Song).title} will play next", Toast.LENGTH_SHORT).show()
                         } else {
-                            try { streamingViewModel.javaClass.getMethod("playNext", StreamingSong::class.java).invoke(streamingViewModel, songObj as StreamingSong) } catch (e: Exception) {}
-                            Toast.makeText(context, "${(songObj as StreamingSong).title} will play next", Toast.LENGTH_SHORT).show()
+                            streamingViewModel.playNext(songObj as StreamingSong, localViewModel)
                         }
                     }
                     showSongOptionsSheet = false
@@ -863,10 +861,8 @@ fun UniversalSearchScreen(
                     handleAction(if (isLocal) "LOCAL" else "STREAMING") {
                         if (isLocal) {
                             localViewModel.addSongToQueue(songObj as Song)
-                            Toast.makeText(context, "${(songObj as Song).title} added to queue", Toast.LENGTH_SHORT).show()
                         } else {
-                            try { streamingViewModel.javaClass.getMethod("addSongToQueue", StreamingSong::class.java).invoke(streamingViewModel, songObj as StreamingSong) } catch (e: Exception) {}
-                            Toast.makeText(context, "${(songObj as StreamingSong).title} added to queue", Toast.LENGTH_SHORT).show()
+                            streamingViewModel.addSongToQueue(songObj as StreamingSong, localViewModel)
                         }
                     }
                     showSongOptionsSheet = false
