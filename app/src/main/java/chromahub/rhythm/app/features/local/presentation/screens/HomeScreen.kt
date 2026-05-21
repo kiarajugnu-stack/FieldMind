@@ -343,7 +343,7 @@ fun HomeScreen(
             onSongClick = onSongClick,
             onPlayAll = { songsToPlay ->
                 if (songsToPlay.isNotEmpty()) {
-                    musicViewModel.playQueueWithUserRule(songsToPlay, sourceLabel = "Home Album")
+                    musicViewModel.playSongs(songsToPlay)
                 }
                 coroutineScope.launch {
                     albumSheetState.hide()
@@ -858,7 +858,7 @@ private fun ModernScrollableContent(
                                                         musicViewModel.getMusicRepository().getSongsForAlbumLocal(album.id)
                                                     }
                                                     if (allNewReleaseSongs.isNotEmpty()) {
-                                                        musicViewModel.playQueueWithUserRule(allNewReleaseSongs, sourceLabel = "Home New Releases")
+                                                        musicViewModel.playSongs(allNewReleaseSongs)
                                                     }
                                                 }
                                             },
@@ -956,7 +956,7 @@ private fun ModernScrollableContent(
                                             subtitle = context.getString(R.string.home_latest_additions),
                                             onPlayAll = {
                                                 if (recentlyAddedSongs.isNotEmpty()) {
-                                                    musicViewModel.playQueueWithUserRule(recentlyAddedSongs, sourceLabel = "Home Recently Added")
+                                                    musicViewModel.playSongs(recentlyAddedSongs)
                                                 }
                                             },
                                             onShufflePlay = {
@@ -1316,7 +1316,7 @@ private fun ModernRecentlyPlayedSection(
             onPlayAll = {
                 coroutineScope.launch {
                     if (recentlyPlayed.isNotEmpty()) {
-                        musicViewModel.playQueueWithUserRule(recentlyPlayed, sourceLabel = "Home Recently Played")
+                        musicViewModel.playSongs(recentlyPlayed)
                     }
                 }
             },

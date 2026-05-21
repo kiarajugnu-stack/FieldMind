@@ -83,6 +83,17 @@
     <string name="settings_use_exoplayer_shuffle_desc">Use the player timeline for shuffle order.</string>
     <string name="settings_auto_queue">Context Queue</string>
     <string name="settings_auto_queue_desc">Build a related queue when playback starts.</string>
+    <string name="settings_context_queue_preference">Context Queue Preference</string>
+    <string name="settings_context_queue_preference_desc">Choose which metadata the context queue should prioritize first.</string>
+    <string name="settings_context_pref_artist_first">Artist first</string>
+    <string name="settings_context_pref_genre_first">Genre first</string>
+    <string name="settings_context_pref_artist_then_genre">Artist then genre</string>
+    <string name="settings_context_queue_persistence">Context Queue Persistence</string>
+    <string name="settings_context_queue_persistence_desc">Choose whether the context queue should stay available after playback ends.</string>
+    <string name="settings_context_persistence_persistent">Persistent</string>
+    <string name="settings_context_persistence_ephemeral">Ephemeral</string>
+    <string name="settings_context_queue_size">Context Queue Size</string>
+    <string name="settings_context_queue_size_desc">%1$d tracks</string>
     <string name="settings_clear_queue_on_new_song">Replace Queue on Play</string>
     <string name="settings_clear_queue_on_new_song_desc">Starting a track replaces the current queue.</string>
     <string name="settings_playback_persistence">Playback State</string>

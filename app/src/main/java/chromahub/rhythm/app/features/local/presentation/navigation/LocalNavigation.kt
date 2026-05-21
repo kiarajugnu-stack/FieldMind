@@ -1656,16 +1656,12 @@ private fun LocalNavigationContent(
                         },
                         onAlbumShufflePlay = onPlayAlbumShuffled,
                         onPlayQueue = { songs ->
-                            // Play queue using user-selected list queue behavior
-                            viewModel.playQueueWithUserRule(songs, sourceLabel = "Library")
+                            // Play queue (force replace) for explicit Play All action
+                            viewModel.playSongs(songs)
                         },
                         onPlayQueueFromIndex = { songs, startIndex ->
-                            // Play queue from specific index using user-selected behavior
-                            viewModel.playQueueWithUserRule(
-                                songs = songs,
-                                startIndex = startIndex,
-                                sourceLabel = "Library"
-                            )
+                            // Play queue from specific index (force replace)
+                            viewModel.playQueue(songs = songs, enableShuffle = false, startIndex = startIndex)
                         },
                         onShuffleQueue = { songs ->
                             // Shuffle using playShuffled to respect settings

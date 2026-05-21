@@ -362,6 +362,9 @@ class AppSettings private constructor(context: Context) {
         private const val KEY_SHUFFLE_USES_EXOPLAYER = "shuffle_uses_exoplayer"
         private const val KEY_AUTO_ADD_TO_QUEUE = "auto_add_to_queue"
         private const val KEY_CLEAR_QUEUE_ON_NEW_SONG = "clear_queue_on_new_song"
+        private const val KEY_CONTEXT_QUEUE_PREFERENCE = "context_queue_preference" // ARTIST_FIRST | GENRE_FIRST | ARTIST_THEN_GENRE
+        private const val KEY_CONTEXT_QUEUE_PERSISTENCE = "context_queue_persistence" // EPHEMERAL | PERSISTENT
+        private const val KEY_CONTEXT_QUEUE_SIZE = "context_queue_size" // default number of contextual tracks to build
         private const val KEY_HIDE_PLAYED_SONGS_IN_QUEUE = "hide_played_songs_in_queue"
         private const val KEY_SHOW_QUEUE_DIALOG = "show_queue_dialog"
         private const val KEY_LIST_QUEUE_ACTION_BEHAVIOR = "list_queue_action_behavior" // "replace", "ask", "play_next", "add_to_end"
@@ -910,6 +913,16 @@ class AppSettings private constructor(context: Context) {
     // Queue Persistence
     private val _queuePersistenceEnabled = MutableStateFlow(prefs.getBoolean(KEY_QUEUE_PERSISTENCE_ENABLED, true))
     val queuePersistenceEnabled: StateFlow<Boolean> = _queuePersistenceEnabled.asStateFlow()
+
+    // Context queue preferences
+    private val _contextQueuePreference = MutableStateFlow(prefs.getString(KEY_CONTEXT_QUEUE_PREFERENCE, "ARTIST_THEN_GENRE")!!)
+    val contextQueuePreference: StateFlow<String> = _contextQueuePreference.asStateFlow()
+
+    private val _contextQueuePersistence = MutableStateFlow(prefs.getString(KEY_CONTEXT_QUEUE_PERSISTENCE, "EPHEMERAL")!!)
+    val contextQueuePersistence: StateFlow<String> = _contextQueuePersistence.asStateFlow()
+
+    private val _contextQueueSize = MutableStateFlow(prefs.getInt(KEY_CONTEXT_QUEUE_SIZE, 50))
+    val contextQueueSize: StateFlow<Int> = _contextQueueSize.asStateFlow()
     
     private val _savedQueue = MutableStateFlow<List<String>>(
         try {
@@ -2231,6 +2244,23 @@ private val _autoCheckForUpdates = MutableStateFlow(prefs.getBoolean(KEY_AUTO_CH
         _savedQueue.value = emptyList()
         _savedQueueIndex.value = -1
         _savedPlaybackPosition.value = 0L
+    }
+
+    // Context queue settings
+    fun setContextQueuePreference(pref: String) {
+        prefs.edit().putString(KEY_CONTEXT_QUEUE_PREFERENCE, pref).apply()
+        _contextQueuePreference.value = pref
+    }
+
+    fun setContextQueuePersistence(value: String) {
+        prefs.edit().putString(KEY_CONTEXT_QUEUE_PERSISTENCE, value).apply()
+        _contextQueuePersistence.value = value
+    }
+
+    fun setContextQueueSize(size: Int) {
+        val safeSize = size.coerceAtLeast(1)
+        prefs.edit().putInt(KEY_CONTEXT_QUEUE_SIZE, safeSize).apply()
+        _contextQueueSize.value = safeSize
     }
     
     // Cache Settings Methods

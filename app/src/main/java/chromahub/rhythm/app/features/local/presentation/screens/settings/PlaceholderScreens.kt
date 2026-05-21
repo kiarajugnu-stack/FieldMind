@@ -834,7 +834,14 @@ fun QueuePlaybackSettingsScreen(onBackClick: () -> Unit) {
     val autoAddToQueue by appSettings.autoAddToQueue.collectAsState()
     val clearQueueOnNewSong by appSettings.clearQueueOnNewSong.collectAsState()
     val hidePlayedQueueSongs by appSettings.hidePlayedQueueSongs.collectAsState()
+    val contextQueuePreference by appSettings.contextQueuePreference.collectAsState()
+    val contextQueuePersistenceRaw by appSettings.contextQueuePersistence.collectAsState()
     val showAlreadyPlayedSongsInQueue = !hidePlayedQueueSongs
+    val effectiveContextQueuePreference = if (contextQueuePreference == "GENRE_FIRST") {
+        "GENRE_FIRST"
+    } else {
+        "ARTIST_FIRST"
+    }
     val showQueueDialog by appSettings.showQueueDialog.collectAsState()
     val repeatModePersistence by appSettings.repeatModePersistence.collectAsState()
     val shuffleModePersistence by appSettings.shuffleModePersistence.collectAsState()
@@ -851,6 +858,7 @@ fun QueuePlaybackSettingsScreen(onBackClick: () -> Unit) {
     var showPlaylistBehaviorDialog by remember { mutableStateOf(false) }
     var showListQueueBehaviorDialog by remember { mutableStateOf(false) }
     var showQueueDialogSettingDialog by remember { mutableStateOf(false) }
+    var showContextPrefBottomSheet by remember { mutableStateOf(false) }
 
     CollapsibleHeaderScreen(
         title = context.getString(R.string.settings_queue_playback),
@@ -869,11 +877,26 @@ fun QueuePlaybackSettingsScreen(onBackClick: () -> Unit) {
                         onToggleChange = { appSettings.setShuffleUsesExoplayer(it) }
                     ),
                     SettingItem(
-                        RhythmIcons.Queue,
+                        RhythmIcons.AddToQueue,
                         context.getString(R.string.settings_auto_queue),
                         context.getString(R.string.settings_auto_queue_desc),
                         toggleState = autoAddToQueue,
                         onToggleChange = { appSettings.setAutoAddToQueue(it) }
+                    ),
+                    SettingItem(
+                        RhythmIcons.Tune,
+                        context.getString(R.string.settings_context_queue_preference),
+                        when (effectiveContextQueuePreference) {
+                            "ARTIST_FIRST" -> context.getString(R.string.settings_context_pref_artist_first)
+                            else -> context.getString(R.string.settings_context_pref_genre_first)
+                        },
+                        onClick = { showContextPrefBottomSheet = true }
+                    ),
+                    SettingItem(
+                        RhythmIcons.Repeat,
+                        context.getString(R.string.settings_context_queue_persistence),
+                        context.getString(R.string.settings_context_queue_persistence_desc),
+                        data = "context_queue_persistence"
                     ),
                     SettingItem(
                         RhythmIcons.Delete,
@@ -890,7 +913,7 @@ fun QueuePlaybackSettingsScreen(onBackClick: () -> Unit) {
                         onToggleChange = { appSettings.setHidePlayedQueueSongs(!it) }
                     ),
                     SettingItem(
-                        RhythmIcons.Queue,
+                        Icons.AutoMirrored.Filled.Help,
                         context.getString(R.string.settings_queue_action_dialog),
                         when {
                             clearQueueOnNewSong -> context.getString(R.string.settings_queue_action_dialog_desc_disabled)
@@ -911,7 +934,7 @@ fun QueuePlaybackSettingsScreen(onBackClick: () -> Unit) {
                         onClick = { showPlaylistBehaviorDialog = true }
                     ),
                     SettingItem(
-                        androidx.compose.material.icons.Icons.AutoMirrored.Filled.QueueMusic,
+                        androidx.compose.material.icons.Icons.AutoMirrored.Rounded.Sort,
                         context.getString(R.string.settings_list_queue_action_dialog),
                         when (listQueueActionBehavior) {
                             "ask" -> context.getString(R.string.settings_list_queue_action_ask)
@@ -1063,6 +1086,33 @@ fun QueuePlaybackSettingsScreen(onBackClick: () -> Unit) {
                                         )
                                     }
                                 }
+
+                                if (item.data == "context_queue_persistence") {
+                                    val persistenceOptions = listOf(
+                                        "EPHEMERAL" to context.getString(R.string.settings_context_persistence_ephemeral),
+                                        "PERSISTENT" to context.getString(R.string.settings_context_persistence_persistent)
+                                    )
+                                    val selectedIndex = persistenceOptions
+                                        .indexOfFirst { it.first == contextQueuePersistenceRaw }
+                                        .coerceAtLeast(0)
+
+                                    Spacer(modifier = Modifier.height(10.dp))
+                                    ExpressiveButtonGroup(
+                                        items = persistenceOptions.map { it.second },
+                                        selectedIndex = selectedIndex,
+                                        onItemClick = { index ->
+                                            HapticUtils.performHapticFeedback(
+                                                context,
+                                                hapticFeedback,
+                                                HapticFeedbackType.TextHandleMove
+                                            )
+                                            appSettings.setContextQueuePersistence(
+                                                persistenceOptions[index].first
+                                            )
+                                        },
+                                        modifier = Modifier.fillMaxWidth()
+                                    )
+                                }
                             }
                         },
                         trailingContent = if (item.toggleState != null) {
@@ -1118,6 +1168,17 @@ fun QueuePlaybackSettingsScreen(onBackClick: () -> Unit) {
 
             item(key = "queue_playback_bottom_spacer") { Spacer(modifier = Modifier.height(100.dp)) }
         }
+    }
+
+    if (showContextPrefBottomSheet) {
+        ContextQueuePreferenceBottomSheet(
+            currentPreference = effectiveContextQueuePreference,
+            onDismiss = { showContextPrefBottomSheet = false },
+            onSelect = { pref ->
+                appSettings.setContextQueuePreference(pref)
+                showContextPrefBottomSheet = false
+            }
+        )
     }
 
     // Playlist Click Behavior Dialog
@@ -1911,6 +1972,92 @@ fun QueuePlaybackSettingsScreen(onBackClick: () -> Unit) {
         }
     }
 
+}
+
+@Composable
+private fun ContextQueuePreferenceBottomSheet(
+    currentPreference: String,
+    onDismiss: () -> Unit,
+    onSelect: (String) -> Unit
+) {
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val context = LocalContext.current
+    val haptic = LocalHapticFeedback.current
+    val options = listOf(
+        "ARTIST_FIRST" to context.getString(R.string.settings_context_pref_artist_first),
+        "GENRE_FIRST" to context.getString(R.string.settings_context_pref_genre_first)
+    )
+
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState,
+        dragHandle = { BottomSheetDefaults.DragHandle(color = MaterialTheme.colorScheme.primary) },
+        shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
+        containerColor = MaterialTheme.colorScheme.surfaceContainer,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        StandardBottomSheetHeader(
+            title = context.getString(R.string.settings_context_queue_preference),
+            subtitle = context.getString(R.string.settings_context_queue_preference_desc),
+            visible = true
+        )
+
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp)
+                .padding(bottom = 24.dp)
+        ) {
+            options.forEach { (key, label) ->
+                val isSelected = currentPreference == key
+
+                Card(
+                    onClick = {
+                        HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                        onSelect(key)
+                    },
+                    colors = CardDefaults.cardColors(
+                        containerColor = if (isSelected) {
+                            MaterialTheme.colorScheme.primaryContainer
+                        } else {
+                            MaterialTheme.colorScheme.surfaceContainerLow
+                        }
+                    ),
+                    shape = RoundedCornerShape(16.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(18.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = label,
+                            style = MaterialTheme.typography.titleMedium,
+                            color = if (isSelected) {
+                                MaterialTheme.colorScheme.onPrimaryContainer
+                            } else {
+                                MaterialTheme.colorScheme.onSurface
+                            },
+                            modifier = Modifier.weight(1f)
+                        )
+
+                        if (isSelected) {
+                            Icon(
+                                imageVector = Icons.Filled.CheckCircle,
+                                contentDescription = context.getString(R.string.ui_selected),
+                                modifier = Modifier.size(24.dp),
+                                tint = MaterialTheme.colorScheme.onPrimaryContainer
+                            )
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(10.dp))
+            }
+        }
+    }
 }
 
 // ✅ FULLY MERGED Playlists Screen (simplified playlist management)

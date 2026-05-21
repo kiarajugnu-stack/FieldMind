@@ -4253,54 +4253,86 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
      * Create a contextual queue based on the song's context (album, artist, recently played, etc.)
      */
     private fun createContextualQueue(song: Song): List<Song> {
-        // Try to determine the best context for this song
-        
-        // Check if song is from recently played - if so, create queue from recently played
+        // Build a context-aware queue using user preferences and statistics
+        val pref = appSettings.contextQueuePreference.value
+        val maxSize = appSettings.contextQueueSize.value.coerceAtLeast(1)
+
+        // If the song appears in recently played, prefer that short recent list
         if (_recentlyPlayed.value.any { it.id == song.id }) {
-            val recentlyPlayedSongs = _recentlyPlayed.value.take(20) // Limit to recent 20
+            val recentlyPlayedSongs = _recentlyPlayed.value.take(20)
             val startIndex = recentlyPlayedSongs.indexOfFirst { it.id == song.id }
             if (startIndex != -1) {
-                // Reorder so the selected song is first, followed by remaining recently played
-                val reorderedList = listOf(song) + recentlyPlayedSongs.filter { it.id != song.id }
-                Log.d(TAG, "Created queue from recently played with ${reorderedList.size} songs")
-                return reorderedList
+                val reordered = listOf(song) + recentlyPlayedSongs.filter { it.id != song.id }
+                Log.d(TAG, "Created queue from recently played with ${reordered.size} songs")
+                return reordered.take(maxSize)
             }
         }
-        
-        // Check if song is part of an album with multiple tracks
+
+        // Album context (preserve natural ordering)
         val albumSongs = _songs.value.filter { it.album == song.album && it.artist == song.artist }
         if (albumSongs.size > 1) {
-            // Keep multi-disc albums in natural disc -> track order.
-            val sortedAlbumSongs = albumSongs.sortedWith { a, b ->
-                compareByDiscThenTrack(a, b)
-            }
-            val startIndex = sortedAlbumSongs.indexOfFirst { it.id == song.id }
-            if (startIndex != -1) {
-                // Reorder so the selected song is first, followed by rest of album
-                val reorderedList = listOf(song) + sortedAlbumSongs.filter { it.id != song.id }
-                Log.d(TAG, "Created queue from album '${song.album}' with ${reorderedList.size} songs")
-                return reorderedList
+            val sortedAlbumSongs = albumSongs.sortedWith { a, b -> compareByDiscThenTrack(a, b) }
+            val reordered = listOf(song) + sortedAlbumSongs.filter { it.id != song.id }
+            Log.d(TAG, "Created queue from album '${song.album}' with ${reordered.size} songs")
+            return reordered.take(maxSize)
+        }
+
+        // Gather candidate pools
+        val artistPool = _songs.value
+            .filter { it.artist == song.artist && it.id != song.id }
+            .distinctBy { it.id }
+
+        val songGenres = GenreUtils.splitGenres(song.genre ?: "").map { it.lowercase() }.toSet()
+        val genrePool = if (songGenres.isNotEmpty()) {
+            _songs.value.filter { other ->
+                other.id != song.id && GenreUtils.splitGenres(other.genre ?: "").any { it.lowercase() in songGenres }
+            }.distinctBy { it.id }
+        } else emptyList()
+
+        // Home recommendations / personalized seeds
+        val recommended = getRecommendedSongs()
+
+        // Scoring function using per-user play counts, favorites and recency
+        val playCounts = _songPlayCounts.value
+        val favorites = _favoriteSongs.value
+        val recentlyIds = _recentlyPlayed.value.map { it.id }.toSet()
+        val recommendedIds = recommended.map { it.id }.toSet()
+
+        fun score(s: Song): Int {
+            var sc = (playCounts[s.id] ?: 0) * 2
+            if (favorites.contains(s.id)) sc += 50
+            if (recentlyIds.contains(s.id)) sc += 10
+            if (recommendedIds.contains(s.id)) sc += 20
+            return sc
+        }
+
+        // Combine pools respecting preference
+        val combined = when (pref) {
+            "GENRE_FIRST" -> (genrePool + artistPool + recommended)
+            "ARTIST_FIRST" -> (artistPool + genrePool + recommended)
+            else -> (artistPool + genrePool + recommended) // ARTIST_THEN_GENRE default
+        }
+
+        val deduped = combined
+            .distinctBy { it.id }
+            .filter { it.id != song.id }
+            .sortedByDescending { score(it) }
+            .take(maxSize)
+
+        val finalQueue = listOf(song) + deduped
+
+        // Persist queue if user requested persistent context queues
+        if (appSettings.contextQueuePersistence.value == "PERSISTENT") {
+            try {
+                appSettings.setSavedQueue(finalQueue.map { it.id })
+                appSettings.setSavedQueueIndex(0)
+            } catch (e: Exception) {
+                Log.w(TAG, "Failed to persist contextual queue: ${e.message}")
             }
         }
-        
-        // Check if song is by an artist with multiple tracks
-        val artistSongs = _songs.value.filter { it.artist == song.artist }
-        if (artistSongs.size > 1) {
-            // Get a reasonable subset of artist songs (popular ones first if available)
-            val limitedArtistSongs = if (artistSongs.size > 25) {
-                // Sort by play count if available, then take top 25
-                artistSongs.sortedByDescending { _songPlayCounts.value[it.id] ?: 0 }.take(25)
-            } else {
-                artistSongs
-            }
-            val reorderedList = listOf(song) + limitedArtistSongs.filter { it.id != song.id }.shuffled()
-            Log.d(TAG, "Created queue from artist '${song.artist}' with ${reorderedList.size} songs")
-            return reorderedList
-        }
-        
-        // Fallback: return just the single song
-        Log.d(TAG, "No context found, returning single song queue")
-        return listOf(song)
+
+        Log.d(TAG, "Created contextual queue (pref=$pref, size=${finalQueue.size})")
+        return finalQueue
     }
 
     private fun compareByDiscThenTrack(a: Song, b: Song): Int {
@@ -4679,7 +4711,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
                 val sortedSongs = album.songs.sortedWith { a, b ->
                     compareByDiscThenTrack(a, b)
                 }
-                playQueueWithUserRule(sortedSongs, sourceLabel = "Album")
+                playSongs(sortedSongs)
             } else {
                 // Fallback to querying if album.songs is empty
                 Log.d(TAG, "Album songs empty, querying repository")
@@ -4690,7 +4722,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
                     val sortedSongs = songs.sortedWith { a: Song, b: Song ->
                         compareByDiscThenTrack(a, b)
                     }
-                    playQueueWithUserRule(sortedSongs, sourceLabel = "Album")
+                    playSongs(sortedSongs)
                 } else {
                     Log.e(TAG, "No songs found for album: ${album.title} (ID: ${album.id})")
                     debugQueueState()
@@ -4705,7 +4737,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
             val songs = repository.getSongsForArtist(artist.id)
             Log.d(TAG, "Found ${songs.size} songs for artist")
             if (songs.isNotEmpty()) {
-                playQueueWithUserRule(songs, sourceLabel = "Artist")
+                playSongs(songs)
             } else {
                 Log.e(TAG, "No songs found for artist: ${artist.name} (ID: ${artist.id})")
                 debugQueueState()
@@ -4716,7 +4748,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
     fun playPlaylist(playlist: Playlist) {
         Log.d(TAG, "Playing playlist: ${playlist.name}")
         if (playlist.songs.isNotEmpty()) {
-            playQueueWithUserRule(playlist.songs, sourceLabel = "Playlist")
+            playSongs(playlist.songs)
         }
     }
 
@@ -7855,8 +7887,9 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
      * Plays a list of songs as a queue.
      */
     fun playSongs(songs: List<Song>) {
-        Log.d(TAG, "Playing list of songs: ${songs.size} songs")
-        playQueueWithUserRule(songs, sourceLabel = "List")
+        Log.d(TAG, "Playing list of songs (force replace): ${songs.size} songs")
+        // Force replace current queue for explicit list "Play All" actions
+        playQueue(songs, enableShuffle = false, startIndex = 0)
     }
 
     /**
