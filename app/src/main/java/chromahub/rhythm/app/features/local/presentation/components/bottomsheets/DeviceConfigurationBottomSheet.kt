@@ -20,7 +20,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.basicMarquee
+import chromahub.rhythm.app.shared.presentation.components.common.rhythmMarquee
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -918,7 +918,7 @@ private fun DeviceCard(
                         else
                             MaterialTheme.colorScheme.onSurface,
                         maxLines = 1,
-                        modifier = Modifier.basicMarquee()
+                        modifier = Modifier.rhythmMarquee()
                     )
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -944,7 +944,7 @@ private fun DeviceCard(
                                 maxLines = 1,
                                 modifier = Modifier
                                     .weight(1f, fill = false)
-                                    .basicMarquee()
+                                    .rhythmMarquee()
                             )
                         }
                     }

@@ -64,6 +64,7 @@ import chromahub.rhythm.app.shared.presentation.components.common.ActionProgress
 import chromahub.rhythm.app.shared.presentation.components.common.ContentLoadingIndicator
 import chromahub.rhythm.app.features.local.presentation.components.player.formatDuration
 import chromahub.rhythm.app.shared.presentation.components.common.MarqueeText
+import chromahub.rhythm.app.shared.presentation.components.common.rhythmMarquee
 import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveButtonGroup
 import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveFilledTonalButton
 import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveGroupButton
@@ -1596,7 +1597,7 @@ private fun SongInfoGridItem(
                     maxLines = 1,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .basicMarquee()
+                        .rhythmMarquee()
                 )
             } else {
                 Text(
@@ -1710,7 +1711,7 @@ private fun FileInfoGridItem(
                     maxLines = 1,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .basicMarquee()
+                        .rhythmMarquee()
                 )
             } else {
                 Text(

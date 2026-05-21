@@ -1498,7 +1498,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 val preferSongArtwork = appSettings.preferSongArtwork.value
-                val losslessArtwork = appSettings.losslessArtwork.value
+                val losslessArtwork = appSettings.isLosslessArtworkActive.value
                 if (preferSongArtwork) {
                     val initialSongs = _songs.value
                     val hasMissingArtwork = initialSongs.any { song ->
@@ -1615,7 +1615,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
                 Log.d(TAG, "Found ${newSongs.size} new songs, updating library")
                 
                 // Extract embedded artwork for new songs if needed
-                val losslessArtwork = appSettings.losslessArtwork.value
+                val losslessArtwork = appSettings.isLosslessArtworkActive.value
                 val updatedNewSongs = repository.extractEmbeddedArtworkForSongs(newSongs, losslessArtwork)
                 
                 val mergedSongs = _songs.value + updatedNewSongs
@@ -1884,7 +1884,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
                 launch {
                     try {
                         val preferSongArtwork = appSettings.preferSongArtwork.value
-                        val losslessArtwork = appSettings.losslessArtwork.value
+                        val losslessArtwork = appSettings.isLosslessArtworkActive.value
                         if (preferSongArtwork) {
                             delay(2000)
                             val currentSongs = _songs.value

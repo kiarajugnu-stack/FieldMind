@@ -18,6 +18,9 @@ import androidx.media3.datasource.ResolvingDataSource
 import androidx.media3.datasource.DefaultDataSource
 import androidx.media3.datasource.DefaultHttpDataSource
 import androidx.media3.datasource.DataSpec
+import android.os.Build
+import androidx.media3.common.TrackSelectionParameters
+import chromahub.rhythm.app.shared.data.model.AppSettings
 import android.net.Uri
 import chromahub.rhythm.app.features.streaming.di.StreamingMusicModule
 import kotlinx.coroutines.runBlocking
@@ -250,10 +253,27 @@ class RhythmPlayerEngine(
         val mediaSourceFactory = DefaultMediaSourceFactory(context)
             .setDataSourceFactory(resolvingDataSourceFactory)
 
+        val appSettings = AppSettings.getInstance(context)
+        val trackSelectionParametersBuilder = TrackSelectionParameters.Builder(context)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            val audioOffloadPreferences = TrackSelectionParameters.AudioOffloadPreferences.Builder()
+                .setAudioOffloadMode(
+                    if (appSettings.isAudioOffloadActive.value) {
+                        TrackSelectionParameters.AudioOffloadPreferences.AUDIO_OFFLOAD_MODE_ENABLED
+                    } else {
+                        TrackSelectionParameters.AudioOffloadPreferences.AUDIO_OFFLOAD_MODE_DISABLED
+                    }
+                )
+                .build()
+            trackSelectionParametersBuilder.setAudioOffloadPreferences(audioOffloadPreferences)
+        }
+        val trackSelectionParameters = trackSelectionParametersBuilder.build()
+
         return ExoPlayer.Builder(context, renderersFactory)
             .setLoadControl(loadControl)
             .setMediaSourceFactory(mediaSourceFactory)
             .build().apply {
+                this.trackSelectionParameters = trackSelectionParameters
                 setAudioAttributes(audioAttributes, handleAudioFocus)
                 setHandleAudioBecomingNoisy(true)
                 setWakeMode(C.WAKE_MODE_LOCAL)

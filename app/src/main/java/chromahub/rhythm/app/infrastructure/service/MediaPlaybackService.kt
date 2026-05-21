@@ -34,6 +34,10 @@ import chromahub.rhythm.app.shared.data.model.AppSettings
 import chromahub.rhythm.app.shared.data.model.Song
 import chromahub.rhythm.app.infrastructure.service.player.RhythmPlayerEngine
 import chromahub.rhythm.app.infrastructure.service.player.TransitionController
+import chromahub.rhythm.app.infrastructure.service.player.PreloadController
+import androidx.media3.cast.CastPlayer
+import androidx.media3.cast.SessionAvailabilityListener
+import com.google.android.gms.cast.framework.CastContext
 import chromahub.rhythm.app.infrastructure.widget.WidgetUpdater
 import com.google.common.collect.ImmutableList
 import com.google.common.util.concurrent.Futures
@@ -54,8 +58,10 @@ import kotlinx.coroutines.sync.withLock
 @OptIn(UnstableApi::class)
 class MediaPlaybackService : MediaLibraryService(), Player.Listener {
     private var mediaSession: MediaLibrarySession? = null
-    private lateinit var player: ExoPlayer
+    private lateinit var player: Player
     private lateinit var customCommands: List<CommandButton>
+    private lateinit var preloadController: PreloadController
+    private var castPlayer: CastPlayer? = null
 
     private var controller: MediaController? = null
     
@@ -253,6 +259,12 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
         )
         appSettings = AppSettings.getInstance(applicationContext)
         
+        // Initialize preloader
+        preloadController = PreloadController(applicationContext, appSettings)
+        
+        // Initialize Cast player defensively
+        initializeCast()
+        
         // Initialize Rhythm audio processors early (before player creation)
         try {
             rhythmBassBoostProcessor = chromahub.rhythm.app.infrastructure.audio.RhythmBassBoostProcessor()
@@ -439,13 +451,13 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
         rhythmPlayerEngine.initialize()
         
         // The master player is exposed to MediaSession and used everywhere
-        player = rhythmPlayerEngine.masterPlayer as ExoPlayer
+        player = rhythmPlayerEngine.masterPlayer
         
         // Register player swap listener for crossfade transitions
         rhythmPlayerEngine.addPlayerSwapListener { newPlayer ->
             Log.d(TAG, "Player swapped during crossfade transition")
             val oldPlayer = player
-            player = newPlayer as ExoPlayer
+            player = newPlayer
             
             // Move the service-level player listener to the new player
             playerListener?.let { listener ->
@@ -463,7 +475,7 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
             updateWidgetFromMediaItem(newPlayer.currentMediaItem)
             
             // Reinitialize audio effects with new session ID
-            if (newPlayer.audioSessionId != 0) {
+            if ((newPlayer as? ExoPlayer)?.audioSessionId != 0) {
                 initializeAudioEffects()
             }
         }
@@ -471,11 +483,21 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
         // Add listener to initialize audio effects when session ID is ready and handle errors
         // Store reference for proper cleanup in onDestroy
         playerListener = object : Player.Listener {
+            override fun onTimelineChanged(timeline: androidx.media3.common.Timeline, reason: Int) {
+                if (::preloadController.isInitialized) {
+                    val mediaItems = mutableListOf<MediaItem>()
+                    for (i in 0 until player.mediaItemCount) {
+                        mediaItems.add(player.getMediaItemAt(i))
+                    }
+                    preloadController.addOrUpdateQueue(mediaItems)
+                }
+            }
+
             override fun onPlaybackStateChanged(playbackState: Int) {
-                if (playbackState == Player.STATE_READY && player.audioSessionId != 0) {
+                if (playbackState == Player.STATE_READY && getPlayerAudioSessionId() != 0) {
                     // Reinitialize audio effects with valid session ID
                     val previouslyEnabled = getEqualizerEnabledSafe()
-                    Log.d(TAG, "Player ready with session ID ${player.audioSessionId}, reinitializing effects (EQ was: $previouslyEnabled)")
+                    Log.d(TAG, "Player ready with session ID ${getPlayerAudioSessionId()}, reinitializing effects (EQ was: $previouslyEnabled)")
                     initializeAudioEffects()
                     
                     // Force reload audio effects settings to fix cold boot issue
@@ -570,6 +592,13 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
             }
             
             override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
+                if (::preloadController.isInitialized) {
+                    val currentIndex = player.currentMediaItemIndex
+                    if (currentIndex != androidx.media3.common.C.INDEX_UNSET) {
+                        preloadController.setPlayingIndex(currentIndex)
+                    }
+                }
+                
                 val transitionMediaId = mediaItem?.mediaId
                 if (
                     reason == Player.MEDIA_ITEM_TRANSITION_REASON_PLAYLIST_CHANGED &&
@@ -1174,7 +1203,7 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
                     if (equalizer == null) {
                         Log.e(TAG, "Cannot apply preset: equalizer is null")
                         // Try to initialize if session ID is available
-                        if (player.audioSessionId != 0) {
+                        if (getPlayerAudioSessionId() != 0) {
                             Log.d(TAG, "Attempting to initialize equalizer before applying preset")
                             initializeAudioEffects()
                             // Try applying again after initialization
@@ -1378,6 +1407,15 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
         cancelSleepTimerProgressNotification()
         serviceScope.cancel()
         
+        // Release preloader
+        if (::preloadController.isInitialized) {
+            preloadController.release()
+        }
+        
+        // Release cast player
+        castPlayer?.release()
+        castPlayer = null
+
         // Release crossfade engine and transition controller
         transitionController.release()
         rhythmPlayerEngine.release()
@@ -1954,10 +1992,121 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
         }
     }
     
+    private fun getPlayerAudioSessionId(): Int {
+        return (player as? ExoPlayer)?.audioSessionId ?: 0
+    }
+
+    private fun initializeCast() {
+        try {
+            val castContext = CastContext.getSharedInstance(this)
+            val cp = CastPlayer(castContext)
+            castPlayer = cp
+            cp.setSessionAvailabilityListener(object : SessionAvailabilityListener {
+                override fun onCastSessionAvailable() {
+                    Log.d(TAG, "Cast session available, switching to CastPlayer")
+                    switchToCastPlayer()
+                }
+
+                override fun onCastSessionUnavailable() {
+                    Log.d(TAG, "Cast session unavailable, switching back to local player")
+                    switchToLocalPlayer()
+                }
+            })
+            Log.d(TAG, "CastPlayer initialized defensively")
+        } catch (e: Exception) {
+            Log.w(TAG, "CastContext could not be initialized defensively (non-GMS device?)", e)
+        }
+    }
+
+    private fun switchToCastPlayer() {
+        val cp = castPlayer ?: return
+        Log.d(TAG, "switchToCastPlayer: Swapping from local player to CastPlayer")
+        
+        val mediaItems = mutableListOf<MediaItem>()
+        for (i in 0 until player.mediaItemCount) {
+            mediaItems.add(player.getMediaItemAt(i))
+        }
+        val currentIndex = player.currentMediaItemIndex
+        val currentPosition = player.currentPosition
+        val isPlaying = player.isPlaying
+
+        // Pause local engine
+        rhythmPlayerEngine.masterPlayer.pause()
+
+        // Swap listeners
+        playerListener?.let { listener ->
+            player.removeListener(listener)
+            cp.addListener(listener)
+        }
+
+        // Swap active player references
+        player = cp
+        mediaSession?.player = cp
+
+        // Synchronize state on CastPlayer
+        cp.setMediaItems(mediaItems, currentIndex, currentPosition)
+        cp.prepare()
+        if (isPlaying) {
+            cp.play()
+        }
+
+        // Reinitialize audio effects if needed
+        initializeAudioEffects()
+        
+        // Update widget
+        updateWidgetFromMediaItem(cp.currentMediaItem)
+        scheduleCustomLayoutUpdate(50)
+    }
+
+    private fun switchToLocalPlayer() {
+        val cp = castPlayer ?: return
+        Log.d(TAG, "switchToLocalPlayer: Swapping from CastPlayer back to local player")
+        
+        val mediaItems = mutableListOf<MediaItem>()
+        for (i in 0 until cp.mediaItemCount) {
+            mediaItems.add(cp.getMediaItemAt(i))
+        }
+        val currentIndex = cp.currentMediaItemIndex
+        val currentPosition = cp.currentPosition
+        val isPlaying = cp.isPlaying
+
+        // Stop remote casting
+        cp.stop()
+
+        // Swap listeners back to local player
+        val localPlayer = rhythmPlayerEngine.masterPlayer
+        playerListener?.let { listener ->
+            cp.removeListener(listener)
+            localPlayer.addListener(listener)
+        }
+
+        // Swap active player references back to local master
+        player = localPlayer
+        mediaSession?.player = localPlayer
+
+        // Synchronize state back to local player
+        if (currentIndex != C.INDEX_UNSET && currentIndex < localPlayer.mediaItemCount) {
+            localPlayer.seekTo(currentIndex, currentPosition)
+        } else {
+            localPlayer.seekTo(currentPosition)
+        }
+        localPlayer.prepare()
+        if (isPlaying) {
+            localPlayer.play()
+        }
+
+        // Reinitialize audio effects for local session
+        initializeAudioEffects()
+        
+        // Update widget
+        updateWidgetFromMediaItem(localPlayer.currentMediaItem)
+        scheduleCustomLayoutUpdate(50)
+    }
+
     // Audio Effects (Equalizer) functionality
     fun getAudioSessionId(): Int {
         return try {
-            player.audioSessionId
+            getPlayerAudioSessionId()
         } catch (e: Exception) {
             Log.e(TAG, "Error getting audio session ID", e)
             0
@@ -1993,7 +2142,7 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
         initializeRhythmProcessors()
 
         val requestedSessionId = try {
-            player.audioSessionId
+            getPlayerAudioSessionId()
         } catch (e: Exception) {
             Log.e(TAG, "Error reading audio session ID", e)
             0
@@ -2136,7 +2285,7 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
         if (equalizer == null) {
             Log.w(TAG, "Attempting to enable equalizer but equalizer is null. Will reinitialize.")
             // Try to initialize if we have a valid session ID
-            if (player.audioSessionId != 0) {
+            if (getPlayerAudioSessionId() != 0) {
                 initializeAudioEffects()
             } else {
                 Log.e(TAG, "Cannot enable equalizer: invalid audio session ID")
@@ -2198,7 +2347,7 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
             appendLine("=== Audio Effects Diagnostics ===")
             appendLine("Audio effects initialized: $audioEffectsInitialized")
             appendLine("Currently initializing: $isInitializingAudioEffects")
-            appendLine("Audio session ID: ${player.audioSessionId}")
+            appendLine("Audio session ID: ${getPlayerAudioSessionId()}")
             appendLine("")
             appendLine("--- Equalizer ---")
             appendLine("Equalizer object: ${if (equalizer != null) "initialized" else "null"}")
@@ -2328,7 +2477,7 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
     fun setBassBoostEnabled(enabled: Boolean) {
         if (rhythmBassBoostProcessor == null) {
             Log.w(TAG, "Attempting to enable bass boost but Rhythm processor is null. Will reinitialize.")
-            if (player.audioSessionId != 0) {
+            if (getPlayerAudioSessionId() != 0) {
                 initializeAudioEffects()
             } else {
                 Log.e(TAG, "Cannot enable bass boost: invalid audio session ID")
@@ -2358,7 +2507,7 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
     }
     
     fun setVirtualizerEnabled(enabled: Boolean) {
-        if (rhythmSpatializationProcessor == null && player.audioSessionId != 0) {
+        if (rhythmSpatializationProcessor == null && getPlayerAudioSessionId() != 0) {
             Log.w(TAG, "Rhythm spatialization processor is null, attempting reinitialization")
             initializeAudioEffects()
         }

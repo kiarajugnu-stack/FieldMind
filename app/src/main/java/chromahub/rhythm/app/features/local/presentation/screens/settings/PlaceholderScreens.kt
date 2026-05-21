@@ -870,83 +870,103 @@ fun QueuePlaybackSettingsScreen(onBackClick: () -> Unit) {
         val settingGroups = listOf(
             SettingGroup(
                 title = context.getString(R.string.settings_queue_behavior),
-                items = listOf(
-                    SettingItem(
-                        RhythmIcons.Shuffle,
-                        context.getString(R.string.settings_use_exoplayer_shuffle),
-                        context.getString(R.string.settings_use_exoplayer_shuffle_desc),
-                        toggleState = shuffleUsesExoplayer,
-                        onToggleChange = { appSettings.setShuffleUsesExoplayer(it) }
-                    ),
-                    SettingItem(
-                        RhythmIcons.AddToQueue,
-                        context.getString(R.string.settings_auto_queue),
-                        context.getString(R.string.settings_auto_queue_desc),
-                        toggleState = autoAddToQueue,
-                        onToggleChange = { appSettings.setAutoAddToQueue(it) }
-                    ),
-                    SettingItem(
-                        RhythmIcons.Tune,
-                        context.getString(R.string.settings_context_queue_preference),
-                        when (effectiveContextQueuePreference) {
-                            "ARTIST_FIRST" -> context.getString(R.string.settings_context_pref_artist_first)
-                            else -> context.getString(R.string.settings_context_pref_genre_first)
-                        },
-                        onClick = { showContextPrefBottomSheet = true }
-                    ),
-                    SettingItem(
-                        RhythmIcons.Repeat,
-                        context.getString(R.string.settings_context_queue_persistence),
-                        context.getString(R.string.settings_context_queue_persistence_desc),
-                        data = "context_queue_persistence"
-                    ),
-                    SettingItem(
-                        RhythmIcons.Delete,
-                        context.getString(R.string.settings_clear_queue_on_new_song),
-                        context.getString(R.string.settings_clear_queue_on_new_song_desc),
-                        toggleState = clearQueueOnNewSong,
-                        onToggleChange = { appSettings.setClearQueueOnNewSong(it) }
-                    ),
-                    SettingItem(
-                        RhythmIcons.Queue,
-                        context.getString(R.string.settings_show_played_queue_songs),
-                        context.getString(R.string.settings_show_played_queue_songs_desc),
-                        toggleState = showAlreadyPlayedSongsInQueue,
-                        onToggleChange = { appSettings.setHidePlayedQueueSongs(!it) }
-                    ),
-                    SettingItem(
-                        Icons.AutoMirrored.Filled.Help,
-                        context.getString(R.string.settings_queue_action_dialog),
-                        when {
-                            clearQueueOnNewSong -> context.getString(R.string.settings_queue_action_dialog_desc_disabled)
-                            showQueueDialog -> context.getString(R.string.settings_queue_action_dialog_desc_ask)
-                            else -> context.getString(R.string.settings_queue_action_dialog_desc_always)
-                        },
-                        onClick = { showQueueDialogSettingDialog = true },
-                        enabled = !clearQueueOnNewSong
-                    ),
-                    SettingItem(
-                        androidx.compose.material.icons.Icons.AutoMirrored.Filled.QueueMusic,
-                        context.getString(R.string.settings_playlist_action_dialog),
-                        when (playlistClickBehavior) {
-                            "play_all" -> context.getString(R.string.settings_playlist_action_play_all)
-                            "play_one" -> context.getString(R.string.settings_playlist_action_play_one)
-                            else -> context.getString(R.string.settings_playlist_action_ask)
-                        },
-                        onClick = { showPlaylistBehaviorDialog = true }
-                    ),
-                    SettingItem(
-                        androidx.compose.material.icons.Icons.AutoMirrored.Rounded.Sort,
-                        context.getString(R.string.settings_list_queue_action_dialog),
-                        when (listQueueActionBehavior) {
-                            "ask" -> context.getString(R.string.settings_list_queue_action_ask)
-                            "play_next" -> context.getString(R.string.settings_list_queue_action_play_next)
-                            "add_to_end" -> context.getString(R.string.settings_list_queue_action_add_to_end)
-                            else -> context.getString(R.string.settings_list_queue_action_replace)
-                        },
-                        onClick = { showListQueueBehaviorDialog = true }
+                items = buildList {
+                    add(
+                        SettingItem(
+                            RhythmIcons.Shuffle,
+                            context.getString(R.string.settings_use_exoplayer_shuffle),
+                            context.getString(R.string.settings_use_exoplayer_shuffle_desc),
+                            toggleState = shuffleUsesExoplayer,
+                            onToggleChange = { appSettings.setShuffleUsesExoplayer(it) }
+                        )
                     )
-                )
+                    add(
+                        SettingItem(
+                            RhythmIcons.AddToQueue,
+                            context.getString(R.string.settings_auto_queue),
+                            context.getString(R.string.settings_auto_queue_desc),
+                            toggleState = autoAddToQueue,
+                            onToggleChange = { appSettings.setAutoAddToQueue(it) }
+                        )
+                    )
+                    if (autoAddToQueue) {
+                        add(
+                            SettingItem(
+                                RhythmIcons.Tune,
+                                context.getString(R.string.settings_context_queue_preference),
+                                when (effectiveContextQueuePreference) {
+                                    "ARTIST_FIRST" -> context.getString(R.string.settings_context_pref_artist_first)
+                                    else -> context.getString(R.string.settings_context_pref_genre_first)
+                                },
+                                onClick = { showContextPrefBottomSheet = true }
+                            )
+                        )
+                        add(
+                            SettingItem(
+                                RhythmIcons.Repeat,
+                                context.getString(R.string.settings_context_queue_persistence),
+                                context.getString(R.string.settings_context_queue_persistence_desc),
+                                data = "context_queue_persistence"
+                            )
+                        )
+                    }
+                    add(
+                        SettingItem(
+                            RhythmIcons.Delete,
+                            context.getString(R.string.settings_clear_queue_on_new_song),
+                            context.getString(R.string.settings_clear_queue_on_new_song_desc),
+                            toggleState = clearQueueOnNewSong,
+                            onToggleChange = { appSettings.setClearQueueOnNewSong(it) }
+                        )
+                    )
+                    add(
+                        SettingItem(
+                            RhythmIcons.Queue,
+                            context.getString(R.string.settings_show_played_queue_songs),
+                            context.getString(R.string.settings_show_played_queue_songs_desc),
+                            toggleState = showAlreadyPlayedSongsInQueue,
+                            onToggleChange = { appSettings.setHidePlayedQueueSongs(!it) }
+                        )
+                    )
+                    add(
+                        SettingItem(
+                            Icons.AutoMirrored.Filled.Help,
+                            context.getString(R.string.settings_queue_action_dialog),
+                            when {
+                                clearQueueOnNewSong -> context.getString(R.string.settings_queue_action_dialog_desc_disabled)
+                                showQueueDialog -> context.getString(R.string.settings_queue_action_dialog_desc_ask)
+                                else -> context.getString(R.string.settings_queue_action_dialog_desc_always)
+                            },
+                            onClick = { showQueueDialogSettingDialog = true },
+                            enabled = !clearQueueOnNewSong
+                        )
+                    )
+                    add(
+                        SettingItem(
+                            androidx.compose.material.icons.Icons.AutoMirrored.Filled.QueueMusic,
+                            context.getString(R.string.settings_playlist_action_dialog),
+                            when (playlistClickBehavior) {
+                                "play_all" -> context.getString(R.string.settings_playlist_action_play_all)
+                                "play_one" -> context.getString(R.string.settings_playlist_action_play_one)
+                                else -> context.getString(R.string.settings_playlist_action_ask)
+                            },
+                            onClick = { showPlaylistBehaviorDialog = true }
+                        )
+                    )
+                    add(
+                        SettingItem(
+                            androidx.compose.material.icons.Icons.AutoMirrored.Rounded.Sort,
+                            context.getString(R.string.settings_list_queue_action_dialog),
+                            when (listQueueActionBehavior) {
+                                "ask" -> context.getString(R.string.settings_list_queue_action_ask)
+                                "play_next" -> context.getString(R.string.settings_list_queue_action_play_next)
+                                "add_to_end" -> context.getString(R.string.settings_list_queue_action_add_to_end)
+                                else -> context.getString(R.string.settings_list_queue_action_replace)
+                            },
+                            onClick = { showListQueueBehaviorDialog = true }
+                        )
+                    )
+                }
             ),
             SettingGroup(
                 title = context.getString(R.string.settings_playback_persistence),
@@ -18453,6 +18473,226 @@ fun PlaceholderSettingsScreen() {
         }
     }
 }
+
+@Composable
+fun BatterySaverSettingsScreen(onBackClick: () -> Unit) {
+    val context = LocalContext.current
+    val appSettings = remember { AppSettings.getInstance(context) }
+    val haptic = LocalHapticFeedback.current
+
+    // Collect settings states
+    val batterySaverEnabled by appSettings.batterySaverEnabled.collectAsState()
+    val batterySaverMode by appSettings.batterySaverMode.collectAsState()
+    
+    val batterySaverDisableHaptics by appSettings.batterySaverDisableHaptics.collectAsState()
+    val batterySaverEnableOffload by appSettings.batterySaverEnableOffload.collectAsState()
+    val batterySaverDisableMarquee by appSettings.batterySaverDisableMarquee.collectAsState()
+    val batterySaverDisableLosslessArtwork by appSettings.batterySaverDisableLosslessArtwork.collectAsState()
+
+    CollapsibleHeaderScreen(
+        title = "Battery Saver",
+        showBackButton = true,
+        onBackClick = onBackClick,
+        headerContent = {
+            Card(
+                colors = CardDefaults.cardColors(
+                    containerColor = if (batterySaverEnabled)
+                        MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
+                    else
+                        MaterialTheme.colorScheme.surfaceContainer
+                ),
+                shape = RoundedCornerShape(24.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp)
+            ) {
+                Column(modifier = Modifier.padding(20.dp)) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.BatteryChargingFull,
+                            contentDescription = null,
+                            tint = if (batterySaverEnabled) {
+                                MaterialTheme.colorScheme.primary
+                            } else {
+                                MaterialTheme.colorScheme.onSurfaceVariant
+                            },
+                            modifier = Modifier.size(32.dp)
+                        )
+                        Spacer(modifier = Modifier.width(16.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = if (batterySaverEnabled) "Active" else "Disabled",
+                                style = MaterialTheme.typography.titleLarge,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                        TunerAnimatedSwitch(
+                            checked = batterySaverEnabled,
+                            onCheckedChange = { enabled ->
+                                HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
+                                appSettings.setBatterySaverEnabled(enabled)
+                            }
+                        )
+                    }
+                    if (batterySaverEnabled) {
+                        Spacer(modifier = Modifier.height(16.dp))
+                        ExpressiveButtonGroup(
+                            items = listOf("Auto", "Manual"),
+                            selectedIndex = if (batterySaverMode == "auto") 0 else 1,
+                            onItemClick = { index ->
+                                HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                                appSettings.setBatterySaverMode(if (index == 0) "auto" else "manual")
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                }
+            }
+        }
+    ) { modifier ->
+        LazyColumn(
+            modifier = modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background)
+                .padding(horizontal = 24.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            item(key = "options_section") {
+                AnimatedVisibility(
+                    visible = batterySaverEnabled,
+                    enter = fadeIn() + expandVertically(),
+                    exit = fadeOut() + shrinkVertically()
+                ) {
+                    Column {
+                        Spacer(modifier = Modifier.height(24.dp))
+                        Text(
+                            text = if (batterySaverMode == "auto") "Auto Overrides (Enforced)" else "Manual Overrides",
+                            style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
+                            color = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
+                        )
+                        
+                        if (batterySaverMode == "auto") {
+                            Material3SettingsGroup(
+                                items = listOf(
+                                    toMaterial3SettingsItem(
+                                        context = context,
+                                        hapticFeedback = haptic,
+                                        item = SettingItem(
+                                            icon = Icons.Default.TouchApp,
+                                            title = "Disable Haptics",
+                                            description = "All physical haptic feedback is disabled to conserve battery.",
+                                            toggleState = true,
+                                            onToggleChange = {},
+                                            enabled = false
+                                        )
+                                    ),
+                                    toMaterial3SettingsItem(
+                                        context = context,
+                                        hapticFeedback = haptic,
+                                        item = SettingItem(
+                                            icon = Icons.Default.Bolt,
+                                            title = "Enable Audio Offload",
+                                            description = "Forced hardware DSP decoding to minimize CPU workload.",
+                                            toggleState = true,
+                                            onToggleChange = {},
+                                            enabled = false
+                                        )
+                                    ),
+                                    toMaterial3SettingsItem(
+                                        context = context,
+                                        hapticFeedback = haptic,
+                                        item = SettingItem(
+                                            icon = Icons.Default.Slideshow,
+                                            title = "Disable Text Marquee",
+                                            description = "Sliding animations are paused to reduce display refresh cycles.",
+                                            toggleState = true,
+                                            onToggleChange = {},
+                                            enabled = false
+                                        )
+                                    ),
+                                    toMaterial3SettingsItem(
+                                        context = context,
+                                        hapticFeedback = haptic,
+                                        item = SettingItem(
+                                            icon = Icons.Default.Image,
+                                            title = "Disable Lossless Artwork",
+                                            description = "Lossless artwork is disabled to reduce data decoding and memory overhead.",
+                                            toggleState = true,
+                                            onToggleChange = {},
+                                            enabled = false
+                                        )
+                                    )
+                                ),
+                                containerColor = MaterialTheme.colorScheme.surfaceContainer
+                            )
+                        } else {
+                            // Manual mode: switch controls
+                            Material3SettingsGroup(
+                                items = listOf(
+                                    toMaterial3SettingsItem(
+                                        context = context,
+                                        hapticFeedback = haptic,
+                                        item = SettingItem(
+                                            icon = Icons.Default.TouchApp,
+                                            title = "Disable Haptics",
+                                            description = "Disable touch vibrations to extend battery life",
+                                            toggleState = batterySaverDisableHaptics,
+                                            onToggleChange = { appSettings.setBatterySaverDisableHaptics(it) }
+                                        )
+                                    ),
+                                    toMaterial3SettingsItem(
+                                        context = context,
+                                        hapticFeedback = haptic,
+                                        item = SettingItem(
+                                            icon = Icons.Default.Bolt,
+                                            title = "Enable Audio Offload",
+                                            description = "Use hardware DSP decoding under Battery Saver",
+                                            toggleState = batterySaverEnableOffload,
+                                            onToggleChange = { appSettings.setBatterySaverEnableOffload(it) }
+                                        )
+                                    ),
+                                    toMaterial3SettingsItem(
+                                        context = context,
+                                        hapticFeedback = haptic,
+                                        item = SettingItem(
+                                            icon = Icons.Default.Slideshow,
+                                            title = "Disable Text Marquee",
+                                            description = "Pause title sliding animations to save screen power",
+                                            toggleState = batterySaverDisableMarquee,
+                                            onToggleChange = { appSettings.setBatterySaverDisableMarquee(it) }
+                                        )
+                                    ),
+                                    toMaterial3SettingsItem(
+                                        context = context,
+                                        hapticFeedback = haptic,
+                                        item = SettingItem(
+                                            icon = Icons.Default.Image,
+                                            title = "Disable Lossless Artwork",
+                                            description = "Use standard artwork instead of lossless under Battery Saver",
+                                            toggleState = batterySaverDisableLosslessArtwork,
+                                            onToggleChange = { appSettings.setBatterySaverDisableLosslessArtwork(it) }
+                                        )
+                                    )
+                                ),
+                                containerColor = MaterialTheme.colorScheme.surfaceContainer
+                            )
+                        }
+                    }
+                }
+            }
+            
+            // Padding item
+            item {
+                Spacer(modifier = Modifier.height(40.dp))
+            }
+        }
+    }
+}
+
 
 
 

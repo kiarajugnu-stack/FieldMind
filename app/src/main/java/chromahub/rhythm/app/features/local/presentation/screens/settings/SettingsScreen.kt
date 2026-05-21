@@ -59,6 +59,8 @@ import androidx.compose.material.icons.automirrored.filled.ArrowForwardIos
 import androidx.compose.material.icons.automirrored.filled.QueueMusic
 import androidx.compose.material.icons.filled.AccessTime
 import androidx.compose.material.icons.filled.Api
+import androidx.compose.material.icons.filled.BatteryChargingFull
+import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Backup
@@ -180,6 +182,7 @@ object SettingsRoutes {
     @Deprecated("Use RHYTHM_GUARD")
     const val RHYTHM_AURA = RHYTHM_GUARD
     const val GO_SETTINGS = "go_settings"
+    const val BATTERY_SAVER = "battery_saver_settings"
 }
 
 data class SettingItem(
@@ -224,6 +227,7 @@ fun SettingsScreen(
     val rhythmGuardMode by appSettings.rhythmGuardMode.collectAsState()
     val showSettingsSuggestions by appSettings.showSettingsSuggestions.collectAsState()
     val showKeyboardOnSearchOpen by appSettings.showKeyboardOnSearchOpen.collectAsState()
+    val audioOffloadEnabled by appSettings.audioOffloadEnabled.collectAsState()
     
     var showDefaultScreenDialog by remember { mutableStateOf(false) }
     var showLanguageSwitcher by remember { mutableStateOf(false) }
@@ -357,6 +361,19 @@ fun SettingsScreen(
                     //add(SettingItem(Icons.Default.GraphicEq, context.getString(R.string.replay_gain), context.getString(R.string.replay_gain_desc), toggleState = replayGain, onToggleChange = { appSettings.setReplayGain(it) }))
                     // Equalizer is available in both LOCAL and STREAMING modes
                     add(SettingItem(Icons.Default.Equalizer, context.getString(R.string.settings_equalizer_title), context.getString(R.string.settings_equalizer_desc), onClick = { onNavigateTo(SettingsRoutes.EQUALIZER) }))
+                    add(SettingItem(
+                        icon = Icons.Default.BatteryChargingFull,
+                        title = "Battery Saver",
+                        description = "Optimize haptics, decoding, and marquee for power consumption",
+                        onClick = { onNavigateTo(SettingsRoutes.BATTERY_SAVER) }
+                    ))
+                    add(SettingItem(
+                        icon = Icons.Default.Bolt,
+                        title = "Audio Offload",
+                        description = "Hardware-accelerated audio decoding to save device power",
+                        toggleState = audioOffloadEnabled,
+                        onToggleChange = { appSettings.setAudioOffloadEnabled(it) }
+                    ))
                 }
             ),
             // 6. Library & Media - only show in LOCAL mode
@@ -1126,6 +1143,7 @@ fun SettingsScreenWrapper(
                         SettingsRoutes.EXPRESSIVE_SHAPES -> ExpressiveShapesSettingsScreen(onBackClick = { currentRoute = null })
                         SettingsRoutes.LIBRARY_SETTINGS -> LibrarySettingsScreen(onBackClick = { currentRoute = null })
                         SettingsRoutes.RHYTHM_GUARD -> RhythmGuardSettingsScreen(onBackClick = { currentRoute = null })
+                        SettingsRoutes.BATTERY_SAVER -> BatterySaverSettingsScreen(onBackClick = { currentRoute = null })
                         else -> PlaceholderSettingsScreen()
                     }
                 }
@@ -1248,6 +1266,7 @@ fun SettingsScreenWrapper(
                 SettingsRoutes.EXPRESSIVE_SHAPES -> ExpressiveShapesSettingsScreen(onBackClick = { currentRoute = null })
                 SettingsRoutes.LIBRARY_SETTINGS -> LibrarySettingsScreen(onBackClick = { currentRoute = null })
                 SettingsRoutes.RHYTHM_GUARD -> RhythmGuardSettingsScreen(onBackClick = { currentRoute = null })
+                SettingsRoutes.BATTERY_SAVER -> BatterySaverSettingsScreen(onBackClick = { currentRoute = null })
                 else -> SettingsScreen(
                     onBackClick = handleBack,
                     onNavigateTo = onNavigateToSubsetting,

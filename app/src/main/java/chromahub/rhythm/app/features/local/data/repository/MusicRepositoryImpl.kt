@@ -373,7 +373,7 @@ class MusicRepository(context: Context) {
             if (entities.isEmpty()) return null
             val appSettings = AppSettings.getInstance(context)
             val useEmbeddedArt = appSettings.preferSongArtwork.value
-            val losslessArtwork = appSettings.losslessArtwork.value
+            val losslessArtwork = appSettings.isLosslessArtworkActive.value
             val songs = entities.mapNotNull { entity ->
                 try {
                     val songUri = Uri.parse(entity.uri)
@@ -1565,7 +1565,7 @@ class MusicRepository(context: Context) {
 
             val useEmbeddedArt = appSettings.preferSongArtwork.value
             val effectiveArtUri = if (useEmbeddedArt) {
-                val lossless = appSettings.losslessArtwork.value
+                val lossless = appSettings.isLosslessArtworkActive.value
                 chromahub.rhythm.app.util.MediaUtils.getCachedEmbeddedAlbumArtUri(
                     cacheDir = context.cacheDir,
                     songUri = contentUri,

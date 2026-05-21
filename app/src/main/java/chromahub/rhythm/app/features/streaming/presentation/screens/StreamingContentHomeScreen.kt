@@ -1,7 +1,7 @@
 package chromahub.rhythm.app.features.streaming.presentation.screens
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.basicMarquee
+import chromahub.rhythm.app.shared.presentation.components.common.rhythmMarquee
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -1673,7 +1673,7 @@ private fun StreamingAlbumWidgetCard(
                     maxLines = 1,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .basicMarquee(),
+                        .rhythmMarquee(),
                     overflow = TextOverflow.Ellipsis,
                     color = MaterialTheme.colorScheme.onSurface,
                     lineHeight = 18.sp

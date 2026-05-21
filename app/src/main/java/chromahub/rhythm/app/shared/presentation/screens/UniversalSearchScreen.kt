@@ -99,6 +99,7 @@ fun UniversalSearchScreen(
     val context = LocalContext.current
     val appSettings = AppSettings.getInstance(context)
     val appMode by appSettings.appMode.collectAsState()
+    val showKeyboardOnSearchOpen by appSettings.showKeyboardOnSearchOpen.collectAsState()
 
     DisposableEffect(context) {
         val activity = context as? android.app.Activity
@@ -120,6 +121,17 @@ fun UniversalSearchScreen(
 
     var query by remember { mutableStateOf("") }
     val focusRequester = remember { FocusRequester() }
+
+    LaunchedEffect(Unit) {
+        if (showKeyboardOnSearchOpen) {
+            delay(300)
+            try {
+                focusRequester.requestFocus()
+            } catch (e: Exception) {
+                // Ignore focus request failure in unexpected states
+            }
+        }
+    }
 
     var showFilters by remember { mutableStateOf(false) }
     var filterSongs by remember { mutableStateOf(true) }

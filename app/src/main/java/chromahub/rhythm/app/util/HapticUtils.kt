@@ -28,7 +28,7 @@ object HapticUtils {
         val appSettings = AppSettings.getInstance(context)
         // Use the StateFlow's current value which is synchronously available
         // This avoids runBlocking which can cause ANR
-        val isEnabled = appSettings.hapticFeedbackEnabled.value
+        val isEnabled = appSettings.isHapticEnabled.value
         
         if (isEnabled) {
             try {

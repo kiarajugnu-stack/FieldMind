@@ -29,6 +29,11 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
+import androidx.compose.ui.composed
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.runtime.collectAsState
+import chromahub.rhythm.app.shared.data.model.AppSettings
+
 @Composable
 fun AutoScrollingTextOnDemand(
     text: String,
@@ -38,10 +43,15 @@ fun AutoScrollingTextOnDemand(
     enabled: Boolean = true,
     textAlign: TextAlign = TextAlign.Start
 ) {
+    val context = LocalContext.current
+    val appSettings = remember { AppSettings.getInstance(context) }
+    val isMarqueeActive by appSettings.isMarqueeActive.collectAsState()
+    val effectivelyEnabled = enabled && isMarqueeActive
+
     var overflow by remember { mutableStateOf(false) }
 
     // Use a measurement text on first composition to detect overflow
-    if (!overflow || !enabled) {
+    if (!overflow || !effectivelyEnabled) {
         Text(
             text = text,
             style = style,
@@ -180,4 +190,25 @@ fun MarqueeText(
         modifier = modifier,
         enabled = enabled
     )
+}
+
+fun Modifier.rhythmMarquee(
+    iterations: Int = Int.MAX_VALUE,
+    spacing: MarqueeSpacing = MarqueeSpacing(30.dp),
+    velocity: Dp = 30.dp,
+    initialDelayMillis: Int = 1200
+): Modifier = composed {
+    val context = LocalContext.current
+    val appSettings = remember { AppSettings.getInstance(context) }
+    val isMarqueeActive by appSettings.isMarqueeActive.collectAsState()
+    if (isMarqueeActive) {
+        this.basicMarquee(
+            iterations = iterations,
+            spacing = spacing,
+            velocity = velocity,
+            initialDelayMillis = initialDelayMillis
+        )
+    } else {
+        this
+    }
 }

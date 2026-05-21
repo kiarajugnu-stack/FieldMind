@@ -35,6 +35,8 @@ import androidx.compose.material.icons.filled.AccessTime
 import androidx.compose.material.icons.filled.Album
 import androidx.compose.material.icons.filled.Api
 import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.BatteryChargingFull
+import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.AutoGraph
 import androidx.compose.material.icons.filled.Backup
 import androidx.compose.material.icons.filled.BugReport
@@ -342,6 +344,24 @@ fun buildSettingsSearchIndex(context: Context): List<SearchableSettingItem> {
             keywords = listOf("equalizer", "eq", "audio", "bass", "treble", "sound", "effects", "audio enhancement"),
             icon = Icons.Default.Equalizer,
             route = SettingsRoutes.EQUALIZER,
+            parentScreen = context.getString(R.string.settings_section_audio_lyrics)
+        ))
+        add(SearchableSettingItem(
+            id = "battery_saver",
+            title = "Battery Saver",
+            description = "Optimize haptics, decoding, and marquee for power consumption",
+            keywords = listOf("battery", "power", "saver", "offload", "haptics", "marquee", "optimize"),
+            icon = Icons.Default.BatteryChargingFull,
+            route = SettingsRoutes.BATTERY_SAVER,
+            parentScreen = context.getString(R.string.settings_section_audio_lyrics)
+        ))
+        add(SearchableSettingItem(
+            id = "audio_offload",
+            title = "Audio Offload",
+            description = "Hardware-accelerated audio decoding to save device power",
+            keywords = listOf("audio", "offload", "hardware", "dsp", "decode", "battery", "power"),
+            icon = Icons.Default.Bolt,
+            route = SettingsRoutes.BATTERY_SAVER,
             parentScreen = context.getString(R.string.settings_section_audio_lyrics)
         ))
 

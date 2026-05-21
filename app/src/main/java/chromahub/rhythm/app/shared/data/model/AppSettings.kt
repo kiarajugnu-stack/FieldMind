@@ -90,6 +90,18 @@ class AppSettings private constructor(context: Context) {
         private const val KEY_BIT_PERFECT_MODE = "bit_perfect_mode"
         private const val KEY_AUDIO_ROUTING_MODE = "audio_routing_mode" // "default", "app", "system"
         private const val KEY_RESUME_ON_DEVICE_RECONNECT = "resume_on_device_reconnect"
+        private const val KEY_AUDIO_OFFLOAD_ENABLED = "audio_offload_enabled"
+        
+        // Battery Saver Settings
+        private const val KEY_BATTERY_SAVER_ENABLED = "battery_saver_enabled"
+        private const val KEY_BATTERY_SAVER_MODE = "battery_saver_mode" // "auto" or "manual"
+        private const val KEY_BATTERY_SAVER_DISABLE_HAPTICS = "battery_saver_disable_haptics"
+        private const val KEY_BATTERY_SAVER_ENABLE_OFFLOAD = "battery_saver_enable_offload"
+        private const val KEY_BATTERY_SAVER_DISABLE_MARQUEE = "battery_saver_disable_marquee"
+        private const val KEY_BATTERY_SAVER_DISABLE_LOSSLESS_ARTWORK = "battery_saver_disable_lossless_artwork"
+        private const val KEY_GLOBAL_MARQUEE_ENABLED = "global_marquee_enabled"
+        
+        private const val KEY_PRELOAD_LIMIT = "preload_limit"
         
         // Lyrics Settings
         private const val KEY_SHOW_LYRICS = "show_lyrics"
@@ -542,6 +554,12 @@ class AppSettings private constructor(context: Context) {
     // Playback Settings
     private val _highQualityAudio = MutableStateFlow(prefs.getBoolean(KEY_HIGH_QUALITY_AUDIO, true))
     val highQualityAudio: StateFlow<Boolean> = _highQualityAudio.asStateFlow()
+    
+    private val _audioOffloadEnabled = MutableStateFlow(prefs.getBoolean(KEY_AUDIO_OFFLOAD_ENABLED, true))
+    val audioOffloadEnabled: StateFlow<Boolean> = _audioOffloadEnabled.asStateFlow()
+    
+    private val _preloadLimit = MutableStateFlow(prefs.getInt(KEY_PRELOAD_LIMIT, 3))
+    val preloadLimit: StateFlow<Int> = _preloadLimit.asStateFlow()
     
     private val _gaplessPlayback = MutableStateFlow(prefs.getBoolean(KEY_GAPLESS_PLAYBACK, true))
     val gaplessPlayback: StateFlow<Boolean> = _gaplessPlayback.asStateFlow()
@@ -1447,6 +1465,84 @@ private val _autoCheckForUpdates = MutableStateFlow(prefs.getBoolean(KEY_AUTO_CH
     
     private val _stuckPlayerDetectionEnabled = MutableStateFlow(prefs.getBoolean(KEY_STUCK_PLAYER_DETECTION_ENABLED, true))
     val stuckPlayerDetectionEnabled: StateFlow<Boolean> = _stuckPlayerDetectionEnabled.asStateFlow()
+
+    // Battery Saver StateFlows
+    private val _batterySaverEnabled = MutableStateFlow(prefs.getBoolean(KEY_BATTERY_SAVER_ENABLED, false))
+    val batterySaverEnabled: StateFlow<Boolean> = _batterySaverEnabled.asStateFlow()
+
+    private val _batterySaverMode = MutableStateFlow(prefs.getString(KEY_BATTERY_SAVER_MODE, "auto") ?: "auto")
+    val batterySaverMode: StateFlow<String> = _batterySaverMode.asStateFlow()
+
+    private val _batterySaverDisableHaptics = MutableStateFlow(prefs.getBoolean(KEY_BATTERY_SAVER_DISABLE_HAPTICS, true))
+    val batterySaverDisableHaptics: StateFlow<Boolean> = _batterySaverDisableHaptics.asStateFlow()
+
+    private val _batterySaverEnableOffload = MutableStateFlow(prefs.getBoolean(KEY_BATTERY_SAVER_ENABLE_OFFLOAD, true))
+    val batterySaverEnableOffload: StateFlow<Boolean> = _batterySaverEnableOffload.asStateFlow()
+
+    private val _batterySaverDisableMarquee = MutableStateFlow(prefs.getBoolean(KEY_BATTERY_SAVER_DISABLE_MARQUEE, true))
+    val batterySaverDisableMarquee: StateFlow<Boolean> = _batterySaverDisableMarquee.asStateFlow()
+
+    private val _batterySaverDisableLosslessArtwork = MutableStateFlow(prefs.getBoolean(KEY_BATTERY_SAVER_DISABLE_LOSSLESS_ARTWORK, true))
+    val batterySaverDisableLosslessArtwork: StateFlow<Boolean> = _batterySaverDisableLosslessArtwork.asStateFlow()
+
+    private val _globalMarqueeEnabled = MutableStateFlow(prefs.getBoolean(KEY_GLOBAL_MARQUEE_ENABLED, true))
+    val globalMarqueeEnabled: StateFlow<Boolean> = _globalMarqueeEnabled.asStateFlow()
+
+    // Derived settings
+    private val _isHapticEnabled = MutableStateFlow(calculateIsHapticEnabled())
+    val isHapticEnabled: StateFlow<Boolean> = _isHapticEnabled.asStateFlow()
+
+    private val _isAudioOffloadActive = MutableStateFlow(calculateIsAudioOffloadActive())
+    val isAudioOffloadActive: StateFlow<Boolean> = _isAudioOffloadActive.asStateFlow()
+
+    private val _isMarqueeActive = MutableStateFlow(calculateIsMarqueeActive())
+    val isMarqueeActive: StateFlow<Boolean> = _isMarqueeActive.asStateFlow()
+
+    private val _isLosslessArtworkActive = MutableStateFlow(calculateIsLosslessArtworkActive())
+    val isLosslessArtworkActive: StateFlow<Boolean> = _isLosslessArtworkActive.asStateFlow()
+
+    private fun calculateIsHapticEnabled(): Boolean {
+        val masterEnabled = _batterySaverEnabled.value
+        val mode = _batterySaverMode.value
+        val disableHapticsInManual = _batterySaverDisableHaptics.value
+        val baseHaptics = _hapticFeedbackEnabled.value
+        
+        return baseHaptics && !(masterEnabled && (mode == "auto" || disableHapticsInManual))
+    }
+
+    private fun calculateIsAudioOffloadActive(): Boolean {
+        val masterEnabled = _batterySaverEnabled.value
+        val mode = _batterySaverMode.value
+        val enableOffloadInManual = _batterySaverEnableOffload.value
+        val baseOffload = _audioOffloadEnabled.value
+        
+        return baseOffload || (masterEnabled && (mode == "auto" || enableOffloadInManual))
+    }
+
+    private fun calculateIsMarqueeActive(): Boolean {
+        val masterEnabled = _batterySaverEnabled.value
+        val mode = _batterySaverMode.value
+        val disableMarqueeInManual = _batterySaverDisableMarquee.value
+        val baseMarquee = _globalMarqueeEnabled.value
+        
+        return baseMarquee && !(masterEnabled && (mode == "auto" || disableMarqueeInManual))
+    }
+
+    private fun calculateIsLosslessArtworkActive(): Boolean {
+        val masterEnabled = _batterySaverEnabled.value
+        val mode = _batterySaverMode.value
+        val disableLosslessInManual = _batterySaverDisableLosslessArtwork.value
+        val baseLossless = _losslessArtwork.value
+        
+        return baseLossless && !(masterEnabled && (mode == "auto" || disableLosslessInManual))
+    }
+
+    fun updateDerivedSettings() {
+        _isHapticEnabled.value = calculateIsHapticEnabled()
+        _isAudioOffloadActive.value = calculateIsAudioOffloadActive()
+        _isMarqueeActive.value = calculateIsMarqueeActive()
+        _isLosslessArtworkActive.value = calculateIsLosslessArtworkActive()
+    }
     
     // Festive Decoration Position Settings
     private val _festiveShowTopLights = MutableStateFlow(prefs.getBoolean(KEY_FESTIVE_SHOW_TOP_LIGHTS, true))
@@ -1628,7 +1724,60 @@ private val _autoCheckForUpdates = MutableStateFlow(prefs.getBoolean(KEY_AUTO_CH
         }
     }
     
-    // Playback Settings Methods
+    fun setAudioOffloadEnabled(enable: Boolean) {
+        prefs.edit().putBoolean(KEY_AUDIO_OFFLOAD_ENABLED, enable).apply()
+        _audioOffloadEnabled.value = enable
+        updateDerivedSettings()
+    }
+
+    // Battery Saver Methods
+    fun setBatterySaverEnabled(enabled: Boolean) {
+        prefs.edit().putBoolean(KEY_BATTERY_SAVER_ENABLED, enabled).apply()
+        _batterySaverEnabled.value = enabled
+        updateDerivedSettings()
+    }
+
+    fun setBatterySaverMode(mode: String) {
+        prefs.edit().putString(KEY_BATTERY_SAVER_MODE, mode).apply()
+        _batterySaverMode.value = mode
+        updateDerivedSettings()
+    }
+
+    fun setBatterySaverDisableHaptics(disable: Boolean) {
+        prefs.edit().putBoolean(KEY_BATTERY_SAVER_DISABLE_HAPTICS, disable).apply()
+        _batterySaverDisableHaptics.value = disable
+        updateDerivedSettings()
+    }
+
+    fun setBatterySaverEnableOffload(enable: Boolean) {
+        prefs.edit().putBoolean(KEY_BATTERY_SAVER_ENABLE_OFFLOAD, enable).apply()
+        _batterySaverEnableOffload.value = enable
+        updateDerivedSettings()
+    }
+
+    fun setBatterySaverDisableMarquee(disable: Boolean) {
+        prefs.edit().putBoolean(KEY_BATTERY_SAVER_DISABLE_MARQUEE, disable).apply()
+        _batterySaverDisableMarquee.value = disable
+        updateDerivedSettings()
+    }
+
+    fun setBatterySaverDisableLosslessArtwork(disable: Boolean) {
+        prefs.edit().putBoolean(KEY_BATTERY_SAVER_DISABLE_LOSSLESS_ARTWORK, disable).apply()
+        _batterySaverDisableLosslessArtwork.value = disable
+        updateDerivedSettings()
+    }
+
+    fun setGlobalMarqueeEnabled(enabled: Boolean) {
+        prefs.edit().putBoolean(KEY_GLOBAL_MARQUEE_ENABLED, enabled).apply()
+        _globalMarqueeEnabled.value = enabled
+        updateDerivedSettings()
+    }
+    
+    fun setPreloadLimit(limit: Int) {
+        prefs.edit().putInt(KEY_PRELOAD_LIMIT, limit).apply()
+        _preloadLimit.value = limit
+    }
+
     fun setHighQualityAudio(enable: Boolean) {
         prefs.edit().putBoolean(KEY_HIGH_QUALITY_AUDIO, enable).apply()
         _highQualityAudio.value = enable
@@ -1925,6 +2074,7 @@ private val _autoCheckForUpdates = MutableStateFlow(prefs.getBoolean(KEY_AUTO_CH
         val changed = _losslessArtwork.value != enabled
         prefs.edit().putBoolean(KEY_LOSSLESS_ARTWORK, enabled).apply()
         _losslessArtwork.value = enabled
+        updateDerivedSettings()
 
         // Lossless artwork requires per-song artwork mode to take effect.
         if (enabled && !_preferSongArtwork.value) {
@@ -2844,6 +2994,7 @@ private val _autoCheckForUpdates = MutableStateFlow(prefs.getBoolean(KEY_AUTO_CH
     fun setHapticFeedbackEnabled(enabled: Boolean) {
         prefs.edit().putBoolean(KEY_HAPTIC_FEEDBACK_ENABLED, enabled).apply()
         _hapticFeedbackEnabled.value = enabled
+        updateDerivedSettings()
     }
     
     // Notification Settings Methods
@@ -4037,6 +4188,15 @@ private val _autoCheckForUpdates = MutableStateFlow(prefs.getBoolean(KEY_AUTO_CH
         _crossfadeRepeatOne.value = prefs.getBoolean(KEY_CROSSFADE_REPEAT_ONE, false)
         _audioNormalization.value = prefs.getBoolean(KEY_AUDIO_NORMALIZATION, true)
         _replayGain.value = prefs.getBoolean(KEY_REPLAY_GAIN, false)
+        _audioOffloadEnabled.value = prefs.getBoolean(KEY_AUDIO_OFFLOAD_ENABLED, true)
+        _batterySaverEnabled.value = prefs.getBoolean(KEY_BATTERY_SAVER_ENABLED, false)
+        _batterySaverMode.value = prefs.getString(KEY_BATTERY_SAVER_MODE, "auto") ?: "auto"
+        _batterySaverDisableHaptics.value = prefs.getBoolean(KEY_BATTERY_SAVER_DISABLE_HAPTICS, true)
+        _batterySaverEnableOffload.value = prefs.getBoolean(KEY_BATTERY_SAVER_ENABLE_OFFLOAD, true)
+        _batterySaverDisableMarquee.value = prefs.getBoolean(KEY_BATTERY_SAVER_DISABLE_MARQUEE, true)
+        _batterySaverDisableLosslessArtwork.value = prefs.getBoolean(KEY_BATTERY_SAVER_DISABLE_LOSSLESS_ARTWORK, true)
+        _globalMarqueeEnabled.value = prefs.getBoolean(KEY_GLOBAL_MARQUEE_ENABLED, true)
+        updateDerivedSettings()
         
         // Theme Settings
         _useSystemTheme.value = prefs.getBoolean(KEY_USE_SYSTEM_THEME, true)
