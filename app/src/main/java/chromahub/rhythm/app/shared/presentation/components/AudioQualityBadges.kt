@@ -4,6 +4,7 @@ import android.util.Log
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -17,6 +18,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -132,6 +134,14 @@ fun AudioQualityBadges(
             ) {
                 // Primary quality badge based on type with enhanced color coding
                 when (quality.qualityType) {
+                    AudioQualityDetector.QualityType.DSD_HIGH_RES -> {
+                        QualityBadge(
+                            text = quality.qualityLabel,
+                            icon = Icons.Rounded.HighQuality,
+                            qualityLevel = QualityLevel.EXCELLENT
+                        )
+                    }
+
                     AudioQualityDetector.QualityType.HI_RES_STUDIO_MASTER -> {
                         QualityBadge(
                             text = "STUDIO MASTER",
@@ -250,22 +260,51 @@ private fun QualityBadge(
         label = "scale"
     )
     
-    // Material 3 Expressive colors with gradient
+    // Shimmer effect for premium badges (EXCELLENT level)
+    val shimmerTransition = rememberInfiniteTransition(label = "shimmer")
+    val shimmerTranslate by shimmerTransition.animateFloat(
+        initialValue = -300f,
+        targetValue = 600f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(3000, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "shimmerTranslate"
+    )
+    
+    val shimmerBrush = Brush.linearGradient(
+        colors = listOf(
+            Color.White.copy(alpha = 0f),
+            Color.White.copy(alpha = 0.22f),
+            Color.White.copy(alpha = 0f)
+        ),
+        start = Offset(shimmerTranslate, 0f),
+        end = Offset(shimmerTranslate + 120f, 120f)
+    )
+    
+    // Premium custom gradient palettes & content colors
     val (gradientColors, contentColor) = when (qualityLevel) {
         QualityLevel.EXCELLENT -> listOf(
-            MaterialTheme.colorScheme.primaryContainer,
-            MaterialTheme.colorScheme.primaryContainer,
-        ) to MaterialTheme.colorScheme.onPrimaryContainer
+            Color(0xFFF2C94C), // Sunset Gold
+            Color(0xFFF2994A), // Vibrant Orange
+            Color(0xFFE25B45)  // Coral Red
+        ) to Color(0xFF2A1B0A) // Deep charcoal-gold for maximum legibility
         
         QualityLevel.GOOD -> listOf(
-            MaterialTheme.colorScheme.secondaryContainer,
-            MaterialTheme.colorScheme.secondaryContainer,
-        ) to MaterialTheme.colorScheme.onSecondaryContainer
+            Color(0xFF00F2FE), // Cyber Cyan
+            Color(0xFF4FACFE)  // Electric Blue
+        ) to Color(0xFF031B33) // Deep navy for supreme legibility
         
         QualityLevel.STANDARD -> listOf(
-            MaterialTheme.colorScheme.tertiaryContainer,
-            MaterialTheme.colorScheme.tertiaryContainer,
-        ) to MaterialTheme.colorScheme.onTertiaryContainer
+            Color(0xFF757F9A), // Slate Grey
+            Color(0xFFD7DDE8)  // Silver Grey
+        ) to Color(0xFF232B38) // Dark charcoal for clean minimal legibility
+    }
+    
+    val borderBrush = when (qualityLevel) {
+        QualityLevel.EXCELLENT -> Brush.horizontalGradient(listOf(Color(0xFFFFF099), Color(0xFFFFB366)))
+        QualityLevel.GOOD -> Brush.horizontalGradient(listOf(Color(0xFF80F9FF), Color(0xFF80C3FF)))
+        QualityLevel.STANDARD -> Brush.horizontalGradient(listOf(Color(0xFFB0B9C8), Color(0xFFECEFF5)))
     }
     
     AnimatedVisibility(
@@ -282,12 +321,22 @@ private fun QualityBadge(
                 .padding(horizontal = 4.dp),
             shape = RoundedCornerShape(12.dp),
             tonalElevation = 2.dp,
-            shadowElevation = if (qualityLevel == QualityLevel.EXCELLENT) 0.dp else 0.dp
+            shadowElevation = if (qualityLevel == QualityLevel.EXCELLENT) 2.dp else 0.dp
         ) {
             Box(
                 modifier = Modifier
                     .background(
                         brush = Brush.horizontalGradient(gradientColors)
+                    )
+                    .then(
+                        if (qualityLevel == QualityLevel.EXCELLENT) {
+                            Modifier.background(shimmerBrush)
+                        } else Modifier
+                    )
+                    .border(
+                        width = 1.dp,
+                        brush = borderBrush,
+                        shape = RoundedCornerShape(12.dp)
                     )
                     .padding(horizontal = 12.dp, vertical = 6.dp)
             ) {

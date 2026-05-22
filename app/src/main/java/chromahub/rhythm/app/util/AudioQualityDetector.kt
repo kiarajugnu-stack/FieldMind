@@ -57,6 +57,7 @@ object AudioQualityDetector {
         DOLBY_LOSSY_SURROUND,  // AC-3, E-AC-3
         DOLBY_LOSSLESS,        // TrueHD, Atmos
         DTS_SURROUND,          // DTS variants
+        DSD_HIGH_RES,          // DSD64, DSD128, DSD256, DSD512 (1-bit high-end audiophile)
         UNKNOWN
     }
 
@@ -136,6 +137,7 @@ object AudioQualityDetector {
 
         // Estimate bit depth if not provided
         val estimatedBitDepth = when {
+            normalizedCodec.contains("DSD") || normalizedCodec == "DSD" -> 1
             bitDepth > 0 -> {
                 Log.d(TAG, "Using provided bit depth: $bitDepth-bit")
                 bitDepth
@@ -148,10 +150,12 @@ object AudioQualityDetector {
             // Hi-Res lossless: 24-bit/96kHz/stereo = 4,608 kbps → 24 bits/sample
             //   Calculation: (4,608,000 bps) / (96,000 Hz * 2 channels) = 24.0 bits/sample
             // 
-            // CRITICAL: If calculated bit depth is too low (< 12), the file is likely NOT true lossless
-            // or has incorrect metadata. We must be strict to avoid false positives.
+            // CRITICAL: Lossless formats like FLAC and ALAC are compressed (typically 45%-70% of raw size).
+            // We scale the bitrate using a 0.55 compression factor to get the original raw bitrate for depth calculation.
             finalIsLossless && bitrateKbps > 0 && sampleRateHz > 0 && channelCount > 0 -> {
-                val calculated = (bitrateKbps * 1000) / (sampleRateHz * channelCount)
+                val isCompressedLossless = normalizedCodec != "WAV" && normalizedCodec != "PCM" && normalizedCodec != "AIFF" && normalizedCodec != "DSD"
+                val rawBitrate = if (isCompressedLossless) (bitrateKbps * 1000.0 / 0.55) else (bitrateKbps * 1000.0)
+                val calculated = (rawBitrate / (sampleRateHz * channelCount)).toInt()
                 val result = when {
                     calculated >= 22 -> 24  // 24-bit Hi-Res (22+ bits/sample for safety margin)
                     calculated >= 14 -> 16  // 16-bit CD Quality (14-21 bits/sample)
@@ -164,7 +168,7 @@ object AudioQualityDetector {
                         0  // Return 0 to indicate invalid/suspicious bit depth
                     }
                 }
-                Log.d(TAG, "Bit depth from bitrate: codec=$normalizedCodec, " +
+                Log.d(TAG, "Bit depth from bitrate (adjusted for compression=$isCompressedLossless): codec=$normalizedCodec, " +
                         "bitrate=${bitrateKbps}kbps, sampleRate=${sampleRateHz}Hz, " +
                         "channels=$channelCount, calculated=$calculated bits/sample → $result-bit")
                 result
@@ -188,6 +192,27 @@ object AudioQualityDetector {
                 "channels=$channelCount, isLossless=$finalIsLossless")
         
         return when {
+            // DSD (Direct Stream Digital) - Top-tier high fidelity
+            normalizedCodec.contains("DSD") || normalizedCodec == "DSD" -> {
+                val dsdVersion = when {
+                    sampleRateHz >= 22000000 -> "DSD512"
+                    sampleRateHz >= 11000000 -> "DSD256"
+                    sampleRateHz >= 5000000 -> "DSD128"
+                    else -> "DSD64"
+                }
+                AudioQuality(
+                    qualityType = QualityType.DSD_HIGH_RES,
+                    qualityLabel = dsdVersion,
+                    qualityDescription = "1-bit / ${(sampleRateHz / 1000000.0)} MHz DSD Audio",
+                    isLossless = true,
+                    isHiRes = true,
+                    isDolby = false,
+                    isDTS = false,
+                    bitDepthEstimate = 1,
+                    category = "Hi-Res Master"
+                )
+            }
+
             // Dolby TrueHD / Atmos (Lossless surround)
             normalizedCodec in listOf("TRUEHD", "DOLBY TRUEHD", "ATMOS", "DOLBY ATMOS", "MLP") -> {
                 AudioQuality(
@@ -370,6 +395,7 @@ object AudioQualityDetector {
      */
     fun getQualityBadge(quality: AudioQuality): String {
         return when (quality.qualityType) {
+            QualityType.DSD_HIGH_RES -> quality.qualityLabel // e.g. "DSD64"
             QualityType.HI_RES_STUDIO_MASTER -> "Studio Master"
             QualityType.HI_RES_LOSSLESS -> "Hi-Res"
             QualityType.CD_QUALITY_LOSSLESS -> "Lossless"
@@ -410,6 +436,7 @@ object AudioQualityDetector {
      */
     fun getQualityColorIndicator(quality: AudioQuality): String {
         return when (quality.qualityType) {
+            QualityType.DSD_HIGH_RES,
             QualityType.HI_RES_STUDIO_MASTER, 
             QualityType.DOLBY_LOSSLESS,
             QualityType.LOSSLESS_SURROUND -> "excellent"
