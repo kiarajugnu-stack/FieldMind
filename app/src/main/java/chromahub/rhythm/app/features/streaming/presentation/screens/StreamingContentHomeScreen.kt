@@ -928,12 +928,6 @@ private fun StreamingWidgetSectionTitle(
                         isStart = true,
                         isEnd = onShufflePlay == null
                     ) {
-                        Icon(
-                            imageVector = Icons.Rounded.PlayArrow,
-                            contentDescription = null,
-                            modifier = Modifier.size(18.dp)
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
                         Text(
                             text = stringResource(id = R.string.action_play),
                             style = MaterialTheme.typography.labelMedium,
@@ -1533,13 +1527,7 @@ private fun StreamingSongWidgetCard(
         },
         modifier = Modifier
             .width(180.dp)
-            .height(80.dp)
-            .shadow(
-                elevation = 4.dp,
-                shape = ExpressiveShapes.Large,
-                ambientColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.06f),
-                spotColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
-            ),
+            .height(80.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
         ),
@@ -1600,22 +1588,16 @@ private fun StreamingAlbumWidgetCard(
     val context = LocalContext.current
     val haptics = LocalHapticFeedback.current
 
-    ExpressiveElevatedCard(
+    ExpressiveCard(
         onClick = {
             HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
             onAlbumClick()
         },
         modifier = Modifier
             .width(160.dp)
-            .height(252.dp)
-            .shadow(
-                elevation = 12.dp,
-                shape = ExpressiveShapes.SquircleLarge,
-                ambientColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
-                spotColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.18f)
-            ),
+            .height(252.dp),
         shape = ExpressiveShapes.SquircleLarge,
-        colors = CardDefaults.elevatedCardColors(
+        colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
         ),
     ) {
