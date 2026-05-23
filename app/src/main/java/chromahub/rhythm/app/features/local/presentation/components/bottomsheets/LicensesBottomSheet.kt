@@ -59,7 +59,7 @@ fun LicensesBottomSheet(
         ),
         licenseItem(
             name = "Jetpack Compose",
-            description = "Android's modern toolkit for building native UI",
+            description = "Android's modern toolkit for building native UI (BOM 2026.05.01)",
             license = "Apache License 2.0",
             url = "https://developer.android.com/jetpack/compose",
             icon = RhythmIcons.Actions.Info,
@@ -68,7 +68,7 @@ fun LicensesBottomSheet(
         ),
         licenseItem(
             name = "Material 3 Components",
-            description = "Material Design 3 components for Android",
+            description = "Material Design 3 components for Android (v1.5.0-alpha20)",
             license = "Apache License 2.0",
             url = "https://m3.material.io/",
             icon = RhythmIcons.Actions.Info,
@@ -77,7 +77,7 @@ fun LicensesBottomSheet(
         ),
         licenseItem(
             name = "Media3 ExoPlayer",
-            description = "Modern media playback library for Android",
+            description = "Modern media playback library for Android (v1.10.1)",
             license = "Apache License 2.0",
             url = "https://github.com/androidx/media",
             icon = RhythmIcons.Actions.Info,
@@ -86,7 +86,7 @@ fun LicensesBottomSheet(
         ),
         licenseItem(
             name = "Kotlin Coroutines",
-            description = "Asynchronous programming framework for Kotlin",
+            description = "Asynchronous programming framework for Kotlin (v1.11.0)",
             license = "Apache License 2.0",
             url = "https://github.com/Kotlin/kotlinx.coroutines",
             icon = RhythmIcons.Actions.Info,
@@ -95,7 +95,7 @@ fun LicensesBottomSheet(
         ),
         licenseItem(
             name = "Coil",
-            description = "Image loading library for Android backed by Kotlin Coroutines",
+            description = "Image loading library for Android backed by Kotlin Coroutines (v2.7.0)",
             license = "Apache License 2.0",
             url = "https://coil-kt.github.io/coil/",
             icon = RhythmIcons.Actions.Info,
@@ -104,7 +104,7 @@ fun LicensesBottomSheet(
         ),
         licenseItem(
             name = "Retrofit",
-            description = "Type-safe HTTP client for Android and Java",
+            description = "Type-safe HTTP client for Android and Java (v3.0.0)",
             license = "Apache License 2.0",
             url = "https://square.github.io/retrofit/",
             icon = RhythmIcons.Actions.Info,
@@ -113,7 +113,7 @@ fun LicensesBottomSheet(
         ),
         licenseItem(
             name = "OkHttp",
-            description = "HTTP client for Android, Kotlin, and Java",
+            description = "HTTP client for Android, Kotlin, and Java (v5.3.2)",
             license = "Apache License 2.0",
             url = "https://square.github.io/okhttp/",
             icon = RhythmIcons.Actions.Info,
@@ -122,7 +122,7 @@ fun LicensesBottomSheet(
         ),
         licenseItem(
             name = "Gson",
-            description = "Java serialization/deserialization library for JSON",
+            description = "Java serialization/deserialization library for JSON (v2.14.0)",
             license = "Apache License 2.0",
             url = "https://github.com/google/gson",
             icon = RhythmIcons.Actions.Info,
@@ -131,7 +131,7 @@ fun LicensesBottomSheet(
         ),
         licenseItem(
             name = "AndroidX Navigation",
-            description = "Navigation components for Android apps",
+            description = "Navigation components for Android apps (v2.9.8)",
             license = "Apache License 2.0",
             url = "https://developer.android.com/guide/navigation",
             icon = RhythmIcons.Actions.Info,
@@ -140,7 +140,7 @@ fun LicensesBottomSheet(
         ),
         licenseItem(
             name = "Accompanist Permissions",
-            description = "Compose utilities for permissions handling",
+            description = "Compose utilities for permissions handling (v0.37.3)",
             license = "Apache License 2.0",
             url = "https://google.github.io/accompanist/permissions/",
             icon = RhythmIcons.Actions.Info,
@@ -149,7 +149,7 @@ fun LicensesBottomSheet(
         ),
         licenseItem(
             name = "AndroidX Palette",
-            description = "Library to extract prominent colors from images",
+            description = "Library to extract prominent colors from images (v1.0.0)",
             license = "Apache License 2.0",
             url = "https://developer.android.com/jetpack/androidx/releases/palette",
             icon = RhythmIcons.Actions.Info,
@@ -158,7 +158,7 @@ fun LicensesBottomSheet(
         ),
         licenseItem(
             name = "JAudioTagger",
-            description = "Audio metadata editing library for Java",
+            description = "Audio metadata editing library for Java (v3.0.1)",
             license = "LGPL v2.1",
             url = "https://github.com/Borewit/jaudiotagger",
             icon = RhythmIcons.Connectivity.OpenInNew,
@@ -167,7 +167,7 @@ fun LicensesBottomSheet(
         ),
         licenseItem(
             name = "AndroidX Fragment",
-            description = "Modular UI components for Android",
+            description = "Modular UI components for Android (v1.8.9)",
             license = "Apache License 2.0",
             url = "https://developer.android.com/jetpack/androidx/releases/fragment",
             icon = RhythmIcons.Actions.Info,
@@ -176,7 +176,7 @@ fun LicensesBottomSheet(
         ),
         licenseItem(
             name = "AndroidX MediaRouter",
-            description = "Media routing support for Android",
+            description = "Media routing support for Android (v1.8.1)",
             license = "Apache License 2.0",
             url = "https://developer.android.com/jetpack/androidx/releases/mediarouter",
             icon = RhythmIcons.Actions.Info,
@@ -185,7 +185,7 @@ fun LicensesBottomSheet(
         ),
         licenseItem(
             name = "Glance AppWidget",
-            description = "Modern reactive widgets framework with Material 3",
+            description = "Modern reactive widgets framework with Material 3 (v1.1.1)",
             license = "Apache License 2.0",
             url = "https://developer.android.com/jetpack/androidx/releases/glance",
             icon = RhythmIcons.Actions.Info,
@@ -194,7 +194,7 @@ fun LicensesBottomSheet(
         ),
         licenseItem(
             name = "WorkManager",
-            description = "Deferrable, asynchronous task management library",
+            description = "Deferrable, asynchronous task management library (v2.11.2)",
             license = "Apache License 2.0",
             url = "https://developer.android.com/jetpack/androidx/releases/work",
             icon = RhythmIcons.Actions.Info,
@@ -203,7 +203,7 @@ fun LicensesBottomSheet(
         ),
         licenseItem(
             name = "Material Icons Extended",
-            description = "Extended set of Material Design icons",
+            description = "Extended set of Material Design icons (BOM 2026.05.01)",
             license = "Apache License 2.0",
             url = "https://developer.android.com/jetpack/compose/resources/material-icons",
             icon = RhythmIcons.Actions.Info,
@@ -212,7 +212,7 @@ fun LicensesBottomSheet(
         ),
         licenseItem(
             name = "Ktor",
-            description = "Asynchronous framework for creating microservices and web applications",
+            description = "Asynchronous microservices & HTTP client framework (v3.5.0)",
             license = "Apache License 2.0",
             url = "https://ktor.io/",
             icon = RhythmIcons.Actions.Info,
@@ -221,7 +221,7 @@ fun LicensesBottomSheet(
         ),
         licenseItem(
             name = "LeakCanary",
-            description = "Memory leak detection library for Android (debug builds only)",
+            description = "Memory leak detection library for Android (v2.14)",
             license = "Apache License 2.0",
             url = "https://square.github.io/leakcanary/",
             icon = RhythmIcons.Actions.Info,
@@ -230,7 +230,7 @@ fun LicensesBottomSheet(
         ),
         licenseItem(
             name = "Desugar JDK Libs",
-            description = "Allows using newer Java language APIs on older Android versions",
+            description = "Java 8+ API compatibility for older Android versions (v2.1.5)",
             license = "Apache License 2.0",
             url = "https://github.com/google/desugar_jdk_libs",
             icon = RhythmIcons.Actions.Info,
@@ -239,7 +239,7 @@ fun LicensesBottomSheet(
         ),
         licenseItem(
             name = "Media3 FFmpeg Decoder",
-            description = "FFmpeg-based decoder for Media3, enabling additional audio/video formats",
+            description = "FFmpeg audio/video decoder extension for Media3 (v1.10.1)",
             license = "Apache License 2.0",
             url = "https://github.com/androidx/media",
             icon = RhythmIcons.Actions.Info,
@@ -248,7 +248,7 @@ fun LicensesBottomSheet(
         ),
         licenseItem(
             name = "Room",
-            description = "SQLite object mapping library that provides local data persistence",
+            description = "SQLite object mapping library for database persistence (v2.8.4)",
             license = "Apache License 2.0",
             url = "https://developer.android.com/jetpack/androidx/releases/room",
             icon = RhythmIcons.Actions.Info,

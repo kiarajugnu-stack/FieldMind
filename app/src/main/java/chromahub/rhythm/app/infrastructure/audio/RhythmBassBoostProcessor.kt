@@ -69,6 +69,12 @@ class RhythmBassBoostProcessor : RhythmAudioProcessor() {
         return outputFormat
     }
 
+    override fun flush() {
+        super.flush()
+        onProcessorFlushed()
+        Log.d(TAG, "flush() - filter state reset")
+    }
+
     fun onProcessorFlushed() {
         // Reset filter state on flush to prevent artifacts across stream boundaries
         prevSample.fill(0f)

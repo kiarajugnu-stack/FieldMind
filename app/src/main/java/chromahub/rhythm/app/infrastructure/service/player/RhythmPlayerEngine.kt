@@ -65,6 +65,12 @@ class RhythmPlayerEngine(
 
     private lateinit var playerA: ExoPlayer
     private lateinit var playerB: ExoPlayer
+    
+    // Player-specific child audio processors to avoid shared-state concurrency bugs in crossfades
+    private var playerABassBoost: RhythmBassBoostProcessor? = null
+    private var playerBBassBoost: RhythmBassBoostProcessor? = null
+    private var playerASpatialization: RhythmSpatializationProcessor? = null
+    private var playerBSpatialization: RhythmSpatializationProcessor? = null
 
     private val onPlayerSwappedListeners = mutableListOf<(Player) -> Unit>()
 
@@ -153,8 +159,20 @@ class RhythmPlayerEngine(
             try { playerB.release() } catch (_: Exception) {}
         }
 
-        playerA = buildPlayer(handleAudioFocus = false)
-        playerB = buildPlayer(handleAudioFocus = false)
+        // Instantiate child processors for Player A
+        val aBass = bassBoostProcessor?.let { RhythmBassBoostProcessor().apply { setParent(it) } }
+        val aSpatial = spatializationProcessor?.let { RhythmSpatializationProcessor().apply { setParent(it) } }
+        playerABassBoost = aBass
+        playerASpatialization = aSpatial
+
+        // Instantiate child processors for Player B
+        val bBass = bassBoostProcessor?.let { RhythmBassBoostProcessor().apply { setParent(it) } }
+        val bSpatial = spatializationProcessor?.let { RhythmSpatializationProcessor().apply { setParent(it) } }
+        playerBBassBoost = bBass
+        playerBSpatialization = bSpatial
+
+        playerA = buildPlayer(handleAudioFocus = false, bassProcessor = aBass, spatialProcessor = aSpatial)
+        playerB = buildPlayer(handleAudioFocus = false, bassProcessor = bBass, spatialProcessor = bSpatial)
 
         playerA.addListener(masterPlayerListener)
 
@@ -193,7 +211,11 @@ class RhythmPlayerEngine(
         }
     }
 
-    private fun buildPlayer(handleAudioFocus: Boolean): ExoPlayer {
+    private fun buildPlayer(
+        handleAudioFocus: Boolean,
+        bassProcessor: RhythmBassBoostProcessor? = null,
+        spatialProcessor: RhythmSpatializationProcessor? = null
+    ): ExoPlayer {
         val loadControl = DefaultLoadControl.Builder()
             .setBufferDurationsMs(15_000, 30_000, 1_500, 2_500)
             .setPrioritizeTimeOverSizeThresholds(true)
@@ -206,11 +228,11 @@ class RhythmPlayerEngine(
                 enableAudioTrackPlaybackParams: Boolean
             ): androidx.media3.exoplayer.audio.AudioSink? {
                 val processors = mutableListOf<androidx.media3.common.audio.AudioProcessor>()
-                if (bassBoostProcessor != null) {
-                    processors.add(bassBoostProcessor)
+                if (bassProcessor != null) {
+                    processors.add(bassProcessor)
                 }
-                if (spatializationProcessor != null) {
-                    processors.add(spatializationProcessor)
+                if (spatialProcessor != null) {
+                    processors.add(spatialProcessor)
                 }
                 
                 return if (processors.isNotEmpty()) {

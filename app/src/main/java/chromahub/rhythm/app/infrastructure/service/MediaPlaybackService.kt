@@ -2292,11 +2292,50 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
             }
         }
         
-        val actualState = setEqualizerEnabledSafe(enabled)
-        Log.d(TAG, "Equalizer enabled: $enabled, actual state: $actualState")
-        
-        if (actualState != enabled) {
-            Log.e(TAG, "Equalizer state mismatch! Requested: $enabled, Actual: $actualState")
+        if (enabled) {
+            // Restore saved band levels first before enabling to avoid dynamic transition glitch
+            val bandLevelsString = appSettings.equalizerBandLevels.value
+            val bandLevels = bandLevelsString.split(",").mapNotNull { it.toFloatOrNull() }
+            if (bandLevels.isNotEmpty()) {
+                applyEqualizerPreset(bandLevels.toFloatArray())
+            }
+            
+            val actualState = setEqualizerEnabledSafe(true)
+            Log.d(TAG, "Equalizer enabled: true, actual state: $actualState")
+            if (!actualState) {
+                Log.e(TAG, "Equalizer state mismatch! Requested: true, Actual: false")
+            }
+        } else {
+            // Turning OFF: Set all bands to 0 (flat/neutral) first so response transitions smoothly
+            equalizer?.let { eq ->
+                try {
+                    val numberOfBands = eq.numberOfBands.toInt()
+                    val flatLevels = FloatArray(numberOfBands) { 0f }
+                    applyEqualizerPreset(flatLevels)
+                    Log.d(TAG, "Equalizer set to flat levels prior to disablement")
+                } catch (e: Exception) {
+                    Log.w(TAG, "Failed to apply flat preset before disabling equalizer", e)
+                }
+            }
+            
+            // Defer hardware disabling if player is currently playing to prevent pop/hard sound
+            if (player.isPlaying) {
+                Log.d(TAG, "Player is active; deferring hardware equalizer disable by 300ms to clear audio sink buffer")
+                serviceScope.launch(Dispatchers.Main) {
+                    delay(300)
+                    // Check if equalizer was not re-enabled by the user in the interim
+                    if (!appSettings.equalizerEnabled.value) {
+                        val actualState = setEqualizerEnabledSafe(false)
+                        Log.d(TAG, "Equalizer deferred hardware disable completed. Actual state: $actualState")
+                    } else {
+                        Log.d(TAG, "Equalizer re-enabled during delay window; skipping hardware disablement")
+                    }
+                }
+            } else {
+                // Player is paused/stopped; disable immediately
+                val actualState = setEqualizerEnabledSafe(false)
+                Log.d(TAG, "Player is inactive; equalizer disabled immediately. Actual state: $actualState")
+            }
         }
     }
     

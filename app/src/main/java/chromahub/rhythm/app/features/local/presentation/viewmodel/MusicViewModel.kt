@@ -617,28 +617,23 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
             emptyList()
         }
 
-        artists.filter { artist ->
-            // Include artist if they have at least one non-blacklisted song
-            // Check against the appropriate field based on grouping mode
+        // Pre-compute the set of all unique, lowercase split artist names from filteredSongs
+        // to avoid O(N * M) complex string splitting and massive allocations in the filter loop.
+        val activeArtistNames = filteredSongs.flatMap { song ->
+            val explicitAlbumArtist = song.albumArtist?.trim().orEmpty()
             if (groupByAlbumArtist) {
-                // When grouping by album artist, split albumArtist when present,
-                // otherwise split track artist fallback.
-                filteredSongs.any { song -> 
-                    val explicitAlbumArtist = song.albumArtist?.trim().orEmpty()
-                    val songArtistNames = if (explicitAlbumArtist.isNotBlank() && !explicitAlbumArtist.equals("<unknown>", ignoreCase = true)) {
-                        repository.splitArtistNames(explicitAlbumArtist, charDelimiters)
-                    } else {
-                        repository.splitArtistNames(song.artist, charDelimiters)
-                    }
-                    songArtistNames.any { it.equals(artist.name, ignoreCase = true) }
+                if (explicitAlbumArtist.isNotBlank() && !explicitAlbumArtist.equals("<unknown>", ignoreCase = true)) {
+                    repository.splitArtistNames(explicitAlbumArtist, charDelimiters)
+                } else {
+                    repository.splitArtistNames(song.artist, charDelimiters)
                 }
             } else {
-                // When grouping by track artist, match if artist appears in song's artist field (split collaborations)
-                filteredSongs.any { song -> 
-                    val artistNames = repository.splitArtistNames(song.artist, charDelimiters)
-                    artistNames.any { it.equals(artist.name, ignoreCase = true) }
-                }
+                repository.splitArtistNames(song.artist, charDelimiters)
             }
+        }.map { it.lowercase() }.toSet()
+
+        artists.filter { artist ->
+            activeArtistNames.contains(artist.name.lowercase())
         }
     }.flowOn(Dispatchers.Default).stateIn(viewModelScope, kotlinx.coroutines.flow.SharingStarted.Eagerly, emptyList())
 
