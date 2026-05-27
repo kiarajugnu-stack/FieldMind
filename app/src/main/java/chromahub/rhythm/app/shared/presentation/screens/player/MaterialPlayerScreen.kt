@@ -1149,10 +1149,14 @@ fun MaterialPlayerScreen(
                         } else {
                             splitArtistNames(currentSong.artist)
                         }
-                        artists.find { artist -> songArtistNames.any { it.equals(artist.name, ignoreCase = true) } }
+                        songArtistNames.firstNotNullOfOrNull { name ->
+                            artists.find { it.name.equals(name, ignoreCase = true) }
+                        }
                     } else {
                         val songArtistNames = splitArtistNames(currentSong.artist)
-                        artists.find { artist -> songArtistNames.any { it.equals(artist.name, ignoreCase = true) } }
+                        songArtistNames.firstNotNullOfOrNull { name ->
+                            artists.find { it.name.equals(name, ignoreCase = true) }
+                        }
                     }
                     artistForSong?.let {
                         selectedArtist = it
@@ -3351,14 +3355,14 @@ fun MaterialPlayerScreen(
                                                                 } else {
                                                                     splitArtistNames(currentSong.artist)
                                                                 }
-                                                                artists.find { artist ->
-                                                                    songArtistNames.any { it.equals(artist.name, ignoreCase = true) }
+                                                                songArtistNames.firstNotNullOfOrNull { name ->
+                                                                    artists.find { it.name.equals(name, ignoreCase = true) }
                                                                 }
                                                             } else {
                                                                 // When not grouping, check if any split artist name matches
                                                                 val songArtistNames = splitArtistNames(currentSong.artist)
-                                                                artists.find { artist ->
-                                                                    songArtistNames.any { it.equals(artist.name, ignoreCase = true) }
+                                                                songArtistNames.firstNotNullOfOrNull { name ->
+                                                                    artists.find { it.name.equals(name, ignoreCase = true) }
                                                                 }
                                                             }
                                                             artistForSong?.let {

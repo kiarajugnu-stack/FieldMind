@@ -948,7 +948,16 @@ fun UniversalSearchScreen(
                 onGoToArtist = {
                     showSongOptionsSheet = false
                     if (isLocal) {
-                        val artist = localArtists.find { it.name.equals((songObj as Song).artist, ignoreCase = true) }
+                        val separatorEnabled = appSettings.artistSeparatorEnabled.value
+                        val delimiters = appSettings.artistSeparatorDelimiters.value.ifBlank { "/;,+&" }
+                        val songArtistNames = chromahub.rhythm.app.util.ArtistSeparator.splitArtistNames(
+                            artistName = (songObj as Song).artist,
+                            delimiters = delimiters,
+                            enabled = separatorEnabled
+                        )
+                        val artist = songArtistNames.firstNotNullOfOrNull { name ->
+                            localArtists.find { it.name.equals(name, ignoreCase = true) }
+                        }
                         if (artist != null) {
                             handleAction("LOCAL") { onLocalArtistClick(artist) }
                         } else Toast.makeText(context, "Artist not found", Toast.LENGTH_SHORT).show()

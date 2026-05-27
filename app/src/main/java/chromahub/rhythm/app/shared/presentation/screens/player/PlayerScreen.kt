@@ -173,8 +173,8 @@ fun PlayerScreen(
                 splitArtistNames(currentSong.artist)
             }
 
-            return artists.firstOrNull { artist ->
-                artistNames.any { it.equals(artist.name, ignoreCase = true) }
+            return artistNames.firstNotNullOfOrNull { name ->
+                artists.firstOrNull { it.name.equals(name, ignoreCase = true) }
             }
         }
 

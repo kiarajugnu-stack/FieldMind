@@ -17,8 +17,8 @@ android {
         applicationId = "chromahub.rhythm.app"
         minSdk = 26
         targetSdk = 37
-        versionCode = 493861019
-        versionName = "4.9.386.1019 Beta"
+        versionCode = 493871022
+        versionName = "4.9.387.1022 Beta"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }

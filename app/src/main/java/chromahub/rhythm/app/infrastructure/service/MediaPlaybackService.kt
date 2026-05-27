@@ -725,8 +725,21 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
 
         equalizerVolumeTransitionJob = serviceScope.launch(Dispatchers.Main.immediate) {
             try {
+                // If disabling, set the band levels to 0 (flat) first before waiting,
+                // so the DSP coefficients transition smoothly in the background.
+                if (!enabled) {
+                    withEqualizerSafe("set flat bands on disable", Unit) { eq ->
+                        val numberOfBands = eq.numberOfBands.toInt()
+                        for (i in 0 until numberOfBands) {
+                            eq.setBandLevel(i.toShort(), 0)
+                        }
+                    }
+                }
+
                 // 2. Wait for the silent/ducked volume state to propagate and the audio track's buffer to clear
-                delay(120L)
+                // Use a slightly longer delay (200ms) when disabling to ensure the audio buffer is completely drained
+                val drainDelay = if (enabled) 120L else 200L
+                delay(drainDelay)
                 
                 // 3. Safely toggle the hardware equalizer enabled state while fully silent
                 actualState = setEqualizerEnabledSafe(enabled)

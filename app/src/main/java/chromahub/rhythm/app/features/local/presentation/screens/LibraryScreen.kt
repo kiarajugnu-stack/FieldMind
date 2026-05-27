@@ -2393,13 +2393,13 @@ fun SingleCardSongsContent(
                                     } else {
                                         splitArtistNames(song.artist)
                                     }
-                                    artists.find { artist ->
-                                        songArtistNames.any { it.equals(artist.name, ignoreCase = true) }
+                                    songArtistNames.firstNotNullOfOrNull { name ->
+                                        artists.find { it.name.equals(name, ignoreCase = true) }
                                     }
                                 } else {
                                     val songArtistNames = splitArtistNames(song.artist)
-                                    artists.find { artist ->
-                                        songArtistNames.any { it.equals(artist.name, ignoreCase = true) }
+                                    songArtistNames.firstNotNullOfOrNull { name ->
+                                        artists.find { it.name.equals(name, ignoreCase = true) }
                                     }
                                 }
                                 artist?.let { onGoToArtist(it) }
