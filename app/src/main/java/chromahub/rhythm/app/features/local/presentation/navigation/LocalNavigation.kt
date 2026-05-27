@@ -111,14 +111,13 @@ import chromahub.rhythm.app.features.local.presentation.screens.AddToPlaylistScr
 import chromahub.rhythm.app.features.local.presentation.components.dialogs.CreatePlaylistDialog
 import chromahub.rhythm.app.features.local.presentation.components.dialogs.QueueActionDialog
 import chromahub.rhythm.app.features.local.presentation.components.dialogs.QueueListActionDialog
-import chromahub.rhythm.app.features.local.presentation.components.player.MiniPlayer
-import chromahub.rhythm.app.features.local.presentation.components.player.RhythmMiniplayer
+import chromahub.rhythm.app.shared.presentation.components.player.MiniPlayer
 import chromahub.rhythm.app.features.local.presentation.components.player.SleepTimerBottomSheetNew
 import chromahub.rhythm.app.features.local.presentation.screens.LibraryScreen
 import chromahub.rhythm.app.features.local.presentation.screens.HomeScreen
 import chromahub.rhythm.app.features.local.presentation.screens.ListeningStatsScreen
 import chromahub.rhythm.app.features.local.presentation.screens.EqualizerScreen
-import chromahub.rhythm.app.features.local.presentation.screens.RhythmPlayerScreen
+import chromahub.rhythm.app.shared.presentation.screens.player.PlayerScreen
 
 import chromahub.rhythm.app.features.local.presentation.screens.PlaylistDetailScreen
 import chromahub.rhythm.app.features.local.presentation.screens.ArtistDetailScreen
@@ -873,37 +872,20 @@ private fun LocalNavigationContent(
                             .fillMaxWidth()
                             .padding(bottom = miniPlayerBottomOffset)
                     ) {
-                        if (useExperimentalPlayerUi) {
-                            RhythmMiniplayer(
-                                song = currentSong,
-                                isPlaying = isPlaying,
-                                progress = progress,
-                                onPlayPause = onPlayPause,
-                                onPlayerClick = onPlayerClick,
-                                onSkipNext = onSkipNext,
-                                onSkipPrevious = onSkipPrevious,
-                                onDismiss = {
-                                    onMiniPlayerDismiss()
-                                },
-                                isMediaLoading = viewModel.isBuffering.collectAsState().value,
-                                modifier = Modifier.align(Alignment.BottomEnd)
-                            )
-                        } else {
-                            MiniPlayer(
-                                song = currentSong,
-                                isPlaying = isPlaying,
-                                progress = progress,
-                                onPlayPause = onPlayPause,
-                                onPlayerClick = onPlayerClick,
-                                onSkipNext = onSkipNext,
-                                onSkipPrevious = onSkipPrevious,
-                                onDismiss = {
-                                    onMiniPlayerDismiss()
-                                },
-                                isMediaLoading = viewModel.isBuffering.collectAsState().value,
-                                modifier = Modifier.align(Alignment.BottomEnd)
-                            )
-                        }
+                        MiniPlayer(
+                            song = currentSong,
+                            isPlaying = isPlaying,
+                            progress = progress,
+                            onPlayPause = onPlayPause,
+                            onPlayerClick = onPlayerClick,
+                            onSkipNext = onSkipNext,
+                            onSkipPrevious = onSkipPrevious,
+                            onDismiss = {
+                                onMiniPlayerDismiss()
+                            },
+                            isMediaLoading = viewModel.isBuffering.collectAsState().value,
+                            modifier = Modifier.align(Alignment.BottomEnd)
+                        )
                     }
                 }
 
@@ -2016,7 +1998,7 @@ private fun LocalNavigationContent(
                         }
                     }
 
-                    RhythmPlayerScreen(
+                    PlayerScreen(
                         song = currentSong,
                         isPlaying = isPlaying,
                         progress = progress,

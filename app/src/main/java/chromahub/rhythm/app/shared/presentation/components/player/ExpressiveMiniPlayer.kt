@@ -1,4 +1,4 @@
-package chromahub.rhythm.app.features.local.presentation.components.player
+package chromahub.rhythm.app.shared.presentation.components.player
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Spring
@@ -51,7 +51,7 @@ import kotlinx.coroutines.delay
 import kotlin.math.abs
 
 @Composable
-fun RhythmMiniplayer(
+fun ExpressiveMiniPlayer(
     song: Song?,
     isPlaying: Boolean,
     progress: () -> Float,

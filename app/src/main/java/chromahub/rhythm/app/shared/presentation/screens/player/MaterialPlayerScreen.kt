@@ -1,4 +1,4 @@
-package chromahub.rhythm.app.features.local.presentation.screens
+package chromahub.rhythm.app.shared.presentation.screens.player
 
 import chromahub.rhythm.app.shared.presentation.components.icons.RhythmIcons
 import chromahub.rhythm.app.shared.presentation.components.icons.MaterialSymbolIcon
@@ -213,7 +213,7 @@ import androidx.navigation.NavController
 // - Material3 ModalBottomSheet and related APIs
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PlayerScreen(
+fun MaterialPlayerScreen(
     song: Song?,
     isPlaying: Boolean,
     progress: () -> Float,
@@ -282,7 +282,8 @@ fun PlayerScreen(
     appSettings: chromahub.rhythm.app.shared.data.model.AppSettings,
     musicViewModel: chromahub.rhythm.app.viewmodel.MusicViewModel,
     navController: NavController,
-    isStreamingMode: Boolean = false
+    isStreamingMode: Boolean = false,
+    modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
     val configuration = LocalConfiguration.current
@@ -584,7 +585,7 @@ fun PlayerScreen(
                         ).show()
                     }
                 } catch (e: Exception) {
-                    Log.e("PlayerScreen", "Error loading lyrics file", e)
+                    Log.e("MaterialPlayerScreen", "Error loading lyrics file", e)
                     Toast.makeText(context, "Error loading lyrics: ${e.message}", Toast.LENGTH_LONG).show()
                 }
             }
@@ -1024,7 +1025,7 @@ fun PlayerScreen(
                     ).show()
                     
                     // Log additional debug info
-                    android.util.Log.w("PlayerScreen", "Metadata update failed for song: ${song.title}", e)
+                    android.util.Log.w("MaterialPlayerScreen", "Metadata update failed for song: ${song.title}", e)
                 }
             },
             onShowLyricsEditor = { showLyricsEditorDialog = true }

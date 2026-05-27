@@ -6529,20 +6529,6 @@ fun ExperimentalFeaturesScreen(onBackClick: () -> Unit, onNavigateToGoSettings: 
                 )
             )
 
-            add(
-                SettingGroup(
-                    title = "Experimental Player UI",
-                    items = listOf(
-                        SettingItem(
-                            MaterialSymbolIcon("new_window"),
-                            "Use new player and miniplayer",
-                            "Switches the app to the new experimental player and miniplayer",
-                            toggleState = useExperimentalPlayerUi,
-                            onToggleChange = { appSettings.setUseExperimentalPlayerUi(it) }
-                        )
-                    )
-                )
-            )
 
             add(
                 SettingGroup(
@@ -13276,6 +13262,16 @@ fun ThemeCustomizationSettingsScreen(onBackClick: () -> Unit) {
                 )
             ),
             SettingGroup(
+                title = "Player Themes",
+                items = listOf(
+                    SettingItem(
+                        MaterialSymbolIcon("palette"),
+                        "Playback Themes",
+                        "Choose between Rhythm Default or Expressive theme"
+                    )
+                )
+            ),
+            SettingGroup(
                 title = context.getString(R.string.settings_festive_themes),
                 items = buildList {
                     add(
@@ -13324,65 +13320,101 @@ fun ThemeCustomizationSettingsScreen(onBackClick: () -> Unit) {
             items(settingGroups, key = { "setting_${it.title}_${settingGroups.indexOf(it)}" }) { group ->
                 Spacer(modifier = Modifier.height(24.dp))
 
-                val materialItems = if (group.title == context.getString(R.string.settings_display_mode)) {
-                    buildList {
-                        add(
-                            Material3SettingsItem(
-                                icon = RhythmIcons.Settings,
-                                title = { Text(context.getString(R.string.settings_theme_mode)) },
-                                description = {
-                                    Column {
-                                        Text(context.getString(R.string.settings_theme_mode_desc))
-                                        Spacer(modifier = Modifier.height(12.dp))
-                                        ExpressiveButtonGroup(
-                                            items = listOf(
-                                                context.getString(R.string.settings_theme_system),
-                                                context.getString(R.string.settings_theme_light),
-                                                context.getString(R.string.settings_theme_dark)
-                                            ),
-                                            selectedIndex = when {
-                                                useSystemTheme -> 0
-                                                !darkMode -> 1
-                                                else -> 2
-                                            },
-                                            onItemClick = { index ->
-                                                HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
-                                                when (index) {
-                                                    0 -> {
-                                                        appSettings.setUseSystemTheme(true)
-                                                    }
-
-                                                    1 -> {
-                                                        appSettings.setUseSystemTheme(false)
-                                                        appSettings.setDarkMode(false)
-                                                    }
-
-                                                    2 -> {
-                                                        appSettings.setUseSystemTheme(false)
-                                                        appSettings.setDarkMode(true)
-                                                    }
-                                                }
-                                            },
-                                            modifier = Modifier.fillMaxWidth()
-                                        )
-                                    }
-                                }
-                            )
-                        )
-
-                        if (!useSystemTheme && darkMode && group.items.size > 1) {
+                val materialItems = when (group.title) {
+                    context.getString(R.string.settings_display_mode) -> {
+                        buildList {
                             add(
-                                toMaterial3SettingsItem(
-                                    context = context,
-                                    item = group.items[1],
-                                    hapticFeedback = haptic
+                                Material3SettingsItem(
+                                    icon = RhythmIcons.Settings,
+                                    title = { Text(context.getString(R.string.settings_theme_mode)) },
+                                    description = {
+                                        Column {
+                                            Text(context.getString(R.string.settings_theme_mode_desc))
+                                            Spacer(modifier = Modifier.height(12.dp))
+                                            ExpressiveButtonGroup(
+                                                items = listOf(
+                                                    context.getString(R.string.settings_theme_system),
+                                                    context.getString(R.string.settings_theme_light),
+                                                    context.getString(R.string.settings_theme_dark)
+                                                ),
+                                                selectedIndex = when {
+                                                    useSystemTheme -> 0
+                                                    !darkMode -> 1
+                                                    else -> 2
+                                                },
+                                                onItemClick = { index ->
+                                                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                                                    when (index) {
+                                                        0 -> {
+                                                            appSettings.setUseSystemTheme(true)
+                                                        }
+
+                                                        1 -> {
+                                                            appSettings.setUseSystemTheme(false)
+                                                            appSettings.setDarkMode(false)
+                                                        }
+
+                                                        2 -> {
+                                                            appSettings.setUseSystemTheme(false)
+                                                            appSettings.setDarkMode(true)
+                                                        }
+                                                    }
+                                                },
+                                                modifier = Modifier.fillMaxWidth()
+                                            )
+                                        }
+                                    }
+                                )
+                            )
+
+                            if (!useSystemTheme && darkMode && group.items.size > 1) {
+                                add(
+                                    toMaterial3SettingsItem(
+                                        context = context,
+                                        item = group.items[1],
+                                        hapticFeedback = haptic
+                                    )
+                                )
+                            }
+                        }
+                    }
+                    "Player Themes" -> {
+                        buildList {
+                            val playerThemeId by appSettings.playerThemeId.collectAsState()
+                            add(
+                                Material3SettingsItem(
+                                    icon = MaterialSymbolIcon("palette"),
+                                    title = { Text("Playback Themes") },
+                                    description = {
+                                        Column {
+                                            Text("Choose between Rhythm Default or Expressive theme")
+                                            Spacer(modifier = Modifier.height(12.dp))
+                                            ExpressiveButtonGroup(
+                                                items = listOf(
+                                                        "Rhythm",
+                                                    "Expressive"
+                                                ),
+                                                selectedIndex = if (playerThemeId == "EXPRESSIVE") 1 else 0,
+                                                onItemClick = { index ->
+                                                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
+                                                    if (index == 1) {
+                                                        appSettings.setPlayerThemeId("EXPRESSIVE")
+                                                    } else {
+                                                        appSettings.setPlayerThemeId("MATERIAL")
+                                                    }
+                                                },
+                                                modifier = Modifier.fillMaxWidth()
+                                            )
+                                        }
+                                    }
                                 )
                             )
                         }
                     }
-                } else {
-                    group.items.map { item ->
-                        toMaterial3SettingsItem(context = context, item = item, hapticFeedback = haptic)
+                    else -> {
+                        group.items.map { item ->
+                            toMaterial3SettingsItem(context = context, item = item, hapticFeedback = haptic)
+                        }
                     }
                 }
 

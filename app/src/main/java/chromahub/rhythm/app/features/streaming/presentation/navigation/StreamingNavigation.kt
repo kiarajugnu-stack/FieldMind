@@ -91,15 +91,14 @@ import chromahub.rhythm.app.features.local.presentation.components.bottomsheets.
 import chromahub.rhythm.app.features.local.presentation.components.bottomsheets.AlbumBottomSheet
 import chromahub.rhythm.app.features.local.presentation.components.bottomsheets.SongInfoBottomSheet
 import chromahub.rhythm.app.features.local.presentation.components.dialogs.CreatePlaylistDialog
-import chromahub.rhythm.app.features.local.presentation.components.player.MiniPlayer
-import chromahub.rhythm.app.features.local.presentation.components.player.RhythmMiniplayer
+import chromahub.rhythm.app.shared.presentation.components.player.MiniPlayer
 import chromahub.rhythm.app.features.local.presentation.navigation.Screen
 import chromahub.rhythm.app.features.local.presentation.screens.AddToPlaylistScreen
 import chromahub.rhythm.app.features.local.presentation.screens.ArtistDetailScreen
 import chromahub.rhythm.app.features.local.presentation.screens.EqualizerScreen
 import chromahub.rhythm.app.features.local.presentation.screens.ListeningStatsScreen
 import chromahub.rhythm.app.features.local.presentation.screens.PlaylistDetailScreen
-import chromahub.rhythm.app.features.local.presentation.screens.RhythmPlayerScreen
+import chromahub.rhythm.app.shared.presentation.screens.player.PlayerScreen
 import chromahub.rhythm.app.features.local.presentation.screens.settings.RhythmGuardSettingsScreen
 import chromahub.rhythm.app.features.local.presentation.screens.settings.QueuePlaybackSettingsScreen
 import chromahub.rhythm.app.features.local.presentation.viewmodel.MusicViewModel as LocalMusicViewModel
@@ -516,27 +515,6 @@ fun StreamingNavigation(
                     ) {
                         // Only render MiniPlayer if currentSong is not null
                         currentSong?.let { song ->
-                            if (useExperimentalPlayerUi) {
-                                RhythmMiniplayer(
-                                    song = song,
-                                    isPlaying = isPlaying,
-                                    progress = { progress },
-                                    onPlayPause = { localMusicViewModel.togglePlayPause() },
-                                    onPlayerClick = {
-                                        onNavigateToPlayer()
-                                        navController.navigate(StreamingScreen.Player.route) {
-                                            launchSingleTop = true
-                                        }
-                                    },
-                                    onSkipNext = { localMusicViewModel.skipToNext() },
-                                    onSkipPrevious = { localMusicViewModel.skipToPrevious() },
-                                    onDismiss = {
-                                        isMiniPlayerDismissed = true
-                                    },
-                                    isMediaLoading = isMediaLoading,
-                                    modifier = Modifier.align(Alignment.BottomEnd)
-                                )
-                            } else {
                                 MiniPlayer(
                                     song = song,
                                     isPlaying = isPlaying,
@@ -556,7 +534,6 @@ fun StreamingNavigation(
                                     isMediaLoading = isMediaLoading,
                                     modifier = Modifier.align(Alignment.BottomEnd)
                                 )
-                            }
                         }
                     }
                 }
@@ -1725,7 +1702,7 @@ fun StreamingNavigation(
                     savedPlaylists.map { it.toLibraryPlaylist() }
                 }
 
-                RhythmPlayerScreen(
+                PlayerScreen(
                     song = currentSong,
                     isPlaying = isPlaying,
                     progress = { progress },
