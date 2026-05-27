@@ -78,8 +78,8 @@ import chromahub.rhythm.app.features.local.presentation.screens.SingleCardArtist
 import chromahub.rhythm.app.features.local.presentation.screens.PlaylistFabMenu
 import chromahub.rhythm.app.features.local.presentation.screens.SingleCardPlaylistsContent
 import chromahub.rhythm.app.features.local.presentation.screens.SingleCardSongsContent
-import chromahub.rhythm.app.features.local.presentation.components.bottomsheets.AlbumBottomSheet
-import chromahub.rhythm.app.features.local.presentation.components.bottomsheets.SongInfoBottomSheet
+import chromahub.rhythm.app.shared.presentation.components.bottomsheets.AlbumBottomSheet
+import chromahub.rhythm.app.shared.presentation.components.bottomsheets.SongInfoBottomSheet
 import chromahub.rhythm.app.features.streaming.domain.model.StreamingAlbum
 import chromahub.rhythm.app.features.streaming.domain.model.StreamingArtist
 import chromahub.rhythm.app.features.streaming.domain.model.StreamingPlaylist
@@ -1321,7 +1321,7 @@ fun StreamingLibraryScreen(
 
     // Create Playlist Dialog for streaming
     if (showCreatePlaylistDialog) {
-        chromahub.rhythm.app.features.local.presentation.components.dialogs.CreatePlaylistDialog(
+        chromahub.rhythm.app.shared.presentation.components.dialogs.CreatePlaylistDialog(
             onDismiss = { showCreatePlaylistDialog = false },
             onConfirm = { name ->
                 viewModel.createPlaylist(name)

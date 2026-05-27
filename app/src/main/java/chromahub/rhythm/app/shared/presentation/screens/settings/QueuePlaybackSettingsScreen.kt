@@ -1,0 +1,1326 @@
+@file:OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
+
+package chromahub.rhythm.app.shared.presentation.screens.settings
+
+
+import chromahub.rhythm.app.shared.presentation.components.icons.RhythmIcons
+import chromahub.rhythm.app.shared.presentation.components.icons.MaterialSymbolIcon
+import chromahub.rhythm.app.shared.presentation.components.icons.Icon
+
+import android.app.Activity
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
+import android.os.Build
+import android.provider.DocumentsContract
+import android.util.Log
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.*
+import androidx.compose.animation.core.*
+import androidx.compose.animation.core.Spring
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.ExperimentalFoundationApi
+import chromahub.rhythm.app.R
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.border
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.material3.*
+import androidx.compose.material3.CircularWavyProgressIndicator
+import androidx.compose.material3.LinearWavyProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.Slider
+import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
+import androidx.compose.runtime.*
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
+import androidx.compose.ui.hapticfeedback.HapticFeedback
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.TextUnit
+import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import chromahub.rhythm.app.BuildConfig
+import chromahub.rhythm.app.shared.data.model.AppSettings
+import chromahub.rhythm.app.shared.data.model.Playlist
+import chromahub.rhythm.app.shared.data.model.Song
+import chromahub.rhythm.app.shared.data.repository.PlaybackStatsRepository
+import chromahub.rhythm.app.shared.data.repository.StatsTimeRange
+import chromahub.rhythm.app.util.GsonUtils
+import chromahub.rhythm.app.util.HapticUtils
+import coil.compose.AsyncImage
+import coil.compose.rememberAsyncImagePainter
+import coil.request.ImageRequest
+import kotlin.system.exitProcess
+import chromahub.rhythm.app.shared.presentation.components.common.CollapsibleHeaderScreen
+import chromahub.rhythm.app.shared.presentation.components.common.ButtonGroupStyle
+import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveScrollBar
+import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveButtonGroup
+import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveGroupButton
+import chromahub.rhythm.app.shared.presentation.components.bottomsheets.StandardBottomSheetHeader
+import chromahub.rhythm.app.shared.presentation.components.common.StyledProgressBar
+import chromahub.rhythm.app.shared.presentation.components.common.ProgressStyle
+import chromahub.rhythm.app.shared.presentation.components.common.ThumbStyle
+import chromahub.rhythm.app.shared.presentation.components.bottomsheets.LicensesBottomSheet
+import chromahub.rhythm.app.shared.presentation.components.bottomsheets.UpdateBottomSheet
+import chromahub.rhythm.app.ui.utils.LazyListStateSaver
+import chromahub.rhythm.app.features.local.presentation.viewmodel.MusicViewModel
+import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveShapeProvider
+import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveShapes
+import chromahub.rhythm.app.shared.presentation.components.common.buildSplashBackdropShapes
+import chromahub.rhythm.app.shared.presentation.components.common.SplashBackgroundOrbs
+import chromahub.rhythm.app.shared.presentation.viewmodel.AppUpdaterViewModel
+import chromahub.rhythm.app.shared.presentation.viewmodel.AppVersion
+import chromahub.rhythm.app.ui.theme.getFontPreviewStyle
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.MainScope
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+import java.io.File
+import chromahub.rhythm.app.utils.FontLoader
+import chromahub.rhythm.app.ui.theme.parseCustomColorScheme
+import androidx.compose.ui.viewinterop.AndroidView
+import android.widget.TextView
+import androidx.compose.foundation.Image
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import androidx.core.text.HtmlCompat
+import chromahub.rhythm.app.shared.presentation.components.common.M3FourColorCircularLoader
+import chromahub.rhythm.app.shared.presentation.components.player.PlayingEqIcon
+import chromahub.rhythm.app.shared.presentation.components.dialogs.CreatePlaylistDialog
+import chromahub.rhythm.app.shared.presentation.components.dialogs.BulkPlaylistExportDialog
+import chromahub.rhythm.app.shared.presentation.components.dialogs.PlaylistImportDialog
+import chromahub.rhythm.app.shared.presentation.components.common.rememberExpressiveShape
+import chromahub.rhythm.app.shared.presentation.components.dialogs.PlaylistOperationProgressDialog
+import chromahub.rhythm.app.shared.presentation.components.dialogs.PlaylistOperationResultDialog
+import chromahub.rhythm.app.shared.presentation.components.dialogs.AppRestartDialog
+import chromahub.rhythm.app.shared.presentation.components.player.PlayerChipOrderBottomSheet
+import chromahub.rhythm.app.features.local.presentation.components.settings.HomeSectionOrderBottomSheet
+import chromahub.rhythm.app.features.local.presentation.components.settings.LibraryTabOrderBottomSheet
+import chromahub.rhythm.app.shared.presentation.components.Material3SettingsGroup
+import chromahub.rhythm.app.shared.presentation.components.Material3SettingsItem
+
+import chromahub.rhythm.app.shared.presentation.screens.settings.TunerSettingRow
+import chromahub.rhythm.app.shared.presentation.screens.settings.TunerAnimatedSwitch
+import chromahub.rhythm.app.shared.presentation.screens.settings.TunerSettingCard
+import chromahub.rhythm.app.shared.presentation.screens.settings.SettingItem
+import chromahub.rhythm.app.shared.presentation.screens.settings.SettingGroup
+
+
+// Queue & Playback Settings Screen
+@Composable
+fun QueuePlaybackSettingsScreen(onBackClick: () -> Unit) {
+    val context = LocalContext.current
+    val appSettings = AppSettings.getInstance(context)
+    val hapticFeedback = LocalHapticFeedback.current
+
+    val shuffleUsesExoplayer by appSettings.shuffleUsesExoplayer.collectAsState()
+    val autoAddToQueue by appSettings.autoAddToQueue.collectAsState()
+    val clearQueueOnNewSong by appSettings.clearQueueOnNewSong.collectAsState()
+    val hidePlayedQueueSongs by appSettings.hidePlayedQueueSongs.collectAsState()
+    val contextQueuePreference by appSettings.contextQueuePreference.collectAsState()
+    val contextQueuePersistenceRaw by appSettings.contextQueuePersistence.collectAsState()
+    val showAlreadyPlayedSongsInQueue = !hidePlayedQueueSongs
+    val effectiveContextQueuePreference = if (contextQueuePreference == "GENRE_FIRST") {
+        "GENRE_FIRST"
+    } else {
+        "ARTIST_FIRST"
+    }
+    val showQueueDialog by appSettings.showQueueDialog.collectAsState()
+    val repeatModePersistence by appSettings.repeatModePersistence.collectAsState()
+    val shuffleModePersistence by appSettings.shuffleModePersistence.collectAsState()
+    val queuePersistenceEnabled by appSettings.queuePersistenceEnabled.collectAsState()
+    val playlistClickBehavior by appSettings.playlistClickBehavior.collectAsState(initial = "ask")
+    val listQueueActionBehavior by appSettings.listQueueActionBehavior.collectAsState(initial = "replace")
+    val useHoursInTimeFormat by appSettings.useHoursInTimeFormat.collectAsState()
+    val gaplessEnabled by appSettings.gaplessPlayback.collectAsState()
+    val crossfadeEnabled by appSettings.crossfade.collectAsState()
+    val crossfadeDuration by appSettings.crossfadeDuration.collectAsState()
+    val crossfadeRepeatOne by appSettings.crossfadeRepeatOne.collectAsState()
+    val stopPlaybackOnAppClose by appSettings.stopPlaybackOnAppClose.collectAsState()
+
+    var showPlaylistBehaviorDialog by remember { mutableStateOf(false) }
+    var showListQueueBehaviorDialog by remember { mutableStateOf(false) }
+    var showQueueDialogSettingDialog by remember { mutableStateOf(false) }
+    var showContextPrefBottomSheet by remember { mutableStateOf(false) }
+
+    CollapsibleHeaderScreen(
+        title = context.getString(R.string.settings_queue_playback),
+        showBackButton = true,
+        onBackClick = onBackClick
+    ) { modifier ->
+        val settingGroups = listOf(
+            SettingGroup(
+                title = context.getString(R.string.settings_queue_behavior),
+                items = buildList {
+                    add(
+                        SettingItem(
+                            RhythmIcons.Shuffle,
+                            context.getString(R.string.settings_use_exoplayer_shuffle),
+                            context.getString(R.string.settings_use_exoplayer_shuffle_desc),
+                            toggleState = shuffleUsesExoplayer,
+                            onToggleChange = { appSettings.setShuffleUsesExoplayer(it) }
+                        )
+                    )
+                    add(
+                        SettingItem(
+                            RhythmIcons.AddToQueue,
+                            context.getString(R.string.settings_auto_queue),
+                            context.getString(R.string.settings_auto_queue_desc),
+                            toggleState = autoAddToQueue,
+                            onToggleChange = { appSettings.setAutoAddToQueue(it) }
+                        )
+                    )
+                    if (autoAddToQueue) {
+                        add(
+                            SettingItem(
+                                RhythmIcons.Tune,
+                                context.getString(R.string.settings_context_queue_preference),
+                                when (effectiveContextQueuePreference) {
+                                    "ARTIST_FIRST" -> context.getString(R.string.settings_context_pref_artist_first)
+                                    else -> context.getString(R.string.settings_context_pref_genre_first)
+                                },
+                                onClick = { showContextPrefBottomSheet = true }
+                            )
+                        )
+                        add(
+                            SettingItem(
+                                RhythmIcons.Repeat,
+                                context.getString(R.string.settings_context_queue_persistence),
+                                context.getString(R.string.settings_context_queue_persistence_desc),
+                                data = "context_queue_persistence"
+                            )
+                        )
+                    }
+                    add(
+                        SettingItem(
+                            RhythmIcons.Delete,
+                            context.getString(R.string.settings_clear_queue_on_new_song),
+                            context.getString(R.string.settings_clear_queue_on_new_song_desc),
+                            toggleState = clearQueueOnNewSong,
+                            onToggleChange = { appSettings.setClearQueueOnNewSong(it) }
+                        )
+                    )
+                    add(
+                        SettingItem(
+                            RhythmIcons.Queue,
+                            context.getString(R.string.settings_show_played_queue_songs),
+                            context.getString(R.string.settings_show_played_queue_songs_desc),
+                            toggleState = showAlreadyPlayedSongsInQueue,
+                            onToggleChange = { appSettings.setHidePlayedQueueSongs(!it) }
+                        )
+                    )
+                    add(
+                        SettingItem(
+                            MaterialSymbolIcon("help", filled = true),
+                            context.getString(R.string.settings_queue_action_dialog),
+                            when {
+                                clearQueueOnNewSong -> context.getString(R.string.settings_queue_action_dialog_desc_disabled)
+                                showQueueDialog -> context.getString(R.string.settings_queue_action_dialog_desc_ask)
+                                else -> context.getString(R.string.settings_queue_action_dialog_desc_always)
+                            },
+                            onClick = { showQueueDialogSettingDialog = true },
+                            enabled = !clearQueueOnNewSong
+                        )
+                    )
+                    add(
+                        SettingItem(
+                            RhythmIcons.Queue,
+                            context.getString(R.string.settings_playlist_action_dialog),
+                            when (playlistClickBehavior) {
+                                "play_all" -> context.getString(R.string.settings_playlist_action_play_all)
+                                "play_one" -> context.getString(R.string.settings_playlist_action_play_one)
+                                else -> context.getString(R.string.settings_playlist_action_ask)
+                            },
+                            onClick = { showPlaylistBehaviorDialog = true }
+                        )
+                    )
+                    add(
+                        SettingItem(
+                            RhythmIcons.Sort,
+                            context.getString(R.string.settings_list_queue_action_dialog),
+                            when (listQueueActionBehavior) {
+                                "ask" -> context.getString(R.string.settings_list_queue_action_ask)
+                                "play_next" -> context.getString(R.string.settings_list_queue_action_play_next)
+                                "add_to_end" -> context.getString(R.string.settings_list_queue_action_add_to_end)
+                                else -> context.getString(R.string.settings_list_queue_action_replace)
+                            },
+                            onClick = { showListQueueBehaviorDialog = true }
+                        )
+                    )
+                }
+            ),
+            SettingGroup(
+                title = context.getString(R.string.settings_playback_persistence),
+                items = listOf(
+                    SettingItem(
+                        RhythmIcons.Repeat,
+                        context.getString(R.string.settings_remember_repeat_mode),
+                        context.getString(R.string.settings_remember_repeat_mode_desc),
+                        toggleState = repeatModePersistence,
+                        onToggleChange = { appSettings.setRepeatModePersistence(it) }
+                    ),
+                    SettingItem(
+                        RhythmIcons.Shuffle,
+                        context.getString(R.string.settings_remember_shuffle_mode),
+                        context.getString(R.string.settings_remember_shuffle_mode_desc),
+                        toggleState = shuffleModePersistence,
+                        onToggleChange = { appSettings.setShuffleModePersistence(it) }
+                    ),
+                    SettingItem(
+                        RhythmIcons.Queue,
+                        context.getString(R.string.settings_remember_queue),
+                        context.getString(R.string.settings_remember_queue_desc),
+                        toggleState = queuePersistenceEnabled,
+                        onToggleChange = { appSettings.setQueuePersistenceEnabled(it) }
+                    ),
+                    SettingItem(
+                        RhythmIcons.Stop,
+                        context.getString(R.string.settings_stop_playback_on_close),
+                        context.getString(R.string.settings_stop_playback_on_close_desc),
+                        toggleState = stopPlaybackOnAppClose,
+                        onToggleChange = { appSettings.setStopPlaybackOnAppClose(it) }
+                    )
+                )
+            ),
+            SettingGroup(
+                title = context.getString(R.string.settings_audio_effects),
+                items = listOf(
+                    SettingItem(
+                        MaterialSymbolIcon("graphic_eq"),
+                        context.getString(R.string.settings_gapless_playback),
+                        context.getString(R.string.settings_gapless_playback_desc),
+                        toggleState = gaplessEnabled,
+                        onToggleChange = { appSettings.setGaplessPlayback(it) }
+                    ),
+                    SettingItem(
+                        RhythmIcons.Tune,
+                        context.getString(R.string.settings_crossfade),
+                        context.getString(R.string.settings_crossfade_desc),
+                        toggleState = crossfadeEnabled,
+                        onToggleChange = { appSettings.setCrossfade(it) },
+                        // Pass the crossfade duration as extra data for rendering
+                        data = if (crossfadeEnabled) crossfadeDuration else null
+                    ),
+                    SettingItem(
+                        RhythmIcons.Repeat,
+                        context.getString(R.string.settings_crossfade_repeat_one),
+                        context.getString(R.string.settings_crossfade_repeat_one_desc),
+                        toggleState = crossfadeRepeatOne,
+                        onToggleChange = { appSettings.setCrossfadeRepeatOne(it) },
+                        enabled = crossfadeEnabled
+                    )
+                )
+            ),
+            SettingGroup(
+                title = context.getString(R.string.settings_time_display),
+                items = listOf(
+                    SettingItem(
+                        RhythmIcons.AccessTime,
+                        context.getString(R.string.settings_use_hours),
+                        if (useHoursInTimeFormat) context.getString(R.string.settings_use_hours_enabled) else context.getString(R.string.settings_use_hours_disabled),
+                        toggleState = useHoursInTimeFormat,
+                        onToggleChange = { appSettings.setUseHoursInTimeFormat(it) }
+                    )
+                )
+            )
+        )
+
+        LazyColumn(
+            modifier = modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background)
+                .padding(horizontal = 24.dp)
+        ) {
+            items(
+                items = settingGroups,
+                key = { "queueplayback_${it.title}" },
+                contentType = { "settingGroup" }
+            ) { group ->
+                Spacer(modifier = Modifier.height(24.dp))
+
+                val materialItems = group.items.map { item ->
+                    Material3SettingsItem(
+                        icon = item.icon,
+                        title = { Text(item.title) },
+                        description = {
+                            Column {
+                                item.description?.let { desc -> Text(desc) }
+
+                                // Keep crossfade duration slider integrated in this item when enabled.
+                                if (item.data is Float && item.toggleState == true) {
+                                    Spacer(modifier = Modifier.height(10.dp))
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text(
+                                            text = context.getString(R.string.settings_crossfade_duration),
+                                            style = MaterialTheme.typography.bodyLarge,
+                                            fontWeight = FontWeight.Medium
+                                        )
+                                        Text(
+                                            text = context.getString(R.string.settings_crossfade_duration_desc, crossfadeDuration),
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = MaterialTheme.colorScheme.primary
+                                        )
+                                    }
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Slider(
+                                        value = crossfadeDuration,
+                                        onValueChange = { appSettings.setCrossfadeDuration(it) },
+                                        valueRange = 0.5f..12f,
+                                        steps = 22,
+                                        modifier = Modifier.fillMaxWidth()
+                                    )
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween
+                                    ) {
+                                        Text(
+                                            text = context.getString(R.string.settings_crossfade_min),
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                        Text(
+                                            text = context.getString(R.string.settings_crossfade_max),
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                }
+
+                                if (item.data == "context_queue_persistence") {
+                                    val persistenceOptions = listOf(
+                                        "EPHEMERAL" to context.getString(R.string.settings_context_persistence_ephemeral),
+                                        "PERSISTENT" to context.getString(R.string.settings_context_persistence_persistent)
+                                    )
+                                    val selectedIndex = persistenceOptions
+                                        .indexOfFirst { it.first == contextQueuePersistenceRaw }
+                                        .coerceAtLeast(0)
+
+                                    Spacer(modifier = Modifier.height(10.dp))
+                                    ExpressiveButtonGroup(
+                                        items = persistenceOptions.map { it.second },
+                                        selectedIndex = selectedIndex,
+                                        onItemClick = { index ->
+                                            HapticUtils.performHapticFeedback(
+                                                context,
+                                                hapticFeedback,
+                                                HapticFeedbackType.TextHandleMove
+                                            )
+                                            appSettings.setContextQueuePersistence(
+                                                persistenceOptions[index].first
+                                            )
+                                        },
+                                        modifier = Modifier.fillMaxWidth()
+                                    )
+                                }
+                            }
+                        },
+                        trailingContent = if (item.toggleState != null) {
+                            {
+                                TunerAnimatedSwitch(
+                                    checked = item.toggleState,
+                                    onCheckedChange = {
+                                        HapticUtils.performHapticFeedback(context, hapticFeedback, HapticFeedbackType.TextHandleMove)
+                                        item.onToggleChange?.invoke(it)
+                                    }
+                                )
+                            }
+                        } else if (item.onClick != null) {
+                            {
+                                Icon(
+                                    imageVector = MaterialSymbolIcon("arrow_forward_ios", filled = true),
+                                    contentDescription = context.getString(R.string.cd_navigate),
+                                    modifier = Modifier.size(16.dp),
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        } else {
+                            null
+                        },
+                        isHighlighted = item.toggleState == true,
+                        enabled = item.enabled,
+                        onClick = when {
+                            item.onClick != null -> {
+                                {
+                                    HapticUtils.performHapticFeedback(context, hapticFeedback, HapticFeedbackType.LongPress)
+                                    item.onClick.invoke()
+                                }
+                            }
+
+                            item.toggleState != null && item.onToggleChange != null -> {
+                                {
+                                    HapticUtils.performHapticFeedback(context, hapticFeedback, HapticFeedbackType.TextHandleMove)
+                                    item.onToggleChange.invoke(!item.toggleState)
+                                }
+                            }
+
+                            else -> null
+                        }
+                    )
+                }
+
+                Material3SettingsGroup(
+                    title = group.title,
+                    items = materialItems,
+                    containerColor = MaterialTheme.colorScheme.surfaceContainer
+                )
+            }
+
+            item(key = "queue_playback_bottom_spacer") { Spacer(modifier = Modifier.height(100.dp)) }
+        }
+    }
+
+    if (showContextPrefBottomSheet) {
+        ContextQueuePreferenceBottomSheet(
+            currentPreference = effectiveContextQueuePreference,
+            onDismiss = { showContextPrefBottomSheet = false },
+            onSelect = { pref ->
+                appSettings.setContextQueuePreference(pref)
+                showContextPrefBottomSheet = false
+            }
+        )
+    }
+
+    // Playlist Click Behavior Dialog
+    if (showPlaylistBehaviorDialog) {
+        val haptic = LocalHapticFeedback.current
+        val scope = rememberCoroutineScope()
+        val playlistSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+
+        // Animation states
+        var showContent by remember { mutableStateOf(false) }
+
+        val contentAlpha by animateFloatAsState(
+            targetValue = if (showContent) 1f else 0f,
+            animationSpec = spring(
+                dampingRatio = Spring.DampingRatioMediumBouncy,
+                stiffness = Spring.StiffnessLow
+            ),
+            label = "contentAlpha"
+        )
+
+        LaunchedEffect(Unit) {
+            delay(100)
+            showContent = true
+        }
+
+        ModalBottomSheet(
+            onDismissRequest = { showPlaylistBehaviorDialog = false },
+            sheetState = playlistSheetState,
+            dragHandle = {
+                BottomSheetDefaults.DragHandle(
+                    color = MaterialTheme.colorScheme.primary
+                )
+            },
+            containerColor = MaterialTheme.colorScheme.surfaceContainer
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp)
+                    .padding(bottom = 24.dp)
+                    .graphicsLayer(alpha = contentAlpha)
+            ) {
+                // Header
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 0.dp, vertical = 16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Column {
+                        Text(
+                            text = context.getString(R.string.playlist_action_title),
+                            style = MaterialTheme.typography.displayMedium,
+                            fontWeight = FontWeight.Medium,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Box(
+                            modifier = Modifier
+                                .padding(top = 6.dp)
+                                .background(
+                                    color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                                    shape = CircleShape
+                                )
+                        ) {
+                            Text(
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                                style = MaterialTheme.typography.labelLarge,
+                                text = context.getString(R.string.playlist_action_desc),
+                                overflow = TextOverflow.Ellipsis,
+                                maxLines = 1,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    // Option 1: Ask each time
+                    Card(
+                        onClick = {
+                            HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                            scope.launch {
+                                appSettings.setPlaylistClickBehavior("ask")
+                                showPlaylistBehaviorDialog = false
+                            }
+                        },
+                        colors = CardDefaults.cardColors(
+                            containerColor = if (playlistClickBehavior == "ask")
+                                MaterialTheme.colorScheme.primaryContainer
+                            else
+                                MaterialTheme.colorScheme.surfaceContainerHigh
+                        ),
+                        shape = RoundedCornerShape(16.dp),
+                        border = if (playlistClickBehavior == "ask") {
+                            BorderStroke(2.dp, MaterialTheme.colorScheme.primary)
+                        } else {
+                            null
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(20.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Surface(
+                                shape = CircleShape,
+                                color = if (playlistClickBehavior == "ask")
+                                    MaterialTheme.colorScheme.primary
+                                else
+                                    MaterialTheme.colorScheme.surfaceVariant,
+                                modifier = Modifier.size(44.dp)
+                            ) {
+                                Box(
+                                    contentAlignment = Alignment.Center,
+                                    modifier = Modifier.fillMaxSize()
+                                ) {
+                                    Icon(
+                                        imageVector = MaterialSymbolIcon("help", filled = true),
+                                        contentDescription = null,
+                                        tint = if (playlistClickBehavior == "ask")
+                                            MaterialTheme.colorScheme.onPrimary
+                                        else
+                                            MaterialTheme.colorScheme.onSurfaceVariant,
+                                        modifier = Modifier.size(22.dp)
+                                    )
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.width(16.dp))
+
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = context.getString(R.string.playlist_ask_each_time),
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = if (playlistClickBehavior == "ask")
+                                        MaterialTheme.colorScheme.onPrimaryContainer
+                                    else
+                                        MaterialTheme.colorScheme.onSurface
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = context.getString(R.string.playlist_ask_each_time_desc),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = if (playlistClickBehavior == "ask")
+                                        MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
+                                    else
+                                        MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+
+                            if (playlistClickBehavior == "ask") {
+                                Icon(
+                                    imageVector = RhythmIcons.CheckCircle,
+                                    contentDescription = context.getString(R.string.ui_selected),
+                                    
+                                    modifier = Modifier.size(28.dp)
+                                )
+                            }
+                        }
+                    }
+
+                    // Option 2: Load entire playlist
+                    Card(
+                        onClick = {
+                            HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                            scope.launch {
+                                appSettings.setPlaylistClickBehavior("play_all")
+                                showPlaylistBehaviorDialog = false
+                            }
+                        },
+                        colors = CardDefaults.cardColors(
+                            containerColor = if (playlistClickBehavior == "play_all")
+                                MaterialTheme.colorScheme.primaryContainer
+                            else
+                                MaterialTheme.colorScheme.surfaceContainerHigh
+                        ),
+                        shape = RoundedCornerShape(16.dp),
+                        border = if (playlistClickBehavior == "play_all") {
+                            BorderStroke(2.dp, MaterialTheme.colorScheme.primary)
+                        } else {
+                            null
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(20.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Surface(
+                                shape = CircleShape,
+                                color = if (playlistClickBehavior == "play_all")
+                                    MaterialTheme.colorScheme.primary
+                                else
+                                    MaterialTheme.colorScheme.surfaceVariant,
+                                modifier = Modifier.size(44.dp)
+                            ) {
+                                Box(
+                                    contentAlignment = Alignment.Center,
+                                    modifier = Modifier.fillMaxSize()
+                                ) {
+                                    Icon(
+                                        imageVector = RhythmIcons.Queue,
+                                        contentDescription = null,
+                                        tint = if (playlistClickBehavior == "play_all")
+                                            MaterialTheme.colorScheme.onPrimary
+                                        else
+                                            MaterialTheme.colorScheme.onSurfaceVariant,
+                                        modifier = Modifier.size(22.dp)
+                                    )
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.width(16.dp))
+
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = context.getString(R.string.playlist_action_load_title),
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = if (playlistClickBehavior == "play_all")
+                                        MaterialTheme.colorScheme.onPrimaryContainer
+                                    else
+                                        MaterialTheme.colorScheme.onSurface
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = context.getString(R.string.playlist_action_load_desc),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = if (playlistClickBehavior == "play_all")
+                                        MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
+                                    else
+                                        MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+
+                            if (playlistClickBehavior == "play_all") {
+                                Icon(
+                                    imageVector = RhythmIcons.CheckCircle,
+                                    contentDescription = "Selected",
+                                    
+                                    modifier = Modifier.size(28.dp)
+                                )
+                            }
+                        }
+                    }
+
+                    // Option 3: Play only this song
+                    Card(
+                        onClick = {
+                            HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                            scope.launch {
+                                appSettings.setPlaylistClickBehavior("play_one")
+                                showPlaylistBehaviorDialog = false
+                            }
+                        },
+                        colors = CardDefaults.cardColors(
+                            containerColor = if (playlistClickBehavior == "play_one")
+                                MaterialTheme.colorScheme.primaryContainer
+                            else
+                                MaterialTheme.colorScheme.surfaceContainerHigh
+                        ),
+                        shape = RoundedCornerShape(16.dp),
+                        border = if (playlistClickBehavior == "play_one") {
+                            BorderStroke(2.dp, MaterialTheme.colorScheme.primary)
+                        } else {
+                            null
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(20.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Surface(
+                                shape = CircleShape,
+                                color = if (playlistClickBehavior == "play_one")
+                                    MaterialTheme.colorScheme.primary
+                                else
+                                    MaterialTheme.colorScheme.surfaceVariant,
+                                modifier = Modifier.size(44.dp)
+                            ) {
+                                Box(
+                                    contentAlignment = Alignment.Center,
+                                    modifier = Modifier.fillMaxSize()
+                                ) {
+                                    Icon(
+                                        imageVector = RhythmIcons.Play,
+                                        contentDescription = null,
+                                        tint = if (playlistClickBehavior == "play_one")
+                                            MaterialTheme.colorScheme.onPrimary
+                                        else
+                                            MaterialTheme.colorScheme.onSurfaceVariant,
+                                        modifier = Modifier.size(22.dp)
+                                    )
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.width(16.dp))
+
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = context.getString(R.string.playlist_action_single_title),
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = if (playlistClickBehavior == "play_one")
+                                        MaterialTheme.colorScheme.onPrimaryContainer
+                                    else
+                                        MaterialTheme.colorScheme.onSurface
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = context.getString(R.string.playlist_action_single_desc),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = if (playlistClickBehavior == "play_one")
+                                        MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
+                                    else
+                                        MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+
+                            if (playlistClickBehavior == "play_one") {
+                                Icon(
+                                    imageVector = RhythmIcons.CheckCircle,
+                                    contentDescription = "Selected",
+                                    
+                                    modifier = Modifier.size(28.dp)
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // List Queue Behavior Dialog
+    if (showListQueueBehaviorDialog) {
+        val haptic = LocalHapticFeedback.current
+        val scope = rememberCoroutineScope()
+        val listQueueSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+
+        var showContent by remember { mutableStateOf(false) }
+
+        val contentAlpha by animateFloatAsState(
+            targetValue = if (showContent) 1f else 0f,
+            animationSpec = spring(
+                dampingRatio = Spring.DampingRatioMediumBouncy,
+                stiffness = Spring.StiffnessLow
+            ),
+            label = "contentAlpha"
+        )
+
+        LaunchedEffect(Unit) {
+            delay(100)
+            showContent = true
+        }
+
+        ModalBottomSheet(
+            onDismissRequest = { showListQueueBehaviorDialog = false },
+            sheetState = listQueueSheetState,
+            dragHandle = {
+                BottomSheetDefaults.DragHandle(
+                    color = MaterialTheme.colorScheme.primary
+                )
+            },
+            containerColor = MaterialTheme.colorScheme.surfaceContainer
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp)
+                    .padding(bottom = 24.dp)
+                    .graphicsLayer(alpha = contentAlpha)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 0.dp, vertical = 16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Column {
+                        Text(
+                            text = context.getString(R.string.list_queue_behavior_title),
+                            style = MaterialTheme.typography.displayMedium,
+                            fontWeight = FontWeight.Medium,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Box(
+                            modifier = Modifier
+                                .padding(top = 6.dp)
+                                .background(
+                                    color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                                    shape = CircleShape
+                                )
+                        ) {
+                            Text(
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                                style = MaterialTheme.typography.labelLarge,
+                                text = context.getString(R.string.list_queue_behavior_desc),
+                                overflow = TextOverflow.Ellipsis,
+                                maxLines = 1,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    val options = listOf(
+                        "replace" to Triple(
+                            context.getString(R.string.list_queue_behavior_replace_title),
+                            context.getString(R.string.list_queue_behavior_replace_desc),
+                            RhythmIcons.Playlist
+                        ),
+                        "ask" to Triple(
+                            context.getString(R.string.list_queue_behavior_ask_title),
+                            context.getString(R.string.list_queue_behavior_ask_desc),
+                            MaterialSymbolIcon("help", filled = true)
+                        ),
+                        "play_next" to Triple(
+                            context.getString(R.string.list_queue_behavior_play_next_title),
+                            context.getString(R.string.list_queue_behavior_play_next_desc),
+                            RhythmIcons.Play
+                        ),
+                        "add_to_end" to Triple(
+                            context.getString(R.string.list_queue_behavior_add_end_title),
+                            context.getString(R.string.list_queue_behavior_add_end_desc),
+                            RhythmIcons.AddToPlaylist
+                        )
+                    )
+
+                    options.forEach { (value, option) ->
+                        val isSelected = listQueueActionBehavior == value
+
+                        Card(
+                            onClick = {
+                                HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                                scope.launch {
+                                    appSettings.setListQueueActionBehavior(value)
+                                    showListQueueBehaviorDialog = false
+                                }
+                            },
+                            colors = CardDefaults.cardColors(
+                                containerColor = if (isSelected)
+                                    MaterialTheme.colorScheme.primaryContainer
+                                else
+                                    MaterialTheme.colorScheme.surfaceContainerHigh
+                            ),
+                            shape = RoundedCornerShape(16.dp),
+                            border = if (isSelected) {
+                                BorderStroke(2.dp, MaterialTheme.colorScheme.primary)
+                            } else {
+                                null
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(20.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Surface(
+                                    shape = CircleShape,
+                                    color = if (isSelected)
+                                        MaterialTheme.colorScheme.primary
+                                    else
+                                        MaterialTheme.colorScheme.surfaceVariant,
+                                    modifier = Modifier.size(44.dp)
+                                ) {
+                                    Box(
+                                        contentAlignment = Alignment.Center,
+                                        modifier = Modifier.fillMaxSize()
+                                    ) {
+                                        Icon(
+                                            imageVector = option.third,
+                                            contentDescription = null,
+                                            tint = if (isSelected)
+                                                MaterialTheme.colorScheme.onPrimary
+                                            else
+                                                MaterialTheme.colorScheme.onSurfaceVariant,
+                                            modifier = Modifier.size(22.dp)
+                                        )
+                                    }
+                                }
+
+                                Spacer(modifier = Modifier.width(16.dp))
+
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = option.first,
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = if (isSelected)
+                                            MaterialTheme.colorScheme.onPrimaryContainer
+                                        else
+                                            MaterialTheme.colorScheme.onSurface
+                                    )
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    Text(
+                                        text = option.second,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = if (isSelected)
+                                            MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
+                                        else
+                                            MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+
+                                if (isSelected) {
+                                    Icon(
+                                        imageVector = RhythmIcons.CheckCircle,
+                                        contentDescription = context.getString(R.string.ui_selected),
+                                        modifier = Modifier.size(28.dp)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // Show Queue Dialog Setting Dialog
+    if (showQueueDialogSettingDialog) {
+        val haptic = LocalHapticFeedback.current
+        val scope = rememberCoroutineScope()
+        val queueSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+
+        // Animation states
+        var showContent by remember { mutableStateOf(false) }
+
+        val contentAlpha by animateFloatAsState(
+            targetValue = if (showContent) 1f else 0f,
+            animationSpec = spring(
+                dampingRatio = Spring.DampingRatioMediumBouncy,
+                stiffness = Spring.StiffnessLow
+            ),
+            label = "contentAlpha"
+        )
+
+        LaunchedEffect(Unit) {
+            delay(100)
+            showContent = true
+        }
+
+        ModalBottomSheet(
+            onDismissRequest = { showQueueDialogSettingDialog = false },
+            sheetState = queueSheetState,
+            dragHandle = {
+                BottomSheetDefaults.DragHandle(
+                    color = MaterialTheme.colorScheme.primary
+                )
+            },
+            containerColor = MaterialTheme.colorScheme.surfaceContainer
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp)
+                    .padding(bottom = 24.dp)
+                    .graphicsLayer(alpha = contentAlpha)
+            ) {
+                // Header
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 0.dp, vertical = 16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Column {
+                        Text(
+                            text = context.getString(R.string.queue_action_title),
+                            style = MaterialTheme.typography.displayMedium,
+                            fontWeight = FontWeight.Medium,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Box(
+                            modifier = Modifier
+                                .padding(top = 6.dp)
+                                .background(
+                                    color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                                    shape = CircleShape
+                                )
+                        ) {
+                            Text(
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                                style = MaterialTheme.typography.labelLarge,
+                                text = context.getString(R.string.queue_action_choose),
+                                overflow = TextOverflow.Ellipsis,
+                                maxLines = 1,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    // Option 1: Ask each time (show dialog)
+                    Card(
+                        onClick = {
+                            HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                            scope.launch {
+                                appSettings.setShowQueueDialog(true)
+                                showQueueDialogSettingDialog = false
+                            }
+                        },
+                        colors = CardDefaults.cardColors(
+                            containerColor = if (showQueueDialog)
+                                MaterialTheme.colorScheme.primaryContainer
+                            else
+                                MaterialTheme.colorScheme.surfaceContainerHigh
+                        ),
+                        shape = RoundedCornerShape(16.dp),
+                        border = if (showQueueDialog) {
+                            BorderStroke(2.dp, MaterialTheme.colorScheme.primary)
+                        } else {
+                            null
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(20.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Surface(
+                                shape = CircleShape,
+                                color = if (showQueueDialog)
+                                    MaterialTheme.colorScheme.primary
+                                else
+                                    MaterialTheme.colorScheme.surfaceVariant,
+                                modifier = Modifier.size(44.dp)
+                            ) {
+                                Box(
+                                    contentAlignment = Alignment.Center,
+                                    modifier = Modifier.fillMaxSize()
+                                ) {
+                                    Icon(
+                                        imageVector = MaterialSymbolIcon("help", filled = true),
+                                        contentDescription = null,
+                                        tint = if (showQueueDialog)
+                                            MaterialTheme.colorScheme.onPrimary
+                                        else
+                                            MaterialTheme.colorScheme.onSurfaceVariant,
+                                        modifier = Modifier.size(22.dp)
+                                    )
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.width(16.dp))
+
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = context.getString(R.string.queue_action_ask_title),
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = if (showQueueDialog)
+                                        MaterialTheme.colorScheme.onPrimaryContainer
+                                    else
+                                        MaterialTheme.colorScheme.onSurface
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = context.getString(R.string.queue_action_ask_desc),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = if (showQueueDialog)
+                                        MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
+                                    else
+                                        MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+
+                            if (showQueueDialog) {
+                                Icon(
+                                    imageVector = RhythmIcons.CheckCircle,
+                                    contentDescription = "Selected",
+                                    
+                                    modifier = Modifier.size(28.dp)
+                                )
+                            }
+                        }
+                    }
+
+                    // Option 2: Always add to queue
+                    Card(
+                        onClick = {
+                            HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                            scope.launch {
+                                appSettings.setShowQueueDialog(false)
+                                showQueueDialogSettingDialog = false
+                            }
+                        },
+                        colors = CardDefaults.cardColors(
+                            containerColor = if (!showQueueDialog)
+                                MaterialTheme.colorScheme.primaryContainer
+                            else
+                                MaterialTheme.colorScheme.surfaceContainerHigh
+                        ),
+                        shape = RoundedCornerShape(16.dp),
+                        border = if (!showQueueDialog) {
+                            BorderStroke(2.dp, MaterialTheme.colorScheme.primary)
+                        } else {
+                            null
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(20.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Surface(
+                                shape = CircleShape,
+                                color = if (!showQueueDialog)
+                                    MaterialTheme.colorScheme.primary
+                                else
+                                    MaterialTheme.colorScheme.surfaceVariant,
+                                modifier = Modifier.size(44.dp)
+                            ) {
+                                Box(
+                                    contentAlignment = Alignment.Center,
+                                    modifier = Modifier.fillMaxSize()
+                                ) {
+                                    Icon(
+                                        imageVector = RhythmIcons.AddToPlaylist,
+                                        contentDescription = null,
+                                        tint = if (!showQueueDialog)
+                                            MaterialTheme.colorScheme.onPrimary
+                                        else
+                                            MaterialTheme.colorScheme.onSurfaceVariant,
+                                        modifier = Modifier.size(22.dp)
+                                    )
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.width(16.dp))
+
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = context.getString(R.string.queue_action_always_add_title),
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = if (!showQueueDialog)
+                                        MaterialTheme.colorScheme.onPrimaryContainer
+                                    else
+                                        MaterialTheme.colorScheme.onSurface
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = context.getString(R.string.queue_action_always_add_desc),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = if (!showQueueDialog)
+                                        MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
+                                    else
+                                        MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+
+                            if (!showQueueDialog) {
+                                Icon(
+                                    imageVector = RhythmIcons.CheckCircle,
+                                    contentDescription = "Selected",
+                                    
+                                    modifier = Modifier.size(28.dp)
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+}

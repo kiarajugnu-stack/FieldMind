@@ -157,7 +157,7 @@ import chromahub.rhythm.app.shared.presentation.components.common.M3CircularLoad
 import chromahub.rhythm.app.shared.presentation.components.common.M3LinearLoader
 import chromahub.rhythm.app.shared.presentation.components.common.FixedHeaderScreen
 import chromahub.rhythm.app.shared.presentation.components.common.AutoScrollingTextOnDemand
-import chromahub.rhythm.app.features.local.presentation.components.player.PlayingEqIcon
+import chromahub.rhythm.app.shared.presentation.components.player.PlayingEqIcon
 import chromahub.rhythm.app.shared.presentation.components.common.ShimmerBox
 import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveButtonGroup
 import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveGroupButton
@@ -179,34 +179,34 @@ import java.util.Locale
 import kotlin.math.abs
 import chromahub.rhythm.app.shared.presentation.components.common.NetworkOperationLoader
 import android.view.animation.OvershootInterpolator
-import chromahub.rhythm.app.features.local.presentation.components.player.SleepTimerBottomSheetNew
-import chromahub.rhythm.app.features.local.presentation.components.lyrics.SyncedLyricsView
+import chromahub.rhythm.app.shared.presentation.components.player.SleepTimerBottomSheetNew
+import chromahub.rhythm.app.shared.presentation.components.lyrics.SyncedLyricsView
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.asPaddingValues
-import chromahub.rhythm.app.features.local.presentation.components.player.formatDuration
+import chromahub.rhythm.app.shared.presentation.components.player.formatDuration
 import java.util.concurrent.TimeUnit // Import TimeUnit for duration formatting
 import chromahub.rhythm.app.shared.presentation.components.common.PlaybackBufferingLoader
-import chromahub.rhythm.app.features.local.presentation.components.bottomsheets.QueueBottomSheet
+import chromahub.rhythm.app.shared.presentation.components.bottomsheets.QueueBottomSheet
 import chromahub.rhythm.app.features.local.presentation.screens.LibraryTab
-import chromahub.rhythm.app.features.local.presentation.components.bottomsheets.AddToPlaylistBottomSheet
-import chromahub.rhythm.app.features.local.presentation.components.bottomsheets.PlaybackBottomSheet
-import chromahub.rhythm.app.features.local.presentation.components.bottomsheets.SongInfoBottomSheet
-import chromahub.rhythm.app.features.local.presentation.components.bottomsheets.ArtistBottomSheet
-import chromahub.rhythm.app.features.local.presentation.components.bottomsheets.AlbumBottomSheet
-import chromahub.rhythm.app.features.local.presentation.components.player.PlayerChipOrderBottomSheet
-import chromahub.rhythm.app.features.local.presentation.components.lyrics.LyricsEditorBottomSheet
+import chromahub.rhythm.app.shared.presentation.components.bottomsheets.AddToPlaylistBottomSheet
+import chromahub.rhythm.app.shared.presentation.components.bottomsheets.PlaybackBottomSheet
+import chromahub.rhythm.app.shared.presentation.components.bottomsheets.SongInfoBottomSheet
+import chromahub.rhythm.app.shared.presentation.components.bottomsheets.ArtistBottomSheet
+import chromahub.rhythm.app.shared.presentation.components.bottomsheets.AlbumBottomSheet
+import chromahub.rhythm.app.shared.presentation.components.player.PlayerChipOrderBottomSheet
+import chromahub.rhythm.app.shared.presentation.components.lyrics.LyricsEditorBottomSheet
 import chromahub.rhythm.app.shared.presentation.components.AudioQualityBadges
 import chromahub.rhythm.app.util.MediaUtils
 import chromahub.rhythm.app.shared.data.model.Album
 import chromahub.rhythm.app.shared.data.model.Artist
 import chromahub.rhythm.app.features.local.presentation.navigation.Screen
 import chromahub.rhythm.app.features.local.presentation.viewmodel.MusicViewModel
-import chromahub.rhythm.app.features.local.presentation.components.player.formatDuration
-import chromahub.rhythm.app.features.local.presentation.components.lyrics.WordByWordLyricsView
-import chromahub.rhythm.app.features.local.presentation.components.bottomsheets.ExtraControlBottomSheet
-import chromahub.rhythm.app.features.local.presentation.components.dialogs.PlaybackSpeedDialog
-import chromahub.rhythm.app.features.local.presentation.components.dialogs.PlaybackPitchDialog
+import chromahub.rhythm.app.shared.presentation.components.player.formatDuration
+import chromahub.rhythm.app.shared.presentation.components.lyrics.WordByWordLyricsView
+import chromahub.rhythm.app.shared.presentation.components.bottomsheets.ExtraControlBottomSheet
+import chromahub.rhythm.app.shared.presentation.components.dialogs.PlaybackSpeedDialog
+import chromahub.rhythm.app.shared.presentation.components.dialogs.PlaybackPitchDialog
 import androidx.navigation.NavController
 
 // Experimental API opt-ins required for:
@@ -3942,7 +3942,7 @@ fun MaterialPlayerScreen(
         val equalizerEnabled by appSettings.equalizerEnabled.collectAsState()
         val autoEQProfiles by musicViewModel.autoEQProfiles.collectAsState()
         
-        chromahub.rhythm.app.features.local.presentation.components.dialogs.AutoEQSuggestionDialog(
+        chromahub.rhythm.app.shared.presentation.components.dialogs.AutoEQSuggestionDialog(
             deviceName = location?.name ?: detectedDevice!!.name,
             savedDevice = detectedDevice!!,
             equalizerEnabled = equalizerEnabled,
@@ -3978,7 +3978,7 @@ fun MaterialPlayerScreen(
     
     // Device Configuration Dialog
     if (showDeviceConfig) {
-        chromahub.rhythm.app.features.local.presentation.components.bottomsheets.DeviceConfigurationBottomSheet(
+        chromahub.rhythm.app.shared.presentation.components.bottomsheets.DeviceConfigurationBottomSheet(
             musicViewModel = musicViewModel,
             onDismiss = { showDeviceConfig = false }
         )

@@ -20,7 +20,7 @@ import org.jaudiotagger.tag.Tag
 import org.jaudiotagger.tag.images.ArtworkFactory
 import androidx.core.net.toUri
 import chromahub.rhythm.app.shared.data.model.Song
-import chromahub.rhythm.app.features.local.presentation.components.bottomsheets.ExtendedSongInfo
+import chromahub.rhythm.app.shared.presentation.components.bottomsheets.ExtendedSongInfo
 import java.io.File
 import java.io.FileOutputStream
 import java.security.MessageDigest

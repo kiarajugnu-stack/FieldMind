@@ -210,7 +210,7 @@ fun RhythmNavigation(
                         )
                 }
             ) {
-                chromahub.rhythm.app.features.local.presentation.screens.settings.SettingsScreenWrapper(
+                chromahub.rhythm.app.shared.presentation.screens.settings.SettingsScreenWrapper(
                     onBack = {
                         val popped = rootNavController.popBackStack()
                         if (!popped) {

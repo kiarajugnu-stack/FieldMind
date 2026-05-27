@@ -71,7 +71,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import chromahub.rhythm.app.shared.data.model.Song
 import chromahub.rhythm.app.R
-import chromahub.rhythm.app.features.local.presentation.components.player.formatDuration
+import chromahub.rhythm.app.shared.presentation.components.player.formatDuration
 import chromahub.rhythm.app.ui.theme.PlayerButtonColor
 import chromahub.rhythm.app.ui.theme.PlayerProgressColor
 import chromahub.rhythm.app.util.ImageUtils
@@ -95,7 +95,7 @@ import kotlin.math.roundToInt
 import kotlinx.coroutines.delay
 import chromahub.rhythm.app.shared.presentation.components.common.M3LinearLoader
 import chromahub.rhythm.app.shared.presentation.components.common.M3CircularLoader
-import chromahub.rhythm.app.features.local.presentation.components.player.PlayingEqIcon
+import chromahub.rhythm.app.shared.presentation.components.player.PlayingEqIcon
 import chromahub.rhythm.app.shared.presentation.components.common.AutoScrollingTextOnDemand
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.foundation.layout.WindowInsets

@@ -41,8 +41,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import chromahub.rhythm.app.R
-import chromahub.rhythm.app.features.local.presentation.components.player.PlayingEqIcon
-import chromahub.rhythm.app.features.local.presentation.components.player.formatDuration
+import chromahub.rhythm.app.shared.presentation.components.player.PlayingEqIcon
+import chromahub.rhythm.app.shared.presentation.components.player.formatDuration
 import chromahub.rhythm.app.features.local.presentation.viewmodel.MusicViewModel
 import chromahub.rhythm.app.shared.data.model.Album
 import chromahub.rhythm.app.shared.data.model.AppSettings

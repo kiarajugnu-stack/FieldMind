@@ -67,7 +67,7 @@ import androidx.compose.material3.Snackbar
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.rememberModalBottomSheetState
-import chromahub.rhythm.app.features.local.presentation.components.bottomsheets.SongPickerBottomSheet
+import chromahub.rhythm.app.shared.presentation.components.bottomsheets.SongPickerBottomSheet
 import chromahub.rhythm.app.shared.presentation.components.common.CollapsibleHeaderScreen
 import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveFilledIconButton
 import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveShapes
@@ -102,17 +102,17 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import chromahub.rhythm.app.features.local.presentation.components.bottomsheets.AddToPlaylistBottomSheet
-import chromahub.rhythm.app.features.local.presentation.components.bottomsheets.AlbumBottomSheet
-import chromahub.rhythm.app.features.local.presentation.components.bottomsheets.ArtistBottomSheet
-import chromahub.rhythm.app.features.local.presentation.components.bottomsheets.SongInfoBottomSheet
-import chromahub.rhythm.app.features.local.presentation.components.bottomsheets.UpdateBottomSheet
+import chromahub.rhythm.app.shared.presentation.components.bottomsheets.AddToPlaylistBottomSheet
+import chromahub.rhythm.app.shared.presentation.components.bottomsheets.AlbumBottomSheet
+import chromahub.rhythm.app.shared.presentation.components.bottomsheets.ArtistBottomSheet
+import chromahub.rhythm.app.shared.presentation.components.bottomsheets.SongInfoBottomSheet
+import chromahub.rhythm.app.shared.presentation.components.bottomsheets.UpdateBottomSheet
 import chromahub.rhythm.app.features.local.presentation.screens.AddToPlaylistScreen
-import chromahub.rhythm.app.features.local.presentation.components.dialogs.CreatePlaylistDialog
-import chromahub.rhythm.app.features.local.presentation.components.dialogs.QueueActionDialog
-import chromahub.rhythm.app.features.local.presentation.components.dialogs.QueueListActionDialog
+import chromahub.rhythm.app.shared.presentation.components.dialogs.CreatePlaylistDialog
+import chromahub.rhythm.app.shared.presentation.components.dialogs.QueueActionDialog
+import chromahub.rhythm.app.shared.presentation.components.dialogs.QueueListActionDialog
 import chromahub.rhythm.app.shared.presentation.components.player.MiniPlayer
-import chromahub.rhythm.app.features.local.presentation.components.player.SleepTimerBottomSheetNew
+import chromahub.rhythm.app.shared.presentation.components.player.SleepTimerBottomSheetNew
 import chromahub.rhythm.app.features.local.presentation.screens.LibraryScreen
 import chromahub.rhythm.app.features.local.presentation.screens.HomeScreen
 import chromahub.rhythm.app.features.local.presentation.screens.ListeningStatsScreen
@@ -121,8 +121,8 @@ import chromahub.rhythm.app.shared.presentation.screens.player.PlayerScreen
 
 import chromahub.rhythm.app.features.local.presentation.screens.PlaylistDetailScreen
 import chromahub.rhythm.app.features.local.presentation.screens.ArtistDetailScreen
-import chromahub.rhythm.app.features.local.presentation.screens.settings.SettingsScreenWrapper
-import chromahub.rhythm.app.features.local.presentation.screens.settings.*
+import chromahub.rhythm.app.shared.presentation.screens.settings.SettingsScreenWrapper
+import chromahub.rhythm.app.shared.presentation.screens.settings.*
 import chromahub.rhythm.app.shared.data.model.PlaybackLocation
 import chromahub.rhythm.app.shared.presentation.components.MediaScanLoader // Add MediaScanLoader import
 import chromahub.rhythm.app.util.ArtistSeparator
@@ -1536,7 +1536,7 @@ private fun LocalNavigationContent(
                 }
 
                 composable(Screen.TunerAbout.route) {
-                    chromahub.rhythm.app.features.local.presentation.screens.settings.AboutScreen(
+                    chromahub.rhythm.app.shared.presentation.screens.settings.AboutScreen(
                         onBackClick = navigateBackOrToSettings,
                         onNavigateToUpdates = { navController.navigate(Screen.TunerUpdates.route) }
                     )

@@ -122,7 +122,7 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType // Import HapticFee
 import androidx.compose.material3.ButtonDefaults // Import ButtonDefaults
 import chromahub.rhythm.app.features.local.presentation.screens.SplashScreen
 import chromahub.rhythm.app.shared.presentation.components.PermissionHandler
-import chromahub.rhythm.app.features.local.presentation.components.dialogs.BetaProgramPopup
+import chromahub.rhythm.app.shared.presentation.components.dialogs.BetaProgramPopup
 import chromahub.rhythm.app.features.local.presentation.screens.OnboardingScreen
 import chromahub.rhythm.app.features.local.presentation.screens.onboarding.OnboardingStep
 import chromahub.rhythm.app.features.local.presentation.screens.onboarding.PermissionScreenState

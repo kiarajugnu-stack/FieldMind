@@ -44,7 +44,7 @@ import androidx.compose.ui.unit.dp
 import chromahub.rhythm.app.R
 import chromahub.rhythm.app.core.domain.model.StreamingQuality
 import chromahub.rhythm.app.core.utils.NetworkUtils
-import chromahub.rhythm.app.features.local.presentation.screens.settings.TunerAnimatedSwitch
+import chromahub.rhythm.app.shared.presentation.screens.settings.TunerAnimatedSwitch
 import chromahub.rhythm.app.features.streaming.presentation.model.StreamingServiceOptions
 import chromahub.rhythm.app.features.streaming.presentation.viewmodel.StreamingMusicViewModel
 import chromahub.rhythm.app.shared.data.model.AppSettings
@@ -204,7 +204,7 @@ fun StreamingSettingsScreen(
                             description = { Text(text = stringResource(id = R.string.exp_go_mode_desc)) },
                             onClick = {
                                 // Set settings host to open the Go Settings pane, then open settings
-                                appSettings.setInitialSettingsSubroute(chromahub.rhythm.app.features.local.presentation.screens.settings.SettingsRoutes.GO_SETTINGS)
+                                appSettings.setInitialSettingsSubroute(chromahub.rhythm.app.shared.presentation.screens.settings.SettingsRoutes.GO_SETTINGS)
                                 onOpenGlobalSettings()
                             }
                         )

@@ -1,4 +1,4 @@
-package chromahub.rhythm.app.features.local.presentation.components.player
+package chromahub.rhythm.app.shared.presentation.components.player
 
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.AnimationSpec

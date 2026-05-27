@@ -6,7 +6,7 @@ import chromahub.rhythm.app.shared.presentation.components.icons.Icon
 
 import android.content.Context
 import androidx.compose.ui.focus.FocusRequester
-import chromahub.rhythm.app.features.local.presentation.screens.settings.SettingsSearchBar
+import chromahub.rhythm.app.shared.presentation.screens.settings.SettingsSearchBar
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
@@ -82,7 +82,7 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import chromahub.rhythm.app.features.local.presentation.viewmodel.MusicViewModel
-import chromahub.rhythm.app.features.local.presentation.components.bottomsheets.SongPickerBottomSheet
+import chromahub.rhythm.app.shared.presentation.components.bottomsheets.SongPickerBottomSheet
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.ui.platform.LocalConfiguration
@@ -107,10 +107,10 @@ import chromahub.rhythm.app.shared.presentation.components.icons.RhythmIcons.Sea
 import chromahub.rhythm.app.ui.LocalMiniPlayerPadding
 import chromahub.rhythm.app.ui.UiConstants
 import chromahub.rhythm.app.shared.presentation.components.common.CollapsibleHeaderScreen
-import chromahub.rhythm.app.features.local.presentation.components.dialogs.PlaylistExportDialog
-import chromahub.rhythm.app.features.local.presentation.components.dialogs.PlaylistImportDialog
-import chromahub.rhythm.app.features.local.presentation.components.dialogs.PlaylistOperationProgressDialog
-import chromahub.rhythm.app.features.local.presentation.components.dialogs.PlaylistOperationResultDialog
+import chromahub.rhythm.app.shared.presentation.components.dialogs.PlaylistExportDialog
+import chromahub.rhythm.app.shared.presentation.components.dialogs.PlaylistImportDialog
+import chromahub.rhythm.app.shared.presentation.components.dialogs.PlaylistOperationProgressDialog
+import chromahub.rhythm.app.shared.presentation.components.dialogs.PlaylistOperationResultDialog
 import chromahub.rhythm.app.util.PlaylistImportExportUtils
 import android.net.Uri
 import android.widget.Toast
@@ -123,9 +123,9 @@ import chromahub.rhythm.app.util.M3ImageUtils
 import chromahub.rhythm.app.shared.presentation.components.common.rememberExpressiveShapeFor
 import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveShapeTarget
 import chromahub.rhythm.app.shared.presentation.components.common.DragDropLazyColumn
-import chromahub.rhythm.app.features.local.presentation.components.player.formatDuration
-import chromahub.rhythm.app.features.local.presentation.components.bottomsheets.PlaylistSongOptionsBottomSheet
-import chromahub.rhythm.app.features.local.presentation.components.bottomsheets.SongInfoBottomSheet
+import chromahub.rhythm.app.shared.presentation.components.player.formatDuration
+import chromahub.rhythm.app.shared.presentation.components.bottomsheets.PlaylistSongOptionsBottomSheet
+import chromahub.rhythm.app.shared.presentation.components.bottomsheets.SongInfoBottomSheet
 import kotlinx.coroutines.delay // Import delay
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
@@ -139,7 +139,7 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.runtime.collectAsState
-import chromahub.rhythm.app.features.local.presentation.components.player.PlayingEqIcon
+import chromahub.rhythm.app.shared.presentation.components.player.PlayingEqIcon
 import androidx.compose.ui.graphics.Color
 import androidx.room.util.copy
 import androidx.compose.material3.BottomSheetDefaults

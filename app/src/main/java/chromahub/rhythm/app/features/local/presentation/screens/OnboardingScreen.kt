@@ -9410,7 +9410,7 @@ fun OnboardingAnimatedSwitch(
     enabled: Boolean = true,
     modifier: Modifier = Modifier
 ) {
-    chromahub.rhythm.app.features.local.presentation.screens.settings.TunerAnimatedSwitch(
+    chromahub.rhythm.app.shared.presentation.screens.settings.TunerAnimatedSwitch(
         checked = checked,
         onCheckedChange = onCheckedChange,
         enabled = enabled,

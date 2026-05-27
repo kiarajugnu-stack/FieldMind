@@ -87,10 +87,10 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import chromahub.rhythm.app.R
-import chromahub.rhythm.app.features.local.presentation.components.bottomsheets.AddToPlaylistBottomSheet
-import chromahub.rhythm.app.features.local.presentation.components.bottomsheets.AlbumBottomSheet
-import chromahub.rhythm.app.features.local.presentation.components.bottomsheets.SongInfoBottomSheet
-import chromahub.rhythm.app.features.local.presentation.components.dialogs.CreatePlaylistDialog
+import chromahub.rhythm.app.shared.presentation.components.bottomsheets.AddToPlaylistBottomSheet
+import chromahub.rhythm.app.shared.presentation.components.bottomsheets.AlbumBottomSheet
+import chromahub.rhythm.app.shared.presentation.components.bottomsheets.SongInfoBottomSheet
+import chromahub.rhythm.app.shared.presentation.components.dialogs.CreatePlaylistDialog
 import chromahub.rhythm.app.shared.presentation.components.player.MiniPlayer
 import chromahub.rhythm.app.features.local.presentation.navigation.Screen
 import chromahub.rhythm.app.features.local.presentation.screens.AddToPlaylistScreen
@@ -99,8 +99,8 @@ import chromahub.rhythm.app.features.local.presentation.screens.EqualizerScreen
 import chromahub.rhythm.app.features.local.presentation.screens.ListeningStatsScreen
 import chromahub.rhythm.app.features.local.presentation.screens.PlaylistDetailScreen
 import chromahub.rhythm.app.shared.presentation.screens.player.PlayerScreen
-import chromahub.rhythm.app.features.local.presentation.screens.settings.RhythmGuardSettingsScreen
-import chromahub.rhythm.app.features.local.presentation.screens.settings.QueuePlaybackSettingsScreen
+import chromahub.rhythm.app.shared.presentation.screens.settings.RhythmGuardSettingsScreen
+import chromahub.rhythm.app.shared.presentation.screens.settings.QueuePlaybackSettingsScreen
 import chromahub.rhythm.app.features.local.presentation.viewmodel.MusicViewModel as LocalMusicViewModel
 import chromahub.rhythm.app.features.streaming.domain.model.StreamingArtist
 import chromahub.rhythm.app.features.streaming.domain.model.StreamingAlbum
@@ -125,12 +125,12 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.material3.rememberModalBottomSheetState
 import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveShapes
-import chromahub.rhythm.app.features.local.presentation.components.bottomsheets.SongPickerBottomSheet
+import chromahub.rhythm.app.shared.presentation.components.bottomsheets.SongPickerBottomSheet
 import chromahub.rhythm.app.ui.LocalMiniPlayerPadding
 import chromahub.rhythm.app.ui.UiConstants
 import chromahub.rhythm.app.ui.theme.MusicDimensions
 import chromahub.rhythm.app.util.HapticUtils
-import chromahub.rhythm.app.features.local.presentation.screens.settings.SettingsScreenWrapper
+import chromahub.rhythm.app.shared.presentation.screens.settings.SettingsScreenWrapper
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.compose.ui.platform.LocalDensity
 
@@ -1795,7 +1795,7 @@ fun StreamingNavigation(
                 )
                 
                 if (showCreatePlaylistDialog) {
-                    chromahub.rhythm.app.features.local.presentation.components.dialogs.CreatePlaylistDialog(
+                    chromahub.rhythm.app.shared.presentation.components.dialogs.CreatePlaylistDialog(
                         onDismiss = { showCreatePlaylistDialog = false },
                         onConfirm = { name ->
                             streamingMusicViewModel.createPlaylist(name)

@@ -1,0 +1,609 @@
+@file:OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
+
+package chromahub.rhythm.app.shared.presentation.screens.settings
+
+
+import chromahub.rhythm.app.shared.presentation.components.icons.RhythmIcons
+import chromahub.rhythm.app.shared.presentation.components.icons.MaterialSymbolIcon
+import chromahub.rhythm.app.shared.presentation.components.icons.Icon
+
+import android.app.Activity
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
+import android.os.Build
+import android.provider.DocumentsContract
+import android.util.Log
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.*
+import androidx.compose.animation.core.*
+import androidx.compose.animation.core.Spring
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.ExperimentalFoundationApi
+import chromahub.rhythm.app.R
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.border
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.material3.*
+import androidx.compose.material3.CircularWavyProgressIndicator
+import androidx.compose.material3.LinearWavyProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.Slider
+import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
+import androidx.compose.runtime.*
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
+import androidx.compose.ui.hapticfeedback.HapticFeedback
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.TextUnit
+import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import chromahub.rhythm.app.BuildConfig
+import chromahub.rhythm.app.shared.data.model.AppSettings
+import chromahub.rhythm.app.shared.data.model.Playlist
+import chromahub.rhythm.app.shared.data.model.Song
+import chromahub.rhythm.app.shared.data.repository.PlaybackStatsRepository
+import chromahub.rhythm.app.shared.data.repository.StatsTimeRange
+import chromahub.rhythm.app.util.GsonUtils
+import chromahub.rhythm.app.util.HapticUtils
+import coil.compose.AsyncImage
+import coil.compose.rememberAsyncImagePainter
+import coil.request.ImageRequest
+import kotlin.system.exitProcess
+import chromahub.rhythm.app.shared.presentation.components.common.CollapsibleHeaderScreen
+import chromahub.rhythm.app.shared.presentation.components.common.ButtonGroupStyle
+import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveScrollBar
+import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveButtonGroup
+import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveGroupButton
+import chromahub.rhythm.app.shared.presentation.components.bottomsheets.StandardBottomSheetHeader
+import chromahub.rhythm.app.shared.presentation.components.common.StyledProgressBar
+import chromahub.rhythm.app.shared.presentation.components.common.ProgressStyle
+import chromahub.rhythm.app.shared.presentation.components.common.ThumbStyle
+import chromahub.rhythm.app.shared.presentation.components.bottomsheets.LicensesBottomSheet
+import chromahub.rhythm.app.shared.presentation.components.bottomsheets.UpdateBottomSheet
+import chromahub.rhythm.app.ui.utils.LazyListStateSaver
+import chromahub.rhythm.app.features.local.presentation.viewmodel.MusicViewModel
+import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveShapeProvider
+import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveShapes
+import chromahub.rhythm.app.shared.presentation.components.common.buildSplashBackdropShapes
+import chromahub.rhythm.app.shared.presentation.components.common.SplashBackgroundOrbs
+import chromahub.rhythm.app.shared.presentation.viewmodel.AppUpdaterViewModel
+import chromahub.rhythm.app.shared.presentation.viewmodel.AppVersion
+import chromahub.rhythm.app.ui.theme.getFontPreviewStyle
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.MainScope
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+import java.io.File
+import chromahub.rhythm.app.utils.FontLoader
+import chromahub.rhythm.app.ui.theme.parseCustomColorScheme
+import androidx.compose.ui.viewinterop.AndroidView
+import android.widget.TextView
+import androidx.compose.foundation.Image
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import androidx.core.text.HtmlCompat
+import chromahub.rhythm.app.shared.presentation.components.common.M3FourColorCircularLoader
+import chromahub.rhythm.app.shared.presentation.components.player.PlayingEqIcon
+import chromahub.rhythm.app.shared.presentation.components.dialogs.CreatePlaylistDialog
+import chromahub.rhythm.app.shared.presentation.components.dialogs.BulkPlaylistExportDialog
+import chromahub.rhythm.app.shared.presentation.components.dialogs.PlaylistImportDialog
+import chromahub.rhythm.app.shared.presentation.components.common.rememberExpressiveShape
+import chromahub.rhythm.app.shared.presentation.components.dialogs.PlaylistOperationProgressDialog
+import chromahub.rhythm.app.shared.presentation.components.dialogs.PlaylistOperationResultDialog
+import chromahub.rhythm.app.shared.presentation.components.dialogs.AppRestartDialog
+import chromahub.rhythm.app.shared.presentation.components.player.PlayerChipOrderBottomSheet
+import chromahub.rhythm.app.features.local.presentation.components.settings.HomeSectionOrderBottomSheet
+import chromahub.rhythm.app.features.local.presentation.components.settings.LibraryTabOrderBottomSheet
+import chromahub.rhythm.app.shared.presentation.components.Material3SettingsGroup
+import chromahub.rhythm.app.shared.presentation.components.Material3SettingsItem
+
+import chromahub.rhythm.app.shared.presentation.screens.settings.TunerSettingRow
+import chromahub.rhythm.app.shared.presentation.screens.settings.TunerAnimatedSwitch
+import chromahub.rhythm.app.shared.presentation.screens.settings.TunerSettingCard
+import chromahub.rhythm.app.shared.presentation.screens.settings.SettingItem
+import chromahub.rhythm.app.shared.presentation.screens.settings.SettingGroup
+
+
+// MiniPlayer Customization Screen
+@Composable
+fun MiniPlayerCustomizationSettingsScreen(onBackClick: () -> Unit) {
+    val context = LocalContext.current
+    val appSettings = AppSettings.getInstance(context)
+    val haptics = LocalHapticFeedback.current
+
+    // MiniPlayer settings
+    val miniPlayerProgressStyle by appSettings.miniPlayerProgressStyle.collectAsState()
+    val miniPlayerShowProgress by appSettings.miniPlayerShowProgress.collectAsState()
+    val miniPlayerShowArtwork by appSettings.miniPlayerShowArtwork.collectAsState()
+    val miniPlayerArtworkSize by appSettings.miniPlayerArtworkSize.collectAsState()
+    val miniPlayerCornerRadius by appSettings.miniPlayerCornerRadius.collectAsState()
+    val miniPlayerShowTime by appSettings.miniPlayerShowTime.collectAsState()
+    val miniPlayerUseCircularProgress by appSettings.miniPlayerUseCircularProgress.collectAsState()
+    val miniPlayerAlwaysShowTablet by appSettings.miniPlayerAlwaysShowTablet.collectAsState()
+    val expressiveShapesEnabled by appSettings.expressiveShapesEnabled.collectAsState()
+
+    var showMiniPlayerProgressStyleSheet by remember { mutableStateOf(false) }
+    var showMiniPlayerArtworkSizeSheet by remember { mutableStateOf(false) }
+    var showMiniPlayerCornerRadiusSheet by remember { mutableStateOf(false) }
+
+    CollapsibleHeaderScreen(
+        title = context.getString(R.string.settings_miniplayer),
+        showBackButton = true,
+        onBackClick = onBackClick
+    ) { modifier ->
+        LazyColumn(
+            modifier = modifier
+                .fillMaxSize()
+                .padding(horizontal = 24.dp)
+        ) {
+
+            // Progress Display Section
+            item {
+                Spacer(modifier = Modifier.height(24.dp))
+                Text(
+                    text = context.getString(R.string.settings_progress_display),
+                    style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
+                )
+                val previewStyle = try {
+                    ProgressStyle.valueOf(miniPlayerProgressStyle)
+                } catch (e: IllegalArgumentException) {
+                    ProgressStyle.NORMAL
+                }
+                if (miniPlayerShowProgress && !miniPlayerUseCircularProgress) {
+                    StyledProgressBar(
+                        progress = 0.45f,
+                        style = previewStyle,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 20.dp, vertical = 12.dp),
+                        progressColor = MaterialTheme.colorScheme.primary,
+                        trackColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f),
+                        height = 4.dp,
+                        isPlaying = true
+                    )
+                } else if (miniPlayerShowProgress && miniPlayerUseCircularProgress) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 20.dp, vertical = 12.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularWavyProgressIndicator(
+                            progress = { 0.45f },
+                            modifier = Modifier.size(40.dp)
+                        )
+                    }
+                } else {
+                    Text(
+                        text = context.getString(R.string.settings_progress_hidden),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 20.dp, vertical = 12.dp),
+                        textAlign = TextAlign.Center
+                    )
+                }
+
+                val progressSettingsItems = buildList {
+                    add(
+                        toMaterial3SettingsItem(
+                            context = context,
+                            hapticFeedback = haptics,
+                            item = SettingItem(
+                                icon = RhythmIcons.Visibility,
+                                title = context.getString(R.string.settings_show_progress),
+                                description = context.getString(R.string.settings_show_progress_desc),
+                                toggleState = miniPlayerShowProgress,
+                                onToggleChange = { appSettings.setMiniPlayerShowProgress(it) }
+                            )
+                        )
+                    )
+
+                    if (miniPlayerShowProgress) {
+                        add(
+                            toMaterial3SettingsItem(
+                                context = context,
+                                hapticFeedback = haptics,
+                                item = SettingItem(
+                                    icon = MaterialSymbolIcon("change_circle"),
+                                    title = context.getString(R.string.settings_progress_mode),
+                                    description = context.getString(R.string.settings_choose_progress_style)
+                                ),
+                                description = {
+                                    Column(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(top = 8.dp),
+                                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                                    ) {
+                                        Text(
+                                            text = context.getString(R.string.settings_choose_progress_style),
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                        ExpressiveButtonGroup(
+                                            items = listOf("Linear", "Circular"),
+                                            selectedIndex = if (miniPlayerUseCircularProgress) 1 else 0,
+                                            onItemClick = { index ->
+                                                HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                                                appSettings.setMiniPlayerUseCircularProgress(index == 1)
+                                            },
+                                            modifier = Modifier.fillMaxWidth()
+                                        )
+                                    }
+                                }
+                            )
+                        )
+
+                        if (!miniPlayerUseCircularProgress) {
+                            add(
+                                toMaterial3SettingsItem(
+                                    context = context,
+                                    hapticFeedback = haptics,
+                                    item = SettingItem(
+                                        icon = MaterialSymbolIcon("linear_scale"),
+                                        title = "Progress Style",
+                                        description = miniPlayerProgressStyle.lowercase().replaceFirstChar { it.uppercase() },
+                                        onClick = { showMiniPlayerProgressStyleSheet = true }
+                                    )
+                                )
+                            )
+                        }
+                    }
+                }
+
+                Material3SettingsGroup(
+                    items = progressSettingsItems,
+                    containerColor = MaterialTheme.colorScheme.surfaceContainer
+                )
+            }
+
+            // Artwork Section
+            item {
+                Spacer(modifier = Modifier.height(24.dp))
+                Text(
+                    text = context.getString(R.string.settings_artwork),
+                    style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
+                )
+                Material3SettingsGroup(
+                    items = listOf(
+                        toMaterial3SettingsItem(
+                            context = context,
+                            hapticFeedback = haptics,
+                            item = SettingItem(
+                                icon = RhythmIcons.Album,
+                                title = context.getString(R.string.settings_show_artwork),
+                                description = context.getString(R.string.settings_show_artwork_desc),
+                                toggleState = miniPlayerShowArtwork,
+                                onToggleChange = { appSettings.setMiniPlayerShowArtwork(it) }
+                            )
+                        ),
+                        toMaterial3SettingsItem(
+                            context = context,
+                            hapticFeedback = haptics,
+                            item = SettingItem(
+                                icon = MaterialSymbolIcon("photo_size_select_large"),
+                                title = "Artwork Size",
+                                description = "${miniPlayerArtworkSize}dp",
+                                onClick = { showMiniPlayerArtworkSizeSheet = true }
+                            )
+                        ),
+                        toMaterial3SettingsItem(
+                            context = context,
+                            hapticFeedback = haptics,
+                            item = if (expressiveShapesEnabled) {
+                                SettingItem(
+                                    icon = MaterialSymbolIcon("rounded_corner"),
+                                    title = "Corner Radius",
+                                    description = "Managed by Expressive Shapes"
+                                )
+                            } else {
+                                SettingItem(
+                                    icon = MaterialSymbolIcon("rounded_corner"),
+                                    title = "Corner Radius",
+                                    description = "${miniPlayerCornerRadius}dp",
+                                    onClick = { showMiniPlayerCornerRadiusSheet = true }
+                                )
+                            }
+                        )
+                    ),
+                    containerColor = MaterialTheme.colorScheme.surfaceContainer
+                )
+            }
+
+            // Display Options Section
+            item {
+                Spacer(modifier = Modifier.height(24.dp))
+                Text(
+                    text = context.getString(R.string.settings_display_options),
+                    style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
+                )
+                Material3SettingsGroup(
+                    items = listOf(
+                        toMaterial3SettingsItem(
+                            context = context,
+                            hapticFeedback = haptics,
+                            item = SettingItem(
+                                icon = MaterialSymbolIcon("timer"),
+                                title = context.getString(R.string.settings_show_time),
+                                description = context.getString(R.string.settings_show_time_desc),
+                                toggleState = miniPlayerShowTime,
+                                onToggleChange = { appSettings.setMiniPlayerShowTime(it) }
+                            )
+                        ),
+                        toMaterial3SettingsItem(
+                            context = context,
+                            hapticFeedback = haptics,
+                            item = SettingItem(
+                                icon = MaterialSymbolIcon("tablet"),
+                                title = context.getString(R.string.settings_tablet_layout),
+                                description = context.getString(R.string.settings_tablet_layout_desc),
+                                toggleState = miniPlayerAlwaysShowTablet,
+                                onToggleChange = { appSettings.setMiniPlayerAlwaysShowTablet(it) }
+                            )
+                        )
+                    ),
+                    containerColor = MaterialTheme.colorScheme.surfaceContainer
+                )
+            }
+
+            item { Spacer(modifier = Modifier.height(16.dp)) }
+
+            // Description Card
+            item {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(18.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer
+                    )
+                ) {
+                    Column(
+                        modifier = Modifier.padding(20.dp)
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = RhythmIcons.Info,
+                                contentDescription = null,
+                                modifier = Modifier.size(24.dp)
+                            )
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Text(
+                                text = "MiniPlayer",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Text(
+                            text = context.getString(R.string.settings_customize_miniplayer),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                    }
+                }
+            }
+
+            item { Spacer(modifier = Modifier.height(24.dp)) }
+        }
+    }
+
+    // MiniPlayer Progress Style Bottom Sheet
+    if (showMiniPlayerProgressStyleSheet) {
+        ProgressStyleBottomSheet(
+            title = "Progress Style",
+            currentStyle = miniPlayerProgressStyle,
+            onStyleSelected = { style ->
+                appSettings.setMiniPlayerProgressStyle(style)
+                showMiniPlayerProgressStyleSheet = false
+            },
+            onDismiss = { showMiniPlayerProgressStyleSheet = false },
+            context = context,
+            haptics = haptics
+        )
+    }
+
+    // MiniPlayer Artwork Size Bottom Sheet
+    if (showMiniPlayerArtworkSizeSheet) {
+        val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+        var tempSize by remember { mutableIntStateOf(miniPlayerArtworkSize) }
+
+        ModalBottomSheet(
+            onDismissRequest = { showMiniPlayerArtworkSizeSheet = false },
+            sheetState = sheetState,
+            dragHandle = {
+                BottomSheetDefaults.DragHandle(color = MaterialTheme.colorScheme.primary)
+            },
+            shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
+            containerColor = MaterialTheme.colorScheme.surfaceContainer,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp)
+                    .padding(bottom = 24.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column {
+                        Text(
+                            text = "Artwork Size",
+                            style = MaterialTheme.typography.displayMedium,
+                            fontWeight = FontWeight.Medium,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Box(
+                            modifier = Modifier
+                                .padding(top = 6.dp)
+                                .background(
+                                    color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                                    shape = CircleShape
+                                )
+                        ) {
+                            Text(
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                                style = MaterialTheme.typography.labelLarge,
+                                text = "${tempSize}dp",
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Slider(
+                    value = tempSize.toFloat(),
+                    onValueChange = { tempSize = it.toInt() },
+                    onValueChangeFinished = {
+                        HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                        appSettings.setMiniPlayerArtworkSize(tempSize)
+                    },
+                    valueRange = 40f..72f,
+                    steps = 31,
+                    colors = SliderDefaults.colors(
+                        thumbColor = MaterialTheme.colorScheme.primary,
+                        activeTrackColor = MaterialTheme.colorScheme.primary
+                    )
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+            }
+        }
+    }
+
+    // MiniPlayer Corner Radius Bottom Sheet
+    if (showMiniPlayerCornerRadiusSheet) {
+        val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+        var tempRadius by remember { mutableIntStateOf(miniPlayerCornerRadius) }
+
+        ModalBottomSheet(
+            onDismissRequest = { showMiniPlayerCornerRadiusSheet = false },
+            sheetState = sheetState,
+            dragHandle = {
+                BottomSheetDefaults.DragHandle(color = MaterialTheme.colorScheme.primary)
+            },
+            shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
+            containerColor = MaterialTheme.colorScheme.surfaceContainer,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp)
+                    .padding(bottom = 24.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column {
+                        Text(
+                            text = "Corner Radius",
+                            style = MaterialTheme.typography.displayMedium,
+                            fontWeight = FontWeight.Medium,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Box(
+                            modifier = Modifier
+                                .padding(top = 6.dp)
+                                .background(
+                                    color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                                    shape = CircleShape
+                                )
+                        ) {
+                            Text(
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                                style = MaterialTheme.typography.labelLarge,
+                                text = "${tempRadius}dp",
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Slider(
+                    value = tempRadius.toFloat(),
+                    onValueChange = { tempRadius = it.toInt() },
+                    onValueChangeFinished = {
+                        HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                        appSettings.setMiniPlayerCornerRadius(tempRadius)
+                    },
+                    valueRange = 0f..28f,
+                    steps = 27,
+                    colors = SliderDefaults.colors(
+                        thumbColor = MaterialTheme.colorScheme.primary,
+                        activeTrackColor = MaterialTheme.colorScheme.primary
+                    )
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+            }
+        }
+    }
+}

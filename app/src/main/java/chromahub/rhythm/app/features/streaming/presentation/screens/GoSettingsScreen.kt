@@ -27,7 +27,7 @@ import chromahub.rhythm.app.features.streaming.presentation.viewmodel.StreamingM
 import chromahub.rhythm.app.shared.presentation.components.common.CollapsibleHeaderScreen
 import chromahub.rhythm.app.shared.presentation.components.Material3SettingsGroup
 import chromahub.rhythm.app.shared.presentation.components.Material3SettingsItem
-import chromahub.rhythm.app.features.local.presentation.screens.settings.TunerAnimatedSwitch
+import chromahub.rhythm.app.shared.presentation.screens.settings.TunerAnimatedSwitch
 import chromahub.rhythm.app.util.HapticUtils
 import android.content.Context
 import androidx.compose.ui.platform.LocalContext
@@ -41,9 +41,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.ui.unit.dp
 import chromahub.rhythm.app.features.streaming.presentation.model.StreamingServiceOptions
 import chromahub.rhythm.app.util.AppRestarter
-import chromahub.rhythm.app.features.local.presentation.components.dialogs.AppRestartDialog
+import chromahub.rhythm.app.shared.presentation.components.dialogs.AppRestartDialog
 import chromahub.rhythm.app.core.utils.NetworkUtils
-import chromahub.rhythm.app.features.local.presentation.components.bottomsheets.StandardBottomSheetHeader
+import chromahub.rhythm.app.shared.presentation.components.bottomsheets.StandardBottomSheetHeader
 import androidx.compose.ui.text.style.TextOverflow
 import chromahub.rhythm.app.features.streaming.presentation.model.StreamingServiceOption
 import androidx.annotation.StringRes
