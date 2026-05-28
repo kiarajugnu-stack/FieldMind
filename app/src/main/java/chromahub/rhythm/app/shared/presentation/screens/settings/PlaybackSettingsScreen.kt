@@ -49,6 +49,7 @@ fun PlaybackSettingsScreen(onBackClick: () -> Unit) {
     val crossfadeEnabled by appSettings.crossfade.collectAsState()
     val crossfadeDuration by appSettings.crossfadeDuration.collectAsState()
     val crossfadeRepeatOne by appSettings.crossfadeRepeatOne.collectAsState()
+    val crossfadeOnSkip by appSettings.crossfadeOnSkip.collectAsState()
     val stopPlaybackOnAppClose by appSettings.stopPlaybackOnAppClose.collectAsState()
 
     CollapsibleHeaderScreen(
@@ -107,6 +108,14 @@ fun PlaybackSettingsScreen(onBackClick: () -> Unit) {
                         context.getString(R.string.settings_crossfade_repeat_one_desc),
                         toggleState = crossfadeRepeatOne,
                         onToggleChange = { appSettings.setCrossfadeRepeatOne(it) },
+                        enabled = crossfadeEnabled
+                    ),
+                    SettingItem(
+                        MaterialSymbolIcon("skip_next"),
+                        context.getString(R.string.settings_crossfade_on_skip),
+                        context.getString(R.string.settings_crossfade_on_skip_desc),
+                        toggleState = crossfadeOnSkip,
+                        onToggleChange = { appSettings.setCrossfadeOnSkip(it) },
                         enabled = crossfadeEnabled
                     )
                 )

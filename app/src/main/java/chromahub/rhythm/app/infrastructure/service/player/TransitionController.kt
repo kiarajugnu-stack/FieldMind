@@ -395,6 +395,24 @@ class TransitionController(
         }
     }
 
+    fun cancelPendingTransition() {
+        Log.d(TAG, "cancelPendingTransition requested")
+        invalidateScheduledTransitions()
+        transitionSchedulerJob?.cancel()
+        transitionCompletionWatchJob?.cancel()
+        engine.cancelNext()
+        setState(TransitionState.IDLE)
+    }
+
+    fun setManualTransitioning() {
+        Log.d(TAG, "setManualTransitioning requested")
+        invalidateScheduledTransitions()
+        transitionSchedulerJob?.cancel()
+        
+        setState(TransitionState.TRANSITIONING)
+        watchForTransitionCompletion(scheduleGeneration)
+    }
+
     /**
      * Releases the controller, removing all listeners and cancelling jobs.
      */

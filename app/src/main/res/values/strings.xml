@@ -121,6 +121,8 @@
     <string name="settings_crossfade_duration_desc">%1$.1f seconds</string>
     <string name="settings_crossfade_repeat_one">Crossfade in Repeat One</string>
     <string name="settings_crossfade_repeat_one_desc">Allow crossfade when repeating one track.</string>
+    <string name="settings_crossfade_on_skip">Crossfade on Skip</string>
+    <string name="settings_crossfade_on_skip_desc">Apply crossfade when manually skipping songs.</string>
     <string name="settings_stop_playback_on_close">Stop on App Close</string>
     <string name="settings_stop_playback_on_close_desc">Stop music when the app is closed.</string>
     <string name="settings_time_display">Time Format</string>

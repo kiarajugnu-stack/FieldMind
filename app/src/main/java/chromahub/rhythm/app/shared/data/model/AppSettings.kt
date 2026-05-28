@@ -84,6 +84,7 @@ class AppSettings private constructor(context: Context) {
         private const val KEY_CROSSFADE = "crossfade"
         private const val KEY_CROSSFADE_DURATION = "crossfade_duration"
         private const val KEY_CROSSFADE_REPEAT_ONE = "crossfade_repeat_one"
+        private const val KEY_CROSSFADE_ON_SKIP = "crossfade_on_skip"
         private const val KEY_AUDIO_NORMALIZATION = "audio_normalization"
         private const val KEY_REPLAY_GAIN = "replay_gain"
         private const val KEY_SKIP_SILENCE = "skip_silence_enabled"
@@ -573,6 +574,9 @@ class AppSettings private constructor(context: Context) {
 
     private val _crossfadeRepeatOne = MutableStateFlow(prefs.getBoolean(KEY_CROSSFADE_REPEAT_ONE, false))
     val crossfadeRepeatOne: StateFlow<Boolean> = _crossfadeRepeatOne.asStateFlow()
+    
+    private val _crossfadeOnSkip = MutableStateFlow(prefs.getBoolean(KEY_CROSSFADE_ON_SKIP, false))
+    val crossfadeOnSkip: StateFlow<Boolean> = _crossfadeOnSkip.asStateFlow()
     
     private val _audioNormalization = MutableStateFlow(prefs.getBoolean(KEY_AUDIO_NORMALIZATION, true))
     val audioNormalization: StateFlow<Boolean> = _audioNormalization.asStateFlow()
@@ -1807,6 +1811,11 @@ private val _autoCheckForUpdates = MutableStateFlow(prefs.getBoolean(KEY_AUTO_CH
     fun setCrossfadeRepeatOne(enabled: Boolean) {
         prefs.edit().putBoolean(KEY_CROSSFADE_REPEAT_ONE, enabled).apply()
         _crossfadeRepeatOne.value = enabled
+    }
+    
+    fun setCrossfadeOnSkip(enable: Boolean) {
+        prefs.edit().putBoolean(KEY_CROSSFADE_ON_SKIP, enable).apply()
+        _crossfadeOnSkip.value = enable
     }
     
     fun setSkipSilenceEnabled(enable: Boolean) {

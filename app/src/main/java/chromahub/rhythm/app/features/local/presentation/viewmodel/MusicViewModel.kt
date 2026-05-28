@@ -176,6 +176,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
     val enableGaplessPlayback = appSettings.gaplessPlayback
     val enableCrossfade = appSettings.crossfade
     val crossfadeDuration = appSettings.crossfadeDuration
+    val enableCrossfadeOnSkip = appSettings.crossfadeOnSkip
     val enableAudioNormalization = appSettings.audioNormalization
     val enableReplayGain = appSettings.replayGain
     val skipSilenceEnabled = appSettings.skipSilenceEnabled
@@ -6317,6 +6318,11 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
     
     fun setCrossfadeDuration(duration: Float) {
         appSettings.setCrossfadeDuration(duration)
+        applyPlaybackSettings()
+    }
+
+    fun setCrossfadeOnSkip(enable: Boolean) {
+        appSettings.setCrossfadeOnSkip(enable)
         applyPlaybackSettings()
     }
     

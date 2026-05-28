@@ -18,6 +18,9 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
+import androidx.media3.common.ForwardingPlayer
+import chromahub.rhythm.app.shared.data.model.TransitionSettings
+import chromahub.rhythm.app.shared.data.model.TransitionMode
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.DefaultRenderersFactory
@@ -446,22 +449,23 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
         rhythmPlayerEngine.initialize()
         
         // The master player is exposed to MediaSession and used everywhere
-        player = rhythmPlayerEngine.masterPlayer
+        player = wrapPlayer(rhythmPlayerEngine.masterPlayer)
         
         // Register player swap listener for crossfade transitions
         rhythmPlayerEngine.addPlayerSwapListener { newPlayer ->
             Log.d(TAG, "Player swapped during crossfade transition")
             val oldPlayer = player
-            player = newPlayer
+            val wrappedNewPlayer = wrapPlayer(newPlayer)
+            player = wrappedNewPlayer
             
             // Move the service-level player listener to the new player
             playerListener?.let { listener ->
                 oldPlayer.removeListener(listener)
-                newPlayer.addListener(listener)
+                wrappedNewPlayer.addListener(listener)
             }
             
             // Update the MediaSession to use the new player
-            mediaSession?.player = newPlayer
+            mediaSession?.player = wrappedNewPlayer
             
             // Force custom layout update for the new player
             scheduleCustomLayoutUpdate(50)
@@ -1339,6 +1343,117 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
         return super.onStartCommand(intent, flags, startId)
     }
     
+    private fun wrapPlayer(rawPlayer: Player): Player {
+        return object : ForwardingPlayer(rawPlayer) {
+            override fun seekToNext() {
+                if (!skipWithCrossfade(toNext = true)) {
+                    super.seekToNext()
+                }
+            }
+
+            override fun seekToNextMediaItem() {
+                if (!skipWithCrossfade(toNext = true)) {
+                    super.seekToNextMediaItem()
+                }
+            }
+
+            override fun seekToPrevious() {
+                if (!skipWithCrossfade(toNext = false)) {
+                    super.seekToPrevious()
+                }
+            }
+
+            override fun seekToPreviousMediaItem() {
+                if (!skipWithCrossfade(toNext = false)) {
+                    super.seekToPreviousMediaItem()
+                }
+            }
+        }
+    }
+
+    private fun skipWithCrossfade(toNext: Boolean): Boolean {
+        try {
+            if (!appSettings.crossfade.value || !appSettings.crossfadeOnSkip.value) {
+                return false
+            }
+
+            if (rhythmPlayerEngine.isTransitionRunning()) {
+                Log.d(TAG, "Cannot skip with crossfade while transition is already running")
+                return false
+            }
+
+            val playerToUse = rhythmPlayerEngine.masterPlayer
+            if (!playerToUse.isPlaying) {
+                Log.d(TAG, "Player is not playing, skipping instant without crossfade")
+                return false
+            }
+
+            val repeatMode = playerToUse.repeatMode
+            val currentWindowIndex = playerToUse.currentMediaItemIndex
+            val timeline = playerToUse.currentTimeline
+
+            if (timeline.isEmpty || currentWindowIndex == C.INDEX_UNSET) {
+                return false
+            }
+
+            // Handled case: previous skip when track has played for over 5s (restarts track)
+            if (!toNext && playerToUse.currentPosition > 5000) {
+                Log.d(TAG, "Previous skip past 5s, restarting track")
+                return false
+            }
+
+            val nextIndex = if (toNext) {
+                timeline.getNextWindowIndex(
+                    currentWindowIndex,
+                    repeatMode,
+                    playerToUse.shuffleModeEnabled
+                )
+            } else {
+                timeline.getPreviousWindowIndex(
+                    currentWindowIndex,
+                    repeatMode,
+                    playerToUse.shuffleModeEnabled
+                )
+            }
+
+            if (nextIndex == C.INDEX_UNSET) {
+                return false
+            }
+
+            val nextMediaItem = playerToUse.getMediaItemAt(nextIndex)
+
+            Log.d(TAG, "Skipping with crossfade. Target track: ${nextMediaItem.mediaId}")
+
+            // Cancel any pending transitions
+            if (::transitionController.isInitialized) {
+                transitionController.cancelPendingTransition()
+            }
+
+            // Prepare the next song
+            rhythmPlayerEngine.prepareNext(nextMediaItem)
+
+            // Configure transition settings
+            val crossfadeDurationMs = (appSettings.crossfadeDuration.value * 1000).toInt()
+            val settings = TransitionSettings(
+                mode = TransitionMode.OVERLAP,
+                durationMs = crossfadeDurationMs,
+            )
+
+            // Set transitionController to manual transitioning state
+            if (::transitionController.isInitialized) {
+                transitionController.setManualTransitioning()
+            }
+
+            // Perform the crossfade transition
+            rhythmPlayerEngine.performTransition(settings)
+
+            return true
+        } catch (e: Exception) {
+            Log.e(TAG, "Error performing skip with crossfade, falling back to standard skip", e)
+            return false
+        }
+    }
+
     /**
      * Play an external audio file
      */
