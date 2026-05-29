@@ -26,6 +26,8 @@ object NetworkClient {
     private const val DEEZER_BASE_URL = "https://api.deezer.com/"
     private const val YTMUSIC_BASE_URL = "https://music.youtube.com/"
     private const val SPOTIFY_API_BASE_URL = "https://api.spotify.com/v1/"
+    private const val APPLEMUSIC_BASE_URL = "https://lyrics.paxsenix.org/"
+    private const val ITUNES_BASE_URL = "https://itunes.apple.com/"
     
     // Connection timeouts
     private const val CONNECT_TIMEOUT = 30L
@@ -126,7 +128,7 @@ object NetworkClient {
     private fun deezerHeadersInterceptor() = Interceptor { chain ->
         try {
             val request = chain.request().newBuilder()
-                .header("User-Agent", "RhythmApp/4.8 (Android)")
+                .header("User-Agent", "RhythmApp/${BuildConfig.VERSION_NAME} (Android)")
                 .header("Accept", "application/json")
                 .build()
             chain.proceed(request)
@@ -196,6 +198,37 @@ object NetworkClient {
         .client(spotifyHttpClient)
         .addConverterFactory(GsonConverterFactory.create())
         .build()
+        
+    private val appleMusicHttpClient = OkHttpClient.Builder()
+        .addInterceptor(deezerHeadersInterceptor())
+        .addInterceptor(loggingInterceptor)
+        .addInterceptor(retryInterceptor)
+        .connectTimeout(CONNECT_TIMEOUT, TimeUnit.SECONDS)
+        .readTimeout(READ_TIMEOUT, TimeUnit.SECONDS)
+        .writeTimeout(WRITE_TIMEOUT, TimeUnit.SECONDS)
+        .connectionPool(connectionPool)
+        .build()
+    
+    private val appleMusicRetrofit = Retrofit.Builder()
+        .baseUrl(APPLEMUSIC_BASE_URL)
+        .client(appleMusicHttpClient)
+        .addConverterFactory(GsonConverterFactory.create())
+        .build()
+
+    private val itunesHttpClient = OkHttpClient.Builder()
+        .addInterceptor(loggingInterceptor)
+        .addInterceptor(retryInterceptor)
+        .connectTimeout(CONNECT_TIMEOUT, TimeUnit.SECONDS)
+        .readTimeout(READ_TIMEOUT, TimeUnit.SECONDS)
+        .writeTimeout(WRITE_TIMEOUT, TimeUnit.SECONDS)
+        .connectionPool(connectionPool)
+        .build()
+
+    private val itunesRetrofit = Retrofit.Builder()
+        .baseUrl(ITUNES_BASE_URL)
+        .client(itunesHttpClient)
+        .addConverterFactory(GsonConverterFactory.create())
+        .build()
     
     val deezerApiService: DeezerApiService? = if (BuildConfig.ENABLE_DEEZER) {
         deezerRetrofit.create(DeezerApiService::class.java)
@@ -212,6 +245,14 @@ object NetworkClient {
     val spotifySearchApiService: SpotifySearchApiService? = if (BuildConfig.ENABLE_SPOTIFY_SEARCH) {
         spotifyRetrofit.create(SpotifySearchApiService::class.java)
     } else null
+
+    val rhythmLyricsApiService: RhythmLyricsApiService? = if (BuildConfig.ENABLE_APPLE_MUSIC) {
+        appleMusicRetrofit.create(RhythmLyricsApiService::class.java)
+    } else null
+
+    val itunesSearchApiService: ITunesSearchApiService? = if (BuildConfig.ENABLE_APPLE_MUSIC) {
+        itunesRetrofit.create(ITunesSearchApiService::class.java)
+    } else null
     
     // Generic OkHttp client for one-off requests (e.g., Wikidata JSON). Reuses header interceptor.
     val genericHttpClient: OkHttpClient = OkHttpClient.Builder()
@@ -224,6 +265,7 @@ object NetworkClient {
     fun isLrcLibApiEnabled(): Boolean = BuildConfig.ENABLE_LRCLIB && (appSettings?.lrclibApiEnabled?.value ?: false)
     fun isYTMusicApiEnabled(): Boolean = BuildConfig.ENABLE_YOUTUBE_MUSIC && (appSettings?.ytMusicApiEnabled?.value ?: false)
     fun isSpotifyApiEnabled(): Boolean = BuildConfig.ENABLE_SPOTIFY_SEARCH && (appSettings?.spotifyApiEnabled?.value ?: false)
+    fun isAppleMusicApiEnabled(): Boolean = BuildConfig.ENABLE_APPLE_MUSIC && (appSettings?.appleMusicApiEnabled?.value ?: false)
     
     // Get Spotify API credentials
     fun getSpotifyClientId(): String = appSettings?.spotifyClientId?.value ?: ""

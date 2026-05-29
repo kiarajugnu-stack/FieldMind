@@ -524,7 +524,7 @@ class SubsonicApiClient(context: Context) {
                 val request = Request.Builder()
                     .url(url)
                     .header("Accept", "application/json")
-                    .header("User-Agent", "Rhythm/1.0 (Android)")
+                    .header("User-Agent", "Rhythm/${chromahub.rhythm.app.BuildConfig.VERSION_NAME} (Android)")
                     .get()
                     .build()
 

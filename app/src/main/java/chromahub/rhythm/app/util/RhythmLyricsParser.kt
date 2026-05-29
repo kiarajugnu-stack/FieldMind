@@ -34,10 +34,10 @@ object RhythmLyricsParser {
             val parsedLines = rhythmLyricsLines.mapNotNull { line ->
                 var words = line.text?.map { word ->
                     WordByWordWord(
-                        text = word.text,
+                        text = word.text.orEmpty(),
                         isPart = word.part ?: false,
-                        timestamp = word.timestamp,
-                        endtime = word.endtime
+                        timestamp = word.timestamp ?: 0L,
+                        endtime = word.endtime ?: (word.timestamp ?: 0L)
                     )
                 } ?: emptyList()
 
@@ -77,7 +77,7 @@ object RhythmLyricsParser {
                         ?.joinToString("\n")
                         ?.takeIf { it.isNotEmpty() }
 
-                    val firstWordTimestamp = words.first().timestamp
+                    val firstWordTimestamp = words.firstOrNull()?.timestamp ?: 0L
                     val lastWordEndtime = words.maxOfOrNull { it.endtime } ?: firstWordTimestamp
                     val lineStart = maxOf(0L, line.timestamp ?: firstWordTimestamp)
                     val lineEnd = maxOf(line.endtime ?: 0L, lastWordEndtime, lineStart)

@@ -917,7 +917,7 @@ class AppUpdaterViewModel(application: Application) : AndroidViewModel(applicati
                 // Create request with resume support
                 val requestBuilder = Request.Builder()
                     .url(downloadUrl)
-                    .header("User-Agent", "Rhythm-App")
+                    .header("User-Agent", "Rhythm-App/${BuildConfig.VERSION_NAME} (Android)")
                 
                 // Add range header if resuming
                 if (existingLength > 0 && activeDownload != null) {

@@ -165,6 +165,7 @@ fun ApiManagementSettingsScreen(onBackClick: () -> Unit) {
     val deezerApiEnabled by appSettings.deezerApiEnabled.collectAsState()
     val lrclibApiEnabled by appSettings.lrclibApiEnabled.collectAsState()
     val ytMusicApiEnabled by appSettings.ytMusicApiEnabled.collectAsState()
+    val appleMusicApiEnabled by appSettings.appleMusicApiEnabled.collectAsState()
 
     CollapsibleHeaderScreen(
         title = context.getString(R.string.settings_api_management),
@@ -227,6 +228,22 @@ fun ApiManagementSettingsScreen(onBackClick: () -> Unit) {
                         )
                     }
 
+                    if (chromahub.rhythm.app.BuildConfig.ENABLE_APPLE_MUSIC) {
+                        add(
+                            toMaterial3SettingsItem(
+                                context = context,
+                                hapticFeedback = hapticFeedback,
+                                item = SettingItem(
+                                    icon = MaterialSymbolIcon("music_note"),
+                                    title = "Apple Music",
+                                    description = "Word-by-word synchronized lyrics (Highest Quality)",
+                                    toggleState = appleMusicApiEnabled,
+                                    onToggleChange = { enabled -> appSettings.setAppleMusicApiEnabled(enabled) }
+                                )
+                            )
+                        )
+                    }
+
                     if (chromahub.rhythm.app.BuildConfig.ENABLE_YOUTUBE_MUSIC) {
                         add(
                             toMaterial3SettingsItem(
@@ -242,6 +259,7 @@ fun ApiManagementSettingsScreen(onBackClick: () -> Unit) {
                             )
                         )
                     }
+
 
                     add(
                         Material3SettingsItem(

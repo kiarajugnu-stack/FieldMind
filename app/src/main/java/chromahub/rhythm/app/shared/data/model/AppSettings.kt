@@ -235,6 +235,8 @@ class AppSettings private constructor(context: Context) {
         private const val KEY_SPOTIFY_API_ENABLED = "spotify_api_enabled"
         private const val KEY_SPOTIFY_CLIENT_ID = "spotify_client_id"
         private const val KEY_SPOTIFY_CLIENT_SECRET = "spotify_client_secret"
+        private const val KEY_APPLEMUSIC_API_ENABLED = "applemusic_api_enabled"
+        private const val KEY_AUTO_FETCH_ARTWORK = "auto_fetch_artwork"
         
         // Scrobbling Settings
         private const val KEY_SCROBBLING_ENABLED = "scrobbling_enabled"
@@ -260,6 +262,7 @@ class AppSettings private constructor(context: Context) {
         private const val KEY_INITIAL_MEDIA_SCAN_COMPLETED = "initial_media_scan_completed"
         private const val KEY_GENRE_DETECTION_COMPLETED = "genre_detection_completed"
         private const val KEY_AUDIO_METADATA_EXTRACTION_COMPLETED = "audio_metadata_extraction_completed"
+        private const val KEY_EMBEDDED_ARTWORK_EXTRACTION_COMPLETED = "embedded_artwork_extraction_completed"
 
         // App Updater Settings
         private const val KEY_AUTO_CHECK_FOR_UPDATES = "auto_check_for_updates"
@@ -1229,6 +1232,12 @@ class AppSettings private constructor(context: Context) {
     private val _spotifyApiEnabled = MutableStateFlow(prefs.getBoolean(KEY_SPOTIFY_API_ENABLED, BuildConfig.FLAVOR != "fdroid"))
     val spotifyApiEnabled: StateFlow<Boolean> = _spotifyApiEnabled.asStateFlow()
     
+    private val _appleMusicApiEnabled = MutableStateFlow(prefs.getBoolean(KEY_APPLEMUSIC_API_ENABLED, BuildConfig.FLAVOR != "fdroid"))
+    val appleMusicApiEnabled: StateFlow<Boolean> = _appleMusicApiEnabled.asStateFlow()
+    
+    private val _autoFetchArtwork = MutableStateFlow(prefs.getBoolean(KEY_AUTO_FETCH_ARTWORK, false))
+    val autoFetchArtwork: StateFlow<Boolean> = _autoFetchArtwork.asStateFlow()
+    
     private val _spotifyClientId = MutableStateFlow(prefs.getString(KEY_SPOTIFY_CLIENT_ID, "") ?: "")
     val spotifyClientId: StateFlow<String> = _spotifyClientId.asStateFlow()
     
@@ -1335,6 +1344,11 @@ class AppSettings private constructor(context: Context) {
         prefs.getBoolean(KEY_AUDIO_METADATA_EXTRACTION_COMPLETED, false)
     )
     val audioMetadataExtractionCompleted: StateFlow<Boolean> = _audioMetadataExtractionCompleted.asStateFlow()
+
+    private val _embeddedArtworkExtractionCompleted = MutableStateFlow(
+        prefs.getBoolean(KEY_EMBEDDED_ARTWORK_EXTRACTION_COMPLETED, false)
+    )
+    val embeddedArtworkExtractionCompleted: StateFlow<Boolean> = _embeddedArtworkExtractionCompleted.asStateFlow()
 
     // App Updater Settings
 private val _autoCheckForUpdates = MutableStateFlow(prefs.getBoolean(KEY_AUTO_CHECK_FOR_UPDATES, BuildConfig.FLAVOR != "fdroid"))
@@ -2108,6 +2122,7 @@ private val _autoCheckForUpdates = MutableStateFlow(prefs.getBoolean(KEY_AUTO_CH
             .putBoolean(KEY_PENDING_FULL_MEDIA_RESCAN, true)
             .putBoolean(KEY_INITIAL_MEDIA_SCAN_COMPLETED, false)
             .putBoolean(KEY_GENRE_DETECTION_COMPLETED, false)
+            .putBoolean(KEY_EMBEDDED_ARTWORK_EXTRACTION_COMPLETED, false)
             .putLong(KEY_LAST_SCAN_TIMESTAMP, 0L)
             .putLong(KEY_LAST_SCAN_DURATION, 0L)
             .apply()
@@ -2115,6 +2130,7 @@ private val _autoCheckForUpdates = MutableStateFlow(prefs.getBoolean(KEY_AUTO_CH
         _initialMediaScanCompleted.value = false
         _genreDetectionCompleted.value = false
         _audioMetadataExtractionCompleted.value = false
+        _embeddedArtworkExtractionCompleted.value = false
         _lastScanTimestamp.value = 0L
         _lastScanDuration.value = 0L
 
@@ -2781,6 +2797,16 @@ private val _autoCheckForUpdates = MutableStateFlow(prefs.getBoolean(KEY_AUTO_CH
         _spotifyApiEnabled.value = enabled
     }
     
+    fun setAppleMusicApiEnabled(enabled: Boolean) {
+        prefs.edit().putBoolean(KEY_APPLEMUSIC_API_ENABLED, enabled).apply()
+        _appleMusicApiEnabled.value = enabled
+    }
+    
+    fun setAutoFetchArtwork(enabled: Boolean) {
+        prefs.edit().putBoolean(KEY_AUTO_FETCH_ARTWORK, enabled).apply()
+        _autoFetchArtwork.value = enabled
+    }
+    
     fun setSpotifyClientId(clientId: String) {
         prefs.edit().putString(KEY_SPOTIFY_CLIENT_ID, clientId).apply()
         _spotifyClientId.value = clientId
@@ -2865,6 +2891,11 @@ private val _autoCheckForUpdates = MutableStateFlow(prefs.getBoolean(KEY_AUTO_CH
     fun setAudioMetadataExtractionCompleted(completed: Boolean) {
         prefs.edit().putBoolean(KEY_AUDIO_METADATA_EXTRACTION_COMPLETED, completed).apply()
         _audioMetadataExtractionCompleted.value = completed
+    }
+
+    fun setEmbeddedArtworkExtractionCompleted(completed: Boolean) {
+        prefs.edit().putBoolean(KEY_EMBEDDED_ARTWORK_EXTRACTION_COMPLETED, completed).apply()
+        _embeddedArtworkExtractionCompleted.value = completed
     }
 
     // App Updater Settings Methods
@@ -4363,6 +4394,8 @@ private val _autoCheckForUpdates = MutableStateFlow(prefs.getBoolean(KEY_AUTO_CH
         _lrclibApiEnabled.value = prefs.getBoolean(KEY_LRCLIB_API_ENABLED, BuildConfig.FLAVOR != "fdroid")
         _ytMusicApiEnabled.value = prefs.getBoolean(KEY_YTMUSIC_API_ENABLED, BuildConfig.FLAVOR != "fdroid")
         _spotifyApiEnabled.value = prefs.getBoolean(KEY_SPOTIFY_API_ENABLED, BuildConfig.FLAVOR != "fdroid")
+        _appleMusicApiEnabled.value = prefs.getBoolean(KEY_APPLEMUSIC_API_ENABLED, BuildConfig.FLAVOR != "fdroid")
+        _autoFetchArtwork.value = prefs.getBoolean(KEY_AUTO_FETCH_ARTWORK, false)
         _spotifyClientId.value = prefs.getString(KEY_SPOTIFY_CLIENT_ID, "") ?: ""
         _spotifyClientSecret.value = prefs.getString(KEY_SPOTIFY_CLIENT_SECRET, "") ?: ""
         

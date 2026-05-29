@@ -13,7 +13,7 @@ object LyricsParser {
 
     // Enhanced regex pattern to support various LRC timestamp formats
     // Supports: [mm:ss.xx], [mm:ss:xx], [mm:ss.xxx], [mm:ss], and even [hh:mm:ss.xxx]
-    private val timestampPattern = Pattern.compile("\\[(\\d{1,3}):(\\d{2})(?:[.:]?(\\d{0,3}))?\\]")
+    private val timestampPattern = Pattern.compile("\\[\\s*(\\d{1,3})\\s*:\\s*(\\d{2})(?:\\s*[.:]?\\s*(\\d{0,3}))?\\s*\\]")
     
     // Metadata pattern includes:
     // - Standard LRC metadata: ar (artist), ti (title), al (album), by (creator), offset, re (editor), ve (version), length
@@ -487,9 +487,7 @@ object LyricsParser {
 
                 // Store timestamps and initial text
                 pendingTimestamps = timestamps
-                if (text.isNotEmpty()) {
-                    pendingTextLines.add(text)
-                }
+                pendingTextLines.add(text)
             } else {
                 // Line without timestamp - add to pending text if we have a pending timestamp
                 // This handles translations, romanizations, or multi-line lyrics

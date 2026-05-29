@@ -186,6 +186,7 @@ fun ExpressivePlayerScreen(
     val playerLyricsTextSize by appSettings.playerLyricsTextSize.collectAsState()
     val showLyricsTranslation by appSettings.showLyricsTranslation.collectAsState()
     val showLyricsRomanization by appSettings.showLyricsRomanization.collectAsState()
+    val playerLyricsTransition by appSettings.playerLyricsTransition.collectAsState()
     var isScrubbing by remember { mutableStateOf(false) }
     var scrubProgress by remember { mutableFloatStateOf(0f) }
     val progressValue = progress().coerceIn(0f, 1f)
@@ -464,97 +465,119 @@ fun ExpressivePlayerScreen(
                             .fillMaxSize(),
                         contentAlignment = Alignment.Center
                     ) {
-                        if (lyricsVisible) {
-                            RhythmPlayerLyricsPanel(
-                                lyrics = lyrics,
-                                isLoadingLyrics = isLoadingLyrics,
-                                onlineOnlyLyrics = onlineOnlyLyrics,
-                                currentTimeMs = currentTimeMs,
-                                onLyricsSeek = onLyricsSeek,
-                                textSizeMultiplier = playerLyricsTextSize,
-                                onRetryLyrics = onRetryLyrics,
-                                onShowLyricsEditor = onShowLyricsEditor,
-                                onPickLyricsFile = onPickLyricsFile,
-                                showTranslation = showLyricsTranslation,
-                                showRomanization = showLyricsRomanization,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .fillMaxHeight()
-                                    .padding(horizontal = if (isCompactWidth) 16.dp else 24.dp)
-                            )
-                        } else {
-                            Box(
-                                modifier = Modifier
-                                    .padding(horizontal = if (isCompactWidth) 12.dp else 24.dp)
-                                    .fillMaxSize(if (isCompactHeight) 0.55f else 0.88f)
-                                    .aspectRatio(1f)
-                                    .graphicsLayer {
-                                        scaleX = artworkScale
-                                        scaleY = artworkScale
-                                        shadowElevation = if (isPlaying) 0.dp.toPx() else 0.dp.toPx()
-                                        translationX = artworkTranslationX
-                                        shape = artworkClipShape
-                                        clip = true
-                                    }
-                                    .pointerInput(showLyrics, lyricsVisible) {
-                                        detectTapGestures(
-                                            onDoubleTap = {
-                                                HapticUtils.performHapticFeedback(
-                                                    context,
-                                                    haptic,
-                                                    HapticFeedbackType.LongPress
-                                                )
-                                                onPlayPause()
-                                            },
-                                            onTap = {
-                                                if (showLyrics) {
-                                                    HapticUtils.performHapticFeedback(
-                                                        context,
-                                                        haptic,
-                                                        HapticFeedbackType.TextHandleMove
-                                                    )
-                                                    onToggleLyrics()
-                                                }
-                                            }
-                                        )
-                                    }
-                                    .pointerInput(Unit) {
-                                        detectDragGestures(
-                                            onDragEnd = {
-                                                if (artworkOffsetX < -artworkSwipeThreshold) {
-                                                    HapticUtils.performHapticFeedback(
-                                                        context,
-                                                        haptic,
-                                                        HapticFeedbackType.LongPress
-                                                    )
-                                                    onSkipNext()
-                                                } else if (artworkOffsetX > artworkSwipeThreshold) {
-                                                    HapticUtils.performHapticFeedback(
-                                                        context,
-                                                        haptic,
-                                                        HapticFeedbackType.LongPress
-                                                    )
-                                                    onSkipPrevious()
-                                                }
-                                                artworkOffsetX = 0f
-                                            },
-                                            onDragCancel = { artworkOffsetX = 0f },
-                                            onDrag = { change, dragAmount ->
-                                                change.consume()
-                                                artworkOffsetX += dragAmount.x
-                                            }
-                                        )
-                                    }
-                            ) {
-                                M3ImageUtils.M3MediaImage(
-                                    data = song?.artworkUri,
-                                    contentDescription = "Album Artwork",
-                                    modifier = Modifier.fillMaxSize(),
-                                    shape = artworkClipShape,
-                                    type = M3PlaceholderType.TRACK,
-                                    name = song?.title,
-                                    expressiveShape = playerArtworkShape
+                        AnimatedContent(
+                            targetState = lyricsVisible,
+                            transitionSpec = {
+                                val enterTransition = when (playerLyricsTransition) {
+                                    1 -> fadeIn(tween(400, easing = EaseInOut))
+                                    2 -> fadeIn(tween(350, easing = EaseInOut)) + scaleIn(tween(350, easing = EaseInOut), initialScale = 0.92f)
+                                    3 -> fadeIn(tween(350, easing = EaseInOut)) + slideInVertically(tween(350, easing = EaseInOut)) { it / 2 }
+                                    else -> fadeIn(tween(350, easing = EaseInOut)) + slideInVertically(tween(350, easing = EaseInOut)) { -it / 2 }
+                                }
+                                val exitTransition = when (playerLyricsTransition) {
+                                    1 -> fadeOut(tween(300, easing = EaseInOut))
+                                    2 -> fadeOut(tween(250, easing = EaseInOut)) + scaleOut(tween(250, easing = EaseInOut), targetScale = 0.92f)
+                                    3 -> fadeOut(tween(250, easing = EaseInOut)) + slideOutVertically(tween(250, easing = EaseInOut)) { it / 2 }
+                                    else -> fadeOut(tween(250, easing = EaseInOut)) + slideOutVertically(tween(250, easing = EaseInOut)) { -it / 2 }
+                                }
+                                enterTransition togetherWith exitTransition
+                            },
+                            label = "lyricsViewTransition",
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) { targetLyricsVisible ->
+                            if (targetLyricsVisible) {
+                                RhythmPlayerLyricsPanel(
+                                    lyrics = lyrics,
+                                    isLoadingLyrics = isLoadingLyrics,
+                                    onlineOnlyLyrics = onlineOnlyLyrics,
+                                    currentTimeMs = currentTimeMs,
+                                    onLyricsSeek = onLyricsSeek,
+                                    textSizeMultiplier = playerLyricsTextSize,
+                                    onRetryLyrics = onRetryLyrics,
+                                    onShowLyricsEditor = onShowLyricsEditor,
+                                    onPickLyricsFile = onPickLyricsFile,
+                                    showTranslation = showLyricsTranslation,
+                                    showRomanization = showLyricsRomanization,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .fillMaxHeight()
+                                        .padding(horizontal = if (isCompactWidth) 16.dp else 24.dp)
                                 )
+                            } else {
+                                Box(
+                                    modifier = Modifier
+                                        .padding(horizontal = if (isCompactWidth) 12.dp else 24.dp)
+                                        .fillMaxSize(if (isCompactHeight) 0.55f else 0.88f)
+                                        .aspectRatio(1f)
+                                        .graphicsLayer {
+                                            scaleX = artworkScale
+                                            scaleY = artworkScale
+                                            shadowElevation = if (isPlaying) 0.dp.toPx() else 0.dp.toPx()
+                                            translationX = artworkTranslationX
+                                            shape = artworkClipShape
+                                            clip = true
+                                        }
+                                        .pointerInput(showLyrics, lyricsVisible) {
+                                            detectTapGestures(
+                                                onDoubleTap = {
+                                                    HapticUtils.performHapticFeedback(
+                                                        context,
+                                                        haptic,
+                                                        HapticFeedbackType.LongPress
+                                                    )
+                                                    onPlayPause()
+                                                },
+                                                onTap = {
+                                                    if (showLyrics) {
+                                                        HapticUtils.performHapticFeedback(
+                                                            context,
+                                                            haptic,
+                                                            HapticFeedbackType.TextHandleMove
+                                                        )
+                                                        onToggleLyrics()
+                                                    }
+                                                }
+                                            )
+                                        }
+                                        .pointerInput(Unit) {
+                                            detectDragGestures(
+                                                onDragEnd = {
+                                                    if (artworkOffsetX < -artworkSwipeThreshold) {
+                                                        HapticUtils.performHapticFeedback(
+                                                            context,
+                                                            haptic,
+                                                            HapticFeedbackType.LongPress
+                                                        )
+                                                        onSkipNext()
+                                                    } else if (artworkOffsetX > artworkSwipeThreshold) {
+                                                        HapticUtils.performHapticFeedback(
+                                                            context,
+                                                            haptic,
+                                                            HapticFeedbackType.LongPress
+                                                        )
+                                                        onSkipPrevious()
+                                                    }
+                                                    artworkOffsetX = 0f
+                                                },
+                                                onDragCancel = { artworkOffsetX = 0f },
+                                                onDrag = { change, dragAmount ->
+                                                    change.consume()
+                                                    artworkOffsetX += dragAmount.x
+                                                }
+                                            )
+                                        }
+                                ) {
+                                    M3ImageUtils.M3MediaImage(
+                                        data = song?.artworkUri,
+                                        contentDescription = "Album Artwork",
+                                        modifier = Modifier.fillMaxSize(),
+                                        shape = artworkClipShape,
+                                        type = M3PlaceholderType.TRACK,
+                                        name = song?.title,
+                                        expressiveShape = playerArtworkShape
+                                    )
+                                }
                             }
                         }
                     }

@@ -8968,6 +8968,7 @@ fun EnhancedIntegrationsContent(
     // Integration settings
     val deezerApiEnabled by appSettings.deezerApiEnabled.collectAsState()
     val lrclibApiEnabled by appSettings.lrclibApiEnabled.collectAsState()
+    val appleMusicApiEnabled by appSettings.appleMusicApiEnabled.collectAsState()
     val ytMusicApiEnabled by appSettings.ytMusicApiEnabled.collectAsState()
     val spotifyApiEnabled by appSettings.spotifyApiEnabled.collectAsState()
     val scrobblingEnabled by appSettings.scrobblingEnabled.collectAsState()
@@ -9032,6 +9033,7 @@ fun EnhancedIntegrationsContent(
                 IntegrationsSettingsCards(
                     deezerApiEnabled = deezerApiEnabled,
                     lrclibApiEnabled = lrclibApiEnabled,
+                    appleMusicApiEnabled = appleMusicApiEnabled,
                     ytMusicApiEnabled = ytMusicApiEnabled,
                     spotifyApiEnabled = spotifyApiEnabled,
                     scrobblingEnabled = scrobblingEnabled,
@@ -9040,6 +9042,7 @@ fun EnhancedIntegrationsContent(
                     bluetoothLyricsEnabled = bluetoothLyricsEnabled,
                     onDeezerChange = { appSettings.setDeezerApiEnabled(it) },
                     onLrcLibChange = { appSettings.setLrcLibApiEnabled(it) },
+                    onAppleMusicChange = { appSettings.setAppleMusicApiEnabled(it) },
                     onYtMusicChange = { appSettings.setYTMusicApiEnabled(it) },
                     onSpotifyChange = { appSettings.setSpotifyApiEnabled(it) },
                     onScrobblingChange = { appSettings.setScrobblingEnabled(it) },
@@ -9089,6 +9092,7 @@ fun EnhancedIntegrationsContent(
             IntegrationsSettingsCards(
                 deezerApiEnabled = deezerApiEnabled,
                 lrclibApiEnabled = lrclibApiEnabled,
+                appleMusicApiEnabled = appleMusicApiEnabled,
                 ytMusicApiEnabled = ytMusicApiEnabled,
                 spotifyApiEnabled = spotifyApiEnabled,
                 scrobblingEnabled = scrobblingEnabled,
@@ -9097,6 +9101,7 @@ fun EnhancedIntegrationsContent(
                 bluetoothLyricsEnabled = bluetoothLyricsEnabled,
                 onDeezerChange = { appSettings.setDeezerApiEnabled(it) },
                 onLrcLibChange = { appSettings.setLrcLibApiEnabled(it) },
+                onAppleMusicChange = { appSettings.setAppleMusicApiEnabled(it) },
                 onYtMusicChange = { appSettings.setYTMusicApiEnabled(it) },
                 onSpotifyChange = { appSettings.setSpotifyApiEnabled(it) },
                 onScrobblingChange = { appSettings.setScrobblingEnabled(it) },
@@ -9123,6 +9128,7 @@ fun EnhancedIntegrationsContent(
 private fun IntegrationsSettingsCards(
     deezerApiEnabled: Boolean,
     lrclibApiEnabled: Boolean,
+    appleMusicApiEnabled: Boolean,
     ytMusicApiEnabled: Boolean,
     spotifyApiEnabled: Boolean,
     scrobblingEnabled: Boolean,
@@ -9131,6 +9137,7 @@ private fun IntegrationsSettingsCards(
     bluetoothLyricsEnabled: Boolean,
     onDeezerChange: (Boolean) -> Unit,
     onLrcLibChange: (Boolean) -> Unit,
+    onAppleMusicChange: (Boolean) -> Unit,
     onYtMusicChange: (Boolean) -> Unit,
     onSpotifyChange: (Boolean) -> Unit,
     onScrobblingChange: (Boolean) -> Unit,
@@ -9171,6 +9178,17 @@ private fun IntegrationsSettingsCards(
                     context.getString(R.string.onboarding_integration_deezer_desc),
                     deezerApiEnabled,
                     onDeezerChange
+                )
+            )
+        }
+        if (chromahub.rhythm.app.BuildConfig.ENABLE_APPLE_MUSIC) {
+            add(
+                onboardingToggleItem(
+                    MaterialSymbolIcon("music_note"),
+                    "Apple Music",
+                    "Word-by-word synchronized lyrics (Highest Quality)",
+                    appleMusicApiEnabled,
+                    onAppleMusicChange
                 )
             )
         }

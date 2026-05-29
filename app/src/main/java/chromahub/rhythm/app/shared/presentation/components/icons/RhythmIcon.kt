@@ -73,7 +73,12 @@ private object RhythmIconFontCache {
         grade: Float,
         opticalSize: Float
     ): FontFamily {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
+        val manufacturer = Build.MANUFACTURER.lowercase(java.util.Locale.US)
+        val isXiaomiDevice = manufacturer.contains("xiaomi") ||
+                manufacturer.contains("redmi") ||
+                manufacturer.contains("poco")
+
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O || isXiaomiDevice) {
             return getFallbackFontFamily(context)
         }
 

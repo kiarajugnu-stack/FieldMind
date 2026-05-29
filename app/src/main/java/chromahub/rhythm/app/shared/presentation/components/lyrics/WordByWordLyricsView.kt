@@ -196,7 +196,17 @@ fun WordByWordLyricsView(
         }
     }
 
-    if (visibleLyricsLines.isEmpty()) {
+    val isInstrumental = remember(visibleLyricsLines, wordByWordLyrics) {
+        isWordByWordInstrumental(visibleLyricsLines, wordByWordLyrics)
+    }
+
+    if (isInstrumental) {
+        InstrumentalPlaceholder(
+            modifier = modifier,
+            titleText = "Instrumental",
+            subtitleText = "No vocals detected in this song"
+        )
+    } else if (visibleLyricsLines.isEmpty()) {
         Box(
             modifier = modifier.fillMaxSize(),
             contentAlignment = Alignment.Center
@@ -492,6 +502,119 @@ fun WordByWordLyricsView(
                     )
                 }
             }
+        }
+    }
+}
+
+private fun isWordByWordInstrumental(lines: List<WordByWordLyricLine>, rawLyrics: String): Boolean {
+    val canonical = rawLyrics.trim().lowercase().removeSurrounding("[", "]").removeSurrounding("(", ")").trim()
+    if (lines.isEmpty()) {
+        return canonical.isNotEmpty() && (
+            canonical == "instrumental" ||
+            canonical == "no vocals" ||
+            canonical == "music" ||
+            canonical == "instrumental track" ||
+            canonical == "pure instrumental" ||
+            canonical == "no lyrics"
+        )
+    }
+    
+    if (lines.size <= 2) {
+        return lines.all { line ->
+            val text = line.words.joinToString(" ") { it.text }
+            val textCanonical = text.trim().lowercase().removeSurrounding("[", "]").removeSurrounding("(", ")").trim()
+            textCanonical.isEmpty() ||
+            textCanonical == "instrumental" ||
+            textCanonical == "no vocals" ||
+            textCanonical == "music" ||
+            textCanonical == "instrumental break" ||
+            textCanonical == "instrumental track" ||
+            textCanonical == "pure instrumental" ||
+            textCanonical == "no lyrics" ||
+            textCanonical == "♪" ||
+            textCanonical == "♫"
+        }
+    }
+    return false
+}
+
+@Composable
+private fun InstrumentalPlaceholder(
+    modifier: Modifier = Modifier,
+    titleText: String = "Instrumental",
+    subtitleText: String = "Enjoy the music"
+) {
+    val infiniteTransition = rememberInfiniteTransition(label = "instrumentalPulse")
+    val pulseScale by infiniteTransition.animateFloat(
+        initialValue = 0.95f,
+        targetValue = 1.08f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(2000, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "pulseScale"
+    )
+    val pulseAlpha by infiniteTransition.animateFloat(
+        initialValue = 0.4f,
+        targetValue = 0.85f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(2000, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "pulseAlpha"
+    )
+
+    Box(
+        modifier = modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
+            modifier = Modifier.padding(32.dp)
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(120.dp)
+                    .graphicsLayer {
+                        scaleX = pulseScale
+                        scaleY = pulseScale
+                        alpha = pulseAlpha
+                    },
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "♪ ♫ ♪",
+                    style = MaterialTheme.typography.headlineLarge.copy(
+                        fontSize = 42.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        letterSpacing = 4.sp
+                    ),
+                    color = MaterialTheme.colorScheme.primary,
+                    textAlign = TextAlign.Center
+                )
+            }
+            
+            Spacer(modifier = Modifier.height(20.dp))
+            
+            Text(
+                text = titleText,
+                style = MaterialTheme.typography.titleLarge.copy(
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 0.5.sp
+                ),
+                color = MaterialTheme.colorScheme.onSurface,
+                textAlign = TextAlign.Center
+            )
+            
+            Spacer(modifier = Modifier.height(8.dp))
+            
+            Text(
+                text = subtitleText,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+                textAlign = TextAlign.Center
+            )
         }
     }
 }

@@ -166,6 +166,8 @@ fun LibrarySettingsScreen(onBackClick: () -> Unit) {
     val preferSongArtwork by appSettings.preferSongArtwork.collectAsState()
     val losslessArtwork by appSettings.losslessArtwork.collectAsState()
     val albumBottomSheetGradientBlur by appSettings.albumBottomSheetGradientBlur.collectAsState()
+    val appleMusicApiEnabled by appSettings.appleMusicApiEnabled.collectAsState()
+    val autoFetchArtwork by appSettings.autoFetchArtwork.collectAsState()
 
     var showLibraryTabOrderBottomSheet by remember { mutableStateOf(false) }
     var showRestartDialog by remember { mutableStateOf(false) }
@@ -242,6 +244,14 @@ fun LibrarySettingsScreen(onBackClick: () -> Unit) {
                         context.getString(R.string.settings_album_bottom_sheet_gradient_blur_desc),
                         toggleState = albumBottomSheetGradientBlur,
                         onToggleChange = { appSettings.setAlbumBottomSheetGradientBlur(it) }
+                    ),
+                    SettingItem(
+                        icon = MaterialSymbolIcon("cloud_download"),
+                        title = "Auto-Fetch Artwork",
+                        description = "Automatically search online APIs for missing cover artwork on startup",
+                        toggleState = autoFetchArtwork && appleMusicApiEnabled,
+                        onToggleChange = { enabled -> appSettings.setAutoFetchArtwork(enabled) },
+                        enabled = appleMusicApiEnabled
                     )
                 )
             )

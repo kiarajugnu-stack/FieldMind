@@ -79,7 +79,13 @@ import chromahub.rhythm.app.util.MediaUtils
 import chromahub.rhythm.app.util.HapticUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.launch
 import java.io.File
+import chromahub.rhythm.app.network.NetworkClient
+import chromahub.rhythm.app.network.YTMusicSearchRequest
+import chromahub.rhythm.app.network.YTMusicContext
+import chromahub.rhythm.app.network.YTMusicClient
+import chromahub.rhythm.app.network.extractAlbumImageUrl
 
 // Data class to hold additional song metadata
 // 
@@ -1745,24 +1751,26 @@ private fun EditSongSheet(
     val isTablet = configuration.screenWidthDp >= 600
     
     // Store original values for undo functionality
-    val originalTitle by remember { mutableStateOf(song.title) }
-    val originalArtist by remember { mutableStateOf(song.artist) }
-    val originalAlbum by remember { mutableStateOf(song.album) }
-    val originalGenre by remember { mutableStateOf(song.genre ?: "") }
-    val originalYear by remember { mutableStateOf(if (song.year > 0) song.year.toString() else "") }
-    val originalTrackNumber by remember { mutableStateOf(if (song.trackNumber > 0) song.trackNumber.toString() else "") }
+    val originalTitle by remember(song.id) { mutableStateOf(song.title) }
+    val originalArtist by remember(song.id) { mutableStateOf(song.artist) }
+    val originalAlbum by remember(song.id) { mutableStateOf(song.album) }
+    val originalGenre by remember(song.id) { mutableStateOf(song.genre ?: "") }
+    val originalYear by remember(song.id) { mutableStateOf(if (song.year > 0) song.year.toString() else "") }
+    val originalTrackNumber by remember(song.id) { mutableStateOf(if (song.trackNumber > 0) song.trackNumber.toString() else "") }
     
-    var title by remember { mutableStateOf(song.title) }
-    var artist by remember { mutableStateOf(song.artist) }
-    var album by remember { mutableStateOf(song.album) }
-    var genre by remember { mutableStateOf(song.genre ?: "") }
-    var year by remember { mutableStateOf(if (song.year > 0) song.year.toString() else "") }
-    var trackNumber by remember { mutableStateOf(if (song.trackNumber > 0) song.trackNumber.toString() else "") }
-    var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
-    var removeArtwork by remember { mutableStateOf(false) }
+    var title by remember(song.id) { mutableStateOf(song.title) }
+    var artist by remember(song.id) { mutableStateOf(song.artist) }
+    var album by remember(song.id) { mutableStateOf(song.album) }
+    var genre by remember(song.id) { mutableStateOf(song.genre ?: "") }
+    var year by remember(song.id) { mutableStateOf(if (song.year > 0) song.year.toString() else "") }
+    var trackNumber by remember(song.id) { mutableStateOf(if (song.trackNumber > 0) song.trackNumber.toString() else "") }
+    var selectedImageUri by remember(song.id) { mutableStateOf<Uri?>(null) }
+    var removeArtwork by remember(song.id) { mutableStateOf(false) }
     val haptics = LocalHapticFeedback.current
     var showWarningDialog by remember { mutableStateOf(false) }
     var isSaving by remember { mutableStateOf(false) }
+    var isFetchingOnlineArt by remember { mutableStateOf(false) }
+    val coroutineScope = rememberCoroutineScope()
     var showContent by remember { mutableStateOf(false) }
     var resolvedSongArtworkUri by remember(song.id, song.artworkUri, song.uri) {
         mutableStateOf(song.artworkUri)
@@ -2282,6 +2290,99 @@ private fun EditSongSheet(
                                         }
 
                                         Spacer(modifier = Modifier.height(16.dp))
+
+                                if (NetworkClient.isYTMusicApiEnabled()) {
+                                    Button(
+                                        onClick = {
+                                            isFetchingOnlineArt = true
+                                            coroutineScope.launch(Dispatchers.IO) {
+                                                try {
+                                                    val apiService = NetworkClient.ytmusicApiService
+                                                    if (apiService != null) {
+                                                        val searchQuery = "${title.trim()} ${artist.trim()}"
+                                                        val searchRequest = YTMusicSearchRequest(
+                                                            context = YTMusicContext(YTMusicClient()),
+                                                            query = searchQuery,
+                                                            params = "EgWKAQIIAWoKEAoQAxAEEAkQBQ%3D%3D"
+                                                        )
+                                                        val response = apiService.search(request = searchRequest)
+                                                        if (response.isSuccessful) {
+                                                            val imageUrl = response.body()?.extractAlbumImageUrl()
+                                                            if (!imageUrl.isNullOrEmpty()) {
+                                                                val okRequest = okhttp3.Request.Builder().url(imageUrl).build()
+                                                                val okResponse = NetworkClient.genericHttpClient.newCall(okRequest).execute()
+                                                                if (okResponse.isSuccessful) {
+                                                                    val bytes = okResponse.body?.bytes()
+                                                                    if (bytes != null) {
+                                                                        val tempFile = File(context.cacheDir, "temp_artwork_fetched_${song.id}.jpg")
+                                                                        tempFile.writeBytes(bytes)
+                                                                        withContext(Dispatchers.Main) {
+                                                                            selectedImageUri = Uri.fromFile(tempFile)
+                                                                            removeArtwork = false
+                                                                            Toast.makeText(context, "Artwork fetched successfully! Click Save to embed.", Toast.LENGTH_SHORT).show()
+                                                                        }
+                                                                    } else {
+                                                                        withContext(Dispatchers.Main) {
+                                                                            Toast.makeText(context, "Failed to download artwork bytes", Toast.LENGTH_SHORT).show()
+                                                                        }
+                                                                    }
+                                                                } else {
+                                                                    withContext(Dispatchers.Main) {
+                                                                        Toast.makeText(context, "Failed to download artwork from URL", Toast.LENGTH_SHORT).show()
+                                                                    }
+                                                                }
+                                                            } else {
+                                                                withContext(Dispatchers.Main) {
+                                                                    Toast.makeText(context, "No artwork found for this song online", Toast.LENGTH_SHORT).show()
+                                                                }
+                                                            }
+                                                        } else {
+                                                            withContext(Dispatchers.Main) {
+                                                                Toast.makeText(context, "Online search failed", Toast.LENGTH_SHORT).show()
+                                                            }
+                                                        }
+                                                    } else {
+                                                        withContext(Dispatchers.Main) {
+                                                            Toast.makeText(context, "Online API service unavailable", Toast.LENGTH_SHORT).show()
+                                                        }
+                                                    }
+                                                } catch (e: Exception) {
+                                                    withContext(Dispatchers.Main) {
+                                                        Toast.makeText(context, "Error fetching artwork: ${e.message}", Toast.LENGTH_LONG).show()
+                                                    }
+                                                } finally {
+                                                    withContext(Dispatchers.Main) {
+                                                        isFetchingOnlineArt = false
+                                                    }
+                                                }
+                                            }
+                                        },
+                                        enabled = !isFetchingOnlineArt && title.isNotBlank() && artist.isNotBlank(),
+                                        shape = RoundedCornerShape(14.dp),
+                                        colors = ButtonDefaults.buttonColors(
+                                            containerColor = MaterialTheme.colorScheme.primaryContainer,
+                                            contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                                        )
+                                    ) {
+                                        if (isFetchingOnlineArt) {
+                                            ActionProgressLoader(
+                                                size = 18.dp,
+                                                color = MaterialTheme.colorScheme.onPrimaryContainer
+                                            )
+                                            Spacer(modifier = Modifier.width(8.dp))
+                                            Text("Fetching...")
+                                        } else {
+                                            Icon(
+                                                imageVector = MaterialSymbolIcon("cloud_download", filled = true),
+                                                contentDescription = null,
+                                                modifier = Modifier.size(18.dp)
+                                            )
+                                            Spacer(modifier = Modifier.width(8.dp))
+                                            Text("Fetch Online Art")
+                                        }
+                                    }
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                }
                                     }
                                 }
                             }
@@ -2508,6 +2609,100 @@ private fun EditSongSheet(
                                             maxLines = 1,
                                             overflow = TextOverflow.Ellipsis
                                         )
+                                    }
+                                }
+                            }
+
+                            if (NetworkClient.isYTMusicApiEnabled()) {
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Button(
+                                    onClick = {
+                                        isFetchingOnlineArt = true
+                                        coroutineScope.launch(Dispatchers.IO) {
+                                            try {
+                                                val apiService = NetworkClient.ytmusicApiService
+                                                if (apiService != null) {
+                                                    val searchQuery = "${title.trim()} ${artist.trim()}"
+                                                    val searchRequest = YTMusicSearchRequest(
+                                                        context = YTMusicContext(YTMusicClient()),
+                                                        query = searchQuery,
+                                                        params = "EgWKAQIIAWoKEAoQAxAEEAkQBQ%3D%3D"
+                                                    )
+                                                    val response = apiService.search(request = searchRequest)
+                                                    if (response.isSuccessful) {
+                                                        val imageUrl = response.body()?.extractAlbumImageUrl()
+                                                        if (!imageUrl.isNullOrEmpty()) {
+                                                            val okRequest = okhttp3.Request.Builder().url(imageUrl).build()
+                                                            val okResponse = NetworkClient.genericHttpClient.newCall(okRequest).execute()
+                                                            if (okResponse.isSuccessful) {
+                                                                val bytes = okResponse.body?.bytes()
+                                                                if (bytes != null) {
+                                                                    val tempFile = File(context.cacheDir, "temp_artwork_fetched_${song.id}.jpg")
+                                                                    tempFile.writeBytes(bytes)
+                                                                    withContext(Dispatchers.Main) {
+                                                                        selectedImageUri = Uri.fromFile(tempFile)
+                                                                        removeArtwork = false
+                                                                        Toast.makeText(context, "Artwork fetched successfully! Click Save to embed.", Toast.LENGTH_SHORT).show()
+                                                                    }
+                                                                } else {
+                                                                    withContext(Dispatchers.Main) {
+                                                                        Toast.makeText(context, "Failed to download artwork bytes", Toast.LENGTH_SHORT).show()
+                                                                    }
+                                                                }
+                                                            } else {
+                                                                withContext(Dispatchers.Main) {
+                                                                    Toast.makeText(context, "Failed to download artwork from URL", Toast.LENGTH_SHORT).show()
+                                                                }
+                                                            }
+                                                        } else {
+                                                            withContext(Dispatchers.Main) {
+                                                                    Toast.makeText(context, "No artwork found for this song online", Toast.LENGTH_SHORT).show()
+                                                            }
+                                                        }
+                                                    } else {
+                                                        withContext(Dispatchers.Main) {
+                                                            Toast.makeText(context, "Online search failed", Toast.LENGTH_SHORT).show()
+                                                        }
+                                                    }
+                                                } else {
+                                                    withContext(Dispatchers.Main) {
+                                                        Toast.makeText(context, "Online API service unavailable", Toast.LENGTH_SHORT).show()
+                                                    }
+                                                }
+                                            } catch (e: Exception) {
+                                                withContext(Dispatchers.Main) {
+                                                    Toast.makeText(context, "Error fetching artwork: ${e.message}", Toast.LENGTH_LONG).show()
+                                                }
+                                            } finally {
+                                                withContext(Dispatchers.Main) {
+                                                    isFetchingOnlineArt = false
+                                                }
+                                            }
+                                        }
+                                    },
+                                    enabled = !isFetchingOnlineArt && title.isNotBlank() && artist.isNotBlank(),
+                                    modifier = Modifier.fillMaxWidth(),
+                                    shape = RoundedCornerShape(16.dp),
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = MaterialTheme.colorScheme.primaryContainer,
+                                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                                    )
+                                ) {
+                                    if (isFetchingOnlineArt) {
+                                        ActionProgressLoader(
+                                            size = 18.dp,
+                                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                                        )
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Text("Fetching Artwork...")
+                                    } else {
+                                        Icon(
+                                            imageVector = MaterialSymbolIcon("cloud_download", filled = true),
+                                            contentDescription = null,
+                                            modifier = Modifier.size(18.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Text("Fetch Online Art")
                                     }
                                 }
                             }

@@ -1461,11 +1461,11 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
                 }
                 val hasMissingSongs = _songs.value.any { it.artworkUri == null }
                 
-                if (hasMissingArtists || hasMissingAlbums || hasMissingSongs) {
+                if ((hasMissingArtists || hasMissingAlbums || hasMissingSongs) && appSettings.autoFetchArtwork.value && appSettings.appleMusicApiEnabled.value) {
                     _isFetchingArtwork.value = true
                     fetchArtworkFromInternet()
                 } else {
-                    Log.d(TAG, "All artist/album/song artworks are present, skipping startup internet fetches")
+                    Log.d(TAG, "All artist/album/song artworks are present or auto-fetch is disabled, skipping startup internet fetches")
                 }
             } catch (e: Exception) {
                 Log.e(TAG, "Error fetching artwork from internet", e)
@@ -1516,24 +1516,34 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
 
         // Extract embedded album art in background when preferSongArtwork is enabled.
         // This runs after the UI is fully settled so it doesn't affect splash screen load time.
+        //
+        // KEY LOGIC: We only extract if there are songs with NO artwork at all (artworkUri == null).
+        // Songs that already have any artwork URI (including MediaStore content:// album art) are
+        // considered covered — extractEmbeddedArtworkForSongs() will skip them individually anyway.
+        // This prevents the extraction from running on every launch just because songs have
+        // non-embedded-cache artwork URIs (which used to incorrectly count as "missing").
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 val preferSongArtwork = appSettings.preferSongArtwork.value
                 val losslessArtwork = appSettings.isLosslessArtworkActive.value
-                if (preferSongArtwork) {
+                val isCompleted = appSettings.embeddedArtworkExtractionCompleted.value
+                if (preferSongArtwork && !isCompleted) {
                     val initialSongs = _songs.value
-                    val hasMissingArtwork = initialSongs.any { song ->
-                        val artworkUri = song.artworkUri
-                        when {
-                            artworkUri == null -> true
-                            artworkUri.scheme == "file" || artworkUri.scheme == null -> {
-                                artworkUri.path?.let { !File(it).exists() } != false
-                            }
-                            else -> false
-                        }
+
+                    // A song needs embedded art extraction only if it has NO artwork at all.
+                    // Songs with any non-null artworkUri (MediaStore, content://, file://, etc.)
+                    // already have artwork; extractEmbeddedArtworkForSongs skips them individually.
+                    // Only songs with artworkUri == null are candidates for extraction.
+                    val songsNeedingExtraction = initialSongs.count { it.artworkUri == null }
+
+                    if (songsNeedingExtraction == 0) {
+                        Log.d(TAG, "All ${initialSongs.size} songs already have artwork URIs, skipping embedded art extraction")
+                        appSettings.setEmbeddedArtworkExtractionCompleted(true)
+                        return@launch
                     }
-                    val extractionDelayMs = if (hasMissingArtwork) 1500L else 4500L
-                    delay(extractionDelayMs)
+
+                    Log.d(TAG, "$songsNeedingExtraction/${initialSongs.size} songs have no artwork, starting embedded art extraction after delay")
+                    delay(1500L) // Allow UI to fully settle before heavy IO
 
                     Log.d(TAG, "Starting background embedded album art extraction (preferSongArtwork=$preferSongArtwork, lossless=$losslessArtwork)")
                     val currentSongs = _songs.value
@@ -1544,8 +1554,11 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
                         }
                         // Persist the updated song snapshot so the repository cache stays aligned.
                         repository.updateAndPersistSongs(updatedSongs)
+                        appSettings.setEmbeddedArtworkExtractionCompleted(true)
                         Log.d(TAG, "Background embedded art extraction complete for ${currentSongs.size} songs")
                     }
+                } else {
+                    Log.d(TAG, "Embedded artwork extraction already completed or disabled (preferSongArtwork=$preferSongArtwork, completed=$isCompleted), skipping")
                 }
             } catch (e: Exception) {
                 Log.e(TAG, "Error during background embedded art extraction", e)
@@ -1583,11 +1596,11 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
                 }
                 val hasMissingSongs = _songs.value.any { it.artworkUri == null }
                 
-                if (hasMissingArtists || hasMissingAlbums || hasMissingSongs) {
+                if ((hasMissingArtists || hasMissingAlbums || hasMissingSongs) && appSettings.autoFetchArtwork.value && appSettings.appleMusicApiEnabled.value) {
                     _isFetchingArtwork.value = true
                     fetchArtworkFromInternet()
                 } else {
-                    Log.d(TAG, "All artist/album/song artworks are present, skipping internet fetches")
+                    Log.d(TAG, "All artist/album/song artworks are present or auto-fetch is disabled, skipping internet fetches")
                 }
             } catch (e: Exception) {
                 Log.e(TAG, "Error fetching artwork from internet", e)
@@ -1710,6 +1723,13 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
             _artists.value = freshArtists
             repository.updateAndPersistSongs(mergedSongs)
             appSettings.setLastScanTimestamp(System.currentTimeMillis())
+            // Only invalidate the embedded artwork extraction flag when new songs have appeared.
+            // Resetting it unconditionally caused extraction to re-run on every launch because the
+            // MediaStore observer fires on startup, triggering this refresh and clearing the flag.
+            if (mergedSongs.size > currentCount) {
+                Log.d(TAG, "New songs detected (${mergedSongs.size - currentCount} added), resetting embedded artwork extraction flag")
+                appSettings.setEmbeddedArtworkExtractionCompleted(false)
+            }
             Log.d(TAG, "MediaStore refresh complete: $currentCount -> ${mergedSongs.size} songs")
         } catch (e: Exception) {
             Log.e(TAG, "Error during MediaStore refresh", e)
@@ -1845,6 +1865,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
             _isLibraryRefreshing.value = true // Always set for pull-to-refresh tracking
             _isInitialized.value = false // Indicate that data is being refreshed
             _isGenreDetectionComplete.value = false // Reset genre detection state
+            appSettings.setEmbeddedArtworkExtractionCompleted(false)
             // Don't reset _isGenreDetectionRunning to allow proper concurrency check
 
             startMediaScanProgressNotifications(notificationSequence)
@@ -1895,11 +1916,11 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
                         }
                         val hasMissingSongs = _songs.value.any { it.artworkUri == null }
                         
-                        if (hasMissingArtists || hasMissingAlbums || hasMissingSongs) {
+                        if ((hasMissingArtists || hasMissingAlbums || hasMissingSongs) && appSettings.autoFetchArtwork.value && appSettings.appleMusicApiEnabled.value) {
                             _isFetchingArtwork.value = true
                             fetchArtworkFromInternet()
                         } else {
-                            Log.d(TAG, "All artist/album/song artworks are present, skipping internet fetches")
+                            Log.d(TAG, "All artist/album/song artworks are present or auto-fetch is disabled, skipping internet fetches")
                         }
                     } catch (e: Exception) {
                         Log.w(TAG, "Artwork fetching failed but continuing with library refresh", e)
