@@ -743,7 +743,7 @@ fun StreamingLibraryScreen(
                                         contentAlignment = Alignment.Center
                                     ) {
                                         Text(
-                                            text = "No albums",
+                                            text = stringResource(R.string.streaminglibraryscreen_no_albums),
                                             style = MaterialTheme.typography.bodyLarge,
                                             color = MaterialTheme.colorScheme.onSurfaceVariant
                                         )
@@ -1030,7 +1030,7 @@ fun StreamingLibraryScreen(
                                                 .padding(horizontal = 8.dp, vertical = 2.dp)
                                         ) {
                                             DropdownMenuItem(
-                                                text = { Text("Add to playlist", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurface) },
+                                                text = { Text(stringResource(R.string.content_desc_add_to_playlist), style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurface) },
                                                 leadingIcon = {
                                                     Surface(
                                                         color = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.6f),
@@ -1157,7 +1157,7 @@ fun StreamingLibraryScreen(
                                                     .padding(horizontal = 8.dp, vertical = 2.dp)
                                             ) {
                                                 DropdownMenuItem(
-                                                    text = { Text("Go to artist", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurface) },
+                                                    text = { Text(stringResource(R.string.multiselectionbottomsheet_go_to_artist), style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurface) },
                                                     leadingIcon = {
                                                         Surface(
                                                             color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.6f),

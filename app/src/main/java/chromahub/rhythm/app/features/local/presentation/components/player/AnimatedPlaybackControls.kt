@@ -41,6 +41,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import chromahub.rhythm.app.R
 import kotlinx.coroutines.delay
+import androidx.compose.ui.res.stringResource
 
 private enum class PlaybackButtonType { NONE, PREVIOUS, PLAY_PAUSE, NEXT }
 
@@ -133,7 +134,7 @@ fun AnimatedPlaybackControls(
             ) {
                 Icon(
                     imageVector = RhythmIcons.SkipPrevious,
-                    contentDescription = "Previous",
+                    contentDescription = stringResource(R.string.animatedplaybackcontrols_previous),
                     tint = tintOtherIcons,
                     modifier = Modifier.size(iconSize)
                 )
@@ -194,7 +195,7 @@ fun AnimatedPlaybackControls(
             ) {
                 Icon(
                     imageVector = RhythmIcons.SkipNext,
-                    contentDescription = "Next",
+                    contentDescription = stringResource(R.string.onboarding_next),
                     tint = tintOtherIcons,
                     modifier = Modifier.size(iconSize)
                 )

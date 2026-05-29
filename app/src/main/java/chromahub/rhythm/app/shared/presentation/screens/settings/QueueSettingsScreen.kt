@@ -41,6 +41,7 @@ import chromahub.rhythm.app.shared.presentation.components.Material3SettingsGrou
 import chromahub.rhythm.app.shared.presentation.components.Material3SettingsItem
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import androidx.compose.ui.res.stringResource
 
 @Composable
 fun QueueSettingsScreen(onBackClick: () -> Unit) {
@@ -548,7 +549,7 @@ fun QueueSettingsScreen(onBackClick: () -> Unit) {
                             if (playlistClickBehavior == "play_all") {
                                 Icon(
                                     imageVector = RhythmIcons.CheckCircle,
-                                    contentDescription = "Selected",
+                                    contentDescription = stringResource(R.string.streaming_selected),
                                     modifier = Modifier.size(28.dp)
                                 )
                             }
@@ -634,7 +635,7 @@ fun QueueSettingsScreen(onBackClick: () -> Unit) {
                             if (playlistClickBehavior == "play_one") {
                                 Icon(
                                     imageVector = RhythmIcons.CheckCircle,
-                                    contentDescription = "Selected",
+                                    contentDescription = stringResource(R.string.streaming_selected),
                                     modifier = Modifier.size(28.dp)
                                 )
                             }
@@ -993,7 +994,7 @@ fun QueueSettingsScreen(onBackClick: () -> Unit) {
                             if (showQueueDialog) {
                                 Icon(
                                     imageVector = RhythmIcons.CheckCircle,
-                                    contentDescription = "Selected",
+                                    contentDescription = stringResource(R.string.streaming_selected),
                                     modifier = Modifier.size(28.dp)
                                 )
                             }
@@ -1079,7 +1080,7 @@ fun QueueSettingsScreen(onBackClick: () -> Unit) {
                             if (!showQueueDialog) {
                                 Icon(
                                     imageVector = RhythmIcons.CheckCircle,
-                                    contentDescription = "Selected",
+                                    contentDescription = stringResource(R.string.streaming_selected),
                                     modifier = Modifier.size(28.dp)
                                 )
                             }

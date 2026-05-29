@@ -75,6 +75,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import androidx.compose.ui.res.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -240,7 +241,7 @@ fun LyricsEditorBottomSheet(
 
                     if (result.lyrics != null) {
                         editedLyrics = result.lyrics
-                        Toast.makeText(context, "Lyrics loaded successfully", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, R.string.lyrics_loaded_success, Toast.LENGTH_SHORT).show()
                     } else {
                         Toast.makeText(
                             context,
@@ -278,7 +279,7 @@ fun LyricsEditorBottomSheet(
 
                 maybeRenameLyricsDocument(it, defaultLyricsFileName)
 
-                Toast.makeText(context, "Lyrics saved successfully", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, R.string.lyrics_saved_success, Toast.LENGTH_SHORT).show()
                 onSave(editedLyrics, timeOffset)
                 onDismiss()
             } catch (e: Exception) {
@@ -434,7 +435,7 @@ fun LyricsEditorBottomSheet(
                                 )
                                 Spacer(modifier = Modifier.height(4.dp))
                                 Text(
-                                    text = "500ms",
+                                    text = stringResource(R.string.lyricseditorbottomsheet_str_500ms),
                                     style = MaterialTheme.typography.labelMedium,
                                     fontWeight = FontWeight.Bold
                                 )
@@ -482,7 +483,7 @@ fun LyricsEditorBottomSheet(
                                 )
                                 Spacer(modifier = Modifier.height(4.dp))
                                 Text(
-                                    text = "100ms",
+                                    text = stringResource(R.string.lyricseditorbottomsheet_str_100ms),
                                     style = MaterialTheme.typography.labelMedium,
                                     fontWeight = FontWeight.Bold
                                 )
@@ -530,7 +531,7 @@ fun LyricsEditorBottomSheet(
                                 )
                                 Spacer(modifier = Modifier.height(4.dp))
                                 Text(
-                                    text = "100ms",
+                                    text = stringResource(R.string.lyricseditorbottomsheet_str_100ms),
                                     style = MaterialTheme.typography.labelMedium,
                                     fontWeight = FontWeight.Bold
                                 )
@@ -578,7 +579,7 @@ fun LyricsEditorBottomSheet(
                                 )
                                 Spacer(modifier = Modifier.height(4.dp))
                                 Text(
-                                    text = "500ms",
+                                    text = stringResource(R.string.lyricseditorbottomsheet_str_500ms),
                                     style = MaterialTheme.typography.labelMedium,
                                     fontWeight = FontWeight.Bold
                                 )

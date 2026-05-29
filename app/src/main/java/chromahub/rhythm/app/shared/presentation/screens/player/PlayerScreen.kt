@@ -78,6 +78,8 @@ import chromahub.rhythm.app.shared.data.model.LyricsData
 import chromahub.rhythm.app.shared.data.model.PlaybackLocation
 import chromahub.rhythm.app.shared.data.model.Playlist
 import chromahub.rhythm.app.shared.data.model.Song
+import chromahub.rhythm.app.R
+import androidx.compose.ui.res.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -236,7 +238,7 @@ fun PlayerScreen(
                 )
             } else {
                 musicViewModel.cancelPendingLyricsWrite()
-                Toast.makeText(context, "Permission denied. Could not embed lyrics.", Toast.LENGTH_LONG).show()
+                Toast.makeText(context, R.string.materialplayerscreen_permission_denied_could_not, Toast.LENGTH_LONG).show()
             }
         }
 
@@ -455,7 +457,7 @@ fun PlayerScreen(
                             }
                             context.startActivity(android.content.Intent.createChooser(shareIntent, "Share ${currentSong.title}"))
                         } catch (_: Exception) {
-                            Toast.makeText(context, "Unable to share file", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, R.string.materialplayerscreen_unable_to_share_file, Toast.LENGTH_SHORT).show()
                         }
                     }
                 },
@@ -597,7 +599,7 @@ fun PlayerScreen(
                         .padding(bottom = 32.dp)
                 ) {
                     Text(
-                        text = "Select Artist",
+                        text = stringResource(R.string.playerscreen_select_artist),
                         style = MaterialTheme.typography.displayMedium,
                         fontWeight = FontWeight.Medium,
                         color = MaterialTheme.colorScheme.onSurface,
@@ -678,7 +680,7 @@ fun PlayerScreen(
                                         Box(contentAlignment = Alignment.Center) {
                                             Icon(
                                                 imageVector = RhythmIcons.Forward,
-                                                contentDescription = "Open Artist",
+                                                contentDescription = stringResource(R.string.playerscreen_open_artist),
                                                 modifier = Modifier.size(20.dp)
                                             )
                                         }

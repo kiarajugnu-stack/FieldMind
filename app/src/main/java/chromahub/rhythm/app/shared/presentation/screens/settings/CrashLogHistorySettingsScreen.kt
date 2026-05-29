@@ -200,7 +200,7 @@ fun CrashLogHistorySettingsScreen(onBackClick: () -> Unit, appSettings: AppSetti
                         ) {
                             Icon(
                                 imageVector = RhythmIcons.CheckCircle,
-                                contentDescription = "No crashes",
+                                contentDescription = stringResource(R.string.crashloghistorysettingsscreen_no_crashes),
                                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier.size(64.dp)
                             )
@@ -314,7 +314,7 @@ fun CrashLogHistorySettingsScreen(onBackClick: () -> Unit, appSettings: AppSetti
                         modifier = Modifier.size(18.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Close")
+                    Text(stringResource(R.string.ui_close))
                 }
             },
             shape = RoundedCornerShape(24.dp)

@@ -209,7 +209,7 @@ fun PlayerCustomizationSettingsScreen(onBackClick: () -> Unit) {
             item {
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
-                    text = "Player Theme",
+                    text = stringResource(R.string.playercustomizationsettingsscreen_player_theme),
                     style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
                     color = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
@@ -218,10 +218,10 @@ fun PlayerCustomizationSettingsScreen(onBackClick: () -> Unit) {
                     items = listOf(
                         Material3SettingsItem(
                             icon = MaterialSymbolIcon("palette"),
-                            title = { Text("Playback Theme") },
+                            title = { Text(stringResource(R.string.playercustomizationsettingsscreen_playback_theme)) },
                             description = {
                                 Column {
-                                    Text("Choose between Rhythm Default or Expressive theme")
+                                    Text(stringResource(R.string.miniplayercustomizationsettingsscreen_choose_between_rhythm_default))
                                     Spacer(modifier = Modifier.height(12.dp))
                                     ExpressiveButtonGroup(
                                         items = listOf(
@@ -277,7 +277,7 @@ fun PlayerCustomizationSettingsScreen(onBackClick: () -> Unit) {
             item {
                 Spacer(modifier = Modifier.height(24.dp))
                 Text(
-                    text = "Display Options",
+                    text = stringResource(R.string.settings_display_options),
                     style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
                     color = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
@@ -357,7 +357,7 @@ fun PlayerCustomizationSettingsScreen(onBackClick: () -> Unit) {
                                 hapticFeedback = haptics,
                                 item = SettingItem(
                                     icon = MaterialSymbolIcon("fullscreen", filled = true),
-                                    title = "Tap Lyrics for Immersive View",
+                                    title = stringResource(R.string.playercustomizationsettingsscreen_tap_lyrics_for_immersive),
                                     description = "Open a full-screen lyrics screen by tapping the lyrics view",
                                     toggleState = tapLyricsToFullScreen,
                                     onToggleChange = { appSettings.setTapLyricsToFullScreen(it) }
@@ -406,7 +406,7 @@ fun PlayerCustomizationSettingsScreen(onBackClick: () -> Unit) {
                                         verticalArrangement = Arrangement.spacedBy(12.dp)
                                     ) {
                                         Text(
-                                            text = "Art ↔ Lyrics switch animation",
+                                            text = stringResource(R.string.settings_lyrics_transition_desc),
                                             style = MaterialTheme.typography.bodyMedium,
                                             color = MaterialTheme.colorScheme.onSurfaceVariant
                                         )
@@ -467,7 +467,7 @@ fun PlayerCustomizationSettingsScreen(onBackClick: () -> Unit) {
                                 hapticFeedback = haptics,
                                 item = SettingItem(
                                     icon = MaterialSymbolIcon("format_align_center"),
-                                    title = "Lyrics Alignment",
+                                    title = stringResource(R.string.settings_lyrics_alignment),
                                     description = context.getString(R.string.settings_lyrics_alignment_desc)
                                 ),
                                 description = {
@@ -571,7 +571,7 @@ fun PlayerCustomizationSettingsScreen(onBackClick: () -> Unit) {
             item {
                 Spacer(modifier = Modifier.height(24.dp))
                 Text(
-                    text = "Progress Display",
+                    text = stringResource(R.string.settings_progress_display),
                     style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
                     color = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
@@ -608,7 +608,7 @@ fun PlayerCustomizationSettingsScreen(onBackClick: () -> Unit) {
                             hapticFeedback = haptics,
                             item = SettingItem(
                                 icon = MaterialSymbolIcon("linear_scale"),
-                                title = "Progress Style",
+                                title = stringResource(R.string.settings_miniplayer_progress_style),
                                 description = playerProgressStyle.lowercase().replaceFirstChar { it.uppercase() },
                                 onClick = { showPlayerProgressStyleSheet = true }
                             )
@@ -632,7 +632,7 @@ fun PlayerCustomizationSettingsScreen(onBackClick: () -> Unit) {
             item {
                 Spacer(modifier = Modifier.height(24.dp))
                 Text(
-                    text = "Artwork",
+                    text = stringResource(R.string.settings_artwork),
                     style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
                     color = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
@@ -645,21 +645,21 @@ fun PlayerCustomizationSettingsScreen(onBackClick: () -> Unit) {
                             item = if (isExpressiveActive) {
                                 SettingItem(
                                     icon = MaterialSymbolIcon("rounded_corner"),
-                                    title = "Corner Radius",
+                                    title = stringResource(R.string.settings_miniplayer_corner_radius),
                                     description = "Not supported by Expressive theme",
                                     enabled = false
                                 )
                             } else if (expressiveShapesEnabled) {
                                 SettingItem(
                                     icon = MaterialSymbolIcon("rounded_corner"),
-                                    title = "Corner Radius",
+                                    title = stringResource(R.string.settings_miniplayer_corner_radius),
                                     description = "Managed by Expressive Shapes",
                                     enabled = false
                                 )
                             } else {
                                 SettingItem(
                                     icon = MaterialSymbolIcon("rounded_corner"),
-                                    title = "Corner Radius",
+                                    title = stringResource(R.string.settings_miniplayer_corner_radius),
                                     description = "${playerArtworkCornerRadius}dp",
                                     onClick = { showCornerRadiusSheet = true }
                                 )
@@ -694,7 +694,7 @@ fun PlayerCustomizationSettingsScreen(onBackClick: () -> Unit) {
                             )
                             Spacer(modifier = Modifier.width(12.dp))
                             Text(
-                                text = "Player Screen",
+                                text = stringResource(R.string.settings_player_screen),
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onPrimaryContainer
@@ -749,7 +749,7 @@ fun PlayerCustomizationSettingsScreen(onBackClick: () -> Unit) {
                     .padding(bottom = 24.dp)
             ) {
                 Text(
-                    text = "Text Alignment",
+                    text = stringResource(R.string.settings_player_text_alignment),
                     style = MaterialTheme.typography.displayMedium,
                     fontWeight = FontWeight.Medium,
                     color = MaterialTheme.colorScheme.onSurface,
@@ -810,7 +810,7 @@ fun PlayerCustomizationSettingsScreen(onBackClick: () -> Unit) {
                             if (isSelected) {
                                 Icon(
                                     imageVector = RhythmIcons.Check,
-                                    contentDescription = "Selected",
+                                    contentDescription = stringResource(R.string.streaming_selected),
                                     modifier = Modifier.size(20.dp)
                                 )
                             }
@@ -826,7 +826,7 @@ fun PlayerCustomizationSettingsScreen(onBackClick: () -> Unit) {
     // Player Progress Style Bottom Sheet
     if (showPlayerProgressStyleSheet) {
         ProgressStyleBottomSheet(
-            title = "Progress Style",
+            title = stringResource(R.string.settings_miniplayer_progress_style),
             currentStyle = playerProgressStyle,
             onStyleSelected = { style ->
                 appSettings.setPlayerProgressStyle(style)
@@ -841,7 +841,7 @@ fun PlayerCustomizationSettingsScreen(onBackClick: () -> Unit) {
     // Player Thumb Style Bottom Sheet
     if (showPlayerThumbStyleSheet) {
         ThumbStyleBottomSheet(
-            title = "Thumb Style",
+            title = stringResource(R.string.settings_thumb_style),
             currentStyle = playerProgressThumbStyle,
             onStyleSelected = { style ->
                 appSettings.setPlayerProgressThumbStyle(style)
@@ -883,7 +883,7 @@ fun PlayerCustomizationSettingsScreen(onBackClick: () -> Unit) {
                 ) {
                     Column {
                         Text(
-                            text = "Corner Radius",
+                            text = stringResource(R.string.settings_miniplayer_corner_radius),
                             style = MaterialTheme.typography.displayMedium,
                             fontWeight = FontWeight.Medium,
                             color = MaterialTheme.colorScheme.onSurface
@@ -1021,7 +1021,7 @@ fun SettingRow(
         } else if (onClick != null) {
             Icon(
                 imageVector = MaterialSymbolIcon("arrow_forward_ios", filled = true),
-                contentDescription = "Navigate",
+                contentDescription = stringResource(R.string.cd_navigate),
                 modifier = Modifier.size(16.dp),
                 tint = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -1217,7 +1217,7 @@ fun ProgressStyleBottomSheet(
                                 Spacer(modifier = Modifier.height(4.dp))
                                 Icon(
                                     imageVector = RhythmIcons.Check,
-                                    contentDescription = "Selected",
+                                    contentDescription = stringResource(R.string.streaming_selected),
                                     
                                     modifier = Modifier.size(16.dp)
                                 )
@@ -1419,7 +1419,7 @@ fun ThumbStyleBottomSheet(
                                 Spacer(modifier = Modifier.height(4.dp))
                                 Icon(
                                     imageVector = RhythmIcons.Check,
-                                    contentDescription = "Selected",
+                                    contentDescription = stringResource(R.string.streaming_selected),
                                     
                                     modifier = Modifier.size(16.dp)
                                 )

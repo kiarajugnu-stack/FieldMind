@@ -57,6 +57,7 @@ import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveButt
 import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveGroupButton
 import chromahub.rhythm.app.util.HapticUtils
 import kotlinx.coroutines.launch
+import androidx.compose.ui.res.stringResource
 
 private fun groupedBottomSheetItemShape(index: Int, totalCount: Int): RoundedCornerShape {
     if (totalCount <= 1) return RoundedCornerShape(24.dp)
@@ -223,7 +224,7 @@ fun LibraryTabOrderBottomSheet(
                                 onClick = {
                                     // Prevent hiding the last visible tab
                                     if (!isHidden && visibleTabsCount <= 1) {
-                                        Toast.makeText(context, "At least one tab must be visible", Toast.LENGTH_SHORT).show()
+                                        Toast.makeText(context, R.string.library_tab_one_visible, Toast.LENGTH_SHORT).show()
                                         return@IconButton
                                     }
                                     HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
@@ -265,7 +266,7 @@ fun LibraryTabOrderBottomSheet(
                             ) {
                                 Icon(
                                     imageVector = RhythmIcons.ArrowUpward,
-                                    contentDescription = "Move up",
+                                    contentDescription = stringResource(R.string.settings_move_up),
                                     modifier = Modifier.size(20.dp)
                                 )
                             }
@@ -292,7 +293,7 @@ fun LibraryTabOrderBottomSheet(
                             ) {
                                 Icon(
                                     imageVector = RhythmIcons.ArrowDownward,
-                                    contentDescription = "Move down",
+                                    contentDescription = stringResource(R.string.settings_move_down),
                                     modifier = Modifier.size(20.dp)
                                 )
                             }
@@ -317,7 +318,7 @@ fun LibraryTabOrderBottomSheet(
                             appSettings.setHiddenLibraryTabs(emptySet())
                             reorderableList = listOf("SONGS", "PLAYLISTS", "ALBUMS", "ARTISTS", "EXPLORER")
                             hiddenTabsSet = emptySet()
-                            Toast.makeText(context, "Tab order and visibility reset to default", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, R.string.library_tab_order_reset, Toast.LENGTH_SHORT).show()
                         },
                         modifier = Modifier.weight(1f),
                         isStart = true
@@ -337,7 +338,7 @@ fun LibraryTabOrderBottomSheet(
                             HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
                             appSettings.setLibraryTabOrder(reorderableList)
                             appSettings.setHiddenLibraryTabs(hiddenTabsSet)
-                            Toast.makeText(context, "Tab order and visibility saved", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, R.string.library_tab_order_saved, Toast.LENGTH_SHORT).show()
                             scope.launch {
                                 sheetState.hide()
                             }.invokeOnCompletion {

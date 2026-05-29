@@ -37,6 +37,7 @@ import chromahub.rhythm.app.shared.presentation.components.Material3SettingsItem
 import chromahub.rhythm.app.shared.presentation.components.icons.Icon
 import chromahub.rhythm.app.shared.presentation.components.icons.RhythmIcons
 import chromahub.rhythm.app.util.HapticUtils
+import androidx.compose.ui.res.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -309,7 +310,7 @@ fun LicensesBottomSheet(
             Spacer(modifier = Modifier.height(24.dp))
 
             Material3SettingsGroup(
-                title = "Open Source Libraries",
+                title = stringResource(R.string.settings_about_open_source_libs),
                 items = licenseItems,
                 containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
             )
@@ -317,7 +318,7 @@ fun LicensesBottomSheet(
             Spacer(modifier = Modifier.height(16.dp))
 
             Material3SettingsGroup(
-                title = "License Notes",
+                title = stringResource(R.string.licensesbottomsheet_license_notes),
                 items = licenseInfoItems,
                 containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.3f)
             )

@@ -15,6 +15,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import chromahub.rhythm.app.R
+import androidx.compose.ui.res.stringResource
 
 /**
  * Preview components for Glance widgets
@@ -152,7 +154,7 @@ fun GlanceWidgetPreviewsScreen() {
                     .padding(16.dp)
             ) {
                 Text(
-                    text = "Rhythm Glance Widget Previews",
+                    text = stringResource(R.string.rhythmwidgetpreview_rhythm_glance_widget_previews),
                     style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.padding(bottom = 24.dp)
@@ -160,7 +162,7 @@ fun GlanceWidgetPreviewsScreen() {
                 
                 // 1x1 Widget
                 WidgetPreviewCard(
-                    title = "1×1 Compact Widget",
+                    title = stringResource(R.string.rhythmwidgetpreview_str_11_compact_widget),
                     size = "110 × 110 dp"
                 ) {
                     WidgetMockup(110, 110, "OneByOne")
@@ -170,7 +172,7 @@ fun GlanceWidgetPreviewsScreen() {
                 
                 // 1x2 Narrow Vertical Widget
                 WidgetPreviewCard(
-                    title = "1×2 Vertical Widget",
+                    title = stringResource(R.string.legacywidgetpreview_str_12_vertical_widget),
                     size = "110 × 220 dp"
                 ) {
                     WidgetMockup(110, 220, "Gabe")
@@ -180,7 +182,7 @@ fun GlanceWidgetPreviewsScreen() {
                 
                 // 2x1 Horizontal Strip Widget
                 WidgetPreviewCard(
-                    title = "2×1 Horizontal Strip",
+                    title = stringResource(R.string.rhythmwidgetpreview_str_21_horizontal_strip),
                     size = "250 × 80 dp"
                 ) {
                     WidgetMockup(250, 80, "Thin")
@@ -190,7 +192,7 @@ fun GlanceWidgetPreviewsScreen() {
                 
                 // 2x2 Small Widget
                 WidgetPreviewCard(
-                    title = "2×2 Small Widget",
+                    title = stringResource(R.string.rhythmwidgetpreview_str_22_small_widget),
                     size = "180 × 180 dp"
                 ) {
                     WidgetMockup(180, 180, "Small")
@@ -200,7 +202,7 @@ fun GlanceWidgetPreviewsScreen() {
                 
                 // 3x2 Medium Widget
                 WidgetPreviewCard(
-                    title = "3×2 Medium Widget",
+                    title = stringResource(R.string.legacywidgetpreview_str_32_medium_widget),
                     size = "250 × 150 dp"
                 ) {
                     WidgetMockup(250, 150, "Medium")
@@ -210,7 +212,7 @@ fun GlanceWidgetPreviewsScreen() {
                 
                 // 4x2 Large Widget
                 WidgetPreviewCard(
-                    title = "4×2 Large Widget",
+                    title = stringResource(R.string.rhythmwidgetpreview_str_42_large_widget),
                     size = "300 × 180 dp"
                 ) {
                     WidgetMockup(300, 180, "Large")
@@ -220,7 +222,7 @@ fun GlanceWidgetPreviewsScreen() {
                 
                 // 3x3 Extra Large Widget
                 WidgetPreviewCard(
-                    title = "3×3 Extra Large Widget",
+                    title = stringResource(R.string.rhythmwidgetpreview_str_33_extra_large_widget),
                     size = "300 × 220 dp"
                 ) {
                     WidgetMockup(300, 220, "ExtraLarge")
@@ -230,7 +232,7 @@ fun GlanceWidgetPreviewsScreen() {
                 
                 // 4x3 Extra Large Plus Widget
                 WidgetPreviewCard(
-                    title = "4×3 Extra Large Plus Widget",
+                    title = stringResource(R.string.rhythmwidgetpreview_str_43_extra_large_plus),
                     size = "350 × 260 dp"
                 ) {
                     WidgetMockup(350, 260, "ExtraLargePlus")
@@ -240,7 +242,7 @@ fun GlanceWidgetPreviewsScreen() {
                 
                 // 5x4 Huge Widget
                 WidgetPreviewCard(
-                    title = "5×4 Huge Widget",
+                    title = stringResource(R.string.rhythmwidgetpreview_str_54_huge_widget),
                     size = "400 × 300 dp"
                 ) {
                     WidgetMockup(400, 300, "Huge")
@@ -250,7 +252,7 @@ fun GlanceWidgetPreviewsScreen() {
                 
                 // Widget States Section
                 Text(
-                    text = "Widget States",
+                    text = stringResource(R.string.rhythmwidgetpreview_widget_states),
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.padding(bottom = 16.dp)
@@ -261,13 +263,13 @@ fun GlanceWidgetPreviewsScreen() {
                     horizontalArrangement = Arrangement.SpaceEvenly
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text("Playing", style = MaterialTheme.typography.labelMedium)
+                        Text(stringResource(R.string.rhythmwidgetpreview_playing), style = MaterialTheme.typography.labelMedium)
                         Spacer(modifier = Modifier.height(8.dp))
                         WidgetMockup(180, 180, "Playing")
                     }
                     
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text("Paused", style = MaterialTheme.typography.labelMedium)
+                        Text(stringResource(R.string.rhythmwidgetpreview_paused), style = MaterialTheme.typography.labelMedium)
                         Spacer(modifier = Modifier.height(8.dp))
                         WidgetMockup(180, 180, "Paused")
                     }
@@ -284,7 +286,7 @@ fun GlanceWidgetPreviewsScreen() {
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         Text(
-                            text = "Design Features",
+                            text = stringResource(R.string.rhythmwidgetpreview_design_features),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
                             modifier = Modifier.padding(bottom = 12.dp)

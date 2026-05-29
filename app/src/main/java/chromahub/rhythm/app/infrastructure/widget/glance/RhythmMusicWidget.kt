@@ -60,6 +60,7 @@ import androidx.datastore.preferences.core.booleanPreferencesKey
 import chromahub.rhythm.app.activities.MainActivity
 import chromahub.rhythm.app.R
 import androidx.glance.appwidget.ImageProvider
+import androidx.compose.ui.res.stringResource
 
 /**
  * Modern Glance-based Music Widget with Material 3 Expressive Design
@@ -1250,7 +1251,7 @@ class RhythmMusicWidget : GlanceAppWidget() {
             if (bitmap.value != null) {
                 Image(
                     provider = ImageProvider(bitmap.value!!),
-                    contentDescription = "Album Art",
+                    contentDescription = stringResource(R.string.settings_shapes_album_art),
                     modifier = GlanceModifier.fillMaxSize().cornerRadius(cornerRadius),
                     contentScale = ContentScale.Crop
                 )
@@ -1272,7 +1273,7 @@ class RhythmMusicWidget : GlanceAppWidget() {
         ) {
             Image(
                 provider = ImageProvider(R.drawable.ic_music_note),
-                contentDescription = "Album Art Placeholder",
+                contentDescription = stringResource(R.string.rhythmmusicwidget_album_art_placeholder),
                 modifier = GlanceModifier.size(placeholderSize),
                 contentScale = ContentScale.Fit,
                 colorFilter = ColorFilter.tint(GlanceTheme.colors.onPrimaryContainer)
@@ -1322,7 +1323,7 @@ class RhythmMusicWidget : GlanceAppWidget() {
         ) {
             Image(
                 provider = ImageProvider(R.drawable.ic_skip_next),
-                contentDescription = "Next",
+                contentDescription = stringResource(R.string.onboarding_next),
                 modifier = GlanceModifier.size(iconSize),
                 colorFilter = ColorFilter.tint(iconColor)
             )
@@ -1346,7 +1347,7 @@ class RhythmMusicWidget : GlanceAppWidget() {
         ) {
             Image(
                 provider = ImageProvider(R.drawable.ic_skip_previous),
-                contentDescription = "Previous",
+                contentDescription = stringResource(R.string.animatedplaybackcontrols_previous),
                 modifier = GlanceModifier.size(iconSize),
                 colorFilter = ColorFilter.tint(iconColor)
             )
@@ -1395,7 +1396,7 @@ class RhythmMusicWidget : GlanceAppWidget() {
                 provider = ImageProvider(
                     if (isFavorite) R.drawable.ic_favorite_filled else R.drawable.ic_favorite_border
                 ),
-                contentDescription = "Favorite",
+                contentDescription = stringResource(R.string.player_chip_favorite),
                 modifier = GlanceModifier.size(20.dp),
                 colorFilter = ColorFilter.tint(iconColor)
             )

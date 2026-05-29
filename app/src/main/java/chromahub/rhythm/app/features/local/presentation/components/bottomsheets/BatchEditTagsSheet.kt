@@ -65,6 +65,8 @@ import chromahub.rhythm.app.util.MediaUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
+import chromahub.rhythm.app.R
+import androidx.compose.ui.res.stringResource
 
 private fun resolveBatchEditArtworkUri(context: android.content.Context, song: Song): Uri? {
     val currentArtworkUri = song.artworkUri
@@ -190,7 +192,7 @@ fun BatchEditTagsSheet(
 
     fun submitBatchChanges() {
         if (!editArtist && !editAlbum && !editGenre && !editYear && !editArtwork) {
-            Toast.makeText(context, "Enable at least one field to edit", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, R.string.batchedittagssheet_enable_at_least_one, Toast.LENGTH_SHORT).show()
             return
         }
         val hasValidInput = (editArtist && artist.trim().isNotBlank()) ||
@@ -200,7 +202,7 @@ fun BatchEditTagsSheet(
             (editArtwork && (selectedImageUri != null || removeArtwork))
 
         if (!hasValidInput) {
-            Toast.makeText(context, "Please enter a value for at least one enabled field", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, R.string.batchedittagssheet_please_enter_a_value, Toast.LENGTH_SHORT).show()
             return
         }
 
@@ -229,7 +231,7 @@ fun BatchEditTagsSheet(
                 .padding(vertical = 8.dp)
         ) {
             StandardBottomSheetHeader(
-                title = "Batch Edit Tags",
+                title = stringResource(R.string.batchedittagssheet_batch_edit_tags),
                 subtitle = "${selectedSongs.size} songs selected • $enabledFieldCount fields enabled",
                 visible = true,
                 modifier = Modifier.padding(horizontal = 0.dp, vertical = 0.dp)
@@ -270,7 +272,7 @@ fun BatchEditTagsSheet(
                                 modifier = Modifier.size(18.dp)
                             )
                             Text(
-                                text = "Enable fields you want to update. Disabled fields stay unchanged.",
+                                text = stringResource(R.string.batchedittagssheet_enable_fields_you_want),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -292,7 +294,7 @@ fun BatchEditTagsSheet(
                             verticalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
                             Text(
-                                text = "Tags",
+                                text = stringResource(R.string.batchedittagssheet_tags),
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.SemiBold,
                                 color = MaterialTheme.colorScheme.onSurface
@@ -363,7 +365,7 @@ fun BatchEditTagsSheet(
                                 },
                                 onValueChange = {},
                                 readOnly = true,
-                                label = { Text("Artwork") },
+                                label = { Text(stringResource(R.string.settings_artwork)) },
                                 leadingIcon = {
                                     Icon(
                                         imageVector = RhythmIcons.Image,
@@ -413,7 +415,7 @@ fun BatchEditTagsSheet(
                                                 )
                                                 .crossfade(true)
                                                 .build(),
-                                            contentDescription = "Batch artwork preview",
+                                            contentDescription = stringResource(R.string.batchedittagssheet_batch_artwork_preview),
                                             modifier = Modifier.fillMaxWidth(),
                                             contentScale = ContentScale.Crop
                                         )
@@ -452,7 +454,7 @@ fun BatchEditTagsSheet(
                                                 modifier = Modifier.size(18.dp)
                                             )
                                             Spacer(modifier = Modifier.width(6.dp))
-                                            Text("Remove")
+                                            Text(stringResource(R.string.content_desc_remove))
                                         }
                                     }
                                 }
@@ -503,7 +505,7 @@ fun BatchEditTagsSheet(
                         modifier = Modifier.size(18.dp)
                     )
                     Spacer(modifier = Modifier.width(6.dp))
-                    Text("Cancel")
+                    Text(stringResource(R.string.ui_cancel))
                 }
 
                 ExpressiveGroupButton(
@@ -518,7 +520,7 @@ fun BatchEditTagsSheet(
                         modifier = Modifier.size(18.dp)
                     )
                     Spacer(modifier = Modifier.width(6.dp))
-                    Text("Apply")
+                    Text(stringResource(R.string.ui_apply))
                 }
             }
 

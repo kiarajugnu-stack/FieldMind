@@ -62,6 +62,7 @@ import chromahub.rhythm.app.util.M3ImageUtils
 import chromahub.rhythm.app.util.HapticUtils
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import androidx.compose.ui.res.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class, ExperimentalFoundationApi::class)
 @Composable
@@ -498,7 +499,7 @@ private fun TopSongsList(
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         Text(
-            text = "Top Songs",
+            text = stringResource(R.string.rhythmstatsscreen_top_songs),
             style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onSurface
@@ -529,7 +530,7 @@ private fun TopArtistsList(
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         Text(
-            text = "Top Artists",
+            text = stringResource(R.string.settings_top_artists),
             style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onSurface
@@ -797,7 +798,7 @@ private fun ListeningHabitsCard(
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
             Text(
-                text = "Listening Habits",
+                text = stringResource(R.string.rhythmstatsscreen_listening_habits),
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface
@@ -861,7 +862,7 @@ private fun BeatTimelineCard(timeline: List<PlaybackStatsRepository.TimelineEntr
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Text(
-                text = "Listening Timeline",
+                text = stringResource(R.string.rhythmstatsscreen_listening_timeline),
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface
@@ -939,7 +940,7 @@ private fun RatingStatsCard(viewModel: MusicViewModel) {
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Text(
-                text = "Song Ratings",
+                text = stringResource(R.string.settings_song_ratings),
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface
@@ -983,14 +984,14 @@ private fun RatingStatsCard(viewModel: MusicViewModel) {
                     if ((ratingDistribution[5] ?: 0) > 0) {
                         AssistChip(
                             onClick = { viewModel.playRatingPlaylist(5, shuffled = false) },
-                            label = { Text("Favorites") },
+                            label = { Text(stringResource(R.string.rhythmstatsscreen_favorites)) },
                             leadingIcon = { Icon(MaterialSymbolIcon("star"), contentDescription = null, modifier = Modifier.size(16.dp)) }
                         )
                     }
                     if (totalRated > 0) {
                         AssistChip(
                             onClick = { viewModel.playMinimumRatingPlaylist(4, shuffled = false) },
-                            label = { Text("Loved (4+)") },
+                            label = { Text(stringResource(R.string.rhythmstatsscreen_loved_4)) },
                             leadingIcon = { Icon(RhythmIcons.Favorite, contentDescription = null, modifier = Modifier.size(16.dp)) }
                         )
                     }
@@ -1014,13 +1015,13 @@ private fun EmptyStatsView() {
             tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
         )
         Text(
-            text = "No stats available yet",
+            text = stringResource(R.string.rhythmstatsscreen_no_stats_available_yet),
             style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onSurface
         )
         Text(
-            text = "Keep listening to build your musical journey!",
+            text = stringResource(R.string.rhythmstatsscreen_keep_listening_to_build),
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center

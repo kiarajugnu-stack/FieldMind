@@ -71,6 +71,7 @@ import chromahub.rhythm.app.shared.presentation.components.common.RhythmWavyProg
 import chromahub.rhythm.app.ui.theme.RhythmTheme
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import androidx.compose.ui.res.stringResource
 
 class RhythmGuardTimeoutActivity : ComponentActivity() {
 
@@ -269,7 +270,7 @@ private fun RhythmGuardTimeoutScreen(
                     ) {
                         Icon(
                             imageVector = RhythmIcons.Security,
-                            contentDescription = "Rhythm Guard",
+                            contentDescription = stringResource(R.string.settings_rhythm_guard),
                             tint = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.size(56.dp)
                         )
@@ -382,7 +383,7 @@ private fun RhythmGuardTimeoutScreen(
                         ) {
                             Image(
                                 painter = painterResource(id = R.drawable.rhythm_splash_logo),
-                                contentDescription = "Rhythm Logo",
+                                contentDescription = stringResource(R.string.updates_rhythm_logo_cd),
                                 modifier = Modifier.size(80.dp)
                             )
                         }
@@ -401,7 +402,7 @@ private fun RhythmGuardTimeoutScreen(
                         ) + fadeIn(animationSpec = tween(800, delayMillis = 200))
                     ) {
                         Text(
-                            text = "Rhythm",
+                            text = stringResource(R.string.cd_rhythm_splash),
                             style = MaterialTheme.typography.displaySmall,
                             color = MaterialTheme.colorScheme.onBackground,
                             fontWeight = FontWeight.Bold

@@ -326,6 +326,7 @@ import androidx.compose.animation.shrinkVertically
 import chromahub.rhythm.app.shared.presentation.components.bottomsheets.AutoEQPresetPickerBottomSheet
 import chromahub.rhythm.app.shared.presentation.components.bottomsheets.DeviceConfigurationBottomSheet
 import chromahub.rhythm.app.shared.data.model.AutoEQProfile
+import androidx.compose.ui.res.stringResource
 
 data class EqualizerPreset(
     val name: String,
@@ -472,7 +473,7 @@ fun EqualizerScreen(
     )
 
     CollapsibleHeaderScreen(
-        title = "Equalizer",
+        title = stringResource(R.string.player_chip_equalizer),
         showBackButton = true,
         onBackClick = { navController.popBackStack() },
         actions = {
@@ -490,7 +491,7 @@ fun EqualizerScreen(
             ) {
                 Icon(
                     imageVector = RhythmIcons.More,
-                    contentDescription = "More options",
+                    contentDescription = stringResource(R.string.content_desc_more_options),
                     modifier = Modifier.size(20.dp)
                 )
             }
@@ -713,7 +714,7 @@ fun EqualizerScreen(
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Text(
-                                text = "Presets",
+                                text = stringResource(R.string.settings_presets),
                                 style = MaterialTheme.typography.titleLarge,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onSurface
@@ -726,11 +727,11 @@ fun EqualizerScreen(
                                 ) {
                                     Icon(
                                         imageVector = RhythmIcons.Refresh,
-                                        contentDescription = "Reset to Flat",
+                                        contentDescription = stringResource(R.string.equalizerscreen_reset_to_flat),
                                         modifier = Modifier.size(16.dp)
                                     )
                                     Spacer(modifier = Modifier.width(6.dp))
-                                    Text("Reset", style = MaterialTheme.typography.labelLarge)
+                                    Text(stringResource(R.string.ui_reset), style = MaterialTheme.typography.labelLarge)
                                 }
                             }
                         }
@@ -983,7 +984,7 @@ fun EqualizerScreen(
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         ExpressiveEffectCard(
-                            title = "Bass Boost",
+                            title = stringResource(R.string.settings_bass_boost),
                             icon = RhythmIcons.SpeakerFilled,
                             value = bassBoostStrength,
                             valueRange = 0f..1000f,
@@ -1013,7 +1014,7 @@ fun EqualizerScreen(
                         )
 
                         ExpressiveEffectCard(
-                            title = "Spatial Audio",
+                            title = stringResource(R.string.virtualizer),
                             icon = RhythmIcons.HeadphonesFilled,
                             value = virtualizerStrength,
                             valueRange = 0f..1000f,
@@ -1052,7 +1053,7 @@ fun EqualizerScreen(
                     exit = fadeOut() + shrinkVertically()
                 ) {
                     Material3SettingsGroup(
-                        title = "Advanced",
+                        title = stringResource(R.string.settings_section_advanced),
                         containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
                         items = listOf(
                             Material3SettingsItem(
@@ -1060,10 +1061,10 @@ fun EqualizerScreen(
                                 iconTint = MaterialTheme.colorScheme.onPrimaryContainer,
                                 iconBackgroundTint = MaterialTheme.colorScheme.primaryContainer,
                                 title = {
-                                    Text("AutoEQ Profiles", fontWeight = FontWeight.SemiBold)
+                                    Text(stringResource(R.string.equalizerscreen_autoeq_profiles), fontWeight = FontWeight.SemiBold)
                                 },
                                 description = {
-                                    Text("Apply headphone-specific equalization")
+                                    Text(stringResource(R.string.equalizerscreen_apply_headphonespecific_equalization))
                                 },
                                 onClick = {
                                     HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
@@ -1075,10 +1076,10 @@ fun EqualizerScreen(
                                 iconTint = MaterialTheme.colorScheme.onSecondaryContainer,
                                 iconBackgroundTint = MaterialTheme.colorScheme.secondaryContainer,
                                 title = {
-                                    Text("Manage AutoEQ", fontWeight = FontWeight.SemiBold)
+                                    Text(stringResource(R.string.autoeq_manage), fontWeight = FontWeight.SemiBold)
                                 },
                                 description = {
-                                    Text("Import, export, and organize profiles")
+                                    Text(stringResource(R.string.equalizerscreen_import_export_and_organize))
                                 },
                                 onClick = {
                                     HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
@@ -1090,10 +1091,10 @@ fun EqualizerScreen(
                                 iconTint = MaterialTheme.colorScheme.onTertiaryContainer,
                                 iconBackgroundTint = MaterialTheme.colorScheme.tertiaryContainer,
                                 title = {
-                                    Text("System Equalizer", fontWeight = FontWeight.SemiBold)
+                                    Text(stringResource(R.string.system_equalizer), fontWeight = FontWeight.SemiBold)
                                 },
                                 description = {
-                                    Text("Access Android's built-in settings")
+                                    Text(stringResource(R.string.equalizerscreen_access_androids_builtin_settings))
                                 },
                                 onClick = {
                                     HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)

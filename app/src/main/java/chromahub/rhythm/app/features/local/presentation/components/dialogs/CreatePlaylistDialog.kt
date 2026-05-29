@@ -42,6 +42,7 @@ import androidx.compose.ui.window.Dialog
 import chromahub.rhythm.app.R
 import chromahub.rhythm.app.shared.data.model.Song
 import chromahub.rhythm.app.util.HapticUtils
+import androidx.compose.ui.res.stringResource
 
 @Composable
 fun CreatePlaylistDialog(
@@ -80,7 +81,7 @@ fun CreatePlaylistDialog(
                         playlistName = it
                         isError = it.isBlank()
                     },
-                    label = { Text("Playlist Name") },
+                    label = { Text(stringResource(R.string.playlist_name_field)) },
                     isError = isError,
                     supportingText = {
                         if (isError) {
@@ -137,7 +138,7 @@ fun CreatePlaylistDialog(
                     modifier = Modifier.size(18.dp)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("Create")
+                Text(stringResource(R.string.action_create))
             }
         },
         dismissButton = {
@@ -148,7 +149,7 @@ fun CreatePlaylistDialog(
                     modifier = Modifier.size(18.dp)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("Cancel")
+                Text(stringResource(R.string.ui_cancel))
             }
         },
         shape = RoundedCornerShape(24.dp)
@@ -178,7 +179,7 @@ fun QueueActionDialog(
         },
         title = {
             Text(
-                text = "Queue Not Empty",
+                text = stringResource(R.string.playlist_queue_not_empty),
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold
             )
@@ -302,7 +303,7 @@ fun QueueActionDialog(
                     modifier = Modifier.size(18.dp)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("Cancel")
+                Text(stringResource(R.string.ui_cancel))
             }
         },
         shape = RoundedCornerShape(24.dp)

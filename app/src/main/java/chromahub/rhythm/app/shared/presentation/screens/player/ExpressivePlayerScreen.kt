@@ -106,6 +106,7 @@ import kotlinx.coroutines.withContext
 import kotlinx.coroutines.Dispatchers
 import androidx.compose.runtime.produceState
 import kotlin.math.abs
+import androidx.compose.ui.res.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -384,7 +385,7 @@ fun ExpressivePlayerScreen(
                         ) {
                             Icon(
                                 imageVector = RhythmIcons.Info,
-                                contentDescription = "Song Info",
+                                contentDescription = stringResource(R.string.action_song_info),
                                 modifier = Modifier.size(24.dp)
                             )
                         }
@@ -400,7 +401,7 @@ fun ExpressivePlayerScreen(
                         ) {
                             Icon(
                                 imageVector = RhythmIcons.More,
-                                contentDescription = "More",
+                                contentDescription = stringResource(R.string.expressiveplayerscreen_more),
                                 modifier = Modifier.size(24.dp)
                             )
                         }
@@ -574,7 +575,7 @@ fun ExpressivePlayerScreen(
                                 ) {
                                     M3ImageUtils.M3MediaImage(
                                         data = song?.artworkUri,
-                                        contentDescription = "Album Artwork",
+                                        contentDescription = stringResource(R.string.content_desc_album_artwork),
                                         modifier = Modifier.fillMaxSize(),
                                         shape = artworkClipShape,
                                         type = M3PlaceholderType.TRACK,
@@ -665,7 +666,7 @@ fun ExpressivePlayerScreen(
                             ) {
                                 Icon(
                                     imageVector = RhythmIcons.Player.Lyrics,
-                                    contentDescription = "Lyrics",
+                                    contentDescription = stringResource(R.string.player_chip_lyrics),
                                     modifier = Modifier.size(25.dp)
                                 )
                             }
@@ -681,7 +682,7 @@ fun ExpressivePlayerScreen(
                             ) {
                                 Icon(
                                     imageVector = if (isFavorite) RhythmIcons.FavoriteFilled else RhythmIcons.Favorite,
-                                    contentDescription = "Toggle Favorite",
+                                    contentDescription = stringResource(R.string.cd_toggle_favorite),
                                     modifier = Modifier.size(26.dp)
                                 )
                             }
@@ -736,7 +737,7 @@ fun ExpressivePlayerScreen(
                                 ) {
                                     Icon(
                                         imageVector = RhythmIcons.Player.SkipNext,
-                                        contentDescription = "Next Track",
+                                        contentDescription = stringResource(R.string.cd_next_track),
                                         modifier = Modifier.padding(if (isCompactWidth) 16.dp else 24.dp),
                                         tint = secondaryButtonOnColor
                                     )
@@ -758,7 +759,7 @@ fun ExpressivePlayerScreen(
                                 ) {
                                     Icon(
                                         imageVector = RhythmIcons.Player.SkipPrevious,
-                                        contentDescription = "Previous Track",
+                                        contentDescription = stringResource(R.string.cd_previous_track),
                                         modifier = Modifier.padding(if (isCompactWidth) 16.dp else 24.dp),
                                         tint = secondaryButtonOnColor
                                     )
@@ -921,7 +922,7 @@ fun ExpressivePlayerScreen(
                                 ) {
                                     Icon(
                                         imageVector = deviceIcon,
-                                        contentDescription = "Device",
+                                        contentDescription = stringResource(R.string.expressiveplayerscreen_device),
                                         modifier = Modifier.size(20.dp),
                                         tint = MaterialTheme.colorScheme.primary
                                     )
@@ -948,7 +949,7 @@ fun ExpressivePlayerScreen(
                                 ) {
                                     Icon(
                                         imageVector = RhythmIcons.Queue,
-                                        contentDescription = "Queue",
+                                        contentDescription = stringResource(R.string.bottomsheet_queue),
                                         modifier = Modifier.size(20.dp),
                                         tint = MaterialTheme.colorScheme.primary
                                     )
@@ -1053,7 +1054,7 @@ private fun RhythmPlayerLyricsPanel(
                                     modifier = Modifier.size(18.dp)
                                 )
                                 Spacer(modifier = Modifier.width(8.dp))
-                                Text("Retry")
+                                Text(stringResource(R.string.updates_retry))
                             }
                             ExpressiveGroupButton(
                                 onClick = {
@@ -1073,7 +1074,7 @@ private fun RhythmPlayerLyricsPanel(
                                     modifier = Modifier.size(18.dp)
                                 )
                                 Spacer(modifier = Modifier.width(8.dp))
-                                Text("Add")
+                                Text(stringResource(R.string.button_add))
                             }
                             ExpressiveGroupButton(
                                 onClick = {
@@ -1093,7 +1094,7 @@ private fun RhythmPlayerLyricsPanel(
                                     modifier = Modifier.size(18.dp)
                                 )
                                 Spacer(modifier = Modifier.width(8.dp))
-                                Text("Load")
+                                Text(stringResource(R.string.expressiveplayerscreen_load))
                             }
                         }
                     }

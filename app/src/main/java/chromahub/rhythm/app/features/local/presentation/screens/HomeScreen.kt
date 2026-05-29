@@ -204,6 +204,7 @@ import kotlin.math.absoluteValue
 import java.util.Calendar
 import kotlin.random.Random
 import androidx.core.text.HtmlCompat
+import androidx.compose.ui.res.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
@@ -272,7 +273,7 @@ fun HomeScreen(
         if (result.resultCode == android.app.Activity.RESULT_OK) {
             musicViewModel.completeMetadataWriteAfterPermission(
                 onSuccess = {
-                    Toast.makeText(context, "Metadata saved successfully!", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, R.string.localnavigation_metadata_saved_successfully, Toast.LENGTH_SHORT).show()
                 },
                 onError = { errorMessage ->
                     Toast.makeText(context, errorMessage, Toast.LENGTH_LONG).show()
@@ -280,7 +281,7 @@ fun HomeScreen(
             )
         } else {
             musicViewModel.cancelPendingMetadataWrite()
-            Toast.makeText(context, "Permission denied. Changes saved to library only.", Toast.LENGTH_LONG).show()
+            Toast.makeText(context, R.string.localnavigation_permission_denied_changes_saved, Toast.LENGTH_LONG).show()
         }
     }
 
@@ -414,7 +415,7 @@ fun HomeScreen(
                     removeArtwork = removeArtwork,
                     onSuccess = { fileWriteSucceeded ->
                         if (fileWriteSucceeded) {
-                            Toast.makeText(context, "Metadata saved successfully to file!", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, R.string.localnavigation_metadata_saved_successfully_to, Toast.LENGTH_SHORT).show()
                         }
                     },
                     onError = { errorMessage ->
@@ -2128,7 +2129,7 @@ private fun ModernListeningStatsSection(
             IconButton(onClick = onClick) {
                 Icon(
                     imageVector = MaterialSymbolIcon("arrow_forward", filled = true),
-                    contentDescription = "View all stats",
+                    contentDescription = stringResource(R.string.homescreen_view_all_stats),
                     tint = MaterialTheme.colorScheme.primary
                 )
             }
@@ -2156,7 +2157,7 @@ private fun ModernListeningStatsSection(
                     color = MaterialTheme.colorScheme.onPrimaryContainer
                 )
                 Text(
-                    text = "Total Listening Time",
+                    text = stringResource(R.string.stats_total_listening_time),
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
                 )
@@ -2189,7 +2190,7 @@ private fun ModernListeningStatsSection(
                         color = MaterialTheme.colorScheme.onSecondaryContainer
                     )
                     Text(
-                        text = "Plays",
+                        text = stringResource(R.string.homescreen_plays),
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.8f)
                     )
@@ -2218,7 +2219,7 @@ private fun ModernListeningStatsSection(
                         color = MaterialTheme.colorScheme.onTertiaryContainer
                     )
                     Text(
-                        text = "Artists",
+                        text = stringResource(R.string.settings_tab_artists),
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.8f)
                     )
@@ -2352,7 +2353,7 @@ private fun ModernRecommendedSection(
                             shape = RoundedCornerShape(24.dp)
                         ) {
                             Text(
-                                text = "Play",
+                                text = stringResource(R.string.cd_play),
                                 style = MaterialTheme.typography.titleMedium.copy(
                                     fontWeight = FontWeight.Bold
                                 )
@@ -2493,7 +2494,7 @@ private fun RecommendedSongItem(
         ) {
             Icon(
                 imageVector = RhythmIcons.Play,
-                contentDescription = "Play",
+                contentDescription = stringResource(R.string.cd_play),
                 modifier = Modifier.size(25.dp)
             )
         }

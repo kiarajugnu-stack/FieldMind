@@ -57,6 +57,7 @@ import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveButt
 import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveGroupButton
 import chromahub.rhythm.app.util.HapticUtils
 import kotlinx.coroutines.launch
+import androidx.compose.ui.res.stringResource
 
 private const val STREAMING_SECTION_DISCOVER = "DISCOVER"
 private const val STREAMING_SECTION_ARTISTS = "ARTISTS"
@@ -247,7 +248,7 @@ fun StreamingHomeSectionOrderBottomSheet(
                                         color = MaterialTheme.colorScheme.onSurface
                                     )
                                     Text(
-                                        text = "Fixed position",
+                                        text = stringResource(R.string.homesectionorderbottomsheet_fixed_position),
                                         style = MaterialTheme.typography.labelSmall,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
@@ -343,7 +344,7 @@ fun StreamingHomeSectionOrderBottomSheet(
                                 IconButton(
                                     onClick = {
                                         if (isVisible && visibleSectionsCount <= 1) {
-                                            Toast.makeText(context, "At least one section must be visible", Toast.LENGTH_SHORT).show()
+                                            Toast.makeText(context, R.string.home_section_one_visible, Toast.LENGTH_SHORT).show()
                                             return@IconButton
                                         }
                                         HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
@@ -382,7 +383,7 @@ fun StreamingHomeSectionOrderBottomSheet(
                                 ) {
                                     Icon(
                                         imageVector = RhythmIcons.ArrowUpward,
-                                        contentDescription = "Move up",
+                                        contentDescription = stringResource(R.string.settings_move_up),
                                         modifier = Modifier.size(20.dp)
                                     )
                                 }
@@ -408,7 +409,7 @@ fun StreamingHomeSectionOrderBottomSheet(
                                 ) {
                                     Icon(
                                         imageVector = RhythmIcons.ArrowDownward,
-                                        contentDescription = "Move down",
+                                        contentDescription = stringResource(R.string.settings_move_down),
                                         modifier = Modifier.size(20.dp)
                                     )
                                 }
@@ -441,7 +442,7 @@ fun StreamingHomeSectionOrderBottomSheet(
                                 STREAMING_SECTION_RECENTLY_PLAYED to true,
                                 STREAMING_SECTION_NEW_RELEASES to true
                             )
-                            Toast.makeText(context, "Streaming section order and visibility reset to default", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, R.string.streaminghomesectionorderbottomsheet_streaming_section_order_and, Toast.LENGTH_SHORT).show()
                         },
                         modifier = Modifier.weight(1f),
                         isStart = true
@@ -467,7 +468,7 @@ fun StreamingHomeSectionOrderBottomSheet(
                             appSettings.setStreamingHomeShowRecentlyPlayed(visibilityMap[STREAMING_SECTION_RECENTLY_PLAYED] ?: true)
                             appSettings.setStreamingHomeShowNewReleases(visibilityMap[STREAMING_SECTION_NEW_RELEASES] ?: true)
 
-                            Toast.makeText(context, "Streaming section order and visibility saved", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, R.string.streaminghomesectionorderbottomsheet_streaming_section_order_and_1, Toast.LENGTH_SHORT).show()
                             scope.launch {
                                 sheetState.hide()
                             }.invokeOnCompletion {

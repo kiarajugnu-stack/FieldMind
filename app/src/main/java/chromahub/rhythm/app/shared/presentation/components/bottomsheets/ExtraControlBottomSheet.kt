@@ -53,6 +53,8 @@ import chromahub.rhythm.app.shared.data.model.LyricsData
 import chromahub.rhythm.app.util.HapticUtils
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import chromahub.rhythm.app.R
+import androidx.compose.ui.res.stringResource
 
 private data class ControlAction(
     val icon: MaterialSymbolIcon,
@@ -290,7 +292,7 @@ fun ExtraControlBottomSheet(
                         .padding(horizontal = 20.dp, vertical = 16.dp)
                 ) {
                     Text(
-                        text = "Player Controls",
+                        text = stringResource(R.string.settings_shapes_player_controls),
                         style = MaterialTheme.typography.displayMedium,
                         fontWeight = FontWeight.Medium,
                         color = MaterialTheme.colorScheme.onSurface
@@ -306,7 +308,7 @@ fun ExtraControlBottomSheet(
                         Text(
                             modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
                             style = MaterialTheme.typography.labelLarge,
-                            text = "More actions",
+                            text = stringResource(R.string.libraryscreen_more_actions),
                             color = MaterialTheme.colorScheme.onSurface
                         )
                     }

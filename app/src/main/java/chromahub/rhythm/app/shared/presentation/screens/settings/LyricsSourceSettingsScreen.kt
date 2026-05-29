@@ -299,7 +299,7 @@ fun LyricsSourceSettingsScreen(onBackClick: () -> Unit) {
                         if (isSelected) {
                             Icon(
                                 imageVector = RhythmIcons.CheckCircle,
-                                contentDescription = "Selected",
+                                contentDescription = stringResource(R.string.streaming_selected),
                                 
                                 modifier = Modifier.size(28.dp)
                             )
@@ -311,7 +311,7 @@ fun LyricsSourceSettingsScreen(onBackClick: () -> Unit) {
             item {
                 Spacer(modifier = Modifier.height(24.dp))
                 Text(
-                    text = "Online API Options",
+                    text = stringResource(R.string.lyricssourcesettingsscreen_online_api_options),
                     style = MaterialTheme.typography.titleSmall.copy(
                         fontWeight = FontWeight.SemiBold
                     ),
@@ -326,14 +326,14 @@ fun LyricsSourceSettingsScreen(onBackClick: () -> Unit) {
                     items = listOf(
                         Material3SettingsItem(
                             icon = MaterialSymbolIcon("lyrics"),
-                            title = { Text("Lyrics API Priority") },
+                            title = { Text(stringResource(R.string.lyricssourcesettingsscreen_lyrics_api_priority)) },
                             description = {
                                 Column(
                                     modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
                                     verticalArrangement = Arrangement.spacedBy(12.dp)
                                 ) {
                                     Text(
-                                        text = "Choose which online lyrics API to search first",
+                                        text = stringResource(R.string.lyricssourcesettingsscreen_choose_which_online_lyrics),
                                         style = MaterialTheme.typography.bodyMedium,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
@@ -359,7 +359,7 @@ fun LyricsSourceSettingsScreen(onBackClick: () -> Unit) {
                             hapticFeedback = hapticFeedback,
                             item = SettingItem(
                                 icon = MaterialSymbolIcon("compare_arrows"),
-                                title = "Retry using fallbacks",
+                                title = stringResource(R.string.lyricssourcesettingsscreen_retry_using_fallbacks),
                                 description = "Attempt fallback APIs if the preferred API fails to return lyrics",
                                 toggleState = apiFallback,
                                 onToggleChange = { appSettings.setLyricsApiFallbackRetry(it) }
@@ -393,7 +393,7 @@ fun LyricsSourceSettingsScreen(onBackClick: () -> Unit) {
                             )
                             Spacer(modifier = Modifier.width(12.dp))
                             Text(
-                                text = "About Lyrics Sources",
+                                text = stringResource(R.string.settings_about_lyrics_sources),
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onTertiaryContainer
@@ -401,7 +401,7 @@ fun LyricsSourceSettingsScreen(onBackClick: () -> Unit) {
                         }
 
                         Text(
-                            text = "• Embedded lyrics are stored in your audio files\n" +
+                            text = stringResource(R.string.lyricssourcesettingsscreen_embedded_lyrics_are_stored) +
                                     "• Online APIs provide high-quality synced lyrics\n" +
                                 "• Rhythm offers word-by-word sync\n" +
                                     "• LRCLib provides free line-by-line sync",

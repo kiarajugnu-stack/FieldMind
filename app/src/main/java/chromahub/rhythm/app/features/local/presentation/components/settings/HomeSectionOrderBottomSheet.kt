@@ -58,6 +58,7 @@ import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveButt
 import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveGroupButton
 import chromahub.rhythm.app.util.HapticUtils
 import kotlinx.coroutines.launch
+import androidx.compose.ui.res.stringResource
 
 private fun groupedBottomSheetItemShape(index: Int, totalCount: Int): RoundedCornerShape {
     if (totalCount <= 1) return RoundedCornerShape(24.dp)
@@ -239,7 +240,7 @@ fun HomeSectionOrderBottomSheet(
                                     color = MaterialTheme.colorScheme.onSurface
                                 )
                                 Text(
-                                    text = "Fixed position",
+                                    text = stringResource(R.string.homesectionorderbottomsheet_fixed_position),
                                     style = MaterialTheme.typography.labelSmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
@@ -340,7 +341,7 @@ fun HomeSectionOrderBottomSheet(
                                 onClick = {
                                     // Prevent hiding the last visible section
                                     if (isVisible && visibleSectionsCount <= 1) {
-                                        Toast.makeText(context, "At least one section must be visible", Toast.LENGTH_SHORT).show()
+                                        Toast.makeText(context, R.string.home_section_one_visible, Toast.LENGTH_SHORT).show()
                                         return@IconButton
                                     }
                                     HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
@@ -380,7 +381,7 @@ fun HomeSectionOrderBottomSheet(
                             ) {
                                 Icon(
                                     imageVector = RhythmIcons.ArrowUpward,
-                                    contentDescription = "Move up",
+                                    contentDescription = stringResource(R.string.settings_move_up),
                                     modifier = Modifier.size(20.dp)
                                 )
                             }
@@ -407,7 +408,7 @@ fun HomeSectionOrderBottomSheet(
                             ) {
                                 Icon(
                                     imageVector = RhythmIcons.ArrowDownward,
-                                    contentDescription = "Move down",
+                                    contentDescription = stringResource(R.string.settings_move_down),
                                     modifier = Modifier.size(20.dp)
                                 )
                             }
@@ -447,7 +448,7 @@ fun HomeSectionOrderBottomSheet(
                             "RECOMMENDED" to true,
                             "STATS" to true
                         )
-                        Toast.makeText(context, "Section order and visibility reset to default", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, R.string.homesectionorderbottomsheet_section_order_and_visibility, Toast.LENGTH_SHORT).show()
                     },
                     modifier = Modifier.weight(1f),
                     isStart = true
@@ -479,7 +480,7 @@ fun HomeSectionOrderBottomSheet(
                         appSettings.setHomeShowRecommended(visibilityMap["RECOMMENDED"] ?: true)
                         appSettings.setHomeShowListeningStats(visibilityMap["STATS"] ?: true)
 
-                        Toast.makeText(context, "Home section order and visibility saved", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, R.string.homesectionorderbottomsheet_home_section_order_and, Toast.LENGTH_SHORT).show()
                         scope.launch {
                             sheetState.hide()
                         }.invokeOnCompletion {

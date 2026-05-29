@@ -106,6 +106,8 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
+import chromahub.rhythm.app.R
+import androidx.compose.ui.res.stringResource
 
 // ============================================================================
 // EXPRESSIVE SHAPES
@@ -1444,7 +1446,7 @@ fun ExpressivePlayerControlGroup(
             ) {
                 Icon(
                     imageVector = RhythmIcons.SkipPrevious,
-                    contentDescription = "Previous",
+                    contentDescription = stringResource(R.string.animatedplaybackcontrols_previous),
                     tint = if (useGlassEffect) {
                         if (isDark) Color.White else Color.Black
                     } else {
@@ -1485,7 +1487,7 @@ fun ExpressivePlayerControlGroup(
                 ) {
                     Icon(
                         imageVector = RhythmIcons.Replay10,
-                        contentDescription = "Seek back",
+                        contentDescription = stringResource(R.string.expressivecomponents_seek_back),
                         tint = if (useGlassEffect) {
                             (if (isDark) Color.White else Color.Black).copy(alpha = 0.72f)
                         } else {
@@ -1551,7 +1553,7 @@ fun ExpressivePlayerControlGroup(
                 ) {
                     Icon(
                         imageVector = RhythmIcons.Forward10,
-                        contentDescription = "Seek forward",
+                        contentDescription = stringResource(R.string.expressivecomponents_seek_forward),
                         tint = if (useGlassEffect) {
                             (if (isDark) Color.White else Color.Black).copy(alpha = 0.72f)
                         } else {
@@ -1592,7 +1594,7 @@ fun ExpressivePlayerControlGroup(
             ) {
                 Icon(
                     imageVector = RhythmIcons.SkipNext,
-                    contentDescription = "Next",
+                    contentDescription = stringResource(R.string.onboarding_next),
                     tint = if (useGlassEffect) {
                         if (isDark) Color.White else Color.Black
                     } else {
@@ -1743,7 +1745,7 @@ private fun ExpressiveMorphingPlayPauseButton(
                 ) { playing ->
                     Icon(
                         imageVector = if (playing) RhythmIcons.Pause else RhythmIcons.Play,
-                        contentDescription = "Play/Pause",
+                        contentDescription = stringResource(R.string.play_pause),
                         tint = buttonTint,
                         modifier = Modifier.size(if (isExtraSmallWidth) 20.dp else 24.dp)
                     )
@@ -2027,7 +2029,7 @@ fun ExpressiveElevatedPlayerControlGroup(
             ) {
                 Icon(
                     imageVector = RhythmIcons.SkipPrevious,
-                    contentDescription = "Previous",
+                    contentDescription = stringResource(R.string.animatedplaybackcontrols_previous),
                     modifier = Modifier.size(when {
                         isExtraSmallWidth -> 22.dp
                         isCompactWidth -> 24.dp
@@ -2052,7 +2054,7 @@ fun ExpressiveElevatedPlayerControlGroup(
                 ) {
                     Icon(
                         imageVector = RhythmIcons.Replay10,
-                        contentDescription = "Seek back",
+                        contentDescription = stringResource(R.string.expressivecomponents_seek_back),
                         modifier = Modifier.size(when {
                             isExtraSmallWidth -> 24.dp
                             isCompactWidth -> 26.dp
@@ -2085,7 +2087,7 @@ fun ExpressiveElevatedPlayerControlGroup(
                 ) {
                     Icon(
                         imageVector = RhythmIcons.Forward10,
-                        contentDescription = "Seek forward",
+                        contentDescription = stringResource(R.string.expressivecomponents_seek_forward),
                         modifier = Modifier.size(when {
                             isExtraSmallWidth -> 24.dp
                             isCompactWidth -> 26.dp
@@ -2106,7 +2108,7 @@ fun ExpressiveElevatedPlayerControlGroup(
             ) {
                 Icon(
                     imageVector = RhythmIcons.SkipNext,
-                    contentDescription = "Next",
+                    contentDescription = stringResource(R.string.onboarding_next),
                     modifier = Modifier.size(when {
                         isExtraSmallWidth -> 22.dp
                         isCompactWidth -> 24.dp
@@ -2141,7 +2143,7 @@ fun ExpressiveCompactPlayerControls(
         ) {
             Icon(
                 imageVector = RhythmIcons.SkipPrevious,
-                contentDescription = "Previous",
+                contentDescription = stringResource(R.string.animatedplaybackcontrols_previous),
                 modifier = Modifier.size(20.dp)
             )
         }
@@ -2163,7 +2165,7 @@ fun ExpressiveCompactPlayerControls(
         ) {
             Icon(
                 imageVector = RhythmIcons.SkipNext,
-                contentDescription = "Next",
+                contentDescription = stringResource(R.string.onboarding_next),
                 modifier = Modifier.size(20.dp)
             )
         }

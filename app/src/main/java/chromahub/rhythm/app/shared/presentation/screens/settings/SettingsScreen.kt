@@ -110,6 +110,7 @@ import chromahub.rhythm.app.features.local.presentation.navigation.Screen
 import chromahub.rhythm.app.features.local.presentation.viewmodel.MusicViewModel
 import chromahub.rhythm.app.shared.presentation.components.Material3SettingsGroup
 import chromahub.rhythm.app.shared.presentation.components.Material3SettingsItem
+import androidx.compose.ui.res.stringResource
 
 // Define routes for navigation
 object SettingsRoutes {
@@ -325,13 +326,13 @@ fun SettingsScreen(
                     add(SettingItem(RhythmIcons.Equalizer, context.getString(R.string.settings_equalizer_title), context.getString(R.string.settings_equalizer_desc), onClick = { onNavigateTo(SettingsRoutes.EQUALIZER) }))
                     add(SettingItem(
                         icon = MaterialSymbolIcon("battery_charging_full"),
-                        title = "Performance",
+                        title = stringResource(R.string.performancesettingsscreen_performance),
                         description = "Optimize haptics, decoding, and marquee for power consumption",
                         onClick = { onNavigateTo(SettingsRoutes.BATTERY_SAVER) }
                     ))
                     add(SettingItem(
                         icon = MaterialSymbolIcon("bolt"),
-                        title = "Audio Offload",
+                        title = stringResource(R.string.settingsscreen_audio_offload),
                         description = "Hardware-accelerated audio decoding to save device power",
                         toggleState = audioOffloadEnabled,
                         onToggleChange = { appSettings.setAudioOffloadEnabled(it) }
@@ -666,7 +667,7 @@ fun SettingsScreen(
                             if (defaultScreen == "home") {
                                 Icon(
                                     imageVector = RhythmIcons.CheckCircle,
-                                    contentDescription = "Selected",
+                                    contentDescription = stringResource(R.string.streaming_selected),
                                     
                                     modifier = Modifier.size(24.dp)
                                 )
@@ -733,7 +734,7 @@ fun SettingsScreen(
                             if (defaultScreen == "library") {
                                 Icon(
                                     imageVector = RhythmIcons.CheckCircle,
-                                    contentDescription = "Selected",
+                                    contentDescription = stringResource(R.string.streaming_selected),
                                     
                                     modifier = Modifier.size(24.dp)
                                 )
@@ -881,7 +882,7 @@ fun SettingRow(item: SettingItem) {
         if (item.toggleState != null && item.onClick != null) {
             Icon(
                 imageVector = MaterialSymbolIcon("arrow_forward_ios", filled = true),
-                contentDescription = "Navigate",
+                contentDescription = stringResource(R.string.cd_navigate),
                 modifier = Modifier
                     .size(18.dp)
                     .padding(end = 8.dp),
@@ -905,7 +906,7 @@ fun SettingRow(item: SettingItem) {
         } else if (item.onClick != null) {
             Icon(
                 imageVector = MaterialSymbolIcon("arrow_forward_ios", filled = true),
-                contentDescription = "Navigate",
+                contentDescription = stringResource(R.string.cd_navigate),
                 modifier = Modifier.size(16.dp),
                 tint = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -1369,7 +1370,7 @@ fun SettingsTipsRow(
                     SettingsTipData(
                         id = "rhythm_guard",
                         icon = RhythmIcons.Security,
-                        title = "Rhythm Guard",
+                        title = context.getString(R.string.settings_rhythm_guard),
                         text = desc,
                         route = SettingsRoutes.RHYTHM_GUARD,
                         isPrimary = true,
@@ -1388,7 +1389,7 @@ fun SettingsTipsRow(
                     SettingsTipData(
                         id = "theme",
                         icon = RhythmIcons.Palette,
-                        title = "Personalization",
+                        title = context.getString(R.string.settingsscreen_personalization),
                         text = descs.random(random),
                         route = SettingsRoutes.THEME_CUSTOMIZATION
                     )
@@ -1420,7 +1421,7 @@ fun SettingsTipsRow(
                     SettingsTipData(
                         id = "media_scan",
                         icon = RhythmIcons.Folder,
-                        title = "Library Focus",
+                        title = context.getString(R.string.settingsscreen_library_focus),
                         text = descs.random(random),
                         route = SettingsRoutes.MEDIA_SCAN
                     )
@@ -1435,7 +1436,7 @@ fun SettingsTipsRow(
                     SettingsTipData(
                         id = "sleep_timer",
                         icon = RhythmIcons.AccessTime,
-                        title = "Sleep Timer",
+                        title = context.getString(R.string.settings_sleep_timer_search),
                         text = descs.random(random),
                         route = SettingsRoutes.SLEEP_TIMER
                     )
@@ -1450,7 +1451,7 @@ fun SettingsTipsRow(
                     SettingsTipData(
                         id = "equalizer",
                         icon = RhythmIcons.Equalizer,
-                        title = "Audio Equalizer",
+                        title = context.getString(R.string.settingsscreen_audio_equalizer),
                         text = descs.random(random),
                         route = SettingsRoutes.EQUALIZER
                     )
@@ -1472,7 +1473,7 @@ fun SettingsTipsRow(
                     SettingsTipData(
                         id = "backup_restore",
                         icon = MaterialSymbolIcon("backup"),
-                        title = "Backup & Restore",
+                        title = context.getString(R.string.settings_backup_restore),
                         text = descs.random(random),
                         route = SettingsRoutes.BACKUP_RESTORE
                     )
@@ -1494,7 +1495,7 @@ fun SettingsTipsRow(
                     SettingsTipData(
                         id = "updates",
                         icon = RhythmIcons.Update,
-                        title = "App Updates",
+                        title = context.getString(R.string.cd_app_updates),
                         text = descs.random(random),
                         route = SettingsRoutes.UPDATES
                     )
@@ -1516,7 +1517,7 @@ fun SettingsTipsRow(
                     SettingsTipData(
                         id = "queue_playback",
                         icon = RhythmIcons.Queue,
-                        title = "Queue Settings",
+                        title = context.getString(R.string.settings_queue_title),
                         text = descs.random(random),
                         route = SettingsRoutes.QUEUE
                     )
@@ -1538,7 +1539,7 @@ fun SettingsTipsRow(
                     SettingsTipData(
                         id = "player_controls",
                         icon = RhythmIcons.MusicNote,
-                        title = "Player Controls",
+                        title = context.getString(R.string.settings_shapes_player_controls),
                         text = descs.random(random),
                         route = SettingsRoutes.PLAYER_CUSTOMIZATION
                     )
@@ -1560,7 +1561,7 @@ fun SettingsTipsRow(
                     SettingsTipData(
                         id = "miniplayer",
                         icon = MaterialSymbolIcon("play_circle_filled"),
-                        title = "Mini Player",
+                        title = context.getString(R.string.settings_shapes_mini_player),
                         text = descs.random(random),
                         route = SettingsRoutes.MINIPLAYER_CUSTOMIZATION
                     )
@@ -1582,7 +1583,7 @@ fun SettingsTipsRow(
                     SettingsTipData(
                         id = "library_settings",
                         icon = RhythmIcons.Library,
-                        title = "Library Settings",
+                        title = context.getString(R.string.settingsscreen_library_settings),
                         text = descs.random(random),
                         route = SettingsRoutes.LIBRARY_SETTINGS
                     )
@@ -1678,7 +1679,7 @@ fun SettingsTipCard(
                     ) {
                         Icon(
                             imageVector = RhythmIcons.Close,
-                            contentDescription = "Dismiss",
+                            contentDescription = stringResource(R.string.onboarding_dismiss),
                             tint = contentColor,
                             modifier = Modifier.size(16.dp)
                         )

@@ -236,6 +236,7 @@ import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveElev
 import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveGroupButton
 import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveFilledIconButton
 import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveShapes
+import androidx.compose.ui.res.stringResource
 
 
 enum class LibraryTab { SONGS, PLAYLISTS, ALBUMS, ARTISTS, EXPLORER }
@@ -364,7 +365,7 @@ fun LibraryScreen(
         if (result.resultCode == android.app.Activity.RESULT_OK) {
             musicViewModel.completeMetadataWriteAfterPermission(
                 onSuccess = {
-                    Toast.makeText(context, "Metadata saved successfully!", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, R.string.localnavigation_metadata_saved_successfully, Toast.LENGTH_SHORT).show()
                 },
                 onError = { errorMessage ->
                     Toast.makeText(context, errorMessage, Toast.LENGTH_LONG).show()
@@ -372,7 +373,7 @@ fun LibraryScreen(
             )
         } else {
             musicViewModel.cancelPendingMetadataWrite()
-            Toast.makeText(context, "Permission denied. Changes saved to library only.", Toast.LENGTH_LONG).show()
+            Toast.makeText(context, R.string.localnavigation_permission_denied_changes_saved, Toast.LENGTH_LONG).show()
         }
     }
     
@@ -483,7 +484,7 @@ fun LibraryScreen(
                     removeArtwork = removeArtwork,
                     onSuccess = { fileWriteSucceeded ->
                         if (fileWriteSucceeded) {
-                            Toast.makeText(context, "Metadata saved successfully to file!", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, R.string.localnavigation_metadata_saved_successfully_to, Toast.LENGTH_SHORT).show()
                         } else {
                         }
                     },
@@ -936,7 +937,7 @@ fun LibraryScreen(
                                                 MusicViewModel.SortOrder.TITLE_ASC, MusicViewModel.SortOrder.ARTIST_ASC, MusicViewModel.SortOrder.DATE_ADDED_ASC, MusicViewModel.SortOrder.DATE_MODIFIED_ASC -> {
                                                     Icon(
                                                         imageVector = RhythmIcons.ArrowUpward,
-                                                        contentDescription = "Ascending",
+                                                        contentDescription = stringResource(R.string.content_desc_ascending),
                                                         modifier = Modifier.size(18.dp),
                                                         tint = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
                                                     )
@@ -944,7 +945,7 @@ fun LibraryScreen(
                                                 MusicViewModel.SortOrder.TITLE_DESC, MusicViewModel.SortOrder.ARTIST_DESC, MusicViewModel.SortOrder.DATE_ADDED_DESC, MusicViewModel.SortOrder.DATE_MODIFIED_DESC -> {
                                                     Icon(
                                                         imageVector = RhythmIcons.ArrowDownward,
-                                                        contentDescription = "Descending",
+                                                        contentDescription = stringResource(R.string.content_desc_descending),
                                                         modifier = Modifier.size(18.dp),
                                                         tint = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
                                                     )
@@ -1214,7 +1215,7 @@ fun LibraryScreen(
                         TabAnimation(
                             index = tabs.size,
                             selectedIndex = -1,
-                            title = "Edit",
+                            title = stringResource(R.string.bottomsheet_timer_edit),
                             selectedColor = MaterialTheme.colorScheme.secondaryContainer,
                             onSelectedColor = MaterialTheme.colorScheme.onSecondaryContainer,
                             unselectedColor = MaterialTheme.colorScheme.surfaceContainer,
@@ -1231,11 +1232,11 @@ fun LibraryScreen(
                                 ) {
                                     Icon(
                                         imageVector = RhythmIcons.Edit,
-                                        contentDescription = "Reorder tabs",
+                                        contentDescription = stringResource(R.string.cd_reorder_tabs),
                                         modifier = Modifier.size(18.dp)
                                     )
                                     Text(
-                                        text = "Edit",
+                                        text = stringResource(R.string.bottomsheet_timer_edit),
                                         style = MaterialTheme.typography.labelLarge,
                                         fontWeight = FontWeight.Medium
                                     )
@@ -1498,7 +1499,7 @@ fun LibraryScreen(
                                     
                                     Icon(
                                         imageVector = RhythmIcons.Refresh,
-                                        contentDescription = "Scanning",
+                                        contentDescription = stringResource(R.string.settings_scanning),
                                         modifier = Modifier
                                             .size(24.dp)
                                             .graphicsLayer { rotationZ = rotation }
@@ -1643,7 +1644,7 @@ fun LibraryScreen(
                     modifier = Modifier.size(24.dp)
                 )
             },
-            title = { Text("Error") },
+            title = { Text(stringResource(R.string.updates_status_error)) },
             text = { Text(operationError!!) },
             confirmButton = {
                 Button(onClick = { operationError = null }) {
@@ -1653,7 +1654,7 @@ fun LibraryScreen(
                         modifier = Modifier.size(18.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("OK")
+                    Text(stringResource(R.string.ui_ok))
                 }
             },
             shape = RoundedCornerShape(24.dp)
@@ -1671,7 +1672,7 @@ fun LibraryScreen(
                     modifier = Modifier.size(24.dp)
                 )
             },
-            title = { Text("Import Complete") },
+            title = { Text(stringResource(R.string.import_complete_title)) },
             text = {
                 val (count, message) = importResult!!
                 Text("Successfully imported $count playlists.\n$message\n\nRestart the app to apply changes.")
@@ -1689,7 +1690,7 @@ fun LibraryScreen(
                         modifier = Modifier.size(18.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Restart App")
+                    Text(stringResource(R.string.crash_restart_app))
                 }
             },
             dismissButton = {
@@ -1704,7 +1705,7 @@ fun LibraryScreen(
                         modifier = Modifier.size(18.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Later")
+                    Text(stringResource(R.string.bottomsheet_lyrics_later))
                 }
             },
             shape = RoundedCornerShape(24.dp)
@@ -2137,7 +2138,7 @@ fun SingleCardSongsContent(
                                 ) {
                                     Icon(imageVector = RhythmIcons.Play, contentDescription = null, modifier = Modifier.size(18.dp))
                                     Spacer(Modifier.width(4.dp))
-                                    Text("Play", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold)
+                                    Text(stringResource(R.string.cd_play), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold)
                                 }
 
                                 ExpressiveGroupButton(
@@ -2149,7 +2150,7 @@ fun SingleCardSongsContent(
                                     isStart = false,
                                     isEnd = true
                                 ) {
-                                    Icon(imageVector = RhythmIcons.Shuffle, contentDescription = "Shuffle selected", modifier = Modifier.size(20.dp))
+                                    Icon(imageVector = RhythmIcons.Shuffle, contentDescription = stringResource(R.string.libraryscreen_shuffle_selected), modifier = Modifier.size(20.dp))
                                 }
                             }
 
@@ -2178,7 +2179,7 @@ fun SingleCardSongsContent(
                                 },
                                 modifier = Modifier.size(44.dp)
                             ) {
-                                Icon(imageVector = RhythmIcons.More, contentDescription = "More actions")
+                                Icon(imageVector = RhythmIcons.More, contentDescription = stringResource(R.string.libraryscreen_more_actions))
                             }
                         }
                     } else {
@@ -2950,7 +2951,7 @@ fun AlbumsTab(
                     ) {
                         Icon(
                             imageVector = if (albumViewType == AlbumViewType.LIST) RhythmIcons.AppsGrid else RhythmIcons.List,
-                            contentDescription = "Toggle view type",
+                            contentDescription = stringResource(R.string.cd_toggle_view_type),
                             modifier = Modifier.size(18.dp)
                         )
                     }
@@ -3139,7 +3140,7 @@ fun LibrarySongItem(
                         } else {
                             Icon(
                                 imageVector = RhythmIcons.CheckCircle,
-                                contentDescription = "Selected",
+                                contentDescription = stringResource(R.string.streaming_selected),
                                 tint = MaterialTheme.colorScheme.onPrimary,
                                 modifier = Modifier.size(28.dp)
                             )
@@ -3188,7 +3189,7 @@ fun LibrarySongItem(
                 ) {
                     Icon(
                         imageVector = RhythmIcons.More,
-                        contentDescription = "More options",
+                        contentDescription = stringResource(R.string.content_desc_more_options),
                         modifier = Modifier.size(22.dp)
                     )
                 }
@@ -3792,7 +3793,7 @@ fun PlaylistItem(
                 ) {
                     Icon(
                         imageVector = RhythmIcons.Forward,
-                        contentDescription = "Open playlist",
+                        contentDescription = stringResource(R.string.cd_open_playlist),
                         tint = MaterialTheme.colorScheme.onPrimary,
                         modifier = Modifier.size(20.dp)
                     )
@@ -4127,7 +4128,7 @@ fun LibraryAlbumItem(
             ) {
                 Icon(
                     imageVector = RhythmIcons.Play,
-                    contentDescription = "Play album",
+                    contentDescription = stringResource(R.string.content_desc_play_album),
                     modifier = Modifier.size(24.dp)
                 )
             }
@@ -4240,7 +4241,7 @@ fun EmptyState(
                             modifier = Modifier.size(18.dp)
                         )
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("Refresh")
+                        Text(stringResource(R.string.cd_refresh))
                     }
                 }
             }
@@ -4606,7 +4607,7 @@ fun AlbumGridItem(
                 ) {
                     Icon(
                         imageVector = RhythmIcons.Play,
-                        contentDescription = "Play album",
+                        contentDescription = stringResource(R.string.content_desc_play_album),
                         modifier = Modifier.size(18.dp)
                     )
                 }
@@ -4852,7 +4853,7 @@ fun SingleCardArtistsContent(
                         if (currentSortOption == sortOption) {
                             Icon(
                                 imageVector = RhythmIcons.Check,
-                                contentDescription = "Selected",
+                                contentDescription = stringResource(R.string.streaming_selected),
                                 tint = MaterialTheme.colorScheme.primary
                             )
                         }
@@ -4904,7 +4905,7 @@ private fun ArtistSectionHeader(
             ) {
                 Icon(
                     imageVector = RhythmIcons.Shuffle,
-                    contentDescription = "Shuffle Artists",
+                    contentDescription = stringResource(R.string.libraryscreen_shuffle_artists),
                     modifier = Modifier.size(24.dp)
                 )
             }
@@ -5238,7 +5239,7 @@ fun PlaylistFabMenuContent(
             ) {
                 Icon(
                     imageVector = MaterialSymbolIcon("file_upload"),
-                    contentDescription = "Export playlists",
+                    contentDescription = stringResource(R.string.cd_export_playlists),
                     modifier = Modifier.size(20.dp)
                 )
             }
@@ -5258,7 +5259,7 @@ fun PlaylistFabMenuContent(
             ) {
                 Icon(
                     imageVector = RhythmIcons.Actions.Download,
-                    contentDescription = "Import playlist",
+                    contentDescription = stringResource(R.string.cd_import_playlist),
                     modifier = Modifier.size(20.dp)
                 )
             }
@@ -5277,7 +5278,7 @@ fun PlaylistFabMenuContent(
         ) {
             Icon(
                 imageVector = RhythmIcons.Add,
-                contentDescription = "Create playlist",
+                contentDescription = stringResource(R.string.cd_create_playlist),
                 modifier = Modifier.size(20.dp)
             )
         }
@@ -5536,7 +5537,7 @@ fun BottomFloatingButtonGroup(
                 } else {
                     Icon(
                         imageVector = RhythmIcons.Play,
-                        contentDescription = "Play all",
+                        contentDescription = stringResource(R.string.action_play_all),
                         modifier = Modifier.size(20.dp)
                     )
                 }
@@ -5579,7 +5580,7 @@ fun BottomFloatingButtonGroup(
                 } else {
                     Icon(
                         imageVector = RhythmIcons.Shuffle,
-                        contentDescription = "Shuffle",
+                        contentDescription = stringResource(R.string.cd_shuffle),
                         modifier = Modifier.size(24.dp)
                     )
                 }
@@ -5708,7 +5709,7 @@ fun ExpressiveSelectionHeader(
                         contentColor = MaterialTheme.colorScheme.secondaryContainer
                     )
                 ) {
-                    Icon(imageVector = RhythmIcons.Close, contentDescription = "Clear selection")
+                    Icon(imageVector = RhythmIcons.Close, contentDescription = stringResource(R.string.libraryscreen_clear_selection))
                 }
 
                 Spacer(modifier = Modifier.width(16.dp))

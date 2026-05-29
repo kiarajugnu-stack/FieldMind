@@ -750,7 +750,7 @@ fun AlbumBottomSheet(
                                                 ) {
                                                     Icon(
                                                         imageVector = RhythmIcons.Actions.Sort,
-                                                        contentDescription = "Sort songs",
+                                                        contentDescription = stringResource(R.string.content_desc_sort_songs),
                                                         modifier = Modifier.size(20.dp)
                                                     )
                                                 }
@@ -814,7 +814,7 @@ fun AlbumBottomSheet(
                                                                         AlbumSortOrder.TITLE_ASC, AlbumSortOrder.DURATION_ASC -> {
                                                                             Icon(
                                                                                 imageVector = RhythmIcons.ArrowUpward,
-                                                                                contentDescription = "Ascending",
+                                                                                contentDescription = stringResource(R.string.content_desc_ascending),
                                                                                 modifier = Modifier.size(18.dp),
                                                                                 tint = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
                                                                             )
@@ -823,7 +823,7 @@ fun AlbumBottomSheet(
                                                                         AlbumSortOrder.TITLE_DESC, AlbumSortOrder.DURATION_DESC -> {
                                                                             Icon(
                                                                                 imageVector = RhythmIcons.ArrowDownward,
-                                                                                contentDescription = "Descending",
+                                                                                contentDescription = stringResource(R.string.content_desc_descending),
                                                                                 modifier = Modifier.size(18.dp),
                                                                                 tint = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
                                                                             )
@@ -863,7 +863,7 @@ fun AlbumBottomSheet(
                                             ) {
                                                 Icon(
                                                     imageVector = RhythmIcons.Close,
-                                                    contentDescription = "Close",
+                                                    contentDescription = stringResource(R.string.ui_close),
                                                     tint = MaterialTheme.colorScheme.onSurfaceVariant
                                                 )
                                             }
@@ -1666,7 +1666,7 @@ fun AlbumBottomSheet(
                                         ) {
                                             Icon(
                                                 imageVector = RhythmIcons.Actions.Sort,
-                                                contentDescription = "Sort songs",
+                                                contentDescription = stringResource(R.string.content_desc_sort_songs),
                                                 modifier = Modifier.size(20.dp)
                                             )
                                         }
@@ -1727,7 +1727,7 @@ fun AlbumBottomSheet(
                                                                 AlbumSortOrder.TITLE_ASC, AlbumSortOrder.DURATION_ASC -> {
                                                                     Icon(
                                                                         imageVector = RhythmIcons.ArrowUpward,
-                                                                        contentDescription = "Ascending",
+                                                                        contentDescription = stringResource(R.string.content_desc_ascending),
                                                                         modifier = Modifier.size(18.dp),
                                                                         tint = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
                                                                     )
@@ -1736,7 +1736,7 @@ fun AlbumBottomSheet(
                                                                 AlbumSortOrder.TITLE_DESC, AlbumSortOrder.DURATION_DESC -> {
                                                                     Icon(
                                                                         imageVector = RhythmIcons.ArrowDownward,
-                                                                        contentDescription = "Descending",
+                                                                        contentDescription = stringResource(R.string.content_desc_descending),
                                                                         modifier = Modifier.size(18.dp),
                                                                         tint = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
                                                                     )
@@ -2126,7 +2126,7 @@ fun ExpressiveSongItem(
                     ) {
                         Icon(
                             imageVector = RhythmIcons.FavoriteFilled,
-                            contentDescription = "Favorite",
+                            contentDescription = stringResource(R.string.player_chip_favorite),
                             tint = MaterialTheme.colorScheme.error,
                             modifier = Modifier.size(14.dp)
                         )
@@ -2181,7 +2181,7 @@ fun ExpressiveSongItem(
                 ) {
                     Icon(
                         imageVector = RhythmIcons.More,
-                        contentDescription = "More options",
+                        contentDescription = stringResource(R.string.content_desc_more_options),
                         modifier = Modifier.size(20.dp)
                     )
                 }

@@ -22,6 +22,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import chromahub.rhythm.app.R
+import androidx.compose.ui.res.stringResource
 
 /**
  * Preview components for Legacy RemoteViews widgets
@@ -347,14 +349,14 @@ fun LegacyWidgetPreviewsScreen() {
                     .padding(16.dp)
             ) {
                 Text(
-                    text = "Rhythm Legacy Widget Previews",
+                    text = stringResource(R.string.legacywidgetpreview_rhythm_legacy_widget_previews),
                     style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.padding(bottom = 8.dp)
                 )
                 
                 Text(
-                    text = "RemoteViews-based widgets for maximum compatibility",
+                    text = stringResource(R.string.legacywidgetpreview_remoteviewsbased_widgets_for_maximum),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(bottom = 24.dp)
@@ -362,7 +364,7 @@ fun LegacyWidgetPreviewsScreen() {
                 
                 // Extra Small Widget
                 LegacyWidgetPreviewCard(
-                    title = "1×1 Extra Small Widget",
+                    title = stringResource(R.string.legacywidgetpreview_str_11_extra_small_widget),
                     size = "70 × 70 dp",
                     layoutFile = "widget_music_extra_small.xml"
                 ) {
@@ -373,7 +375,7 @@ fun LegacyWidgetPreviewsScreen() {
                 
                 // Small Widget
                 LegacyWidgetPreviewCard(
-                    title = "2×1 Small Horizontal Widget",
+                    title = stringResource(R.string.legacywidgetpreview_str_21_small_horizontal_widget),
                     size = "180 × 90 dp",
                     layoutFile = "widget_music_small.xml"
                 ) {
@@ -384,7 +386,7 @@ fun LegacyWidgetPreviewsScreen() {
                 
                 // Vertical Widget
                 LegacyWidgetPreviewCard(
-                    title = "1×2 Vertical Widget",
+                    title = stringResource(R.string.legacywidgetpreview_str_12_vertical_widget),
                     size = "110 × 220 dp",
                     layoutFile = "widget_music_vertical.xml"
                 ) {
@@ -395,7 +397,7 @@ fun LegacyWidgetPreviewsScreen() {
                 
                 // Medium Widget
                 LegacyWidgetPreviewCard(
-                    title = "3×2 Medium Widget",
+                    title = stringResource(R.string.legacywidgetpreview_str_32_medium_widget),
                     size = "250 × 140 dp",
                     layoutFile = "widget_music_medium.xml"
                 ) {
@@ -406,7 +408,7 @@ fun LegacyWidgetPreviewsScreen() {
                 
                 // Wide Widget
                 LegacyWidgetPreviewCard(
-                    title = "4×1 Wide Widget",
+                    title = stringResource(R.string.legacywidgetpreview_str_41_wide_widget),
                     size = "300 × 90 dp",
                     layoutFile = "widget_music_wide.xml"
                 ) {
@@ -417,7 +419,7 @@ fun LegacyWidgetPreviewsScreen() {
                 
                 // Large Widget
                 LegacyWidgetPreviewCard(
-                    title = "3×3 Large Widget",
+                    title = stringResource(R.string.legacywidgetpreview_str_33_large_widget),
                     size = "280 × 280 dp",
                     layoutFile = "widget_music_large.xml"
                 ) {
@@ -428,7 +430,7 @@ fun LegacyWidgetPreviewsScreen() {
                 
                 // Extra Large Widget
                 LegacyWidgetPreviewCard(
-                    title = "4×3 Extra Large Widget",
+                    title = stringResource(R.string.legacywidgetpreview_str_43_extra_large_widget),
                     size = "320 × 240 dp",
                     layoutFile = "widget_music_extra_large.xml"
                 ) {
@@ -439,7 +441,7 @@ fun LegacyWidgetPreviewsScreen() {
                 
                 // 5x5 Widget
                 LegacyWidgetPreviewCard(
-                    title = "5×5 Premium Widget",
+                    title = stringResource(R.string.legacywidgetpreview_str_55_premium_widget),
                     size = "400 × 400 dp",
                     layoutFile = "widget_music_5x5.xml"
                 ) {
@@ -457,7 +459,7 @@ fun LegacyWidgetPreviewsScreen() {
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         Text(
-                            text = "Legacy Widget Features",
+                            text = stringResource(R.string.legacywidgetpreview_legacy_widget_features),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
                             modifier = Modifier.padding(bottom = 12.dp)
@@ -495,14 +497,14 @@ fun LegacyWidgetPreviewsScreen() {
                         Spacer(modifier = Modifier.width(12.dp))
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                text = "Migration to Glance",
+                                text = stringResource(R.string.legacywidgetpreview_migration_to_glance),
                                 style = MaterialTheme.typography.titleSmall,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onTertiaryContainer
                             )
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
-                                text = "Consider using Glance widgets for better Material 3 theming, dynamic colors, and more customization options.",
+                                text = stringResource(R.string.legacywidgetpreview_consider_using_glance_widgets),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onTertiaryContainer
                             )

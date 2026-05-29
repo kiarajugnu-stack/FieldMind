@@ -522,14 +522,14 @@ fun StreamingContentHomeScreen(
                                     ) {
                                         StreamingWidgetSectionTitle(
                                             title = stringResource(id = R.string.library_tab_playlists),
-                                            subtitle = "Your connected streaming service playlists"
+                                            subtitle = stringResource(R.string.streamingcontenthomescreen_your_connected_streaming_service)
                                         )
 
                                         if (playlists.isEmpty()) {
                                             StreamingSectionEmptyCard(
                                                 icon = MaterialSymbolIcon("playlist_play"),
-                                                title = "No Playlists Found",
-                                                subtitle = "Create playlists on your server to see them here."
+                                                title = stringResource(R.string.streamingcontenthomescreen_no_playlists_found),
+                                                subtitle = stringResource(R.string.streamingcontenthomescreen_create_playlists_on_your)
                                             )
                                         } else {
                                             LazyRow(
@@ -1295,7 +1295,7 @@ private fun StreamingRhythmStatsCard(
                     color = MaterialTheme.colorScheme.onPrimaryContainer
                 )
                 Text(
-                    text = "Total Listening Time",
+                    text = stringResource(R.string.stats_total_listening_time),
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
                 )
@@ -1328,7 +1328,7 @@ private fun StreamingRhythmStatsCard(
                         color = MaterialTheme.colorScheme.onSecondaryContainer
                     )
                     Text(
-                        text = "Plays",
+                        text = stringResource(R.string.homescreen_plays),
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.8f)
                     )
@@ -1357,7 +1357,7 @@ private fun StreamingRhythmStatsCard(
                         color = MaterialTheme.colorScheme.onTertiaryContainer
                     )
                     Text(
-                        text = "Artists",
+                        text = stringResource(R.string.settings_tab_artists),
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.8f)
                     )

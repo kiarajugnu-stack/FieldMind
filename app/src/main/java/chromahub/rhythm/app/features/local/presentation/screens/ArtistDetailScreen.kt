@@ -58,6 +58,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import androidx.compose.ui.res.stringResource
 
 private data class ArtistDetailContent(
     val songs: List<Song>,
@@ -561,7 +562,7 @@ private fun ArtistActionButtons(
             )
             Spacer(modifier = Modifier.width(10.dp))
             Text(
-                text = "Play All",
+                text = stringResource(R.string.action_play_all),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold
             )
@@ -595,7 +596,7 @@ private fun ArtistActionButtons(
             )
             Spacer(modifier = Modifier.width(10.dp))
             Text(
-                text = "Shuffle",
+                text = stringResource(R.string.cd_shuffle),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold
             )
@@ -723,7 +724,7 @@ private fun ArtistAlbumCard(
                     ) {
                         Icon(
                             imageVector = RhythmIcons.Play,
-                            contentDescription = "Play album",
+                            contentDescription = stringResource(R.string.content_desc_play_album),
                             modifier = Modifier.size(20.dp)
                         )
                     }
@@ -927,7 +928,7 @@ private fun ArtistSongItem(
                 ) {
                     Icon(
                         imageVector = RhythmIcons.More,
-                        contentDescription = "More options",
+                        contentDescription = stringResource(R.string.content_desc_more_options),
                         modifier = Modifier.size(20.dp)
                     )
                 }
@@ -946,7 +947,7 @@ private fun ArtistSongItem(
                 ) {
                     if (showPlayNextAction) {
                     SongItemDropdownMenuItem(
-                        text = "Play next",
+                        text = stringResource(R.string.action_play_next),
                         icon = RhythmIcons.SkipNext,
                         containerColor = MaterialTheme.colorScheme.primaryContainer,
                         onClick = {
@@ -959,7 +960,7 @@ private fun ArtistSongItem(
                     
                     if (showAddToQueueAction) {
                     SongItemDropdownMenuItem(
-                        text = "Add to queue",
+                        text = stringResource(R.string.action_add_to_queue),
                         icon = RhythmIcons.Queue,
                         containerColor = MaterialTheme.colorScheme.primaryContainer,
                         onClick = {
@@ -985,7 +986,7 @@ private fun ArtistSongItem(
                     
                     if (showAddToPlaylistAction) {
                     SongItemDropdownMenuItem(
-                        text = "Add to playlist",
+                        text = stringResource(R.string.content_desc_add_to_playlist),
                         icon = RhythmIcons.AddToPlaylist,
                         containerColor = MaterialTheme.colorScheme.primaryContainer,
                         onClick = {
@@ -998,7 +999,7 @@ private fun ArtistSongItem(
                     
                     if (showSongInfoAction) {
                     SongItemDropdownMenuItem(
-                        text = "Song info",
+                        text = stringResource(R.string.action_song_info),
                         icon = RhythmIcons.Info,
                         containerColor = MaterialTheme.colorScheme.secondaryContainer,
                         onClick = {

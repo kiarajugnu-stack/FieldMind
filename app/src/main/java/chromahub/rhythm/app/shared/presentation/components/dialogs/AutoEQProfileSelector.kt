@@ -69,6 +69,8 @@ import chromahub.rhythm.app.shared.data.model.AutoEQProfile
 import chromahub.rhythm.app.util.HapticUtils
 import chromahub.rhythm.app.features.local.presentation.viewmodel.MusicViewModel
 import kotlinx.coroutines.delay
+import chromahub.rhythm.app.R
+import androidx.compose.ui.res.stringResource
 
 @Composable
 fun AutoEQProfileSelector(
@@ -186,7 +188,7 @@ fun AutoEQProfileSelector(
             ) {
                 Column {
                     Text(
-                        text = "AutoEQ Profiles",
+                        text = stringResource(R.string.equalizerscreen_autoeq_profiles),
                         style = MaterialTheme.typography.displayMedium,
                         fontWeight = FontWeight.Medium,
                         color = MaterialTheme.colorScheme.onSurface
@@ -217,7 +219,7 @@ fun AutoEQProfileSelector(
                     value = searchQuery,
                     onValueChange = { searchQuery = it },
                     modifier = Modifier.fillMaxWidth(),
-                    placeholder = { Text("Find EQ profiles or brands...") },
+                    placeholder = { Text(stringResource(R.string.autoeqprofileselector_find_eq_profiles_or)) },
                     leadingIcon = {
                         Icon(
                             imageVector = RhythmIcons.SearchFilled,
@@ -230,7 +232,7 @@ fun AutoEQProfileSelector(
                             IconButton(onClick = { searchQuery = "" }) {
                                 Icon(
                                     imageVector = RhythmIcons.Close,
-                                    contentDescription = "Clear",
+                                    contentDescription = stringResource(R.string.ui_clear),
                                     modifier = Modifier.size(18.dp)
                                 )
                             }
@@ -244,7 +246,7 @@ fun AutoEQProfileSelector(
 
                 // Brand filters
                 Text(
-                    text = "Brand",
+                    text = stringResource(R.string.autoeqpresetpickerbottomsheet_brand),
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.primary,
                     fontWeight = FontWeight.SemiBold,
@@ -258,7 +260,7 @@ fun AutoEQProfileSelector(
                             FilterChip(
                                 selected = selectedBrand == null,
                                 onClick = { selectedBrand = null },
-                                label = { Text("All") },
+                                label = { Text(stringResource(R.string.autoeqprofileselector_all)) },
                                 colors = FilterChipDefaults.filterChipColors(
                                     selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
                                     selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer
@@ -282,7 +284,7 @@ fun AutoEQProfileSelector(
 
                     // Type filters
                     Text(
-                        text = "Type",
+                        text = stringResource(R.string.autoeqpresetpickerbottomsheet_type),
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.primary,
                         fontWeight = FontWeight.SemiBold,
@@ -296,7 +298,7 @@ fun AutoEQProfileSelector(
                             FilterChip(
                                 selected = selectedType == null,
                                 onClick = { selectedType = null },
-                                label = { Text("All") },
+                                label = { Text(stringResource(R.string.autoeqprofileselector_all)) },
                                 colors = FilterChipDefaults.filterChipColors(
                                     selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
                                     selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer
@@ -489,7 +491,7 @@ private fun ProfileCard(
                 ) {
                     Icon(
                         imageVector = RhythmIcons.Check,
-                        contentDescription = "Selected",
+                        contentDescription = stringResource(R.string.streaming_selected),
                         tint = MaterialTheme.colorScheme.onPrimary,
                         modifier = Modifier.size(14.dp)
                     )

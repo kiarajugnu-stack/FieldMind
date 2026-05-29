@@ -21,6 +21,8 @@ import androidx.compose.ui.unit.dp
 import chromahub.rhythm.app.shared.presentation.components.common.CollapsibleHeaderScreen
 import chromahub.rhythm.app.shared.data.model.AppSettings
 import chromahub.rhythm.app.ui.theme.festive.FestiveThemeType
+import chromahub.rhythm.app.R
+import androidx.compose.ui.res.stringResource
 
 @Composable
 fun FestiveSettingsScreen(
@@ -36,7 +38,7 @@ fun FestiveSettingsScreen(
     val festiveAutoDetect by appSettings.festiveThemeAutoDetect.collectAsState()
 
     CollapsibleHeaderScreen(
-        title = "Festive Theme",
+        title = stringResource(R.string.settings_exp_festive_theme),
         showBackButton = true,
         onBackClick = {
             hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
@@ -53,7 +55,7 @@ fun FestiveSettingsScreen(
             
             item {
                 Text(
-                    text = "Festive Decorations",
+                    text = stringResource(R.string.settings_exp_festive_theme_desc),
                     style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
                     color = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
@@ -70,7 +72,7 @@ fun FestiveSettingsScreen(
                     Column {
                         FestiveSettingRow(
                             icon = MaterialSymbolIcon("celebration"),
-                            title = "Enable Festive Theme",
+                            title = stringResource(R.string.theme_enable_festive),
                             description = "Show festive decorations across the app",
                             checked = festiveEnabled,
                             onCheckedChange = { 
@@ -87,7 +89,7 @@ fun FestiveSettingsScreen(
                             
                             FestiveSettingRow(
                                 icon = MaterialSymbolIcon("event_available"),
-                                title = "Auto-Detect Holidays",
+                                title = stringResource(R.string.theme_auto_detect),
                                 description = "Automatically show decorations for holidays",
                                 checked = festiveAutoDetect,
                                 onCheckedChange = { 
@@ -105,7 +107,7 @@ fun FestiveSettingsScreen(
                 
                 item {
                     Text(
-                        text = "Festive Theme Type",
+                        text = stringResource(R.string.festivesettingsscreen_festive_theme_type),
                         style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
                         color = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
@@ -122,7 +124,7 @@ fun FestiveSettingsScreen(
                         Column {
                             FestiveTypeOption(
                                 icon = MaterialSymbolIcon("ac_unit"),
-                                title = "Christmas",
+                                title = stringResource(R.string.settings_festival_christmas),
                                 description = "Snowfall decorations",
                                 selected = festiveType == "CHRISTMAS",
                                 onClick = { 
@@ -138,7 +140,7 @@ fun FestiveSettingsScreen(
                             
                             FestiveTypeOption(
                                 icon = MaterialSymbolIcon("celebration"),
-                                title = "New Year",
+                                title = stringResource(R.string.settings_festival_new_year),
                                 description = "Festive snowfall and sparkles",
                                 selected = festiveType == "NEW_YEAR",
                                 onClick = { 
@@ -156,7 +158,7 @@ fun FestiveSettingsScreen(
                 
                 item {
                     Text(
-                        text = "Intensity",
+                        text = stringResource(R.string.settings_intensity),
                         style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
                         color = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
@@ -179,7 +181,7 @@ fun FestiveSettingsScreen(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Text(
-                                    text = "Decoration Intensity",
+                                    text = stringResource(R.string.settings_decoration_intensity),
                                     style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium),
                                     color = MaterialTheme.colorScheme.onSurface
                                 )
@@ -204,7 +206,7 @@ fun FestiveSettingsScreen(
                             Spacer(modifier = Modifier.height(8.dp))
                             
                             Text(
-                                text = "Adjust the amount of festive decorations shown",
+                                text = stringResource(R.string.settings_adjust_festive_decorations),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -236,13 +238,13 @@ fun FestiveSettingsScreen(
                         )
                         Column {
                             Text(
-                                text = "About Festive Themes",
+                                text = stringResource(R.string.festivesettingsscreen_about_festive_themes),
                                 style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
                                 color = MaterialTheme.colorScheme.onSurface
                             )
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
-                                text = "Festive decorations add a touch of celebration to your music experience. When auto-detect is enabled, decorations appear automatically during holidays like Christmas (Dec 15-31).",
+                                text = stringResource(R.string.festivesettingsscreen_festive_decorations_add_a),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -364,7 +366,7 @@ fun FestiveTypeOption(
             if (selected) {
                 Icon(
                     imageVector = RhythmIcons.Check,
-                    contentDescription = "Selected",
+                    contentDescription = stringResource(R.string.streaming_selected),
                     
                     modifier = Modifier.size(24.dp)
                 )

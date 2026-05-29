@@ -8,6 +8,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import chromahub.rhythm.app.ui.theme.festive.*
+import chromahub.rhythm.app.R
+import androidx.compose.ui.res.stringResource
 
 /**
  * Example implementations of the Festive Theme Engine
@@ -28,7 +30,7 @@ fun ExampleBasicChristmasSnowfall() {
             contentAlignment = Alignment.Center
         ) {
             Text(
-                text = "Merry Christmas!",
+                text = stringResource(R.string.festivesplashgreeting_merry_christmas),
                 style = MaterialTheme.typography.headlineLarge,
                 color = MaterialTheme.colorScheme.onBackground
             )
@@ -56,7 +58,7 @@ fun ExampleManualConfiguration() {
             verticalArrangement = Arrangement.Center
         ) {
             Text(
-                text = "Custom Festive Theme",
+                text = stringResource(R.string.festivethemeexamples_custom_festive_theme),
                 style = MaterialTheme.typography.headlineMedium
             )
             Spacer(modifier = Modifier.height(16.dp))
@@ -90,7 +92,7 @@ fun ExampleAutoDetection() {
             verticalArrangement = Arrangement.Center
         ) {
             Text(
-                text = "Auto-Detected Theme",
+                text = stringResource(R.string.festivethemeexamples_autodetected_theme),
                 style = MaterialTheme.typography.headlineMedium
             )
             Spacer(modifier = Modifier.height(16.dp))
@@ -127,7 +129,7 @@ fun ExampleInteractiveIntensity() {
             verticalArrangement = Arrangement.Center
         ) {
             Text(
-                text = "Adjust Snowfall",
+                text = stringResource(R.string.festivethemeexamples_adjust_snowfall),
                 style = MaterialTheme.typography.headlineMedium
             )
             
@@ -153,13 +155,13 @@ fun ExampleInteractiveIntensity() {
                 horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 Button(onClick = { intensity = 0.3f }) {
-                    Text("Light")
+                    Text(stringResource(R.string.settings_theme_light))
                 }
                 Button(onClick = { intensity = 0.5f }) {
-                    Text("Medium")
+                    Text(stringResource(R.string.festivethemeexamples_medium))
                 }
                 Button(onClick = { intensity = 0.8f }) {
-                    Text("Heavy")
+                    Text(stringResource(R.string.festivethemeexamples_heavy))
                 }
             }
         }
@@ -187,12 +189,12 @@ fun ExampleLightweightMode() {
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = "⚡ Performance Mode",
+                    text = stringResource(R.string.festivethemeexamples_performance_mode),
                     style = MaterialTheme.typography.headlineMedium
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = "Optimized for lower-end devices",
+                    text = stringResource(R.string.festivethemeexamples_optimized_for_lowerend_devices),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -262,7 +264,7 @@ fun ExampleThemeSelector() {
             verticalArrangement = Arrangement.Center
         ) {
             Text(
-                text = "Select Theme",
+                text = stringResource(R.string.festivethemeexamples_select_theme),
                 style = MaterialTheme.typography.headlineMedium
             )
             
@@ -275,14 +277,14 @@ fun ExampleThemeSelector() {
                     onClick = { selectedTheme = FestiveThemeType.CHRISTMAS },
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text("🎄 Christmas")
+                    Text(stringResource(R.string.festivethemeexamples_christmas))
                 }
                 
                 Button(
                     onClick = { selectedTheme = FestiveThemeType.NEW_YEAR },
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text("🎉 New Year")
+                    Text(stringResource(R.string.festivethemeexamples_new_year))
                 }
             }
             
@@ -309,7 +311,7 @@ fun ExampleWithAppSettings() {
             contentAlignment = Alignment.Center
         ) {
             Text(
-                text = "Using App Settings",
+                text = stringResource(R.string.festivethemeexamples_using_app_settings),
                 style = MaterialTheme.typography.headlineMedium
             )
         }

@@ -94,6 +94,8 @@ import chromahub.rhythm.app.util.HapticUtils
 import chromahub.rhythm.app.features.local.presentation.viewmodel.MusicViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import chromahub.rhythm.app.R
+import androidx.compose.ui.res.stringResource
 
 @Composable
 fun DeviceConfigurationBottomSheet(
@@ -163,7 +165,7 @@ fun DeviceConfigurationBottomSheet(
             if (content != null) {
                 importText = content
             } else {
-                Toast.makeText(context, "Failed to read file", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, R.string.autoeq_failed_read_file, Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -202,7 +204,7 @@ fun DeviceConfigurationBottomSheet(
             ) {
                 Column {
                     Text(
-                        text = "Manage AutoEQ",
+                        text = stringResource(R.string.autoeq_manage),
                         style = MaterialTheme.typography.displayMedium,
                         fontWeight = FontWeight.Medium,
                         color = MaterialTheme.colorScheme.onSurface
@@ -230,7 +232,7 @@ fun DeviceConfigurationBottomSheet(
             Column {
                 // Description text
                 Text(
-                    text = "Configure your audio devices with optimized AutoEQ profiles for the best listening experience.",
+                    text = stringResource(R.string.autoeq_configure_desc),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(vertical = 4.dp)
@@ -315,7 +317,7 @@ fun DeviceConfigurationBottomSheet(
                             modifier = Modifier.size(18.dp)
                         )
                         Spacer(modifier = Modifier.width(6.dp))
-                        Text("Add")
+                        Text(stringResource(R.string.button_add))
                     }
                     
                     // Import Button
@@ -334,7 +336,7 @@ fun DeviceConfigurationBottomSheet(
                             modifier = Modifier.size(18.dp)
                         )
                         Spacer(modifier = Modifier.width(6.dp))
-                        Text("Import")
+                        Text(stringResource(R.string.button_import))
                     }
                     
                     // Export Button
@@ -353,7 +355,7 @@ fun DeviceConfigurationBottomSheet(
                             modifier = Modifier.size(18.dp)
                         )
                         Spacer(modifier = Modifier.width(6.dp))
-                        Text("Export")
+                        Text(stringResource(R.string.button_export))
                     }
                 }
                 
@@ -387,13 +389,13 @@ fun DeviceConfigurationBottomSheet(
                                 }
                             }
                             Text(
-                                text = "No devices configured",
+                                text = stringResource(R.string.autoeq_no_devices),
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Medium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                             Text(
-                                text = "Add your headphones or speakers to get personalized EQ settings",
+                                text = stringResource(R.string.autoeq_add_prompt),
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
                                 textAlign = androidx.compose.ui.text.style.TextAlign.Center
@@ -463,7 +465,7 @@ fun DeviceConfigurationBottomSheet(
                     modifier = Modifier.size(28.dp)
                 )
             },
-            title = { Text("Delete Device") },
+            title = { Text(stringResource(R.string.autoeq_delete_device_title)) },
             text = { Text("Are you sure you want to delete '${device.name}'? This action cannot be undone.") },
             confirmButton = {
                 Button(
@@ -475,12 +477,12 @@ fun DeviceConfigurationBottomSheet(
                         containerColor = MaterialTheme.colorScheme.error
                     )
                 ) {
-                    Text("Delete")
+                    Text(stringResource(R.string.button_delete))
                 }
             },
             dismissButton = {
                 OutlinedButton(onClick = { showDeleteConfirmDialog = null }) {
-                    Text("Cancel")
+                    Text(stringResource(R.string.ui_cancel))
                 }
             },
             shape = RoundedCornerShape(24.dp)
@@ -536,7 +538,7 @@ fun DeviceConfigurationBottomSheet(
                 )
             },
             title = {
-                Text("Import EQ Profile")
+                Text(stringResource(R.string.autoeq_import_profile))
             },
             text = {
                 Column(
@@ -547,7 +549,7 @@ fun DeviceConfigurationBottomSheet(
                         .verticalScroll(rememberScrollState())
                 ) {
                     Text(
-                        text = "Paste EQ settings from autoeq.app or other sources.",
+                        text = stringResource(R.string.autoeq_import_paste_hint),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -558,7 +560,7 @@ fun DeviceConfigurationBottomSheet(
                     ) {
                         Column(modifier = Modifier.padding(12.dp)) {
                             Text(
-                                text = "Supported formats:\n• FixedBandEQ text (AutoEQ)\n• JSON format\n• CSV (10 band values)",
+                                text = stringResource(R.string.deviceconfigurationbottomsheet_supported_formats_fixedbandeq_text),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -571,8 +573,8 @@ fun DeviceConfigurationBottomSheet(
                             importText = it
                             importError = null
                         },
-                        label = { Text("EQ Settings") },
-                        placeholder = { Text("Paste EQ data here...") },
+                        label = { Text(stringResource(R.string.autoeq_eq_settings_label)) },
+                        placeholder = { Text(stringResource(R.string.deviceconfigurationbottomsheet_paste_eq_data_here)) },
                         minLines = 6,
                         maxLines = 10,
                         modifier = Modifier.fillMaxWidth(),
@@ -594,7 +596,7 @@ fun DeviceConfigurationBottomSheet(
                         ) {
                             Icon(MaterialSymbolIcon("file_upload"), null, modifier = Modifier.size(16.dp))
                             Spacer(Modifier.width(4.dp))
-                            Text("File", style = MaterialTheme.typography.labelLarge)
+                            Text(stringResource(R.string.text_file), style = MaterialTheme.typography.labelLarge)
                         }
                         FilledTonalButton(
                             onClick = {
@@ -607,7 +609,7 @@ fun DeviceConfigurationBottomSheet(
                         ) {
                             Icon(MaterialSymbolIcon("content_paste"), null, modifier = Modifier.size(16.dp))
                             Spacer(Modifier.width(4.dp))
-                            Text("Paste", style = MaterialTheme.typography.labelLarge)
+                            Text(stringResource(R.string.text_paste), style = MaterialTheme.typography.labelLarge)
                         }
                     }
                     
@@ -621,7 +623,7 @@ fun DeviceConfigurationBottomSheet(
                     ) {
                         Icon(RhythmIcons.Link, null, modifier = Modifier.size(16.dp))
                         Spacer(Modifier.width(6.dp))
-                        Text("Open autoeq.app")
+                        Text(stringResource(R.string.deviceconfigurationbottomsheet_open_autoeqapp))
                     }
                 }
             },
@@ -645,7 +647,7 @@ fun DeviceConfigurationBottomSheet(
                 ) {
                     Icon(RhythmIcons.Check, null, modifier = Modifier.size(18.dp))
                     Spacer(Modifier.width(6.dp))
-                    Text("Import")
+                    Text(stringResource(R.string.button_import))
                 }
             },
             dismissButton = {
@@ -658,7 +660,7 @@ fun DeviceConfigurationBottomSheet(
                 ) {
                     Icon(RhythmIcons.Close, null, modifier = Modifier.size(18.dp))
                     Spacer(Modifier.width(6.dp))
-                    Text("Cancel")
+                    Text(stringResource(R.string.ui_cancel))
                 }
             },
             shape = RoundedCornerShape(24.dp)
@@ -729,7 +731,7 @@ fun DeviceConfigurationBottomSheet(
                 )
             },
             title = {
-                Text("Export EQ Profile")
+                Text(stringResource(R.string.deviceconfigurationbottomsheet_export_eq_profile))
             },
             text = {
                 Column(
@@ -740,7 +742,7 @@ fun DeviceConfigurationBottomSheet(
                         val exportText = AutoEQImportExport.generateShareableText(profileToExport)
                         
                         Text(
-                            text = "Share your EQ settings with others or save for backup.",
+                            text = stringResource(R.string.bottomsheet_export_eq),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -774,14 +776,14 @@ fun DeviceConfigurationBottomSheet(
                             FilledTonalButton(
                                 onClick = {
                                     clipboardManager.setPrimaryClip(ClipData.newPlainText("exported text", exportText))
-                                    Toast.makeText(context, "Copied to clipboard", Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(context, R.string.deviceconfigurationbottomsheet_copied_to_clipboard, Toast.LENGTH_SHORT).show()
                                 },
                                 modifier = Modifier.weight(1f),
                                 shape = RoundedCornerShape(12.dp)
                             ) {
                                 Icon(MaterialSymbolIcon("content_paste"), null, modifier = Modifier.size(16.dp))
                                 Spacer(Modifier.width(4.dp))
-                                Text("Copy", style = MaterialTheme.typography.labelLarge)
+                                Text(stringResource(R.string.deviceconfigurationbottomsheet_copy), style = MaterialTheme.typography.labelLarge)
                             }
                             FilledTonalButton(
                                 onClick = {
@@ -797,12 +799,12 @@ fun DeviceConfigurationBottomSheet(
                             ) {
                                 Icon(RhythmIcons.Share, null, modifier = Modifier.size(16.dp))
                                 Spacer(Modifier.width(4.dp))
-                                Text("Share", style = MaterialTheme.typography.labelLarge)
+                                Text(stringResource(R.string.crashactivity_share), style = MaterialTheme.typography.labelLarge)
                             }
                         }
                     } else {
                         Text(
-                            text = "No active EQ settings to export. Please enable the equalizer and configure it first.",
+                            text = stringResource(R.string.bottomsheet_no_eq_export),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -815,7 +817,7 @@ fun DeviceConfigurationBottomSheet(
                 ) {
                     Icon(RhythmIcons.Check, null, modifier = Modifier.size(18.dp))
                     Spacer(Modifier.width(6.dp))
-                    Text("Done")
+                    Text(stringResource(R.string.ui_done))
                 }
             },
             dismissButton = null,
@@ -943,7 +945,7 @@ private fun DeviceCard(
                     ) {
                         Icon(
                             imageVector = RhythmIcons.Check,
-                            contentDescription = "Active",
+                            contentDescription = stringResource(R.string.bottomsheet_active_device),
                             tint = MaterialTheme.colorScheme.onPrimary,
                             modifier = Modifier.size(18.dp)
                         )
@@ -971,7 +973,7 @@ private fun DeviceCard(
                     )
                     Spacer(Modifier.width(6.dp))
                     Text(
-                        text = "AutoEQ",
+                        text = stringResource(R.string.license_autoeq_name),
                         style = MaterialTheme.typography.labelMedium,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
@@ -992,7 +994,7 @@ private fun DeviceCard(
                     )
                     Spacer(Modifier.width(6.dp))
                     Text(
-                        text = "Edit",
+                        text = stringResource(R.string.bottomsheet_timer_edit),
                         style = MaterialTheme.typography.labelMedium,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
@@ -1016,7 +1018,7 @@ private fun DeviceCard(
                     )
                     Spacer(Modifier.width(6.dp))
                     Text(
-                        text = "Delete",
+                        text = stringResource(R.string.button_delete),
                         style = MaterialTheme.typography.labelMedium,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
@@ -1059,8 +1061,8 @@ private fun AddEditDeviceDialog(
                 OutlinedTextField(
                     value = deviceName,
                     onValueChange = { deviceName = it },
-                    label = { Text("Device Name") },
-                    placeholder = { Text("e.g., Sony WH-1000XM4") },
+                    label = { Text(stringResource(R.string.deviceconfigurationbottomsheet_device_name)) },
+                    placeholder = { Text(stringResource(R.string.deviceconfigurationbottomsheet_eg_sony_wh1000xm4)) },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp)
@@ -1069,15 +1071,15 @@ private fun AddEditDeviceDialog(
                 OutlinedTextField(
                     value = deviceBrand,
                     onValueChange = { deviceBrand = it },
-                    label = { Text("Brand (Optional)") },
-                    placeholder = { Text("e.g., Sony") },
+                    label = { Text(stringResource(R.string.deviceconfigurationbottomsheet_brand_optional)) },
+                    placeholder = { Text(stringResource(R.string.deviceconfigurationbottomsheet_eg_sony)) },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp)
                 )
                 
                 Text(
-                    text = "Device Type",
+                    text = stringResource(R.string.bottomsheet_device_type),
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.primary,
                     fontWeight = FontWeight.SemiBold
@@ -1146,7 +1148,7 @@ private fun AddEditDeviceDialog(
                     modifier = Modifier.size(18.dp)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("Cancel")
+                Text(stringResource(R.string.ui_cancel))
             }
         },
         shape = RoundedCornerShape(24.dp)
@@ -1219,7 +1221,7 @@ private fun DeviceAutoEQSelector(
         title = {
             Column {
                 Text(
-                    text = "Select AutoEQ Profile",
+                    text = stringResource(R.string.deviceconfigurationbottomsheet_select_autoeq_profile),
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold
                 )
@@ -1242,7 +1244,7 @@ private fun DeviceAutoEQSelector(
                     value = searchQuery,
                     onValueChange = { searchQuery = it },
                     modifier = Modifier.fillMaxWidth(),
-                    placeholder = { Text("Find a profile for this device...") },
+                    placeholder = { Text(stringResource(R.string.deviceconfigurationbottomsheet_find_a_profile_for)) },
                     leadingIcon = {
                         Icon(
                             imageVector = RhythmIcons.SearchFilled,
@@ -1255,7 +1257,7 @@ private fun DeviceAutoEQSelector(
                             IconButton(onClick = { searchQuery = "" }) {
                                 Icon(
                                     imageVector = RhythmIcons.Close,
-                                    contentDescription = "Clear",
+                                    contentDescription = stringResource(R.string.ui_clear),
                                     modifier = Modifier.size(18.dp)
                                 )
                             }
@@ -1395,7 +1397,7 @@ private fun DeviceAutoEQSelector(
                                         modifier = Modifier.size(32.dp)
                                     )
                                     Text(
-                                        text = "No matching profiles found",
+                                        text = stringResource(R.string.deviceconfigurationbottomsheet_no_matching_profiles_found),
                                         style = MaterialTheme.typography.bodyMedium,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
@@ -1422,7 +1424,7 @@ private fun DeviceAutoEQSelector(
             OutlinedButton(onClick = onDismiss) {
                 Icon(RhythmIcons.Close, null, modifier = Modifier.size(18.dp))
                 Spacer(Modifier.width(6.dp))
-                Text("Cancel")
+                Text(stringResource(R.string.ui_cancel))
             }
         },
         shape = RoundedCornerShape(24.dp)
@@ -1545,7 +1547,7 @@ private fun EQProfileCard(
                 ) {
                     Icon(
                         imageVector = RhythmIcons.Check,
-                        contentDescription = "Selected",
+                        contentDescription = stringResource(R.string.streaming_selected),
                         tint = MaterialTheme.colorScheme.onPrimary,
                         modifier = Modifier.size(14.dp)
                     )

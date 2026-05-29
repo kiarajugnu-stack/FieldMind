@@ -343,7 +343,7 @@ fun UpdatesSettingsScreen(onBackClick: () -> Unit) {
                             ) {
                                 Icon(
                                     imageVector = RhythmIcons.Back,
-                                    contentDescription = "Back",
+                                    contentDescription = stringResource(R.string.cd_back),
                                     tint = MaterialTheme.colorScheme.onSurface,
                                     modifier = Modifier.size(25.dp)
                                 )
@@ -660,7 +660,7 @@ fun UpdatesSettingsScreen(onBackClick: () -> Unit) {
                                 Button(
                                     onClick = {
                                         if (simulateEnabled) {
-                                            Toast.makeText(context, "Simulating update installation (Success!)", Toast.LENGTH_SHORT).show()
+                                            Toast.makeText(context, R.string.updatessettingsscreen_simulating_update_installation_success, Toast.LENGTH_SHORT).show()
                                             simDownloadedFile = null
                                             simUpdateAvailable = false
                                         } else {
@@ -765,7 +765,7 @@ fun UpdatesSettingsScreen(onBackClick: () -> Unit) {
                                             )
                                             Spacer(modifier = Modifier.width(8.dp))
                                             Text(
-                                                text = "Check Now",
+                                                text = stringResource(R.string.updates_check_now_action),
                                                 fontWeight = FontWeight.Bold,
                                                 style = MaterialTheme.typography.titleSmall,
                                                 modifier = Modifier.padding(vertical = 4.dp)
@@ -851,7 +851,7 @@ fun UpdatesSettingsScreen(onBackClick: () -> Unit) {
                                 val intent = Intent(Intent.ACTION_VIEW, Uri.parse(releaseUrl))
                                 context.startActivity(intent)
                             } catch (e: Exception) {
-                                Toast.makeText(context, "Unable to open release page", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, R.string.updatessettingsscreen_unable_to_open_release, Toast.LENGTH_SHORT).show()
                             }
                         }
                         .padding(vertical = 8.dp, horizontal = 16.dp),
@@ -900,7 +900,7 @@ fun UpdatesSettingsScreen(onBackClick: () -> Unit) {
                                 val onSurfaceColor = MaterialTheme.colorScheme.onSurface.toArgb()
                                 if (activeWhatsNew.isEmpty()) {
                                     Text(
-                                        text = "Refer to release notes on GitHub releases page.",
+                                        text = stringResource(R.string.updatessettingsscreen_refer_to_release_notes),
                                         style = MaterialTheme.typography.bodyMedium,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
@@ -1529,7 +1529,7 @@ fun UpdatesSettingsScreen(onBackClick: () -> Unit) {
                                 if (updateChannel == channel) {
                                     Icon(
                                         imageVector = RhythmIcons.CheckCircle,
-                                        contentDescription = "Selected",
+                                        contentDescription = stringResource(R.string.streaming_selected),
                                         tint = MaterialTheme.colorScheme.primary,
                                         modifier = Modifier.size(28.dp)
                                     )
@@ -1606,7 +1606,7 @@ fun UpdatesSettingsScreen(onBackClick: () -> Unit) {
                                 if (updateCheckIntervalHours == hours) {
                                     Icon(
                                         imageVector = RhythmIcons.CheckCircle,
-                                        contentDescription = "Selected",
+                                        contentDescription = stringResource(R.string.streaming_selected),
                                         tint = MaterialTheme.colorScheme.primary,
                                         modifier = Modifier.size(28.dp)
                                     )
@@ -1697,7 +1697,7 @@ fun UpdatesSettingsScreen(onBackClick: () -> Unit) {
                                 if (updateSource == source) {
                                     Icon(
                                         imageVector = RhythmIcons.CheckCircle,
-                                        contentDescription = "Selected",
+                                        contentDescription = stringResource(R.string.streaming_selected),
                                         tint = MaterialTheme.colorScheme.primary,
                                         modifier = Modifier.size(28.dp)
                                     )

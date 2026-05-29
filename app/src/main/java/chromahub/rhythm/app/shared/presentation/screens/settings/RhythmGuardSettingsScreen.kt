@@ -1781,7 +1781,7 @@ fun BackupRestoreSectionPickerBottomSheet(
                         }
                         Column {
                             Text(
-                                text = "Choose sections",
+                                text = stringResource(R.string.rhythmguardsettingsscreen_choose_sections),
                                 style = MaterialTheme.typography.titleSmall,
                                 fontWeight = FontWeight.SemiBold
                             )
@@ -1807,7 +1807,7 @@ fun BackupRestoreSectionPickerBottomSheet(
                             enabled = !isProcessing,
                             contentPadding = PaddingValues(horizontal = 10.dp, vertical = 0.dp)
                         ) {
-                            Text("All", style = MaterialTheme.typography.labelLarge)
+                            Text(stringResource(R.string.autoeqprofileselector_all), style = MaterialTheme.typography.labelLarge)
                         }
                         FilledTonalButton(
                             onClick = {
@@ -1822,7 +1822,7 @@ fun BackupRestoreSectionPickerBottomSheet(
                             enabled = !isProcessing,
                             contentPadding = PaddingValues(horizontal = 10.dp, vertical = 0.dp)
                         ) {
-                            Text("None", style = MaterialTheme.typography.labelLarge)
+                            Text(stringResource(R.string.rhythmguardsettingsscreen_none), style = MaterialTheme.typography.labelLarge)
                         }
                     }
                 }
@@ -1836,7 +1836,7 @@ fun BackupRestoreSectionPickerBottomSheet(
             ) {
                 BackupRestoreSectionRow(
                     icon = RhythmIcons.Settings,
-                    title = "General Settings",
+                    title = stringResource(R.string.rhythmguardsettingsscreen_general_settings),
                     description = "Theme, player, UI, API, and app preferences.",
                     checked = sections.includeGeneralSettings,
                     badge = "Core",
@@ -1845,7 +1845,7 @@ fun BackupRestoreSectionPickerBottomSheet(
 
                 BackupRestoreSectionRow(
                     icon = RhythmIcons.Library,
-                    title = "Library Data",
+                    title = stringResource(R.string.rhythmguardsettingsscreen_library_data),
                     description = "Playlists, favorites, blacklist/whitelist, pinned folders.",
                     checked = sections.includeLibraryData,
                     badge = "Collection",
@@ -1854,7 +1854,7 @@ fun BackupRestoreSectionPickerBottomSheet(
 
                 BackupRestoreSectionRow(
                     icon = MaterialSymbolIcon("auto_graph"),
-                    title = "Stats & Rhythm Guard",
+                    title = stringResource(R.string.rhythmguardsettingsscreen_stats_rhythm_guard),
                     description = "Play counts, daily stats, genres, and Rhythm Guard configuration.",
                     checked = sections.includeStatsAndRhythmGuard,
                     badge = "Insight",

@@ -208,6 +208,7 @@ import chromahub.rhythm.app.shared.presentation.components.bottomsheets.ExtraCon
 import chromahub.rhythm.app.shared.presentation.components.dialogs.PlaybackSpeedDialog
 import chromahub.rhythm.app.shared.presentation.components.dialogs.PlaybackPitchDialog
 import androidx.navigation.NavController
+import androidx.compose.ui.res.stringResource
 
 // Experimental API opt-ins required for:
 // - Material3 ModalBottomSheet and related APIs
@@ -533,7 +534,7 @@ fun MaterialPlayerScreen(
             // User granted permission, complete the write
             musicViewModel.completeMetadataWriteAfterPermission(
                 onSuccess = {
-                    Toast.makeText(context, "Metadata saved successfully!", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, R.string.localnavigation_metadata_saved_successfully, Toast.LENGTH_SHORT).show()
                 },
                 onError = { errorMessage ->
                     Toast.makeText(context, errorMessage, Toast.LENGTH_LONG).show()
@@ -542,7 +543,7 @@ fun MaterialPlayerScreen(
         } else {
             // User denied permission
             musicViewModel.cancelPendingMetadataWrite()
-            Toast.makeText(context, "Permission denied. Changes saved to library only.", Toast.LENGTH_LONG).show()
+            Toast.makeText(context, R.string.localnavigation_permission_denied_changes_saved, Toast.LENGTH_LONG).show()
         }
     }
     
@@ -561,7 +562,7 @@ fun MaterialPlayerScreen(
             )
         } else {
             musicViewModel.cancelPendingLyricsWrite()
-            Toast.makeText(context, "Permission denied. Could not embed lyrics.", Toast.LENGTH_LONG).show()
+            Toast.makeText(context, R.string.materialplayerscreen_permission_denied_could_not, Toast.LENGTH_LONG).show()
         }
     }
     
@@ -579,7 +580,7 @@ fun MaterialPlayerScreen(
                     if (result.lyrics != null) {
                         musicViewModel.saveEditedLyrics(result.lyrics)
                         showLyricsEditorDialog = true
-                        Toast.makeText(context, "Lyrics loaded successfully", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, R.string.lyrics_loaded_success, Toast.LENGTH_SHORT).show()
                     } else {
                         Toast.makeText(
                             context,
@@ -985,7 +986,7 @@ fun MaterialPlayerScreen(
                         removeArtwork = removeArtwork,
                         onSuccess = { fileWriteSucceeded ->
                             if (fileWriteSucceeded) {
-                                Toast.makeText(context, "Metadata saved successfully to file!", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, R.string.localnavigation_metadata_saved_successfully_to, Toast.LENGTH_SHORT).show()
                             } else {
                                 // Don't show error here - permission request will be triggered
                             }
@@ -1174,7 +1175,7 @@ fun MaterialPlayerScreen(
                         }
                         context.startActivity(android.content.Intent.createChooser(shareIntent, "Share ${currentSong.title}"))
                     } catch (e: Exception) {
-                        android.widget.Toast.makeText(context, "Unable to share file", android.widget.Toast.LENGTH_SHORT).show()
+                        android.widget.Toast.makeText(context, R.string.materialplayerscreen_unable_to_share_file, android.widget.Toast.LENGTH_SHORT).show()
                     }
                 }
             },
@@ -1185,7 +1186,7 @@ fun MaterialPlayerScreen(
     }
 
     FixedHeaderScreen(
-        title = "Player",
+        title = stringResource(R.string.settings_player),
         showBackButton = true,
         onBackClick = {
             HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
@@ -1330,7 +1331,7 @@ fun MaterialPlayerScreen(
             ) {
                 Icon(
                     imageVector = RhythmIcons.Info,
-                    contentDescription = "Song info",
+                    contentDescription = stringResource(R.string.action_song_info),
                     tint = MaterialTheme.colorScheme.onSecondaryContainer,
                     modifier = Modifier.size(20.dp)
                 )
@@ -1732,7 +1733,7 @@ fun MaterialPlayerScreen(
                                 ) {
                                     Icon(
                                         painter = painterResource(id = chromahub.rhythm.app.R.drawable.rhythm_logo),
-                                        contentDescription = "No song playing",
+                                        contentDescription = stringResource(R.string.cd_no_song_playing),
                                         tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f),
                                         modifier = Modifier.size(120.dp)
                                     )
@@ -2050,7 +2051,7 @@ fun MaterialPlayerScreen(
                                                                             modifier = Modifier.size(18.dp)
                                                                         )
                                                                         Spacer(modifier = Modifier.width(8.dp))
-                                                                        Text("Retry")
+                                                                        Text(stringResource(R.string.updates_retry))
                                                                     }
 
                                                                     // Edit manually button
@@ -2072,7 +2073,7 @@ fun MaterialPlayerScreen(
                                                                             modifier = Modifier.size(18.dp)
                                                                         )
                                                                         Spacer(modifier = Modifier.width(8.dp))
-                                                                        Text("Add")
+                                                                        Text(stringResource(R.string.button_add))
                                                                     }
 
                                                                     // Load lyrics button
@@ -2103,7 +2104,7 @@ fun MaterialPlayerScreen(
                                                                             modifier = Modifier.size(18.dp)
                                                                         )
                                                                         Spacer(modifier = Modifier.width(8.dp))
-                                                                        Text("Load")
+                                                                        Text(stringResource(R.string.expressiveplayerscreen_load))
                                                                     }
                                                                 }
                                                             }
@@ -2717,7 +2718,7 @@ fun MaterialPlayerScreen(
                                 ) {
                                     Icon(
                                         imageVector = MaterialSymbolIcon("keyboard_arrow_up"),
-                                        contentDescription = "Show actions",
+                                        contentDescription = stringResource(R.string.cd_show_actions),
                                         tint = MaterialTheme.colorScheme.onSurfaceVariant,
                                         modifier = Modifier.size(24.dp)
                                     )
@@ -2776,7 +2777,7 @@ fun MaterialPlayerScreen(
                                             leadingIcon = {
                                                 Icon(
                                                     imageVector = RhythmIcons.AddToPlaylist,
-                                                    contentDescription = "Add to playlist",
+                                                    contentDescription = stringResource(R.string.content_desc_add_to_playlist),
                                                     modifier = Modifier.size(if (isExtraSmallWidth) 14.dp else 18.dp)
                                                 )
                                             },
@@ -2869,7 +2870,7 @@ fun MaterialPlayerScreen(
                                                     leadingIcon = {
                                                         Icon(
                                                             imageVector = if (isFavorite) RhythmIcons.FavoriteFilled else RhythmIcons.Favorite,
-                                                            contentDescription = "Toggle favorite",
+                                                            contentDescription = stringResource(R.string.cd_toggle_favorite),
                                                             modifier = Modifier.size(if (isExtraSmallWidth) 14.dp else 16.dp)
                                                         )
                                                     },
@@ -2949,7 +2950,7 @@ fun MaterialPlayerScreen(
                                                     leadingIcon = {
                                                         Icon(
                                                             imageVector = MaterialSymbolIcon("speed", filled = true),
-                                                            contentDescription = "Playback speed",
+                                                            contentDescription = stringResource(R.string.player_chip_speed),
                                                             modifier = Modifier.size(if (isExtraSmallWidth) 14.dp else 16.dp)
                                                         )
                                                     },
@@ -3021,7 +3022,7 @@ fun MaterialPlayerScreen(
                                                     leadingIcon = {
                                                         Icon(
                                                             imageVector = MaterialSymbolIcon("graphic_eq", filled = true),
-                                                            contentDescription = "Playback pitch",
+                                                            contentDescription = stringResource(R.string.settings_playback_pitch),
                                                             modifier = Modifier.size(if (isExtraSmallWidth) 14.dp else 16.dp)
                                                         )
                                                     },
@@ -3298,7 +3299,7 @@ fun MaterialPlayerScreen(
                                                     leadingIcon = {
                                                         Icon(
                                                             imageVector = RhythmIcons.Music.Album,
-                                                            contentDescription = "Show album",
+                                                            contentDescription = stringResource(R.string.cd_show_album),
                                                             modifier = Modifier.size(if (isExtraSmallWidth) 14.dp else 16.dp)
                                                         )
                                                     },
@@ -3384,7 +3385,7 @@ fun MaterialPlayerScreen(
                                                     leadingIcon = {
                                                         Icon(
                                                             imageVector = RhythmIcons.Music.Artist,
-                                                            contentDescription = "Show artist",
+                                                            contentDescription = stringResource(R.string.cd_show_artist),
                                                             modifier = Modifier.size(if (isExtraSmallWidth) 14.dp else 16.dp)
                                                         )
                                                     },
@@ -3449,7 +3450,7 @@ fun MaterialPlayerScreen(
                                             leadingIcon = {
                                                 Icon(
                                                     imageVector = RhythmIcons.Edit,
-                                                    contentDescription = "Reorder chips",
+                                                    contentDescription = stringResource(R.string.cd_reorder_chips),
                                                     modifier = Modifier.size(if (isExtraSmallWidth) 14.dp else 16.dp)
                                                 )
                                             },
@@ -3675,7 +3676,7 @@ fun MaterialPlayerScreen(
                                         ) {
                                             Icon(
                                                 imageVector = MaterialSymbolIcon("keyboard_arrow_up"),
-                                                contentDescription = "Show actions",
+                                                contentDescription = stringResource(R.string.cd_show_actions),
                                                 
                                                 modifier = Modifier.size(if (isCompactHeight) 20.dp else 22.dp)
                                             )

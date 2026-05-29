@@ -602,7 +602,7 @@ private fun ActiveDeviceCard(
                 ) {
                     Icon(
                         imageVector = RhythmIcons.Refresh,
-                        contentDescription = "Refresh devices",
+                        contentDescription = stringResource(R.string.content_desc_refresh_devices),
                         modifier = Modifier
                             .size(18.dp)
                             .graphicsLayer {
@@ -621,7 +621,7 @@ private fun ActiveDeviceCard(
                     Box(contentAlignment = Alignment.Center) {
                         Icon(
                             imageVector = MaterialSymbolIcon("sync_alt", filled = true),
-                            contentDescription = "Switch device",
+                            contentDescription = stringResource(R.string.content_desc_switch_device),
                             tint = MaterialTheme.colorScheme.onPrimary,
                             modifier = Modifier.size(18.dp)
                         )
@@ -822,7 +822,7 @@ private fun VolumeControlCard(
                                 if (animatedVolume < 0.3f) RhythmIcons.VolumeMute else 
                                 if (animatedVolume < 0.7f) RhythmIcons.VolumeDown else 
                                 RhythmIcons.VolumeUp,
-                    contentDescription = "Volume",
+                    contentDescription = stringResource(R.string.content_desc_volume),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = iconAlpha),
                     modifier = Modifier.size(24.dp)
                 )
@@ -882,7 +882,7 @@ private fun VolumeControlCard(
                 ) {
                     Icon(
                         imageVector = RhythmIcons.Remove,
-                        contentDescription = "Decrease volume",
+                        contentDescription = stringResource(R.string.content_desc_decrease_volume),
                         tint = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.size(20.dp)
                     )
@@ -930,7 +930,7 @@ private fun VolumeControlCard(
                 ) {
                     Icon(
                         imageVector = RhythmIcons.Add,
-                        contentDescription = "Increase volume",
+                        contentDescription = stringResource(R.string.content_desc_increase_volume),
                         tint = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.size(20.dp)
                     )
@@ -1076,7 +1076,7 @@ private fun PlaybackSpeedCard(
             ) {
                 Icon(
                     imageVector = MaterialSymbolIcon("speed", filled = true),
-                    contentDescription = "Playback Speed",
+                    contentDescription = stringResource(R.string.player_chip_speed),
                     
                     modifier = Modifier.size(24.dp)
                 )
@@ -1158,12 +1158,12 @@ private fun PlaybackSpeedCard(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text(
-                        text = "0.25x",
+                        text = stringResource(R.string.playbackbottomsheet_str_025x),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Text(
-                        text = "3.0x",
+                        text = stringResource(R.string.playbackbottomsheet_str_30x),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -1546,7 +1546,7 @@ private fun PlaybackPitchCard(
             ) {
                 Icon(
                     imageVector = MaterialSymbolIcon("graphic_eq", filled = true),
-                    contentDescription = "Playback Pitch",
+                    contentDescription = stringResource(R.string.settings_playback_pitch),
                     
                     modifier = Modifier.size(24.dp)
                 )
@@ -1628,12 +1628,12 @@ private fun PlaybackPitchCard(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text(
-                        text = "0.25x",
+                        text = stringResource(R.string.playbackbottomsheet_str_025x),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Text(
-                        text = "3.0x",
+                        text = stringResource(R.string.playbackbottomsheet_str_30x),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )

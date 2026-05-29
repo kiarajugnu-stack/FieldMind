@@ -332,7 +332,7 @@ fun FontSourceDialog(
                                 if (isSelected) {
                                     Icon(
                                         imageVector = RhythmIcons.CheckCircle,
-                                        contentDescription = "Selected",
+                                        contentDescription = stringResource(R.string.streaming_selected),
                                         
                                         modifier = Modifier.size(28.dp)
                                     )

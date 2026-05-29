@@ -237,7 +237,7 @@ fun PlaceholderSettingsScreen() {
                 Spacer(modifier = Modifier.height(16.dp))
 
                 Text(
-                    text = "Choose a setting from the left panel",
+                    text = stringResource(R.string.placeholdersettingsscreen_choose_a_setting_from),
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = androidx.compose.ui.text.style.TextAlign.Center,
@@ -247,7 +247,7 @@ fun PlaceholderSettingsScreen() {
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Text(
-                    text = "Tap on any setting option to view and modify its preferences here",
+                    text = stringResource(R.string.placeholdersettingsscreen_tap_on_any_setting),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
                     textAlign = androidx.compose.ui.text.style.TextAlign.Center

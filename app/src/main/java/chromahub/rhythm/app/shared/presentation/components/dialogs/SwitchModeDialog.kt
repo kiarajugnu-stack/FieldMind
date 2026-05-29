@@ -12,6 +12,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import chromahub.rhythm.app.R
+import androidx.compose.ui.res.stringResource
 
 @Composable
 fun SwitchModeDialog(
@@ -73,7 +75,7 @@ fun SwitchModeDialog(
                         modifier = Modifier.size(16.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Switch & Play")
+                    Text(stringResource(R.string.switchmodedialog_switch_play))
                 }
 
                 OutlinedButton(
@@ -90,7 +92,7 @@ fun SwitchModeDialog(
                         modifier = Modifier.size(16.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Cancel")
+                    Text(stringResource(R.string.ui_cancel))
                 }
             }
         },

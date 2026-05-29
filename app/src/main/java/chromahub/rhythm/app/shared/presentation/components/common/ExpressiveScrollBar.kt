@@ -33,6 +33,8 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
+import chromahub.rhythm.app.R
+import androidx.compose.ui.res.stringResource
 
 /**
  * Expressive scrollbar component with smooth animations and interactive features.
@@ -200,7 +202,7 @@ fun ExpressiveScrollBar(
                 
                 Icon(
                     imageVector = innerIcon,
-                    contentDescription = "Scroll Indicator",
+                    contentDescription = stringResource(R.string.expressivescrollbar_scroll_indicator),
                     modifier = Modifier
                         .offset(
                             x = paddingEnd + (animatedWidth - iconSize) / 2,

@@ -750,7 +750,7 @@ fun MediaScanSettingsScreen(onBackClick: () -> Unit) {
                                 ) {
                                     Icon(
                                         imageVector = RhythmIcons.Close,
-                                        contentDescription = "Remove",
+                                        contentDescription = stringResource(R.string.content_desc_remove),
                                         tint = if (currentMode == chromahub.rhythm.app.shared.presentation.components.MediaScanMode.BLACKLIST)
                                             MaterialTheme.colorScheme.onErrorContainer else MaterialTheme.colorScheme.onPrimaryContainer
                                     )

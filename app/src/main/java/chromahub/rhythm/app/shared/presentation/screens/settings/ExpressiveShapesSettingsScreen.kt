@@ -396,7 +396,7 @@ fun ExpressiveShapesSettingsScreen(onBackClick: () -> Unit) {
                     Column {
                         Spacer(modifier = Modifier.height(24.dp))
                         Text(
-                            text = "Quick Presets",
+                            text = stringResource(R.string.theme_quick_presets),
                             style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
                             color = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
@@ -517,13 +517,13 @@ fun ExpressiveShapesSettingsScreen(onBackClick: () -> Unit) {
                         ) {
                             Icon(
                                 imageVector = RhythmIcons.Shuffle,
-                                contentDescription = "Randomize shapes",
+                                contentDescription = stringResource(R.string.expressiveshapessettingsscreen_randomize_shapes),
                                 modifier = Modifier.size(22.dp),
                                 tint = MaterialTheme.colorScheme.onTertiaryContainer
                             )
                             Spacer(modifier = Modifier.width(12.dp))
                             Text(
-                                text = "Randomize All Shapes",
+                                text = stringResource(R.string.expressiveshapessettingsscreen_randomize_all_shapes),
                                 style = MaterialTheme.typography.titleSmall,
                                 fontWeight = FontWeight.SemiBold,
                                 color = MaterialTheme.colorScheme.onTertiaryContainer
@@ -543,7 +543,7 @@ fun ExpressiveShapesSettingsScreen(onBackClick: () -> Unit) {
                     Column {
                     Spacer(modifier = Modifier.height(24.dp))
                     Text(
-                        text = "Individual Shape Settings",
+                        text = stringResource(R.string.expressiveshapessettingsscreen_individual_shape_settings),
                         style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
                         color = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
@@ -601,7 +601,7 @@ fun ExpressiveShapesSettingsScreen(onBackClick: () -> Unit) {
                             )
                             Spacer(modifier = Modifier.width(12.dp))
                             Text(
-                                text = "About Expressive Shapes",
+                                text = stringResource(R.string.expressiveshapessettingsscreen_about_expressive_shapes),
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onPrimaryContainer
@@ -609,7 +609,7 @@ fun ExpressiveShapesSettingsScreen(onBackClick: () -> Unit) {
                         }
                         Spacer(modifier = Modifier.height(12.dp))
                         Text(
-                            text = "Material 3 Expressive introduces organic, playful shapes like flowers, hearts, cookies, and more. These shapes create a unique, expressive experience that makes your music app feel more personal and fun. Enable expressive shapes to bring your music collection to life with beautiful, age-appropriate organic forms.",
+                            text = stringResource(R.string.expressiveshapessettingsscreen_material_3_expressive_introduces),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.9f),
                             lineHeight = MaterialTheme.typography.bodyMedium.lineHeight * 1.2f
@@ -658,8 +658,8 @@ fun ExpressiveShapesSettingsScreen(onBackClick: () -> Unit) {
             ) {
                 // Header with animation
                 StandardBottomSheetHeader(
-                    title = "Choose a Preset",
-                    subtitle = "Select a theme for all components",
+                    title = stringResource(R.string.expressiveshapessettingsscreen_choose_a_preset),
+                    subtitle = stringResource(R.string.expressiveshapessettingsscreen_select_a_theme_for),
                     visible = showPresetContent
                 )
 
@@ -842,7 +842,7 @@ fun ExpressiveShapesSettingsScreen(onBackClick: () -> Unit) {
                 // Header with animation
                 StandardBottomSheetHeader(
                     title = "Shape for $targetName",
-                    subtitle = "Choose an expressive shape",
+                    subtitle = stringResource(R.string.expressiveshapessettingsscreen_choose_an_expressive_shape),
                     visible = showShapeContent
                 )
 
@@ -1024,7 +1024,7 @@ fun ColorPreviewItem(
                 ) {
                     Icon(
                         imageVector = RhythmIcons.Check,
-                        contentDescription = "Selected",
+                        contentDescription = stringResource(R.string.streaming_selected),
                         tint = if (color.luminance() > 0.5f) Color.Black else Color.White,
                         modifier = Modifier.size(20.dp)
                     )

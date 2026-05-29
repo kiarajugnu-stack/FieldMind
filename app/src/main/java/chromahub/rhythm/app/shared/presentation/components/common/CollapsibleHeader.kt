@@ -61,6 +61,8 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.ui.graphics.graphicsLayer
 import kotlinx.coroutines.delay
+import chromahub.rhythm.app.R
+import androidx.compose.ui.res.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -196,7 +198,7 @@ fun CollapsibleHeaderScreen(
                             if (shouldShowIcon) {
                                 androidx.compose.foundation.Image(
                                     painter = androidx.compose.ui.res.painterResource(id = chromahub.rhythm.app.R.drawable.rhythm_splash_logo),
-                                    contentDescription = "App Icon",
+                                    contentDescription = stringResource(R.string.collapsibleheader_app_icon),
                                     modifier = Modifier.size((48 + (36 - 28) * (1 - collapsedFraction)).dp)
                                 )
                             }
@@ -228,7 +230,7 @@ fun CollapsibleHeaderScreen(
                                 ) {
                                     Icon(
                                         imageVector = RhythmIcons.Back,
-                                        contentDescription = "Back",
+                                        contentDescription = stringResource(R.string.cd_back),
                                         tint = MaterialTheme.colorScheme.onSurface,
                                         modifier = Modifier.size(25.dp)
                                     )
@@ -525,7 +527,7 @@ fun ArtistCollapsibleHeaderScreen(
                                     ) {
                                         Icon(
                                             imageVector = RhythmIcons.Back,
-                                            contentDescription = "Back",
+                                            contentDescription = stringResource(R.string.cd_back),
                                             tint = MaterialTheme.colorScheme.onSurface,
                                             modifier = Modifier.size(25.dp)
                                         )
@@ -638,7 +640,7 @@ fun FixedHeaderScreen(
                                 ) {
                                     Icon(
                                         imageVector = RhythmIcons.Back,
-                                        contentDescription = "Back",
+                                        contentDescription = stringResource(R.string.cd_back),
                                         tint = MaterialTheme.colorScheme.onSurface,
                                         modifier = Modifier.size(25.dp)
                                     )
@@ -685,7 +687,7 @@ fun CollapsibleHeaderScreenPreview() {
             color = MaterialTheme.colorScheme.background
         ) {
             CollapsibleHeaderScreen(
-                title = "Settings",
+                title = stringResource(R.string.settings_backup_settings),
                 showBackButton = true,
                 onBackClick = { /* Handle back click in preview */ }
             ) { modifier ->

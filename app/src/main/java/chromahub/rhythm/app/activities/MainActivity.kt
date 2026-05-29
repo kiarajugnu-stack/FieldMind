@@ -344,7 +344,7 @@ class MainActivity : FragmentActivity() {
             }
         } catch (e: Exception) {
             Log.e(TAG, "Error handling intent", e)
-            Toast.makeText(this, "Error opening file", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, R.string.mainactivity_error_opening_file, Toast.LENGTH_SHORT).show()
         }
     }
     
@@ -424,7 +424,7 @@ class MainActivity : FragmentActivity() {
         // Validate URI and check if it's an audio file
         if (!isValidAudioUri(uri)) {
             Log.e(TAG, "Invalid or unsupported audio file: $uri")
-            Toast.makeText(applicationContext, "Unsupported file format", Toast.LENGTH_SHORT).show()
+            Toast.makeText(applicationContext, R.string.mainactivity_unsupported_file_format, Toast.LENGTH_SHORT).show()
             return
         }
         
@@ -438,7 +438,7 @@ class MainActivity : FragmentActivity() {
                 val serviceStarted = startMediaServiceAndWait()
                 if (!serviceStarted) {
                     Log.e(TAG, "Failed to start media service")
-                    Toast.makeText(applicationContext, "Failed to initialize media player", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(applicationContext, R.string.mainactivity_failed_to_initialize_media, Toast.LENGTH_SHORT).show()
                     return@launch
                 }
                 
@@ -575,18 +575,18 @@ class MainActivity : FragmentActivity() {
                 reason = "main_activity_fallback_external_play"
             )
             if (!started) {
-                Toast.makeText(applicationContext, "Failed to play audio file", Toast.LENGTH_SHORT).show()
+                Toast.makeText(applicationContext, R.string.externalplaybackactivity_failed_to_play_audio, Toast.LENGTH_SHORT).show()
                 return
             }
             
             // Give fallback some time to start
             delay(1000)
             if (!musicViewModel.isPlaying()) {
-                Toast.makeText(applicationContext, "Unable to play audio file", Toast.LENGTH_SHORT).show()
+                Toast.makeText(applicationContext, R.string.mainactivity_unable_to_play_audio, Toast.LENGTH_SHORT).show()
             }
         } catch (e: Exception) {
             Log.e(TAG, "Fallback playback also failed", e)
-            Toast.makeText(applicationContext, "Failed to play audio file", Toast.LENGTH_SHORT).show()
+            Toast.makeText(applicationContext, R.string.externalplaybackactivity_failed_to_play_audio, Toast.LENGTH_SHORT).show()
         }
     }
 

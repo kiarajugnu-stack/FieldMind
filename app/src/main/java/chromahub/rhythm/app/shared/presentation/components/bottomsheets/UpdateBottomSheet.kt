@@ -24,6 +24,7 @@ import chromahub.rhythm.app.R
 import chromahub.rhythm.app.shared.presentation.viewmodel.AppUpdaterViewModel
 import chromahub.rhythm.app.shared.presentation.viewmodel.AppVersion
 import chromahub.rhythm.app.util.HapticUtils
+import androidx.compose.ui.res.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -266,7 +267,7 @@ fun UpdateBottomSheet(
                             downloadedFile != null -> {
                                 Icon(
                                     imageVector = RhythmIcons.CheckCircle,
-                                    contentDescription = "Install",
+                                    contentDescription = stringResource(R.string.updatebottomsheet_install),
                                     tint = MaterialTheme.colorScheme.onTertiary
                                 )
                             }
@@ -281,7 +282,7 @@ fun UpdateBottomSheet(
                             else -> {
                                 Icon(
                                     imageVector = RhythmIcons.Forward,
-                                    contentDescription = "Update",
+                                    contentDescription = stringResource(R.string.updatebottomsheet_update),
                                     tint = MaterialTheme.colorScheme.onPrimary
                                 )
                             }
@@ -299,7 +300,7 @@ fun UpdateBottomSheet(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text(
-                        text = "Later",
+                        text = stringResource(R.string.bottomsheet_lyrics_later),
                         style = MaterialTheme.typography.titleMedium,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                     )

@@ -193,7 +193,7 @@ fun MiniPlayerCustomizationSettingsScreen(onBackClick: () -> Unit) {
             item {
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
-                    text = "MiniPlayer Theme",
+                    text = stringResource(R.string.miniplayercustomizationsettingsscreen_miniplayer_theme),
                     style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
                     color = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
@@ -202,10 +202,10 @@ fun MiniPlayerCustomizationSettingsScreen(onBackClick: () -> Unit) {
                     items = listOf(
                         Material3SettingsItem(
                             icon = MaterialSymbolIcon("palette"),
-                            title = { Text("MiniPlayer Theme") },
+                            title = { Text(stringResource(R.string.miniplayercustomizationsettingsscreen_miniplayer_theme)) },
                             description = {
                                 Column {
-                                    Text("Choose between Rhythm Default or Expressive theme")
+                                    Text(stringResource(R.string.miniplayercustomizationsettingsscreen_choose_between_rhythm_default))
                                     Spacer(modifier = Modifier.height(12.dp))
                                     ExpressiveButtonGroup(
                                         items = listOf(
@@ -247,7 +247,7 @@ fun MiniPlayerCustomizationSettingsScreen(onBackClick: () -> Unit) {
                 }
                 if (isExpressiveActive) {
                     Text(
-                        text = "Integrated directly into the MiniPlayer background",
+                        text = stringResource(R.string.miniplayercustomizationsettingsscreen_integrated_directly_into_the),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.primary,
                         modifier = Modifier
@@ -350,7 +350,7 @@ fun MiniPlayerCustomizationSettingsScreen(onBackClick: () -> Unit) {
                                     hapticFeedback = haptics,
                                     item = SettingItem(
                                         icon = MaterialSymbolIcon("linear_scale"),
-                                        title = "Progress Style",
+                                        title = stringResource(R.string.settings_miniplayer_progress_style),
                                         description = miniPlayerProgressStyle.lowercase().replaceFirstChar { it.uppercase() },
                                         onClick = { showMiniPlayerProgressStyleSheet = true }
                                     )
@@ -394,7 +394,7 @@ fun MiniPlayerCustomizationSettingsScreen(onBackClick: () -> Unit) {
                             hapticFeedback = haptics,
                             item = SettingItem(
                                 icon = MaterialSymbolIcon("photo_size_select_large"),
-                                title = "Artwork Size",
+                                title = stringResource(R.string.settings_miniplayer_artwork_size),
                                 description = if (isExpressiveActive) "Not supported by Expressive theme" else "${miniPlayerArtworkSize}dp",
                                 onClick = { showMiniPlayerArtworkSizeSheet = true },
                                 enabled = !isExpressiveActive
@@ -406,13 +406,13 @@ fun MiniPlayerCustomizationSettingsScreen(onBackClick: () -> Unit) {
                             item = if (expressiveShapesEnabled) {
                                 SettingItem(
                                     icon = MaterialSymbolIcon("rounded_corner"),
-                                    title = "Corner Radius",
+                                    title = stringResource(R.string.settings_miniplayer_corner_radius),
                                     description = "Managed by Expressive Shapes"
                                 )
                             } else {
                                 SettingItem(
                                     icon = MaterialSymbolIcon("rounded_corner"),
-                                    title = "Corner Radius",
+                                    title = stringResource(R.string.settings_miniplayer_corner_radius),
                                     description = "${miniPlayerCornerRadius}dp",
                                     onClick = { showMiniPlayerCornerRadiusSheet = true }
                                 )
@@ -487,7 +487,7 @@ fun MiniPlayerCustomizationSettingsScreen(onBackClick: () -> Unit) {
                             )
                             Spacer(modifier = Modifier.width(12.dp))
                             Text(
-                                text = "MiniPlayer",
+                                text = stringResource(R.string.settings_miniplayer_header),
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onPrimaryContainer
@@ -510,7 +510,7 @@ fun MiniPlayerCustomizationSettingsScreen(onBackClick: () -> Unit) {
     // MiniPlayer Progress Style Bottom Sheet
     if (showMiniPlayerProgressStyleSheet) {
         ProgressStyleBottomSheet(
-            title = "Progress Style",
+            title = stringResource(R.string.settings_miniplayer_progress_style),
             currentStyle = miniPlayerProgressStyle,
             onStyleSelected = { style ->
                 appSettings.setMiniPlayerProgressStyle(style)
@@ -549,7 +549,7 @@ fun MiniPlayerCustomizationSettingsScreen(onBackClick: () -> Unit) {
                 ) {
                     Column {
                         Text(
-                            text = "Artwork Size",
+                            text = stringResource(R.string.settings_miniplayer_artwork_size),
                             style = MaterialTheme.typography.displayMedium,
                             fontWeight = FontWeight.Medium,
                             color = MaterialTheme.colorScheme.onSurface
@@ -621,7 +621,7 @@ fun MiniPlayerCustomizationSettingsScreen(onBackClick: () -> Unit) {
                 ) {
                     Column {
                         Text(
-                            text = "Corner Radius",
+                            text = stringResource(R.string.settings_miniplayer_corner_radius),
                             style = MaterialTheme.typography.displayMedium,
                             fontWeight = FontWeight.Medium,
                             color = MaterialTheme.colorScheme.onSurface

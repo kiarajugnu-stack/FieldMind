@@ -37,6 +37,8 @@ import chromahub.rhythm.app.shared.presentation.components.common.CollapsibleHea
 import chromahub.rhythm.app.util.HapticUtils
 import chromahub.rhythm.app.infrastructure.widget.MusicWidgetProvider
 import chromahub.rhythm.app.infrastructure.widget.glance.RhythmWidgetReceiver
+import chromahub.rhythm.app.R
+import androidx.compose.ui.res.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -87,7 +89,7 @@ fun WidgetSettingsScreen(
     }
     
     CollapsibleHeaderScreen(
-        title = "Widget Settings",
+        title = stringResource(R.string.widgetsettingsscreen_widget_settings),
         showBackButton = true,
         onBackClick = {
             HapticUtils.performHapticFeedback(context, hapticFeedback, HapticFeedbackType.LongPress)
@@ -123,7 +125,7 @@ fun WidgetSettingsScreen(
                             )
                             Spacer(modifier = Modifier.width(12.dp))
                             Text(
-                                text = "Widget Preview",
+                                text = stringResource(R.string.widget_preview_title),
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onPrimaryContainer
@@ -131,7 +133,7 @@ fun WidgetSettingsScreen(
                         }
                         Spacer(modifier = Modifier.height(12.dp))
                         Text(
-                            text = "Changes will be applied to all active widgets on your home screen. Long-press the widget to resize it and see different layouts.",
+                            text = stringResource(R.string.widget_preview_desc),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onPrimaryContainer
                         )
@@ -148,7 +150,7 @@ fun WidgetSettingsScreen(
                                 contentDescription = null
                             )
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text("Refresh All Widgets")
+                            Text(stringResource(R.string.widget_refresh_all))
                         }
                     }
                 }
@@ -160,7 +162,7 @@ fun WidgetSettingsScreen(
                 val displayItems = listOf(
                     buildToggleSettingsItem(
                         icon = RhythmIcons.Image,
-                        title = "Show Album Art",
+                        title = stringResource(R.string.onboarding_widget_album_art),
                         description = "Display album artwork in widget",
                         checked = showAlbumArt,
                         onToggle = {
@@ -170,7 +172,7 @@ fun WidgetSettingsScreen(
                     ),
                     buildToggleSettingsItem(
                         icon = RhythmIcons.Artist,
-                        title = "Show Artist Name",
+                        title = stringResource(R.string.onboarding_widget_artist),
                         description = "Display artist information",
                         checked = showArtist,
                         onToggle = {
@@ -180,7 +182,7 @@ fun WidgetSettingsScreen(
                     ),
                     buildToggleSettingsItem(
                         icon = RhythmIcons.Album,
-                        title = "Show Album Name",
+                        title = stringResource(R.string.onboarding_widget_album),
                         description = "Display album information",
                         checked = showAlbum,
                         onToggle = {
@@ -190,7 +192,7 @@ fun WidgetSettingsScreen(
                     ),
                     buildToggleSettingsItem(
                         icon = RhythmIcons.FavoriteFilled,
-                        title = "Show Favorite Button",
+                        title = stringResource(R.string.widgetsettingsscreen_show_favorite_button),
                         description = "Display favorite toggle on large widgets",
                         checked = showFavoriteButton,
                         onToggle = {
@@ -201,7 +203,7 @@ fun WidgetSettingsScreen(
                 )
 
                 Material3SettingsGroup(
-                    title = "Display Options",
+                    title = stringResource(R.string.settings_display_options),
                     items = displayItems,
                     containerColor = MaterialTheme.colorScheme.surfaceContainer
                 )
@@ -211,11 +213,11 @@ fun WidgetSettingsScreen(
             item {
                 Spacer(modifier = Modifier.height(24.dp))
                 Material3SettingsGroup(
-                    title = "Appearance",
+                    title = stringResource(R.string.widget_appearance),
                     items = listOf(
                         Material3SettingsItem(
                             icon = MaterialSymbolIcon("rounded_corner"),
-                            title = { Text("Corner Radius") },
+                            title = { Text(stringResource(R.string.settings_miniplayer_corner_radius)) },
                             description = { Text("${cornerRadius}dp (Glance widgets only)") },
                             trailingContent = {
                                 Icon(
@@ -231,7 +233,7 @@ fun WidgetSettingsScreen(
                         ),
                         Material3SettingsItem(
                             icon = MaterialSymbolIcon("palette"),
-                            title = { Text("Widget Theme") },
+                            title = { Text(stringResource(R.string.widgetsettingsscreen_widget_theme)) },
                             description = {
                                 Text(
                                     when (widgetTheme) {
@@ -263,11 +265,11 @@ fun WidgetSettingsScreen(
             item {
                 Spacer(modifier = Modifier.height(24.dp))
                 Material3SettingsGroup(
-                    title = "Behavior",
+                    title = stringResource(R.string.widget_behavior),
                     items = listOf(
                         buildToggleSettingsItem(
                             icon = MaterialSymbolIcon("auto_mode"),
-                            title = "Auto Update",
+                            title = stringResource(R.string.widget_auto_update),
                             description = "Automatically update widget when song changes",
                             checked = autoUpdate,
                             onToggle = { appSettings.setWidgetAutoUpdate(it) }
@@ -301,7 +303,7 @@ fun WidgetSettingsScreen(
                             )
                             Spacer(modifier = Modifier.width(12.dp))
                             Text(
-                                text = "Widget Tips",
+                                text = stringResource(R.string.onboarding_widgets_tips_title),
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onPrimaryContainer
@@ -311,19 +313,19 @@ fun WidgetSettingsScreen(
                         
                         WidgetTipItem(
                             icon = MaterialSymbolIcon("apps"),
-                            text = "Rhythm uses Material 3 Expressive design with dynamic colors"
+                            text = stringResource(R.string.widgetsettingsscreen_rhythm_uses_material_3)
                         )
                         WidgetTipItem(
                             icon = MaterialSymbolIcon("widgets"),
-                            text = "Widget adapts from 1x1 play button to 5x5+ full layout"
+                            text = stringResource(R.string.widgetsettingsscreen_widget_adapts_from_1x1)
                         )
                         WidgetTipItem(
                             icon = MaterialSymbolIcon("touch_app"),
-                            text = "Tap the widget to open the app, buttons control playback"
+                            text = stringResource(R.string.widget_tip_controls)
                         )
                         WidgetTipItem(
                             icon = MaterialSymbolIcon("grid_on"),
-                            text = "Long-press and resize for different expressive layouts"
+                            text = stringResource(R.string.widgetsettingsscreen_longpress_and_resize_for)
                         )
                     }
                 }
@@ -361,7 +363,7 @@ fun WidgetSettingsScreen(
                     ) {
                         Column {
                             Text(
-                                text = "Corner Radius",
+                                text = stringResource(R.string.settings_miniplayer_corner_radius),
                                 style = MaterialTheme.typography.displayMedium,
                                 fontWeight = FontWeight.Medium,
                                 color = MaterialTheme.colorScheme.onSurface
@@ -426,7 +428,7 @@ fun WidgetSettingsScreen(
                             )
                             Spacer(modifier = Modifier.width(12.dp))
                             Text(
-                                text = "Applies to Glance widgets only",
+                                text = stringResource(R.string.widgetsettingsscreen_applies_to_glance_widgets),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -492,7 +494,7 @@ fun WidgetSettingsScreen(
                     ) {
                         Column {
                             Text(
-                                text = "Widget Theme",
+                                text = stringResource(R.string.widgetsettingsscreen_widget_theme),
                                 style = MaterialTheme.typography.displayMedium,
                                 fontWeight = FontWeight.Medium,
                                 color = MaterialTheme.colorScheme.onSurface
@@ -508,7 +510,7 @@ fun WidgetSettingsScreen(
                                 Text(
                                     modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
                                     style = MaterialTheme.typography.labelLarge,
-                                    text = "Personalize home screen widgets",
+                                    text = stringResource(R.string.widgetsettingsscreen_personalize_home_screen_widgets),
                                     overflow = TextOverflow.Ellipsis,
                                     maxLines = 1,
                                     color = MaterialTheme.colorScheme.onSurface
@@ -606,7 +608,7 @@ fun WidgetSettingsScreen(
                                     if (isSelected) {
                                         Icon(
                                             imageVector = RhythmIcons.CheckCircle,
-                                            contentDescription = "Selected",
+                                            contentDescription = stringResource(R.string.streaming_selected),
                                             modifier = Modifier.size(28.dp)
                                         )
                                     }

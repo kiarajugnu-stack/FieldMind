@@ -33,6 +33,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.sp
 import chromahub.rhythm.app.shared.presentation.components.common.FileOperationLoader
+import androidx.compose.ui.res.stringResource
 
 /**
  * Dialog asking user if they want to restart the app after import
@@ -219,7 +220,7 @@ fun PlaylistExportDialog(
                             modifier = Modifier.size(16.dp)
                         )
                         Spacer(modifier = Modifier.width(6.dp))
-                        Text("Default")
+                        Text(stringResource(R.string.settings_carousel_default))
                     }
                     
                     Button(
@@ -233,7 +234,7 @@ fun PlaylistExportDialog(
                             modifier = Modifier.size(16.dp)
                         )
                         Spacer(modifier = Modifier.width(6.dp))
-                        Text("Choose")
+                        Text(stringResource(R.string.action_choose))
                     }
                 }
             } else {
@@ -246,7 +247,7 @@ fun PlaylistExportDialog(
                         modifier = Modifier.size(18.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Export")
+                    Text(stringResource(R.string.button_export))
                 }
             }
         },
@@ -395,7 +396,7 @@ fun BulkPlaylistExportDialog(
                             modifier = Modifier.size(16.dp)
                         )
                         Spacer(modifier = Modifier.width(6.dp))
-                        Text("Default")
+                        Text(stringResource(R.string.settings_carousel_default))
                     }
                     
                     Button(
@@ -409,7 +410,7 @@ fun BulkPlaylistExportDialog(
                             modifier = Modifier.size(16.dp)
                         )
                         Spacer(modifier = Modifier.width(6.dp))
-                        Text("Choose")
+                        Text(stringResource(R.string.action_choose))
                     }
                 }
             } else {
@@ -422,7 +423,7 @@ fun BulkPlaylistExportDialog(
                         modifier = Modifier.size(18.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Export All")
+                    Text(stringResource(R.string.action_export_all))
                 }
             }
         },
@@ -434,7 +435,7 @@ fun BulkPlaylistExportDialog(
                     modifier = Modifier.size(18.dp)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("Cancel")
+                Text(stringResource(R.string.ui_cancel))
             }
         },
         shape = RoundedCornerShape(24.dp)
@@ -543,7 +544,7 @@ fun PlaylistImportDialog(
                     modifier = Modifier.size(18.dp)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("Browse Files")
+                Text(stringResource(R.string.action_browse_files))
             }
         },
         dismissButton = {
@@ -554,7 +555,7 @@ fun PlaylistImportDialog(
                     modifier = Modifier.size(18.dp)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("Cancel")
+                Text(stringResource(R.string.ui_cancel))
             }
         },
         shape = RoundedCornerShape(24.dp)
@@ -678,7 +679,7 @@ fun PlaylistOperationResultDialog(
                     modifier = Modifier.size(18.dp)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("OK")
+                Text(stringResource(R.string.ui_ok))
             }
         },
         shape = RoundedCornerShape(24.dp)

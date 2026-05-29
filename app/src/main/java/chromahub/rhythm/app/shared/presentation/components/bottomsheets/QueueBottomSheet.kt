@@ -93,6 +93,7 @@ import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveFill
 import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveShapeTarget
 import chromahub.rhythm.app.shared.presentation.components.common.rememberExpressiveShapeFor
 import chromahub.rhythm.app.util.ImageUtils
+import androidx.compose.ui.res.stringResource
 
 private fun groupedQueueItemShape(index: Int, totalCount: Int): RoundedCornerShape {
     if (totalCount <= 1) return RoundedCornerShape(24.dp)
@@ -555,7 +556,7 @@ private fun QueueHeader(
                 ) {
                     Icon(
                     imageVector = RhythmIcons.Delete,
-                        contentDescription = "Clear queue",
+                        contentDescription = stringResource(R.string.content_desc_clear_queue),
                         modifier = Modifier.size(20.dp)
                     )
                 }
@@ -660,7 +661,7 @@ private fun NowPlayingCard(
             // Playing indicator with pulse animation
             Icon(
                 imageVector = RhythmIcons.MusicNote,
-                contentDescription = "Now playing",
+                contentDescription = stringResource(R.string.content_desc_now_playing),
                 tint = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = pulseAlpha),
                 modifier = Modifier.size(24.dp)
             )
@@ -837,7 +838,7 @@ private fun QueueItem(
                 
                 Icon(
                     imageVector = RhythmIcons.DragHandle,
-                    contentDescription = "Drag to reorder",
+                    contentDescription = stringResource(R.string.content_desc_drag_reorder),
                     tint = if (isDragging)
                         MaterialTheme.colorScheme.onSecondaryContainer
                     else if (isPlayed)
@@ -884,7 +885,7 @@ private fun QueueItem(
                 ) {
                 Icon(
                     imageVector = MaterialSymbolIcon("clear"),
-                    contentDescription = "Remove from queue",
+                    contentDescription = stringResource(R.string.content_desc_remove_from_queue),
                     modifier = Modifier.size(18.dp)
                 )
             }
@@ -957,7 +958,7 @@ private fun QueueSettingsInfo(
                         modifier = Modifier.size(16.dp)
                     )
                     Text(
-                        text = "Played songs are hidden from the queue",
+                        text = stringResource(R.string.queuebottomsheet_played_songs_are_hidden),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onTertiaryContainer,
                         modifier = Modifier.weight(1f)

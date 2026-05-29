@@ -22,6 +22,7 @@ import androidx.compose.ui.unit.sp
 import chromahub.rhythm.app.R
 import chromahub.rhythm.app.shared.presentation.screens.settings.TunerAnimatedSwitch
 import chromahub.rhythm.app.util.HapticUtils
+import androidx.compose.ui.res.stringResource
 
 @Composable
 fun PlaybackPitchDialog(
@@ -64,7 +65,7 @@ fun PlaybackPitchDialog(
         text = {
             Column {
                 Text(
-                    text = "Adjust audio pitch",
+                    text = stringResource(R.string.playbackpitchdialog_adjust_audio_pitch),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -150,12 +151,12 @@ fun PlaybackPitchDialog(
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Text(
-                            text = "0.25x",
+                            text = stringResource(R.string.playbackbottomsheet_str_025x),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         Text(
-                            text = "3.0x",
+                            text = stringResource(R.string.playbackbottomsheet_str_30x),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -231,7 +232,7 @@ fun PlaybackPitchDialog(
                     modifier = Modifier.size(18.dp)
                 )
                 Spacer(modifier = Modifier.width(6.dp))
-                Text("Apply")
+                Text(stringResource(R.string.ui_apply))
             }
         },
         dismissButton = {
@@ -247,7 +248,7 @@ fun PlaybackPitchDialog(
                     modifier = Modifier.size(18.dp)
                 )
                 Spacer(modifier = Modifier.width(6.dp))
-                Text("Cancel")
+                Text(stringResource(R.string.ui_cancel))
             }
         }
     )

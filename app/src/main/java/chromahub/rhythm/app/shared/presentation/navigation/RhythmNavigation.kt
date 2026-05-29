@@ -99,6 +99,7 @@ import androidx.core.app.NotificationCompat
 import androidx.compose.ui.platform.LocalContext
 import kotlinx.coroutines.delay
 import kotlin.math.roundToInt
+import androidx.compose.ui.res.stringResource
 
 /**
  * Main navigation composable that handles switching between Local and Streaming modes.
@@ -1587,7 +1588,7 @@ fun ModeSelectorScreen(
         verticalArrangement = Arrangement.Center
     ) {
         Text(
-            text = "Choose Your Experience",
+            text = stringResource(R.string.rhythmnavigation_choose_your_experience),
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onBackground
@@ -1596,7 +1597,7 @@ fun ModeSelectorScreen(
         Spacer(modifier = Modifier.height(8.dp))
         
         Text(
-            text = "Switch between local music and streaming services",
+            text = stringResource(R.string.rhythmnavigation_switch_between_local_music),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -1609,7 +1610,7 @@ fun ModeSelectorScreen(
         ) {
             // Local Mode Card
             ModeCard(
-                title = "Local",
+                title = stringResource(R.string.rhythmnavigation_local),
                 description = "Play music stored on your device",
                 icon = if (currentMode == AppMode.LOCAL) RhythmIcons.MusicNote else RhythmIcons.MusicNote,
                 isSelected = currentMode == AppMode.LOCAL,
@@ -1619,7 +1620,7 @@ fun ModeSelectorScreen(
             
             // Streaming Mode Card
             ModeCard(
-                title = "Streaming",
+                title = stringResource(R.string.rhythmnavigation_streaming),
                 description = "Stream from Spotify and more",
                 icon = if (currentMode == AppMode.STREAMING) MaterialSymbolIcon("cloud_queue", filled = true) else MaterialSymbolIcon("cloud_queue"),
                 isSelected = currentMode == AppMode.STREAMING,
@@ -1727,7 +1728,7 @@ private fun ModeCard(
                     color = MaterialTheme.colorScheme.primary
                 ) {
                     Text(
-                        text = "Active",
+                        text = stringResource(R.string.bottomsheet_active_device),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onPrimary,
                         modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp)
@@ -1774,7 +1775,7 @@ fun CompactModeSwitcher(
                 ) {
                     Icon(
                         imageVector = RhythmIcons.MusicNote,
-                        contentDescription = "Local",
+                        contentDescription = stringResource(R.string.rhythmnavigation_local),
                         modifier = Modifier.size(16.dp),
                         tint = if (currentMode == AppMode.LOCAL) {
                             MaterialTheme.colorScheme.onPrimary
@@ -1785,7 +1786,7 @@ fun CompactModeSwitcher(
                     if (currentMode == AppMode.LOCAL) {
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(
-                            text = "Local",
+                            text = stringResource(R.string.rhythmnavigation_local),
                             style = MaterialTheme.typography.labelMedium,
                             color = MaterialTheme.colorScheme.onPrimary
                         )
@@ -1809,7 +1810,7 @@ fun CompactModeSwitcher(
                 ) {
                     Icon(
                         imageVector = MaterialSymbolIcon("cloud_queue"),
-                        contentDescription = "Streaming",
+                        contentDescription = stringResource(R.string.rhythmnavigation_streaming),
                         modifier = Modifier.size(16.dp),
                         tint = if (currentMode == AppMode.STREAMING) {
                             MaterialTheme.colorScheme.onPrimary
@@ -1820,7 +1821,7 @@ fun CompactModeSwitcher(
                     if (currentMode == AppMode.STREAMING) {
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(
-                            text = "Stream",
+                            text = stringResource(R.string.rhythmnavigation_stream),
                             style = MaterialTheme.typography.labelMedium,
                             color = MaterialTheme.colorScheme.onPrimary
                         )

@@ -86,6 +86,7 @@ import chromahub.rhythm.app.network.YTMusicSearchRequest
 import chromahub.rhythm.app.network.YTMusicContext
 import chromahub.rhythm.app.network.YTMusicClient
 import chromahub.rhythm.app.network.extractAlbumImageUrl
+import androidx.compose.ui.res.stringResource
 
 // Data class to hold additional song metadata
 // 
@@ -395,7 +396,7 @@ fun SongInfoBottomSheet(
                         modifier = Modifier.size(18.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Cancel")
+                    Text(stringResource(R.string.ui_cancel))
                 }
             },
             shape = RoundedCornerShape(24.dp)
@@ -473,7 +474,7 @@ fun SongInfoBottomSheet(
                         modifier = Modifier.size(18.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Cancel")
+                    Text(stringResource(R.string.ui_cancel))
                 }
             },
             shape = RoundedCornerShape(24.dp)
@@ -546,7 +547,7 @@ fun SongInfoBottomSheet(
                                                     )
                                                 )
                                                 .build(),
-                                            contentDescription = "Song artwork",
+                                            contentDescription = stringResource(R.string.songinfobottomsheet_song_artwork),
                                             contentScale = ContentScale.Crop,
                                             modifier = Modifier.fillMaxSize()
                                         )
@@ -624,7 +625,7 @@ fun SongInfoBottomSheet(
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
                                         Text(
-                                            text = "Details",
+                                            text = stringResource(R.string.songinfobottomsheet_details),
                                             style = MaterialTheme.typography.titleLarge,
                                             fontWeight = FontWeight.Bold,
                                             color = MaterialTheme.colorScheme.onSurface,
@@ -655,7 +656,7 @@ fun SongInfoBottomSheet(
                                                 ) {
                                                     Icon(
                                                         imageVector = RhythmIcons.Edit,
-                                                        contentDescription = "Edit",
+                                                        contentDescription = stringResource(R.string.bottomsheet_timer_edit),
                                                         modifier = Modifier.size(20.dp)
                                                     )
                                                 }
@@ -668,7 +669,7 @@ fun SongInfoBottomSheet(
                                             ) {
                                                 Icon(
                                                     imageVector = RhythmIcons.Close,
-                                                    contentDescription = "Close",
+                                                    contentDescription = stringResource(R.string.ui_close),
                                                     tint = MaterialTheme.colorScheme.onSurfaceVariant
                                                 )
                                             }
@@ -816,7 +817,7 @@ fun SongInfoBottomSheet(
                                         )
                                     )
                                     .build(),
-                                contentDescription = "Song artwork",
+                                contentDescription = stringResource(R.string.songinfobottomsheet_song_artwork),
                                 contentScale = ContentScale.Crop,
                                 modifier = Modifier.fillMaxSize()
                             )
@@ -902,7 +903,7 @@ fun SongInfoBottomSheet(
                                             modifier = Modifier.size(16.dp)
                                         )
                                         Spacer(modifier = Modifier.width(8.dp))
-                                        Text("Edit")
+                                        Text(stringResource(R.string.bottomsheet_timer_edit))
                                     }
                                 }
                             }
@@ -948,7 +949,7 @@ fun SongInfoBottomSheet(
                                         )
                                     }
                                     Spacer(modifier = Modifier.width(8.dp))
-                                    Text("Track")
+                                    Text(stringResource(R.string.bottomsheet_track))
                                 }
                             }
                             
@@ -986,7 +987,7 @@ fun SongInfoBottomSheet(
                                         )
                                     }
                                     Spacer(modifier = Modifier.width(8.dp))
-                                    Text("Folder")
+                                    Text(stringResource(R.string.cd_folder))
                                 }
                             }
                         }
@@ -2008,7 +2009,7 @@ private fun EditSongSheet(
                                             )
                                             .crossfade(true)
                                             .build(),
-                                        contentDescription = "Album artwork",
+                                        contentDescription = stringResource(R.string.content_desc_album_artwork),
                                         modifier = Modifier.fillMaxSize(),
                                         contentScale = ContentScale.Crop
                                     )
@@ -2031,7 +2032,7 @@ private fun EditSongSheet(
                                     ) {
                                         Icon(
                                             imageVector = RhythmIcons.Image,
-                                            contentDescription = "Change artwork",
+                                            contentDescription = stringResource(R.string.songinfobottomsheet_change_artwork),
                                             modifier = Modifier.size(22.dp)
                                         )
                                     }
@@ -2056,7 +2057,7 @@ private fun EditSongSheet(
                                         modifier = Modifier.size(18.dp)
                                     )
                                     Spacer(modifier = Modifier.width(8.dp))
-                                    Text("Remove Artwork")
+                                    Text(stringResource(R.string.songinfobottomsheet_remove_artwork))
                                 }
 
 
@@ -2098,7 +2099,7 @@ private fun EditSongSheet(
                                         ) {
                                             Icon(
                                                 imageVector = RhythmIcons.Close,
-                                                contentDescription = "Close",
+                                                contentDescription = stringResource(R.string.ui_close),
                                                 tint = MaterialTheme.colorScheme.onSurfaceVariant
                                             )
                                         }
@@ -2126,7 +2127,7 @@ private fun EditSongSheet(
                                         OutlinedTextField(
                                             value = title,
                                             onValueChange = { title = it },
-                                            label = { Text("Title") },
+                                            label = { Text(stringResource(R.string.bottomsheet_title)) },
                                             leadingIcon = {
                                                 Icon(
                                                     imageVector = RhythmIcons.MusicNote,
@@ -2142,7 +2143,7 @@ private fun EditSongSheet(
                                         OutlinedTextField(
                                             value = artist,
                                             onValueChange = { artist = it },
-                                            label = { Text("Artist") },
+                                            label = { Text(stringResource(R.string.player_chip_artist)) },
                                             leadingIcon = {
                                                 Icon(
                                                     imageVector = RhythmIcons.ArtistFilled,
@@ -2158,7 +2159,7 @@ private fun EditSongSheet(
                                         OutlinedTextField(
                                             value = album,
                                             onValueChange = { album = it },
-                                            label = { Text("Album") },
+                                            label = { Text(stringResource(R.string.player_chip_album)) },
                                             leadingIcon = {
                                                 Icon(
                                                     imageVector = RhythmIcons.AlbumFilled,
@@ -2174,7 +2175,7 @@ private fun EditSongSheet(
                                         OutlinedTextField(
                                             value = genre,
                                             onValueChange = { genre = it },
-                                            label = { Text("Genre") },
+                                            label = { Text(stringResource(R.string.bottomsheet_genre)) },
                                             leadingIcon = {
                                                 Icon(
                                                     imageVector = RhythmIcons.Category,
@@ -2194,7 +2195,7 @@ private fun EditSongSheet(
                                             OutlinedTextField(
                                                 value = year,
                                                 onValueChange = { year = it },
-                                                label = { Text("Year") },
+                                                label = { Text(stringResource(R.string.bottomsheet_year)) },
                                                 leadingIcon = {
                                                     Icon(
                                                         imageVector = RhythmIcons.DateRange,
@@ -2210,7 +2211,7 @@ private fun EditSongSheet(
                                             OutlinedTextField(
                                                 value = trackNumber,
                                                 onValueChange = { trackNumber = it },
-                                                label = { Text("Track") },
+                                                label = { Text(stringResource(R.string.bottomsheet_track)) },
                                                 leadingIcon = {
                                                     Icon(
                                                         imageVector = RhythmIcons.FormatListNumbered,
@@ -2245,7 +2246,7 @@ private fun EditSongSheet(
                                                     modifier = Modifier.size(20.dp)
                                                 )
                                                 Spacer(modifier = Modifier.width(8.dp))
-                                                Text("Reset")
+                                                Text(stringResource(R.string.ui_reset))
                                             }
 
                                             // Cancel button
@@ -2260,7 +2261,7 @@ private fun EditSongSheet(
                                                     modifier = Modifier.size(20.dp)
                                                 )
                                                 Spacer(modifier = Modifier.width(8.dp))
-                                                Text("Cancel")
+                                                Text(stringResource(R.string.ui_cancel))
                                             }
 
                                             // Save button
@@ -2276,7 +2277,7 @@ private fun EditSongSheet(
                                                         color = MaterialTheme.colorScheme.onPrimary
                                                     )
                                                     Spacer(modifier = Modifier.width(8.dp))
-                                                    Text("Saving...")
+                                                    Text(stringResource(R.string.metadata_saving))
                                                 } else {
                                                     Icon(
                                                         imageVector = MaterialSymbolIcon("save", filled = true),
@@ -2284,7 +2285,7 @@ private fun EditSongSheet(
                                                         modifier = Modifier.size(20.dp)
                                                     )
                                                     Spacer(modifier = Modifier.width(8.dp))
-                                                    Text("Save")
+                                                    Text(stringResource(R.string.ui_save))
                                                 }
                                             }
                                         }
@@ -2319,31 +2320,31 @@ private fun EditSongSheet(
                                                                         withContext(Dispatchers.Main) {
                                                                             selectedImageUri = Uri.fromFile(tempFile)
                                                                             removeArtwork = false
-                                                                            Toast.makeText(context, "Artwork fetched successfully! Click Save to embed.", Toast.LENGTH_SHORT).show()
+                                                                            Toast.makeText(context, R.string.songinfobottomsheet_artwork_fetched_successfully_click, Toast.LENGTH_SHORT).show()
                                                                         }
                                                                     } else {
                                                                         withContext(Dispatchers.Main) {
-                                                                            Toast.makeText(context, "Failed to download artwork bytes", Toast.LENGTH_SHORT).show()
+                                                                            Toast.makeText(context, R.string.songinfobottomsheet_failed_to_download_artwork, Toast.LENGTH_SHORT).show()
                                                                         }
                                                                     }
                                                                 } else {
                                                                     withContext(Dispatchers.Main) {
-                                                                        Toast.makeText(context, "Failed to download artwork from URL", Toast.LENGTH_SHORT).show()
+                                                                        Toast.makeText(context, R.string.songinfobottomsheet_failed_to_download_artwork_1, Toast.LENGTH_SHORT).show()
                                                                     }
                                                                 }
                                                             } else {
                                                                 withContext(Dispatchers.Main) {
-                                                                    Toast.makeText(context, "No artwork found for this song online", Toast.LENGTH_SHORT).show()
+                                                                    Toast.makeText(context, R.string.songinfobottomsheet_no_artwork_found_for, Toast.LENGTH_SHORT).show()
                                                                 }
                                                             }
                                                         } else {
                                                             withContext(Dispatchers.Main) {
-                                                                Toast.makeText(context, "Online search failed", Toast.LENGTH_SHORT).show()
+                                                                Toast.makeText(context, R.string.songinfobottomsheet_online_search_failed, Toast.LENGTH_SHORT).show()
                                                             }
                                                         }
                                                     } else {
                                                         withContext(Dispatchers.Main) {
-                                                            Toast.makeText(context, "Online API service unavailable", Toast.LENGTH_SHORT).show()
+                                                            Toast.makeText(context, R.string.songinfobottomsheet_online_api_service_unavailable, Toast.LENGTH_SHORT).show()
                                                         }
                                                     }
                                                 } catch (e: Exception) {
@@ -2370,7 +2371,7 @@ private fun EditSongSheet(
                                                 color = MaterialTheme.colorScheme.onPrimaryContainer
                                             )
                                             Spacer(modifier = Modifier.width(8.dp))
-                                            Text("Fetching...")
+                                            Text(stringResource(R.string.songinfobottomsheet_fetching))
                                         } else {
                                             Icon(
                                                 imageVector = MaterialSymbolIcon("cloud_download", filled = true),
@@ -2378,7 +2379,7 @@ private fun EditSongSheet(
                                                 modifier = Modifier.size(18.dp)
                                             )
                                             Spacer(modifier = Modifier.width(8.dp))
-                                            Text("Fetch Online Art")
+                                            Text(stringResource(R.string.songinfobottomsheet_fetch_online_art))
                                         }
                                     }
                                     Spacer(modifier = Modifier.height(8.dp))
@@ -2407,7 +2408,7 @@ private fun EditSongSheet(
                             modifier = Modifier.size(24.dp)
                         )
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("Irreversible Changes")
+                        Text(stringResource(R.string.bottomsheet_irreversible))
                     }
                 },
                 text = {
@@ -2440,7 +2441,7 @@ private fun EditSongSheet(
                             modifier = Modifier.size(18.dp)
                         )
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("Proceed")
+                        Text(stringResource(R.string.bottomsheet_proceed))
                     }
                 },
                 dismissButton = {
@@ -2456,7 +2457,7 @@ private fun EditSongSheet(
                             modifier = Modifier.size(18.dp)
                         )
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("Cancel")
+                        Text(stringResource(R.string.ui_cancel))
                     }
                 },
                 shape = RoundedCornerShape(24.dp)
@@ -2484,7 +2485,7 @@ private fun EditSongSheet(
         ) {
             StandardBottomSheetHeader(
                 title = context.getString(R.string.edit_metadata),
-                subtitle = "Update artwork and tags",
+                subtitle = stringResource(R.string.songinfobottomsheet_update_artwork_and_tags),
                 visible = showContent
             )
 
@@ -2543,7 +2544,7 @@ private fun EditSongSheet(
                                         )
                                         .crossfade(true)
                                         .build(),
-                                    contentDescription = "Album artwork",
+                                    contentDescription = stringResource(R.string.content_desc_album_artwork),
                                     modifier = Modifier.fillMaxSize(),
                                     contentScale = ContentScale.Crop
                                 )
@@ -2560,7 +2561,7 @@ private fun EditSongSheet(
                                 ) {
                                     Icon(
                                         imageVector = RhythmIcons.Image,
-                                        contentDescription = "Change artwork",
+                                        contentDescription = stringResource(R.string.songinfobottomsheet_change_artwork),
                                         modifier = Modifier.size(20.dp)
                                     )
                                 }
@@ -2605,7 +2606,7 @@ private fun EditSongSheet(
                                         )
                                         Spacer(modifier = Modifier.width(8.dp))
                                         Text(
-                                            text = "Remove",
+                                            text = stringResource(R.string.content_desc_remove),
                                             maxLines = 1,
                                             overflow = TextOverflow.Ellipsis
                                         )
@@ -2642,31 +2643,31 @@ private fun EditSongSheet(
                                                                     withContext(Dispatchers.Main) {
                                                                         selectedImageUri = Uri.fromFile(tempFile)
                                                                         removeArtwork = false
-                                                                        Toast.makeText(context, "Artwork fetched successfully! Click Save to embed.", Toast.LENGTH_SHORT).show()
+                                                                        Toast.makeText(context, R.string.songinfobottomsheet_artwork_fetched_successfully_click, Toast.LENGTH_SHORT).show()
                                                                     }
                                                                 } else {
                                                                     withContext(Dispatchers.Main) {
-                                                                        Toast.makeText(context, "Failed to download artwork bytes", Toast.LENGTH_SHORT).show()
+                                                                        Toast.makeText(context, R.string.songinfobottomsheet_failed_to_download_artwork, Toast.LENGTH_SHORT).show()
                                                                     }
                                                                 }
                                                             } else {
                                                                 withContext(Dispatchers.Main) {
-                                                                    Toast.makeText(context, "Failed to download artwork from URL", Toast.LENGTH_SHORT).show()
+                                                                    Toast.makeText(context, R.string.songinfobottomsheet_failed_to_download_artwork_1, Toast.LENGTH_SHORT).show()
                                                                 }
                                                             }
                                                         } else {
                                                             withContext(Dispatchers.Main) {
-                                                                    Toast.makeText(context, "No artwork found for this song online", Toast.LENGTH_SHORT).show()
+                                                                    Toast.makeText(context, R.string.songinfobottomsheet_no_artwork_found_for, Toast.LENGTH_SHORT).show()
                                                             }
                                                         }
                                                     } else {
                                                         withContext(Dispatchers.Main) {
-                                                            Toast.makeText(context, "Online search failed", Toast.LENGTH_SHORT).show()
+                                                            Toast.makeText(context, R.string.songinfobottomsheet_online_search_failed, Toast.LENGTH_SHORT).show()
                                                         }
                                                     }
                                                 } else {
                                                     withContext(Dispatchers.Main) {
-                                                        Toast.makeText(context, "Online API service unavailable", Toast.LENGTH_SHORT).show()
+                                                        Toast.makeText(context, R.string.songinfobottomsheet_online_api_service_unavailable, Toast.LENGTH_SHORT).show()
                                                     }
                                                 }
                                             } catch (e: Exception) {
@@ -2694,7 +2695,7 @@ private fun EditSongSheet(
                                             color = MaterialTheme.colorScheme.onPrimaryContainer
                                         )
                                         Spacer(modifier = Modifier.width(8.dp))
-                                        Text("Fetching Artwork...")
+                                        Text(stringResource(R.string.songinfobottomsheet_fetching_artwork))
                                     } else {
                                         Icon(
                                             imageVector = MaterialSymbolIcon("cloud_download", filled = true),
@@ -2702,7 +2703,7 @@ private fun EditSongSheet(
                                             modifier = Modifier.size(18.dp)
                                         )
                                         Spacer(modifier = Modifier.width(8.dp))
-                                        Text("Fetch Online Art")
+                                        Text(stringResource(R.string.songinfobottomsheet_fetch_online_art))
                                     }
                                 }
                             }
@@ -2733,7 +2734,7 @@ private fun EditSongSheet(
                             OutlinedTextField(
                                 value = title,
                                 onValueChange = { title = it },
-                                label = { Text("Title") },
+                                label = { Text(stringResource(R.string.bottomsheet_title)) },
                                 leadingIcon = {
                                     Icon(
                                         imageVector = RhythmIcons.MusicNote,
@@ -2748,7 +2749,7 @@ private fun EditSongSheet(
                             OutlinedTextField(
                                 value = artist,
                                 onValueChange = { artist = it },
-                                label = { Text("Artist") },
+                                label = { Text(stringResource(R.string.player_chip_artist)) },
                                 leadingIcon = {
                                     Icon(
                                         imageVector = RhythmIcons.ArtistFilled,
@@ -2763,7 +2764,7 @@ private fun EditSongSheet(
                             OutlinedTextField(
                                 value = album,
                                 onValueChange = { album = it },
-                                label = { Text("Album") },
+                                label = { Text(stringResource(R.string.player_chip_album)) },
                                 leadingIcon = {
                                     Icon(
                                         imageVector = RhythmIcons.AlbumFilled,
@@ -2778,7 +2779,7 @@ private fun EditSongSheet(
                             OutlinedTextField(
                                 value = genre,
                                 onValueChange = { genre = it },
-                                label = { Text("Genre") },
+                                label = { Text(stringResource(R.string.bottomsheet_genre)) },
                                 leadingIcon = {
                                     Icon(
                                         imageVector = RhythmIcons.Category,
@@ -2801,7 +2802,7 @@ private fun EditSongSheet(
                                             year = input
                                         }
                                     },
-                                    label = { Text("Year") },
+                                    label = { Text(stringResource(R.string.bottomsheet_year)) },
                                     leadingIcon = {
                                         Icon(
                                             imageVector = RhythmIcons.DateRange,
@@ -2820,7 +2821,7 @@ private fun EditSongSheet(
                                             trackNumber = input
                                         }
                                     },
-                                    label = { Text("Track") },
+                                    label = { Text(stringResource(R.string.bottomsheet_track)) },
                                     leadingIcon = {
                                         Icon(
                                             imageVector = RhythmIcons.FormatListNumbered,
@@ -2865,7 +2866,7 @@ private fun EditSongSheet(
                         modifier = Modifier.size(18.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Reset")
+                    Text(stringResource(R.string.ui_reset))
                 }
 
                 ExpressiveGroupButton(
@@ -2880,7 +2881,7 @@ private fun EditSongSheet(
                             color = MaterialTheme.colorScheme.onPrimary
                         )
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("Saving...")
+                        Text(stringResource(R.string.metadata_saving))
                     } else {
                         Icon(
                             imageVector = MaterialSymbolIcon("save", filled = true),
@@ -2888,7 +2889,7 @@ private fun EditSongSheet(
                             modifier = Modifier.size(18.dp)
                         )
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("Save")
+                        Text(stringResource(R.string.ui_save))
                     }
                 }
             }
@@ -2912,7 +2913,7 @@ private fun EditSongSheet(
                         modifier = Modifier.size(28.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Irreversible Changes")
+                    Text(stringResource(R.string.bottomsheet_irreversible))
                 }
             },
             text = {
@@ -2945,7 +2946,7 @@ private fun EditSongSheet(
                         modifier = Modifier.size(18.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Proceed")
+                    Text(stringResource(R.string.bottomsheet_proceed))
                 }
             },
             dismissButton = {
@@ -2961,7 +2962,7 @@ private fun EditSongSheet(
                         modifier = Modifier.size(18.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Cancel")
+                    Text(stringResource(R.string.ui_cancel))
                 }
             },
             shape = RoundedCornerShape(24.dp)

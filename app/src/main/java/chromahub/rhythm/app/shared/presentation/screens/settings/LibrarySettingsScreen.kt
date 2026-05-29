@@ -247,7 +247,7 @@ fun LibrarySettingsScreen(onBackClick: () -> Unit) {
                     ),
                     SettingItem(
                         icon = MaterialSymbolIcon("cloud_download"),
-                        title = "Auto-Fetch Artwork",
+                        title = stringResource(R.string.librarysettingsscreen_autofetch_artwork),
                         description = "Automatically search online APIs for missing cover artwork on startup",
                         toggleState = autoFetchArtwork && appleMusicApiEnabled,
                         onToggleChange = { enabled -> appSettings.setAutoFetchArtwork(enabled) },

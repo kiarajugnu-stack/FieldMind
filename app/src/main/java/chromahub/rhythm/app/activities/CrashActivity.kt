@@ -52,6 +52,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.animation.animateContentSize
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.res.stringResource
 
 class CrashActivity : ComponentActivity() {
 
@@ -140,7 +141,7 @@ class CrashActivity : ComponentActivity() {
                         ) {
                             Icon(
                                 imageVector = RhythmIcons.BugReport,
-                                contentDescription = "Bug Report",
+                                contentDescription = stringResource(R.string.crash_bug_report),
                                 tint = MaterialTheme.colorScheme.error,
                                 modifier = Modifier.size(56.dp)
                             )
@@ -149,7 +150,7 @@ class CrashActivity : ComponentActivity() {
 
                     // Left-aligned texts
                     Text(
-                        text = "Uh oh! Looks like Rhythm hit a sour note!", // Comic text
+                        text = stringResource(R.string.crashactivity_uh_oh_looks_like), // Comic text
                         style = MaterialTheme.typography.headlineMedium,
                         fontWeight = FontWeight.Bold,
                         textAlign = TextAlign.Start,
@@ -158,7 +159,7 @@ class CrashActivity : ComponentActivity() {
                     )
 
                     Text(
-                        text = "Don't fret! Our app just had a little 'oopsie'. Please share the crash details below – it's like a secret message for our developers to fix things! Then, let's try that again, shall we?", // Comic text
+                        text = stringResource(R.string.crashactivity_dont_fret_our_app), // Comic text
                         style = MaterialTheme.typography.bodyLarge,
                         textAlign = TextAlign.Start,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -169,7 +170,7 @@ class CrashActivity : ComponentActivity() {
                     OutlinedTextField(
                         value = crashLog ?: "No funny business here, just a crash log!", // Comic text
                         onValueChange = { /* Read-only */ },
-                        label = { Text("Secret Crash Scrolls") }, // Comic label
+                        label = { Text(stringResource(R.string.crashactivity_secret_crash_scrolls)) }, // Comic label
                         readOnly = true,
                         modifier = Modifier
                             .fillMaxWidth()
@@ -220,7 +221,7 @@ class CrashActivity : ComponentActivity() {
                             ) {
                                 Image(
                                     painter = painterResource(id = R.drawable.rhythm_splash_logo),
-                                    contentDescription = "Rhythm Logo",
+                                    contentDescription = stringResource(R.string.updates_rhythm_logo_cd),
                                     modifier = Modifier.size(80.dp)
                                 )
                             }
@@ -239,7 +240,7 @@ class CrashActivity : ComponentActivity() {
                             ) + fadeIn(animationSpec = tween(800, delayMillis = 200))
                         ) {
                             Text(
-                                text = "Rhythm",
+                                text = stringResource(R.string.cd_rhythm_splash),
                                 style = MaterialTheme.typography.displaySmall,
                                 color = MaterialTheme.colorScheme.onBackground,
                                 fontWeight = FontWeight.Bold
@@ -288,7 +289,7 @@ class CrashActivity : ComponentActivity() {
                                 modifier = Modifier.size(20.dp)
                             )
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text("Share", style = MaterialTheme.typography.labelLarge)
+                            Text(stringResource(R.string.crashactivity_share), style = MaterialTheme.typography.labelLarge)
                         }
 
                         // Restart button (styled like onboarding)
@@ -316,7 +317,7 @@ class CrashActivity : ComponentActivity() {
                                 },
                             shape = RoundedCornerShape(32.dp)
                         ) {
-                            Text("Restart App", style = MaterialTheme.typography.labelLarge)
+                            Text(stringResource(R.string.crash_restart_app), style = MaterialTheme.typography.labelLarge)
                             Spacer(modifier = Modifier.width(8.dp))
                             Icon(
                                 imageVector = RhythmIcons.Forward,

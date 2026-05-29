@@ -170,7 +170,7 @@ fun PerformanceSettingsScreen(onBackClick: () -> Unit) {
     val batterySaverDisableLosslessArtwork by appSettings.batterySaverDisableLosslessArtwork.collectAsState()
 
     CollapsibleHeaderScreen(
-        title = "Performance",
+        title = stringResource(R.string.performancesettingsscreen_performance),
         showBackButton = true,
         onBackClick = onBackClick,
         headerContent = {
@@ -271,7 +271,7 @@ fun PerformanceSettingsScreen(onBackClick: () -> Unit) {
                                         hapticFeedback = haptic,
                                         item = SettingItem(
                                             icon = MaterialSymbolIcon("touch_app"),
-                                            title = "Disable Haptics",
+                                            title = stringResource(R.string.performancesettingsscreen_disable_haptics),
                                             description = "All physical haptic feedback is disabled to conserve battery.",
                                             toggleState = true,
                                             onToggleChange = {},
@@ -283,7 +283,7 @@ fun PerformanceSettingsScreen(onBackClick: () -> Unit) {
                                         hapticFeedback = haptic,
                                         item = SettingItem(
                                             icon = MaterialSymbolIcon("bolt"),
-                                            title = "Enable Audio Offload",
+                                            title = stringResource(R.string.performancesettingsscreen_enable_audio_offload),
                                             description = "Forced hardware DSP decoding to minimize CPU workload.",
                                             toggleState = true,
                                             onToggleChange = {},
@@ -295,7 +295,7 @@ fun PerformanceSettingsScreen(onBackClick: () -> Unit) {
                                         hapticFeedback = haptic,
                                         item = SettingItem(
                                             icon = MaterialSymbolIcon("slideshow"),
-                                            title = "Disable Text Marquee",
+                                            title = stringResource(R.string.performancesettingsscreen_disable_text_marquee),
                                             description = "Sliding animations are paused to reduce display refresh cycles.",
                                             toggleState = true,
                                             onToggleChange = {},
@@ -307,7 +307,7 @@ fun PerformanceSettingsScreen(onBackClick: () -> Unit) {
                                         hapticFeedback = haptic,
                                         item = SettingItem(
                                             icon = RhythmIcons.Image,
-                                            title = "Disable Lossless Artwork",
+                                            title = stringResource(R.string.performancesettingsscreen_disable_lossless_artwork),
                                             description = "Lossless artwork is disabled to reduce data decoding and memory overhead.",
                                             toggleState = true,
                                             onToggleChange = {},
@@ -326,7 +326,7 @@ fun PerformanceSettingsScreen(onBackClick: () -> Unit) {
                                         hapticFeedback = haptic,
                                         item = SettingItem(
                                             icon = MaterialSymbolIcon("touch_app"),
-                                            title = "Disable Haptics",
+                                            title = stringResource(R.string.performancesettingsscreen_disable_haptics),
                                             description = "Disable touch vibrations to extend battery life",
                                             toggleState = batterySaverDisableHaptics,
                                             onToggleChange = { appSettings.setBatterySaverDisableHaptics(it) }
@@ -337,7 +337,7 @@ fun PerformanceSettingsScreen(onBackClick: () -> Unit) {
                                         hapticFeedback = haptic,
                                         item = SettingItem(
                                             icon = MaterialSymbolIcon("bolt"),
-                                            title = "Enable Audio Offload",
+                                            title = stringResource(R.string.performancesettingsscreen_enable_audio_offload),
                                             description = "Use hardware DSP decoding under Performance",
                                             toggleState = batterySaverEnableOffload,
                                             onToggleChange = { appSettings.setBatterySaverEnableOffload(it) }
@@ -348,7 +348,7 @@ fun PerformanceSettingsScreen(onBackClick: () -> Unit) {
                                         hapticFeedback = haptic,
                                         item = SettingItem(
                                             icon = MaterialSymbolIcon("slideshow"),
-                                            title = "Disable Text Marquee",
+                                            title = stringResource(R.string.performancesettingsscreen_disable_text_marquee),
                                             description = "Pause title sliding animations to save screen power",
                                             toggleState = batterySaverDisableMarquee,
                                             onToggleChange = { appSettings.setBatterySaverDisableMarquee(it) }
@@ -359,7 +359,7 @@ fun PerformanceSettingsScreen(onBackClick: () -> Unit) {
                                         hapticFeedback = haptic,
                                         item = SettingItem(
                                             icon = RhythmIcons.Image,
-                                            title = "Disable Lossless Artwork",
+                                            title = stringResource(R.string.performancesettingsscreen_disable_lossless_artwork),
                                             description = "Use standard artwork instead of lossless under Performance",
                                             toggleState = batterySaverDisableLosslessArtwork,
                                             onToggleChange = { appSettings.setBatterySaverDisableLosslessArtwork(it) }

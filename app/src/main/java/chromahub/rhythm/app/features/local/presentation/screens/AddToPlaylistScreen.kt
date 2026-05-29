@@ -42,6 +42,7 @@ import chromahub.rhythm.app.shared.presentation.components.common.CollapsibleHea
 import chromahub.rhythm.app.shared.presentation.components.common.M3PlaceholderType
 import chromahub.rhythm.app.util.HapticUtils
 import chromahub.rhythm.app.util.ImageUtils
+import androidx.compose.ui.res.stringResource
 
 /**
  * Screen for adding songs to a playlist with multi-selection support
@@ -173,7 +174,7 @@ fun AddToPlaylistScreen(
                     ) {
                         Icon(
                             imageVector = RhythmIcons.Check,
-                            contentDescription = "Add selected songs",
+                            contentDescription = stringResource(R.string.cd_add_selected_songs),
                             modifier = Modifier.size(20.dp)
                         )
                     }
@@ -210,7 +211,7 @@ fun AddToPlaylistScreen(
                     ) {
                         Icon(
                             imageVector = MaterialSymbolIcon("checklist", filled = true),
-                            contentDescription = "Toggle multi-select",
+                            contentDescription = stringResource(R.string.cd_toggle_multi_select),
                             modifier = Modifier.size(20.dp)
                         )
                     }
@@ -223,7 +224,7 @@ fun AddToPlaylistScreen(
             OutlinedTextField(
                 value = searchQuery,
                 onValueChange = onSearchQueryChange,
-                placeholder = { Text("Pick a tune to add...") },
+                placeholder = { Text(stringResource(R.string.addtoplaylistscreen_pick_a_tune_to)) },
                 singleLine = true,
                 modifier = Modifier
                     .fillMaxWidth()
@@ -244,7 +245,7 @@ fun AddToPlaylistScreen(
                         }) {
                             Icon(
                                 imageVector = RhythmIcons.Close,
-                                contentDescription = "Clear search"
+                                contentDescription = stringResource(R.string.clear_search)
                             )
                         }
                     }
@@ -284,7 +285,7 @@ fun AddToPlaylistScreen(
                         )
                         Spacer(modifier = Modifier.width(12.dp))
                         Text(
-                            text = "Tap songs to select multiple, then add them all at once",
+                            text = stringResource(R.string.addtoplaylistscreen_tap_songs_to_select),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onPrimaryContainer
                         )
@@ -475,7 +476,7 @@ private fun SongSelectionItem(
                     Box(contentAlignment = Alignment.Center) {
                         Icon(
                             imageVector = RhythmIcons.Add,
-                            contentDescription = "Add song",
+                            contentDescription = stringResource(R.string.cd_add_song),
                             
                             modifier = Modifier.size(20.dp)
                         )

@@ -36,6 +36,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import chromahub.rhythm.app.shared.data.model.UserAudioDevice
 import chromahub.rhythm.app.util.HapticUtils
+import chromahub.rhythm.app.R
+import androidx.compose.ui.res.stringResource
 
 /**
  * Dialog that suggests applying an AutoEQ profile when a recognized device is detected
@@ -66,7 +68,7 @@ fun AutoEQSuggestionDialog(
         title = {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
-                    text = "Audio Device Detected",
+                    text = stringResource(R.string.autoeqsuggestiondialog_audio_device_detected),
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold,
                     textAlign = TextAlign.Center
@@ -120,7 +122,7 @@ fun AutoEQSuggestionDialog(
                             
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
-                                    text = "Saved Configuration",
+                                    text = stringResource(R.string.autoeqsuggestiondialog_saved_configuration),
                                     style = MaterialTheme.typography.labelMedium,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
@@ -175,7 +177,7 @@ fun AutoEQSuggestionDialog(
                         shape = RoundedCornerShape(12.dp)
                     ) {
                         Text(
-                            text = "Note: Equalizer is currently disabled. Applying the profile will enable it automatically.",
+                            text = stringResource(R.string.autoeqsuggestiondialog_note_equalizer_is_currently),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.padding(12.dp)
@@ -203,7 +205,7 @@ fun AutoEQSuggestionDialog(
                             modifier = Modifier.size(18.dp)
                         )
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("Apply Profile")
+                        Text(stringResource(R.string.autoeqsuggestiondialog_apply_profile))
                     }
                 }
                 
@@ -242,7 +244,7 @@ fun AutoEQSuggestionDialog(
                             modifier = Modifier.size(18.dp)
                         )
                         Spacer(modifier = Modifier.width(6.dp))
-                        Text("Don't Ask", style = MaterialTheme.typography.labelMedium)
+                        Text(stringResource(R.string.autoeqsuggestiondialog_dont_ask), style = MaterialTheme.typography.labelMedium)
                     }
                     
                     OutlinedButton(
@@ -260,7 +262,7 @@ fun AutoEQSuggestionDialog(
                             modifier = Modifier.size(18.dp)
                         )
                         Spacer(modifier = Modifier.width(6.dp))
-                        Text("Not Now", style = MaterialTheme.typography.labelMedium)
+                        Text(stringResource(R.string.autoeqsuggestiondialog_not_now), style = MaterialTheme.typography.labelMedium)
                     }
                 }
             }

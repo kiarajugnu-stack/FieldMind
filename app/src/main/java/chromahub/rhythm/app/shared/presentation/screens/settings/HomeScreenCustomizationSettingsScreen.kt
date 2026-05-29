@@ -375,7 +375,7 @@ fun HomeScreenCustomizationSettingsScreen(onBackClick: () -> Unit) {
                                 hapticFeedback = haptic,
                                 item = SettingItem(
                                     icon = MaterialSymbolIcon("history", filled = true),
-                                    title = "Recently Played",
+                                    title = stringResource(R.string.settings_home_recently_played),
                                     description = "$recentlyPlayedCount songs"
                                 ),
                                 description = {
@@ -413,7 +413,7 @@ fun HomeScreenCustomizationSettingsScreen(onBackClick: () -> Unit) {
                                 hapticFeedback = haptic,
                                 item = SettingItem(
                                     icon = MaterialSymbolIcon("people", filled = true),
-                                    title = "Top Artists",
+                                    title = stringResource(R.string.settings_top_artists),
                                     description = "$artistsCount artists"
                                 ),
                                 description = {
@@ -451,7 +451,7 @@ fun HomeScreenCustomizationSettingsScreen(onBackClick: () -> Unit) {
                                 hapticFeedback = haptic,
                                 item = SettingItem(
                                     icon = MaterialSymbolIcon("new_releases", filled = true),
-                                    title = "New Releases",
+                                    title = stringResource(R.string.settings_new_releases),
                                     description = "$newReleasesCount albums"
                                 ),
                                 description = {
@@ -489,7 +489,7 @@ fun HomeScreenCustomizationSettingsScreen(onBackClick: () -> Unit) {
                                 hapticFeedback = haptic,
                                 item = SettingItem(
                                     icon = MaterialSymbolIcon("library_add", filled = true),
-                                    title = "Recently Added",
+                                    title = stringResource(R.string.settings_recently_added),
                                     description = "$recentlyAddedCount albums"
                                 ),
                                 description = {
@@ -527,7 +527,7 @@ fun HomeScreenCustomizationSettingsScreen(onBackClick: () -> Unit) {
                                 hapticFeedback = haptic,
                                 item = SettingItem(
                                     icon = MaterialSymbolIcon("recommend", filled = true),
-                                    title = "Recommended",
+                                    title = stringResource(R.string.settings_recommended),
                                     description = "$recommendedCount songs"
                                 ),
                                 description = {
@@ -595,7 +595,7 @@ fun HomeScreenCustomizationSettingsScreen(onBackClick: () -> Unit) {
 
                         if (isDiscoverImmersiveMode) {
                             Text(
-                                text = "Immersive mode is active. Only supported discover controls are shown.",
+                                text = stringResource(R.string.homescreencustomizationsettingsscreen_immersive_mode_is_active),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 8.dp)
@@ -667,7 +667,7 @@ fun HomeScreenCustomizationSettingsScreen(onBackClick: () -> Unit) {
                                     hapticFeedback = haptic,
                                     item = SettingItem(
                                         icon = MaterialSymbolIcon("view_carousel", filled = true),
-                                        title = "Album Count",
+                                        title = stringResource(R.string.homescreencustomizationsettingsscreen_album_count),
                                         description = "$discoverItemCount albums"
                                     ),
                                     description = {
@@ -734,7 +734,7 @@ fun HomeScreenCustomizationSettingsScreen(onBackClick: () -> Unit) {
                             )
                             Spacer(modifier = Modifier.width(12.dp))
                             Text(
-                                text = "Quick Tips",
+                                text = stringResource(R.string.settings_quick_tips),
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onPrimaryContainer
@@ -744,19 +744,19 @@ fun HomeScreenCustomizationSettingsScreen(onBackClick: () -> Unit) {
 
                         HomeScreenTipItem(
                             icon = RhythmIcons.Visibility,
-                            text = "Toggle widgets to customize your home screen"
+                            text = stringResource(R.string.settings_toggle_widgets)
                         )
                         HomeScreenTipItem(
                             icon = MaterialSymbolIcon("speed"),
-                            text = "Disable unused sections for faster loading"
+                            text = stringResource(R.string.settings_disable_unused_sections)
                         )
                         HomeScreenTipItem(
                             icon = RhythmIcons.Album,
-                            text = "Discover carousel showcases featured albums"
+                            text = stringResource(R.string.settings_discover_carousel_info)
                         )
                         HomeScreenTipItem(
                             icon = RhythmIcons.TrendingUp,
-                            text = "Statistics update based on listening habits"
+                            text = stringResource(R.string.settings_statistics_update)
                         )
                     }
                 }
@@ -841,12 +841,12 @@ fun CarouselStyleSelector(
                 Spacer(modifier = Modifier.width(16.dp))
                 Column {
                     Text(
-                        text = "Carousel Style",
+                        text = stringResource(R.string.settings_carousel_style),
                         style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium),
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
-                        text = "Choose how albums are displayed",
+                        text = stringResource(R.string.settings_carousel_style_desc),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )

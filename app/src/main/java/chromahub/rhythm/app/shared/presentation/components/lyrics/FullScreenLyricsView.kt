@@ -47,6 +47,8 @@ import chromahub.rhythm.app.util.HapticUtils
 import chromahub.rhythm.app.util.M3ImageUtils
 import androidx.compose.ui.graphics.luminance
 import kotlinx.coroutines.delay
+import chromahub.rhythm.app.R
+import androidx.compose.ui.res.stringResource
 
 @Composable
 fun FullScreenLyricsView(
@@ -266,7 +268,7 @@ fun FullScreenLyricsView(
                 ) {
                     M3ImageUtils.M3MediaImage(
                         data = song?.artworkUri,
-                        contentDescription = "Cover Artwork",
+                        contentDescription = stringResource(R.string.fullscreenlyricsview_cover_artwork),
                         modifier = Modifier.fillMaxSize(),
                         shape = RoundedCornerShape(12.dp),
                         type = M3PlaceholderType.TRACK,
@@ -326,7 +328,7 @@ fun FullScreenLyricsView(
                                 CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
                                 Spacer(modifier = Modifier.height(16.dp))
                                 Text(
-                                    text = "Loading synced lyrics...",
+                                    text = stringResource(R.string.fullscreenlyricsview_loading_synced_lyrics),
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = textSecondaryColor
                                 )
@@ -348,7 +350,7 @@ fun FullScreenLyricsView(
                                 )
                                 Spacer(modifier = Modifier.height(20.dp))
                                 Text(
-                                    text = "Lyrics aren't available for this song",
+                                    text = stringResource(R.string.fullscreenlyricsview_lyrics_arent_available_for),
                                     style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                                     color = textPrimaryColor,
                                     textAlign = TextAlign.Center
@@ -358,7 +360,7 @@ fun FullScreenLyricsView(
                                     onClick = onRetryLyrics,
                                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
                                 ) {
-                                    Text("Retry Fetching")
+                                    Text(stringResource(R.string.fullscreenlyricsview_retry_fetching))
                                 }
                             }
                         }
@@ -412,7 +414,7 @@ fun FullScreenLyricsView(
                     // Quick Toggle Romanization
                     FloatingLyricOptionButton(
                         icon = MaterialSymbolIcon("translate"),
-                        contentDescription = "Romanization",
+                        contentDescription = stringResource(R.string.fullscreenlyricsview_romanization),
                         isActive = showRomanization,
                         onClick = {
                             HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
@@ -424,7 +426,7 @@ fun FullScreenLyricsView(
                     // Quick Toggle Translation
                     FloatingLyricOptionButton(
                         icon = MaterialSymbolIcon("subtitles"),
-                        contentDescription = "Translation",
+                        contentDescription = stringResource(R.string.fullscreenlyricsview_translation),
                         isActive = showTranslation,
                         onClick = {
                             HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
@@ -453,7 +455,7 @@ fun FullScreenLyricsView(
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text(
-                        text = "Real-time Sync Adjustment",
+                        text = stringResource(R.string.fullscreenlyricsview_realtime_sync_adjustment),
                         style = MaterialTheme.typography.bodyMedium.copy(
                             fontWeight = FontWeight.Bold,
                             color = textSecondaryColor
@@ -491,7 +493,7 @@ fun FullScreenLyricsView(
                             interactionSource = nudgeBackInteractionSource
                         ) {
                             Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
-                                Text("-0.5s", color = textPrimaryColor, style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold))
+                                Text(stringResource(R.string.fullscreenlyricsview_str_05s), color = textPrimaryColor, style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold))
                             }
                         }
 
@@ -533,7 +535,7 @@ fun FullScreenLyricsView(
                             interactionSource = nudgeForwardInteractionSource
                         ) {
                             Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
-                                Text("+0.5s", color = textPrimaryColor, style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold))
+                                Text(stringResource(R.string.fullscreenlyricsview_str_05s_1), color = textPrimaryColor, style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold))
                             }
                         }
 
@@ -541,7 +543,7 @@ fun FullScreenLyricsView(
                         if (manualSyncOffsetMs != 0L) {
                             Icon(
                                 imageVector = RhythmIcons.Restore,
-                                contentDescription = "Reset Offset",
+                                contentDescription = stringResource(R.string.fullscreenlyricsview_reset_offset),
                                 tint = textSecondaryColor,
                                 modifier = Modifier
                                     .padding(start = 6.dp)
@@ -613,7 +615,7 @@ fun FullScreenLyricsView(
                 Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
                     Icon(
                         imageVector = RhythmIcons.KeyboardArrowDown,
-                        contentDescription = "Dismiss",
+                        contentDescription = stringResource(R.string.onboarding_dismiss),
                         tint = textPrimaryColor,
                         modifier = Modifier.size(24.dp)
                     )

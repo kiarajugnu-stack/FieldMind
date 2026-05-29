@@ -1533,7 +1533,7 @@ fun ColorSchemeCard(
             if (isSelected) {
                 Icon(
                     imageVector = RhythmIcons.CheckCircle,
-                    contentDescription = "Selected",
+                    contentDescription = stringResource(R.string.streaming_selected),
                     
                     modifier = Modifier.size(28.dp)
                 )
@@ -1700,7 +1700,7 @@ fun ExpressiveColorPickerControls(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Hue",
+                    text = stringResource(R.string.settings_hue),
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onSurface
@@ -1766,7 +1766,7 @@ fun ExpressiveColorPickerControls(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Saturation",
+                    text = stringResource(R.string.settings_saturation),
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onSurface
@@ -1832,7 +1832,7 @@ fun ExpressiveColorPickerControls(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Lightness",
+                    text = stringResource(R.string.settings_lightness),
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onSurface
@@ -1962,7 +1962,7 @@ fun ExpressiveColorPickerControls(
                     }
 
                     Text(
-                        text = "RGB Values",
+                        text = stringResource(R.string.themecustomizationsettingsscreen_rgb_values),
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.onSurface,
@@ -2196,7 +2196,7 @@ fun ColorPickerControls(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "Hue",
+                text = stringResource(R.string.settings_hue),
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.onSurface
@@ -2258,7 +2258,7 @@ fun ColorPickerControls(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "Saturation",
+                text = stringResource(R.string.settings_saturation),
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.onSurface
@@ -2320,7 +2320,7 @@ fun ColorPickerControls(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "Lightness",
+                text = stringResource(R.string.settings_lightness),
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.onSurface
@@ -2571,7 +2571,7 @@ fun FontCard(
                 if (isSelected) {
                     Icon(
                         imageVector = RhythmIcons.CheckCircle,
-                        contentDescription = "Selected",
+                        contentDescription = stringResource(R.string.streaming_selected),
                         
                         modifier = Modifier.size(28.dp)
                     )
@@ -2590,7 +2590,7 @@ fun FontCard(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text(
-                    text = "The quick brown fox jumps over the lazy dog",
+                    text = stringResource(R.string.settings_quick_brown_fox),
                     style = getFontPreviewStyle(option.name),
                     color = if (isSelected)
                         MaterialTheme.colorScheme.onPrimaryContainer

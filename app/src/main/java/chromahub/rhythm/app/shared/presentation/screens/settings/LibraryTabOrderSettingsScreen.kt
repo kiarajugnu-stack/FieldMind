@@ -367,7 +367,7 @@ fun LibraryTabOrderSettingsScreen(onBackClick: () -> Unit) {
                             modifier = Modifier.size(20.dp)
                         )
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("Save")
+                        Text(stringResource(R.string.ui_save))
                     }
                 }
             }

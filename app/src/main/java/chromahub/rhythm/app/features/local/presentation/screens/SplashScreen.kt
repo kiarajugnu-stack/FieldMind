@@ -64,6 +64,7 @@ import chromahub.rhythm.app.features.local.presentation.viewmodel.MusicViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.random.Random
+import androidx.compose.ui.res.stringResource
 
 @Composable
 fun SplashScreen(
@@ -291,7 +292,7 @@ fun SplashScreen(
                 // Logo
                 Image(
                     painter = painterResource(id = R.drawable.rhythm_splash_logo),
-                    contentDescription = "Rhythm Logo",
+                    contentDescription = stringResource(R.string.updates_rhythm_logo_cd),
                     modifier = Modifier
                         .size(100.dp)
                 )
@@ -313,7 +314,7 @@ fun SplashScreen(
 
                     if (appMode == AppMode.STREAMING.name) {
                         Text(
-                            text = "Go",
+                            text = stringResource(R.string.splashscreen_go),
                             style = MaterialTheme.typography.displayMedium.copy(
                                 fontSize = 42.sp,
                                 fontWeight = FontWeight.Bold,

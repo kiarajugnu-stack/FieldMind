@@ -28,6 +28,8 @@ import chromahub.rhythm.app.shared.data.model.AutoEQProfile
 import chromahub.rhythm.app.shared.presentation.screens.settings.SettingsSearchBar
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
+import chromahub.rhythm.app.R
+import androidx.compose.ui.res.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -117,7 +119,7 @@ fun AutoEQPresetPickerBottomSheet(
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = "Choose AutoEQ Preset",
+                            text = stringResource(R.string.autoeqpresetpickerbottomsheet_choose_autoeq_preset),
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.SemiBold,
                             color = MaterialTheme.colorScheme.onSurface
@@ -155,7 +157,7 @@ fun AutoEQPresetPickerBottomSheet(
                         ) {
                             Icon(
                                 imageVector = RhythmIcons.FilterList, // Changed icon here
-                                contentDescription = "Toggle filters",
+                                contentDescription = stringResource(R.string.autoeqpresetpickerbottomsheet_toggle_filters),
                                 modifier = Modifier.size(20.dp)
                             )
                         }
@@ -197,7 +199,7 @@ fun AutoEQPresetPickerBottomSheet(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
-                                text = "Filters",
+                                text = stringResource(R.string.cd_filters),
                                 style = MaterialTheme.typography.titleMedium,
                                 color = MaterialTheme.colorScheme.primary,
                                 fontWeight = FontWeight.SemiBold
@@ -215,14 +217,14 @@ fun AutoEQPresetPickerBottomSheet(
                                         selectedType = null
                                     }
                                 ) {
-                                    Text("Clear all", style = MaterialTheme.typography.labelLarge)
+                                    Text(stringResource(R.string.ui_clear_all), style = MaterialTheme.typography.labelLarge)
                                 }
                             }
                         }
 
                         if (allBrands.isNotEmpty()) {
                             FilterSection(
-                                title = "Brand",
+                                title = stringResource(R.string.autoeqpresetpickerbottomsheet_brand),
                                 items = allBrands,
                                 selectedItem = selectedBrand,
                                 onItemSelected = { selectedBrand = if (selectedBrand == it) null else it },
@@ -233,7 +235,7 @@ fun AutoEQPresetPickerBottomSheet(
                         if (allTypes.isNotEmpty()) {
                             Spacer(modifier = Modifier.height(8.dp))
                             FilterSection(
-                                title = "Type",
+                                title = stringResource(R.string.autoeqpresetpickerbottomsheet_type),
                                 items = allTypes,
                                 selectedItem = selectedType,
                                 onItemSelected = { selectedType = if (selectedType == it) null else it },
@@ -300,7 +302,7 @@ fun AutoEQPresetPickerBottomSheet(
                                     if (isCurrentlyActive) {
                                         Icon(
                                             imageVector = RhythmIcons.Check,
-                                            contentDescription = "Currently active",
+                                            contentDescription = stringResource(R.string.autoeqpresetpickerbottomsheet_currently_active),
                                             tint = MaterialTheme.colorScheme.onSecondaryContainer,
                                             modifier = Modifier.size(24.dp)
                                         )
@@ -323,7 +325,7 @@ fun AutoEQPresetPickerBottomSheet(
                                 contentAlignment = Alignment.Center
                             ) {
                                 Text(
-                                    text = "No presets found",
+                                    text = stringResource(R.string.autoeqpresetpickerbottomsheet_no_presets_found),
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
@@ -371,7 +373,7 @@ fun AutoEQPresetPickerBottomSheet(
                                         if (isCurrentlyActive) {
                                             Icon(
                                                 imageVector = RhythmIcons.Check,
-                                                contentDescription = "Currently active",
+                                                contentDescription = stringResource(R.string.autoeqpresetpickerbottomsheet_currently_active),
                                                 tint = MaterialTheme.colorScheme.onSecondaryContainer,
                                                 modifier = Modifier.size(24.dp)
                                             )
@@ -425,7 +427,7 @@ private fun FilterSection(
                     contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp)
                 ) {
                     Text(
-                        text = "Reset",
+                        text = stringResource(R.string.ui_reset),
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.tertiary
                     )

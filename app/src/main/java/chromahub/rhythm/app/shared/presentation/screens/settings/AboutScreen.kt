@@ -292,7 +292,7 @@ fun AboutScreen(
                         )
 
                         Text(
-                            text = "Your Music, Your Rhythm",
+                            text = stringResource(R.string.onboarding_welcome_subtitle),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             textAlign = TextAlign.Center
@@ -384,7 +384,7 @@ fun AboutScreen(
                                 modifier = Modifier.size(18.dp)
                             )
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text("Support Development")
+                            Text(stringResource(R.string.aboutscreen_support_development))
                         }
 
                         Spacer(modifier = Modifier.height(10.dp))
@@ -505,14 +505,14 @@ fun AboutScreen(
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         Text(
-                            text = "Sponsors",
+                            text = stringResource(R.string.aboutscreen_sponsors),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSurface,
                             modifier = Modifier.padding(bottom = 8.dp)
                         )
                         Text(
-                            text = "Thanks to everyone supporting Rhythm's development.",
+                            text = stringResource(R.string.aboutscreen_thanks_to_everyone_supporting),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.padding(bottom = 10.dp)
@@ -598,7 +598,7 @@ fun AboutScreen(
                         hapticFeedback = haptics,
                         item = SettingItem(
                             icon = MaterialSymbolIcon("chat", filled = true),
-                            title = "Discord Community",
+                            title = stringResource(R.string.aboutscreen_discord_community),
                             description = "discord.gg/XjPyUYPQYc",
                             onClick = { openUrl("https://discord.gg/XjPyUYPQYc") }
                         )
@@ -608,7 +608,7 @@ fun AboutScreen(
                         hapticFeedback = haptics,
                         item = SettingItem(
                             icon = MaterialSymbolIcon("send", filled = true),
-                            title = "Telegram Support",
+                            title = stringResource(R.string.cd_telegram_support),
                             description = "t.me/RhythmSupport",
                             onClick = { openUrl("https://t.me/RhythmSupport") }
                         )
@@ -717,7 +717,7 @@ fun CommunityMember(
                     Spacer(modifier = Modifier.width(4.dp))
                     Icon(
                         imageVector = MaterialSymbolIcon("local_cafe", filled = true),
-                        contentDescription = "Support",
+                        contentDescription = stringResource(R.string.aboutscreen_support),
                         modifier = Modifier.size(12.dp),
                         tint = Color(0xFF13C3FF)
                     )
@@ -727,7 +727,7 @@ fun CommunityMember(
 
         Icon(
             imageVector = RhythmIcons.ArtistFilled,
-            contentDescription = "View GitHub Profile",
+            contentDescription = stringResource(R.string.cd_view_github_profile),
             
             modifier = Modifier.size(18.dp)
         )

@@ -477,7 +477,7 @@ fun BackupRestoreSettingsScreen(onBackClick: () -> Unit) {
 
             val settingGroups = listOf(
                 SettingGroup(
-                    title = "Backup",
+                    title = context.getString(R.string.settings_backup_action_short),
                     items = listOf(
                         SettingItem(
                             MaterialSymbolIcon("save"),
@@ -505,7 +505,7 @@ fun BackupRestoreSettingsScreen(onBackClick: () -> Unit) {
                     )
                 ),
                 SettingGroup(
-                    title = "Restore",
+                    title = context.getString(R.string.settings_restore_action_short),
                     items = listOf(
                         SettingItem(
                             RhythmIcons.ContentCopy,
@@ -603,8 +603,8 @@ fun BackupRestoreSettingsScreen(onBackClick: () -> Unit) {
 
     if (showBackupSelectionSheet) {
         BackupRestoreSectionPickerBottomSheet(
-            title = "Choose Backup Sections",
-            subtitle = "Select what to include in this backup file.",
+            title = stringResource(R.string.backuprestoresettingsscreen_choose_backup_sections),
+            subtitle = stringResource(R.string.backuprestoresettingsscreen_select_what_to_include),
             confirmLabel = context.getString(R.string.settings_backup_action_short),
             confirmIcon = MaterialSymbolIcon("backup"),
             sections = backupSections,
@@ -635,8 +635,8 @@ fun BackupRestoreSettingsScreen(onBackClick: () -> Unit) {
 
     if (showRestoreSelectionSheet && pendingRestorePayload != null) {
         BackupRestoreSectionPickerBottomSheet(
-            title = "Choose Restore Sections",
-            subtitle = "Select which sections from the backup should be restored.",
+            title = stringResource(R.string.backuprestoresettingsscreen_choose_restore_sections),
+            subtitle = stringResource(R.string.backuprestoresettingsscreen_select_which_sections_from),
             confirmLabel = context.getString(R.string.settings_restore_action_short),
             confirmIcon = MaterialSymbolIcon("system_update_alt"),
             sections = restoreSections,

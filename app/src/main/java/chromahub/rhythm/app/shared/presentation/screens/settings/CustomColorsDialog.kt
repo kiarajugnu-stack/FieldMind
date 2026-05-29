@@ -303,7 +303,7 @@ fun CustomColorsDialog(
                                     Column(modifier = Modifier.padding(24.dp)) {
                                         // Color Preview Section
                                         Text(
-                                            text = "Color Preview",
+                                            text = stringResource(R.string.customcolorsdialog_color_preview),
                                             style = MaterialTheme.typography.titleMedium,
                                             fontWeight = FontWeight.SemiBold,
                                             color = MaterialTheme.colorScheme.onSurface,
@@ -348,7 +348,7 @@ fun CustomColorsDialog(
 
                                         // Color Picker Section
                                         Text(
-                                            text = "Color Picker",
+                                            text = stringResource(R.string.customcolorsdialog_color_picker),
                                             style = MaterialTheme.typography.titleMedium,
                                             fontWeight = FontWeight.SemiBold,
                                             color = MaterialTheme.colorScheme.onSurface,
@@ -374,7 +374,7 @@ fun CustomColorsDialog(
 
                                         // Color Inspirations Section
                                         Text(
-                                            text = "Color Inspirations",
+                                            text = stringResource(R.string.customcolorsdialog_color_inspirations),
                                             style = MaterialTheme.typography.titleMedium,
                                             fontWeight = FontWeight.SemiBold,
                                             color = MaterialTheme.colorScheme.onSurface,
@@ -383,7 +383,7 @@ fun CustomColorsDialog(
 
                                         // Warm colors
                                         PresetColorRow(
-                                            title = "Warm & Cozy",
+                                            title = stringResource(R.string.customcolorsdialog_warm_cozy),
                                             colors = listOf(
                                                 Color(0xFFFF6B35), Color(0xFFFF8F00), Color(0xFFFF6F00),
                                                 Color(0xFFFF5722), Color(0xFFE91E63), Color(0xFF9C27B0)
@@ -402,7 +402,7 @@ fun CustomColorsDialog(
 
                                         // Cool colors
                                         PresetColorRow(
-                                            title = "Cool & Fresh",
+                                            title = stringResource(R.string.customcolorsdialog_cool_fresh),
                                             colors = listOf(
                                                 Color(0xFF1E88E5), Color(0xFF0097A7), Color(0xFF00ACC1),
                                                 Color(0xFF00BCD4), Color(0xFF4DD0E1), Color(0xFF26A69A)
@@ -421,7 +421,7 @@ fun CustomColorsDialog(
 
                                         // Nature colors
                                         PresetColorRow(
-                                            title = "Nature & Earth",
+                                            title = stringResource(R.string.customcolorsdialog_nature_earth),
                                             colors = listOf(
                                                 Color(0xFF2E7D32), Color(0xFF388E3C), Color(0xFF4CAF50),
                                                 Color(0xFF66BB6A), Color(0xFF81C784), Color(0xFFA5D6A7)
@@ -461,7 +461,7 @@ fun CustomColorsDialog(
                                         modifier = Modifier.size(18.dp)
                                     )
                                     Spacer(modifier = Modifier.width(8.dp))
-                                    Text("Cancel")
+                                    Text(stringResource(R.string.ui_cancel))
                                 }
                                 Button(
                                     onClick = {

@@ -111,7 +111,7 @@ fun StreamingHomeScreen(
                     ) {
                         Image(
                             painter = painterResource(id = R.drawable.rhythm_splash_logo),
-                            contentDescription = "Rhythm Logo",
+                            contentDescription = stringResource(R.string.updates_rhythm_logo_cd),
                             modifier = Modifier.size(100.dp)
                         )
 
@@ -131,7 +131,7 @@ fun StreamingHomeScreen(
 
                             if (appMode == "STREAMING") {
                                 Text(
-                                    text = "Go",
+                                    text = stringResource(R.string.splashscreen_go),
                                     style = MaterialTheme.typography.displayMedium.copy(
                                         fontSize = 42.sp,
                                         fontWeight = FontWeight.Bold,
@@ -162,7 +162,7 @@ fun StreamingHomeScreen(
                             onSwitchToLocalMode()
                         }
                     ) {
-                        Text(text = "Leave Go Mode")
+                        Text(text = stringResource(R.string.streaminghomescreen_leave_go_mode))
                     }
                 }
             }

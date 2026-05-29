@@ -188,6 +188,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState // Redundant, but 
 import androidx.compose.material3.OutlinedTextField // Redundant, but ensuring it's there
 import androidx.compose.foundation.shape.CircleShape // Redundant, but ensuring it's there
 import androidx.compose.ui.text.style.TextAlign // Redundant, but ensuring it's there
+import androidx.compose.ui.res.stringResource
 
 sealed class Screen(val route: String) {
     object Home : Screen("home")
@@ -1168,7 +1169,7 @@ private fun LocalNavigationContent(
                             ) {
                                 Icon(
                                     imageVector = RhythmIcons.Search,
-                                    contentDescription = "Search",
+                                    contentDescription = stringResource(R.string.cd_search),
                                     modifier = Modifier.size(25.dp)
                                 )
                             }
@@ -1370,7 +1371,7 @@ private fun LocalNavigationContent(
                         if (result.resultCode == android.app.Activity.RESULT_OK) {
                             viewModel.completeMetadataWriteAfterPermission(
                                 onSuccess = {
-                                    android.widget.Toast.makeText(context, "Metadata saved successfully!", android.widget.Toast.LENGTH_SHORT).show()
+                                    android.widget.Toast.makeText(context, R.string.localnavigation_metadata_saved_successfully, android.widget.Toast.LENGTH_SHORT).show()
                                 },
                                 onError = { errorMessage ->
                                     android.widget.Toast.makeText(context, errorMessage, android.widget.Toast.LENGTH_LONG).show()
@@ -1378,7 +1379,7 @@ private fun LocalNavigationContent(
                             )
                         } else {
                             viewModel.cancelPendingMetadataWrite()
-                            android.widget.Toast.makeText(context, "Permission denied. Changes saved to library only.", android.widget.Toast.LENGTH_LONG).show()
+                            android.widget.Toast.makeText(context, R.string.localnavigation_permission_denied_changes_saved, android.widget.Toast.LENGTH_LONG).show()
                         }
                     }
 
@@ -1489,7 +1490,7 @@ private fun LocalNavigationContent(
                                     removeArtwork = removeArtwork,
                                     onSuccess = { fileWriteSucceeded ->
                                         if (fileWriteSucceeded) {
-                                            android.widget.Toast.makeText(context, "Metadata saved successfully to file!", android.widget.Toast.LENGTH_SHORT).show()
+                                            android.widget.Toast.makeText(context, R.string.localnavigation_metadata_saved_successfully_to, android.widget.Toast.LENGTH_SHORT).show()
                                         }
                                     },
                                     onError = { errorMessage ->
@@ -1502,7 +1503,7 @@ private fun LocalNavigationContent(
                                             ).build()
                                             writePermissionLauncher.launch(intentSenderRequest)
                                         } catch (e: Exception) {
-                                            android.widget.Toast.makeText(context, "Permission required to modify file metadata", android.widget.Toast.LENGTH_SHORT).show()
+                                            android.widget.Toast.makeText(context, R.string.localnavigation_permission_required_to_modify, android.widget.Toast.LENGTH_SHORT).show()
                                         }
                                     }
                                 )
@@ -2361,7 +2362,7 @@ private fun LocalNavigationContent(
                         if (result.resultCode == android.app.Activity.RESULT_OK) {
                             viewModel.completeMetadataWriteAfterPermission(
                                 onSuccess = {
-                                    android.widget.Toast.makeText(context, "Metadata saved successfully!", android.widget.Toast.LENGTH_SHORT).show()
+                                    android.widget.Toast.makeText(context, R.string.localnavigation_metadata_saved_successfully, android.widget.Toast.LENGTH_SHORT).show()
                                 },
                                 onError = { errorMessage ->
                                     android.widget.Toast.makeText(context, errorMessage, android.widget.Toast.LENGTH_LONG).show()
@@ -2369,7 +2370,7 @@ private fun LocalNavigationContent(
                             )
                         } else {
                             viewModel.cancelPendingMetadataWrite()
-                            android.widget.Toast.makeText(context, "Permission denied. Changes saved to library only.", android.widget.Toast.LENGTH_LONG).show()
+                            android.widget.Toast.makeText(context, R.string.localnavigation_permission_denied_changes_saved, android.widget.Toast.LENGTH_LONG).show()
                         }
                     }
                     
@@ -2475,7 +2476,7 @@ private fun LocalNavigationContent(
                                     removeArtwork = removeArtwork,
                                     onSuccess = { fileWriteSucceeded ->
                                         if (fileWriteSucceeded) {
-                                            android.widget.Toast.makeText(context, "Metadata saved successfully to file!", android.widget.Toast.LENGTH_SHORT).show()
+                                            android.widget.Toast.makeText(context, R.string.localnavigation_metadata_saved_successfully_to, android.widget.Toast.LENGTH_SHORT).show()
                                         }
                                     },
                                     onError = { errorMessage ->
@@ -2488,7 +2489,7 @@ private fun LocalNavigationContent(
                                             ).build()
                                             writePermissionLauncher.launch(intentSenderRequest)
                                         } catch (e: Exception) {
-                                            android.widget.Toast.makeText(context, "Permission required to modify file metadata", android.widget.Toast.LENGTH_SHORT).show()
+                                            android.widget.Toast.makeText(context, R.string.localnavigation_permission_required_to_modify, android.widget.Toast.LENGTH_SHORT).show()
                                         }
                                     }
                                 )
@@ -2585,8 +2586,8 @@ private fun LocalNavigationContent(
                                             modifier = Modifier.size(28.dp)
                                         )
                                     },
-                                    title = { Text("No Songs Available") },
-                                    text = { Text("All songs are already in this playlist.") },
+                                    title = { Text(stringResource(R.string.playlist_no_songs_available)) },
+                                    text = { Text(stringResource(R.string.playlist_all_in_playlist)) },
                                     confirmButton = {
                                         Button(onClick = {
                                             viewModel.clearTargetPlaylistForAddingSongs()
@@ -2598,7 +2599,7 @@ private fun LocalNavigationContent(
                                                 modifier = Modifier.size(18.dp)
                                             )
                                             Spacer(modifier = Modifier.width(8.dp))
-                                            Text("OK")
+                                            Text(stringResource(R.string.ui_ok))
                                         }
                                     },
                                     shape = RoundedCornerShape(24.dp)
@@ -2809,7 +2810,7 @@ private fun LocalNavigationRail(
             val items = listOf(
                 LocalNavRailItem(
                     route = Screen.Home.route,
-                    title = "Home",
+                    title = stringResource(R.string.settings_home_screen),
                     selectedIcon = RhythmIcons.HomeFilled,
                     unselectedIcon = RhythmIcons.Home,
                     onClick = {
@@ -2818,7 +2819,7 @@ private fun LocalNavigationRail(
                 ),
                 LocalNavRailItem(
                     route = libraryRoute,
-                    title = "Library",
+                    title = stringResource(R.string.option_library),
                     selectedIcon = RhythmIcons.Navigation.Library,
                     unselectedIcon = RhythmIcons.Navigation.LibraryOutlined,
                     onClick = {
@@ -2827,7 +2828,7 @@ private fun LocalNavigationRail(
                 ),
                 LocalNavRailItem(
                     route = Screen.RhythmStats.route,
-                    title = "Stats",
+                    title = stringResource(R.string.localnavigation_stats),
                     selectedIcon = MaterialSymbolIcon("auto_graph", filled = true),
                     unselectedIcon = MaterialSymbolIcon("auto_graph"),
                     onClick = {
@@ -2836,7 +2837,7 @@ private fun LocalNavigationRail(
                 ),
                 LocalNavRailItem(
                     route = Screen.Search.route,
-                    title = "Search",
+                    title = stringResource(R.string.cd_search),
                     selectedIcon = RhythmIcons.SearchFilled,
                     unselectedIcon = RhythmIcons.Search,
                     onClick = {
@@ -2845,7 +2846,7 @@ private fun LocalNavigationRail(
                 ),
                 LocalNavRailItem(
                     route = Screen.Settings.route,
-                    title = "Settings",
+                    title = stringResource(R.string.settings_backup_settings),
                     selectedIcon = RhythmIcons.SettingsFilled,
                     unselectedIcon = RhythmIcons.Settings,
                     onClick = {

@@ -150,6 +150,7 @@ import androidx.compose.material3.windowsizeclass.WindowSizeClass
 import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 
 @OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3WindowSizeClassApi::class)
 @Composable
@@ -1809,7 +1810,7 @@ private fun OnboardingTopBackButton(onBackClick: () -> Unit) {
         ) {
             Icon(
                 imageVector = RhythmIcons.Back,
-                contentDescription = "Back",
+                contentDescription = stringResource(R.string.cd_back),
                 tint = MaterialTheme.colorScheme.onSurface
             )
         }
@@ -1910,7 +1911,7 @@ fun EnhancedWelcomeContent(onNextStep: () -> Unit, isTablet: Boolean = false, co
         ) {
             Icon(
                 imageVector = RhythmIcons.Public,
-                contentDescription = "Change Language",
+                contentDescription = stringResource(R.string.cd_change_language),
                 modifier = Modifier.size(20.dp)
             )
             Spacer(modifier = Modifier.width(8.dp))
@@ -1955,7 +1956,7 @@ fun EnhancedWelcomeContent(onNextStep: () -> Unit, isTablet: Boolean = false, co
                         ) {
                             Image(
                                 painter = painterResource(id = R.drawable.rhythm_splash_logo),
-                                contentDescription = "Rhythm Logo",
+                                contentDescription = stringResource(R.string.updates_rhythm_logo_cd),
                                 modifier = Modifier.size(140.dp)
                             )
                         }
@@ -2035,7 +2036,7 @@ fun EnhancedWelcomeContent(onNextStep: () -> Unit, isTablet: Boolean = false, co
                     ) {
                         Image(
                             painter = painterResource(id = R.drawable.rhythm_splash_logo),
-                            contentDescription = "Rhythm Logo",
+                            contentDescription = stringResource(R.string.updates_rhythm_logo_cd),
                             modifier = Modifier.size(130.dp)
                         )
                     }
@@ -4286,7 +4287,7 @@ private fun FolderManagementCard(
         add(
             Material3SettingsItem(
                 icon = RhythmIcons.FilterList,
-                title = { Text("Media Scan Mode") },
+                title = { Text(stringResource(R.string.onboardingscreen_media_scan_mode)) },
                 description = {
                     Column(modifier = Modifier.fillMaxWidth().padding(top = 8.dp)) {
                         Text(
@@ -4312,7 +4313,7 @@ private fun FolderManagementCard(
         add(
             Material3SettingsItem(
                 icon = MaterialSymbolIcon("create_new_folder"),
-                title = { Text("Add Folder") },
+                title = { Text(stringResource(R.string.settings_add_folder_button)) },
                 description = {
                     Text(
                         if (isBlacklistMode) {
@@ -4344,7 +4345,7 @@ private fun FolderManagementCard(
                         Text("${currentFolders.size} ${if (isBlacklistMode) "blocked" else "whitelisted"} folders")
                     },
                     description = {
-                        Text("Tap the remove action to update folder access")
+                        Text(stringResource(R.string.onboardingscreen_tap_the_remove_action))
                     }
                 )
             )
@@ -4365,7 +4366,7 @@ private fun FolderManagementCard(
                             IconButton(onClick = { onRemoveFolder(folder) }) {
                                 Icon(
                                     imageVector = RhythmIcons.Close,
-                                    contentDescription = "Remove",
+                                    contentDescription = stringResource(R.string.content_desc_remove),
                                     tint = MaterialTheme.colorScheme.error
                                 )
                             }
@@ -4584,8 +4585,8 @@ private fun ThemeSettingsCard(
         add(
             Material3SettingsItem(
                 icon = RhythmIcons.AutoAwesome,
-                title = { Text("Festive Theme") },
-                description = { Text("Enable festive decorations and seasonal themes") },
+                title = { Text(stringResource(R.string.settings_exp_festive_theme)) },
+                description = { Text(stringResource(R.string.onboardingscreen_enable_festive_decorations_and)) },
                 trailingContent = {
                     OnboardingAnimatedSwitch(
                         checked = festiveTheme,
@@ -4674,7 +4675,7 @@ private fun LibraryFeatureCard(
             if (onClick != null) {
                 Icon(
                     imageVector = RhythmIcons.Forward,
-                    contentDescription = "Open",
+                    contentDescription = stringResource(R.string.cd_open_settings),
                     tint = if (usePrimaryStyle)
                         MaterialTheme.colorScheme.onPrimaryContainer
                     else
@@ -5517,7 +5518,7 @@ fun OnboardingDropdownOption(
                     Spacer(modifier = Modifier.width(4.dp))
                     Icon(
                         imageVector = RhythmIcons.KeyboardArrowDown,
-                        contentDescription = "Show options",
+                        contentDescription = stringResource(R.string.cd_show_options),
                         modifier = Modifier.size(16.dp)
                     )
                 }
@@ -5566,7 +5567,7 @@ fun OnboardingDropdownOption(
                                 if (selectedOption == option) {
                                     Icon(
                                         imageVector = RhythmIcons.Check,
-                                        contentDescription = "Selected",
+                                        contentDescription = stringResource(R.string.streaming_selected),
                                         
                                         modifier = Modifier.size(20.dp)
                                     )
@@ -6739,7 +6740,7 @@ fun EnhancedUpdateChannelOption(
                 if (isSelected) {
                     Icon(
                         imageVector = RhythmIcons.Check,
-                        contentDescription = "Selected",
+                        contentDescription = stringResource(R.string.streaming_selected),
                         
                         modifier = Modifier.size(16.dp)
                     )
@@ -6831,7 +6832,7 @@ fun SettingsDropdownItem(
 
             Icon(
                 imageVector = RhythmIcons.KeyboardArrowDown,
-                contentDescription = "Show options",
+                contentDescription = stringResource(R.string.cd_show_options),
                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.size(20.dp)
             )
@@ -6980,7 +6981,7 @@ fun OnboardingProgressIndicator(
                     ) {
                         Icon(
                             imageVector = RhythmIcons.Check,
-                            contentDescription = "Completed",
+                            contentDescription = stringResource(R.string.cd_completed),
                             tint = MaterialTheme.colorScheme.onPrimary,
                             modifier = Modifier.size(6.dp)
                         )
@@ -7534,7 +7535,7 @@ fun MediaScanModeOption(
             if (isSelected) {
                 Icon(
                     imageVector = RhythmIcons.CheckCircle,
-                    contentDescription = "Selected",
+                    contentDescription = stringResource(R.string.streaming_selected),
                     
                     modifier = Modifier.size(24.dp)
                 )
@@ -8548,7 +8549,7 @@ private fun GestureSettingsCards(
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         // General Interaction Settings
         Text(
-            text = "Interaction",
+            text = stringResource(R.string.onboardingscreen_interaction),
             style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
             color = MaterialTheme.colorScheme.primary,
             modifier = Modifier.padding(start = 16.dp, bottom = 4.dp)
@@ -9656,7 +9657,7 @@ fun EnhancedAppModeChoiceContent(
                 }
 
                 Text(
-                    text = "Choose Your Playback Mode",
+                    text = stringResource(R.string.onboardingscreen_choose_your_playback_mode),
                     style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface,
@@ -9664,7 +9665,7 @@ fun EnhancedAppModeChoiceContent(
                 )
 
                 Text(
-                    text = "Select how you'd like to experience your music. You can change this anytime in settings.",
+                    text = stringResource(R.string.onboardingscreen_select_how_youd_like),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(bottom = 32.dp)
@@ -9716,7 +9717,7 @@ fun EnhancedAppModeChoiceContent(
             Spacer(modifier = Modifier.height(24.dp))
 
             Text(
-                text = "Choose Your Playback Mode",
+                text = stringResource(R.string.onboardingscreen_choose_your_playback_mode),
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface,
@@ -9724,7 +9725,7 @@ fun EnhancedAppModeChoiceContent(
             )
 
             Text(
-                text = "Select how you'd like to experience your music. You can change this anytime in settings.",
+                text = stringResource(R.string.onboardingscreen_select_how_youd_like),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(bottom = 24.dp)
@@ -9802,13 +9803,13 @@ private fun AppModeChoiceSelection(
 
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = "Local Offline Player",
+                    text = stringResource(R.string.onboardingscreen_local_offline_player),
                     style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                     color = if (isLocalSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = "Play audio files stored directly on your device. Supports advanced local directory scanning, statistics, and theme matching.",
+                    text = stringResource(R.string.onboardingscreen_play_audio_files_stored),
                     style = MaterialTheme.typography.bodySmall,
                     color = if (isLocalSelected) MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f) else MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -9868,13 +9869,13 @@ private fun AppModeChoiceSelection(
 
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = "Rhythm GO! (Streaming)",
+                    text = stringResource(R.string.onboardingscreen_rhythm_go_streaming),
                     style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                     color = if (isStreamingSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = "Connect to Jellyfin, Subsonic, or Navidrome servers to stream your entire library on the go, with caching support for offline listening.",
+                    text = stringResource(R.string.onboardingscreen_connect_to_jellyfin_subsonic),
                     style = MaterialTheme.typography.bodySmall,
                     color = if (isStreamingSelected) MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f) else MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -9902,7 +9903,7 @@ private fun AppModeChoiceTipsCard() {
                 )
                 Spacer(modifier = Modifier.width(12.dp))
                 Text(
-                    text = "Playback Mode Tips",
+                    text = stringResource(R.string.onboardingscreen_playback_mode_tips),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onPrimaryContainer
@@ -9912,15 +9913,15 @@ private fun AppModeChoiceTipsCard() {
 
             OnboardingTipItem(
                 icon = MaterialSymbolIcon("settings"),
-                text = "Switch easily anytime in Settings > Integration."
+                text = stringResource(R.string.onboardingscreen_switch_easily_anytime_in)
             )
             OnboardingTipItem(
                 icon = MaterialSymbolIcon("folder_open"),
-                text = "Local mode scans and catalogs audio files on your device."
+                text = stringResource(R.string.onboardingscreen_local_mode_scans_and)
             )
             OnboardingTipItem(
                 icon = MaterialSymbolIcon("cloud_sync"),
-                text = "GO Streaming connects via subsonic/jellyfin API server."
+                text = stringResource(R.string.onboardingscreen_go_streaming_connects_via)
             )
         }
     }
@@ -9978,7 +9979,7 @@ fun EnhancedStreamingSetupContent(
                 }
 
                 Text(
-                    text = "Connect Your Streaming Service",
+                    text = stringResource(R.string.onboardingscreen_connect_your_streaming_service),
                     style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface,
@@ -9986,7 +9987,7 @@ fun EnhancedStreamingSetupContent(
                 )
 
                 Text(
-                    text = "Connect your Subsonic/Navidrome or Jellyfin server to start streaming.",
+                    text = stringResource(R.string.onboardingscreen_connect_your_subsonicnavidrome_or),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(bottom = 32.dp)
@@ -10059,7 +10060,7 @@ fun EnhancedStreamingSetupContent(
             Spacer(modifier = Modifier.height(24.dp))
 
             Text(
-                text = "Connect Your Streaming Service",
+                text = stringResource(R.string.onboardingscreen_connect_your_streaming_service),
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface,
@@ -10067,7 +10068,7 @@ fun EnhancedStreamingSetupContent(
             )
 
             Text(
-                text = "Connect your Subsonic/Navidrome or Jellyfin server to start streaming.",
+                text = stringResource(R.string.onboardingscreen_connect_your_subsonicnavidrome_or),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(bottom = 24.dp)
@@ -10128,7 +10129,7 @@ private fun StreamingSetupTipsCard() {
                 )
                 Spacer(modifier = Modifier.width(12.dp))
                 Text(
-                    text = "Streaming Setup Tips",
+                    text = stringResource(R.string.onboardingscreen_streaming_setup_tips),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onPrimaryContainer
@@ -10138,15 +10139,15 @@ private fun StreamingSetupTipsCard() {
 
             OnboardingTipItem(
                 icon = MaterialSymbolIcon("dns"),
-                text = "Supports Navidrome, gonic, and all subsonic APIs."
+                text = stringResource(R.string.onboardingscreen_supports_navidrome_gonic_and)
             )
             OnboardingTipItem(
                 icon = MaterialSymbolIcon("offline_pin"),
-                text = "Enable caching in Settings for offline playback later."
+                text = stringResource(R.string.onboardingscreen_enable_caching_in_settings)
             )
             OnboardingTipItem(
                 icon = MaterialSymbolIcon("verified_user"),
-                text = "Connection test ensures server credentials are correct."
+                text = stringResource(R.string.onboardingscreen_connection_test_ensures_server)
             )
         }
     }
@@ -10215,7 +10216,7 @@ private fun StreamingSetupSelectionAndForm(
                     modifier = Modifier.size(24.dp)
                 )
                 Text(
-                    text = "Subsonic / Navidrome",
+                    text = stringResource(R.string.onboardingscreen_subsonic_navidrome),
                     style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
                     color = if (isSubsonic) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center
@@ -10260,7 +10261,7 @@ private fun StreamingSetupSelectionAndForm(
                     modifier = Modifier.size(24.dp)
                 )
                 Text(
-                    text = "Jellyfin Server",
+                    text = stringResource(R.string.onboardingscreen_jellyfin_server),
                     style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
                     color = if (isJellyfin) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center
@@ -10290,9 +10291,9 @@ private fun StreamingSetupSelectionAndForm(
                     value = serverUrl,
                     onValueChange = onServerUrlChange,
                     modifier = Modifier.fillMaxWidth(),
-                    label = { Text("Server URL") },
-                    placeholder = { Text("https://your-server.com") },
-                    supportingText = { Text("Remember to include http:// or https://") },
+                    label = { Text(stringResource(R.string.streaming_service_setup_server_url)) },
+                    placeholder = { Text(stringResource(R.string.onboardingscreen_httpsyourservercom)) },
+                    supportingText = { Text(stringResource(R.string.onboardingscreen_remember_to_include_http)) },
                     singleLine = true,
                     enabled = !isLoading && !isConnected
                 )
@@ -10302,8 +10303,8 @@ private fun StreamingSetupSelectionAndForm(
                 value = username,
                 onValueChange = onUsernameChange,
                 modifier = Modifier.fillMaxWidth(),
-                label = { Text("Username") },
-                placeholder = { Text("Enter server username") },
+                label = { Text(stringResource(R.string.onboardingscreen_username)) },
+                placeholder = { Text(stringResource(R.string.onboardingscreen_enter_server_username)) },
                 singleLine = true,
                 enabled = !isLoading && !isConnected
             )
@@ -10312,8 +10313,8 @@ private fun StreamingSetupSelectionAndForm(
                 value = password,
                 onValueChange = onPasswordChange,
                 modifier = Modifier.fillMaxWidth(),
-                label = { Text("Password") },
-                placeholder = { Text("Enter server password") },
+                label = { Text(stringResource(R.string.streaming_service_setup_password)) },
+                placeholder = { Text(stringResource(R.string.onboardingscreen_enter_server_password)) },
                 visualTransformation = PasswordVisualTransformation(),
                 singleLine = true,
                 enabled = !isLoading && !isConnected
@@ -10339,7 +10340,7 @@ private fun StreamingSetupSelectionAndForm(
                     )
                     Column {
                         Text(
-                            text = "Successfully Connected!",
+                            text = stringResource(R.string.onboardingscreen_successfully_connected),
                             style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
                             color = MaterialTheme.colorScheme.onTertiaryContainer
                         )
@@ -10388,7 +10389,7 @@ private fun StreamingSetupSelectionAndForm(
                         modifier = Modifier.weight(1f),
                         enabled = !isLoading
                     ) {
-                        Text("Disconnect")
+                        Text(stringResource(R.string.streaming_service_setup_disconnect))
                     }
                 } else {
                     Button(
@@ -10407,9 +10408,9 @@ private fun StreamingSetupSelectionAndForm(
                                 color = MaterialTheme.colorScheme.onPrimary
                             )
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text("Connecting...")
+                            Text(stringResource(R.string.onboardingscreen_connecting))
                         } else {
-                            Text("Connect & Verify")
+                            Text(stringResource(R.string.onboardingscreen_connect_verify))
                         }
                     }
                 }

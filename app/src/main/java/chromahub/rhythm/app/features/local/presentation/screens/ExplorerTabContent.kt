@@ -57,6 +57,7 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
+import androidx.compose.ui.res.stringResource
 
 // Data classes for explorer functionality
 data class ExplorerItem(
@@ -495,7 +496,7 @@ fun SingleCardExplorerContent(
                                     ) {
                                         Icon(
                                             imageVector = RhythmIcons.Back,
-                                            contentDescription = "Go back",
+                                            contentDescription = stringResource(R.string.cd_navigate_back),
                                             modifier = Modifier.size(22.dp)
                                         )
                                     }
@@ -590,7 +591,7 @@ fun SingleCardExplorerContent(
                     ) {
                         Icon(
                             imageVector = RhythmIcons.Storage,
-                            contentDescription = "Storage",
+                            contentDescription = stringResource(R.string.cd_storage),
                             tint = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.size(22.dp)
                         )
@@ -667,7 +668,7 @@ fun SingleCardExplorerContent(
                         ) {
                             Icon(
                                 imageVector = RhythmIcons.Pushpin,
-                                contentDescription = "Pinned",
+                                contentDescription = stringResource(R.string.cd_pinned),
                                 tint = MaterialTheme.colorScheme.secondary,
                                 modifier = Modifier.size(22.dp)
                             )
@@ -1027,7 +1028,7 @@ fun SingleCardExplorerContent(
                                 playlistName = it
                                 isError = it.isBlank()
                             },
-                            label = { Text("Playlist name") },
+                            label = { Text(stringResource(R.string.playlist_name_field)) },
                             isError = isError,
                             supportingText = {
                                 if (isError) {
@@ -1096,7 +1097,7 @@ fun SingleCardExplorerContent(
                             modifier = Modifier.size(18.dp)
                         )
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("Create")
+                        Text(stringResource(R.string.action_create))
                     }
                 }
             },
@@ -1115,7 +1116,7 @@ fun SingleCardExplorerContent(
                             modifier = Modifier.size(18.dp)
                         )
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("Cancel")
+                        Text(stringResource(R.string.ui_cancel))
                     }
                 }
             },
@@ -1865,7 +1866,7 @@ fun FolderItem(
                 ) {
                     Icon(
                         imageVector = RhythmIcons.Folder,
-                        contentDescription = "Folder",
+                        contentDescription = stringResource(R.string.cd_folder),
                         tint = MaterialTheme.colorScheme.onTertiaryContainer,
                         modifier = Modifier.size(36.dp)
                     )
@@ -1918,7 +1919,7 @@ fun FolderItem(
                 ) {
                     Icon(
                         imageVector = RhythmIcons.Forward,
-                        contentDescription = "Open folder",
+                        contentDescription = stringResource(R.string.cd_open_folder),
                         modifier = Modifier.size(22.dp)
                     )
                 }
@@ -2006,7 +2007,7 @@ fun ExplorerBreadcrumb(
                 ) {
                     Icon(
                         imageVector = RhythmIcons.Home,
-                        contentDescription = "Home",
+                        contentDescription = stringResource(R.string.settings_home_screen),
                         modifier = Modifier.size(18.dp),
                         tint = MaterialTheme.colorScheme.onPrimaryContainer
                     )
@@ -2025,7 +2026,7 @@ fun ExplorerBreadcrumb(
             item {
                 Icon(
                     imageVector = MaterialSymbolIcon("chevron_right"),
-                    contentDescription = "Navigate",
+                    contentDescription = stringResource(R.string.cd_navigate),
                     modifier = Modifier.size(18.dp),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
                 )
@@ -2104,7 +2105,7 @@ fun ExplorerBreadcrumb(
                         if (isLastSegment) {
                             Icon(
                                 imageVector = RhythmIcons.Location,
-                                contentDescription = "Current location",
+                                contentDescription = stringResource(R.string.cd_current_location),
                                 modifier = Modifier.size(12.dp),
                                 tint = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.7f)
                             )
@@ -2209,7 +2210,7 @@ fun ExplorerItemCard(
                         Box(contentAlignment = Alignment.Center) {
                             Icon(
                                 imageVector = RhythmIcons.Forward,
-                                contentDescription = "Browse storage",
+                                contentDescription = stringResource(R.string.explorertabcontent_browse_storage),
                                 modifier = Modifier.size(22.dp)
                             )
                         }
@@ -2247,7 +2248,7 @@ fun ExplorerItemCard(
                         Box(contentAlignment = Alignment.Center) {
                             Icon(
                                 imageVector = RhythmIcons.Folder,
-                                contentDescription = "Folder icon",
+                                contentDescription = stringResource(R.string.explorertabcontent_folder_icon),
                                 tint = MaterialTheme.colorScheme.onSecondaryContainer,
                                 modifier = Modifier.size(28.dp)
                             )
@@ -2325,7 +2326,7 @@ fun ExplorerItemCard(
                                 ) {
                                     Icon(
                                         imageVector = RhythmIcons.More,
-                                        contentDescription = "Folder options",
+                                        contentDescription = stringResource(R.string.cd_folder_options),
                                         modifier = Modifier.size(20.dp)
                                     )
                                 }
@@ -2338,7 +2339,7 @@ fun ExplorerItemCard(
                                 ) {
                                     if (onPlayFolder != null) {
                                         DropdownMenuItem(
-                                            text = { Text("Play folder (as Playlist)") },
+                                            text = { Text(stringResource(R.string.explorertabcontent_play_folder_as_playlist)) },
                                             onClick = {
                                                 HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
                                                 showMenu = false
@@ -2356,7 +2357,7 @@ fun ExplorerItemCard(
 
                                     if (onAddFolderToQueue != null) {
                                         DropdownMenuItem(
-                                            text = { Text("Add all to Queue") },
+                                            text = { Text(stringResource(R.string.explorertabcontent_add_all_to_queue)) },
                                             onClick = {
                                                 HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
                                                 showMenu = false

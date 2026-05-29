@@ -55,6 +55,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlin.math.abs
+import androidx.compose.ui.res.stringResource
 
 /**
  * Compact bottom sheet activity for playing external audio files.
@@ -123,13 +124,13 @@ class ExternalPlaybackActivity : ComponentActivity() {
 
         val uri = intent.data ?: run {
             Log.e(TAG, "Intent data is null")
-            Toast.makeText(this, "Unable to open audio file", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, R.string.externalplaybackactivity_unable_to_open_audio, Toast.LENGTH_SHORT).show()
             return
         }
 
         if (!isValidAudioUri(uri)) {
             Log.w(TAG, "Rejected non-audio or unreadable URI: $uri")
-            Toast.makeText(this, "Unsupported or unreadable audio file", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, R.string.externalplaybackactivity_unsupported_or_unreadable_audio, Toast.LENGTH_SHORT).show()
             return
         }
 
@@ -196,7 +197,7 @@ class ExternalPlaybackActivity : ComponentActivity() {
         } catch (e: Exception) {
             Log.e(TAG, "Error playing external file", e)
             withContext(Dispatchers.Main) {
-                Toast.makeText(this@ExternalPlaybackActivity, "Failed to play audio file", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this@ExternalPlaybackActivity, R.string.externalplaybackactivity_failed_to_play_audio, Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -345,7 +346,7 @@ fun ExternalPlaybackBottomSheet(
 
                     Image(
                         painter = painterResource(R.drawable.rhythm_splash_logo),
-                        contentDescription = "Rhythm Logo",
+                        contentDescription = stringResource(R.string.updates_rhythm_logo_cd),
                         modifier = Modifier
                             .size(50.dp)
 //                            .graphicsLayer {
@@ -356,13 +357,13 @@ fun ExternalPlaybackBottomSheet(
                     Spacer(modifier = Modifier.width(3.dp))
                     Column {
                         Text(
-                            text = "Rhythm",
+                            text = stringResource(R.string.cd_rhythm_splash),
                             style = MaterialTheme.typography.headlineSmall,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.primary
                         )
                         Text(
-                            text = "Music Player",
+                            text = stringResource(R.string.settings_about_music_player),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onPrimaryContainer
                         )
@@ -596,7 +597,7 @@ fun ExternalPlaybackBottomSheet(
                                     exit = fadeOut() + shrinkHorizontally()
                                 ) {
                                     Text(
-                                        text = "PLAY",
+                                        text = stringResource(R.string.cd_play),
                                         modifier = Modifier.padding(start = 8.dp, end = 4.dp),
                                         style = MaterialTheme.typography.labelLarge,
                                         fontWeight = FontWeight.ExtraBold,
@@ -643,7 +644,7 @@ fun ExternalPlaybackBottomSheet(
                     )
                 ) {
                     Text(
-                        text = "Open Rhythm",
+                        text = stringResource(R.string.externalplaybackactivity_open_rhythm),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )

@@ -145,6 +145,7 @@ import androidx.room.util.copy
 import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.ui.res.stringResource
 
 // Playlist sort order enum
 enum class PlaylistSortOrder {
@@ -409,7 +410,7 @@ fun PlaylistDetailScreen(
                         modifier = Modifier.size(18.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Cancel")
+                    Text(stringResource(R.string.ui_cancel))
                 }
             },
             shape = RoundedCornerShape(24.dp)
@@ -451,7 +452,7 @@ fun PlaylistDetailScreen(
                         modifier = Modifier.size(18.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Save")
+                    Text(stringResource(R.string.ui_save))
                 }
             },
             dismissButton = {
@@ -465,7 +466,7 @@ fun PlaylistDetailScreen(
                         modifier = Modifier.size(18.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Cancel")
+                    Text(stringResource(R.string.ui_cancel))
                 }
             },
             shape = RoundedCornerShape(24.dp)
@@ -502,7 +503,7 @@ fun PlaylistDetailScreen(
                         modifier = Modifier.size(18.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Delete")
+                    Text(stringResource(R.string.button_delete))
                 }
             },
             dismissButton = {
@@ -516,7 +517,7 @@ fun PlaylistDetailScreen(
                         modifier = Modifier.size(18.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Cancel")
+                    Text(stringResource(R.string.ui_cancel))
                 }
             },
             shape = RoundedCornerShape(24.dp)
@@ -561,7 +562,7 @@ fun PlaylistDetailScreen(
                         modifier = Modifier.size(18.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Remove")
+                    Text(stringResource(R.string.content_desc_remove))
                 }
             },
             dismissButton = {
@@ -575,7 +576,7 @@ fun PlaylistDetailScreen(
                         modifier = Modifier.size(18.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Cancel")
+                    Text(stringResource(R.string.ui_cancel))
                 }
             },
             shape = RoundedCornerShape(24.dp)
@@ -1144,7 +1145,7 @@ fun PlaylistDetailScreen(
                                         PlaylistSortOrder.DURATION_ASC, PlaylistSortOrder.DATE_ADDED_ASC -> {
                                             Icon(
                                                 imageVector = RhythmIcons.ArrowUpward,
-                                                contentDescription = "Ascending",
+                                                contentDescription = stringResource(R.string.content_desc_ascending),
                                                 modifier = Modifier.size(18.dp),
                                                 tint = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
                                             )
@@ -1152,7 +1153,7 @@ fun PlaylistDetailScreen(
                                         else -> {
                                             Icon(
                                                 imageVector = RhythmIcons.ArrowDownward,
-                                                contentDescription = "Descending",
+                                                contentDescription = stringResource(R.string.content_desc_descending),
                                                 modifier = Modifier.size(18.dp),
                                                 tint = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
                                             )
@@ -1471,7 +1472,7 @@ fun PlaylistDetailScreen(
                                 ) {
                                     Icon(
                                         imageVector = RhythmIcons.Shuffle,
-                                        contentDescription = "Shuffle play",
+                                        contentDescription = stringResource(R.string.content_desc_shuffle_play),
                                         modifier = Modifier.size(24.dp)
                                     )
                                     Spacer(modifier = Modifier.width(8.dp))
@@ -1969,7 +1970,7 @@ fun PlaylistDetailScreen(
                                     )
                                     Spacer(modifier = Modifier.width(6.dp))
                                     Text(
-                                        text = "Add",
+                                        text = stringResource(R.string.button_add),
                                         style = MaterialTheme.typography.titleMedium,
                                         fontWeight = FontWeight.Bold
                                     )
@@ -2255,7 +2256,7 @@ fun PlaylistDetailScreen(
                                                     modifier = Modifier.size(18.dp)
                                                 )
                                                 Spacer(modifier = Modifier.width(4.dp))
-                                                Text("Remove")
+                                                Text(stringResource(R.string.content_desc_remove))
                                             }
                                         }
                                         // Done button
@@ -2276,7 +2277,7 @@ fun PlaylistDetailScreen(
                                                 modifier = Modifier.size(18.dp)
                                             )
                                             Spacer(modifier = Modifier.width(4.dp))
-                                            Text("Done")
+                                            Text(stringResource(R.string.ui_done))
                                         }
                                     }
                                 }
@@ -2311,7 +2312,7 @@ fun PlaylistDetailScreen(
                                             tint = MaterialTheme.colorScheme.onSurfaceVariant
                                         )
                                         Text(
-                                            text = "Reorder Songs",
+                                            text = stringResource(R.string.playlist_reorder_songs_title),
                                             style = MaterialTheme.typography.bodyMedium,
                                             color = MaterialTheme.colorScheme.onSurfaceVariant
                                         )
@@ -2333,7 +2334,7 @@ fun PlaylistDetailScreen(
                                             modifier = Modifier.size(18.dp)
                                         )
                                         Spacer(modifier = Modifier.width(4.dp))
-                                        Text("Done")
+                                        Text(stringResource(R.string.ui_done))
                                     }
                                 }
                             }
@@ -2618,7 +2619,7 @@ fun PlaylistDetailScreen(
                                     )
                                     Spacer(modifier = Modifier.width(8.dp))
                                     Text(
-                                        text = "Add Songs",
+                                        text = stringResource(R.string.content_desc_add_songs),
                                         style = MaterialTheme.typography.titleMedium,
                                         fontWeight = FontWeight.Bold
                                     )
@@ -2772,7 +2773,7 @@ fun PlaylistSongItem(
                     modifier = Modifier.size(28.dp)
                 )
             },
-            title = { Text("Remove Song") },
+            title = { Text(stringResource(R.string.playlist_remove_song)) },
             text = { Text("Remove '${song.title}' from this playlist?") },
             confirmButton = {
                 Button(
@@ -2791,7 +2792,7 @@ fun PlaylistSongItem(
                         modifier = Modifier.size(18.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Remove")
+                    Text(stringResource(R.string.content_desc_remove))
                 }
             },
             dismissButton = {
@@ -2805,7 +2806,7 @@ fun PlaylistSongItem(
                         modifier = Modifier.size(18.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Cancel")
+                    Text(stringResource(R.string.ui_cancel))
                 }
             },
             shape = RoundedCornerShape(24.dp)
@@ -2994,7 +2995,7 @@ fun PlaylistSongItem(
                     ) {
                         Icon(
                             imageVector = RhythmIcons.DragHandle,
-                            contentDescription = "Drag to reorder",
+                            contentDescription = stringResource(R.string.content_desc_drag_reorder),
                             tint = if (isDragging) {
                                 MaterialTheme.colorScheme.onPrimaryContainer
                             } else {
@@ -3019,7 +3020,7 @@ fun PlaylistSongItem(
                 ) {
                     Icon(
                         imageVector = RhythmIcons.Remove,
-                        contentDescription = "Remove from playlist",
+                        contentDescription = stringResource(R.string.cd_remove_from_playlist),
                         modifier = Modifier.size(20.dp)
                     )
                 }
@@ -3038,7 +3039,7 @@ fun PlaylistSongItem(
                 ) {
                     Icon(
                         imageVector = RhythmIcons.More,
-                        contentDescription = "More options",
+                        contentDescription = stringResource(R.string.content_desc_more_options),
                         modifier = Modifier.size(18.dp)
                     )
                 }

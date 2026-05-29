@@ -63,6 +63,7 @@ import chromahub.rhythm.app.R
 import chromahub.rhythm.app.shared.presentation.components.Material3SettingsGroup
 import chromahub.rhythm.app.shared.presentation.components.Material3SettingsItem
 import chromahub.rhythm.app.util.HapticUtils
+import androidx.compose.ui.res.stringResource
 
 /**
  * Represents a searchable setting item with its metadata for search indexing
@@ -186,7 +187,7 @@ fun buildSettingsSearchIndex(context: Context): List<SearchableSettingItem> {
         ))
         add(SearchableSettingItem(
             id = "settings_suggestions",
-            title = "Settings Suggestions",
+            title = context.getString(R.string.settingssearch_settings_suggestions),
             description = "Show contextual suggestions at the top",
             keywords = listOf("suggestions", "tips", "recommendations", "contextual", "settings"),
             icon = RhythmIcons.AutoAwesome,
@@ -292,7 +293,7 @@ fun buildSettingsSearchIndex(context: Context): List<SearchableSettingItem> {
         ))
         add(SearchableSettingItem(
             id = "battery_saver",
-            title = "Performance",
+            title = context.getString(R.string.performancesettingsscreen_performance),
             description = "Optimize haptics, decoding, and marquee for power consumption",
             keywords = listOf("battery", "power", "saver", "offload", "haptics", "marquee", "optimize"),
             icon = MaterialSymbolIcon("battery_charging_full"),
@@ -301,7 +302,7 @@ fun buildSettingsSearchIndex(context: Context): List<SearchableSettingItem> {
         ))
         add(SearchableSettingItem(
             id = "audio_offload",
-            title = "Audio Offload",
+            title = context.getString(R.string.settingsscreen_audio_offload),
             description = "Hardware-accelerated audio decoding to save device power",
             keywords = listOf("audio", "offload", "hardware", "dsp", "decode", "battery", "power"),
             icon = MaterialSymbolIcon("bolt"),

@@ -38,6 +38,7 @@ import chromahub.rhythm.app.util.ImageUtils
 import chromahub.rhythm.app.shared.presentation.screens.settings.SettingsSearchBar
 import chromahub.rhythm.app.R
 import kotlinx.coroutines.delay
+import androidx.compose.ui.res.stringResource
 
 /**
  * Modal bottom sheet that provides song picking UI (search + multi-select + add)
@@ -204,7 +205,7 @@ fun SongPickerBottomSheet(
                         )
                         Spacer(modifier = Modifier.width(12.dp))
                         Text(
-                            text = "Tap songs to select multiple, then add them all at once",
+                            text = stringResource(R.string.addtoplaylistscreen_tap_songs_to_select),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onPrimaryContainer
                         )
@@ -314,7 +315,7 @@ private fun SongSelectionItem(
                 Spacer(modifier = Modifier.width(8.dp))
                 Surface(modifier = Modifier.size(36.dp), shape = CircleShape, color = MaterialTheme.colorScheme.primaryContainer, tonalElevation = 0.dp) {
                     Box(contentAlignment = Alignment.Center) {
-                        Icon(imageVector = RhythmIcons.Add, contentDescription = "Add song", modifier = Modifier.size(20.dp))
+                        Icon(imageVector = RhythmIcons.Add, contentDescription = stringResource(R.string.cd_add_song), modifier = Modifier.size(20.dp))
                     }
                 }
             }

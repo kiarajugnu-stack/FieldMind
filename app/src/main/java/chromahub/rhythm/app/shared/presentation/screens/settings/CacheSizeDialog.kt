@@ -235,12 +235,12 @@ fun CacheSizeDialog(
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Text(
-                            text = "64 MB",
+                            text = stringResource(R.string.settings_cache_size_64mb),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         Text(
-                            text = "2 GB",
+                            text = stringResource(R.string.settings_cache_size_2gb),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )

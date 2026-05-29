@@ -52,6 +52,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import chromahub.rhythm.app.shared.data.model.Song
 import chromahub.rhythm.app.util.HapticUtils
+import chromahub.rhythm.app.R
+import androidx.compose.ui.res.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -122,7 +124,7 @@ fun PlaylistSongOptionsBottomSheet(
                         .padding(horizontal = 20.dp, vertical = 16.dp)
                 ) {
                     Text(
-                        text = "Song options",
+                        text = stringResource(R.string.playlistsongoptionsbottomsheet_song_options),
                         style = MaterialTheme.typography.displayMedium,
                         fontWeight = FontWeight.Medium,
                         color = MaterialTheme.colorScheme.onSurface
@@ -168,7 +170,7 @@ fun PlaylistSongOptionsBottomSheet(
                         Box(modifier = Modifier.weight(1f)) {
                             SongOptionGridItem(
                                 icon = RhythmIcons.SkipNext,
-                                text = "Play next",
+                                text = stringResource(R.string.action_play_next),
                                 containerColor = MaterialTheme.colorScheme.primaryContainer,
                                 iconColor = MaterialTheme.colorScheme.onPrimaryContainer,
                                 onClick = {
@@ -180,7 +182,7 @@ fun PlaylistSongOptionsBottomSheet(
                         Box(modifier = Modifier.weight(1f)) {
                             SongOptionGridItem(
                                 icon = RhythmIcons.Queue,
-                                text = "Add to queue",
+                                text = stringResource(R.string.action_add_to_queue),
                                 containerColor = MaterialTheme.colorScheme.primaryContainer,
                                 iconColor = MaterialTheme.colorScheme.onPrimaryContainer,
                                 onClick = {
@@ -199,7 +201,7 @@ fun PlaylistSongOptionsBottomSheet(
                         Box(modifier = Modifier.weight(1f)) {
                             SongOptionGridItem(
                                 icon = RhythmIcons.AddToPlaylist,
-                                text = "Add to playlist",
+                                text = stringResource(R.string.content_desc_add_to_playlist),
                                 containerColor = MaterialTheme.colorScheme.primaryContainer,
                                 iconColor = MaterialTheme.colorScheme.onPrimaryContainer,
                                 onClick = {
@@ -211,7 +213,7 @@ fun PlaylistSongOptionsBottomSheet(
                         Box(modifier = Modifier.weight(1f)) {
                             SongOptionGridItem(
                                 icon = RhythmIcons.Album,
-                                text = "Go to album",
+                                text = stringResource(R.string.multiselectionbottomsheet_go_to_album),
                                 containerColor = MaterialTheme.colorScheme.secondaryContainer,
                                 iconColor = MaterialTheme.colorScheme.onSecondaryContainer,
                                 onClick = {
@@ -230,7 +232,7 @@ fun PlaylistSongOptionsBottomSheet(
                         Box(modifier = Modifier.weight(1f)) {
                             SongOptionGridItem(
                                 icon = RhythmIcons.Artist,
-                                text = "Go to artist",
+                                text = stringResource(R.string.multiselectionbottomsheet_go_to_artist),
                                 containerColor = MaterialTheme.colorScheme.secondaryContainer,
                                 iconColor = MaterialTheme.colorScheme.onSecondaryContainer,
                                 onClick = {
@@ -242,7 +244,7 @@ fun PlaylistSongOptionsBottomSheet(
                         Box(modifier = Modifier.weight(1f)) {
                             SongOptionGridItem(
                                 icon = RhythmIcons.Info,
-                                text = "Song info",
+                                text = stringResource(R.string.action_song_info),
                                 containerColor = MaterialTheme.colorScheme.secondaryContainer,
                                 iconColor = MaterialTheme.colorScheme.onSecondaryContainer,
                                 onClick = {
@@ -257,7 +259,7 @@ fun PlaylistSongOptionsBottomSheet(
                         // Row 4: Remove from playlist (full width, error color)
                         SongOptionGridItem(
                             icon = RhythmIcons.Remove,
-                            text = "Remove from playlist",
+                            text = stringResource(R.string.cd_remove_from_playlist),
                             containerColor = MaterialTheme.colorScheme.errorContainer,
                             iconColor = MaterialTheme.colorScheme.error,
                             onClick = {

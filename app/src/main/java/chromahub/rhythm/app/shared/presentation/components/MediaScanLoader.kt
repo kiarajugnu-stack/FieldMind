@@ -71,6 +71,7 @@ import android.util.Log
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
+import androidx.compose.ui.res.stringResource
 
 /**
  * Media Scan Loader Screen
@@ -351,7 +352,7 @@ fun MediaScanLoader(
                         Spacer(modifier = Modifier.width(8.dp))
                         
                         Text(
-                            text = "Ready to groove!",
+                            text = stringResource(R.string.splash_ready),
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.primary

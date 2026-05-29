@@ -53,6 +53,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.stringResource
+import chromahub.rhythm.app.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -109,7 +110,7 @@ fun GoSettingsScreen(
     var pendingServiceSelection by remember { mutableStateOf<String?>(null) }
 
     CollapsibleHeaderScreen(
-        title = "Go Mode",
+        title = stringResource(R.string.exp_go_mode),
         showBackButton = true,
         onBackClick = {
             showContent = false
@@ -170,17 +171,17 @@ fun GoSettingsScreen(
         ) {
             item {
                 Material3SettingsGroup(
-                    title = "Services",
+                    title = stringResource(R.string.streaming_settings_group_services),
                     items = listOf(
                         Material3SettingsItem(
                             icon = MaterialSymbolIcon("cloud_queue"),
-                            title = { Text(text = "Preferred Service") },
+                            title = { Text(text = stringResource(R.string.streaming_settings_preferred_service)) },
                             description = { Text(text = selectedService) },
                             onClick = { showServiceSheet = true }
                         ),
                         Material3SettingsItem(
                             icon = RhythmIcons.Settings,
-                            title = { Text(text = "Configure Current Provider") },
+                            title = { Text(text = stringResource(R.string.gosettingsscreen_configure_current_provider)) },
                             description = { Text(text = selectedServiceLabel(selectedService, context)) },
                             onClick = { 
                                 // Validate selectedService is not empty before navigating
@@ -191,7 +192,7 @@ fun GoSettingsScreen(
                         ),
                         Material3SettingsItem(
                             icon = MaterialSymbolIcon("high_quality"),
-                            title = { Text(text = "Streaming Quality") },
+                            title = { Text(text = stringResource(R.string.streaming_settings_quality)) },
                             description = { Text(text = streamingQuality) },
                             onClick = { showQualitySheet = true }
                         )
@@ -201,12 +202,12 @@ fun GoSettingsScreen(
 
             item {
                 Material3SettingsGroup(
-                    title = "Network",
+                    title = stringResource(R.string.gosettingsscreen_network),
                     items = listOf(
                         Material3SettingsItem(
                             icon = MaterialSymbolIcon("mobile_friendly"),
-                            title = { Text(text = "Allow cellular streaming") },
-                            description = { Text(text = "Enable streaming over mobile data") },
+                            title = { Text(text = stringResource(R.string.exp_cellular_streaming)) },
+                            description = { Text(text = stringResource(R.string.gosettingsscreen_enable_streaming_over_mobile)) },
                             trailingContent = {
                                 TunerAnimatedSwitch(
                                     checked = allowCellularStreaming,
@@ -386,7 +387,7 @@ private fun StreamingStatusCard(
 
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = "Streaming Status",
+                        text = stringResource(R.string.streaming_status_title),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onPrimaryContainer
@@ -429,7 +430,7 @@ private fun StreamingStatusCard(
 
             if (isConnected) {
                 Text(
-                    text = "Connection is healthy",
+                    text = stringResource(R.string.gosettingsscreen_connection_is_healthy),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.9f)
                 )

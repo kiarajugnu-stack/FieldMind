@@ -6497,7 +6497,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
             val errorMsg = "Cannot add song to queue - media controller is null"
             Log.e(TAG, errorMsg)
             _queueOperationError.value = errorMsg
-            android.widget.Toast.makeText(getApplication<android.app.Application>().applicationContext, "Failed to add to queue: Player not initialized", android.widget.Toast.LENGTH_SHORT).show()
+            android.widget.Toast.makeText(getApplication<android.app.Application>().applicationContext, R.string.musicviewmodel_failed_to_add_to, android.widget.Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -6578,7 +6578,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
             val errorMsg = "Cannot add song to play next - media controller is null"
             Log.e(TAG, errorMsg)
             _queueOperationError.value = errorMsg
-            android.widget.Toast.makeText(getApplication<android.app.Application>().applicationContext, "Failed to play next: Player not initialized", android.widget.Toast.LENGTH_SHORT).show()
+            android.widget.Toast.makeText(getApplication<android.app.Application>().applicationContext, R.string.musicviewmodel_failed_to_play_next, android.widget.Toast.LENGTH_SHORT).show()
         }
     }
 

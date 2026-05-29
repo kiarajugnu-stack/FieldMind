@@ -31,6 +31,7 @@ import kotlinx.coroutines.delay
 import android.net.Uri
 import chromahub.rhythm.app.shared.data.model.Song
 import chromahub.rhythm.app.features.local.presentation.viewmodel.MusicViewModel
+import chromahub.rhythm.app.R
 
 /**
  * ViewModel for managing streaming music playback and library.
@@ -1359,7 +1360,7 @@ class StreamingMusicViewModel(application: Application) : AndroidViewModel(appli
 
                 if (updatedSong.streamingUrl.isNullOrBlank()) {
                     _error.value = "Unable to resolve stream URL for this song"
-                    android.widget.Toast.makeText(context, "Failed to play next: Unable to resolve URL", android.widget.Toast.LENGTH_SHORT).show()
+                    android.widget.Toast.makeText(context, R.string.streamingmusicviewmodel_failed_to_play_next, android.widget.Toast.LENGTH_SHORT).show()
                     return@launch
                 }
 
@@ -1407,7 +1408,7 @@ class StreamingMusicViewModel(application: Application) : AndroidViewModel(appli
 
                 if (updatedSong.streamingUrl.isNullOrBlank()) {
                     _error.value = "Unable to resolve stream URL for this song"
-                    android.widget.Toast.makeText(context, "Failed to add to queue: Unable to resolve URL", android.widget.Toast.LENGTH_SHORT).show()
+                    android.widget.Toast.makeText(context, R.string.streamingmusicviewmodel_failed_to_add_to, android.widget.Toast.LENGTH_SHORT).show()
                     return@launch
                 }
 

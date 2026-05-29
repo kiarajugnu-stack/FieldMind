@@ -25,6 +25,8 @@ import chromahub.rhythm.app.util.AudioQualityDetector
 import chromahub.rhythm.app.util.AudioFormatDetector
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import chromahub.rhythm.app.R
+import androidx.compose.ui.res.stringResource
 
 /**
  * Quality level for badge styling
@@ -140,7 +142,7 @@ fun AudioQualityBadges(
 
                     AudioQualityDetector.QualityType.HI_RES_STUDIO_MASTER -> {
                         QualityBadge(
-                            text = "STUDIO MASTER",
+                            text = stringResource(R.string.audio_quality_studio_master),
                             icon = MaterialSymbolIcon("high_quality", filled = true),
                             qualityLevel = QualityLevel.EXCELLENT
                         )
@@ -194,7 +196,7 @@ fun AudioQualityBadges(
 
                     AudioQualityDetector.QualityType.HI_RES_LOSSLESS -> {
                         QualityBadge(
-                            text = "HI-RES LOSSLESS",
+                            text = stringResource(R.string.song_info_quality_hires_lossless),
                             icon = MaterialSymbolIcon("high_quality", filled = true),
                             qualityLevel = QualityLevel.GOOD
                         )
@@ -202,7 +204,7 @@ fun AudioQualityBadges(
 
                     AudioQualityDetector.QualityType.CD_QUALITY_LOSSLESS -> {
                         QualityBadge(
-                            text = "LOSSLESS",
+                            text = stringResource(R.string.streaming_quality_lossless),
                             icon = MaterialSymbolIcon("high_quality", filled = true),
                             qualityLevel = QualityLevel.GOOD
                         )
@@ -212,7 +214,7 @@ fun AudioQualityBadges(
                         // Only show high-quality lossy badges (320kbps+)
                         if (quality.qualityDescription.contains("320")) {
                             QualityBadge(
-                                text = "320K",
+                                text = stringResource(R.string.audioqualitybadges_str_320k),
                                 icon = MaterialSymbolIcon("high_quality", filled = true),
                                 qualityLevel = QualityLevel.STANDARD
                             )

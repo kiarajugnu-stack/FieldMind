@@ -116,6 +116,7 @@ import androidx.compose.ui.platform.LocalConfiguration
 
 
 import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveShapes
+import androidx.compose.ui.res.stringResource
 
 
 /**
@@ -1205,7 +1206,7 @@ fun MaterialMiniPlayer(
                             ) {
                                 Icon(
                                     imageVector = RhythmIcons.SkipNext,
-                                    contentDescription = "Next track",
+                                    contentDescription = stringResource(R.string.cd_next_track),
                                     modifier = Modifier.size(if (isCompactHeight) 14.dp else 18.dp)
                                 )
                             }

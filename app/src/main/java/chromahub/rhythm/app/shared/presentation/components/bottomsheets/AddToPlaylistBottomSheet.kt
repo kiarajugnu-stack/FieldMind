@@ -70,6 +70,7 @@ import chromahub.rhythm.app.shared.data.model.Song
 import chromahub.rhythm.app.shared.presentation.components.common.M3PlaceholderType
 import chromahub.rhythm.app.util.ImageUtils
 import chromahub.rhythm.app.util.HapticUtils
+import androidx.compose.ui.res.stringResource
 
 private fun groupedPlaylistItemShape(index: Int, totalCount: Int): RoundedCornerShape {
     if (totalCount <= 1) return RoundedCornerShape(24.dp)
@@ -543,7 +544,7 @@ private fun PlaylistCard(
                 Box(contentAlignment = Alignment.Center) {
                     Icon(
                         imageVector = RhythmIcons.Add,
-                        contentDescription = "Add to playlist",
+                        contentDescription = stringResource(R.string.content_desc_add_to_playlist),
                         
                         modifier = Modifier.size(20.dp)
                     )

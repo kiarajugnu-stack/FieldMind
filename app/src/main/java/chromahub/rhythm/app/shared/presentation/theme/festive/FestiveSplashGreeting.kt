@@ -14,6 +14,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import chromahub.rhythm.app.R
+import androidx.compose.ui.res.stringResource
 
 /**
  * Festive splash greeting overlay for Christmas and New Year
@@ -101,7 +103,7 @@ private fun ChristmasGreeting() {
     Spacer(modifier = Modifier.height(16.dp))
     
     Text(
-        text = "Merry Christmas!",
+        text = stringResource(R.string.festivesplashgreeting_merry_christmas),
         style = MaterialTheme.typography.headlineLarge,
         fontWeight = FontWeight.Bold,
         color = Color(0xFFE63946),
@@ -111,7 +113,7 @@ private fun ChristmasGreeting() {
     Spacer(modifier = Modifier.height(8.dp))
     
     Text(
-        text = "🎅 Season's Greetings 🎁",
+        text = stringResource(R.string.festivesplashgreeting_seasons_greetings),
         style = MaterialTheme.typography.titleMedium,
         color = Color(0xFF2A9D8F),
         textAlign = TextAlign.Center
@@ -141,7 +143,7 @@ private fun NewYearGreeting() {
     Spacer(modifier = Modifier.height(16.dp))
     
     Text(
-        text = "Happy New Year!",
+        text = stringResource(R.string.festivesplashgreeting_happy_new_year),
         style = MaterialTheme.typography.headlineLarge,
         fontWeight = FontWeight.Bold,
         color = Color(0xFFFFD700),
@@ -169,7 +171,7 @@ private fun HalloweenGreeting() {
     Spacer(modifier = Modifier.height(16.dp))
     
     Text(
-        text = "Happy Halloween!",
+        text = stringResource(R.string.festivesplashgreeting_happy_halloween),
         style = MaterialTheme.typography.headlineLarge,
         fontWeight = FontWeight.Bold,
         color = Color(0xFFFF6B35),
@@ -179,7 +181,7 @@ private fun HalloweenGreeting() {
     Spacer(modifier = Modifier.height(8.dp))
     
     Text(
-        text = "👻 Spooky Season 🦇",
+        text = stringResource(R.string.festivesplashgreeting_spooky_season),
         style = MaterialTheme.typography.titleMedium,
         color = Color(0xFF6A4C93),
         textAlign = TextAlign.Center
@@ -209,7 +211,7 @@ private fun ValentinesGreeting() {
     Spacer(modifier = Modifier.height(16.dp))
     
     Text(
-        text = "Happy Valentine's!",
+        text = stringResource(R.string.festivesplashgreeting_happy_valentines),
         style = MaterialTheme.typography.headlineLarge,
         fontWeight = FontWeight.Bold,
         color = Color(0xFFFF006E),
@@ -219,7 +221,7 @@ private fun ValentinesGreeting() {
     Spacer(modifier = Modifier.height(8.dp))
     
     Text(
-        text = "💖 Love is in the Air 💗",
+        text = stringResource(R.string.festivesplashgreeting_love_is_in_the),
         style = MaterialTheme.typography.titleMedium,
         color = Color(0xFFFF8FA3),
         textAlign = TextAlign.Center

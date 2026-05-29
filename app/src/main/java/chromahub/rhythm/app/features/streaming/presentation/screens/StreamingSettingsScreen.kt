@@ -170,7 +170,7 @@ fun StreamingSettingsScreen(
                             )
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
-                                    text = "Streaming Restricted",
+                                    text = stringResource(R.string.streamingsettingsscreen_streaming_restricted),
                                     style = MaterialTheme.typography.labelMedium,
                                     color = MaterialTheme.colorScheme.error,
                                     fontWeight = FontWeight.Bold

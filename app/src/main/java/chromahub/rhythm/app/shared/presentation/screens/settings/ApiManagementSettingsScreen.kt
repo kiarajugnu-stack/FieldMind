@@ -203,7 +203,7 @@ fun ApiManagementSettingsScreen(onBackClick: () -> Unit) {
                                 hapticFeedback = hapticFeedback,
                                 item = SettingItem(
                                     icon = RhythmIcons.Public,
-                                    title = "Deezer",
+                                    title = stringResource(R.string.onboarding_integration_deezer),
                                     description = "Free artist images and album artwork - no setup needed",
                                     toggleState = deezerApiEnabled,
                                     onToggleChange = { enabled -> appSettings.setDeezerApiEnabled(enabled) }
@@ -219,7 +219,7 @@ fun ApiManagementSettingsScreen(onBackClick: () -> Unit) {
                                 hapticFeedback = hapticFeedback,
                                 item = SettingItem(
                                     icon = RhythmIcons.Queue,
-                                    title = "LRCLib",
+                                    title = stringResource(R.string.onboarding_integration_lrclib),
                                     description = "Free line-by-line synced lyrics (Fallback)",
                                     toggleState = lrclibApiEnabled,
                                     onToggleChange = { enabled -> appSettings.setLrcLibApiEnabled(enabled) }
@@ -235,7 +235,7 @@ fun ApiManagementSettingsScreen(onBackClick: () -> Unit) {
                                 hapticFeedback = hapticFeedback,
                                 item = SettingItem(
                                     icon = MaterialSymbolIcon("music_note"),
-                                    title = "Apple Music",
+                                    title = stringResource(R.string.apimanagementsettingsscreen_apple_music),
                                     description = "Word-by-word synchronized lyrics (Highest Quality)",
                                     toggleState = appleMusicApiEnabled,
                                     onToggleChange = { enabled -> appSettings.setAppleMusicApiEnabled(enabled) }
@@ -251,7 +251,7 @@ fun ApiManagementSettingsScreen(onBackClick: () -> Unit) {
                                 hapticFeedback = hapticFeedback,
                                 item = SettingItem(
                                     icon = RhythmIcons.Album,
-                                    title = "YouTube Music",
+                                    title = stringResource(R.string.onboarding_integration_ytmusic),
                                     description = "Fallback for artist images and album artwork",
                                     toggleState = ytMusicApiEnabled,
                                     onToggleChange = { enabled -> appSettings.setYTMusicApiEnabled(enabled) }
@@ -264,8 +264,8 @@ fun ApiManagementSettingsScreen(onBackClick: () -> Unit) {
                     add(
                         Material3SettingsItem(
                             icon = RhythmIcons.Download,
-                            title = { Text("GitHub") },
-                            description = { Text("App updates and release information") }
+                            title = { Text(stringResource(R.string.apimanagementsettingsscreen_github)) },
+                            description = { Text(stringResource(R.string.apimanagementsettingsscreen_app_updates_and_release)) }
                         )
                     )
                 }

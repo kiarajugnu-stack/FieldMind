@@ -56,6 +56,7 @@ import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveButt
 import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveGroupButton
 import chromahub.rhythm.app.util.HapticUtils
 import kotlinx.coroutines.launch
+import androidx.compose.ui.res.stringResource
 
 private fun groupedChipItemShape(index: Int, totalCount: Int): RoundedCornerShape {
     return when {
@@ -234,7 +235,7 @@ fun PlayerChipOrderBottomSheet(
                                 onClick = {
                                     // Prevent hiding the last visible chip
                                     if (!isHidden && visibleChipsCount <= 1) {
-                                        Toast.makeText(context, "At least one chip must be visible", Toast.LENGTH_SHORT).show()
+                                        Toast.makeText(context, R.string.player_chip_one_visible, Toast.LENGTH_SHORT).show()
                                         return@IconButton
                                     }
                                     HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
@@ -281,7 +282,7 @@ fun PlayerChipOrderBottomSheet(
                             ) {
                                 Icon(
                                     imageVector = RhythmIcons.ArrowUpward,
-                                    contentDescription = "Move up",
+                                    contentDescription = stringResource(R.string.settings_move_up),
                                     modifier = Modifier.size(20.dp)
                                 )
                             }
@@ -311,7 +312,7 @@ fun PlayerChipOrderBottomSheet(
                             ) {
                                 Icon(
                                     imageVector = RhythmIcons.ArrowDownward,
-                                    contentDescription = "Move down",
+                                    contentDescription = stringResource(R.string.settings_move_down),
                                     modifier = Modifier.size(20.dp)
                                 )
                             }
@@ -341,7 +342,7 @@ fun PlayerChipOrderBottomSheet(
                                 // Save changes instantly
                                 appSettings.setPlayerChipOrder(reorderableList)
                                 appSettings.setHiddenPlayerChips(hiddenChipsSet)
-                                Toast.makeText(context, "Reset to default order and visibility", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, R.string.player_chip_order_reset, Toast.LENGTH_SHORT).show()
                             },
                             modifier = Modifier.fillMaxWidth(),
                             isStart = true,

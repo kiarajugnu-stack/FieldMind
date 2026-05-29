@@ -22,6 +22,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.core.os.LocaleListCompat
 import java.util.Locale
+import chromahub.rhythm.app.R
+import androidx.compose.ui.res.stringResource
 
 data class LanguageOption(
     val code: String,
@@ -88,14 +90,14 @@ fun LanguageSwitcherDialog(
         icon = {
             Icon(
                 imageVector = RhythmIcons.Language,
-                contentDescription = "Language",
+                contentDescription = stringResource(R.string.cd_language),
                 tint = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.size(28.dp)
             )
         },
         title = {
             Text(
-                text = "Select Language",
+                text = stringResource(R.string.languageswitcher_select_language),
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold
             )
@@ -128,7 +130,7 @@ fun LanguageSwitcherDialog(
                     modifier = Modifier.size(18.dp)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("Cancel")
+                Text(stringResource(R.string.ui_cancel))
             }
         },
         shape = RoundedCornerShape(28.dp)
@@ -184,7 +186,7 @@ private fun LanguageItem(
             if (isSelected) {
                 Icon(
                     imageVector = RhythmIcons.Check,
-                    contentDescription = "Selected",
+                    contentDescription = stringResource(R.string.streaming_selected),
                     
                     modifier = Modifier.size(24.dp)
                 )

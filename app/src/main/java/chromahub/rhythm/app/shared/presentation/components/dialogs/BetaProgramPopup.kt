@@ -23,6 +23,7 @@ import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import chromahub.rhythm.app.R
+import androidx.compose.ui.res.stringResource
 
 data class BetaFeature(
     val icon: MaterialSymbolIcon,
@@ -39,17 +40,17 @@ fun BetaProgramPopup(onDismiss: () -> Unit) {
     val betaFeatures = listOf(
         BetaFeature(
             icon = MaterialSymbolIcon("flight_takeoff", filled = true),
-            title = "Early Access",
+            title = stringResource(R.string.betaprogrampopup_early_access),
             description = "Try new features before official release"
         ),
         BetaFeature(
             icon = MaterialSymbolIcon("edit_note", filled = true),
-            title = "Shape the Future",
+            title = stringResource(R.string.betaprogrampopup_shape_the_future),
             description = "Your feedback directly influences development"
         ),
         BetaFeature(
             icon = MaterialSymbolIcon("message", filled = true),
-            title = "Direct Feedback",
+            title = stringResource(R.string.betaprogrampopup_direct_feedback),
             description = "Communicate directly with the development team"
         ),
     )
@@ -97,7 +98,7 @@ fun BetaProgramPopup(onDismiss: () -> Unit) {
                             ) {
                                 Image(
                                     painter = painterResource(id = R.drawable.rhythm_splash_logo),
-                                    contentDescription = "Rhythm Logo",
+                                    contentDescription = stringResource(R.string.updates_rhythm_logo_cd),
                                     modifier = Modifier.size(85.dp)
                                 )
                                 Text(
@@ -110,7 +111,7 @@ fun BetaProgramPopup(onDismiss: () -> Unit) {
                             }
 
                             Text(
-                                text = "BETA Program",
+                                text = stringResource(R.string.beta_program),
                                 style = MaterialTheme.typography.headlineMedium,
                                 fontWeight = FontWeight.ExtraBold,
                                 color = MaterialTheme.colorScheme.primary,
@@ -135,7 +136,7 @@ fun BetaProgramPopup(onDismiss: () -> Unit) {
                                 )
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Text(
-                                    text = "Get Started",
+                                    text = stringResource(R.string.onboarding_get_started),
                                     style = MaterialTheme.typography.labelLarge,
                                     fontWeight = FontWeight.Bold
                                 )
@@ -161,14 +162,14 @@ fun BetaProgramPopup(onDismiss: () -> Unit) {
                         ) {
                             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                                 Text(
-                                    text = "Welcome to the Beta",
+                                    text = stringResource(R.string.betaprogrampopup_welcome_to_the_beta),
                                     style = MaterialTheme.typography.headlineSmall,
                                     fontWeight = FontWeight.Bold,
                                     color = MaterialTheme.colorScheme.onSurface
                                 )
 
                                 Text(
-                                    text = "You're part of an exclusive group helping shape the future of Rhythm music player",
+                                    text = stringResource(R.string.betaprogrampopup_youre_part_of_an),
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
@@ -230,7 +231,7 @@ fun BetaProgramPopup(onDismiss: () -> Unit) {
                             ) {
                                 Image(
                                     painter = painterResource(id = R.drawable.rhythm_splash_logo),
-                                    contentDescription = "Rhythm Logo",
+                                    contentDescription = stringResource(R.string.updates_rhythm_logo_cd),
                                     modifier = Modifier.size(56.dp)
                                 )
                                 Text(
@@ -245,7 +246,7 @@ fun BetaProgramPopup(onDismiss: () -> Unit) {
                             Spacer(modifier = Modifier.height(8.dp))
 
                             Text(
-                                text = "Beta Program",
+                                text = stringResource(R.string.beta_program),
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.SemiBold,
                                 color = MaterialTheme.colorScheme.onPrimaryContainer,
@@ -266,7 +267,7 @@ fun BetaProgramPopup(onDismiss: () -> Unit) {
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
                             Text(
-                                text = "Welcome to the Beta",
+                                text = stringResource(R.string.betaprogrampopup_welcome_to_the_beta),
                                 style = MaterialTheme.typography.titleLarge,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onSurface,
@@ -274,7 +275,7 @@ fun BetaProgramPopup(onDismiss: () -> Unit) {
                             )
 
                             Text(
-                                text = "You're part of an exclusive group helping shape the future of Rhythm music player",
+                                text = stringResource(R.string.betaprogrampopup_youre_part_of_an),
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 textAlign = TextAlign.Center
@@ -309,7 +310,7 @@ fun BetaProgramPopup(onDismiss: () -> Unit) {
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
-                                text = "Start Exploring",
+                                text = stringResource(R.string.betaprogrampopup_start_exploring),
                                 style = MaterialTheme.typography.labelLarge,
                                 fontWeight = FontWeight.Bold
                             )
