@@ -4721,6 +4721,20 @@ class MusicRepository(context: Context) {
         var anyUpdated = false
         for (i in updatedSongs.indices) {
             val song = updatedSongs[i]
+            
+            // Check if song already has a valid cached embedded artwork URI and if it exists
+            val hasValidArtwork = song.artworkUri?.let { uri ->
+                if (isEmbeddedArtworkCacheUri(uri)) {
+                    uri.path?.let { File(it).exists() } == true
+                } else {
+                    false
+                }
+            } ?: false
+            
+            if (hasValidArtwork) {
+                continue
+            }
+
             try {
                 val embeddedUri = chromahub.rhythm.app.util.MediaUtils.extractEmbeddedAlbumArt(
                     context, song.uri, context.cacheDir, lossless

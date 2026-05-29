@@ -253,6 +253,20 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
     // Scan job for cancellation support
     private var scanJob: Job? = null
 
+    private var mediaStoreObserverRegisteredTimeMs = 0L
+
+    private fun isContentUriReadable(context: Context, uri: Uri?): Boolean {
+        if (uri == null) return false
+        if (uri.scheme != "content") return true
+        return try {
+            context.contentResolver.openInputStream(uri)?.use { 
+                true
+            } ?: false
+        } catch (e: Exception) {
+            false
+        }
+    }
+
     // Playback session tracking for accurate stats
     private var currentPlaybackStartTime: Long = 0L
     private var currentPlaybackAccumulatedTime: Long = 0L
@@ -1420,7 +1434,13 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
         // Register ContentObserver for automatic MediaStore updates
         // Use a full refresh instead of incremental scan to detect removed/re-added songs.
         // Cancel any pending refresh job before scheduling a new one (debounce pattern)
+        mediaStoreObserverRegisteredTimeMs = SystemClock.elapsedRealtime()
         repository.registerMediaStoreObserver {
+            val timeSinceRegistration = SystemClock.elapsedRealtime() - mediaStoreObserverRegisteredTimeMs
+            if (timeSinceRegistration < 5000) {
+                Log.d(TAG, "Ignoring false-positive startup MediaStore observer callback ($timeSinceRegistration ms since registration)")
+                return@registerMediaStoreObserver
+            }
             Log.d(TAG, "MediaStore changed, scheduling full library refresh")
             mediaStoreRefreshJob?.cancel()
             mediaStoreRefreshJob = viewModelScope.launch {
@@ -1433,8 +1453,20 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             delay(1500) // Wait 1.5 seconds for UI to fully settle
             try {
-                _isFetchingArtwork.value = true
-                fetchArtworkFromInternet()
+                val context = getApplication<Application>()
+                val hasMissingArtists = _artists.value.any { it.artworkUri == null }
+                val hasMissingAlbums = _albums.value.any { album ->
+                    val uri = album.artworkUri
+                    uri == null || (uri.toString().startsWith("content://media/external/audio/albumart") && !isContentUriReadable(context, uri))
+                }
+                val hasMissingSongs = _songs.value.any { it.artworkUri == null }
+                
+                if (hasMissingArtists || hasMissingAlbums || hasMissingSongs) {
+                    _isFetchingArtwork.value = true
+                    fetchArtworkFromInternet()
+                } else {
+                    Log.d(TAG, "All artist/album/song artworks are present, skipping startup internet fetches")
+                }
             } catch (e: Exception) {
                 Log.e(TAG, "Error fetching artwork from internet", e)
             } finally {
@@ -1446,18 +1478,11 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             delay(3000) // Wait 3 seconds after app load before starting genre detection
             try {
-                // Check if songs actually have genres, not just if detection completed before
-                val songsWithGenres = songs.value.count { 
-                    !it.genre.isNullOrBlank() && it.genre.lowercase() != "unknown" 
-                }
-                val hasGenresInSongs = songsWithGenres > 0
-                
-                if (!appSettings.genreDetectionCompleted.value || !hasGenresInSongs) {
-                    // Run detection if never completed OR if songs don't have genres
-                    Log.d(TAG, "Starting genre detection (completed: ${appSettings.genreDetectionCompleted.value}, songsWithGenres: $songsWithGenres/${songs.value.size})")
+                if (!appSettings.genreDetectionCompleted.value) {
+                    Log.d(TAG, "Starting genre detection (completed: ${appSettings.genreDetectionCompleted.value})")
                     detectGenresInBackground()
                 } else {
-                    Log.d(TAG, "Genre detection already completed and songs have genres ($songsWithGenres/${songs.value.size}), skipping")
+                    Log.d(TAG, "Genre detection already completed, skipping")
                     _isGenreDetectionComplete.value = true
                 }
             } catch (e: Exception) {
@@ -1533,7 +1558,13 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
         armLibrarySetupCompletionNotification()
 
         // Register ContentObserver for automatic MediaStore updates
+        mediaStoreObserverRegisteredTimeMs = SystemClock.elapsedRealtime()
         repository.registerMediaStoreObserver {
+            val timeSinceRegistration = SystemClock.elapsedRealtime() - mediaStoreObserverRegisteredTimeMs
+            if (timeSinceRegistration < 5000) {
+                Log.d(TAG, "Ignoring false-positive startup MediaStore observer callback ($timeSinceRegistration ms since registration)")
+                return@registerMediaStoreObserver
+            }
             Log.d(TAG, "MediaStore changed, scheduling incremental scan")
             viewModelScope.launch {
                 delay(2000) // Debounce - wait for changes to settle
@@ -1544,8 +1575,20 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
         // Start artwork fetching in background without blocking initialization
         viewModelScope.launch {
             try {
-                _isFetchingArtwork.value = true
-                fetchArtworkFromInternet()
+                val context = getApplication<Application>()
+                val hasMissingArtists = _artists.value.any { it.artworkUri == null }
+                val hasMissingAlbums = _albums.value.any { album ->
+                    val uri = album.artworkUri
+                    uri == null || (uri.toString().startsWith("content://media/external/audio/albumart") && !isContentUriReadable(context, uri))
+                }
+                val hasMissingSongs = _songs.value.any { it.artworkUri == null }
+                
+                if (hasMissingArtists || hasMissingAlbums || hasMissingSongs) {
+                    _isFetchingArtwork.value = true
+                    fetchArtworkFromInternet()
+                } else {
+                    Log.d(TAG, "All artist/album/song artworks are present, skipping internet fetches")
+                }
             } catch (e: Exception) {
                 Log.e(TAG, "Error fetching artwork from internet", e)
             } finally {
@@ -1557,19 +1600,11 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             try {
                 delay(2000) // Wait 2 seconds after app load before starting genre detection
-                
-                // Check if songs actually have genres, not just if detection completed before
-                val songsWithGenres = songs.value.count { 
-                    !it.genre.isNullOrBlank() && it.genre.lowercase() != "unknown" 
-                }
-                val hasGenresInSongs = songsWithGenres > 0
-                
-                if (!appSettings.genreDetectionCompleted.value || !hasGenresInSongs) {
-                    // Run detection if never completed OR if songs don't have genres
-                    Log.d(TAG, "Starting genre detection (completed: ${appSettings.genreDetectionCompleted.value}, songsWithGenres: $songsWithGenres/${songs.value.size})")
+                if (!appSettings.genreDetectionCompleted.value) {
+                    Log.d(TAG, "Starting genre detection (completed: ${appSettings.genreDetectionCompleted.value})")
                     detectGenresInBackground()
                 } else {
-                    Log.d(TAG, "Genre detection already completed and songs have genres ($songsWithGenres/${songs.value.size}), skipping")
+                    Log.d(TAG, "Genre detection already completed, skipping")
                     _isGenreDetectionComplete.value = true
                 }
             } catch (e: Exception) {
@@ -1852,8 +1887,20 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
                 // Re-fetch artwork from internet for newly added/updated items (but don't block completion)
                 launch { 
                     try {
-                        _isFetchingArtwork.value = true
-                        fetchArtworkFromInternet()
+                        val context = getApplication<Application>()
+                        val hasMissingArtists = _artists.value.any { it.artworkUri == null }
+                        val hasMissingAlbums = _albums.value.any { album ->
+                            val uri = album.artworkUri
+                            uri == null || (uri.toString().startsWith("content://media/external/audio/albumart") && !isContentUriReadable(context, uri))
+                        }
+                        val hasMissingSongs = _songs.value.any { it.artworkUri == null }
+                        
+                        if (hasMissingArtists || hasMissingAlbums || hasMissingSongs) {
+                            _isFetchingArtwork.value = true
+                            fetchArtworkFromInternet()
+                        } else {
+                            Log.d(TAG, "All artist/album/song artworks are present, skipping internet fetches")
+                        }
                     } catch (e: Exception) {
                         Log.w(TAG, "Artwork fetching failed but continuing with library refresh", e)
                     } finally {
@@ -2433,68 +2480,63 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
     /**
      * Fetches artist images and album artwork from the internet for items that don't have them
      */
-    private fun fetchArtworkFromInternet() {
-        viewModelScope.launch {
-            try {
-                Log.d(TAG, "Fetching artist images from internet")
-                val missingArtists = _artists.value.filter { it.artworkUri == null }
-                Log.d(TAG, "Found ${missingArtists.size} artists without images out of ${_artists.value.size} total artists")
-                val chunkSize = 10
-                for (batch in missingArtists.chunked(chunkSize)) {
-                    val updatedArtists = repository.fetchArtistImages(batch)
-                    if (updatedArtists.isNotEmpty()) {
-                        val artistMap = updatedArtists.associateBy { it.id }
-                        _artists.value = _artists.value.map { artist ->
-                            artistMap[artist.id] ?: artist
-                        }
-                        Log.d(TAG, "Updated ${updatedArtists.size} artists with images from internet (batch)")
+    private suspend fun fetchArtworkFromInternet() = withContext(Dispatchers.IO) {
+        try {
+            Log.d(TAG, "Fetching artist images from internet")
+            val missingArtists = _artists.value.filter { it.artworkUri == null }
+            Log.d(TAG, "Found ${missingArtists.size} artists without images out of ${_artists.value.size} total artists")
+            val chunkSize = 10
+            for (batch in missingArtists.chunked(chunkSize)) {
+                val updatedArtists = repository.fetchArtistImages(batch)
+                if (updatedArtists.isNotEmpty()) {
+                    val artistMap = updatedArtists.associateBy { it.id }
+                    _artists.value = _artists.value.map { artist ->
+                        artistMap[artist.id] ?: artist
                     }
-                    // Throttle between batches to avoid hitting API rate limits
-                    delay(1000)
+                    Log.d(TAG, "Updated ${updatedArtists.size} artists with images from internet (batch)")
                 }
-                
-                Log.d(TAG, "Fetching album artwork from internet")
-                // Check for albums with null or content URI artwork (which might not exist)
-                val albumsWithContentUri = _albums.value.filter { 
-                    it.artworkUri != null && it.artworkUri.toString().startsWith("content://media/external/audio/albumart") 
-                }
-                Log.d(TAG, "Found ${albumsWithContentUri.size} albums with content:// URIs that might need validation")
-                
-                // Only fetch for a subset of albums to avoid overwhelming the API
-                // Consider albums with content:// URIs as potentially needing artwork
-                val albumsToUpdate = _albums.value.filter { 
-                    it.artworkUri == null || it.artworkUri.toString().startsWith("content://media/external/audio/albumart") 
-                }.take(10)
-                
-                Log.d(TAG, "Found ${albumsToUpdate.size} albums that might need artwork out of ${_albums.value.size} total albums")
-                if (albumsToUpdate.isNotEmpty()) {
-                    Log.d(TAG, "Albums to update: ${albumsToUpdate.map { "${it.artist} - ${it.title}" }}")
-                    val updatedAlbums = repository.fetchAlbumArtwork(albumsToUpdate)
-                    // Update only the albums we fetched, keeping the rest unchanged
-                    val albumMap = updatedAlbums.associateBy { it.id }
-                    _albums.value = _albums.value.map { 
-                        albumMap[it.id] ?: it 
-                    }
-                    Log.d(TAG, "Updated ${updatedAlbums.size} albums with artwork from internet")
-                } else {
-                    Log.d(TAG, "No albums found that need artwork")
-                }
-
-                Log.d(TAG, "Fetching track artwork fallback from YouTube Music for songs without art")
-                val songsToUpdate = _songs.value.filter { it.artworkUri == null }.take(40)
-                if (songsToUpdate.isNotEmpty()) {
-                    val updatedSongs = repository.fetchTrackArtwork(songsToUpdate)
-                    val songMap = updatedSongs.associateBy { it.id }
-                    _songs.value = _songs.value.map { song ->
-                        songMap[song.id] ?: song
-                    }
-                    Log.d(TAG, "Updated ${updatedSongs.count { it.artworkUri != null }} songs with fallback artwork")
-                } else {
-                    Log.d(TAG, "No songs found that need fallback artwork")
-                }
-            } catch (e: Exception) {
-                Log.e(TAG, "Error fetching artwork from internet", e)
+                // Throttle between batches to avoid hitting API rate limits
+                delay(1000)
             }
+            
+            Log.d(TAG, "Fetching album artwork from internet")
+            val context = getApplication<Application>()
+            
+            // Only fetch for a subset of albums to avoid overwhelming the API
+            // Check for albums with genuinely missing or unreadable cover art URIs
+            val albumsToUpdate = _albums.value.filter { album ->
+                val uri = album.artworkUri
+                uri == null || (uri.toString().startsWith("content://media/external/audio/albumart") && !isContentUriReadable(context, uri))
+            }.take(10)
+            
+            Log.d(TAG, "Found ${albumsToUpdate.size} albums that genuinely need artwork out of ${_albums.value.size} total albums")
+            if (albumsToUpdate.isNotEmpty()) {
+                Log.d(TAG, "Albums to update: ${albumsToUpdate.map { "${it.artist} - ${it.title}" }}")
+                val updatedAlbums = repository.fetchAlbumArtwork(albumsToUpdate)
+                // Update only the albums we fetched, keeping the rest unchanged
+                val albumMap = updatedAlbums.associateBy { it.id }
+                _albums.value = _albums.value.map { 
+                    albumMap[it.id] ?: it 
+                }
+                Log.d(TAG, "Updated ${updatedAlbums.size} albums with artwork from internet")
+            } else {
+                Log.d(TAG, "No albums found that need artwork")
+            }
+
+            Log.d(TAG, "Fetching track artwork fallback from YouTube Music for songs without art")
+            val songsToUpdate = _songs.value.filter { it.artworkUri == null }.take(40)
+            if (songsToUpdate.isNotEmpty()) {
+                val updatedSongs = repository.fetchTrackArtwork(songsToUpdate)
+                val songMap = updatedSongs.associateBy { it.id }
+                _songs.value = _songs.value.map { song ->
+                    songMap[song.id] ?: song
+                }
+                Log.d(TAG, "Updated ${updatedSongs.count { it.artworkUri != null }} songs with fallback artwork")
+            } else {
+                Log.d(TAG, "No songs found that need fallback artwork")
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error fetching artwork from internet", e)
         }
     }
     

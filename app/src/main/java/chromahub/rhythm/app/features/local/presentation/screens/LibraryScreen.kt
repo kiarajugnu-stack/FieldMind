@@ -1868,7 +1868,6 @@ fun SingleCardSongsContent(
 
     fun isHiResLossless(song: Song): Boolean {
         if (!isLosslessAudio(song)) {
-            android.util.Log.d("SongsTab", "Song ${song.title} is not lossless")
             return false
         }
 
@@ -1877,31 +1876,25 @@ fun SingleCardSongsContent(
         val channels = song.channels ?: 2
 
         if (sampleRate < 48000) {
-            android.util.Log.d("SongsTab", "Song ${song.title} sample rate $sampleRate < 48000, not Hi-Res")
             return false
         }
 
         if (sampleRate >= 88200) {
-            android.util.Log.d("SongsTab", "Song ${song.title} has Hi-Res sample rate $sampleRate")
             return true
         }
 
         if (bitrate > 0 && sampleRate > 0 && channels > 0) {
             val bitrateKbps = bitrate / 1000
             val calculatedBitDepth = (bitrateKbps * 1000) / (sampleRate * channels)
-            android.util.Log.d("SongsTab", "Song ${song.title} bit depth calculation: bitrate=${bitrateKbps}kbps, sampleRate=$sampleRate, channels=$channels, calculatedBitDepth=$calculatedBitDepth")
             if (calculatedBitDepth >= 18) {
-                android.util.Log.d("SongsTab", "Song ${song.title} qualifies as Hi-Res with bit depth $calculatedBitDepth")
                 return true
             }
         }
 
         if (bitrate >= 2000000 && sampleRate >= 48000) {
-            android.util.Log.d("SongsTab", "Song ${song.title} qualifies as Hi-Res with high bitrate $bitrate")
             return true
         }
 
-        android.util.Log.d("SongsTab", "Song ${song.title} does not qualify as Hi-Res")
         return false
     }
     
@@ -1911,11 +1904,9 @@ fun SingleCardSongsContent(
         
         val hiRes = isHiResLossless(song)
         if (hiRes) {
-            android.util.Log.d("SongsTab", "Song ${song.title} is Hi-Res, excluding from Regular Lossless")
             return false
         }
         
-        android.util.Log.d("SongsTab", "Song ${song.title} qualifies as Regular Lossless (not Hi-Res)")
         return true
     }
 

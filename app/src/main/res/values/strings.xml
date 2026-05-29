@@ -155,31 +155,31 @@
     <string name="settings_enable_default_playlists_desc">Automatically create Recently Added and Most Played playlists</string>
     
     <!-- Operation Progress -->
-    <string name="operation_exporting_playlists">Rhythm Library is exporting playlists…</string>
-    <string name="operation_exporting_playlists_location">Rhythm Library is exporting playlists to the selected location…</string>
-    <string name="operation_importing_playlist">Rhythm Library is importing a playlist…</string>
+    <string name="operation_exporting_playlists">Backing up your custom playlists…</string>
+    <string name="operation_exporting_playlists_location">Backing up playlists to storage…</string>
+    <string name="operation_importing_playlist">Importing playlist file…</string>
     <string name="notification_operations_channel_name">Rhythm Library</string>
     <string name="notification_operations_channel_desc">Progress and results for library scans and playlist actions</string>
     <string name="notification_media_scan_title">Rhythm Library Scan</string>
-    <string name="notification_media_scan_stage_songs">🔍 Scanning audio files…</string>
-    <string name="notification_media_scan_stage_saving">💾 Saving your library…</string>
-    <string name="notification_media_scan_stage_finishing">✨ Completing scan…</string>
-    <string name="notification_media_scan_complete_summary">✓ Found %1$d songs • %2$d albums • %3$d artists</string>
-    <string name="notification_media_scan_complete_pending_setup">✓ Scan complete! Rhythm is setting up your library…</string>
-    <string name="notification_media_scan_cancelled">Scan cancelled.</string>
-    <string name="notification_media_scan_failed">⚠ Scan failed. Please check permissions and try again.</string>
+    <string name="notification_media_scan_stage_songs">Scanning device storage for audio tracks…</string>
+    <string name="notification_media_scan_stage_saving">Optimizing and saving audio track database…</string>
+    <string name="notification_media_scan_stage_finishing">Completing audio indexing…</string>
+    <string name="notification_media_scan_complete_summary">Library scan completed: %1$d tracks, %2$d albums, %3$d artists indexed</string>
+    <string name="notification_media_scan_complete_pending_setup">Audio scanning finished, initializing background tasks…</string>
+    <string name="notification_media_scan_cancelled">Library scan was cancelled.</string>
+    <string name="notification_media_scan_failed">Library scan failed. Check storage permissions and try again.</string>
     <string name="notification_playlist_export_title">Rhythm Library Export</string>
     <string name="notification_playlist_import_title">Rhythm Library Import</string>
     <string name="notification_library_setup_title">Rhythm Library Setup</string>
-    <string name="notification_library_setup_complete_summary">✓ Library ready! %1$d songs • %2$d albums • %3$d artists</string>
-    <string name="notification_playlist_not_found">Playlist export failed. The playlist was not found.</string>
-    <string name="notification_no_playlists_to_export">No playlists are available for export.</string>
-    <string name="notification_operation_timed_out">This request took too long. Please try again.</string>
-    <string name="notification_playlist_export_complete">✓ Playlist exported!</string>
-    <string name="notification_playlist_export_all_complete">✓ Exported %1$d playlists!</string>
-    <string name="notification_playlist_export_failed">⚠ Export failed. Try again.</string>
-    <string name="notification_playlist_import_complete">✓ Imported \"%1$s\" with %2$d songs!</string>
-    <string name="notification_playlist_import_failed">⚠ Import failed. Check the file format.</string>
+    <string name="notification_library_setup_complete_summary">Library is optimized and ready: %1$d tracks, %2$d albums, %3$d artists</string>
+    <string name="notification_playlist_not_found">Export aborted: target playlist was not found.</string>
+    <string name="notification_no_playlists_to_export">Export aborted: no playlists found to backup.</string>
+    <string name="notification_operation_timed_out">The operation timed out. Please try again.</string>
+    <string name="notification_playlist_export_complete">Playlist successfully exported to storage.</string>
+    <string name="notification_playlist_export_all_complete">Successfully exported %1$d playlists to storage.</string>
+    <string name="notification_playlist_export_failed">Playlist export failed. Try again.</string>
+    <string name="notification_playlist_import_complete">Successfully imported \"%1$s\" with %2$d songs.</string>
+    <string name="notification_playlist_import_failed">Playlist import failed. Please verify the file format.</string>
     <string name="notification_updater_channel_name">Rhythm Updater</string>
     <string name="notification_updater_channel_desc">Download status for app updates</string>
     <string name="notification_updater_title">Rhythm Updater</string>
@@ -510,11 +510,11 @@
     <string name="library_tracks_count">%1$d of %2$d tracks</string>
     
     <!-- Background Processing States -->
-    <string name="scanning_media">Scanning your music library…</string>
-    <string name="detecting_genres">Detecting genres…</string>
-    <string name="fetching_artwork">Fetching artwork…</string>
-    <string name="extracting_metadata">Extracting audio metadata…</string>
-    <string name="processing_library">Finishing your library setup…</string>
+    <string name="scanning_media">Indexing audio files…</string>
+    <string name="detecting_genres">Analyzing track genres…</string>
+    <string name="fetching_artwork">Resolving album art…</string>
+    <string name="extracting_metadata">Extracting track details…</string>
+    <string name="processing_library">Optimizing library…</string>
     
     <string name="library_no_songs">No songs yet</string>
     <string name="library_no_artists">No artists found</string>
