@@ -199,12 +199,12 @@ fun RhythmGuardSettingsScreen(onBackClick: () -> Unit) {
     val nowEpochMs = System.currentTimeMillis()
     val isRhythmGuardEnabled = auraMode != AppSettings.RHYTHM_GUARD_MODE_OFF
     val todayExposureMinutes = (todayExposureMs / 60000L).toInt().coerceAtLeast(0)
-    
+
     val activePolicy = remember(auraAge) { appSettings.getRhythmGuardPolicy(auraAge) }
     val policyTable = remember { appSettings.getRhythmGuardPolicyBands() }
     val recommendedVolumeThreshold = activePolicy.maxVolumeThreshold
     val recommendedDailyMinutes = activePolicy.recommendedDailyMinutes
-    
+
     val effectiveExposureLimitMinutes = if (auraMode == AppSettings.RHYTHM_GUARD_MODE_AUTO) {
         recommendedDailyMinutes
     } else if (alertThresholdMinutes > 0) {
@@ -217,7 +217,7 @@ fun RhythmGuardSettingsScreen(onBackClick: () -> Unit) {
     val currentVolumePercent = (currentSystemVolume * 100f).toInt().coerceIn(0, 100)
     val manualThresholdPercent = (manualVolumeThreshold * 100f).toInt().coerceIn(0, 100)
     val recommendedThresholdPercent = (recommendedVolumeThreshold * 100f).toInt().coerceIn(0, 100)
-    
+
     val formattedTotalExposure = remember(todayExposureMs, useHoursFormat) {
         rhythmGuardFormatDurationFromMillis(todayExposureMs, useHoursFormat)
     }
@@ -1594,18 +1594,10 @@ fun RhythmGuardOverallHealthCard(
     val statusFair = if (isDark) Color(0xFFFBBF24) else Color(0xFFD97706)
     val statusCooldown = if (isDark) Color(0xFF60A5FA) else Color(0xFF2563EB)
 
-    val containerColor = when (level) {
-        RhythmGuardOverallHealthLevel.GOOD -> statusGood.copy(alpha = if (isDark) 0.15f else 0.12f)
-        RhythmGuardOverallHealthLevel.FAIR -> statusFair.copy(alpha = if (isDark) 0.15f else 0.12f)
-        RhythmGuardOverallHealthLevel.RISK, RhythmGuardOverallHealthLevel.TIMEOUT -> MaterialTheme.colorScheme.errorContainer
-        RhythmGuardOverallHealthLevel.COOLDOWN -> statusCooldown.copy(alpha = if (isDark) 0.15f else 0.12f)
-        RhythmGuardOverallHealthLevel.OFF -> MaterialTheme.colorScheme.surfaceContainerHigh
-    }
-
     val contentColor = when (level) {
         RhythmGuardOverallHealthLevel.GOOD -> statusGood
         RhythmGuardOverallHealthLevel.FAIR -> statusFair
-        RhythmGuardOverallHealthLevel.RISK, RhythmGuardOverallHealthLevel.TIMEOUT -> MaterialTheme.colorScheme.onErrorContainer
+        RhythmGuardOverallHealthLevel.RISK, RhythmGuardOverallHealthLevel.TIMEOUT -> MaterialTheme.colorScheme.error
         RhythmGuardOverallHealthLevel.COOLDOWN -> statusCooldown
         RhythmGuardOverallHealthLevel.OFF -> MaterialTheme.colorScheme.onSurfaceVariant
     }
@@ -1615,24 +1607,24 @@ fun RhythmGuardOverallHealthCard(
         RhythmGuardOverallHealthLevel.GOOD -> "All Good"
         RhythmGuardOverallHealthLevel.FAIR -> "Careful"
         RhythmGuardOverallHealthLevel.RISK -> "Too Loud"
-        RhythmGuardOverallHealthLevel.COOLDOWN -> "Chilling"
+        RhythmGuardOverallHealthLevel.COOLDOWN -> "Grace Period"
         RhythmGuardOverallHealthLevel.TIMEOUT -> "Locked"
         RhythmGuardOverallHealthLevel.OFF -> "Disabled"
     }
 
     val comicSubtitle = when (level) {
-        RhythmGuardOverallHealthLevel.GOOD -> "Your ears are currently throwing a perfectly-volumed party. 🎉"
-        RhythmGuardOverallHealthLevel.FAIR -> "Getting a little spicy in there. Maybe turn it down a notch? 🌶️"
-        RhythmGuardOverallHealthLevel.RISK -> "Whoa there, rockstar! Your eardrums are begging for mercy. 🎸🔥"
-        RhythmGuardOverallHealthLevel.COOLDOWN -> "Shhh... mandatory ear nap in progress. Do not disturb. 😴"
-        RhythmGuardOverallHealthLevel.TIMEOUT -> "You're in acoustic jail. Time to think about what you've done. 🛑"
-        RhythmGuardOverallHealthLevel.OFF -> "Living dangerously on the edge, I see. Godspeed. 🏍️"
+        RhythmGuardOverallHealthLevel.GOOD -> "Your ears are throwing a perfectly-volumed party. Keep vibing responsibly! 🎉"
+        RhythmGuardOverallHealthLevel.FAIR -> "Getting a little spicy in there. Maybe turn it down a notch before the guard steps in? 🌶️"
+        RhythmGuardOverallHealthLevel.RISK -> "Whoa rockstar, you are in the eardrum danger zone! Dial it back before the locks trigger! 🎸🔥"
+        RhythmGuardOverallHealthLevel.COOLDOWN -> "Safe zone active! Rhythm Guard is off-duty on coffee break, so jam freely without timeouts! 🎫☕"
+        RhythmGuardOverallHealthLevel.TIMEOUT -> "Acoustic time-out active. A mandatory ear nap is in progress to protect your hearing! 😴🛑"
+        RhythmGuardOverallHealthLevel.OFF -> "Rhythm Guard is off duty. You are flying completely solo on volume safety. Godspeed! 🏍️💨"
     }
 
     Card(
         modifier = modifier.fillMaxWidth(),
         shape = MaterialTheme.shapes.extraLarge,
-        colors = CardDefaults.cardColors(containerColor = containerColor),
+        colors = CardDefaults.cardColors(containerColor = Color.Transparent),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Column(

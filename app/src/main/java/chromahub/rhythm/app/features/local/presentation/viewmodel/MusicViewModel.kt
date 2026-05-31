@@ -1455,9 +1455,11 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
             try {
                 val context = getApplication<Application>()
                 val hasMissingArtists = _artists.value.any { it.artworkUri == null }
-                val hasMissingAlbums = _albums.value.any { album ->
-                    val uri = album.artworkUri
-                    uri == null || (uri.toString().startsWith("content://media/external/audio/albumart") && !isContentUriReadable(context, uri))
+                val hasMissingAlbums = withContext(Dispatchers.IO) {
+                    _albums.value.any { album ->
+                        val uri = album.artworkUri
+                        uri == null || (uri.toString().startsWith("content://media/external/audio/albumart") && !isContentUriReadable(context, uri))
+                    }
                 }
                 val hasMissingSongs = _songs.value.any { it.artworkUri == null }
                 
@@ -1596,9 +1598,11 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
             try {
                 val context = getApplication<Application>()
                 val hasMissingArtists = _artists.value.any { it.artworkUri == null }
-                val hasMissingAlbums = _albums.value.any { album ->
-                    val uri = album.artworkUri
-                    uri == null || (uri.toString().startsWith("content://media/external/audio/albumart") && !isContentUriReadable(context, uri))
+                val hasMissingAlbums = withContext(Dispatchers.IO) {
+                    _albums.value.any { album ->
+                        val uri = album.artworkUri
+                        uri == null || (uri.toString().startsWith("content://media/external/audio/albumart") && !isContentUriReadable(context, uri))
+                    }
                 }
                 val hasMissingSongs = _songs.value.any { it.artworkUri == null }
                 
@@ -1922,9 +1926,11 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
                     try {
                         val context = getApplication<Application>()
                         val hasMissingArtists = _artists.value.any { it.artworkUri == null }
-                        val hasMissingAlbums = _albums.value.any { album ->
-                            val uri = album.artworkUri
-                            uri == null || (uri.toString().startsWith("content://media/external/audio/albumart") && !isContentUriReadable(context, uri))
+                        val hasMissingAlbums = withContext(Dispatchers.IO) {
+                            _albums.value.any { album ->
+                                val uri = album.artworkUri
+                                uri == null || (uri.toString().startsWith("content://media/external/audio/albumart") && !isContentUriReadable(context, uri))
+                            }
                         }
                         val hasMissingSongs = _songs.value.any { it.artworkUri == null }
                         
