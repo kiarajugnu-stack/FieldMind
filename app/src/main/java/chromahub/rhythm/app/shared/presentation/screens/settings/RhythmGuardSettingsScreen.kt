@@ -457,383 +457,381 @@ fun RhythmGuardSettingsScreen(onBackClick: () -> Unit) {
             }
 
             item {
-                RhythmGuardOverallHealthCard(
+                RhythmGuardExpressiveDashboard(
                     level = overallHealthLevel,
-                    progress = overallHealthProgress,
+                    overallProgress = overallHealthProgress,
                     statusText = guardStatusText,
                     statusDetail = guardStatusDetail,
+                    // Exposure bindings
+                    exposureValue = formattedTotalExposure,
+                    exposureSubtitle = formattedDailyTarget,
+                    exposureProgress = (totalExposureMinutes / maxOf(effectiveExposureLimitMinutes, 1).toFloat()).coerceIn(0f, 1f),
+                    exposureWarning = showExposureWarning,
+                    // Volume bindings
+                    volumeValue = "$currentVolumePercent%",
+                    volumeSubtitle = "${activeThresholdPercent}%",
+                    volumeProgress = (currentSystemVolume / maxOf(activeVolumeThreshold, 0.01f)).coerceIn(0f, 1f),
+                    volumeWarning = showVolumeWarning,
+
                     modifier = Modifier.fillMaxWidth()
                 )
             }
 
-            item {
-                Spacer(modifier = Modifier.height(8.dp))
-            }
-
-            item {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    RhythmGuardHeroCard(
-                        title = context.getString(R.string.settings_rhythm_guard_snapshot_exposure_title),
-                        value = formattedTotalExposure,
-                        subtitle = "/$formattedDailyTarget",
-                        progress = (totalExposureMinutes / maxOf(effectiveExposureLimitMinutes, 1).toFloat()).coerceIn(0f, 1f),
-                        icon = RhythmIcons.AccessTime,
-                        isWarning = showExposureWarning,
-                        modifier = Modifier.weight(1f)
-                    )
-
-                    RhythmGuardHeroCard(
-                        title = context.getString(R.string.settings_rhythm_guard_snapshot_volume_title),
-                        value = "$currentVolumePercent%",
-                        subtitle = "of ${activeThresholdPercent}%",
-                        progress = (currentSystemVolume / maxOf(activeVolumeThreshold, 0.01f)).coerceIn(0f, 1f),
-                        icon = MaterialSymbolIcon("graphic_eq"),
-                        isWarning = showVolumeWarning,
-                        modifier = Modifier.weight(1f)
-                    )
-                }
-            }
-
             if (isRhythmGuardEnabled) {
-            item {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(18.dp),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
-                ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    text = context.getString(R.string.settings_rhythm_guard_age_label, auraAge),
-                                    style = MaterialTheme.typography.titleSmall,
-                                    fontWeight = FontWeight.SemiBold
-                                )
-                                Text(
-                                    text = context.getString(
-                                        R.string.settings_rhythm_guard_age_desc,
-                                        recommendedThresholdPercent,
-                                        recommendedDailyMinutes
-                                    ),
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-                        }
-                        Spacer(modifier = Modifier.height(12.dp))
-                        Slider(
-                            value = auraAge.toFloat(),
-                            onValueChange = { appSettings.setRhythmGuardAge(it.toInt()) },
-                            valueRange = 8f..80f,
-                            steps = 71
-                        )
-                    }
-                }
-            }
-
-            item {
-                val outputSettingItems = listOf(
-                    SettingItem(
-                        RhythmIcons.Speaker,
-                        context.getString(R.string.settings_rhythm_guard_device_controls_speaker_limit_title),
-                        context.getString(R.string.settings_rhythm_guard_device_controls_speaker_limit_desc),
-                        toggleState = rhythmGuardApplyVolumeLimitOnSpeaker,
-                        onToggleChange = { appSettings.setRhythmGuardApplyVolumeLimitOnSpeaker(it) }
-                    )
-                )
-
-                val materialItems = outputSettingItems.map { item ->
-                    toMaterial3SettingsItem(context = context, item = item, hapticFeedback = haptic)
-                }
-
-                Material3SettingsGroup(
-                    title = context.getString(R.string.settings_rhythm_guard_device_controls_title),
-                    items = materialItems,
-                    containerColor = MaterialTheme.colorScheme.surfaceContainer
-                )
-            }
-
-            if (auraMode == AppSettings.RHYTHM_GUARD_MODE_MANUAL) {
                 item {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(18.dp),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
-                ) {
-                    Column(
-                        modifier = Modifier.padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(16.dp)
-                    ) {
-                        Text(
-                            text = context.getString(R.string.settings_rhythm_guard_alert_controls_title),
-                            style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.SemiBold
-                        )
+                    Spacer(modifier = Modifier.height(8.dp))
 
-                        // Threshold control
-                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Text(
-                                text = context.getString(
-                                    R.string.settings_rhythm_guard_alert_threshold_title,
-                                    if (alertThresholdMinutes > 0) {
-                                        rhythmGuardFormatDurationFromMinutes(alertThresholdMinutes, useHoursFormat)
-                                    } else {
-                                        context.getString(R.string.settings_rhythm_guard_alert_threshold_policy_default)
-                                    }
-                                ),
-                                style = MaterialTheme.typography.labelLarge
-                            )
-                            Row(
-                                modifier = Modifier.horizontalScroll(rememberScrollState()),
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                listOf(-1, 60, 90, 120).forEach { option ->
-                                    FilterChip(
-                                        selected = alertThresholdMinutes == option,
-                                        onClick = { appSettings.setRhythmGuardAlertThresholdMinutes(option) },
-                                        label = {
-                                            Text(
-                                                if (option > 0) {
-                                                    rhythmGuardFormatDurationFromMinutes(option, useHoursFormat)
-                                                } else {
-                                                    context.getString(R.string.settings_rhythm_guard_alert_threshold_policy_default)
-                                                }
-                                            )
-                                        }
-                                    )
-                                }
-                            }
-                            Slider(
-                                value = maxOf(alertThresholdMinutes, 15).toFloat(),
-                                onValueChange = { appSettings.setRhythmGuardAlertThresholdMinutes(it.toInt()) },
-                                valueRange = 15f..360f,
-                                steps = 344
-                            )
-                        }
-
-                        // Timeout control
-                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Text(
-                                text = context.getString(
-                                    R.string.settings_rhythm_guard_alert_timeout_title,
-                                    formattedTimeout
-                                ),
-                                style = MaterialTheme.typography.labelLarge
-                            )
-                            Row(
-                                modifier = Modifier.horizontalScroll(rememberScrollState()),
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                listOf(2, 5, 10, 15).forEach { option ->
-                                    FilterChip(
-                                        selected = warningTimeoutMinutes == option,
-                                        onClick = { appSettings.setRhythmGuardWarningTimeoutMinutes(option) },
-                                        label = { Text(rhythmGuardFormatDurationFromMinutes(option, useHoursFormat)) }
-                                    )
-                                }
-                            }
-                            Slider(
-                                value = warningTimeoutMinutes.toFloat(),
-                                onValueChange = { appSettings.setRhythmGuardWarningTimeoutMinutes(it.toInt()) },
-                                valueRange = 1f..30f,
-                                steps = 28
-                            )
-                        }
-
-                        // Post-timeout cooldown control
-                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Text(
-                                text = context.getString(
-                                    R.string.settings_rhythm_guard_post_timeout_cooldown_title,
-                                    formattedPostTimeoutCooldown
-                                ),
-                                style = MaterialTheme.typography.labelLarge
-                            )
-                            Row(
-                                modifier = Modifier.horizontalScroll(rememberScrollState()),
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                listOf(3, 5, 10, 15).forEach { option ->
-                                    FilterChip(
-                                        selected = postTimeoutCooldownMinutes == option,
-                                        onClick = { appSettings.setRhythmGuardPostTimeoutCooldownMinutes(option) },
-                                        label = { Text(rhythmGuardFormatDurationFromMinutes(option, useHoursFormat)) }
-                                    )
-                                }
-                            }
-                            Slider(
-                                value = postTimeoutCooldownMinutes.toFloat(),
-                                onValueChange = { appSettings.setRhythmGuardPostTimeoutCooldownMinutes(it.toInt()) },
-                                valueRange = 1f..30f,
-                                steps = 28
-                            )
-                        }
-
-                        // Break interval control
-                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Text(
-                                text = context.getString(
-                                    R.string.settings_rhythm_guard_break_resume_default_title,
-                                    formattedResumeInterval
-                                ),
-                                style = MaterialTheme.typography.labelLarge
-                            )
-                            Row(
-                                modifier = Modifier.horizontalScroll(rememberScrollState()),
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                listOf(10, 15, 30, 60).forEach { option ->
-                                    FilterChip(
-                                        selected = breakResumeMinutes == option,
-                                        onClick = { appSettings.setRhythmGuardBreakResumeMinutes(option) },
-                                        label = { Text(rhythmGuardFormatDurationFromMinutes(option, useHoursFormat)) }
-                                    )
-                                }
-                            }
-                            Slider(
-                                value = breakResumeMinutes.toFloat(),
-                                onValueChange = { appSettings.setRhythmGuardBreakResumeMinutes(it.toInt()) },
-                                valueRange = 1f..120f,
-                                steps = 118
-                            )
-                        }
-
-                        // Manual protection presets (quick multi-setting tunes)
-                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Text(
-                                text = context.getString(R.string.settings_rhythm_guard_protection_presets_title),
-                                style = MaterialTheme.typography.labelLarge
-                            )
-                            Text(
-                                text = context.getString(R.string.settings_rhythm_guard_protection_presets_desc),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                            Row(
-                                modifier = Modifier.horizontalScroll(rememberScrollState()),
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                listOf(
-                                    RhythmGuardProtectionPreset.GENTLE,
-                                    RhythmGuardProtectionPreset.BALANCED,
-                                    RhythmGuardProtectionPreset.STRICT
-                                ).forEach { preset ->
-                                    FilterChip(
-                                        selected = activeManualPreset == preset,
-                                        onClick = {
-                                            val values = rhythmGuardPresetValues(preset)
-                                            appSettings.setRhythmGuardManualWarningsEnabled(true)
-                                            appSettings.setRhythmGuardManualVolumeThreshold(values.volumeThreshold)
-                                            appSettings.setRhythmGuardAlertThresholdMinutes(values.alertThresholdMinutes)
-                                            appSettings.setRhythmGuardWarningTimeoutMinutes(values.warningTimeoutMinutes)
-                                            appSettings.setRhythmGuardPostTimeoutCooldownMinutes(values.postTimeoutCooldownMinutes)
-                                            appSettings.setRhythmGuardBreakResumeMinutes(values.breakResumeMinutes)
-                                        },
-                                        label = {
-                                            Text(
-                                                text = when (preset) {
-                                                    RhythmGuardProtectionPreset.GENTLE -> context.getString(R.string.settings_rhythm_guard_protection_preset_gentle)
-                                                    RhythmGuardProtectionPreset.BALANCED -> context.getString(R.string.settings_rhythm_guard_protection_preset_balanced)
-                                                    RhythmGuardProtectionPreset.STRICT -> context.getString(R.string.settings_rhythm_guard_protection_preset_strict)
-                                                    RhythmGuardProtectionPreset.CUSTOM -> context.getString(R.string.settings_rhythm_guard_protection_preset_custom)
-                                                }
-                                            )
-                                        }
-                                    )
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            }
-
-            if (auraMode == AppSettings.RHYTHM_GUARD_MODE_AUTO) {
-                item {
                     Card(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(18.dp),
                         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
                     ) {
                         Column(modifier = Modifier.padding(16.dp)) {
-                            Text(
-                                text = context.getString(R.string.settings_rhythm_guard_auto_policy_table_title),
-                                style = MaterialTheme.typography.titleSmall,
-                                fontWeight = FontWeight.SemiBold
-                            )
-                            Spacer(modifier = Modifier.height(10.dp))
-                            policyTable.forEachIndexed { index, band ->
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
                                     Text(
                                         text = context.getString(
-                                            R.string.settings_rhythm_guard_auto_policy_band,
-                                            band.minAge,
-                                            band.maxAge
+                                            R.string.settings_rhythm_guard_age_label,
+                                            auraAge
                                         ),
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = MaterialTheme.colorScheme.onSurface
+                                        style = MaterialTheme.typography.titleSmall,
+                                        fontWeight = FontWeight.SemiBold
                                     )
                                     Text(
                                         text = context.getString(
-                                            R.string.settings_rhythm_guard_auto_policy_value,
-                                            (band.maxVolumeThreshold * 100f).toInt(),
-                                            band.recommendedDailyMinutes
+                                            R.string.settings_rhythm_guard_age_desc,
+                                            recommendedThresholdPercent,
+                                            recommendedDailyMinutes
                                         ),
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = if (auraAge in band.minAge..band.maxAge) {
-                                            MaterialTheme.colorScheme.primary
-                                        } else {
-                                            MaterialTheme.colorScheme.onSurfaceVariant
-                                        },
-                                        fontWeight = if (auraAge in band.minAge..band.maxAge) {
-                                            FontWeight.SemiBold
-                                        } else {
-                                            FontWeight.Normal
-                                        }
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
                                 }
-                                if (index < policyTable.lastIndex) {
-                                    Spacer(modifier = Modifier.height(8.dp))
-                                    HorizontalDivider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f))
-                                    Spacer(modifier = Modifier.height(8.dp))
+                            }
+                            Spacer(modifier = Modifier.height(12.dp))
+                            Slider(
+                                value = auraAge.toFloat(),
+                                onValueChange = { appSettings.setRhythmGuardAge(it.toInt()) },
+                                valueRange = 8f..80f,
+                                steps = 71
+                            )
+                        }
+                    }
+                }
+
+                item {
+                    val outputSettingItems = listOf(
+                        SettingItem(
+                            RhythmIcons.Speaker,
+                            context.getString(R.string.settings_rhythm_guard_device_controls_speaker_limit_title),
+                            context.getString(R.string.settings_rhythm_guard_device_controls_speaker_limit_desc),
+                            toggleState = rhythmGuardApplyVolumeLimitOnSpeaker,
+                            onToggleChange = {
+                                appSettings.setRhythmGuardApplyVolumeLimitOnSpeaker(
+                                    it
+                                )
+                            }
+                        )
+                    )
+
+                    val materialItems = outputSettingItems.map { item ->
+                        toMaterial3SettingsItem(
+                            context = context,
+                            item = item,
+                            hapticFeedback = haptic
+                        )
+                    }
+
+                    Material3SettingsGroup(
+                        title = context.getString(R.string.settings_rhythm_guard_device_controls_title),
+                        items = materialItems,
+                        containerColor = MaterialTheme.colorScheme.surfaceContainer
+                    )
+                }
+
+                if (auraMode == AppSettings.RHYTHM_GUARD_MODE_MANUAL) {
+                    item {
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(18.dp),
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
+                        ) {
+                            Column(
+                                modifier = Modifier.padding(16.dp),
+                                verticalArrangement = Arrangement.spacedBy(16.dp)
+                            ) {
+                                Text(
+                                    text = context.getString(R.string.settings_rhythm_guard_alert_controls_title),
+                                    style = MaterialTheme.typography.titleSmall,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+
+                                // Threshold control
+                                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    Text(
+                                        text = context.getString(
+                                            R.string.settings_rhythm_guard_alert_threshold_title,
+                                            if (alertThresholdMinutes > 0) {
+                                                rhythmGuardFormatDurationFromMinutes(
+                                                    alertThresholdMinutes,
+                                                    useHoursFormat
+                                                )
+                                            } else {
+                                                context.getString(R.string.settings_rhythm_guard_alert_threshold_policy_default)
+                                            }
+                                        ),
+                                        style = MaterialTheme.typography.labelLarge
+                                    )
+                                    Row(
+                                        modifier = Modifier.horizontalScroll(rememberScrollState()),
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                    ) {
+                                        listOf(-1, 60, 90, 120).forEach { option ->
+                                            FilterChip(
+                                                selected = alertThresholdMinutes == option,
+                                                onClick = {
+                                                    appSettings.setRhythmGuardAlertThresholdMinutes(
+                                                        option
+                                                    )
+                                                },
+                                                label = {
+                                                    Text(
+                                                        if (option > 0) {
+                                                            rhythmGuardFormatDurationFromMinutes(
+                                                                option,
+                                                                useHoursFormat
+                                                            )
+                                                        } else {
+                                                            context.getString(R.string.settings_rhythm_guard_alert_threshold_policy_default)
+                                                        }
+                                                    )
+                                                }
+                                            )
+                                        }
+                                    }
+                                    Slider(
+                                        value = maxOf(alertThresholdMinutes, 15).toFloat(),
+                                        onValueChange = {
+                                            appSettings.setRhythmGuardAlertThresholdMinutes(
+                                                it.toInt()
+                                            )
+                                        },
+                                        valueRange = 15f..360f,
+                                        steps = 344
+                                    )
+                                }
+
+                                // Timeout control
+                                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    Text(
+                                        text = context.getString(
+                                            R.string.settings_rhythm_guard_alert_timeout_title,
+                                            formattedTimeout
+                                        ),
+                                        style = MaterialTheme.typography.labelLarge
+                                    )
+                                    Row(
+                                        modifier = Modifier.horizontalScroll(rememberScrollState()),
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                    ) {
+                                        listOf(2, 5, 10, 15).forEach { option ->
+                                            FilterChip(
+                                                selected = warningTimeoutMinutes == option,
+                                                onClick = {
+                                                    appSettings.setRhythmGuardWarningTimeoutMinutes(
+                                                        option
+                                                    )
+                                                },
+                                                label = {
+                                                    Text(
+                                                        rhythmGuardFormatDurationFromMinutes(
+                                                            option,
+                                                            useHoursFormat
+                                                        )
+                                                    )
+                                                }
+                                            )
+                                        }
+                                    }
+                                    Slider(
+                                        value = warningTimeoutMinutes.toFloat(),
+                                        onValueChange = {
+                                            appSettings.setRhythmGuardWarningTimeoutMinutes(
+                                                it.toInt()
+                                            )
+                                        },
+                                        valueRange = 1f..30f,
+                                        steps = 28
+                                    )
+                                }
+
+                                // Post-timeout cooldown control
+                                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    Text(
+                                        text = context.getString(
+                                            R.string.settings_rhythm_guard_post_timeout_cooldown_title,
+                                            formattedPostTimeoutCooldown
+                                        ),
+                                        style = MaterialTheme.typography.labelLarge
+                                    )
+                                    Row(
+                                        modifier = Modifier.horizontalScroll(rememberScrollState()),
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                    ) {
+                                        listOf(3, 5, 10, 15).forEach { option ->
+                                            FilterChip(
+                                                selected = postTimeoutCooldownMinutes == option,
+                                                onClick = {
+                                                    appSettings.setRhythmGuardPostTimeoutCooldownMinutes(
+                                                        option
+                                                    )
+                                                },
+                                                label = {
+                                                    Text(
+                                                        rhythmGuardFormatDurationFromMinutes(
+                                                            option,
+                                                            useHoursFormat
+                                                        )
+                                                    )
+                                                }
+                                            )
+                                        }
+                                    }
+                                    Slider(
+                                        value = postTimeoutCooldownMinutes.toFloat(),
+                                        onValueChange = {
+                                            appSettings.setRhythmGuardPostTimeoutCooldownMinutes(
+                                                it.toInt()
+                                            )
+                                        },
+                                        valueRange = 1f..30f,
+                                        steps = 28
+                                    )
+                                }
+
+                                // Break interval control
+                                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    Text(
+                                        text = context.getString(
+                                            R.string.settings_rhythm_guard_break_resume_default_title,
+                                            formattedResumeInterval
+                                        ),
+                                        style = MaterialTheme.typography.labelLarge
+                                    )
+                                    Row(
+                                        modifier = Modifier.horizontalScroll(rememberScrollState()),
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                    ) {
+                                        listOf(10, 15, 30, 60).forEach { option ->
+                                            FilterChip(
+                                                selected = breakResumeMinutes == option,
+                                                onClick = {
+                                                    appSettings.setRhythmGuardBreakResumeMinutes(
+                                                        option
+                                                    )
+                                                },
+                                                label = {
+                                                    Text(
+                                                        rhythmGuardFormatDurationFromMinutes(
+                                                            option,
+                                                            useHoursFormat
+                                                        )
+                                                    )
+                                                }
+                                            )
+                                        }
+                                    }
+                                    Slider(
+                                        value = breakResumeMinutes.toFloat(),
+                                        onValueChange = {
+                                            appSettings.setRhythmGuardBreakResumeMinutes(
+                                                it.toInt()
+                                            )
+                                        },
+                                        valueRange = 1f..120f,
+                                        steps = 118
+                                    )
+                                }
+
+                                // Manual protection presets (quick multi-setting tunes)
+                                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    Text(
+                                        text = context.getString(R.string.settings_rhythm_guard_protection_presets_title),
+                                        style = MaterialTheme.typography.labelLarge
+                                    )
+                                    Text(
+                                        text = context.getString(R.string.settings_rhythm_guard_protection_presets_desc),
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                    Row(
+                                        modifier = Modifier.horizontalScroll(rememberScrollState()),
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                    ) {
+                                        listOf(
+                                            RhythmGuardProtectionPreset.GENTLE,
+                                            RhythmGuardProtectionPreset.BALANCED,
+                                            RhythmGuardProtectionPreset.STRICT
+                                        ).forEach { preset ->
+                                            FilterChip(
+                                                selected = activeManualPreset == preset,
+                                                onClick = {
+                                                    val values = rhythmGuardPresetValues(preset)
+                                                    appSettings.setRhythmGuardManualWarningsEnabled(
+                                                        true
+                                                    )
+                                                    appSettings.setRhythmGuardManualVolumeThreshold(
+                                                        values.volumeThreshold
+                                                    )
+                                                    appSettings.setRhythmGuardAlertThresholdMinutes(
+                                                        values.alertThresholdMinutes
+                                                    )
+                                                    appSettings.setRhythmGuardWarningTimeoutMinutes(
+                                                        values.warningTimeoutMinutes
+                                                    )
+                                                    appSettings.setRhythmGuardPostTimeoutCooldownMinutes(
+                                                        values.postTimeoutCooldownMinutes
+                                                    )
+                                                    appSettings.setRhythmGuardBreakResumeMinutes(
+                                                        values.breakResumeMinutes
+                                                    )
+                                                },
+                                                label = {
+                                                    Text(
+                                                        text = when (preset) {
+                                                            RhythmGuardProtectionPreset.GENTLE -> context.getString(
+                                                                R.string.settings_rhythm_guard_protection_preset_gentle
+                                                            )
+
+                                                            RhythmGuardProtectionPreset.BALANCED -> context.getString(
+                                                                R.string.settings_rhythm_guard_protection_preset_balanced
+                                                            )
+
+                                                            RhythmGuardProtectionPreset.STRICT -> context.getString(
+                                                                R.string.settings_rhythm_guard_protection_preset_strict
+                                                            )
+
+                                                            RhythmGuardProtectionPreset.CUSTOM -> context.getString(
+                                                                R.string.settings_rhythm_guard_protection_preset_custom
+                                                            )
+                                                        }
+                                                    )
+                                                }
+                                            )
+                                        }
+                                    }
                                 }
                             }
                         }
                     }
                 }
-            }
 
-            if (auraMode == AppSettings.RHYTHM_GUARD_MODE_MANUAL) {
-                item {
-                    val manualSettingItems = listOf(
-                        SettingItem(
-                            RhythmIcons.Warning,
-                            context.getString(R.string.settings_rhythm_guard_manual_warning_toggle),
-                            context.getString(R.string.settings_rhythm_guard_manual_warning_toggle_desc),
-                            toggleState = manualWarningsEnabled,
-                            onToggleChange = { appSettings.setRhythmGuardManualWarningsEnabled(it) }
-                        ),
-                        SettingItem(
-                            RhythmIcons.Stop,
-                            context.getString(R.string.settings_stop_playback_on_zero_volume),
-                            context.getString(R.string.settings_stop_playback_on_zero_volume_desc),
-                            toggleState = stopPlaybackOnZeroVolume,
-                            onToggleChange = { appSettings.setStopPlaybackOnZeroVolume(it) }
-                        )
-                    )
-
-                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                if (auraMode == AppSettings.RHYTHM_GUARD_MODE_AUTO) {
+                    item {
                         Card(
                             modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(18.dp),
@@ -841,72 +839,169 @@ fun RhythmGuardSettingsScreen(onBackClick: () -> Unit) {
                         ) {
                             Column(modifier = Modifier.padding(16.dp)) {
                                 Text(
-                                    text = context.getString(R.string.settings_rhythm_guard_manual_threshold_title, manualThresholdPercent),
+                                    text = context.getString(R.string.settings_rhythm_guard_auto_policy_table_title),
                                     style = MaterialTheme.typography.titleSmall,
                                     fontWeight = FontWeight.SemiBold
                                 )
+                                Spacer(modifier = Modifier.height(10.dp))
+                                policyTable.forEachIndexed { index, band ->
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text(
+                                            text = context.getString(
+                                                R.string.settings_rhythm_guard_auto_policy_band,
+                                                band.minAge,
+                                                band.maxAge
+                                            ),
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = MaterialTheme.colorScheme.onSurface
+                                        )
+                                        Text(
+                                            text = context.getString(
+                                                R.string.settings_rhythm_guard_auto_policy_value,
+                                                (band.maxVolumeThreshold * 100f).toInt(),
+                                                band.recommendedDailyMinutes
+                                            ),
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = if (auraAge in band.minAge..band.maxAge) {
+                                                MaterialTheme.colorScheme.primary
+                                            } else {
+                                                MaterialTheme.colorScheme.onSurfaceVariant
+                                            },
+                                            fontWeight = if (auraAge in band.minAge..band.maxAge) {
+                                                FontWeight.SemiBold
+                                            } else {
+                                                FontWeight.Normal
+                                            }
+                                        )
+                                    }
+                                    if (index < policyTable.lastIndex) {
+                                        Spacer(modifier = Modifier.height(8.dp))
+                                        HorizontalDivider(
+                                            color = MaterialTheme.colorScheme.onSurface.copy(
+                                                alpha = 0.08f
+                                            )
+                                        )
+                                        Spacer(modifier = Modifier.height(8.dp))
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if (auraMode == AppSettings.RHYTHM_GUARD_MODE_MANUAL) {
+                    item {
+                        val manualSettingItems = listOf(
+                            SettingItem(
+                                RhythmIcons.Warning,
+                                context.getString(R.string.settings_rhythm_guard_manual_warning_toggle),
+                                context.getString(R.string.settings_rhythm_guard_manual_warning_toggle_desc),
+                                toggleState = manualWarningsEnabled,
+                                onToggleChange = {
+                                    appSettings.setRhythmGuardManualWarningsEnabled(
+                                        it
+                                    )
+                                }
+                            ),
+                            SettingItem(
+                                RhythmIcons.Stop,
+                                context.getString(R.string.settings_stop_playback_on_zero_volume),
+                                context.getString(R.string.settings_stop_playback_on_zero_volume_desc),
+                                toggleState = stopPlaybackOnZeroVolume,
+                                onToggleChange = { appSettings.setStopPlaybackOnZeroVolume(it) }
+                            )
+                        )
+
+                        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                            Card(
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(18.dp),
+                                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
+                            ) {
+                                Column(modifier = Modifier.padding(16.dp)) {
+                                    Text(
+                                        text = context.getString(
+                                            R.string.settings_rhythm_guard_manual_threshold_title,
+                                            manualThresholdPercent
+                                        ),
+                                        style = MaterialTheme.typography.titleSmall,
+                                        fontWeight = FontWeight.SemiBold
+                                    )
+                                    Spacer(modifier = Modifier.height(6.dp))
+                                    Text(
+                                        text = context.getString(R.string.settings_rhythm_guard_manual_threshold_desc),
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                    Spacer(modifier = Modifier.height(10.dp))
+                                    Slider(
+                                        value = manualVolumeThreshold,
+                                        onValueChange = {
+                                            appSettings.setRhythmGuardManualVolumeThreshold(
+                                                it
+                                            )
+                                        },
+                                        valueRange = 0.40f..0.95f
+                                    )
+                                }
+                            }
+
+                            val materialItems = manualSettingItems.map { item ->
+                                toMaterial3SettingsItem(
+                                    context = context,
+                                    item = item,
+                                    hapticFeedback = haptic
+                                )
+                            }
+
+                            Material3SettingsGroup(
+                                title = context.getString(R.string.settings_rhythm_guard_manual_controls_title),
+                                items = materialItems,
+                                containerColor = MaterialTheme.colorScheme.surfaceContainer
+                            )
+                        }
+                    }
+                }
+
+                if (showVolumeWarning || showExposureWarning) {
+                    item {
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(18.dp),
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHighest)
+                        ) {
+                            Column(modifier = Modifier.padding(16.dp)) {
+                                Text(
+                                    text = context.getString(R.string.settings_rhythm_guard_warning_title),
+                                    style = MaterialTheme.typography.titleSmall,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
                                 Spacer(modifier = Modifier.height(6.dp))
                                 Text(
-                                    text = context.getString(R.string.settings_rhythm_guard_manual_threshold_desc),
+                                    text = when {
+                                        showExposureWarning -> context.getString(
+                                            R.string.settings_rhythm_guard_warning_daily_exposure,
+                                            formattedTotalExposure,
+                                            formattedDailyTarget
+                                        )
+
+                                        else -> context.getString(
+                                            R.string.settings_rhythm_guard_warning_high_volume,
+                                            activeThresholdPercent
+                                        )
+                                    },
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
-                                Spacer(modifier = Modifier.height(10.dp))
-                                Slider(
-                                    value = manualVolumeThreshold,
-                                    onValueChange = { appSettings.setRhythmGuardManualVolumeThreshold(it) },
-                                    valueRange = 0.40f..0.95f
-                                )
                             }
                         }
-
-                        val materialItems = manualSettingItems.map { item ->
-                            toMaterial3SettingsItem(context = context, item = item, hapticFeedback = haptic)
-                        }
-
-                        Material3SettingsGroup(
-                            title = context.getString(R.string.settings_rhythm_guard_manual_controls_title),
-                            items = materialItems,
-                            containerColor = MaterialTheme.colorScheme.surfaceContainer
-                        )
                     }
                 }
-            }
-
-            if (showVolumeWarning || showExposureWarning) {
-                item {
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(18.dp),
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHighest)
-                    ) {
-                        Column(modifier = Modifier.padding(16.dp)) {
-                            Text(
-                                text = context.getString(R.string.settings_rhythm_guard_warning_title),
-                                style = MaterialTheme.typography.titleSmall,
-                                fontWeight = FontWeight.SemiBold,
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
-                            Spacer(modifier = Modifier.height(6.dp))
-                            Text(
-                                text = when {
-                                    showExposureWarning -> context.getString(
-                                        R.string.settings_rhythm_guard_warning_daily_exposure,
-                                        formattedTotalExposure,
-                                        formattedDailyTarget
-                                    )
-                                    else -> context.getString(
-                                        R.string.settings_rhythm_guard_warning_high_volume,
-                                        activeThresholdPercent
-                                    )
-                                },
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                    }
-                }
-            }
             }
 
             item { Spacer(modifier = Modifier.height(100.dp)) }
@@ -1900,6 +1995,248 @@ fun BackupRestoreSectionPickerBottomSheet(
                     }
                 }
             }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+fun RhythmGuardExpressiveDashboard(
+    level: RhythmGuardOverallHealthLevel,
+    overallProgress: Float,
+    statusText: String,
+    statusDetail: String?,
+    exposureValue: String,
+    exposureSubtitle: String,
+    exposureProgress: Float,
+    exposureWarning: Boolean,
+    volumeValue: String,
+    volumeSubtitle: String,
+    volumeProgress: Float,
+    volumeWarning: Boolean,
+    modifier: Modifier = Modifier
+) {
+    // 100% Material 3 Theme Integration
+    val containerColor = when (level) {
+        RhythmGuardOverallHealthLevel.GOOD -> MaterialTheme.colorScheme.primaryContainer
+        RhythmGuardOverallHealthLevel.FAIR -> MaterialTheme.colorScheme.tertiaryContainer
+        RhythmGuardOverallHealthLevel.RISK, RhythmGuardOverallHealthLevel.TIMEOUT -> MaterialTheme.colorScheme.errorContainer
+        RhythmGuardOverallHealthLevel.COOLDOWN -> MaterialTheme.colorScheme.secondaryContainer
+        RhythmGuardOverallHealthLevel.OFF -> MaterialTheme.colorScheme.surfaceContainer
+    }
+
+    val contentColor = when (level) {
+        RhythmGuardOverallHealthLevel.GOOD -> MaterialTheme.colorScheme.onPrimaryContainer
+        RhythmGuardOverallHealthLevel.FAIR -> MaterialTheme.colorScheme.onTertiaryContainer
+        RhythmGuardOverallHealthLevel.RISK, RhythmGuardOverallHealthLevel.TIMEOUT -> MaterialTheme.colorScheme.onErrorContainer
+        RhythmGuardOverallHealthLevel.COOLDOWN -> MaterialTheme.colorScheme.onSecondaryContainer
+        RhythmGuardOverallHealthLevel.OFF -> MaterialTheme.colorScheme.onSurfaceVariant
+    }
+
+    // Dynamic Comic Content
+    val headerText = when (level) {
+        RhythmGuardOverallHealthLevel.GOOD -> "All Good"
+        RhythmGuardOverallHealthLevel.FAIR -> "Careful"
+        RhythmGuardOverallHealthLevel.RISK -> "Too Loud"
+        RhythmGuardOverallHealthLevel.COOLDOWN -> "Grace Period"
+        RhythmGuardOverallHealthLevel.TIMEOUT -> "Locked"
+        RhythmGuardOverallHealthLevel.OFF -> "Disabled"
+    }
+
+    val comicSubtitle = when (level) {
+        RhythmGuardOverallHealthLevel.GOOD -> "Your ears are throwing a perfectly-volumed party. Keep vibing responsibly! 🎉"
+        RhythmGuardOverallHealthLevel.FAIR -> "Getting a little spicy in there. Maybe turn it down a notch before the guard steps in? 🌶️"
+        RhythmGuardOverallHealthLevel.RISK -> "Whoa rockstar, you are in the eardrum danger zone! Dial it back before the locks trigger! 🎸🔥"
+        RhythmGuardOverallHealthLevel.COOLDOWN -> "Safe zone active! Rhythm Guard is on coffee break, so jam freely without timeouts! 🎫☕"
+        RhythmGuardOverallHealthLevel.TIMEOUT -> "Acoustic time-out active. A mandatory ear nap is in progress to protect your hearing! 😴🛑"
+        RhythmGuardOverallHealthLevel.OFF -> "Rhythm Guard is off duty. You are flying completely solo on volume safety. Godspeed! 🏍️💨"
+    }
+
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(32.dp),
+        colors = CardDefaults.cardColors(containerColor = containerColor),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(24.dp)
+        ) {
+            // Header: Status Title & Optional Detail Chip
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.Top
+            ) {
+                Text(
+                    text = headerText,
+                    style = MaterialTheme.typography.displaySmall,
+                    color = contentColor,
+                    fontWeight = FontWeight.Black
+                )
+
+                if (!statusDetail.isNullOrBlank()) {
+                    Surface(
+                        shape = CircleShape,
+                        color = contentColor.copy(alpha = 0.12f) // Standard M3 state layer alpha
+                    ) {
+                        Text(
+                            text = statusDetail,
+                            style = MaterialTheme.typography.labelMedium,
+                            color = contentColor,
+                            fontWeight = FontWeight.SemiBold,
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Subtitle
+            Text(
+                text = comicSubtitle,
+                style = MaterialTheme.typography.bodyLarge,
+                color = contentColor.copy(alpha = 0.85f),
+                lineHeight = 22.sp
+            )
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // Overall Progress Indicator Wavy
+            StyledProgressBar(
+                progress = overallProgress.coerceIn(0f, 1f),
+                style = ProgressStyle.WAVY,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(10.dp),
+                progressColor = contentColor,
+                trackColor = contentColor.copy(alpha = 0.2f),
+                isPlaying = level != RhythmGuardOverallHealthLevel.OFF,
+                showThumb = false,
+                waveAmplitudeWhenPlaying = 3.dp,
+                waveLength = 60.dp,
+                height = 6.dp
+            )
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // Integrated Metrics Row
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                DashboardMetricPill(
+                    title = stringResource(R.string.settings_rhythm_guard_snapshot_exposure_title),
+                    value = exposureValue,
+                    subtitle = "/$exposureSubtitle",
+                    progress = exposureProgress,
+                    isWarning = exposureWarning,
+                    icon = RhythmIcons.AccessTime,
+                    baseContentColor = contentColor,
+                    modifier = Modifier.weight(1f)
+                )
+
+                DashboardMetricPill(
+                    title = stringResource(R.string.settings_rhythm_guard_snapshot_volume_title),
+                    value = volumeValue,
+                    subtitle = "of $volumeSubtitle",
+                    progress = volumeProgress,
+                    isWarning = volumeWarning,
+                    icon = MaterialSymbolIcon("graphic_eq"),
+                    baseContentColor = contentColor,
+                    modifier = Modifier.weight(1f)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun DashboardMetricPill(
+    title: String,
+    value: String,
+    subtitle: String,
+    progress: Float,
+    isWarning: Boolean,
+    icon: Any,
+    baseContentColor: Color,
+    modifier: Modifier = Modifier
+) {
+    val dynamicValueFontSize = rememberRhythmGuardHeroValueFontSize(value)
+
+    // If warning triggers on a specific metric, override with error colors.
+    // Otherwise, create a subtle tonal separation using standard M3 alpha blending.
+    val metricContainerColor = if (isWarning) MaterialTheme.colorScheme.errorContainer else baseContentColor.copy(alpha = 0.08f)
+    val metricContentColor = if (isWarning) MaterialTheme.colorScheme.onErrorContainer else baseContentColor
+
+    Surface(
+        modifier = modifier.height(140.dp),
+        shape = RoundedCornerShape(20.dp),
+        color = metricContainerColor,
+        border = if (!isWarning) BorderStroke(1.dp, baseContentColor.copy(alpha = 0.1f)) else null
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.SpaceBetween
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                if (icon is ImageVector) {
+                    Icon(imageVector = icon, contentDescription = null, modifier = Modifier.size(18.dp), tint = metricContentColor)
+                } else if (icon is MaterialSymbolIcon) {
+                    Icon(imageVector = icon, contentDescription = null, modifier = Modifier.size(18.dp), tint = metricContentColor)
+                }
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.Medium,
+                    color = metricContentColor.copy(alpha = 0.85f),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+
+            Column {
+                Text(
+                    text = value,
+                    style = MaterialTheme.typography.headlineSmall.copy(
+                        fontSize = dynamicValueFontSize,
+                        lineHeight = (dynamicValueFontSize.value + 2f).sp
+                    ),
+                    fontWeight = FontWeight.Bold,
+                    color = metricContentColor,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Text(
+                    text = subtitle,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = metricContentColor.copy(alpha = 0.7f),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+
+            StyledProgressBar(
+                progress = progress.coerceIn(0f, 1f),
+                style = ProgressStyle.WAVY,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(6.dp),
+                progressColor = metricContentColor,
+                trackColor = metricContentColor.copy(alpha = 0.2f),
+                isPlaying = true,
+                showThumb = false,
+                waveAmplitudeWhenPlaying = 2.dp,
+                waveLength = 40.dp,
+                height = 3.dp
+            )
         }
     }
 }

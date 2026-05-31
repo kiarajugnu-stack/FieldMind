@@ -1,38 +1,28 @@
-<b>Your Music, Your Rhythm</b>
+Your Music, Your Rhythm
 
-Open-source Material You music player with audiophile-grade audio, zero tracking, and zero ads.
+Experience your local music collection like never before. Rhythm is a beautiful, open-source Material You music player built for audiophiles. Enjoy high-quality audio with zero tracking and absolutely no ads.  
 
-<b>🔊 Sound That Moves You</b>
-• High-Resolution Audio Playback — preserve native sample rates and bit depths
-• 10-Band Equalizer + 6,000+ AutoEQ device presets
-• Gapless playback, EAC3-JOC/Dolby Atmos codec support
-• FLAC, ALAC, MP3, AAC, Opus, WAV, OGG & more
+🔊 Audiophile-Grade Sound
+• High-Res Audio: Preserves native sample rates and bit depths for pure, unaltered sound.
+• Advanced EQ: Perfect your audio with a 10-band equalizer and over 6,000 AutoEQ presets tailored to your specific headphones.
+• Premium Playback: Enjoy true gapless playback and support for all major formats (FLAC, ALAC, Opus, WAV, MP3, OGG, and Dolby Atmos/EAC3-JOC).  
 
-<b>🎨 Design That Delights</b>
-• Material 3 Expressive — adaptive shapes, fluid motion
-• Material You dynamic colors from your wallpaper (Android 12+)
-• Album-art-driven player colors & immersive lyrics view
-• Home screen widgets with responsive Material 3 layouts
+🎨 Gorgeous Material 3 Design
+• Dynamic Colors: The app's theme adapts beautifully to your wallpaper (Android 12+) and the current album artwork.
+• Fluid UI: Experience expressive shapes, smooth animations, and an immersive, distraction-free lyrics view.
+• Responsive Widgets: Control your music straight from your home screen with modern Material 3 layouts.  
 
-<b>📚 Library Power</b>
-• Multi-select batch actions — queue, share, delete at once
-• Shuffle whole albums in correct track order
-• Full-scan media scanner — reliable, no songs missed
-• Songs, Albums, Artists, Genres, Playlists, Folders
+📚 Smart Library & Lyrics
+• Synced Lyrics: Sing along with word-by-word highlighting via LRCLib, or use the local editor for custom offsets.
+• Ultimate Organization: Browse your music by Songs, Albums, Artists, Genres, Playlists, or Folders.
+• Multi-Select Power: Manage your queue, share, or delete multiple tracks at once with batch actions.
+• Reliable Scanning: A full-scan media scanner ensures no songs are ever missed.  
 
-<b>🎤 Lyrics & Metadata</b>
-• Synced lyrics via LRCLib with word-by-word highlighting
-• Local lyrics editor for custom offsets and edits
-• Full metadata editor with artwork support
+⚙️ Feature-Packed
+• Built-in metadata editor with artwork integration from Deezer and YouTube Music.
+• Sleep timer, playback statistics, and guard support.
+• Easy queue management and M3U playlist import/export.
+• In-app auto-updates directly from GitHub.  
 
-<b>⚙️ Power Features</b>
-• Sleep timer, queue management, M3U import/export
-• Settings search, playback stats, Android Auto
-• Deezer & YouTube Music artwork integration
-• In-app auto-updates from GitHub
-
-<b>🔒 Privacy First</b>
-No ads. No analytics. No accounts. 100% offline-capable. GPL v3.
-
-<b>📥 Get it on GitHub, F-Droid &amp; IzzyOnDroid</b>
-— Google Play coming soon —
+🔒 100% Private
+Rhythm respects your data. There are no ads, no analytics, and no accounts required. It is completely offline-capable and proudly open-source (GPL v3).  
