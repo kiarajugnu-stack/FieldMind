@@ -1,13 +1,4 @@
-<div align="left">
 
-> ### ⚠️ DEVELOPMENT CURRENTLY PAUSED
-> My development laptop has completely broken down, and I need your help to get back to coding! 
-> If Rhythm has made your daily music experience better, please consider chipping in to my hardware upgrade goal. Every little bit helps get the project back on track.
-> 
-> **[👉 Help me reach my laptop upgrade goal on Ko-fi!](https://ko-fi.com/anjishnunandi/goal?g=0)**
-
-</div>
-<br>
 <div align="center">
 
 <picture>
@@ -18,6 +9,8 @@
 
 # Project Rhythm
 **Your Music, Your Rhythm.**
+
+<a href="https://trendshift.io/repositories/15217" target="_blank"><img src="https://trendshift.io/api/badge/repositories/15217" alt="cromaguy%2FRhythm | Trendshift" style="width: 250px; height: 55px;" width="250" height="55"/></a>
 
 [![Platform](https://img.shields.io/badge/Android-34A853?style=flat-square&logo=android&logoColor=white)](https://android.com)
 [![API Level](https://img.shields.io/badge/API-26%2B-4285f4?style=flat-square&logo=android&logoColor=white)](https://android-arsenal.com/api?level=26)
