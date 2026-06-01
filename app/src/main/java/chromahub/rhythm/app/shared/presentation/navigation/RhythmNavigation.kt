@@ -566,20 +566,6 @@ private fun RhythmGuardWarningHost(
         timeoutStartedAtMs = 0L
     }
 
-    LaunchedEffect(timeoutCooldownUntilMs) {
-        val now = System.currentTimeMillis()
-        if (timeoutCooldownUntilMs <= now) {
-            if (timeoutCooldownUntilMs > 0L) {
-                appSettings.clearRhythmGuardTimeoutCooldown()
-            }
-            return@LaunchedEffect
-        }
-
-        val delayMs = (timeoutCooldownUntilMs - now).coerceAtLeast(0L)
-        delay(delayMs)
-        appSettings.clearRhythmGuardTimeoutCooldown()
-    }
-
     LaunchedEffect(pendingBreakStartAtMs, pendingBreakDurationMinutes, timeoutUntilMs) {
         if (pendingBreakStartAtMs <= 0L || timeoutUntilMs > System.currentTimeMillis()) {
             pendingBreakStartCountdownSeconds = 0L

@@ -9,6 +9,7 @@ import chromahub.rhythm.app.shared.presentation.components.icons.Icon
 import android.net.Uri
 import androidx.annotation.StringRes
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -63,6 +64,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.hapticfeedback.HapticFeedback
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
@@ -199,6 +201,8 @@ fun StreamingLibraryScreen(
     val recommendations by viewModel.recommendations.collectAsState()
     val newReleases by viewModel.newReleases.collectAsState()
     val groupByAlbumArtist by appSettings.groupByAlbumArtist.collectAsState()
+    val artistSeparatorEnabled by appSettings.artistSeparatorEnabled.collectAsState()
+    val artistSeparatorDelimiters by appSettings.artistSeparatorDelimiters.collectAsState()
 
     val resolvedServiceId = remember(selectedService, sessions) {
         when {
@@ -236,9 +240,16 @@ fun StreamingLibraryScreen(
             newReleases
         }
     }
-    val libraryArtists = remember(followedArtists) {
-        // Display only provider artists - no derivation or merging
-        followedArtists
+    val derivedArtists = remember(librarySongs, artistSeparatorEnabled, artistSeparatorDelimiters) {
+        deriveArtistsFromSongs(
+            songs = librarySongs,
+            separatorEnabled = artistSeparatorEnabled,
+            separatorDelimiters = artistSeparatorDelimiters
+        )
+    }
+    val libraryArtists = remember(followedArtists, derivedArtists) {
+        // Prefer provider artists, but fall back to song-derived artists when provider lists are empty.
+        if (followedArtists.isNotEmpty()) followedArtists else derivedArtists
     }
     val libraryPlaylists = remember(savedPlaylists, featuredPlaylists) {
         (savedPlaylists + featuredPlaylists).distinctBy { it.id }
@@ -333,8 +344,21 @@ fun StreamingLibraryScreen(
     val localAlbums = remember(sortedAlbums) {
         sortedAlbums.map { it.toLibraryAlbum(localSongs) }
     }
-    val localArtists = remember(sortedArtists, localSongs) {
-        sortedArtists.map { it.toLibraryArtist(localSongs, emptyList()) }
+    val localArtists = remember(
+        sortedArtists,
+        localSongs,
+        localAlbums,
+        artistSeparatorEnabled,
+        artistSeparatorDelimiters
+    ) {
+        sortedArtists.map {
+            it.toLibraryArtist(
+                librarySongs = localSongs,
+                libraryAlbums = localAlbums,
+                separatorEnabled = artistSeparatorEnabled,
+                separatorDelimiters = artistSeparatorDelimiters
+            )
+        }
     }
     val localPlaylists = remember(sortedPlaylists) {
         sortedPlaylists.map { it.toLibraryPlaylist() }
@@ -1250,6 +1274,22 @@ fun StreamingLibraryScreen(
                         }
                     }
                     }
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(24.dp)
+                            .align(Alignment.TopCenter)
+                            .background(
+                                brush = Brush.verticalGradient(
+                                    colors = listOf(
+                                        MaterialTheme.colorScheme.background,
+                                        MaterialTheme.colorScheme.background.copy(alpha = 0.72f),
+                                        MaterialTheme.colorScheme.background.copy(alpha = 0.32f),
+                                        Color.Transparent
+                                    )
+                                )
+                            )
+                    )
                 }
             }
             }
@@ -2171,10 +2211,19 @@ fun StreamingAlbum.toLibraryAlbum(librarySongs: List<chromahub.rhythm.app.shared
 
 private fun StreamingArtist.toLibraryArtist(
     librarySongs: List<Song>,
-    libraryAlbums: List<Album>
+    libraryAlbums: List<Album>,
+    separatorEnabled: Boolean,
+    separatorDelimiters: String
 ): Artist {
     val matchingSongs = if (librarySongs.isNotEmpty()) {
-        librarySongs.filter { it.artist.equals(name, ignoreCase = true) }
+        librarySongs.filter { song ->
+            song.artist.equals(name, ignoreCase = true) ||
+                ArtistSeparator.splitArtists(
+                    artistString = song.artist,
+                    delimiters = separatorDelimiters,
+                    enabled = separatorEnabled
+                ).any { splitName -> splitName.equals(name, ignoreCase = true) }
+        }
     } else {
         getTopTracks().map { it.toLibrarySong() }
     }

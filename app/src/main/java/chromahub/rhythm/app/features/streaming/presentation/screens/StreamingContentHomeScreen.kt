@@ -156,7 +156,6 @@ fun StreamingContentHomeScreen(
     onNavigateToArtist: (StreamingArtist) -> Unit,
     onNavigateToPlaylist: (chromahub.rhythm.app.features.streaming.domain.model.StreamingPlaylist) -> Unit,
     onConfigureService: (String) -> Unit,
-    onOpenAlbumSheet: (StreamingAlbum) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -581,6 +580,21 @@ fun StreamingContentHomeScreen(
                                                     startIndex = index,
                                                     shuffle = false
                                                 )
+                                            },
+                                            onOpenAlbum = { song ->
+                                                song.albumId?.let { albumId ->
+                                                    handleAlbumClick(
+                                                        chromahub.rhythm.app.features.streaming.domain.model.StreamingAlbum(
+                                                            id = albumId,
+                                                            title = song.album,
+                                                            artist = song.albumArtist ?: song.artist,
+                                                            artworkUri = song.artworkUri,
+                                                            songCount = 0,
+                                                            year = null,
+                                                            sourceType = song.sourceType
+                                                        )
+                                                    )
+                                                }
                                             }
                                         )
                                     }
@@ -1286,7 +1300,8 @@ private fun StreamingRecommendationsCarousel(
     songs: List<StreamingSong>,
     autoScrollEnabled: Boolean,
     autoScrollIntervalSeconds: Int,
-    onPlaySong: (StreamingSong, Int) -> Unit
+    onPlaySong: (StreamingSong, Int) -> Unit,
+    onOpenAlbum: (StreamingSong) -> Unit
 ) {
     val carouselState = rememberCarouselState(
         initialItem = 0,
@@ -1308,6 +1323,7 @@ private fun StreamingRecommendationsCarousel(
     }
 
     val context = LocalContext.current
+    val haptic = LocalHapticFeedback.current
     val windowSizeClass = calculateWindowSizeClass(context as android.app.Activity)
     val widthSizeClass = windowSizeClass.widthSizeClass
     val heightSizeClass = windowSizeClass.heightSizeClass
@@ -1337,12 +1353,19 @@ private fun StreamingRecommendationsCarousel(
             modifier = Modifier.fillMaxSize()
         ) { page ->
             val song = songs[page]
+            val hasAlbumId = !song.albumId.isNullOrBlank()
+
             Box(
                 modifier = Modifier
                     .fillMaxSize()
                     .clip(RectangleShape)
                     .clickable {
-                        onPlaySong(song, page)
+                        HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                        if (hasAlbumId) {
+                            onOpenAlbum(song)
+                        } else {
+                            onPlaySong(song, page)
+                        }
                     }
             ) {
                 M3ImageUtils.TrackImage(
@@ -1393,6 +1416,34 @@ private fun StreamingRecommendationsCarousel(
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
+
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        androidx.compose.material3.Button(
+                            onClick = {
+                                HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
+                                onPlaySong(song, page)
+                            },
+                            shape = androidx.compose.foundation.shape.RoundedCornerShape(percent = 50),
+                            colors = androidx.compose.material3.ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.primaryContainer,
+                                contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                            ),
+                            contentPadding = PaddingValues(horizontal = 32.dp, vertical = 16.dp),
+                            modifier = Modifier.height(56.dp)
+                        ) {
+                            Text(
+                                text = context.getString(R.string.action_play),
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.ExtraBold
+                            )
+                        }
+                    }
                 }
             }
         }

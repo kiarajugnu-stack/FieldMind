@@ -345,7 +345,12 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
                             val now = System.currentTimeMillis()
                             val timeoutUntil = appSettings.rhythmGuardTimeoutUntilMs.value
                             val cooldownUntil = appSettings.rhythmGuardTimeoutCooldownUntilMs.value
-                            if (now < timeoutUntil) {
+                            if (timeoutUntil > 0L && now >= timeoutUntil && cooldownUntil <= 0L) {
+                                val cooldownMinutes = appSettings.rhythmGuardPostTimeoutCooldownMinutes.value.coerceIn(1, 60)
+                                val cooldownUntilMs = now + cooldownMinutes.toLong() * 60_000L
+                                appSettings.setRhythmGuardTimeoutCooldownUntilMs(cooldownUntilMs)
+                                appSettings.clearRhythmGuardListeningTimeout()
+                            } else if (now < timeoutUntil) {
                                 // Timeout is active, ensure playback is paused
                                 if (player.isPlaying) {
                                     withContext(Dispatchers.Main) {

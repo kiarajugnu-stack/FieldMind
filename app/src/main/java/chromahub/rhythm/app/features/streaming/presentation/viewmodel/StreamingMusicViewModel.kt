@@ -670,8 +670,14 @@ class StreamingMusicViewModel(application: Application) : AndroidViewModel(appli
 
             val selectedSong = queueToPlay[selectedIndex]
             val queueWithResolvedSongs = queueToPlay.map { song ->
-                val resolvedUrl = song.streamingUrl
-                    ?: repository.getStreamingUrl(song.id)
+                val fallbackUrl = song.streamingUrl?.takeIf { cachedUrl ->
+                    val isNetworkUrl =
+                        cachedUrl.startsWith("http://", ignoreCase = true) ||
+                            cachedUrl.startsWith("https://", ignoreCase = true)
+                    !isNetworkUrl || !song.id.contains("::")
+                }
+                val resolvedUrl = repository.getStreamingUrl(song.id)
+                    ?: fallbackUrl
 
                 if (resolvedUrl.isNullOrBlank()) {
                     song
