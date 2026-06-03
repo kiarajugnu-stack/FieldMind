@@ -496,7 +496,11 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
         var foregroundStartSucceeded = false
         
         try {
-            super.startForeground(NOTIFICATION_ID, notification)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                super.startForeground(NOTIFICATION_ID, notification, android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK)
+            } else {
+                super.startForeground(NOTIFICATION_ID, notification)
+            }
             foregroundStartSucceeded = true
             Log.d(TAG, "Started foreground service: $title - $content")
         } catch (e: Exception) {
