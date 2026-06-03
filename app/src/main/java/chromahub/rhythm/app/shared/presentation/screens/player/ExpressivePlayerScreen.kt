@@ -513,7 +513,7 @@ fun ExpressivePlayerScreen(
                                 Box(
                                     modifier = Modifier
                                         .padding(horizontal = if (isCompactWidth) 12.dp else 24.dp)
-                                        .fillMaxSize(if (isCompactHeight) 0.55f else 0.88f)
+                                        .fillMaxSize(if (isCompactHeight) 0.78f else 0.88f)
                                         .aspectRatio(1f)
                                         .graphicsLayer {
                                             scaleX = artworkScale

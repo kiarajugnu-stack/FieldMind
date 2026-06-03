@@ -608,7 +608,7 @@ fun MaterialPlayerScreen(
 
     // Dynamic sizing based on screen dimensions - used for artwork responsiveness
     val albumArtFraction = when {
-        isCompactHeight -> 0.58f
+        isCompactHeight -> 0.78f
         isExtraSmallWidth -> 0.90f
         isCompactWidth -> 0.92f
         isLargeHeight -> 1.0f
