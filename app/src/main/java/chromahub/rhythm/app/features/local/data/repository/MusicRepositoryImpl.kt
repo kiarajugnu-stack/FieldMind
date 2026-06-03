@@ -4298,7 +4298,18 @@ class MusicRepository(context: Context) {
                     bestTrack?.let { track ->
                         Log.d(TAG, "Apple Music API: Found matching iTunes track ID: ${track.trackId} (${track.trackName})")
                         val lyricsResponse = rhythmLyricsApiService.getLyrics(track.trackId.toString())
-                        val content = lyricsResponse.content
+                        
+                        var content = lyricsResponse.content
+                        var isSyllable = lyricsResponse.type == "Syllable"
+                        
+                        if ((content == null || content.isEmpty()) && !lyricsResponse.ttmlContent.isNullOrBlank()) {
+                            Log.d(TAG, "Apple Music API: Content is empty, but TTML content is present. Parsing TTML...")
+                            val parsedTtml = RhythmLyricsParser.parseTtmlLyrics(lyricsResponse.ttmlContent)
+                            if (parsedTtml.isNotEmpty()) {
+                                content = parsedTtml
+                                isSyllable = true
+                            }
+                        }
                         
                         if (content != null && content.isNotEmpty()) {
                             val wordByWordJson = Gson().toJson(content)
@@ -4306,7 +4317,7 @@ class MusicRepository(context: Context) {
                             val lrc = RhythmLyricsParser.toLRCFormat(parsedLines)
                             val plain = RhythmLyricsParser.toPlainText(parsedLines)
 
-                            if (lyricsResponse.type == "Syllable") {
+                            if (isSyllable) {
                                 Log.d(TAG, "Apple Music API: Syllable (Word-by-word) lyrics found and parsed successfully")
                                 LyricsData(
                                     plainLyrics = plain,
