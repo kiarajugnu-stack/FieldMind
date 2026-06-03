@@ -102,59 +102,7 @@ fun WidgetSettingsScreen(
                 .background(MaterialTheme.colorScheme.background)
                 .padding(horizontal = 24.dp)
         ) {
-            // Widget Preview Card
-            item {
-                Spacer(modifier = Modifier.height(16.dp))
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(18.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.primaryContainer
-                    )
-                ) {
-                    Column(
-                        modifier = Modifier.padding(20.dp)
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Icon(
-                                imageVector = RhythmIcons.Info,
-                                contentDescription = null,
-                                modifier = Modifier.size(24.dp)
-                            )
-                            Spacer(modifier = Modifier.width(12.dp))
-                            Text(
-                                text = stringResource(R.string.widget_preview_title),
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onPrimaryContainer
-                            )
-                        }
-                        Spacer(modifier = Modifier.height(12.dp))
-                        Text(
-                            text = stringResource(R.string.widget_preview_desc),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer
-                        )
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Button(
-                            onClick = {
-                                HapticUtils.performHapticFeedback(context, hapticFeedback, HapticFeedbackType.LongPress)
-                                updateAllWidgets(context)
-                            },
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Icon(
-                                imageVector = RhythmIcons.Refresh,
-                                contentDescription = null
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(stringResource(R.string.widget_refresh_all))
-                        }
-                    }
-                }
-            }
+
             
             // Display Options
             item {
@@ -261,23 +209,7 @@ fun WidgetSettingsScreen(
                 )
             }
             
-            // Behavior Options
-            item {
-                Spacer(modifier = Modifier.height(24.dp))
-                Material3SettingsGroup(
-                    title = stringResource(R.string.widget_behavior),
-                    items = listOf(
-                        buildToggleSettingsItem(
-                            icon = MaterialSymbolIcon("auto_mode"),
-                            title = stringResource(R.string.widget_auto_update),
-                            description = "Automatically update widget when song changes",
-                            checked = autoUpdate,
-                            onToggle = { appSettings.setWidgetAutoUpdate(it) }
-                        )
-                    ),
-                    containerColor = MaterialTheme.colorScheme.surfaceContainer
-                )
-            }
+
             
             // Tips Card
             item {

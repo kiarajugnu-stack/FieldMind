@@ -130,6 +130,213 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
         }
     }
 
+    private var wasPlayingBeforeTimeout = false
+
+    private val volumeChangeReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            if (intent?.action == "android.media.VOLUME_CHANGED_ACTION") {
+                val streamType = intent.getIntExtra("android.media.EXTRA_VOLUME_STREAM_TYPE", -1)
+                if (streamType == AudioManager.STREAM_MUSIC) {
+                    checkAndClampVolumeForRhythmGuard()
+                    checkAndPauseOnZeroSystemVolume()
+                }
+            }
+        }
+    }
+
+    /**
+     * When "Pause on Zero Volume" is enabled and system-volume mode is active,
+     * pause playback as soon as the system music stream reaches 0.
+     * Also broadcasts ACTION_ZERO_VOLUME_PAUSE so the UI can show the dialog
+     * regardless of whether MaterialPlayerScreen is currently in composition.
+     */
+    private fun checkAndPauseOnZeroSystemVolume() {
+        try {
+            if (!::appSettings.isInitialized) return
+            if (!appSettings.useSystemVolume.value) return
+            if (!appSettings.stopPlaybackOnZeroVolume.value) return
+            if (!player.isPlaying) return
+
+            val audioManager = getSystemService(Context.AUDIO_SERVICE) as? AudioManager ?: return
+            val current = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
+            if (current == 0) {
+                Log.d(TAG, "System volume hit 0 while playing — pausing (pause-on-zero active)")
+                player.pause()
+                // Broadcast so RhythmNavigation / UI can show the zero-volume dialog
+                val broadcastIntent = Intent(ACTION_ZERO_VOLUME_PAUSE).apply {
+                    `package` = packageName
+                }
+                sendBroadcast(broadcastIntent)
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error in checkAndPauseOnZeroSystemVolume", e)
+        }
+    }
+
+    private fun checkAndClampVolumeForRhythmGuard() {
+        try {
+            if (!::appSettings.isInitialized) return
+            val mode = appSettings.rhythmGuardMode.value
+            if (mode == AppSettings.RHYTHM_GUARD_MODE_AUTO) {
+                val age = appSettings.rhythmGuardAge.value
+                val policy = appSettings.getRhythmGuardPolicy(age)
+                val activeThreshold = policy.maxVolumeThreshold
+                
+                val audioManager = getSystemService(Context.AUDIO_SERVICE) as? AudioManager ?: return
+                val isSpeaker = isSpeakerOutputActive(audioManager)
+                val applyVolumeLimitOnSpeaker = appSettings.rhythmGuardApplyVolumeLimitOnSpeaker.value
+                val shouldApply = applyVolumeLimitOnSpeaker || !isSpeaker
+                
+                if (shouldApply) {
+                    val currentVolume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
+                    val maxVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
+                    val currentVolumeFraction = if (maxVolume > 0) currentVolume.toFloat() / maxVolume.toFloat() else 0f
+                    
+                    val volumeOvershoot = currentVolumeFraction - activeThreshold
+                    if (volumeOvershoot > 0.01f) {
+                        val targetVolume = Math.round(activeThreshold * maxVolume).toInt().coerceIn(0, maxVolume)
+                        audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, targetVolume, 0)
+                        Log.d(TAG, "Rhythm Guard Auto: clamped system volume from $currentVolumeFraction to $activeThreshold")
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error clamping volume in background", e)
+        }
+    }
+
+    private fun isSpeakerOutputActive(audioManager: AudioManager): Boolean {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            val devices = audioManager.getDevices(AudioManager.GET_DEVICES_OUTPUTS)
+            devices.any { it.type == AudioDeviceInfo.TYPE_BUILTIN_SPEAKER } &&
+                    !devices.any {
+                        (it.type == AudioDeviceInfo.TYPE_BLUETOOTH_A2DP ||
+                         it.type == AudioDeviceInfo.TYPE_BLUETOOTH_SCO ||
+                         it.type == AudioDeviceInfo.TYPE_WIRED_HEADSET ||
+                         it.type == AudioDeviceInfo.TYPE_WIRED_HEADPHONES) &&
+                        it.isSink
+                    }
+        } else {
+            @Suppress("DEPRECATION")
+            !audioManager.isBluetoothA2dpOn && !audioManager.isWiredHeadsetOn
+        }
+    }
+
+    private fun showRhythmGuardAlertNotification(title: String, text: String, riskLevel: String) {
+        val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        ensureRhythmGuardNotificationChannels(notificationManager)
+
+        val openAppIntent = Intent(this, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            putExtra("open_player", true)
+        }
+
+        val pendingIntent = PendingIntent.getActivity(
+            this,
+            8101,
+            openAppIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        val priority = when (riskLevel) {
+            "SEVERE", "HIGH" -> NotificationCompat.PRIORITY_HIGH
+            "MODERATE" -> NotificationCompat.PRIORITY_DEFAULT
+            else -> NotificationCompat.PRIORITY_LOW
+        }
+
+        val notification = NotificationCompat.Builder(this, "rhythm_guard_alerts")
+            .setSmallIcon(chromahub.rhythm.app.R.drawable.ic_notification)
+            .setContentTitle(title)
+            .setContentText(text)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(text))
+            .setCategory(NotificationCompat.CATEGORY_ALARM)
+            .setPriority(priority)
+            .setAutoCancel(true)
+            .setOnlyAlertOnce(true)
+            .setContentIntent(pendingIntent)
+            .build()
+
+        notificationManager.notify(1301, notification)
+    }
+
+    private fun showRhythmGuardTimerNotification(title: String, text: String, remainingSeconds: Long, totalSeconds: Long) {
+        val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        ensureRhythmGuardNotificationChannels(notificationManager)
+
+        val safeTotal = totalSeconds.coerceAtLeast(1L).coerceAtMost(Int.MAX_VALUE.toLong()).toInt()
+        val safeRemaining = remainingSeconds.coerceIn(0L, safeTotal.toLong()).toInt()
+        val completed = (safeTotal - safeRemaining).coerceIn(0, safeTotal)
+
+        val openAppIntent = Intent(this, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            putExtra("open_player", true)
+        }
+
+        val pendingIntent = PendingIntent.getActivity(
+            this,
+            8102,
+            openAppIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        val notification = NotificationCompat.Builder(this, "rhythm_guard_timers")
+            .setSmallIcon(chromahub.rhythm.app.R.drawable.ic_notification)
+            .setContentTitle(title)
+            .setContentText(text)
+            .setStyle(
+                NotificationCompat.BigTextStyle().bigText(
+                    "$text\n${getString(chromahub.rhythm.app.R.string.settings_rhythm_guard_notification_tap_open)}"
+                )
+            )
+            .setProgress(safeTotal, completed, false)
+            .setCategory(NotificationCompat.CATEGORY_REMINDER)
+            .setPriority(NotificationCompat.PRIORITY_LOW)
+            .setAutoCancel(true)
+            .setOnlyAlertOnce(true)
+            .setSilent(true)
+            .setContentIntent(pendingIntent)
+            .build()
+
+        notificationManager.notify(1302, notification)
+    }
+
+    private fun ensureRhythmGuardNotificationChannels(notificationManager: NotificationManager) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
+
+        val alertChannel = NotificationChannel(
+            "rhythm_guard_alerts",
+            getString(chromahub.rhythm.app.R.string.service_rhythm_guard_alerts),
+            NotificationManager.IMPORTANCE_HIGH
+        ).apply {
+            description = getString(chromahub.rhythm.app.R.string.service_rhythm_guard_alerts_desc)
+            enableVibration(true)
+        }
+
+        val timerChannel = NotificationChannel(
+            "rhythm_guard_timers",
+            getString(chromahub.rhythm.app.R.string.service_rhythm_guard_timers),
+            NotificationManager.IMPORTANCE_DEFAULT
+        ).apply {
+            description = getString(chromahub.rhythm.app.R.string.service_rhythm_guard_timers_desc)
+            enableVibration(false)
+            setShowBadge(false)
+        }
+
+        notificationManager.createNotificationChannel(alertChannel)
+        notificationManager.createNotificationChannel(timerChannel)
+    }
+
+    private fun cancelRhythmGuardTimerNotification() {
+        val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        notificationManager.cancel(1302)
+    }
+
+    private fun cancelRhythmGuardAlertNotification() {
+        val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        notificationManager.cancel(1301)
+    }
+
+
     private val repeatCommand: CommandButton
         get() = when (val mode = controller?.repeatMode ?: Player.REPEAT_MODE_OFF) {
             Player.REPEAT_MODE_OFF -> customCommands[2]
@@ -233,6 +440,9 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
         const val ACTION_UNMUTE = "chromahub.rhythm.app.action.UNMUTE"
         const val ACTION_TOGGLE_MUTE = "chromahub.rhythm.app.action.TOGGLE_MUTE"
 
+        // Zero-volume pause broadcast — sent by service, received by UI to show dialog
+        const val ACTION_ZERO_VOLUME_PAUSE = "chromahub.rhythm.app.action.ZERO_VOLUME_PAUSE"
+
         // Playback custom commands
         const val REPEAT_MODE_ALL = "repeat_all"
         const val REPEAT_MODE_ONE = "repeat_one"
@@ -307,6 +517,13 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
             registerReceiver(favoriteChangeReceiver, filter)
         }
 
+        val volumeFilter = IntentFilter("android.media.VOLUME_CHANGED_ACTION")
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+            registerReceiver(volumeChangeReceiver, volumeFilter, Context.RECEIVER_EXPORTED)
+        } else {
+            registerReceiver(volumeChangeReceiver, volumeFilter)
+        }
+
         try {
             // Initialize core components on main thread (required for media service)
             updateForegroundNotification(
@@ -348,30 +565,7 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
                             if (timeoutUntil > 0L && now >= timeoutUntil && cooldownUntil <= 0L) {
                                 val cooldownMinutes = appSettings.rhythmGuardPostTimeoutCooldownMinutes.value.coerceIn(1, 60)
                                 val cooldownUntilMs = now + cooldownMinutes.toLong() * 60_000L
-                                appSettings.setRhythmGuardTimeoutCooldownUntilMs(cooldownUntilMs)
-                                appSettings.clearRhythmGuardListeningTimeout()
-                            } else if (now < timeoutUntil) {
-                                // Timeout is active, ensure playback is paused
-                                if (player.isPlaying) {
-                                    withContext(Dispatchers.Main) {
-                                        player.pause()
-                                    }
-                                }
-                            } else if (now < cooldownUntil) {
-                                // Cooldown is active, do not trigger a new timeout
-                            } else if (player.isPlaying) {
-                                // Check active daily exposure limit
-                                val age = appSettings.rhythmGuardAge.value
-                                val policy = appSettings.getRhythmGuardPolicy(age)
-                                val alertThresholdMinutes = appSettings.rhythmGuardAlertThresholdMinutes.value
-                                val effectiveLimitMinutes = if (mode == AppSettings.RHYTHM_GUARD_MODE_AUTO) {
-                                    policy.recommendedDailyMinutes
-                                } else if (alertThresholdMinutes > 0) {
-                                    alertThresholdMinutes
-                                } else {
-                                    policy.recommendedDailyMinutes
-                                }
-
+                                
                                 val todaySummary = runCatching {
                                     statsRepository.loadSummary(StatsTimeRange.TODAY)
                                 }.getOrNull()
@@ -379,55 +573,119 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
                                 val currentPositionMs = player.currentPosition
                                 val totalMs = dbDurationMs + currentPositionMs
                                 val currentMinutes = (totalMs / 60000L).toInt().coerceAtLeast(0)
-
-                                // If listening minutes are below the daily limit (e.g., new day), reset the next allowed limit
-                                if (currentMinutes <= effectiveLimitMinutes) {
-                                    if (appSettings.rhythmGuardNextAllowedLimitMinutes.value != 0) {
-                                        appSettings.setRhythmGuardNextAllowedLimitMinutes(0)
+                                
+                                appSettings.setRhythmGuardTimeoutCooldownWithLimit(cooldownUntilMs, currentMinutes + 15)
+                                appSettings.clearRhythmGuardListeningTimeout()
+                                cancelRhythmGuardTimerNotification()
+                                if (wasPlayingBeforeTimeout) {
+                                    wasPlayingBeforeTimeout = false
+                                    withContext(Dispatchers.Main) {
+                                        player.play()
                                     }
                                 }
-
-                                // If a cooldown was active and has just ended, set the next allowed limit to allow 15 minutes of additional listening
+                            } else if (now < timeoutUntil) {
+                                // Timeout is active, ensure playback is paused
+                                if (player.isPlaying) {
+                                    wasPlayingBeforeTimeout = true
+                                    withContext(Dispatchers.Main) {
+                                        player.pause()
+                                    }
+                                }
+                            } else if (now < cooldownUntil) {
+                                // Cooldown is active, do not trigger a new timeout
+                            } else {
                                 if (cooldownUntil > 0L) {
-                                    val nextLimit = currentMinutes + 15
-                                    appSettings.setRhythmGuardNextAllowedLimitMinutes(nextLimit)
                                     appSettings.clearRhythmGuardTimeoutCooldown()
                                 }
+                                if (player.isPlaying) {
+                                    // Check active daily exposure limit
+                                    val age = appSettings.rhythmGuardAge.value
+                                    val policy = appSettings.getRhythmGuardPolicy(age)
+                                    val alertThresholdMinutes = appSettings.rhythmGuardAlertThresholdMinutes.value
+                                    val effectiveLimitMinutes = if (mode == AppSettings.RHYTHM_GUARD_MODE_AUTO) {
+                                        policy.recommendedDailyMinutes
+                                    } else if (alertThresholdMinutes > 0) {
+                                        alertThresholdMinutes
+                                    } else {
+                                        policy.recommendedDailyMinutes
+                                    }
 
-                                val nextAllowedLimit = appSettings.rhythmGuardNextAllowedLimitMinutes.value
-                                val activeLimit = if (nextAllowedLimit > effectiveLimitMinutes) {
-                                    nextAllowedLimit
-                                } else {
-                                    effectiveLimitMinutes
-                                }
+                                    val todaySummary = runCatching {
+                                        statsRepository.loadSummary(StatsTimeRange.TODAY)
+                                    }.getOrNull()
+                                    val dbDurationMs = todaySummary?.totalDurationMs ?: 0L
+                                    val currentPositionMs = player.currentPosition
+                                    val totalMs = dbDurationMs + currentPositionMs
+                                    val currentMinutes = (totalMs / 60000L).toInt().coerceAtLeast(0)
 
-                                if (currentMinutes > activeLimit) {
-                                    val warningTimeoutMinutes = appSettings.rhythmGuardWarningTimeoutMinutes.value.coerceIn(1, 180)
-                                    val newTimeoutUntilMs = now + warningTimeoutMinutes * 60_000L
-                                    val formattedToday = rhythmGuardFormatDurationFromMinutes(currentMinutes)
-                                    val formattedLimit = rhythmGuardFormatDurationFromMinutes(effectiveLimitMinutes)
-                                    val timeoutReason = getString(
-                                        chromahub.rhythm.app.R.string.settings_rhythm_guard_timeout_reason_auto,
-                                        formattedToday,
-                                        formattedLimit
-                                    )
-
-                                    appSettings.setRhythmGuardListeningTimeout(
-                                        untilEpochMs = newTimeoutUntilMs,
-                                        reason = timeoutReason,
-                                        startedAtEpochMs = now
-                                    )
-
-                                    withContext(Dispatchers.Main) {
-                                        if (player.isPlaying) {
-                                            player.pause()
+                                    // If listening minutes are below the daily limit (e.g., new day), reset the next allowed limit
+                                    if (currentMinutes <= effectiveLimitMinutes) {
+                                        if (appSettings.rhythmGuardNextAllowedLimitMinutes.value != 0) {
+                                            appSettings.setRhythmGuardNextAllowedLimitMinutes(0)
                                         }
-                                        RhythmGuardTimeoutActivity.start(
-                                            context = applicationContext,
-                                            reason = timeoutReason,
-                                            timeoutUntilMs = newTimeoutUntilMs,
-                                            timeoutStartedAtMs = now
+                                    }
+
+                                    val nextAllowedLimit = appSettings.rhythmGuardNextAllowedLimitMinutes.value
+                                    val activeLimit = if (nextAllowedLimit > effectiveLimitMinutes) {
+                                        nextAllowedLimit
+                                    } else {
+                                        effectiveLimitMinutes
+                                    }
+
+                                    if (currentMinutes > activeLimit) {
+                                        val breakResumeMinutes = appSettings.rhythmGuardBreakResumeMinutes.value.coerceIn(1, 180)
+                                        val newTimeoutUntilMs = now + breakResumeMinutes * 60_000L
+                                        val formattedToday = rhythmGuardFormatDurationFromMinutes(currentMinutes)
+                                        val formattedLimit = rhythmGuardFormatDurationFromMinutes(effectiveLimitMinutes)
+                                        val timeoutReason = getString(
+                                            chromahub.rhythm.app.R.string.settings_rhythm_guard_timeout_reason_auto,
+                                            formattedToday,
+                                            formattedLimit
                                         )
+
+                                        appSettings.setRhythmGuardListeningTimeout(
+                                            untilEpochMs = newTimeoutUntilMs,
+                                            reason = timeoutReason,
+                                            startedAtEpochMs = now
+                                        )
+
+                                        if (appSettings.rhythmGuardAlertNotificationsEnabled.value) {
+                                            showRhythmGuardAlertNotification(
+                                                title = getString(chromahub.rhythm.app.R.string.settings_rhythm_guard_notification_alert_title),
+                                                text = timeoutReason,
+                                                riskLevel = "HIGH"
+                                            )
+                                        }
+
+                                        if (appSettings.rhythmGuardTimerNotificationsEnabled.value) {
+                                            showRhythmGuardTimerNotification(
+                                                title = getString(chromahub.rhythm.app.R.string.settings_rhythm_guard_notification_timer_active_title),
+                                                text = getString(
+                                                    chromahub.rhythm.app.R.string.settings_rhythm_guard_notification_timer_active_text,
+                                                    rhythmGuardFormatDurationFromMinutes(breakResumeMinutes)
+                                                ),
+                                                remainingSeconds = breakResumeMinutes.toLong() * 60L,
+                                                totalSeconds = breakResumeMinutes.toLong() * 60L
+                                            )
+                                        }
+
+                                        withContext(Dispatchers.Main) {
+                                            val wasPlaying = player.isPlaying
+                                            if (wasPlaying) {
+                                                wasPlayingBeforeTimeout = true
+                                                player.pause()
+                                            }
+                                            try {
+                                                RhythmGuardTimeoutActivity.start(
+                                                    context = applicationContext,
+                                                    reason = timeoutReason,
+                                                    timeoutUntilMs = newTimeoutUntilMs,
+                                                    timeoutStartedAtMs = now
+                                                )
+                                            } catch (e: Exception) {
+                                                Log.w(TAG, "Failed to start RhythmGuardTimeoutActivity from background", e)
+                                            }
+                                        }
                                     }
                                 }
                             }
@@ -1767,6 +2025,11 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
             unregisterReceiver(favoriteChangeReceiver)
         } catch (e: Exception) {
             Log.w(TAG, "Error unregistering favorite change receiver", e)
+        }
+        try {
+            unregisterReceiver(volumeChangeReceiver)
+        } catch (e: Exception) {
+            Log.w(TAG, "Error unregistering volume change receiver", e)
         }
         
         // Cancel all coroutines and pending jobs

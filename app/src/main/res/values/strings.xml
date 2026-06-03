@@ -3607,11 +3607,12 @@
     <string name="miniplayercustomizationsettingsscreen_miniplayer_theme">MiniPlayer Theme</string>
     <string name="miniplayercustomizationsettingsscreen_choose_between_rhythm_default">Choose between Rhythm Default or Expressive theme</string>
     <string name="miniplayercustomizationsettingsscreen_integrated_directly_into_the">Integrated directly into the MiniPlayer background</string>
-    <string name="performancesettingsscreen_performance">Performance</string>
+    <string name="performancesettingsscreen_performance">Lite Mode</string>
     <string name="performancesettingsscreen_disable_haptics">Disable Haptics</string>
     <string name="performancesettingsscreen_enable_audio_offload">Enable Audio Offload</string>
     <string name="performancesettingsscreen_disable_text_marquee">Disable Text Marquee</string>
     <string name="performancesettingsscreen_disable_lossless_artwork">Disable Lossless Artwork</string>
+    <string name="performancesettingsscreen_disable_auto_fetch_artwork">Disable Auto-Fetch Artwork</string>
     <string name="placeholdersettingsscreen_choose_a_setting_from">Choose a setting from the left panel</string>
     <string name="placeholdersettingsscreen_tap_on_any_setting">Tap on any setting option to view and modify its preferences here</string>
     <string name="playercustomizationsettingsscreen_player_theme">Player Theme</string>
@@ -3658,4 +3659,6 @@
     <string name="festivethemeexamples_christmas">🎄 Christmas</string>
     <string name="festivethemeexamples_new_year">🎉 New Year</string>
     <string name="festivethemeexamples_using_app_settings">Using App Settings</string>
+    <string name="playback_paused_zero_volume">Playback was paused because the volume reached zero. Raise the volume to resume listening.</string>
+    <string name="zero_volume_raise_volume">Raise Volume</string>
 </resources>

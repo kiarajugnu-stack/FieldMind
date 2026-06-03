@@ -187,7 +187,8 @@ fun PlaylistDetailScreen(
     onToggleFavorite: (Song) -> Unit = {},
     onGoToAlbum: (Song) -> Unit = {},
     onGoToArtist: (Song) -> Unit = {},
-    onShare: (Song) -> Unit = {}
+    onShare: (Song) -> Unit = {},
+    musicViewModel: MusicViewModel = viewModel()
 ) {
     // Screen size detection for responsive UI
     val configuration = LocalConfiguration.current
@@ -234,7 +235,6 @@ fun PlaylistDetailScreen(
 
     // Song picker sheet state
     val coroutineScope = rememberCoroutineScope()
-    val musicViewModel: MusicViewModel = viewModel()
     val allSongs by musicViewModel.songs.collectAsState()
     var showSongPicker by remember { mutableStateOf(false) }
     val sheetState = rememberModalBottomSheetState()

@@ -2224,6 +2224,7 @@ private fun LocalNavigationContent(
 
                     if (playlist != null) {
                         PlaylistDetailScreen(
+                            musicViewModel = viewModel,
                             playlist = playlist,
                             currentSong = currentSong,
                             isPlaying = isPlaying,
@@ -2386,6 +2387,7 @@ private fun LocalNavigationContent(
                     val albumBottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false)
                     
                     ArtistDetailScreen(
+                        viewModel = viewModel,
                         artistName = artistName,
                         onBack = {
                             navigateBackOrToLanding()

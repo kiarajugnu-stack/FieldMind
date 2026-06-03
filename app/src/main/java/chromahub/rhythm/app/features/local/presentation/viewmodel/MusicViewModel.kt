@@ -31,6 +31,7 @@ import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import chromahub.rhythm.app.R
 import chromahub.rhythm.app.activities.MainActivity
+import chromahub.rhythm.app.activities.RhythmGuardTimeoutActivity
 import chromahub.rhythm.app.shared.data.model.Album
 import chromahub.rhythm.app.shared.data.model.AppSettings
 import chromahub.rhythm.app.shared.data.model.Artist
@@ -698,6 +699,17 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
     val isMuted: StateFlow<Boolean> = _isMuted.asStateFlow()
     
     private var _previousVolume = 0.7f
+
+    private val _showZeroVolumePauseDialog = MutableStateFlow(false)
+    val showZeroVolumePauseDialog = _showZeroVolumePauseDialog.asStateFlow()
+
+    fun triggerZeroVolumePauseDialog() {
+        _showZeroVolumePauseDialog.value = true
+    }
+
+    fun dismissZeroVolumePauseDialog() {
+        _showZeroVolumePauseDialog.value = false
+    }
 
     // New player state for additional functionality
     private val _isShuffleEnabled = MutableStateFlow(false)
@@ -1464,7 +1476,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
                 val hasMissingSongs = _songs.value.any { it.artworkUri == null }
                 
                 val shouldFetchArtists = hasMissingArtists && appSettings.deezerApiEnabled.value
-                val shouldFetchAlbumsAndSongs = (hasMissingAlbums || hasMissingSongs) && appSettings.autoFetchArtwork.value && appSettings.ytMusicApiEnabled.value
+                val shouldFetchAlbumsAndSongs = (hasMissingAlbums || hasMissingSongs) && appSettings.isAutoFetchArtworkActive.value && appSettings.ytMusicApiEnabled.value
 
                 if (shouldFetchArtists || shouldFetchAlbumsAndSongs) {
                     _isFetchingArtwork.value = true
@@ -1607,7 +1619,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
                 val hasMissingSongs = _songs.value.any { it.artworkUri == null }
                 
                 val shouldFetchArtists = hasMissingArtists && appSettings.deezerApiEnabled.value
-                val shouldFetchAlbumsAndSongs = (hasMissingAlbums || hasMissingSongs) && appSettings.autoFetchArtwork.value && appSettings.ytMusicApiEnabled.value
+                val shouldFetchAlbumsAndSongs = (hasMissingAlbums || hasMissingSongs) && appSettings.isAutoFetchArtworkActive.value && appSettings.ytMusicApiEnabled.value
 
                 if (shouldFetchArtists || shouldFetchAlbumsAndSongs) {
                     _isFetchingArtwork.value = true
@@ -1935,7 +1947,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
                         val hasMissingSongs = _songs.value.any { it.artworkUri == null }
                         
                         val shouldFetchArtists = hasMissingArtists && appSettings.deezerApiEnabled.value
-                        val shouldFetchAlbumsAndSongs = (hasMissingAlbums || hasMissingSongs) && appSettings.autoFetchArtwork.value && appSettings.ytMusicApiEnabled.value
+                        val shouldFetchAlbumsAndSongs = (hasMissingAlbums || hasMissingSongs) && appSettings.isAutoFetchArtworkActive.value && appSettings.ytMusicApiEnabled.value
 
                         if (shouldFetchArtists || shouldFetchAlbumsAndSongs) {
                             _isFetchingArtwork.value = true
@@ -4463,6 +4475,15 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
         if (!isRhythmGuardTimeoutActive()) return true
         Log.d(TAG, "Blocked playback action '$action' due to active Rhythm Guard timeout")
         enforceRhythmGuardTimeout(reason = action)
+
+        RhythmGuardTimeoutActivity.start(
+            context = getApplication<Application>(),
+            reason = appSettings.rhythmGuardTimeoutReason.value.ifBlank {
+                getApplication<Application>().getString(R.string.settings_rhythm_guard_timeout_activity_default_reason)
+            },
+            timeoutUntilMs = appSettings.rhythmGuardTimeoutUntilMs.value,
+            timeoutStartedAtMs = appSettings.rhythmGuardTimeoutStartedAtMs.value
+        )
         return false
     }
 
@@ -5369,10 +5390,10 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
             return
         }
 
-        // Use filteredSongs to respect whitelist/blacklist mode
-        val sortedSongsByPlayCount = filteredSongs.value.sortedByDescending { song ->
-            _songPlayCounts.value[song.id] ?: 0
-        }
+        // Use filteredSongs to respect whitelist/blacklist mode, filtering out unplayed songs
+        val sortedSongsByPlayCount = filteredSongs.value
+            .filter { song -> (_songPlayCounts.value[song.id] ?: 0) > 0 }
+            .sortedByDescending { song -> _songPlayCounts.value[song.id] ?: 0 }
 
         // Take top 50 most played songs
         val topSongs = sortedSongsByPlayCount.take(50)
@@ -6362,9 +6383,40 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
                 _isMuted.value = false
             }
             // Stop playback if volume reaches 0 and setting is enabled
-            if (clampedVolume == 0f && !_isMuted.value && appSettings.stopPlaybackOnZeroVolume.value) {
+            // Gate on !useSystemVolume: when system volume mode is ON, the system-volume
+            // ContentObserver in MaterialPlayerScreen handles pausing and the dialog trigger.
+            if (clampedVolume == 0f && !_isMuted.value
+                && appSettings.stopPlaybackOnZeroVolume.value
+                && !appSettings.useSystemVolume.value
+            ) {
                 pauseMusic()
+                _showZeroVolumePauseDialog.value = true
             }
+        }
+    }
+
+    /**
+     * Switches the volume control mode.
+     * - When enabling system volume mode: pins ExoPlayer volume to 1.0f (silent burst prevention)
+     *   and saves current app volume so it can be restored later.
+     * - When disabling system volume mode: restores the previously saved app volume.
+     */
+    fun setUseSystemVolumeMode(enable: Boolean) {
+        val prevAppVolume = _volume.value
+        appSettings.setUseSystemVolume(enable)
+        if (enable) {
+            // Pin app (ExoPlayer) volume to full so system volume is sole audio knob.
+            // Use the raw controller call to bypass the zero-volume dialog guard.
+            mediaController?.volume = 1f
+            _volume.value = 1f
+            _isMuted.value = false
+            Log.d(TAG, "System volume mode ON — ExoPlayer volume pinned to 1.0f")
+        } else {
+            // Restore a reasonable app volume (use previous, but at least 30% so no silence burst).
+            val restore = prevAppVolume.coerceAtLeast(0.3f)
+            mediaController?.volume = restore
+            _volume.value = restore
+            Log.d(TAG, "System volume mode OFF — ExoPlayer volume restored to $restore")
         }
     }
     
@@ -6372,13 +6424,15 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
         Log.d(TAG, "Toggling mute")
         if (_isMuted.value) {
             // Unmute - restore previous volume
-            setVolume(_previousVolume)
             _isMuted.value = false
+            setVolume(_previousVolume)
         } else {
             // Mute - save current volume and set to 0
+            // Set _isMuted BEFORE calling setVolume so the zero-volume dialog guard
+            // correctly suppresses the dialog during intentional muting.
             _previousVolume = _volume.value
-            setVolume(0f)
             _isMuted.value = true
+            setVolume(0f)
         }
     }
     
@@ -7330,6 +7384,12 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
             currentSongPlayCounts[song.id] = playCount
             _songPlayCounts.value = currentSongPlayCounts
             appSettings.setSongPlayCounts(currentSongPlayCounts)
+            
+            try {
+                populateMostPlayedPlaylist()
+            } catch (e: Exception) {
+                Log.e(TAG, "Error updating most played playlist on playback", e)
+            }
             
             // Update time-based preferences
             val hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY)

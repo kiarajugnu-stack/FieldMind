@@ -321,7 +321,7 @@ fun PlaybackBottomSheet(
                             onGaplessPlaybackChange = {
                                 musicViewModel.setGaplessPlayback(it)
                             },
-                            onUseSystemVolumeChange = { appSettings.setUseSystemVolume(it) },
+                            onUseSystemVolumeChange = { musicViewModel.setUseSystemVolumeMode(it) },
                             onStopPlaybackOnZeroVolumeChange = { appSettings.setStopPlaybackOnZeroVolume(it) },
                             onResumeOnDeviceReconnectChange = { appSettings.setResumeOnDeviceReconnect(it) },
                             onShowPlayedQueueSongsChange = { appSettings.setHidePlayedQueueSongs(!it) },

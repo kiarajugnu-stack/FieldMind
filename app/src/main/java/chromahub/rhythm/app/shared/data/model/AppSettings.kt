@@ -114,6 +114,7 @@ class AppSettings private constructor(context: Context) {
         private const val KEY_BATTERY_SAVER_ENABLE_OFFLOAD = "battery_saver_enable_offload"
         private const val KEY_BATTERY_SAVER_DISABLE_MARQUEE = "battery_saver_disable_marquee"
         private const val KEY_BATTERY_SAVER_DISABLE_LOSSLESS_ARTWORK = "battery_saver_disable_lossless_artwork"
+        private const val KEY_BATTERY_SAVER_DISABLE_AUTO_FETCH_ARTWORK = "battery_saver_disable_auto_fetch_artwork"
         private const val KEY_GLOBAL_MARQUEE_ENABLED = "global_marquee_enabled"
         
         private const val KEY_PRELOAD_LIMIT = "preload_limit"
@@ -1552,6 +1553,9 @@ private val _autoCheckForUpdates = MutableStateFlow(prefs.getBoolean(KEY_AUTO_CH
     private val _batterySaverDisableLosslessArtwork = MutableStateFlow(prefs.getBoolean(KEY_BATTERY_SAVER_DISABLE_LOSSLESS_ARTWORK, true))
     val batterySaverDisableLosslessArtwork: StateFlow<Boolean> = _batterySaverDisableLosslessArtwork.asStateFlow()
 
+    private val _batterySaverDisableAutoFetchArtwork = MutableStateFlow(prefs.getBoolean(KEY_BATTERY_SAVER_DISABLE_AUTO_FETCH_ARTWORK, true))
+    val batterySaverDisableAutoFetchArtwork: StateFlow<Boolean> = _batterySaverDisableAutoFetchArtwork.asStateFlow()
+
     private val _globalMarqueeEnabled = MutableStateFlow(prefs.getBoolean(KEY_GLOBAL_MARQUEE_ENABLED, true))
     val globalMarqueeEnabled: StateFlow<Boolean> = _globalMarqueeEnabled.asStateFlow()
 
@@ -1567,6 +1571,9 @@ private val _autoCheckForUpdates = MutableStateFlow(prefs.getBoolean(KEY_AUTO_CH
 
     private val _isLosslessArtworkActive = MutableStateFlow(calculateIsLosslessArtworkActive())
     val isLosslessArtworkActive: StateFlow<Boolean> = _isLosslessArtworkActive.asStateFlow()
+
+    private val _isAutoFetchArtworkActive = MutableStateFlow(calculateIsAutoFetchArtworkActive())
+    val isAutoFetchArtworkActive: StateFlow<Boolean> = _isAutoFetchArtworkActive.asStateFlow()
 
     private fun calculateIsHapticEnabled(): Boolean {
         val masterEnabled = _batterySaverEnabled.value
@@ -1604,11 +1611,21 @@ private val _autoCheckForUpdates = MutableStateFlow(prefs.getBoolean(KEY_AUTO_CH
         return baseLossless && !(masterEnabled && (mode == "auto" || disableLosslessInManual))
     }
 
+    private fun calculateIsAutoFetchArtworkActive(): Boolean {
+        val masterEnabled = _batterySaverEnabled.value
+        val mode = _batterySaverMode.value
+        val disableAutoFetchInManual = _batterySaverDisableAutoFetchArtwork.value
+        val baseAutoFetch = _autoFetchArtwork.value
+        
+        return baseAutoFetch && !(masterEnabled && (mode == "auto" || disableAutoFetchInManual))
+    }
+
     fun updateDerivedSettings() {
         _isHapticEnabled.value = calculateIsHapticEnabled()
         _isAudioOffloadActive.value = calculateIsAudioOffloadActive()
         _isMarqueeActive.value = calculateIsMarqueeActive()
         _isLosslessArtworkActive.value = calculateIsLosslessArtworkActive()
+        _isAutoFetchArtworkActive.value = calculateIsAutoFetchArtworkActive()
     }
     
     // Festive Decoration Position Settings
@@ -1831,6 +1848,12 @@ private val _autoCheckForUpdates = MutableStateFlow(prefs.getBoolean(KEY_AUTO_CH
     fun setBatterySaverDisableLosslessArtwork(disable: Boolean) {
         prefs.edit().putBoolean(KEY_BATTERY_SAVER_DISABLE_LOSSLESS_ARTWORK, disable).apply()
         _batterySaverDisableLosslessArtwork.value = disable
+        updateDerivedSettings()
+    }
+
+    fun setBatterySaverDisableAutoFetchArtwork(disable: Boolean) {
+        prefs.edit().putBoolean(KEY_BATTERY_SAVER_DISABLE_AUTO_FETCH_ARTWORK, disable).apply()
+        _batterySaverDisableAutoFetchArtwork.value = disable
         updateDerivedSettings()
     }
 
@@ -2729,6 +2752,17 @@ private val _autoCheckForUpdates = MutableStateFlow(prefs.getBoolean(KEY_AUTO_CH
         _rhythmGuardTimeoutCooldownUntilMs.value = safeUntil
     }
 
+    fun setRhythmGuardTimeoutCooldownWithLimit(cooldownUntilMs: Long, nextLimitMinutes: Int) {
+        val safeUntil = cooldownUntilMs.coerceAtLeast(0L)
+        val editor = prefs.edit().putLong(KEY_RHYTHM_GUARD_TIMEOUT_COOLDOWN_UNTIL_MS, safeUntil)
+        if (nextLimitMinutes > 0) {
+            editor.putInt(KEY_RHYTHM_GUARD_NEXT_ALLOWED_LIMIT_MINUTES, nextLimitMinutes)
+            _rhythmGuardNextAllowedLimitMinutes.value = nextLimitMinutes
+        }
+        editor.apply()
+        _rhythmGuardTimeoutCooldownUntilMs.value = safeUntil
+    }
+
     fun clearRhythmGuardTimeoutCooldown() {
         setRhythmGuardTimeoutCooldownUntilMs(0L)
     }
@@ -2879,6 +2913,7 @@ private val _autoCheckForUpdates = MutableStateFlow(prefs.getBoolean(KEY_AUTO_CH
     fun setAutoFetchArtwork(enabled: Boolean) {
         prefs.edit().putBoolean(KEY_AUTO_FETCH_ARTWORK, enabled).apply()
         _autoFetchArtwork.value = enabled
+        updateDerivedSettings()
     }
     
     fun setSpotifyClientId(clientId: String) {
@@ -4352,6 +4387,7 @@ private val _autoCheckForUpdates = MutableStateFlow(prefs.getBoolean(KEY_AUTO_CH
         _batterySaverEnableOffload.value = prefs.getBoolean(KEY_BATTERY_SAVER_ENABLE_OFFLOAD, true)
         _batterySaverDisableMarquee.value = prefs.getBoolean(KEY_BATTERY_SAVER_DISABLE_MARQUEE, true)
         _batterySaverDisableLosslessArtwork.value = prefs.getBoolean(KEY_BATTERY_SAVER_DISABLE_LOSSLESS_ARTWORK, true)
+        _batterySaverDisableAutoFetchArtwork.value = prefs.getBoolean(KEY_BATTERY_SAVER_DISABLE_AUTO_FETCH_ARTWORK, true)
         _globalMarqueeEnabled.value = prefs.getBoolean(KEY_GLOBAL_MARQUEE_ENABLED, true)
         updateDerivedSettings()
         

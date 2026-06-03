@@ -7,7 +7,10 @@ import chromahub.rhythm.app.shared.presentation.components.icons.Icon
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
+import android.content.BroadcastReceiver
+import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.os.Build
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
@@ -57,6 +60,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TimePicker
 import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -66,6 +70,7 @@ import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -274,6 +279,58 @@ private fun RhythmGuardWarningHost(
     val context = LocalContext.current
     val playbackStatsRepository = remember(context) { PlaybackStatsRepository.getInstance(context) }
 
+    var timeoutActivityLaunched by rememberSaveable { mutableStateOf(false) }
+
+    val timeoutUntilMs by appSettings.rhythmGuardTimeoutUntilMs.collectAsState()
+    val timeoutReason by appSettings.rhythmGuardTimeoutReason.collectAsState()
+    val timeoutStartedAtMsState by appSettings.rhythmGuardTimeoutStartedAtMs.collectAsState()
+
+    LaunchedEffect(timeoutUntilMs) {
+        val now = System.currentTimeMillis()
+        if (timeoutUntilMs > now) {
+            // Dismiss zero-volume dialog if a Rhythm Guard timeout starts (lock screen takes over)
+            if (musicViewModel.showZeroVolumePauseDialog.value) {
+                musicViewModel.dismissZeroVolumePauseDialog()
+            }
+            if (!timeoutActivityLaunched) {
+                timeoutActivityLaunched = true
+                val reason = timeoutReason.ifBlank {
+                    context.getString(R.string.settings_rhythm_guard_timeout_activity_default_reason)
+                }
+                RhythmGuardTimeoutActivity.start(
+                    context = context,
+                    reason = reason,
+                    timeoutUntilMs = timeoutUntilMs,
+                    timeoutStartedAtMs = timeoutStartedAtMsState
+                )
+            }
+        } else {
+            timeoutActivityLaunched = false
+        }
+    }
+
+    // Register a BroadcastReceiver to detect zero system-volume pauses triggered by the service.
+    // This works from any screen (not just the player screen) because the receiver lives at the
+    // root composition level for the lifetime of RhythmGuardWarningHost.
+    DisposableEffect(Unit) {
+        val zeroVolumeReceiver = object : BroadcastReceiver() {
+            override fun onReceive(ctx: Context?, intent: Intent?) {
+                if (intent?.action == chromahub.rhythm.app.infrastructure.service.MediaPlaybackService.ACTION_ZERO_VOLUME_PAUSE) {
+                    musicViewModel.triggerZeroVolumePauseDialog()
+                }
+            }
+        }
+        val zeroVolumeFilter = IntentFilter(chromahub.rhythm.app.infrastructure.service.MediaPlaybackService.ACTION_ZERO_VOLUME_PAUSE)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            context.registerReceiver(zeroVolumeReceiver, zeroVolumeFilter, Context.RECEIVER_NOT_EXPORTED)
+        } else {
+            context.registerReceiver(zeroVolumeReceiver, zeroVolumeFilter)
+        }
+        onDispose {
+            context.unregisterReceiver(zeroVolumeReceiver)
+        }
+    }
+
     val auraMode by appSettings.rhythmGuardMode.collectAsState()
     val auraAge by appSettings.rhythmGuardAge.collectAsState()
     val manualWarningsEnabled by appSettings.rhythmGuardManualWarningsEnabled.collectAsState()
@@ -285,10 +342,8 @@ private fun RhythmGuardWarningHost(
     val warningTimeoutMinutes by appSettings.rhythmGuardWarningTimeoutMinutes.collectAsState()
     val postTimeoutCooldownMinutes by appSettings.rhythmGuardPostTimeoutCooldownMinutes.collectAsState()
     val configuredBreakResumeMinutes by appSettings.rhythmGuardBreakResumeMinutes.collectAsState()
-    val timeoutUntilMs by appSettings.rhythmGuardTimeoutUntilMs.collectAsState()
-    val timeoutReason by appSettings.rhythmGuardTimeoutReason.collectAsState()
-    val timeoutStartedAtMsState by appSettings.rhythmGuardTimeoutStartedAtMs.collectAsState()
     val timeoutCooldownUntilMs by appSettings.rhythmGuardTimeoutCooldownUntilMs.collectAsState()
+    val nextAllowedLimit by appSettings.rhythmGuardNextAllowedLimitMinutes.collectAsState()
     val dailyListeningStats by appSettings.dailyListeningStats.collectAsState()
     val songsPlayed by appSettings.songsPlayed.collectAsState()
     val listeningTime by appSettings.listeningTime.collectAsState()
@@ -311,6 +366,11 @@ private fun RhythmGuardWarningHost(
         configuredAlertThresholdMinutes
     } else {
         activePolicy.recommendedDailyMinutes
+    }
+    val activeLimit = if (nextAllowedLimit > effectiveExposureLimitMinutes) {
+        nextAllowedLimit
+    } else {
+        effectiveExposureLimitMinutes
     }
     val activeThreshold = if (auraMode == AppSettings.RHYTHM_GUARD_MODE_AUTO) {
         activePolicy.maxVolumeThreshold
@@ -346,7 +406,7 @@ private fun RhythmGuardWarningHost(
             !isListeningTimeoutActive &&
             !isPostTimeoutCooldownActive &&
             exposureWarningEnabled &&
-            todayExposureMinutes > effectiveExposureLimitMinutes
+            todayExposureMinutes > activeLimit
 
     var volumeDialogState by remember { mutableStateOf<RhythmGuardVolumeWarningDialogState?>(null) }
     var breakDialogState by remember { mutableStateOf<RhythmGuardBreakDialogState?>(null) }
@@ -504,14 +564,15 @@ private fun RhythmGuardWarningHost(
         timeoutStartedAtMsState,
         configuredBreakResumeMinutes,
         postTimeoutCooldownMinutes,
-        auraMode
+        auraMode,
+        todayExposureMinutes
     ) {
         val now = System.currentTimeMillis()
         if (timeoutUntilMs <= now) {
             cancelRhythmGuardTimerNotification(context)
             if (timeoutUntilMs > 0L) {
                 val cooldownUntil = now + postTimeoutCooldownMinutes.coerceIn(1, 60) * 60_000L
-                appSettings.setRhythmGuardTimeoutCooldownUntilMs(cooldownUntil)
+                appSettings.setRhythmGuardTimeoutCooldownWithLimit(cooldownUntil, todayExposureMinutes + 15)
                 appSettings.clearRhythmGuardListeningTimeout()
                 musicViewModel.resumePlaybackAfterRhythmGuardTimeoutIfNeeded(
                     source = "timeout effect immediate-expired"
@@ -555,7 +616,7 @@ private fun RhythmGuardWarningHost(
         val timeoutExpired = timeoutUntilMs <= System.currentTimeMillis()
         if (timeoutExpired) {
             val cooldownUntil = System.currentTimeMillis() + postTimeoutCooldownMinutes.coerceIn(1, 60) * 60_000L
-            appSettings.setRhythmGuardTimeoutCooldownUntilMs(cooldownUntil)
+            appSettings.setRhythmGuardTimeoutCooldownWithLimit(cooldownUntil, todayExposureMinutes + 15)
             appSettings.clearRhythmGuardListeningTimeout()
             musicViewModel.resumePlaybackAfterRhythmGuardTimeoutIfNeeded(
                 source = "timeout effect countdown-finished"
@@ -843,6 +904,63 @@ private fun RhythmGuardWarningHost(
         }
     }
 
+    val showZeroVolumeDialog by musicViewModel.showZeroVolumePauseDialog.collectAsState()
+    val useSystemVolumeForDialog by appSettings.useSystemVolume.collectAsState()
+    if (showZeroVolumeDialog) {
+        AlertDialog(
+            onDismissRequest = { musicViewModel.dismissZeroVolumePauseDialog() },
+            icon = {
+                Icon(
+                    imageVector = RhythmIcons.VolumeOff,
+                    contentDescription = null,
+                    modifier = Modifier.size(28.dp)
+                )
+            },
+            title = {
+                Text(
+                    text = context.getString(R.string.settings_stop_playback_on_zero_volume),
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold
+                )
+            },
+            text = {
+                Text(
+                    text = context.getString(R.string.playback_paused_zero_volume),
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        // Restore volume to a safe audible level (30%)
+                        val restoreVolume = 0.30f
+                        if (useSystemVolumeForDialog) {
+                            setSystemMusicVolumeFraction(context, restoreVolume)
+                        }
+                        musicViewModel.setVolume(restoreVolume)
+                        musicViewModel.dismissZeroVolumePauseDialog()
+                    }
+                ) {
+                    Icon(
+                        imageVector = RhythmIcons.VolumeUp,
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(text = context.getString(R.string.zero_volume_raise_volume))
+                }
+            },
+            dismissButton = {
+                OutlinedButton(
+                    onClick = { musicViewModel.dismissZeroVolumePauseDialog() }
+                ) {
+                    Text(text = context.getString(R.string.action_ok))
+                }
+            }
+        )
+    }
+
+
     val volumeState = volumeDialogState
     if (volumeState != null) {
         AlertDialog(
@@ -944,15 +1062,10 @@ private fun RhythmGuardWarningHost(
                 showDelayDurationPicker = false
                 breakDialogState = null
             },
-            containerColor = MaterialTheme.colorScheme.surfaceContainer,
-            iconContentColor = MaterialTheme.colorScheme.secondary,
-            titleContentColor = MaterialTheme.colorScheme.onSurface,
-            textContentColor = MaterialTheme.colorScheme.onSurface,
             icon = {
                 Icon(
                     imageVector = RhythmIcons.AccessTime,
                     contentDescription = null,
-                    tint = MaterialTheme.colorScheme.secondary,
                     modifier = Modifier.size(28.dp)
                 )
             },
@@ -971,16 +1084,14 @@ private fun RhythmGuardWarningHost(
                             formattedTodayExposure,
                             formattedExposureLimit
                         ),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSecondaryContainer
+                        style = MaterialTheme.typography.bodyMedium
                     )
                     Text(
                         text = context.getString(
                             R.string.settings_rhythm_guard_risk_level_label,
                             rhythmGuardRiskLabel(context, breakState.riskLevel)
                         ),
-                        style = MaterialTheme.typography.labelLarge,
-                        color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.9f)
+                        style = MaterialTheme.typography.labelLarge
                     )
                     Text(
                         text = context.getString(
@@ -988,11 +1099,11 @@ private fun RhythmGuardWarningHost(
                             rhythmGuardRiskAction(context, breakState.riskLevel)
                         ),
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.88f)
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Card(
                         colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+                            containerColor = MaterialTheme.colorScheme.surfaceContainerHighest
                         )
                     ) {
                         Row(
@@ -1005,13 +1116,12 @@ private fun RhythmGuardWarningHost(
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
                                     text = context.getString(R.string.settings_rhythm_guard_break_dialog_schedule_title),
-                                    style = MaterialTheme.typography.labelLarge,
-                                    color = MaterialTheme.colorScheme.onSecondaryContainer
+                                    style = MaterialTheme.typography.labelLarge
                                 )
                                 Text(
                                     text = formattedBreakDuration,
                                     style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.85f)
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
                             OutlinedButton(onClick = { showBreakDurationPicker = true }) {

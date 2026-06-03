@@ -9548,11 +9548,9 @@ fun EnhancedWidgetsContent(
                     showAlbumArt = showAlbumArt,
                     showArtist = showArtist,
                     showAlbum = showAlbum,
-                    autoUpdate = autoUpdate,
                     onAlbumArtChange = { appSettings.setWidgetShowAlbumArt(it) },
                     onArtistChange = { appSettings.setWidgetShowArtist(it) },
-                    onAlbumChange = { appSettings.setWidgetShowAlbum(it) },
-                    onAutoUpdateChange = { appSettings.setWidgetAutoUpdate(it) }
+                    onAlbumChange = { appSettings.setWidgetShowAlbum(it) }
                 )
             }
         }
@@ -9592,11 +9590,9 @@ fun EnhancedWidgetsContent(
                 showAlbumArt = showAlbumArt,
                 showArtist = showArtist,
                 showAlbum = showAlbum,
-                autoUpdate = autoUpdate,
                 onAlbumArtChange = { appSettings.setWidgetShowAlbumArt(it) },
                 onArtistChange = { appSettings.setWidgetShowArtist(it) },
-                onAlbumChange = { appSettings.setWidgetShowAlbum(it) },
-                onAutoUpdateChange = { appSettings.setWidgetAutoUpdate(it) }
+                onAlbumChange = { appSettings.setWidgetShowAlbum(it) }
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -9613,11 +9609,9 @@ private fun WidgetSettingsCard(
     showAlbumArt: Boolean,
     showArtist: Boolean,
     showAlbum: Boolean,
-    autoUpdate: Boolean,
     onAlbumArtChange: (Boolean) -> Unit,
     onArtistChange: (Boolean) -> Unit,
-    onAlbumChange: (Boolean) -> Unit,
-    onAutoUpdateChange: (Boolean) -> Unit
+    onAlbumChange: (Boolean) -> Unit
 ) {
     val context = LocalContext.current
     val haptic = LocalHapticFeedback.current
@@ -9676,24 +9670,6 @@ private fun WidgetSettingsCard(
                 onClick = {
                     HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
                     onAlbumChange(!showAlbum)
-                }
-            ),
-            Material3SettingsItem(
-                icon = RhythmIcons.Refresh,
-                title = { Text(context.getString(R.string.onboarding_widget_auto_update)) },
-                description = { Text(context.getString(R.string.onboarding_widget_auto_update_desc)) },
-                trailingContent = {
-                    OnboardingAnimatedSwitch(
-                        checked = autoUpdate,
-                        onCheckedChange = {
-                            HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
-                            onAutoUpdateChange(it)
-                        }
-                    )
-                },
-                onClick = {
-                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
-                    onAutoUpdateChange(!autoUpdate)
                 }
             )
         ),

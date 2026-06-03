@@ -91,11 +91,11 @@ fun ArtistDetailScreen(
     artistOverride: Artist? = null,
     songsOverride: List<Song>? = null,
     albumsOverride: List<Album>? = null,
-    isContentLoadingOverride: Boolean? = null
+    isContentLoadingOverride: Boolean? = null,
+    viewModel: MusicViewModel = viewModel()
 ) {
     val context = LocalContext.current
     val haptics = LocalHapticFeedback.current
-    val viewModel: MusicViewModel = viewModel()
     val appSettings = remember { AppSettings.getInstance(context) }
     val groupByAlbumArtist by appSettings.groupByAlbumArtist.collectAsState()
     val artistSeparatorEnabled by appSettings.artistSeparatorEnabled.collectAsState()

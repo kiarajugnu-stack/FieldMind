@@ -439,6 +439,11 @@ fun MaterialPlayerScreen(
     // Monitor system volume changes using ContentObserver instead of polling
     LaunchedEffect(useSystemVolume) {
         if (useSystemVolume) {
+            // Safety net: ensure app (ExoPlayer) volume is full when system volume mode is active.
+            // setUseSystemVolumeMode() already does this, but guard against cold-start or direct
+            // AppSettings toggle paths that bypass the ViewModel.
+            musicViewModel.setVolume(1f)
+
             val audioManager =
                 context.getSystemService(android.content.Context.AUDIO_SERVICE) as android.media.AudioManager
             // Get initial volume
@@ -467,15 +472,18 @@ fun MaterialPlayerScreen(
         }
     }
 
-    // Stop playback when system volume reaches 0 if setting is enabled, and resume when volume > 0
-    LaunchedEffect(systemVolume, stopPlaybackOnZeroVolume, isPlaying) {
+
+    // Auto-resume: when system volume rises back above 0 after a zero-volume pause, resume playback.
+    // NOTE: Pausing + dialog trigger are now handled in MediaPlaybackService.volumeChangeReceiver
+    //       (via checkAndPauseOnZeroSystemVolume) so they work from any screen, not just the player.
+    LaunchedEffect(systemVolume, isPlaying) {
         if (useSystemVolume && stopPlaybackOnZeroVolume) {
-            if (systemVolume == 0f && isPlaying) {
-                onPlayPause()
-                wasPausedByZeroVolume = true
-            } else if (systemVolume > 0f && !isPlaying && wasPausedByZeroVolume) {
+            if (systemVolume > 0f && !isPlaying && wasPausedByZeroVolume) {
                 onPlayPause()
                 wasPausedByZeroVolume = false
+            } else if (systemVolume == 0f && isPlaying) {
+                // Service will pause; track that we were playing so auto-resume can fire
+                wasPausedByZeroVolume = true
             }
         }
     }

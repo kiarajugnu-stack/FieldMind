@@ -168,6 +168,7 @@ fun PerformanceSettingsScreen(onBackClick: () -> Unit) {
     val batterySaverEnableOffload by appSettings.batterySaverEnableOffload.collectAsState()
     val batterySaverDisableMarquee by appSettings.batterySaverDisableMarquee.collectAsState()
     val batterySaverDisableLosslessArtwork by appSettings.batterySaverDisableLosslessArtwork.collectAsState()
+    val batterySaverDisableAutoFetchArtwork by appSettings.batterySaverDisableAutoFetchArtwork.collectAsState()
 
     CollapsibleHeaderScreen(
         title = stringResource(R.string.performancesettingsscreen_performance),
@@ -192,7 +193,7 @@ fun PerformanceSettingsScreen(onBackClick: () -> Unit) {
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Icon(
-                            imageVector = MaterialSymbolIcon("battery_charging_full"),
+                            imageVector = MaterialSymbolIcon("speed"),
                             contentDescription = null,
                             tint = if (batterySaverEnabled) {
                                 MaterialTheme.colorScheme.primary
@@ -313,6 +314,18 @@ fun PerformanceSettingsScreen(onBackClick: () -> Unit) {
                                             onToggleChange = {},
                                             enabled = false
                                         )
+                                    ),
+                                    toMaterial3SettingsItem(
+                                        context = context,
+                                        hapticFeedback = haptic,
+                                        item = SettingItem(
+                                            icon = MaterialSymbolIcon("cloud_off"),
+                                            title = stringResource(R.string.performancesettingsscreen_disable_auto_fetch_artwork),
+                                            description = "Auto-fetching missing artwork from online sources is disabled to prevent lag.",
+                                            toggleState = true,
+                                            onToggleChange = {},
+                                            enabled = false
+                                        )
                                     )
                                 ),
                                 containerColor = MaterialTheme.colorScheme.surfaceContainer
@@ -363,6 +376,17 @@ fun PerformanceSettingsScreen(onBackClick: () -> Unit) {
                                             description = "Use standard artwork instead of lossless under Performance",
                                             toggleState = batterySaverDisableLosslessArtwork,
                                             onToggleChange = { appSettings.setBatterySaverDisableLosslessArtwork(it) }
+                                        )
+                                    ),
+                                    toMaterial3SettingsItem(
+                                        context = context,
+                                        hapticFeedback = haptic,
+                                        item = SettingItem(
+                                            icon = MaterialSymbolIcon("cloud_off"),
+                                            title = stringResource(R.string.performancesettingsscreen_disable_auto_fetch_artwork),
+                                            description = "Disable auto-fetching artwork to reduce lag and network overhead",
+                                            toggleState = batterySaverDisableAutoFetchArtwork,
+                                            onToggleChange = { appSettings.setBatterySaverDisableAutoFetchArtwork(it) }
                                         )
                                     )
                                 ),

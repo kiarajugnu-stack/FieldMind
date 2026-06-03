@@ -174,6 +174,7 @@ fun SettingsScreen(
     val hapticFeedback = LocalHapticFeedback.current
     val context = LocalContext.current
     val appSettings = AppSettings.getInstance(context)
+    val musicViewModel: MusicViewModel = viewModel()
     
     // Collect states for toggles
     val updatesEnabled by appSettings.updatesEnabled.collectAsState()
@@ -311,7 +312,7 @@ fun SettingsScreen(
                         context.getString(R.string.settings_system_volume), 
                         context.getString(R.string.settings_system_volume_desc), 
                         toggleState = useSystemVolume,
-                        onToggleChange = { appSettings.setUseSystemVolume(it) }
+                        onToggleChange = { musicViewModel.setUseSystemVolumeMode(it) }
                     ))
                     add(SettingItem(
                         RhythmIcons.Devices.Bluetooth,
@@ -325,9 +326,9 @@ fun SettingsScreen(
                     // Equalizer is available in both LOCAL and STREAMING modes
                     add(SettingItem(RhythmIcons.Equalizer, context.getString(R.string.settings_equalizer_title), context.getString(R.string.settings_equalizer_desc), onClick = { onNavigateTo(SettingsRoutes.EQUALIZER) }))
                     add(SettingItem(
-                        icon = MaterialSymbolIcon("battery_charging_full"),
+                        icon = MaterialSymbolIcon("speed"),
                         title = stringResource(R.string.performancesettingsscreen_performance),
-                        description = "Optimize haptics, decoding, and marquee for power consumption",
+                        description = "Optimize haptics, decoding, marquee, and artwork fetching to reduce lag",
                         onClick = { onNavigateTo(SettingsRoutes.BATTERY_SAVER) }
                     ))
                     add(SettingItem(

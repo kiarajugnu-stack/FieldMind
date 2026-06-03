@@ -10,6 +10,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.lifecycle.lifecycleScope
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.compose.animation.AnimatedVisibility
@@ -68,6 +69,8 @@ import androidx.compose.ui.unit.dp
 import chromahub.rhythm.app.R
 import chromahub.rhythm.app.shared.data.model.AppSettings
 import chromahub.rhythm.app.shared.presentation.components.common.RhythmWavyProgressLoader
+import chromahub.rhythm.app.shared.data.repository.PlaybackStatsRepository
+import chromahub.rhythm.app.shared.data.repository.StatsTimeRange
 import chromahub.rhythm.app.ui.theme.RhythmTheme
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -108,11 +111,26 @@ class RhythmGuardTimeoutActivity : ComponentActivity() {
                         if (shouldApplyCooldown) {
                             val cooldownMinutes = appSettings.rhythmGuardPostTimeoutCooldownMinutes.value.coerceIn(1, 60)
                             val cooldownUntil = System.currentTimeMillis() + cooldownMinutes.toLong() * 60_000L
-                            appSettings.setRhythmGuardTimeoutCooldownUntilMs(cooldownUntil)
+                            
+                            lifecycleScope.launch {
+                                val statsRepository = PlaybackStatsRepository.getInstance(applicationContext)
+                                val todaySummary = runCatching {
+                                    statsRepository.loadSummary(StatsTimeRange.TODAY)
+                                }.getOrNull()
+                                val dbDurationMs = todaySummary?.totalDurationMs ?: 0L
+                                val currentMinutes = (dbDurationMs / 60000L).toInt().coerceAtLeast(0)
+                                
+                                appSettings.setRhythmGuardTimeoutCooldownWithLimit(cooldownUntil, currentMinutes + 15)
+                                
+                                cancelRhythmGuardTimerNotification()
+                                appSettings.clearRhythmGuardListeningTimeout()
+                                finish()
+                            }
+                        } else {
+                            cancelRhythmGuardTimerNotification()
+                            appSettings.clearRhythmGuardListeningTimeout()
+                            finish()
                         }
-                        cancelRhythmGuardTimerNotification()
-                        appSettings.clearRhythmGuardListeningTimeout()
-                        finish()
                     }
                 )
             }

@@ -1167,6 +1167,7 @@ fun StreamingNavigation(
                 var selectedSongForInfo by remember { mutableStateOf<Song?>(null) }
 
                 ArtistDetailScreen(
+                    viewModel = localMusicViewModel,
                     artistName = localArtist.name,
                     onBack = { navController.popBackStack() },
                     onSongClick = { localSong ->
@@ -1331,6 +1332,7 @@ fun StreamingNavigation(
                 val albumSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false)
 
                 PlaylistDetailScreen(
+                    musicViewModel = localMusicViewModel,
                     playlist = localPlaylist,
                     currentSong = currentSong,
                     isPlaying = isPlaying,
