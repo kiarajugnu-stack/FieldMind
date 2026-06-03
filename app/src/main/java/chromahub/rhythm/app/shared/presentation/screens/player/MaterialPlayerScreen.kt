@@ -1044,6 +1044,7 @@ fun MaterialPlayerScreen(
             onPlayAll = { songs -> onPlayAlbumSongs(songs) },
             onShufflePlay = { songs -> onShuffleAlbumSongs(songs) },
             onAddToQueue = { song -> musicViewModel.addSongToQueue(song) },
+            onAddToQueueAll = { songs -> musicViewModel.addSongsToQueue(songs) },
             onAddSongToPlaylist = { song -> onAddSongToPlaylist(song, "") },
             onPlayerClick = onBack,
             sheetState = albumBottomSheetState,
@@ -1091,6 +1092,7 @@ fun MaterialPlayerScreen(
                 }
             },
             onAddToQueue = { song -> musicViewModel.addSongToQueue(song) },
+            onAddToQueueAll = { songs -> musicViewModel.addSongsToQueue(songs) },
             onAddSongToPlaylist = { song -> onAddSongToPlaylist(song, "") },
             onPlayerClick = { /* Already in player screen */ },
             sheetState = artistBottomSheetState,

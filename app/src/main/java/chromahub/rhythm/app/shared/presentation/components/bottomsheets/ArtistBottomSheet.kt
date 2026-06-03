@@ -73,7 +73,8 @@ fun ArtistBottomSheet(
     currentSong: Song? = null,
     isPlaying: Boolean = false,
     songs: List<Song>? = null,
-    albums: List<Album>? = null
+    albums: List<Album>? = null,
+    onAddToQueueAll: ((List<Song>) -> Unit)? = null
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -418,7 +419,7 @@ fun ArtistBottomSheet(
                                     modifier = Modifier
                                         .weight(1f)
                                         .height(52.dp),
-                                    shape = ButtonGroupDefaults.connectedTrailingButtonShapes().shape,
+                                    shape = if (onAddToQueueAll != null) ButtonGroupDefaults.connectedMiddleButtonShapes().shape else ButtonGroupDefaults.connectedTrailingButtonShapes().shape,
                                     colors = ButtonDefaults.filledTonalButtonColors(
                                         containerColor = MaterialTheme.colorScheme.secondaryContainer,
                                         contentColor = MaterialTheme.colorScheme.onSecondaryContainer
@@ -436,6 +437,41 @@ fun ArtistBottomSheet(
                                         style = MaterialTheme.typography.titleMedium,
                                         fontWeight = FontWeight.Medium
                                     )
+                                }
+
+                                if (onAddToQueueAll != null) {
+                                    FilledTonalButton(
+                                        onClick = {
+                                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                            if (artistSongs.isNotEmpty()) {
+                                                onAddToQueueAll(artistSongs)
+                                                scope.launch { sheetState.hide() }.invokeOnCompletion {
+                                                    onDismiss()
+                                                }
+                                            }
+                                        },
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .height(52.dp),
+                                        shape = ButtonGroupDefaults.connectedTrailingButtonShapes().shape,
+                                        colors = ButtonDefaults.filledTonalButtonColors(
+                                            containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                                            contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                                        ),
+                                        contentPadding = PaddingValues(horizontal = 16.dp)
+                                    ) {
+                                        Icon(
+                                            imageVector = RhythmIcons.Queue,
+                                            contentDescription = null,
+                                            modifier = Modifier.size(20.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Text(
+                                            "Add to queue",
+                                            style = MaterialTheme.typography.titleMedium,
+                                            fontWeight = FontWeight.Medium
+                                        )
+                                    }
                                 }
                             }
                         }

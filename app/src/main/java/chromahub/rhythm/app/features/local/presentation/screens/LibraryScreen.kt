@@ -560,6 +560,7 @@ fun LibraryScreen(
                 }
             },
             onAddToQueue = onAddToQueue,
+            onAddToQueueAll = { songs -> musicViewModel.addSongsToQueue(songs) },
             onAddSongToPlaylist = { song ->
                 selectedSong = song
                 scope.launch {

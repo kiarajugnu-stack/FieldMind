@@ -97,7 +97,8 @@ fun AlbumBottomSheet(
     showToggleFavoriteAction: Boolean = true,
     showAddToPlaylistAction: Boolean = true,
     showSongInfoAction: Boolean = true,
-    showAddToBlacklistAction: Boolean = true
+    showAddToBlacklistAction: Boolean = true,
+    onAddToQueueAll: ((List<Song>) -> Unit)? = null
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -536,6 +537,7 @@ fun AlbumBottomSheet(
                                 // Action buttons - Grouped button design
                                 var shufflePressed by remember { mutableStateOf(false) }
                                 var playAllPressed by remember { mutableStateOf(false) }
+                                var addToQueuePressed by remember { mutableStateOf(false) }
                                 
                                 val shuffleScale by animateFloatAsState(
                                     targetValue = if (shufflePressed) 0.96f else 1f,
@@ -554,6 +556,15 @@ fun AlbumBottomSheet(
                                     ),
                                     label = "playAllScale"
                                 )
+
+                                val addToQueueScale by animateFloatAsState(
+                                    targetValue = if (addToQueuePressed) 0.96f else 1f,
+                                    animationSpec = spring(
+                                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                                        stiffness = Spring.StiffnessMedium
+                                    ),
+                                    label = "addToQueueScale"
+                                )
                                 
                                 LaunchedEffect(shufflePressed) {
                                     if (shufflePressed) {
@@ -566,6 +577,13 @@ fun AlbumBottomSheet(
                                     if (playAllPressed) {
                                         delay(150)
                                         playAllPressed = false
+                                    }
+                                }
+                                
+                                LaunchedEffect(addToQueuePressed) {
+                                    if (addToQueuePressed) {
+                                        delay(150)
+                                        addToQueuePressed = false
                                     }
                                 }
                                 
@@ -1377,6 +1395,7 @@ fun AlbumBottomSheet(
                             ) {
                                 var shufflePressed by remember { mutableStateOf(false) }
                                 var playAllPressed by remember { mutableStateOf(false) }
+                                var addToQueuePressed by remember { mutableStateOf(false) }
                                 
                                 val shuffleScale by animateFloatAsState(
                                     targetValue = if (shufflePressed) 0.96f else 1f,
@@ -1395,6 +1414,15 @@ fun AlbumBottomSheet(
                                     ),
                                     label = "playAllScale"
                                 )
+
+                                val addToQueueScale by animateFloatAsState(
+                                    targetValue = if (addToQueuePressed) 0.96f else 1f,
+                                    animationSpec = spring(
+                                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                                        stiffness = Spring.StiffnessMedium
+                                    ),
+                                    label = "addToQueueScale"
+                                )
                                 
                                 LaunchedEffect(shufflePressed) {
                                     if (shufflePressed) {
@@ -1407,6 +1435,13 @@ fun AlbumBottomSheet(
                                     if (playAllPressed) {
                                         delay(150)
                                         playAllPressed = false
+                                    }
+                                }
+
+                                LaunchedEffect(addToQueuePressed) {
+                                    if (addToQueuePressed) {
+                                        delay(150)
+                                        addToQueuePressed = false
                                     }
                                 }
                                 
@@ -1486,7 +1521,7 @@ fun AlbumBottomSheet(
                                                 scaleX = shuffleScale
                                                 scaleY = shuffleScale
                                             },
-                                        shape = ButtonGroupDefaults.connectedTrailingButtonShapes().shape,
+                                        shape = if (onAddToQueueAll != null) ButtonGroupDefaults.connectedMiddleButtonShapes().shape else ButtonGroupDefaults.connectedTrailingButtonShapes().shape,
                                         colors = ButtonDefaults.filledTonalButtonColors(
                                             containerColor = MaterialTheme.colorScheme.secondaryContainer,
                                             contentColor = MaterialTheme.colorScheme.onSecondaryContainer
@@ -1504,6 +1539,52 @@ fun AlbumBottomSheet(
                                             style = MaterialTheme.typography.titleMedium,
                                             fontWeight = FontWeight.Medium
                                         )
+                                    }
+
+                                    if (onAddToQueueAll != null) {
+                                        FilledTonalButton(
+                                            onClick = {
+                                                HapticUtils.performHapticFeedback(
+                                                    context,
+                                                    haptics,
+                                                    HapticFeedbackType.LongPress
+                                                )
+                                                addToQueuePressed = true
+                                                onAddToQueueAll(visibleSongs)
+                                                scope.launch {
+                                                    sheetState.hide()
+                                                }.invokeOnCompletion {
+                                                    if (!sheetState.isVisible) {
+                                                        onDismiss()
+                                                    }
+                                                }
+                                            },
+                                            modifier = Modifier
+                                                .weight(1f)
+                                                .height(52.dp)
+                                                .graphicsLayer {
+                                                    scaleX = addToQueueScale
+                                                    scaleY = addToQueueScale
+                                                },
+                                            shape = ButtonGroupDefaults.connectedTrailingButtonShapes().shape,
+                                            colors = ButtonDefaults.filledTonalButtonColors(
+                                                containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                                                contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                                            ),
+                                            contentPadding = PaddingValues(horizontal = 16.dp)
+                                        ) {
+                                            Icon(
+                                                imageVector = RhythmIcons.Queue,
+                                                contentDescription = null,
+                                                modifier = Modifier.size(20.dp)
+                                            )
+                                            Spacer(modifier = Modifier.width(8.dp))
+                                            Text(
+                                                text = context.getString(R.string.action_add_to_queue),
+                                                style = MaterialTheme.typography.titleMedium,
+                                                fontWeight = FontWeight.Medium
+                                            )
+                                        }
                                     }
                                 }
                             }

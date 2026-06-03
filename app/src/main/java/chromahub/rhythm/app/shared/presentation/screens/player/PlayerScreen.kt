@@ -588,6 +588,7 @@ fun PlayerScreen(
                 onPlayAll = onPlayAlbumSongs,
                 onShufflePlay = onShuffleAlbumSongs,
                 onAddToQueue = { onAddSongsToQueue() },
+                onAddToQueueAll = { songs -> musicViewModel.addSongsToQueue(songs) },
                 onAddSongToPlaylist = { track ->
                     selectedSongForPlaylist = track
                     showAddToPlaylistSheetInternal = true
@@ -616,6 +617,7 @@ fun PlayerScreen(
                 onPlayAll = onPlayArtistSongs,
                 onShufflePlay = onShuffleArtistSongs,
                 onAddToQueue = { onAddSongsToQueue() },
+                onAddToQueueAll = { songs -> musicViewModel.addSongsToQueue(songs) },
                 onAddSongToPlaylist = { track ->
                     selectedSongForPlaylist = track
                     showAddToPlaylistSheetInternal = true

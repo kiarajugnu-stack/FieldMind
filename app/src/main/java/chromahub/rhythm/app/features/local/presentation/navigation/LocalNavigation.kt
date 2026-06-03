@@ -1424,6 +1424,7 @@ private fun LocalNavigationContent(
                             onPlayAll = { songs -> viewModel.playSongs(songs) },
                             onShufflePlay = { songs -> viewModel.playShuffled(songs) },
                             onAddToQueue = { song -> viewModel.addSongToQueue(song) },
+                            onAddToQueueAll = { songs -> viewModel.addSongsToQueue(songs) },
                             onAddSongToPlaylist = { song ->
                                 selectedSongForPlaylist = song
                                 showAddToPlaylistSheet = true
@@ -2313,6 +2314,7 @@ private fun LocalNavigationContent(
                             onPlayAll = { songs -> viewModel.playSongs(songs) },
                             onShufflePlay = { songs -> viewModel.playShuffled(songs) },
                             onAddToQueue = { song -> viewModel.addSongToQueue(song) },
+                            onAddToQueueAll = { songs -> viewModel.addSongsToQueue(songs) },
                             onAddSongToPlaylist = { },
                             onPlayerClick = { navController.navigate(Screen.Player.route) },
                             sheetState = albumSheetState,
@@ -2405,6 +2407,9 @@ private fun LocalNavigationContent(
                         },
                         onAddToQueue = { song ->
                             viewModel.addSongToQueue(song)
+                        },
+                        onAddToQueueAll = { songs ->
+                            viewModel.addSongsToQueue(songs)
                         },
                         onAddSongToPlaylist = { song ->
                             selectedSongForPlaylist = song
@@ -2509,6 +2514,7 @@ private fun LocalNavigationContent(
                             onPlayAll = { songs -> viewModel.playSongs(songs) },
                             onShufflePlay = { songs -> viewModel.playShuffled(songs) },
                             onAddToQueue = { song -> viewModel.addSongToQueue(song) },
+                            onAddToQueueAll = { songs -> viewModel.addSongsToQueue(songs) },
                             onAddSongToPlaylist = { song ->
                                 selectedSongForPlaylist = song
                                 showAddToPlaylistSheet = true

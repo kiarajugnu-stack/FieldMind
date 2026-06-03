@@ -73,6 +73,7 @@ fun ArtistDetailScreen(
     onAlbumClick: (Album) -> Unit,
     onPlayAll: (List<Song>) -> Unit,
     onShufflePlay: (List<Song>) -> Unit,
+    onAddToQueueAll: (List<Song>) -> Unit = {},
     onAddToQueue: (Song) -> Unit,
     onAddSongToPlaylist: (Song) -> Unit,
     onPlayerClick: () -> Unit,
@@ -236,6 +237,11 @@ fun ArtistDetailScreen(
                             if (artistSongs.isNotEmpty()) {
                                 onShufflePlay(artistSongs)
                                 onPlayerClick()
+                            }
+                        },
+                        onAddToQueueAll = {
+                            if (artistSongs.isNotEmpty()) {
+                                onAddToQueueAll(artistSongs)
                             }
                         },
                         haptics = haptics
@@ -490,11 +496,13 @@ private fun ArtistActionButtons(
     artistSongs: List<Song>,
     onPlayAll: () -> Unit,
     onShufflePlay: () -> Unit,
+    onAddToQueueAll: () -> Unit,
     haptics: androidx.compose.ui.hapticfeedback.HapticFeedback
 ) {
     val context = LocalContext.current
     var shufflePressed by remember { mutableStateOf(false) }
     var playAllPressed by remember { mutableStateOf(false) }
+    var addToQueuePressed by remember { mutableStateOf(false) }
     
     val shuffleScale by animateFloatAsState(
         targetValue = if (shufflePressed) 0.96f else 1f,
@@ -513,6 +521,15 @@ private fun ArtistActionButtons(
         ),
         label = "playAllScale"
     )
+
+    val addToQueueScale by animateFloatAsState(
+        targetValue = if (addToQueuePressed) 0.96f else 1f,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessMedium
+        ),
+        label = "addToQueueScale"
+    )
     
     LaunchedEffect(shufflePressed) {
         if (shufflePressed) {
@@ -525,6 +542,13 @@ private fun ArtistActionButtons(
         if (playAllPressed) {
             delay(150)
             playAllPressed = false
+        }
+    }
+
+    LaunchedEffect(addToQueuePressed) {
+        if (addToQueuePressed) {
+            delay(150)
+            addToQueuePressed = false
         }
     }
     
@@ -582,7 +606,7 @@ private fun ArtistActionButtons(
                     scaleX = shuffleScale
                     scaleY = shuffleScale
                 },
-            shape = ButtonGroupDefaults.connectedTrailingButtonShapes().shape,
+            shape = ButtonGroupDefaults.connectedMiddleButtonShapes().shape,
             colors = ButtonDefaults.filledTonalButtonColors(
                 containerColor = MaterialTheme.colorScheme.secondaryContainer,
                 contentColor = MaterialTheme.colorScheme.onSecondaryContainer
@@ -597,6 +621,40 @@ private fun ArtistActionButtons(
             Spacer(modifier = Modifier.width(10.dp))
             Text(
                 text = stringResource(R.string.cd_shuffle),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold
+            )
+        }
+
+        // Add to Queue Button
+        FilledTonalButton(
+            onClick = {
+                HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                addToQueuePressed = true
+                onAddToQueueAll()
+            },
+            modifier = Modifier
+                .weight(1f)
+                .height(56.dp)
+                .graphicsLayer {
+                    scaleX = addToQueueScale
+                    scaleY = addToQueueScale
+                },
+            shape = ButtonGroupDefaults.connectedTrailingButtonShapes().shape,
+            colors = ButtonDefaults.filledTonalButtonColors(
+                containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+            ),
+            enabled = artistSongs.isNotEmpty()
+        ) {
+            Icon(
+                imageVector = RhythmIcons.Queue,
+                contentDescription = null,
+                modifier = Modifier.size(22.dp)
+            )
+            Spacer(modifier = Modifier.width(10.dp))
+            Text(
+                text = stringResource(R.string.action_add_to_queue),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold
             )

@@ -359,6 +359,7 @@ fun HomeScreen(
                 }
             },
             onAddToQueue = onAddToQueue,
+            onAddToQueueAll = { songs -> musicViewModel.addSongsToQueue(songs) },
             onAddSongToPlaylist = { song ->
                 selectedSongForPlaylist = song
                 coroutineScope.launch {
