@@ -29,6 +29,12 @@ object CrashReporter {
         appSettings = AppSettings.getInstance(application) // Initialize AppSettings
         val defaultHandler = Thread.getDefaultUncaughtExceptionHandler()
         Thread.setDefaultUncaughtExceptionHandler { thread, throwable ->
+            if (isRuntimeShutdownThrowable(throwable)) {
+                Log.w(TAG, "Ignoring uncaught exception during runtime shutdown on thread ${thread.name}")
+                defaultHandler?.uncaughtException(thread, throwable)
+                return@setDefaultUncaughtExceptionHandler
+            }
+
             val crashLog = Log.getStackTraceString(throwable)
             Log.e(TAG, "Uncaught exception on thread ${thread.name}: $crashLog")
             appSettings.addCrashLogEntry(crashLog) // Add to crash log history
@@ -37,6 +43,21 @@ object CrashReporter {
             android.os.Process.killProcess(android.os.Process.myPid())
             System.exit(1)
         }
+    }
+
+    private fun isRuntimeShutdownThrowable(throwable: Throwable?): Boolean {
+        var cause = throwable
+        while (cause != null) {
+            val message = cause.message
+            if (message != null && (
+                message.contains("Thread starting during runtime shutdown") ||
+                message.contains("Runtime shutdown in progress")
+            )) {
+                return true
+            }
+            cause = cause.cause
+        }
+        return false
     }
 
     fun testCrash() {
