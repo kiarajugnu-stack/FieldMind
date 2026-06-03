@@ -43,6 +43,55 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Update Data (Centralized for both pages)
 const updateData = {
+    updateAnniversary: {
+        image: "assets/Banner.png",
+        headline: "Celebrating Our First Anniversary! 🥳",
+        date: "June 03, 2026",
+        writer: "Anjishnu Nandi",
+        details: `
+            <p>It's been an incredible year! We are thrilled to celebrate the first anniversary of Rhythm. What started as a vision for a professional, open-source music player has grown into a vibrant community of audiophiles.</p>
+            
+            <h3>🌟 A Year of Growth:</h3>
+            <ul>
+                <li>🚀 From simple local playback to the <strong>Streaming Revolution</strong> in v5.</li>
+                <li>🎨 Evolving from basic themes to <strong>Material You Expressive</strong> design.</li>
+                <li>🎧 Implementing studio-grade features like <strong>AutoEQ</strong> and <strong>High-Res Audio</strong>.</li>
+                <li>🌍 Expanding to support users across the globe.</li>
+            </ul>
+            
+            <p>We want to thank every single user, contributor, and supporter who helped us reach this milestone. Your feedback and passion drive us to keep pushing the boundaries of what a music player can be.</p>
+            
+            <p><strong>Here's to many more years of beautiful music and innovation! 🎵✨</strong></p>
+        `
+    },
+    update15: {
+        image: "assets/Posts/Rhythm_5_Release.png",
+        headline: "Rhythm 5: The Streaming Revolution 🌐",
+        date: "June 03, 2026",
+        writer: "Anjishnu Nandi",
+        details: `
+            <p>Rhythm 5 is here, and it's more than just an update—it's a complete evolution of how you experience music. We've introduced a <strong>Dual-Mode Architecture</strong>, allowing you to switch seamlessly between your local high-res library and a powerful new streaming ecosystem.</p>
+            
+            <h3>🚀 Key Highlights:</h3>
+            <ul>
+                <li>🌐 <strong>Streaming Ecosystem</strong> - Dedicated streaming providers, libraries, and a refined playback UI.</li>
+                <li>🔍 <strong>Universal Search</strong> - A unified search experience for faster discovery across all your music sources.</li>
+                <li>🎤 <strong>Full-Screen Lyrics</strong> - An immersive, karaoke-style view for deeper connection with your favorite tracks.</li>
+                <li>🎨 <strong>Material Symbols</strong> - A modernized visual language for a cleaner, more intuitive interface.</li>
+                <li>📊 <strong>Rhythm Stats 2.0</strong> - Deeper listening insights and a revamped UI to visualize your musical journey.</li>
+            </ul>
+            
+            <h3>🎧 Audio & Performance:</h3>
+            <ul>
+                <li>🔊 <strong>Crossfade Support</strong> - Smooth transitions between tracks with new crossfade on skip.</li>
+                <li>💎 <strong>ALAC Restored</strong> - High-resolution audio support is back and better than ever.</li>
+                <li>⚡ <strong>Zero Lag</strong> - Optimized codebase that eliminates frame drops during playback and navigation.</li>
+                <li>🛡️ <strong>Audio Stability</strong> - Fixed 16-bit crackling and concurrency issues for studio-grade stability.</li>
+            </ul>
+            
+            <p><strong>Experience the revolution today!</strong> The latest stable version is available for download on our GitHub releases page.</p>
+        `
+    },
     update1: {
         image: "assets/update.jpg",
         headline: "Rhythm's Website Launch ;)",
