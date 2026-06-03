@@ -1985,7 +1985,7 @@ class MusicRepository(context: Context) {
 
     suspend fun loadAlbums(): List<Album> = withContext(Dispatchers.IO) {
         val albums = mutableListOf<Album>()
-        val seenAlbumTitles = mutableSetOf<String>() // Dedup albums by normalized title
+        val seenAlbums = mutableSetOf<String>() // Dedup albums by normalized title and artist
         val collection = MediaStore.Audio.Albums.EXTERNAL_CONTENT_URI
 
         val projection = arrayOf(
@@ -2000,7 +2000,7 @@ class MusicRepository(context: Context) {
 
         // Load all songs once
         val allSongs = loadSongs()
-        val songsByAlbumTitle = allSongs.groupBy { it.album }
+        val songsByAlbumId = allSongs.groupBy { it.albumId }
 
         context.contentResolver.query(
             collection,
@@ -2024,16 +2024,18 @@ class MusicRepository(context: Context) {
                 val songsCount = cursor.getInt(songsCountColumn)
                 val year = cursor.getInt(yearColumn)
 
-                // Deduplicate albums by normalized title (case-insensitive, trimmed)
+                // Deduplicate albums by normalized title and artist (case-insensitive, trimmed)
                 val normalizedTitle = title.lowercase().trim()
-                if (seenAlbumTitles.contains(normalizedTitle)) {
-                    Log.d(TAG, "Skipping duplicate album: $title")
+                val normalizedArtist = artist.lowercase().trim()
+                val albumKey = "$normalizedTitle|$normalizedArtist"
+                if (seenAlbums.contains(albumKey)) {
+                    Log.d(TAG, "Skipping duplicate album: $title by $artist")
                     continue
                 }
-                seenAlbumTitles.add(normalizedTitle)
+                seenAlbums.add(albumKey)
 
-                // Get songs for this album from the pre-loaded map
-                val albumSongs = songsByAlbumTitle[title] ?: emptyList()
+                // Get songs for this album from the pre-loaded map by albumId
+                val albumSongs = songsByAlbumId[id.toString()] ?: emptyList()
                 
                 // Use album art from the first song in the album if available
                 // This ensures consistency with the song's album art (whether embedded or from MediaStore)
