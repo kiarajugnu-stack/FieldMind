@@ -1268,6 +1268,16 @@ fun buildSettingsSearchIndex(context: Context): List<SearchableSettingItem> {
             settingKey = "crossfadeDuration"
         ))
         add(SearchableSettingItem(
+            id = "crossfade_on_skip",
+            title = context.getString(R.string.settings_crossfade_on_skip),
+            description = context.getString(R.string.settings_crossfade_on_skip_desc),
+            keywords = listOf("crossfade", "skip", "next", "previous", "manual", "transition", "fade"),
+            icon = MaterialSymbolIcon("skip_next"),
+            route = SettingsRoutes.PLAYBACK,
+            parentScreen = "Playback",
+            settingKey = "crossfadeOnSkip"
+        ))
+        add(SearchableSettingItem(
             id = "queue_persistence",
             title = context.getString(R.string.settings_queue_persistence),
             description = context.getString(R.string.settings_queue_persistence_desc),

@@ -36,12 +36,15 @@ import chromahub.rhythm.app.util.HapticType
 import chromahub.rhythm.app.shared.presentation.components.common.CollapsibleHeaderScreen
 import chromahub.rhythm.app.shared.presentation.components.Material3SettingsGroup
 import chromahub.rhythm.app.shared.presentation.components.Material3SettingsItem
+import androidx.lifecycle.viewmodel.compose.viewModel
+import chromahub.rhythm.app.features.local.presentation.viewmodel.MusicViewModel
 
 @Composable
 fun PlaybackSettingsScreen(onBackClick: () -> Unit) {
     val context = LocalContext.current
     val appSettings = AppSettings.getInstance(context)
     val hapticFeedback = LocalHapticFeedback.current
+    val musicViewModel: MusicViewModel = viewModel()
 
     val repeatModePersistence by appSettings.repeatModePersistence.collectAsState()
     val shuffleModePersistence by appSettings.shuffleModePersistence.collectAsState()
@@ -52,6 +55,9 @@ fun PlaybackSettingsScreen(onBackClick: () -> Unit) {
     val crossfadeRepeatOne by appSettings.crossfadeRepeatOne.collectAsState()
     val crossfadeOnSkip by appSettings.crossfadeOnSkip.collectAsState()
     val stopPlaybackOnAppClose by appSettings.stopPlaybackOnAppClose.collectAsState()
+    val useSystemVolume by appSettings.useSystemVolume.collectAsState()
+    val resumeOnDeviceReconnect by appSettings.resumeOnDeviceReconnect.collectAsState()
+    val audioOffloadEnabled by appSettings.audioOffloadEnabled.collectAsState()
 
     CollapsibleHeaderScreen(
         title = context.getString(R.string.settings_playback_title),
@@ -59,6 +65,25 @@ fun PlaybackSettingsScreen(onBackClick: () -> Unit) {
         onBackClick = onBackClick
     ) { modifier ->
         val settingGroups = listOf(
+            SettingGroup(
+                title = context.getString(R.string.settings_section_volume_device),
+                items = listOf(
+                    SettingItem(
+                        RhythmIcons.Player.VolumeUp,
+                        context.getString(R.string.settings_system_volume),
+                        context.getString(R.string.settings_system_volume_desc),
+                        toggleState = useSystemVolume,
+                        onToggleChange = { musicViewModel.setUseSystemVolumeMode(it) }
+                    ),
+                    SettingItem(
+                        RhythmIcons.Devices.Bluetooth,
+                        context.getString(R.string.settings_resume_on_device_reconnect),
+                        context.getString(R.string.settings_resume_on_device_reconnect_desc),
+                        toggleState = resumeOnDeviceReconnect,
+                        onToggleChange = { appSettings.setResumeOnDeviceReconnect(it) }
+                    )
+                )
+            ),
             SettingGroup(
                 title = context.getString(R.string.settings_playback_persistence),
                 items = listOf(
@@ -118,6 +143,18 @@ fun PlaybackSettingsScreen(onBackClick: () -> Unit) {
                         toggleState = crossfadeOnSkip,
                         onToggleChange = { appSettings.setCrossfadeOnSkip(it) },
                         enabled = crossfadeEnabled
+                    )
+                )
+            ),
+            SettingGroup(
+                title = context.getString(R.string.settings_section_audio_playback),
+                items = listOf(
+                    SettingItem(
+                        MaterialSymbolIcon("bolt"),
+                        context.getString(R.string.settingsscreen_audio_offload),
+                        "Hardware-accelerated audio decoding to save device power",
+                        toggleState = audioOffloadEnabled,
+                        onToggleChange = { appSettings.setAudioOffloadEnabled(it) }
                     )
                 )
             ),

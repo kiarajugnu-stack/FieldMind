@@ -465,10 +465,17 @@ object RhythmLyricsParser {
         val parsed = parseTtml(audioMimeType = null, lyricText = ttmlContent)
         if (parsed is SemanticLyrics.SyncedLyrics) {
             return parsed.text.map { semanticLine ->
-                val rhythmLyricsWords = semanticLine.words?.map { word ->
+                val rhythmLyricsWords = semanticLine.words?.mapIndexed { idx, word ->
+                    val isPart = if (idx > 0) {
+                        val prevWord = semanticLine.words[idx - 1]
+                        val gap = semanticLine.text.substring(prevWord.charRange.last + 1, word.charRange.first)
+                        gap.isEmpty()
+                    } else {
+                        false
+                    }
                     RhythmLyricsWord(
                         text = semanticLine.text.substring(word.charRange),
-                        part = false,
+                        part = isPart,
                         timestamp = word.begin.toLong(),
                         endtime = (word.endInclusive ?: word.begin).toLong()
                     )

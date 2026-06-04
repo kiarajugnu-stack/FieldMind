@@ -175,14 +175,10 @@ fun SettingsScreen(
     val hapticFeedback = LocalHapticFeedback.current
     val context = LocalContext.current
     val appSettings = AppSettings.getInstance(context)
-    val musicViewModel: MusicViewModel = viewModel()
     
     // Collect states for toggles
     val updatesEnabled by appSettings.updatesEnabled.collectAsState()
     val hapticFeedbackEnabled by appSettings.hapticFeedbackEnabled.collectAsState()
-    val useSystemVolume by appSettings.useSystemVolume.collectAsState()
-    val audioNormalization by appSettings.audioNormalization.collectAsState()
-    val resumeOnDeviceReconnect by appSettings.resumeOnDeviceReconnect.collectAsState()
     val defaultScreen by appSettings.defaultScreen.collectAsState()
     val showAlphabetBar by appSettings.showAlphabetBar.collectAsState()
     val showScrollToTop by appSettings.showScrollToTop.collectAsState()
@@ -190,7 +186,6 @@ fun SettingsScreen(
     val rhythmGuardMode by appSettings.rhythmGuardMode.collectAsState()
     val showSettingsSuggestions by appSettings.showSettingsSuggestions.collectAsState()
     val showKeyboardOnSearchOpen by appSettings.showKeyboardOnSearchOpen.collectAsState()
-    val audioOffloadEnabled by appSettings.audioOffloadEnabled.collectAsState()
     
     var showDefaultScreenDialog by remember { mutableStateOf(false) }
     var showLanguageSwitcher by remember { mutableStateOf(false) }
@@ -307,21 +302,6 @@ fun SettingsScreen(
             SettingGroup(
                 title = context.getString(R.string.settings_section_audio_lyrics),
                 items = buildList {
-                    add(SettingItem(
-                        RhythmIcons.Player.VolumeUp, 
-                        context.getString(R.string.settings_system_volume), 
-                        context.getString(R.string.settings_system_volume_desc), 
-                        toggleState = useSystemVolume,
-                        onToggleChange = { musicViewModel.setUseSystemVolumeMode(it) }
-                    ))
-                    add(SettingItem(
-                        RhythmIcons.Devices.Bluetooth,
-                        context.getString(R.string.settings_resume_on_device_reconnect),
-                        context.getString(R.string.settings_resume_on_device_reconnect_desc),
-                        toggleState = resumeOnDeviceReconnect,
-                        onToggleChange = { appSettings.setResumeOnDeviceReconnect(it) }
-                    ))
-                    //add(SettingItem(MaterialSymbolIcon("graphic_eq"), context.getString(R.string.audio_normalization), context.getString(R.string.audio_normalization_desc), toggleState = audioNormalization, onToggleChange = { appSettings.setAudioNormalization(it) }))
                     // Equalizer is available in both LOCAL and STREAMING modes
                     add(SettingItem(RhythmIcons.Equalizer, context.getString(R.string.settings_equalizer_title), context.getString(R.string.settings_equalizer_desc), onClick = { onNavigateTo(SettingsRoutes.EQUALIZER) }))
                     add(SettingItem(
@@ -335,13 +315,6 @@ fun SettingsScreen(
                         title = stringResource(R.string.performancesettingsscreen_performance),
                         description = "Optimize haptics, decoding, marquee, and artwork fetching to reduce lag",
                         onClick = { onNavigateTo(SettingsRoutes.BATTERY_SAVER) }
-                    ))
-                    add(SettingItem(
-                        icon = MaterialSymbolIcon("bolt"),
-                        title = stringResource(R.string.settingsscreen_audio_offload),
-                        description = "Hardware-accelerated audio decoding to save device power",
-                        toggleState = audioOffloadEnabled,
-                        onToggleChange = { appSettings.setAudioOffloadEnabled(it) }
                     ))
                 }
             ),

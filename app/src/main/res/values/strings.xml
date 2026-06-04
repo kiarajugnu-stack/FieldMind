@@ -1354,6 +1354,7 @@
     <string name="settings_section_queue_playback">Queue &amp; Playback</string>
     <string name="settings_section_audio_lyrics">Audio &amp; Effects</string>
     <string name="settings_section_audio_playback">Audio &amp; Playback</string>
+    <string name="settings_section_volume_device">Volume &amp; Device</string>
     <string name="settings_system_volume">System Volume</string>
     <string name="settings_system_volume_desc">System audio</string>
     <string name="settings_stop_playback_on_zero_volume">Pause on Zero Volume</string>

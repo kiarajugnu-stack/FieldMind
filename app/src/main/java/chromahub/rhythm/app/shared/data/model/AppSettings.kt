@@ -602,10 +602,10 @@ class AppSettings private constructor(context: Context) {
     private val _crossfadeDuration = MutableStateFlow(prefs.getFloat(KEY_CROSSFADE_DURATION, 4f))
     val crossfadeDuration: StateFlow<Float> = _crossfadeDuration.asStateFlow()
 
-    private val _crossfadeRepeatOne = MutableStateFlow(prefs.getBoolean(KEY_CROSSFADE_REPEAT_ONE, false))
+    private val _crossfadeRepeatOne = MutableStateFlow(prefs.getBoolean(KEY_CROSSFADE_REPEAT_ONE, true))
     val crossfadeRepeatOne: StateFlow<Boolean> = _crossfadeRepeatOne.asStateFlow()
     
-    private val _crossfadeOnSkip = MutableStateFlow(prefs.getBoolean(KEY_CROSSFADE_ON_SKIP, false))
+    private val _crossfadeOnSkip = MutableStateFlow(prefs.getBoolean(KEY_CROSSFADE_ON_SKIP, true))
     val crossfadeOnSkip: StateFlow<Boolean> = _crossfadeOnSkip.asStateFlow()
     
     private val _audioNormalization = MutableStateFlow(prefs.getBoolean(KEY_AUDIO_NORMALIZATION, true))
@@ -4421,7 +4421,7 @@ private val _autoCheckForUpdates = MutableStateFlow(prefs.getBoolean(KEY_AUTO_CH
         _gaplessPlayback.value = prefs.getBoolean(KEY_GAPLESS_PLAYBACK, true)
         _crossfade.value = prefs.getBoolean(KEY_CROSSFADE, true)
         _crossfadeDuration.value = prefs.getFloat(KEY_CROSSFADE_DURATION, 4f)
-        _crossfadeRepeatOne.value = prefs.getBoolean(KEY_CROSSFADE_REPEAT_ONE, false)
+        _crossfadeRepeatOne.value = prefs.getBoolean(KEY_CROSSFADE_REPEAT_ONE, true)
         _audioNormalization.value = prefs.getBoolean(KEY_AUDIO_NORMALIZATION, true)
         _replayGain.value = prefs.getBoolean(KEY_REPLAY_GAIN, false)
         _audioOffloadEnabled.value = prefs.getBoolean(KEY_AUDIO_OFFLOAD_ENABLED, true)
