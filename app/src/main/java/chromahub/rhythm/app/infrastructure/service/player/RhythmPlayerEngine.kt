@@ -28,6 +28,8 @@ import androidx.media3.datasource.cache.CacheDataSource
 import chromahub.rhythm.app.infrastructure.audio.RhythmBassBoostProcessor
 import chromahub.rhythm.app.infrastructure.audio.RhythmSpatializationProcessor
 import chromahub.rhythm.app.shared.data.model.TransitionSettings
+import chromahub.rhythm.app.infrastructure.service.player.replaygain.ReplayGainAudioProcessor
+import chromahub.rhythm.app.infrastructure.service.player.replaygain.ReplayGainUtil
 import chromahub.rhythm.app.util.envelope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CancellationException
@@ -71,6 +73,9 @@ class RhythmPlayerEngine(
     private var playerBBassBoost: RhythmBassBoostProcessor? = null
     private var playerASpatialization: RhythmSpatializationProcessor? = null
     private var playerBSpatialization: RhythmSpatializationProcessor? = null
+    private lateinit var playerAReplayGain: ReplayGainAudioProcessor
+    private lateinit var playerBReplayGain: ReplayGainAudioProcessor
+    private var activeReplayGainProcessor: ReplayGainAudioProcessor? = null
 
     private val onPlayerSwappedListeners = mutableListOf<(Player) -> Unit>()
 
@@ -128,6 +133,10 @@ class RhythmPlayerEngine(
         
         override fun onTracksChanged(tracks: androidx.media3.common.Tracks) {
             Log.d(TAG, "Tracks changed")
+            val format = tracks.getFirstSelectedTrackFormatByType(C.TRACK_TYPE_AUDIO)
+            if (format != null) {
+                activeReplayGainProcessor?.setRootFormat(format)
+            }
         }
     }
 
@@ -162,19 +171,29 @@ class RhythmPlayerEngine(
         // Instantiate child processors for Player A
         val aBass = bassBoostProcessor?.let { RhythmBassBoostProcessor().apply { setParent(it) } }
         val aSpatial = spatializationProcessor?.let { RhythmSpatializationProcessor().apply { setParent(it) } }
+        val aReplayGain = ReplayGainAudioProcessor()
         playerABassBoost = aBass
         playerASpatialization = aSpatial
+        playerAReplayGain = aReplayGain
 
         // Instantiate child processors for Player B
         val bBass = bassBoostProcessor?.let { RhythmBassBoostProcessor().apply { setParent(it) } }
         val bSpatial = spatializationProcessor?.let { RhythmSpatializationProcessor().apply { setParent(it) } }
+        val bReplayGain = ReplayGainAudioProcessor()
         playerBBassBoost = bBass
         playerBSpatialization = bSpatial
+        playerBReplayGain = bReplayGain
 
-        playerA = buildPlayer(handleAudioFocus = false, bassProcessor = aBass, spatialProcessor = aSpatial)
-        playerB = buildPlayer(handleAudioFocus = false, bassProcessor = bBass, spatialProcessor = bSpatial)
+        // Apply settings initially
+        val appSettings = AppSettings.getInstance(context)
+        applyReplayGainSettingsOnProcessor(aReplayGain, appSettings.replayGain.value)
+        applyReplayGainSettingsOnProcessor(bReplayGain, appSettings.replayGain.value)
+
+        playerA = buildPlayer(handleAudioFocus = false, bassProcessor = aBass, spatialProcessor = aSpatial, replayGainProcessor = aReplayGain)
+        playerB = buildPlayer(handleAudioFocus = false, bassProcessor = bBass, spatialProcessor = bSpatial, replayGainProcessor = bReplayGain)
 
         playerA.addListener(masterPlayerListener)
+        activeReplayGainProcessor = aReplayGain
 
         _activeAudioSessionId.value = playerA.audioSessionId
 
@@ -214,7 +233,8 @@ class RhythmPlayerEngine(
     private fun buildPlayer(
         handleAudioFocus: Boolean,
         bassProcessor: RhythmBassBoostProcessor? = null,
-        spatialProcessor: RhythmSpatializationProcessor? = null
+        spatialProcessor: RhythmSpatializationProcessor? = null,
+        replayGainProcessor: ReplayGainAudioProcessor? = null
     ): ExoPlayer {
         val loadControl = DefaultLoadControl.Builder()
             .setBufferDurationsMs(15_000, 30_000, 1_500, 2_500)
@@ -233,6 +253,9 @@ class RhythmPlayerEngine(
                 }
                 if (spatialProcessor != null) {
                     processors.add(spatialProcessor)
+                }
+                if (replayGainProcessor != null) {
+                    processors.add(replayGainProcessor)
                 }
                 
                 return if (processors.isNotEmpty()) {
@@ -492,8 +515,17 @@ class RhythmPlayerEngine(
 
         outgoingPlayer.removeListener(masterPlayerListener)
 
+        val incomingReplayGain = if (incomingPlayer === playerA) playerAReplayGain else playerBReplayGain
         playerA = incomingPlayer
         playerB = outgoingPlayer
+        activeReplayGainProcessor = incomingReplayGain
+
+        // Sync ReplayGain formats for the incoming player
+        val tracks = playerA.currentTracks
+        val format = tracks.getFirstSelectedTrackFormatByType(C.TRACK_TYPE_AUDIO)
+        if (format != null) {
+            incomingReplayGain.setRootFormat(format)
+        }
 
         playerB.pauseAtEndOfMediaItems = true
         playerA.pauseAtEndOfMediaItems = false
@@ -586,8 +618,36 @@ class RhythmPlayerEngine(
             playerB.setPlaybackParameters(playerB.playbackParameters)
         } catch (e: Exception) {
             playerB.release()
-            playerB = buildPlayer(handleAudioFocus = false)
+            val otherReplayGain = if (incomingReplayGain === playerAReplayGain) playerBReplayGain else playerAReplayGain
+            val otherBassBoost = if (incomingReplayGain === playerAReplayGain) playerBBassBoost else playerABassBoost
+            val otherSpatial = if (incomingReplayGain === playerAReplayGain) playerBSpatialization else playerASpatialization
+            playerB = buildPlayer(
+                handleAudioFocus = false,
+                bassProcessor = otherBassBoost,
+                spatialProcessor = otherSpatial,
+                replayGainProcessor = otherReplayGain
+            )
         }
+    }
+
+    fun getActiveReplayGainProcessor(): ReplayGainAudioProcessor? = activeReplayGainProcessor
+
+    private fun applyReplayGainSettingsOnProcessor(processor: ReplayGainAudioProcessor, enabled: Boolean) {
+        val mode = if (enabled) ReplayGainUtil.Mode.Track else ReplayGainUtil.Mode.None
+        processor.setMode(mode, false)
+        processor.setReduceGain(true) // clipping prevention (drc)
+        processor.setRgGain(0) // preamp = 0dB
+        processor.setNonRgGain(0) // 0dB preamp when no tag is present
+    }
+
+    fun applyReplayGainSettings(enabled: Boolean) {
+        if (::playerAReplayGain.isInitialized) {
+            applyReplayGainSettingsOnProcessor(playerAReplayGain, enabled)
+        }
+        if (::playerBReplayGain.isInitialized) {
+            applyReplayGainSettingsOnProcessor(playerBReplayGain, enabled)
+        }
+        Log.d(TAG, "Replay Gain settings applied on both player processors: enabled=$enabled")
     }
 
     fun release() {
@@ -602,4 +662,17 @@ class RhythmPlayerEngine(
         isReleased = true
         Log.d(TAG, "RhythmPlayerEngine released.")
     }
+}
+
+private fun androidx.media3.common.Tracks.getFirstSelectedTrackFormatByType(trackType: Int): androidx.media3.common.Format? {
+    for (group in groups) {
+        if (group.type == trackType && group.isSelected) {
+            for (i in 0 until group.length) {
+                if (group.isTrackSelected(i)) {
+                    return group.getTrackFormat(i)
+                }
+            }
+        }
+    }
+    return null
 }

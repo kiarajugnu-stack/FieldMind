@@ -165,6 +165,7 @@ fun ExperimentalFeaturesScreen(onBackClick: () -> Unit, onNavigateToGoSettings: 
     val showLyricsTranslation by appSettings.showLyricsTranslation.collectAsState()
     val showLyricsRomanization by appSettings.showLyricsRomanization.collectAsState()
     val skipSilenceEnabled by appSettings.skipSilenceEnabled.collectAsState()
+    val replayGain by appSettings.replayGain.collectAsState()
     val audioRoutingMode by appSettings.audioRoutingMode.collectAsState()
     val haptic = LocalHapticFeedback.current
     
@@ -201,6 +202,13 @@ fun ExperimentalFeaturesScreen(onBackClick: () -> Unit, onNavigateToGoSettings: 
                             onToggleChange = {
                                 appSettings.setSkipSilenceEnabled(it)
                             }
+                        ),
+                        SettingItem(
+                            MaterialSymbolIcon("volume_up"),
+                            context.getString(R.string.replay_gain),
+                            context.getString(R.string.replay_gain_desc),
+                            toggleState = replayGain,
+                            onToggleChange = { appSettings.setReplayGain(it) }
                         )
                     )
                 )

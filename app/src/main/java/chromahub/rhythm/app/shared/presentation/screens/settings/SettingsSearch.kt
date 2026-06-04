@@ -1311,6 +1311,18 @@ fun buildSettingsSearchIndex(context: Context): List<SearchableSettingItem> {
             parentScreen = "Experimental",
             settingKey = "skipSilenceEnabled"
         ))
+        
+        // Replay Gain
+        add(SearchableSettingItem(
+            id = "replay_gain",
+            title = context.getString(R.string.replay_gain),
+            description = context.getString(R.string.replay_gain_desc),
+            keywords = listOf("replay gain", "replaygain", "volume normalization", "normalization", "gain", "audio effects", "experimental"),
+            icon = MaterialSymbolIcon("volume_up"),
+            route = SettingsRoutes.EXPERIMENTAL_FEATURES,
+            parentScreen = "Experimental",
+            settingKey = "replayGain"
+        ))
         add(SearchableSettingItem(
             id = "audio_routing_mode",
             title = context.getString(R.string.settings_audio_routing),

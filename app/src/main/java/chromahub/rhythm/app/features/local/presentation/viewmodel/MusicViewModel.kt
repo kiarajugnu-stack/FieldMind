@@ -1323,7 +1323,6 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
                             } ?: false
                             
                             // Update progress immediately to reflect restored position
-                            controller.seekTo(savedPosition)
                             val playbackDuration = resolvePlaybackDuration(controller)
                             if (playbackDuration > 0) {
                                 _progress.value = savedPosition.toFloat() / playbackDuration.toFloat()

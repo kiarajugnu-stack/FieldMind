@@ -182,7 +182,6 @@ fun SettingsScreen(
     val hapticFeedbackEnabled by appSettings.hapticFeedbackEnabled.collectAsState()
     val useSystemVolume by appSettings.useSystemVolume.collectAsState()
     val audioNormalization by appSettings.audioNormalization.collectAsState()
-    val replayGain by appSettings.replayGain.collectAsState()
     val resumeOnDeviceReconnect by appSettings.resumeOnDeviceReconnect.collectAsState()
     val defaultScreen by appSettings.defaultScreen.collectAsState()
     val showAlphabetBar by appSettings.showAlphabetBar.collectAsState()
@@ -323,7 +322,6 @@ fun SettingsScreen(
                         onToggleChange = { appSettings.setResumeOnDeviceReconnect(it) }
                     ))
                     //add(SettingItem(MaterialSymbolIcon("graphic_eq"), context.getString(R.string.audio_normalization), context.getString(R.string.audio_normalization_desc), toggleState = audioNormalization, onToggleChange = { appSettings.setAudioNormalization(it) }))
-                    //add(SettingItem(MaterialSymbolIcon("graphic_eq"), context.getString(R.string.replay_gain), context.getString(R.string.replay_gain_desc), toggleState = replayGain, onToggleChange = { appSettings.setReplayGain(it) }))
                     // Equalizer is available in both LOCAL and STREAMING modes
                     add(SettingItem(RhythmIcons.Equalizer, context.getString(R.string.settings_equalizer_title), context.getString(R.string.settings_equalizer_desc), onClick = { onNavigateTo(SettingsRoutes.EQUALIZER) }))
                     add(SettingItem(

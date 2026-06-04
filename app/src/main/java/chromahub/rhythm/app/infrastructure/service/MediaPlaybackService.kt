@@ -959,6 +959,16 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
                 if (appSettings.broadcastStatusEnabled.value) {
                     statusBroadcaster.broadcastPlaystateChanged(isPlaying, player.currentPosition)
                 }
+
+                // Persist playback position when paused and queue persistence is enabled
+                if (!isPlaying && appSettings.queuePersistenceEnabled.value) {
+                    val currentIndex = player.currentMediaItemIndex
+                    if (currentIndex != androidx.media3.common.C.INDEX_UNSET) {
+                        appSettings.setSavedQueueIndex(currentIndex)
+                        appSettings.setSavedPlaybackPosition(player.currentPosition)
+                        Log.d(TAG, "Persisted queue index $currentIndex and position ${player.currentPosition} on pause")
+                    }
+                }
             }
             
             override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
@@ -966,6 +976,15 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
                     val currentIndex = player.currentMediaItemIndex
                     if (currentIndex != androidx.media3.common.C.INDEX_UNSET) {
                         preloadController.setPlayingIndex(currentIndex)
+                    }
+                }
+
+                if (appSettings.queuePersistenceEnabled.value) {
+                    val currentIndex = player.currentMediaItemIndex
+                    if (currentIndex != androidx.media3.common.C.INDEX_UNSET) {
+                        appSettings.setSavedQueueIndex(currentIndex)
+                        appSettings.setSavedPlaybackPosition(0L) // Reset position for new track
+                        Log.d(TAG, "Persisted queue index $currentIndex on track transition")
                     }
                 }
                 
@@ -1051,6 +1070,13 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
         
         // Try to initialize audio effects (might fail if session ID not ready)
         initializeAudioEffects()
+
+        // Collect replayGain setting reactively
+        serviceScope.launch {
+            appSettings.replayGain.collect { enabled ->
+                rhythmPlayerEngine.applyReplayGainSettings(enabled)
+            }
+        }
     }
 
     private inline fun <T> withEqualizerSafe(
@@ -1544,18 +1570,15 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
     
     private fun applyPlayerSettings() {
         applyUsbExclusiveRoutingPreference()
-
         player.apply {
             // Audio normalization - NOT IMPLEMENTED
             // if (appSettings.audioNormalization.value) {
             //     volume = 1.0f
             // }
-
-            // Replay gain - NOT IMPLEMENTED
-            // if (appSettings.replayGain.value) {
-            //     Log.d(TAG, "Replay gain enabled")
-            // }
         }
+
+        // Apply Replay Gain settings
+        rhythmPlayerEngine.applyReplayGainSettings(appSettings.replayGain.value)
 
         // Apply gapless playback setting
         rhythmPlayerEngine.setGaplessPlayback(appSettings.gaplessPlayback.value)
@@ -2010,6 +2033,16 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
 
     override fun onDestroy() {
         Log.d(TAG, "Service being destroyed")
+
+        // Persist final playback position and index on destroy
+        if (::player.isInitialized && appSettings.queuePersistenceEnabled.value) {
+            val currentIndex = player.currentMediaItemIndex
+            if (currentIndex != androidx.media3.common.C.INDEX_UNSET) {
+                appSettings.setSavedQueueIndex(currentIndex)
+                appSettings.setSavedPlaybackPosition(player.currentPosition)
+                Log.d(TAG, "Persisted queue index $currentIndex and position ${player.currentPosition} on service destroy")
+            }
+        }
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
             val audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
