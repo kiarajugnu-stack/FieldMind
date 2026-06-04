@@ -1,4 +1,8 @@
 package chromahub.rhythm.app.shared.presentation.components.common
+import androidx.compose.ui.platform.LocalContext
+import chromahub.rhythm.app.util.HapticUtils
+import chromahub.rhythm.app.util.HapticType
+
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Animatable
@@ -39,6 +43,7 @@ fun TabAnimation(
     transformOrigin: TransformOrigin = TransformOrigin.Center,
     content: @Composable () -> Unit
 ) {
+    val context = LocalContext.current
     val hapticFeedback = LocalHapticFeedback.current
     val isSelected = index == selectedIndex
     val scale = remember { Animatable(1f) }
@@ -108,7 +113,7 @@ fun TabAnimation(
         selected = isSelected,
         text = content,
         onClick = {
-            hapticFeedback.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+            HapticUtils.performHapticFeedback(context, hapticFeedback, HapticType.LIGHT)
             onClick()
         },
         selectedContentColor = contentColor,

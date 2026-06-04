@@ -92,6 +92,7 @@ import chromahub.rhythm.app.shared.data.repository.PlaybackStatsRepository
 import chromahub.rhythm.app.shared.data.repository.StatsTimeRange
 import chromahub.rhythm.app.util.GsonUtils
 import chromahub.rhythm.app.util.HapticUtils
+import chromahub.rhythm.app.util.HapticType
 import coil.compose.AsyncImage
 import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
@@ -214,7 +215,7 @@ fun PerformanceSettingsScreen(onBackClick: () -> Unit) {
                         TunerAnimatedSwitch(
                             checked = batterySaverEnabled,
                             onCheckedChange = { enabled ->
-                                HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
+                                HapticUtils.performHapticFeedback(context, haptic, HapticType.HEAVY)
                                 appSettings.setBatterySaverEnabled(enabled)
                             }
                         )
@@ -231,7 +232,7 @@ fun PerformanceSettingsScreen(onBackClick: () -> Unit) {
                                 items = listOf("Auto", "Manual"),
                                 selectedIndex = if (batterySaverMode == "auto") 0 else 1,
                                 onItemClick = { index ->
-                                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                                    HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                                     appSettings.setBatterySaverMode(if (index == 0) "auto" else "manual")
                                 },
                                 modifier = Modifier.fillMaxWidth()

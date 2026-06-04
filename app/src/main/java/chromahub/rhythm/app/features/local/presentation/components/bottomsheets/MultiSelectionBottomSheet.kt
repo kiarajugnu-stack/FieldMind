@@ -61,6 +61,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import chromahub.rhythm.app.shared.data.model.Song
 import chromahub.rhythm.app.util.HapticUtils
+import chromahub.rhythm.app.util.HapticType
 import chromahub.rhythm.app.util.M3ImageUtils
 import chromahub.rhythm.app.R
 import androidx.compose.ui.res.stringResource
@@ -174,7 +175,7 @@ fun MultiSelectionBottomSheet(
                                 containerColor = MaterialTheme.colorScheme.primaryContainer,
                                 iconColor = MaterialTheme.colorScheme.onPrimaryContainer,
                                 onClick = {
-                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                    HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                                     onPlayAll()
                                     onDismiss()
                                 }
@@ -187,7 +188,7 @@ fun MultiSelectionBottomSheet(
                                 containerColor = MaterialTheme.colorScheme.primaryContainer,
                                 iconColor = MaterialTheme.colorScheme.onPrimaryContainer,
                                 onClick = {
-                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                    HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                                     onPlayNext()
                                     onDismiss()
                                 }
@@ -207,7 +208,7 @@ fun MultiSelectionBottomSheet(
                                 containerColor = MaterialTheme.colorScheme.primaryContainer,
                                 iconColor = MaterialTheme.colorScheme.onPrimaryContainer,
                                 onClick = {
-                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                    HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                                     onAddToQueue()
                                     onDismiss()
                                 }
@@ -220,7 +221,7 @@ fun MultiSelectionBottomSheet(
                                 containerColor = MaterialTheme.colorScheme.primaryContainer,
                                 iconColor = MaterialTheme.colorScheme.onPrimaryContainer,
                                 onClick = {
-                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                    HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                                     onAddToPlaylist()
                                     onDismiss()
                                 }
@@ -240,7 +241,7 @@ fun MultiSelectionBottomSheet(
                                 containerColor = MaterialTheme.colorScheme.tertiaryContainer,
                                 iconColor = MaterialTheme.colorScheme.onTertiaryContainer,
                                 onClick = {
-                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                    HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                                     onToggleLikeAll(!allAreLiked)
                                     onDismiss()
                                 }
@@ -262,7 +263,7 @@ fun MultiSelectionBottomSheet(
                                         containerColor = MaterialTheme.colorScheme.secondaryContainer,
                                         iconColor = MaterialTheme.colorScheme.onSecondaryContainer,
                                         onClick = {
-                                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                            HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                                             onGoToAlbum()
                                             onDismiss()
                                         }
@@ -280,7 +281,7 @@ fun MultiSelectionBottomSheet(
                                         containerColor = MaterialTheme.colorScheme.secondaryContainer,
                                         iconColor = MaterialTheme.colorScheme.onSecondaryContainer,
                                         onClick = {
-                                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                            HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                                             onGoToArtist()
                                             onDismiss()
                                         }
@@ -311,7 +312,7 @@ fun MultiSelectionBottomSheet(
                                         containerColor = MaterialTheme.colorScheme.errorContainer,
                                         iconColor = MaterialTheme.colorScheme.error,
                                         onClick = {
-                                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                            HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                                             onAddToBlacklist()
                                             onDismiss()
                                         }
@@ -327,7 +328,7 @@ fun MultiSelectionBottomSheet(
                                         containerColor = MaterialTheme.colorScheme.secondaryContainer,
                                         iconColor = MaterialTheme.colorScheme.onSecondaryContainer,
                                         onClick = {
-                                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                            HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                                             onBatchEditTags()
                                         }
                                     )

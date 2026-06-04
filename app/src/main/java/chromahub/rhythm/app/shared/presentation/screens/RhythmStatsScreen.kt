@@ -60,6 +60,7 @@ import chromahub.rhythm.app.shared.presentation.components.common.SmallTabAnimat
 import chromahub.rhythm.app.shared.presentation.components.common.rememberExpressiveShapeFor
 import chromahub.rhythm.app.util.M3ImageUtils
 import chromahub.rhythm.app.util.HapticUtils
+import chromahub.rhythm.app.util.HapticType
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import androidx.compose.ui.res.stringResource
@@ -95,14 +96,14 @@ fun RhythmStatsScreen(
         title = context.getString(R.string.stats_title),
         showBackButton = true,
         onBackClick = {
-            HapticUtils.performHapticFeedback(context, hapticFeedback, HapticFeedbackType.LongPress)
+            HapticUtils.performHapticFeedback(context, hapticFeedback, HapticType.HEAVY)
             navController.popBackStack()
         },
         headerContent = {
             RhythmTimeRangeTabs(
                 selectedRange = ranges[pagerState.currentPage],
                 onRangeSelected = { range ->
-                    HapticUtils.performHapticFeedback(context, hapticFeedback, HapticFeedbackType.TextHandleMove)
+                    HapticUtils.performHapticFeedback(context, hapticFeedback, HapticType.LIGHT)
                     val index = ranges.indexOf(range).coerceAtLeast(0)
                     coroutineScope.launch {
                         pagerState.animateScrollToPage(index)

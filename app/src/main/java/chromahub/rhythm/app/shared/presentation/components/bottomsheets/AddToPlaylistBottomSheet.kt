@@ -70,6 +70,7 @@ import chromahub.rhythm.app.shared.data.model.Song
 import chromahub.rhythm.app.shared.presentation.components.common.M3PlaceholderType
 import chromahub.rhythm.app.util.ImageUtils
 import chromahub.rhythm.app.util.HapticUtils
+import chromahub.rhythm.app.util.HapticType
 import androidx.compose.ui.res.stringResource
 
 private fun groupedPlaylistItemShape(index: Int, totalCount: Int): RoundedCornerShape {
@@ -161,7 +162,7 @@ fun AddToPlaylistBottomSheet(
             ) {
                 CreateNewPlaylistCard(
                     onClick = {
-                        HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                        HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                         scope.launch { sheetState.hide() }.invokeOnCompletion {
                             if (!sheetState.isVisible) {
                                 onCreateNewPlaylist()
@@ -195,7 +196,7 @@ fun AddToPlaylistBottomSheet(
                                     playlist = playlist,
                                     itemShape = groupedPlaylistItemShape(index, playlists.size),
                                     onClick = {
-                                        HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                        HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                                         scope.launch { sheetState.hide() }.invokeOnCompletion {
                                             if (!sheetState.isVisible) {
                                                 onAddToPlaylist(playlist)
@@ -356,7 +357,7 @@ private fun CreateNewPlaylistCard(
     val haptics = LocalHapticFeedback.current
     Card(
         onClick = {
-            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+            HapticUtils.performHapticFeedback(context, haptics, HapticType.LIGHT)
             onClick()
         },
         modifier = modifier
@@ -430,7 +431,7 @@ private fun PlaylistCard(
     
     Card(
         onClick = {
-            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+            HapticUtils.performHapticFeedback(context, haptics, HapticType.LIGHT)
             onClick()
         },
         modifier = modifier

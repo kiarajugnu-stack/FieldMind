@@ -74,6 +74,7 @@ import chromahub.rhythm.app.shared.presentation.components.dialogs.SwitchModeDia
 import chromahub.rhythm.app.ui.LocalMiniPlayerPadding
 import chromahub.rhythm.app.util.GenreUtils
 import chromahub.rhythm.app.util.HapticUtils
+import chromahub.rhythm.app.util.HapticType
 import chromahub.rhythm.app.util.ImageUtils
 import chromahub.rhythm.app.util.M3ImageUtils
 import coil.compose.AsyncImage
@@ -333,7 +334,7 @@ fun UniversalSearchScreen(
                                 )
                                 TextButton(
                                     onClick = {
-                                        HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                                        HapticUtils.performHapticFeedback(context, haptics, HapticType.LIGHT)
                                         localViewModel.clearSearchHistory()
                                     },
                                     colors = ButtonDefaults.textButtonColors(
@@ -366,7 +367,7 @@ fun UniversalSearchScreen(
                                     trailingContent = {
                                         IconButton(
                                             onClick = {
-                                                HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                                HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                                                 localViewModel.removeSearchQuery(item)
                                             },
                                             modifier = Modifier
@@ -377,7 +378,7 @@ fun UniversalSearchScreen(
                                         }
                                     },
                                     onClick = {
-                                        HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                                        HapticUtils.performHapticFeedback(context, haptics, HapticType.LIGHT)
                                         query = item
                                     }
                                 )
@@ -418,7 +419,7 @@ fun UniversalSearchScreen(
                             genreSongCounts = genreSongCounts,
                             isGenreDetectionComplete = isGenreDetectionComplete,
                             onGenreClick = { genre ->
-                                HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                                HapticUtils.performHapticFeedback(context, haptics, HapticType.LIGHT)
                                 query = genre
                             }
                         )
@@ -547,7 +548,7 @@ fun UniversalSearchScreen(
                                                 .fillMaxWidth()
                                                 .padding(horizontal = 4.dp)
                                                 .clickable {
-                                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                                    HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                                                     showAllSongsPage = true
                                                 }
                                         ) {
@@ -663,7 +664,7 @@ fun UniversalSearchScreen(
                                         title = { Text(title, maxLines = 1, overflow = TextOverflow.Ellipsis) },
                                         description = { Text(subtitle) },
                                         onClick = {
-                                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                                            HapticUtils.performHapticFeedback(context, haptics, HapticType.LIGHT)
                                             action()
                                         }
                                     )
@@ -757,7 +758,7 @@ fun UniversalSearchScreen(
                         )
                         if (query.isNotEmpty()) {
                             IconButton(onClick = {
-                                HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                                HapticUtils.performHapticFeedback(context, haptics, HapticType.LIGHT)
                                 query = ""
                             }, modifier = Modifier.size(32.dp)) {
                                 Icon(MaterialSymbolIcon("clear", filled = true), contentDescription = stringResource(R.string.ui_clear), modifier = Modifier.size(18.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -771,7 +772,7 @@ fun UniversalSearchScreen(
                     color = if (showFilters) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceContainerHigh
                 ) {
                     IconButton(onClick = {
-                        HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                        HapticUtils.performHapticFeedback(context, haptics, HapticType.LIGHT)
                         showFilters = !showFilters
                     }) {
                         Icon(
@@ -796,7 +797,7 @@ fun UniversalSearchScreen(
                     FilterChip(
                         selected = filterSongs,
                         onClick = {
-                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                            HapticUtils.performHapticFeedback(context, haptics, HapticType.LIGHT)
                             filterSongs = !filterSongs
                         },
                         label = { Text(stringResource(R.string.settings_tab_songs), style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold) },
@@ -807,7 +808,7 @@ fun UniversalSearchScreen(
                     FilterChip(
                         selected = filterAlbums,
                         onClick = {
-                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                            HapticUtils.performHapticFeedback(context, haptics, HapticType.LIGHT)
                             filterAlbums = !filterAlbums
                         },
                         label = { Text(stringResource(R.string.settings_tab_albums), style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold) },
@@ -818,7 +819,7 @@ fun UniversalSearchScreen(
                     FilterChip(
                         selected = filterArtists,
                         onClick = {
-                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                            HapticUtils.performHapticFeedback(context, haptics, HapticType.LIGHT)
                             filterArtists = !filterArtists
                         },
                         label = { Text(stringResource(R.string.settings_tab_artists), style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold) },
@@ -829,7 +830,7 @@ fun UniversalSearchScreen(
                     FilterChip(
                         selected = filterPlaylists,
                         onClick = {
-                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                            HapticUtils.performHapticFeedback(context, haptics, HapticType.LIGHT)
                             filterPlaylists = !filterPlaylists
                         },
                         label = { Text(stringResource(R.string.settings_tab_playlists), style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold) },
@@ -1174,7 +1175,7 @@ fun UniversalSearchSongItem(
     val context = LocalContext.current
     Card(
         onClick = {
-            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+            HapticUtils.performHapticFeedback(context, haptics, HapticType.LIGHT)
             onClick()
         },
         colors = CardDefaults.cardColors(
@@ -1258,7 +1259,7 @@ fun UniversalSearchSongItem(
 
             FilledIconButton(
                 onClick = {
-                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                    HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                     onMoreClick()
                 },
                 modifier = Modifier.size(36.dp),
@@ -1305,7 +1306,7 @@ private fun SearchGridCard(
 
     Card(
         onClick = {
-            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+            HapticUtils.performHapticFeedback(context, haptics, HapticType.LIGHT)
             item.onClick()
         },
         modifier = modifier
@@ -1582,7 +1583,7 @@ fun UniversalSongOptionsBottomSheet(
                                 containerColor = MaterialTheme.colorScheme.primaryContainer,
                                 iconColor = MaterialTheme.colorScheme.onPrimaryContainer,
                                 onClick = {
-                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                    HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                                     onPlayNext()
                                 }
                             )
@@ -1594,7 +1595,7 @@ fun UniversalSongOptionsBottomSheet(
                                 containerColor = MaterialTheme.colorScheme.primaryContainer,
                                 iconColor = MaterialTheme.colorScheme.onPrimaryContainer,
                                 onClick = {
-                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                    HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                                     onAddToQueue()
                                 }
                             )
@@ -1612,7 +1613,7 @@ fun UniversalSongOptionsBottomSheet(
                                 containerColor = MaterialTheme.colorScheme.primaryContainer,
                                 iconColor = MaterialTheme.colorScheme.onPrimaryContainer,
                                 onClick = {
-                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                    HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                                     onAddToPlaylist()
                                 }
                             )
@@ -1624,7 +1625,7 @@ fun UniversalSongOptionsBottomSheet(
                                 containerColor = MaterialTheme.colorScheme.tertiaryContainer,
                                 iconColor = MaterialTheme.colorScheme.onTertiaryContainer,
                                 onClick = {
-                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                    HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                                     onToggleFavorite()
                                 }
                             )
@@ -1642,7 +1643,7 @@ fun UniversalSongOptionsBottomSheet(
                                 containerColor = MaterialTheme.colorScheme.secondaryContainer,
                                 iconColor = MaterialTheme.colorScheme.onSecondaryContainer,
                                 onClick = {
-                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                    HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                                     onGoToAlbum()
                                 }
                             )
@@ -1654,7 +1655,7 @@ fun UniversalSongOptionsBottomSheet(
                                 containerColor = MaterialTheme.colorScheme.secondaryContainer,
                                 iconColor = MaterialTheme.colorScheme.onSecondaryContainer,
                                 onClick = {
-                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                    HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                                     onGoToArtist()
                                 }
                             )
@@ -1672,7 +1673,7 @@ fun UniversalSongOptionsBottomSheet(
                                 containerColor = MaterialTheme.colorScheme.secondaryContainer,
                                 iconColor = MaterialTheme.colorScheme.onSecondaryContainer,
                                 onClick = {
-                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                    HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                                     onShowSongInfo()
                                 }
                             )
@@ -1686,7 +1687,7 @@ fun UniversalSongOptionsBottomSheet(
                                     containerColor = MaterialTheme.colorScheme.errorContainer,
                                     iconColor = MaterialTheme.colorScheme.error,
                                     onClick = {
-                                        HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                        HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                                         onAddToBlacklist()
                                     }
                                 )

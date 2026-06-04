@@ -2,6 +2,7 @@ package chromahub.rhythm.app.util
 
 import android.util.Log
 import java.util.regex.Pattern
+import chromahub.rhythm.app.shared.data.model.AppSettings
 
 object LyricsParser {
 
@@ -348,168 +349,25 @@ object LyricsParser {
      */
     fun parseLyrics(lrcContent: String): List<LyricLine> {
         if (lrcContent.isBlank()) return emptyList()
-
-        val boundedContent = if (lrcContent.length > MAX_PARSE_INPUT_CHARS) {
-            Log.w("LyricsParser", "Input too large (${lrcContent.length} chars). Truncating before parse.")
-            lrcContent.take(MAX_PARSE_INPUT_CHARS)
-        } else {
-            lrcContent
-        }
+        val trim = runCatching { AppSettings.getInstance(chromahub.rhythm.app.RhythmApplication.instance).trimLyrics.value }.getOrDefault(true)
+        val options = LrcUtils.LrcParserOptions(trim = trim, multiLine = true, errorText = null)
+        val parsed = LrcUtils.parseLyrics(lrcContent, audioMimeType = null, parserOptions = options, format = LrcUtils.LyricFormat.LRC)
         
-        val lyricLines = mutableListOf<LyricLine>()
-        val lines = boundedContent
-            .replace("\r\n", "\n")
-            .replace('\r', '\n')
-            .lineSequence()
-            .take(MAX_PARSE_LINES)
-            .toList()
-        
-        var pendingTimestamps = mutableListOf<Long>()
-        val pendingTextLines = mutableListOf<String>()
-
-        for (lineIndex in lines.indices) {
-            if (lyricLines.size >= MAX_PARSED_LYRIC_LINES) break
-
-            val line = lines[lineIndex]
-            val trimmedLine = line.trim()
-            if (trimmedLine.isEmpty()) continue
-            if (trimmedLine.length > MAX_LINE_LENGTH) continue
-            
-            // Skip metadata lines (artist, title, album, etc.)
-            if (metadataPattern.matcher(trimmedLine).find()) continue
-            
-            val matcher = timestampPattern.matcher(trimmedLine)
-            val timestamps = mutableListOf<Long>()
-            var lastMatchEnd = 0
-            var timestampMatchCount = 0
-
-            // Find all timestamps in the line
-            while (matcher.find()) {
-                if (timestampMatchCount++ >= MAX_TIMESTAMPS_PER_LINE) {
-                    break
-                }
-
-                try {
-                    val timeValue1 = matcher.group(1)?.toLongOrNull() ?: 0
-                    val timeValue2 = matcher.group(2)?.toLongOrNull() ?: 0
-                    val millisecondsStr = matcher.group(3) ?: ""
-                    
-                    // Determine if this is HH:MM:SS or MM:SS format
-                    // If timeValue1 > 59, it's likely minutes in MM:SS format
-                    val (hours, minutes, seconds) = if (timeValue1 > 59) {
-                        // Extended format MM:SS where MM can be > 59 (some songs are very long)
-                        Triple(0L, timeValue1, timeValue2)
-                    } else {
-                        // Could be HH:MM:SS or MM:SS - check for another colon
-                        val remainingText = trimmedLine.substring(matcher.start())
-                        val colonCount = remainingText.substring(0, matcher.end() - matcher.start()).count { it == ':' }
-                        if (colonCount >= 2) {
-                            // HH:MM:SS format
-                            Triple(timeValue1, timeValue2, millisecondsStr.toLongOrNull() ?: 0)
-                        } else {
-                            // MM:SS format
-                            Triple(0L, timeValue1, timeValue2)
-                        }
-                    }
-                    
-                    // Handle different millisecond formats more robustly
-                    val milliseconds = when {
-                        millisecondsStr.isEmpty() -> 0L
-                        millisecondsStr.length == 1 -> millisecondsStr.toLong() * 100  // [mm:ss.x] -> x00ms
-                        millisecondsStr.length == 2 -> millisecondsStr.toLong() * 10   // [mm:ss.xx] -> xx0ms
-                        millisecondsStr.length == 3 -> millisecondsStr.toLong()        // [mm:ss.xxx] -> xxxms
-                        else -> millisecondsStr.substring(0, 3).toLong() // Truncate if too long
-                    }
-                    
-                    // Calculate total timestamp in milliseconds
-                    val timestamp = (hours * 3600 * 1000) + (minutes * 60 * 1000) + (seconds * 1000) + milliseconds
-                    
-                    // Only add valid timestamps (prevent negative or unreasonably large values)
-                    if (timestamp >= 0 && timestamp < 86400000) { // Less than 24 hours
-                        timestamps.add(timestamp)
-                    }
-                    lastMatchEnd = matcher.end()
-                } catch (e: Exception) {
-                    Log.w("LyricsParser", "Error parsing timestamp in line: $trimmedLine", e)
-                    continue
-                }
-            }
-
-            if (timestamps.isNotEmpty()) {
-                val text = if (lastMatchEnd < trimmedLine.length) {
-                    normalizeWordFlowText(trimmedLine.substring(lastMatchEnd).trim())
-                } else {
-                    ""
-                }
-
-                val isSameTimestampPair =
-                    pendingTimestamps.isNotEmpty() &&
-                        timestamps == pendingTimestamps &&
-                        pendingTextLines.isNotEmpty() &&
-                        text.isNotEmpty()
-
-                if (isSameTimestampPair) {
-                    val existingMain = pendingTextLines.first()
-                    val preferredMain = pickPreferredDuplicateMain(existingMain, text)
-                    val alternateLine = if (preferredMain == text) existingMain else text
-
-                    if (isLikelyDuplicateLine(preferredMain, alternateLine)) {
-                        pendingTextLines[0] = preferredMain
-                        continue
-                    }
-
-                    if (isLikelySupplementalLine(preferredMain, alternateLine)) {
-                        pendingTextLines[0] = preferredMain
-                        val alternateTrimmed = alternateLine.trim()
-                        val alreadyExists = pendingTextLines
-                            .drop(1)
-                            .any { canonicalText(it) == canonicalText(alternateTrimmed) }
-
-                        if (alternateTrimmed.isNotEmpty() && !alreadyExists) {
-                            pendingTextLines.add(alternateTrimmed)
-                        }
-                        continue
-                    }
-                }
-
-                // This line has timestamps - process any pending text first
-                if (pendingTimestamps.isNotEmpty() && pendingTextLines.isNotEmpty()) {
-                    // Separate main lyrics from translations/romanizations
-                    val (mainText, translation, romanization) = separateTranslation(pendingTextLines)
-                    val (voiceTag, cleanedText) = extractVoiceTag(mainText)
-                    
-                    for (timestamp in pendingTimestamps) {
-                        if (lyricLines.size >= MAX_PARSED_LYRIC_LINES) break
-                        lyricLines.add(LyricLine(timestamp, cleanedText, voiceTag, translation, romanization))
-                    }
-                    pendingTextLines.clear()
-                }
-
-                // Store timestamps and initial text
-                pendingTimestamps = timestamps
-                pendingTextLines.add(text)
-            } else {
-                // Line without timestamp - add to pending text if we have a pending timestamp
-                // This handles translations, romanizations, or multi-line lyrics
-                if (pendingTimestamps.isNotEmpty()) {
-                    pendingTextLines.add(trimmedLine)
-                }
-            }
+        if (parsed is SemanticLyrics.SyncedLyrics) {
+            val grouped = parsed.text.groupBy { it.start }
+            return grouped.map { (start, lines) ->
+                val mainLine = lines.firstOrNull { !it.isTranslated } ?: lines.first()
+                val translation = lines.filter { it != mainLine && it.isTranslated }.joinToString("\n") { it.text }
+                val (voiceTag, cleanedText) = extractVoiceTag(mainLine.text)
+                LyricLine(
+                    timestamp = start.toLong(),
+                    text = cleanedText,
+                    voiceTag = voiceTag ?: mainLine.speaker?.name?.lowercase(),
+                    translation = translation.takeIf { it.isNotEmpty() }
+                )
+            }.sortedBy { it.timestamp }
         }
-        
-        // Process any remaining pending text
-        if (pendingTimestamps.isNotEmpty() && pendingTextLines.isNotEmpty()) {
-            val (mainText, translation, romanization) = separateTranslation(pendingTextLines)
-            val (voiceTag, cleanedText) = extractVoiceTag(mainText)
-            
-            for (timestamp in pendingTimestamps) {
-                if (lyricLines.size >= MAX_PARSED_LYRIC_LINES) break
-                lyricLines.add(LyricLine(timestamp, cleanedText, voiceTag, translation, romanization))
-            }
-        }
-
-        // Sort by timestamp and merge duplicate lyric lines while preserving richer metadata.
-        return mergeDuplicateLyricLines(lyricLines.sortedBy { it.timestamp })
+        return emptyList()
     }
     
     /**
@@ -540,151 +398,33 @@ object LyricsParser {
      */
     fun parseEnhancedLRC(lrcContent: String): List<EnhancedLyricLine> {
         if (lrcContent.isBlank()) return emptyList()
-
-        val boundedContent = if (lrcContent.length > MAX_PARSE_INPUT_CHARS) {
-            Log.w("LyricsParser", "Enhanced LRC input too large (${lrcContent.length} chars). Truncating before parse.")
-            lrcContent.take(MAX_PARSE_INPUT_CHARS)
-        } else {
-            lrcContent
+        val trim = runCatching { AppSettings.getInstance(chromahub.rhythm.app.RhythmApplication.instance).trimLyrics.value }.getOrDefault(true)
+        val options = LrcUtils.LrcParserOptions(trim = trim, multiLine = true, errorText = null)
+        val parsed = LrcUtils.parseLyrics(lrcContent, audioMimeType = null, parserOptions = options, format = LrcUtils.LyricFormat.LRC)
+        
+        if (parsed is SemanticLyrics.SyncedLyrics) {
+            return parsed.text.filter { !it.isTranslated }.map { semanticLine ->
+                val enhancedWords = semanticLine.words?.map { word ->
+                    EnhancedWord(
+                        text = semanticLine.text.substring(word.charRange),
+                        timestamp = word.begin.toLong(),
+                        endtime = (word.endInclusive ?: word.begin).toLong()
+                    )
+                } ?: listOf(
+                    EnhancedWord(
+                        text = semanticLine.text,
+                        timestamp = semanticLine.start.toLong(),
+                        endtime = semanticLine.end.toLong()
+                    )
+                )
+                EnhancedLyricLine(
+                    words = enhancedWords,
+                    lineTimestamp = semanticLine.start.toLong(),
+                    lineEndtime = semanticLine.end.toLong()
+                )
+            }.sortedBy { it.lineTimestamp }
         }
-        
-        val enhancedLines = mutableListOf<EnhancedLyricLine>()
-        val lines = boundedContent
-            .replace("\r\n", "\n")
-            .replace('\r', '\n')
-            .lineSequence()
-            .take(MAX_PARSE_LINES)
-            .toList()
-        
-        for (line in lines) {
-            if (enhancedLines.size >= MAX_PARSED_LYRIC_LINES) break
-
-            val trimmedLine = line.trim()
-            if (trimmedLine.isEmpty()) continue
-            if (trimmedLine.length > MAX_LINE_LENGTH) continue
-            
-            // Skip metadata lines
-            if (metadataPattern.matcher(trimmedLine).find()) continue
-            
-            // Extract line-level timestamp [mm:ss.xx]
-            val lineTimestampMatcher = timestampPattern.matcher(trimmedLine)
-            if (!lineTimestampMatcher.find()) continue
-            
-            val lineTimestamp = try {
-                val timeValue1 = lineTimestampMatcher.group(1)?.toLongOrNull() ?: 0
-                val timeValue2 = lineTimestampMatcher.group(2)?.toLongOrNull() ?: 0
-                val millisecondsStr = lineTimestampMatcher.group(3) ?: ""
-                
-                val (hours, minutes, seconds) = if (timeValue1 > 59) {
-                    Triple(0L, timeValue1, timeValue2)
-                } else {
-                    val remainingText = trimmedLine.substring(lineTimestampMatcher.start())
-                    val colonCount = remainingText.substring(0, lineTimestampMatcher.end() - lineTimestampMatcher.start()).count { it == ':' }
-                    if (colonCount >= 2) {
-                        Triple(timeValue1, timeValue2, millisecondsStr.toLongOrNull() ?: 0)
-                    } else {
-                        Triple(0L, timeValue1, timeValue2)
-                    }
-                }
-                
-                val milliseconds = when {
-                    millisecondsStr.isEmpty() -> 0L
-                    millisecondsStr.length == 1 -> millisecondsStr.toLong() * 100
-                    millisecondsStr.length == 2 -> millisecondsStr.toLong() * 10
-                    millisecondsStr.length == 3 -> millisecondsStr.toLong()
-                    else -> millisecondsStr.substring(0, 3).toLong()
-                }
-                
-                (hours * 3600 * 1000) + (minutes * 60 * 1000) + (seconds * 1000) + milliseconds
-            } catch (e: Exception) {
-                Log.w("LyricsParser", "Error parsing line timestamp: $trimmedLine", e)
-                continue
-            }
-            
-            // Extract text after line timestamp
-            val textAfterLineTimestamp = trimmedLine.substring(lineTimestampMatcher.end()).trim()
-            if (textAfterLineTimestamp.isEmpty()) continue
-            
-            // Parse word-level timestamps <mm:ss.xx>
-            val words = mutableListOf<EnhancedWord>()
-            val wordMatcher = wordTimestampPattern.matcher(textAfterLineTimestamp)
-            var lastWordEnd = 0
-            var previousWordTimestamp = lineTimestamp
-            var wordTimestampCount = 0
-            
-            while (wordMatcher.find()) {
-                if (wordTimestampCount++ >= MAX_TIMESTAMPS_PER_LINE) {
-                    break
-                }
-
-                // Get text before this word timestamp
-                val textBeforeTimestamp = textAfterLineTimestamp.substring(lastWordEnd, wordMatcher.start()).trim()
-                
-                // Parse word timestamp
-                val wordTimestamp = try {
-                    val minutes = wordMatcher.group(1)?.toLongOrNull() ?: 0
-                    val seconds = wordMatcher.group(2)?.toLongOrNull() ?: 0
-                    val millis = wordMatcher.group(3)?.let {
-                        when (it.length) {
-                            1 -> it.toLong() * 100
-                            2 -> it.toLong() * 10
-                            3 -> it.toLong()
-                            else -> it.substring(0, 3).toLong()
-                        }
-                    } ?: 0
-                    
-                    (minutes * 60 * 1000) + (seconds * 1000) + millis
-                } catch (e: Exception) {
-                    Log.w("LyricsParser", "Error parsing word timestamp: ${wordMatcher.group()}", e)
-                    lastWordEnd = wordMatcher.end()
-                    continue
-                }
-                
-                // Add the text before timestamp as a word (if any)
-                if (textBeforeTimestamp.isNotEmpty()) {
-                    words.add(EnhancedWord(
-                        text = textBeforeTimestamp,
-                        timestamp = previousWordTimestamp,
-                        endtime = wordTimestamp
-                    ))
-                }
-                
-                previousWordTimestamp = wordTimestamp
-                lastWordEnd = wordMatcher.end()
-            }
-            
-            // Add remaining text after last word timestamp
-            if (lastWordEnd < textAfterLineTimestamp.length) {
-                val remainingText = textAfterLineTimestamp.substring(lastWordEnd).trim()
-                if (remainingText.isNotEmpty()) {
-                    words.add(EnhancedWord(
-                        text = remainingText,
-                        timestamp = previousWordTimestamp,
-                        endtime = previousWordTimestamp + 1000 // Estimate 1 second duration
-                    ))
-                }
-            }
-            
-            // If no word timestamps found, treat the entire line as one word
-            if (words.isEmpty() && textAfterLineTimestamp.isNotEmpty()) {
-                words.add(EnhancedWord(
-                    text = textAfterLineTimestamp,
-                    timestamp = lineTimestamp,
-                    endtime = lineTimestamp + 3000 // Estimate 3 seconds duration
-                ))
-            }
-            
-            if (words.isNotEmpty()) {
-                val lineEndtime = words.lastOrNull()?.endtime ?: (lineTimestamp + 3000)
-                enhancedLines.add(EnhancedLyricLine(
-                    words = words,
-                    lineTimestamp = lineTimestamp,
-                    lineEndtime = lineEndtime
-                ))
-            }
-        }
-        
-        return enhancedLines
+        return emptyList()
     }
     
     // TODO: Implement syllable-level timestamp parsing

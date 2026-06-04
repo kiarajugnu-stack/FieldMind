@@ -130,6 +130,10 @@ class AppSettings private constructor(context: Context) {
         private const val KEY_LYRICS_API_PRIORITY = "lyrics_api_priority"
         private const val KEY_LYRICS_API_FALLBACK_RETRY = "lyrics_api_fallback_retry"
         private const val KEY_AUTO_HIDE_LYRICS_CONTROLS = "auto_hide_lyrics_controls"
+        private const val KEY_LYRIC_BOLD = "lyric_bold"
+        private const val KEY_TRIM_LYRICS = "trim_lyrics"
+        private const val KEY_LYRIC_NO_ANIMATION = "lyric_no_animation"
+        private const val KEY_TRANSLATION_AUTO_WORD = "translation_auto_word"
         
         // Theme Settings
         private const val KEY_USE_SYSTEM_THEME = "use_system_theme"
@@ -660,6 +664,18 @@ class AppSettings private constructor(context: Context) {
     
     private val _autoHideLyricsControls = MutableStateFlow(prefs.getBoolean(KEY_AUTO_HIDE_LYRICS_CONTROLS, true))
     val autoHideLyricsControls: StateFlow<Boolean> = _autoHideLyricsControls.asStateFlow()
+    
+    private val _lyricBold = MutableStateFlow(prefs.getBoolean(KEY_LYRIC_BOLD, false))
+    val lyricBold: StateFlow<Boolean> = _lyricBold.asStateFlow()
+
+    private val _trimLyrics = MutableStateFlow(prefs.getBoolean(KEY_TRIM_LYRICS, true))
+    val trimLyrics: StateFlow<Boolean> = _trimLyrics.asStateFlow()
+
+    private val _lyricNoAnimation = MutableStateFlow(prefs.getBoolean(KEY_LYRIC_NO_ANIMATION, false))
+    val lyricNoAnimation: StateFlow<Boolean> = _lyricNoAnimation.asStateFlow()
+
+    private val _translationAutoWord = MutableStateFlow(prefs.getBoolean(KEY_TRANSLATION_AUTO_WORD, false))
+    val translationAutoWord: StateFlow<Boolean> = _translationAutoWord.asStateFlow()
     
     // Theme Settings
     private val _useSystemTheme = MutableStateFlow(prefs.getBoolean(KEY_USE_SYSTEM_THEME, true))
@@ -1979,6 +1995,26 @@ private val _autoCheckForUpdates = MutableStateFlow(prefs.getBoolean(KEY_AUTO_CH
     fun setAutoHideLyricsControls(enabled: Boolean) {
         prefs.edit().putBoolean(KEY_AUTO_HIDE_LYRICS_CONTROLS, enabled).apply()
         _autoHideLyricsControls.value = enabled
+    }
+
+    fun setLyricBold(enable: Boolean) {
+        prefs.edit().putBoolean(KEY_LYRIC_BOLD, enable).apply()
+        _lyricBold.value = enable
+    }
+
+    fun setTrimLyrics(enable: Boolean) {
+        prefs.edit().putBoolean(KEY_TRIM_LYRICS, enable).apply()
+        _trimLyrics.value = enable
+    }
+
+    fun setLyricNoAnimation(enable: Boolean) {
+        prefs.edit().putBoolean(KEY_LYRIC_NO_ANIMATION, enable).apply()
+        _lyricNoAnimation.value = enable
+    }
+
+    fun setTranslationAutoWord(enable: Boolean) {
+        prefs.edit().putBoolean(KEY_TRANSLATION_AUTO_WORD, enable).apply()
+        _translationAutoWord.value = enable
     }
     
     // Theme Settings Methods
@@ -4433,6 +4469,10 @@ private val _autoCheckForUpdates = MutableStateFlow(prefs.getBoolean(KEY_AUTO_CH
         )
         _lyricsApiFallbackRetry.value = prefs.getBoolean(KEY_LYRICS_API_FALLBACK_RETRY, true)
         _onlineOnlyLyrics.value = prefs.getBoolean(KEY_ONLINE_ONLY_LYRICS, true)
+        _lyricBold.value = prefs.getBoolean(KEY_LYRIC_BOLD, false)
+        _trimLyrics.value = prefs.getBoolean(KEY_TRIM_LYRICS, true)
+        _lyricNoAnimation.value = prefs.getBoolean(KEY_LYRIC_NO_ANIMATION, false)
+        _translationAutoWord.value = prefs.getBoolean(KEY_TRANSLATION_AUTO_WORD, false)
         _searchHistory.value = prefs.getString(KEY_SEARCH_HISTORY, null)
         _showKeyboardOnSearchOpen.value = prefs.getBoolean(KEY_SHOW_KEYBOARD_ON_SEARCH_OPEN, true)
         _playlists.value = prefs.getString(KEY_PLAYLISTS, null)

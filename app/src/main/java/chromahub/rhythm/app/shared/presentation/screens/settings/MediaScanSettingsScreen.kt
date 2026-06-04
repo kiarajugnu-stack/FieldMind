@@ -92,6 +92,7 @@ import chromahub.rhythm.app.shared.data.repository.PlaybackStatsRepository
 import chromahub.rhythm.app.shared.data.repository.StatsTimeRange
 import chromahub.rhythm.app.util.GsonUtils
 import chromahub.rhythm.app.util.HapticUtils
+import chromahub.rhythm.app.util.HapticType
 import coil.compose.AsyncImage
 import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
@@ -259,7 +260,7 @@ fun MediaScanSettingsScreen(onBackClick: () -> Unit) {
                     toggleState = currentMode == chromahub.rhythm.app.shared.presentation.components.MediaScanMode.BLACKLIST,
                     onToggleChange = { enabled ->
                         if (enabled) {
-                            HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                            HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                             currentMode = chromahub.rhythm.app.shared.presentation.components.MediaScanMode.BLACKLIST
                             appSettings.setMediaScanMode("blacklist")
                         }
@@ -272,7 +273,7 @@ fun MediaScanSettingsScreen(onBackClick: () -> Unit) {
                     toggleState = currentMode == chromahub.rhythm.app.shared.presentation.components.MediaScanMode.WHITELIST,
                     onToggleChange = { enabled ->
                         if (enabled) {
-                            HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                            HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                             currentMode = chromahub.rhythm.app.shared.presentation.components.MediaScanMode.WHITELIST
                             appSettings.setMediaScanMode("whitelist")
                         }
@@ -288,7 +289,7 @@ fun MediaScanSettingsScreen(onBackClick: () -> Unit) {
                     context.getString(R.string.settings_manage_songs),
                     context.getString(R.string.settings_manage_songs_desc, filteredSongDetails.size, if (currentMode == chromahub.rhythm.app.shared.presentation.components.MediaScanMode.BLACKLIST) context.getString(R.string.settings_blocked) else context.getString(R.string.settings_whitelisted)),
                     onClick = {
-                        HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                        HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                         showSongsBottomSheet = true
                     }
                 ),
@@ -297,7 +298,7 @@ fun MediaScanSettingsScreen(onBackClick: () -> Unit) {
                     context.getString(R.string.settings_clear_all_songs),
                     context.getString(R.string.settings_clear_all_songs_desc, if (currentMode == chromahub.rhythm.app.shared.presentation.components.MediaScanMode.BLACKLIST) context.getString(R.string.settings_blocked) else context.getString(R.string.settings_whitelisted)),
                     onClick = {
-                        HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                        HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                         if (currentMode == chromahub.rhythm.app.shared.presentation.components.MediaScanMode.BLACKLIST) {
                             appSettings.clearBlacklist()
                         } else {
@@ -315,7 +316,7 @@ fun MediaScanSettingsScreen(onBackClick: () -> Unit) {
                     context.getString(R.string.settings_manage_folders),
                     context.getString(R.string.settings_manage_folders_desc, filteredFoldersList.size, if (currentMode == chromahub.rhythm.app.shared.presentation.components.MediaScanMode.BLACKLIST) context.getString(R.string.settings_blocked) else context.getString(R.string.settings_whitelisted)),
                     onClick = {
-                        HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                        HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                         showFoldersBottomSheet = true
                     }
                 ),
@@ -324,7 +325,7 @@ fun MediaScanSettingsScreen(onBackClick: () -> Unit) {
                     context.getString(R.string.settings_add_folder),
                     context.getString(R.string.settings_add_folder_desc, if (currentMode == chromahub.rhythm.app.shared.presentation.components.MediaScanMode.BLACKLIST) context.getString(R.string.settings_block) else context.getString(R.string.settings_whitelist)),
                     onClick = {
-                        HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                        HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                         val intent = Intent(Intent.ACTION_OPEN_DOCUMENT_TREE)
                         folderPickerLauncher.launch(intent)
                     }
@@ -334,7 +335,7 @@ fun MediaScanSettingsScreen(onBackClick: () -> Unit) {
                     context.getString(R.string.settings_clear_all_folders),
                     context.getString(R.string.settings_clear_all_folders_desc, if (currentMode == chromahub.rhythm.app.shared.presentation.components.MediaScanMode.BLACKLIST) context.getString(R.string.settings_blocked) else context.getString(R.string.settings_whitelisted)),
                     onClick = {
-                        HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                        HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                         if (currentMode == chromahub.rhythm.app.shared.presentation.components.MediaScanMode.BLACKLIST) {
                             blacklistedFolders.forEach { folder ->
                                 appSettings.removeFolderFromBlacklist(folder)
@@ -396,7 +397,7 @@ fun MediaScanSettingsScreen(onBackClick: () -> Unit) {
                                 ),
                                 selectedIndex = if (currentMode == chromahub.rhythm.app.shared.presentation.components.MediaScanMode.BLACKLIST) 0 else 1,
                                 onItemClick = { index ->
-                                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                                    HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                                     currentMode = if (index == 0) {
                                         appSettings.setMediaScanMode("blacklist")
                                         chromahub.rhythm.app.shared.presentation.components.MediaScanMode.BLACKLIST
@@ -735,7 +736,7 @@ fun MediaScanSettingsScreen(onBackClick: () -> Unit) {
 
                                 FilledIconButton(
                                     onClick = {
-                                        HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                                        HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                                         if (currentMode == chromahub.rhythm.app.shared.presentation.components.MediaScanMode.BLACKLIST) {
                                             appSettings.removeFromBlacklist(song.id)
                                         } else {
@@ -765,7 +766,7 @@ fun MediaScanSettingsScreen(onBackClick: () -> Unit) {
                     Spacer(modifier = Modifier.height(24.dp))
                     OutlinedButton(
                         onClick = {
-                            HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
+                            HapticUtils.performHapticFeedback(context, haptic, HapticType.HEAVY)
                             if (currentMode == chromahub.rhythm.app.shared.presentation.components.MediaScanMode.BLACKLIST) {
                                 appSettings.clearBlacklist()
                             } else {
@@ -966,7 +967,7 @@ fun MediaScanSettingsScreen(onBackClick: () -> Unit) {
 
                                 FilledIconButton(
                                     onClick = {
-                                        HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                                        HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                                         if (currentMode == chromahub.rhythm.app.shared.presentation.components.MediaScanMode.BLACKLIST) {
                                             appSettings.removeFolderFromBlacklist(folder)
                                         } else {
@@ -999,7 +1000,7 @@ fun MediaScanSettingsScreen(onBackClick: () -> Unit) {
                 ) {
                     Button(
                         onClick = {
-                            HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
+                            HapticUtils.performHapticFeedback(context, haptic, HapticType.HEAVY)
                             val intent = Intent(Intent.ACTION_OPEN_DOCUMENT_TREE)
                             folderPickerLauncher.launch(intent)
                         },
@@ -1020,7 +1021,7 @@ fun MediaScanSettingsScreen(onBackClick: () -> Unit) {
                     if (filteredFoldersList.isNotEmpty()) {
                         OutlinedButton(
                             onClick = {
-                                HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
+                                HapticUtils.performHapticFeedback(context, haptic, HapticType.HEAVY)
                                 if (currentMode == chromahub.rhythm.app.shared.presentation.components.MediaScanMode.BLACKLIST) {
                                     blacklistedFolders.forEach { folder ->
                                         appSettings.removeFolderFromBlacklist(folder)

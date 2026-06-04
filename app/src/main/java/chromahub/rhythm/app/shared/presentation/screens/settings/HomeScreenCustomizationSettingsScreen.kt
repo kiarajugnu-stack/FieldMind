@@ -92,6 +92,7 @@ import chromahub.rhythm.app.shared.data.repository.PlaybackStatsRepository
 import chromahub.rhythm.app.shared.data.repository.StatsTimeRange
 import chromahub.rhythm.app.util.GsonUtils
 import chromahub.rhythm.app.util.HapticUtils
+import chromahub.rhythm.app.util.HapticType
 import coil.compose.AsyncImage
 import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
@@ -198,7 +199,7 @@ fun HomeScreenCustomizationSettingsScreen(onBackClick: () -> Unit) {
         title = context.getString(R.string.settings_home_screen),
         showBackButton = true,
         onBackClick = {
-            HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
+            HapticUtils.performHapticFeedback(context, haptic, HapticType.HEAVY)
             onBackClick()
         }
     ) { modifier ->
@@ -279,7 +280,7 @@ fun HomeScreenCustomizationSettingsScreen(onBackClick: () -> Unit) {
                                         items = listOf("Icon", "Name", "Both"),
                                         selectedIndex = displayMode,
                                         onItemClick = { index ->
-                                            HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                                            HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                                             appSettings.setHomeHeaderDisplayMode(index)
                                         },
                                         modifier = Modifier.fillMaxWidth()
@@ -315,7 +316,7 @@ fun HomeScreenCustomizationSettingsScreen(onBackClick: () -> Unit) {
                                             items = listOf("Always", "Expanded", "Collapsed"),
                                             selectedIndex = visibilityMode,
                                             onItemClick = { index ->
-                                                HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                                                HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                                                 appSettings.setHomeAppIconVisibility(index)
                                             },
                                             modifier = Modifier.fillMaxWidth()
@@ -355,7 +356,7 @@ fun HomeScreenCustomizationSettingsScreen(onBackClick: () -> Unit) {
                                 title = context.getString(R.string.settings_reorder_toggle_sections),
                                 description = context.getString(R.string.settings_customize_home_layout),
                                 onClick = {
-                                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                                    HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                                     showHomeSectionOrderSheet = true
                                 }
                             )
@@ -393,7 +394,7 @@ fun HomeScreenCustomizationSettingsScreen(onBackClick: () -> Unit) {
                                         Slider(
                                             value = recentlyPlayedCount.toFloat(),
                                             onValueChange = {
-                                                HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                                                HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                                                 appSettings.setHomeRecentlyPlayedCount(it.toInt())
                                             },
                                             valueRange = 3f..12f,
@@ -431,7 +432,7 @@ fun HomeScreenCustomizationSettingsScreen(onBackClick: () -> Unit) {
                                         Slider(
                                             value = artistsCount.toFloat(),
                                             onValueChange = {
-                                                HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                                                HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                                                 appSettings.setHomeArtistsCount(it.toInt())
                                             },
                                             valueRange = 4f..20f,
@@ -469,7 +470,7 @@ fun HomeScreenCustomizationSettingsScreen(onBackClick: () -> Unit) {
                                         Slider(
                                             value = newReleasesCount.toFloat(),
                                             onValueChange = {
-                                                HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                                                HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                                                 appSettings.setHomeNewReleasesCount(it.toInt())
                                             },
                                             valueRange = 4f..20f,
@@ -507,7 +508,7 @@ fun HomeScreenCustomizationSettingsScreen(onBackClick: () -> Unit) {
                                         Slider(
                                             value = recentlyAddedCount.toFloat(),
                                             onValueChange = {
-                                                HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                                                HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                                                 appSettings.setHomeRecentlyAddedCount(it.toInt())
                                             },
                                             valueRange = 4f..20f,
@@ -545,7 +546,7 @@ fun HomeScreenCustomizationSettingsScreen(onBackClick: () -> Unit) {
                                         Slider(
                                             value = recommendedCount.toFloat(),
                                             onValueChange = {
-                                                HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                                                HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                                                 appSettings.setHomeRecommendedCount(it.toInt())
                                             },
                                             valueRange = 2f..8f,
@@ -685,7 +686,7 @@ fun HomeScreenCustomizationSettingsScreen(onBackClick: () -> Unit) {
                                             Slider(
                                                 value = discoverItemCount.toFloat(),
                                                 onValueChange = {
-                                                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                                                    HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                                                     appSettings.setHomeDiscoverItemCount(it.toInt())
                                                 },
                                                 valueRange = 3f..12f,
@@ -862,7 +863,7 @@ fun CarouselStyleSelector(
 
                     Card(
                         onClick = {
-                            HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                            HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                             onStyleSelected(style)
                         },
                         modifier = Modifier.weight(1f),
@@ -975,7 +976,7 @@ fun HomeSettingsSliderCard(
             Slider(
                 value = value,
                 onValueChange = {
-                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                    HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                     onValueChange(it)
                 },
                 valueRange = valueRange,
@@ -1058,7 +1059,7 @@ fun HomeSettingsSliderRow(
         Slider(
             value = value,
             onValueChange = {
-                HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                 onValueChange(it)
             },
             valueRange = valueRange,

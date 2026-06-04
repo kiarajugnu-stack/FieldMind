@@ -18,8 +18,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
+import chromahub.rhythm.app.shared.presentation.components.common.DragDropLazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.BottomSheetDefaults
@@ -56,6 +56,7 @@ import chromahub.rhythm.app.shared.presentation.components.common.ButtonGroupSty
 import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveButtonGroup
 import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveGroupButton
 import chromahub.rhythm.app.util.HapticUtils
+import chromahub.rhythm.app.util.HapticType
 import kotlinx.coroutines.launch
 import androidx.compose.ui.res.stringResource
 
@@ -158,114 +159,230 @@ fun StreamingHomeSectionOrderBottomSheet(
         val totalSectionCards = reorderableList.size + 1
 
         Column(modifier = Modifier.fillMaxWidth()) {
-            LazyColumn(
+            // Header content (Fixed)
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(1f)
-                    .padding(horizontal = 24.dp, vertical = 16.dp)
+                    .padding(horizontal = 24.dp)
+                    .padding(top = 16.dp, bottom = 8.dp)
             ) {
-                item {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Column {
+                        Text(
+                            text = context.getString(R.string.bottomsheet_home_section_order),
+                            style = MaterialTheme.typography.displayMedium,
+                            fontWeight = FontWeight.Medium,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Box(
+                            modifier = Modifier
+                                .padding(top = 6.dp)
+                                .background(
+                                    color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                                    shape = CircleShape
+                                )
+                        ) {
+                            Text(
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                                style = MaterialTheme.typography.labelLarge,
+                                text = context.getString(R.string.bottomsheet_reorder_toggle_visibility),
+                                overflow = TextOverflow.Ellipsis,
+                                maxLines = 1,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                        }
+                    }
+                }
+            }
+
+            // Fixed Discover Carousel section (always first, not reorderable)
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp)
+            ) {
+                val (sectionName, sectionIcon) = getSectionInfo(STREAMING_SECTION_DISCOVER)
+                val isVisible = visibilityMap[STREAMING_SECTION_DISCOVER] ?: true
+                
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 4.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHighest),
+                    shape = groupedBottomSheetItemShape(0, totalSectionCards)
+                ) {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(vertical = 16.dp),
+                            .padding(16.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Column {
-                            Text(
-                                text = context.getString(R.string.bottomsheet_home_section_order),
-                                style = MaterialTheme.typography.displayMedium,
-                                fontWeight = FontWeight.Medium,
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
-                            Box(
-                                modifier = Modifier
-                                    .padding(top = 6.dp)
-                                    .background(
-                                        color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                                        shape = CircleShape
-                                    )
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(16.dp),
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Surface(
+                                shape = CircleShape,
+                                color = MaterialTheme.colorScheme.tertiaryContainer,
+                                modifier = Modifier.size(36.dp)
                             ) {
+                                Box(contentAlignment = Alignment.Center) {
+                                    Icon(
+                                        imageVector = RhythmIcons.Pushpin,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                }
+                            }
+
+                            Icon(
+                                imageVector = sectionIcon,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.size(24.dp)
+                            )
+
+                            Column(modifier = Modifier.weight(1f)) {
                                 Text(
-                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                                    style = MaterialTheme.typography.labelLarge,
-                                    text = context.getString(R.string.bottomsheet_reorder_toggle_visibility),
-                                    overflow = TextOverflow.Ellipsis,
-                                    maxLines = 1,
+                                    text = sectionName,
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Medium,
                                     color = MaterialTheme.colorScheme.onSurface
+                                )
+                                Text(
+                                    text = stringResource(R.string.homesectionorderbottomsheet_fixed_position),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
                         }
+
+                        IconButton(
+                            onClick = {
+                                HapticUtils.performHapticFeedback(context, haptics, HapticType.LIGHT)
+                                visibilityMap = visibilityMap.toMutableMap().apply {
+                                    this[STREAMING_SECTION_DISCOVER] = !isVisible
+                                }
+                            },
+                            modifier = Modifier.size(40.dp)
+                        ) {
+                            Icon(
+                                imageVector = if (isVisible) RhythmIcons.Visibility else RhythmIcons.VisibilityOff,
+                                contentDescription = if (isVisible) "Hide section" else "Show section",
+                                tint = if (isVisible) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
                     }
-
-                    Spacer(modifier = Modifier.height(24.dp))
                 }
+            }
 
-                item(key = STREAMING_SECTION_DISCOVER) {
-                    val (sectionName, sectionIcon) = getSectionInfo(STREAMING_SECTION_DISCOVER)
-                    val isVisible = visibilityMap[STREAMING_SECTION_DISCOVER] ?: true
+            Spacer(modifier = Modifier.height(4.dp))
 
-                    Card(
+            // Reorderable list using DragDropLazyColumn
+            val lazyListState = rememberLazyListState()
+            DragDropLazyColumn(
+                items = reorderableList,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f)
+                    .padding(horizontal = 24.dp),
+                lazyListState = lazyListState,
+                onMove = { fromIndex, toIndex ->
+                    val newList = reorderableList.toMutableList()
+                    val item = newList.removeAt(fromIndex)
+                    newList.add(toIndex, item)
+                    reorderableList = newList
+                },
+                itemKey = { it }
+            ) { sectionId, isDragging, index ->
+                val (sectionName, sectionIcon) = getSectionInfo(sectionId)
+                val isVisible = visibilityMap[sectionId] ?: true
+                val visibleSectionsCount = visibilityMap.values.count { it }
+                
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 4.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = if (isDragging) 
+                            MaterialTheme.colorScheme.secondaryContainer 
+                        else 
+                            MaterialTheme.colorScheme.surfaceContainerHigh
+                    ),
+                    shape = groupedBottomSheetItemShape(index + 1, totalSectionCards)
+                ) {
+                    Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(vertical = 4.dp),
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHighest),
-                        shape = groupedBottomSheetItemShape(0, totalSectionCards)
+                            .padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(16.dp),
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
+                            horizontalArrangement = Arrangement.spacedBy(16.dp),
+                            modifier = Modifier.weight(1f)
                         ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(16.dp),
-                                modifier = Modifier.weight(1f)
+                            Surface(
+                                shape = CircleShape,
+                                color = MaterialTheme.colorScheme.primaryContainer,
+                                modifier = Modifier.size(36.dp)
                             ) {
-                                Surface(
-                                    shape = CircleShape,
-                                    color = MaterialTheme.colorScheme.tertiaryContainer,
-                                    modifier = Modifier.size(36.dp)
-                                ) {
-                                    Box(contentAlignment = Alignment.Center) {
-                                        Icon(
-                                            imageVector = RhythmIcons.Pushpin,
-                                            contentDescription = null,
-                                            modifier = Modifier.size(18.dp)
-                                        )
-                                    }
-                                }
-
-                                Icon(
-                                    imageVector = sectionIcon,
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    modifier = Modifier.size(24.dp)
-                                )
-
-                                Column(modifier = Modifier.weight(1f)) {
+                                Box(contentAlignment = Alignment.Center) {
                                     Text(
-                                        text = sectionName,
-                                        style = MaterialTheme.typography.titleMedium,
-                                        fontWeight = FontWeight.Medium,
-                                        color = MaterialTheme.colorScheme.onSurface
-                                    )
-                                    Text(
-                                        text = stringResource(R.string.homesectionorderbottomsheet_fixed_position),
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        text = "${index + 1}",
+                                        style = MaterialTheme.typography.labelLarge,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.onPrimaryContainer
                                     )
                                 }
                             }
 
+                            Icon(
+                                imageVector = sectionIcon,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.size(24.dp)
+                            )
+
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = sectionName,
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Medium,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                                Text(
+                                    text = context.getString(R.string.bottomsheet_reorder_toggle_visibility),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+
+                        // Visibility toggle and drag handle
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
                             IconButton(
                                 onClick = {
-                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                                    if (isVisible && visibleSectionsCount <= 1) {
+                                        Toast.makeText(context, R.string.home_section_one_visible, Toast.LENGTH_SHORT).show()
+                                        return@IconButton
+                                    }
+                                    HapticUtils.performHapticFeedback(context, haptics, HapticType.LIGHT)
                                     visibilityMap = visibilityMap.toMutableMap().apply {
-                                        this[STREAMING_SECTION_DISCOVER] = !isVisible
+                                        this[sectionId] = !isVisible
                                     }
                                 },
                                 modifier = Modifier.size(40.dp)
@@ -277,154 +394,21 @@ fun StreamingHomeSectionOrderBottomSheet(
                                     modifier = Modifier.size(20.dp)
                                 )
                             }
-                        }
-                    }
-                }
 
-                itemsIndexed(
-                    items = reorderableList,
-                    key = { _, item -> item }
-                ) { index, sectionId ->
-                    val (sectionName, sectionIcon) = getSectionInfo(sectionId)
-                    val isVisible = visibilityMap[sectionId] ?: true
-                    val visibleSectionsCount = visibilityMap.values.count { it }
-
-                    Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 4.dp)
-                            .animateItem(),
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
-                        shape = groupedBottomSheetItemShape(index + 1, totalSectionCards)
-                    ) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(16.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(16.dp),
-                                modifier = Modifier.weight(1f)
-                            ) {
-                                Surface(
-                                    shape = CircleShape,
-                                    color = MaterialTheme.colorScheme.primaryContainer,
-                                    modifier = Modifier.size(36.dp)
-                                ) {
-                                    Box(contentAlignment = Alignment.Center) {
-                                        Text(
-                                            text = "${index + 1}",
-                                            style = MaterialTheme.typography.labelLarge,
-                                            fontWeight = FontWeight.Bold,
-                                            color = MaterialTheme.colorScheme.onPrimaryContainer
-                                        )
-                                    }
-                                }
-
-                                Icon(
-                                    imageVector = sectionIcon,
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    modifier = Modifier.size(24.dp)
-                                )
-
-                                Column(modifier = Modifier.weight(1f)) {
-                                    Text(
-                                        text = sectionName,
-                                        style = MaterialTheme.typography.titleMedium,
-                                        fontWeight = FontWeight.Medium,
-                                        color = MaterialTheme.colorScheme.onSurface
-                                    )
-                                    Text(
-                                        text = context.getString(R.string.bottomsheet_reorder_toggle_visibility),
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                }
-                            }
-
-                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                IconButton(
-                                    onClick = {
-                                        if (isVisible && visibleSectionsCount <= 1) {
-                                            Toast.makeText(context, R.string.home_section_one_visible, Toast.LENGTH_SHORT).show()
-                                            return@IconButton
-                                        }
-                                        HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
-                                        visibilityMap = visibilityMap.toMutableMap().apply {
-                                            this[sectionId] = !isVisible
-                                        }
-                                    },
-                                    modifier = Modifier.size(40.dp)
-                                ) {
-                                    Icon(
-                                        imageVector = if (isVisible) RhythmIcons.Visibility else RhythmIcons.VisibilityOff,
-                                        contentDescription = if (isVisible) "Hide section" else "Show section",
-                                        tint = if (isVisible) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
-                                        modifier = Modifier.size(20.dp)
-                                    )
-                                }
-
-                                FilledIconButton(
-                                    onClick = {
-                                        if (index > 0) {
-                                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
-                                            val newList = reorderableList.toMutableList()
-                                            val item = newList.removeAt(index)
-                                            newList.add(index - 1, item)
-                                            reorderableList = newList
-                                        }
-                                    },
-                                    enabled = index > 0,
-                                    colors = IconButtonDefaults.filledIconButtonColors(
-                                        containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                                        contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
-                                        disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-                                        disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f)
-                                    ),
-                                    modifier = Modifier.size(40.dp)
-                                ) {
-                                    Icon(
-                                        imageVector = RhythmIcons.ArrowUpward,
-                                        contentDescription = stringResource(R.string.settings_move_up),
-                                        modifier = Modifier.size(20.dp)
-                                    )
-                                }
-
-                                FilledIconButton(
-                                    onClick = {
-                                        if (index < reorderableList.size - 1) {
-                                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
-                                            val newList = reorderableList.toMutableList()
-                                            val item = newList.removeAt(index)
-                                            newList.add(index + 1, item)
-                                            reorderableList = newList
-                                        }
-                                    },
-                                    enabled = index < reorderableList.size - 1,
-                                    colors = IconButtonDefaults.filledIconButtonColors(
-                                        containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                                        contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
-                                        disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-                                        disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f)
-                                    ),
-                                    modifier = Modifier.size(40.dp)
-                                ) {
-                                    Icon(
-                                        imageVector = RhythmIcons.ArrowDownward,
-                                        contentDescription = stringResource(R.string.settings_move_down),
-                                        modifier = Modifier.size(20.dp)
-                                    )
-                                }
-                            }
+                            // Drag Handle Icon
+                            Icon(
+                                imageVector = RhythmIcons.DragHandle,
+                                contentDescription = "Drag to reorder",
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+                                modifier = Modifier
+                                    .size(24.dp)
+                                    .padding(horizontal = 4.dp)
+                            )
                         }
                     }
                 }
             }
-
+        
             Surface(
                 modifier = Modifier.fillMaxWidth(),
                 color = MaterialTheme.colorScheme.surfaceContainer,
@@ -438,7 +422,7 @@ fun StreamingHomeSectionOrderBottomSheet(
                 ) {
                     ExpressiveGroupButton(
                         onClick = {
-                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                            HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                             reorderableList = defaultStreamingReorderableSections
                             visibilityMap = mapOf(
                                 STREAMING_SECTION_DISCOVER to true,
@@ -465,7 +449,7 @@ fun StreamingHomeSectionOrderBottomSheet(
 
                     ExpressiveGroupButton(
                         onClick = {
-                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                            HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                             val finalOrder = listOf(STREAMING_SECTION_DISCOVER) + reorderableList
                             appSettings.setStreamingHomeSectionOrder(finalOrder)
                             appSettings.setStreamingHomeShowRecommended(visibilityMap[STREAMING_SECTION_DISCOVER] ?: true)
@@ -498,6 +482,6 @@ fun StreamingHomeSectionOrderBottomSheet(
                     }
                 }
             }
-        }
+    }
     }
 }

@@ -3,6 +3,7 @@
 package chromahub.rhythm.app.shared.presentation.screens.settings
 
 
+
 import chromahub.rhythm.app.shared.presentation.components.icons.RhythmIcons
 import chromahub.rhythm.app.shared.presentation.components.icons.MaterialSymbolIcon
 import chromahub.rhythm.app.shared.presentation.components.icons.Icon
@@ -92,6 +93,7 @@ import chromahub.rhythm.app.shared.data.repository.PlaybackStatsRepository
 import chromahub.rhythm.app.shared.data.repository.StatsTimeRange
 import chromahub.rhythm.app.util.GsonUtils
 import chromahub.rhythm.app.util.HapticUtils
+import chromahub.rhythm.app.util.HapticType
 import coil.compose.AsyncImage
 import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
@@ -173,7 +175,7 @@ fun CrashLogHistorySettingsScreen(onBackClick: () -> Unit, appSettings: AppSetti
         title = context.getString(R.string.settings_crash_log),
         showBackButton = true,
         onBackClick = {
-            hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
+            HapticUtils.performHapticFeedback(context, hapticFeedback, HapticType.HEAVY)
             onBackClick()
         }
     ) { modifier ->

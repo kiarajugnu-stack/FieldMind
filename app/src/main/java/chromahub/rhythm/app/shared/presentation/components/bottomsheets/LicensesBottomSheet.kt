@@ -37,6 +37,7 @@ import chromahub.rhythm.app.shared.presentation.components.Material3SettingsItem
 import chromahub.rhythm.app.shared.presentation.components.icons.Icon
 import chromahub.rhythm.app.shared.presentation.components.icons.RhythmIcons
 import chromahub.rhythm.app.util.HapticUtils
+import chromahub.rhythm.app.util.HapticType
 import androidx.compose.ui.res.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -357,7 +358,7 @@ private fun licenseItem(
             )
         },
         onClick = {
-            HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+            HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
             val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url)).apply {
                 addCategory(Intent.CATEGORY_BROWSABLE)
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)

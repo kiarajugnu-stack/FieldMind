@@ -104,6 +104,7 @@ import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.windowInsetsPadding
 import chromahub.rhythm.app.util.HapticUtils
+import chromahub.rhythm.app.util.HapticType
 import chromahub.rhythm.app.shared.presentation.components.icons.RhythmIcons
 import chromahub.rhythm.app.shared.presentation.components.common.ShimmerBox
 import chromahub.rhythm.app.shared.presentation.components.common.StyledProgressBar
@@ -285,7 +286,7 @@ fun MaterialMiniPlayer(
         onClick = {
             if (!isDismissingPlayer) {
                 // Enhanced haptic feedback for click - respecting settings
-                HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
+                HapticUtils.performHapticFeedback(context, haptic, HapticType.HEAVY)
                 onPlayerClick()
             }
         },
@@ -335,19 +336,19 @@ fun MaterialMiniPlayer(
                             }
                             
                             // Initial feedback when starting to drag - respecting settings
-                            HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                            HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                         },
                         onDragEnd = {
                             if (useTabletLayout) {
                                 // Tablet: check for dismiss
                                 if (miniPlayerOffset.y > swipeDownThreshold) {
                                     // Swipe down detected, dismiss mini player
-                                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
+                                    HapticUtils.performHapticFeedback(context, haptic, HapticType.HEAVY)
                                     isDismissingPlayer = true
                                 } else {
                                     // Snap back to original position
                                     miniPlayerOffset = Offset.Zero
-                                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                                    HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                                 }
                             } else {
                                 // Phone: Determine which gesture was dominant
@@ -358,29 +359,29 @@ fun MaterialMiniPlayer(
                                     // Horizontal swipe is dominant
                                     if (offsetX < -swipeHorizontalThreshold) {
                                         // Swipe left - next track
-                                        HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
+                                        HapticUtils.performHapticFeedback(context, haptic, HapticType.HEAVY)
                                         onSkipNext()
                                     } else if (offsetX > swipeHorizontalThreshold) {
                                         // Swipe right - previous track
-                                        HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
+                                        HapticUtils.performHapticFeedback(context, haptic, HapticType.HEAVY)
                                         onSkipPrevious()
                                     } else {
                                         // Not enough swipe distance
-                                        HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                                        HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                                     }
                                 } else {
                                     // Vertical swipe is dominant
                                     if (offsetY < -swipeUpThreshold) {
                                         // Swipe up detected, open player with stronger feedback
-                                        HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
+                                        HapticUtils.performHapticFeedback(context, haptic, HapticType.HEAVY)
                                         onPlayerClick()
                                     } else if (offsetY > swipeDownThreshold) {
                                         // Swipe down detected, dismiss mini player with stronger feedback
-                                        HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
+                                        HapticUtils.performHapticFeedback(context, haptic, HapticType.HEAVY)
                                         isDismissingPlayer = true
                                     } else {
                                         // Snap-back haptic when releasing before threshold
-                                        HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                                        HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                                     }
                                 }
                             }
@@ -393,7 +394,7 @@ fun MaterialMiniPlayer(
                         },
                         onDragCancel = {
                             // Feedback when drag canceled
-                            HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                            HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                             // Reset offsets if not dismissing
                             if (!isDismissingPlayer) {
                                 offsetY = 0f
@@ -418,16 +419,16 @@ fun MaterialMiniPlayer(
                             if (abs(offsetY) > abs(offsetX)) {
                                 // Vertical is dominant
                                 if (offsetY < 0 && abs(offsetY) - abs(lastHapticOffset) > swipeUpThreshold / 3) {
-                                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                                    HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                                     lastHapticOffset = offsetY
                                 } else if (offsetY > 0 && abs(offsetY) - abs(lastHapticOffset) > swipeDownThreshold / 3) {
-                                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                                    HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                                     lastHapticOffset = offsetY
                                 }
                             } else {
                                 // Horizontal is dominant
                                 if (abs(offsetX) - abs(lastHapticOffsetX) > swipeHorizontalThreshold / 3) {
-                                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                                    HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                                     lastHapticOffsetX = offsetX
                                 }
                             }
@@ -680,7 +681,7 @@ fun MaterialMiniPlayer(
                                                 HapticUtils.performHapticFeedback(
                                                     context,
                                                     haptic,
-                                                    HapticFeedbackType.TextHandleMove
+                                                    HapticType.LIGHT
                                                 )
                                             },
                                             onDragEnd = {
@@ -695,14 +696,14 @@ fun MaterialMiniPlayer(
                                                         HapticUtils.performHapticFeedback(
                                                             context,
                                                             haptic,
-                                                            HapticFeedbackType.LongPress
+                                                            HapticType.HEAVY
                                                         )
                                                         onSkipNext()
                                                     } else if (offsetX > swipeHorizontalThreshold) {
                                                         HapticUtils.performHapticFeedback(
                                                             context,
                                                             haptic,
-                                                            HapticFeedbackType.LongPress
+                                                            HapticType.HEAVY
                                                         )
                                                         onSkipPrevious()
                                                     }
@@ -712,7 +713,7 @@ fun MaterialMiniPlayer(
                                                         HapticUtils.performHapticFeedback(
                                                             context,
                                                             haptic,
-                                                            HapticFeedbackType.LongPress
+                                                            HapticType.HEAVY
                                                         )
                                                         onPlayerClick()
                                                     }
@@ -759,7 +760,7 @@ fun MaterialMiniPlayer(
                                     HapticUtils.performHapticFeedback(
                                         context,
                                         haptic,
-                                        HapticFeedbackType.LongPress
+                                        HapticType.HEAVY
                                     )
                                     onSkipPrevious()
                                 },
@@ -797,7 +798,7 @@ fun MaterialMiniPlayer(
                                     HapticUtils.performHapticFeedback(
                                         context,
                                         haptic,
-                                        HapticFeedbackType.LongPress
+                                        HapticType.HEAVY
                                     )
                                     onPlayPause()
                                 },
@@ -846,7 +847,7 @@ fun MaterialMiniPlayer(
                                     HapticUtils.performHapticFeedback(
                                         context,
                                         haptic,
-                                        HapticFeedbackType.LongPress
+                                        HapticType.HEAVY
                                     )
                                     onSkipNext()
                                 },
@@ -1079,7 +1080,7 @@ fun MaterialMiniPlayer(
                                             HapticUtils.performHapticFeedback(
                                                 context,
                                                 haptic,
-                                                HapticFeedbackType.LongPress
+                                                HapticType.HEAVY
                                             )
                                             onPlayPause()
                                         },
@@ -1133,7 +1134,7 @@ fun MaterialMiniPlayer(
                                         HapticUtils.performHapticFeedback(
                                             context,
                                             haptic,
-                                            HapticFeedbackType.LongPress
+                                            HapticType.HEAVY
                                         )
                                         onPlayPause()
                                     },
@@ -1187,7 +1188,7 @@ fun MaterialMiniPlayer(
                                     HapticUtils.performHapticFeedback(
                                         context,
                                         haptic,
-                                        HapticFeedbackType.TextHandleMove
+                                        HapticType.LIGHT
                                     )
                                     onSkipNext()
                                 },

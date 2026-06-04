@@ -91,6 +91,7 @@ import chromahub.rhythm.app.shared.data.model.AutoEQProfile
 import chromahub.rhythm.app.shared.data.model.UserAudioDevice
 import chromahub.rhythm.app.util.AutoEQImportExport
 import chromahub.rhythm.app.util.HapticUtils
+import chromahub.rhythm.app.util.HapticType
 import chromahub.rhythm.app.features.local.presentation.viewmodel.MusicViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -304,7 +305,7 @@ fun DeviceConfigurationBottomSheet(
                     // Add Device Button
                     Button(
                         onClick = {
-                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                            HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                             showAddDeviceDialog = true
                         },
                         modifier = Modifier.weight(1f),
@@ -323,7 +324,7 @@ fun DeviceConfigurationBottomSheet(
                     // Import Button
                     OutlinedButton(
                         onClick = {
-                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                            HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                             showImportDialog = true
                         },
                         modifier = Modifier.weight(1f),
@@ -342,7 +343,7 @@ fun DeviceConfigurationBottomSheet(
                     // Export Button
                     OutlinedButton(
                         onClick = {
-                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                            HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                             showExportDialog = true
                         },
                         modifier = Modifier.weight(1f),
@@ -412,20 +413,20 @@ fun DeviceConfigurationBottomSheet(
                                 device = device,
                                 isActive = device.autoEQProfileName == currentAutoEQProfile && currentAutoEQProfile.isNotEmpty(),
                                 onSelect = {
-                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                    HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                                     musicViewModel.setActiveAudioDevice(device)
                                 },
                                 onEdit = {
-                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                                    HapticUtils.performHapticFeedback(context, haptics, HapticType.LIGHT)
                                     deviceToEdit = device
                                     showAddDeviceDialog = true
                                 },
                                 onDelete = {
-                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                    HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                                     showDeleteConfirmDialog = device
                                 },
                                 onConfigureAutoEQ = {
-                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                                    HapticUtils.performHapticFeedback(context, haptics, HapticType.LIGHT)
                                     deviceForAutoEQ = device
                                     showAutoEQSelector = true
                                 }
@@ -1372,7 +1373,7 @@ private fun DeviceAutoEQSelector(
                             ),
                             isSelected = isNoneSelected,
                             onClick = {
-                                HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                                 onProfileSelected(AutoEQProfile("None", "", "", List(10) { 0f }))
                             }
                         )
@@ -1410,7 +1411,7 @@ private fun DeviceAutoEQSelector(
                                 profile = profile,
                                 isSelected = device.autoEQProfileName == profile.name,
                                 onClick = {
-                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                    HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                                     onProfileSelected(profile)
                                 }
                             )

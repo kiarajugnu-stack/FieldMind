@@ -25,6 +25,8 @@ import chromahub.rhythm.app.util.LyricLine
 import chromahub.rhythm.app.util.LyricsParser
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import chromahub.rhythm.app.shared.data.model.AppSettings
+import chromahub.rhythm.app.RhythmApplication
 import kotlin.math.abs
 
 private sealed class SyncedLyricsItem {
@@ -38,10 +40,16 @@ private const val LARGE_SCROLL_CATCH_UP_DELTA = 8
 private suspend fun LazyListState.animateToSyncedItemWithCatchUp(
     targetIndex: Int,
     scrollOffset: Int,
-    lastIndex: Int
+    lastIndex: Int,
+    noAnimation: Boolean = false
 ) {
     val currentIndex = firstVisibleItemIndex
     val delta = abs(currentIndex - targetIndex)
+
+    if (noAnimation) {
+        scrollToItem(targetIndex, scrollOffset = scrollOffset)
+        return
+    }
 
     if (delta >= LARGE_SCROLL_CATCH_UP_DELTA) {
         val prePositionIndex = if (targetIndex > currentIndex) {
@@ -134,6 +142,10 @@ fun SyncedLyricsView(
         }
     }
 
+    val appSettings = remember(context) { AppSettings.getInstance(context) }
+    val lyricBoldVal by appSettings.lyricBold.collectAsState()
+    val lyricNoAnimationVal by appSettings.lyricNoAnimation.collectAsState()
+
     // Track previous line for smooth transitions
     val previousLineIndex = remember { mutableIntStateOf(-1) }
 
@@ -167,7 +179,8 @@ fun SyncedLyricsView(
             listState.animateToSyncedItemWithCatchUp(
                 targetIndex = targetItemIndex,
                 scrollOffset = -offset,
-                lastIndex = lyricsItems.lastIndex
+                lastIndex = lyricsItems.lastIndex,
+                noAnimation = lyricNoAnimationVal
             )
         }
     }
@@ -219,14 +232,17 @@ fun SyncedLyricsView(
                             showRomanization = showRomanization,
                             textSizeMultiplier = textSizeMultiplier,
                             textAlignment = textAlignment,
-                            onTapLyricsView = onTapLyricsView
+                            onTapLyricsView = onTapLyricsView,
+                            lyricBold = lyricBoldVal,
+                            noAnimation = lyricNoAnimationVal
                         )
                     }
 
                     is SyncedLyricsItem.Gap -> {
                         SyncedVocalGapItem(
                             item = item,
-                            currentPlaybackTime = adjustedPlaybackTime
+                            currentPlaybackTime = adjustedPlaybackTime,
+                            noAnimation = lyricNoAnimationVal
                         )
                     }
                 }
@@ -252,7 +268,8 @@ fun SyncedLyricsView(
 @Composable
 private fun SyncedVocalGapItem(
     item: SyncedLyricsItem.Gap,
-    currentPlaybackTime: Long
+    currentPlaybackTime: Long,
+    noAnimation: Boolean
 ) {
     val isCurrentGap = currentPlaybackTime >= item.startTime &&
         currentPlaybackTime < item.startTime + item.duration
@@ -261,7 +278,7 @@ private fun SyncedVocalGapItem(
 
     val iconScale by animateFloatAsState(
         targetValue = if (isCurrentGap) 1.4f else 1f,
-        animationSpec = spring(
+        animationSpec = if (noAnimation) snap() else spring(
             dampingRatio = Spring.DampingRatioLowBouncy,
             stiffness = Spring.StiffnessVeryLow
         ),
@@ -270,7 +287,7 @@ private fun SyncedVocalGapItem(
 
     val iconAlpha by animateFloatAsState(
         targetValue = if (isCurrentGap) 0.82f else 0.3f,
-        animationSpec = spring(
+        animationSpec = if (noAnimation) snap() else spring(
             dampingRatio = Spring.DampingRatioNoBouncy,
             stiffness = Spring.StiffnessLow
         ),
@@ -324,7 +341,9 @@ private fun SyncedLyricItem(
     showRomanization: Boolean,
     textSizeMultiplier: Float = 1.0f,
     textAlignment: TextAlign = TextAlign.Center,
-    onTapLyricsView: (() -> Unit)? = null
+    onTapLyricsView: (() -> Unit)? = null,
+    lyricBold: Boolean = false,
+    noAnimation: Boolean = false
 ) {
     val isCurrentLine = currentLineIndex == index
     val isPreviousLine = currentLineIndex == index + 1
@@ -349,7 +368,7 @@ private fun SyncedLyricItem(
             isNextLine -> 1.03f + (0.07f * progressToNextLine)
             else -> 1f
         },
-        animationSpec = spring(
+        animationSpec = if (noAnimation) snap() else spring(
             dampingRatio = Spring.DampingRatioMediumBouncy,
             stiffness = Spring.StiffnessMediumLow
         ),
@@ -366,7 +385,7 @@ private fun SyncedLyricItem(
             distanceFromCurrent == 4 -> 0.30f
             else -> 0.22f
         },
-        animationSpec = spring(
+        animationSpec = if (noAnimation) snap() else spring(
             dampingRatio = Spring.DampingRatioMediumBouncy,
             stiffness = Spring.StiffnessMedium
         ),
@@ -376,7 +395,7 @@ private fun SyncedLyricItem(
     // Vertical translation for flowing effect
     val verticalTranslation by animateFloatAsState(
         targetValue = if (isCurrentLine) 0f else if (isPreviousLine) -8f else 0f,
-        animationSpec = spring(
+        animationSpec = if (noAnimation) snap() else spring(
             dampingRatio = Spring.DampingRatioMediumBouncy,
             stiffness = Spring.StiffnessMedium
         ),
@@ -405,10 +424,10 @@ private fun SyncedLyricItem(
     
     // Dynamic font weight based on position
     val fontWeight = when {
-        isCurrentLine -> FontWeight.ExtraBold
-        distanceFromCurrent <= 1 -> FontWeight.SemiBold
-        distanceFromCurrent <= 2 -> FontWeight.Medium
-        else -> FontWeight.Normal
+        isCurrentLine -> if (lyricBold) FontWeight.Black else FontWeight.ExtraBold
+        distanceFromCurrent <= 1 -> if (lyricBold) FontWeight.ExtraBold else FontWeight.SemiBold
+        distanceFromCurrent <= 2 -> if (lyricBold) FontWeight.Bold else FontWeight.Medium
+        else -> if (lyricBold) FontWeight.SemiBold else FontWeight.Normal
     }
     
     // Subtle letter spacing for emphasis

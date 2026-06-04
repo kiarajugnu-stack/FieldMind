@@ -91,6 +91,7 @@ import chromahub.rhythm.app.R
 import chromahub.rhythm.app.shared.data.model.PlaybackLocation
 import chromahub.rhythm.app.shared.data.model.AppSettings
 import chromahub.rhythm.app.util.HapticUtils
+import chromahub.rhythm.app.util.HapticType
 import chromahub.rhythm.app.features.local.presentation.viewmodel.MusicViewModel
 import androidx.compose.ui.res.stringResource
 import chromahub.rhythm.app.shared.presentation.components.Material3SettingsGroup
@@ -417,7 +418,7 @@ fun PlaybackBottomSheet(
             selectedQuality = streamingQuality.uppercase(),
             onDismiss = { showQualitySheet = false },
             onSelect = { quality ->
-                HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                 appSettings.setStreamingQuality(quality)
                 // Show restart dialog
                 restartDialogMessage = "Streaming quality changed. Restart the app to apply the new audio settings."
@@ -590,7 +591,7 @@ private fun ActiveDeviceCard(
                 FilledTonalIconButton(
                     onClick = {
                         isRefreshing = true
-                        HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                        HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                         onRefreshDevices()
                     },
                     modifier = Modifier.size(34.dp),
@@ -864,7 +865,7 @@ private fun VolumeControlCard(
                 // Volume down button
                 IconButton(
                     onClick = {
-                        HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                        HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                         if (useSystemVolume) {
                             val newVolume = (systemVolume - 0.1f).coerceAtLeast(0f)
                             setSystemVolume(newVolume)
@@ -892,7 +893,7 @@ private fun VolumeControlCard(
                 Slider(
                     value = currentVolume,
                     onValueChange = { newVolume ->
-                        HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                        HapticUtils.performHapticFeedback(context, haptics, HapticType.LIGHT)
                         if (useSystemVolume) {
                             setSystemVolume(newVolume)
                         } else {
@@ -912,7 +913,7 @@ private fun VolumeControlCard(
                 // Volume up button
                 IconButton(
                     onClick = {
-                        HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                        HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                         if (useSystemVolume) {
                             val newVolume = (systemVolume + 0.1f).coerceAtMost(1f)
                             setSystemVolume(newVolume)
@@ -964,7 +965,7 @@ private fun VolumeControlCard(
                 
                 Surface(
                     onClick = {
-                        HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                        HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                         if (useSystemVolume) {
                             toggleSystemMute()
                         } else {
@@ -1002,7 +1003,7 @@ private fun VolumeControlCard(
                 // Max volume button
                 Surface(
                     onClick = {
-                        HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                        HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                         if (useSystemVolume) {
                             setSystemMaxVolume()
                         } else {
@@ -1143,7 +1144,7 @@ private fun PlaybackSpeedCard(
                 chromahub.rhythm.app.shared.presentation.screens.settings.TunerAnimatedSwitch(
                     checked = syncEnabled,
                     onCheckedChange = {
-                        HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                        HapticUtils.performHapticFeedback(context, haptics, HapticType.LIGHT)
                         onSyncChange(it)
                     }
                 )
@@ -1175,7 +1176,7 @@ private fun PlaybackSpeedCard(
                     value = selectedSpeed,
                     onValueChange = { newValue ->
                         selectedSpeed = newValue
-                        HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                        HapticUtils.performHapticFeedback(context, haptics, HapticType.LIGHT)
                     },
                     onValueChangeFinished = {
                         onSpeedChange(selectedSpeed)
@@ -1202,7 +1203,7 @@ private fun PlaybackSpeedCard(
                         onClick = {
                             selectedSpeed = presetSpeed
                             onSpeedChange(presetSpeed)
-                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                            HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                         },
                         label = {
                             Text(
@@ -1263,13 +1264,13 @@ private fun PlaybackQuickSettingsCard(
                     AnimatedAudioSwitch(
                         checked = useSystemVolume,
                         onCheckedChange = {
-                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                            HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                             onUseSystemVolumeChange(it)
                         }
                     )
                 },
                 onClick = {
-                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                    HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                     onUseSystemVolumeChange(!useSystemVolume)
                 }
             )
@@ -1283,14 +1284,14 @@ private fun PlaybackQuickSettingsCard(
                     AnimatedAudioSwitch(
                         checked = stopPlaybackOnZeroVolume,
                         onCheckedChange = {
-                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                            HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                             onStopPlaybackOnZeroVolumeChange(it)
                         }
                     )
                 },
                 scope = chromahub.rhythm.app.shared.presentation.components.SettingScope.BOTH,
                 onClick = {
-                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                    HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                     onStopPlaybackOnZeroVolumeChange(!stopPlaybackOnZeroVolume)
                 }
             )
@@ -1304,14 +1305,14 @@ private fun PlaybackQuickSettingsCard(
                     AnimatedAudioSwitch(
                         checked = resumeOnDeviceReconnect,
                         onCheckedChange = {
-                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                            HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                             onResumeOnDeviceReconnectChange(it)
                         }
                     )
                 },
                 scope = chromahub.rhythm.app.shared.presentation.components.SettingScope.BOTH,
                 onClick = {
-                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                    HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                     onResumeOnDeviceReconnectChange(!resumeOnDeviceReconnect)
                 }
             )
@@ -1325,14 +1326,14 @@ private fun PlaybackQuickSettingsCard(
                     AnimatedAudioSwitch(
                         checked = gaplessPlayback,
                         onCheckedChange = {
-                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                            HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                             onGaplessPlaybackChange(it)
                         }
                     )
                 },
                 scope = chromahub.rhythm.app.shared.presentation.components.SettingScope.BOTH,
                 onClick = {
-                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                    HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                     onGaplessPlaybackChange(!gaplessPlayback)
                 }
             )
@@ -1346,14 +1347,14 @@ private fun PlaybackQuickSettingsCard(
                     AnimatedAudioSwitch(
                         checked = showPlayedQueueSongs,
                         onCheckedChange = {
-                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                            HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                             onShowPlayedQueueSongsChange(it)
                         }
                     )
                 },
                 scope = chromahub.rhythm.app.shared.presentation.components.SettingScope.BOTH,
                 onClick = {
-                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                    HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                     onShowPlayedQueueSongsChange(!showPlayedQueueSongs)
                 }
             )
@@ -1367,14 +1368,14 @@ private fun PlaybackQuickSettingsCard(
                     AnimatedAudioSwitch(
                         checked = crossfadeEnabled,
                         onCheckedChange = {
-                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                            HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                             onCrossfadeEnabledChange(it)
                         }
                     )
                 },
                 scope = chromahub.rhythm.app.shared.presentation.components.SettingScope.BOTH,
                 onClick = {
-                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                    HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                     onCrossfadeEnabledChange(!crossfadeEnabled)
                 }
             )
@@ -1442,7 +1443,7 @@ private fun PlaybackQuickSettingsCard(
                         )
                     },
                     onClick = {
-                        HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                        HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                         if (appMode == "STREAMING") {
                             if (onNavigateToGoMode != null) {
                                 onNavigateToGoMode.invoke()
@@ -1500,7 +1501,7 @@ private fun StreamingQualityCard(
                         )
                     },
                     onClick = {
-                        HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                        HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                         onOpenQualitySheet()
                     }
                 )
@@ -1613,7 +1614,7 @@ private fun PlaybackPitchCard(
                 chromahub.rhythm.app.shared.presentation.screens.settings.TunerAnimatedSwitch(
                     checked = syncEnabled,
                     onCheckedChange = {
-                        HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                        HapticUtils.performHapticFeedback(context, haptics, HapticType.LIGHT)
                         onSyncChange(it)
                     }
                 )
@@ -1645,7 +1646,7 @@ private fun PlaybackPitchCard(
                     value = selectedPitch,
                     onValueChange = { newValue ->
                         selectedPitch = newValue
-                        HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                        HapticUtils.performHapticFeedback(context, haptics, HapticType.LIGHT)
                     },
                     onValueChangeFinished = {
                         onPitchChange(selectedPitch)
@@ -1672,7 +1673,7 @@ private fun PlaybackPitchCard(
                         onClick = {
                             selectedPitch = presetPitch
                             onPitchChange(presetPitch)
-                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                            HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                         },
                         label = {
                             Text(
@@ -1800,13 +1801,13 @@ private fun AudioEffectsCard(
                     AnimatedAudioSwitch(
                         checked = equalizerEnabled,
                         onCheckedChange = {
-                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                            HapticUtils.performHapticFeedback(context, haptics, HapticType.LIGHT)
                             onEqualizerEnabledChange(it)
                         }
                     )
                 },
                 onClick = {
-                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                    HapticUtils.performHapticFeedback(context, haptics, HapticType.LIGHT)
                     onEqualizerEnabledChange(!equalizerEnabled)
                 }
             )
@@ -1844,13 +1845,13 @@ private fun AudioEffectsCard(
                     AnimatedAudioSwitch(
                         checked = bassBoostEnabled,
                         onCheckedChange = {
-                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                            HapticUtils.performHapticFeedback(context, haptics, HapticType.LIGHT)
                             onBassBoostEnabledChange(it)
                         }
                     )
                 },
                 onClick = {
-                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                    HapticUtils.performHapticFeedback(context, haptics, HapticType.LIGHT)
                     onBassBoostEnabledChange(!bassBoostEnabled)
                 }
             )
@@ -1888,13 +1889,13 @@ private fun AudioEffectsCard(
                     AnimatedAudioSwitch(
                         checked = virtualizerEnabled,
                         onCheckedChange = {
-                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                            HapticUtils.performHapticFeedback(context, haptics, HapticType.LIGHT)
                             onVirtualizerEnabledChange(it)
                         }
                     )
                 },
                 onClick = {
-                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                    HapticUtils.performHapticFeedback(context, haptics, HapticType.LIGHT)
                     onVirtualizerEnabledChange(!virtualizerEnabled)
                 }
             )
@@ -1915,7 +1916,7 @@ private fun AudioEffectsCard(
                         )
                     },
                     onClick = {
-                        HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                        HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                         navigateToEqualizer.invoke()
                     }
                 )

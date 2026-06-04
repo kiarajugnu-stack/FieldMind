@@ -52,6 +52,7 @@ import chromahub.rhythm.app.shared.presentation.components.Material3SettingsGrou
 import chromahub.rhythm.app.shared.presentation.components.Material3SettingsItem
 import chromahub.rhythm.app.shared.presentation.components.common.CollapsibleHeaderScreen
 import chromahub.rhythm.app.util.HapticUtils
+import chromahub.rhythm.app.util.HapticType
 
 @Composable
 fun StreamingSettingsScreen(
@@ -108,7 +109,7 @@ fun StreamingSettingsScreen(
     var showQualitySheet by remember { mutableStateOf(false) }
 
     fun setGoMode(enabled: Boolean) {
-        HapticUtils.performHapticFeedback(context, hapticFeedback, HapticFeedbackType.TextHandleMove)
+        HapticUtils.performHapticFeedback(context, hapticFeedback, HapticType.LIGHT)
         if (enabled) {
             appSettings.setAppMode("STREAMING")
         } else {
@@ -284,7 +285,7 @@ fun StreamingSettingsScreen(
             sessions = sessions,
             onDismiss = { showServiceSheet = false },
             onSelect = { serviceId ->
-                HapticUtils.performHapticFeedback(context, hapticFeedback, HapticFeedbackType.TextHandleMove)
+                HapticUtils.performHapticFeedback(context, hapticFeedback, HapticType.LIGHT)
                 appSettings.setStreamingService(serviceId)
                 showServiceSheet = false
             }
@@ -296,7 +297,7 @@ fun StreamingSettingsScreen(
             selectedQuality = normalizeStreamingQuality(streamingQuality),
             onDismiss = { showQualitySheet = false },
             onSelect = { quality ->
-                HapticUtils.performHapticFeedback(context, hapticFeedback, HapticFeedbackType.TextHandleMove)
+                HapticUtils.performHapticFeedback(context, hapticFeedback, HapticType.LIGHT)
                 viewModel.setStreamingQuality(StreamingQuality.valueOf(quality))
                 showQualitySheet = false
             }

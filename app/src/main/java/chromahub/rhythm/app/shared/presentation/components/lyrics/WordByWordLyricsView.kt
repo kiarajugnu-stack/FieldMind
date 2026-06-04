@@ -27,6 +27,10 @@ import androidx.compose.ui.unit.sp
 import chromahub.rhythm.app.R
 import chromahub.rhythm.app.util.RhythmLyricsParser
 import chromahub.rhythm.app.util.WordByWordLyricLine
+import chromahub.rhythm.app.shared.data.model.AppSettings
+import chromahub.rhythm.app.RhythmApplication
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import kotlin.math.abs
 
 /**
@@ -116,6 +120,10 @@ fun WordByWordLyricsView(
     val context = LocalContext.current
     // TODO: Apply syncOffset to all timestamp comparisons for manual sync adjustment
     val adjustedPlaybackTime = currentPlaybackTime + syncOffset
+    
+    val appSettings = remember(context) { AppSettings.getInstance(context) }
+    val lyricBoldVal by appSettings.lyricBold.collectAsState()
+    val lyricNoAnimationVal by appSettings.lyricNoAnimation.collectAsState()
     
     val parsedLyrics = remember(wordByWordLyrics) {
         RhythmLyricsParser.parseWordByWordLyrics(wordByWordLyrics)
@@ -239,214 +247,49 @@ fun WordByWordLyricsView(
                         val isUpcomingLine = index > currentLineIndex
                         val linesAhead = index - currentLineIndex
                         
-                        // Animated scale for current line with elastic spring
-                        val scale by animateFloatAsState(
-                            targetValue = when {
-                                isCurrentLine -> 1.08f
-                                isUpcomingLine && linesAhead == 1 -> 1.02f
-                                else -> 1f
-                            },
-                            animationSpec = spring<Float>(
-                                dampingRatio = Spring.DampingRatioLowBouncy,
-                                stiffness = Spring.StiffnessVeryLow
-                            ),
-                            label = "lineScale"
-                        )
-
-                        // Staggered opacity animation for upcoming lines with elastic effect
-                        val opacity by animateFloatAsState(
-                            targetValue = when {
-                                isCurrentLine -> 1f
-                                isUpcomingLine && linesAhead <= 4 -> 0.9f - (linesAhead * 0.1f)
-                                else -> 0.3f
-                            },
-                            animationSpec = if (isUpcomingLine) {
-                                spring<Float>(
-                                    dampingRatio = Spring.DampingRatioLowBouncy,
-                                    stiffness = Spring.StiffnessVeryLow,
-                                    visibilityThreshold = 0.01f
-                                )
-                            } else {
-                                spring<Float>(
-                                    dampingRatio = Spring.DampingRatioMediumBouncy,
-                                    stiffness = Spring.StiffnessLow
-                                )
-                            },
-                            label = "lineOpacity"
-                        )
-
-                        // Staggered translation animation for upcoming lines with elastic bounce
-                        val animatedTranslationY by animateFloatAsState(
-                            targetValue = when {
-                                isUpcomingLine && linesAhead <= 3 -> (linesAhead * 6f)
-                                else -> 0f
-                            },
-                            animationSpec = spring<Float>(
-                                dampingRatio = Spring.DampingRatioLowBouncy,
-                                stiffness = Spring.StiffnessVeryLow
-                            ),
-                            label = "lineTranslation"
-                        )
-
-                        // Calculate distance-based alpha for better readability
                         val distanceFromCurrent = abs(index - currentLineIndex)
                         
-                        // Build annotated string with word-level highlighting (using adjustedPlaybackTime)
-                        val annotatedText = buildAnnotatedString {
-                            val activeWordIndex = if (isCurrentLine) {
-                                val exactActive = line.words.indexOfLast { word ->
-                                    adjustedPlaybackTime >= word.timestamp && adjustedPlaybackTime <= word.endtime
-                                }
+                        // Active word index calculation
+                        val activeWordIndex = if (isCurrentLine) {
+                            val exactActive = line.words.indexOfLast { word ->
+                                adjustedPlaybackTime >= word.timestamp && adjustedPlaybackTime <= word.endtime
+                            }
 
-                                if (exactActive >= 0) {
-                                    exactActive
-                                } else {
-                                    // Fallback: keep the latest word active until next line starts.
-                                    line.words.indexOfLast { word ->
-                                        adjustedPlaybackTime >= word.timestamp
-                                    }
-                                }
+                            if (exactActive >= 0) {
+                                exactActive
                             } else {
-                                -1
-                            }
-
-                            line.words.forEachIndexed { wordIndex, word ->
-                                // TODO: Apply animation preset here based on animationPreset parameter
-                                val isWordActive = isCurrentLine && wordIndex == activeWordIndex
-                                
-                                // Improved alpha values based on distance for better readability
-                                val wordAlpha = when {
-                                    isWordActive -> 1f
-                                    isCurrentLine -> 0.95f // Active line words that haven't been sung yet
-                                    distanceFromCurrent == 1 -> 0.75f // Next/previous line
-                                    distanceFromCurrent == 2 -> 0.60f
-                                    distanceFromCurrent == 3 -> 0.45f
-                                    else -> 0.32f // Far away lines
-                                }
-                                
-                                // Apply different colors based on voice tag
-                                val baseColor = when (line.voiceTag) {
-                                    "v2" -> MaterialTheme.colorScheme.secondary
-                                    "v3" -> MaterialTheme.colorScheme.tertiary
-                                    else -> MaterialTheme.colorScheme.primary // Default/v1
-                                }
-                                
-                                val wordColor = if (isWordActive) {
-                                    baseColor // Active word gets voice-specific color
-                                } else if (isCurrentLine) {
-                                    // Inactive words in current line - use voice color but slightly dimmed
-                                    when (line.voiceTag) {
-                                        "v2" -> MaterialTheme.colorScheme.secondary.copy(alpha = 0.7f)
-                                        "v3" -> MaterialTheme.colorScheme.tertiary.copy(alpha = 0.7f)
-                                        else -> MaterialTheme.colorScheme.onSurface
-                                    }
-                                } else {
-                                    MaterialTheme.colorScheme.onSurface.copy(alpha = wordAlpha)
-                                }
-                                
-                                withStyle(
-                                    SpanStyle(
-                                        color = wordColor,
-                                        fontWeight = if (isWordActive) FontWeight.Bold else 
-                                            if (isCurrentLine) FontWeight.SemiBold else FontWeight.Normal
-                                    )
-                                ) {
-                                    // Add space before word if it's not a syllable part
-                                    if (wordIndex > 0 && !word.isPart) {
-                                        append(" ")
-                                    }
-                                    append(word.text)
+                                line.words.indexOfLast { word ->
+                                    adjustedPlaybackTime >= word.timestamp
                                 }
                             }
+                        } else {
+                            -1
                         }
-                        
-                        val translationAlpha by animateFloatAsState(
-                            targetValue = if (isCurrentLine) 0.95f else 0.72f,
-                            animationSpec = spring(
-                                dampingRatio = Spring.DampingRatioNoBouncy,
-                                stiffness = Spring.StiffnessMediumLow
-                            ),
-                            label = "translationAlpha"
+
+                        WordByWordLyricLineItem(
+                            line = line,
+                            index = index,
+                            isCurrentLine = isCurrentLine,
+                            isUpcomingLine = isUpcomingLine,
+                            linesAhead = linesAhead,
+                            distanceFromCurrent = distanceFromCurrent,
+                            activeWordIndex = activeWordIndex,
+                            adjustedPlaybackTime = adjustedPlaybackTime,
+                            textSizeMultiplier = textSizeMultiplier,
+                            textAlignment = textAlignment,
+                            showTranslation = showTranslation,
+                            showRomanization = showRomanization,
+                            onSeek = onSeek,
+                            onTapLyricsView = onTapLyricsView,
+                            lyricBold = lyricBoldVal,
+                            noAnimation = lyricNoAnimationVal
                         )
-
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable {
-                                    if (onTapLyricsView != null) {
-                                        onTapLyricsView()
-                                    } else {
-                                        onSeek?.invoke(line.lineTimestamp)
-                                    }
-                                }
-                                .padding(vertical = 12.dp, horizontal = 16.dp)
-                                .graphicsLayer {
-                                    scaleX = scale
-                                    scaleY = scale
-                                    alpha = opacity
-                                    translationY = animatedTranslationY
-                                },
-                            horizontalAlignment = when (textAlignment) {
-                                TextAlign.Start -> Alignment.Start
-                                TextAlign.End -> Alignment.End
-                                else -> Alignment.CenterHorizontally
-                            }
-                        ) {
-                            Text(
-                                text = annotatedText,
-                                style = MaterialTheme.typography.headlineSmall.copy(
-                                    fontSize = MaterialTheme.typography.headlineSmall.fontSize * textSizeMultiplier,
-                                    lineHeight = MaterialTheme.typography.headlineSmall.lineHeight * 1.4f * textSizeMultiplier
-                                ),
-                                textAlign = textAlignment,
-                                modifier = Modifier.fillMaxWidth()
-                            )
-
-                            if (showTranslation && !line.translation.isNullOrBlank()) {
-                                Spacer(modifier = Modifier.height(4.dp))
-                                Text(
-                                    text = line.translation,
-                                    style = MaterialTheme.typography.bodyMedium.copy(
-                                        fontStyle = FontStyle.Italic,
-                                        fontWeight = if (isCurrentLine) FontWeight.SemiBold else FontWeight.Normal,
-                                        fontSize = MaterialTheme.typography.bodyMedium.fontSize * (0.92f * textSizeMultiplier),
-                                        lineHeight = MaterialTheme.typography.bodyMedium.lineHeight * 1.32f * textSizeMultiplier
-                                    ),
-                                    color = MaterialTheme.colorScheme.tertiary.copy(
-                                        alpha = if (isCurrentLine) 0.86f else 0.62f
-                                    ),
-                                    textAlign = textAlignment,
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .alpha(translationAlpha)
-                                )
-                            }
-
-                            if (showRomanization && !line.romanization.isNullOrBlank()) {
-                                Spacer(modifier = Modifier.height(4.dp))
-                                Text(
-                                    text = line.romanization,
-                                    style = MaterialTheme.typography.bodySmall.copy(
-                                        fontWeight = FontWeight.Normal,
-                                        fontSize = MaterialTheme.typography.bodySmall.fontSize * (0.9f * textSizeMultiplier),
-                                        lineHeight = MaterialTheme.typography.bodySmall.lineHeight * 1.3f * textSizeMultiplier,
-                                        letterSpacing = 0.02.sp
-                                    ),
-                                    color = MaterialTheme.colorScheme.onSurface.copy(
-                                        alpha = if (isCurrentLine) 0.68f else 0.5f
-                                    ),
-                                    textAlign = textAlignment,
-                                    modifier = Modifier.fillMaxWidth()
-                                )
-                            }
-                        }
                     }
                     is LyricsItem.Gap -> {
-                        // Visual indicator for instrumental gap
                         val isCurrentGap = adjustedPlaybackTime >= item.startTime &&
                             adjustedPlaybackTime < item.startTime + item.duration
                         
-                        val gapHeight = (item.duration / 1000f).coerceIn(20f, 80f) // 20-80dp based on duration
+                        val gapHeight = (item.duration / 1000f).coerceIn(20f, 80f)
                         
                         Spacer(
                             modifier = Modifier
@@ -455,7 +298,6 @@ fun WordByWordLyricsView(
                                 .padding(horizontal = 32.dp)
                         )
                         
-                        // Musical note icon or wave indicator
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -464,7 +306,7 @@ fun WordByWordLyricsView(
                         ) {
                             val iconScale by animateFloatAsState(
                                 targetValue = if (isCurrentGap) 1.5f else 1f,
-                                animationSpec = spring<Float>(
+                                animationSpec = if (lyricNoAnimationVal) snap() else spring<Float>(
                                     dampingRatio = Spring.DampingRatioLowBouncy,
                                     stiffness = Spring.StiffnessVeryLow
                                 ),
@@ -507,6 +349,267 @@ fun WordByWordLyricsView(
                     )
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun WordByWordLyricLineItem(
+    line: WordByWordLyricLine,
+    index: Int,
+    isCurrentLine: Boolean,
+    isUpcomingLine: Boolean,
+    linesAhead: Int,
+    distanceFromCurrent: Int,
+    activeWordIndex: Int,
+    adjustedPlaybackTime: Long,
+    textSizeMultiplier: Float,
+    textAlignment: TextAlign,
+    showTranslation: Boolean,
+    showRomanization: Boolean,
+    onSeek: ((Long) -> Unit)?,
+    onTapLyricsView: (() -> Unit)?,
+    lyricBold: Boolean,
+    noAnimation: Boolean
+) {
+    val scale by animateFloatAsState(
+        targetValue = when {
+            isCurrentLine -> 1.08f
+            isUpcomingLine && linesAhead == 1 -> 1.02f
+            else -> 1f
+        },
+        animationSpec = if (noAnimation) snap() else spring(
+            dampingRatio = Spring.DampingRatioLowBouncy,
+            stiffness = Spring.StiffnessVeryLow
+        ),
+        label = "lineScale"
+    )
+
+    val opacity by animateFloatAsState(
+        targetValue = when {
+            isCurrentLine -> 1f
+            isUpcomingLine && linesAhead <= 4 -> 0.9f - (linesAhead * 0.1f)
+            else -> 0.3f
+        },
+        animationSpec = if (noAnimation) snap() else if (isUpcomingLine) {
+            spring(
+                dampingRatio = Spring.DampingRatioLowBouncy,
+                stiffness = Spring.StiffnessVeryLow,
+                visibilityThreshold = 0.01f
+            )
+        } else {
+            spring(
+                dampingRatio = Spring.DampingRatioMediumBouncy,
+                stiffness = Spring.StiffnessLow
+            )
+        },
+        label = "lineOpacity"
+    )
+
+    val animatedTranslationY by animateFloatAsState(
+        targetValue = when {
+            isUpcomingLine && linesAhead <= 3 -> (linesAhead * 6f)
+            else -> 0f
+        },
+        animationSpec = if (noAnimation) snap() else spring(
+            dampingRatio = Spring.DampingRatioLowBouncy,
+            stiffness = Spring.StiffnessVeryLow
+        ),
+        label = "lineTranslation"
+    )
+
+    val translationAlpha by animateFloatAsState(
+        targetValue = if (isCurrentLine) 0.95f else 0.72f,
+        animationSpec = if (noAnimation) snap() else spring(
+            dampingRatio = Spring.DampingRatioNoBouncy,
+            stiffness = Spring.StiffnessMediumLow
+        ),
+        label = "translationAlpha"
+    )
+
+    val activeWord = if (isCurrentLine) line.words.getOrNull(activeWordIndex) else null
+    val duration = remember(activeWord) {
+        activeWord?.let { (it.endtime - it.timestamp).toInt() } ?: 0
+    }
+    
+    val animatedProgress = remember { Animatable(0f) }
+    LaunchedEffect(activeWord) {
+        animatedProgress.snapTo(0f)
+        if (duration > 0 && !noAnimation) {
+            animatedProgress.animateTo(
+                targetValue = 1f,
+                animationSpec = tween(durationMillis = duration, easing = LinearEasing)
+            )
+        } else {
+            animatedProgress.snapTo(1f)
+        }
+    }
+
+    var textLayoutResult by remember { mutableStateOf<androidx.compose.ui.text.TextLayoutResult?>(null) }
+    
+    val wordRanges = remember(line.words) {
+        val ranges = mutableListOf<IntRange>()
+        var currentLen = 0
+        line.words.forEachIndexed { idx, word ->
+            val prefix = if (idx > 0 && !word.isPart) 1 else 0
+            val start = currentLen + prefix
+            val end = start + word.text.length
+            ranges.add(start until end)
+            currentLen = end
+        }
+        ranges
+    }
+
+    val annotatedText = buildAnnotatedString {
+        line.words.forEachIndexed { wordIndex, word ->
+            val isWordActive = isCurrentLine && wordIndex == activeWordIndex
+            
+            val wordAlpha = when {
+                isWordActive -> 1f
+                isCurrentLine -> 0.95f
+                distanceFromCurrent == 1 -> 0.75f
+                distanceFromCurrent == 2 -> 0.60f
+                distanceFromCurrent == 3 -> 0.45f
+                else -> 0.32f
+            }
+
+            val baseColor = when (line.voiceTag) {
+                "v2" -> MaterialTheme.colorScheme.secondary
+                "v3" -> MaterialTheme.colorScheme.tertiary
+                else -> MaterialTheme.colorScheme.primary
+            }
+
+            val inactiveWordColor = when (line.voiceTag) {
+                "v2" -> MaterialTheme.colorScheme.secondary.copy(alpha = 0.5f)
+                "v3" -> MaterialTheme.colorScheme.tertiary.copy(alpha = 0.5f)
+                else -> MaterialTheme.colorScheme.onSurface.copy(alpha = wordAlpha)
+            }
+
+            val isWordPassed = isCurrentLine && wordIndex < activeWordIndex
+
+            val style = if (isWordActive) {
+                val range = wordRanges.getOrNull(wordIndex)
+                val layout = textLayoutResult
+                if (range != null && layout != null && !noAnimation) {
+                    val startChar = range.first
+                    val endChar = (range.last).coerceAtMost(layout.layoutInput.text.length - 1)
+                    val startRect = layout.getBoundingBox(startChar)
+                    val endRect = layout.getBoundingBox(endChar)
+                    
+                    val left = startRect.left
+                    val right = endRect.right
+                    val sweepProgress = animatedProgress.value
+                    
+                    val activeBrush = Brush.linearGradient(
+                        colorStops = arrayOf(
+                            (sweepProgress - 0.15f).coerceIn(0f, 1f) to baseColor,
+                            (sweepProgress + 0.15f).coerceIn(0f, 1f) to inactiveWordColor
+                        ),
+                        start = Offset(left, 0f),
+                        end = Offset(right, 0f)
+                    )
+                    SpanStyle(
+                        brush = activeBrush,
+                        fontWeight = if (lyricBold) FontWeight.Black else FontWeight.Bold
+                    )
+                } else {
+                    SpanStyle(
+                        color = baseColor,
+                        fontWeight = if (lyricBold) FontWeight.Black else FontWeight.Bold
+                    )
+                }
+            } else {
+                SpanStyle(
+                    color = if (isWordPassed) baseColor else inactiveWordColor,
+                    fontWeight = if (isCurrentLine) {
+                        if (lyricBold) FontWeight.ExtraBold else FontWeight.SemiBold
+                    } else {
+                        if (lyricBold) FontWeight.Bold else FontWeight.Normal
+                    }
+                )
+            }
+
+            withStyle(style) {
+                if (wordIndex > 0 && !word.isPart) {
+                    append(" ")
+                }
+                append(word.text)
+            }
+        }
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable {
+                if (onTapLyricsView != null) {
+                    onTapLyricsView()
+                } else {
+                    onSeek?.invoke(line.lineTimestamp)
+                }
+            }
+            .padding(vertical = 12.dp, horizontal = 16.dp)
+            .graphicsLayer {
+                scaleX = scale
+                scaleY = scale
+                alpha = opacity
+                translationY = animatedTranslationY
+            },
+        horizontalAlignment = when (textAlignment) {
+            TextAlign.Start -> Alignment.Start
+            TextAlign.End -> Alignment.End
+            else -> Alignment.CenterHorizontally
+        }
+    ) {
+        Text(
+            text = annotatedText,
+            onTextLayout = { textLayoutResult = it },
+            style = MaterialTheme.typography.headlineSmall.copy(
+                fontSize = MaterialTheme.typography.headlineSmall.fontSize * textSizeMultiplier,
+                lineHeight = MaterialTheme.typography.headlineSmall.lineHeight * 1.4f * textSizeMultiplier
+            ),
+            textAlign = textAlignment,
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        if (showTranslation && !line.translation.isNullOrBlank()) {
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = line.translation,
+                style = MaterialTheme.typography.bodyMedium.copy(
+                    fontStyle = FontStyle.Italic,
+                    fontWeight = if (isCurrentLine) {
+                        if (lyricBold) FontWeight.Bold else FontWeight.SemiBold
+                    } else FontWeight.Normal,
+                    fontSize = MaterialTheme.typography.bodyMedium.fontSize * (0.92f * textSizeMultiplier),
+                    lineHeight = MaterialTheme.typography.bodyMedium.lineHeight * 1.32f * textSizeMultiplier
+                ),
+                color = MaterialTheme.colorScheme.tertiary.copy(
+                    alpha = if (isCurrentLine) 0.86f else 0.62f
+                ),
+                textAlign = textAlignment,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .alpha(translationAlpha)
+            )
+        }
+
+        if (showRomanization && !line.romanization.isNullOrBlank()) {
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = line.romanization,
+                style = MaterialTheme.typography.bodySmall.copy(
+                    fontWeight = if (lyricBold) FontWeight.Medium else FontWeight.Normal,
+                    fontSize = MaterialTheme.typography.bodySmall.fontSize * (0.9f * textSizeMultiplier),
+                    lineHeight = MaterialTheme.typography.bodySmall.lineHeight * 1.3f * textSizeMultiplier,
+                    letterSpacing = 0.02.sp
+                ),
+                color = MaterialTheme.colorScheme.onSurface.copy(
+                    alpha = if (isCurrentLine) 0.68f else 0.5f
+                ),
+                textAlign = textAlignment,
+                modifier = Modifier.fillMaxWidth()
+            )
         }
     }
 }

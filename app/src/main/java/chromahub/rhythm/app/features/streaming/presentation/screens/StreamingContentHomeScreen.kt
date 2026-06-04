@@ -121,6 +121,7 @@ import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveGrou
 import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveShapeTarget
 import chromahub.rhythm.app.shared.presentation.components.common.rememberExpressiveShapeFor
 import chromahub.rhythm.app.util.HapticUtils
+import chromahub.rhythm.app.util.HapticType
 import chromahub.rhythm.app.util.M3ImageUtils
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -336,7 +337,7 @@ fun StreamingContentHomeScreen(
                         HapticUtils.performHapticFeedback(
                             context,
                             haptics,
-                            HapticFeedbackType.LongPress
+                            HapticType.HEAVY
                         )
                         showSectionOrderBottomSheet = true
                     },
@@ -355,7 +356,7 @@ fun StreamingContentHomeScreen(
 
             ExpressiveFilledIconButton(
                 onClick = {
-                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                    HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                     onNavigateToSettings()
                 },
                 colors = IconButtonDefaults.filledIconButtonColors(
@@ -411,7 +412,7 @@ fun StreamingContentHomeScreen(
                                 HapticUtils.performHapticFeedback(
                                     context,
                                     haptics,
-                                    HapticFeedbackType.LongPress
+                                    HapticType.HEAVY
                                 )
                                 if (serviceIdForConfig.isNotBlank()) {
                                     onConfigureService(serviceIdForConfig)
@@ -463,7 +464,7 @@ fun StreamingContentHomeScreen(
                                 HapticUtils.performHapticFeedback(
                                     context,
                                     haptics,
-                                    HapticFeedbackType.LongPress
+                                    HapticType.HEAVY
                                 )
                                 if (serviceIdForConfig.isNotBlank()) {
                                     onConfigureService(serviceIdForConfig)
@@ -498,7 +499,7 @@ fun StreamingContentHomeScreen(
                                     HapticUtils.performHapticFeedback(
                                         context,
                                         haptics,
-                                        HapticFeedbackType.LongPress
+                                        HapticType.HEAVY
                                     )
                                     if (serviceIdForConfig.isNotBlank()) {
                                         onConfigureService(serviceIdForConfig)
@@ -621,7 +622,7 @@ fun StreamingContentHomeScreen(
                                                 HapticUtils.performHapticFeedback(
                                                     context,
                                                     haptics,
-                                                    HapticFeedbackType.LongPress
+                                                    HapticType.HEAVY
                                                 )
                                                 onNavigateToRhythmGuard()
                                             }
@@ -674,7 +675,7 @@ fun StreamingContentHomeScreen(
                                                 HapticUtils.performHapticFeedback(
                                                     context,
                                                     haptics,
-                                                    HapticFeedbackType.LongPress
+                                                    HapticType.HEAVY
                                                 )
                                                 onNavigateToRhythmStats()
                                             }
@@ -697,7 +698,7 @@ fun StreamingContentHomeScreen(
                                                         HapticUtils.performHapticFeedback(
                                                             context,
                                                             haptics,
-                                                            HapticFeedbackType.LongPress
+                                                            HapticType.HEAVY
                                                         )
                                                         viewModel.playQueue(
                                                             queue = songs,
@@ -712,7 +713,7 @@ fun StreamingContentHomeScreen(
                                                         HapticUtils.performHapticFeedback(
                                                             context,
                                                             haptics,
-                                                            HapticFeedbackType.LongPress
+                                                            HapticType.HEAVY
                                                         )
                                                         viewModel.playQueue(
                                                             queue = songs,
@@ -1091,7 +1092,7 @@ private fun StreamingGreetingWidgetCard(
         modifier = Modifier
             .fillMaxWidth()
             .clickable {
-                HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                HapticUtils.performHapticFeedback(context, haptics, HapticType.LIGHT)
                 onNavigateToSearch()
             },
         colors = CardDefaults.cardColors(
@@ -1161,7 +1162,7 @@ private fun StreamingGreetingWidgetCard(
 
                     ExpressiveFilledIconButton(
                         onClick = {
-                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                            HapticUtils.performHapticFeedback(context, haptics, HapticType.LIGHT)
                             onNavigateToSearch()
                         },
                         colors = IconButtonDefaults.filledIconButtonColors(
@@ -1360,7 +1361,7 @@ private fun StreamingRecommendationsCarousel(
                     .fillMaxSize()
                     .clip(RectangleShape)
                     .clickable {
-                        HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                        HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                         if (hasAlbumId) {
                             onOpenAlbum(song)
                         } else {
@@ -1426,7 +1427,7 @@ private fun StreamingRecommendationsCarousel(
                     ) {
                         androidx.compose.material3.Button(
                             onClick = {
-                                HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
+                                HapticUtils.performHapticFeedback(context, haptic, HapticType.HEAVY)
                                 onPlaySong(song, page)
                             },
                             shape = androidx.compose.foundation.shape.RoundedCornerShape(percent = 50),
@@ -1545,7 +1546,7 @@ private fun StreamingSongWidgetCard(
 
     ExpressiveCard(
         onClick = {
-            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+            HapticUtils.performHapticFeedback(context, haptics, HapticType.LIGHT)
             onPlaySong()
         },
         modifier = Modifier
@@ -1613,7 +1614,7 @@ private fun StreamingAlbumWidgetCard(
 
     ExpressiveCard(
         onClick = {
-            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+            HapticUtils.performHapticFeedback(context, haptics, HapticType.LIGHT)
             onAlbumClick()
         },
         modifier = Modifier
@@ -1646,7 +1647,7 @@ private fun StreamingAlbumWidgetCard(
                 ) {
                     ExpressiveFilledIconButton(
                         onClick = {
-                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                            HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                             onPlayAlbum()
                         },
                         modifier = Modifier.size(40.dp),
@@ -1719,7 +1720,7 @@ private fun StreamingArtistWidgetCard(
         modifier = Modifier
             .width(cardSize)
             .clickable {
-                HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                HapticUtils.performHapticFeedback(context, haptics, HapticType.LIGHT)
                 onOpenArtist()
             },
         horizontalAlignment = Alignment.CenterHorizontally
@@ -1733,7 +1734,7 @@ private fun StreamingArtistWidgetCard(
 
             ExpressiveFilledIconButton(
                 onClick = {
-                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                    HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                     onOpenArtist()
                 },
                 colors = IconButtonDefaults.filledIconButtonColors(
@@ -1962,7 +1963,7 @@ private fun StreamingPlaylistWidgetCard(
 
     ExpressiveCard(
         onClick = {
-            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+            HapticUtils.performHapticFeedback(context, haptics, HapticType.LIGHT)
             onClick()
         },
         modifier = Modifier

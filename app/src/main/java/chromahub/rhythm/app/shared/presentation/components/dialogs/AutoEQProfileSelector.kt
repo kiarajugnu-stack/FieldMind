@@ -67,6 +67,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import chromahub.rhythm.app.shared.data.model.AutoEQProfile
 import chromahub.rhythm.app.util.HapticUtils
+import chromahub.rhythm.app.util.HapticType
 import chromahub.rhythm.app.features.local.presentation.viewmodel.MusicViewModel
 import kotlinx.coroutines.delay
 import chromahub.rhythm.app.R
@@ -352,12 +353,12 @@ fun AutoEQProfileSelector(
                                 profile = profile,
                                 isActive = isCurrentlyActive,
                                 onClick = {
-                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                    HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                                     onProfileSelected(profile)
                                 },
                                 onDisable = if (isCurrentlyActive) {
                                     {
-                                        HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                        HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                                         onProfileSelected(AutoEQProfile(
                                             name = "",
                                             brand = "",

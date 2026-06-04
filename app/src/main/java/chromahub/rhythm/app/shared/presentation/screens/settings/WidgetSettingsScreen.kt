@@ -35,6 +35,7 @@ import chromahub.rhythm.app.shared.presentation.components.Material3SettingsGrou
 import chromahub.rhythm.app.shared.presentation.components.Material3SettingsItem
 import chromahub.rhythm.app.shared.presentation.components.common.CollapsibleHeaderScreen
 import chromahub.rhythm.app.util.HapticUtils
+import chromahub.rhythm.app.util.HapticType
 import chromahub.rhythm.app.infrastructure.widget.MusicWidgetProvider
 import chromahub.rhythm.app.infrastructure.widget.glance.RhythmWidgetReceiver
 import chromahub.rhythm.app.R
@@ -76,13 +77,13 @@ fun WidgetSettingsScreen(
                 TunerAnimatedSwitch(
                     checked = checked,
                     onCheckedChange = {
-                        HapticUtils.performHapticFeedback(context, hapticFeedback, HapticFeedbackType.TextHandleMove)
+                        HapticUtils.performHapticFeedback(context, hapticFeedback, HapticType.LIGHT)
                         onToggle(it)
                     }
                 )
             },
             onClick = {
-                HapticUtils.performHapticFeedback(context, hapticFeedback, HapticFeedbackType.TextHandleMove)
+                HapticUtils.performHapticFeedback(context, hapticFeedback, HapticType.LIGHT)
                 onToggle(!checked)
             }
         )
@@ -92,7 +93,7 @@ fun WidgetSettingsScreen(
         title = stringResource(R.string.widgetsettingsscreen_widget_settings),
         showBackButton = true,
         onBackClick = {
-            HapticUtils.performHapticFeedback(context, hapticFeedback, HapticFeedbackType.LongPress)
+            HapticUtils.performHapticFeedback(context, hapticFeedback, HapticType.HEAVY)
             onBackClick()
         }
     ) { modifier ->
@@ -175,7 +176,7 @@ fun WidgetSettingsScreen(
                                 )
                             },
                             onClick = {
-                                HapticUtils.performHapticFeedback(context, hapticFeedback, HapticFeedbackType.TextHandleMove)
+                                HapticUtils.performHapticFeedback(context, hapticFeedback, HapticType.LIGHT)
                                 showCornerRadiusSheet = true
                             }
                         ),
@@ -200,7 +201,7 @@ fun WidgetSettingsScreen(
                                 )
                             },
                             onClick = {
-                                HapticUtils.performHapticFeedback(context, hapticFeedback, HapticFeedbackType.TextHandleMove)
+                                HapticUtils.performHapticFeedback(context, hapticFeedback, HapticType.LIGHT)
                                 showWidgetThemeSheet = true
                             }
                         )
@@ -326,7 +327,7 @@ fun WidgetSettingsScreen(
                         value = tempRadius.toFloat(),
                         onValueChange = { tempRadius = it.toInt() },
                         onValueChangeFinished = {
-                            HapticUtils.performHapticFeedback(context, hapticFeedback, HapticFeedbackType.LongPress)
+                            HapticUtils.performHapticFeedback(context, hapticFeedback, HapticType.HEAVY)
                             appSettings.setWidgetCornerRadius(tempRadius)
                             updateAllWidgets(context)
                         },
@@ -465,7 +466,7 @@ fun WidgetSettingsScreen(
                             
                             Card(
                                 onClick = {
-                                    HapticUtils.performHapticFeedback(context, hapticFeedback, HapticFeedbackType.TextHandleMove)
+                                    HapticUtils.performHapticFeedback(context, hapticFeedback, HapticType.LIGHT)
                                     appSettings.setWidgetTheme(value)
                                     updateAllWidgets(context)
                                     showWidgetThemeSheet = false

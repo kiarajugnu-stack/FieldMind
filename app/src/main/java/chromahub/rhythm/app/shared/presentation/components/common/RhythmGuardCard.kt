@@ -24,6 +24,7 @@ import chromahub.rhythm.app.shared.presentation.components.icons.RhythmIcons
 import chromahub.rhythm.app.shared.presentation.components.icons.Icon
 import chromahub.rhythm.app.shared.presentation.components.icons.MaterialSymbolIcon
 import chromahub.rhythm.app.util.HapticUtils
+import chromahub.rhythm.app.util.HapticType
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import kotlinx.coroutines.delay
 
@@ -76,7 +77,7 @@ fun RhythmGuardCard(
     // Standard Material 3 Expressive Container to match Rhythm Stats cards
     Surface(
         onClick = {
-            HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
+            HapticUtils.performHapticFeedback(context, haptic, HapticType.HEAVY)
             onCardClick()
         },
         shape = RoundedCornerShape(32.dp),

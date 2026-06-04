@@ -3,6 +3,7 @@
 package chromahub.rhythm.app.shared.presentation.screens.settings
 
 
+
 import chromahub.rhythm.app.shared.presentation.components.icons.RhythmIcons
 import chromahub.rhythm.app.shared.presentation.components.icons.MaterialSymbolIcon
 import chromahub.rhythm.app.shared.presentation.components.icons.Icon
@@ -92,6 +93,7 @@ import chromahub.rhythm.app.shared.data.repository.PlaybackStatsRepository
 import chromahub.rhythm.app.shared.data.repository.StatsTimeRange
 import chromahub.rhythm.app.util.GsonUtils
 import chromahub.rhythm.app.util.HapticUtils
+import chromahub.rhythm.app.util.HapticType
 import coil.compose.AsyncImage
 import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
@@ -190,7 +192,7 @@ fun PlaylistsSettingsScreen(onBackClick: () -> Unit) {
                     context.getString(R.string.settings_create_new_playlist),
                     context.getString(R.string.settings_create_new_playlist_desc),
                     onClick = {
-                        HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                        HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                         showCreatePlaylistDialog = true
                     }
                 ),
@@ -199,7 +201,7 @@ fun PlaylistsSettingsScreen(onBackClick: () -> Unit) {
                     context.getString(R.string.settings_import_playlists),
                     context.getString(R.string.settings_import_playlists_desc),
                     onClick = {
-                        HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                        HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                         showImportDialog = true
                     }
                 ),
@@ -208,7 +210,7 @@ fun PlaylistsSettingsScreen(onBackClick: () -> Unit) {
                     context.getString(R.string.settings_export_all_playlists),
                     context.getString(R.string.settings_export_all_playlists_desc),
                     onClick = {
-                        HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                        HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                         showBulkExportDialog = true
                     }
                 )
@@ -218,7 +220,7 @@ fun PlaylistsSettingsScreen(onBackClick: () -> Unit) {
                     context.getString(R.string.settings_cleanup_empty_playlists),
                     context.getString(R.string.settings_cleanup_empty_playlists_desc, emptyPlaylists.size, if (emptyPlaylists.size > 1) "s" else ""),
                     onClick = {
-                        HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                        HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                         showCleanupConfirmDialog = true
                     }
                 )
@@ -298,7 +300,7 @@ fun PlaylistsSettingsScreen(onBackClick: () -> Unit) {
                         context.getString(R.string.settings_no_custom_playlists),
                         context.getString(R.string.settings_no_custom_playlists_desc),
                         onClick = {
-                            HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                            HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                             showCreatePlaylistDialog = true
                         }
                     )
@@ -311,7 +313,7 @@ fun PlaylistsSettingsScreen(onBackClick: () -> Unit) {
         title = context.getString(R.string.settings_playlists),
         showBackButton = true,
         onBackClick = {
-            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+            HapticUtils.performHapticFeedback(context, haptic, HapticType.HEAVY)
             onBackClick()
         }
     ) { modifier ->
@@ -439,7 +441,7 @@ fun PlaylistsSettingsScreen(onBackClick: () -> Unit) {
                                     {
                                         IconButton(
                                             onClick = {
-                                                HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
+                                                HapticUtils.performHapticFeedback(context, haptic, HapticType.HEAVY)
                                                 playlistToDelete = playlist
                                             }
                                         ) {

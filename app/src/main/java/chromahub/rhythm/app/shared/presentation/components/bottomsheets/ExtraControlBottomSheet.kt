@@ -51,6 +51,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import chromahub.rhythm.app.shared.data.model.LyricsData
 import chromahub.rhythm.app.util.HapticUtils
+import chromahub.rhythm.app.util.HapticType
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import chromahub.rhythm.app.R
@@ -125,7 +126,7 @@ fun ExtraControlBottomSheet(
             containerColor = primary,
             iconColor = onPrimary,
             onClick = {
-                HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
+                HapticUtils.performHapticFeedback(context, haptic, HapticType.HEAVY)
                 dismissAndDo { onAddToPlaylist() }
             }
         ))
@@ -137,7 +138,7 @@ fun ExtraControlBottomSheet(
                 containerColor = if (isFavorite) errorContainer else primary,
                 iconColor = if (isFavorite) error else onPrimary,
                 onClick = {
-                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
+                    HapticUtils.performHapticFeedback(context, haptic, HapticType.HEAVY)
                     dismissAndDo { onToggleFavorite() }
                 }
             ))
@@ -150,7 +151,7 @@ fun ExtraControlBottomSheet(
                 containerColor = secondary,
                 iconColor = onSecondary,
                 onClick = {
-                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
+                    HapticUtils.performHapticFeedback(context, haptic, HapticType.HEAVY)
                     dismissAndDo { onPlaybackSpeed() }
                 }
             ))
@@ -163,7 +164,7 @@ fun ExtraControlBottomSheet(
                 containerColor = secondary,
                 iconColor = onSecondary,
                 onClick = {
-                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
+                    HapticUtils.performHapticFeedback(context, haptic, HapticType.HEAVY)
                     dismissAndDo { onPlaybackPitch() }
                 }
             ))
@@ -176,7 +177,7 @@ fun ExtraControlBottomSheet(
                 containerColor = if (equalizerEnabled) tertiary else secondary,
                 iconColor = if (equalizerEnabled) onTertiary else onSecondary,
                 onClick = {
-                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
+                    HapticUtils.performHapticFeedback(context, haptic, HapticType.HEAVY)
                     dismissAndDo { onEqualizer() }
                 }
             ))
@@ -194,7 +195,7 @@ fun ExtraControlBottomSheet(
                 containerColor = if (sleepTimerActive) tertiary else secondary,
                 iconColor = if (sleepTimerActive) onTertiary else onSecondary,
                 onClick = {
-                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
+                    HapticUtils.performHapticFeedback(context, haptic, HapticType.HEAVY)
                     dismissAndDo { onSleepTimer() }
                 }
             ))
@@ -208,7 +209,7 @@ fun ExtraControlBottomSheet(
                 containerColor = secondary,
                 iconColor = onSecondary,
                 onClick = {
-                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
+                    HapticUtils.performHapticFeedback(context, haptic, HapticType.HEAVY)
                     dismissAndDo { onLyricsEditor() }
                 }
             ))
@@ -221,7 +222,7 @@ fun ExtraControlBottomSheet(
                 containerColor = secondary,
                 iconColor = onSecondary,
                 onClick = {
-                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
+                    HapticUtils.performHapticFeedback(context, haptic, HapticType.HEAVY)
                     dismissAndDo { onAlbum() }
                 }
             ))
@@ -234,7 +235,7 @@ fun ExtraControlBottomSheet(
                 containerColor = secondary,
                 iconColor = onSecondary,
                 onClick = {
-                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
+                    HapticUtils.performHapticFeedback(context, haptic, HapticType.HEAVY)
                     dismissAndDo { onArtist() }
                 }
             ))
@@ -247,7 +248,7 @@ fun ExtraControlBottomSheet(
             containerColor = secondary,
             iconColor = onSecondary,
             onClick = {
-                HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
+                HapticUtils.performHapticFeedback(context, haptic, HapticType.HEAVY)
                 dismissAndDo { onSongInfo() }
             }
         ))
@@ -259,7 +260,7 @@ fun ExtraControlBottomSheet(
             containerColor = secondary,
             iconColor = onSecondary,
             onClick = {
-                HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
+                HapticUtils.performHapticFeedback(context, haptic, HapticType.HEAVY)
                 dismissAndDo { onShareFile() }
             }
         ))

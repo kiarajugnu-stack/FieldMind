@@ -119,6 +119,7 @@ import coil.request.ImageRequest
 import chromahub.rhythm.app.shared.presentation.components.common.M3PlaceholderType
 import chromahub.rhythm.app.util.ImageUtils
 import chromahub.rhythm.app.util.HapticUtils
+import chromahub.rhythm.app.util.HapticType
 import chromahub.rhythm.app.util.M3ImageUtils
 import chromahub.rhythm.app.shared.presentation.components.common.rememberExpressiveShapeFor
 import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveShapeTarget
@@ -317,7 +318,7 @@ fun PlaylistDetailScreen(
                     // Option 1: Load Playlist & Play
                     Surface(
                         onClick = {
-                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                            HapticUtils.performHapticFeedback(context, haptics, HapticType.LIGHT)
                             onPlaySongFromPlaylist?.invoke(selectedSongForQueue!!, playlist.songs)
                             showQueueOptionsDialog = false
                             selectedSongForQueue = null
@@ -364,7 +365,7 @@ fun PlaylistDetailScreen(
                     // Option 2: Play This Song Only
                     Surface(
                         onClick = {
-                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                            HapticUtils.performHapticFeedback(context, haptics, HapticType.LIGHT)
                             onSongClick(selectedSongForQueue!!)
                             showQueueOptionsDialog = false
                             selectedSongForQueue = null
@@ -413,7 +414,7 @@ fun PlaylistDetailScreen(
             dismissButton = {
                 OutlinedButton(
                     onClick = {
-                        HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                        HapticUtils.performHapticFeedback(context, haptics, HapticType.LIGHT)
                         showQueueOptionsDialog = false
                         selectedSongForQueue = null
                     }
@@ -455,7 +456,7 @@ fun PlaylistDetailScreen(
             confirmButton = {
                 Button(
                     onClick = {
-                        HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                        HapticUtils.performHapticFeedback(context, haptics, HapticType.LIGHT)
                         onRenamePlaylist(newPlaylistName)
                         showRenameDialog = false
                     }
@@ -471,7 +472,7 @@ fun PlaylistDetailScreen(
             },
             dismissButton = {
                 OutlinedButton(onClick = {
-                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                    HapticUtils.performHapticFeedback(context, haptics, HapticType.LIGHT)
                     showRenameDialog = false
                 }) {
                     Icon(
@@ -503,7 +504,7 @@ fun PlaylistDetailScreen(
             confirmButton = {
                 Button(
                     onClick = {
-                        HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                        HapticUtils.performHapticFeedback(context, haptics, HapticType.LIGHT)
                         onDeletePlaylist()
                         showDeleteDialog = false
                     },
@@ -522,7 +523,7 @@ fun PlaylistDetailScreen(
             },
             dismissButton = {
                 OutlinedButton(onClick = {
-                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                    HapticUtils.performHapticFeedback(context, haptics, HapticType.LIGHT)
                     showDeleteDialog = false
                 }) {
                     Icon(
@@ -555,7 +556,7 @@ fun PlaylistDetailScreen(
             confirmButton = {
                 Button(
                     onClick = {
-                        HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                        HapticUtils.performHapticFeedback(context, haptics, HapticType.LIGHT)
                         // Remove selected songs
                         selectedSongs.forEach { songId ->
                             playlist.songs.find { it.id == songId }?.let { song ->
@@ -581,7 +582,7 @@ fun PlaylistDetailScreen(
             },
             dismissButton = {
                 OutlinedButton(onClick = {
-                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                    HapticUtils.performHapticFeedback(context, haptics, HapticType.LIGHT)
                     showBulkDeleteDialog = false
                 }) {
                     Icon(
@@ -772,11 +773,11 @@ fun PlaylistDetailScreen(
         showBackButton = true,
         onBackClick = {
             if (showSearchBar) {
-                HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                 showSearchBar = false
                 searchQuery = ""
             } else {
-                HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                 onBack()
             }
         },
@@ -792,7 +793,7 @@ fun PlaylistDetailScreen(
                 
                 FilledTonalButton(
                     onClick = {
-                        HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                        HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                         showSortMenu = true
                     },
                     colors = ButtonDefaults.filledTonalButtonColors(
@@ -847,7 +848,7 @@ fun PlaylistDetailScreen(
             if (canEditPlaylist) {
                 FilledIconButton(
                     onClick = {
-                        HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                        HapticUtils.performHapticFeedback(context, haptics, HapticType.LIGHT)
                         showMenu = true
                     },
                     colors = IconButtonDefaults.filledIconButtonColors(
@@ -904,7 +905,7 @@ fun PlaylistDetailScreen(
                                     }
                                 },
                                 onClick = {
-                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                                    HapticUtils.performHapticFeedback(context, haptics, HapticType.LIGHT)
                                     showMenu = false
                                     isReorderMode = !isReorderMode
                                     // Exit multi-select mode when entering reorder mode
@@ -951,7 +952,7 @@ fun PlaylistDetailScreen(
                                     }
                                 },
                                 onClick = {
-                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                                    HapticUtils.performHapticFeedback(context, haptics, HapticType.LIGHT)
                                     showMenu = false
                                     isMultiSelectMode = !isMultiSelectMode
                                     // Exit reorder mode when entering multi-select mode
@@ -999,7 +1000,7 @@ fun PlaylistDetailScreen(
                                     }
                                 },
                                 onClick = {
-                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                                    HapticUtils.performHapticFeedback(context, haptics, HapticType.LIGHT)
                                     showMenu = false
                                     showExportDialog = true
                                 }
@@ -1041,7 +1042,7 @@ fun PlaylistDetailScreen(
                                     }
                                 },
                                 onClick = {
-                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                                    HapticUtils.performHapticFeedback(context, haptics, HapticType.LIGHT)
                                     showMenu = false
                                     showImportDialog = true
                                 }
@@ -1084,7 +1085,7 @@ fun PlaylistDetailScreen(
                                     }
                                 },
                                 onClick = {
-                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                                    HapticUtils.performHapticFeedback(context, haptics, HapticType.LIGHT)
                                     showMenu = false
                                     newPlaylistName = playlist.name
                                     showRenameDialog = true
@@ -1128,7 +1129,7 @@ fun PlaylistDetailScreen(
                                     }
                                 },
                                 onClick = {
-                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                                    HapticUtils.performHapticFeedback(context, haptics, HapticType.LIGHT)
                                     showMenu = false
                                     showDeleteDialog = true
                                 }
@@ -1213,7 +1214,7 @@ fun PlaylistDetailScreen(
                                     }
                                 },
                                 onClick = {
-                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                                    HapticUtils.performHapticFeedback(context, haptics, HapticType.LIGHT)
                                     currentPlaylistSort = sortOrder
                                     appSettings.setPlaylistDetailSortOrder(sortOrder.name)
                                     showSortMenu = false
@@ -1349,7 +1350,7 @@ fun PlaylistDetailScreen(
                     // Play All Button - Equal sizing with text
                     Button(
                         onClick = {
-                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                            HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                             playAllPressed = true
                             onPlayAll()
                         },
@@ -1382,7 +1383,7 @@ fun PlaylistDetailScreen(
                     
                     FilledTonalButton(
                         onClick = {
-                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                            HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                             shufflePressed = true
                             onShufflePlay()
                         },
@@ -1489,7 +1490,7 @@ fun PlaylistDetailScreen(
                                 // Play All button
                                 Button(
                                     onClick = {
-                                        HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                        HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                                         onPlayAll()
                                     },
                                     shape = RoundedCornerShape(24.dp),
@@ -1511,7 +1512,7 @@ fun PlaylistDetailScreen(
                                 // Shuffle button
                                 FilledTonalButton(
                                     onClick = {
-                                        HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                        HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                                         onShufflePlay()
                                     },
                                     colors = ButtonDefaults.filledTonalButtonColors(
@@ -1538,7 +1539,7 @@ fun PlaylistDetailScreen(
                             // Add Songs button
                             FilledTonalButton(
                                 onClick = {
-                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                                    HapticUtils.performHapticFeedback(context, haptics, HapticType.LIGHT)
                                     showSongPicker = true
                                 },
                                 shape = RoundedCornerShape(24.dp),
@@ -1564,7 +1565,7 @@ fun PlaylistDetailScreen(
                             // Search button
                             FilledTonalButton(
                                 onClick = {
-                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                                    HapticUtils.performHapticFeedback(context, haptics, HapticType.LIGHT)
                                     showSearchBar = !showSearchBar
                                     if (!showSearchBar) {
                                         searchQuery = ""
@@ -1766,7 +1767,7 @@ fun PlaylistDetailScreen(
                                         onMove = { fromIndex, toIndex ->
                                             val actualFromIndex = filteredSongsWithIndices[fromIndex].first
                                             val actualToIndex = filteredSongsWithIndices[toIndex].first
-                                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                                            HapticUtils.performHapticFeedback(context, haptics, HapticType.LIGHT)
                                             onReorderSongs?.invoke(actualFromIndex, actualToIndex)
                                         },
                                         itemKey = { item -> "${item.first}_${item.second.id}" }
@@ -1798,7 +1799,7 @@ fun PlaylistDetailScreen(
                                             song = song,
                                             onClick = {
                                                 if (isMultiSelectMode) {
-                                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                                                    HapticUtils.performHapticFeedback(context, haptics, HapticType.LIGHT)
                                                     selectedSongs = if (selectedSongs.contains(song.id)) {
                                                         selectedSongs - song.id
                                                     } else {
@@ -1809,7 +1810,7 @@ fun PlaylistDetailScreen(
                                                 if (isReorderMode) {
                                                     return@PlaylistSongItem
                                                 }
-                                                HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                                                HapticUtils.performHapticFeedback(context, haptics, HapticType.LIGHT)
                                                 when (playlistClickBehavior) {
                                                     "play_all" -> {
                                                         onPlaySongFromPlaylist?.invoke(song, playlist.songs) ?: onSongClick(song)
@@ -1832,13 +1833,13 @@ fun PlaylistDetailScreen(
                                             totalCount = filteredSongs.size,
                                             onMoveUp = if (isReorderMode && index > 0) {
                                                 {
-                                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                                                    HapticUtils.performHapticFeedback(context, haptics, HapticType.LIGHT)
                                                     onReorderSongs?.invoke(index, index - 1)
                                                 }
                                             } else null,
                                             onMoveDown = if (isReorderMode && index < filteredSongs.size - 1) {
                                                 {
-                                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                                                    HapticUtils.performHapticFeedback(context, haptics, HapticType.LIGHT)
                                                     onReorderSongs?.invoke(index, index + 1)
                                                 }
                                             } else null,
@@ -1894,7 +1895,7 @@ fun PlaylistDetailScreen(
                             }
                             Button(
                                 onClick = {
-                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                    HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                                     showSearchBar = !showSearchBar
                                     if (!showSearchBar) {
                                         searchQuery = ""
@@ -1948,7 +1949,7 @@ fun PlaylistDetailScreen(
                             }
                             FilledIconButton(
                                 onClick = {
-                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                    HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                                     showSearchBar = !showSearchBar
                                     if (!showSearchBar) {
                                         searchQuery = ""
@@ -1994,7 +1995,7 @@ fun PlaylistDetailScreen(
                             }
                             Button(
                                 onClick = {
-                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                                    HapticUtils.performHapticFeedback(context, haptics, HapticType.LIGHT)
                                     showSongPicker = true
                                     addPressed = true
                                 },
@@ -2040,7 +2041,7 @@ fun PlaylistDetailScreen(
                             }
                             FilledIconButton(
                                 onClick = {
-                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                                    HapticUtils.performHapticFeedback(context, haptics, HapticType.LIGHT)
                                     isMultiSelectMode = !isMultiSelectMode
                                     if (isMultiSelectMode) {
                                         isReorderMode = false
@@ -2210,7 +2211,7 @@ fun PlaylistDetailScreen(
                             // Call-to-action button
                             Button(
                                 onClick = {
-                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                                    HapticUtils.performHapticFeedback(context, haptics, HapticType.LIGHT)
                                     showSongPicker = true
                                 },
                                 shape = RoundedCornerShape(24.dp),
@@ -2255,7 +2256,7 @@ fun PlaylistDetailScreen(
                                         // Select All button
                                         TextButton(
                                             onClick = {
-                                                HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                                                HapticUtils.performHapticFeedback(context, haptics, HapticType.LIGHT)
                                                 if (selectedSongs.size == filteredSongs.size) {
                                                     selectedSongs = emptySet()
                                                 } else {
@@ -2282,7 +2283,7 @@ fun PlaylistDetailScreen(
                                         if (selectedSongs.isNotEmpty()) {
                                             Button(
                                                 onClick = {
-                                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                                    HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                                                     showBulkDeleteDialog = true
                                                 },
                                                 colors = ButtonDefaults.buttonColors(
@@ -2302,7 +2303,7 @@ fun PlaylistDetailScreen(
                                         // Done button
                                         Button(
                                             onClick = {
-                                                HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                                HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                                                 isMultiSelectMode = false
                                                 selectedSongs = emptySet()
                                             },
@@ -2360,7 +2361,7 @@ fun PlaylistDetailScreen(
                                     // Done button
                                     Button(
                                         onClick = {
-                                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                            HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                                             isReorderMode = false
                                         },
                                         colors = ButtonDefaults.buttonColors(
@@ -2393,7 +2394,7 @@ fun PlaylistDetailScreen(
                                 onMove = { fromIndex, toIndex ->
                                     val actualFromIndex = filteredSongsWithIndices[fromIndex].first
                                     val actualToIndex = filteredSongsWithIndices[toIndex].first
-                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                                    HapticUtils.performHapticFeedback(context, haptics, HapticType.LIGHT)
                                     onReorderSongs?.invoke(actualFromIndex, actualToIndex)
                                 },
                                 itemKey = { item -> "${item.first}_${item.second.id}" }
@@ -2426,7 +2427,7 @@ fun PlaylistDetailScreen(
                                     onClick = {
                                         if (isMultiSelectMode) {
                                             // Toggle selection
-                                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                                            HapticUtils.performHapticFeedback(context, haptics, HapticType.LIGHT)
                                             selectedSongs = if (selectedSongs.contains(song.id)) {
                                                 selectedSongs - song.id
                                             } else {
@@ -2438,7 +2439,7 @@ fun PlaylistDetailScreen(
                                             // Don't play in reorder mode
                                             return@PlaylistSongItem
                                         }
-                                        HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                                        HapticUtils.performHapticFeedback(context, haptics, HapticType.LIGHT)
                                         when (playlistClickBehavior) {
                                             "play_all" -> {
                                                 // Load entire playlist and play from selected song
@@ -2464,13 +2465,13 @@ fun PlaylistDetailScreen(
                                     totalCount = filteredSongs.size,
                                     onMoveUp = if (isReorderMode && index > 0) {
                                         {
-                                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                                            HapticUtils.performHapticFeedback(context, haptics, HapticType.LIGHT)
                                             onReorderSongs?.invoke(index, index - 1)
                                         }
                                     } else null,
                                     onMoveDown = if (isReorderMode && index < filteredSongs.size - 1) {
                                         {
-                                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                                            HapticUtils.performHapticFeedback(context, haptics, HapticType.LIGHT)
                                             onReorderSongs?.invoke(index, index + 1)
                                         }
                                     } else null,
@@ -2530,7 +2531,7 @@ fun PlaylistDetailScreen(
                             }
                             Button(
                                 onClick = {
-                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                    HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                                     showSearchBar = !showSearchBar
                                     if (!showSearchBar) {
                                         searchQuery = ""
@@ -2587,7 +2588,7 @@ fun PlaylistDetailScreen(
                             }
                             FilledIconButton(
                                 onClick = {
-                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                                    HapticUtils.performHapticFeedback(context, haptics, HapticType.LIGHT)
                                     isMultiSelectMode = !isMultiSelectMode
                                     if (isMultiSelectMode) {
                                         isReorderMode = false
@@ -2638,7 +2639,7 @@ fun PlaylistDetailScreen(
                             }
                             Button(
                                 onClick = {
-                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                                    HapticUtils.performHapticFeedback(context, haptics, HapticType.LIGHT)
                                     showSongPicker = true
                                     addPressed = true
                                 },
@@ -2687,7 +2688,7 @@ fun PlaylistDetailScreen(
                             }
                             FilledIconButton(
                                 onClick = {
-                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                    HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                                     showSearchBar = !showSearchBar
                                     if (!showSearchBar) {
                                         searchQuery = ""
@@ -2820,7 +2821,7 @@ fun PlaylistSongItem(
             confirmButton = {
                 Button(
                     onClick = {
-                        HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove) // Use captured haptics
+                        HapticUtils.performHapticFeedback(context, haptics, HapticType.LIGHT) // Use captured haptics
                         onRemove("Removed ${song.title} from playlist")
                         showRemoveDialog = false
                     },
@@ -2839,7 +2840,7 @@ fun PlaylistSongItem(
             },
             dismissButton = {
                 OutlinedButton(onClick = {
-                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove) // Use captured haptics
+                    HapticUtils.performHapticFeedback(context, haptics, HapticType.LIGHT) // Use captured haptics
                     showRemoveDialog = false
                 }) {
                     Icon(
@@ -3051,7 +3052,7 @@ fun PlaylistSongItem(
                 // Remove button only shown in multi-select mode
                 FilledIconButton(
                     onClick = {
-                        HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                        HapticUtils.performHapticFeedback(context, haptics, HapticType.LIGHT)
                         showRemoveDialog = true
                     },
                     colors = IconButtonDefaults.filledIconButtonColors(
@@ -3070,7 +3071,7 @@ fun PlaylistSongItem(
                 // 3-dot menu button matching SearchSongItem style
                 FilledIconButton(
                     onClick = {
-                        HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                        HapticUtils.performHapticFeedback(context, haptics, HapticType.LIGHT)
                         onMoreClick?.invoke()
                     },
                     modifier = Modifier.size(36.dp),

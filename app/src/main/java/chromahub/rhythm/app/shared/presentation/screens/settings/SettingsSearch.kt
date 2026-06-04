@@ -63,6 +63,7 @@ import chromahub.rhythm.app.R
 import chromahub.rhythm.app.shared.presentation.components.Material3SettingsGroup
 import chromahub.rhythm.app.shared.presentation.components.Material3SettingsItem
 import chromahub.rhythm.app.util.HapticUtils
+import chromahub.rhythm.app.util.HapticType
 import androidx.compose.ui.res.stringResource
 
 /**
@@ -260,9 +261,29 @@ fun buildSettingsSearchIndex(context: Context): List<SearchableSettingItem> {
             description = context.getString(R.string.playback_lyrics_priority_desc),
             keywords = listOf("lyrics", "synced lyrics", "lrc", "subtitle", "song text", "karaoke", "source", "priority"),
             icon = MaterialSymbolIcon("lyrics"),
-            route = SettingsRoutes.PLAYER_CUSTOMIZATION,
-            parentScreen = context.getString(R.string.settings_player_customization),
+            route = SettingsRoutes.LYRICS,
+            parentScreen = context.getString(R.string.settings_lyrics_source),
             settingKey = "lyricsSource"
+        ))
+        add(SearchableSettingItem(
+            id = "lyrics_api_priority",
+            title = context.getString(R.string.lyricssourcesettingsscreen_lyrics_api_priority),
+            description = "Prefer Apple Music or LRCLib for online lyrics fetching",
+            keywords = listOf("lyrics", "api", "priority", "apple music", "lrclib", "online"),
+            icon = MaterialSymbolIcon("lyrics"),
+            route = SettingsRoutes.LYRICS,
+            parentScreen = context.getString(R.string.settings_lyrics_source),
+            settingKey = "lyricsApiPriority"
+        ))
+        add(SearchableSettingItem(
+            id = "lyrics_api_fallback",
+            title = context.getString(R.string.lyricssourcesettingsscreen_retry_using_fallbacks),
+            description = "Attempt fallback APIs if the preferred API fails to return lyrics",
+            keywords = listOf("lyrics", "fallback", "retry", "api", "online"),
+            icon = MaterialSymbolIcon("compare_arrows"),
+            route = SettingsRoutes.LYRICS,
+            parentScreen = context.getString(R.string.settings_lyrics_source),
+            settingKey = "lyricsApiFallbackRetry"
         ))
         add(SearchableSettingItem(
             id = "queue_settings",
@@ -309,6 +330,56 @@ fun buildSettingsSearchIndex(context: Context): List<SearchableSettingItem> {
             route = SettingsRoutes.BATTERY_SAVER,
             parentScreen = context.getString(R.string.settings_section_audio_lyrics)
         ))
+        add(SearchableSettingItem(
+            id = "battery_saver_disable_haptics",
+            title = context.getString(R.string.performancesettingsscreen_disable_haptics),
+            description = "Disable touch vibrations to extend battery life",
+            keywords = listOf("battery", "performance", "disable haptics", "vibration", "vibrate", "feedback"),
+            icon = MaterialSymbolIcon("touch_app"),
+            route = SettingsRoutes.BATTERY_SAVER,
+            parentScreen = context.getString(R.string.performancesettingsscreen_performance),
+            settingKey = "batterySaverDisableHaptics"
+        ))
+        add(SearchableSettingItem(
+            id = "battery_saver_enable_offload",
+            title = context.getString(R.string.performancesettingsscreen_enable_audio_offload),
+            description = "Use hardware DSP decoding under Performance",
+            keywords = listOf("battery", "performance", "audio offload", "dsp", "hardware decoding"),
+            icon = MaterialSymbolIcon("bolt"),
+            route = SettingsRoutes.BATTERY_SAVER,
+            parentScreen = context.getString(R.string.performancesettingsscreen_performance),
+            settingKey = "batterySaverEnableOffload"
+        ))
+        add(SearchableSettingItem(
+            id = "battery_saver_disable_marquee",
+            title = context.getString(R.string.performancesettingsscreen_disable_text_marquee),
+            description = "Pause title sliding animations to save screen power",
+            keywords = listOf("battery", "performance", "disable marquee", "slide animation", "marquee"),
+            icon = MaterialSymbolIcon("slideshow"),
+            route = SettingsRoutes.BATTERY_SAVER,
+            parentScreen = context.getString(R.string.performancesettingsscreen_performance),
+            settingKey = "batterySaverDisableMarquee"
+        ))
+        add(SearchableSettingItem(
+            id = "battery_saver_disable_lossless_artwork",
+            title = context.getString(R.string.performancesettingsscreen_disable_lossless_artwork),
+            description = "Use standard artwork instead of lossless under Performance",
+            keywords = listOf("battery", "performance", "disable lossless artwork", "artwork quality", "compressed art"),
+            icon = RhythmIcons.Image,
+            route = SettingsRoutes.BATTERY_SAVER,
+            parentScreen = context.getString(R.string.performancesettingsscreen_performance),
+            settingKey = "batterySaverDisableLosslessArtwork"
+        ))
+        add(SearchableSettingItem(
+            id = "battery_saver_disable_auto_fetch_artwork",
+            title = context.getString(R.string.performancesettingsscreen_disable_auto_fetch_artwork),
+            description = "Disable auto-fetching artwork to reduce lag and network overhead",
+            keywords = listOf("battery", "performance", "disable auto fetch artwork", "network load", "lag"),
+            icon = MaterialSymbolIcon("cloud_off"),
+            route = SettingsRoutes.BATTERY_SAVER,
+            parentScreen = context.getString(R.string.performancesettingsscreen_performance),
+            settingKey = "batterySaverDisableAutoFetchArtwork"
+        ))
 
         
         // Library & Media Section
@@ -350,6 +421,16 @@ fun buildSettingsSearchIndex(context: Context): List<SearchableSettingItem> {
             parentScreen = context.getString(R.string.settings_section_library_content)
         ))
         add(SearchableSettingItem(
+            id = "default_playlists_enabled",
+            title = context.getString(R.string.settings_enable_default_playlists),
+            description = context.getString(R.string.settings_enable_default_playlists_desc),
+            keywords = listOf("default playlists", "recently added", "most played", "auto playlist"),
+            icon = RhythmIcons.Library,
+            route = SettingsRoutes.PLAYLISTS,
+            parentScreen = context.getString(R.string.settings_playlists_title),
+            settingKey = "defaultPlaylistsEnabled"
+        ))
+        add(SearchableSettingItem(
             id = "library_settings",
             title = context.getString(R.string.settings_library_settings),
             description = context.getString(R.string.settings_library_settings_desc),
@@ -387,6 +468,16 @@ fun buildSettingsSearchIndex(context: Context): List<SearchableSettingItem> {
             route = SettingsRoutes.LIBRARY_SETTINGS,
             parentScreen = context.getString(R.string.settings_library_settings),
             settingKey = "libraryCombineDiscs"
+        ))
+        add(SearchableSettingItem(
+            id = "auto_fetch_artwork",
+            title = context.getString(R.string.librarysettingsscreen_autofetch_artwork),
+            description = "Automatically search online APIs for missing cover artwork on startup",
+            keywords = listOf("auto fetch", "fetch artwork", "online artwork", "missing cover", "startup"),
+            icon = MaterialSymbolIcon("cloud_download"),
+            route = SettingsRoutes.LIBRARY_SETTINGS,
+            parentScreen = context.getString(R.string.settings_library_settings),
+            settingKey = "autoFetchArtwork"
         ))
         
         // Notifications & Services Section
@@ -564,6 +655,16 @@ fun buildSettingsSearchIndex(context: Context): List<SearchableSettingItem> {
             route = SettingsRoutes.RHYTHM_GUARD,
             parentScreen = context.getString(R.string.settings_rhythm_guard),
             settingKey = "stopPlaybackOnZeroVolume"
+        ))
+        add(SearchableSettingItem(
+            id = "rhythm_guard_speaker_limit",
+            title = context.getString(R.string.settings_rhythm_guard_device_controls_speaker_limit_title),
+            description = context.getString(R.string.settings_rhythm_guard_device_controls_speaker_limit_desc),
+            keywords = listOf("speaker limit", "speaker volume", "speaker", "volume limit", "hearing safety"),
+            icon = RhythmIcons.Speaker,
+            route = SettingsRoutes.RHYTHM_GUARD,
+            parentScreen = context.getString(R.string.settings_rhythm_guard),
+            settingKey = "rhythmGuardApplyVolumeLimitOnSpeaker"
         ))
         
         // Updates & Info Section
@@ -798,8 +899,8 @@ fun buildSettingsSearchIndex(context: Context): List<SearchableSettingItem> {
             description = context.getString(R.string.settings_show_lyrics_player_desc),
             keywords = listOf("lyrics", "synced lyrics", "karaoke", "text", "song words"),
             icon = MaterialSymbolIcon("lyrics", filled = true),
-            route = SettingsRoutes.PLAYER_CUSTOMIZATION,
-            parentScreen = "Player"
+            route = SettingsRoutes.LYRICS,
+            parentScreen = "Lyrics"
         ))
         add(SearchableSettingItem(
             id = "lyrics_show_translation",
@@ -807,8 +908,8 @@ fun buildSettingsSearchIndex(context: Context): List<SearchableSettingItem> {
             description = context.getString(R.string.settings_lyrics_show_translation_desc),
             keywords = listOf("lyrics", "translation", "translate", "multi-language", "subtitle"),
             icon = RhythmIcons.Info,
-            route = SettingsRoutes.EXPERIMENTAL_FEATURES,
-            parentScreen = "Experimental",
+            route = SettingsRoutes.LYRICS,
+            parentScreen = "Lyrics",
             settingKey = "showLyricsTranslation"
         ))
         add(SearchableSettingItem(
@@ -817,8 +918,8 @@ fun buildSettingsSearchIndex(context: Context): List<SearchableSettingItem> {
             description = context.getString(R.string.settings_lyrics_show_romanization_desc),
             keywords = listOf("lyrics", "romanization", "romaji", "pinyin", "transliteration"),
             icon = MaterialSymbolIcon("text_fields"),
-            route = SettingsRoutes.EXPERIMENTAL_FEATURES,
-            parentScreen = "Experimental",
+            route = SettingsRoutes.LYRICS,
+            parentScreen = "Lyrics",
             settingKey = "showLyricsRomanization"
         ))
         add(SearchableSettingItem(
@@ -827,8 +928,8 @@ fun buildSettingsSearchIndex(context: Context): List<SearchableSettingItem> {
             description = context.getString(R.string.settings_keep_screen_on_lyrics_desc),
             keywords = listOf("screen", "awake", "wake", "lyrics", "screen on", "display", "timeout", "dim"),
             icon = RhythmIcons.Visibility,
-            route = SettingsRoutes.PLAYER_CUSTOMIZATION,
-            parentScreen = "Player",
+            route = SettingsRoutes.LYRICS,
+            parentScreen = "Lyrics",
             settingKey = "keepScreenOnLyrics"
         ))
         add(SearchableSettingItem(
@@ -837,8 +938,8 @@ fun buildSettingsSearchIndex(context: Context): List<SearchableSettingItem> {
             description = context.getString(R.string.settings_embed_lyrics_in_file_desc),
             keywords = listOf("embed", "lyrics", "file", "metadata", "write", "save", "tag", "id3"),
             icon = RhythmIcons.MusicNote,
-            route = SettingsRoutes.PLAYER_CUSTOMIZATION,
-            parentScreen = "Player"
+            route = SettingsRoutes.LYRICS,
+            parentScreen = "Lyrics"
         ))
         add(SearchableSettingItem(
             id = "lossless_artwork",
@@ -1633,7 +1734,7 @@ fun SettingsSearchBar(
                         .size(24.dp)
                         .clip(CircleShape)
                         .clickable {
-                            HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                            HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                             onQueryChange("")
                         }
                 )
@@ -1707,7 +1808,7 @@ fun SettingsSearchResults(
                                 )
                             },
                             onClick = {
-                                HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                                HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                                 onResultClick(setting)
                             }
                         )

@@ -18,8 +18,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
+import chromahub.rhythm.app.shared.presentation.components.common.DragDropLazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.text.style.TextOverflow
@@ -55,6 +55,7 @@ import chromahub.rhythm.app.shared.presentation.components.common.ButtonGroupSty
 import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveButtonGroup
 import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveGroupButton
 import chromahub.rhythm.app.util.HapticUtils
+import chromahub.rhythm.app.util.HapticType
 import kotlinx.coroutines.launch
 import androidx.compose.ui.res.stringResource
 
@@ -118,17 +119,18 @@ fun PlayerChipOrderBottomSheet(
         containerColor = MaterialTheme.colorScheme.surfaceContainer,
         modifier = Modifier.fillMaxWidth()
     ) {
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 24.dp, vertical = 16.dp)
-        ) {
-            // Header
-            item {
+        Column(modifier = Modifier.fillMaxWidth()) {
+            // Header content (Fixed)
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp)
+                    .padding(top = 16.dp, bottom = 8.dp)
+            ) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 0.dp, vertical = 16.dp),
+                        .padding(vertical = 16.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
@@ -158,24 +160,38 @@ fun PlayerChipOrderBottomSheet(
                         }
                     }
                 }
-                
-                Spacer(modifier = Modifier.height(24.dp))
             }
-            
-            // Reorderable chip list
-            itemsIndexed(
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Reorderable list using DragDropLazyColumn
+            val lazyListState = rememberLazyListState()
+            DragDropLazyColumn(
                 items = reorderableList,
-                key = { _, chip -> chip }
-            ) { index, chip ->
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f)
+                    .padding(horizontal = 24.dp),
+                lazyListState = lazyListState,
+                onMove = { fromIndex, toIndex ->
+                    val newList = reorderableList.toMutableList()
+                    val item = newList.removeAt(fromIndex)
+                    newList.add(toIndex, item)
+                    reorderableList = newList
+                },
+                itemKey = { it }
+            ) { chip, isDragging, index ->
                 val (name, icon) = getChipInfo(chip)
                 
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(vertical = 4.dp)
-                        .animateItem(),
+                        .padding(vertical = 4.dp),
                     colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+                        containerColor = if (isDragging) 
+                            MaterialTheme.colorScheme.secondaryContainer 
+                        else 
+                            MaterialTheme.colorScheme.surfaceContainerHigh
                     ),
                     shape = groupedChipItemShape(index, reorderableList.size)
                 ) {
@@ -225,8 +241,11 @@ fun PlayerChipOrderBottomSheet(
                             )
                         }
                         
-                        // Visibility and reorder buttons
-                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        // Visibility toggle and drag handle
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
                             // Visibility toggle button
                             val isHidden = hiddenChipsSet.contains(chip)
                             val visibleChipsCount = reorderableList.count { !hiddenChipsSet.contains(it) }
@@ -238,14 +257,12 @@ fun PlayerChipOrderBottomSheet(
                                         Toast.makeText(context, R.string.player_chip_one_visible, Toast.LENGTH_SHORT).show()
                                         return@IconButton
                                     }
-                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                                    HapticUtils.performHapticFeedback(context, haptics, HapticType.LIGHT)
                                     hiddenChipsSet = if (isHidden) {
                                         hiddenChipsSet - chip
                                     } else {
                                         hiddenChipsSet + chip
                                     }
-                                    // Save changes instantly
-                                    appSettings.setHiddenPlayerChips(hiddenChipsSet)
                                 },
                                 modifier = Modifier.size(40.dp)
                             ) {
@@ -257,108 +274,79 @@ fun PlayerChipOrderBottomSheet(
                                 )
                             }
                             
-                            // Move up button
-                            FilledIconButton(
-                                onClick = {
-                                    if (index > 0) {
-                                        HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
-                                        val newList = reorderableList.toMutableList()
-                                        val item = newList.removeAt(index)
-                                        newList.add(index - 1, item)
-                                        reorderableList = newList
-                                        // Save changes instantly
-                                        appSettings.setPlayerChipOrder(reorderableList)
-                                        appSettings.setHiddenPlayerChips(hiddenChipsSet)
-                                    }
-                                },
-                                enabled = index > 0,
-                                colors = IconButtonDefaults.filledIconButtonColors(
-                                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
-                                    disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-                                    disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f)
-                                ),
-                                modifier = Modifier.size(40.dp)
-                            ) {
-                                Icon(
-                                    imageVector = RhythmIcons.ArrowUpward,
-                                    contentDescription = stringResource(R.string.settings_move_up),
-                                    modifier = Modifier.size(20.dp)
-                                )
-                            }
-                            
-                            // Move down button
-                            FilledIconButton(
-                                onClick = {
-                                    if (index < reorderableList.size - 1) {
-                                        HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
-                                        val newList = reorderableList.toMutableList()
-                                        val item = newList.removeAt(index)
-                                        newList.add(index + 1, item)
-                                        reorderableList = newList
-                                        // Save changes instantly
-                                        appSettings.setPlayerChipOrder(reorderableList)
-                                        appSettings.setHiddenPlayerChips(hiddenChipsSet)
-                                    }
-                                },
-                                enabled = index < reorderableList.size - 1,
-                                colors = IconButtonDefaults.filledIconButtonColors(
-                                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
-                                    disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-                                    disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f)
-                                ),
-                                modifier = Modifier.size(40.dp)
-                            ) {
-                                Icon(
-                                    imageVector = RhythmIcons.ArrowDownward,
-                                    contentDescription = stringResource(R.string.settings_move_down),
-                                    modifier = Modifier.size(20.dp)
-                                )
-                            }
+                            // Drag Handle Icon
+                            Icon(
+                                imageVector = RhythmIcons.DragHandle,
+                                contentDescription = "Drag to reorder",
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+                                modifier = Modifier
+                                    .size(24.dp)
+                                    .padding(horizontal = 4.dp)
+                            )
                         }
                     }
                 }
             }
             
-            // Action buttons section
-            item {
-                Column(
+            // Sticky Footer at the bottom
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                color = MaterialTheme.colorScheme.surfaceContainer,
+                tonalElevation = 3.dp
+            ) {
+                ExpressiveButtonGroup(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(top = 16.dp, bottom = 8.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                        .padding(horizontal = 24.dp, vertical = 16.dp),
+                    style = ButtonGroupStyle.Tonal
                 ) {
-                    // Reset to Default button
-                    ExpressiveButtonGroup(
-                        modifier = Modifier.fillMaxWidth(),
-                        style = ButtonGroupStyle.Tonal
+                    // Reset button
+                    ExpressiveGroupButton(
+                        onClick = {
+                            HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
+                            appSettings.resetPlayerChipOrder()
+                            appSettings.setHiddenPlayerChips(emptySet())
+                            reorderableList = listOf("FAVORITE", "SPEED", "PITCH", "EQUALIZER", "SLEEP_TIMER", "LYRICS", "ALBUM", "ARTIST")
+                            hiddenChipsSet = emptySet()
+                            Toast.makeText(context, R.string.player_chip_order_reset, Toast.LENGTH_SHORT).show()
+                        },
+                        modifier = Modifier.weight(1f),
+                        isStart = true
                     ) {
-                        ExpressiveGroupButton(
-                            onClick = {
-                                HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
-                                reorderableList = listOf("FAVORITE", "SPEED", "PITCH", "EQUALIZER", "SLEEP_TIMER", "LYRICS", "ALBUM", "ARTIST")
-                                hiddenChipsSet = emptySet()
-                                // Save changes instantly
-                                appSettings.setPlayerChipOrder(reorderableList)
-                                appSettings.setHiddenPlayerChips(hiddenChipsSet)
-                                Toast.makeText(context, R.string.player_chip_order_reset, Toast.LENGTH_SHORT).show()
-                            },
-                            modifier = Modifier.fillMaxWidth(),
-                            isStart = true,
-                            isEnd = true
-                        ) {
-                            Icon(
-                                imageVector = MaterialSymbolIcon("restart_alt"),
-                                contentDescription = null,
-                                modifier = Modifier.size(20.dp)
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(
-                                text = context.getString(R.string.player_chip_reset),
-                                style = MaterialTheme.typography.labelLarge
-                            )
-                        }
+                        Icon(
+                            imageVector = MaterialSymbolIcon("restart_alt"),
+                            contentDescription = null,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(context.getString(R.string.bottomsheet_reset))
+                    }
+
+                    // Save button
+                    ExpressiveGroupButton(
+                        onClick = {
+                            HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
+                            appSettings.setPlayerChipOrder(reorderableList)
+                            appSettings.setHiddenPlayerChips(hiddenChipsSet)
+                            Toast.makeText(context, R.string.player_chip_order_saved, Toast.LENGTH_SHORT).show()
+                            scope.launch {
+                                sheetState.hide()
+                            }.invokeOnCompletion {
+                                if (!sheetState.isVisible) {
+                                    onDismiss()
+                                }
+                            }
+                        },
+                        modifier = Modifier.weight(1f),
+                        isEnd = true
+                    ) {
+                        Icon(
+                            imageVector = RhythmIcons.Check,
+                            contentDescription = null,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(context.getString(R.string.bottomsheet_save))
                     }
                 }
             }

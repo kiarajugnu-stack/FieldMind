@@ -92,6 +92,7 @@ import chromahub.rhythm.app.shared.data.repository.PlaybackStatsRepository
 import chromahub.rhythm.app.shared.data.repository.StatsTimeRange
 import chromahub.rhythm.app.util.GsonUtils
 import chromahub.rhythm.app.util.HapticUtils
+import chromahub.rhythm.app.util.HapticType
 import coil.compose.AsyncImage
 import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
@@ -277,7 +278,7 @@ fun FontSelectionDialog(
                                 option = option,
                                 isSelected = currentFont == option.name,
                                 onSelect = {
-                                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                                    HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                                     onFontSelected(option.name)
                                 }
                             )

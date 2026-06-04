@@ -32,6 +32,7 @@ import androidx.compose.ui.text.font.FontWeight
 import chromahub.rhythm.app.R
 import chromahub.rhythm.app.shared.data.model.AppSettings
 import chromahub.rhythm.app.util.HapticUtils
+import chromahub.rhythm.app.util.HapticType
 import chromahub.rhythm.app.shared.presentation.components.common.CollapsibleHeaderScreen
 import chromahub.rhythm.app.shared.presentation.components.Material3SettingsGroup
 import chromahub.rhythm.app.shared.presentation.components.Material3SettingsItem
@@ -204,7 +205,7 @@ fun PlaybackSettingsScreen(onBackClick: () -> Unit) {
                                 TunerAnimatedSwitch(
                                     checked = item.toggleState,
                                     onCheckedChange = {
-                                        HapticUtils.performHapticFeedback(context, hapticFeedback, HapticFeedbackType.TextHandleMove)
+                                        HapticUtils.performHapticFeedback(context, hapticFeedback, HapticType.LIGHT)
                                         item.onToggleChange?.invoke(it)
                                     }
                                 )
@@ -226,14 +227,14 @@ fun PlaybackSettingsScreen(onBackClick: () -> Unit) {
                         onClick = when {
                             item.onClick != null -> {
                                 {
-                                    HapticUtils.performHapticFeedback(context, hapticFeedback, HapticFeedbackType.LongPress)
+                                    HapticUtils.performHapticFeedback(context, hapticFeedback, HapticType.HEAVY)
                                     item.onClick.invoke()
                                 }
                             }
 
                             item.toggleState != null && item.onToggleChange != null -> {
                                 {
-                                    HapticUtils.performHapticFeedback(context, hapticFeedback, HapticFeedbackType.TextHandleMove)
+                                    HapticUtils.performHapticFeedback(context, hapticFeedback, HapticType.LIGHT)
                                     item.onToggleChange.invoke(!item.toggleState)
                                 }
                             }

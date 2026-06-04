@@ -46,6 +46,7 @@ import chromahub.rhythm.app.shared.data.model.AppSettings
 import chromahub.rhythm.app.shared.presentation.components.common.CollapsibleHeaderScreen
 import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveFilledIconButton
 import chromahub.rhythm.app.util.HapticUtils
+import chromahub.rhythm.app.util.HapticType
 
 @Composable
 fun StreamingHomeScreen(
@@ -74,7 +75,7 @@ fun StreamingHomeScreen(
         actions = {
             ExpressiveFilledIconButton(
                 onClick = {
-                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                    HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                     onNavigateToSettings()
                 },
                 colors = IconButtonDefaults.filledIconButtonColors(
@@ -158,7 +159,7 @@ fun StreamingHomeScreen(
 
                     Button(
                         onClick = {
-                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                            HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                             onSwitchToLocalMode()
                         }
                     ) {

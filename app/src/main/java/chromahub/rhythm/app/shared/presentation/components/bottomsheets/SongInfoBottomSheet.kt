@@ -1,5 +1,6 @@
 package chromahub.rhythm.app.shared.presentation.components.bottomsheets
 
+
 import chromahub.rhythm.app.shared.presentation.components.icons.RhythmIcons
 import chromahub.rhythm.app.shared.presentation.components.icons.MaterialSymbolIcon
 import chromahub.rhythm.app.shared.presentation.components.icons.Icon
@@ -77,6 +78,7 @@ import chromahub.rhythm.app.shared.presentation.components.RatingStarsDisplay
 import chromahub.rhythm.app.util.ImageUtils
 import chromahub.rhythm.app.util.MediaUtils
 import chromahub.rhythm.app.util.HapticUtils
+import chromahub.rhythm.app.util.HapticType
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.launch
@@ -644,7 +646,7 @@ fun SongInfoBottomSheet(
                                                         HapticUtils.performHapticFeedback(
                                                             context,
                                                             haptics,
-                                                            HapticFeedbackType.LongPress
+                                                            HapticType.HEAVY
                                                         )
                                                         showEditSheet = true
                                                     },
@@ -887,7 +889,7 @@ fun SongInfoBottomSheet(
                                 onEditSong?.let {
                                     ExpressiveFilledTonalButton(
                                         onClick = {
-                                            haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                                            HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                                             showEditSheet = true
                                         },
                                         shape = if (folderPath == null) ExpressiveShapes.Full else RoundedCornerShape(topStart = 20.dp, bottomStart = 20.dp, topEnd = 8.dp, bottomEnd = 8.dp),
@@ -912,7 +914,7 @@ fun SongInfoBottomSheet(
                             if (!isStreamingMode) {
                                 ExpressiveFilledTonalButton(
                                     onClick = {
-                                        haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                                        HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                                         showBlacklistTrackConfirm = true
                                     },
                                     enabled = !isLoadingBlacklist,
@@ -957,7 +959,7 @@ fun SongInfoBottomSheet(
                             if (!isStreamingMode && folderPath != null) {
                                 ExpressiveFilledTonalButton(
                                     onClick = {
-                                        haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                                        HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                                         showBlacklistFolderConfirm = true
                                     },
                                     enabled = !isLoadingBlacklist,
@@ -1004,7 +1006,7 @@ fun SongInfoBottomSheet(
             //         // Share Song Info
             //         FilledTonalButton(
             //             onClick = {
-            //                 haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+            //                 HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
             //                 val shareIntent = Intent().apply {
             //                     action = Intent.ACTION_SEND
             //                     putExtra(Intent.EXTRA_TEXT, "Now playing: ${song.title} by ${song.artist}")
@@ -1029,7 +1031,7 @@ fun SongInfoBottomSheet(
             //         // Share Original File
             //         FilledTonalButton(
             //             onClick = {
-            //                 haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+            //                 HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
             //                 try {
             //                     val shareIntent = Intent().apply {
             //                         action = Intent.ACTION_SEND
@@ -1059,7 +1061,7 @@ fun SongInfoBottomSheet(
             //         // Open in external player
             //         FilledTonalButton(
             //             onClick = {
-            //                 haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+            //                 HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
             //                 val intent = Intent().apply {
             //                     action = Intent.ACTION_VIEW
             //                     setDataAndType(song.uri, "audio/*")
@@ -1799,7 +1801,7 @@ private fun EditSongSheet(
         trackNumber = originalTrackNumber
         selectedImageUri = null
         removeArtwork = false
-        HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+        HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
     }
     
     // Helper function to proceed with save after permissions are granted
@@ -1895,7 +1897,7 @@ private fun EditSongSheet(
     // Function to handle save with permission checks
     fun handleSave() {
         if (isSaving) return
-        haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+        HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
         showWarningDialog = true
     }
     
@@ -2234,7 +2236,7 @@ private fun EditSongSheet(
                                             // Reset button
                                             OutlinedButton(
                                                 onClick = {
-                                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                                    HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                                                     resetToOriginal()
                                                 },
                                                 modifier = Modifier.weight(1f),
@@ -2852,7 +2854,7 @@ private fun EditSongSheet(
                         HapticUtils.performHapticFeedback(
                             context,
                             haptics,
-                            HapticFeedbackType.LongPress
+                            HapticType.HEAVY
                         )
                         resetToOriginal()
                     },

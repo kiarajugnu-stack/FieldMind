@@ -92,6 +92,7 @@ import chromahub.rhythm.app.shared.data.repository.PlaybackStatsRepository
 import chromahub.rhythm.app.shared.data.repository.StatsTimeRange
 import chromahub.rhythm.app.util.GsonUtils
 import chromahub.rhythm.app.util.HapticUtils
+import chromahub.rhythm.app.util.HapticType
 import coil.compose.AsyncImage
 import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
@@ -401,7 +402,7 @@ fun RhythmGuardSettingsScreen(onBackClick: () -> Unit) {
                         TunerAnimatedSwitch(
                             checked = isRhythmGuardEnabled,
                             onCheckedChange = { enabled ->
-                                HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
+                                HapticUtils.performHapticFeedback(context, haptic, HapticType.HEAVY)
                                 if (enabled) {
                                     val restoredMode = if (auraMode == AppSettings.RHYTHM_GUARD_MODE_MANUAL) {
                                         AppSettings.RHYTHM_GUARD_MODE_MANUAL
@@ -431,7 +432,7 @@ fun RhythmGuardSettingsScreen(onBackClick: () -> Unit) {
                                 ),
                                 selectedIndex = if (auraMode == AppSettings.RHYTHM_GUARD_MODE_MANUAL) 1 else 0,
                                 onItemClick = { index ->
-                                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                                    HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                                     when (index) {
                                         0 -> appSettings.setRhythmGuardMode(AppSettings.RHYTHM_GUARD_MODE_AUTO)
                                         else -> appSettings.setRhythmGuardMode(AppSettings.RHYTHM_GUARD_MODE_MANUAL)

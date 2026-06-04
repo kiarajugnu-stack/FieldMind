@@ -92,6 +92,7 @@ import chromahub.rhythm.app.shared.data.repository.PlaybackStatsRepository
 import chromahub.rhythm.app.shared.data.repository.StatsTimeRange
 import chromahub.rhythm.app.util.GsonUtils
 import chromahub.rhythm.app.util.HapticUtils
+import chromahub.rhythm.app.util.HapticType
 import coil.compose.AsyncImage
 import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
@@ -236,7 +237,7 @@ fun BackupRestoreSettingsScreen(onBackClick: () -> Unit) {
                 scope.launch {
                     try {
                         isCreatingBackup = true
-                        HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                        HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
 
                         musicViewModel.ensurePlaylistsSaved()
                         val backupJson = appSettings.createBackup(pendingBackupSections)
@@ -285,7 +286,7 @@ fun BackupRestoreSettingsScreen(onBackClick: () -> Unit) {
                 scope.launch {
                     try {
                         isRestoringFromFile = true
-                        HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                        HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
 
                         val inputStream = context.contentResolver.openInputStream(uri)
                         val backupJson = inputStream?.bufferedReader()?.use { it.readText() }
@@ -316,7 +317,7 @@ fun BackupRestoreSettingsScreen(onBackClick: () -> Unit) {
         scope.launch {
             try {
                 isRestoringFromClipboard = true
-                HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
 
                 val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
                 val clip = clipboard.primaryClip
@@ -344,7 +345,7 @@ fun BackupRestoreSettingsScreen(onBackClick: () -> Unit) {
         scope.launch {
             try {
                 isPreparingRestore = true
-                HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
 
                 if (appSettings.restoreFromBackup(backupJson, sections)) {
                     musicViewModel.reloadPlaylistsFromSettings()
@@ -485,7 +486,7 @@ fun BackupRestoreSettingsScreen(onBackClick: () -> Unit) {
                             context.getString(R.string.settings_create_backup_desc),
                             onClick = {
                                 if (!isBusy) {
-                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                                    HapticUtils.performHapticFeedback(context, haptics, HapticType.LIGHT)
                                     backupSections = AppSettings.BackupRestoreSections()
                                     showBackupSelectionSheet = true
                                 }
@@ -497,7 +498,7 @@ fun BackupRestoreSettingsScreen(onBackClick: () -> Unit) {
                             context.getString(R.string.settings_auto_backup_desc),
                             toggleState = autoBackupEnabled,
                             onToggleChange = {
-                                HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                                HapticUtils.performHapticFeedback(context, haptics, HapticType.LIGHT)
                                 appSettings.setAutoBackupEnabled(it)
                                 if (it) appSettings.triggerImmediateBackup()
                             }
@@ -513,7 +514,7 @@ fun BackupRestoreSettingsScreen(onBackClick: () -> Unit) {
                             context.getString(R.string.settings_restore_clipboard_desc),
                             onClick = {
                                 if (!isBusy) {
-                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                                    HapticUtils.performHapticFeedback(context, haptics, HapticType.LIGHT)
                                     restoreFromClipboard()
                                 }
                             }
@@ -524,7 +525,7 @@ fun BackupRestoreSettingsScreen(onBackClick: () -> Unit) {
                             context.getString(R.string.settings_restore_file_desc),
                             onClick = {
                                 if (!isBusy) {
-                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                                    HapticUtils.performHapticFeedback(context, haptics, HapticType.LIGHT)
                                     isRestoringFromFile = true
                                     val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
                                         addCategory(Intent.CATEGORY_OPENABLE)

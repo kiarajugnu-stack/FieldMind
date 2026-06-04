@@ -44,6 +44,7 @@ import chromahub.rhythm.app.shared.presentation.components.common.M3PlaceholderT
 import chromahub.rhythm.app.shared.presentation.components.player.formatDuration
 import chromahub.rhythm.app.util.ImageUtils
 import chromahub.rhythm.app.util.HapticUtils
+import chromahub.rhythm.app.util.HapticType
 import chromahub.rhythm.app.features.local.presentation.viewmodel.MusicViewModel
 import chromahub.rhythm.app.R
 import chromahub.rhythm.app.shared.presentation.components.Material3SettingsGroup
@@ -367,82 +368,87 @@ fun ArtistBottomSheet(
 
                             Spacer(modifier = Modifier.height(20.dp))
 
-                            Row(
+                            Column(
                                 modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
-                                Button(
-                                    onClick = {
-                                        HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
-                                        if (artistSongs.isNotEmpty()) {
-                                            onPlayAll(artistSongs)
-                                            scope.launch { sheetState.hide() }.invokeOnCompletion {
-                                                onDismiss()
-                                                onPlayerClick()
-                                            }
-                                        }
-                                    },
-                                    modifier = Modifier
-                                        .weight(1f)
-                                        .height(52.dp),
-                                    shape = ButtonGroupDefaults.connectedLeadingButtonShapes().shape,
-                                    colors = ButtonDefaults.buttonColors(
-                                        containerColor = MaterialTheme.colorScheme.primary,
-                                        contentColor = MaterialTheme.colorScheme.onPrimary
-                                    ),
-                                    contentPadding = PaddingValues(horizontal = 16.dp)
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp),
                                 ) {
-                                    Icon(
-                                        imageVector = RhythmIcons.Play,
-                                        contentDescription = null,
-                                        modifier = Modifier.size(20.dp)
-                                    )
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    Text(
-                                        "Play All",
-                                        style = MaterialTheme.typography.titleMedium,
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                }
+                                    Button(
+                                        onClick = {
+                                            HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
+                                            if (artistSongs.isNotEmpty()) {
+                                                onPlayAll(artistSongs)
+                                                scope.launch { sheetState.hide() }.invokeOnCompletion {
+                                                    onDismiss()
+                                                    onPlayerClick()
+                                                }
+                                            }
+                                        },
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .height(52.dp),
+                                        shape = ButtonGroupDefaults.connectedLeadingButtonShapes().shape,
+                                        colors = ButtonDefaults.buttonColors(
+                                            containerColor = MaterialTheme.colorScheme.primary,
+                                            contentColor = MaterialTheme.colorScheme.onPrimary
+                                        ),
+                                        contentPadding = PaddingValues(horizontal = 16.dp)
+                                    ) {
+                                        Icon(
+                                            imageVector = RhythmIcons.Play,
+                                            contentDescription = null,
+                                            modifier = Modifier.size(20.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Text(
+                                            "Play All",
+                                            style = MaterialTheme.typography.titleMedium,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                    }
 
-                                FilledTonalButton(
-                                    onClick = {
-                                        HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
-                                        if (artistSongs.isNotEmpty()) {
-                                            onShufflePlay(artistSongs)
-                                            scope.launch { sheetState.hide() }.invokeOnCompletion {
-                                                onDismiss()
-                                                onPlayerClick()
+                                    FilledTonalButton(
+                                        onClick = {
+                                            HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
+                                            if (artistSongs.isNotEmpty()) {
+                                                onShufflePlay(artistSongs)
+                                                scope.launch { sheetState.hide() }.invokeOnCompletion {
+                                                    onDismiss()
+                                                    onPlayerClick()
+                                                }
                                             }
-                                        }
-                                    },
-                                    modifier = Modifier
-                                        .weight(1f)
-                                        .height(52.dp),
-                                    shape = if (onAddToQueueAll != null) ButtonGroupDefaults.connectedMiddleButtonShapes().shape else ButtonGroupDefaults.connectedTrailingButtonShapes().shape,
-                                    colors = ButtonDefaults.filledTonalButtonColors(
-                                        containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                                        contentColor = MaterialTheme.colorScheme.onSecondaryContainer
-                                    ),
-                                    contentPadding = PaddingValues(horizontal = 16.dp)
-                                ) {
-                                    Icon(
-                                        imageVector = RhythmIcons.Shuffle,
-                                        contentDescription = null,
-                                        modifier = Modifier.size(20.dp)
-                                    )
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    Text(
-                                        "Shuffle",
-                                        style = MaterialTheme.typography.titleMedium,
-                                        fontWeight = FontWeight.Medium
-                                    )
+                                        },
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .height(52.dp),
+                                        shape = ButtonGroupDefaults.connectedTrailingButtonShapes().shape,
+                                        colors = ButtonDefaults.filledTonalButtonColors(
+                                            containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                                            contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                                        ),
+                                        contentPadding = PaddingValues(horizontal = 16.dp)
+                                    ) {
+                                        Icon(
+                                            imageVector = RhythmIcons.Shuffle,
+                                            contentDescription = null,
+                                            modifier = Modifier.size(20.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Text(
+                                            "Shuffle",
+                                            style = MaterialTheme.typography.titleMedium,
+                                            fontWeight = FontWeight.Medium
+                                        )
+                                    }
                                 }
 
                                 if (onAddToQueueAll != null) {
                                     FilledTonalButton(
                                         onClick = {
-                                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                            HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                                             if (artistSongs.isNotEmpty()) {
                                                 onAddToQueueAll(artistSongs)
                                                 scope.launch { sheetState.hide() }.invokeOnCompletion {
@@ -451,9 +457,9 @@ fun ArtistBottomSheet(
                                             }
                                         },
                                         modifier = Modifier
-                                            .weight(1f)
+                                            .fillMaxWidth()
                                             .height(52.dp),
-                                        shape = ButtonGroupDefaults.connectedTrailingButtonShapes().shape,
+                                        shape = RoundedCornerShape(26.dp),
                                         colors = ButtonDefaults.filledTonalButtonColors(
                                             containerColor = MaterialTheme.colorScheme.secondaryContainer,
                                             contentColor = MaterialTheme.colorScheme.onSecondaryContainer
@@ -505,11 +511,11 @@ fun ArtistBottomSheet(
                                     ArtistAlbumCard(
                                         album = album,
                                         onClick = {
-                                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                                            HapticUtils.performHapticFeedback(context, haptics, HapticType.LIGHT)
                                             onAlbumClick(album)
                                         },
                                         onPlay = {
-                                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                            HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                                             viewModel.playAlbum(album)
                                         },
                                         haptics = haptics
@@ -605,7 +611,7 @@ fun ArtistBottomSheet(
                                         )
                                     },
                                     onClick = {
-                                        HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                                        HapticUtils.performHapticFeedback(context, haptics, HapticType.LIGHT)
                                         onSongClick(song)
                                         scope.launch { sheetState.hide() }.invokeOnCompletion {
                                             onDismiss()
@@ -644,7 +650,7 @@ private fun SongTrailingMenu(
     Box {
         FilledIconButton(
             onClick = {
-                HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                 showDropdown = true
             },
             modifier = Modifier.size(width = 40.dp, height = 36.dp),
@@ -664,7 +670,7 @@ private fun SongTrailingMenu(
         DropdownMenu(
             expanded = showDropdown,
             onDismissRequest = {
-                HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                 showDropdown = false
             },
             modifier = Modifier
@@ -705,7 +711,7 @@ private fun SongTrailingMenu(
                         }
                     },
                     onClick = {
-                        HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                        HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                         showDropdown = false
                         onPlayNext()
                     }
@@ -744,7 +750,7 @@ private fun SongTrailingMenu(
                         }
                     },
                     onClick = {
-                        HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                        HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                         showDropdown = false
                         onAddToQueue()
                     }
@@ -783,7 +789,7 @@ private fun SongTrailingMenu(
                         }
                     },
                     onClick = {
-                        HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                        HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                         showDropdown = false
                         onToggleFavorite()
                     }
@@ -822,7 +828,7 @@ private fun SongTrailingMenu(
                         }
                     },
                     onClick = {
-                        HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                        HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                         showDropdown = false
                         onAddToPlaylist()
                     }
@@ -862,7 +868,7 @@ private fun SongTrailingMenu(
                         }
                     },
                     onClick = {
-                        HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                        HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                         showDropdown = false
                         onShowSongInfo()
                     }
@@ -889,7 +895,7 @@ private fun ArtistAlbumCard(
 
     Card(
         onClick = {
-            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+            HapticUtils.performHapticFeedback(context, haptics, HapticType.LIGHT)
             onClick()
         },
         modifier = Modifier.width(160.dp),
@@ -926,7 +932,7 @@ private fun ArtistAlbumCard(
                 ) {
                     FilledIconButton(
                         onClick = {
-                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                            HapticUtils.performHapticFeedback(context, haptics, HapticType.LIGHT)
                             onPlay()
                         },
                         modifier = Modifier.size(44.dp),

@@ -134,6 +134,7 @@ import chromahub.rhythm.app.features.local.presentation.viewmodel.MusicViewModel
 import chromahub.rhythm.app.features.streaming.presentation.viewmodel.StreamingMusicViewModel
 import chromahub.rhythm.app.shared.presentation.viewmodel.ThemeViewModel
 import chromahub.rhythm.app.util.HapticUtils
+import chromahub.rhythm.app.util.HapticType
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
@@ -372,7 +373,7 @@ fun OnboardingScreen(
                                                         stiffness = Spring.StiffnessHigh
                                                     ))
                                                 }
-                                                HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
+                                                HapticUtils.performHapticFeedback(context, haptic, HapticType.HEAVY)
                                                 onNextStep()
                                             },
                                             modifier = Modifier
@@ -451,7 +452,7 @@ fun OnboardingScreen(
                                                         stiffness = Spring.StiffnessHigh
                                                     ))
                                                 }
-                                                HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
+                                                HapticUtils.performHapticFeedback(context, haptic, HapticType.HEAVY)
                                                 onNextStep()
                                             },
                                             enabled = isStreamingServiceConnected,
@@ -540,7 +541,7 @@ fun OnboardingScreen(
                                                         stiffness = Spring.StiffnessHigh
                                                     ))
                                                 }
-                                                HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
+                                                HapticUtils.performHapticFeedback(context, haptic, HapticType.HEAVY)
                                                 // For permission step, handle based on state
                                                 when (permissionScreenState) {
                                                     PermissionScreenState.RedirectToSettings -> {
@@ -676,7 +677,7 @@ fun OnboardingScreen(
                                                         stiffness = Spring.StiffnessHigh
                                                     ))
                                                 }
-                                                HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
+                                                HapticUtils.performHapticFeedback(context, haptic, HapticType.HEAVY)
                                                 onNextStep()
                                             },
                                             modifier = Modifier
@@ -756,7 +757,7 @@ fun OnboardingScreen(
                                                         stiffness = Spring.StiffnessHigh
                                                     ))
                                                 }
-                                                HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
+                                                HapticUtils.performHapticFeedback(context, haptic, HapticType.HEAVY)
                                                 onNextStep()
                                             },
                                             modifier = Modifier
@@ -835,7 +836,7 @@ fun OnboardingScreen(
                                                         stiffness = Spring.StiffnessHigh
                                                     ))
                                                 }
-                                                HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
+                                                HapticUtils.performHapticFeedback(context, haptic, HapticType.HEAVY)
                                                 onNextStep()
                                             },
                                             modifier = Modifier
@@ -916,7 +917,7 @@ fun OnboardingScreen(
                                                         stiffness = Spring.StiffnessHigh
                                                     ))
                                                 }
-                                                HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
+                                                HapticUtils.performHapticFeedback(context, haptic, HapticType.HEAVY)
                                                 onNextStep()
                                             },
                                             modifier = Modifier
@@ -995,7 +996,7 @@ fun OnboardingScreen(
                                                         stiffness = Spring.StiffnessHigh
                                                     ))
                                                 }
-                                                HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
+                                                HapticUtils.performHapticFeedback(context, haptic, HapticType.HEAVY)
                                                 onNextStep()
                                             },
                                             modifier = Modifier
@@ -1074,7 +1075,7 @@ fun OnboardingScreen(
                                                         stiffness = Spring.StiffnessHigh
                                                     ))
                                                 }
-                                                HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
+                                                HapticUtils.performHapticFeedback(context, haptic, HapticType.HEAVY)
                                                 onNextStep()
                                             },
                                             modifier = Modifier
@@ -1156,7 +1157,7 @@ fun OnboardingScreen(
                                                         stiffness = Spring.StiffnessHigh
                                                     ))
                                                 }
-                                                HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
+                                                HapticUtils.performHapticFeedback(context, haptic, HapticType.HEAVY)
                                                 onNextStep()
                                             },
                                             modifier = Modifier
@@ -1235,7 +1236,7 @@ fun OnboardingScreen(
                                                         stiffness = Spring.StiffnessHigh
                                                     ))
                                                 }
-                                                HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
+                                                HapticUtils.performHapticFeedback(context, haptic, HapticType.HEAVY)
                                                 onNextStep()
                                             },
                                             modifier = Modifier
@@ -1314,7 +1315,7 @@ fun OnboardingScreen(
                                                         stiffness = Spring.StiffnessHigh
                                                     ))
                                                 }
-                                                HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
+                                                HapticUtils.performHapticFeedback(context, haptic, HapticType.HEAVY)
                                                 onNextStep()
                                             },
                                             modifier = Modifier
@@ -1393,7 +1394,7 @@ fun OnboardingScreen(
                                                         stiffness = Spring.StiffnessHigh
                                                     ))
                                                 }
-                                                HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
+                                                HapticUtils.performHapticFeedback(context, haptic, HapticType.HEAVY)
                                                 onNextStep()
                                             },
                                             modifier = Modifier
@@ -1473,7 +1474,7 @@ fun OnboardingScreen(
                                                         stiffness = Spring.StiffnessHigh
                                                     ))
                                                 }
-                                                HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
+                                                HapticUtils.performHapticFeedback(context, haptic, HapticType.HEAVY)
                                                 onNextStep()
                                             },
                                             modifier = Modifier
@@ -1590,7 +1591,7 @@ fun OnboardingScreen(
                                                         stiffness = Spring.StiffnessHigh
                                                     ))
                                                 }
-                                                HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
+                                                HapticUtils.performHapticFeedback(context, haptic, HapticType.HEAVY)
                                                 onFinish()
                                             },
                                             modifier = Modifier
@@ -1754,7 +1755,7 @@ fun OnboardingScreen(
                                     stiffness = Spring.StiffnessHigh
                                 ))
                             }
-                            HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
+                            HapticUtils.performHapticFeedback(context, haptic, HapticType.HEAVY)
                             when (currentStep) {
                                 OnboardingStep.PERMISSIONS -> {
                                     // For permission step, handle based on state
@@ -2053,7 +2054,7 @@ fun EnhancedWelcomeContent(
                         .clip(RoundedCornerShape(34.dp)) // pill shape
                         .background(MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.15f))
                         .clickable {
-                            HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
+                            HapticUtils.performHapticFeedback(context, haptic, HapticType.HEAVY)
                             themeViewModel.setUseSystemTheme(false)
                             themeViewModel.setDarkMode(!darkMode)
                         },
@@ -2070,7 +2071,7 @@ fun EnhancedWelcomeContent(
                 // Middle Action: Large pill-shaped "Get started" button
                 Button(
                     onClick = {
-                        HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
+                        HapticUtils.performHapticFeedback(context, haptic, HapticType.HEAVY)
                         onNextStep()
                     },
                     modifier = Modifier
@@ -2099,7 +2100,7 @@ fun EnhancedWelcomeContent(
                         .clip(RoundedCornerShape(34.dp)) // pill shape
                         .background(MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.15f))
                         .clickable {
-                            HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
+                            HapticUtils.performHapticFeedback(context, haptic, HapticType.HEAVY)
                             showLanguageSwitcher = true
                         },
                     contentAlignment = Alignment.Center
@@ -2763,7 +2764,7 @@ fun EnhancedBackupRestoreContent(
                 scope.launch {
                     try {
                         isCreatingBackup = true
-                        HapticUtils.performHapticFeedback(context, hapticFeedback, HapticFeedbackType.LongPress)
+                        HapticUtils.performHapticFeedback(context, hapticFeedback, HapticType.HEAVY)
                         musicViewModel.ensurePlaylistsSaved()
 
                         val backupJson = appSettings.createBackup()
@@ -2808,7 +2809,7 @@ fun EnhancedBackupRestoreContent(
                 scope.launch {
                     try {
                         isRestoringFromFile = true
-                        HapticUtils.performHapticFeedback(context, hapticFeedback, HapticFeedbackType.LongPress)
+                        HapticUtils.performHapticFeedback(context, hapticFeedback, HapticType.HEAVY)
                         val backupJson = context.contentResolver.openInputStream(uri)
                             ?.bufferedReader()
                             ?.use { it.readText() }
@@ -2833,7 +2834,7 @@ fun EnhancedBackupRestoreContent(
         scope.launch {
             try {
                 isRestoringFromClipboard = true
-                HapticUtils.performHapticFeedback(context, hapticFeedback, HapticFeedbackType.LongPress)
+                HapticUtils.performHapticFeedback(context, hapticFeedback, HapticType.HEAVY)
                 val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
                 val clip = clipboard.primaryClip
                 val backupJson = if (clip != null && clip.itemCount > 0) {
@@ -2997,13 +2998,13 @@ fun EnhancedBackupRestoreContent(
                                 OnboardingAnimatedSwitch(
                                     checked = autoBackupEnabled,
                                     onCheckedChange = {
-                                        HapticUtils.performHapticFeedback(context, hapticFeedback, HapticFeedbackType.TextHandleMove)
+                                        HapticUtils.performHapticFeedback(context, hapticFeedback, HapticType.LIGHT)
                                         appSettings.setAutoBackupEnabled(it)
                                     }
                                 )
                             },
                             onClick = {
-                                HapticUtils.performHapticFeedback(context, hapticFeedback, HapticFeedbackType.TextHandleMove)
+                                HapticUtils.performHapticFeedback(context, hapticFeedback, HapticType.LIGHT)
                                 appSettings.setAutoBackupEnabled(!autoBackupEnabled)
                             }
                         )
@@ -3016,16 +3017,16 @@ fun EnhancedBackupRestoreContent(
                     isRestoringFromClipboard = isRestoringFromClipboard,
                     isRestoringFromFile = isRestoringFromFile,
                     onCreateBackup = {
-                        HapticUtils.performHapticFeedback(context, hapticFeedback, HapticFeedbackType.TextHandleMove)
+                        HapticUtils.performHapticFeedback(context, hapticFeedback, HapticType.LIGHT)
                         launchCreateBackup()
                     },
                     onRestoreFromClipboard = {
                         if (isBusy) return@OnboardingBackupActionCard
-                        HapticUtils.performHapticFeedback(context, hapticFeedback, HapticFeedbackType.TextHandleMove)
+                        HapticUtils.performHapticFeedback(context, hapticFeedback, HapticType.LIGHT)
                         restoreFromClipboard()
                     },
                     onRestoreFromFile = {
-                        HapticUtils.performHapticFeedback(context, hapticFeedback, HapticFeedbackType.TextHandleMove)
+                        HapticUtils.performHapticFeedback(context, hapticFeedback, HapticType.LIGHT)
                         launchRestoreFile()
                     }
                 )
@@ -3040,7 +3041,7 @@ fun EnhancedBackupRestoreContent(
                         isError = backupStatusIsError,
                         showRestart = showRestartHint,
                         onRestart = {
-                            HapticUtils.performHapticFeedback(context, hapticFeedback, HapticFeedbackType.TextHandleMove)
+                            HapticUtils.performHapticFeedback(context, hapticFeedback, HapticType.LIGHT)
                             restartApp()
                         }
                     )
@@ -3140,13 +3141,13 @@ fun EnhancedBackupRestoreContent(
                                 OnboardingAnimatedSwitch(
                                     checked = autoBackupEnabled,
                                     onCheckedChange = {
-                                        HapticUtils.performHapticFeedback(context, hapticFeedback, HapticFeedbackType.TextHandleMove)
+                                        HapticUtils.performHapticFeedback(context, hapticFeedback, HapticType.LIGHT)
                                         appSettings.setAutoBackupEnabled(it)
                                     }
                                 )
                             },
                             onClick = {
-                                HapticUtils.performHapticFeedback(context, hapticFeedback, HapticFeedbackType.TextHandleMove)
+                                HapticUtils.performHapticFeedback(context, hapticFeedback, HapticType.LIGHT)
                                 appSettings.setAutoBackupEnabled(!autoBackupEnabled)
                             }
                         )
@@ -3159,16 +3160,16 @@ fun EnhancedBackupRestoreContent(
                     isRestoringFromClipboard = isRestoringFromClipboard,
                     isRestoringFromFile = isRestoringFromFile,
                     onCreateBackup = {
-                        HapticUtils.performHapticFeedback(context, hapticFeedback, HapticFeedbackType.TextHandleMove)
+                        HapticUtils.performHapticFeedback(context, hapticFeedback, HapticType.LIGHT)
                         launchCreateBackup()
                     },
                     onRestoreFromClipboard = {
                         if (isBusy) return@OnboardingBackupActionCard
-                        HapticUtils.performHapticFeedback(context, hapticFeedback, HapticFeedbackType.TextHandleMove)
+                        HapticUtils.performHapticFeedback(context, hapticFeedback, HapticType.LIGHT)
                         restoreFromClipboard()
                     },
                     onRestoreFromFile = {
-                        HapticUtils.performHapticFeedback(context, hapticFeedback, HapticFeedbackType.TextHandleMove)
+                        HapticUtils.performHapticFeedback(context, hapticFeedback, HapticType.LIGHT)
                         launchRestoreFile()
                     }
                 )
@@ -3183,7 +3184,7 @@ fun EnhancedBackupRestoreContent(
                         isError = backupStatusIsError,
                         showRestart = showRestartHint,
                         onRestart = {
-                            HapticUtils.performHapticFeedback(context, hapticFeedback, HapticFeedbackType.TextHandleMove)
+                            HapticUtils.performHapticFeedback(context, hapticFeedback, HapticType.LIGHT)
                             restartApp()
                         }
                     )
@@ -4116,13 +4117,13 @@ private fun LibrarySettingsCard(
                     OnboardingAnimatedSwitch(
                         checked = albumViewIsGrid,
                         onCheckedChange = {
-                            HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                            HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                             onAlbumViewChange(it)
                         }
                     )
                 },
                 onClick = {
-                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                    HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                     onAlbumViewChange(!albumViewIsGrid)
                 }
             ),
@@ -4134,13 +4135,13 @@ private fun LibrarySettingsCard(
                     OnboardingAnimatedSwitch(
                         checked = artistViewIsGrid,
                         onCheckedChange = {
-                            HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                            HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                             onArtistViewChange(it)
                         }
                     )
                 },
                 onClick = {
-                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                    HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                     onArtistViewChange(!artistViewIsGrid)
                 }
             ),
@@ -4152,13 +4153,13 @@ private fun LibrarySettingsCard(
                     OnboardingAnimatedSwitch(
                         checked = showLyrics,
                         onCheckedChange = {
-                            HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                            HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                             onShowLyricsChange(it)
                         }
                     )
                 },
                 onClick = {
-                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                    HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                     onShowLyricsChange(!showLyrics)
                 }
             )
@@ -4198,7 +4199,7 @@ private fun FolderManagementCard(
                             items = listOf("Blacklist", "Whitelist"),
                             selectedIndex = if (isBlacklistMode) 0 else 1,
                             onItemClick = { index ->
-                                HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                                HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                                 onModeChange(index == 0)
                             },
                             modifier = Modifier.fillMaxWidth()
@@ -4229,7 +4230,7 @@ private fun FolderManagementCard(
                     )
                 },
                 onClick = {
-                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                    HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                     onAddFolder()
                 }
             )
@@ -4307,13 +4308,13 @@ private fun AudioPlaybackSettingsCard(
                     OnboardingAnimatedSwitch(
                         checked = useSystemVolume,
                         onCheckedChange = {
-                            HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                            HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                             onSystemVolumeChange(it)
                         }
                     )
                 },
                 onClick = {
-                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                    HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                     onSystemVolumeChange(!useSystemVolume)
                 }
             ),
@@ -4325,13 +4326,13 @@ private fun AudioPlaybackSettingsCard(
                     OnboardingAnimatedSwitch(
                         checked = stopPlaybackOnZeroVolume,
                         onCheckedChange = {
-                            HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                            HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                             onStopPlaybackOnZeroVolumeChange(it)
                         }
                     )
                 },
                 onClick = {
-                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                    HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                     onStopPlaybackOnZeroVolumeChange(!stopPlaybackOnZeroVolume)
                 }
             ),
@@ -4343,13 +4344,13 @@ private fun AudioPlaybackSettingsCard(
                     OnboardingAnimatedSwitch(
                         checked = resumeOnDeviceReconnect,
                         onCheckedChange = {
-                            HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                            HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                             onResumeOnReconnectChange(it)
                         }
                     )
                 },
                 onClick = {
-                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                    HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                     onResumeOnReconnectChange(!resumeOnDeviceReconnect)
                 }
             ),
@@ -4361,13 +4362,13 @@ private fun AudioPlaybackSettingsCard(
                     OnboardingAnimatedSwitch(
                         checked = autoAddToQueue,
                         onCheckedChange = {
-                            HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                            HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                             onAutoQueueChange(it)
                         }
                     )
                 },
                 onClick = {
-                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                    HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                     onAutoQueueChange(!autoAddToQueue)
                 }
             ),
@@ -4379,13 +4380,13 @@ private fun AudioPlaybackSettingsCard(
                     OnboardingAnimatedSwitch(
                         checked = showLyrics,
                         onCheckedChange = {
-                            HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                            HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                             onShowLyricsChange(it)
                         }
                     )
                 },
                 onClick = {
-                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                    HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                     onShowLyricsChange(!showLyrics)
                 }
             )
@@ -4437,7 +4438,7 @@ private fun ThemeSettingsCard(
                                 else -> 2
                             },
                             onItemClick = { index ->
-                                HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                                HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                                 when (index) {
                                     0 -> onSystemThemeChange(true)
                                     1 -> {
@@ -4467,13 +4468,13 @@ private fun ThemeSettingsCard(
                         OnboardingAnimatedSwitch(
                             checked = useDynamicColors,
                             onCheckedChange = {
-                                HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                                HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                                 onDynamicColorsChange(it)
                             }
                         )
                     },
                     onClick = {
-                        HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                        HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                         onDynamicColorsChange(!useDynamicColors)
                     }
                 )
@@ -4489,13 +4490,13 @@ private fun ThemeSettingsCard(
                     OnboardingAnimatedSwitch(
                         checked = festiveTheme,
                         onCheckedChange = {
-                            HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                            HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                             onFestiveThemeChange(it)
                         }
                     )
                 },
                 onClick = {
-                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                    HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                     onFestiveThemeChange(!festiveTheme)
                 }
             )
@@ -5276,7 +5277,7 @@ fun EnhancedThemeOption(
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
             .clickable {
-                HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
+                HapticUtils.performHapticFeedback(context, haptic, HapticType.HEAVY)
                 onToggle(!isEnabled)
             },
         colors = CardDefaults.cardColors(
@@ -5327,7 +5328,7 @@ fun EnhancedThemeOption(
             OnboardingAnimatedSwitch(
                 checked = isEnabled,
                 onCheckedChange = { enabled ->
-                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
+                    HapticUtils.performHapticFeedback(context, haptic, HapticType.HEAVY)
                     onToggle(enabled)
                 }
             )
@@ -5353,7 +5354,7 @@ fun OnboardingDropdownOption(
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
             .clickable {
-                HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
+                HapticUtils.performHapticFeedback(context, haptic, HapticType.HEAVY)
                 showDropdown = true
             },
         colors = CardDefaults.cardColors(
@@ -5473,7 +5474,7 @@ fun OnboardingDropdownOption(
                             }
                         },
                         onClick = {
-                            HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                            HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                             onOptionSelected(option)
                             showDropdown = false
                         }
@@ -5500,7 +5501,7 @@ fun EnhancedRhythmGuardContent(
     val rhythmGuardEnabled = rhythmGuardMode != AppSettings.RHYTHM_GUARD_MODE_OFF
 
     fun setMode(mode: String) {
-        HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+        HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
         appSettings.setRhythmGuardMode(mode)
     }
 
@@ -5865,7 +5866,7 @@ fun EnhancedFullTourPromptContent(
 
         Button(
             onClick = {
-                HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
+                HapticUtils.performHapticFeedback(context, haptic, HapticType.HEAVY)
                 onContinueFullTour()
             },
             modifier = Modifier
@@ -5890,7 +5891,7 @@ fun EnhancedFullTourPromptContent(
 
         OutlinedButton(
             onClick = {
-                HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                 onSkipFullTour()
             },
             modifier = Modifier
@@ -6149,7 +6150,7 @@ fun EnhancedUpdaterContent(
                                 OnboardingAnimatedSwitch(
                                     checked = updatesEnabled,
                                     onCheckedChange = { enabled ->
-                                        HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                                        HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                                         scope.launch {
                                             appSettings.setUpdatesEnabled(enabled)
                                         }
@@ -6157,7 +6158,7 @@ fun EnhancedUpdaterContent(
                                 )
                             },
                             onClick = {
-                                HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                                HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                                 scope.launch {
                                     appSettings.setUpdatesEnabled(!updatesEnabled)
                                 }
@@ -6197,7 +6198,7 @@ fun EnhancedUpdaterContent(
                                                 ),
                                                 selectedIndex = if (updateChannel == "beta") 1 else 0,
                                                 onItemClick = { index ->
-                                                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                                                    HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                                                     scope.launch { appSettings.setUpdateChannel(if (index == 0) "stable" else "beta") }
                                                 },
                                                 modifier = Modifier.fillMaxWidth()
@@ -6213,13 +6214,13 @@ fun EnhancedUpdaterContent(
                                         OnboardingAnimatedSwitch(
                                             checked = autoCheckForUpdates,
                                             onCheckedChange = { enabled ->
-                                                HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                                                HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                                                 scope.launch { appSettings.setAutoCheckForUpdates(enabled) }
                                             }
                                         )
                                     },
                                     onClick = {
-                                        HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                                        HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                                         scope.launch { appSettings.setAutoCheckForUpdates(!autoCheckForUpdates) }
                                     }
                                 ),
@@ -6231,13 +6232,13 @@ fun EnhancedUpdaterContent(
                                         OnboardingAnimatedSwitch(
                                             checked = updateNotificationsEnabled,
                                             onCheckedChange = { enabled ->
-                                                HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                                                HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                                                 scope.launch { appSettings.setUpdateNotificationsEnabled(enabled) }
                                             }
                                         )
                                     },
                                     onClick = {
-                                        HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                                        HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                                         scope.launch { appSettings.setUpdateNotificationsEnabled(!updateNotificationsEnabled) }
                                     }
                                 ),
@@ -6249,13 +6250,13 @@ fun EnhancedUpdaterContent(
                                         OnboardingAnimatedSwitch(
                                             checked = useSmartUpdatePolling,
                                             onCheckedChange = { enabled ->
-                                                HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                                                HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                                                 scope.launch { appSettings.setUseSmartUpdatePolling(enabled) }
                                             }
                                         )
                                     },
                                     onClick = {
-                                        HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                                        HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                                         scope.launch { appSettings.setUseSmartUpdatePolling(!useSmartUpdatePolling) }
                                     }
                                 )
@@ -6405,7 +6406,7 @@ fun EnhancedUpdaterContent(
                                 OnboardingAnimatedSwitch(
                                     checked = updatesEnabled,
                                     onCheckedChange = { enabled ->
-                                        HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                                        HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                                         scope.launch {
                                             appSettings.setUpdatesEnabled(enabled)
                                         }
@@ -6413,7 +6414,7 @@ fun EnhancedUpdaterContent(
                                 )
                             },
                             onClick = {
-                                HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                                HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                                 scope.launch {
                                     appSettings.setUpdatesEnabled(!updatesEnabled)
                                 }
@@ -6453,7 +6454,7 @@ fun EnhancedUpdaterContent(
                                                 ),
                                                 selectedIndex = if (updateChannel == "beta") 1 else 0,
                                                 onItemClick = { index ->
-                                                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                                                    HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                                                     scope.launch { appSettings.setUpdateChannel(if (index == 0) "stable" else "beta") }
                                                 },
                                                 modifier = Modifier.fillMaxWidth()
@@ -6469,13 +6470,13 @@ fun EnhancedUpdaterContent(
                                         OnboardingAnimatedSwitch(
                                             checked = autoCheckForUpdates,
                                             onCheckedChange = { enabled ->
-                                                HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                                                HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                                                 scope.launch { appSettings.setAutoCheckForUpdates(enabled) }
                                             }
                                         )
                                     },
                                     onClick = {
-                                        HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                                        HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                                         scope.launch { appSettings.setAutoCheckForUpdates(!autoCheckForUpdates) }
                                     }
                                 ),
@@ -6487,13 +6488,13 @@ fun EnhancedUpdaterContent(
                                         OnboardingAnimatedSwitch(
                                             checked = updateNotificationsEnabled,
                                             onCheckedChange = { enabled ->
-                                                HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                                                HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                                                 scope.launch { appSettings.setUpdateNotificationsEnabled(enabled) }
                                             }
                                         )
                                     },
                                     onClick = {
-                                        HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                                        HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                                         scope.launch { appSettings.setUpdateNotificationsEnabled(!updateNotificationsEnabled) }
                                     }
                                 ),
@@ -6505,13 +6506,13 @@ fun EnhancedUpdaterContent(
                                         OnboardingAnimatedSwitch(
                                             checked = useSmartUpdatePolling,
                                             onCheckedChange = { enabled ->
-                                                HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                                                HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                                                 scope.launch { appSettings.setUseSmartUpdatePolling(enabled) }
                                             }
                                         )
                                     },
                                     onClick = {
-                                        HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                                        HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                                         scope.launch { appSettings.setUseSmartUpdatePolling(!useSmartUpdatePolling) }
                                     }
                                 )
@@ -6541,7 +6542,7 @@ fun EnhancedUpdateOption(
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
             .clickable {
-                HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
+                HapticUtils.performHapticFeedback(context, haptic, HapticType.HEAVY)
                 onToggle(!isEnabled)
             },
         colors = CardDefaults.cardColors(
@@ -6592,7 +6593,7 @@ fun EnhancedUpdateOption(
             OnboardingAnimatedSwitch(
                 checked = isEnabled,
                 onCheckedChange = { enabled ->
-                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
+                    HapticUtils.performHapticFeedback(context, haptic, HapticType.HEAVY)
                     onToggle(enabled)
                 }
             )
@@ -6667,7 +6668,7 @@ fun SettingsDropdownItem(
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
             .clickable {
-                HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
+                HapticUtils.performHapticFeedback(context, haptic, HapticType.HEAVY)
                 showDropdown = true
             },
         colors = CardDefaults.cardColors(
@@ -6793,7 +6794,7 @@ fun SettingsDropdownItem(
                             )
                         },
                         onClick = {
-                            HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
+                            HapticUtils.performHapticFeedback(context, haptic, HapticType.HEAVY)
                             onOptionSelected(option)
                             showDropdown = false
                         },
@@ -7107,12 +7108,12 @@ fun EnhancedMediaScanContent(
                         appSettings.setMediaScanMode(if (useBlacklist) "blacklist" else "whitelist")
                     },
                     onAddFolder = {
-                        HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                        HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                         val intent = Intent(Intent.ACTION_OPEN_DOCUMENT_TREE)
                         folderPickerLauncher.launch(intent)
                     },
                     onRemoveFolder = { folder ->
-                        HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                        HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                         if (isBlacklistMode) {
                             appSettings.removeFolderFromBlacklist(folder)
                         } else {
@@ -7167,12 +7168,12 @@ fun EnhancedMediaScanContent(
                     appSettings.setMediaScanMode(if (useBlacklist) "blacklist" else "whitelist")
                 },
                 onAddFolder = {
-                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                    HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                     val intent = Intent(Intent.ACTION_OPEN_DOCUMENT_TREE)
                     folderPickerLauncher.launch(intent)
                 },
                 onRemoveFolder = { folder ->
-                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                    HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                     if (isBlacklistMode) {
                         appSettings.removeFolderFromBlacklist(folder)
                     } else {
@@ -7249,13 +7250,13 @@ private fun MediaScanSettingsCard(
                     OnboardingAnimatedSwitch(
                         checked = isBlacklistMode,
                         onCheckedChange = {
-                            HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                            HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                             onModeChange(it)
                         }
                     )
                 },
                 onClick = {
-                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                    HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                     onModeChange(!isBlacklistMode)
                 }
             ),
@@ -7267,13 +7268,13 @@ private fun MediaScanSettingsCard(
                     OnboardingAnimatedSwitch(
                         checked = !isBlacklistMode,
                         onCheckedChange = {
-                            HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                            HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                             onModeChange(!it)
                         }
                     )
                 },
                 onClick = {
-                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                    HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                     onModeChange(!isBlacklistMode)
                 }
             )
@@ -7357,7 +7358,7 @@ fun MediaScanModeOption(
                     cardScale.animateTo(0.95f, tween(100))
                     cardScale.animateTo(1f, spring(dampingRatio = Spring.DampingRatioMediumBouncy))
                 }
-                HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
+                HapticUtils.performHapticFeedback(context, haptic, HapticType.HEAVY)
                 onSelect()
             },
         colors = CardDefaults.cardColors(
@@ -8325,7 +8326,7 @@ fun EnhancedPlayerThemeChoiceContent(
                     items = listOf("Full Player", "Mini Player"),
                     selectedIndex = selectedViewIndex,
                     onItemClick = { index ->
-                        HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                        HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                         selectedViewIndex = index
                     },
                     modifier = Modifier.fillMaxWidth()
@@ -8372,7 +8373,7 @@ fun EnhancedPlayerThemeChoiceContent(
                     playerThemeId = playerThemeId,
                     miniPlayerThemeId = miniPlayerThemeId,
                     onThemeChange = { newTheme ->
-                        HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
+                        HapticUtils.performHapticFeedback(context, haptic, HapticType.HEAVY)
                         if (selectedViewIndex == 0) {
                             appSettings.setPlayerThemeId(newTheme)
                         } else {
@@ -8418,7 +8419,7 @@ fun EnhancedPlayerThemeChoiceContent(
                 items = listOf("Full Player", "Mini Player"),
                 selectedIndex = selectedViewIndex,
                 onItemClick = { index ->
-                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                    HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                     selectedViewIndex = index
                 },
                 modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)
@@ -8439,7 +8440,7 @@ fun EnhancedPlayerThemeChoiceContent(
                 playerThemeId = playerThemeId,
                 miniPlayerThemeId = miniPlayerThemeId,
                 onThemeChange = { newTheme ->
-                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
+                    HapticUtils.performHapticFeedback(context, haptic, HapticType.HEAVY)
                     if (selectedViewIndex == 0) {
                         appSettings.setPlayerThemeId(newTheme)
                     } else {
@@ -9330,13 +9331,13 @@ private fun GestureSettingsCards(
                     OnboardingAnimatedSwitch(
                         checked = isEnabled,
                         onCheckedChange = {
-                            HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                            HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                             onToggle(it)
                         }
                     )
                 },
                 onClick = {
-                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                    HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                     onToggle(!isEnabled)
                 }
             )
@@ -9626,13 +9627,13 @@ private fun WidgetSettingsCard(
                     OnboardingAnimatedSwitch(
                         checked = showAlbumArt,
                         onCheckedChange = {
-                            HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                            HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                             onAlbumArtChange(it)
                         }
                     )
                 },
                 onClick = {
-                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                    HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                     onAlbumArtChange(!showAlbumArt)
                 }
             ),
@@ -9644,13 +9645,13 @@ private fun WidgetSettingsCard(
                     OnboardingAnimatedSwitch(
                         checked = showArtist,
                         onCheckedChange = {
-                            HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                            HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                             onArtistChange(it)
                         }
                     )
                 },
                 onClick = {
-                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                    HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                     onArtistChange(!showArtist)
                 }
             ),
@@ -9662,13 +9663,13 @@ private fun WidgetSettingsCard(
                     OnboardingAnimatedSwitch(
                         checked = showAlbum,
                         onCheckedChange = {
-                            HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                            HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                             onAlbumChange(it)
                         }
                     )
                 },
                 onClick = {
-                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                    HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                     onAlbumChange(!showAlbum)
                 }
             )
@@ -9930,13 +9931,13 @@ private fun IntegrationsSettingsCards(
                     OnboardingAnimatedSwitch(
                         checked = isEnabled,
                         onCheckedChange = {
-                            HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                            HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                             onToggle(it)
                         }
                     )
                 },
                 onClick = {
-                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                    HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                     onToggle(!isEnabled)
                 }
             )
@@ -10235,13 +10236,13 @@ private fun StatsSettingsCard(
                     OnboardingAnimatedSwitch(
                         checked = showOnHome,
                         onCheckedChange = {
-                            HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                            HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                             onShowOnHomeChange(it)
                         }
                     )
                 },
                 onClick = {
-                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                    HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                     onShowOnHomeChange(!showOnHome)
                 }
             ),
@@ -10253,13 +10254,13 @@ private fun StatsSettingsCard(
                     OnboardingAnimatedSwitch(
                         checked = enableRating,
                         onCheckedChange = {
-                            HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                            HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                             onEnableRatingChange(it)
                         }
                     )
                 },
                 onClick = {
-                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                    HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                     onEnableRatingChange(!enableRating)
                 }
             )
@@ -10575,7 +10576,7 @@ private fun AppModeChoiceSelection(
         items = items,
         selectedIndex = selectedIndex,
         onItemClick = { index ->
-            HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+            HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
             onModeSelected(if (index == 0) "LOCAL" else "STREAMING")
         },
         modifier = Modifier.fillMaxWidth().height(56.dp)

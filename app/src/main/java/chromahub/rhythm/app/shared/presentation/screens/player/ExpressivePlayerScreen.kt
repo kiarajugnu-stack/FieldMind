@@ -84,6 +84,7 @@ import androidx.compose.material3.ContainedLoadingIndicator
 import chromahub.rhythm.app.shared.presentation.components.icons.Icon
 import chromahub.rhythm.app.shared.presentation.components.icons.RhythmIcons
 import chromahub.rhythm.app.util.HapticUtils
+import chromahub.rhythm.app.util.HapticType
 import chromahub.rhythm.app.util.M3ImageUtils
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -322,7 +323,7 @@ fun ExpressivePlayerScreen(
                         HapticUtils.performHapticFeedback(
                             context,
                             haptic,
-                            HapticFeedbackType.LongPress
+                            HapticType.HEAVY
                         )
                         isSwipeMinimizing = true
                         swipeOffsetY = swipeDismissTarget
@@ -529,7 +530,7 @@ fun ExpressivePlayerScreen(
                                                     HapticUtils.performHapticFeedback(
                                                         context,
                                                         haptic,
-                                                        HapticFeedbackType.LongPress
+                                                        HapticType.HEAVY
                                                     )
                                                     onPlayPause()
                                                 },
@@ -538,7 +539,7 @@ fun ExpressivePlayerScreen(
                                                         HapticUtils.performHapticFeedback(
                                                             context,
                                                             haptic,
-                                                            HapticFeedbackType.TextHandleMove
+                                                            HapticType.LIGHT
                                                         )
                                                         onToggleLyrics()
                                                     }
@@ -552,14 +553,14 @@ fun ExpressivePlayerScreen(
                                                         HapticUtils.performHapticFeedback(
                                                             context,
                                                             haptic,
-                                                            HapticFeedbackType.LongPress
+                                                            HapticType.HEAVY
                                                         )
                                                         onSkipNext()
                                                     } else if (artworkOffsetX > artworkSwipeThreshold) {
                                                         HapticUtils.performHapticFeedback(
                                                             context,
                                                             haptic,
-                                                            HapticFeedbackType.LongPress
+                                                            HapticType.HEAVY
                                                         )
                                                         onSkipPrevious()
                                                     }
@@ -1041,7 +1042,7 @@ private fun RhythmPlayerLyricsPanel(
                                     HapticUtils.performHapticFeedback(
                                         context,
                                         haptic,
-                                        HapticFeedbackType.LongPress
+                                        HapticType.HEAVY
                                     )
                                     onRetryLyrics()
                                 },
@@ -1061,7 +1062,7 @@ private fun RhythmPlayerLyricsPanel(
                                     HapticUtils.performHapticFeedback(
                                         context,
                                         haptic,
-                                        HapticFeedbackType.LongPress
+                                        HapticType.HEAVY
                                     )
                                     onShowLyricsEditor()
                                 },
@@ -1081,7 +1082,7 @@ private fun RhythmPlayerLyricsPanel(
                                     HapticUtils.performHapticFeedback(
                                         context,
                                         haptic,
-                                        HapticFeedbackType.LongPress
+                                        HapticType.HEAVY
                                     )
                                     onPickLyricsFile()
                                 },

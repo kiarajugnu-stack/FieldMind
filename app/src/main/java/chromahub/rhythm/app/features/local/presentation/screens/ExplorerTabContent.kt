@@ -52,6 +52,7 @@ import chromahub.rhythm.app.shared.presentation.components.common.DataProcessing
 import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveShapeTarget
 import chromahub.rhythm.app.shared.presentation.components.common.rememberExpressiveShapeFor
 import chromahub.rhythm.app.util.HapticUtils
+import chromahub.rhythm.app.util.HapticType
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -227,7 +228,7 @@ fun SingleCardExplorerContent(
 
                     Button(
                         onClick = {
-                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                            HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
 
                             when {
                                 Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU -> {
@@ -459,7 +460,7 @@ fun SingleCardExplorerContent(
     }
 
     BackHandler(enabled = currentPath != null) {
-        HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+        HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
         currentPath = getParentPath(currentPath!!)
     }
 
@@ -484,7 +485,7 @@ fun SingleCardExplorerContent(
                                 ) {
                                     FilledTonalIconButton(
                                         onClick = {
-                                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                            HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                                             currentPath = getParentPath(currentPath!!)
                                         },
                                         shape = ButtonGroupDefaults.connectedLeadingButtonShapes().shape,
@@ -504,7 +505,7 @@ fun SingleCardExplorerContent(
                                     if (currentFolderSongs.isNotEmpty()) {
                                         FilledTonalIconButton(
                                             onClick = {
-                                                HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                                HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                                                 onShuffleQueue(currentFolderSongs)
                                             },
                                             shape = ButtonGroupDefaults.connectedTrailingButtonShapes().shape,
@@ -531,11 +532,11 @@ fun SingleCardExplorerContent(
                         ExplorerBreadcrumb(
                             path = currentPath!!,
                             onNavigateTo = { newPath ->
-                                HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                                 currentPath = newPath
                             },
                             onGoHome = {
-                                HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                                 currentPath = null
                             },
                             scrollState = breadcrumbScrollState
@@ -613,7 +614,7 @@ fun SingleCardExplorerContent(
                         ExplorerItemCard(
                             item = item,
                             onItemClick = {
-                                HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                                 currentPath = item.path
                             },
                             onSongClick = onSongClick,
@@ -690,7 +691,7 @@ fun SingleCardExplorerContent(
                             ExplorerItemCard(
                                 item = item,
                                 onItemClick = {
-                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                    HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                                     currentPath = item.path
                                 },
                                 onSongClick = onSongClick,
@@ -759,7 +760,7 @@ fun SingleCardExplorerContent(
                         ExplorerItemCard(
                             item = item,
                             onItemClick = {
-                                HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
 
                                 when (item.type) {
                                     ExplorerItemType.STORAGE, ExplorerItemType.FOLDER -> {
@@ -939,7 +940,7 @@ fun SingleCardExplorerContent(
                             if (currentPath != null) {
                                 OutlinedButton(
                                     onClick = {
-                                        HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                        HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                                         currentPath = getParentPath(currentPath!!)
                                     },
                                     shape = RoundedCornerShape(12.dp),
@@ -1988,7 +1989,7 @@ fun ExplorerBreadcrumb(
 
             Surface(
                 onClick = {
-                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                    HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                     onGoHome()
                 },
                 shape = RoundedCornerShape(16.dp),
@@ -2053,7 +2054,7 @@ fun ExplorerBreadcrumb(
 
                 Surface(
                     onClick = {
-                        HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                        HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                         onNavigateTo(currentPath)
                     },
                     shape = RoundedCornerShape(18.dp),
@@ -2143,7 +2144,7 @@ fun ExplorerItemCard(
         ExplorerItemType.STORAGE -> {
             Card(
                 onClick = {
-                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                    HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                     onItemClick()
                 },
                 modifier = modifier
@@ -2222,7 +2223,7 @@ fun ExplorerItemCard(
         ExplorerItemType.FOLDER -> {
             Card(
                 onClick = {
-                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                    HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                     onItemClick()
                 },
                 modifier = modifier
@@ -2294,7 +2295,7 @@ fun ExplorerItemCard(
                         if (onPinToggle != null) {
                             IconButton(
                                 onClick = {
-                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                    HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                                     onPinToggle()
                                 }
                             ) {
@@ -2312,7 +2313,7 @@ fun ExplorerItemCard(
                             Box {
                                 FilledIconButton(
                                     onClick = {
-                                        HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                        HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                                         showMenu = true
                                     },
                                     modifier = Modifier
@@ -2341,7 +2342,7 @@ fun ExplorerItemCard(
                                         DropdownMenuItem(
                                             text = { Text(stringResource(R.string.explorertabcontent_play_folder_as_playlist)) },
                                             onClick = {
-                                                HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                                HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                                                 showMenu = false
                                                 onPlayFolder(item)
                                             },
@@ -2359,7 +2360,7 @@ fun ExplorerItemCard(
                                         DropdownMenuItem(
                                             text = { Text(stringResource(R.string.explorertabcontent_add_all_to_queue)) },
                                             onClick = {
-                                                HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                                HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                                                 showMenu = false
                                                 onAddFolderToQueue(item)
                                             },

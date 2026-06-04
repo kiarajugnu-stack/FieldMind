@@ -92,6 +92,7 @@ import chromahub.rhythm.app.shared.data.repository.PlaybackStatsRepository
 import chromahub.rhythm.app.shared.data.repository.StatsTimeRange
 import chromahub.rhythm.app.util.GsonUtils
 import chromahub.rhythm.app.util.HapticUtils
+import chromahub.rhythm.app.util.HapticType
 import coil.compose.AsyncImage
 import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
@@ -214,7 +215,7 @@ fun MiniPlayerCustomizationSettingsScreen(onBackClick: () -> Unit) {
                                         ),
                                         selectedIndex = if (miniPlayerThemeId == "EXPRESSIVE") 1 else 0,
                                         onItemClick = { index ->
-                                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                            HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                                             if (index == 1) {
                                                 appSettings.setMiniPlayerThemeId("EXPRESSIVE")
                                             } else {
@@ -333,7 +334,7 @@ fun MiniPlayerCustomizationSettingsScreen(onBackClick: () -> Unit) {
                                             items = listOf("Linear", "Circular"),
                                             selectedIndex = if (miniPlayerUseCircularProgress) 1 else 0,
                                             onItemClick = { index ->
-                                                HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                                                HapticUtils.performHapticFeedback(context, haptics, HapticType.LIGHT)
                                                 appSettings.setMiniPlayerUseCircularProgress(index == 1)
                                             },
                                             modifier = Modifier.fillMaxWidth()
@@ -578,7 +579,7 @@ fun MiniPlayerCustomizationSettingsScreen(onBackClick: () -> Unit) {
                     value = tempSize.toFloat(),
                     onValueChange = { tempSize = it.toInt() },
                     onValueChangeFinished = {
-                        HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                        HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                         appSettings.setMiniPlayerArtworkSize(tempSize)
                     },
                     valueRange = 40f..72f,
@@ -650,7 +651,7 @@ fun MiniPlayerCustomizationSettingsScreen(onBackClick: () -> Unit) {
                     value = tempRadius.toFloat(),
                     onValueChange = { tempRadius = it.toInt() },
                     onValueChangeFinished = {
-                        HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                        HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                         appSettings.setMiniPlayerCornerRadius(tempRadius)
                     },
                     valueRange = 0f..28f,

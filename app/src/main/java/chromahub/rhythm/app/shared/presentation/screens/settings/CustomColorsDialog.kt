@@ -92,6 +92,7 @@ import chromahub.rhythm.app.shared.data.repository.PlaybackStatsRepository
 import chromahub.rhythm.app.shared.data.repository.StatsTimeRange
 import chromahub.rhythm.app.util.GsonUtils
 import chromahub.rhythm.app.util.HapticUtils
+import chromahub.rhythm.app.util.HapticType
 import coil.compose.AsyncImage
 import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
@@ -320,7 +321,7 @@ fun CustomColorsDialog(
                                                 color = primaryColor,
                                                 isSelected = selectedColorType == ColorType.PRIMARY,
                                                 onClick = {
-                                                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                                                    HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                                                     selectedColorType = ColorType.PRIMARY
                                                 }
                                             )
@@ -329,7 +330,7 @@ fun CustomColorsDialog(
                                                 color = secondaryColor,
                                                 isSelected = selectedColorType == ColorType.SECONDARY,
                                                 onClick = {
-                                                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                                                    HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                                                     selectedColorType = ColorType.SECONDARY
                                                 }
                                             )
@@ -338,7 +339,7 @@ fun CustomColorsDialog(
                                                 color = tertiaryColor,
                                                 isSelected = selectedColorType == ColorType.TERTIARY,
                                                 onClick = {
-                                                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                                                    HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                                                     selectedColorType = ColorType.TERTIARY
                                                 }
                                             )
@@ -389,7 +390,7 @@ fun CustomColorsDialog(
                                                 Color(0xFFFF5722), Color(0xFFE91E63), Color(0xFF9C27B0)
                                             ),
                                             onColorSelected = { color ->
-                                                HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                                                HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                                                 when (selectedColorType) {
                                                     ColorType.PRIMARY -> primaryColor = color
                                                     ColorType.SECONDARY -> secondaryColor = color
@@ -408,7 +409,7 @@ fun CustomColorsDialog(
                                                 Color(0xFF00BCD4), Color(0xFF4DD0E1), Color(0xFF26A69A)
                                             ),
                                             onColorSelected = { color ->
-                                                HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                                                HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                                                 when (selectedColorType) {
                                                     ColorType.PRIMARY -> primaryColor = color
                                                     ColorType.SECONDARY -> secondaryColor = color
@@ -427,7 +428,7 @@ fun CustomColorsDialog(
                                                 Color(0xFF66BB6A), Color(0xFF81C784), Color(0xFFA5D6A7)
                                             ),
                                             onColorSelected = { color ->
-                                                HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                                                HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                                                 when (selectedColorType) {
                                                     ColorType.PRIMARY -> primaryColor = color
                                                     ColorType.SECONDARY -> secondaryColor = color
@@ -465,7 +466,7 @@ fun CustomColorsDialog(
                                 }
                                 Button(
                                     onClick = {
-                                        HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
+                                        HapticUtils.performHapticFeedback(context, haptic, HapticType.HEAVY)
                                         onApply(primaryColor, secondaryColor, tertiaryColor)
                                         val primaryHex = String.format("%06X", (primaryColor.toArgb() and 0xFFFFFF))
                                         val secondaryHex = String.format("%06X", (secondaryColor.toArgb() and 0xFFFFFF))

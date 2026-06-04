@@ -29,6 +29,7 @@ import chromahub.rhythm.app.shared.presentation.components.Material3SettingsGrou
 import chromahub.rhythm.app.shared.presentation.components.Material3SettingsItem
 import chromahub.rhythm.app.shared.presentation.screens.settings.TunerAnimatedSwitch
 import chromahub.rhythm.app.util.HapticUtils
+import chromahub.rhythm.app.util.HapticType
 import android.content.Context
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.material3.BottomSheetDefaults
@@ -150,7 +151,7 @@ fun GoSettingsScreen(
                     TunerAnimatedSwitch(
                         checked = appMode == "STREAMING",
                         onCheckedChange = { enabled ->
-                            HapticUtils.performHapticFeedback(context, haptics, androidx.compose.ui.hapticfeedback.HapticFeedbackType.LongPress)
+                            HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                             if (enabled) appSettings.setAppMode("STREAMING") else appSettings.setAppMode("LOCAL")
                         }
                     )
@@ -244,7 +245,7 @@ fun GoSettingsScreen(
             },
             onSelect = { serviceId ->
                 if (serviceId.isNotBlank()) {
-                    HapticUtils.performHapticFeedback(context, haptics, androidx.compose.ui.hapticfeedback.HapticFeedbackType.LongPress)
+                    HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
 
                     // Prompt whenever switching away while any provider session is currently active.
                     val hasActiveSession = sessions.any { (_, session) -> session.isConnected }
@@ -314,7 +315,7 @@ fun GoSettingsScreen(
             selectedQuality = streamingQuality.uppercase(),
             onDismiss = { showQualitySheet = false },
             onSelect = { quality ->
-                HapticUtils.performHapticFeedback(context, haptics, androidx.compose.ui.hapticfeedback.HapticFeedbackType.LongPress)
+                HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                 viewModel.setStreamingQuality(StreamingQuality.valueOf(quality))
                 // Show restart dialog consistent with other settings that require app restart
                 restartDialogMessage = "Streaming quality changed. Restart the app to apply the new audio settings."

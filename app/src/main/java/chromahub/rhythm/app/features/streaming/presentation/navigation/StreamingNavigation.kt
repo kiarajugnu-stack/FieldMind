@@ -131,6 +131,7 @@ import chromahub.rhythm.app.ui.LocalMiniPlayerPadding
 import chromahub.rhythm.app.ui.UiConstants
 import chromahub.rhythm.app.ui.theme.MusicDimensions
 import chromahub.rhythm.app.util.HapticUtils
+import chromahub.rhythm.app.util.HapticType
 import chromahub.rhythm.app.shared.presentation.screens.settings.SettingsScreenWrapper
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.compose.ui.layout.layout
@@ -2328,7 +2329,7 @@ private fun StreamingNavigationRailItemWithAnimation(
             .size(64.dp)
             .clip(RoundedCornerShape(16.dp))
             .clickable {
-                HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
+                HapticUtils.performHapticFeedback(context, haptic, HapticType.HEAVY)
                 item.onClick()
             },
         contentAlignment = Alignment.Center
@@ -2466,7 +2467,7 @@ private fun StreamingBottomBar(
                                 .weight(1f)
                                 .fillMaxHeight()
                                 .clickable {
-                                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
+                                    HapticUtils.performHapticFeedback(context, haptic, HapticType.HEAVY)
                                     navController.navigate(route) {
                                         popUpTo(navController.graph.findStartDestination().id) {
                                             saveState = true
@@ -2571,7 +2572,7 @@ private fun StreamingBottomBar(
 
             FilledIconButton(
                 onClick = {
-                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
+                    HapticUtils.performHapticFeedback(context, haptic, HapticType.HEAVY)
                     onSearchClick()
                 },
                 colors = IconButtonDefaults.filledIconButtonColors(

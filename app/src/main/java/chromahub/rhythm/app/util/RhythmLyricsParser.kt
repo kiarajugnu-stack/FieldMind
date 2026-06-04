@@ -442,168 +442,36 @@ object RhythmLyricsParser {
      * Extracts lines (<p>) and word-by-word timestamps (<span>).
      */
     fun parseTtmlLyrics(ttmlContent: String): List<RhythmLyricsLine> {
-        val lines = mutableListOf<RhythmLyricsLine>()
-        try {
-            val factory = org.xmlpull.v1.XmlPullParserFactory.newInstance()
-            factory.isNamespaceAware = true
-            val parser = factory.newPullParser()
-            parser.setInput(StringReader(ttmlContent))
-            
-            var eventType = parser.eventType
-            var currentLineBegin: Long? = null
-            var currentLineEnd: Long? = null
-            var isBackground = false
-            val currentSpans = mutableListOf<RhythmLyricsWord>()
-            var insideP = false
-            val pTextAccumulator = StringBuilder()
-            
-            var insideSpan = false
-            var currentSpanBegin: Long? = null
-            var currentSpanEnd: Long? = null
-            val spanTextAccumulator = StringBuilder()
-            
-            while (eventType != XmlPullParser.END_DOCUMENT) {
-                val tagName = parser.name
-                when (eventType) {
-                    XmlPullParser.START_TAG -> {
-                        if (tagName.equals("p", ignoreCase = true)) {
-                            insideP = true
-                            pTextAccumulator.setLength(0)
-                            currentSpans.clear()
-                            
-                            var beginAttr: String? = null
-                            var endAttr: String? = null
-                            var roleAttr: String? = null
-                            
-                            for (i in 0 until parser.attributeCount) {
-                                val attrName = parser.getAttributeName(i)
-                                if (attrName.equals("begin", ignoreCase = true)) {
-                                    beginAttr = parser.getAttributeValue(i)
-                                } else if (attrName.equals("end", ignoreCase = true)) {
-                                    endAttr = parser.getAttributeValue(i)
-                                } else if (attrName.equals("role", ignoreCase = true)) {
-                                    roleAttr = parser.getAttributeValue(i)
-                                }
-                            }
-                            
-                            currentLineBegin = parseTtmlTime(beginAttr)
-                            currentLineEnd = parseTtmlTime(endAttr)
-                            isBackground = roleAttr?.contains("background", ignoreCase = true) == true
-                        } else if (tagName.equals("span", ignoreCase = true) && insideP) {
-                            insideSpan = true
-                            spanTextAccumulator.setLength(0)
-                            
-                            var beginAttr: String? = null
-                            var endAttr: String? = null
-                            for (i in 0 until parser.attributeCount) {
-                                val attrName = parser.getAttributeName(i)
-                                if (attrName.equals("begin", ignoreCase = true)) {
-                                    beginAttr = parser.getAttributeValue(i)
-                                } else if (attrName.equals("end", ignoreCase = true)) {
-                                    endAttr = parser.getAttributeValue(i)
-                                }
-                            }
-                            currentSpanBegin = parseTtmlTime(beginAttr)
-                            currentSpanEnd = parseTtmlTime(endAttr)
-                        }
-                    }
-                    XmlPullParser.TEXT -> {
-                        if (insideSpan) {
-                            spanTextAccumulator.append(parser.text)
-                        } else if (insideP) {
-                            pTextAccumulator.append(parser.text)
-                        }
-                    }
-                    XmlPullParser.END_TAG -> {
-                        if (tagName.equals("span", ignoreCase = true) && insideP) {
-                            insideSpan = false
-                            val spanText = spanTextAccumulator.toString()
-                            if (spanText.isNotEmpty()) {
-                                val sBegin = currentSpanBegin ?: currentLineBegin ?: 0L
-                                val sEnd = currentSpanEnd ?: currentLineEnd ?: sBegin
-                                currentSpans.add(
-                                    RhythmLyricsWord(
-                                        text = spanText,
-                                        part = false,
-                                        timestamp = sBegin,
-                                        endtime = sEnd
-                                    )
-                                )
-                            }
-                        } else if (tagName.equals("p", ignoreCase = true)) {
-                            insideP = false
-                            val lineBegin = currentLineBegin ?: 0L
-                            val lineEnd = currentLineEnd ?: lineBegin
-                            
-                            val lineWords = if (currentSpans.isNotEmpty()) {
-                                val processedWords = mutableListOf<RhythmLyricsWord>()
-                                for (i in 0 until currentSpans.size) {
-                                    val currentSpan = currentSpans[i]
-                                    val rawText = currentSpan.text
-                                    
-                                    var isPart = false
-                                    var cleanedText = rawText
-                                    
-                                    if (i > 0) {
-                                        val prevSpan = currentSpans[i - 1]
-                                        val prevText = prevSpan.text
-                                        
-                                        val prevEndsWithSpace = prevText.endsWith(" ") || prevText.endsWith("\t") || prevText.endsWith("\n")
-                                        val currentStartsWithSpace = rawText.startsWith(" ") || rawText.startsWith("\t") || rawText.startsWith("\n")
-                                        
-                                        if (!prevEndsWithSpace && !currentStartsWithSpace) {
-                                            isPart = true
-                                        }
-                                    }
-                                    
-                                    cleanedText = cleanedText.trim()
-                                    processedWords.add(
-                                        RhythmLyricsWord(
-                                            text = cleanedText,
-                                            part = isPart,
-                                            timestamp = currentSpan.timestamp,
-                                            endtime = currentSpan.endtime
-                                        )
-                                    )
-                                }
-                                processedWords
-                            } else {
-                                val lineText = pTextAccumulator.toString().trim()
-                                if (lineText.isNotEmpty()) {
-                                    listOf(
-                                        RhythmLyricsWord(
-                                            text = lineText,
-                                            part = false,
-                                            timestamp = lineBegin,
-                                            endtime = lineEnd
-                                        )
-                                    )
-                                } else {
-                                    emptyList()
-                                }
-                            }
-                            
-                            if (lineWords.isNotEmpty()) {
-                                lines.add(
-                                    RhythmLyricsLine(
-                                        text = lineWords,
-                                        background = isBackground,
-                                        backgroundText = null,
-                                        oppositeTurn = null,
-                                        timestamp = lineBegin,
-                                        endtime = lineEnd
-                                    )
-                                )
-                            }
-                        }
-                    }
-                }
-                eventType = parser.next()
+        val parsed = parseTtml(audioMimeType = null, lyricText = ttmlContent)
+        if (parsed is SemanticLyrics.SyncedLyrics) {
+            return parsed.text.map { semanticLine ->
+                val rhythmLyricsWords = semanticLine.words?.map { word ->
+                    RhythmLyricsWord(
+                        text = semanticLine.text.substring(word.charRange),
+                        part = false,
+                        timestamp = word.begin.toLong(),
+                        endtime = (word.endInclusive ?: word.begin).toLong()
+                    )
+                } ?: listOf(
+                    RhythmLyricsWord(
+                        text = semanticLine.text,
+                        part = false,
+                        timestamp = semanticLine.start.toLong(),
+                        endtime = semanticLine.end.toLong()
+                    )
+                )
+                
+                RhythmLyricsLine(
+                    text = rhythmLyricsWords,
+                    background = semanticLine.speaker?.isBackground ?: false,
+                    backgroundText = if (semanticLine.isTranslated) listOf(semanticLine.text) else null,
+                    oppositeTurn = semanticLine.speaker?.isVoice2,
+                    timestamp = semanticLine.start.toLong(),
+                    endtime = semanticLine.end.toLong()
+                )
             }
-        } catch (e: Exception) {
-            Log.e(TAG, "Error parsing TTML lyrics xml", e)
         }
-        return lines
+        return emptyList()
     }
 }
 

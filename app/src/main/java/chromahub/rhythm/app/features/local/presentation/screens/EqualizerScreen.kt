@@ -71,6 +71,7 @@ import chromahub.rhythm.app.shared.data.model.Playlist
 import chromahub.rhythm.app.shared.data.model.Song
 import chromahub.rhythm.app.util.GsonUtils
 import chromahub.rhythm.app.util.HapticUtils
+import chromahub.rhythm.app.util.HapticType
 import chromahub.rhythm.app.util.EqualizerUtils
 import chromahub.rhythm.app.activities.MainActivity
 import coil.compose.AsyncImage
@@ -419,7 +420,7 @@ fun EqualizerScreen(
 
     // Functions
     fun applyPreset(preset: EqualizerPreset) {
-        HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+        HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
         selectedPreset = preset.name
         bandLevels = preset.bands
 
@@ -480,7 +481,7 @@ fun EqualizerScreen(
             // More Options Button
             FilledIconButton(
                 onClick = {
-                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                    HapticUtils.performHapticFeedback(context, haptics, HapticType.LIGHT)
                     showMenu = true
                 },
                 colors = IconButtonDefaults.filledIconButtonColors(
@@ -538,7 +539,7 @@ fun EqualizerScreen(
                             }
                         },
                         onClick = {
-                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                            HapticUtils.performHapticFeedback(context, haptics, HapticType.LIGHT)
                             showMenu = false
                             showAutoEQSelector = true
                         }
@@ -578,7 +579,7 @@ fun EqualizerScreen(
                             }
                         },
                         onClick = {
-                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                            HapticUtils.performHapticFeedback(context, haptics, HapticType.LIGHT)
                             showMenu = false
                             showDeviceConfiguration = true
                         }
@@ -618,7 +619,7 @@ fun EqualizerScreen(
                             }
                         },
                         onClick = {
-                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                            HapticUtils.performHapticFeedback(context, haptics, HapticType.LIGHT)
                             showMenu = false
                             val activity = context as? Activity
                             viewModel.openSystemEqualizer(activity, MainActivity.DISPLAY_AUDIO_EFFECT_CONTROL_PANEL_REQUEST)
@@ -672,7 +673,7 @@ fun EqualizerScreen(
                     TunerAnimatedSwitch(
                         checked = isEqualizerEnabled,
                         onCheckedChange = { enabled ->
-                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                            HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                             isEqualizerEnabled = enabled
                             viewModel.setEqualizerEnabled(enabled)
                         }
@@ -940,7 +941,7 @@ fun EqualizerScreen(
                                             value = level,
                                             onValueChange = { newLevel ->
                                                 val roundedLevel = (kotlin.math.round(newLevel * 10) / 10f)
-                                                HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                                                HapticUtils.performHapticFeedback(context, haptics, HapticType.LIGHT)
                                                 updateBandLevel(index, roundedLevel)
                                             },
                                             valueRange = -15f..15f,
@@ -994,13 +995,13 @@ fun EqualizerScreen(
                             activeContainerColor = MaterialTheme.colorScheme.secondaryContainer,
                             onActiveContainerColor = MaterialTheme.colorScheme.onSecondaryContainer,
                             onValueChange = { strength ->
-                                HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                                HapticUtils.performHapticFeedback(context, haptics, HapticType.LIGHT)
                                 bassBoostStrength = strength
                                 viewModel.setBassBoost(true, strength.toInt().toShort())
                             },
                             onEnabledChange = { enabled ->
                                 if (isBassBoostAvailableState) {
-                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                    HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                                     isBassBoostEnabled = enabled
                                     viewModel.setBassBoost(enabled, bassBoostStrength.toInt().toShort())
                                 }
@@ -1024,13 +1025,13 @@ fun EqualizerScreen(
                             activeContainerColor = MaterialTheme.colorScheme.tertiaryContainer,
                             onActiveContainerColor = MaterialTheme.colorScheme.onTertiaryContainer,
                             onValueChange = { strength ->
-                                HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                                HapticUtils.performHapticFeedback(context, haptics, HapticType.LIGHT)
                                 virtualizerStrength = strength
                                 viewModel.setVirtualizer(true, strength.toInt().toShort())
                             },
                             onEnabledChange = { enabled ->
                                 if (isSpatializationAvailable) {
-                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                    HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                                     isVirtualizerEnabled = enabled
                                     viewModel.setVirtualizer(enabled, virtualizerStrength.toInt().toShort())
                                 }
@@ -1067,7 +1068,7 @@ fun EqualizerScreen(
                                     Text(stringResource(R.string.equalizerscreen_apply_headphonespecific_equalization))
                                 },
                                 onClick = {
-                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                    HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                                     showAutoEQSelector = true
                                 }
                             ),
@@ -1082,7 +1083,7 @@ fun EqualizerScreen(
                                     Text(stringResource(R.string.equalizerscreen_import_export_and_organize))
                                 },
                                 onClick = {
-                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                    HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                                     showDeviceConfiguration = true
                                 }
                             ),
@@ -1097,7 +1098,7 @@ fun EqualizerScreen(
                                     Text(stringResource(R.string.equalizerscreen_access_androids_builtin_settings))
                                 },
                                 onClick = {
-                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                    HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                                     val activity = context as? Activity
                                     viewModel.openSystemEqualizer(activity, MainActivity.DISPLAY_AUDIO_EFFECT_CONTROL_PANEL_REQUEST)
                                 }

@@ -92,6 +92,7 @@ import chromahub.rhythm.app.shared.data.repository.PlaybackStatsRepository
 import chromahub.rhythm.app.shared.data.repository.StatsTimeRange
 import chromahub.rhythm.app.util.GsonUtils
 import chromahub.rhythm.app.util.HapticUtils
+import chromahub.rhythm.app.util.HapticType
 import coil.compose.AsyncImage
 import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
@@ -206,7 +207,7 @@ fun TunerSettingRow(item: SettingItem) {
                 if (item.enabled && item.onClick != null && item.toggleState == null) {
                     Modifier.clickable(onClick = {
                         isPressed = true
-                        HapticUtils.performHapticFeedback(context, hapticFeedback, HapticFeedbackType.LongPress)
+                        HapticUtils.performHapticFeedback(context, hapticFeedback, HapticType.HEAVY)
                         item.onClick()
                     })
                 } else {
@@ -278,7 +279,7 @@ fun TunerSettingRow(item: SettingItem) {
                 checked = item.toggleState,
                 onCheckedChange = {
                     if (!item.enabled) return@TunerAnimatedSwitch
-                    HapticUtils.performHapticFeedback(context, hapticFeedback, HapticFeedbackType.TextHandleMove)
+                    HapticUtils.performHapticFeedback(context, hapticFeedback, HapticType.LIGHT)
                     item.onToggleChange?.invoke(it)
                 },
                 enabled = item.enabled
@@ -288,7 +289,7 @@ fun TunerSettingRow(item: SettingItem) {
                 checked = item.toggleState,
                 onCheckedChange = {
                     if (!item.enabled) return@TunerAnimatedSwitch
-                    HapticUtils.performHapticFeedback(context, hapticFeedback, HapticFeedbackType.TextHandleMove)
+                    HapticUtils.performHapticFeedback(context, hapticFeedback, HapticType.LIGHT)
                     item.onToggleChange?.invoke(it)
                 },
                 enabled = item.enabled
@@ -501,7 +502,7 @@ fun toMaterial3SettingsItem(
                         onCheckedChange = {
                             if (!item.enabled) return@TunerAnimatedSwitch
                             hapticFeedback?.let { haptic ->
-                                HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                                HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                             }
                             item.onToggleChange?.invoke(it)
                         },
@@ -516,7 +517,7 @@ fun toMaterial3SettingsItem(
                     onCheckedChange = {
                         if (!item.enabled) return@TunerAnimatedSwitch
                         hapticFeedback?.let { haptic ->
-                            HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                            HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                         }
                         item.onToggleChange?.invoke(it)
                     },
@@ -542,7 +543,7 @@ fun toMaterial3SettingsItem(
                 {
                     if (item.enabled) {
                         hapticFeedback?.let { haptic ->
-                            HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
+                            HapticUtils.performHapticFeedback(context, haptic, HapticType.HEAVY)
                         }
                         item.onClick.invoke()
                     }
@@ -553,7 +554,7 @@ fun toMaterial3SettingsItem(
                 {
                     if (item.enabled) {
                         hapticFeedback?.let { haptic ->
-                            HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                            HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                         }
                         item.onToggleChange.invoke(!item.toggleState)
                     }

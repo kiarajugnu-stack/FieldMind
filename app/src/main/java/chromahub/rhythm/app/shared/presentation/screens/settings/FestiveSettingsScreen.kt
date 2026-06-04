@@ -1,4 +1,7 @@
 package chromahub.rhythm.app.shared.presentation.screens.settings
+import chromahub.rhythm.app.util.HapticUtils
+import chromahub.rhythm.app.util.HapticType
+
 
 import chromahub.rhythm.app.shared.presentation.components.icons.RhythmIcons
 import chromahub.rhythm.app.shared.presentation.components.icons.MaterialSymbolIcon
@@ -41,7 +44,7 @@ fun FestiveSettingsScreen(
         title = stringResource(R.string.settings_exp_festive_theme),
         showBackButton = true,
         onBackClick = {
-            hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
+            HapticUtils.performHapticFeedback(context, hapticFeedback, HapticType.HEAVY)
             onBackClick()
         }
     ) { modifier ->
@@ -76,7 +79,7 @@ fun FestiveSettingsScreen(
                             description = "Show festive decorations across the app",
                             checked = festiveEnabled,
                             onCheckedChange = { 
-                                hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
+                                HapticUtils.performHapticFeedback(context, hapticFeedback, HapticType.HEAVY)
                                 appSettings.setFestiveThemeEnabled(it) 
                             }
                         )
@@ -93,7 +96,7 @@ fun FestiveSettingsScreen(
                                 description = "Automatically show decorations for holidays",
                                 checked = festiveAutoDetect,
                                 onCheckedChange = { 
-                                    hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
+                                    HapticUtils.performHapticFeedback(context, hapticFeedback, HapticType.HEAVY)
                                     appSettings.setFestiveThemeAutoDetect(it) 
                                 }
                             )
@@ -128,7 +131,7 @@ fun FestiveSettingsScreen(
                                 description = "Snowfall decorations",
                                 selected = festiveType == "CHRISTMAS",
                                 onClick = { 
-                                    hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
+                                    HapticUtils.performHapticFeedback(context, hapticFeedback, HapticType.HEAVY)
                                     appSettings.setFestiveThemeType("CHRISTMAS") 
                                 }
                             )
@@ -144,7 +147,7 @@ fun FestiveSettingsScreen(
                                 description = "Festive snowfall and sparkles",
                                 selected = festiveType == "NEW_YEAR",
                                 onClick = { 
-                                    hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
+                                    HapticUtils.performHapticFeedback(context, hapticFeedback, HapticType.HEAVY)
                                     appSettings.setFestiveThemeType("NEW_YEAR") 
                                 }
                             )

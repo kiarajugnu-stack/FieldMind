@@ -92,6 +92,7 @@ import chromahub.rhythm.app.shared.data.repository.PlaybackStatsRepository
 import chromahub.rhythm.app.shared.data.repository.StatsTimeRange
 import chromahub.rhythm.app.util.GsonUtils
 import chromahub.rhythm.app.util.HapticUtils
+import chromahub.rhythm.app.util.HapticType
 import coil.compose.AsyncImage
 import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
@@ -269,7 +270,7 @@ fun LibraryTabOrderSettingsScreen(onBackClick: () -> Unit) {
                             FilledIconButton(
                                 onClick = {
                                     if (index > 0) {
-                                        HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                                        HapticUtils.performHapticFeedback(context, haptics, HapticType.LIGHT)
                                         val newList = reorderableList.toMutableList()
                                         val item = newList.removeAt(index)
                                         newList.add(index - 1, item)
@@ -296,7 +297,7 @@ fun LibraryTabOrderSettingsScreen(onBackClick: () -> Unit) {
                             FilledIconButton(
                                 onClick = {
                                     if (index < reorderableList.size - 1) {
-                                        HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                                        HapticUtils.performHapticFeedback(context, haptics, HapticType.LIGHT)
                                         val newList = reorderableList.toMutableList()
                                         val item = newList.removeAt(index)
                                         newList.add(index + 1, item)
@@ -334,7 +335,7 @@ fun LibraryTabOrderSettingsScreen(onBackClick: () -> Unit) {
                     // Reset button
                     OutlinedButton(
                         onClick = {
-                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                            HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                             appSettings.resetLibraryTabOrder()
                             reorderableList = listOf("SONGS", "PLAYLISTS", "ALBUMS", "ARTISTS", "EXPLORER")
                             Toast.makeText(context, context.getString(R.string.settings_tab_order_reset), Toast.LENGTH_SHORT).show()
@@ -354,7 +355,7 @@ fun LibraryTabOrderSettingsScreen(onBackClick: () -> Unit) {
                     // Save button
                     Button(
                         onClick = {
-                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                            HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                             appSettings.setLibraryTabOrder(reorderableList)
                             Toast.makeText(context, context.getString(R.string.settings_tab_order_saved), Toast.LENGTH_SHORT).show()
                         },

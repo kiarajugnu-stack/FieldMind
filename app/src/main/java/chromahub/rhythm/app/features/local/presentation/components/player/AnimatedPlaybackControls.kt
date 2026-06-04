@@ -1,4 +1,8 @@
 package chromahub.rhythm.app.shared.presentation.components.player
+import androidx.compose.ui.platform.LocalContext
+import chromahub.rhythm.app.util.HapticUtils
+import chromahub.rhythm.app.util.HapticType
+
 
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.AnimationSpec
@@ -76,6 +80,7 @@ fun AnimatedPlaybackControls(
         lastClicked == PlaybackButtonType.NEXT || lastClicked == PlaybackButtonType.PREVIOUS
     var playPauseVisualState by remember { mutableStateOf(isPlaying) }
     var pendingPlayPauseState by remember { mutableStateOf<Boolean?>(null) }
+    val context = LocalContext.current
     val hapticFeedback = LocalHapticFeedback.current
 
     LaunchedEffect(lastClicked) {
@@ -127,7 +132,7 @@ fun AnimatedPlaybackControls(
                     .background(colorOtherButtons)
                     .clickable {
                         lastClicked = PlaybackButtonType.PREVIOUS
-                        hapticFeedback.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                        HapticUtils.performHapticFeedback(context, hapticFeedback, HapticType.LIGHT)
                         onPrevious()
                     },
                 contentAlignment = Alignment.Center
@@ -163,7 +168,7 @@ fun AnimatedPlaybackControls(
                     .background(colorPlayPause)
                     .clickable {
                         lastClicked = PlaybackButtonType.PLAY_PAUSE
-                        hapticFeedback.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                        HapticUtils.performHapticFeedback(context, hapticFeedback, HapticType.LIGHT)
                         onPlayPause()
                     },
                 contentAlignment = Alignment.Center
@@ -188,7 +193,7 @@ fun AnimatedPlaybackControls(
                     .background(colorOtherButtons)
                     .clickable {
                         lastClicked = PlaybackButtonType.NEXT
-                        hapticFeedback.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                        HapticUtils.performHapticFeedback(context, hapticFeedback, HapticType.LIGHT)
                         onNext()
                     },
                 contentAlignment = Alignment.Center

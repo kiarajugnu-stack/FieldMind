@@ -1,4 +1,8 @@
 package chromahub.rhythm.app.shared.presentation.components.common
+import androidx.compose.ui.platform.LocalContext
+import chromahub.rhythm.app.util.HapticUtils
+import chromahub.rhythm.app.util.HapticType
+
 
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.Canvas
@@ -45,6 +49,7 @@ fun ArcProgressSlider(
     sweepAngle: Float = 270f
 ) {
     val density = LocalDensity.current
+    val context = LocalContext.current
     val hapticFeedback = LocalHapticFeedback.current
     val view = LocalView.current
 
@@ -117,7 +122,7 @@ fun ArcProgressSlider(
                             onValueChange(newValue)
                             val newInt = newValue.roundToInt()
                             if (forceHaptic || newInt != lastHapticValue) {
-                                hapticFeedback.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                HapticUtils.performHapticFeedback(context, hapticFeedback, HapticType.LIGHT)
                                 lastHapticValue = newInt
                             }
                         }

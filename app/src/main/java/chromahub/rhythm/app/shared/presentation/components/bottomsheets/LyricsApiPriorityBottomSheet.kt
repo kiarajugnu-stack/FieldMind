@@ -24,6 +24,7 @@ import chromahub.rhythm.app.shared.presentation.components.icons.Icon
 import chromahub.rhythm.app.shared.presentation.components.icons.MaterialSymbolIcon
 import chromahub.rhythm.app.shared.presentation.components.icons.RhythmIcons
 import chromahub.rhythm.app.util.HapticUtils
+import chromahub.rhythm.app.util.HapticType
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -108,7 +109,7 @@ fun LyricsApiPriorityBottomSheet(
 
                 Card(
                     onClick = {
-                        HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                        HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                         appSettings.setLyricsApiPriority(priority)
                         onDismiss()
                     },

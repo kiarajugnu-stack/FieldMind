@@ -92,6 +92,7 @@ import chromahub.rhythm.app.shared.data.repository.PlaybackStatsRepository
 import chromahub.rhythm.app.shared.data.repository.StatsTimeRange
 import chromahub.rhythm.app.util.GsonUtils
 import chromahub.rhythm.app.util.HapticUtils
+import chromahub.rhythm.app.util.HapticType
 import coil.compose.AsyncImage
 import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
@@ -305,7 +306,7 @@ fun ThemeCustomizationSettingsScreen(onBackClick: () -> Unit) {
                     appSettings.setCustomFontFamily(fontName)
 
                     // Show success feedback
-                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
+                    HapticUtils.performHapticFeedback(context, haptic, HapticType.HEAVY)
                     Toast.makeText(context, context.getString(R.string.theme_font_imported), Toast.LENGTH_SHORT).show()
                 } else {
                     // Font file copied but can't be loaded
@@ -614,7 +615,7 @@ fun ThemeCustomizationSettingsScreen(onBackClick: () -> Unit) {
                             ColorSource.CUSTOM -> context.getString(R.string.settings_color_source_custom, customColorScheme)
                         },
                         onClick = {
-                            HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                            HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                             showColorSourceDialog = true
                         }
                     ),
@@ -626,7 +627,7 @@ fun ThemeCustomizationSettingsScreen(onBackClick: () -> Unit) {
                         else
                             context.getString(R.string.settings_custom_only),
                         onClick = {
-                            HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                            HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                             showColorSchemesDialog = true
                         }
                     ),
@@ -638,7 +639,7 @@ fun ThemeCustomizationSettingsScreen(onBackClick: () -> Unit) {
                         else
                             context.getString(R.string.settings_custom_only),
                         onClick = {
-                            HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                            HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                             showCustomColorsDialog = true
                         }
                     )
@@ -658,7 +659,7 @@ fun ThemeCustomizationSettingsScreen(onBackClick: () -> Unit) {
                             )
                         },
                         onClick = {
-                            HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                            HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                             showFontSourceDialog = true
                         }
                     ),
@@ -670,7 +671,7 @@ fun ThemeCustomizationSettingsScreen(onBackClick: () -> Unit) {
                         else
                             context.getString(R.string.settings_system_font_only),
                         onClick = {
-                            HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                            HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                             showFontSelectionDialog = true
                         }
                     ),
@@ -685,7 +686,7 @@ fun ThemeCustomizationSettingsScreen(onBackClick: () -> Unit) {
                             HapticUtils.performHapticFeedback(
                                 context,
                                 haptic,
-                                HapticFeedbackType.LongPress
+                                HapticType.HEAVY
                             )
                             fontPickerLauncher.launch("font/*")
                         }
@@ -722,7 +723,7 @@ fun ThemeCustomizationSettingsScreen(onBackClick: () -> Unit) {
                                     context.getString(R.string.settings_select_festival),
                                     getFestivalDisplayName(festiveThemeType),
                                     onClick = {
-                                        HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                                        HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                                         showFestivalSelectionDialog = true
                                     }
                                 )
@@ -765,7 +766,7 @@ fun ThemeCustomizationSettingsScreen(onBackClick: () -> Unit) {
                                                     else -> 2
                                                 },
                                                 onItemClick = { index ->
-                                                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                                                    HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                                                     when (index) {
                                                         0 -> {
                                                             appSettings.setUseSystemTheme(true)
@@ -1012,7 +1013,7 @@ fun ThemeCustomizationSettingsScreen(onBackClick: () -> Unit) {
                                 val isSelected = id == festiveThemeType
                                 Card(
                                     onClick = {
-                                        HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                                        HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                                         appSettings.setFestiveThemeType(id)
                                     },
                                     modifier = Modifier.fillMaxWidth(),
@@ -1408,7 +1409,7 @@ fun ColorSchemesDialog(
                                 option = option,
                                 isSelected = currentScheme == option.name,
                                 onSelect = {
-                                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                                    HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                                     onSchemeSelected(option.name)
                                 }
                             )
@@ -1435,7 +1436,7 @@ fun ColorSchemesDialog(
                                 option = option,
                                 isSelected = currentScheme == option.name,
                                 onSelect = {
-                                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                                    HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                                     onSchemeSelected(option.name)
                                 }
                             )

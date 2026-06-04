@@ -92,6 +92,7 @@ import chromahub.rhythm.app.shared.data.repository.PlaybackStatsRepository
 import chromahub.rhythm.app.shared.data.repository.StatsTimeRange
 import chromahub.rhythm.app.util.GsonUtils
 import chromahub.rhythm.app.util.HapticUtils
+import chromahub.rhythm.app.util.HapticType
 import coil.compose.AsyncImage
 import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
@@ -173,7 +174,7 @@ fun ArtistSeparatorsSettingsScreen(onBackClick: () -> Unit) {
         title = context.getString(R.string.artists_title),
         showBackButton = true,
         onBackClick = {
-            HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
+            HapticUtils.performHapticFeedback(context, haptic, HapticType.HEAVY)
             onBackClick()
         }
     ) { modifier ->
@@ -187,7 +188,7 @@ fun ArtistSeparatorsSettingsScreen(onBackClick: () -> Unit) {
                         context.getString(R.string.artist_enable_separation_desc),
                         toggleState = artistSeparatorEnabled,
                         onToggleChange = {
-                            HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                            HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                             appSettings.setArtistSeparatorEnabled(it)
                         }
                     ),
@@ -196,7 +197,7 @@ fun ArtistSeparatorsSettingsScreen(onBackClick: () -> Unit) {
                         context.getString(R.string.artist_configure_delimiters),
                         context.getString(R.string.artist_current_delimiters, artistSeparatorDelimiters.toCharArray().joinToString(", ")),
                         onClick = {
-                            HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                            HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                             tempDelimiters = artistSeparatorDelimiters
                             showDelimiterBottomSheet = true
                         }
@@ -212,7 +213,7 @@ fun ArtistSeparatorsSettingsScreen(onBackClick: () -> Unit) {
                         context.getString(R.string.artist_group_by_album_artist_desc),
                         toggleState = groupByAlbumArtist,
                         onToggleChange = {
-                            HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                            HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                             appSettings.setGroupByAlbumArtist(it)
                         }
                     )
@@ -481,7 +482,7 @@ fun ArtistSeparatorsSettingsScreen(onBackClick: () -> Unit) {
 
                                 Card(
                                     onClick = {
-                                        HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                                        HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                                         isPressed = true
                                         tempDelimiters = if (tempDelimiters.contains(char)) {
                                             tempDelimiters.replace(char.toString(), "")
@@ -625,7 +626,7 @@ fun ArtistSeparatorsSettingsScreen(onBackClick: () -> Unit) {
                         // Reset Button - Secondary action
                         OutlinedButton(
                             onClick = {
-                                HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                                HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                                 resetPressed = true
                                 tempDelimiters = artistSeparatorDelimiters // Reset to original
                             },
@@ -660,7 +661,7 @@ fun ArtistSeparatorsSettingsScreen(onBackClick: () -> Unit) {
                         // Save Changes Button - Primary action
                         Button(
                             onClick = {
-                                HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
+                                HapticUtils.performHapticFeedback(context, haptic, HapticType.HEAVY)
                                 savePressed = true
                                 scope.launch {
                                     appSettings.setArtistSeparatorDelimiters(tempDelimiters)
@@ -845,7 +846,7 @@ fun ApiServiceRow(
             TunerAnimatedSwitch(
                 checked = isEnabled,
                 onCheckedChange = { enabled ->
-                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                    HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                     onToggle(enabled)
                 }
             )

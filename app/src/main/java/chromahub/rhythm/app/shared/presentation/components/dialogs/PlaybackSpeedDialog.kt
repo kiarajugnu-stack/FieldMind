@@ -22,6 +22,7 @@ import androidx.compose.ui.unit.sp
 import chromahub.rhythm.app.R
 import chromahub.rhythm.app.shared.presentation.screens.settings.TunerAnimatedSwitch
 import chromahub.rhythm.app.util.HapticUtils
+import chromahub.rhythm.app.util.HapticType
 import androidx.compose.ui.res.stringResource
 
 @Composable
@@ -112,7 +113,7 @@ fun PlaybackSpeedDialog(
                     TunerAnimatedSwitch(
                         checked = syncEnabled,
                         onCheckedChange = {
-                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                            HapticUtils.performHapticFeedback(context, haptics, HapticType.LIGHT)
                             onSyncChange(it)
                         }
                     )
@@ -168,7 +169,7 @@ fun PlaybackSpeedDialog(
                         value = selectedSpeed,
                         onValueChange = { newValue ->
                             selectedSpeed = newValue
-                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                            HapticUtils.performHapticFeedback(context, haptics, HapticType.LIGHT)
                         },
                         valueRange = minSpeed..maxSpeed,
                         steps = 54,
@@ -188,7 +189,7 @@ fun PlaybackSpeedDialog(
                             AssistChip(
                                 onClick = {
                                     selectedSpeed = presetSpeed
-                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                    HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                                 },
                                 label = {
                                     Text(
@@ -218,7 +219,7 @@ fun PlaybackSpeedDialog(
         confirmButton = {
             Button(
                 onClick = {
-                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                    HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                     onSave(selectedSpeed)
                 },
                 colors = ButtonDefaults.buttonColors(
@@ -238,7 +239,7 @@ fun PlaybackSpeedDialog(
         dismissButton = {
             OutlinedButton(
                 onClick = {
-                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                    HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                     onDismiss()
                 }
             ) {

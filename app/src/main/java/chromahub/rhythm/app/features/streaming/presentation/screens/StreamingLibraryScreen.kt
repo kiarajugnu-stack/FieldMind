@@ -97,6 +97,7 @@ import chromahub.rhythm.app.shared.presentation.components.common.CollapsibleHea
 import chromahub.rhythm.app.shared.presentation.components.common.TabAnimation
 import chromahub.rhythm.app.util.ArtistSeparator
 import chromahub.rhythm.app.util.HapticUtils
+import chromahub.rhythm.app.util.HapticType
 import chromahub.rhythm.app.util.M3ImageUtils
 import kotlinx.coroutines.launch
 import chromahub.rhythm.app.ui.LocalMiniPlayerPadding
@@ -489,7 +490,7 @@ fun StreamingLibraryScreen(
                 Box {
                     FilledTonalButton(
                         onClick = {
-                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                            HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                             showSortMenu = true
                         },
                         colors = ButtonDefaults.filledTonalButtonColors(
@@ -538,7 +539,7 @@ fun StreamingLibraryScreen(
                                         ascending = order.ascending,
                                         selected = songSortOrder == order,
                                         onClick = {
-                                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                            HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                                             songSortOrder = order
                                             showSortMenu = false
                                         }
@@ -554,7 +555,7 @@ fun StreamingLibraryScreen(
                                         ascending = order.ascending,
                                         selected = albumSortOrder == order,
                                         onClick = {
-                                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                            HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                                             albumSortOrder = order
                                             showSortMenu = false
                                         }
@@ -570,7 +571,7 @@ fun StreamingLibraryScreen(
                                         ascending = order.ascending,
                                         selected = artistSortOrder == order,
                                         onClick = {
-                                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                            HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                                             artistSortOrder = order
                                             showSortMenu = false
                                         }
@@ -586,7 +587,7 @@ fun StreamingLibraryScreen(
                                         ascending = order.ascending,
                                         selected = playlistSortOrder == order,
                                         onClick = {
-                                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                            HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                                             playlistSortOrder = order
                                             showSortMenu = false
                                         }

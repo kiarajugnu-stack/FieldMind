@@ -1070,6 +1070,7 @@
     <string name="player_chip_order_title">Player Chip Order</string>
     <string name="player_chip_order_desc">Customize player chips</string>
     <string name="player_chip_reset">Reset to Default</string>
+    <string name="player_chip_order_saved">Player chip order and visibility saved</string>
     
     <!-- Components: Library Tab Order -->
     <string name="library_tab_order_title">Library Tab Order</string>
@@ -1077,7 +1078,7 @@
     
     <!-- Components: Playback Bottom Sheet -->
     <string name="playback_lyrics_priority">Lyrics Source Priority</string>
-    <string name="playback_lyrics_priority_desc">Choose which source to check first for lyrics</string>
+    <string name="playback_lyrics_priority_desc">Configure sources, behaviors, layout, size, and styling of lyrics</string>
     <string name="playback_settings">Playback Settings</string>
     <string name="playback_audio_settings">Audio Settings</string>
     <string name="playback_active_device">ACTIVE DEVICE</string>
@@ -3317,7 +3318,7 @@
     <string name="settings_crash_log">Crash Log History</string>
     <string name="settings_expressive_shapes">Expressive Shapes</string>
     <string name="settings_home_screen">Home</string>
-    <string name="settings_lyrics_source">Lyrics Source</string>
+    <string name="settings_lyrics_source">Lyrics Settings</string>
     <string name="settings_theme">Theme</string>
     <string name="theme_amoled">OLED Theme</string>
     <string name="theme_amoled_desc">Pure black theme for OLED displays</string>

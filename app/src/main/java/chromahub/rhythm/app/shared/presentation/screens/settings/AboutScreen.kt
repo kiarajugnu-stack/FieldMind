@@ -92,6 +92,7 @@ import chromahub.rhythm.app.shared.data.repository.PlaybackStatsRepository
 import chromahub.rhythm.app.shared.data.repository.StatsTimeRange
 import chromahub.rhythm.app.util.GsonUtils
 import chromahub.rhythm.app.util.HapticUtils
+import chromahub.rhythm.app.util.HapticType
 import coil.compose.AsyncImage
 import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
@@ -372,7 +373,7 @@ fun AboutScreen(
 
                         OutlinedButton(
                             onClick = {
-                                HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                                HapticUtils.performHapticFeedback(context, haptics, HapticType.LIGHT)
                                 openUrl("https://ko-fi.com/anjishnunandi")
                             },
                             shape = RoundedCornerShape(14.dp),
@@ -496,47 +497,7 @@ fun AboutScreen(
                 }
             }
 
-            item {
-                Card(
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-                    shape = RoundedCornerShape(20.dp),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Text(
-                            text = stringResource(R.string.aboutscreen_sponsors),
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurface,
-                            modifier = Modifier.padding(bottom = 8.dp)
-                        )
-                        Text(
-                            text = stringResource(R.string.aboutscreen_thanks_to_everyone_supporting),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(bottom = 10.dp)
-                        )
 
-                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            CommunityMember(
-                                name = "HyXeny",
-                                role = "Sponsor",
-                                githubUsername = "HyXeny",
-                                avatarUrl = "https://github.com/HyXeny.png",
-                                context = context
-                            )
-                            CommunityMember(
-                                name = "Xiaomiraphealin",
-                                role = "Sponsor",
-                                githubUsername = "Xiaomiraphealin",
-                                avatarUrl = "https://github.com/Xiaomiraphealin.png",
-                                context = context
-                            )
-                        }
-                    }
-                }
-            }
 
             item {
                 val actionItems = listOf(
@@ -652,7 +613,7 @@ fun CommunityMember(
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
             .clickable {
-                HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                HapticUtils.performHapticFeedback(context, haptics, HapticType.LIGHT)
                 val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/$githubUsername"))
                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 context.startActivity(intent)

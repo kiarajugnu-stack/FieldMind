@@ -52,6 +52,7 @@ import chromahub.rhythm.app.shared.presentation.components.icons.Icon
 import androidx.compose.foundation.layout.fillMaxSize
 import chromahub.rhythm.app.shared.presentation.components.icons.RhythmIcons
 import chromahub.rhythm.app.util.HapticUtils
+import chromahub.rhythm.app.util.HapticType
 import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveShapeTarget
 import chromahub.rhythm.app.shared.presentation.components.common.rememberExpressiveShapeFor
 import chromahub.rhythm.app.shared.presentation.components.Material3SettingsGroup
@@ -155,10 +156,28 @@ fun PlayerScreen(
 ) {
     val playerThemeId by appSettings.playerThemeId.collectAsState()
     var showFullScreenLyrics by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+    val lyricsTimeOffset by musicViewModel.lyricsTimeOffset.collectAsState()
+    var showLyricsEditorDialog by remember { mutableStateOf(false) }
+
+    val lyricsWritePermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartIntentSenderForResult()
+    ) { result ->
+        if (result.resultCode == android.app.Activity.RESULT_OK) {
+            musicViewModel.completeLyricsWriteAfterPermission(
+                onSuccess = { },
+                onError = { errorMessage ->
+                    Toast.makeText(context, errorMessage, Toast.LENGTH_LONG).show()
+                }
+            )
+        } else {
+            musicViewModel.cancelPendingLyricsWrite()
+            Toast.makeText(context, R.string.materialplayerscreen_permission_denied_could_not, Toast.LENGTH_LONG).show()
+        }
+    }
 
     Box(modifier = Modifier.fillMaxSize()) {
         if (playerThemeId == "EXPRESSIVE") {
-        val context = LocalContext.current
         val haptic = LocalHapticFeedback.current
         val useHoursFormat by appSettings.useHoursInTimeFormat.collectAsState()
         val progressValue = progress().coerceIn(0f, 1f)
@@ -179,7 +198,6 @@ fun PlayerScreen(
         var selectedArtist by remember { mutableStateOf<Artist?>(null) }
         var selectedSongForPlaylist by remember { mutableStateOf<Song?>(null) }
         var showLyricsView by remember { mutableStateOf(false) }
-        var showLyricsEditorDialog by remember { mutableStateOf(false) }
         var showArtistChooserSheet by remember { mutableStateOf(false) }
         var candidateArtists by remember { mutableStateOf<List<Artist>>(emptyList()) }
 
@@ -224,24 +242,6 @@ fun PlayerScreen(
                 artists.firstOrNull { it.name.equals(name, ignoreCase = true) }
             }
         }
-
-        val lyricsTimeOffset by musicViewModel.lyricsTimeOffset.collectAsState()
-        val lyricsWritePermissionLauncher = rememberLauncherForActivityResult(
-            contract = ActivityResultContracts.StartIntentSenderForResult()
-        ) { result ->
-            if (result.resultCode == android.app.Activity.RESULT_OK) {
-                musicViewModel.completeLyricsWriteAfterPermission(
-                    onSuccess = { },
-                    onError = { errorMessage ->
-                        Toast.makeText(context, errorMessage, Toast.LENGTH_LONG).show()
-                    }
-                )
-            } else {
-                musicViewModel.cancelPendingLyricsWrite()
-                Toast.makeText(context, R.string.materialplayerscreen_permission_denied_could_not, Toast.LENGTH_LONG).show()
-            }
-        }
-
         val writePermissionLauncher = rememberLauncherForActivityResult(
             contract = ActivityResultContracts.StartIntentSenderForResult()
         ) { result ->
@@ -683,7 +683,7 @@ fun PlayerScreen(
 
                             Card(
                                 onClick = {
-                                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                                    HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                                     selectedArtist = artist
                                     showArtistChooserSheet = false
                                     showArtistSheet = true
@@ -747,41 +747,6 @@ fun PlayerScreen(
                     }
                 }
             }
-        }
-
-        if (showLyricsEditorDialog) {
-            LyricsEditorBottomSheet(
-                currentLyrics = lyrics?.getBestLyrics() ?: "",
-                songTitle = song?.title ?: "Unknown",
-                initialTimeOffset = lyricsTimeOffset,
-                onDismiss = { showLyricsEditorDialog = false },
-                onSave = { editedLyrics, timeOffset ->
-                    musicViewModel.saveEditedLyrics(editedLyrics, timeOffset)
-                },
-                onRefresh = {
-                    musicViewModel.clearLyricsCacheAndRefetch()
-                },
-                onEmbedInFile = { editedLyrics ->
-                    musicViewModel.embedLyricsInFile(
-                        lyrics = editedLyrics,
-                        onPermissionRequired = { pendingRequest ->
-                            try {
-                                val intentSenderRequest = androidx.activity.result.IntentSenderRequest.Builder(
-                                    pendingRequest.intentSender
-                                ).build()
-                                lyricsWritePermissionLauncher.launch(intentSenderRequest)
-                            } catch (e: Exception) {
-                                Toast.makeText(
-                                    context,
-                                    "Failed to request permission: ${e.message}",
-                                    Toast.LENGTH_LONG
-                                ).show()
-                                musicViewModel.cancelPendingLyricsWrite()
-                            }
-                        }
-                    )
-                }
-            )
         }
     } else {
         MaterialPlayerScreen(
@@ -880,7 +845,44 @@ fun PlayerScreen(
             onLyricsSeek = onLyricsSeek,
             onRetryLyrics = onRetryLyrics,
             onClose = { showFullScreenLyrics = false },
+            onShowLyricsEditor = { showLyricsEditorDialog = true },
+            onNavigateToLyricsSettings = { navController.navigate(Screen.TunerLyrics.route) },
             modifier = Modifier.fillMaxSize()
+        )
+    }
+
+    if (showLyricsEditorDialog) {
+        LyricsEditorBottomSheet(
+            currentLyrics = lyrics?.getBestLyrics() ?: "",
+            songTitle = song?.title ?: "Unknown",
+            initialTimeOffset = lyricsTimeOffset,
+            onDismiss = { showLyricsEditorDialog = false },
+            onSave = { editedLyrics, timeOffset ->
+                musicViewModel.saveEditedLyrics(editedLyrics, timeOffset)
+            },
+            onRefresh = {
+                musicViewModel.clearLyricsCacheAndRefetch()
+            },
+            onEmbedInFile = { editedLyrics ->
+                musicViewModel.embedLyricsInFile(
+                    lyrics = editedLyrics,
+                    onPermissionRequired = { pendingRequest ->
+                        try {
+                            val intentSenderRequest = androidx.activity.result.IntentSenderRequest.Builder(
+                                pendingRequest.intentSender
+                            ).build()
+                            lyricsWritePermissionLauncher.launch(intentSenderRequest)
+                        } catch (e: Exception) {
+                            Toast.makeText(
+                                context,
+                                "Failed to request permission: ${e.message}",
+                                Toast.LENGTH_LONG
+                            ).show()
+                            musicViewModel.cancelPendingLyricsWrite()
+                        }
+                    }
+                )
+            }
         )
     }
 }

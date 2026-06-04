@@ -164,6 +164,7 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import chromahub.rhythm.app.util.performIfEnabled
 import chromahub.rhythm.app.util.HapticUtils
+import chromahub.rhythm.app.util.HapticType
 import chromahub.rhythm.app.R
 import chromahub.rhythm.app.shared.data.model.Album
 import chromahub.rhythm.app.shared.data.model.Artist
@@ -499,7 +500,7 @@ fun HomeScreen(
         actions = {
             ExpressiveFilledTonalIconButton(
                 onClick = {
-                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                    HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                     showHomeSectionOrderSheet = true
                 },
                 colors = IconButtonDefaults.filledTonalIconButtonColors(
@@ -516,7 +517,7 @@ fun HomeScreen(
             }
             ExpressiveFilledIconButton(
                 onClick = {
-                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                    HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                     onSettingsClick()
                 },
                 colors = IconButtonDefaults.filledIconButtonColors(
@@ -1158,7 +1159,7 @@ private fun ModernWelcomeSection(
         modifier = Modifier
             .fillMaxWidth()
             .clickable {
-                HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                 onSearchClick()
             },
         colors = CardDefaults.cardColors(
@@ -1231,7 +1232,7 @@ private fun ModernWelcomeSection(
 
                     ExpressiveFilledIconButton(
                         onClick = {
-                            HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                            HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                             onSearchClick()
                         },
                         colors = IconButtonDefaults.filledIconButtonColors(
@@ -1388,7 +1389,7 @@ private fun ModernRecentSongCard(
 
     ExpressiveCard(
         onClick = {
-            HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+            HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
             onClick()
         },
         modifier = cardModifier,
@@ -1492,7 +1493,7 @@ private fun ModernSectionTitle(
                     onPlayAll?.let { playAction ->
                         ExpressiveGroupButton(
                             onClick = {
-                                HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
+                                HapticUtils.performHapticFeedback(context, haptic, HapticType.HEAVY)
                                 playAction()
                             },
                             isStart = true,
@@ -1509,7 +1510,7 @@ private fun ModernSectionTitle(
                     onShufflePlay?.let { shuffleAction ->
                         ExpressiveGroupButton(
                             onClick = {
-                                HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
+                                HapticUtils.performHapticFeedback(context, haptic, HapticType.HEAVY)
                                 shuffleAction()
                             },
                             isStart = onPlayAll == null,
@@ -1536,7 +1537,7 @@ private fun ModernSectionTitle(
             viewAllAction?.let { action ->
                 IconButton(
                     onClick = {
-                        HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                        HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                         action()
                     }
                 ) {
@@ -1616,7 +1617,7 @@ private fun ModernFeaturedSection(
                     .fillMaxSize()
                     .clip(RectangleShape)
                     .clickable {
-                        HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                        HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                         onAlbumClick(album)
                     }
             ) {
@@ -1692,7 +1693,7 @@ private fun ModernFeaturedSection(
                         if (showPlayButton) {
                             Button(
                                 onClick = {
-                                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
+                                    HapticUtils.performHapticFeedback(context, haptic, HapticType.HEAVY)
                                     viewModel.playAlbum(album)
                                 },
                                 shape = RoundedCornerShape(percent = 50),
@@ -1839,14 +1840,14 @@ private fun ModernArtistCard(
         Modifier
             .fillMaxWidth()
             .clickable {
-                HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                 onClick()
             }
     } else {
         Modifier
             .width(cardSize)
             .clickable {
-                HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                 onClick()
             }
     }
@@ -1864,7 +1865,7 @@ private fun ModernArtistCard(
 
             ExpressiveFilledIconButton(
                 onClick = {
-                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
+                    HapticUtils.performHapticFeedback(context, haptic, HapticType.HEAVY)
                     viewModel.playArtist(artist)
                     onClick()
                 },
@@ -1930,7 +1931,7 @@ private fun ModernAlbumCard(
 
     ExpressiveCard(
         onClick = {
-            HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+            HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
             onClick(album)
         },
         modifier = Modifier
@@ -1973,7 +1974,7 @@ private fun ModernAlbumCard(
                 ) {
                     ExpressiveFilledIconButton(
                         onClick = {
-                            HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
+                            HapticUtils.performHapticFeedback(context, haptic, HapticType.HEAVY)
                             viewModel.playAlbum(album)
                         },
                         modifier = Modifier.size(
@@ -2073,7 +2074,7 @@ private fun ModernSongCard(
 
     ExpressiveCard(
         onClick = {
-            HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+            HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
             onClick()
         },
         modifier = Modifier
@@ -2393,7 +2394,7 @@ private fun ModernRecommendedSection(
 
                         Button(
                             onClick = {
-                                HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                                 onPlayClick(recommendedSongs)
                             },
                             colors = ButtonDefaults.buttonColors(
@@ -2496,7 +2497,7 @@ private fun RecommendedSongItem(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = {
-                HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                HapticUtils.performHapticFeedback(context, haptics, HapticType.LIGHT)
                 onClick()
             })
             .padding(vertical = 12.dp),
@@ -2534,7 +2535,7 @@ private fun RecommendedSongItem(
 
         ExpressiveFilledIconButton(
             onClick = {
-                HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                 onClick()
             },
             modifier = Modifier.size(40.dp),

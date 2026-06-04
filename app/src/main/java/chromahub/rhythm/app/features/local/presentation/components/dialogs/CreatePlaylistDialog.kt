@@ -42,6 +42,7 @@ import androidx.compose.ui.window.Dialog
 import chromahub.rhythm.app.R
 import chromahub.rhythm.app.shared.data.model.Song
 import chromahub.rhythm.app.util.HapticUtils
+import chromahub.rhythm.app.util.HapticType
 import androidx.compose.ui.res.stringResource
 
 @Composable
@@ -201,7 +202,7 @@ fun QueueActionDialog(
                 // Option 1: Clear & Play
                 Surface(
                     onClick = {
-                        HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                        HapticUtils.performHapticFeedback(context, haptics, HapticType.LIGHT)
                         onClearAndPlay()
                     },
                     shape = RoundedCornerShape(16.dp),
@@ -246,7 +247,7 @@ fun QueueActionDialog(
                 // Option 2: Add to Queue
                 Surface(
                     onClick = {
-                        HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                        HapticUtils.performHapticFeedback(context, haptics, HapticType.LIGHT)
                         onAddToQueue()
                     },
                     shape = RoundedCornerShape(16.dp),
@@ -293,7 +294,7 @@ fun QueueActionDialog(
         dismissButton = {
             OutlinedButton(
                 onClick = {
-                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                    HapticUtils.performHapticFeedback(context, haptics, HapticType.LIGHT)
                     onDismiss()
                 }
             ) {
@@ -362,7 +363,7 @@ fun QueueListActionDialog(
 
                 Surface(
                     onClick = {
-                        HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                        HapticUtils.performHapticFeedback(context, haptics, HapticType.LIGHT)
                         onReplaceQueue()
                     },
                     shape = RoundedCornerShape(16.dp),
@@ -406,7 +407,7 @@ fun QueueListActionDialog(
 
                 Surface(
                     onClick = {
-                        HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                        HapticUtils.performHapticFeedback(context, haptics, HapticType.LIGHT)
                         onPlayNext()
                     },
                     shape = RoundedCornerShape(16.dp),
@@ -450,7 +451,7 @@ fun QueueListActionDialog(
 
                 Surface(
                     onClick = {
-                        HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                        HapticUtils.performHapticFeedback(context, haptics, HapticType.LIGHT)
                         onAddToEnd()
                     },
                     shape = RoundedCornerShape(16.dp),
@@ -497,7 +498,7 @@ fun QueueListActionDialog(
         dismissButton = {
             OutlinedButton(
                 onClick = {
-                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                    HapticUtils.performHapticFeedback(context, haptics, HapticType.LIGHT)
                     onDismiss()
                 }
             ) {

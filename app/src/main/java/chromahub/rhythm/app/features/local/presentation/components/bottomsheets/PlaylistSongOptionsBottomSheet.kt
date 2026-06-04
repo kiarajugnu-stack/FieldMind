@@ -52,6 +52,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import chromahub.rhythm.app.shared.data.model.Song
 import chromahub.rhythm.app.util.HapticUtils
+import chromahub.rhythm.app.util.HapticType
 import chromahub.rhythm.app.R
 import androidx.compose.ui.res.stringResource
 
@@ -174,7 +175,7 @@ fun PlaylistSongOptionsBottomSheet(
                                 containerColor = MaterialTheme.colorScheme.primaryContainer,
                                 iconColor = MaterialTheme.colorScheme.onPrimaryContainer,
                                 onClick = {
-                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                    HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                                     onPlayNext()
                                 }
                             )
@@ -186,7 +187,7 @@ fun PlaylistSongOptionsBottomSheet(
                                 containerColor = MaterialTheme.colorScheme.primaryContainer,
                                 iconColor = MaterialTheme.colorScheme.onPrimaryContainer,
                                 onClick = {
-                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                    HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                                     onAddToQueue()
                                 }
                             )
@@ -205,7 +206,7 @@ fun PlaylistSongOptionsBottomSheet(
                                 containerColor = MaterialTheme.colorScheme.primaryContainer,
                                 iconColor = MaterialTheme.colorScheme.onPrimaryContainer,
                                 onClick = {
-                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                    HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                                     onAddToPlaylist()
                                 }
                             )
@@ -217,7 +218,7 @@ fun PlaylistSongOptionsBottomSheet(
                                 containerColor = MaterialTheme.colorScheme.secondaryContainer,
                                 iconColor = MaterialTheme.colorScheme.onSecondaryContainer,
                                 onClick = {
-                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                    HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                                     onGoToAlbum()
                                 }
                             )
@@ -236,7 +237,7 @@ fun PlaylistSongOptionsBottomSheet(
                                 containerColor = MaterialTheme.colorScheme.secondaryContainer,
                                 iconColor = MaterialTheme.colorScheme.onSecondaryContainer,
                                 onClick = {
-                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                    HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                                     onGoToArtist()
                                 }
                             )
@@ -248,7 +249,7 @@ fun PlaylistSongOptionsBottomSheet(
                                 containerColor = MaterialTheme.colorScheme.secondaryContainer,
                                 iconColor = MaterialTheme.colorScheme.onSecondaryContainer,
                                 onClick = {
-                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                    HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                                     onShowSongInfo()
                                 }
                             )
@@ -263,7 +264,7 @@ fun PlaylistSongOptionsBottomSheet(
                             containerColor = MaterialTheme.colorScheme.errorContainer,
                             iconColor = MaterialTheme.colorScheme.error,
                             onClick = {
-                                HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                                 onRemoveFromPlaylist()
                             },
                             modifier = Modifier.fillMaxWidth()

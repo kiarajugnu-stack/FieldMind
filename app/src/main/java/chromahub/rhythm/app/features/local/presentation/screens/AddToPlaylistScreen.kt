@@ -41,6 +41,7 @@ import chromahub.rhythm.app.shared.data.model.Song
 import chromahub.rhythm.app.shared.presentation.components.common.CollapsibleHeaderScreen
 import chromahub.rhythm.app.shared.presentation.components.common.M3PlaceholderType
 import chromahub.rhythm.app.util.HapticUtils
+import chromahub.rhythm.app.util.HapticType
 import chromahub.rhythm.app.util.ImageUtils
 import androidx.compose.ui.res.stringResource
 
@@ -113,7 +114,7 @@ fun AddToPlaylistScreen(
         },
         showBackButton = true,
         onBackClick = {
-            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+            HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
             if (isSelectionMode) {
                 isSelectionMode = false
                 selectedSongs = emptySet()
@@ -131,7 +132,7 @@ fun AddToPlaylistScreen(
                     // Select/Deselect all button
                     FilledTonalIconButton(
                         onClick = {
-                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                            HapticUtils.performHapticFeedback(context, haptics, HapticType.LIGHT)
                             if (selectedSongs.size == filteredSongs.size) {
                                 selectedSongs = emptySet()
                             } else {
@@ -161,7 +162,7 @@ fun AddToPlaylistScreen(
                     // Add selected songs button
                     FilledIconButton(
                         onClick = {
-                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                            HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                             val songsToAdd = filteredSongs.filter { selectedSongs.contains(it.id) }
                             onAddSongsToPlaylist(songsToAdd)
                             isSelectionMode = false
@@ -190,7 +191,7 @@ fun AddToPlaylistScreen(
                     // Multi-select toggle button
                     FilledTonalIconButton(
                         onClick = {
-                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                            HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                             isSelectionMode = !isSelectionMode
                             if (!isSelectionMode) {
                                 selectedSongs = emptySet()
@@ -240,7 +241,7 @@ fun AddToPlaylistScreen(
                 trailingIcon = {
                     if (searchQuery.isNotEmpty()) {
                         IconButton(onClick = {
-                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                            HapticUtils.performHapticFeedback(context, haptics, HapticType.LIGHT)
                             onSearchQueryChange("")
                         }) {
                             Icon(
@@ -327,7 +328,7 @@ fun AddToPlaylistScreen(
                             index = index,
                             totalCount = filteredSongs.size,
                             onSongClick = {
-                                HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                                HapticUtils.performHapticFeedback(context, haptics, HapticType.LIGHT)
                                 if (isSelectionMode) {
                                     selectedSongs = if (selectedSongs.contains(song.id)) {
                                         selectedSongs - song.id
@@ -339,7 +340,7 @@ fun AddToPlaylistScreen(
                                 }
                             },
                             onLongClick = {
-                                HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                                 if (!isSelectionMode) {
                                     isSelectionMode = true
                                     selectedSongs = setOf(song.id)

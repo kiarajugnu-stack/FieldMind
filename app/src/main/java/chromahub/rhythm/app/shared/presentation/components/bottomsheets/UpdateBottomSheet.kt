@@ -24,6 +24,7 @@ import chromahub.rhythm.app.R
 import chromahub.rhythm.app.shared.presentation.viewmodel.AppUpdaterViewModel
 import chromahub.rhythm.app.shared.presentation.viewmodel.AppVersion
 import chromahub.rhythm.app.util.HapticUtils
+import chromahub.rhythm.app.util.HapticType
 import androidx.compose.ui.res.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -224,11 +225,11 @@ fun UpdateBottomSheet(
                 ElevatedCard(
                     onClick = {
                         if (!isDownloading && downloadedFile == null) {
-                            HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                            HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                             updaterViewModel.downloadUpdate()
                             onUpdateClick(false)
                         } else if (downloadedFile != null) {
-                            HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                            HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                             updaterViewModel.installDownloadedApk()
                         }
                     },

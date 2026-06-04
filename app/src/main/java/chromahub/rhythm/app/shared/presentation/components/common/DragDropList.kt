@@ -31,6 +31,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.zIndex
 import chromahub.rhythm.app.util.HapticUtils
+import chromahub.rhythm.app.util.HapticType
 import kotlinx.coroutines.launch
 
 @Composable
@@ -91,7 +92,7 @@ fun <T> DragDropLazyColumn(
                     itemInfo?.let { info ->
                         draggedItem = info.index
                         isDragging = true
-                        HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
+                        HapticUtils.performHapticFeedback(context, haptic, HapticType.HEAVY)
                     }
                 },
                 onDrag = { change, dragAmount ->

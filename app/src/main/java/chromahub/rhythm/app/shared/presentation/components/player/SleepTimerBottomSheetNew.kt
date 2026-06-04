@@ -1,6 +1,9 @@
 @file:OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 
 package chromahub.rhythm.app.shared.presentation.components.player
+import chromahub.rhythm.app.util.HapticUtils
+import chromahub.rhythm.app.util.HapticType
+
 
 import chromahub.rhythm.app.shared.presentation.components.icons.RhythmIcons
 import chromahub.rhythm.app.shared.presentation.components.icons.MaterialSymbolIcon
@@ -124,17 +127,17 @@ fun SleepTimerBottomSheetNew(
     // Clean timer functions
     fun startTimer(minutes: Int) {
         if (!isPlaying || currentSong == null) {
-            haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+            HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
             return
         }
         
-        haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+        HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
         totalTimerDuration = minutes * 60L
         musicViewModel.startSleepTimer(minutes, selectedAction)
     }
     
     fun stopTimer() {
-        haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+        HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
         musicViewModel.stopSleepTimer()
     }
     
@@ -144,12 +147,12 @@ fun SleepTimerBottomSheetNew(
     fun showTimePicker() {
         // Check if music is playing and service is connected before showing picker
         if (!isPlaying || currentSong == null) {
-            haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+            HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
             // Don't show picker - let the UI show the disabled state
             return
         }
         
-        haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+        HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
         showTimePickerDialog = true
     }
     
@@ -516,7 +519,7 @@ fun SleepTimerBottomSheetNew(
                                 
                                 Card(
                                     onClick = { 
-                                        haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                                        HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                                         selectedAction = action 
                                         musicViewModel.appSettings.setSleepTimerAction(action.name)
                                     },

@@ -92,6 +92,7 @@ import chromahub.rhythm.app.shared.data.repository.PlaybackStatsRepository
 import chromahub.rhythm.app.shared.data.repository.StatsTimeRange
 import chromahub.rhythm.app.util.GsonUtils
 import chromahub.rhythm.app.util.HapticUtils
+import chromahub.rhythm.app.util.HapticType
 import coil.compose.AsyncImage
 import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
@@ -840,7 +841,7 @@ fun UpdatesSettingsScreen(onBackClick: () -> Unit) {
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(12.dp))
                         .clickable {
-                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                            HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                             val tag = currentVersion.versionName
                             val releaseUrl = if (tag.startsWith("v", ignoreCase = true)) {
                                 "https://github.com/cromaguy/Rhythm/releases/tag/$displayVersionName"
@@ -1161,7 +1162,7 @@ fun UpdatesSettingsScreen(onBackClick: () -> Unit) {
 //                            TunerAnimatedSwitch(
 //                                checked = simulateEnabled,
 //                                onCheckedChange = {
-//                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+//                                    HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
 //                                    simulateEnabled = it
 //                                    if (!it) {
 //                                        // Reset simulated states when disabled
@@ -1208,7 +1209,7 @@ fun UpdatesSettingsScreen(onBackClick: () -> Unit) {
 //                                    if (isCheckingSelected) {
 //                                        Button(
 //                                            onClick = {
-//                                                HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+//                                                HapticUtils.performHapticFeedback(context, haptics, HapticType.LIGHT)
 //                                                simIsChecking = true
 //                                                simUpdateAvailable = false
 //                                                simIsDownloading = false
@@ -1224,7 +1225,7 @@ fun UpdatesSettingsScreen(onBackClick: () -> Unit) {
 //                                    } else {
 //                                        OutlinedButton(
 //                                            onClick = {
-//                                                HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+//                                                HapticUtils.performHapticFeedback(context, haptics, HapticType.LIGHT)
 //                                                simIsChecking = true
 //                                                simUpdateAvailable = false
 //                                                simIsDownloading = false
@@ -1244,7 +1245,7 @@ fun UpdatesSettingsScreen(onBackClick: () -> Unit) {
 //                                    if (isAvailableSelected) {
 //                                        Button(
 //                                            onClick = {
-//                                                HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+//                                                HapticUtils.performHapticFeedback(context, haptics, HapticType.LIGHT)
 //                                                simIsChecking = false
 //                                                simUpdateAvailable = true
 //                                                simIsDownloading = false
@@ -1260,7 +1261,7 @@ fun UpdatesSettingsScreen(onBackClick: () -> Unit) {
 //                                    } else {
 //                                        OutlinedButton(
 //                                            onClick = {
-//                                                HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+//                                                HapticUtils.performHapticFeedback(context, haptics, HapticType.LIGHT)
 //                                                simIsChecking = false
 //                                                simUpdateAvailable = true
 //                                                simIsDownloading = false
@@ -1286,7 +1287,7 @@ fun UpdatesSettingsScreen(onBackClick: () -> Unit) {
 //                                    if (isDownloadingSelected) {
 //                                        Button(
 //                                            onClick = {
-//                                                HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+//                                                HapticUtils.performHapticFeedback(context, haptics, HapticType.LIGHT)
 //                                                simIsChecking = false
 //                                                simUpdateAvailable = true
 //                                                simIsDownloading = true
@@ -1315,7 +1316,7 @@ fun UpdatesSettingsScreen(onBackClick: () -> Unit) {
 //                                    } else {
 //                                        OutlinedButton(
 //                                            onClick = {
-//                                                HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+//                                                HapticUtils.performHapticFeedback(context, haptics, HapticType.LIGHT)
 //                                                simIsChecking = false
 //                                                simUpdateAvailable = true
 //                                                simIsDownloading = true
@@ -1348,7 +1349,7 @@ fun UpdatesSettingsScreen(onBackClick: () -> Unit) {
 //                                    if (isDownloadedSelected) {
 //                                        Button(
 //                                            onClick = {
-//                                                HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+//                                                HapticUtils.performHapticFeedback(context, haptics, HapticType.LIGHT)
 //                                                simIsChecking = false
 //                                                simUpdateAvailable = true
 //                                                simIsDownloading = false
@@ -1364,7 +1365,7 @@ fun UpdatesSettingsScreen(onBackClick: () -> Unit) {
 //                                    } else {
 //                                        OutlinedButton(
 //                                            onClick = {
-//                                                HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+//                                                HapticUtils.performHapticFeedback(context, haptics, HapticType.LIGHT)
 //                                                simIsChecking = false
 //                                                simUpdateAvailable = true
 //                                                simIsDownloading = false
@@ -1390,7 +1391,7 @@ fun UpdatesSettingsScreen(onBackClick: () -> Unit) {
 //                                    if (isErrorSelected) {
 //                                        Button(
 //                                            onClick = {
-//                                                HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+//                                                HapticUtils.performHapticFeedback(context, haptics, HapticType.LIGHT)
 //                                                simIsChecking = false
 //                                                simUpdateAvailable = false
 //                                                simIsDownloading = false
@@ -1406,7 +1407,7 @@ fun UpdatesSettingsScreen(onBackClick: () -> Unit) {
 //                                    } else {
 //                                        OutlinedButton(
 //                                            onClick = {
-//                                                HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+//                                                HapticUtils.performHapticFeedback(context, haptics, HapticType.LIGHT)
 //                                                simIsChecking = false
 //                                                simUpdateAvailable = false
 //                                                simIsDownloading = false
@@ -1426,7 +1427,7 @@ fun UpdatesSettingsScreen(onBackClick: () -> Unit) {
 //                                    if (isResetSelected) {
 //                                        Button(
 //                                            onClick = {
-//                                                HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+//                                                HapticUtils.performHapticFeedback(context, haptics, HapticType.LIGHT)
 //                                                simIsChecking = false
 //                                                simUpdateAvailable = false
 //                                                simIsDownloading = false
@@ -1442,7 +1443,7 @@ fun UpdatesSettingsScreen(onBackClick: () -> Unit) {
 //                                    } else {
 //                                        OutlinedButton(
 //                                            onClick = {
-//                                                HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+//                                                HapticUtils.performHapticFeedback(context, haptics, HapticType.LIGHT)
 //                                                simIsChecking = false
 //                                                simUpdateAvailable = false
 //                                                simIsDownloading = false
@@ -1495,7 +1496,7 @@ fun UpdatesSettingsScreen(onBackClick: () -> Unit) {
                     channels.forEach { (channel, description) ->
                         Card(
                             onClick = {
-                                HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                                HapticUtils.performHapticFeedback(context, haptics, HapticType.LIGHT)
                                 appSettings.setUpdateChannel(channel)
                                 showChannelDialog = false
                             },
@@ -1578,7 +1579,7 @@ fun UpdatesSettingsScreen(onBackClick: () -> Unit) {
                     intervalOptions.forEach { (hours, label) ->
                         Card(
                             onClick = {
-                                HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                                HapticUtils.performHapticFeedback(context, haptics, HapticType.LIGHT)
                                 appSettings.setUpdateCheckIntervalHours(hours)
                                 showIntervalDialog = false
                             },
@@ -1660,7 +1661,7 @@ fun UpdatesSettingsScreen(onBackClick: () -> Unit) {
                     sources.forEach { (source, description) ->
                         Card(
                             onClick = {
-                                HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                                HapticUtils.performHapticFeedback(context, haptics, HapticType.LIGHT)
                                 appSettings.setUpdateSource(source)
                                 showSourceDialog = false
                             },

@@ -46,6 +46,7 @@ import chromahub.rhythm.app.shared.presentation.components.common.rememberExpres
 import chromahub.rhythm.app.shared.presentation.components.icons.Icon
 import chromahub.rhythm.app.shared.presentation.components.icons.RhythmIcons
 import chromahub.rhythm.app.util.HapticUtils
+import chromahub.rhythm.app.util.HapticType
 import chromahub.rhythm.app.util.M3ImageUtils
 import kotlinx.coroutines.delay
 import kotlin.math.abs
@@ -193,7 +194,7 @@ fun ExpressiveMiniPlayer(
                             onDragStart = {
                                 lastHapticOffset = 0f
                                 lastHapticOffsetX = 0f
-                                HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                                HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                             },
                             onDragEnd = {
                                 val absX = abs(offsetX)
@@ -201,23 +202,23 @@ fun ExpressiveMiniPlayer(
 
                                 if (absX > absY) {
                                     if (offsetX < -swipeHorizontalThreshold) {
-                                        HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
+                                        HapticUtils.performHapticFeedback(context, haptic, HapticType.HEAVY)
                                         onSkipNext()
                                     } else if (offsetX > swipeHorizontalThreshold) {
-                                        HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
+                                        HapticUtils.performHapticFeedback(context, haptic, HapticType.HEAVY)
                                         onSkipPrevious()
                                     } else {
-                                        HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                                        HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                                     }
                                 } else {
                                     if (offsetY < -swipeUpThreshold) {
-                                        HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
+                                        HapticUtils.performHapticFeedback(context, haptic, HapticType.HEAVY)
                                         onPlayerClick()
                                     } else if (offsetY > swipeDownThreshold) {
-                                        HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
+                                        HapticUtils.performHapticFeedback(context, haptic, HapticType.HEAVY)
                                         isDismissingPlayer = true
                                     } else {
-                                        HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                                        HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                                     }
                                 }
 
@@ -227,7 +228,7 @@ fun ExpressiveMiniPlayer(
                                 }
                             },
                             onDragCancel = {
-                                HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                                HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                                 if (!isDismissingPlayer) {
                                     offsetY = 0f
                                     offsetX = 0f
@@ -240,15 +241,15 @@ fun ExpressiveMiniPlayer(
 
                                 if (abs(offsetY) > abs(offsetX)) {
                                     if (offsetY < 0 && abs(offsetY) - abs(lastHapticOffset) > swipeUpThreshold / 3) {
-                                        HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                                        HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                                         lastHapticOffset = offsetY
                                     } else if (offsetY > 0 && abs(offsetY) - abs(lastHapticOffset) > swipeDownThreshold / 3) {
-                                        HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                                        HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                                         lastHapticOffset = offsetY
                                     }
                                 } else {
                                     if (abs(offsetX) - abs(lastHapticOffsetX) > swipeHorizontalThreshold / 3) {
-                                        HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                                        HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                                         lastHapticOffsetX = offsetX
                                     }
                                 }
@@ -261,7 +262,7 @@ fun ExpressiveMiniPlayer(
                     indication = null,
                     onClick = {
                         if (!isDismissingPlayer) {
-                            HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
+                            HapticUtils.performHapticFeedback(context, haptic, HapticType.HEAVY)
                             onPlayerClick()
                         }
                     }
@@ -394,7 +395,7 @@ fun ExpressiveMiniPlayer(
 
                     Surface(
                         onClick = {
-                            HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
+                            HapticUtils.performHapticFeedback(context, haptic, HapticType.HEAVY)
                             onPlayPause()
                         },
                         modifier = Modifier

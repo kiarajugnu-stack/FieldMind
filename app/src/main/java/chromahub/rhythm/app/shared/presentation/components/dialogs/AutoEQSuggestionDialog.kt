@@ -36,6 +36,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import chromahub.rhythm.app.shared.data.model.UserAudioDevice
 import chromahub.rhythm.app.util.HapticUtils
+import chromahub.rhythm.app.util.HapticType
 import chromahub.rhythm.app.R
 import androidx.compose.ui.res.stringResource
 
@@ -194,7 +195,7 @@ fun AutoEQSuggestionDialog(
                 if (savedDevice.autoEQProfileName != null) {
                     Button(
                         onClick = {
-                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                            HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                             onApplyProfile()
                         },
                         modifier = Modifier.fillMaxWidth()
@@ -211,7 +212,7 @@ fun AutoEQSuggestionDialog(
                 
                 FilledTonalButton(
                     onClick = {
-                        HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                        HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                         onConfigureDevice()
                     },
                     modifier = Modifier.fillMaxWidth()
@@ -231,7 +232,7 @@ fun AutoEQSuggestionDialog(
                 ) {
                     OutlinedButton(
                         onClick = {
-                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                            HapticUtils.performHapticFeedback(context, haptics, HapticType.LIGHT)
                             onDontAskAgain()
                         },
                         modifier = Modifier
@@ -249,7 +250,7 @@ fun AutoEQSuggestionDialog(
                     
                     OutlinedButton(
                         onClick = {
-                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                            HapticUtils.performHapticFeedback(context, haptics, HapticType.LIGHT)
                             onDismiss()
                         },
                         modifier = Modifier

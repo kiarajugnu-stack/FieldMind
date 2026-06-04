@@ -18,8 +18,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
+import chromahub.rhythm.app.shared.presentation.components.common.DragDropLazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.text.style.TextOverflow
@@ -57,6 +57,7 @@ import chromahub.rhythm.app.shared.presentation.components.common.ButtonGroupSty
 import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveButtonGroup
 import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveGroupButton
 import chromahub.rhythm.app.util.HapticUtils
+import chromahub.rhythm.app.util.HapticType
 import kotlinx.coroutines.launch
 import androidx.compose.ui.res.stringResource
 
@@ -141,18 +142,17 @@ fun HomeSectionOrderBottomSheet(
         val totalSectionCards = reorderableList.size + 1
 
         Column(modifier = Modifier.fillMaxWidth()) {
-            LazyColumn(
+            // Header content (Fixed)
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(1f)
-                    .padding(horizontal = 24.dp, vertical = 16.dp)
+                    .padding(horizontal = 24.dp)
+                    .padding(top = 16.dp, bottom = 8.dp)
             ) {
-            // Header
-            item {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 0.dp, vertical = 16.dp),
+                        .padding(vertical = 16.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
@@ -182,12 +182,14 @@ fun HomeSectionOrderBottomSheet(
                         }
                     }
                 }
-                
-                Spacer(modifier = Modifier.height(24.dp))
             }
-            
+
             // Fixed Discover Carousel section (always first, not reorderable)
-            item(key = "fixed_discover") {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp)
+            ) {
                 val (discoverName, discoverIcon) = getSectionInfo("DISCOVER")
                 val isDiscoverVisible = visibilityMap["DISCOVER"] ?: true
                 
@@ -222,7 +224,6 @@ fun HomeSectionOrderBottomSheet(
                                     Icon(
                                         imageVector = RhythmIcons.Pushpin,
                                         contentDescription = null,
-                                        
                                         modifier = Modifier.size(18.dp)
                                     )
                                 }
@@ -253,7 +254,7 @@ fun HomeSectionOrderBottomSheet(
                         // Visibility toggle only (no reorder buttons)
                         IconButton(
                             onClick = {
-                                HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                                HapticUtils.performHapticFeedback(context, haptics, HapticType.LIGHT)
                                 visibilityMap = visibilityMap.toMutableMap().apply {
                                     this["DISCOVER"] = !isDiscoverVisible
                                 }
@@ -270,21 +271,37 @@ fun HomeSectionOrderBottomSheet(
                     }
                 }
             }
-            
-            // Reorderable list
-            itemsIndexed(
+
+            Spacer(modifier = Modifier.height(4.dp))
+
+            // Reorderable list using DragDropLazyColumn
+            val lazyListState = rememberLazyListState()
+            DragDropLazyColumn(
                 items = reorderableList,
-                key = { _, item -> item }
-            ) { index, sectionId ->
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f)
+                    .padding(horizontal = 24.dp),
+                lazyListState = lazyListState,
+                onMove = { fromIndex, toIndex ->
+                    val newList = reorderableList.toMutableList()
+                    val item = newList.removeAt(fromIndex)
+                    newList.add(toIndex, item)
+                    reorderableList = newList
+                },
+                itemKey = { it }
+            ) { sectionId, isDragging, index ->
                 val (sectionName, sectionIcon) = getSectionInfo(sectionId)
                 
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(vertical = 4.dp)
-                        .animateItem(),
+                        .padding(vertical = 4.dp),
                     colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+                        containerColor = if (isDragging) 
+                            MaterialTheme.colorScheme.secondaryContainer 
+                        else 
+                            MaterialTheme.colorScheme.surfaceContainerHigh
                     ),
                     shape = groupedBottomSheetItemShape(index + 1, totalSectionCards)
                 ) {
@@ -334,9 +351,11 @@ fun HomeSectionOrderBottomSheet(
                             )
                         }
                         
-                        // Visibility and reorder buttons
-                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            // Visibility toggle button
+                        // Visibility toggle and drag handle
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
                             val isVisible = visibilityMap[sectionId] ?: true
                             val visibleSectionsCount = visibilityMap.values.count { it }
                             
@@ -347,7 +366,7 @@ fun HomeSectionOrderBottomSheet(
                                         Toast.makeText(context, R.string.home_section_one_visible, Toast.LENGTH_SHORT).show()
                                         return@IconButton
                                     }
-                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                                    HapticUtils.performHapticFeedback(context, haptics, HapticType.LIGHT)
                                     if (sectionId == "RHYTHM_GUARD") {
                                         appSettings.setRhythmGuardMode(
                                             if (isVisible) AppSettings.RHYTHM_GUARD_MODE_OFF else AppSettings.RHYTHM_GUARD_MODE_AUTO
@@ -367,65 +386,20 @@ fun HomeSectionOrderBottomSheet(
                                     modifier = Modifier.size(20.dp)
                                 )
                             }
-                            
-                            // Move up button
-                            FilledIconButton(
-                                onClick = {
-                                    if (index > 0) {
-                                        HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
-                                        val newList = reorderableList.toMutableList()
-                                        val item = newList.removeAt(index)
-                                        newList.add(index - 1, item)
-                                        reorderableList = newList
-                                    }
-                                },
-                                enabled = index > 0,
-                                colors = IconButtonDefaults.filledIconButtonColors(
-                                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
-                                    disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-                                    disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f)
-                                ),
-                                modifier = Modifier.size(40.dp)
-                            ) {
-                                Icon(
-                                    imageVector = RhythmIcons.ArrowUpward,
-                                    contentDescription = stringResource(R.string.settings_move_up),
-                                    modifier = Modifier.size(20.dp)
-                                )
-                            }
-                            
-                            // Move down button
-                            FilledIconButton(
-                                onClick = {
-                                    if (index < reorderableList.size - 1) {
-                                        HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
-                                        val newList = reorderableList.toMutableList()
-                                        val item = newList.removeAt(index)
-                                        newList.add(index + 1, item)
-                                        reorderableList = newList
-                                    }
-                                },
-                                enabled = index < reorderableList.size - 1,
-                                colors = IconButtonDefaults.filledIconButtonColors(
-                                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
-                                    disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-                                    disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f)
-                                ),
-                                modifier = Modifier.size(40.dp)
-                            ) {
-                                Icon(
-                                    imageVector = RhythmIcons.ArrowDownward,
-                                    contentDescription = stringResource(R.string.settings_move_down),
-                                    modifier = Modifier.size(20.dp)
-                                )
-                            }
+
+                            // Drag Handle Icon
+                            Icon(
+                                imageVector = RhythmIcons.DragHandle,
+                                contentDescription = "Drag to reorder",
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+                                modifier = Modifier
+                                    .size(24.dp)
+                                    .padding(horizontal = 4.dp)
+                            )
                         }
                     }
                 }
             }
-        }
         
         // Sticky action buttons at bottom
         Surface(
@@ -442,7 +416,7 @@ fun HomeSectionOrderBottomSheet(
                 // Reset button
                 ExpressiveGroupButton(
                     onClick = {
-                        HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                        HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                         val defaultOrder = listOf(
                             "RECENTLY_PLAYED", "ARTISTS", "RHYTHM_GUARD",
                             "NEW_RELEASES", "RECENTLY_ADDED", "RECOMMENDED", "STATS"
@@ -475,7 +449,7 @@ fun HomeSectionOrderBottomSheet(
                 // Save button
                 ExpressiveGroupButton(
                     onClick = {
-                        HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                        HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
 
                         // Save section order (DISCOVER first, then user-ordered sections)
                         val finalOrder = listOf("DISCOVER") + reorderableList

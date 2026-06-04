@@ -92,6 +92,7 @@ import chromahub.rhythm.app.shared.data.repository.PlaybackStatsRepository
 import chromahub.rhythm.app.shared.data.repository.StatsTimeRange
 import chromahub.rhythm.app.util.GsonUtils
 import chromahub.rhythm.app.util.HapticUtils
+import chromahub.rhythm.app.util.HapticType
 import coil.compose.AsyncImage
 import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
@@ -258,7 +259,7 @@ fun CacheSizeDialog(
                             HapticUtils.performHapticFeedback(
                                 context,
                                 haptics,
-                                HapticFeedbackType.TextHandleMove
+                                HapticType.LIGHT
                             )
                         },
                         valueRange = 64f..2048f,
@@ -289,7 +290,7 @@ fun CacheSizeDialog(
                                 HapticUtils.performHapticFeedback(
                                     context,
                                     haptics,
-                                    HapticFeedbackType.TextHandleMove
+                                    HapticType.LIGHT
                                 )
                             },
                             shape = RoundedCornerShape(8.dp),
@@ -320,7 +321,7 @@ fun CacheSizeDialog(
                     HapticUtils.performHapticFeedback(
                         context,
                         haptics,
-                        HapticFeedbackType.LongPress
+                        HapticType.HEAVY
                     )
                     val sizeInBytes = selectedSizeMB.toLong() * 1024L * 1024L
                     onSave(sizeInBytes)

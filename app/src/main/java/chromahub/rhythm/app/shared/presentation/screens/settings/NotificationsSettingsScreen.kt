@@ -92,6 +92,7 @@ import chromahub.rhythm.app.shared.data.repository.PlaybackStatsRepository
 import chromahub.rhythm.app.shared.data.repository.StatsTimeRange
 import chromahub.rhythm.app.util.GsonUtils
 import chromahub.rhythm.app.util.HapticUtils
+import chromahub.rhythm.app.util.HapticType
 import coil.compose.AsyncImage
 import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
@@ -304,7 +305,7 @@ fun NotificationsSettingsScreen(onBackClick: () -> Unit) {
                     intervals.forEach { (hours, label) ->
                         Card(
                             onClick = {
-                                HapticUtils.performHapticFeedback(context, hapticFeedback, HapticFeedbackType.TextHandleMove)
+                                HapticUtils.performHapticFeedback(context, hapticFeedback, HapticType.LIGHT)
                                 appSettings.setRhythmPulseNotificationIntervalHours(hours)
                                 showPulseIntervalDialog = false
                             },

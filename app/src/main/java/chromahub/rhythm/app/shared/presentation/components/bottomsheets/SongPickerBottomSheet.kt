@@ -34,6 +34,7 @@ import chromahub.rhythm.app.shared.data.model.Playlist
 import chromahub.rhythm.app.shared.data.model.Song
 import chromahub.rhythm.app.shared.presentation.components.common.M3PlaceholderType
 import chromahub.rhythm.app.util.HapticUtils
+import chromahub.rhythm.app.util.HapticType
 import chromahub.rhythm.app.util.ImageUtils
 import chromahub.rhythm.app.shared.presentation.screens.settings.SettingsSearchBar
 import chromahub.rhythm.app.R
@@ -124,7 +125,7 @@ fun SongPickerBottomSheet(
                                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                     FilledTonalIconButton(
                                         onClick = {
-                                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                                            HapticUtils.performHapticFeedback(context, haptics, HapticType.LIGHT)
                                             if (selectedSongs.size == filteredSongs.size) selectedSongs = emptySet()
                                             else selectedSongs = filteredSongs.map { it.id }.toSet()
                                         },
@@ -142,7 +143,7 @@ fun SongPickerBottomSheet(
 
                                     FilledIconButton(
                                         onClick = {
-                                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                            HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                                             val songsToAdd = filteredSongs.filter { selectedSongs.contains(it.id) }
                                             onAddSongsToPlaylist(songsToAdd)
                                             isSelectionMode = false
@@ -161,7 +162,7 @@ fun SongPickerBottomSheet(
                             AnimatedVisibility(visible = !isSelectionMode) {
                                 FilledTonalIconButton(
                                     onClick = {
-                                        HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                        HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                                         isSelectionMode = !isSelectionMode
                                         if (!isSelectionMode) selectedSongs = emptySet()
                                     },
@@ -235,7 +236,7 @@ fun SongPickerBottomSheet(
                             index = index,
                             totalCount = filteredSongs.size,
                             onSongClick = {
-                                HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                                HapticUtils.performHapticFeedback(context, haptics, HapticType.LIGHT)
                                 if (isSelectionMode) {
                                     selectedSongs = if (selectedSongs.contains(song.id)) selectedSongs - song.id else selectedSongs + song.id
                                 } else {
@@ -243,7 +244,7 @@ fun SongPickerBottomSheet(
                                 }
                             },
                             onLongClick = {
-                                HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                                 if (!isSelectionMode) {
                                     isSelectionMode = true
                                     selectedSongs = setOf(song.id)

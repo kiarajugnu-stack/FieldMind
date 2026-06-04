@@ -70,6 +70,7 @@ import chromahub.rhythm.app.shared.presentation.components.common.ButtonGroupSty
 import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveButtonGroup
 import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveGroupButton
 import chromahub.rhythm.app.util.HapticUtils
+import chromahub.rhythm.app.util.HapticType
 import chromahub.rhythm.app.util.LyricsFileUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -368,7 +369,7 @@ fun LyricsEditorBottomSheet(
                             // Reset/Refresh button
                             FilledTonalButton(
                                 onClick = {
-                                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
+                                    HapticUtils.performHapticFeedback(context, haptic, HapticType.HEAVY)
                                     timeOffset = 0
                                     onRefresh()
                                 },
@@ -405,7 +406,7 @@ fun LyricsEditorBottomSheet(
                         // Earlier Button (-500ms)
                         OutlinedButton(
                             onClick = {
-                                HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
+                                HapticUtils.performHapticFeedback(context, haptic, HapticType.HEAVY)
                                 timeOffset -= 500
                                 editedLyrics = adjustLyricsTimestamps(editedLyrics, -500)
                                 onSave(editedLyrics, timeOffset) // Apply changes immediately with offset
@@ -453,7 +454,7 @@ fun LyricsEditorBottomSheet(
                         // Earlier Button (-100ms)
                         OutlinedButton(
                             onClick = {
-                                HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
+                                HapticUtils.performHapticFeedback(context, haptic, HapticType.HEAVY)
                                 timeOffset -= 100
                                 editedLyrics = adjustLyricsTimestamps(editedLyrics, -100)
                                 onSave(editedLyrics, timeOffset) // Apply changes immediately with offset
@@ -501,7 +502,7 @@ fun LyricsEditorBottomSheet(
                         // Later Button (+100ms)
                         OutlinedButton(
                             onClick = {
-                                HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
+                                HapticUtils.performHapticFeedback(context, haptic, HapticType.HEAVY)
                                 timeOffset += 100
                                 editedLyrics = adjustLyricsTimestamps(editedLyrics, 100)
                                 onSave(editedLyrics, timeOffset) // Apply changes immediately with offset
@@ -549,7 +550,7 @@ fun LyricsEditorBottomSheet(
                         // Later Button (+500ms)
                         OutlinedButton(
                             onClick = {
-                                HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
+                                HapticUtils.performHapticFeedback(context, haptic, HapticType.HEAVY)
                                 timeOffset += 500
                                 editedLyrics = adjustLyricsTimestamps(editedLyrics, 500)
                                 onSave(editedLyrics, timeOffset) // Apply changes immediately with offset
@@ -651,7 +652,7 @@ fun LyricsEditorBottomSheet(
                 // Load File Button
                 ExpressiveGroupButton(
                     onClick = {
-                        HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
+                        HapticUtils.performHapticFeedback(context, haptic, HapticType.HEAVY)
                         loadLyricsLauncher.launch(
                             arrayOf(
                                 "text/plain",
@@ -678,7 +679,7 @@ fun LyricsEditorBottomSheet(
                 // Save File Button
                 ExpressiveGroupButton(
                     onClick = {
-                        HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
+                        HapticUtils.performHapticFeedback(context, haptic, HapticType.HEAVY)
                         if (editedLyrics.isNotBlank()) {
                             saveLyricsLauncher.launch(defaultLyricsFileName)
                         }
@@ -708,7 +709,7 @@ fun LyricsEditorBottomSheet(
             ) {
                 ExpressiveGroupButton(
                     onClick = {
-                        HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
+                        HapticUtils.performHapticFeedback(context, haptic, HapticType.HEAVY)
                         if (editedLyrics.isNotBlank()) {
                             onEmbedInFile(editedLyrics)
                         }

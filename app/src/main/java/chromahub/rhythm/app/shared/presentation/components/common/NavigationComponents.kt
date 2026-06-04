@@ -1,4 +1,8 @@
 package chromahub.rhythm.app.shared.presentation.components.common
+import androidx.compose.ui.platform.LocalContext
+import chromahub.rhythm.app.util.HapticUtils
+import chromahub.rhythm.app.util.HapticType
+
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Spring
@@ -64,6 +68,7 @@ fun AlphabetBar(
     modifier: Modifier = Modifier,
     haptics: HapticFeedback? = null
 ) {
+    val context = LocalContext.current
     var draggedLetter by remember { mutableStateOf<String?>(null) }
     val activeLetter = draggedLetter ?: selectedLetter
     
@@ -109,7 +114,7 @@ fun AlphabetBar(
                             val letter = letters[index]
                             draggedLetter = letter
                             onLetterSelected(letter)
-                            haptics?.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                            haptics?.let { HapticUtils.performHapticFeedback(context, it, HapticType.LIGHT) }
                         },
                         onDrag = { change, _ ->
                             change.consume()
@@ -119,7 +124,7 @@ fun AlphabetBar(
                             if (letter != draggedLetter) {
                                 draggedLetter = letter
                                 onLetterSelected(letter)
-                                haptics?.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                haptics?.let { HapticUtils.performHapticFeedback(context, it, HapticType.LIGHT) }
                             }
                         },
                         onDragEnd = {
@@ -138,7 +143,7 @@ fun AlphabetBar(
                     fontSize = fontSize,
                     onClick = {
                         onLetterSelected(letter)
-                        haptics?.performHapticFeedback(HapticFeedbackType.LongPress)
+                        haptics?.let { HapticUtils.performHapticFeedback(context, it, HapticType.HEAVY) }
                     }
                 )
             }
@@ -224,6 +229,7 @@ fun ScrollToTopButton(
     modifier: Modifier = Modifier,
     haptics: HapticFeedback? = null
 ) {
+    val context = LocalContext.current
     // Responsive sizing based on screen size
     val configuration = LocalConfiguration.current
     val screenWidthDp = configuration.screenWidthDp
@@ -278,7 +284,7 @@ fun ScrollToTopButton(
         
         FloatingActionButton(
             onClick = {
-                haptics?.performHapticFeedback(HapticFeedbackType.LongPress)
+                haptics?.let { HapticUtils.performHapticFeedback(context, it, HapticType.HEAVY) }
                 onClick()
             },
             containerColor = MaterialTheme.colorScheme.primaryContainer,

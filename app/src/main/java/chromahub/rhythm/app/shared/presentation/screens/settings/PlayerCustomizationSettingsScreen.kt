@@ -92,6 +92,7 @@ import chromahub.rhythm.app.shared.data.repository.PlaybackStatsRepository
 import chromahub.rhythm.app.shared.data.repository.StatsTimeRange
 import chromahub.rhythm.app.util.GsonUtils
 import chromahub.rhythm.app.util.HapticUtils
+import chromahub.rhythm.app.util.HapticType
 import coil.compose.AsyncImage
 import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
@@ -165,44 +166,23 @@ fun PlayerCustomizationSettingsScreen(onBackClick: () -> Unit) {
     // State variables
     val playerThemeId by appSettings.playerThemeId.collectAsState()
     val isExpressiveActive = playerThemeId == "EXPRESSIVE"
-    val showLyrics by appSettings.showLyrics.collectAsState()
     val playerShowGradientOverlay by appSettings.playerShowGradientOverlay.collectAsState()
-    val playerLyricsTransition by appSettings.playerLyricsTransition.collectAsState()
-    val playerLyricsTextSize by appSettings.playerLyricsTextSize.collectAsState()
-    val playerLyricsAlignment by appSettings.playerLyricsAlignment.collectAsState()
-    val playerShowArtBelowLyrics by appSettings.playerShowArtBelowLyrics.collectAsState()
-    val keepScreenOnLyrics by appSettings.keepScreenOnLyrics.collectAsState()
     val playerShowSeekButtons by appSettings.playerShowSeekButtons.collectAsState()
     val playerTextAlignment by appSettings.playerTextAlignment.collectAsState()
     val playerShowSongInfoOnArtwork by appSettings.playerShowSongInfoOnArtwork.collectAsState()
     val playerArtworkCornerRadius by appSettings.playerArtworkCornerRadius.collectAsState()
     val playerShowAudioQualityBadges by appSettings.playerShowAudioQualityBadges.collectAsState()
     val expressiveShapesEnabled by appSettings.expressiveShapesEnabled.collectAsState()
-    val tapLyricsToFullScreen by appSettings.tapLyricsToFullScreen.collectAsState()
-    val autoHideLyricsControls by appSettings.autoHideLyricsControls.collectAsState()
 
     // Progress bar settings
     val playerProgressStyle by appSettings.playerProgressStyle.collectAsState()
     val playerProgressThumbStyle by appSettings.playerProgressThumbStyle.collectAsState()
 
     var showChipOrderBottomSheet by remember { mutableStateOf(false) }
-    var showLyricsSourceDialog by remember { mutableStateOf(false) }
-    var showLyricsApiPriorityBottomSheet by remember { mutableStateOf(false) }
     var showTextAlignmentSheet by remember { mutableStateOf(false) }
     var showCornerRadiusSheet by remember { mutableStateOf(false) }
     var showPlayerProgressStyleSheet by remember { mutableStateOf(false) }
     var showPlayerThumbStyleSheet by remember { mutableStateOf(false) }
-
-    if (showLyricsSourceDialog) {
-        LyricsSourceDialog(onDismiss = { showLyricsSourceDialog = false }, appSettings = appSettings, context = context, haptic = haptics)
-    }
-
-    if (showLyricsApiPriorityBottomSheet) {
-        LyricsApiPriorityBottomSheet(
-            onDismiss = { showLyricsApiPriorityBottomSheet = false },
-            appSettings = appSettings
-        )
-    }
 
     CollapsibleHeaderScreen(
         title = context.getString(R.string.settings_player),
@@ -240,7 +220,7 @@ fun PlayerCustomizationSettingsScreen(onBackClick: () -> Unit) {
                                         ),
                                         selectedIndex = if (playerThemeId == "EXPRESSIVE") 1 else 0,
                                         onItemClick = { index ->
-                                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                            HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                                             if (index == 1) {
                                                 appSettings.setPlayerThemeId("EXPRESSIVE")
                                             } else {
@@ -335,232 +315,6 @@ fun PlayerCustomizationSettingsScreen(onBackClick: () -> Unit) {
                 )
             }
 
-            // Lyrics Customization Section (always visible)
-            item {
-                Spacer(modifier = Modifier.height(24.dp))
-                Text(
-                    text = context.getString(R.string.settings_lyrics_customization),
-                    style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
-                    color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
-                )
-
-                val lyricsSettingsItems = buildList {
-                    add(
-                        toMaterial3SettingsItem(
-                            context = context,
-                            hapticFeedback = haptics,
-                            item = SettingItem(
-                                icon = MaterialSymbolIcon("lyrics", filled = true),
-                                title = context.getString(R.string.settings_show_lyrics),
-                                description = context.getString(R.string.settings_show_lyrics_desc),
-                                toggleState = showLyrics,
-                                onToggleChange = { appSettings.setShowLyrics(it) }
-                            )
-                        )
-                    )
-
-                    if (showLyrics) {
-                        add(
-                            toMaterial3SettingsItem(
-                                context = context,
-                                hapticFeedback = haptics,
-                                item = SettingItem(
-                                    icon = MaterialSymbolIcon("fullscreen", filled = true),
-                                    title = stringResource(R.string.playercustomizationsettingsscreen_tap_lyrics_for_immersive),
-                                    description = "Open a full-screen lyrics screen by tapping the lyrics view",
-                                    toggleState = tapLyricsToFullScreen,
-                                    onToggleChange = { appSettings.setTapLyricsToFullScreen(it) }
-                                )
-                            )
-                        )
-                        add(
-                            toMaterial3SettingsItem(
-                                context = context,
-                                hapticFeedback = haptics,
-                                item = SettingItem(
-                                    icon = MaterialSymbolIcon("lyrics"),
-                                    title = context.getString(R.string.lyrics_source_priority),
-                                    description = context.getString(R.string.playback_lyrics_priority_desc),
-                                    onClick = { showLyricsSourceDialog = true }
-                                )
-                            )
-                        )
-                        val apiPriority by appSettings.lyricsApiPriority.collectAsState()
-                        add(
-                            toMaterial3SettingsItem(
-                                context = context,
-                                hapticFeedback = haptics,
-                                item = SettingItem(
-                                    icon = MaterialSymbolIcon("lyrics"),
-                                    title = stringResource(R.string.lyricssourcesettingsscreen_lyrics_api_priority),
-                                    description = if (apiPriority == chromahub.rhythm.app.shared.data.model.LyricsApiPriority.APPLE_MUSIC_FIRST) "Apple Music First" else "LRCLib First",
-                                    onClick = { showLyricsApiPriorityBottomSheet = true }
-                                )
-                            )
-                        )
-                        add(
-                            toMaterial3SettingsItem(
-                                context = context,
-                                hapticFeedback = haptics,
-                                item = SettingItem(
-                                    icon = MaterialSymbolIcon("light_mode", filled = true),
-                                    title = context.getString(R.string.settings_keep_screen_on_lyrics),
-                                    description = context.getString(R.string.settings_keep_screen_on_lyrics_desc),
-                                    toggleState = keepScreenOnLyrics,
-                                    onToggleChange = { appSettings.setKeepScreenOnLyrics(it) }
-                                )
-                            )
-                        )
-                        add(
-                            toMaterial3SettingsItem(
-                                context = context,
-                                hapticFeedback = haptics,
-                                item = SettingItem(
-                                    icon = MaterialSymbolIcon("visibility_off"),
-                                    title = "Auto-hide lyrics controls",
-                                    description = "Automatically hide controls in full-screen lyrics screen after a few seconds of inactivity",
-                                    toggleState = autoHideLyricsControls,
-                                    onToggleChange = { appSettings.setAutoHideLyricsControls(it) }
-                                )
-                            )
-                        )
-                        add(
-                            toMaterial3SettingsItem(
-                                context = context,
-                                hapticFeedback = haptics,
-                                item = SettingItem(
-                                    icon = MaterialSymbolIcon("animation"),
-                                    title = context.getString(R.string.settings_lyrics_transition),
-                                    description = "Art ↔ Lyrics switch animation"
-                                ),
-                                description = {
-                                    Column(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(top = 8.dp),
-                                        verticalArrangement = Arrangement.spacedBy(12.dp)
-                                    ) {
-                                        Text(
-                                            text = stringResource(R.string.settings_lyrics_transition_desc),
-                                            style = MaterialTheme.typography.bodyMedium,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                                        )
-                                        ExpressiveButtonGroup(
-                                            items = listOf("Slide", "Fade", "Scale", "Up"),
-                                            selectedIndex = playerLyricsTransition,
-                                            onItemClick = { index ->
-                                                HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
-                                                appSettings.setPlayerLyricsTransition(index)
-                                            },
-                                            modifier = Modifier.fillMaxWidth()
-                                        )
-                                    }
-                                }
-                            )
-                        )
-                        add(
-                            toMaterial3SettingsItem(
-                                context = context,
-                                hapticFeedback = haptics,
-                                item = SettingItem(
-                                    icon = MaterialSymbolIcon("format_size"),
-                                    title = context.getString(R.string.settings_lyrics_text_size),
-                                    description = "Size: ${(playerLyricsTextSize * 100).toInt()}%"
-                                ),
-                                description = {
-                                    Column(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(top = 8.dp),
-                                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                                    ) {
-                                        Text(
-                                            text = "Size: ${(playerLyricsTextSize * 100).toInt()}%",
-                                            style = MaterialTheme.typography.bodyMedium,
-                                            color = MaterialTheme.colorScheme.primary
-                                        )
-                                        Slider(
-                                            value = playerLyricsTextSize,
-                                            onValueChange = { appSettings.setPlayerLyricsTextSize(it) },
-                                            valueRange = 0.5f..2.0f,
-                                            modifier = Modifier.fillMaxWidth()
-                                        )
-                                        Row(
-                                            modifier = Modifier.fillMaxWidth(),
-                                            horizontalArrangement = Arrangement.SpaceBetween
-                                        ) {
-                                            Text("50%", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                            Text("200%", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                        }
-                                    }
-                                }
-                            )
-                        )
-                        add(
-                            toMaterial3SettingsItem(
-                                context = context,
-                                hapticFeedback = haptics,
-                                item = SettingItem(
-                                    icon = MaterialSymbolIcon("format_align_center"),
-                                    title = stringResource(R.string.settings_lyrics_alignment),
-                                    description = context.getString(R.string.settings_lyrics_alignment_desc)
-                                ),
-                                description = {
-                                    Column(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(top = 8.dp),
-                                        verticalArrangement = Arrangement.spacedBy(12.dp)
-                                    ) {
-                                        Text(
-                                            text = context.getString(R.string.settings_lyrics_alignment_desc),
-                                            style = MaterialTheme.typography.bodyMedium,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                                        )
-                                        ExpressiveButtonGroup(
-                                            items = listOf("Left", "Center", "Right"),
-                                            selectedIndex = when (playerLyricsAlignment) {
-                                                "START" -> 0
-                                                "END" -> 2
-                                                else -> 1
-                                            },
-                                            onItemClick = { index ->
-                                                HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
-                                                appSettings.setPlayerLyricsAlignment(when (index) {
-                                                    0 -> "START"
-                                                    2 -> "END"
-                                                    else -> "CENTER"
-                                                })
-                                            },
-                                            modifier = Modifier.fillMaxWidth()
-                                        )
-                                    }
-                                }
-                            )
-                        )
-                        add(
-                            toMaterial3SettingsItem(
-                                context = context,
-                                hapticFeedback = haptics,
-                                item = SettingItem(
-                                    icon = RhythmIcons.Image,
-                                    title = context.getString(R.string.settings_show_art_below_lyrics),
-                                    description = if (isExpressiveActive) "Not supported by Expressive theme" else context.getString(R.string.settings_show_art_below_lyrics_desc),
-                                    toggleState = playerShowArtBelowLyrics,
-                                    onToggleChange = { appSettings.setPlayerShowArtBelowLyrics(it) },
-                                    enabled = !isExpressiveActive
-                                )
-                            )
-                        )
-                    }
-                }
-
-                Material3SettingsGroup(
-                    items = lyricsSettingsItems,
-                    containerColor = MaterialTheme.colorScheme.surfaceContainer
-                )
-            }
             item {
                 Spacer(modifier = Modifier.height(24.dp))
                 Text(
@@ -812,7 +566,7 @@ fun PlayerCustomizationSettingsScreen(onBackClick: () -> Unit) {
                                 MaterialTheme.colorScheme.surfaceContainerHigh
                         ),
                         onClick = {
-                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                            HapticUtils.performHapticFeedback(context, haptics, HapticType.LIGHT)
                             appSettings.setPlayerTextAlignment(value)
                             showTextAlignmentSheet = false
                         }
@@ -950,7 +704,7 @@ fun PlayerCustomizationSettingsScreen(onBackClick: () -> Unit) {
                     value = tempRadius.toFloat(),
                     onValueChange = { tempRadius = it.toInt() },
                     onValueChangeFinished = {
-                        HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                        HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                         appSettings.setPlayerArtworkCornerRadius(tempRadius)
                     },
                     valueRange = 0f..40f,
@@ -1015,7 +769,7 @@ fun SettingRow(
             .fillMaxWidth()
             .then(
                 if (onClick != null) Modifier.clickable {
-                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                    HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                     onClick()
                 }
                 else Modifier
@@ -1050,7 +804,7 @@ fun SettingRow(
             TunerAnimatedSwitch(
                 checked = toggleState,
                 onCheckedChange = {
-                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                    HapticUtils.performHapticFeedback(context, haptics, HapticType.LIGHT)
                     onToggleChange(it)
                 }
             )
@@ -1175,7 +929,7 @@ fun ProgressStyleBottomSheet(
                             BorderStroke(2.dp, MaterialTheme.colorScheme.primary)
                         else null,
                         onClick = {
-                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                            HapticUtils.performHapticFeedback(context, haptics, HapticType.LIGHT)
                             onStyleSelected(styleOption.id)
                         }
                     ) {
@@ -1374,7 +1128,7 @@ fun ThumbStyleBottomSheet(
                             BorderStroke(2.dp, MaterialTheme.colorScheme.primary)
                         else null,
                         onClick = {
-                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                            HapticUtils.performHapticFeedback(context, haptics, HapticType.LIGHT)
                             onStyleSelected(styleOption.id)
                         }
                     ) {

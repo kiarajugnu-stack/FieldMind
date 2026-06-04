@@ -92,6 +92,7 @@ import chromahub.rhythm.app.shared.data.repository.PlaybackStatsRepository
 import chromahub.rhythm.app.shared.data.repository.StatsTimeRange
 import chromahub.rhythm.app.util.GsonUtils
 import chromahub.rhythm.app.util.HapticUtils
+import chromahub.rhythm.app.util.HapticType
 import coil.compose.AsyncImage
 import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
@@ -188,7 +189,7 @@ fun GesturesSettingsScreen(onBackClick: () -> Unit) {
                         "Swipe up/down to open/dismiss, left/right to skip tracks",
                         toggleState = miniPlayerSwipeGestures,
                         onToggleChange = {
-                            HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                            HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                             appSettings.setMiniPlayerSwipeGestures(it)
                         }
                     )
@@ -214,7 +215,7 @@ fun GesturesSettingsScreen(onBackClick: () -> Unit) {
                         "Close player by swiping down on the screen",
                         toggleState = gesturePlayerSwipeDismiss,
                         onToggleChange = {
-                            HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                            HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                             appSettings.setGesturePlayerSwipeDismiss(it)
                         }
                     ),
@@ -224,7 +225,7 @@ fun GesturesSettingsScreen(onBackClick: () -> Unit) {
                         "Swipe left/right on album artwork to skip tracks",
                         toggleState = gesturePlayerSwipeTracks,
                         onToggleChange = {
-                            HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                            HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                             appSettings.setGesturePlayerSwipeTracks(it)
                         }
                     ),
@@ -234,7 +235,7 @@ fun GesturesSettingsScreen(onBackClick: () -> Unit) {
                         "Double tap on album art to play/pause",
                         toggleState = gestureArtworkDoubleTap,
                         onToggleChange = {
-                            HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                            HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                             appSettings.setGestureArtworkDoubleTap(it)
                         }
                     )

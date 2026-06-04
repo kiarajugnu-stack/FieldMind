@@ -104,6 +104,7 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalConfiguration
 import chromahub.rhythm.app.ui.theme.RhythmTheme
 import chromahub.rhythm.app.util.HapticUtils
+import chromahub.rhythm.app.util.HapticType
 import androidx.lifecycle.viewmodel.compose.viewModel
 import chromahub.rhythm.app.shared.presentation.components.player.SleepTimerBottomSheetNew
 import chromahub.rhythm.app.features.local.presentation.navigation.Screen
@@ -133,7 +134,7 @@ object SettingsRoutes {
     const val CRASH_LOG_HISTORY = "crash_log_history_settings"
     const val QUEUE = "queue_settings"
     const val PLAYBACK = "playback_settings"
-    const val LYRICS_SOURCE = "lyrics_source_settings"
+    const val LYRICS = "lyrics_settings"
     const val WIDGET = "widget_settings"
     const val HOME_SCREEN = "home_screen_settings"
     const val GESTURES = "gestures_settings"
@@ -210,7 +211,7 @@ fun SettingsScreen(
             if (isSearchActive) {
                 searchQuery = ""
             } else {
-                HapticUtils.performHapticFeedback(context, hapticFeedback, HapticFeedbackType.LongPress)
+                HapticUtils.performHapticFeedback(context, hapticFeedback, HapticType.HEAVY)
                 onBackClick()
             }
         }
@@ -325,6 +326,12 @@ fun SettingsScreen(
                     //add(SettingItem(MaterialSymbolIcon("graphic_eq"), context.getString(R.string.replay_gain), context.getString(R.string.replay_gain_desc), toggleState = replayGain, onToggleChange = { appSettings.setReplayGain(it) }))
                     // Equalizer is available in both LOCAL and STREAMING modes
                     add(SettingItem(RhythmIcons.Equalizer, context.getString(R.string.settings_equalizer_title), context.getString(R.string.settings_equalizer_desc), onClick = { onNavigateTo(SettingsRoutes.EQUALIZER) }))
+                    add(SettingItem(
+                        icon = MaterialSymbolIcon("lyrics"),
+                        title = context.getString(R.string.settings_lyrics_source),
+                        description = context.getString(R.string.playback_lyrics_priority_desc),
+                        onClick = { onNavigateTo(SettingsRoutes.LYRICS) }
+                    ))
                     add(SettingItem(
                         icon = MaterialSymbolIcon("speed"),
                         title = stringResource(R.string.performancesettingsscreen_performance),
@@ -474,7 +481,7 @@ fun SettingsScreen(
                                                         HapticUtils.performHapticFeedback(
                                                             context,
                                                             hapticFeedback,
-                                                            HapticFeedbackType.TextHandleMove
+                                                            HapticType.LIGHT
                                                         )
                                                         item.onToggleChange?.invoke(it)
                                                     }
@@ -491,7 +498,7 @@ fun SettingsScreen(
                                                     HapticUtils.performHapticFeedback(
                                                         context,
                                                         hapticFeedback,
-                                                        HapticFeedbackType.TextHandleMove
+                                                        HapticType.LIGHT
                                                     )
                                                     item.onToggleChange?.invoke(it)
                                                 }
@@ -520,7 +527,7 @@ fun SettingsScreen(
                                             HapticUtils.performHapticFeedback(
                                                 context,
                                                 hapticFeedback,
-                                                HapticFeedbackType.LongPress
+                                                HapticType.HEAVY
                                             )
                                             item.onClick.invoke()
                                         }
@@ -531,7 +538,7 @@ fun SettingsScreen(
                                             HapticUtils.performHapticFeedback(
                                                 context,
                                                 hapticFeedback,
-                                                HapticFeedbackType.TextHandleMove
+                                                HapticType.LIGHT
                                             )
                                             item.onToggleChange.invoke(!item.toggleState)
                                         }
@@ -612,7 +619,7 @@ fun SettingsScreen(
                     // Home option
                     Card(
                         onClick = {
-                            HapticUtils.performHapticFeedback(context, hapticFeedback, HapticFeedbackType.TextHandleMove)
+                            HapticUtils.performHapticFeedback(context, hapticFeedback, HapticType.LIGHT)
                             appSettings.setDefaultScreen("home")
                             showDefaultScreenDialog = false
                         },
@@ -679,7 +686,7 @@ fun SettingsScreen(
                     // Library option
                     Card(
                         onClick = {
-                            HapticUtils.performHapticFeedback(context, hapticFeedback, HapticFeedbackType.TextHandleMove)
+                            HapticUtils.performHapticFeedback(context, hapticFeedback, HapticType.LIGHT)
                             appSettings.setDefaultScreen("library")
                             showDefaultScreenDialog = false
                         },
@@ -844,7 +851,7 @@ fun SettingRow(item: SettingItem) {
                             indication = null,
                             onClick = {
                                 isPressed = true
-                                HapticUtils.performHapticFeedback(context, hapticFeedback, HapticFeedbackType.LongPress)
+                                HapticUtils.performHapticFeedback(context, hapticFeedback, HapticType.HEAVY)
                                 item.onClick()
                             }
                         )
@@ -854,7 +861,7 @@ fun SettingRow(item: SettingItem) {
                             indication = null,
                             onClick = {
                                 isPressed = true
-                                HapticUtils.performHapticFeedback(context, hapticFeedback, HapticFeedbackType.LongPress)
+                                HapticUtils.performHapticFeedback(context, hapticFeedback, HapticType.HEAVY)
                                 item.onClick()
                             }
                         )
@@ -892,7 +899,7 @@ fun SettingRow(item: SettingItem) {
             AnimatedSwitch(
                 checked = item.toggleState,
                 onCheckedChange = {
-                    HapticUtils.performHapticFeedback(context, hapticFeedback, HapticFeedbackType.TextHandleMove)
+                    HapticUtils.performHapticFeedback(context, hapticFeedback, HapticType.LIGHT)
                     item.onToggleChange?.invoke(it)
                 }
             )
@@ -900,7 +907,7 @@ fun SettingRow(item: SettingItem) {
             AnimatedSwitch(
                 checked = item.toggleState,
                 onCheckedChange = {
-                    HapticUtils.performHapticFeedback(context, hapticFeedback, HapticFeedbackType.TextHandleMove)
+                    HapticUtils.performHapticFeedback(context, hapticFeedback, HapticType.LIGHT)
                     item.onToggleChange?.invoke(it)
                 }
             )
@@ -1091,6 +1098,16 @@ fun SettingsScreenWrapper(
                         )
                         SettingsRoutes.UPDATES -> UpdatesSettingsScreen(onBackClick = { currentRoute = null })
                         SettingsRoutes.EXPERIMENTAL_FEATURES -> ExperimentalFeaturesScreen(onBackClick = { currentRoute = null }, onNavigateToGoSettings = { currentRoute = SettingsRoutes.GO_SETTINGS })
+                        SettingsRoutes.GO_SETTINGS -> chromahub.rhythm.app.features.streaming.presentation.screens.GoSettingsScreen(
+                            onBackClick = { currentRoute = null },
+                            onConfigureCurrentProvider = { serviceId ->
+                                appSettings.setInitialStreamingRoute("streaming_service_setup/$serviceId")
+                                appSettings.setAppMode("STREAMING")
+                                if (!navController.popBackStack()) {
+                                    navController.navigate("main") { launchSingleTop = true }
+                                }
+                            }
+                        )
                         SettingsRoutes.API_MANAGEMENT -> ApiManagementSettingsScreen(onBackClick = { currentRoute = null })
                         SettingsRoutes.CACHE_MANAGEMENT -> CacheManagementSettingsScreen(onBackClick = { currentRoute = null })
                         SettingsRoutes.BACKUP_RESTORE -> BackupRestoreSettingsScreen(onBackClick = { currentRoute = null })
@@ -1101,7 +1118,7 @@ fun SettingsScreenWrapper(
                         SettingsRoutes.CRASH_LOG_HISTORY -> CrashLogHistorySettingsScreen(onBackClick = { currentRoute = null }, appSettings = appSettings)
                         SettingsRoutes.QUEUE -> QueueSettingsScreen(onBackClick = { currentRoute = null })
                         SettingsRoutes.PLAYBACK -> PlaybackSettingsScreen(onBackClick = { currentRoute = null })
-                        SettingsRoutes.LYRICS_SOURCE -> LyricsSourceSettingsScreen(onBackClick = { currentRoute = null })
+                        SettingsRoutes.LYRICS -> LyricsSettingsScreen(onBackClick = { currentRoute = null })
                         SettingsRoutes.WIDGET -> WidgetSettingsScreen(onBackClick = { currentRoute = null })
                         SettingsRoutes.HOME_SCREEN -> HomeScreenCustomizationSettingsScreen(onBackClick = { currentRoute = null })
                         SettingsRoutes.GESTURES -> GesturesSettingsScreen(onBackClick = { currentRoute = null })
@@ -1225,7 +1242,7 @@ fun SettingsScreenWrapper(
                 SettingsRoutes.CRASH_LOG_HISTORY -> CrashLogHistorySettingsScreen(onBackClick = { currentRoute = null }, appSettings = appSettings)
                 SettingsRoutes.QUEUE -> QueueSettingsScreen(onBackClick = { currentRoute = null })
                 SettingsRoutes.PLAYBACK -> PlaybackSettingsScreen(onBackClick = { currentRoute = null })
-                SettingsRoutes.LYRICS_SOURCE -> LyricsSourceSettingsScreen(onBackClick = { currentRoute = null })
+                SettingsRoutes.LYRICS -> LyricsSettingsScreen(onBackClick = { currentRoute = null })
                 SettingsRoutes.WIDGET -> WidgetSettingsScreen(onBackClick = { currentRoute = null })
                 SettingsRoutes.HOME_SCREEN -> HomeScreenCustomizationSettingsScreen(onBackClick = { currentRoute = null })
                 SettingsRoutes.GESTURES -> GesturesSettingsScreen(onBackClick = { currentRoute = null })

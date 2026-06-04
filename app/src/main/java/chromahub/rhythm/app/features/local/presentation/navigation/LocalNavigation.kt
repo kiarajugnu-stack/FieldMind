@@ -128,6 +128,7 @@ import chromahub.rhythm.app.shared.data.model.PlaybackLocation
 import chromahub.rhythm.app.shared.presentation.components.MediaScanLoader // Add MediaScanLoader import
 import chromahub.rhythm.app.util.ArtistSeparator
 import chromahub.rhythm.app.util.HapticUtils
+import chromahub.rhythm.app.util.HapticType
 import chromahub.rhythm.app.features.local.presentation.viewmodel.MusicViewModel
 import chromahub.rhythm.app.features.local.presentation.viewmodel.MusicViewModel.SortOrder
 import chromahub.rhythm.app.shared.presentation.viewmodel.ThemeViewModel
@@ -224,6 +225,17 @@ sealed class Screen(val route: String) {
     object TunerQueue : Screen("tuner_queue_settings")
     object TunerPlayback : Screen("tuner_playback_settings")
     object TunerHomeScreen : Screen("tuner_home_screen_settings")
+    object TunerExpressiveShapes : Screen("tuner_expressive_shapes_settings")
+    object TunerPlayerCustomization : Screen("tuner_player_customization_settings")
+    object TunerMiniPlayerCustomization : Screen("tuner_miniplayer_customization_settings")
+    object TunerBatterySaver : Screen("tuner_battery_saver_settings")
+    object TunerLibrarySettings : Screen("tuner_library_settings")
+    object TunerRhythmGuard : Screen("tuner_rhythm_guard_settings")
+    object TunerLyrics : Screen("tuner_lyrics_settings")
+    object TunerGestures : Screen("tuner_gestures_settings")
+    object TunerWidget : Screen("tuner_widget_settings")
+    object TunerArtistSeparators : Screen("tuner_artist_separators_settings")
+    object TunerGoSettings : Screen("tuner_go_settings")
     
     // Stats Screen
     object RhythmStats : Screen("rhythm_stats")
@@ -1034,7 +1046,7 @@ private fun LocalNavigationContent(
                                                     HapticUtils.performHapticFeedback(
                                                         context,
                                                         haptic,
-                                                        HapticFeedbackType.LongPress
+                                                        HapticType.HEAVY
                                                     )
                                                     navController.navigate(route) {
                                                         popUpTo(navController.graph.findStartDestination().id) {
@@ -1144,7 +1156,7 @@ private fun LocalNavigationContent(
                                     HapticUtils.performHapticFeedback(
                                         context,
                                         haptic,
-                                        HapticFeedbackType.LongPress
+                                        HapticType.HEAVY
                                     )
                                     navController.navigate(Screen.Search.route) {
                                         popUpTo(navController.graph.findStartDestination().id) {
@@ -1654,6 +1666,59 @@ private fun LocalNavigationContent(
 
                 composable(Screen.TunerHomeScreen.route) {
                     HomeScreenCustomizationSettingsScreen(onBackClick = navigateBackOrToSettings)
+                }
+
+                composable(Screen.TunerExpressiveShapes.route) {
+                    ExpressiveShapesSettingsScreen(onBackClick = navigateBackOrToSettings)
+                }
+
+                composable(Screen.TunerPlayerCustomization.route) {
+                    PlayerCustomizationSettingsScreen(onBackClick = navigateBackOrToSettings)
+                }
+
+                composable(Screen.TunerMiniPlayerCustomization.route) {
+                    MiniPlayerCustomizationSettingsScreen(onBackClick = navigateBackOrToSettings)
+                }
+
+                composable(Screen.TunerBatterySaver.route) {
+                    PerformanceSettingsScreen(onBackClick = navigateBackOrToSettings)
+                }
+
+                composable(Screen.TunerLibrarySettings.route) {
+                    LibrarySettingsScreen(onBackClick = navigateBackOrToSettings)
+                }
+
+                composable(Screen.TunerRhythmGuard.route) {
+                    RhythmGuardSettingsScreen(onBackClick = navigateBackOrToSettings)
+                }
+
+                composable(Screen.TunerLyrics.route) {
+                    LyricsSettingsScreen(onBackClick = navigateBackOrToSettings)
+                }
+
+                composable(Screen.TunerGestures.route) {
+                    GesturesSettingsScreen(onBackClick = navigateBackOrToSettings)
+                }
+
+                composable(Screen.TunerWidget.route) {
+                    WidgetSettingsScreen(onBackClick = navigateBackOrToSettings)
+                }
+
+                composable(Screen.TunerArtistSeparators.route) {
+                    ArtistSeparatorsSettingsScreen(onBackClick = navigateBackOrToSettings)
+                }
+
+                composable(Screen.TunerGoSettings.route) {
+                    chromahub.rhythm.app.features.streaming.presentation.screens.GoSettingsScreen(
+                        onBackClick = navigateBackOrToSettings,
+                        onConfigureCurrentProvider = { serviceId ->
+                            appSettings.setInitialStreamingRoute("streaming_service_setup/$serviceId")
+                            appSettings.setAppMode("STREAMING")
+                            if (!navController.popBackStack()) {
+                                navController.navigate("main") { launchSingleTop = true }
+                            }
+                        }
+                    )
                 }
 
                 composable(
@@ -2948,7 +3013,7 @@ private fun LocalNavigationRailItemWithAnimation(
             .size(64.dp)
             .clip(RoundedCornerShape(16.dp))
             .clickable {
-                HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
+                HapticUtils.performHapticFeedback(context, haptic, HapticType.HEAVY)
                 item.onClick()
             },
         contentAlignment = Alignment.Center
