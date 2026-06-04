@@ -171,6 +171,7 @@ fun LyricsSettingsScreen(onBackClick: () -> Unit) {
     val tapLyricsToFullScreen by appSettings.tapLyricsToFullScreen.collectAsState()
     val keepScreenOnLyrics by appSettings.keepScreenOnLyrics.collectAsState()
     val autoHideLyricsControls by appSettings.autoHideLyricsControls.collectAsState()
+    val showLyricsBackgroundArtwork by appSettings.showLyricsBackgroundArtwork.collectAsState()
     val playerShowArtBelowLyrics by appSettings.playerShowArtBelowLyrics.collectAsState()
     val playerLyricsTransition by appSettings.playerLyricsTransition.collectAsState()
     val playerLyricsTextSize by appSettings.playerLyricsTextSize.collectAsState()
@@ -182,9 +183,11 @@ fun LyricsSettingsScreen(onBackClick: () -> Unit) {
     val trimLyrics by appSettings.trimLyrics.collectAsState()
     val lyricNoAnimation by appSettings.lyricNoAnimation.collectAsState()
     val translationAutoWord by appSettings.translationAutoWord.collectAsState()
+    val showLyricsTranslation by appSettings.showLyricsTranslation.collectAsState()
+    val showLyricsRomanization by appSettings.showLyricsRomanization.collectAsState()
 
     CollapsibleHeaderScreen(
-        title = "Lyrics Settings",
+        title = "Lyrics",
         showBackButton = true,
         onBackClick = {
             HapticUtils.performHapticFeedback(context, hapticFeedback, HapticType.HEAVY)
@@ -237,6 +240,45 @@ fun LyricsSettingsScreen(onBackClick: () -> Unit) {
                                         description = "Open a full-screen lyrics screen by tapping the lyrics view",
                                         toggleState = tapLyricsToFullScreen,
                                         onToggleChange = { appSettings.setTapLyricsToFullScreen(it) }
+                                    )
+                                )
+                            )
+                            add(
+                                toMaterial3SettingsItem(
+                                    context = context,
+                                    hapticFeedback = hapticFeedback,
+                                    item = SettingItem(
+                                        icon = MaterialSymbolIcon("blur_on"),
+                                        title = stringResource(R.string.settings_show_lyrics_background_artwork),
+                                        description = stringResource(R.string.settings_show_lyrics_background_artwork_desc),
+                                        toggleState = showLyricsBackgroundArtwork,
+                                        onToggleChange = { appSettings.setShowLyricsBackgroundArtwork(it) }
+                                    )
+                                )
+                            )
+                            add(
+                                toMaterial3SettingsItem(
+                                    context = context,
+                                    hapticFeedback = hapticFeedback,
+                                    item = SettingItem(
+                                        icon = MaterialSymbolIcon("translate"),
+                                        title = context.getString(R.string.lyrics_show_translation),
+                                        description = context.getString(R.string.lyrics_show_translation_desc),
+                                        toggleState = showLyricsTranslation,
+                                        onToggleChange = { appSettings.setShowLyricsTranslation(it) }
+                                    )
+                                )
+                            )
+                            add(
+                                toMaterial3SettingsItem(
+                                    context = context,
+                                    hapticFeedback = hapticFeedback,
+                                    item = SettingItem(
+                                        icon = MaterialSymbolIcon("subtitles"),
+                                        title = context.getString(R.string.lyrics_show_romanization),
+                                        description = context.getString(R.string.lyrics_show_romanization_desc),
+                                        toggleState = showLyricsRomanization,
+                                        onToggleChange = { appSettings.setShowLyricsRomanization(it) }
                                     )
                                 )
                             )

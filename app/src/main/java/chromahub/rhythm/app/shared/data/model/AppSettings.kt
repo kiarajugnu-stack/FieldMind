@@ -123,6 +123,7 @@ class AppSettings private constructor(context: Context) {
         private const val KEY_SHOW_LYRICS = "show_lyrics"
         private const val KEY_ONLINE_ONLY_LYRICS = "online_only_lyrics" // Deprecated, kept for migration
         private const val KEY_LYRICS_SOURCE_PREFERENCE = "lyrics_source_preference"
+        private const val KEY_SHOW_LYRICS_BACKGROUND_ARTWORK = "show_lyrics_background_artwork"
         private const val KEY_SHOW_LYRICS_TRANSLATION = "show_lyrics_translation"
         private const val KEY_SHOW_LYRICS_ROMANIZATION = "show_lyrics_romanization"
         private const val KEY_KEEP_SCREEN_ON_LYRICS = "keep_screen_on_lyrics"
@@ -642,6 +643,9 @@ class AppSettings private constructor(context: Context) {
     private val _onlineOnlyLyrics = MutableStateFlow(_lyricsSourcePreference.value == LyricsSourcePreference.API_FIRST)
     val onlineOnlyLyrics: StateFlow<Boolean> = _onlineOnlyLyrics.asStateFlow()
     
+    private val _showLyricsBackgroundArtwork = MutableStateFlow(prefs.getBoolean(KEY_SHOW_LYRICS_BACKGROUND_ARTWORK, true))
+    val showLyricsBackgroundArtwork: StateFlow<Boolean> = _showLyricsBackgroundArtwork.asStateFlow()
+
     private val _showLyricsTranslation = MutableStateFlow(prefs.getBoolean(KEY_SHOW_LYRICS_TRANSLATION, true))
     val showLyricsTranslation: StateFlow<Boolean> = _showLyricsTranslation.asStateFlow()
     
@@ -1962,6 +1966,11 @@ private val _autoCheckForUpdates = MutableStateFlow(prefs.getBoolean(KEY_AUTO_CH
         setLyricsSourcePreference(preference)
     }
     
+    fun setShowLyricsBackgroundArtwork(show: Boolean) {
+        prefs.edit().putBoolean(KEY_SHOW_LYRICS_BACKGROUND_ARTWORK, show).apply()
+        _showLyricsBackgroundArtwork.value = show
+    }
+
     fun setShowLyricsTranslation(show: Boolean) {
         prefs.edit().putBoolean(KEY_SHOW_LYRICS_TRANSLATION, show).apply()
         _showLyricsTranslation.value = show
@@ -4473,6 +4482,7 @@ private val _autoCheckForUpdates = MutableStateFlow(prefs.getBoolean(KEY_AUTO_CH
         _trimLyrics.value = prefs.getBoolean(KEY_TRIM_LYRICS, true)
         _lyricNoAnimation.value = prefs.getBoolean(KEY_LYRIC_NO_ANIMATION, false)
         _translationAutoWord.value = prefs.getBoolean(KEY_TRANSLATION_AUTO_WORD, false)
+        _showLyricsBackgroundArtwork.value = prefs.getBoolean(KEY_SHOW_LYRICS_BACKGROUND_ARTWORK, true)
         _searchHistory.value = prefs.getString(KEY_SEARCH_HISTORY, null)
         _showKeyboardOnSearchOpen.value = prefs.getBoolean(KEY_SHOW_KEYBOARD_ON_SEARCH_OPEN, true)
         _playlists.value = prefs.getString(KEY_PLAYLISTS, null)

@@ -399,12 +399,12 @@ fun LyricsEditorBottomSheet(
                     
                     Spacer(modifier = Modifier.height(12.dp))
                     
-                    Row(
+                    ExpressiveButtonGroup(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        style = ButtonGroupStyle.Outlined
                     ) {
                         // Earlier Button (-500ms)
-                        OutlinedButton(
+                        ExpressiveGroupButton(
                             onClick = {
                                 HapticUtils.performHapticFeedback(context, haptic, HapticType.HEAVY)
                                 timeOffset -= 500
@@ -412,15 +412,16 @@ fun LyricsEditorBottomSheet(
                                 onSave(editedLyrics, timeOffset) // Apply changes immediately with offset
                             },
                             enabled = hasSyncedLyrics,
+                            isStart = true,
+                            isEnd = false,
                             modifier = Modifier
                                 .weight(1f)
                                 .height(72.dp),
-                            shape = RoundedCornerShape(16.dp),
-                            colors = ButtonDefaults.outlinedButtonColors(
-                                contentColor = MaterialTheme.colorScheme.primary,
+                            colors = ButtonDefaults.filledTonalButtonColors(
                                 containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f),
-                                disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
-                                disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f)
+                                contentColor = MaterialTheme.colorScheme.primary,
+                                disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f),
+                                disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
                             ),
                             contentPadding = PaddingValues(vertical = 8.dp, horizontal = 4.dp)
                         ) {
@@ -452,7 +453,7 @@ fun LyricsEditorBottomSheet(
                         }
                         
                         // Earlier Button (-100ms)
-                        OutlinedButton(
+                        ExpressiveGroupButton(
                             onClick = {
                                 HapticUtils.performHapticFeedback(context, haptic, HapticType.HEAVY)
                                 timeOffset -= 100
@@ -460,15 +461,16 @@ fun LyricsEditorBottomSheet(
                                 onSave(editedLyrics, timeOffset) // Apply changes immediately with offset
                             },
                             enabled = hasSyncedLyrics,
+                            isStart = false,
+                            isEnd = false,
                             modifier = Modifier
                                 .weight(1f)
                                 .height(72.dp),
-                            shape = RoundedCornerShape(16.dp),
-                            colors = ButtonDefaults.outlinedButtonColors(
-                                contentColor = MaterialTheme.colorScheme.primary,
+                            colors = ButtonDefaults.filledTonalButtonColors(
                                 containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f),
-                                disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
-                                disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f)
+                                contentColor = MaterialTheme.colorScheme.primary,
+                                disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f),
+                                disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
                             ),
                             contentPadding = PaddingValues(vertical = 8.dp, horizontal = 4.dp)
                         ) {
@@ -500,7 +502,7 @@ fun LyricsEditorBottomSheet(
                         }
                         
                         // Later Button (+100ms)
-                        OutlinedButton(
+                        ExpressiveGroupButton(
                             onClick = {
                                 HapticUtils.performHapticFeedback(context, haptic, HapticType.HEAVY)
                                 timeOffset += 100
@@ -508,15 +510,16 @@ fun LyricsEditorBottomSheet(
                                 onSave(editedLyrics, timeOffset) // Apply changes immediately with offset
                             },
                             enabled = hasSyncedLyrics,
+                            isStart = false,
+                            isEnd = false,
                             modifier = Modifier
                                 .weight(1f)
                                 .height(72.dp),
-                            shape = RoundedCornerShape(16.dp),
-                            colors = ButtonDefaults.outlinedButtonColors(
-                                contentColor = MaterialTheme.colorScheme.secondary,
+                            colors = ButtonDefaults.filledTonalButtonColors(
                                 containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.3f),
-                                disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
-                                disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f)
+                                contentColor = MaterialTheme.colorScheme.secondary,
+                                disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f),
+                                disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
                             ),
                             contentPadding = PaddingValues(vertical = 8.dp, horizontal = 4.dp)
                         ) {
@@ -548,7 +551,7 @@ fun LyricsEditorBottomSheet(
                         }
                         
                         // Later Button (+500ms)
-                        OutlinedButton(
+                        ExpressiveGroupButton(
                             onClick = {
                                 HapticUtils.performHapticFeedback(context, haptic, HapticType.HEAVY)
                                 timeOffset += 500
@@ -556,15 +559,16 @@ fun LyricsEditorBottomSheet(
                                 onSave(editedLyrics, timeOffset) // Apply changes immediately with offset
                             },
                             enabled = hasSyncedLyrics,
+                            isStart = false,
+                            isEnd = true,
                             modifier = Modifier
                                 .weight(1f)
                                 .height(72.dp),
-                            shape = RoundedCornerShape(16.dp),
-                            colors = ButtonDefaults.outlinedButtonColors(
-                                contentColor = MaterialTheme.colorScheme.secondary,
+                            colors = ButtonDefaults.filledTonalButtonColors(
                                 containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.3f),
-                                disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
-                                disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f)
+                                contentColor = MaterialTheme.colorScheme.secondary,
+                                disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f),
+                                disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
                             ),
                             contentPadding = PaddingValues(vertical = 8.dp, horizontal = 4.dp)
                         ) {

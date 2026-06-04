@@ -16,6 +16,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -191,6 +192,15 @@ fun ExpressivePlayerScreen(
     val showLyricsRomanization by appSettings.showLyricsRomanization.collectAsState()
     val playerLyricsTransition by appSettings.playerLyricsTransition.collectAsState()
     val tapLyricsToFullScreen by appSettings.tapLyricsToFullScreen.collectAsState()
+    val playerLyricsAlignment by appSettings.playerLyricsAlignment.collectAsState()
+    val keepScreenOnLyrics by appSettings.keepScreenOnLyrics.collectAsState()
+
+    val lyricsTextAlign = when (playerLyricsAlignment) {
+        "START" -> TextAlign.Start
+        "END" -> TextAlign.End
+        else -> TextAlign.Center
+    }
+
     val onTapLyricsView = if (tapLyricsToFullScreen) onOpenFullScreenLyrics else null
     var isScrubbing by remember { mutableStateOf(false) }
     var scrubProgress by remember { mutableFloatStateOf(0f) }
@@ -200,6 +210,18 @@ fun ExpressivePlayerScreen(
     val showBuffering = isMediaLoading || isSeeking
     val haptic = LocalHapticFeedback.current
     val context = LocalContext.current
+
+    // Keep screen awake while lyrics are visible
+    val shouldKeepScreenOn = keepScreenOnLyrics && lyricsVisible
+    val activity = context as? android.app.Activity
+    DisposableEffect(shouldKeepScreenOn) {
+        if (shouldKeepScreenOn && activity != null) {
+            activity.window.addFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        }
+        onDispose {
+            activity?.window?.clearFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        }
+    }
 
     // Entry animation states - staggered
     var showHeader by remember { mutableStateOf(false) }
@@ -505,6 +527,7 @@ fun ExpressivePlayerScreen(
                                     onPickLyricsFile = onPickLyricsFile,
                                     showTranslation = showLyricsTranslation,
                                     showRomanization = showLyricsRomanization,
+                                    textAlignment = lyricsTextAlign,
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .fillMaxHeight()
@@ -986,12 +1009,12 @@ private fun RhythmPlayerLyricsPanel(
     onPickLyricsFile: () -> Unit,
     showTranslation: Boolean,
     showRomanization: Boolean,
+    textAlignment: TextAlign,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
     val haptic = LocalHapticFeedback.current
     val hasLyrics = lyrics?.hasLyrics() == true && lyrics.isErrorMessage().not()
-    val textAlignment = TextAlign.Center
 
     Box(
         modifier = modifier,

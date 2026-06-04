@@ -606,18 +606,27 @@ object MetadataHeuristics {
             val words = line.words.map { word: EnhancedWord ->
                 mapOf(
                     "text" to word.text,
-                    "part" to false,
+                    "part" to word.isPart,
                     "timestamp" to word.timestamp,
                     "endtime" to word.endtime
                 )
             }
 
-            mapOf(
+            val lineMap = mutableMapOf<String, Any>(
                 "text" to words,
                 "background" to false,
                 "timestamp" to line.lineTimestamp,
                 "endtime" to line.lineEndtime
             )
+
+            val backgroundText = mutableListOf<String>()
+            line.translation?.let { backgroundText.add(it) }
+            line.romanization?.let { backgroundText.add(it) }
+            if (backgroundText.isNotEmpty()) {
+                lineMap["backgroundText"] = backgroundText
+            }
+
+            lineMap
         }
 
         return com.google.gson.Gson().toJson(rhythmWordLines)

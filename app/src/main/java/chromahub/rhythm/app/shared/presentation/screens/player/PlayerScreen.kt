@@ -1,6 +1,7 @@
 package chromahub.rhythm.app.shared.presentation.screens.player
 
 import android.widget.Toast
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -156,6 +157,11 @@ fun PlayerScreen(
 ) {
     val playerThemeId by appSettings.playerThemeId.collectAsState()
     var showFullScreenLyrics by remember { mutableStateOf(false) }
+
+    BackHandler(enabled = showFullScreenLyrics) {
+        showFullScreenLyrics = false
+    }
+
     val context = LocalContext.current
     val lyricsTimeOffset by musicViewModel.lyricsTimeOffset.collectAsState()
     var showLyricsEditorDialog by remember { mutableStateOf(false) }

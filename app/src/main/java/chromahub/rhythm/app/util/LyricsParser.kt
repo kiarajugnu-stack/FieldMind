@@ -357,13 +357,51 @@ object LyricsParser {
             val grouped = parsed.text.groupBy { it.start }
             return grouped.map { (start, lines) ->
                 val mainLine = lines.firstOrNull { !it.isTranslated } ?: lines.first()
-                val translation = lines.filter { it != mainLine && it.isTranslated }.joinToString("\n") { it.text }
-                val (voiceTag, cleanedText) = extractVoiceTag(mainLine.text)
+                val mainText = mainLine.text.trim()
+                
+                var translation: String? = null
+                var romanization: String? = null
+                
+                lines.forEach { lineObj ->
+                    if (lineObj == mainLine) return@forEach
+                    val line = lineObj.text.trim()
+                    if (line.isEmpty()) return@forEach
+                    
+                    when {
+                        line.startsWith("(") && line.endsWith(")") -> {
+                            translation = appendSupplementalUnique(
+                                translation,
+                                line.substring(1, line.length - 1).trim()
+                            ).ifBlank { null }
+                        }
+                        line.startsWith("[") && line.endsWith("]") -> {
+                            romanization = appendSupplementalUnique(
+                                romanization,
+                                line.substring(1, line.length - 1).trim()
+                            ).ifBlank { null }
+                        }
+                        // If main text has non-ASCII and this line has ASCII, it's likely romanization
+                        mainText.any { it.code > 127 } && line.all { it.code <= 127 || it.isWhitespace() } -> {
+                            romanization = appendSupplementalUnique(romanization, line).ifBlank { null }
+                        }
+                        // If main text is ASCII and this line has non-ASCII, it's likely translation
+                        mainText.all { it.code <= 127 || it.isWhitespace() } && line.any { it.code > 127 } -> {
+                            translation = appendSupplementalUnique(translation, line).ifBlank { null }
+                        }
+                        // Otherwise, treat as translation
+                        else -> {
+                            translation = appendSupplementalUnique(translation, line).ifBlank { null }
+                        }
+                    }
+                }
+                
+                val (voiceTag, cleanedText) = extractVoiceTag(mainText)
                 LyricLine(
                     timestamp = start.toLong(),
                     text = cleanedText,
                     voiceTag = voiceTag ?: mainLine.speaker?.name?.lowercase(),
-                    translation = translation.takeIf { it.isNotEmpty() }
+                    translation = translation,
+                    romanization = romanization
                 )
             }.sortedBy { it.timestamp }
         }
@@ -403,24 +441,75 @@ object LyricsParser {
         val parsed = LrcUtils.parseLyrics(lrcContent, audioMimeType = null, parserOptions = options, format = LrcUtils.LyricFormat.LRC)
         
         if (parsed is SemanticLyrics.SyncedLyrics) {
-            return parsed.text.filter { !it.isTranslated }.map { semanticLine ->
-                val enhancedWords = semanticLine.words?.map { word ->
+            val grouped = parsed.text.groupBy { it.start }
+            return grouped.map { (start, lines) ->
+                val mainLine = lines.firstOrNull { !it.isTranslated } ?: lines.first()
+                val mainText = mainLine.text.trim()
+                
+                var translation: String? = null
+                var romanization: String? = null
+                
+                lines.forEach { lineObj ->
+                    if (lineObj == mainLine) return@forEach
+                    val line = lineObj.text.trim()
+                    if (line.isEmpty()) return@forEach
+                    
+                    when {
+                        line.startsWith("(") && line.endsWith(")") -> {
+                            translation = appendSupplementalUnique(
+                                translation,
+                                line.substring(1, line.length - 1).trim()
+                            ).ifBlank { null }
+                        }
+                        line.startsWith("[") && line.endsWith("]") -> {
+                            romanization = appendSupplementalUnique(
+                                romanization,
+                                line.substring(1, line.length - 1).trim()
+                            ).ifBlank { null }
+                        }
+                        // If main text has non-ASCII and this line has ASCII, it's likely romanization
+                        mainText.any { it.code > 127 } && line.all { it.code <= 127 || it.isWhitespace() } -> {
+                            romanization = appendSupplementalUnique(romanization, line).ifBlank { null }
+                        }
+                        // If main text is ASCII and this line has non-ASCII, it's likely translation
+                        mainText.all { it.code <= 127 || it.isWhitespace() } && line.any { it.code > 127 } -> {
+                            translation = appendSupplementalUnique(translation, line).ifBlank { null }
+                        }
+                        // Otherwise, treat as translation
+                        else -> {
+                            translation = appendSupplementalUnique(translation, line).ifBlank { null }
+                        }
+                    }
+                }
+                
+                val enhancedWords = mainLine.words?.mapIndexed { idx, word ->
+                    val isPart = if (idx > 0) {
+                        val prevWord = mainLine.words[idx - 1]
+                        val gap = mainLine.text.substring(prevWord.charRange.last + 1, word.charRange.first)
+                        gap.isEmpty()
+                    } else {
+                        false
+                    }
                     EnhancedWord(
-                        text = semanticLine.text.substring(word.charRange),
+                        text = mainLine.text.substring(word.charRange),
                         timestamp = word.begin.toLong(),
-                        endtime = (word.endInclusive ?: word.begin).toLong()
+                        endtime = (word.endInclusive ?: word.begin).toLong(),
+                        isPart = isPart
                     )
                 } ?: listOf(
                     EnhancedWord(
-                        text = semanticLine.text,
-                        timestamp = semanticLine.start.toLong(),
-                        endtime = semanticLine.end.toLong()
+                        text = mainLine.text,
+                        timestamp = mainLine.start.toLong(),
+                        endtime = mainLine.end.toLong(),
+                        isPart = false
                     )
                 )
                 EnhancedLyricLine(
                     words = enhancedWords,
-                    lineTimestamp = semanticLine.start.toLong(),
-                    lineEndtime = semanticLine.end.toLong()
+                    lineTimestamp = mainLine.start.toLong(),
+                    lineEndtime = mainLine.end.toLong(),
+                    translation = translation,
+                    romanization = romanization
                 )
             }.sortedBy { it.lineTimestamp }
         }
@@ -483,7 +572,9 @@ data class LyricLine(
 data class EnhancedLyricLine(
     val words: List<EnhancedWord>,
     val lineTimestamp: Long,
-    val lineEndtime: Long
+    val lineEndtime: Long,
+    val translation: String? = null,
+    val romanization: String? = null
 )
 
 /**
@@ -494,6 +585,7 @@ data class EnhancedWord(
     val text: String,
     val timestamp: Long, // start time in milliseconds
     val endtime: Long, // end time in milliseconds
+    val isPart: Boolean = false,
     val syllables: List<Syllable>? = null // TODO: Future syllable-level timing
 )
 

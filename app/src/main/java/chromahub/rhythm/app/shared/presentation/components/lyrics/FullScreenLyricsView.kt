@@ -79,6 +79,9 @@ fun FullScreenLyricsView(
     val appSettings = remember { AppSettings.getInstance(context) }
     val playerLyricsTextSize by appSettings.playerLyricsTextSize.collectAsState()
     val autoHideLyricsControls by appSettings.autoHideLyricsControls.collectAsState()
+    val keepScreenOnLyrics by appSettings.keepScreenOnLyrics.collectAsState()
+    val playerLyricsAlignment by appSettings.playerLyricsAlignment.collectAsState()
+    val showLyricsBackgroundArtwork by appSettings.showLyricsBackgroundArtwork.collectAsState()
 
     var controlsVisible by remember { mutableStateOf(true) }
     var lastInteractionTime by remember { mutableLongStateOf(System.currentTimeMillis()) }
@@ -95,6 +98,22 @@ fun FullScreenLyricsView(
         }
     }
 
+    // Keep screen awake while full screen lyrics is visible
+    val activity = context as? android.app.Activity
+    DisposableEffect(keepScreenOnLyrics) {
+        if (keepScreenOnLyrics && activity != null) {
+            activity.window.addFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        }
+        onDispose {
+            activity?.window?.clearFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        }
+    }
+
+    val lyricsTextAlign = when (playerLyricsAlignment) {
+        "START" -> TextAlign.Start
+        "END" -> TextAlign.End
+        else -> TextAlign.Center
+    }
 
     // Detect light or dark theme based on the app's theme background luminance
     val isDark = MaterialTheme.colorScheme.background.luminance() < 0.5f
@@ -104,9 +123,9 @@ fun FullScreenLyricsView(
     val glassBgColor = (if (isDark) Color.White else Color.Black).copy(alpha = 0.08f)
     val glassBorderColor = (if (isDark) Color.White else Color.Black).copy(alpha = 0.12f)
 
-    // Local toggles for translation and romanization
-    var showTranslation by remember { mutableStateOf(true) }
-    var showRomanization by remember { mutableStateOf(true) }
+    // Global settings for translation and romanization
+    val showTranslation by appSettings.showLyricsTranslation.collectAsState()
+    val showRomanization by appSettings.showLyricsRomanization.collectAsState()
     
     // Local manual sync offset in milliseconds (real-time offset tuning!)
     var manualSyncOffsetMs by remember { mutableLongStateOf(0L) }
@@ -201,91 +220,93 @@ fun FullScreenLyricsView(
                 }
             }
     ) {
-        // 1. DYNAMIC BACKGROUND: Blurred scaled album art with animated moving orbs
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .blur(56.dp)
-                .alpha(0.68f)
-        ) {
-            // Blurred base cover art
-            M3ImageUtils.M3MediaImage(
-                data = song?.artworkUri,
-                contentDescription = null,
-                modifier = Modifier.fillMaxSize(),
-                shape = RoundedCornerShape(0.dp),
-                type = M3PlaceholderType.TRACK,
-                name = song?.title,
-                expressiveShape = RoundedCornerShape(0.dp)
-            )
-
-            // Dynamic Gradient Overlay 1 (Golden-accented Warm Aura)
+        // 1. DYNAMIC BACKGROUND: Blurred scaled album art with animated moving orbs (if enabled)
+        if (showLyricsBackgroundArtwork) {
             Box(
                 modifier = Modifier
-                    .size(340.dp)
-                    .align(Alignment.TopStart)
-                    .graphicsLayer {
-                        translationX = translationX1
-                        translationY = translationY1
-                        scaleX = pulseScale1
-                        scaleY = pulseScale1
-                        rotationZ = rotationAngle
-                    }
-                    .background(
-                        Brush.radialGradient(
-                            colors = listOf(
-                                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.45f),
-                                Color.Transparent
+                    .fillMaxSize()
+                    .blur(56.dp)
+                    .alpha(0.68f)
+            ) {
+                // Blurred base cover art
+                M3ImageUtils.M3MediaImage(
+                    data = song?.artworkUri,
+                    contentDescription = null,
+                    modifier = Modifier.fillMaxSize(),
+                    shape = RoundedCornerShape(0.dp),
+                    type = M3PlaceholderType.TRACK,
+                    name = song?.title,
+                    expressiveShape = RoundedCornerShape(0.dp)
+                )
+
+                // Dynamic Gradient Overlay 1 (Golden-accented Warm Aura)
+                Box(
+                    modifier = Modifier
+                        .size(340.dp)
+                        .align(Alignment.TopStart)
+                        .graphicsLayer {
+                            translationX = translationX1
+                            translationY = translationY1
+                            scaleX = pulseScale1
+                            scaleY = pulseScale1
+                            rotationZ = rotationAngle
+                        }
+                        .background(
+                            Brush.radialGradient(
+                                colors = listOf(
+                                    MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.45f),
+                                    Color.Transparent
+                                )
                             )
                         )
-                    )
-            )
+                )
 
-            // Dynamic Gradient Overlay 2 (Cooler Toned Aurora Accent)
+                // Dynamic Gradient Overlay 2 (Cooler Toned Aurora Accent)
+                Box(
+                    modifier = Modifier
+                        .size(420.dp)
+                        .align(Alignment.BottomEnd)
+                        .graphicsLayer {
+                            translationX = -translationX1 * 0.8f
+                            translationY = -translationY1 * 0.9f
+                            scaleX = pulseScale2
+                            scaleY = pulseScale2
+                            rotationZ = -rotationAngle * 1.2f
+                        }
+                        .background(
+                            Brush.radialGradient(
+                                colors = listOf(
+                                    MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.4f),
+                                    Color.Transparent
+                                )
+                            )
+                        )
+                )
+            }
+
+            // Dynamic dim layer to boost readability of text overlay based on theme
             Box(
                 modifier = Modifier
-                    .size(420.dp)
-                    .align(Alignment.BottomEnd)
-                    .graphicsLayer {
-                        translationX = -translationX1 * 0.8f
-                        translationY = -translationY1 * 0.9f
-                        scaleX = pulseScale2
-                        scaleY = pulseScale2
-                        rotationZ = -rotationAngle * 1.2f
-                    }
+                    .fillMaxSize()
                     .background(
-                        Brush.radialGradient(
-                            colors = listOf(
-                                MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.4f),
-                                Color.Transparent
-                            )
+                        Brush.verticalGradient(
+                            colors = if (isDark) {
+                                listOf(
+                                    Color.Black.copy(alpha = 0.72f),
+                                    Color.Black.copy(alpha = 0.52f),
+                                    Color.Black.copy(alpha = 0.78f)
+                                )
+                            } else {
+                                listOf(
+                                    Color.White.copy(alpha = 0.72f),
+                                    Color.White.copy(alpha = 0.52f),
+                                    Color.White.copy(alpha = 0.78f)
+                                )
+                            }
                         )
                     )
             )
         }
-
-        // Dynamic dim layer to boost readability of text overlay based on theme
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(
-                    Brush.verticalGradient(
-                        colors = if (isDark) {
-                            listOf(
-                                Color.Black.copy(alpha = 0.72f),
-                                Color.Black.copy(alpha = 0.52f),
-                                Color.Black.copy(alpha = 0.78f)
-                            )
-                        } else {
-                            listOf(
-                                Color.White.copy(alpha = 0.72f),
-                                Color.White.copy(alpha = 0.52f),
-                                Color.White.copy(alpha = 0.78f)
-                            )
-                        }
-                    )
-                )
-        )
 
         // 2. MAIN LAYOUT CONTAINER
         Column(
@@ -440,7 +461,7 @@ fun FullScreenLyricsView(
                                 onSeek = onLyricsSeek,
                                 lyricsSource = lyrics?.source,
                                 textSizeMultiplier = playerLyricsTextSize,
-                                textAlignment = TextAlign.Center,
+                                textAlignment = lyricsTextAlign,
                                 showTranslation = showTranslation,
                                 showRomanization = showRomanization
                             )
@@ -458,7 +479,7 @@ fun FullScreenLyricsView(
                                 showRomanization = showRomanization,
                                 lyricsSource = lyrics?.source,
                                 textSizeMultiplier = playerLyricsTextSize,
-                                textAlignment = TextAlign.Center
+                                textAlignment = lyricsTextAlign
                             )
                         }
                     }
@@ -481,7 +502,7 @@ fun FullScreenLyricsView(
                             checked = showRomanization,
                             onCheckedChange = {
                                 HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
-                                showRomanization = it
+                                appSettings.setShowLyricsRomanization(it)
                             },
                             modifier = Modifier.size(44.dp)
                         ) {
@@ -497,7 +518,7 @@ fun FullScreenLyricsView(
                             checked = showTranslation,
                             onCheckedChange = {
                                 HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
-                                showTranslation = it
+                                appSettings.setShowLyricsTranslation(it)
                             },
                             modifier = Modifier.size(44.dp)
                         ) {

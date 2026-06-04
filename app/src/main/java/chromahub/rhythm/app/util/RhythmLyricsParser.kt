@@ -73,11 +73,30 @@ object RhythmLyricsParser {
                 }
                 
                 if (words.isNotEmpty()) {
-                    val backgroundTranslation = line.backgroundText
-                        ?.map { it.trim() }
-                        ?.filter { it.isNotEmpty() }
-                        ?.joinToString("\n")
-                        ?.takeIf { it.isNotEmpty() }
+                    val mainText = words.joinToString(separator = "") { word ->
+                        if (word.isPart && word.text.isNotEmpty()) word.text else " ${word.text}"
+                    }.trim()
+                    
+                    var translation: String? = null
+                    var romanization: String? = null
+                    
+                    line.backgroundText?.forEach { bgText ->
+                        val trimmedBg = bgText.trim()
+                        if (trimmedBg.isEmpty()) return@forEach
+                        
+                        val kind = inferSupplementalKind(
+                            mainText = mainText,
+                            candidateText = trimmedBg,
+                            candidateBackground = line.background ?: false
+                        )
+                        
+                        val strippedText = stripSupplementalDelimiters(trimmedBg)
+                        if (kind == SupplementalLineKind.ROMANIZATION) {
+                            romanization = appendSupplementalUnique(romanization, strippedText).takeIf { it.isNotBlank() }
+                        } else {
+                            translation = appendSupplementalUnique(translation, strippedText).takeIf { it.isNotBlank() }
+                        }
+                    }
 
                     val firstWordTimestamp = words.firstOrNull()?.timestamp ?: 0L
                     val lastWordEndtime = words.maxOfOrNull { it.endtime } ?: firstWordTimestamp
@@ -90,7 +109,8 @@ object RhythmLyricsParser {
                         lineEndtime = lineEnd,
                         background = line.background ?: false,
                         voiceTag = voiceTag,
-                        translation = backgroundTranslation
+                        translation = translation,
+                        romanization = romanization
                     )
                 } else {
                     null

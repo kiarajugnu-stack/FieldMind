@@ -1000,6 +1000,8 @@
     <string name="lyrics_show_romanization_desc">Display romanized lyrics when available</string>
     <string name="settings_keep_screen_on_lyrics">Keep Screen Awake</string>
     <string name="settings_keep_screen_on_lyrics_desc">Prevent screen from turning off while lyrics are visible</string>
+    <string name="settings_show_lyrics_background_artwork">Show Background Artwork</string>
+    <string name="settings_show_lyrics_background_artwork_desc">Display blurred album artwork behind full-screen lyrics</string>
     
     <!-- Theme Customization -->
     <string name="theme_good_to_know">Good to Know</string>
@@ -3318,7 +3320,7 @@
     <string name="settings_crash_log">Crash Log History</string>
     <string name="settings_expressive_shapes">Expressive Shapes</string>
     <string name="settings_home_screen">Home</string>
-    <string name="settings_lyrics_source">Lyrics Settings</string>
+    <string name="settings_lyrics_source">Lyrics</string>
     <string name="settings_theme">Theme</string>
     <string name="theme_amoled">OLED Theme</string>
     <string name="theme_amoled_desc">Pure black theme for OLED displays</string>
