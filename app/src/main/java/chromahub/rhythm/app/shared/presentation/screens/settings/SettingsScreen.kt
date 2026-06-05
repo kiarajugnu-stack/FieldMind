@@ -958,13 +958,13 @@ fun SettingsScreenWrapper(
                 appMode == "STREAMING" -> {
                     appSettings.setInitialStreamingRoute(streamingStatsRoute)
                     if (!navController.popBackStack()) {
-                        navController.navigate("main") { launchSingleTop = true }
+                        safeNavigateToMain(navController)
                     }
                 }
                 else -> {
                     appSettings.setInitialStreamingRoute(localStatsRoute)
                     if (!navController.popBackStack()) {
-                        navController.navigate("main") { launchSingleTop = true }
+                        safeNavigateToMain(navController)
                     }
                 }
             }
@@ -1075,7 +1075,7 @@ fun SettingsScreenWrapper(
                                 appSettings.setInitialStreamingRoute("streaming_service_setup/$serviceId")
                                 appSettings.setAppMode("STREAMING")
                                 if (!navController.popBackStack()) {
-                                    navController.navigate("main") { launchSingleTop = true }
+                                    safeNavigateToMain(navController)
                                 }
                             }
                         )
@@ -1199,7 +1199,7 @@ fun SettingsScreenWrapper(
                         appSettings.setInitialStreamingRoute("streaming_service_setup/$serviceId")
                         appSettings.setAppMode("STREAMING")
                         if (!navController.popBackStack()) {
-                            navController.navigate("main") { launchSingleTop = true }
+                            safeNavigateToMain(navController)
                         }
                     }
                 )
@@ -1237,6 +1237,20 @@ fun SettingsScreenWrapper(
             isPlaying = isPlaying,
             musicViewModel = musicViewModel
         )
+    }
+}
+
+private fun safeNavigateToMain(navController: androidx.navigation.NavController) {
+    if (navController.graph.findNode("main") != null) {
+        navController.navigate("main") { launchSingleTop = true }
+    } else {
+        val startDest = navController.graph.startDestinationRoute
+        if (startDest != null) {
+            navController.navigate(startDest) {
+                popUpTo(startDest) { inclusive = true }
+                launchSingleTop = true
+            }
+        }
     }
 }
 

@@ -237,42 +237,46 @@ class MusicRepository(context: Context) {
                     return
                 }
 
-                val changedEntities = changedSongs.map { song ->
-                    SongEntity(
-                        id = song.id,
-                        title = song.title,
-                        artist = song.artist,
-                        album = song.album,
-                        albumId = song.albumId,
-                        duration = song.duration,
-                        uri = song.uri.toString(),
-                        artworkUri = song.artworkUri?.toString(),
-                        trackNumber = song.trackNumber,
-                        year = song.year,
-                        genre = song.genre,
-                        dateAdded = song.dateAdded,
-                        dateModified = song.dateModified,
-                        albumArtist = song.albumArtist,
-                        bitrate = song.bitrate,
-                        sampleRate = song.sampleRate,
-                        channels = song.channels,
-                        codec = song.codec,
-                        discNumber = song.discNumber
-                    )
-                }
-                val changedSongIds = changedSongs.map { it.id }
-                val relationshipSets = buildSongArtistRelationshipSets(changedSongs)
+                val chunkSize = 200
+                changedSongs.chunked(chunkSize).forEach { chunk ->
+                    val chunkEntities = chunk.map { song ->
+                        SongEntity(
+                            id = song.id,
+                            title = song.title,
+                            artist = song.artist,
+                            album = song.album,
+                            albumId = song.albumId,
+                            duration = song.duration,
+                            uri = song.uri.toString(),
+                            artworkUri = song.artworkUri?.toString(),
+                            trackNumber = song.trackNumber,
+                            year = song.year,
+                            genre = song.genre,
+                            dateAdded = song.dateAdded,
+                            dateModified = song.dateModified,
+                            albumArtist = song.albumArtist,
+                            bitrate = song.bitrate,
+                            sampleRate = song.sampleRate,
+                            channels = song.channels,
+                            codec = song.codec,
+                            discNumber = song.discNumber
+                        )
+                    }
+                    val chunkSongIds = chunk.map { it.id }
+                    val relationshipSets = buildSongArtistRelationshipSets(chunk)
 
-                roomDb.withTransaction {
-                    songDao.upsertAll(changedEntities)
-                    roomDb.songArtistDao().deleteBySongIds(changedSongIds)
-                    roomDb.songArtistDao().insertAll(relationshipSets.albumArtistRelationships)
-                    roomDb.songArtistDao().insertAll(relationshipSets.trackArtistRelationships)
+                    roomDb.withTransaction {
+                        songDao.upsertAll(chunkEntities)
+                        roomDb.songArtistDao().deleteBySongIds(chunkSongIds)
+                        roomDb.songArtistDao().insertAll(relationshipSets.albumArtistRelationships)
+                        roomDb.songArtistDao().insertAll(relationshipSets.trackArtistRelationships)
+                    }
+                    yield()
                 }
 
                 Log.d(
                     TAG,
-                    "Saved ${changedSongs.size} changed songs to Room database (incremental metadata update)"
+                    "Saved ${changedSongs.size} changed songs to Room database in chunks of $chunkSize (incremental metadata update)"
                 )
             } else {
                 val relationshipSets = buildSongArtistRelationshipSets(songs)

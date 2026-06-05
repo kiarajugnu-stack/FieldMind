@@ -31,7 +31,6 @@ object CrashReporter {
         Thread.setDefaultUncaughtExceptionHandler { thread, throwable ->
             if (isRuntimeShutdownThrowable(throwable)) {
                 Log.w(TAG, "Ignoring uncaught exception during runtime shutdown on thread ${thread.name}")
-                defaultHandler?.uncaughtException(thread, throwable)
                 return@setDefaultUncaughtExceptionHandler
             }
 
