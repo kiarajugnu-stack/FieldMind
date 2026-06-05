@@ -35,20 +35,29 @@ object LanguageHelper {
     val supportedLanguages = listOf(
         LanguageOption("en", "English", "English"),
         LanguageOption("ar", "Arabic", "العربية"),
+        LanguageOption("bn", "Bengali", "বাংলা"),
         LanguageOption("de", "German", "Deutsch"),
         LanguageOption("es", "Spanish", "Español"),
         LanguageOption("fr", "French", "Français"),
+        LanguageOption("fr-CA", "French (Canada)", "Français (Canada)"),
         LanguageOption("hi", "Hindi", "हिन्दी"),
+        LanguageOption("id", "Indonesian", "Bahasa Indonesia"),
         LanguageOption("it", "Italian", "Italiano"),
         LanguageOption("ja", "Japanese", "日本語"),
         LanguageOption("ko", "Korean", "한국어"),
         LanguageOption("nl", "Dutch", "Nederlands"),
         LanguageOption("pl", "Polish", "Polski"),
         LanguageOption("pt", "Portuguese", "Português"),
+        LanguageOption("pt-BR", "Portuguese (Brazil)", "Português (Brasil)"),
         LanguageOption("ru", "Russian", "Русский"),
+        LanguageOption("sv", "Swedish", "Svenska"),
+        LanguageOption("ta", "Tamil", "தமிழ்"),
+        LanguageOption("th", "Thai", "ไทย"),
         LanguageOption("tr", "Turkish", "Türkçe"),
+        LanguageOption("uk", "Ukrainian", "Українська"),
         LanguageOption("vi", "Vietnamese", "Tiếng Việt"),
-        LanguageOption("zh", "Chinese", "中文")
+        LanguageOption("zh", "Chinese (Simplified)", "简体中文"),
+        LanguageOption("zh-TW", "Chinese (Traditional)", "繁體中文")
     )
     
     fun getCurrentLanguage(context: Context): String {
