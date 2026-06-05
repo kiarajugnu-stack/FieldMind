@@ -3729,4 +3729,588 @@
     <string name="widget_theme_solid_purple_desc">Phông nền màu tím đậm đặc trưng với các sắc thái và điểm nhấn đặc trưng</string>
     <string name="widget_theme_glance_suffix">%1$s (chỉ các tiện ích Glance)</string>
     <string name="unit_dp">%1$ddp</string>
+
+    <!-- Settings Suggestions and Tips -->
+    <string name="settings_suggestions">Đề xuất cài đặt</string>
+    <string name="settings_suggestions_desc">Hiển thị đề xuất theo ngữ cảnh ở trên cùng</string>
+    <string name="settings_performance_desc_optimized">Tối ưu hóa xúc giác, giải mã, vùng chọn và tìm nạp tác phẩm nghệ thuật để giảm độ trễ</string>
+    <string name="moment_morning">sáng nay</string>
+    <string name="moment_afternoon">chiều nay</string>
+    <string name="moment_evening">tối nay</string>
+    <string name="moment_night">tối nay</string>
+    <string name="pulse_fresh">Năng lượng buổi tập tươi mới</string>
+    <string name="pulse_steady">Rãnh vững vàng</string>
+    <string name="pulse_heavy">Nghe nặng nề</string>
+    <string name="pulse_marathon">Chế độ chạy marathon</string>
+    
+    <!-- Settings Tips Details -->
+    <string name="settings_tip_theme_desc_1">Làm mới máy nghe nhạc của bạn với màu đen AMOLED sống động và màu pastel đẹp mắt.</string>
+    <string name="settings_tip_theme_desc_2">Hãy biến Rhythm thực sự là của bạn bằng cách kết hợp giọng của ứng dụng với hệ thống của bạn.</string>
+    <string name="settings_tip_media_scan_desc_1">Tránh các đoạn âm thanh không mong muốn. Xác định rõ ràng những thư mục nào chúng ta nên quét để tìm nhạc.</string>
+    <string name="settings_tip_media_scan_desc_2">Giữ các ghi chú thoại và nhạc chuông khỏi danh sách phát của bạn bằng các thư mục tiêu điểm.</string>
+    <string name="settings_tip_sleep_timer_desc_1">Hãy chìm vào giấc ngủ trong khi nhạc của bạn đang phát. Chúng tôi sẽ tự động tạm dừng nó.</string>
+    <string name="settings_tip_sleep_timer_desc_2">Đặt bộ hẹn giờ ngủ tự động trước khi đi ngủ để quá trình phát lại dừng hoàn toàn.</string>
+    <string name="settings_tip_equalizer_desc_1">Nâng cao trải nghiệm của bạn. Tăng âm trầm và điều chỉnh tần số bằng Bộ chỉnh âm.</string>
+    <string name="settings_tip_equalizer_desc_2">Điều chỉnh âm thanh cho tai nghe của bạn một cách an toàn bằng các hiệu ứng âm thanh tiên tiến của chúng tôi.</string>
+    <string name="settings_tip_backup_active_desc_1">Tự động sao lưu đang hoạt động. Xác minh các phần sao lưu của bạn để khôi phục luôn sạch sẽ.</string>
+    <string name="settings_tip_backup_active_desc_2">Đã bật tính năng bảo vệ: lịch trình có vẻ ổn. Chạy sao lưu thủ công trước khi chỉnh sửa lớn.</string>
+    <string name="settings_tip_backup_inactive_desc_1">Tự động sao lưu bị tắt. Kích hoạt nó để bảo vệ danh sách phát và số liệu thống kê Rhythm Guard.</string>
+    <string name="settings_tip_backup_inactive_desc_2">Chưa có mạng lưới an toàn. Bật sao lưu để tránh mất thiết lập của bạn.</string>
+    <string name="settings_tip_updates_active_desc_1">Cập nhật được bật. Hãy tiếp tục sử dụng chúng để sửa lỗi và cải thiện hiệu suất.</string>
+    <string name="settings_tip_updates_active_desc_2">Bạn đã sẵn sàng nhận thông tin cập nhật. Kiểm tra tùy chọn kênh để biết độ ổn định và độ mới.</string>
+    <string name="settings_tip_updates_inactive_desc_1">Cập nhật bị vô hiệu hóa. Kích hoạt lại chúng để luôn được bảo vệ và cập nhật.</string>
+    <string name="settings_tip_updates_inactive_desc_2">Bạn đã được ghim vào bản dựng hiện tại. Bật lại cập nhật khi sẵn sàng.</string>
+    <string name="settings_tip_queue_active_desc_1">Tính năng vuốt để bỏ qua của người chơi đang hoạt động. Điều chỉnh các quy tắc xếp hàng để chuyển tiếp mượt mà hơn.</string>
+    <string name="settings_tip_queue_active_desc_2">Bỏ qua cử chỉ đang bật. Khớp hành vi của hàng đợi với luồng nghe của bạn.</string>
+    <string name="settings_tip_queue_inactive_desc_1">Vuốt để bỏ qua đang tắt. Kiểm soát hàng đợi có thể giúp duy trì hoạt động phát lại hiệu quả.</string>
+    <string name="settings_tip_queue_inactive_desc_2">Bạn thích các biện pháp kiểm soát rõ ràng hơn? Tinh chỉnh hành vi hàng đợi để phát lại có thể dự đoán được.</string>
+    <string name="settings_tip_controls_active_desc_1">Nút tìm kiếm hiển thị. Tùy chỉnh điều khiển của người chơi để giảm sự lộn xộn.</string>
+    <string name="settings_tip_controls_active_desc_2">Đã bật trình phát giàu tính năng kiểm soát. Tinh chỉnh bố cục cho tầm với của ngón tay cái của bạn.</string>
+    <string name="settings_tip_controls_inactive_desc_1">Đã bật điều khiển trình phát tối thiểu. Thêm nút tìm kiếm nếu bạn bỏ lỡ bước nhảy chính xác.</string>
+    <string name="settings_tip_controls_inactive_desc_2">Bố cục rõ ràng đang hoạt động. Kích hoạt lại các điều khiển tìm kiếm để xử lý phát lại tốt hơn.</string>
+    <string name="settings_tip_miniplayer_active_desc_1">Có thể nhìn thấy tiến trình của trình phát mini. Chọn một phong cách phù hợp với chủ đề của bạn.</string>
+    <string name="settings_tip_miniplayer_active_desc_2">Thanh tiến trình đang hoạt động trên trình phát mini. Tiếp theo hãy thử chỉnh sửa hình dạng và góc.</string>
+    <string name="settings_tip_miniplayer_inactive_desc_1">Tiến trình của trình phát mini bị ẩn. Kích hoạt nó để nhận biết theo dõi nhanh chóng.</string>
+    <string name="settings_tip_miniplayer_inactive_desc_2">Chế độ thu gọn hiện đã ở mức tối thiểu. Bật tiến trình để có khả năng xem tốt hơn.</string>
+    <string name="settings_tip_library_active_desc_1">Xếp hạng được bật. Sử dụng cài đặt thư viện để nâng cao khả năng khám phá và sắp xếp.</string>
+    <string name="settings_tip_library_active_desc_2">Thư viện của bạn hỗ trợ xếp hạng. Điều chỉnh quét và nhóm để duyệt sạch hơn.</string>
+    <string name="settings_tip_library_inactive_desc_1">Xếp hạng bị vô hiệu hóa. Cài đặt thư viện vẫn có thể cải thiện cấu trúc và tốc độ.</string>
+    <string name="settings_tip_library_inactive_desc_2">Đã phát hiện chế độ thư viện đơn giản hóa. Điều chỉnh nhóm để điều hướng nhanh hơn.</string>
+
+    <!-- Lyrics Source Dialog -->
+    <string name="lyrics_source_embedded_first">Được nhúng đầu tiên</string>
+    <string name="lyrics_source_embedded_first_desc">Thử siêu dữ liệu tệp âm thanh → API trực tuyến → tệp .lrc</string>
+    <string name="lyrics_source_api_first">API Đầu tiên</string>
+    <string name="lyrics_source_api_first_desc">Thử các dịch vụ trực tuyến → Siêu dữ liệu âm thanh → tệp .lrc</string>
+    <string name="lyrics_source_local_first">.lrc địa phương đầu tiên</string>
+    <string name="lyrics_source_local_first_desc">Thử tệp .lrc → Siêu dữ liệu âm thanh → API trực tuyến</string>
+
+    <!-- Font / Color Customization Dialogs -->
+    <string name="theme_font_source_changed_restart">Nguồn phông chữ đã thay đổi. Khởi động lại ứng dụng để áp dụng phông chữ mới.</string>
+    <string name="color_source_album_art">Album nghệ thuật</string>
+    <string name="color_source_album_art_desc">Trích xuất màu từ ảnh bìa album hiện đang phát</string>
+    <string name="color_source_system_colors">Màu hệ thống</string>
+    <string name="color_source_system_colors_desc">Sử dụng Material Bạn tô màu từ hình nền của mình</string>
+    <string name="color_source_custom_scheme">Lược đồ tùy chỉnh</string>
+    <string name="color_source_custom_scheme_desc">Chọn từ các bảng màu được xác định trước</string>
+    <string name="font_source_system_font">Phông chữ hệ thống</string>
+    <string name="font_source_system_font_desc">Sử dụng phông chữ mặc định của thiết bị</string>
+    <string name="font_source_custom_font">Phông chữ tùy chỉnh</string>
+    <string name="font_source_custom_font_desc">Nhập và sử dụng tệp phông chữ tùy chỉnh</string>
+    <string name="font_system_title">Mặc định hệ thống</string>
+    <string name="font_system_desc">Sử dụng phông chữ mặc định của thiết bị của bạn</string>
+    <string name="font_geom_desc">Phông chữ sans-serif hiện đại, rõ ràng từ Google</string>
+    <string name="font_slate_desc">Phông chữ serif trang nhã với vẻ ngoài cổ điển, truyền thống</string>
+    <string name="font_inter_desc">Phông chữ sans-serif hiện đại và rõ ràng, dễ đọc</string>
+    <string name="font_jetbrains_desc">Phông chữ đơn cách hoàn hảo cho nội dung kỹ thuật</string>
+    <string name="font_quicksand_desc">Phông chữ tròn trịa với vẻ ngoài nhẹ nhàng, thân thiện hơn</string>
+
+    <!-- Predefined Color Schemes -->
+    <string name="color_scheme_default_title">Rhythm Mặc định</string>
+    <string name="color_scheme_default_desc">Material 3 màu tím cơ bản với điểm nhấn hồng hồng</string>
+    <string name="color_scheme_warm_title">Hoàng hôn ấm áp</string>
+    <string name="color_scheme_warm_desc">Tông màu cam và đỏ ấm cúng cho bầu không khí ấm áp</string>
+    <string name="color_scheme_cool_title">Đại dương mát lạnh</string>
+    <string name="color_scheme_cool_desc">Tông màu xanh lam và xanh mòng két tươi mát mang lại cảm giác êm dịu</string>
+    <string name="color_scheme_forest_title">Rừng xanh</string>
+    <string name="color_scheme_forest_desc">Tông xanh tự nhiên lấy cảm hứng từ thiên nhiên</string>
+    <string name="color_scheme_rose_title">Hồng Hồng</string>
+    <string name="color_scheme_rose_desc">Tông màu hồng và đỏ tươi trang nhã</string>
+    <string name="color_scheme_monochrome_title">Đơn sắc</string>
+    <string name="color_scheme_monochrome_desc">Thang màu xám tối giản cho giao diện gọn gàng, hiện đại</string>
+    <string name="color_scheme_lavender_title">Hoa Oải Hương</string>
+    <string name="color_scheme_lavender_desc">Tông màu tím và hoa oải hương dịu nhẹ để thư giãn</string>
+    <string name="color_scheme_ocean_title">Đại dương sâu thẳm</string>
+    <string name="color_scheme_ocean_desc">Màu xanh đậm và màu xanh ngọc mang lại sự thanh bình cho đại dương</string>
+    <string name="color_scheme_aurora_title">Bắc Cực Quang</string>
+    <string name="color_scheme_aurora_desc">Màu xanh lá cây và xanh lam rực rỡ lấy cảm hứng từ cực quang</string>
+    <string name="color_scheme_amber_title">Hổ phách vàng</string>
+    <string name="color_scheme_amber_desc">Tông màu hổ phách và vàng đậm cho cảm giác sang trọng</string>
+    <string name="color_scheme_crimson_title">Đỏ thẫm</string>
+    <string name="color_scheme_crimson_desc">Màu đỏ tía đậm và đỏ thẫm cho kịch tính</string>
+    <string name="color_scheme_emerald_title">Giấc mơ ngọc lục bảo</string>
+    <string name="color_scheme_emerald_desc">Màu xanh ngọc tươi mát với sắc rừng tự nhiên</string>
+    <string name="color_scheme_mint_title">Bạc hà</string>
+    <string name="color_scheme_mint_desc">Tông màu lục lam và xanh bạc hà tươi tắn và sạch sẽ</string>
+
+    <!-- Color Preview Chips -->
+    <string name="theme_color_primary">Tiểu học</string>
+    <string name="theme_color_secondary">Trung học</string>
+    <string name="theme_color_tertiary">cấp ba</string>
+
+    <!-- Lyrics Settings Screen -->
+    <string name="lyrics_settings_title">Lời bài hát</string>
+    <string name="lyrics_settings_general">Cài đặt chung</string>
+    <string name="lyrics_settings_open_fullscreen_desc">Mở màn hình lời bài hát toàn màn hình bằng cách nhấn vào chế độ xem lời bài hát</string>
+    <string name="lyrics_settings_autohide_controls">Điều khiển tự động ẩn lời bài hát</string>
+    <string name="lyrics_settings_autohide_controls_desc">Tự động ẩn các điều khiển trong màn hình lời bài hát toàn màn hình sau vài giây không hoạt động</string>
+    <string name="lyrics_settings_embedded_first">Được nhúng đầu tiên</string>
+    <string name="lyrics_settings_embedded_first_desc">Ưu tiên lời bài hát được nhúng trong tệp âm thanh, dự phòng cho API trực tuyến</string>
+    <string name="lyrics_settings_online_first">trực tuyến đầu tiên</string>
+    <string name="lyrics_settings_online_first_desc">Ưu tiên các API trực tuyến (Rhythm từng từ một, LRCLib), dự phòng cho các API được nhúng</string>
+    <string name="lyrics_settings_local_first">Địa phương đầu tiên</string>
+    <string name="lyrics_settings_local_first_desc">Thích các tệp .lrc cục bộ, sau đó nhúng lời bài hát, sau đó là API trực tuyến</string>
+    <string name="lyrics_settings_apple_music_first">Apple Music đầu tiên</string>
+    <string name="lyrics_settings_lrclib_first">LRCLib Đầu tiên</string>
+    <string name="lyrics_settings_fallback_apis_desc">Thử API dự phòng nếu API ưa thích không trả lại lời bài hát</string>
+    <string name="lyrics_settings_display_styling">Hiển thị &amp; Tạo kiểu</string>
+    <string name="lyrics_settings_size_percentage">Kích thước: %1$d%%</string>
+    <string name="alignment_left">Còn lại</string>
+    <string name="alignment_center">Trung Tâm</string>
+    <string name="alignment_right">Đúng rồi</string>
+    <string name="animation_slide">Trượt</string>
+    <string name="animation_fade">Phai dần</string>
+    <string name="animation_scale">Tỉ lệ</string>
+    <string name="animation_up">Lên</string>
+    <string name="lyrics_settings_switch_animation_desc">Art ↔ Lời bài hát chuyển đổi hoạt hình</string>
+    <string name="lyrics_settings_not_supported_expressive">Không được hỗ trợ bởi chủ đề Biểu cảm</string>
+    <string name="lyrics_settings_formatting_behaviors">Định dạng &amp; Hành vi</string>
+    <string name="lyrics_settings_bold_text">Văn bản in đậm</string>
+    <string name="lyrics_settings_bold_text_desc">Làm đậm văn bản của lời bài hát đang hoạt động</string>
+    <string name="lyrics_settings_trim_lyrics">Cắt Lời bài hát</string>
+    <string name="lyrics_settings_trim_lyrics_desc">Cắt bớt khoảng trắng ở đầu và cuối dòng lời bài hát</string>
+    <string name="lyrics_settings_disable_animations">Tắt ảnh động</string>
+    <string name="lyrics_settings_disable_animations_desc">Tắt chuyển tiếp và hoạt ảnh trong chế độ xem lời bài hát</string>
+    <string name="lyrics_settings_word_by_word_translation">Dịch từng chữ</string>
+    <string name="lyrics_settings_word_by_word_translation_desc">Cố gắng tự động đồng bộ bản dịch âm tiết hoặc từ</string>
+    <string name="lyrics_settings_info_bullets">Chi tiết đồng bộ hóa bổ sung:\n• API trực tuyến cung cấp lời bài hát được đồng bộ hóa chất lượng cao\n• Rhythm cung cấp đồng bộ hóa từng từ\n• LRCLib cung cấp đồng bộ hóa từng dòng miễn phí</string>
+
+    <!-- AutoEQ Preset Picker additions -->
+    <string name="autoeqpresetpickerbottomsheet_search_presets">Tìm kiếm cài đặt trước...</string>
+    <string name="autoeqpresetpickerbottomsheet_disable">Không có / Tắt AutoEQ</string>
+    <string name="autoeqpresetpickerbottomsheet_disable_desc">Xóa cấu hình tai nghe, sử dụng cài đặt trước EQ tiêu chuẩn</string>
+    <string name="autoeqpresetpickerbottomsheet_unknown_brand">Thương hiệu không xác định</string>
+
+    <!-- Device Configuration additions -->
+    <string name="device_configuration_devices_configured">%1$d thiết bị được định cấu hình</string>
+    <string name="device_configuration_device_recognized">Đã nhận dạng được thiết bị</string>
+    <string name="device_configuration_new_device_detected">Đã phát hiện thiết bị mới</string>
+    <string name="device_configuration_configured_with">%1$s được định cấu hình bằng %2$s</string>
+    <string name="device_configuration_configured_no_profile">%1$s được định cấu hình</string>
+    <string name="device_configuration_connected_not_configured">%1$s đã được kết nối nhưng chưa được định cấu hình</string>
+    <string name="device_configuration_applied_profile">Đã áp dụng hồ sơ %1$s</string>
+    <string name="device_configuration_imported_profile">Hồ sơ đã nhập</string>
+    <string name="device_configuration_parse_error">Không thể phân tích cài đặt EQ. Kiểm tra định dạng.</string>
+    <string name="device_configuration_custom_eq">EQ tùy chỉnh</string>
+    <string name="device_configuration_custom_preset">Đặt trước tùy chỉnh</string>
+    <string name="device_configuration_custom">Tùy chỉnh</string>
+    <string name="device_configuration_active_profile_label">Hồ sơ hoạt động: %1$s</string>
+    <string name="device_configuration_share_subject">Rhythm Hồ sơ EQ: %1$s</string>
+    <string name="device_configuration_share_title">Chia sẻ hồ sơ EQ</string>
+    <string name="device_configuration_edit_device">Chỉnh sửa thiết bị</string>
+    <string name="device_configuration_add_device">Thêm thiết bị</string>
+    <string name="device_configuration_save">Lưu</string>
+    <string name="device_configuration_add">Thêm</string>
+    <string name="device_configuration_for_device">cho %1$s</string>
+    <string name="device_configuration_profiles_available">%1$d hồ sơ có sẵn</string>
+    <string name="device_configuration_disable_compensation">Tắt bù tai nghe</string>
+
+    <!-- Common UI element strings -->
+    <string name="common_none">Không có</string>
+    <string name="common_cancel">Hủy</string>
+    <string name="common_back">Trở lại</string>
+    <string name="common_remove">Xóa</string>
+    <string name="common_add">Thêm</string>
+    <string name="common_active">Đang hoạt động</string>
+    <string name="common_disabled">Đã tắt</string>
+    <string name="common_unavailable">Không có sẵn</string>
+    <string name="common_success">Thành công</string>
+    <string name="common_error">Lỗi</string>
+    <string name="common_unknown">Không xác định</string>
+
+    <!-- Blacklist UI additions -->
+    <string name="blacklist_remove_song_title">Xóa khỏi danh sách đen?</string>
+    <string name="blacklist_add_song_title">Thêm vào danh sách đen?</string>
+    <string name="blacklist_remove_song_desc">Bài hát này sẽ không còn bị ẩn khỏi thư viện của bạn nữa.</string>
+    <string name="blacklist_add_song_desc">Bài hát này sẽ bị ẩn khỏi thư viện của bạn và không thể phát lại.</string>
+    <string name="blacklist_undo_warning">Hành động này có thể được hoàn tác bất cứ lúc nào.</string>
+    <string name="blacklist_song_removed_msg">Bài hát bị xóa khỏi danh sách đen</string>
+    <string name="blacklist_song_added_msg">Bài hát được thêm vào danh sách đen</string>
+    <string name="blacklist_button_remove">Xóa</string>
+    <string name="blacklist_button_blacklist">Danh sách đen</string>
+    <string name="blacklist_remove_folder_title">Xóa thư mục khỏi danh sách đen?</string>
+    <string name="blacklist_add_folder_title">Thư mục danh sách đen?</string>
+    <string name="blacklist_remove_folder_desc">Tất cả bài hát trong thư mục này sẽ hiển thị lại.</string>
+    <string name="blacklist_add_folder_desc">Tất cả bài hát trong thư mục này sẽ bị ẩn và không được phát lại.</string>
+    <string name="blacklist_folder_removed_msg">Đã xóa thư mục khỏi danh sách đen</string>
+    <string name="blacklist_folder_added_msg">Đã thêm thư mục vào danh sách đen</string>
+    <string name="blacklist_disc_label">Đĩa %1$d</string>
+    <string name="blacklist_track_label">Theo dõi %1$d</string>
+
+    <!-- Library & Playlist Dialog additions -->
+    <string name="dialog_add_song_to_playlist">Thêm \"%1$s\" vào danh sách phát này</string>
+    <string name="dialog_songs_in_queue">Bạn có %1$d bài hát trong hàng đợi hiện tại.</string>
+    <string name="dialog_play_song_how">Bạn muốn chơi \"%1$s\" như thế nào?</string>
+    <string name="dialog_clear_and_play">Xóa và chơi</string>
+    <string name="dialog_clear_and_play_desc">Thay thế hàng đợi và phát bài hát này</string>
+    <string name="dialog_add_to_queue">Thêm vào hàng đợi</string>
+    <string name="dialog_add_to_queue_desc">Giữ hàng đợi hiện tại và thêm bài hát</string>
+    <string name="dialog_restart_warning_message">Để đảm bảo tất cả danh sách phát đã nhập hoạt động chính xác, chúng tôi khuyên bạn nên khởi động lại ứng dụng. Bạn có thể tiếp tục sử dụng ứng dụng bình thường nhưng một số tính năng có thể không hoạt động như mong đợi cho đến khi khởi động lại.</string>
+    <string name="dialog_export_playlist_to">Xuất \"%1$s\" sang:</string>
+    <string name="dialog_export_playlists_to">Xuất danh sách phát %1$d sang:</string>
+    <string name="dialog_operation_importing">Đang nhập</string>
+    <string name="dialog_operation_exporting">Đang xuất</string>
+
+    <!-- Mode dialog strings -->
+    <string name="dialog_switch_to_go">Chuyển sang Rhythm Đi?</string>
+    <string name="dialog_switch_to_local">Chuyển sang địa phương?</string>
+    <string name="dialog_switch_to_go_desc">Vật phẩm này thuộc về Rhythm Go. Chuyển sang Chế độ phát trực tuyến ngay bây giờ để truyền phát và phát?</string>
+    <string name="dialog_switch_to_local_desc">Mục này thuộc về Thư viện địa phương của bạn. Chuyển sang Chế độ cục bộ ngay bây giờ để phát các bản nhạc ngoại tuyến của bạn?</string>
+
+    <!-- Section order content descriptions -->
+    <string name="home_section_hide_carousel">Ẩn băng chuyền</string>
+    <string name="home_section_show_carousel">Hiển thị băng chuyền</string>
+    <string name="home_section_hide_section">Ẩn phần</string>
+    <string name="home_section_show_section">Hiển thị phần</string>
+    <string name="library_tab_show">Hiển thị tab</string>
+    <string name="library_tab_hide">Ẩn tab</string>
+
+    <!-- Add To Playlist additions -->
+    <string name="add_to_playlist_selected_count">%1$d đã chọn</string>
+    <string name="add_to_playlist_title">Thêm vào %1$s</string>
+    <string name="add_to_playlist_no_songs">Không có bài hát nào</string>
+    <string name="add_to_playlist_all_songs_present">Tất cả các bài hát đều đã có trong danh sách phát này</string>
+
+    <!-- Artist details -->
+    <string name="artist_detail_albums_count">%1$d album</string>
+    <string name="artist_detail_songs_count">%1$d bài hát</string>
+
+    <!-- Equalizer presets & UI -->
+    <string name="eq_preset_flat">Căn hộ</string>
+    <string name="eq_preset_rock">đá</string>
+    <string name="eq_preset_pop">Pop</string>
+    <string name="eq_preset_jazz">Nhạc jazz</string>
+    <string name="eq_preset_classical">Cổ điển</string>
+    <string name="eq_preset_electronic">Điện tử</string>
+    <string name="eq_preset_hiphop">Hip Hop</string>
+    <string name="eq_preset_vocal">Giọng hát</string>
+    <string name="eq_preset_bass_boost">Tăng âm trầm</string>
+    <string name="eq_preset_treble_boost">Tăng âm bổng</string>
+    <string name="eq_preset_v_shape">Hình chữ V</string>
+    <string name="eq_preset_harman">Harman</string>
+    <string name="eq_preset_custom">Tùy chỉnh</string>
+    <string name="eq_autoeq_profiles">Cấu hình AutoEQ</string>
+    <string name="eq_manage_device">Quản lý thiết bị</string>
+    <string name="eq_system_equalizer">Bộ cân bằng hệ thống</string>
+    <string name="eq_enhance_lows">Tăng cường âm trầm</string>
+    <string name="eq_widen_sound">Mở rộng âm thanh</string>
+    <string name="eq_mono_only">Chỉ đơn âm</string>
+
+    <!-- Library updates, sorting & categories -->
+    <string name="library_updated_songs_success">Đã cập nhật %1$d bài hát</string>
+    <string name="library_updated_songs_failed">Cập nhật bài hát %1$d, %2$d không thành công</string>
+    <string name="library_switch_to_grid">Chuyển sang Chế độ xem lưới</string>
+    <string name="library_switch_to_list">Chuyển sang chế độ xem danh sách</string>
+    <string name="library_sort_title">Tiêu đề</string>
+    <string name="library_sort_artist">Nghệ sĩ</string>
+    <string name="library_sort_date_added">Ngày thêm</string>
+    <string name="library_sort_date_modified">Ngày sửa đổi</string>
+    <string name="library_sort_ascending">Tăng dần</string>
+    <string name="library_sort_descending">Giảm dần</string>
+    <string name="library_sort_name_asc">Tên (A-Z)</string>
+    <string name="library_sort_name_desc">Tên (Z-A)</string>
+    <string name="library_sort_songs_desc">Bài hát (Cao đến Thấp)</string>
+    <string name="library_sort_albums_desc">Album (Cao đến Thấp)</string>
+    <string name="library_scan_songs">Đang quét bài hát...</string>
+    <string name="library_scan_albums">Đang xử lý album...</string>
+    <string name="library_scan_artists">Đang xử lý nghệ sĩ...</string>
+    <string name="library_scan_genres">Đang phát hiện thể loại...</string>
+    <string name="library_scan_media">Đang quét phương tiện...</string>
+    <string name="library_export_failed">Xuất không thành công</string>
+    <string name="library_import_failed">Nhập không thành công</string>
+    <string name="library_category_all">Tất cả</string>
+    <string name="library_category_favorites">❤️ Yêu thích</string>
+    <string name="library_category_absolute_favorites">⭐⭐⭐⭐⭐ Yêu thích tuyệt đối</string>
+    <string name="library_category_loved">⭐⭐⭐⭐ Yêu</string>
+    <string name="library_category_great">⭐⭐⭐ Tuyệt vời</string>
+    <string name="library_category_good">⭐⭐ Tốt</string>
+    <string name="library_category_liked">⭐ Đã thích</string>
+    <string name="library_category_short">Ngắn (&lt; 3 phút)</string>
+    <string name="library_category_medium">Trung bình (3-5 phút)</string>
+    <string name="library_category_long">Dài (&gt; 5 phút)</string>
+    <string name="library_category_hi_res_lossless">Hi-Res Lossless</string>
+    <string name="library_category_lossless">Không mất dữ liệu</string>
+    <string name="library_category_dolby">Dolby</string>
+    <string name="library_category_mono">Mono</string>
+    <string name="library_category_stereo">Âm thanh nổi</string>
+    <string name="library_category_high_quality">Chất Lượng Cao</string>
+    <string name="library_category_standard">Tiêu chuẩn</string>
+    <string name="library_removed_from_favorites">Đã xóa %1$d khỏi mục yêu thích</string>
+    <string name="library_added_to_favorites">Đã thêm %1$d vào mục yêu thích</string>
+    <string name="library_unlike_all">Không giống tất cả</string>
+    <string name="library_like_all">Thích tất cả</string>
+    <string name="library_tracks_count_format">%1$d trong số %2$d bài hát</string>
+    <string name="library_no_playlists_yet">Chưa có danh sách phát nào\nTạo danh sách phát đầu tiên của bạn bằng nút +</string>
+    <string name="library_no_albums_yet">Chưa có album nào</string>
+    <string name="library_no_artists_yet">Chưa có nghệ sĩ nào</string>
+    <string name="library_action_play_next">Chơi tiếp</string>
+    <string name="library_action_add_to_queue">Thêm vào hàng đợi</string>
+    <string name="library_action_add_to_blacklist">Thêm vào danh sách đen</string>
+    <string name="library_action_song_info">Thông tin bài hát</string>
+    <string name="library_action_add_to_playlist">Thêm vào danh sách phát</string>
+    <string name="library_action_rate_song">Đánh giá bài hát</string>
+    <string name="library_menu_new_playlist">Danh sách phát mới</string>
+    <string name="library_menu_import_playlist">Nhập danh sách phát</string>
+    <string name="library_menu_export_playlists">Xuất danh sách phát</string>
+    <string name="library_menu_close_playlist">Đóng menu danh sách phát</string>
+    <string name="library_menu_open_playlist">Mở menu danh sách phát</string>
+    <string name="library_menu_close">Đóng menu</string>
+    <string name="library_selected_count_format">%1$d Đã chọn</string>
+    <string name="library_from_tracks_format">từ bài hát %1$d</string>
+    <string name="library_playlist_count_singular">%1$d danh sách phát</string>
+    <string name="library_playlist_count_plural">%1$d danh sách phát</string>
+    <string name="library_album_count_singular">%1$d album</string>
+    <string name="library_album_count_plural">%1$d album</string>
+    <string name="library_artist_count_singular">%1$d nghệ sĩ</string>
+    <string name="library_artist_count_plural">%1$d nghệ sĩ</string>
+    <string name="library_duration_hours_minutes">%1$dh %2$dm</string>
+    <string name="library_duration_minutes">%1$dm</string>
+
+    <!-- Onboarding, Backup & Settings additions -->
+    <string name="onboarding_blacklist_label">Danh sách đen</string>
+    <string name="onboarding_whitelist_label">Danh sách trắng</string>
+    <string name="onboarding_full_player_label">Cầu thủ đầy đủ</string>
+    <string name="onboarding_mini_player_label">Máy nghe nhạc mini</string>
+    <string name="onboarding_blocked_folders">%1$d thư mục bị chặn</string>
+    <string name="onboarding_whitelisted_folders">%1$d thư mục được liệt kê trong danh sách trắng</string>
+    <string name="onboarding_sample_button">Nút mẫu</string>
+    <string name="onboarding_primary_label">Tiểu học</string>
+    <string name="onboarding_secondary_label">Trung học</string>
+    <string name="onboarding_tertiary_label">cấp ba</string>
+    <string name="onboarding_rhythm_material">Rhythm (Material)</string>
+    
+    <string name="backup_restored_success">Sao lưu đã được khôi phục thành công. Khởi động lại ứng dụng để áp dụng tất cả các thay đổi.</string>
+    <string name="backup_copied_to_clipboard">Đã tạo bản sao lưu và sao chép vào bảng nhớ tạm.</string>
+    <string name="backup_failed_to_create">Tạo bản sao lưu không thành công: %1$s</string>
+    <string name="backup_failed_to_restore_file">Không thể khôi phục từ tệp: %1$s</string>
+    <string name="backup_no_backup_clipboard">Không tìm thấy bản sao lưu nào trong bảng nhớ tạm</string>
+    <string name="backup_failed_to_restore_clipboard">Không thể khôi phục từ bảng nhớ tạm: %1$s</string>
+    
+    <string name="updater_ready_to_install">Phiên bản %1$s đã sẵn sàng để cài đặt</string>
+    <string name="updater_download_progress">%1$d%% • %2$s / %3$s</string>
+    <string name="updater_version_info">Phiên bản %1$s • %2$s</string>
+    <string name="updater_error_occurred">Đã xảy ra lỗi</string>
+    <string name="updater_channel_stable">ổn định</string>
+    <string name="updater_channel_beta">phiên bản thử nghiệm</string>
+
+    <!-- Expressive shape preset & group names -->
+    <string name="shape_preset_default">Mặc định</string>
+    <string name="shape_preset_default_desc">Hình dáng biểu cảm nhẹ nhàng phù hợp với mọi lứa tuổi</string>
+    <string name="shape_preset_friendly">Thân thiện</string>
+    <string name="shape_preset_friendly_desc">Hình dáng ấm áp và dễ gần</string>
+    <string name="shape_preset_cheerful">Vui vẻ</string>
+    <string name="shape_preset_cheerful_desc">Hình dáng tươi sáng và biểu cảm</string>
+    <string name="shape_preset_modern">Hiện đại</string>
+    <string name="shape_preset_modern_desc">Thiết kế biểu cảm đương đại</string>
+    <string name="shape_preset_playful">Vui tươi</string>
+    <string name="shape_preset_playful_desc">Hình dạng vui nhộn và biểu cảm</string>
+    <string name="shape_preset_organic">Hữu cơ</string>
+    <string name="shape_preset_organic_desc">Hình dáng lấy cảm hứng từ thiên nhiên</string>
+    <string name="shape_preset_geometric">Hình học</string>
+    <string name="shape_preset_geometric_desc">Hình dáng gọn gàng và hiện đại</string>
+    <string name="shape_preset_retro">Cổ điển</string>
+    <string name="shape_preset_retro_desc">Hình khối hoài cổ đầy điểm ảnh</string>
+    <string name="shape_preset_custom">Tùy chỉnh</string>
+    <string name="shape_preset_custom_desc">Lựa chọn được cá nhân hóa của bạn</string>
+    <string name="shape_option_square">Hình vuông</string>
+    <string name="shape_option_square_desc">Hình vuông tròn</string>
+    <string name="shape_option_oval">Hình bầu dục</string>
+    <string name="shape_option_oval_desc">Hình bầu dục thon dài</string>
+    <string name="shape_option_pill">Viên thuốc</string>
+    <string name="shape_option_pill_desc">Hình dạng viên nang</string>
+    <string name="shape_option_diamond">Kim cương</string>
+    <string name="shape_option_diamond_desc">Hình kim cương</string>
+    <string name="shape_option_triangle">Tam giác</string>
+    <string name="shape_option_triangle_desc">Hình tam giác tròn</string>
+    <string name="shape_option_pentagon">Lầu Năm Góc</string>
+    <string name="shape_option_pentagon_desc">Đa giác năm cạnh</string>
+    <string name="shape_option_flower">Hoa</string>
+    <string name="shape_option_flower_desc">Hoa có cánh</string>
+    <string name="shape_option_clover4">Cỏ 4 Lá</string>
+    <string name="shape_option_clover4_desc">Cỏ bốn lá</string>
+    <string name="shape_option_clover8">Cỏ 8 Lá</string>
+    <string name="shape_option_clover8_desc">Cỏ ba lá tám lá</string>
+    <string name="shape_option_heart">Trái Tim</string>
+    <string name="shape_option_heart_desc">Hình trái tim</string>
+    <string name="shape_option_bun">Bún</string>
+    <string name="shape_option_bun_desc">Hình bánh mì/bánh mì</string>
+    <string name="shape_option_boom">Bùm</string>
+    <string name="shape_option_boom_desc">Hình dạng vụ nổ</string>
+    <string name="shape_option_soft_boom">Bùm mềm</string>
+    <string name="shape_option_soft_boom_desc">Nổ nhẹ hơn</string>
+    <string name="shape_option_burst">Bùng nổ</string>
+    <string name="shape_option_burst_desc">Hình dạng ngôi sao</string>
+    <string name="shape_option_soft_burst">Bùng nổ nhẹ nhàng</string>
+    <string name="shape_option_soft_burst_desc">Ánh sao dịu hơn</string>
+    <string name="shape_option_sunny">Nắng</string>
+    <string name="shape_option_sunny_desc">Nắng có tia</string>
+    <string name="shape_option_very_sunny">Nắng quá</string>
+    <string name="shape_option_very_sunny_desc">Nắng nhiều tia hơn</string>
+    <string name="shape_option_cookie4">Bánh quy 4</string>
+    <string name="shape_option_cookie4_desc">Bánh quy 4 mặt</string>
+    <string name="shape_option_cookie6">Bánh quy 6</string>
+    <string name="shape_option_cookie6_desc">Bánh quy 6 mặt</string>
+    <string name="shape_option_cookie7">Bánh quy 7</string>
+    <string name="shape_option_cookie7_desc">Bánh quy 7 mặt</string>
+    <string name="shape_option_cookie9">Bánh quy 9</string>
+    <string name="shape_option_cookie9_desc">Bánh quy 9 mặt</string>
+    <string name="shape_option_cookie12">Bánh quy 12</string>
+    <string name="shape_option_cookie12_desc">Bánh quy 12 mặt</string>
+    <string name="shape_option_ghostish">Ma quái</string>
+    <string name="shape_option_ghostish_desc">Hình dáng ma quái</string>
+    <string name="shape_option_puffy">Sưng Húp</string>
+    <string name="shape_option_puffy_desc">Hình dạng như đám mây</string>
+    <string name="shape_option_puffy_diamond">Viên kim cương sưng húp</string>
+    <string name="shape_option_puffy_diamond_desc">Viên kim cương sưng húp</string>
+    <string name="shape_option_fan">Người hâm mộ</string>
+    <string name="shape_option_fan_desc">Hình quạt</string>
+    <string name="shape_option_circle">Vòng tròn</string>
+    <string name="shape_option_circle_desc">Một vòng tròn hoàn hảo</string>
+    <string name="shape_option_clover_4_leaf">Cỏ 4 Lá</string>
+    <string name="shape_option_clover_4_leaf_desc">Cỏ bốn lá</string>
+    <string name="shape_option_clover_8_leaf">Cỏ 8 Lá</string>
+    <string name="shape_option_clover_8_leaf_desc">Cỏ ba lá tám lá</string>
+    <string name="shape_option_arrow">Mũi tên</string>
+    <string name="shape_option_arrow_desc">Con trỏ mũi tên</string>
+    <string name="shape_option_arch">vòm</string>
+    <string name="shape_option_arch_desc">Hình vòm</string>
+    <string name="shape_option_clam_shell">Vỏ Nghêu</string>
+    <string name="shape_option_clam_shell_desc">Hình dạng vỏ</string>
+    <string name="shape_option_gem">Đá quý</string>
+    <string name="shape_option_gem_desc">Hình dạng đá quý</string>
+    <string name="shape_option_semi_circle">Hình bán nguyệt</string>
+    <string name="shape_option_semi_circle_desc">Nửa vòng tròn</string>
+    <string name="shape_option_slanted">Nghiêng</string>
+    <string name="shape_option_slanted_desc">Hình vuông nghiêng</string>
+    <string name="shape_option_pixel_circle">Vòng tròn pixel</string>
+    <string name="shape_option_pixel_circle_desc">Vòng tròn có pixel</string>
+    <string name="shape_option_pixel_triangle">Tam giác pixel</string>
+    <string name="shape_option_pixel_triangle_desc">Tam giác có điểm ảnh</string>
+    <string name="shape_group_basic">Cơ bản</string>
+    <string name="shape_group_organic">Hữu cơ</string>
+    <string name="shape_group_playful">Vui tươi</string>
+    <string name="shape_group_cookie">Bánh quy</string>
+    <string name="shape_group_whimsical">Hay thay đổi</string>
+    <string name="shape_group_special">Đặc biệt</string>
+    <string name="shape_group_pixel">Pixel</string>
+
+    <!-- Customization Choices -->
+    <string name="option_always">Luôn luôn</string>
+    <string name="option_expanded">Đã mở rộng</string>
+    <string name="option_collapsed">Đã thu gọn</string>
+    <string name="option_linear">tuyến tính</string>
+    <string name="option_circular">Thông tư</string>
+    <string name="option_auto">Tự động</string>
+    <string name="option_manual">Hướng dẫn sử dụng</string>
+    <string name="option_both">Cả hai</string>
+    <string name="option_icon">Biểu tượng</string>
+    <string name="option_name">Tên</string>
+
+    <!-- Theme settings additions -->
+    <string name="theme_color_red">Đỏ</string>
+    <string name="theme_color_green">Xanh</string>
+    <string name="theme_color_blue">Xanh lam</string>
+    <string name="theme_font_restart_warning">Phông chữ đã thay đổi. Khởi động lại ứng dụng để áp dụng phông chữ mới.</string>
+    <string name="theme_source_album_art">Album nghệ thuật</string>
+    <string name="theme_source_album_art_desc">Trích xuất màu từ ảnh bìa album hiện đang phát</string>
+    <string name="theme_source_system_colors">Màu hệ thống</string>
+    <string name="theme_source_system_colors_desc">Sử dụng Material Bạn tô màu từ hình nền của mình</string>
+    <string name="theme_source_custom_scheme">Lược đồ tùy chỉnh</string>
+    <string name="theme_source_custom_scheme_desc">Chọn từ các bảng màu được xác định trước</string>
+    <string name="theme_font_system">Phông chữ hệ thống</string>
+    <string name="theme_font_system_desc">Sử dụng phông chữ mặc định của thiết bị</string>
+    <string name="theme_font_custom">Phông chữ tùy chỉnh</string>
+    <string name="theme_font_custom_desc">Nhập và sử dụng tệp phông chữ tùy chỉnh</string>
+
+    <!-- Color Scheme names -->
+    <string name="scheme_default">Mặc định</string>
+    <string name="scheme_warm">Ấm áp</string>
+    <string name="scheme_cool">Tuyệt vời</string>
+    <string name="scheme_forest">Rừng</string>
+    <string name="scheme_rose">Hoa hồng</string>
+    <string name="scheme_monochrome">Đơn sắc</string>
+    <string name="scheme_lavender">Hoa Oải Hương</string>
+    <string name="scheme_ocean">Đại dương</string>
+    <string name="scheme_aurora">cực quang</string>
+    <string name="scheme_amber">Hổ phách</string>
+    <string name="scheme_crimson">Đỏ thẫm</string>
+    <string name="scheme_emerald">Ngọc lục bảo</string>
+    <string name="scheme_mint">Bạc hà</string>
+
+    <!-- Shape Utils category and descriptions -->
+    <string name="shape_utils_fab">Nút hành động nổi</string>
+    <string name="shape_utils_fab_desc">Hình dạng cho nút FAB</string>
+    <string name="shape_utils_cards">Thẻ</string>
+    <string name="shape_utils_cards_desc">Hình dạng cho thẻ và hộp đựng</string>
+    <string name="shape_utils_buttons">Nút</string>
+    <string name="shape_utils_buttons_desc">Hình dạng nút bấm</string>
+    <string name="shape_utils_chips">Chip</string>
+    <string name="shape_utils_chips_desc">Hình dạng cho chip và thẻ</string>
+    <string name="shape_utils_player_controls">Điều khiển người chơi</string>
+    <string name="shape_utils_player_controls_desc">Hình dạng nút điều khiển máy nghe nhạc</string>
+    <string name="shape_utils_mini_player">Máy nghe nhạc mini</string>
+    <string name="shape_utils_mini_player_desc">Hình dạng cho tác phẩm nghệ thuật của máy chơi game mini</string>
+
+    <!-- Metadata properties and labels -->
+    <string name="metadata_duration">Thời lượng</string>
+    <string name="metadata_disc">Đĩa</string>
+    <string name="metadata_composer">Nhà soạn nhạc</string>
+    <string name="metadata_album_artist">Nghệ sĩ album</string>
+    <string name="metadata_play_count">Đếm lượt chơi</string>
+    <string name="metadata_total_played">Tổng số đã chơi</string>
+    <string name="metadata_rating">Đánh giá</string>
+    <string name="metadata_quality">Chất lượng</string>
+    <string name="metadata_audio_tech">Công nghệ âm thanh</string>
+    <string name="metadata_bit_depth">Độ sâu bit</string>
+    <string name="metadata_bitrate">Tốc độ bit</string>
+    <string name="metadata_sample_rate">Tỷ lệ mẫu</string>
+    <string name="metadata_channels">Kênh</string>
+    <string name="metadata_format">Định dạng</string>
+    <string name="metadata_location">Vị trí</string>
+    <string name="metadata_lyrics">Lời bài hát</string>
+    <string name="metadata_mime_type">Loại MIME</string>
+    <string name="metadata_date_added">Ngày thêm</string>
+    <string name="metadata_modified">Đã sửa đổi</string>
+    <string name="metadata_lyrics_available">Có sẵn</string>
+    <string name="metadata_dts">DTS</string>
+    <string name="metadata_hi_res">Độ phân giải cao</string>
+    <string name="metadata_dolby">Dolby</string>
+    <string name="metadata_lossless">Không mất dữ liệu</string>
+
+    <!-- Discover settings specific -->
+    <string name="settings_discover_album_name">Tên Album</string>
+    <string name="settings_discover_album_name_desc">Hiển thị tên album trên thẻ</string>
+    <string name="settings_discover_artist_name">Tên nghệ sĩ</string>
+    <string name="settings_discover_artist_name_desc">Hiển thị tên nghệ sĩ trên thẻ</string>
+    <string name="settings_discover_release_year">Năm phát hành</string>
+    <string name="settings_discover_release_year_desc">Hiển thị năm phát hành album</string>
+    <string name="settings_discover_play_button">Nút phát</string>
+    <string name="settings_discover_play_button_desc">Hiện nút phát nhanh</string>
+    <string name="settings_discover_gradient_overlay">Lớp phủ chuyển màu</string>
+    <string name="settings_discover_gradient_overlay_desc">Hiển thị độ dốc phía sau văn bản</string>
+
+    <!-- Carousel Style selector strings -->
+    <string name="carousel_style_default">Mặc định</string>
+    <string name="carousel_style_default_desc">2 album nhìn trộm bên cạnh</string>
+    <string name="carousel_style_hero">Anh hùng</string>
+    <string name="carousel_style_hero_desc">album nhìn trộm 1 bên</string>
+
+    <!-- Theme names -->
+    <string name="theme_rhythm">Rhythm</string>
+    <string name="theme_expressive">Biểu cảm</string>
+    <string name="settings_managed_by_expressive_shapes">Được quản lý bởi Expressive Shapes</string>
+
+    <!-- Shape targets -->
+    <string name="shape_target_album_art">Ảnh minh họa album</string>
+    <string name="shape_target_album_art_desc">Hình dạng cho ảnh bìa album</string>
+    <string name="shape_target_player_art">Ảnh minh họa của người chơi</string>
+    <string name="shape_target_player_art_desc">Hình dạng cho ảnh minh họa trên màn hình trình phát</string>
+    <string name="shape_target_song_art">Tác phẩm bài hát</string>
+    <string name="shape_target_song_art_desc">Hình dạng cho tác phẩm nghệ thuật bài hát trong danh sách</string>
+    <string name="shape_target_playlist_art">Danh sách phát Ảnh minh họa</string>
+    <string name="shape_target_playlist_art_desc">Hình dạng cho bìa danh sách phát</string>
+    <string name="shape_target_artist_art">Tác phẩm nghệ thuật của nghệ sĩ</string>
+    <string name="shape_target_artist_art_desc">Hình dạng cho hình ảnh nghệ sĩ</string>
+    <string name="settings_shape_for">Hình dạng cho %1$s</string>
 </resources>
+

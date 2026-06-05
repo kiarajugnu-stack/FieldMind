@@ -3731,4 +3731,592 @@ Avatar</string>
     <string name="widget_theme_solid_purple_desc">Latar belakang ungu tua yang khas dengan rona dan highlight aksen yang khas</string>
     <string name="widget_theme_glance_suffix">%1$s (khusus widget Glance)</string>
     <string name="unit_dp">%1$ddp</string>
+
+    <!-- Settings Suggestions and Tips -->
+    <string name="settings_suggestions">Saran Pengaturan</string>
+    <string name="settings_suggestions_desc">Tampilkan saran kontekstual di atas</string>
+    <string name="settings_performance_desc_optimized">Optimalkan pengambilan haptik, decoding, marquee, dan karya seni untuk mengurangi kelambatan</string>
+    <string name="moment_morning">pagi ini</string>
+    <string name="moment_afternoon">sore ini</string>
+    <string name="moment_evening">malam ini</string>
+    <string name="moment_night">malam ini</string>
+    <string name="pulse_fresh">Sesi energi segar</string>
+    <string name="pulse_steady">Alur stabil</string>
+    <string name="pulse_heavy">Mendengarkan dengan berat</string>
+    <string name="pulse_marathon">Mode maraton</string>
+    
+    <!-- Settings Tips Details -->
+    <string name="settings_tip_theme_desc_1">Segarkan pemutar musik Anda dengan warna hitam AMOLED yang cerah dan warna-warna pastel yang indah.</string>
+    <string name="settings_tip_theme_desc_2">Jadikan Rhythm benar-benar milik Anda dengan mencocokkan aksen aplikasi dengan sistem Anda.</string>
+    <string name="settings_tip_media_scan_desc_1">Hindari klip audio yang tidak diinginkan. Tentukan secara eksplisit folder mana yang harus kita pindai musiknya.</string>
+    <string name="settings_tip_media_scan_desc_2">Jauhkan catatan suara dan nada dering dari daftar putar Anda menggunakan folder fokus.</string>
+    <string name="settings_tip_sleep_timer_desc_1">Tertidur saat musik diputar. Kami akan menjedanya secara otomatis.</string>
+    <string name="settings_tip_sleep_timer_desc_2">Setel pengatur waktu tidur otomatis sebelum tidur sehingga pemutaran berhenti dengan sempurna.</string>
+    <string name="settings_tip_equalizer_desc_1">Tingkatkan pengalaman Anda. Tingkatkan bass dan sesuaikan frekuensi menggunakan Equalizer.</string>
+    <string name="settings_tip_equalizer_desc_2">Sesuaikan suara ke headphone Anda dengan aman menggunakan efek audio canggih kami.</string>
+    <string name="settings_tip_backup_active_desc_1">Pencadangan otomatis aktif. Verifikasi bagian cadangan Anda sehingga pemulihan tetap bersih.</string>
+    <string name="settings_tip_backup_active_desc_2">Perlindungan diaktifkan: jadwal terlihat bagus. Jalankan pencadangan manual sebelum pengeditan besar.</string>
+    <string name="settings_tip_backup_inactive_desc_1">Pencadangan otomatis tidak aktif. Aktifkan untuk melindungi daftar putar dan statistik Rhythm Penjaga.</string>
+    <string name="settings_tip_backup_inactive_desc_2">Belum ada jaring pengaman. Aktifkan pencadangan untuk menghindari kehilangan pengaturan Anda.</string>
+    <string name="settings_tip_updates_active_desc_1">Pembaruan diaktifkan. Tetap aktifkan untuk perbaikan dan peningkatan kinerja.</string>
+    <string name="settings_tip_updates_active_desc_2">Anda siap menerima pembaruan. Periksa preferensi saluran untuk stabilitas vs kesegaran.</string>
+    <string name="settings_tip_updates_inactive_desc_1">Pembaruan dinonaktifkan. Aktifkan kembali agar tetap terlindungi dan terkini.</string>
+    <string name="settings_tip_updates_inactive_desc_2">Anda disematkan ke versi saat ini. Aktifkan kembali pembaruan jika sudah siap.</string>
+    <string name="settings_tip_queue_active_desc_1">Gesek untuk melewati pemain aktif. Sesuaikan aturan antrean untuk transisi yang lebih lancar.</string>
+    <string name="settings_tip_queue_active_desc_2">Lewati isyarat aktif. Cocokkan perilaku antrean dengan alur mendengarkan Anda.</string>
+    <string name="settings_tip_queue_inactive_desc_1">Gesek untuk melewati tidak aktif. Kontrol antrian dapat membantu menjaga pemutaran tetap efisien.</string>
+    <string name="settings_tip_queue_inactive_desc_2">Lebih suka kontrol eksplisit? Sempurnakan perilaku antrean untuk pemutaran yang dapat diprediksi.</string>
+    <string name="settings_tip_controls_active_desc_1">Tombol pencarian terlihat. Sesuaikan kontrol pemain untuk mengurangi kekacauan.</string>
+    <string name="settings_tip_controls_active_desc_2">Pemutar kaya kontrol diaktifkan. Sesuaikan tata letak untuk jangkauan ibu jari Anda.</string>
+    <string name="settings_tip_controls_inactive_desc_1">Kontrol pemutar minimal diaktifkan. Tambahkan tombol pencarian jika Anda melewatkan lompatan yang tepat.</string>
+    <string name="settings_tip_controls_inactive_desc_2">Tata letak bersih aktif. Aktifkan kembali kontrol pencarian untuk penanganan pemutaran yang lebih baik.</string>
+    <string name="settings_tip_miniplayer_active_desc_1">Kemajuan pemain mini terlihat. Pilih gaya yang sesuai dengan tema Anda.</string>
+    <string name="settings_tip_miniplayer_active_desc_2">Bilah kemajuan aktif di pemutar mini. Coba penyesuaian bentuk dan sudut berikutnya.</string>
+    <string name="settings_tip_miniplayer_inactive_desc_1">Kemajuan pemain mini disembunyikan. Aktifkan untuk kesadaran jalur cepat.</string>
+    <string name="settings_tip_miniplayer_inactive_desc_2">Mode ringkas sekarang sangat minim. Aktifkan kemajuan agar dapat dilihat dengan lebih baik.</string>
+    <string name="settings_tip_library_active_desc_1">Peringkat diaktifkan. Gunakan pengaturan perpustakaan untuk mempertajam penemuan dan penyortiran.</string>
+    <string name="settings_tip_library_active_desc_2">Perpustakaan Anda mendukung peringkat. Sesuaikan pemindaian dan pengelompokan untuk penjelajahan yang lebih bersih.</string>
+    <string name="settings_tip_library_inactive_desc_1">Peringkat dinonaktifkan. Pengaturan perpustakaan masih dapat meningkatkan struktur dan kecepatan.</string>
+    <string name="settings_tip_library_inactive_desc_2">Mode perpustakaan yang disederhanakan terdeteksi. Sesuaikan pengelompokan untuk navigasi yang lebih cepat.</string>
+
+    <!-- Lyrics Source Dialog -->
+    <string name="lyrics_source_embedded_first">Disematkan Terlebih Dahulu</string>
+    <string name="lyrics_source_embedded_first_desc">Coba metadata file audio → API Online → file .lrc</string>
+    <string name="lyrics_source_api_first">API Pertama</string>
+    <string name="lyrics_source_api_first_desc">Coba layanan online → Metadata audio → file .lrc</string>
+    <string name="lyrics_source_local_first">Lokal .lrc Pertama</string>
+    <string name="lyrics_source_local_first_desc">Coba file .lrc → Metadata audio → API Online</string>
+
+    <!-- Font / Color Customization Dialogs -->
+    <string name="theme_font_source_changed_restart">Sumber font diubah. Mulai ulang aplikasi untuk menerapkan font baru.</string>
+    <string name="color_source_album_art">Seni Album</string>
+    <string name="color_source_album_art_desc">Ekstrak warna dari sampul album yang sedang diputar</string>
+    <string name="color_source_system_colors">Warna Sistem</string>
+    <string name="color_source_system_colors_desc">Gunakan Material Anda mewarnai dari wallpaper Anda</string>
+    <string name="color_source_custom_scheme">Skema Kustom</string>
+    <string name="color_source_custom_scheme_desc">Pilih dari skema warna yang telah ditentukan sebelumnya</string>
+    <string name="font_source_system_font">Font Sistem</string>
+    <string name="font_source_system_font_desc">Gunakan font default perangkat</string>
+    <string name="font_source_custom_font">Font Khusus</string>
+    <string name="font_source_custom_font_desc">Impor dan gunakan file font khusus</string>
+    <string name="font_system_title">Bawaan Sistem</string>
+    <string name="font_system_desc">Gunakan font default perangkat Anda</string>
+    <string name="font_geom_desc">Font sans-serif yang modern dan bersih dari Google</string>
+    <string name="font_slate_desc">Font serif yang elegan dengan tampilan klasik dan tradisional</string>
+    <string name="font_inter_desc">Font sans-serif yang bersih dan modern, sangat mudah dibaca</string>
+    <string name="font_jetbrains_desc">Font Monospace sempurna untuk konten teknis</string>
+    <string name="font_quicksand_desc">Font bulat dengan tampilan lebih lembut dan ramah</string>
+
+    <!-- Predefined Color Schemes -->
+    <string name="color_scheme_default_title">Rhythm Bawaan</string>
+    <string name="color_scheme_default_desc">Material 3 warna dasar ungu dengan aksen merah jambu kemerahan</string>
+    <string name="color_scheme_warm_title">Matahari Terbenam yang Hangat</string>
+    <string name="color_scheme_warm_desc">Warna oranye dan merah yang nyaman untuk suasana hangat</string>
+    <string name="color_scheme_cool_title">Lautan Dingin</string>
+    <string name="color_scheme_cool_desc">Warna biru dan teal yang menyegarkan untuk kesan menenangkan</string>
+    <string name="color_scheme_forest_title">Hutan Hijau</string>
+    <string name="color_scheme_forest_desc">Warna hijau alami yang terinspirasi oleh alam</string>
+    <string name="color_scheme_rose_title">Mawar Merah Muda</string>
+    <string name="color_scheme_rose_desc">Warna pink dan magenta yang elegan</string>
+    <string name="color_scheme_monochrome_title">Monokrom</string>
+    <string name="color_scheme_monochrome_desc">Skala abu-abu minimalis untuk tampilan yang bersih dan modern</string>
+    <string name="color_scheme_lavender_title">Lavender</string>
+    <string name="color_scheme_lavender_desc">Warna ungu dan lavender yang menenangkan untuk relaksasi</string>
+    <string name="color_scheme_ocean_title">Laut Dalam</string>
+    <string name="color_scheme_ocean_desc">Warna biru tua dan aquamarine untuk ketenangan lautan</string>
+    <string name="color_scheme_aurora_title">Cahaya Utara</string>
+    <string name="color_scheme_aurora_desc">Warna hijau dan biru cerah yang terinspirasi oleh aurora borealis</string>
+    <string name="color_scheme_amber_title">Kuning Emas</string>
+    <string name="color_scheme_amber_desc">Warna kuning dan emas yang kaya untuk kesan mewah</string>
+    <string name="color_scheme_crimson_title">Merah Tua</string>
+    <string name="color_scheme_crimson_desc">Warna merah anggur dan merah tua yang berani untuk drama</string>
+    <string name="color_scheme_emerald_title">Mimpi Zamrud</string>
+    <string name="color_scheme_emerald_desc">Hijau zamrud segar dengan warna hutan alami</string>
+    <string name="color_scheme_mint_title">Mint</string>
+    <string name="color_scheme_mint_desc">Warna cyan dan hijau mint yang segar dan bersih</string>
+
+    <!-- Color Preview Chips -->
+    <string name="theme_color_primary">Pratama</string>
+    <string name="theme_color_secondary">Sekunder</string>
+    <string name="theme_color_tertiary">Tersier</string>
+
+    <!-- Lyrics Settings Screen -->
+    <string name="lyrics_settings_title">Lirik</string>
+    <string name="lyrics_settings_general">Pengaturan Umum</string>
+    <string name="lyrics_settings_open_fullscreen_desc">Buka layar lirik layar penuh dengan mengetuk tampilan lirik</string>
+    <string name="lyrics_settings_autohide_controls">Kontrol lirik sembunyikan otomatis</string>
+    <string name="lyrics_settings_autohide_controls_desc">Secara otomatis menyembunyikan kontrol di layar lirik layar penuh setelah beberapa detik tidak aktif</string>
+    <string name="lyrics_settings_embedded_first">Disematkan Terlebih Dahulu</string>
+    <string name="lyrics_settings_embedded_first_desc">Lebih memilih lirik yang tertanam dalam file audio, fallback ke API online</string>
+    <string name="lyrics_settings_online_first">Daring Terlebih Dahulu</string>
+    <string name="lyrics_settings_online_first_desc">Lebih memilih API online (Rhythm kata demi kata, LRCLib), mundur ke yang tertanam</string>
+    <string name="lyrics_settings_local_first">Lokal Pertama</string>
+    <string name="lyrics_settings_local_first_desc">Lebih suka file .lrc lokal, lalu lirik yang disematkan, lalu API online</string>
+    <string name="lyrics_settings_apple_music_first">Apple Musik Pertama</string>
+    <string name="lyrics_settings_lrclib_first">LRCLib Pertama</string>
+    <string name="lyrics_settings_fallback_apis_desc">Coba API fallback jika API pilihan gagal mengembalikan lirik</string>
+    <string name="lyrics_settings_display_styling">Tampilan &amp; Gaya</string>
+    <string name="lyrics_settings_size_percentage">Ukuran: %1$d%%</string>
+    <string name="alignment_left">Kiri</string>
+    <string name="alignment_center">Pusat</string>
+    <string name="alignment_right">Benar</string>
+    <string name="animation_slide">Geser</string>
+    <string name="animation_fade">Memudar</string>
+    <string name="animation_scale">Skala</string>
+    <string name="animation_up">Naik</string>
+    <string name="lyrics_settings_switch_animation_desc">Seni ↔ Animasi peralihan lirik</string>
+    <string name="lyrics_settings_not_supported_expressive">Tidak didukung oleh tema Ekspresif</string>
+    <string name="lyrics_settings_formatting_behaviors">Pemformatan &amp; Perilaku</string>
+    <string name="lyrics_settings_bold_text">Teks Tebal</string>
+    <string name="lyrics_settings_bold_text_desc">Buat teks lirik aktif menjadi tebal</string>
+    <string name="lyrics_settings_trim_lyrics">Pangkas Lirik</string>
+    <string name="lyrics_settings_trim_lyrics_desc">Memangkas spasi di depan dan di belakang baris lirik</string>
+    <string name="lyrics_settings_disable_animations">Nonaktifkan Animasi</string>
+    <string name="lyrics_settings_disable_animations_desc">Nonaktifkan transisi dan animasi dalam tampilan lirik</string>
+    <string name="lyrics_settings_word_by_word_translation">Terjemahan Kata demi Kata</string>
+    <string name="lyrics_settings_word_by_word_translation_desc">Cobalah menyinkronkan terjemahan suku kata atau kata secara otomatis</string>
+    <string name="lyrics_settings_info_bullets">Detail Sinkronisasi Tambahan:\n• API Online menyediakan lirik tersinkronisasi berkualitas tinggi\n• Rhythm menawarkan sinkronisasi kata demi kata\n• LRCLib menyediakan sinkronisasi baris demi baris gratis</string>
+
+    <!-- AutoEQ Preset Picker additions -->
+    <string name="autoeqpresetpickerbottomsheet_search_presets">Cari preset...</string>
+    <string name="autoeqpresetpickerbottomsheet_disable">Tidak Ada / Nonaktifkan AutoEQ</string>
+    <string name="autoeqpresetpickerbottomsheet_disable_desc">Hapus profil headphone, gunakan preset EQ standar</string>
+    <string name="autoeqpresetpickerbottomsheet_unknown_brand">Merek Tidak Dikenal</string>
+
+    <!-- Device Configuration additions -->
+    <string name="device_configuration_devices_configured">%1$d perangkat dikonfigurasi</string>
+    <string name="device_configuration_device_recognized">Perangkat Diakui</string>
+    <string name="device_configuration_new_device_detected">Perangkat Baru Terdeteksi</string>
+    <string name="device_configuration_configured_with">%1$s dikonfigurasi dengan %2$s</string>
+    <string name="device_configuration_configured_no_profile">%1$s dikonfigurasi</string>
+    <string name="device_configuration_connected_not_configured">%1$s terhubung tetapi tidak dikonfigurasi</string>
+    <string name="device_configuration_applied_profile">Menerapkan profil %1$s</string>
+    <string name="device_configuration_imported_profile">Profil yang Diimpor</string>
+    <string name="device_configuration_parse_error">Tidak dapat menguraikan pengaturan EQ. Periksa formatnya.</string>
+    <string name="device_configuration_custom_eq">EQ Kustom</string>
+    <string name="device_configuration_custom_preset">Prasetel Khusus</string>
+    <string name="device_configuration_custom">Kustom</string>
+    <string name="device_configuration_active_profile_label">Profil Aktif: %1$s</string>
+    <string name="device_configuration_share_subject">Rhythm Profil EQ: %1$s</string>
+    <string name="device_configuration_share_title">Bagikan Profil EQ</string>
+    <string name="device_configuration_edit_device">Edit Perangkat</string>
+    <string name="device_configuration_add_device">Tambahkan Perangkat</string>
+    <string name="device_configuration_save">Simpan</string>
+    <string name="device_configuration_add">Tambahkan</string>
+    <string name="device_configuration_for_device">Untuk %1$s
+Profil</string>
+    <string name="device_configuration_profiles_available">%1$d tersedia</string>
+    <string name="device_configuration_disable_compensation">Nonaktifkan kompensasi headphone</string>
+
+    <!-- Common UI element strings -->
+    <string name="common_none">Tidak ada</string>
+    <string name="common_cancel">Batal</string>
+    <string name="common_back">Kembali</string>
+    <string name="common_remove">Hapus</string>
+    <string name="common_add">Tambahkan</string>
+    <string name="common_active">Aktif</string>
+    <string name="common_disabled">Dinonaktifkan</string>
+    <string name="common_unavailable">Tidak tersedia</string>
+    <string name="common_success">Sukses</string>
+    <string name="common_error">Kesalahan</string>
+    <string name="common_unknown">Tidak Diketahui</string>
+
+    <!-- Blacklist UI additions -->
+    <string name="blacklist_remove_song_title">Hapus dari Daftar Hitam?</string>
+    <string name="blacklist_add_song_title">Tambahkan ke Daftar Hitam?</string>
+    <string name="blacklist_remove_song_desc">Lagu ini tidak lagi disembunyikan dari perpustakaanmu.</string>
+    <string name="blacklist_add_song_desc">Lagu ini akan disembunyikan dari perpustakaan Anda dan dikecualikan dari pemutaran.</string>
+    <string name="blacklist_undo_warning">Tindakan ini dapat dibatalkan kapan saja.</string>
+    <string name="blacklist_song_removed_msg">Lagu dihapus dari daftar hitam</string>
+    <string name="blacklist_song_added_msg">Lagu ditambahkan ke daftar hitam</string>
+    <string name="blacklist_button_remove">Hapus</string>
+    <string name="blacklist_button_blacklist">Daftar Hitam</string>
+    <string name="blacklist_remove_folder_title">Hapus Folder dari Daftar Hitam?</string>
+    <string name="blacklist_add_folder_title">Folder Daftar Hitam?</string>
+    <string name="blacklist_remove_folder_desc">Semua lagu di folder ini akan terlihat kembali.</string>
+    <string name="blacklist_add_folder_desc">Semua lagu di folder ini akan disembunyikan dan dikecualikan dari pemutaran.</string>
+    <string name="blacklist_folder_removed_msg">Folder dihapus dari daftar hitam</string>
+    <string name="blacklist_folder_added_msg">Folder ditambahkan ke daftar hitam</string>
+    <string name="blacklist_disc_label">Disk %1$d</string>
+    <string name="blacklist_track_label">Lacak %1$d</string>
+
+    <!-- Library & Playlist Dialog additions -->
+    <string name="dialog_add_song_to_playlist">Tambahkan \"%1$s\" ke daftar putar ini</string>
+    <string name="dialog_songs_in_queue">Anda memiliki %1$d lagu di antrean saat ini.</string>
+    <string name="dialog_play_song_how">Bagaimana Anda ingin memainkan \"%1$s\"?</string>
+    <string name="dialog_clear_and_play">Hapus &amp; Mainkan</string>
+    <string name="dialog_clear_and_play_desc">Ganti antrian dan putar lagu ini</string>
+    <string name="dialog_add_to_queue">Tambahkan ke Antrean</string>
+    <string name="dialog_add_to_queue_desc">Pertahankan antrean saat ini dan tambahkan lagu</string>
+    <string name="dialog_restart_warning_message">Untuk memastikan semua daftar putar yang diimpor berfungsi dengan benar, sebaiknya mulai ulang aplikasi. Anda dapat terus menggunakan aplikasi secara normal, namun beberapa fitur mungkin tidak berfungsi seperti yang diharapkan hingga aplikasi dimulai ulang.</string>
+    <string name="dialog_export_playlist_to">Ekspor \"%1$s\" ke:</string>
+    <string name="dialog_export_playlists_to">Ekspor daftar putar %1$d ke:</string>
+    <string name="dialog_operation_importing">Mengimpor</string>
+    <string name="dialog_operation_exporting">Mengekspor</string>
+
+    <!-- Mode dialog strings -->
+    <string name="dialog_switch_to_go">Beralih ke Rhythm Mulai?</string>
+    <string name="dialog_switch_to_local">Beralih ke Lokal?</string>
+    <string name="dialog_switch_to_go_desc">Barang ini milik Rhythm Go. Beralih ke Mode Streaming sekarang untuk melakukan streaming dan memutarnya?</string>
+    <string name="dialog_switch_to_local_desc">Item ini milik Perpustakaan Lokal Anda. Beralih ke Mode Lokal sekarang untuk memutar lagu offline Anda?</string>
+
+    <!-- Section order content descriptions -->
+    <string name="home_section_hide_carousel">Sembunyikan korsel</string>
+    <string name="home_section_show_carousel">Tampilkan korsel</string>
+    <string name="home_section_hide_section">Sembunyikan bagian</string>
+    <string name="home_section_show_section">Tampilkan bagian</string>
+    <string name="library_tab_show">Tampilkan tab</string>
+    <string name="library_tab_hide">Sembunyikan tab</string>
+
+    <!-- Add To Playlist additions -->
+    <string name="add_to_playlist_selected_count">%1$d dipilih</string>
+    <string name="add_to_playlist_title">Tambahkan ke %1$s</string>
+    <string name="add_to_playlist_no_songs">Tidak ada lagu yang tersedia</string>
+    <string name="add_to_playlist_all_songs_present">Semua lagu sudah ada di playlist ini</string>
+
+    <!-- Artist details -->
+    <string name="artist_detail_albums_count">%1$d album</string>
+    <string name="artist_detail_songs_count">%1$d lagu</string>
+
+    <!-- Equalizer presets & UI -->
+    <string name="eq_preset_flat">Datar</string>
+    <string name="eq_preset_rock">Batu</string>
+    <string name="eq_preset_pop">Pop</string>
+    <string name="eq_preset_jazz">Jazz</string>
+    <string name="eq_preset_classical">Klasik</string>
+    <string name="eq_preset_electronic">Elektronik</string>
+    <string name="eq_preset_hiphop">Hip Hop</string>
+    <string name="eq_preset_vocal">Vokal</string>
+    <string name="eq_preset_bass_boost">Peningkatan Bass</string>
+    <string name="eq_preset_treble_boost">Peningkatan Tiga Kali Lipat</string>
+    <string name="eq_preset_v_shape">Bentuk V</string>
+    <string name="eq_preset_harman">Harman</string>
+    <string name="eq_preset_custom">Kustom</string>
+    <string name="eq_autoeq_profiles">Profil AutoEQ</string>
+    <string name="eq_manage_device">Kelola Perangkat</string>
+    <string name="eq_system_equalizer">Ekualiser Sistem</string>
+    <string name="eq_enhance_lows">Tingkatkan posisi terendah</string>
+    <string name="eq_widen_sound">Memperlebar suara</string>
+    <string name="eq_mono_only">Hanya mono</string>
+
+    <!-- Library updates, sorting & categories -->
+    <string name="library_updated_songs_success">Memperbarui %1$d lagu</string>
+    <string name="library_updated_songs_failed">Memperbarui %1$d lagu, %2$d gagal</string>
+    <string name="library_switch_to_grid">Beralih ke Tampilan Grid</string>
+    <string name="library_switch_to_list">Beralih ke Tampilan Daftar</string>
+    <string name="library_sort_title">Judul</string>
+    <string name="library_sort_artist">Artis</string>
+    <string name="library_sort_date_added">Tanggal Ditambahkan</string>
+    <string name="library_sort_date_modified">Tanggal Dimodifikasi</string>
+    <string name="library_sort_ascending">Naik</string>
+    <string name="library_sort_descending">Turun</string>
+    <string name="library_sort_name_asc">Nama (A-Z)</string>
+    <string name="library_sort_name_desc">Nama (ZA)</string>
+    <string name="library_sort_songs_desc">Lagu (Tinggi ke Rendah)</string>
+    <string name="library_sort_albums_desc">Album (Tinggi ke Rendah)</string>
+    <string name="library_scan_songs">Memindai lagu...</string>
+    <string name="library_scan_albums">Memproses album...</string>
+    <string name="library_scan_artists">Memproses artis...</string>
+    <string name="library_scan_genres">Mendeteksi genre...</string>
+    <string name="library_scan_media">Memindai media...</string>
+    <string name="library_export_failed">Ekspor gagal</string>
+    <string name="library_import_failed">Impor gagal</string>
+    <string name="library_category_all">Semuanya</string>
+    <string name="library_category_favorites">❤️ Favorit</string>
+    <string name="library_category_absolute_favorites">⭐⭐⭐⭐⭐ Favorit Mutlak</string>
+    <string name="library_category_loved">⭐⭐⭐⭐ Dicintai</string>
+    <string name="library_category_great">⭐⭐⭐ Hebat</string>
+    <string name="library_category_good">⭐⭐ Bagus</string>
+    <string name="library_category_liked">⭐ Disukai</string>
+    <string name="library_category_short">Pendek (&lt; 3 menit)</string>
+    <string name="library_category_medium">Sedang (3-5 menit)</string>
+    <string name="library_category_long">Panjang (&gt; 5 menit)</string>
+    <string name="library_category_hi_res_lossless">Resolusi Tinggi Tanpa Rugi</string>
+    <string name="library_category_lossless">Tanpa Rugi</string>
+    <string name="library_category_dolby">Dolby</string>
+    <string name="library_category_mono">Mono</string>
+    <string name="library_category_stereo">Stereo</string>
+    <string name="library_category_high_quality">Kualitas Tinggi</string>
+    <string name="library_category_standard">Standar</string>
+    <string name="library_removed_from_favorites">Menghapus %1$d dari favorit</string>
+    <string name="library_added_to_favorites">Menambahkan %1$d ke favorit</string>
+    <string name="library_unlike_all">Tidak seperti semuanya</string>
+    <string name="library_like_all">Seperti semuanya</string>
+    <string name="library_tracks_count_format">%1$d dari %2$d trek</string>
+    <string name="library_no_playlists_yet">Belum ada playlist\nBuat playlist pertama Anda menggunakan tombol +</string>
+    <string name="library_no_albums_yet">Belum ada album</string>
+    <string name="library_no_artists_yet">Belum ada artis</string>
+    <string name="library_action_play_next">Putar berikutnya</string>
+    <string name="library_action_add_to_queue">Tambahkan ke antrean</string>
+    <string name="library_action_add_to_blacklist">Tambahkan ke daftar hitam</string>
+    <string name="library_action_song_info">Info lagu</string>
+    <string name="library_action_add_to_playlist">Tambahkan ke daftar putar</string>
+    <string name="library_action_rate_song">Nilai Lagu</string>
+    <string name="library_menu_new_playlist">Daftar putar baru</string>
+    <string name="library_menu_import_playlist">Impor daftar putar</string>
+    <string name="library_menu_export_playlists">Ekspor daftar putar</string>
+    <string name="library_menu_close_playlist">Tutup menu daftar putar</string>
+    <string name="library_menu_open_playlist">Buka menu daftar putar</string>
+    <string name="library_menu_close">Tutup menu</string>
+    <string name="library_selected_count_format">%1$d Dipilih</string>
+    <string name="library_from_tracks_format">dari trek %1$d
+Daftar putar</string>
+    <string name="library_playlist_count_singular">%1$d</string>
+    <string name="library_playlist_count_plural">%1$d daftar putar</string>
+    <string name="library_album_count_singular">%1$d album</string>
+    <string name="library_album_count_plural">%1$d album</string>
+    <string name="library_artist_count_singular">%1$d artis</string>
+    <string name="library_artist_count_plural">%1$d artis</string>
+    <string name="library_duration_hours_minutes">%1$dh %2$dm</string>
+    <string name="library_duration_minutes">%1$dm</string>
+
+    <!-- Onboarding, Backup & Settings additions -->
+    <string name="onboarding_blacklist_label">Daftar Hitam</string>
+    <string name="onboarding_whitelist_label">Daftar Putih</string>
+    <string name="onboarding_full_player_label">Pemain Penuh</string>
+    <string name="onboarding_mini_player_label">Pemutar Mini</string>
+    <string name="onboarding_blocked_folders">%1$d folder yang diblokir</string>
+    <string name="onboarding_whitelisted_folders">%1$d folder yang masuk daftar putih</string>
+    <string name="onboarding_sample_button">Tombol Contoh</string>
+    <string name="onboarding_primary_label">Pratama</string>
+    <string name="onboarding_secondary_label">Sekunder</string>
+    <string name="onboarding_tertiary_label">Tersier</string>
+    <string name="onboarding_rhythm_material">Rhythm (Material)</string>
+    
+    <string name="backup_restored_success">Cadangan berhasil dipulihkan. Mulai ulang aplikasi untuk menerapkan semua perubahan.</string>
+    <string name="backup_copied_to_clipboard">Cadangan dibuat dan disalin ke papan klip.</string>
+    <string name="backup_failed_to_create">Gagal membuat cadangan: %1$s</string>
+    <string name="backup_failed_to_restore_file">Gagal memulihkan dari file: %1$s</string>
+    <string name="backup_no_backup_clipboard">Tidak ada cadangan yang ditemukan di papan klip</string>
+    <string name="backup_failed_to_restore_clipboard">Gagal memulihkan dari clipboard: %1$s</string>
+    
+    <string name="updater_ready_to_install">Versi %1$s siap dipasang</string>
+    <string name="updater_download_progress">%1$d%% • %2$s / %3$s</string>
+    <string name="updater_version_info">Versi %1$s • %2$s</string>
+    <string name="updater_error_occurred">Terjadi kesalahan</string>
+    <string name="updater_channel_stable">stabil</string>
+    <string name="updater_channel_beta">beta</string>
+
+    <!-- Expressive shape preset & group names -->
+    <string name="shape_preset_default">Bawaan</string>
+    <string name="shape_preset_default_desc">Bentuk ekspresif yang lembut untuk segala usia</string>
+    <string name="shape_preset_friendly">Ramah</string>
+    <string name="shape_preset_friendly_desc">Bentuk yang hangat dan mudah didekati</string>
+    <string name="shape_preset_cheerful">Ceria</string>
+    <string name="shape_preset_cheerful_desc">Bentuk cerah dan ekspresif</string>
+    <string name="shape_preset_modern">Modern</string>
+    <string name="shape_preset_modern_desc">Desain ekspresif kontemporer</string>
+    <string name="shape_preset_playful">Menyenangkan</string>
+    <string name="shape_preset_playful_desc">Bentuk yang menyenangkan dan ekspresif</string>
+    <string name="shape_preset_organic">Organik</string>
+    <string name="shape_preset_organic_desc">Bentuk yang terinspirasi dari alam</string>
+    <string name="shape_preset_geometric">Geometris</string>
+    <string name="shape_preset_geometric_desc">Bentuk bersih dan modern</string>
+    <string name="shape_preset_retro">Retro</string>
+    <string name="shape_preset_retro_desc">Bentuk nostalgia berpiksel</string>
+    <string name="shape_preset_custom">Kustom</string>
+    <string name="shape_preset_custom_desc">Pilihan pribadi Anda</string>
+    <string name="shape_option_square">Kotak</string>
+    <string name="shape_option_square_desc">Kotak bulat</string>
+    <string name="shape_option_oval">Oval</string>
+    <string name="shape_option_oval_desc">Oval memanjang</string>
+    <string name="shape_option_pill">Pil</string>
+    <string name="shape_option_pill_desc">Bentuk kapsul</string>
+    <string name="shape_option_diamond">Berlian</string>
+    <string name="shape_option_diamond_desc">Bentuk berlian</string>
+    <string name="shape_option_triangle">Segitiga</string>
+    <string name="shape_option_triangle_desc">Segitiga bulat</string>
+    <string name="shape_option_pentagon">Segi lima</string>
+    <string name="shape_option_pentagon_desc">Poligon bersisi lima</string>
+    <string name="shape_option_flower">Bunga</string>
+    <string name="shape_option_flower_desc">Bunga dengan kelopak</string>
+    <string name="shape_option_clover4">Semanggi Berdaun 4</string>
+    <string name="shape_option_clover4_desc">Semanggi berdaun empat</string>
+    <string name="shape_option_clover8">Semanggi 8 Daun</string>
+    <string name="shape_option_clover8_desc">Semanggi berdaun delapan</string>
+    <string name="shape_option_heart">Hati</string>
+    <string name="shape_option_heart_desc">Bentuk hati</string>
+    <string name="shape_option_bun">Bun</string>
+    <string name="shape_option_bun_desc">Bentuk roti/roti</string>
+    <string name="shape_option_boom">Booming</string>
+    <string name="shape_option_boom_desc">Bentuk ledakan</string>
+    <string name="shape_option_soft_boom">Boom Lembut</string>
+    <string name="shape_option_soft_boom_desc">Ledakan lebih lembut</string>
+    <string name="shape_option_burst">Meledak</string>
+    <string name="shape_option_burst_desc">Bentuk ledakan bintang</string>
+    <string name="shape_option_soft_burst">Ledakan Lembut</string>
+    <string name="shape_option_soft_burst_desc">Ledakan bintang yang lebih lembut</string>
+    <string name="shape_option_sunny">Cerah</string>
+    <string name="shape_option_sunny_desc">Matahari dengan sinarnya</string>
+    <string name="shape_option_very_sunny">Sangat Cerah</string>
+    <string name="shape_option_very_sunny_desc">Matahari dengan lebih banyak sinar</string>
+    <string name="shape_option_cookie4">Kue 4</string>
+    <string name="shape_option_cookie4_desc">kue 4 sisi</string>
+    <string name="shape_option_cookie6">Kue 6</string>
+    <string name="shape_option_cookie6_desc">kue 6 sisi</string>
+    <string name="shape_option_cookie7">Kue 7</string>
+    <string name="shape_option_cookie7_desc">kue 7 sisi</string>
+    <string name="shape_option_cookie9">Kue 9</string>
+    <string name="shape_option_cookie9_desc">kue 9 sisi</string>
+    <string name="shape_option_cookie12">Kue 12</string>
+    <string name="shape_option_cookie12_desc">kue 12 sisi</string>
+    <string name="shape_option_ghostish">Hantu</string>
+    <string name="shape_option_ghostish_desc">Bentuknya seperti hantu</string>
+    <string name="shape_option_puffy">Bengkak</string>
+    <string name="shape_option_puffy_desc">Bentuknya seperti awan</string>
+    <string name="shape_option_puffy_diamond">Berlian Bengkak</string>
+    <string name="shape_option_puffy_diamond_desc">Berlian bengkak</string>
+    <string name="shape_option_fan">Penggemar</string>
+    <string name="shape_option_fan_desc">Bentuk kipas</string>
+    <string name="shape_option_circle">Lingkaran</string>
+    <string name="shape_option_circle_desc">Lingkaran sempurna</string>
+    <string name="shape_option_clover_4_leaf">Semanggi Berdaun 4</string>
+    <string name="shape_option_clover_4_leaf_desc">Semanggi berdaun empat</string>
+    <string name="shape_option_clover_8_leaf">Semanggi 8 Daun</string>
+    <string name="shape_option_clover_8_leaf_desc">Semanggi berdaun delapan</string>
+    <string name="shape_option_arrow">Panah</string>
+    <string name="shape_option_arrow_desc">Penunjuk panah</string>
+    <string name="shape_option_arch">Lengkungan</string>
+    <string name="shape_option_arch_desc">Bentuk lengkungan</string>
+    <string name="shape_option_clam_shell">Cangkang Kerang</string>
+    <string name="shape_option_clam_shell_desc">Bentuk cangkang</string>
+    <string name="shape_option_gem">Permata</string>
+    <string name="shape_option_gem_desc">Bentuk batu permata</string>
+    <string name="shape_option_semi_circle">Setengah Lingkaran</string>
+    <string name="shape_option_semi_circle_desc">Setengah lingkaran</string>
+    <string name="shape_option_slanted">Miring</string>
+    <string name="shape_option_slanted_desc">Kotak miring</string>
+    <string name="shape_option_pixel_circle">Lingkaran Piksel</string>
+    <string name="shape_option_pixel_circle_desc">Lingkaran berpiksel</string>
+    <string name="shape_option_pixel_triangle">Segitiga Piksel</string>
+    <string name="shape_option_pixel_triangle_desc">Segitiga berpiksel</string>
+    <string name="shape_group_basic">Dasar</string>
+    <string name="shape_group_organic">Organik</string>
+    <string name="shape_group_playful">Menyenangkan</string>
+    <string name="shape_group_cookie">Kue</string>
+    <string name="shape_group_whimsical">Aneh</string>
+    <string name="shape_group_special">Spesial</string>
+    <string name="shape_group_pixel">Piksel</string>
+
+    <!-- Customization Choices -->
+    <string name="option_always">Selalu</string>
+    <string name="option_expanded">Diperluas</string>
+    <string name="option_collapsed">Runtuh</string>
+    <string name="option_linear">Linier</string>
+    <string name="option_circular">Lingkaran</string>
+    <string name="option_auto">Otomatis</string>
+    <string name="option_manual">Petunjuk</string>
+    <string name="option_both">Keduanya</string>
+    <string name="option_icon">Ikon</string>
+    <string name="option_name">Nama</string>
+
+    <!-- Theme settings additions -->
+    <string name="theme_color_red">Merah</string>
+    <string name="theme_color_green">Hijau</string>
+    <string name="theme_color_blue">Biru</string>
+    <string name="theme_font_restart_warning">Font berubah. Mulai ulang aplikasi untuk menerapkan font baru.</string>
+    <string name="theme_source_album_art">Seni Album</string>
+    <string name="theme_source_album_art_desc">Ekstrak warna dari sampul album yang sedang diputar</string>
+    <string name="theme_source_system_colors">Warna Sistem</string>
+    <string name="theme_source_system_colors_desc">Gunakan Material Anda mewarnai dari wallpaper Anda</string>
+    <string name="theme_source_custom_scheme">Skema Kustom</string>
+    <string name="theme_source_custom_scheme_desc">Pilih dari skema warna yang telah ditentukan sebelumnya</string>
+    <string name="theme_font_system">Font Sistem</string>
+    <string name="theme_font_system_desc">Gunakan font default perangkat</string>
+    <string name="theme_font_custom">Font Khusus</string>
+    <string name="theme_font_custom_desc">Impor dan gunakan file font khusus</string>
+
+    <!-- Color Scheme names -->
+    <string name="scheme_default">Bawaan</string>
+    <string name="scheme_warm">Hangat</string>
+    <string name="scheme_cool">Keren</string>
+    <string name="scheme_forest">Hutan</string>
+    <string name="scheme_rose">Mawar</string>
+    <string name="scheme_monochrome">Monokrom</string>
+    <string name="scheme_lavender">Lavender</string>
+    <string name="scheme_ocean">Laut</string>
+    <string name="scheme_aurora">Aurora</string>
+    <string name="scheme_amber">Kuning</string>
+    <string name="scheme_crimson">Merah tua</string>
+    <string name="scheme_emerald">Zamrud</string>
+    <string name="scheme_mint">Mint
+Peringkat</string>
+
+    <!-- Shape Utils category and descriptions -->
+    <string name="shape_utils_fab">Tombol Aksi Mengambang</string>
+    <string name="shape_utils_fab_desc">Bentuk untuk tombol FAB</string>
+    <string name="shape_utils_cards">Kartu</string>
+    <string name="shape_utils_cards_desc">Bentuk untuk kartu dan wadah</string>
+    <string name="shape_utils_buttons">Tombol</string>
+    <string name="shape_utils_buttons_desc">Bentuk untuk tombol</string>
+    <string name="shape_utils_chips">Keripik</string>
+    <string name="shape_utils_chips_desc">Bentuk untuk chip dan tag</string>
+    <string name="shape_utils_player_controls">Kontrol Pemain</string>
+    <string name="shape_utils_player_controls_desc">Bentuk untuk tombol kontrol pemutar</string>
+    <string name="shape_utils_mini_player">Pemutar Mini</string>
+    <string name="shape_utils_mini_player_desc">Bentuk untuk karya seni pemutar mini</string>
+
+    <!-- Metadata properties and labels -->
+    <string name="metadata_duration">Durasi</string>
+    <string name="metadata_disc">Disk</string>
+    <string name="metadata_composer">Komposer</string>
+    <string name="metadata_album_artist">Artis Album</string>
+    <string name="metadata_play_count">Jumlah Pemutaran</string>
+    <string name="metadata_total_played">Total Dimainkan
+Peringkat</string>
+    <string name="metadata_rating">Rating</string>
+    <string name="metadata_quality">Kualitas</string>
+    <string name="metadata_audio_tech">Teknologi Audio</string>
+    <string name="metadata_bit_depth">Kedalaman Bit</string>
+    <string name="metadata_bitrate">Kecepatan bit</string>
+    <string name="metadata_sample_rate">Tingkat Sampel</string>
+    <string name="metadata_channels">Saluran</string>
+    <string name="metadata_format">Format</string>
+    <string name="metadata_location">Lokasi</string>
+    <string name="metadata_lyrics">Lirik</string>
+    <string name="metadata_mime_type">Tipe MIME</string>
+    <string name="metadata_date_added">Tanggal Ditambahkan</string>
+    <string name="metadata_modified">Dimodifikasi</string>
+    <string name="metadata_lyrics_available">Tersedia</string>
+    <string name="metadata_dts">DTS</string>
+    <string name="metadata_hi_res">Resolusi Tinggi</string>
+    <string name="metadata_dolby">Dolby</string>
+    <string name="metadata_lossless">Tanpa Rugi</string>
+
+    <!-- Discover settings specific -->
+    <string name="settings_discover_album_name">Nama Album</string>
+    <string name="settings_discover_album_name_desc">Tampilkan judul album di kartu</string>
+    <string name="settings_discover_artist_name">Nama Artis</string>
+    <string name="settings_discover_artist_name_desc">Tampilkan nama artis di kartu</string>
+    <string name="settings_discover_release_year">Tahun Rilis</string>
+    <string name="settings_discover_release_year_desc">Tampilkan tahun rilis album</string>
+    <string name="settings_discover_play_button">Tombol Putar</string>
+    <string name="settings_discover_play_button_desc">Tampilkan tombol putar cepat</string>
+    <string name="settings_discover_gradient_overlay">Hamparan Gradien</string>
+    <string name="settings_discover_gradient_overlay_desc">Tampilkan gradien di belakang teks</string>
+
+    <!-- Carousel Style selector strings -->
+    <string name="carousel_style_default">Bawaan</string>
+    <string name="carousel_style_default_desc">2 album intip sampingan</string>
+    <string name="carousel_style_hero">Pahlawan</string>
+    <string name="carousel_style_hero_desc">1 album intip samping</string>
+
+    <!-- Theme names -->
+    <string name="theme_rhythm">Rhythm</string>
+    <string name="theme_expressive">Ekspresif</string>
+    <string name="settings_managed_by_expressive_shapes">Dikelola dengan Bentuk Ekspresif</string>
+
+    <!-- Shape targets -->
+    <string name="shape_target_album_art">Karya Seni Album</string>
+    <string name="shape_target_album_art_desc">Bentuk untuk sampul album</string>
+    <string name="shape_target_player_art">Karya Seni Pemain</string>
+    <string name="shape_target_player_art_desc">Bentuk untuk karya seni layar pemain</string>
+    <string name="shape_target_song_art">Karya Seni Lagu</string>
+    <string name="shape_target_song_art_desc">Bentuk untuk karya seni lagu dalam daftar</string>
+    <string name="shape_target_playlist_art">Karya Seni Daftar Putar</string>
+    <string name="shape_target_playlist_art_desc">Bentuk untuk sampul daftar putar</string>
+    <string name="shape_target_artist_art">Karya Seni Artis</string>
+    <string name="shape_target_artist_art_desc">Bentuk untuk gambar artis</string>
+    <string name="settings_shape_for">Bentuk untuk %1$s</string>
 </resources>
+

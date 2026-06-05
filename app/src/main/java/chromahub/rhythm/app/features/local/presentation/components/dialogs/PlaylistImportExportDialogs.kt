@@ -66,7 +66,7 @@ fun AppRestartDialog(
         },
         text = {
             Text(
-                text = message ?: "To ensure all imported playlists work correctly, we recommend restarting the app. You can continue using the app normally, but some features may not work as expected until restart.",
+                text = message ?: context.getString(R.string.dialog_restart_warning_message),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -163,7 +163,7 @@ fun PlaylistExportDialog(
         text = {
             Column {
                 Text(
-                    text = "Export \"$playlistName\" to:",
+                    text = context.getString(R.string.dialog_export_playlist_to, playlistName),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -265,7 +265,7 @@ fun PlaylistExportDialog(
                     modifier = Modifier.size(18.dp)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
-                Text(if (showLocationOptions) "Back" else "Cancel")
+                Text(if (showLocationOptions) context.getString(R.string.common_back) else context.getString(R.string.ui_cancel))
             }
         },
         shape = RoundedCornerShape(24.dp)
@@ -317,7 +317,7 @@ fun BulkPlaylistExportDialog(
             LazyColumn {
                 item {
                     Text(
-                        text = "Export $playlistCount playlists to:",
+                        text = context.getString(R.string.dialog_export_playlists_to, playlistCount),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )

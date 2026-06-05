@@ -3729,4 +3729,588 @@
     <string name="widget_theme_solid_purple_desc">Signatur djupviolett bakgrund med signaturaccenttoner och högdagrar</string>
     <string name="widget_theme_glance_suffix">%1$s (endast Glance widgets)</string>
     <string name="unit_dp">%1$ddp</string>
+
+    <!-- Settings Suggestions and Tips -->
+    <string name="settings_suggestions">Inställningsförslag</string>
+    <string name="settings_suggestions_desc">Visa kontextuella förslag överst</string>
+    <string name="settings_performance_desc_optimized">Optimera haptik, avkodning, markeringsram och hämtning av konstverk för att minska fördröjningen</string>
+    <string name="moment_morning">i morse</string>
+    <string name="moment_afternoon">i eftermiddag</string>
+    <string name="moment_evening">i kväll</string>
+    <string name="moment_night">ikväll</string>
+    <string name="pulse_fresh">Fräsch sessionsenergi</string>
+    <string name="pulse_steady">Stadigt spår</string>
+    <string name="pulse_heavy">Tung lyssning</string>
+    <string name="pulse_marathon">maratonläge</string>
+    
+    <!-- Settings Tips Details -->
+    <string name="settings_tip_theme_desc_1">Fräscha upp din musikspelare med livlig AMOLED-svart och vackra pastellfärger.</string>
+    <string name="settings_tip_theme_desc_2">Gör Rhythm verkligen din genom att matcha appens accent till ditt system.</string>
+    <string name="settings_tip_media_scan_desc_1">Undvik oönskade ljudklipp. Definiera uttryckligen vilka mappar vi ska skanna efter musik.</string>
+    <string name="settings_tip_media_scan_desc_2">Håll röstanteckningar och ringsignaler borta från dina spellistor med fokusmappar.</string>
+    <string name="settings_tip_sleep_timer_desc_1">Gå i viloläge medan din musik spelas. Vi pausar det automatiskt.</string>
+    <string name="settings_tip_sleep_timer_desc_2">Ställ in en automatisk insomningstimer före sänggåendet så att uppspelningen stoppar perfekt.</string>
+    <string name="settings_tip_equalizer_desc_1">Förhöj din upplevelse. Förstärk basen och justera frekvenserna med Equalizer.</string>
+    <string name="settings_tip_equalizer_desc_2">Ställ in ljudet till dina hörlurar säkert med våra avancerade ljudeffekter.</string>
+    <string name="settings_tip_backup_active_desc_1">Automatisk säkerhetskopiering är aktiv. Verifiera dina säkerhetskopior så att återställningar förblir rena.</string>
+    <string name="settings_tip_backup_active_desc_2">Skydd aktiverat: schemat ser bra ut. Kör en manuell säkerhetskopiering innan stora ändringar.</string>
+    <string name="settings_tip_backup_inactive_desc_1">Automatisk säkerhetskopiering är avstängd. Aktivera den för att skydda spellistor och Rhythm Guard-statistik.</string>
+    <string name="settings_tip_backup_inactive_desc_2">Inget skyddsnät ännu. Aktivera säkerhetskopior för att undvika att förlora din installation.</string>
+    <string name="settings_tip_updates_active_desc_1">Uppdateringar är aktiverade. Behåll dem på för korrigeringar och prestandaförbättringar.</string>
+    <string name="settings_tip_updates_active_desc_2">Du är inställd på att ta emot uppdateringar. Kontrollera kanalpreferenser för stabilitet kontra färskhet.</string>
+    <string name="settings_tip_updates_inactive_desc_1">Uppdateringar är inaktiverade. Återaktivera dem att förbli skyddade och aktuella.</string>
+    <string name="settings_tip_updates_inactive_desc_2">Du är fäst vid det aktuella bygget. Slå på uppdateringar igen när du är klar.</string>
+    <string name="settings_tip_queue_active_desc_1">Spelarens svep för att hoppa över är aktiv. Justera köreglerna för smidigare övergångar.</string>
+    <string name="settings_tip_queue_active_desc_2">Hoppa över gest är på. Matcha köbeteende till ditt lyssningsflöde.</string>
+    <string name="settings_tip_queue_inactive_desc_1">Svep för att hoppa över är avstängt. Kökontroller kan hjälpa till att hålla uppspelningen effektiv.</string>
+    <string name="settings_tip_queue_inactive_desc_2">Föredrar explicita kontroller? Finjustera köbeteende för förutsägbar uppspelning.</string>
+    <string name="settings_tip_controls_active_desc_1">Sökknapparna är synliga. Anpassa spelarkontrollerna för att minska röran.</string>
+    <string name="settings_tip_controls_active_desc_2">Kontrollrik spelare aktiverad. Justera layouten för att nå tummen.</string>
+    <string name="settings_tip_controls_inactive_desc_1">Minimala spelarkontroller aktiverade. Lägg till sökknappar om du missar exakta hopp.</string>
+    <string name="settings_tip_controls_inactive_desc_2">Ren layout aktiv. Återaktivera sökkontroller för finare uppspelningshantering.</string>
+    <string name="settings_tip_miniplayer_active_desc_1">Minispelarens framsteg är synliga. Välj en stil som matchar ditt tema.</string>
+    <string name="settings_tip_miniplayer_active_desc_2">Förloppsindikatorn är aktiv på minispelaren. Testa form- och hörnjusteringar härnäst.</string>
+    <string name="settings_tip_miniplayer_inactive_desc_1">Minispelarens framsteg är dold. Aktivera det för snabb spårmedvetenhet.</string>
+    <string name="settings_tip_miniplayer_inactive_desc_2">Det kompakta läget är minimalt nu. Aktivera framsteg för bättre överblick.</string>
+    <string name="settings_tip_library_active_desc_1">Klassificeringar är aktiverade. Använd biblioteksinställningar för att skärpa upptäckt och sortering.</string>
+    <string name="settings_tip_library_active_desc_2">Ditt bibliotek stöder betyg. Justera skanning och gruppering för renare surfning.</string>
+    <string name="settings_tip_library_inactive_desc_1">Klassificeringar är inaktiverade. Biblioteksinställningar kan fortfarande förbättra struktur och hastighet.</string>
+    <string name="settings_tip_library_inactive_desc_2">Förenklat biblioteksläge upptäckt. Justera gruppering för snabbare navigering.</string>
+
+    <!-- Lyrics Source Dialog -->
+    <string name="lyrics_source_embedded_first">Inbäddad först</string>
+    <string name="lyrics_source_embedded_first_desc">Prova ljudfilsmetadata → Online-API:er → .lrc-filer</string>
+    <string name="lyrics_source_api_first">API Först</string>
+    <string name="lyrics_source_api_first_desc">Prova onlinetjänster → Ljudmetadata → .lrc-filer</string>
+    <string name="lyrics_source_local_first">Lokal .lrc först</string>
+    <string name="lyrics_source_local_first_desc">Prova .lrc-filer → Ljudmetadata → Online-API:er</string>
+
+    <!-- Font / Color Customization Dialogs -->
+    <string name="theme_font_source_changed_restart">Teckensnittskälla ändrad. Starta om appen för att tillämpa det nya teckensnittet.</string>
+    <string name="color_source_album_art">Albumomslag</string>
+    <string name="color_source_album_art_desc">Extrahera färger från skivomslag som för närvarande spelas</string>
+    <string name="color_source_system_colors">Systemfärger</string>
+    <string name="color_source_system_colors_desc">Använd Material Du färger från din tapet</string>
+    <string name="color_source_custom_scheme">Anpassat schema</string>
+    <string name="color_source_custom_scheme_desc">Välj bland fördefinierade färgscheman</string>
+    <string name="font_source_system_font">Systemteckensnitt</string>
+    <string name="font_source_system_font_desc">Använd enhetens standardteckensnitt</string>
+    <string name="font_source_custom_font">Anpassat teckensnitt</string>
+    <string name="font_source_custom_font_desc">Importera och använd en anpassad teckensnittsfil</string>
+    <string name="font_system_title">Systemstandard</string>
+    <string name="font_system_desc">Använd enhetens standardteckensnitt</string>
+    <string name="font_geom_desc">Modernt, rent sans-serif-teckensnitt från Google</string>
+    <string name="font_slate_desc">Elegant serif-typsnitt med ett klassiskt, traditionellt utseende</string>
+    <string name="font_inter_desc">Rent och modernt sans-serif-teckensnitt, mycket läsbart</string>
+    <string name="font_jetbrains_desc">Monospace-teckensnitt perfekt för tekniskt innehåll</string>
+    <string name="font_quicksand_desc">Rundat typsnitt med ett mjukare, vänligare utseende</string>
+
+    <!-- Predefined Color Schemes -->
+    <string name="color_scheme_default_title">Rhythm Standard</string>
+    <string name="color_scheme_default_desc">Material 3 baslinje lila med rosa accenter</string>
+    <string name="color_scheme_warm_title">Varm solnedgång</string>
+    <string name="color_scheme_warm_desc">Mysiga orange och röda toner för en varm atmosfär</string>
+    <string name="color_scheme_cool_title">Cool Ocean</string>
+    <string name="color_scheme_cool_desc">Uppfriskande blå och kricka toner för en lugnande atmosfär</string>
+    <string name="color_scheme_forest_title">Skogsgrön</string>
+    <string name="color_scheme_forest_desc">Naturliga gröna toner inspirerade av naturen</string>
+    <string name="color_scheme_rose_title">Rosa rosa</string>
+    <string name="color_scheme_rose_desc">Eleganta rosa och magenta toner</string>
+    <string name="color_scheme_monochrome_title">Monokrom</string>
+    <string name="color_scheme_monochrome_desc">Minimalistisk gråskala för en ren, modern look</string>
+    <string name="color_scheme_lavender_title">Lavendel</string>
+    <string name="color_scheme_lavender_desc">Lugnande lila och lavendeltoner för avkoppling</string>
+    <string name="color_scheme_ocean_title">Deep Ocean</string>
+    <string name="color_scheme_ocean_desc">Deep blues och akvamariner för oceaniskt lugn</string>
+    <string name="color_scheme_aurora_title">norrsken</string>
+    <string name="color_scheme_aurora_desc">Vibrerande gröna och blåa färger inspirerade av norrskenet</string>
+    <string name="color_scheme_amber_title">Gyllene bärnsten</string>
+    <string name="color_scheme_amber_desc">Rika bärnstens- och guldtoner för en lyxig känsla</string>
+    <string name="color_scheme_crimson_title">Deep Crimson</string>
+    <string name="color_scheme_crimson_desc">Djärva vinröda och crimson nyanser för dramatik</string>
+    <string name="color_scheme_emerald_title">Emerald Dream</string>
+    <string name="color_scheme_emerald_desc">Färska smaragdgröna med naturliga skogstoner</string>
+    <string name="color_scheme_mint_title">Mint</string>
+    <string name="color_scheme_mint_desc">Fräscha och rena cyan- och mintgröna toner</string>
+
+    <!-- Color Preview Chips -->
+    <string name="theme_color_primary">Primär</string>
+    <string name="theme_color_secondary">Sekundär</string>
+    <string name="theme_color_tertiary">Tertiär</string>
+
+    <!-- Lyrics Settings Screen -->
+    <string name="lyrics_settings_title">Sångtext</string>
+    <string name="lyrics_settings_general">Allmänna inställningar</string>
+    <string name="lyrics_settings_open_fullscreen_desc">Öppna en textskärm i helskärm genom att trycka på textvyn</string>
+    <string name="lyrics_settings_autohide_controls">Dölj textkontroller automatiskt</string>
+    <string name="lyrics_settings_autohide_controls_desc">Dölj automatiskt kontroller i helskärmstextskärmen efter några sekunders inaktivitet</string>
+    <string name="lyrics_settings_embedded_first">Inbäddad först</string>
+    <string name="lyrics_settings_embedded_first_desc">Föredrar texter inbäddade i ljudfiler, reserv till online-API:er</string>
+    <string name="lyrics_settings_online_first">Online först</string>
+    <string name="lyrics_settings_online_first_desc">Föredrar online-API:er (Rhythm ord-för-ord, LRCLib), reserv till inbäddade</string>
+    <string name="lyrics_settings_local_first">Lokalt först</string>
+    <string name="lyrics_settings_local_first_desc">Föredrar lokala .lrc-filer, sedan inbäddade sångtexter, sedan online-API:er</string>
+    <string name="lyrics_settings_apple_music_first">Apple Music First</string>
+    <string name="lyrics_settings_lrclib_first">LRCLib Först</string>
+    <string name="lyrics_settings_fallback_apis_desc">Försök reserv-API:er om den föredragna API misslyckas med att returnera sångtexter</string>
+    <string name="lyrics_settings_display_styling">Display &amp; Styling</string>
+    <string name="lyrics_settings_size_percentage">Storlek: %1$d%%</string>
+    <string name="alignment_left">Vänster</string>
+    <string name="alignment_center">Center</string>
+    <string name="alignment_right">Höger</string>
+    <string name="animation_slide">Slide</string>
+    <string name="animation_fade">Tona ut</string>
+    <string name="animation_scale">Skala</string>
+    <string name="animation_up">Upp</string>
+    <string name="lyrics_settings_switch_animation_desc">Art ↔ Lyrics switch animation</string>
+    <string name="lyrics_settings_not_supported_expressive">Stöds inte av uttrycksfullt tema</string>
+    <string name="lyrics_settings_formatting_behaviors">Formatering och beteenden</string>
+    <string name="lyrics_settings_bold_text">Fet text</string>
+    <string name="lyrics_settings_bold_text_desc">Gör texten i aktiva sångtexter fet</string>
+    <string name="lyrics_settings_trim_lyrics">Trimma sångtexter</string>
+    <string name="lyrics_settings_trim_lyrics_desc">Trimma inledande och efterföljande blanksteg från lyriska rader</string>
+    <string name="lyrics_settings_disable_animations">Inaktivera animationer</string>
+    <string name="lyrics_settings_disable_animations_desc">Inaktivera övergångar och animationer i sångtextvyn</string>
+    <string name="lyrics_settings_word_by_word_translation">Ord-för-ord-översättning</string>
+    <string name="lyrics_settings_word_by_word_translation_desc">Försök att automatiskt synkronisera stavelse- eller ordöversättningar</string>
+    <string name="lyrics_settings_info_bullets">Ytterligare synkroniseringsdetaljer:\n• Online-API:er ger synkroniserade sångtexter av hög kvalitet\n• Rhythm erbjuder ord-för-ord-synkronisering\n• LRCLib ger gratis rad-för-rad-synkronisering</string>
+
+    <!-- AutoEQ Preset Picker additions -->
+    <string name="autoeqpresetpickerbottomsheet_search_presets">Sök förinställningar...</string>
+    <string name="autoeqpresetpickerbottomsheet_disable">Ingen / Inaktivera AutoEQ</string>
+    <string name="autoeqpresetpickerbottomsheet_disable_desc">Rensa hörlursprofil, använd standard EQ-förinställningar</string>
+    <string name="autoeqpresetpickerbottomsheet_unknown_brand">Okänt varumärke</string>
+
+    <!-- Device Configuration additions -->
+    <string name="device_configuration_devices_configured">%1$d enheter konfigurerade</string>
+    <string name="device_configuration_device_recognized">Enheten känns igen</string>
+    <string name="device_configuration_new_device_detected">Ny enhet upptäckt</string>
+    <string name="device_configuration_configured_with">%1$s är konfigurerad med %2$s</string>
+    <string name="device_configuration_configured_no_profile">%1$s är konfigurerad</string>
+    <string name="device_configuration_connected_not_configured">%1$s är ansluten men inte konfigurerad</string>
+    <string name="device_configuration_applied_profile">Tillämpad %1$s-profil</string>
+    <string name="device_configuration_imported_profile">Importerad profil</string>
+    <string name="device_configuration_parse_error">Kunde inte analysera EQ-inställningar. Kontrollera formatet.</string>
+    <string name="device_configuration_custom_eq">Anpassad EQ</string>
+    <string name="device_configuration_custom_preset">Anpassad förinställning</string>
+    <string name="device_configuration_custom">Anpassad</string>
+    <string name="device_configuration_active_profile_label">Aktiv profil: %1$s</string>
+    <string name="device_configuration_share_subject">Rhythm EQ-profil: %1$s</string>
+    <string name="device_configuration_share_title">Dela EQ-profil</string>
+    <string name="device_configuration_edit_device">Redigera enhet</string>
+    <string name="device_configuration_add_device">Lägg till enhet</string>
+    <string name="device_configuration_save">Spara</string>
+    <string name="device_configuration_add">Lägg till</string>
+    <string name="device_configuration_for_device">För %1$s</string>
+    <string name="device_configuration_profiles_available">%1$d profiler tillgängliga</string>
+    <string name="device_configuration_disable_compensation">Inaktivera hörlurskompensation</string>
+
+    <!-- Common UI element strings -->
+    <string name="common_none">Ingen</string>
+    <string name="common_cancel">Avbryt</string>
+    <string name="common_back">Tillbaka</string>
+    <string name="common_remove">Ta bort</string>
+    <string name="common_add">Lägg till</string>
+    <string name="common_active">Aktiv</string>
+    <string name="common_disabled">Inaktiverad</string>
+    <string name="common_unavailable">Ej tillgänglig</string>
+    <string name="common_success">Framgång</string>
+    <string name="common_error">Fel</string>
+    <string name="common_unknown">Okänd</string>
+
+    <!-- Blacklist UI additions -->
+    <string name="blacklist_remove_song_title">Ta bort från svartlista?</string>
+    <string name="blacklist_add_song_title">Lägg till på svartlista?</string>
+    <string name="blacklist_remove_song_desc">Den här låten kommer inte längre att döljas från ditt bibliotek.</string>
+    <string name="blacklist_add_song_desc">Den här låten kommer att döljas från ditt bibliotek och exkluderas från uppspelning.</string>
+    <string name="blacklist_undo_warning">Denna åtgärd kan ångras när som helst.</string>
+    <string name="blacklist_song_removed_msg">Låten har tagits bort från svartlista</string>
+    <string name="blacklist_song_added_msg">Låten har lagts till på svartlista</string>
+    <string name="blacklist_button_remove">Ta bort</string>
+    <string name="blacklist_button_blacklist">Svartlista</string>
+    <string name="blacklist_remove_folder_title">Ta bort mapp från svartlista?</string>
+    <string name="blacklist_add_folder_title">svartlista mapp?</string>
+    <string name="blacklist_remove_folder_desc">Alla låtar i den här mappen kommer att synas igen.</string>
+    <string name="blacklist_add_folder_desc">Alla låtar i den här mappen kommer att döljas och exkluderas från uppspelning.</string>
+    <string name="blacklist_folder_removed_msg">Mapp borttagen från svartlista</string>
+    <string name="blacklist_folder_added_msg">Mapp tillagd till svartlista</string>
+    <string name="blacklist_disc_label">Skiva %1$d</string>
+    <string name="blacklist_track_label">Spår %1$d</string>
+
+    <!-- Library & Playlist Dialog additions -->
+    <string name="dialog_add_song_to_playlist">Lägg till \"%1$s\" till den här spellistan</string>
+    <string name="dialog_songs_in_queue">Du har %1$d låtar i den aktuella kön.</string>
+    <string name="dialog_play_song_how">Hur skulle du vilja spela \"%1$s\"?</string>
+    <string name="dialog_clear_and_play">Rensa och spela</string>
+    <string name="dialog_clear_and_play_desc">Byt ut kö och spela den här låten</string>
+    <string name="dialog_add_to_queue">Lägg till i kö</string>
+    <string name="dialog_add_to_queue_desc">Behåll aktuell kö och lägg till låt</string>
+    <string name="dialog_restart_warning_message">För att säkerställa att alla importerade spellistor fungerar korrekt rekommenderar vi att du startar om appen. Du kan fortsätta använda appen normalt, men vissa funktioner kanske inte fungerar som förväntat förrän omstart.</string>
+    <string name="dialog_export_playlist_to">Exportera \"%1$s\" till:</string>
+    <string name="dialog_export_playlists_to">Exportera %1$d spellistor till:</string>
+    <string name="dialog_operation_importing">Importerar</string>
+    <string name="dialog_operation_exporting">Exporterar</string>
+
+    <!-- Mode dialog strings -->
+    <string name="dialog_switch_to_go">Byta till Rhythm Gå?</string>
+    <string name="dialog_switch_to_local">Byta till lokalt?</string>
+    <string name="dialog_switch_to_go_desc">Denna artikel tillhör Rhythm Go. Byt till streamingläge nu för att streama och spela upp det?</string>
+    <string name="dialog_switch_to_local_desc">Det här objektet tillhör ditt lokala bibliotek. Byt till lokalt läge nu för att spela dina offlinelåtar?</string>
+
+    <!-- Section order content descriptions -->
+    <string name="home_section_hide_carousel">Dölj karusell</string>
+    <string name="home_section_show_carousel">Visa karusell</string>
+    <string name="home_section_hide_section">Dölj avsnitt</string>
+    <string name="home_section_show_section">Visa avsnitt</string>
+    <string name="library_tab_show">Visa fliken</string>
+    <string name="library_tab_hide">Dölj fliken</string>
+
+    <!-- Add To Playlist additions -->
+    <string name="add_to_playlist_selected_count">%1$d har valts</string>
+    <string name="add_to_playlist_title">Lägg till i %1$s</string>
+    <string name="add_to_playlist_no_songs">Inga låtar tillgängliga</string>
+    <string name="add_to_playlist_all_songs_present">Alla låtar finns redan i den här spellistan</string>
+
+    <!-- Artist details -->
+    <string name="artist_detail_albums_count">%1$d album</string>
+    <string name="artist_detail_songs_count">%1$d låtar</string>
+
+    <!-- Equalizer presets & UI -->
+    <string name="eq_preset_flat">Platt</string>
+    <string name="eq_preset_rock">Rock</string>
+    <string name="eq_preset_pop">Pop</string>
+    <string name="eq_preset_jazz">Jazz</string>
+    <string name="eq_preset_classical">Klassisk</string>
+    <string name="eq_preset_electronic">Elektronisk</string>
+    <string name="eq_preset_hiphop">Hip Hop</string>
+    <string name="eq_preset_vocal">Sång</string>
+    <string name="eq_preset_bass_boost">Basförstärkning</string>
+    <string name="eq_preset_treble_boost">Diskantförstärkning</string>
+    <string name="eq_preset_v_shape">V-form</string>
+    <string name="eq_preset_harman">Harman</string>
+    <string name="eq_preset_custom">Anpassad</string>
+    <string name="eq_autoeq_profiles">AutoEQ-profiler</string>
+    <string name="eq_manage_device">Hantera enhet</string>
+    <string name="eq_system_equalizer">System Equalizer</string>
+    <string name="eq_enhance_lows">Förbättra lågnivåer</string>
+    <string name="eq_widen_sound">Vidga ljudet</string>
+    <string name="eq_mono_only">Endast mono</string>
+
+    <!-- Library updates, sorting & categories -->
+    <string name="library_updated_songs_success">Uppdaterade %1$d låtar</string>
+    <string name="library_updated_songs_failed">Uppdaterade %1$d låtar, %2$d misslyckades</string>
+    <string name="library_switch_to_grid">Växla till rutnätsvy</string>
+    <string name="library_switch_to_list">Växla till listvy</string>
+    <string name="library_sort_title">Titel</string>
+    <string name="library_sort_artist">Artist</string>
+    <string name="library_sort_date_added">Datum tillagd</string>
+    <string name="library_sort_date_modified">Ändrad datum</string>
+    <string name="library_sort_ascending">Stigande</string>
+    <string name="library_sort_descending">fallande</string>
+    <string name="library_sort_name_asc">Namn (A-Z)</string>
+    <string name="library_sort_name_desc">Namn (Z-A)</string>
+    <string name="library_sort_songs_desc">låtar (högt till lågt)</string>
+    <string name="library_sort_albums_desc">Album (högt till lågt)</string>
+    <string name="library_scan_songs">Skannar låtar...</string>
+    <string name="library_scan_albums">Bearbetar album...</string>
+    <string name="library_scan_artists">Bearbetar artister...</string>
+    <string name="library_scan_genres">Upptäcker genrer...</string>
+    <string name="library_scan_media">Skannar media...</string>
+    <string name="library_export_failed">Export misslyckades</string>
+    <string name="library_import_failed">Import misslyckades</string>
+    <string name="library_category_all">Alla</string>
+    <string name="library_category_favorites">❤️ Favoriter</string>
+    <string name="library_category_absolute_favorites">⭐⭐⭐⭐⭐ Absoluta favoriter</string>
+    <string name="library_category_loved">⭐⭐⭐⭐ Älskad</string>
+    <string name="library_category_great">⭐⭐⭐ Bra</string>
+    <string name="library_category_good">⭐⭐ Bra</string>
+    <string name="library_category_liked">⭐ Gillade</string>
+    <string name="library_category_short">kort (&lt; 3 min)</string>
+    <string name="library_category_medium">Medium (3-5 min)</string>
+    <string name="library_category_long">Lång (&gt; 5 min)</string>
+    <string name="library_category_hi_res_lossless">Högupplöst förlustfri</string>
+    <string name="library_category_lossless">Förlustfri</string>
+    <string name="library_category_dolby">Dolby</string>
+    <string name="library_category_mono">Mono</string>
+    <string name="library_category_stereo">Stereo</string>
+    <string name="library_category_high_quality">Hög kvalitet</string>
+    <string name="library_category_standard">Standard</string>
+    <string name="library_removed_from_favorites">Tog bort %1$d från favoriter</string>
+    <string name="library_added_to_favorites">Lade till %1$d till favoriter</string>
+    <string name="library_unlike_all">Till skillnad från alla</string>
+    <string name="library_like_all">Som alla</string>
+    <string name="library_tracks_count_format">%1$d av %2$d spår</string>
+    <string name="library_no_playlists_yet">Inga spellistor ännu\nSkapa din första spellista med +-knappen</string>
+    <string name="library_no_albums_yet">Inga album än</string>
+    <string name="library_no_artists_yet">Inga artister än</string>
+    <string name="library_action_play_next">Spela nästa</string>
+    <string name="library_action_add_to_queue">Lägg till i kö</string>
+    <string name="library_action_add_to_blacklist">Lägg till på svartlista</string>
+    <string name="library_action_song_info">Låtinformation</string>
+    <string name="library_action_add_to_playlist">Lägg till i spellista</string>
+    <string name="library_action_rate_song">Betygsätt sång</string>
+    <string name="library_menu_new_playlist">Ny spellista</string>
+    <string name="library_menu_import_playlist">Importera spellista</string>
+    <string name="library_menu_export_playlists">Exportera spellistor</string>
+    <string name="library_menu_close_playlist">Stäng spellistmenyn</string>
+    <string name="library_menu_open_playlist">Öppna spellistmenyn</string>
+    <string name="library_menu_close">Stäng menyn</string>
+    <string name="library_selected_count_format">%1$d Vald</string>
+    <string name="library_from_tracks_format">från %1$d spår</string>
+    <string name="library_playlist_count_singular">%1$d spellista</string>
+    <string name="library_playlist_count_plural">%1$d spellistor</string>
+    <string name="library_album_count_singular">%1$d album</string>
+    <string name="library_album_count_plural">%1$d album</string>
+    <string name="library_artist_count_singular">%1$d artist</string>
+    <string name="library_artist_count_plural">%1$d artister</string>
+    <string name="library_duration_hours_minutes">%1$dh %2$dm</string>
+    <string name="library_duration_minutes">%1$dm</string>
+
+    <!-- Onboarding, Backup & Settings additions -->
+    <string name="onboarding_blacklist_label">Svartlista</string>
+    <string name="onboarding_whitelist_label">vitlista</string>
+    <string name="onboarding_full_player_label">Full Player</string>
+    <string name="onboarding_mini_player_label">Minispelare</string>
+    <string name="onboarding_blocked_folders">%1$d blockerade mappar</string>
+    <string name="onboarding_whitelisted_folders">%1$d vitlistade mappar</string>
+    <string name="onboarding_sample_button">Exempelknapp</string>
+    <string name="onboarding_primary_label">Primär</string>
+    <string name="onboarding_secondary_label">Sekundär</string>
+    <string name="onboarding_tertiary_label">Tertiär</string>
+    <string name="onboarding_rhythm_material">Rhythm (Material)</string>
+    
+    <string name="backup_restored_success">Säkerhetskopieringen har återställts. Starta om appen för att tillämpa alla ändringar.</string>
+    <string name="backup_copied_to_clipboard">Säkerhetskopiering skapad och kopierad till urklipp.</string>
+    <string name="backup_failed_to_create">Det gick inte att skapa säkerhetskopia: %1$s</string>
+    <string name="backup_failed_to_restore_file">Det gick inte att återställa från fil: %1$s</string>
+    <string name="backup_no_backup_clipboard">Ingen säkerhetskopia hittades i urklipp</string>
+    <string name="backup_failed_to_restore_clipboard">Det gick inte att återställa från urklipp: %1$s</string>
+    
+    <string name="updater_ready_to_install">Version %1$s är klar att installera</string>
+    <string name="updater_download_progress">%1$d%% • %2$s / %3$s</string>
+    <string name="updater_version_info">Version %1$s • %2$s</string>
+    <string name="updater_error_occurred">Ett fel uppstod</string>
+    <string name="updater_channel_stable">stabil</string>
+    <string name="updater_channel_beta">beta</string>
+
+    <!-- Expressive shape preset & group names -->
+    <string name="shape_preset_default">Standard</string>
+    <string name="shape_preset_default_desc">Milda uttrycksfulla former för alla åldrar</string>
+    <string name="shape_preset_friendly">Vänlig</string>
+    <string name="shape_preset_friendly_desc">Varma och lättillgängliga former</string>
+    <string name="shape_preset_cheerful">Glad</string>
+    <string name="shape_preset_cheerful_desc">Ljusa och uttrycksfulla former</string>
+    <string name="shape_preset_modern">Modern</string>
+    <string name="shape_preset_modern_desc">Samtida uttrycksfull design</string>
+    <string name="shape_preset_playful">Lekfull</string>
+    <string name="shape_preset_playful_desc">Roliga och uttrycksfulla former</string>
+    <string name="shape_preset_organic">Ekologisk</string>
+    <string name="shape_preset_organic_desc">Naturinspirerade former</string>
+    <string name="shape_preset_geometric">Geometrisk</string>
+    <string name="shape_preset_geometric_desc">Rena och moderna former</string>
+    <string name="shape_preset_retro">Retro</string>
+    <string name="shape_preset_retro_desc">Pixelerade nostalgiska former</string>
+    <string name="shape_preset_custom">Anpassad</string>
+    <string name="shape_preset_custom_desc">Ditt personliga val</string>
+    <string name="shape_option_square">fyrkant</string>
+    <string name="shape_option_square_desc">Rundad fyrkant</string>
+    <string name="shape_option_oval">Oval</string>
+    <string name="shape_option_oval_desc">Långsträckt oval</string>
+    <string name="shape_option_pill">piller</string>
+    <string name="shape_option_pill_desc">Kapselform</string>
+    <string name="shape_option_diamond">Diamant</string>
+    <string name="shape_option_diamond_desc">Diamantform</string>
+    <string name="shape_option_triangle">Triangel</string>
+    <string name="shape_option_triangle_desc">Rundad triangel</string>
+    <string name="shape_option_pentagon">Pentagon</string>
+    <string name="shape_option_pentagon_desc">Femsidig polygon</string>
+    <string name="shape_option_flower">Blomma</string>
+    <string name="shape_option_flower_desc">Blomma med kronblad</string>
+    <string name="shape_option_clover4">4-bladsklöver</string>
+    <string name="shape_option_clover4_desc">Fyrklöver</string>
+    <string name="shape_option_clover8">8-bladsklöver</string>
+    <string name="shape_option_clover8_desc">Åttabladig klöver</string>
+    <string name="shape_option_heart">Hjärta</string>
+    <string name="shape_option_heart_desc">Hjärtform</string>
+    <string name="shape_option_bun">Bun</string>
+    <string name="shape_option_bun_desc">Form av bulle/bröd</string>
+    <string name="shape_option_boom">Bom</string>
+    <string name="shape_option_boom_desc">Explosionsform</string>
+    <string name="shape_option_soft_boom">Mjuk bom</string>
+    <string name="shape_option_soft_boom_desc">Mjukare explosion</string>
+    <string name="shape_option_burst">Burst</string>
+    <string name="shape_option_burst_desc">Starburst-form</string>
+    <string name="shape_option_soft_burst">Mjuk burst</string>
+    <string name="shape_option_soft_burst_desc">Mjukare starburst</string>
+    <string name="shape_option_sunny">Soligt</string>
+    <string name="shape_option_sunny_desc">Sol med strålar</string>
+    <string name="shape_option_very_sunny">Mycket soligt</string>
+    <string name="shape_option_very_sunny_desc">Sol med fler strålar</string>
+    <string name="shape_option_cookie4">Cookie 4</string>
+    <string name="shape_option_cookie4_desc">4-sidig cookie</string>
+    <string name="shape_option_cookie6">Cookie 6</string>
+    <string name="shape_option_cookie6_desc">6-sidig cookie</string>
+    <string name="shape_option_cookie7">Cookie 7</string>
+    <string name="shape_option_cookie7_desc">7-sidig cookie</string>
+    <string name="shape_option_cookie9">Cookie 9</string>
+    <string name="shape_option_cookie9_desc">9-sidig cookie</string>
+    <string name="shape_option_cookie12">Cookie 12</string>
+    <string name="shape_option_cookie12_desc">12-sidig cookie</string>
+    <string name="shape_option_ghostish">Spöklikt</string>
+    <string name="shape_option_ghostish_desc">Spökliknande form</string>
+    <string name="shape_option_puffy">Pösig</string>
+    <string name="shape_option_puffy_desc">Molnliknande form</string>
+    <string name="shape_option_puffy_diamond">Puffy Diamond</string>
+    <string name="shape_option_puffy_diamond_desc">Puffig diamant</string>
+    <string name="shape_option_fan">Fläkt</string>
+    <string name="shape_option_fan_desc">Fläktform</string>
+    <string name="shape_option_circle">cirkel</string>
+    <string name="shape_option_circle_desc">En perfekt cirkel</string>
+    <string name="shape_option_clover_4_leaf">4-bladsklöver</string>
+    <string name="shape_option_clover_4_leaf_desc">Fyrklöver</string>
+    <string name="shape_option_clover_8_leaf">8-bladsklöver</string>
+    <string name="shape_option_clover_8_leaf_desc">Åttabladig klöver</string>
+    <string name="shape_option_arrow">pil</string>
+    <string name="shape_option_arrow_desc">Pilpekare</string>
+    <string name="shape_option_arch">Arch</string>
+    <string name="shape_option_arch_desc">Bågform</string>
+    <string name="shape_option_clam_shell">Musslaskal</string>
+    <string name="shape_option_clam_shell_desc">Skalform</string>
+    <string name="shape_option_gem">Gem</string>
+    <string name="shape_option_gem_desc">Ädelstensform</string>
+    <string name="shape_option_semi_circle">Halvcirkel</string>
+    <string name="shape_option_semi_circle_desc">Halv cirkel</string>
+    <string name="shape_option_slanted">Sned</string>
+    <string name="shape_option_slanted_desc">Sned fyrkant</string>
+    <string name="shape_option_pixel_circle">Pixelcirkel</string>
+    <string name="shape_option_pixel_circle_desc">Pixelerad cirkel</string>
+    <string name="shape_option_pixel_triangle">Pixeltriangel</string>
+    <string name="shape_option_pixel_triangle_desc">Pixelerad triangel</string>
+    <string name="shape_group_basic">Grundläggande</string>
+    <string name="shape_group_organic">Ekologisk</string>
+    <string name="shape_group_playful">Lekfull</string>
+    <string name="shape_group_cookie">Cookie</string>
+    <string name="shape_group_whimsical">Underligt</string>
+    <string name="shape_group_special">Special</string>
+    <string name="shape_group_pixel">Pixel</string>
+
+    <!-- Customization Choices -->
+    <string name="option_always">Alltid</string>
+    <string name="option_expanded">Utökad</string>
+    <string name="option_collapsed">Komprimerad</string>
+    <string name="option_linear">Linjär</string>
+    <string name="option_circular">Cirkulär</string>
+    <string name="option_auto">Auto</string>
+    <string name="option_manual">Manual</string>
+    <string name="option_both">Båda</string>
+    <string name="option_icon">-ikon</string>
+    <string name="option_name">Namn</string>
+
+    <!-- Theme settings additions -->
+    <string name="theme_color_red">Röd</string>
+    <string name="theme_color_green">Grön</string>
+    <string name="theme_color_blue">Blå</string>
+    <string name="theme_font_restart_warning">Teckensnitt ändrat. Starta om appen för att tillämpa det nya teckensnittet.</string>
+    <string name="theme_source_album_art">Albumomslag</string>
+    <string name="theme_source_album_art_desc">Extrahera färger från skivomslag som för närvarande spelas</string>
+    <string name="theme_source_system_colors">Systemfärger</string>
+    <string name="theme_source_system_colors_desc">Använd Material Du färger från din tapet</string>
+    <string name="theme_source_custom_scheme">Anpassat schema</string>
+    <string name="theme_source_custom_scheme_desc">Välj bland fördefinierade färgscheman</string>
+    <string name="theme_font_system">Systemteckensnitt</string>
+    <string name="theme_font_system_desc">Använd enhetens standardteckensnitt</string>
+    <string name="theme_font_custom">Anpassat teckensnitt</string>
+    <string name="theme_font_custom_desc">Importera och använd en anpassad teckensnittsfil</string>
+
+    <!-- Color Scheme names -->
+    <string name="scheme_default">Standard</string>
+    <string name="scheme_warm">Varmt</string>
+    <string name="scheme_cool">Coolt</string>
+    <string name="scheme_forest">Skog</string>
+    <string name="scheme_rose">Rose</string>
+    <string name="scheme_monochrome">Monokrom</string>
+    <string name="scheme_lavender">Lavendel</string>
+    <string name="scheme_ocean">Ocean</string>
+    <string name="scheme_aurora">Aurora</string>
+    <string name="scheme_amber">Amber</string>
+    <string name="scheme_crimson">Crimson</string>
+    <string name="scheme_emerald">Smaragd</string>
+    <string name="scheme_mint">Mint</string>
+
+    <!-- Shape Utils category and descriptions -->
+    <string name="shape_utils_fab">Flytande åtgärdsknapp</string>
+    <string name="shape_utils_fab_desc">Form för FAB-knappar</string>
+    <string name="shape_utils_cards">-kort</string>
+    <string name="shape_utils_cards_desc">Form för kort och behållare</string>
+    <string name="shape_utils_buttons">-knappar</string>
+    <string name="shape_utils_buttons_desc">Form för knappar</string>
+    <string name="shape_utils_chips">Chips</string>
+    <string name="shape_utils_chips_desc">Form för marker och taggar</string>
+    <string name="shape_utils_player_controls">Spelarkontroller</string>
+    <string name="shape_utils_player_controls_desc">Form för spelarkontrollknappar</string>
+    <string name="shape_utils_mini_player">Minispelare</string>
+    <string name="shape_utils_mini_player_desc">Form för minispelarekonstverk</string>
+
+    <!-- Metadata properties and labels -->
+    <string name="metadata_duration">Varaktighet</string>
+    <string name="metadata_disc">Skiva</string>
+    <string name="metadata_composer">Kompositör</string>
+    <string name="metadata_album_artist">Albumartist</string>
+    <string name="metadata_play_count">Antal uppspelningar</string>
+    <string name="metadata_total_played">Totalt spelat</string>
+    <string name="metadata_rating">Betyg</string>
+    <string name="metadata_quality">Kvalitet</string>
+    <string name="metadata_audio_tech">Audio Tech</string>
+    <string name="metadata_bit_depth">Bitdjup</string>
+    <string name="metadata_bitrate">bithastighet</string>
+    <string name="metadata_sample_rate">Samplingsfrekvens</string>
+    <string name="metadata_channels">kanaler</string>
+    <string name="metadata_format">Format</string>
+    <string name="metadata_location">Plats</string>
+    <string name="metadata_lyrics">Sångtext</string>
+    <string name="metadata_mime_type">MIME-typ</string>
+    <string name="metadata_date_added">Datum tillagd</string>
+    <string name="metadata_modified">Ändrad</string>
+    <string name="metadata_lyrics_available">Tillgänglig</string>
+    <string name="metadata_dts">DTS</string>
+    <string name="metadata_hi_res">Hi-Res</string>
+    <string name="metadata_dolby">Dolby</string>
+    <string name="metadata_lossless">Förlustfri</string>
+
+    <!-- Discover settings specific -->
+    <string name="settings_discover_album_name">Albumnamn</string>
+    <string name="settings_discover_album_name_desc">Visa albumtitel på kortet</string>
+    <string name="settings_discover_artist_name">Artistnamn</string>
+    <string name="settings_discover_artist_name_desc">Visa artistnamnet på kortet</string>
+    <string name="settings_discover_release_year">Utgivningsår</string>
+    <string name="settings_discover_release_year_desc">Visa albumets släppår</string>
+    <string name="settings_discover_play_button">Spela upp knapp</string>
+    <string name="settings_discover_play_button_desc">Visa snabbspelningsknapp</string>
+    <string name="settings_discover_gradient_overlay">Gradient Overlay</string>
+    <string name="settings_discover_gradient_overlay_desc">Visa gradient bakom text</string>
+
+    <!-- Carousel Style selector strings -->
+    <string name="carousel_style_default">Standard</string>
+    <string name="carousel_style_default_desc">2 sidtittalbum</string>
+    <string name="carousel_style_hero">Hjälte</string>
+    <string name="carousel_style_hero_desc">1 sidtittalbum</string>
+
+    <!-- Theme names -->
+    <string name="theme_rhythm">Rhythm</string>
+    <string name="theme_expressive">Uttrycksfull</string>
+    <string name="settings_managed_by_expressive_shapes">Hanteras av uttrycksfulla former</string>
+
+    <!-- Shape targets -->
+    <string name="shape_target_album_art">Albumomslag</string>
+    <string name="shape_target_album_art_desc">Form för albumomslag</string>
+    <string name="shape_target_player_art">Spelarkonstverk</string>
+    <string name="shape_target_player_art_desc">Form för spelarens skärmbild</string>
+    <string name="shape_target_song_art">Låtkonstverk</string>
+    <string name="shape_target_song_art_desc">Form för sångkonstverk i listor</string>
+    <string name="shape_target_playlist_art">Spellista Artwork</string>
+    <string name="shape_target_playlist_art_desc">Form för spellistomslag</string>
+    <string name="shape_target_artist_art">Konstnärskonstverk</string>
+    <string name="shape_target_artist_art_desc">Form för artistbilder</string>
+    <string name="settings_shape_for">Form för %1$s</string>
 </resources>
+

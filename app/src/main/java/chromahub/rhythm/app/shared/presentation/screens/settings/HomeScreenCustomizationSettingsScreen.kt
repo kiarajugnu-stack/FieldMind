@@ -234,10 +234,10 @@ fun HomeScreenCustomizationSettingsScreen(onBackClick: () -> Unit) {
                 val visibilityMode by appSettings.homeAppIconVisibility.collectAsState()
                 
                 val displayLabel = when (displayMode) {
-                    0 -> "icon"
-                    1 -> "name"
-                    2 -> "icon & name"
-                    else -> "content"
+                    0 -> context.getString(R.string.option_icon).lowercase()
+                    1 -> context.getString(R.string.option_name).lowercase()
+                    2 -> context.getString(R.string.option_both).lowercase()
+                    else -> context.getString(R.string.common_unknown).lowercase()
                 }
 
                 val headerItems = buildList {
@@ -277,7 +277,11 @@ fun HomeScreenCustomizationSettingsScreen(onBackClick: () -> Unit) {
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
                                     ExpressiveButtonGroup(
-                                        items = listOf("Icon", "Name", "Both"),
+                                        items = listOf(
+                                            stringResource(R.string.option_icon),
+                                            stringResource(R.string.option_name),
+                                            stringResource(R.string.option_both)
+                                        ),
                                         selectedIndex = displayMode,
                                         onItemClick = { index ->
                                             HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
@@ -298,7 +302,7 @@ fun HomeScreenCustomizationSettingsScreen(onBackClick: () -> Unit) {
                                 item = SettingItem(
                                     icon = RhythmIcons.Visibility,
                                     title = context.getString(R.string.settings_visibility),
-                                    description = "When to show $displayLabel in header"
+                                    description = context.getString(R.string.settings_visibility_desc, displayLabel)
                                 ),
                                 description = {
                                     Column(
@@ -308,12 +312,16 @@ fun HomeScreenCustomizationSettingsScreen(onBackClick: () -> Unit) {
                                         verticalArrangement = Arrangement.spacedBy(12.dp)
                                     ) {
                                         Text(
-                                            text = "When to show $displayLabel in header",
+                                            text = context.getString(R.string.settings_visibility_desc, displayLabel),
                                             style = MaterialTheme.typography.bodyMedium,
                                             color = MaterialTheme.colorScheme.onSurfaceVariant
                                         )
                                         ExpressiveButtonGroup(
-                                            items = listOf("Always", "Expanded", "Collapsed"),
+                                            items = listOf(
+                                                stringResource(R.string.option_always),
+                                                stringResource(R.string.option_expanded),
+                                                stringResource(R.string.option_collapsed)
+                                            ),
                                             selectedIndex = visibilityMode,
                                             onItemClick = { index ->
                                                 HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
@@ -607,8 +615,8 @@ fun HomeScreenCustomizationSettingsScreen(onBackClick: () -> Unit) {
                             add(
                             SettingItem(
                                 RhythmIcons.AlbumFilled,
-                                "Album Name",
-                                "Show album title on card",
+                                context.getString(R.string.settings_discover_album_name),
+                                context.getString(R.string.settings_discover_album_name_desc),
                                 toggleState = discoverShowAlbumName,
                                 onToggleChange = { appSettings.setHomeDiscoverShowAlbumName(it) }
                             )
@@ -617,8 +625,8 @@ fun HomeScreenCustomizationSettingsScreen(onBackClick: () -> Unit) {
                             add(
                             SettingItem(
                                 RhythmIcons.ArtistFilled,
-                                "Artist Name",
-                                "Show artist name on card",
+                                context.getString(R.string.settings_discover_artist_name),
+                                context.getString(R.string.settings_discover_artist_name_desc),
                                 toggleState = discoverShowArtistName,
                                 onToggleChange = { appSettings.setHomeDiscoverShowArtistName(it) }
                             )
@@ -627,8 +635,8 @@ fun HomeScreenCustomizationSettingsScreen(onBackClick: () -> Unit) {
                             add(
                             SettingItem(
                                 MaterialSymbolIcon("calendar_today", filled = true),
-                                "Release Year",
-                                "Show album release year",
+                                context.getString(R.string.settings_discover_release_year),
+                                context.getString(R.string.settings_discover_release_year_desc),
                                 toggleState = discoverShowYear,
                                 onToggleChange = { appSettings.setHomeDiscoverShowYear(it) }
                             )
@@ -637,8 +645,8 @@ fun HomeScreenCustomizationSettingsScreen(onBackClick: () -> Unit) {
                             add(
                             SettingItem(
                                 RhythmIcons.Play,
-                                "Play Button",
-                                "Show quick play button",
+                                context.getString(R.string.settings_discover_play_button),
+                                context.getString(R.string.settings_discover_play_button_desc),
                                 toggleState = discoverShowPlayButton,
                                 onToggleChange = { appSettings.setHomeDiscoverShowPlayButton(it) }
                             )
@@ -647,8 +655,8 @@ fun HomeScreenCustomizationSettingsScreen(onBackClick: () -> Unit) {
                             add(
                             SettingItem(
                                 MaterialSymbolIcon("gradient", filled = true),
-                                "Gradient Overlay",
-                                "Show gradient behind text",
+                                context.getString(R.string.settings_discover_gradient_overlay),
+                                context.getString(R.string.settings_discover_gradient_overlay_desc),
                                 toggleState = discoverShowGradient,
                                 onToggleChange = { appSettings.setHomeDiscoverShowGradient(it) }
                             )
@@ -805,8 +813,8 @@ fun CarouselStyleSelector(
     val haptic = LocalHapticFeedback.current
 
     val styles = listOf(
-        Triple(0, "Default", "2 side peek albums"),
-        Triple(1, "Hero", "1 side peek album")
+        Triple(0, context.getString(R.string.carousel_style_default), context.getString(R.string.carousel_style_default_desc)),
+        Triple(1, context.getString(R.string.carousel_style_hero), context.getString(R.string.carousel_style_hero_desc))
     )
 
     Card(

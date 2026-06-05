@@ -3729,4 +3729,588 @@
     <string name="widget_theme_solid_purple_desc">Kenmerkende dieppaarse achtergrond met kenmerkende accenttinten en highlights</string>
     <string name="widget_theme_glance_suffix">%1$s (alleen Glance widgets)</string>
     <string name="unit_dp">%1$ddp</string>
+
+    <!-- Settings Suggestions and Tips -->
+    <string name="settings_suggestions">Instellingen Suggesties</string>
+    <string name="settings_suggestions_desc">Toon contextuele suggesties bovenaan</string>
+    <string name="settings_performance_desc_optimized">Optimaliseer haptiek, decodering, selectiekader en het ophalen van illustraties om vertraging te verminderen</string>
+    <string name="moment_morning">vanmorgen</string>
+    <string name="moment_afternoon">vanmiddag</string>
+    <string name="moment_evening">vanavond</string>
+    <string name="moment_night">vanavond</string>
+    <string name="pulse_fresh">Frisse sessie-energie</string>
+    <string name="pulse_steady">Stabiele groef</string>
+    <string name="pulse_heavy">Zwaar luisteren</string>
+    <string name="pulse_marathon">Marathonmodus</string>
+    
+    <!-- Settings Tips Details -->
+    <string name="settings_tip_theme_desc_1">Verfris je muziekspeler met levendig AMOLED-zwart en prachtige pastelkleuren.</string>
+    <string name="settings_tip_theme_desc_2">Maak Rhythm echt van jou door het accent van de app af te stemmen op jouw systeem.</string>
+    <string name="settings_tip_media_scan_desc_1">Vermijd ongewenste audiofragmenten. Definieer expliciet welke mappen we moeten scannen op muziek.</string>
+    <string name="settings_tip_media_scan_desc_2">Houd spraaknotities en beltonen uit uw afspeellijsten met behulp van focusmappen.</string>
+    <string name="settings_tip_sleep_timer_desc_1">Val in slaap terwijl je muziek speelt. Wij pauzeren het automatisch.</string>
+    <string name="settings_tip_sleep_timer_desc_2">Stel een automatische slaaptimer in voordat je naar bed gaat, zodat het afspelen perfect stopt.</string>
+    <string name="settings_tip_equalizer_desc_1">Verbeter uw ervaring. Versterk de bas en pas de frequenties aan met de Equalizer.</string>
+    <string name="settings_tip_equalizer_desc_2">Stem het geluid veilig af op uw hoofdtelefoon met onze geavanceerde audio-effecten.</string>
+    <string name="settings_tip_backup_active_desc_1">Automatische back-up is actief. Controleer uw back-upsecties, zodat herstelprocessen schoon blijven.</string>
+    <string name="settings_tip_backup_active_desc_2">Beveiliging ingeschakeld: schema ziet er goed uit. Voer een handmatige back-up uit vóór grote bewerkingen.</string>
+    <string name="settings_tip_backup_inactive_desc_1">Automatische back-up is uitgeschakeld. Schakel het in om afspeellijsten en Rhythm Guard-statistieken te beschermen.</string>
+    <string name="settings_tip_backup_inactive_desc_2">Nog geen vangnet. Schakel back-ups in om te voorkomen dat u uw instellingen kwijtraakt.</string>
+    <string name="settings_tip_updates_active_desc_1">Updates zijn ingeschakeld. Houd ze ingeschakeld voor oplossingen en prestatieverbeteringen.</string>
+    <string name="settings_tip_updates_active_desc_2">U bent ingesteld om updates te ontvangen. Controleer kanaalvoorkeuren op stabiliteit versus versheid.</string>
+    <string name="settings_tip_updates_inactive_desc_1">Updates zijn uitgeschakeld. Schakel ze opnieuw in om beschermd en actueel te blijven.</string>
+    <string name="settings_tip_updates_inactive_desc_2">Je bent vastgemaakt aan de huidige build. Schakel updates weer in als u klaar bent.</string>
+    <string name="settings_tip_queue_active_desc_1">Speler swipe-to-skip is actief. Stem wachtrijregels af voor vloeiendere overgangen.</string>
+    <string name="settings_tip_queue_active_desc_2">Gebaren overslaan is ingeschakeld. Stem het wachtrijgedrag af op uw luisterstroom.</string>
+    <string name="settings_tip_queue_inactive_desc_1">Vegen om over te slaan is uitgeschakeld. Wachtrijbedieningen kunnen helpen het afspelen efficiënt te houden.</string>
+    <string name="settings_tip_queue_inactive_desc_2">Liever expliciete controles? Verfijn het wachtrijgedrag voor voorspelbaar afspelen.</string>
+    <string name="settings_tip_controls_active_desc_1">Zoekknoppen zijn zichtbaar. Pas de bedieningselementen van de speler aan om rommel te verminderen.</string>
+    <string name="settings_tip_controls_active_desc_2">Speler met veel controle ingeschakeld. Pas de lay-out aan voor uw duimbereik.</string>
+    <string name="settings_tip_controls_inactive_desc_1">Minimale spelerbediening ingeschakeld. Voeg zoekknoppen toe als je precieze sprongen mist.</string>
+    <string name="settings_tip_controls_inactive_desc_2">Opgeschoonde lay-out actief. Schakel de zoekbedieningen opnieuw in voor een fijnere afspeelafhandeling.</string>
+    <string name="settings_tip_miniplayer_active_desc_1">De voortgang van de minispeler is zichtbaar. Kies een stijl die bij uw thema past.</string>
+    <string name="settings_tip_miniplayer_active_desc_2">Voortgangsbalk is actief op de minispeler. Probeer vervolgens vorm- en hoekaanpassingen.</string>
+    <string name="settings_tip_miniplayer_inactive_desc_1">De voortgang van de minispeler is verborgen. Schakel het in voor snelle bewustwording.</string>
+    <string name="settings_tip_miniplayer_inactive_desc_2">De compacte modus is nu minimaal. Schakel voortgang in voor betere overzichten.</string>
+    <string name="settings_tip_library_active_desc_1">Beoordelingen zijn ingeschakeld. Gebruik bibliotheekinstellingen om het ontdekken en sorteren te verbeteren.</string>
+    <string name="settings_tip_library_active_desc_2">Uw bibliotheek ondersteunt beoordelingen. Stem scannen en groeperen af ​​voor schoner browsen.</string>
+    <string name="settings_tip_library_inactive_desc_1">Beoordelingen zijn uitgeschakeld. Bibliotheekinstellingen kunnen nog steeds de structuur en snelheid verbeteren.</string>
+    <string name="settings_tip_library_inactive_desc_2">Vereenvoudigde bibliotheekmodus gedetecteerd. Pas de groepering aan voor snellere navigatie.</string>
+
+    <!-- Lyrics Source Dialog -->
+    <string name="lyrics_source_embedded_first">Eerst ingebed</string>
+    <string name="lyrics_source_embedded_first_desc">Probeer metadata van audiobestanden → Online API\'s → .lrc-bestanden</string>
+    <string name="lyrics_source_api_first">API Eerste</string>
+    <string name="lyrics_source_api_first_desc">Probeer online services → Audiometagegevens → .lrc-bestanden</string>
+    <string name="lyrics_source_local_first">Lokale .lrc eerst</string>
+    <string name="lyrics_source_local_first_desc">Probeer .lrc-bestanden → Audiometagegevens → Online API\'s</string>
+
+    <!-- Font / Color Customization Dialogs -->
+    <string name="theme_font_source_changed_restart">Lettertypebron gewijzigd. Start de app opnieuw om het nieuwe lettertype toe te passen.</string>
+    <string name="color_source_album_art">Albumhoezen</string>
+    <string name="color_source_album_art_desc">Extraheer kleuren uit de albumillustraties die momenteel worden afgespeeld</string>
+    <string name="color_source_system_colors">Systeemkleuren</string>
+    <string name="color_source_system_colors_desc">Gebruik Material Je kleurt vanaf je achtergrond</string>
+    <string name="color_source_custom_scheme">Aangepast schema</string>
+    <string name="color_source_custom_scheme_desc">Kies uit vooraf gedefinieerde kleurenschema\'s</string>
+    <string name="font_source_system_font">Systeemlettertype</string>
+    <string name="font_source_system_font_desc">Gebruik het standaardlettertype van het apparaat</string>
+    <string name="font_source_custom_font">Aangepast lettertype</string>
+    <string name="font_source_custom_font_desc">Importeer en gebruik een aangepast lettertypebestand</string>
+    <string name="font_system_title">Systeemstandaard</string>
+    <string name="font_system_desc">Gebruik het standaardlettertype van uw apparaat</string>
+    <string name="font_geom_desc">Modern, strak schreefloos lettertype van Google</string>
+    <string name="font_slate_desc">Elegant schreeflettertype met een klassieke, traditionele uitstraling</string>
+    <string name="font_inter_desc">Schoon en modern schreefloos lettertype, zeer leesbaar</string>
+    <string name="font_jetbrains_desc">Monospace-lettertype, perfect voor technische inhoud</string>
+    <string name="font_quicksand_desc">Rond lettertype met een zachtere, vriendelijkere uitstraling</string>
+
+    <!-- Predefined Color Schemes -->
+    <string name="color_scheme_default_title">Rhythm Standaard</string>
+    <string name="color_scheme_default_desc">Material 3 basislijn paars met roze roze accenten</string>
+    <string name="color_scheme_warm_title">Warme zonsondergang</string>
+    <string name="color_scheme_warm_desc">Gezellige oranje en rode tinten voor een warme sfeer</string>
+    <string name="color_scheme_cool_title">Koele oceaan</string>
+    <string name="color_scheme_cool_desc">Verfrissende blauwe en groenblauw tinten voor een rustgevende sfeer</string>
+    <string name="color_scheme_forest_title">Bosgroen</string>
+    <string name="color_scheme_forest_desc">Natuurlijke groene tinten geïnspireerd door de natuur</string>
+    <string name="color_scheme_rose_title">Roze roze</string>
+    <string name="color_scheme_rose_desc">Elegante roze en magenta tinten</string>
+    <string name="color_scheme_monochrome_title">Monochroom</string>
+    <string name="color_scheme_monochrome_desc">Minimalistische grijstinten voor een strakke, moderne uitstraling</string>
+    <string name="color_scheme_lavender_title">Lavendel</string>
+    <string name="color_scheme_lavender_desc">Kalmerende paarse en lavendeltinten voor ontspanning</string>
+    <string name="color_scheme_ocean_title">Diepe oceaan</string>
+    <string name="color_scheme_ocean_desc">Diepe blauwtinten en aquamarijnen voor oceanische sereniteit</string>
+    <string name="color_scheme_aurora_title">Noorderlicht</string>
+    <string name="color_scheme_aurora_desc">Levendige groen- en blauwtinten geïnspireerd op de aurora borealis</string>
+    <string name="color_scheme_amber_title">Gouden Amber</string>
+    <string name="color_scheme_amber_desc">Rijke amber- en goudtinten voor een luxueus gevoel</string>
+    <string name="color_scheme_crimson_title">Diep karmozijnrood</string>
+    <string name="color_scheme_crimson_desc">Opvallende bordeauxrode en karmozijnrode tinten voor drama</string>
+    <string name="color_scheme_emerald_title">Smaragdgroene droom</string>
+    <string name="color_scheme_emerald_desc">Frisse smaragdgroene tinten met natuurlijke bostinten</string>
+    <string name="color_scheme_mint_title">Nieuwstaat</string>
+    <string name="color_scheme_mint_desc">Frisse en zuivere cyaan- en mintgroene tinten</string>
+
+    <!-- Color Preview Chips -->
+    <string name="theme_color_primary">Primair</string>
+    <string name="theme_color_secondary">Secundair</string>
+    <string name="theme_color_tertiary">Tertiair</string>
+
+    <!-- Lyrics Settings Screen -->
+    <string name="lyrics_settings_title">Songteksten</string>
+    <string name="lyrics_settings_general">Algemene instellingen</string>
+    <string name="lyrics_settings_open_fullscreen_desc">Open een scherm met songteksten op volledig scherm door op de songtekstweergave te tikken</string>
+    <string name="lyrics_settings_autohide_controls">Bedieningselementen voor songteksten automatisch verbergen</string>
+    <string name="lyrics_settings_autohide_controls_desc">Verberg automatisch de besturingselementen in het volledige songtekstscherm na een paar seconden inactiviteit</string>
+    <string name="lyrics_settings_embedded_first">Eerst ingebed</string>
+    <string name="lyrics_settings_embedded_first_desc">Liever songteksten ingebed in audiobestanden, terugvallen op online API\'s</string>
+    <string name="lyrics_settings_online_first">Eerst online</string>
+    <string name="lyrics_settings_online_first_desc">Geef de voorkeur aan online API\'s (Rhythm woord voor woord, LRCLib), terugval op embedded</string>
+    <string name="lyrics_settings_local_first">Lokaal eerst</string>
+    <string name="lyrics_settings_local_first_desc">Geef de voorkeur aan lokale .lrc-bestanden, dan aan ingebedde songteksten en dan aan online API\'s</string>
+    <string name="lyrics_settings_apple_music_first">Apple Music eerst</string>
+    <string name="lyrics_settings_lrclib_first">LRCLib eerst</string>
+    <string name="lyrics_settings_fallback_apis_desc">Probeer fallback-API\'s als de gewenste API geen songtekst retourneert</string>
+    <string name="lyrics_settings_display_styling">Display en styling</string>
+    <string name="lyrics_settings_size_percentage">Grootte: %1$d%%</string>
+    <string name="alignment_left">Links</string>
+    <string name="alignment_center">Midden</string>
+    <string name="alignment_right">Juist</string>
+    <string name="animation_slide">Dia</string>
+    <string name="animation_fade">Vervagen</string>
+    <string name="animation_scale">Schaal</string>
+    <string name="animation_up">Omhoog</string>
+    <string name="lyrics_settings_switch_animation_desc">Kunst ↔ Teksten wisselen van animatie</string>
+    <string name="lyrics_settings_not_supported_expressive">Niet ondersteund door Expressief thema</string>
+    <string name="lyrics_settings_formatting_behaviors">Opmaak en gedrag</string>
+    <string name="lyrics_settings_bold_text">Vetgedrukte tekst</string>
+    <string name="lyrics_settings_bold_text_desc">Maak de tekst van actieve songteksten vetgedrukt</string>
+    <string name="lyrics_settings_trim_lyrics">Tekst bijsnijden</string>
+    <string name="lyrics_settings_trim_lyrics_desc">Verwijder de witruimte aan het begin en einde van de tekstregels</string>
+    <string name="lyrics_settings_disable_animations">Animaties uitschakelen</string>
+    <string name="lyrics_settings_disable_animations_desc">Schakel overgangen en animaties uit in de songtekstweergave</string>
+    <string name="lyrics_settings_word_by_word_translation">Woord-voor-woordvertaling</string>
+    <string name="lyrics_settings_word_by_word_translation_desc">Probeer lettergreep- of woordvertalingen automatisch te synchroniseren</string>
+    <string name="lyrics_settings_info_bullets">Aanvullende synchronisatiedetails:\n• Online API\'s bieden gesynchroniseerde songteksten van hoge kwaliteit\n• Rhythm biedt woord-voor-woord-synchronisatie\n• LRCLib biedt gratis regel-voor-regel synchronisatie</string>
+
+    <!-- AutoEQ Preset Picker additions -->
+    <string name="autoeqpresetpickerbottomsheet_search_presets">Voorinstellingen zoeken...</string>
+    <string name="autoeqpresetpickerbottomsheet_disable">Geen / AutoEQ uitschakelen</string>
+    <string name="autoeqpresetpickerbottomsheet_disable_desc">Duidelijk hoofdtelefoonprofiel, gebruik standaard EQ-presets</string>
+    <string name="autoeqpresetpickerbottomsheet_unknown_brand">Onbekend merk</string>
+
+    <!-- Device Configuration additions -->
+    <string name="device_configuration_devices_configured">%1$d apparaten geconfigureerd</string>
+    <string name="device_configuration_device_recognized">Apparaat herkend</string>
+    <string name="device_configuration_new_device_detected">Nieuw apparaat gedetecteerd</string>
+    <string name="device_configuration_configured_with">%1$s is geconfigureerd met %2$s</string>
+    <string name="device_configuration_configured_no_profile">%1$s is geconfigureerd</string>
+    <string name="device_configuration_connected_not_configured">%1$s is verbonden maar niet geconfigureerd</string>
+    <string name="device_configuration_applied_profile">%1$s profiel toegepast</string>
+    <string name="device_configuration_imported_profile">Geïmporteerd profiel</string>
+    <string name="device_configuration_parse_error">Kan de EQ-instellingen niet parseren. Controleer het formaat.</string>
+    <string name="device_configuration_custom_eq">Aangepaste EQ</string>
+    <string name="device_configuration_custom_preset">Aangepaste voorinstelling</string>
+    <string name="device_configuration_custom">Aangepast</string>
+    <string name="device_configuration_active_profile_label">Actief profiel: %1$s</string>
+    <string name="device_configuration_share_subject">Rhythm EQ-profiel: %1$s</string>
+    <string name="device_configuration_share_title">EQ-profiel delen</string>
+    <string name="device_configuration_edit_device">Apparaat bewerken</string>
+    <string name="device_configuration_add_device">Apparaat toevoegen</string>
+    <string name="device_configuration_save">Opslaan</string>
+    <string name="device_configuration_add">Toevoegen</string>
+    <string name="device_configuration_for_device">Voor %1$s</string>
+    <string name="device_configuration_profiles_available">%1$d profielen beschikbaar</string>
+    <string name="device_configuration_disable_compensation">Schakel hoofdtelefooncompensatie uit</string>
+
+    <!-- Common UI element strings -->
+    <string name="common_none">Geen</string>
+    <string name="common_cancel">Annuleren</string>
+    <string name="common_back">Terug</string>
+    <string name="common_remove">Verwijderen</string>
+    <string name="common_add">Toevoegen</string>
+    <string name="common_active">Actief</string>
+    <string name="common_disabled">Uitgeschakeld</string>
+    <string name="common_unavailable">Niet beschikbaar</string>
+    <string name="common_success">Succes</string>
+    <string name="common_error">Fout</string>
+    <string name="common_unknown">Onbekend</string>
+
+    <!-- Blacklist UI additions -->
+    <string name="blacklist_remove_song_title">Verwijderen van zwarte lijst?</string>
+    <string name="blacklist_add_song_title">Toevoegen aan zwarte lijst?</string>
+    <string name="blacklist_remove_song_desc">Dit nummer wordt niet langer verborgen in je bibliotheek.</string>
+    <string name="blacklist_add_song_desc">Dit nummer wordt verborgen in je bibliotheek en uitgesloten van afspelen.</string>
+    <string name="blacklist_undo_warning">Deze actie kan op elk moment ongedaan worden gemaakt.</string>
+    <string name="blacklist_song_removed_msg">Nummer verwijderd van zwarte lijst</string>
+    <string name="blacklist_song_added_msg">Nummer toegevoegd aan de zwarte lijst</string>
+    <string name="blacklist_button_remove">Verwijderen</string>
+    <string name="blacklist_button_blacklist">Zwarte lijst</string>
+    <string name="blacklist_remove_folder_title">Map verwijderen van zwarte lijst?</string>
+    <string name="blacklist_add_folder_title">Zwarte lijst-map?</string>
+    <string name="blacklist_remove_folder_desc">Alle nummers in deze map zijn weer zichtbaar.</string>
+    <string name="blacklist_add_folder_desc">Alle nummers in deze map worden verborgen en uitgesloten van afspelen.</string>
+    <string name="blacklist_folder_removed_msg">Map verwijderd van zwarte lijst</string>
+    <string name="blacklist_folder_added_msg">Map toegevoegd aan zwarte lijst</string>
+    <string name="blacklist_disc_label">Schijf %1$d</string>
+    <string name="blacklist_track_label">Nummer %1$d</string>
+
+    <!-- Library & Playlist Dialog additions -->
+    <string name="dialog_add_song_to_playlist">Voeg \"%1$s\" toe aan deze afspeellijst</string>
+    <string name="dialog_songs_in_queue">Je hebt %1$d nummers in de huidige wachtrij.</string>
+    <string name="dialog_play_song_how">Hoe zou je \"%1$s\" willen spelen?</string>
+    <string name="dialog_clear_and_play">Wissen en afspelen</string>
+    <string name="dialog_clear_and_play_desc">Vervang de wachtrij en speel dit nummer af</string>
+    <string name="dialog_add_to_queue">Toevoegen aan wachtrij</string>
+    <string name="dialog_add_to_queue_desc">Behoud de huidige wachtrij en voeg een nummer toe</string>
+    <string name="dialog_restart_warning_message">Om ervoor te zorgen dat alle geïmporteerde afspeellijsten correct werken, raden we u aan de app opnieuw te starten. U kunt de app normaal blijven gebruiken, maar sommige functies werken mogelijk niet zoals verwacht totdat u de app opnieuw opstart.</string>
+    <string name="dialog_export_playlist_to">Exporteer \"%1$s\" naar:</string>
+    <string name="dialog_export_playlists_to">Exporteer %1$d afspeellijsten naar:</string>
+    <string name="dialog_operation_importing">Importeren</string>
+    <string name="dialog_operation_exporting">Exporteren</string>
+
+    <!-- Mode dialog strings -->
+    <string name="dialog_switch_to_go">Overstappen naar Rhythm Ga?</string>
+    <string name="dialog_switch_to_local">Overschakelen naar lokaal?</string>
+    <string name="dialog_switch_to_go_desc">Dit item is van Rhythm Go. Nu overschakelen naar de streamingmodus om het te streamen en af ​​te spelen?</string>
+    <string name="dialog_switch_to_local_desc">Dit item behoort tot uw lokale bibliotheek. Nu overschakelen naar de lokale modus om je offline nummers af te spelen?</string>
+
+    <!-- Section order content descriptions -->
+    <string name="home_section_hide_carousel">Carrousel verbergen</string>
+    <string name="home_section_show_carousel">Toon carrousel</string>
+    <string name="home_section_hide_section">Sectie verbergen</string>
+    <string name="home_section_show_section">Sectie weergeven</string>
+    <string name="library_tab_show">Tabblad weergeven</string>
+    <string name="library_tab_hide">Tabblad verbergen</string>
+
+    <!-- Add To Playlist additions -->
+    <string name="add_to_playlist_selected_count">%1$d geselecteerd</string>
+    <string name="add_to_playlist_title">Toevoegen aan %1$s</string>
+    <string name="add_to_playlist_no_songs">Geen nummers beschikbaar</string>
+    <string name="add_to_playlist_all_songs_present">Alle nummers staan al in deze afspeellijst</string>
+
+    <!-- Artist details -->
+    <string name="artist_detail_albums_count">%1$d albums</string>
+    <string name="artist_detail_songs_count">%1$d nummers</string>
+
+    <!-- Equalizer presets & UI -->
+    <string name="eq_preset_flat">Plat</string>
+    <string name="eq_preset_rock">Rots</string>
+    <string name="eq_preset_pop">Pop</string>
+    <string name="eq_preset_jazz">Jazz</string>
+    <string name="eq_preset_classical">Klassiek</string>
+    <string name="eq_preset_electronic">Elektronisch</string>
+    <string name="eq_preset_hiphop">Hiphop</string>
+    <string name="eq_preset_vocal">Vocaal</string>
+    <string name="eq_preset_bass_boost">Basversterking</string>
+    <string name="eq_preset_treble_boost">Hoge tonen versterken</string>
+    <string name="eq_preset_v_shape">V-vorm</string>
+    <string name="eq_preset_harman">Harman</string>
+    <string name="eq_preset_custom">Aangepast</string>
+    <string name="eq_autoeq_profiles">AutoEQ-profielen</string>
+    <string name="eq_manage_device">Apparaat beheren</string>
+    <string name="eq_system_equalizer">Systeemequalizer</string>
+    <string name="eq_enhance_lows">Verbeter dieptepunten</string>
+    <string name="eq_widen_sound">Verbreed geluid</string>
+    <string name="eq_mono_only">Alleen mono</string>
+
+    <!-- Library updates, sorting & categories -->
+    <string name="library_updated_songs_success">%1$d nummers bijgewerkt</string>
+    <string name="library_updated_songs_failed">%1$d nummers bijgewerkt, %2$d mislukt</string>
+    <string name="library_switch_to_grid">Schakel over naar rasterweergave</string>
+    <string name="library_switch_to_list">Schakel over naar lijstweergave</string>
+    <string name="library_sort_title">Titel</string>
+    <string name="library_sort_artist">Artiest</string>
+    <string name="library_sort_date_added">Datum toegevoegd</string>
+    <string name="library_sort_date_modified">Datum gewijzigd</string>
+    <string name="library_sort_ascending">Oplopend</string>
+    <string name="library_sort_descending">Aflopend</string>
+    <string name="library_sort_name_asc">Naam (A-Z)</string>
+    <string name="library_sort_name_desc">Naam (Z-A)</string>
+    <string name="library_sort_songs_desc">Nummers (hoog naar laag)</string>
+    <string name="library_sort_albums_desc">Albums (hoog naar laag)</string>
+    <string name="library_scan_songs">Nummers scannen...</string>
+    <string name="library_scan_albums">Albums verwerken...</string>
+    <string name="library_scan_artists">Artiesten verwerken...</string>
+    <string name="library_scan_genres">Genres detecteren...</string>
+    <string name="library_scan_media">Media scannen...</string>
+    <string name="library_export_failed">Exporteren mislukt</string>
+    <string name="library_import_failed">Importeren mislukt</string>
+    <string name="library_category_all">Alles</string>
+    <string name="library_category_favorites">❤️ Favorieten</string>
+    <string name="library_category_absolute_favorites">⭐⭐⭐⭐⭐ Absolute favorieten</string>
+    <string name="library_category_loved">⭐⭐⭐⭐ Geliefd</string>
+    <string name="library_category_great">⭐⭐⭐ Geweldig</string>
+    <string name="library_category_good">⭐⭐ Goed</string>
+    <string name="library_category_liked">⭐ Vond ik leuk</string>
+    <string name="library_category_short">Kort (&lt; 3 min)</string>
+    <string name="library_category_medium">Gemiddeld (3-5 min)</string>
+    <string name="library_category_long">Lang (&gt; 5 min)</string>
+    <string name="library_category_hi_res_lossless">Hoge resolutie zonder verlies</string>
+    <string name="library_category_lossless">Zonder verlies</string>
+    <string name="library_category_dolby">Dolby</string>
+    <string name="library_category_mono">Mono</string>
+    <string name="library_category_stereo">Stereo</string>
+    <string name="library_category_high_quality">Hoge kwaliteit</string>
+    <string name="library_category_standard">Standaard</string>
+    <string name="library_removed_from_favorites">%1$d verwijderd uit favorieten</string>
+    <string name="library_added_to_favorites">%1$d toegevoegd aan favorieten</string>
+    <string name="library_unlike_all">In tegenstelling tot allemaal</string>
+    <string name="library_like_all">Zoals iedereen</string>
+    <string name="library_tracks_count_format">%1$d van %2$d nummers</string>
+    <string name="library_no_playlists_yet">Nog geen playlists\nMaak je eerste playlist aan met de + knop</string>
+    <string name="library_no_albums_yet">Nog geen albums</string>
+    <string name="library_no_artists_yet">Nog geen artiesten</string>
+    <string name="library_action_play_next">Volgende afspelen</string>
+    <string name="library_action_add_to_queue">Toevoegen aan wachtrij</string>
+    <string name="library_action_add_to_blacklist">Toevoegen aan zwarte lijst</string>
+    <string name="library_action_song_info">Nummerinformatie</string>
+    <string name="library_action_add_to_playlist">Toevoegen aan afspeellijst</string>
+    <string name="library_action_rate_song">Beoordeel nummer</string>
+    <string name="library_menu_new_playlist">Nieuwe afspeellijst</string>
+    <string name="library_menu_import_playlist">Importeer afspeellijst</string>
+    <string name="library_menu_export_playlists">Afspeellijsten exporteren</string>
+    <string name="library_menu_close_playlist">Sluit het afspeellijstmenu</string>
+    <string name="library_menu_open_playlist">Open het afspeellijstmenu</string>
+    <string name="library_menu_close">Menu sluiten</string>
+    <string name="library_selected_count_format">%1$d Geselecteerd</string>
+    <string name="library_from_tracks_format">van %1$d nummers</string>
+    <string name="library_playlist_count_singular">%1$d afspeellijst</string>
+    <string name="library_playlist_count_plural">%1$d afspeellijsten</string>
+    <string name="library_album_count_singular">%1$d album</string>
+    <string name="library_album_count_plural">%1$d albums</string>
+    <string name="library_artist_count_singular">%1$d artiest</string>
+    <string name="library_artist_count_plural">%1$d artiesten</string>
+    <string name="library_duration_hours_minutes">%1$dh %2$dm</string>
+    <string name="library_duration_minutes">%1$dm</string>
+
+    <!-- Onboarding, Backup & Settings additions -->
+    <string name="onboarding_blacklist_label">Zwarte lijst</string>
+    <string name="onboarding_whitelist_label">Witte lijst</string>
+    <string name="onboarding_full_player_label">Volledige speler</string>
+    <string name="onboarding_mini_player_label">Minispeler</string>
+    <string name="onboarding_blocked_folders">%1$d geblokkeerde mappen</string>
+    <string name="onboarding_whitelisted_folders">%1$d mappen op de witte lijst</string>
+    <string name="onboarding_sample_button">Voorbeeldknop</string>
+    <string name="onboarding_primary_label">Primair</string>
+    <string name="onboarding_secondary_label">Secundair</string>
+    <string name="onboarding_tertiary_label">Tertiair</string>
+    <string name="onboarding_rhythm_material">Rhythm (Material)</string>
+    
+    <string name="backup_restored_success">Back-up succesvol hersteld. Start de app opnieuw om alle wijzigingen toe te passen.</string>
+    <string name="backup_copied_to_clipboard">Back-up gemaakt en naar klembord gekopieerd.</string>
+    <string name="backup_failed_to_create">Kan geen back-up maken: %1$s</string>
+    <string name="backup_failed_to_restore_file">Kan niet herstellen vanuit bestand: %1$s</string>
+    <string name="backup_no_backup_clipboard">Geen back-up gevonden op het klembord</string>
+    <string name="backup_failed_to_restore_clipboard">Kan niet herstellen vanaf klembord: %1$s</string>
+    
+    <string name="updater_ready_to_install">Versie %1$s is klaar voor installatie</string>
+    <string name="updater_download_progress">%1$d%% • %2$s / %3$s</string>
+    <string name="updater_version_info">Versie %1$s • %2$s</string>
+    <string name="updater_error_occurred">Er is een fout opgetreden</string>
+    <string name="updater_channel_stable">stabiel</string>
+    <string name="updater_channel_beta">bèta</string>
+
+    <!-- Expressive shape preset & group names -->
+    <string name="shape_preset_default">Standaard</string>
+    <string name="shape_preset_default_desc">Zachte expressieve vormen voor alle leeftijden</string>
+    <string name="shape_preset_friendly">Vriendelijk</string>
+    <string name="shape_preset_friendly_desc">Warme en toegankelijke vormen</string>
+    <string name="shape_preset_cheerful">Vrolijk</string>
+    <string name="shape_preset_cheerful_desc">Heldere en expressieve vormen</string>
+    <string name="shape_preset_modern">Modern</string>
+    <string name="shape_preset_modern_desc">Eigentijds expressief ontwerp</string>
+    <string name="shape_preset_playful">Speels</string>
+    <string name="shape_preset_playful_desc">Leuke en expressieve vormen</string>
+    <string name="shape_preset_organic">Biologisch</string>
+    <string name="shape_preset_organic_desc">Op de natuur geïnspireerde vormen</string>
+    <string name="shape_preset_geometric">Geometrisch</string>
+    <string name="shape_preset_geometric_desc">Strakke en moderne vormen</string>
+    <string name="shape_preset_retro">Retro</string>
+    <string name="shape_preset_retro_desc">Pixelachtige nostalgische vormen</string>
+    <string name="shape_preset_custom">Aangepast</string>
+    <string name="shape_preset_custom_desc">Uw persoonlijke selectie</string>
+    <string name="shape_option_square">Vierkant</string>
+    <string name="shape_option_square_desc">Afgerond vierkant</string>
+    <string name="shape_option_oval">Ovaal</string>
+    <string name="shape_option_oval_desc">Langwerpig ovaal</string>
+    <string name="shape_option_pill">Pil</string>
+    <string name="shape_option_pill_desc">Capsulevorm</string>
+    <string name="shape_option_diamond">Diamant</string>
+    <string name="shape_option_diamond_desc">Diamantvorm</string>
+    <string name="shape_option_triangle">Driehoek</string>
+    <string name="shape_option_triangle_desc">Afgeronde driehoek</string>
+    <string name="shape_option_pentagon">Vijfhoek</string>
+    <string name="shape_option_pentagon_desc">Vijfzijdige veelhoek</string>
+    <string name="shape_option_flower">Bloem</string>
+    <string name="shape_option_flower_desc">Bloem met bloemblaadjes</string>
+    <string name="shape_option_clover4">Klavertje 4</string>
+    <string name="shape_option_clover4_desc">Klavertje vier</string>
+    <string name="shape_option_clover8">Klavertje 8</string>
+    <string name="shape_option_clover8_desc">Klavertje acht</string>
+    <string name="shape_option_heart">Hart</string>
+    <string name="shape_option_heart_desc">Hartvorm</string>
+    <string name="shape_option_bun">Bun</string>
+    <string name="shape_option_bun_desc">Broodje/broodvorm</string>
+    <string name="shape_option_boom">Boem</string>
+    <string name="shape_option_boom_desc">Explosievorm</string>
+    <string name="shape_option_soft_boom">Zachte boem</string>
+    <string name="shape_option_soft_boom_desc">Zachtere explosie</string>
+    <string name="shape_option_burst">Burst</string>
+    <string name="shape_option_burst_desc">Starburst-vorm</string>
+    <string name="shape_option_soft_burst">Zachte uitbarsting</string>
+    <string name="shape_option_soft_burst_desc">Zachtere vuurwerkuitbarsting</string>
+    <string name="shape_option_sunny">Zonnig</string>
+    <string name="shape_option_sunny_desc">Zon met stralen</string>
+    <string name="shape_option_very_sunny">Zeer zonnig</string>
+    <string name="shape_option_very_sunny_desc">Zon met meer stralen</string>
+    <string name="shape_option_cookie4">Cookie 4</string>
+    <string name="shape_option_cookie4_desc">4-zijdig koekje</string>
+    <string name="shape_option_cookie6">Cookie 6</string>
+    <string name="shape_option_cookie6_desc">6-zijdig koekje</string>
+    <string name="shape_option_cookie7">Cookie 7</string>
+    <string name="shape_option_cookie7_desc">7-zijdige cookie</string>
+    <string name="shape_option_cookie9">Cookie 9</string>
+    <string name="shape_option_cookie9_desc">9-zijdige cookie</string>
+    <string name="shape_option_cookie12">Cookie 12</string>
+    <string name="shape_option_cookie12_desc">12-zijdige cookie</string>
+    <string name="shape_option_ghostish">Spookachtig</string>
+    <string name="shape_option_ghostish_desc">Spookachtige vorm</string>
+    <string name="shape_option_puffy">Gezwollen</string>
+    <string name="shape_option_puffy_desc">Wolkachtige vorm</string>
+    <string name="shape_option_puffy_diamond">Gezwollen diamant</string>
+    <string name="shape_option_puffy_diamond_desc">Gezwollen diamant</string>
+    <string name="shape_option_fan">Ventilator</string>
+    <string name="shape_option_fan_desc">Waaiervorm</string>
+    <string name="shape_option_circle">Cirkel</string>
+    <string name="shape_option_circle_desc">Een perfecte cirkel</string>
+    <string name="shape_option_clover_4_leaf">Klavertje 4</string>
+    <string name="shape_option_clover_4_leaf_desc">Klavertje vier</string>
+    <string name="shape_option_clover_8_leaf">Klavertje 8</string>
+    <string name="shape_option_clover_8_leaf_desc">Klavertje acht</string>
+    <string name="shape_option_arrow">Pijl</string>
+    <string name="shape_option_arrow_desc">Pijlaanwijzer</string>
+    <string name="shape_option_arch">Arch</string>
+    <string name="shape_option_arch_desc">Boogvorm</string>
+    <string name="shape_option_clam_shell">Tweekleppige schelpdieren</string>
+    <string name="shape_option_clam_shell_desc">Schelpvorm</string>
+    <string name="shape_option_gem">Gem</string>
+    <string name="shape_option_gem_desc">Edelsteenvorm</string>
+    <string name="shape_option_semi_circle">Halve cirkel</string>
+    <string name="shape_option_semi_circle_desc">Halve cirkel</string>
+    <string name="shape_option_slanted">Schuin</string>
+    <string name="shape_option_slanted_desc">Schuin vierkant</string>
+    <string name="shape_option_pixel_circle">Pixelcirkel</string>
+    <string name="shape_option_pixel_circle_desc">Pixelvormige cirkel</string>
+    <string name="shape_option_pixel_triangle">Pixeldriehoek</string>
+    <string name="shape_option_pixel_triangle_desc">Pixelvormige driehoek</string>
+    <string name="shape_group_basic">Basis</string>
+    <string name="shape_group_organic">Biologisch</string>
+    <string name="shape_group_playful">Speels</string>
+    <string name="shape_group_cookie">Cookie</string>
+    <string name="shape_group_whimsical">Grillig</string>
+    <string name="shape_group_special">Speciaal</string>
+    <string name="shape_group_pixel">Pixel</string>
+
+    <!-- Customization Choices -->
+    <string name="option_always">Altijd</string>
+    <string name="option_expanded">Uitgebreid</string>
+    <string name="option_collapsed">Samengevouwen</string>
+    <string name="option_linear">Lineair</string>
+    <string name="option_circular">Circulair</string>
+    <string name="option_auto">Automatisch</string>
+    <string name="option_manual">Handleiding</string>
+    <string name="option_both">Beide</string>
+    <string name="option_icon">Icoon</string>
+    <string name="option_name">Naam</string>
+
+    <!-- Theme settings additions -->
+    <string name="theme_color_red">Rood</string>
+    <string name="theme_color_green">Groen</string>
+    <string name="theme_color_blue">Blauw</string>
+    <string name="theme_font_restart_warning">Lettertype gewijzigd. Start de app opnieuw om het nieuwe lettertype toe te passen.</string>
+    <string name="theme_source_album_art">Albumhoezen</string>
+    <string name="theme_source_album_art_desc">Extraheer kleuren uit de albumillustraties die momenteel worden afgespeeld</string>
+    <string name="theme_source_system_colors">Systeemkleuren</string>
+    <string name="theme_source_system_colors_desc">Gebruik Material Je kleurt vanaf je achtergrond</string>
+    <string name="theme_source_custom_scheme">Aangepast schema</string>
+    <string name="theme_source_custom_scheme_desc">Kies uit vooraf gedefinieerde kleurenschema\'s</string>
+    <string name="theme_font_system">Systeemlettertype</string>
+    <string name="theme_font_system_desc">Gebruik het standaardlettertype van het apparaat</string>
+    <string name="theme_font_custom">Aangepast lettertype</string>
+    <string name="theme_font_custom_desc">Importeer en gebruik een aangepast lettertypebestand</string>
+
+    <!-- Color Scheme names -->
+    <string name="scheme_default">Standaard</string>
+    <string name="scheme_warm">Warm</string>
+    <string name="scheme_cool">Cool</string>
+    <string name="scheme_forest">Bos</string>
+    <string name="scheme_rose">Roos</string>
+    <string name="scheme_monochrome">Monochroom</string>
+    <string name="scheme_lavender">Lavendel</string>
+    <string name="scheme_ocean">Oceaan</string>
+    <string name="scheme_aurora">Aurora</string>
+    <string name="scheme_amber">Amberkleurig</string>
+    <string name="scheme_crimson">Karmozijnrood</string>
+    <string name="scheme_emerald">Smaragd</string>
+    <string name="scheme_mint">Nieuwstaat</string>
+
+    <!-- Shape Utils category and descriptions -->
+    <string name="shape_utils_fab">Zwevende actieknop</string>
+    <string name="shape_utils_fab_desc">Vorm voor FAB-knoppen</string>
+    <string name="shape_utils_cards">Kaarten</string>
+    <string name="shape_utils_cards_desc">Vorm voor kaarten en containers</string>
+    <string name="shape_utils_buttons">Knoppen</string>
+    <string name="shape_utils_buttons_desc">Vorm voor knoppen</string>
+    <string name="shape_utils_chips">Chips</string>
+    <string name="shape_utils_chips_desc">Vorm voor chips en tags</string>
+    <string name="shape_utils_player_controls">Spelerbediening</string>
+    <string name="shape_utils_player_controls_desc">Vorm voor bedieningsknoppen van de speler</string>
+    <string name="shape_utils_mini_player">Minispeler</string>
+    <string name="shape_utils_mini_player_desc">Vorm voor minispeler-illustraties</string>
+
+    <!-- Metadata properties and labels -->
+    <string name="metadata_duration">Duur</string>
+    <string name="metadata_disc">Schijf</string>
+    <string name="metadata_composer">Componist</string>
+    <string name="metadata_album_artist">Albumartiest</string>
+    <string name="metadata_play_count">Afspeeltelling</string>
+    <string name="metadata_total_played">Totaal gespeeld</string>
+    <string name="metadata_rating">Beoordeling</string>
+    <string name="metadata_quality">Kwaliteit</string>
+    <string name="metadata_audio_tech">Audiotechnologie</string>
+    <string name="metadata_bit_depth">Bitdiepte</string>
+    <string name="metadata_bitrate">Bitsnelheid</string>
+    <string name="metadata_sample_rate">Bemonsteringsfrequentie</string>
+    <string name="metadata_channels">Kanalen</string>
+    <string name="metadata_format">Formaat</string>
+    <string name="metadata_location">Locatie</string>
+    <string name="metadata_lyrics">Songteksten</string>
+    <string name="metadata_mime_type">MIME-type</string>
+    <string name="metadata_date_added">Datum toegevoegd</string>
+    <string name="metadata_modified">Gewijzigd</string>
+    <string name="metadata_lyrics_available">Beschikbaar</string>
+    <string name="metadata_dts">DTS</string>
+    <string name="metadata_hi_res">Hoge resolutie</string>
+    <string name="metadata_dolby">Dolby</string>
+    <string name="metadata_lossless">Zonder verlies</string>
+
+    <!-- Discover settings specific -->
+    <string name="settings_discover_album_name">Albumnaam</string>
+    <string name="settings_discover_album_name_desc">Toon albumtitel op kaart</string>
+    <string name="settings_discover_artist_name">Naam van artiest</string>
+    <string name="settings_discover_artist_name_desc">Toon artiestennaam op kaart</string>
+    <string name="settings_discover_release_year">Jaar van uitgave</string>
+    <string name="settings_discover_release_year_desc">Jaar van albumuitgave weergeven</string>
+    <string name="settings_discover_play_button">Afspeelknop</string>
+    <string name="settings_discover_play_button_desc">Snelafspeelknop weergeven</string>
+    <string name="settings_discover_gradient_overlay">Verloopoverlay</string>
+    <string name="settings_discover_gradient_overlay_desc">Toon verloop achter tekst</string>
+
+    <!-- Carousel Style selector strings -->
+    <string name="carousel_style_default">Standaard</string>
+    <string name="carousel_style_default_desc">2 side peek-albums</string>
+    <string name="carousel_style_hero">Held</string>
+    <string name="carousel_style_hero_desc">1 side peek-album</string>
+
+    <!-- Theme names -->
+    <string name="theme_rhythm">Rhythm</string>
+    <string name="theme_expressive">Expressief</string>
+    <string name="settings_managed_by_expressive_shapes">Beheerd door expressieve vormen</string>
+
+    <!-- Shape targets -->
+    <string name="shape_target_album_art">Albumillustraties</string>
+    <string name="shape_target_album_art_desc">Vorm voor albumillustraties</string>
+    <string name="shape_target_player_art">Spelerillustratie</string>
+    <string name="shape_target_player_art_desc">Vorm voor artwork op het spelersscherm</string>
+    <string name="shape_target_song_art">Liedkunstwerk</string>
+    <string name="shape_target_song_art_desc">Vorm voor songillustraties in lijsten</string>
+    <string name="shape_target_playlist_art">Kunstwerk van afspeellijst</string>
+    <string name="shape_target_playlist_art_desc">Vorm voor covers van afspeellijsten</string>
+    <string name="shape_target_artist_art">Kunstenaarskunstwerk</string>
+    <string name="shape_target_artist_art_desc">Vorm voor artiestenafbeeldingen</string>
+    <string name="settings_shape_for">Vorm voor %1$s</string>
 </resources>
+

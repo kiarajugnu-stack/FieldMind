@@ -3575,7 +3575,8 @@
     <string name="aboutscreen_discord_community">Discord コミュニティ</string>
     <string name="aboutscreen_support">サポート</string>
     <string name="apimanagementsettingsscreen_apple_music">Apple ミュージック</string>
-    <string name="apimanagementsettingsscreen_github">GitHub</string>
+    <string name="apimanagementsettingsscreen_github">GitHub
+今夜</string>
     <string name="apimanagementsettingsscreen_app_updates_and_release">アプリのアップデートとリリース情報</string>
     <string name="backuprestoresettingsscreen_choose_backup_sections">バックアップ セクションを選択</string>
     <string name="backuprestoresettingsscreen_select_what_to_include">このバックアップ ファイルに含めるものを選択します。</string>
@@ -3728,5 +3729,594 @@
     <string name="widget_theme_solid_purple_signature">ソリッドパープル (シグネチャー)</string>
     <string name="widget_theme_solid_purple_desc">特徴的なアクセントの色合いとハイライトを備えた特徴的な深い紫色の背景</string>
     <string name="widget_theme_glance_suffix">%1$s (Glance ウィジェットのみ)</string>
-    <string name="unit_dp">%1$ddp</string>
+    <string name="unit_dp">%1$ddp
+今夜</string>
+
+    <!-- Settings Suggestions and Tips -->
+    <string name="settings_suggestions">設定の提案</string>
+    <string name="settings_suggestions_desc">上部に状況に応じた提案を表示します</string>
+    <string name="settings_performance_desc_optimized">ハプティクス、デコード、マーキー、アートワークの取得を最適化してラグを削減します
+今朝の</string>
+    <string name="moment_morning">今日の午後</string>
+    <string name="moment_afternoon">今晩</string>
+    <string name="moment_evening">今夜</string>
+    <string name="moment_night">tonight</string>
+    <string name="pulse_fresh">新鮮なセッションのエネルギー</string>
+    <string name="pulse_steady">安定したグルーヴ</string>
+    <string name="pulse_heavy">頻繁に聞く</string>
+    <string name="pulse_marathon">マラソンモード</string>
+    
+    <!-- Settings Tips Details -->
+    <string name="settings_tip_theme_desc_1">生き生きとした AMOLED ブラックと美しいパステル カラーで音楽プレーヤーをリフレッシュします。</string>
+    <string name="settings_tip_theme_desc_2">アプリのアクセントをシステムに合わせて、Rhythm を真に自分のものにしましょう。</string>
+    <string name="settings_tip_media_scan_desc_1">不要なオーディオ クリップを避けてください。音楽をスキャンするためにどのフォルダーをスキャンするかを明示的に定義します。</string>
+    <string name="settings_tip_media_scan_desc_2">フォーカス フォルダーを使用して、ボイス メモと着信音をプレイリストから遠ざけます。</string>
+    <string name="settings_tip_sleep_timer_desc_1">音楽を再生しながら、眠りに就いてください。自動的に一時停止させていただきます。</string>
+    <string name="settings_tip_sleep_timer_desc_2">就寝前に自動スリープタイマーを設定して、再生が完全に停止するようにします。</string>
+    <string name="settings_tip_equalizer_desc_1">エクスペリエンスを向上させます。イコライザーを使用して低音を強調し、周波数を調整します。</string>
+    <string name="settings_tip_equalizer_desc_2">高度なオーディオ エフェクトを使用して、ヘッドフォンのサウンドを安全に調整します。</string>
+    <string name="settings_tip_backup_active_desc_1">自動バックアップがアクティブになっています。復元がクリーンな状態に保たれるように、バックアップ セクションを検証します。</string>
+    <string name="settings_tip_backup_active_desc_2">保護が有効になっています: スケジュールは問題ないようです。大規模な編集を行う前に手動バックアップを実行してください。</string>
+    <string name="settings_tip_backup_inactive_desc_1">自動バックアップがオフになっています。プレイリストと Rhythm Guard 統計を保護するには、これを有効にします。</string>
+    <string name="settings_tip_backup_inactive_desc_2">セーフティネットはまだありません。セットアップが失われないようにバックアップを有効にしてください。</string>
+    <string name="settings_tip_updates_active_desc_1">アップデートが有効になります。修正とパフォーマンスの向上のためにオンにしておきます。</string>
+    <string name="settings_tip_updates_active_desc_2">更新を受信するように設定されています。安定性と鮮度についてチャンネルの設定を確認してください。</string>
+    <string name="settings_tip_updates_inactive_desc_1">更新は無効になっています。再度有効にして、保護された状態を最新の状態に保ちます。</string>
+    <string name="settings_tip_updates_inactive_desc_2">現在のビルドに固定されています。準備ができたら、アップデートを再びオンにします。</string>
+    <string name="settings_tip_queue_active_desc_1">プレーヤーのスワイプによるスキップがアクティブです。スムーズな移行のためにキュー ルールを調整します。</string>
+    <string name="settings_tip_queue_active_desc_2">ジェスチャースキップがオンになっています。キューの動作をリスニング フローに合わせます。</string>
+    <string name="settings_tip_queue_inactive_desc_1">スワイプしてスキップがオフになっています。キュー コントロールは、再生の効率を維持するのに役立ちます。</string>
+    <string name="settings_tip_queue_inactive_desc_2">明示的なコントロールを好みますか?予測可能な再生のためにキューの動作を微調整します。</string>
+    <string name="settings_tip_controls_active_desc_1">シーク ボタンが表示されます。プレーヤーのコントロールをカスタマイズして乱雑さを減らします。</string>
+    <string name="settings_tip_controls_active_desc_2">コントロール豊富なプレーヤーが有効になりました。親指が届くようにレイアウトを調整します。</string>
+    <string name="settings_tip_controls_inactive_desc_1">最小限のプレーヤー コントロールが有効になりました。正確なジャンプをミスした場合は、シーク ボタンを追加してください。</string>
+    <string name="settings_tip_controls_inactive_desc_2">クリーンなレイアウトがアクティブです。シーク コントロールを再度有効にして、より細かい再生処理を行います。</string>
+    <string name="settings_tip_miniplayer_active_desc_1">ミニ プレーヤーの進行状況が表示されます。テーマに合ったスタイルを選択してください。</string>
+    <string name="settings_tip_miniplayer_active_desc_2">ミニ プレーヤーでプログレス バーがアクティブになります。次に、形状と角の微調整を試してください。</string>
+    <string name="settings_tip_miniplayer_inactive_desc_1">ミニ プレーヤーの進行状況は非表示になります。トラックを素早く認識するにはこれを有効にします。</string>
+    <string name="settings_tip_miniplayer_inactive_desc_2">コンパクト モードは最小限になりました。一目で分かりやすくするために進行状況をオンにします。</string>
+    <string name="settings_tip_library_active_desc_1">評価が有効になっています。ライブラリ設定を使用して、発見と並べ替えを強化します。</string>
+    <string name="settings_tip_library_active_desc_2">ライブラリは評価をサポートしています。スキャンとグループ化を調整して、よりクリーンなブラウジングを実現します。</string>
+    <string name="settings_tip_library_inactive_desc_1">評価は無効になっています。ライブラリ設定により、構造と速度を向上させることができます。</string>
+    <string name="settings_tip_library_inactive_desc_2">簡易ライブラリ モードが検出されました。グループ化を調整してナビゲーションを高速化します。</string>
+
+    <!-- Lyrics Source Dialog -->
+    <string name="lyrics_source_embedded_first">を最初に埋め込む</string>
+    <string name="lyrics_source_embedded_first_desc">オーディオ ファイル メタデータ → オンライン API → .lrc ファイルを試す</string>
+    <string name="lyrics_source_api_first">API 最初</string>
+    <string name="lyrics_source_api_first_desc">オンライン サービスを試す → オーディオ メタデータ → .lrc ファイル</string>
+    <string name="lyrics_source_local_first">ローカル .lrc を最初に</string>
+    <string name="lyrics_source_local_first_desc">.lrc ファイルを試す → オーディオ メタデータ → オンライン API</string>
+
+    <!-- Font / Color Customization Dialogs -->
+    <string name="theme_font_source_changed_restart">フォント ソースが変更されました。新しいフォントを適用するには、アプリを再起動します。</string>
+    <string name="color_source_album_art">アルバムアート</string>
+    <string name="color_source_album_art_desc">現在再生中のアルバムアートワークから色を抽出します</string>
+    <string name="color_source_system_colors">システムカラー</string>
+    <string name="color_source_system_colors_desc">Material を使用して、壁紙から色を選択してください</string>
+    <string name="color_source_custom_scheme">カスタム スキーム</string>
+    <string name="color_source_custom_scheme_desc">事前定義された配色から選択します</string>
+    <string name="font_source_system_font">システム フォント</string>
+    <string name="font_source_system_font_desc">デバイスのデフォルトのフォントを使用します</string>
+    <string name="font_source_custom_font">カスタム フォント</string>
+    <string name="font_source_custom_font_desc">カスタム フォント ファイルをインポートして使用する</string>
+    <string name="font_system_title">システムのデフォルト</string>
+    <string name="font_system_desc">デバイスのデフォルトのフォントを使用します</string>
+    <string name="font_geom_desc">Google のモダンですっきりとしたサンセリフ フォント</string>
+    <string name="font_slate_desc">クラシックで伝統的な外観のエレガントなセリフ フォント</string>
+    <string name="font_inter_desc">すっきりとしたモダンなサンセリフ フォント、可読性が高い</string>
+    <string name="font_jetbrains_desc">技術的なコンテンツに最適な等幅フォント</string>
+    <string name="font_quicksand_desc">より柔らかく親しみやすい外観の丸みを帯びたフォント</string>
+
+    <!-- Predefined Color Schemes -->
+    <string name="color_scheme_default_title">Rhythm デフォルト</string>
+    <string name="color_scheme_default_desc">Material 3 ベースラインのパープルにバラ色のピンクのアクセント</string>
+    <string name="color_scheme_warm_title">暖かい夕日</string>
+    <string name="color_scheme_warm_desc">温かみのある雰囲気を演出する心地よいオレンジと赤の色調</string>
+    <string name="color_scheme_cool_title">クールオーシャン</string>
+    <string name="color_scheme_cool_desc">爽やかなブルーとティールのトーンで落ち着いた雰囲気を演出</string>
+    <string name="color_scheme_forest_title">フォレストグリーン</string>
+    <string name="color_scheme_forest_desc">自然からインスピレーションを得たナチュラルなグリーントーン</string>
+    <string name="color_scheme_rose_title">ローズピンク</string>
+    <string name="color_scheme_rose_desc">エレガントなピンクとマゼンタのトーン</string>
+    <string name="color_scheme_monochrome_title">モノクロ</string>
+    <string name="color_scheme_monochrome_desc">クリーンでモダンな外観を実現するミニマリストのグレースケール</string>
+    <string name="color_scheme_lavender_title">ラベンダー</string>
+    <string name="color_scheme_lavender_desc">リラックスできる落ち着いたパープルとラベンダーのトーン</string>
+    <string name="color_scheme_ocean_title">深海</string>
+    <string name="color_scheme_ocean_desc">海洋の静けさをもたらすディープブルーとアクアマリン</string>
+    <string name="color_scheme_aurora_title">オーロラ</string>
+    <string name="color_scheme_aurora_desc">オーロラをイメージした鮮やかなグリーンとブルー</string>
+    <string name="color_scheme_amber_title">ゴールデンアンバー</string>
+    <string name="color_scheme_amber_desc">リッチなアンバーとゴールドの色合いが高級感を演出</string>
+    <string name="color_scheme_crimson_title">ディープクリムゾン</string>
+    <string name="color_scheme_crimson_desc">ドラマチックな大胆なバーガンディと深紅の色合い</string>
+    <string name="color_scheme_emerald_title">エメラルドドリーム</string>
+    <string name="color_scheme_emerald_desc">自然の森の色合いを持つ新鮮なエメラルドグリーン</string>
+    <string name="color_scheme_mint_title">ミント</string>
+    <string name="color_scheme_mint_desc">フレッシュでクリーンなシアンとミントグリーンのトーン</string>
+
+    <!-- Color Preview Chips -->
+    <string name="theme_color_primary">プライマリ</string>
+    <string name="theme_color_secondary">セカンダリ</string>
+    <string name="theme_color_tertiary">高等教育</string>
+
+    <!-- Lyrics Settings Screen -->
+    <string name="lyrics_settings_title">歌詞</string>
+    <string name="lyrics_settings_general">一般設定</string>
+    <string name="lyrics_settings_open_fullscreen_desc">歌詞ビューをタップして全画面の歌詞画面を開きます</string>
+    <string name="lyrics_settings_autohide_controls">歌詞コントロールを自動非表示にする</string>
+    <string name="lyrics_settings_autohide_controls_desc">数秒間操作がなかった場合、全画面の歌詞画面でコントロールを自動的に非表示にします</string>
+    <string name="lyrics_settings_embedded_first">を最初に埋め込む</string>
+    <string name="lyrics_settings_embedded_first_desc">オーディオ ファイルに埋め込まれた歌詞を優先し、オンライン API にフォールバックします</string>
+    <string name="lyrics_settings_online_first">オンラインファースト</string>
+    <string name="lyrics_settings_online_first_desc">オンライン API (Rhythm ワードごと、LRCLib) を優先し、組み込みにフォールバックします</string>
+    <string name="lyrics_settings_local_first">ローカルファースト</string>
+    <string name="lyrics_settings_local_first_desc">ローカルの .lrc ファイル、次に埋め込み歌詞、次にオンライン API を優先します</string>
+    <string name="lyrics_settings_apple_music_first">Apple Music ファースト</string>
+    <string name="lyrics_settings_lrclib_first">LRCLib ファースト</string>
+    <string name="lyrics_settings_fallback_apis_desc">優先された API が歌詞を返せない場合にフォールバック API を試みます</string>
+    <string name="lyrics_settings_display_styling">ディスプレイとスタイル</string>
+    <string name="lyrics_settings_size_percentage">サイズ: %1$d%%</string>
+    <string name="alignment_left">左</string>
+    <string name="alignment_center">センター</string>
+    <string name="alignment_right">そうですね</string>
+    <string name="animation_slide">スライド</string>
+    <string name="animation_fade">フェード</string>
+    <string name="animation_scale">スケール</string>
+    <string name="animation_up">アップ</string>
+    <string name="lyrics_settings_switch_animation_desc">アート ↔ 歌詞切り替えアニメーション</string>
+    <string name="lyrics_settings_not_supported_expressive">Expressive テーマではサポートされていません</string>
+    <string name="lyrics_settings_formatting_behaviors">フォーマットと動作</string>
+    <string name="lyrics_settings_bold_text">太字のテキスト</string>
+    <string name="lyrics_settings_bold_text_desc">アクティブな歌詞のテキストを太字にします</string>
+    <string name="lyrics_settings_trim_lyrics">トリム歌詞</string>
+    <string name="lyrics_settings_trim_lyrics_desc">歌詞行の先頭と末尾の空白を削除します</string>
+    <string name="lyrics_settings_disable_animations">アニメーションを無効にする</string>
+    <string name="lyrics_settings_disable_animations_desc">歌詞ビューでトランジションとアニメーションを無効にする</string>
+    <string name="lyrics_settings_word_by_word_translation">単語ごとの翻訳</string>
+    <string name="lyrics_settings_word_by_word_translation_desc">音節または単語の翻訳を自動的に同期してみてください</string>
+    <string name="lyrics_settings_info_bullets">追加の同期詳細:\n• オンライン API は高品質の同期された歌詞を提供します\n• Rhythm は単語ごとの同期を提供します\n• LRCLib は無料の行ごとの同期を提供します</string>
+
+    <!-- AutoEQ Preset Picker additions -->
+    <string name="autoeqpresetpickerbottomsheet_search_presets">プリセットを検索...</string>
+    <string name="autoeqpresetpickerbottomsheet_disable">なし / AutoEQ を無効にする</string>
+    <string name="autoeqpresetpickerbottomsheet_disable_desc">ヘッドフォン プロファイルをクリアし、標準の EQ プリセットを使用します</string>
+    <string name="autoeqpresetpickerbottomsheet_unknown_brand">不明なブランド</string>
+
+    <!-- Device Configuration additions -->
+    <string name="device_configuration_devices_configured">%1$d デバイスが構成されました</string>
+    <string name="device_configuration_device_recognized">デバイスが認識されました</string>
+    <string name="device_configuration_new_device_detected">新しいデバイスが検出されました</string>
+    <string name="device_configuration_configured_with">%1$s は %2$s で構成されています</string>
+    <string name="device_configuration_configured_no_profile">%1$s が構成されています</string>
+    <string name="device_configuration_connected_not_configured">%1$s は接続されていますが、構成されていません</string>
+    <string name="device_configuration_applied_profile">適用された %1$s プロファイル</string>
+    <string name="device_configuration_imported_profile">インポートされたプロファイル</string>
+    <string name="device_configuration_parse_error">EQ 設定を解析できませんでした。フォーマットを確認してください。</string>
+    <string name="device_configuration_custom_eq">カスタム EQ</string>
+    <string name="device_configuration_custom_preset">カスタム プリセット</string>
+    <string name="device_configuration_custom">カスタム</string>
+    <string name="device_configuration_active_profile_label">アクティブなプロファイル: %1$s</string>
+    <string name="device_configuration_share_subject">Rhythm EQ プロファイル: %1$s</string>
+    <string name="device_configuration_share_title">EQ プロファイルを共有する</string>
+    <string name="device_configuration_edit_device">デバイスの編集</string>
+    <string name="device_configuration_add_device">デバイスの追加</string>
+    <string name="device_configuration_save">保存</string>
+    <string name="device_configuration_add">追加</string>
+    <string name="device_configuration_for_device">%1$s の場合</string>
+    <string name="device_configuration_profiles_available">%1$d プロファイルが利用可能</string>
+    <string name="device_configuration_disable_compensation">ヘッドフォン補正を無効にする</string>
+
+    <!-- Common UI element strings -->
+    <string name="common_none">なし</string>
+    <string name="common_cancel">キャンセル</string>
+    <string name="common_back">戻る</string>
+    <string name="common_remove">削除</string>
+    <string name="common_add">追加</string>
+    <string name="common_active">アクティブ</string>
+    <string name="common_disabled">無効</string>
+    <string name="common_unavailable">利用できません</string>
+    <string name="common_success">成功</string>
+    <string name="common_error">エラー</string>
+    <string name="common_unknown">不明</string>
+
+    <!-- Blacklist UI additions -->
+    <string name="blacklist_remove_song_title">ブラックリストから削除しますか?</string>
+    <string name="blacklist_add_song_title">ブラックリストに追加しますか?</string>
+    <string name="blacklist_remove_song_desc">この曲はライブラリから非表示にならなくなります。</string>
+    <string name="blacklist_add_song_desc">この曲はライブラリから非表示になり、再生から除外されます。</string>
+    <string name="blacklist_undo_warning">この操作はいつでも元に戻すことができます。</string>
+    <string name="blacklist_song_removed_msg">曲がブラックリストから削除されました</string>
+    <string name="blacklist_song_added_msg">曲がブラックリストに追加されました</string>
+    <string name="blacklist_button_remove">削除</string>
+    <string name="blacklist_button_blacklist">ブラックリスト</string>
+    <string name="blacklist_remove_folder_title">ブラックリストからフォルダーを削除しますか?</string>
+    <string name="blacklist_add_folder_title">ブラックリスト フォルダー?</string>
+    <string name="blacklist_remove_folder_desc">このフォルダー内のすべての曲が再び表示されます。</string>
+    <string name="blacklist_add_folder_desc">このフォルダー内のすべての曲は非表示になり、再生から除外されます。</string>
+    <string name="blacklist_folder_removed_msg">フォルダーがブラックリストから削除されました</string>
+    <string name="blacklist_folder_added_msg">フォルダーがブラックリストに追加されました</string>
+    <string name="blacklist_disc_label">ディスク %1$d</string>
+    <string name="blacklist_track_label">トラック %1$d</string>
+
+    <!-- Library & Playlist Dialog additions -->
+    <string name="dialog_add_song_to_playlist">「%1$s」をこのプレイリストに追加します</string>
+    <string name="dialog_songs_in_queue">現在のキューには %1$d 曲があります。</string>
+    <string name="dialog_play_song_how">「%1$s」をプレイしてみませんか？</string>
+    <string name="dialog_clear_and_play">クリアしてプレイ</string>
+    <string name="dialog_clear_and_play_desc">キューを置き換えてこの曲を再生します</string>
+    <string name="dialog_add_to_queue">キューに追加</string>
+    <string name="dialog_add_to_queue_desc">現在のキューを保持し、曲を追加します</string>
+    <string name="dialog_restart_warning_message">インポートされたすべてのプレイリストが正しく動作することを確認するには、アプリを再起動することをお勧めします。アプリは通常どおり使用し続けることができますが、再起動するまで一部の機能が期待どおりに動作しない可能性があります。</string>
+    <string name="dialog_export_playlist_to">「%1$s」を次の場所にエクスポートします。</string>
+    <string name="dialog_export_playlists_to">%1$d プレイリストを次の場所にエクスポートします。</string>
+    <string name="dialog_operation_importing">インポート中</string>
+    <string name="dialog_operation_exporting">エクスポート中</string>
+
+    <!-- Mode dialog strings -->
+    <string name="dialog_switch_to_go">Rhythm に切り替えますか?</string>
+    <string name="dialog_switch_to_local">ローカルに切り替えますか?</string>
+    <string name="dialog_switch_to_go_desc">このアイテムは Rhythm Go に属します。今すぐストリーミング モードに切り替えてストリーミングして再生しますか?</string>
+    <string name="dialog_switch_to_local_desc">このアイテムはローカル ライブラリに属します。今すぐローカル モードに切り替えて、オフライン トラックを再生しますか?</string>
+
+    <!-- Section order content descriptions -->
+    <string name="home_section_hide_carousel">カルーセルを非表示にする</string>
+    <string name="home_section_show_carousel">カルーセルを表示</string>
+    <string name="home_section_hide_section">セクションを非表示にする</string>
+    <string name="home_section_show_section">セクションを表示</string>
+    <string name="library_tab_show">タブを表示</string>
+    <string name="library_tab_hide">タブを非表示にする</string>
+
+    <!-- Add To Playlist additions -->
+    <string name="add_to_playlist_selected_count">%1$d が選択されました</string>
+    <string name="add_to_playlist_title">%1$s に追加</string>
+    <string name="add_to_playlist_no_songs">利用可能な曲がありません</string>
+    <string name="add_to_playlist_all_songs_present">すべての曲がすでにこのプレイリストにあります</string>
+
+    <!-- Artist details -->
+    <string name="artist_detail_albums_count">%1$d アルバム</string>
+    <string name="artist_detail_songs_count">%1$d の曲</string>
+
+    <!-- Equalizer presets & UI -->
+    <string name="eq_preset_flat">フラット</string>
+    <string name="eq_preset_rock">ロック</string>
+    <string name="eq_preset_pop">ポップ</string>
+    <string name="eq_preset_jazz">ジャズ</string>
+    <string name="eq_preset_classical">クラシック</string>
+    <string name="eq_preset_electronic">電子</string>
+    <string name="eq_preset_hiphop">ヒップホップ</string>
+    <string name="eq_preset_vocal">ボーカル</string>
+    <string name="eq_preset_bass_boost">低音ブースト</string>
+    <string name="eq_preset_treble_boost">トレブルブースト</string>
+    <string name="eq_preset_v_shape">V 字型</string>
+    <string name="eq_preset_harman">ハーマン</string>
+    <string name="eq_preset_custom">カスタム</string>
+    <string name="eq_autoeq_profiles">AutoEQ プロファイル</string>
+    <string name="eq_manage_device">デバイスの管理</string>
+    <string name="eq_system_equalizer">システムイコライザー</string>
+    <string name="eq_enhance_lows">低音を強化</string>
+    <string name="eq_widen_sound">音の幅を広げる</string>
+    <string name="eq_mono_only">モノラルのみ</string>
+
+    <!-- Library updates, sorting & categories -->
+    <string name="library_updated_songs_success">%1$d 曲を更新しました</string>
+    <string name="library_updated_songs_failed">%1$d 曲を更新しましたが、%2$d は失敗しました</string>
+    <string name="library_switch_to_grid">グリッド ビューに切り替える</string>
+    <string name="library_switch_to_list">リストビューに切り替える</string>
+    <string name="library_sort_title">タイトル</string>
+    <string name="library_sort_artist">アーティスト</string>
+    <string name="library_sort_date_added">追加日</string>
+    <string name="library_sort_date_modified">変更日</string>
+    <string name="library_sort_ascending">昇順</string>
+    <string name="library_sort_descending">降順</string>
+    <string name="library_sort_name_asc">名前 (A ～ Z)</string>
+    <string name="library_sort_name_desc">名前 (Z-A)</string>
+    <string name="library_sort_songs_desc">曲 (高位から低位まで)</string>
+    <string name="library_sort_albums_desc">アルバム (上位から下位)</string>
+    <string name="library_scan_songs">曲をスキャン中...</string>
+    <string name="library_scan_albums">アルバムを処理中...</string>
+    <string name="library_scan_artists">アーティストを処理しています...</string>
+    <string name="library_scan_genres">ジャンルを検出中...</string>
+    <string name="library_scan_media">メディアをスキャンしています...</string>
+    <string name="library_export_failed">エクスポートに失敗しました</string>
+    <string name="library_import_failed">インポートに失敗しました</string>
+    <string name="library_category_all">すべて</string>
+    <string name="library_category_favorites">❤️ お気に入り</string>
+    <string name="library_category_absolute_favorites">⭐⭐⭐⭐⭐絶対のお気に入り</string>
+    <string name="library_category_loved">⭐⭐⭐⭐大好き</string>
+    <string name="library_category_great">⭐⭐⭐素晴らしい</string>
+    <string name="library_category_good">⭐⭐良いです</string>
+    <string name="library_category_liked">⭐いいね！</string>
+    <string name="library_category_short">短い (&lt; 3 分)</string>
+    <string name="library_category_medium">中 (3 ～ 5 分)</string>
+    <string name="library_category_long">長い (&gt; 5 分)</string>
+    <string name="library_category_hi_res_lossless">高解像度ロスレス</string>
+    <string name="library_category_lossless">ロスレス</string>
+    <string name="library_category_dolby">ドルビー</string>
+    <string name="library_category_mono">モノラル</string>
+    <string name="library_category_stereo">ステレオ</string>
+    <string name="library_category_high_quality">高品質</string>
+    <string name="library_category_standard">標準</string>
+    <string name="library_removed_from_favorites">%1$d をお気に入りから削除しました</string>
+    <string name="library_added_to_favorites">%1$d をお気に入りに追加しました</string>
+    <string name="library_unlike_all">すべてとは異なります</string>
+    <string name="library_like_all">みんなと同じように</string>
+    <string name="library_tracks_count_format">%1$d/%2$d トラック</string>
+    <string name="library_no_playlists_yet">プレイリストはまだありません\n+ ボタンを使用して最初のプレイリストを作成します</string>
+    <string name="library_no_albums_yet">アルバムはまだありません</string>
+    <string name="library_no_artists_yet">アーティストはまだいません</string>
+    <string name="library_action_play_next">次に再生</string>
+    <string name="library_action_add_to_queue">キューに追加</string>
+    <string name="library_action_add_to_blacklist">ブラックリストに追加</string>
+    <string name="library_action_song_info">曲情報</string>
+    <string name="library_action_add_to_playlist">プレイリストに追加</string>
+    <string name="library_action_rate_song">ソングを評価する</string>
+    <string name="library_menu_new_playlist">新しいプレイリスト</string>
+    <string name="library_menu_import_playlist">プレイリストをインポートする</string>
+    <string name="library_menu_export_playlists">プレイリストのエクスポート</string>
+    <string name="library_menu_close_playlist">プレイリスト メニューを閉じる</string>
+    <string name="library_menu_open_playlist">プレイリストメニューを開く</string>
+    <string name="library_menu_close">メニューを閉じる</string>
+    <string name="library_selected_count_format">%1$d 選択済み
+%1$d トラックの</string>
+    <string name="library_from_tracks_format">from %1$d tracks</string>
+    <string name="library_playlist_count_singular">%1$d プレイリスト</string>
+    <string name="library_playlist_count_plural">%1$d プレイリスト</string>
+    <string name="library_album_count_singular">%1$d アルバム</string>
+    <string name="library_album_count_plural">%1$d アルバム</string>
+    <string name="library_artist_count_singular">%1$d アーティスト</string>
+    <string name="library_artist_count_plural">%1$d アーティスト</string>
+    <string name="library_duration_hours_minutes">%1$dh %2$dm</string>
+    <string name="library_duration_minutes">%1$dm</string>
+
+    <!-- Onboarding, Backup & Settings additions -->
+    <string name="onboarding_blacklist_label">ブラックリスト</string>
+    <string name="onboarding_whitelist_label">ホワイトリスト</string>
+    <string name="onboarding_full_player_label">フルプレーヤー</string>
+    <string name="onboarding_mini_player_label">ミニプレーヤー</string>
+    <string name="onboarding_blocked_folders">%1$d ブロックされたフォルダー</string>
+    <string name="onboarding_whitelisted_folders">%1$d ホワイトリストに登録されたフォルダー</string>
+    <string name="onboarding_sample_button">サンプルボタン</string>
+    <string name="onboarding_primary_label">プライマリ</string>
+    <string name="onboarding_secondary_label">セカンダリ</string>
+    <string name="onboarding_tertiary_label">高等教育</string>
+    <string name="onboarding_rhythm_material">Rhythm (Material)</string>
+    
+    <string name="backup_restored_success">バックアップは正常に復元されました。すべての変更を適用するには、アプリを再起動します。</string>
+    <string name="backup_copied_to_clipboard">バックアップが作成され、クリップボードにコピーされました。</string>
+    <string name="backup_failed_to_create">バックアップの作成に失敗しました: %1$s</string>
+    <string name="backup_failed_to_restore_file">ファイルからの復元に失敗しました: %1$s</string>
+    <string name="backup_no_backup_clipboard">クリップボードにバックアップが見つかりませんでした</string>
+    <string name="backup_failed_to_restore_clipboard">クリップボードからの復元に失敗しました: %1$s</string>
+    
+    <string name="updater_ready_to_install">バージョン %1$s をインストールする準備ができました</string>
+    <string name="updater_download_progress">%1$d%% • %2$s / %3$s</string>
+    <string name="updater_version_info">バージョン %1$s • %2$s</string>
+    <string name="updater_error_occurred">エラーが発生しました</string>
+    <string name="updater_channel_stable">安定</string>
+    <string name="updater_channel_beta">ベータ版</string>
+
+    <!-- Expressive shape preset & group names -->
+    <string name="shape_preset_default">デフォルト</string>
+    <string name="shape_preset_default_desc">あらゆる年齢層に適した、穏やかな表情豊かな形状</string>
+    <string name="shape_preset_friendly">フレンドリー</string>
+    <string name="shape_preset_friendly_desc">温かみのある親しみやすい形状</string>
+    <string name="shape_preset_cheerful">陽気</string>
+    <string name="shape_preset_cheerful_desc">明るく表情豊かな形状</string>
+    <string name="shape_preset_modern">モダン</string>
+    <string name="shape_preset_modern_desc">現代的な表現力豊かなデザイン</string>
+    <string name="shape_preset_playful">遊び心たっぷり</string>
+    <string name="shape_preset_playful_desc">楽しくて表現力豊かな形</string>
+    <string name="shape_preset_organic">オーガニック</string>
+    <string name="shape_preset_organic_desc">自然からインスピレーションを得た形状</string>
+    <string name="shape_preset_geometric">幾何学模様</string>
+    <string name="shape_preset_geometric_desc">クリーンでモダンな形状</string>
+    <string name="shape_preset_retro">レトロ</string>
+    <string name="shape_preset_retro_desc">ピクセル化された懐かしい形</string>
+    <string name="shape_preset_custom">カスタム</string>
+    <string name="shape_preset_custom_desc">あなたのパーソナライズされた選択</string>
+    <string name="shape_option_square">スクエア</string>
+    <string name="shape_option_square_desc">角丸正方形</string>
+    <string name="shape_option_oval">楕円形</string>
+    <string name="shape_option_oval_desc">細長い楕円形</string>
+    <string name="shape_option_pill">錠剤</string>
+    <string name="shape_option_pill_desc">カプセルの形状</string>
+    <string name="shape_option_diamond">ダイヤモンド</string>
+    <string name="shape_option_diamond_desc">ダイヤモンド形状</string>
+    <string name="shape_option_triangle">三角形</string>
+    <string name="shape_option_triangle_desc">角丸三角形</string>
+    <string name="shape_option_pentagon">ペンタゴン</string>
+    <string name="shape_option_pentagon_desc">5 角形の多角形</string>
+    <string name="shape_option_flower">花</string>
+    <string name="shape_option_flower_desc">花びらのある花</string>
+    <string name="shape_option_clover4">四つ葉のクローバー</string>
+    <string name="shape_option_clover4_desc">四つ葉のクローバー</string>
+    <string name="shape_option_clover8">八つ葉のクローバー</string>
+    <string name="shape_option_clover8_desc">八つ葉のクローバー</string>
+    <string name="shape_option_heart">ハート</string>
+    <string name="shape_option_heart_desc">ハート型</string>
+    <string name="shape_option_bun">バン</string>
+    <string name="shape_option_bun_desc">パン/パンの形状</string>
+    <string name="shape_option_boom">ブーム</string>
+    <string name="shape_option_boom_desc">爆発の形状</string>
+    <string name="shape_option_soft_boom">ソフトブーム</string>
+    <string name="shape_option_soft_boom_desc">よりソフトな爆発</string>
+    <string name="shape_option_burst">バースト</string>
+    <string name="shape_option_burst_desc">スターバースト形状</string>
+    <string name="shape_option_soft_burst">ソフトバースト</string>
+    <string name="shape_option_soft_burst_desc">ソフトなスターバースト</string>
+    <string name="shape_option_sunny">晴れ</string>
+    <string name="shape_option_sunny_desc">光線のある太陽</string>
+    <string name="shape_option_very_sunny">とても晴れました</string>
+    <string name="shape_option_very_sunny_desc">日差しが多くなった</string>
+    <string name="shape_option_cookie4">クッキー 4</string>
+    <string name="shape_option_cookie4_desc">4面クッキー</string>
+    <string name="shape_option_cookie6">クッキー 6</string>
+    <string name="shape_option_cookie6_desc">6面クッキー</string>
+    <string name="shape_option_cookie7">クッキー 7</string>
+    <string name="shape_option_cookie7_desc">7面クッキー</string>
+    <string name="shape_option_cookie9">クッキー 9</string>
+    <string name="shape_option_cookie9_desc">9 面クッキー</string>
+    <string name="shape_option_cookie12">クッキー 12</string>
+    <string name="shape_option_cookie12_desc">12 面クッキー</string>
+    <string name="shape_option_ghostish">幽霊っぽい</string>
+    <string name="shape_option_ghostish_desc">幽霊のような形状</string>
+    <string name="shape_option_puffy">パフィー</string>
+    <string name="shape_option_puffy_desc">雲のような形</string>
+    <string name="shape_option_puffy_diamond">パフィー ダイヤモンド</string>
+    <string name="shape_option_puffy_diamond_desc">ふっくらとしたダイヤモンド</string>
+    <string name="shape_option_fan">ファン</string>
+    <string name="shape_option_fan_desc">扇形</string>
+    <string name="shape_option_circle">サークル</string>
+    <string name="shape_option_circle_desc">完全な円</string>
+    <string name="shape_option_clover_4_leaf">四つ葉のクローバー</string>
+    <string name="shape_option_clover_4_leaf_desc">四つ葉のクローバー</string>
+    <string name="shape_option_clover_8_leaf">八つ葉のクローバー</string>
+    <string name="shape_option_clover_8_leaf_desc">八つ葉のクローバー</string>
+    <string name="shape_option_arrow">矢印</string>
+    <string name="shape_option_arrow_desc">矢印ポインタ</string>
+    <string name="shape_option_arch">アーチ</string>
+    <string name="shape_option_arch_desc">アーチ形状</string>
+    <string name="shape_option_clam_shell">クラムシェル</string>
+    <string name="shape_option_clam_shell_desc">シェル形状</string>
+    <string name="shape_option_gem">ジェム</string>
+    <string name="shape_option_gem_desc">宝石の形状</string>
+    <string name="shape_option_semi_circle">半円</string>
+    <string name="shape_option_semi_circle_desc">半円</string>
+    <string name="shape_option_slanted">斜め</string>
+    <string name="shape_option_slanted_desc">斜めの正方形</string>
+    <string name="shape_option_pixel_circle">ピクセル サークル</string>
+    <string name="shape_option_pixel_circle_desc">ピクセル化された円</string>
+    <string name="shape_option_pixel_triangle">ピクセル三角形</string>
+    <string name="shape_option_pixel_triangle_desc">ピクセル化された三角形</string>
+    <string name="shape_group_basic">基本</string>
+    <string name="shape_group_organic">オーガニック</string>
+    <string name="shape_group_playful">遊び心たっぷり</string>
+    <string name="shape_group_cookie">クッキー</string>
+    <string name="shape_group_whimsical">気まぐれ</string>
+    <string name="shape_group_special">スペシャル</string>
+    <string name="shape_group_pixel">ピクセル</string>
+
+    <!-- Customization Choices -->
+    <string name="option_always">常に</string>
+    <string name="option_expanded">展開済み</string>
+    <string name="option_collapsed">折りたたまれました</string>
+    <string name="option_linear">リニア</string>
+    <string name="option_circular">回覧</string>
+    <string name="option_auto">自動</string>
+    <string name="option_manual">マニュアル</string>
+    <string name="option_both">両方</string>
+    <string name="option_icon">アイコン</string>
+    <string name="option_name">名前</string>
+
+    <!-- Theme settings additions -->
+    <string name="theme_color_red">赤</string>
+    <string name="theme_color_green">グリーン</string>
+    <string name="theme_color_blue">ブルー</string>
+    <string name="theme_font_restart_warning">フォントが変更されました。新しいフォントを適用するには、アプリを再起動します。</string>
+    <string name="theme_source_album_art">アルバムアート</string>
+    <string name="theme_source_album_art_desc">現在再生中のアルバムアートワークから色を抽出します</string>
+    <string name="theme_source_system_colors">システムカラー</string>
+    <string name="theme_source_system_colors_desc">Material を使用して、壁紙から色を選択してください</string>
+    <string name="theme_source_custom_scheme">カスタム スキーム</string>
+    <string name="theme_source_custom_scheme_desc">事前定義された配色から選択します</string>
+    <string name="theme_font_system">システム フォント</string>
+    <string name="theme_font_system_desc">デバイスのデフォルトのフォントを使用します</string>
+    <string name="theme_font_custom">カスタム フォント</string>
+    <string name="theme_font_custom_desc">カスタム フォント ファイルをインポートして使用する</string>
+
+    <!-- Color Scheme names -->
+    <string name="scheme_default">デフォルト</string>
+    <string name="scheme_warm">暖かい</string>
+    <string name="scheme_cool">クール</string>
+    <string name="scheme_forest">フォレスト</string>
+    <string name="scheme_rose">ローズ</string>
+    <string name="scheme_monochrome">モノクロ</string>
+    <string name="scheme_lavender">ラベンダー</string>
+    <string name="scheme_ocean">オーシャン</string>
+    <string name="scheme_aurora">オーロラ</string>
+    <string name="scheme_amber">アンバー</string>
+    <string name="scheme_crimson">クリムゾン</string>
+    <string name="scheme_emerald">エメラルド</string>
+    <string name="scheme_mint">ミント</string>
+
+    <!-- Shape Utils category and descriptions -->
+    <string name="shape_utils_fab">フローティング アクション ボタン</string>
+    <string name="shape_utils_fab_desc">FAB ボタンの形状</string>
+    <string name="shape_utils_cards">カード</string>
+    <string name="shape_utils_cards_desc">カードとコンテナの形状</string>
+    <string name="shape_utils_buttons">ボタン</string>
+    <string name="shape_utils_buttons_desc">ボタンの形状</string>
+    <string name="shape_utils_chips">チップ</string>
+    <string name="shape_utils_chips_desc">チップとタグの形状</string>
+    <string name="shape_utils_player_controls">プレーヤーのコントロール</string>
+    <string name="shape_utils_player_controls_desc">プレーヤーのコントロール ボタンの形状</string>
+    <string name="shape_utils_mini_player">ミニプレーヤー</string>
+    <string name="shape_utils_mini_player_desc">ミニ プレーヤーのアートワークの形状</string>
+
+    <!-- Metadata properties and labels -->
+    <string name="metadata_duration">期間</string>
+    <string name="metadata_disc">ディスク</string>
+    <string name="metadata_composer">作曲家</string>
+    <string name="metadata_album_artist">アルバム アーティスト</string>
+    <string name="metadata_play_count">再生数</string>
+    <string name="metadata_total_played">総再生数</string>
+    <string name="metadata_rating">評価</string>
+    <string name="metadata_quality">品質</string>
+    <string name="metadata_audio_tech">オーディオ技術</string>
+    <string name="metadata_bit_depth">ビット深度</string>
+    <string name="metadata_bitrate">ビットレート</string>
+    <string name="metadata_sample_rate">サンプルレート</string>
+    <string name="metadata_channels">チャンネル</string>
+    <string name="metadata_format">形式</string>
+    <string name="metadata_location">場所</string>
+    <string name="metadata_lyrics">歌詞</string>
+    <string name="metadata_mime_type">MIME タイプ</string>
+    <string name="metadata_date_added">追加日</string>
+    <string name="metadata_modified">変更されました</string>
+    <string name="metadata_lyrics_available">利用可能</string>
+    <string name="metadata_dts">DTS</string>
+    <string name="metadata_hi_res">ハイレゾ</string>
+    <string name="metadata_dolby">ドルビー</string>
+    <string name="metadata_lossless">ロスレス</string>
+
+    <!-- Discover settings specific -->
+    <string name="settings_discover_album_name">アルバム名</string>
+    <string name="settings_discover_album_name_desc">カードにアルバム タイトルを表示</string>
+    <string name="settings_discover_artist_name">アーティスト名</string>
+    <string name="settings_discover_artist_name_desc">カードにアーティスト名を表示</string>
+    <string name="settings_discover_release_year">リリース年</string>
+    <string name="settings_discover_release_year_desc">アルバムのリリース年を表示</string>
+    <string name="settings_discover_play_button">再生ボタン</string>
+    <string name="settings_discover_play_button_desc">クイック再生ボタンを表示</string>
+    <string name="settings_discover_gradient_overlay">グラデーション オーバーレイ</string>
+    <string name="settings_discover_gradient_overlay_desc">テキストの後ろにグラデーションを表示</string>
+
+    <!-- Carousel Style selector strings -->
+    <string name="carousel_style_default">デフォルト</string>
+    <string name="carousel_style_default_desc">サイドピークアルバム 2 枚</string>
+    <string name="carousel_style_hero">ヒーロー</string>
+    <string name="carousel_style_hero_desc">サイドピークアルバム 1 枚</string>
+
+    <!-- Theme names -->
+    <string name="theme_rhythm">Rhythm
+__FMT0__ の</string>
+    <string name="theme_expressive">表現力豊か</string>
+    <string name="settings_managed_by_expressive_shapes">表現力豊かな形状によって管理</string>
+
+    <!-- Shape targets -->
+    <string name="shape_target_album_art">アルバム アートワーク</string>
+    <string name="shape_target_album_art_desc">アルバム アートワークの形状</string>
+    <string name="shape_target_player_art">プレーヤーのアートワーク</string>
+    <string name="shape_target_player_art_desc">プレーヤー画面アートワークの形状</string>
+    <string name="shape_target_song_art">ソングアートワーク</string>
+    <string name="shape_target_song_art_desc">リスト内の曲のアートワークの形状</string>
+    <string name="shape_target_playlist_art">プレイリスト アートワーク</string>
+    <string name="shape_target_playlist_art_desc">プレイリスト カバーの形状</string>
+    <string name="shape_target_artist_art">アーティストのアートワーク</string>
+    <string name="shape_target_artist_art_desc">アーティスト画像の形状
+__FMT0__ の</string>
+    <string name="settings_shape_for">形状</string>
 </resources>
+

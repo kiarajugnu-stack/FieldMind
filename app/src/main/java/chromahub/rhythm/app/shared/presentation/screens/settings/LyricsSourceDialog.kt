@@ -226,18 +226,18 @@ fun LyricsSourceDialog(
             // Options
             val sourceOptions = listOf(
                 chromahub.rhythm.app.shared.data.model.LyricsSourcePreference.EMBEDDED_FIRST to Triple(
-                    "Embedded First",
-                    "Try audio file metadata → Online APIs → .lrc files",
+                    context.getString(R.string.lyrics_source_embedded_first),
+                    context.getString(R.string.lyrics_source_embedded_first_desc),
                     RhythmIcons.MusicNote
                 ),
                 chromahub.rhythm.app.shared.data.model.LyricsSourcePreference.API_FIRST to Triple(
-                    "API First",
-                    "Try online services → Audio metadata → .lrc files",
+                    context.getString(R.string.lyrics_source_api_first),
+                    context.getString(R.string.lyrics_source_api_first_desc),
                     RhythmIcons.CloudDownload
                 ),
                 chromahub.rhythm.app.shared.data.model.LyricsSourcePreference.LOCAL_FIRST to Triple(
-                    "Local .lrc First",
-                    "Try .lrc files → Audio metadata → Online APIs",
+                    context.getString(R.string.lyrics_source_local_first),
+                    context.getString(R.string.lyrics_source_local_first_desc),
                     RhythmIcons.Folder
                 )
             )

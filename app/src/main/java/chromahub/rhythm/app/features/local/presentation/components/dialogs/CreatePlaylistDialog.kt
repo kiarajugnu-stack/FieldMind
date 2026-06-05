@@ -109,7 +109,7 @@ fun CreatePlaylistDialog(
                         )
                         
                         Text(
-                            text = "Add \"${song.title}\" to this playlist",
+                            text = context.getString(R.string.dialog_add_song_to_playlist, song.title),
                             style = MaterialTheme.typography.bodyMedium
                         )
                     }
@@ -188,11 +188,11 @@ fun QueueActionDialog(
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(
-                    text = "You have $queueSize song${if (queueSize > 1) "s" else ""} in the current queue.",
+                    text = context.getString(R.string.dialog_songs_in_queue, queueSize),
                     style = MaterialTheme.typography.bodyMedium
                 )
                 Text(
-                    text = "How would you like to play \"${song.title}\"?",
+                    text = context.getString(R.string.dialog_play_song_how, song.title),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -230,13 +230,13 @@ fun QueueActionDialog(
                         Spacer(modifier = Modifier.width(16.dp))
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                "Clear & Play",
+                                text = context.getString(R.string.dialog_clear_and_play),
                                 style = MaterialTheme.typography.bodyLarge,
                                 fontWeight = FontWeight.SemiBold,
                                 color = MaterialTheme.colorScheme.onPrimaryContainer
                             )
                             Text(
-                                "Replace queue and play this song",
+                                text = context.getString(R.string.dialog_clear_and_play_desc),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
                             )
@@ -275,13 +275,13 @@ fun QueueActionDialog(
                         Spacer(modifier = Modifier.width(16.dp))
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                "Add to Queue",
+                                text = context.getString(R.string.dialog_add_to_queue),
                                 style = MaterialTheme.typography.bodyLarge,
                                 fontWeight = FontWeight.SemiBold,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                             Text(
-                                "Keep current queue and add song",
+                                text = context.getString(R.string.dialog_add_to_queue_desc),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
                             )

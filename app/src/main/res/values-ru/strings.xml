@@ -3730,4 +3730,592 @@
     <string name="widget_theme_solid_purple_desc">Фирменный глубокий фиолетовый фон с фирменными акцентными оттенками и бликами.</string>
     <string name="widget_theme_glance_suffix">%1$s (только виджеты Glance)</string>
     <string name="unit_dp">%1$ddp</string>
+
+    <!-- Settings Suggestions and Tips -->
+    <string name="settings_suggestions">Рекомендации по настройке</string>
+    <string name="settings_suggestions_desc">Показывать контекстные подсказки вверху</string>
+    <string name="settings_performance_desc_optimized">Оптимизируйте тактильные ощущения, декодирование, выделение и выборку иллюстраций, чтобы уменьшить задержку.</string>
+    <string name="moment_morning">сегодня утром</string>
+    <string name="moment_afternoon">сегодня днем</string>
+    <string name="moment_evening">сегодня вечером</string>
+    <string name="moment_night">сегодня вечером</string>
+    <string name="pulse_fresh">Свежая энергия сессии</string>
+    <string name="pulse_steady">Устойчивая канавка</string>
+    <string name="pulse_heavy">Тяжёлое прослушивание</string>
+    <string name="pulse_marathon">Режим марафона</string>
+    
+    <!-- Settings Tips Details -->
+    <string name="settings_tip_theme_desc_1">Обновите свой музыкальный плеер с помощью яркого черного AMOLED-экрана и красивых пастельных тонов.</string>
+    <string name="settings_tip_theme_desc_2">Сделайте Rhythm по-настоящему своим, согласовав акцент приложения с вашей системой.</string>
+    <string name="settings_tip_media_scan_desc_1">Избегайте нежелательных аудиоклипов. Явно определите, какие папки мы должны сканировать на наличие музыки.</string>
+    <string name="settings_tip_media_scan_desc_2">Храните голосовые заметки и мелодии звонков отдельно от своих плейлистов, используя папки фокуса.</string>
+    <string name="settings_tip_sleep_timer_desc_1">Засыпайте, пока играет музыка. Мы автоматически приостановим его.</string>
+    <string name="settings_tip_sleep_timer_desc_2">Установите автоматический таймер сна перед сном, чтобы воспроизведение останавливалось идеально.</string>
+    <string name="settings_tip_equalizer_desc_1">Повысьте свой опыт. Усильте басы и отрегулируйте частоты с помощью эквалайзера.</string>
+    <string name="settings_tip_equalizer_desc_2">Настраивайте звук в наушниках с помощью наших продвинутых звуковых эффектов.</string>
+    <string name="settings_tip_backup_active_desc_1">Автоматическое резервное копирование активно. Проверьте разделы резервной копии, чтобы восстановления оставались чистыми.</string>
+    <string name="settings_tip_backup_active_desc_2">Защита включена: расписание выглядит хорошо. Перед серьезными изменениями выполните резервное копирование вручную.</string>
+    <string name="settings_tip_backup_inactive_desc_1">Автоматическое резервное копирование отключено. Включите его, чтобы защитить плейлисты и статистику Rhythm Guard.</string>
+    <string name="settings_tip_backup_inactive_desc_2">Подстраховки пока нет. Включите резервное копирование, чтобы не потерять настройки.</string>
+    <string name="settings_tip_updates_active_desc_1">Обновления включены. Оставьте их включенными для исправлений и улучшения производительности.</string>
+    <string name="settings_tip_updates_active_desc_2">Вы настроены на получение обновлений. Проверьте настройки канала на предмет стабильности и свежести.</string>
+    <string name="settings_tip_updates_inactive_desc_1">Обновления отключены. Снова включите их, чтобы они оставались защищенными и актуальными.</string>
+    <string name="settings_tip_updates_inactive_desc_2">Вы привязаны к текущей сборке. Когда будете готовы, снова включите обновления.</string>
+    <string name="settings_tip_queue_active_desc_1">Проведение пальцем по экрану игрока активно. Настройте правила очереди для более плавных переходов.</string>
+    <string name="settings_tip_queue_active_desc_2">Пропуск жестов включен. Сопоставьте поведение очереди с потоком прослушивания.</string>
+    <string name="settings_tip_queue_inactive_desc_1">Функция пропуска по экрану отключена. Элементы управления очередью могут помочь обеспечить эффективность воспроизведения.</string>
+    <string name="settings_tip_queue_inactive_desc_2">Предпочитаете явный контроль? Точная настройка поведения очереди для предсказуемого воспроизведения.</string>
+    <string name="settings_tip_controls_active_desc_1">Кнопки поиска видны. Настройте элементы управления игроком, чтобы уменьшить беспорядок.</string>
+    <string name="settings_tip_controls_active_desc_2">Проигрыватель с расширенными возможностями управления включен. Настройте макет так, чтобы вы могли дотянуться до него большим пальцем.</string>
+    <string name="settings_tip_controls_inactive_desc_1">Включено минимальное управление игроком. Добавьте кнопки поиска, если вы пропустите точные прыжки.</string>
+    <string name="settings_tip_controls_inactive_desc_2">Чистый макет активен. Снова включите элементы управления поиском для более точной обработки воспроизведения.</string>
+    <string name="settings_tip_miniplayer_active_desc_1">Виден прогресс мини-плеера. Выберите стиль, соответствующий вашей теме.</string>
+    <string name="settings_tip_miniplayer_active_desc_2">В мини-плеере активен индикатор выполнения. Затем попробуйте изменить форму и углы.</string>
+    <string name="settings_tip_miniplayer_inactive_desc_1">Прогресс мини-плеера скрыт. Включите его для быстрого отслеживания.</string>
+    <string name="settings_tip_miniplayer_inactive_desc_2">Компактный режим теперь минимален. Включите прогресс для лучшей видимости.</string>
+    <string name="settings_tip_library_active_desc_1">Рейтинги включены. Используйте настройки библиотеки, чтобы улучшить обнаружение и сортировку.</string>
+    <string name="settings_tip_library_active_desc_2">Ваша библиотека поддерживает рейтинги. Настройте сканирование и группировку для более чистого просмотра.</string>
+    <string name="settings_tip_library_inactive_desc_1">Рейтинги отключены. Настройки библиотеки по-прежнему могут улучшить структуру и скорость.</string>
+    <string name="settings_tip_library_inactive_desc_2">Обнаружен упрощенный режим библиотеки. Настройте группировку для более быстрой навигации.</string>
+
+    <!-- Lyrics Source Dialog -->
+    <string name="lyrics_source_embedded_first">встраивается первым</string>
+    <string name="lyrics_source_embedded_first_desc">Попробуйте метаданные аудиофайла → Интернет-API → файлы .lrc.</string>
+    <string name="lyrics_source_api_first">API Сначала</string>
+    <string name="lyrics_source_api_first_desc">Попробуйте онлайн-сервисы → Метаданные аудио → файлы .lrc.</string>
+    <string name="lyrics_source_local_first">Сначала локальный .lrc</string>
+    <string name="lyrics_source_local_first_desc">Попробуйте файлы .lrc → Метаданные аудио → Онлайн-API.</string>
+
+    <!-- Font / Color Customization Dialogs -->
+    <string name="theme_font_source_changed_restart">Источник шрифта изменен. Перезапустите приложение, чтобы применить новый шрифт.</string>
+    <string name="color_source_album_art">Обложка альбома</string>
+    <string name="color_source_album_art_desc">Извлечение цветов из обложки воспроизводимого в данный момент альбома</string>
+    <string name="color_source_system_colors">Системные цвета</string>
+    <string name="color_source_system_colors_desc">Используйте Material Цвета с обоев</string>
+    <string name="color_source_custom_scheme">Пользовательская схема</string>
+    <string name="color_source_custom_scheme_desc">Выберите одну из предустановленных цветовых схем.</string>
+    <string name="font_source_system_font">Системный шрифт</string>
+    <string name="font_source_system_font_desc">Использовать шрифт устройства по умолчанию.</string>
+    <string name="font_source_custom_font">Пользовательский шрифт</string>
+    <string name="font_source_custom_font_desc">Импортируйте и используйте файл пользовательского шрифта.</string>
+    <string name="font_system_title">Системные настройки по умолчанию</string>
+    <string name="font_system_desc">Используйте шрифт вашего устройства по умолчанию.</string>
+    <string name="font_geom_desc">Современный чистый шрифт без засечек от Google.</string>
+    <string name="font_slate_desc">Элегантный шрифт с засечками в классическом традиционном дизайне.</string>
+    <string name="font_inter_desc">Чистый и современный шрифт без засечек, легко читаемый.</string>
+    <string name="font_jetbrains_desc">Моноширинный шрифт идеально подходит для технического контента.</string>
+    <string name="font_quicksand_desc">Закругленный шрифт, более мягкий и дружелюбный.</string>
+
+    <!-- Predefined Color Schemes -->
+    <string name="color_scheme_default_title">Rhythm По умолчанию</string>
+    <string name="color_scheme_default_desc">Material 3 базовых фиолетовых цвета с розовыми акцентами</string>
+    <string name="color_scheme_warm_title">Теплый закат</string>
+    <string name="color_scheme_warm_desc">Уютные оранжевые и красные тона для теплой атмосферы</string>
+    <string name="color_scheme_cool_title">Прохладный океан</string>
+    <string name="color_scheme_cool_desc">Освежающие синие и бирюзовые тона для успокаивающей атмосферы.</string>
+    <string name="color_scheme_forest_title">Зеленый лес</string>
+    <string name="color_scheme_forest_desc">Натуральные зеленые тона, вдохновленные природой</string>
+    <string name="color_scheme_rose_title">Розово-розовый</string>
+    <string name="color_scheme_rose_desc">Элегантные розовые и пурпурные тона</string>
+    <string name="color_scheme_monochrome_title">Монохромный</string>
+    <string name="color_scheme_monochrome_desc">Минималистичные оттенки серого для чистого и современного вида.</string>
+    <string name="color_scheme_lavender_title">Лаванда</string>
+    <string name="color_scheme_lavender_desc">Успокаивающие фиолетовые и лавандовые тона для релаксации.</string>
+    <string name="color_scheme_ocean_title">Глубокий океан</string>
+    <string name="color_scheme_ocean_desc">Глубокий синий и аквамарин для океанического спокойствия</string>
+    <string name="color_scheme_aurora_title">Северное сияние</string>
+    <string name="color_scheme_aurora_desc">Яркие зеленые и синие тона, вдохновленные северным сиянием.</string>
+    <string name="color_scheme_amber_title">Золотой Янтарь</string>
+    <string name="color_scheme_amber_desc">Насыщенные янтарные и золотые тона создают ощущение роскоши.</string>
+    <string name="color_scheme_crimson_title">Глубокий малиновый</string>
+    <string name="color_scheme_crimson_desc">Яркие бордовые и малиновые оттенки для драматизма</string>
+    <string name="color_scheme_emerald_title">Изумрудная мечта</string>
+    <string name="color_scheme_emerald_desc">Свежая изумрудная зелень с естественными лесными оттенками</string>
+    <string name="color_scheme_mint_title">Мятный</string>
+    <string name="color_scheme_mint_desc">Свежие и чистые голубые и мятно-зеленые тона</string>
+
+    <!-- Color Preview Chips -->
+    <string name="theme_color_primary">Основной</string>
+    <string name="theme_color_secondary">Вторичный</string>
+    <string name="theme_color_tertiary">Третичный</string>
+
+    <!-- Lyrics Settings Screen -->
+    <string name="lyrics_settings_title">Тексты песен</string>
+    <string name="lyrics_settings_general">Общие настройки</string>
+    <string name="lyrics_settings_open_fullscreen_desc">Откройте полноэкранный экран с текстами песен, коснувшись экрана с текстами песен.</string>
+    <string name="lyrics_settings_autohide_controls">Автоматическое скрытие элементов управления текстами песен</string>
+    <string name="lyrics_settings_autohide_controls_desc">Автоматически скрывать элементы управления на полноэкранном экране с текстами песен после нескольких секунд бездействия.</string>
+    <string name="lyrics_settings_embedded_first">встраивается первым</string>
+    <string name="lyrics_settings_embedded_first_desc">Предпочитайте тексты песен, встроенные в аудиофайлы, используйте альтернативные онлайн-API.</string>
+    <string name="lyrics_settings_online_first">Сначала онлайн</string>
+    <string name="lyrics_settings_online_first_desc">Предпочитает онлайн-API (Rhythm пословно, LRCLib), откат к встроенным</string>
+    <string name="lyrics_settings_local_first">Сначала локальный</string>
+    <string name="lyrics_settings_local_first_desc">Предпочитайте локальные файлы .lrc, затем встроенные тексты песен, а затем онлайн-API.</string>
+    <string name="lyrics_settings_apple_music_first">Apple Music прежде всего</string>
+    <string name="lyrics_settings_lrclib_first">LRCLib Сначала</string>
+    <string name="lyrics_settings_fallback_apis_desc">Попытка использовать резервные API, если предпочтительный API не возвращает тексты песен.</string>
+    <string name="lyrics_settings_display_styling">Отображение и оформление</string>
+    <string name="lyrics_settings_size_percentage">Размер: %1$d%%</string>
+    <string name="alignment_left">слева</string>
+    <string name="alignment_center">Центр</string>
+    <string name="alignment_right">Верно</string>
+    <string name="animation_slide">Слайд</string>
+    <string name="animation_fade">Затухание</string>
+    <string name="animation_scale">Масштаб</string>
+    <string name="animation_up">Вверх</string>
+    <string name="lyrics_settings_switch_animation_desc">Искусство ↔ Анимация переключения текста</string>
+    <string name="lyrics_settings_not_supported_expressive">Не поддерживается темой Expressive.</string>
+    <string name="lyrics_settings_formatting_behaviors">Форматирование и поведение</string>
+    <string name="lyrics_settings_bold_text">Жирный текст</string>
+    <string name="lyrics_settings_bold_text_desc">Сделать текст активной песни жирным</string>
+    <string name="lyrics_settings_trim_lyrics">Текст песни</string>
+    <string name="lyrics_settings_trim_lyrics_desc">Обрезать начальные и конечные пробелы в строках текста</string>
+    <string name="lyrics_settings_disable_animations">Отключить анимацию</string>
+    <string name="lyrics_settings_disable_animations_desc">Отключить переходы и анимацию в представлении текста песни.</string>
+    <string name="lyrics_settings_word_by_word_translation">Пословный перевод</string>
+    <string name="lyrics_settings_word_by_word_translation_desc">Попробуйте автоматически синхронизировать переводы слогов или слов.</string>
+    <string name="lyrics_settings_info_bullets">Дополнительные сведения о синхронизации:\n• Онлайн-API обеспечивают высококачественную синхронизацию текстов песен.\n• Rhythm обеспечивает пословную синхронизацию.\n• LRCLib обеспечивает бесплатную построчную синхронизацию.</string>
+
+    <!-- AutoEQ Preset Picker additions -->
+    <string name="autoeqpresetpickerbottomsheet_search_presets">Поиск пресетов...</string>
+    <string name="autoeqpresetpickerbottomsheet_disable">Нет / отключить автоэквалайзер</string>
+    <string name="autoeqpresetpickerbottomsheet_disable_desc">Очистить профиль наушников, использовать стандартные настройки эквалайзера</string>
+    <string name="autoeqpresetpickerbottomsheet_unknown_brand">Неизвестный бренд</string>
+
+    <!-- Device Configuration additions -->
+    <string name="device_configuration_devices_configured">%1$d настроены устройства</string>
+    <string name="device_configuration_device_recognized">Устройство распознано</string>
+    <string name="device_configuration_new_device_detected">Обнаружено новое устройство</string>
+    <string name="device_configuration_configured_with">%1$s настроен с помощью %2$s</string>
+    <string name="device_configuration_configured_no_profile">%1$s настроен</string>
+    <string name="device_configuration_connected_not_configured">%1$s подключен, но не настроен</string>
+    <string name="device_configuration_applied_profile">Применен профиль %1$s</string>
+    <string name="device_configuration_imported_profile">Импортированный профиль</string>
+    <string name="device_configuration_parse_error">Не удалось проанализировать настройки эквалайзера. Проверьте формат.</string>
+    <string name="device_configuration_custom_eq">Пользовательский эквалайзер</string>
+    <string name="device_configuration_custom_preset">Пользовательская предустановка</string>
+    <string name="device_configuration_custom">Пользовательский</string>
+    <string name="device_configuration_active_profile_label">Активный профиль: %1$s</string>
+    <string name="device_configuration_share_subject">Rhythm Профиль эквалайзера: %1$s</string>
+    <string name="device_configuration_share_title">Поделиться профилем эквалайзера</string>
+    <string name="device_configuration_edit_device">Изменить устройство</string>
+    <string name="device_configuration_add_device">Добавить устройство</string>
+    <string name="device_configuration_save">Сохранить</string>
+    <string name="device_configuration_add">Добавить</string>
+    <string name="device_configuration_for_device">Для %1$s
+Доступны профили</string>
+    <string name="device_configuration_profiles_available">%1$d</string>
+    <string name="device_configuration_disable_compensation">Отключить компенсацию наушников</string>
+
+    <!-- Common UI element strings -->
+    <string name="common_none">Нет</string>
+    <string name="common_cancel">Отмена</string>
+    <string name="common_back">Назад</string>
+    <string name="common_remove">Удалить</string>
+    <string name="common_add">Добавить</string>
+    <string name="common_active">Активен</string>
+    <string name="common_disabled">отключено</string>
+    <string name="common_unavailable">недоступен</string>
+    <string name="common_success">Успех</string>
+    <string name="common_error">Ошибка</string>
+    <string name="common_unknown">Неизвестно</string>
+
+    <!-- Blacklist UI additions -->
+    <string name="blacklist_remove_song_title">Удалить из черного списка?</string>
+    <string name="blacklist_add_song_title">Добавить в черный список?</string>
+    <string name="blacklist_remove_song_desc">Эта песня больше не будет скрыта из вашей библиотеки.</string>
+    <string name="blacklist_add_song_desc">Эта песня будет скрыта из вашей медиатеки и исключена из воспроизведения.</string>
+    <string name="blacklist_undo_warning">Это действие можно отменить в любой момент.</string>
+    <string name="blacklist_song_removed_msg">Песня удалена из черного списка</string>
+    <string name="blacklist_song_added_msg">Песня добавлена в черный список</string>
+    <string name="blacklist_button_remove">Удалить</string>
+    <string name="blacklist_button_blacklist">Черный список</string>
+    <string name="blacklist_remove_folder_title">Удалить папку из черного списка?</string>
+    <string name="blacklist_add_folder_title">Папка черного списка?</string>
+    <string name="blacklist_remove_folder_desc">Все песни в этой папке снова станут видимыми.</string>
+    <string name="blacklist_add_folder_desc">Все песни в этой папке будут скрыты и исключены из воспроизведения.</string>
+    <string name="blacklist_folder_removed_msg">Папка удалена из черного списка</string>
+    <string name="blacklist_folder_added_msg">Папка добавлена в черный список</string>
+    <string name="blacklist_disc_label">Диск %1$d</string>
+    <string name="blacklist_track_label">Трек %1$d</string>
+
+    <!-- Library & Playlist Dialog additions -->
+    <string name="dialog_add_song_to_playlist">Добавить «%1$s» в этот плейлист</string>
+    <string name="dialog_songs_in_queue">В текущей очереди у вас %1$d песен.</string>
+    <string name="dialog_play_song_how">Как бы вы хотели сыграть в «%1$s»?</string>
+    <string name="dialog_clear_and_play">Очистить и играть</string>
+    <string name="dialog_clear_and_play_desc">Заменить очередь и воспроизвести эту песню</string>
+    <string name="dialog_add_to_queue">Добавить в очередь</string>
+    <string name="dialog_add_to_queue_desc">Сохранить текущую очередь и добавить песню</string>
+    <string name="dialog_restart_warning_message">Чтобы все импортированные плейлисты работали корректно, рекомендуем перезапустить приложение. Вы можете продолжать использовать приложение в обычном режиме, но некоторые функции могут работать не так, как ожидалось, до перезапуска.</string>
+    <string name="dialog_export_playlist_to">Экспортировать «%1$s» в:</string>
+    <string name="dialog_export_playlists_to">Экспортируйте плейлисты %1$d в:</string>
+    <string name="dialog_operation_importing">Импорт</string>
+    <string name="dialog_operation_exporting">Экспорт</string>
+
+    <!-- Mode dialog strings -->
+    <string name="dialog_switch_to_go">Переключиться на Rhythm Идти?</string>
+    <string name="dialog_switch_to_local">Переключиться на локальный режим?</string>
+    <string name="dialog_switch_to_go_desc">Этот предмет принадлежит Rhythm Go. Переключиться в режим потоковой передачи сейчас, чтобы транслировать и воспроизводить ее?</string>
+    <string name="dialog_switch_to_local_desc">Этот объект принадлежит вашей местной библиотеке. Переключиться в локальный режим сейчас, чтобы воспроизводить офлайн-треки?</string>
+
+    <!-- Section order content descriptions -->
+    <string name="home_section_hide_carousel">Скрыть карусель</string>
+    <string name="home_section_show_carousel">Показать карусель</string>
+    <string name="home_section_hide_section">Скрыть раздел</string>
+    <string name="home_section_show_section">Показать раздел</string>
+    <string name="library_tab_show">Показать вкладку</string>
+    <string name="library_tab_hide">Скрыть вкладку</string>
+
+    <!-- Add To Playlist additions -->
+    <string name="add_to_playlist_selected_count">%1$d выбрано</string>
+    <string name="add_to_playlist_title">Добавить в %1$s</string>
+    <string name="add_to_playlist_no_songs">Нет доступных песен.</string>
+    <string name="add_to_playlist_all_songs_present">Все песни уже есть в этом плейлисте</string>
+
+    <!-- Artist details -->
+    <string name="artist_detail_albums_count">%1$d альбомы</string>
+    <string name="artist_detail_songs_count">%1$d песни</string>
+
+    <!-- Equalizer presets & UI -->
+    <string name="eq_preset_flat">Квартира</string>
+    <string name="eq_preset_rock">Рок</string>
+    <string name="eq_preset_pop">Поп</string>
+    <string name="eq_preset_jazz">Джаз</string>
+    <string name="eq_preset_classical">Классика</string>
+    <string name="eq_preset_electronic">Электронный</string>
+    <string name="eq_preset_hiphop">Хип-хоп</string>
+    <string name="eq_preset_vocal">Вокал</string>
+    <string name="eq_preset_bass_boost">Усиление басов</string>
+    <string name="eq_preset_treble_boost">Повышение высоких частот</string>
+    <string name="eq_preset_v_shape">V-образная форма</string>
+    <string name="eq_preset_harman">Харман</string>
+    <string name="eq_preset_custom">Пользовательский</string>
+    <string name="eq_autoeq_profiles">Профили AutoEQ</string>
+    <string name="eq_manage_device">Управление устройством</string>
+    <string name="eq_system_equalizer">Системный эквалайзер</string>
+    <string name="eq_enhance_lows">Улучшить низкие частоты</string>
+    <string name="eq_widen_sound">Расширение звука</string>
+    <string name="eq_mono_only">Только моно</string>
+
+    <!-- Library updates, sorting & categories -->
+    <string name="library_updated_songs_success">Обновлены песни %1$d</string>
+    <string name="library_updated_songs_failed">Обновлены песни %1$d, %2$d не удалось.</string>
+    <string name="library_switch_to_grid">Переключиться на вид сетки</string>
+    <string name="library_switch_to_list">Переключиться на просмотр списка</string>
+    <string name="library_sort_title">Название</string>
+    <string name="library_sort_artist">Художник</string>
+    <string name="library_sort_date_added">Дата добавления</string>
+    <string name="library_sort_date_modified">Дата изменения</string>
+    <string name="library_sort_ascending">По возрастанию</string>
+    <string name="library_sort_descending">По убыванию</string>
+    <string name="library_sort_name_asc">Имя (А-Я)</string>
+    <string name="library_sort_name_desc">Имя (Я-А)</string>
+    <string name="library_sort_songs_desc">Песни (от высокого до низкого)</string>
+    <string name="library_sort_albums_desc">Альбомы (от высокого к низкому)</string>
+    <string name="library_scan_songs">Сканирование песен...</string>
+    <string name="library_scan_albums">Обработка альбомов...</string>
+    <string name="library_scan_artists">Обработка исполнителей...</string>
+    <string name="library_scan_genres">Определение жанров...</string>
+    <string name="library_scan_media">Сканирование носителя...</string>
+    <string name="library_export_failed">Экспорт не выполнен.</string>
+    <string name="library_import_failed">Не удалось импортировать</string>
+    <string name="library_category_all">Все</string>
+    <string name="library_category_favorites">❤️ Избранное</string>
+    <string name="library_category_absolute_favorites">⭐⭐⭐⭐⭐ Абсолютные фавориты</string>
+    <string name="library_category_loved">⭐⭐⭐⭐ Очень понравилось</string>
+    <string name="library_category_great">⭐⭐⭐ Отлично</string>
+    <string name="library_category_good">⭐⭐ Хорошо</string>
+    <string name="library_category_liked">⭐ Понравилось</string>
+    <string name="library_category_short">Короткое (&lt; 3 минут)</string>
+    <string name="library_category_medium">Средний (3–5 минут)</string>
+    <string name="library_category_long">Длинный (&gt; 5 минут)</string>
+    <string name="library_category_hi_res_lossless">Высокое разрешение без потерь</string>
+    <string name="library_category_lossless">без потерь</string>
+    <string name="library_category_dolby">Долби</string>
+    <string name="library_category_mono">Моно</string>
+    <string name="library_category_stereo">Стерео</string>
+    <string name="library_category_high_quality">Высокое качество</string>
+    <string name="library_category_standard">Стандарт</string>
+    <string name="library_removed_from_favorites">Удален %1$d из избранного.</string>
+    <string name="library_added_to_favorites">Добавлен %1$d в избранное</string>
+    <string name="library_unlike_all">В отличие от всех</string>
+    <string name="library_like_all">Нравится всем</string>
+    <string name="library_tracks_count_format">%1$d из %2$d дорожек</string>
+    <string name="library_no_playlists_yet">Плейлистов пока нет\nСоздайте свой первый плейлист с помощью кнопки +</string>
+    <string name="library_no_albums_yet">Альбомов пока нет</string>
+    <string name="library_no_artists_yet">Пока нет исполнителей</string>
+    <string name="library_action_play_next">Воспроизвести дальше</string>
+    <string name="library_action_add_to_queue">Добавить в очередь</string>
+    <string name="library_action_add_to_blacklist">Добавить в черный список</string>
+    <string name="library_action_song_info">Информация о песне</string>
+    <string name="library_action_add_to_playlist">Добавить в плейлист</string>
+    <string name="library_action_rate_song">Оценить песню</string>
+    <string name="library_menu_new_playlist">Новый плейлист</string>
+    <string name="library_menu_import_playlist">Импортировать плейлист</string>
+    <string name="library_menu_export_playlists">Экспорт плейлистов</string>
+    <string name="library_menu_close_playlist">Закрыть меню плейлиста</string>
+    <string name="library_menu_open_playlist">Открыть меню плейлиста</string>
+    <string name="library_menu_close">Закрыть меню</string>
+    <string name="library_selected_count_format">%1$d Выбрано</string>
+    <string name="library_from_tracks_format">из треков %1$d</string>
+    <string name="library_playlist_count_singular">%1$d плейлист</string>
+    <string name="library_playlist_count_plural">%1$d плейлисты</string>
+    <string name="library_album_count_singular">%1$d альбом</string>
+    <string name="library_album_count_plural">%1$d альбомы</string>
+    <string name="library_artist_count_singular">%1$d исполнитель</string>
+    <string name="library_artist_count_plural">%1$d исполнители</string>
+    <string name="library_duration_hours_minutes">%1$dh %2$dm</string>
+    <string name="library_duration_minutes">%1$dm</string>
+
+    <!-- Onboarding, Backup & Settings additions -->
+    <string name="onboarding_blacklist_label">Черный список</string>
+    <string name="onboarding_whitelist_label">Белый список</string>
+    <string name="onboarding_full_player_label">Полный плеер</string>
+    <string name="onboarding_mini_player_label">Мини-плеер</string>
+    <string name="onboarding_blocked_folders">%1$d заблокированные папки</string>
+    <string name="onboarding_whitelisted_folders">%1$d папки в белом списке</string>
+    <string name="onboarding_sample_button">Кнопка образца</string>
+    <string name="onboarding_primary_label">Основной</string>
+    <string name="onboarding_secondary_label">Вторичный</string>
+    <string name="onboarding_tertiary_label">Третичный</string>
+    <string name="onboarding_rhythm_material">Rhythm (Material)</string>
+    
+    <string name="backup_restored_success">Резервная копия успешно восстановлена. Перезапустите приложение, чтобы применить все изменения.</string>
+    <string name="backup_copied_to_clipboard">Резервная копия создана и скопирована в буфер обмена.</string>
+    <string name="backup_failed_to_create">Не удалось создать резервную копию: %1$s.</string>
+    <string name="backup_failed_to_restore_file">Не удалось восстановить из файла: %1$s.</string>
+    <string name="backup_no_backup_clipboard">В буфере обмена не найдена резервная копия.</string>
+    <string name="backup_failed_to_restore_clipboard">Не удалось восстановить из буфера обмена: %1$s.</string>
+    
+    <string name="updater_ready_to_install">Версия %1$s готова к установке</string>
+    <string name="updater_download_progress">%1$d%% • %2$s / %3$s
+Значок</string>
+    <string name="updater_version_info">Версия %1$s • %2$s</string>
+    <string name="updater_error_occurred">Произошла ошибка</string>
+    <string name="updater_channel_stable">стабильно</string>
+    <string name="updater_channel_beta">бета</string>
+
+    <!-- Expressive shape preset & group names -->
+    <string name="shape_preset_default">По умолчанию</string>
+    <string name="shape_preset_default_desc">Нежные выразительные формы для всех возрастов</string>
+    <string name="shape_preset_friendly">Дружелюбный</string>
+    <string name="shape_preset_friendly_desc">Теплые и доступные формы</string>
+    <string name="shape_preset_cheerful">Веселый</string>
+    <string name="shape_preset_cheerful_desc">Яркие и выразительные формы</string>
+    <string name="shape_preset_modern">Современный</string>
+    <string name="shape_preset_modern_desc">Современный выразительный дизайн</string>
+    <string name="shape_preset_playful">Игривый</string>
+    <string name="shape_preset_playful_desc">Веселые и выразительные формы</string>
+    <string name="shape_preset_organic">Органический</string>
+    <string name="shape_preset_organic_desc">Формы, вдохновленные природой</string>
+    <string name="shape_preset_geometric">Геометрический</string>
+    <string name="shape_preset_geometric_desc">Чистые и современные формы</string>
+    <string name="shape_preset_retro">Ретро</string>
+    <string name="shape_preset_retro_desc">Пиксельные ностальгические формы</string>
+    <string name="shape_preset_custom">Пользовательский</string>
+    <string name="shape_preset_custom_desc">Ваш персональный выбор</string>
+    <string name="shape_option_square">Квадрат</string>
+    <string name="shape_option_square_desc">Закругленный квадрат</string>
+    <string name="shape_option_oval">Овал</string>
+    <string name="shape_option_oval_desc">Вытянутый овал</string>
+    <string name="shape_option_pill">Таблетка</string>
+    <string name="shape_option_pill_desc">Форма капсулы</string>
+    <string name="shape_option_diamond">Бриллиант</string>
+    <string name="shape_option_diamond_desc">Ромбовидная форма</string>
+    <string name="shape_option_triangle">Треугольник</string>
+    <string name="shape_option_triangle_desc">Треугольник с закругленными углами</string>
+    <string name="shape_option_pentagon">Пентагон</string>
+    <string name="shape_option_pentagon_desc">Пятисторонний многоугольник</string>
+    <string name="shape_option_flower">Цветок</string>
+    <string name="shape_option_flower_desc">Цветок с лепестками</string>
+    <string name="shape_option_clover4">4-листный клевер</string>
+    <string name="shape_option_clover4_desc">Четырехлистный клевер</string>
+    <string name="shape_option_clover8">8-листный клевер</string>
+    <string name="shape_option_clover8_desc">Клевер восьмилистный</string>
+    <string name="shape_option_heart">Сердце</string>
+    <string name="shape_option_heart_desc">Форма сердца</string>
+    <string name="shape_option_bun">Булочка</string>
+    <string name="shape_option_bun_desc">Форма булочки/хлеба</string>
+    <string name="shape_option_boom">Бум</string>
+    <string name="shape_option_boom_desc">Форма взрыва</string>
+    <string name="shape_option_soft_boom">Мягкая стрела</string>
+    <string name="shape_option_soft_boom_desc">Более мягкий взрыв</string>
+    <string name="shape_option_burst">Взрыв</string>
+    <string name="shape_option_burst_desc">Форма звездообразования</string>
+    <string name="shape_option_soft_burst">Мягкая всплеск</string>
+    <string name="shape_option_soft_burst_desc">Более мягкий звездообразование</string>
+    <string name="shape_option_sunny">Санни</string>
+    <string name="shape_option_sunny_desc">Солнце с лучами</string>
+    <string name="shape_option_very_sunny">Очень солнечно</string>
+    <string name="shape_option_very_sunny_desc">Солнце с большим количеством лучей</string>
+    <string name="shape_option_cookie4">Файл cookie 4</string>
+    <string name="shape_option_cookie4_desc">4-сторонний файл cookie</string>
+    <string name="shape_option_cookie6">Файл cookie 6</string>
+    <string name="shape_option_cookie6_desc">6-стороннее печенье</string>
+    <string name="shape_option_cookie7">Файл cookie 7</string>
+    <string name="shape_option_cookie7_desc">7-стороннее печенье</string>
+    <string name="shape_option_cookie9">Файл cookie 9</string>
+    <string name="shape_option_cookie9_desc">9-стороннее печенье</string>
+    <string name="shape_option_cookie12">Файл cookie 12</string>
+    <string name="shape_option_cookie12_desc">12-стороннее печенье</string>
+    <string name="shape_option_ghostish">Призрачный</string>
+    <string name="shape_option_ghostish_desc">Призрачная форма</string>
+    <string name="shape_option_puffy">Пухлый</string>
+    <string name="shape_option_puffy_desc">Облакообразная форма</string>
+    <string name="shape_option_puffy_diamond">Пухлый бриллиант</string>
+    <string name="shape_option_puffy_diamond_desc">Пухлый ромб</string>
+    <string name="shape_option_fan">Вентилятор</string>
+    <string name="shape_option_fan_desc">Форма веера</string>
+    <string name="shape_option_circle">Круг</string>
+    <string name="shape_option_circle_desc">Идеальный круг</string>
+    <string name="shape_option_clover_4_leaf">4-листный клевер</string>
+    <string name="shape_option_clover_4_leaf_desc">Четырехлистный клевер</string>
+    <string name="shape_option_clover_8_leaf">8-листный клевер</string>
+    <string name="shape_option_clover_8_leaf_desc">Клевер восьмилистный</string>
+    <string name="shape_option_arrow">Стрелка</string>
+    <string name="shape_option_arrow_desc">Стрелка-указатель</string>
+    <string name="shape_option_arch">Арка</string>
+    <string name="shape_option_arch_desc">Форма арки</string>
+    <string name="shape_option_clam_shell">Раковина моллюска</string>
+    <string name="shape_option_clam_shell_desc">Форма корпуса</string>
+    <string name="shape_option_gem">драгоценный камень</string>
+    <string name="shape_option_gem_desc">Форма драгоценного камня</string>
+    <string name="shape_option_semi_circle">Полукруг</string>
+    <string name="shape_option_semi_circle_desc">Полукруг</string>
+    <string name="shape_option_slanted">Наклонный</string>
+    <string name="shape_option_slanted_desc">Наклонный квадрат</string>
+    <string name="shape_option_pixel_circle">Пиксельный круг</string>
+    <string name="shape_option_pixel_circle_desc">Пиксельный круг</string>
+    <string name="shape_option_pixel_triangle">Пиксельный треугольник</string>
+    <string name="shape_option_pixel_triangle_desc">Пиксельный треугольник</string>
+    <string name="shape_group_basic">Базовый</string>
+    <string name="shape_group_organic">Органический</string>
+    <string name="shape_group_playful">Игривый</string>
+    <string name="shape_group_cookie">Файл cookie</string>
+    <string name="shape_group_whimsical">Причудливый</string>
+    <string name="shape_group_special">Специальный</string>
+    <string name="shape_group_pixel">Пиксель</string>
+
+    <!-- Customization Choices -->
+    <string name="option_always">Всегда</string>
+    <string name="option_expanded">Расширенный</string>
+    <string name="option_collapsed">Свернут</string>
+    <string name="option_linear">Линейный</string>
+    <string name="option_circular">Циркуляр</string>
+    <string name="option_auto">Авто</string>
+    <string name="option_manual">Руководство</string>
+    <string name="option_both">Оба
+Значок</string>
+    <string name="option_icon">Кнопки</string>
+    <string name="option_name">Имя</string>
+
+    <!-- Theme settings additions -->
+    <string name="theme_color_red">Красный</string>
+    <string name="theme_color_green">Зеленый</string>
+    <string name="theme_color_blue">Синий</string>
+    <string name="theme_font_restart_warning">Шрифт изменен. Перезапустите приложение, чтобы применить новый шрифт.</string>
+    <string name="theme_source_album_art">Обложка альбома</string>
+    <string name="theme_source_album_art_desc">Извлечение цветов из обложки воспроизводимого в данный момент альбома</string>
+    <string name="theme_source_system_colors">Системные цвета</string>
+    <string name="theme_source_system_colors_desc">Используйте Material Цвета с обоев</string>
+    <string name="theme_source_custom_scheme">Пользовательская схема</string>
+    <string name="theme_source_custom_scheme_desc">Выберите одну из предустановленных цветовых схем.</string>
+    <string name="theme_font_system">Системный шрифт</string>
+    <string name="theme_font_system_desc">Использовать шрифт устройства по умолчанию.</string>
+    <string name="theme_font_custom">Пользовательский шрифт</string>
+    <string name="theme_font_custom_desc">Импортируйте и используйте файл пользовательского шрифта.</string>
+
+    <!-- Color Scheme names -->
+    <string name="scheme_default">По умолчанию</string>
+    <string name="scheme_warm">Теплый</string>
+    <string name="scheme_cool">Круто</string>
+    <string name="scheme_forest">Лес</string>
+    <string name="scheme_rose">Роза</string>
+    <string name="scheme_monochrome">Монохромный</string>
+    <string name="scheme_lavender">Лаванда</string>
+    <string name="scheme_ocean">Океан</string>
+    <string name="scheme_aurora">Аврора</string>
+    <string name="scheme_amber">Янтарный</string>
+    <string name="scheme_crimson">Багровый</string>
+    <string name="scheme_emerald">Изумруд</string>
+    <string name="scheme_mint">Мятный</string>
+
+    <!-- Shape Utils category and descriptions -->
+    <string name="shape_utils_fab">Плавающая кнопка действия</string>
+    <string name="shape_utils_fab_desc">Форма для кнопок FAB</string>
+    <string name="shape_utils_cards">Карты</string>
+    <string name="shape_utils_cards_desc">Форма для карточек и контейнеров
+Кнопки</string>
+    <string name="shape_utils_buttons">Buttons</string>
+    <string name="shape_utils_buttons_desc">Форма для кнопок</string>
+    <string name="shape_utils_chips">Фишки</string>
+    <string name="shape_utils_chips_desc">Форма для фишек и меток</string>
+    <string name="shape_utils_player_controls">Элементы управления проигрывателем</string>
+    <string name="shape_utils_player_controls_desc">Форма кнопок управления плеером</string>
+    <string name="shape_utils_mini_player">Мини-плеер</string>
+    <string name="shape_utils_mini_player_desc">Форма для оформления мини-плеера</string>
+
+    <!-- Metadata properties and labels -->
+    <string name="metadata_duration">Продолжительность</string>
+    <string name="metadata_disc">Диск</string>
+    <string name="metadata_composer">Композитор</string>
+    <string name="metadata_album_artist">Исполнитель альбома</string>
+    <string name="metadata_play_count">Счетчик воспроизведений</string>
+    <string name="metadata_total_played">Всего сыграно</string>
+    <string name="metadata_rating">Рейтинг</string>
+    <string name="metadata_quality">Качество</string>
+    <string name="metadata_audio_tech">Аудиотехника</string>
+    <string name="metadata_bit_depth">Битовая глубина</string>
+    <string name="metadata_bitrate">Битрейт</string>
+    <string name="metadata_sample_rate">Частота дискретизации</string>
+    <string name="metadata_channels">Каналы</string>
+    <string name="metadata_format">Формат</string>
+    <string name="metadata_location">Местоположение</string>
+    <string name="metadata_lyrics">Тексты песен</string>
+    <string name="metadata_mime_type">MIME-тип</string>
+    <string name="metadata_date_added">Дата добавления</string>
+    <string name="metadata_modified">Изменено</string>
+    <string name="metadata_lyrics_available">Доступен</string>
+    <string name="metadata_dts">ДТС</string>
+    <string name="metadata_hi_res">Высокое разрешение</string>
+    <string name="metadata_dolby">Долби</string>
+    <string name="metadata_lossless">без потерь</string>
+
+    <!-- Discover settings specific -->
+    <string name="settings_discover_album_name">Название альбома</string>
+    <string name="settings_discover_album_name_desc">Показывать название альбома на карточке</string>
+    <string name="settings_discover_artist_name">Имя исполнителя</string>
+    <string name="settings_discover_artist_name_desc">Показывать имя исполнителя на карточке</string>
+    <string name="settings_discover_release_year">Год выпуска</string>
+    <string name="settings_discover_release_year_desc">Показать год выпуска альбома</string>
+    <string name="settings_discover_play_button">Кнопка воспроизведения</string>
+    <string name="settings_discover_play_button_desc">Показать кнопку быстрого воспроизведения</string>
+    <string name="settings_discover_gradient_overlay">Наложение градиента</string>
+    <string name="settings_discover_gradient_overlay_desc">Показывать градиент позади текста</string>
+
+    <!-- Carousel Style selector strings -->
+    <string name="carousel_style_default">По умолчанию</string>
+    <string name="carousel_style_default_desc">2 альбома со стороны просмотра</string>
+    <string name="carousel_style_hero">Герой</string>
+    <string name="carousel_style_hero_desc">1 альбом со стороны просмотра</string>
+
+    <!-- Theme names -->
+    <string name="theme_rhythm">Rhythm</string>
+    <string name="theme_expressive">Выразительный</string>
+    <string name="settings_managed_by_expressive_shapes">Управляется Expressive Shapes</string>
+
+    <!-- Shape targets -->
+    <string name="shape_target_album_art">Обложка альбома</string>
+    <string name="shape_target_album_art_desc">Форма для обложки альбома</string>
+    <string name="shape_target_player_art">Изображение игрока</string>
+    <string name="shape_target_player_art_desc">Форма для изображения экрана проигрывателя</string>
+    <string name="shape_target_song_art">Обложка песни</string>
+    <string name="shape_target_song_art_desc">Форма для обложки песни в списках</string>
+    <string name="shape_target_playlist_art">Обложка плейлиста</string>
+    <string name="shape_target_playlist_art_desc">Форма обложек плейлистов</string>
+    <string name="shape_target_artist_art">Работа художника</string>
+    <string name="shape_target_artist_art_desc">Форма для изображений исполнителей</string>
+    <string name="settings_shape_for">Форма для %1$s</string>
 </resources>
+

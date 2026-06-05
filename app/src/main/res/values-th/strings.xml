@@ -3729,4 +3729,588 @@
     <string name="widget_theme_solid_purple_desc">ฉากหลังสีม่วงเข้มอันเป็นเอกลักษณ์พร้อมโทนสีและไฮไลท์อันเป็นเอกลักษณ์</string>
     <string name="widget_theme_glance_suffix">%1$s (Glance วิดเจ็ตเท่านั้น)</string>
     <string name="unit_dp">%1$ddp</string>
+
+    <!-- Settings Suggestions and Tips -->
+    <string name="settings_suggestions">คำแนะนำการตั้งค่า</string>
+    <string name="settings_suggestions_desc">แสดงคำแนะนำตามบริบทที่ด้านบน</string>
+    <string name="settings_performance_desc_optimized">เพิ่มประสิทธิภาพระบบสัมผัส การถอดรหัส ปะรำ และการดึงอาร์ตเวิร์กเพื่อลดความล่าช้า</string>
+    <string name="moment_morning">เช้านี้</string>
+    <string name="moment_afternoon">บ่ายนี้</string>
+    <string name="moment_evening">เย็นนี้</string>
+    <string name="moment_night">คืนนี้</string>
+    <string name="pulse_fresh">พลังงานเซสชันที่สดใหม่</string>
+    <string name="pulse_steady">ร่องคงที่</string>
+    <string name="pulse_heavy">ฟังหนักมาก</string>
+    <string name="pulse_marathon">โหมดมาราธอน</string>
+    
+    <!-- Settings Tips Details -->
+    <string name="settings_tip_theme_desc_1">รีเฟรชเครื่องเล่นเพลงของคุณด้วยสีดำ AMOLED ที่มีชีวิตชีวาและสีพาสเทลที่สวยงาม</string>
+    <string name="settings_tip_theme_desc_2">ทำให้ Rhythm เป็นของคุณอย่างแท้จริงโดยการจับคู่สำเนียงของแอปกับระบบของคุณ</string>
+    <string name="settings_tip_media_scan_desc_1">หลีกเลี่ยงคลิปเสียงที่ไม่ต้องการ กำหนดอย่างชัดเจนว่าโฟลเดอร์ใดที่เราควรสแกนหาเพลง</string>
+    <string name="settings_tip_media_scan_desc_2">เก็บบันทึกเสียงและเสียงเรียกเข้าให้ห่างจากเพลย์ลิสต์ของคุณโดยใช้โฟลเดอร์โฟกัส</string>
+    <string name="settings_tip_sleep_timer_desc_1">หลับไปในขณะที่เพลงของคุณกำลังเล่นอยู่ เราจะหยุดชั่วคราวโดยอัตโนมัติ</string>
+    <string name="settings_tip_sleep_timer_desc_2">ตั้งเวลาปิดอัตโนมัติก่อนนอนเพื่อให้การเล่นหยุดอย่างสมบูรณ์แบบ</string>
+    <string name="settings_tip_equalizer_desc_1">ยกระดับประสบการณ์ของคุณ เพิ่มเสียงเบสและปรับความถี่โดยใช้อีควอไลเซอร์</string>
+    <string name="settings_tip_equalizer_desc_2">ปรับแต่งเสียงให้กับหูฟังของคุณอย่างปลอดภัยด้วยเอฟเฟกต์เสียงขั้นสูงของเรา</string>
+    <string name="settings_tip_backup_active_desc_1">การสำรองข้อมูลอัตโนมัติทำงานอยู่ ตรวจสอบส่วนการสำรองข้อมูลของคุณเพื่อให้การคืนค่าสะอาดอยู่เสมอ</string>
+    <string name="settings_tip_backup_active_desc_2">เปิดใช้งานการป้องกันแล้ว: กำหนดการดูดี สำรองข้อมูลด้วยตนเองก่อนการแก้ไขครั้งใหญ่</string>
+    <string name="settings_tip_backup_inactive_desc_1">การสำรองข้อมูลอัตโนมัติปิดอยู่ เปิดใช้งานเพื่อปกป้องเพลย์ลิสต์และสถิติ Rhythm Guard</string>
+    <string name="settings_tip_backup_inactive_desc_2">ยังไม่มีตาข่ายนิรภัย เปิดการสำรองข้อมูลเพื่อหลีกเลี่ยงการสูญเสียการตั้งค่าของคุณ</string>
+    <string name="settings_tip_updates_active_desc_1">เปิดใช้งานการอัปเดตแล้ว เก็บไว้เพื่อการแก้ไขและปรับปรุงประสิทธิภาพ</string>
+    <string name="settings_tip_updates_active_desc_2">คุณพร้อมที่จะรับการอัปเดตแล้ว ตรวจสอบการตั้งค่าช่องเพื่อความเสถียรและความสด</string>
+    <string name="settings_tip_updates_inactive_desc_1">การอัปเดตถูกปิดใช้งาน เปิดใช้งานอีกครั้งเพื่อรับการปกป้องและเป็นปัจจุบัน</string>
+    <string name="settings_tip_updates_inactive_desc_2">คุณถูกตรึงไว้ที่โครงสร้างปัจจุบัน เปิดการอัปเดตอีกครั้งเมื่อพร้อม</string>
+    <string name="settings_tip_queue_active_desc_1">ผู้เล่นรูดเพื่อข้ามเปิดใช้งานอยู่ ปรับแต่งกฎคิวเพื่อการเปลี่ยนผ่านที่ราบรื่นยิ่งขึ้น</string>
+    <string name="settings_tip_queue_active_desc_2">การข้ามด้วยท่าทางเปิดอยู่ จับคู่พฤติกรรมของคิวกับกระแสการฟังของคุณ</string>
+    <string name="settings_tip_queue_inactive_desc_1">ปิดการปัดเพื่อข้าม การควบคุมคิวสามารถช่วยให้การเล่นมีประสิทธิภาพ</string>
+    <string name="settings_tip_queue_inactive_desc_2">ต้องการการควบคุมที่ชัดเจนหรือไม่ ปรับแต่งพฤติกรรมของคิวเพื่อการเล่นที่คาดเดาได้</string>
+    <string name="settings_tip_controls_active_desc_1">ปุ่มค้นหามองเห็นได้ ปรับแต่งการควบคุมผู้เล่นเพื่อลดความยุ่งเหยิง</string>
+    <string name="settings_tip_controls_active_desc_2">เปิดใช้งานเครื่องเล่นที่มีการควบคุมมากมาย ปรับแต่งเค้าโครงเพื่อให้นิ้วหัวแม่มือของคุณเอื้อมถึง</string>
+    <string name="settings_tip_controls_inactive_desc_1">เปิดใช้งานการควบคุมผู้เล่นขั้นต่ำแล้ว เพิ่มปุ่มค้นหาหากคุณพลาดการกระโดดที่แม่นยำ</string>
+    <string name="settings_tip_controls_inactive_desc_2">ใช้งานเลย์เอาต์ที่สะอาดตา เปิดใช้งานการควบคุมการค้นหาอีกครั้งเพื่อการจัดการการเล่นที่ละเอียดยิ่งขึ้น</string>
+    <string name="settings_tip_miniplayer_active_desc_1">ความคืบหน้าของมินิเพลเยอร์ปรากฏให้เห็น เลือกสไตล์ที่ตรงกับธีมของคุณ</string>
+    <string name="settings_tip_miniplayer_active_desc_2">แถบความคืบหน้าเปิดใช้งานบนเครื่องเล่นขนาดเล็ก ลองปรับแต่งรูปร่างและมุมต่อไป</string>
+    <string name="settings_tip_miniplayer_inactive_desc_1">ความคืบหน้าของมินิเพลเยอร์ถูกซ่อนอยู่ เปิดใช้งานเพื่อการรับรู้การติดตามอย่างรวดเร็ว</string>
+    <string name="settings_tip_miniplayer_inactive_desc_2">โหมดกะทัดรัดเหลือน้อยที่สุดแล้ว เปิดความคืบหน้าเพื่อให้มองเห็นได้ดีขึ้น</string>
+    <string name="settings_tip_library_active_desc_1">เปิดใช้งานการให้คะแนนแล้ว ใช้การตั้งค่าไลบรารีเพื่อเพิ่มความคมชัดในการค้นหาและการเรียงลำดับ</string>
+    <string name="settings_tip_library_active_desc_2">ห้องสมุดของคุณรองรับการให้คะแนน ปรับแต่งการสแกนและจัดกลุ่มเพื่อการท่องเว็บที่สะอาดยิ่งขึ้น</string>
+    <string name="settings_tip_library_inactive_desc_1">การให้คะแนนถูกปิดใช้งาน การตั้งค่าไลบรารียังสามารถปรับปรุงโครงสร้างและความเร็วได้</string>
+    <string name="settings_tip_library_inactive_desc_2">ตรวจพบโหมดไลบรารีแบบง่าย ปรับการจัดกลุ่มเพื่อการนำทางที่รวดเร็วยิ่งขึ้น</string>
+
+    <!-- Lyrics Source Dialog -->
+    <string name="lyrics_source_embedded_first">ฝังก่อน</string>
+    <string name="lyrics_source_embedded_first_desc">ลองใช้ข้อมูลเมตาของไฟล์เสียง → API ออนไลน์ → ไฟล์ .lrc</string>
+    <string name="lyrics_source_api_first">API ก่อน</string>
+    <string name="lyrics_source_api_first_desc">ลองใช้บริการออนไลน์ → ข้อมูลเมตาของเสียง → ไฟล์ .lrc</string>
+    <string name="lyrics_source_local_first">ท้องถิ่น .lrc ก่อน</string>
+    <string name="lyrics_source_local_first_desc">ลองใช้ไฟล์ .lrc → ข้อมูลเมตาของเสียง → API ออนไลน์</string>
+
+    <!-- Font / Color Customization Dialogs -->
+    <string name="theme_font_source_changed_restart">แหล่งแบบอักษรมีการเปลี่ยนแปลง รีสตาร์ทแอปเพื่อใช้แบบอักษรใหม่</string>
+    <string name="color_source_album_art">ปกอัลบั้ม</string>
+    <string name="color_source_album_art_desc">แยกสีจากปกอัลบั้มที่กำลังเล่นอยู่</string>
+    <string name="color_source_system_colors">สีของระบบ</string>
+    <string name="color_source_system_colors_desc">ใช้ Material คุณระบายสีจากวอลเปเปอร์ของคุณ</string>
+    <string name="color_source_custom_scheme">รูปแบบที่กำหนดเอง</string>
+    <string name="color_source_custom_scheme_desc">เลือกจากโทนสีที่กำหนดไว้ล่วงหน้า</string>
+    <string name="font_source_system_font">แบบอักษรของระบบ</string>
+    <string name="font_source_system_font_desc">ใช้แบบอักษรเริ่มต้นของอุปกรณ์</string>
+    <string name="font_source_custom_font">แบบอักษรที่กำหนดเอง</string>
+    <string name="font_source_custom_font_desc">นำเข้าและใช้ไฟล์แบบอักษรที่กำหนดเอง</string>
+    <string name="font_system_title">ค่าเริ่มต้นของระบบ</string>
+    <string name="font_system_desc">ใช้แบบอักษรเริ่มต้นของอุปกรณ์ของคุณ</string>
+    <string name="font_geom_desc">แบบอักษรซานเซอริฟที่ทันสมัยและสะอาดตาจาก Google</string>
+    <string name="font_slate_desc">แบบอักษรเซอริฟที่หรูหราพร้อมรูปลักษณ์คลาสสิกแบบดั้งเดิม</string>
+    <string name="font_inter_desc">แบบอักษร sans-serif ที่สะอาดตาและทันสมัย อ่านง่าย</string>
+    <string name="font_jetbrains_desc">แบบอักษร Monospace เหมาะสำหรับเนื้อหาด้านเทคนิค</string>
+    <string name="font_quicksand_desc">แบบอักษรโค้งมนพร้อมรูปลักษณ์ที่นุ่มนวลและเป็นมิตรยิ่งขึ้น</string>
+
+    <!-- Predefined Color Schemes -->
+    <string name="color_scheme_default_title">Rhythm ค่าเริ่มต้น</string>
+    <string name="color_scheme_default_desc">Material 3 สีม่วงพื้นฐานพร้อมเน้นสีชมพูกุหลาบ</string>
+    <string name="color_scheme_warm_title">พระอาทิตย์ตกอันอบอุ่น</string>
+    <string name="color_scheme_warm_desc">โทนสีส้มแดงสบายตาให้บรรยากาศอบอุ่น</string>
+    <string name="color_scheme_cool_title">มหาสมุทรสุดเจ๋ง</string>
+    <string name="color_scheme_cool_desc">โทนสีน้ำเงินและนกเป็ดน้ำที่สดชื่นเพื่อบรรยากาศอันเงียบสงบ</string>
+    <string name="color_scheme_forest_title">ฟอเรสต์กรีน</string>
+    <string name="color_scheme_forest_desc">โทนสีเขียวธรรมชาติที่ได้รับแรงบันดาลใจจากธรรมชาติ</string>
+    <string name="color_scheme_rose_title">กุหลาบสีชมพู</string>
+    <string name="color_scheme_rose_desc">โทนสีชมพูและสีม่วงแดงที่หรูหรา</string>
+    <string name="color_scheme_monochrome_title">ขาวดำ</string>
+    <string name="color_scheme_monochrome_desc">ระดับสีเทาแบบมินิมอลเพื่อลุคที่ดูสะอาดตาและทันสมัย</string>
+    <string name="color_scheme_lavender_title">ลาเวนเดอร์</string>
+    <string name="color_scheme_lavender_desc">โทนสีม่วงและลาเวนเดอร์อันผ่อนคลายเพื่อความผ่อนคลาย</string>
+    <string name="color_scheme_ocean_title">มหาสมุทรลึก</string>
+    <string name="color_scheme_ocean_desc">สีน้ำเงินเข้มและสีอะความารีนสำหรับความสงบในมหาสมุทร</string>
+    <string name="color_scheme_aurora_title">แสงเหนือ</string>
+    <string name="color_scheme_aurora_desc">สีเขียวและสีน้ำเงินที่มีชีวิตชีวาซึ่งได้รับแรงบันดาลใจจากแสงออโรร่าเหนือ</string>
+    <string name="color_scheme_amber_title">อำพันสีทอง</string>
+    <string name="color_scheme_amber_desc">โทนสีอำพันและสีทองที่เข้มข้นเพื่อความรู้สึกหรูหรา</string>
+    <string name="color_scheme_crimson_title">สีแดงเข้ม</string>
+    <string name="color_scheme_crimson_desc">เฉดสีเบอร์กันดีและสีแดงเข้มอันโดดเด่นสำหรับดราม่า</string>
+    <string name="color_scheme_emerald_title">ความฝันมรกต</string>
+    <string name="color_scheme_emerald_desc">สีเขียวมรกตสดพร้อมเฉดสีป่าธรรมชาติ</string>
+    <string name="color_scheme_mint_title">มิ้นท์</string>
+    <string name="color_scheme_mint_desc">โทนสีฟ้าและสีเขียวมิ้นต์ที่สดชื่นและสะอาดตา</string>
+
+    <!-- Color Preview Chips -->
+    <string name="theme_color_primary">ประถม</string>
+    <string name="theme_color_secondary">รอง</string>
+    <string name="theme_color_tertiary">ระดับอุดมศึกษา</string>
+
+    <!-- Lyrics Settings Screen -->
+    <string name="lyrics_settings_title">เนื้อเพลง</string>
+    <string name="lyrics_settings_general">การตั้งค่าทั่วไป</string>
+    <string name="lyrics_settings_open_fullscreen_desc">เปิดหน้าจอเนื้อเพลงแบบเต็มหน้าจอโดยแตะมุมมองเนื้อเพลง</string>
+    <string name="lyrics_settings_autohide_controls">ซ่อนการควบคุมเนื้อเพลงอัตโนมัติ</string>
+    <string name="lyrics_settings_autohide_controls_desc">ซ่อนการควบคุมโดยอัตโนมัติในหน้าจอเนื้อเพลงแบบเต็มหน้าจอหลังจากไม่มีการใช้งานไม่กี่วินาที</string>
+    <string name="lyrics_settings_embedded_first">ฝังก่อน</string>
+    <string name="lyrics_settings_embedded_first_desc">ชอบเนื้อเพลงที่ฝังอยู่ในไฟล์เสียง เป็นทางเลือกแทน API ออนไลน์</string>
+    <string name="lyrics_settings_online_first">ออนไลน์ก่อน</string>
+    <string name="lyrics_settings_online_first_desc">ชอบ API แบบออนไลน์ (Rhythm แบบคำต่อคำ, LRCLib) เป็นทางเลือกแบบฝัง</string>
+    <string name="lyrics_settings_local_first">ท้องถิ่นก่อน</string>
+    <string name="lyrics_settings_local_first_desc">ชอบไฟล์ .lrc ในเครื่อง จากนั้นจึงฝังเนื้อเพลง ตามด้วย API ออนไลน์</string>
+    <string name="lyrics_settings_apple_music_first">Apple Music ก่อน</string>
+    <string name="lyrics_settings_lrclib_first">LRCLib ก่อน</string>
+    <string name="lyrics_settings_fallback_apis_desc">ลองใช้ API ทางเลือกหาก API ที่ต้องการไม่สามารถส่งคืนเนื้อเพลงได้</string>
+    <string name="lyrics_settings_display_styling">การแสดงผลและการจัดสไตล์</string>
+    <string name="lyrics_settings_size_percentage">ขนาด: %1$d%%</string>
+    <string name="alignment_left">ซ้าย</string>
+    <string name="alignment_center">เซ็นเตอร์</string>
+    <string name="alignment_right">ถูกต้อง</string>
+    <string name="animation_slide">สไลด์</string>
+    <string name="animation_fade">จางหายไป</string>
+    <string name="animation_scale">สเกล</string>
+    <string name="animation_up">อัพ</string>
+    <string name="lyrics_settings_switch_animation_desc">ศิลปะ ↔ เนื้อเพลงสลับภาพเคลื่อนไหว</string>
+    <string name="lyrics_settings_not_supported_expressive">ไม่รองรับธีม Expressive</string>
+    <string name="lyrics_settings_formatting_behaviors">การจัดรูปแบบและพฤติกรรม</string>
+    <string name="lyrics_settings_bold_text">ข้อความตัวหนา</string>
+    <string name="lyrics_settings_bold_text_desc">ทำให้ข้อความของเนื้อเพลงที่ใช้งานอยู่เป็นตัวหนา</string>
+    <string name="lyrics_settings_trim_lyrics">ตัดแต่งเนื้อเพลง</string>
+    <string name="lyrics_settings_trim_lyrics_desc">ตัดช่องว่างนำหน้าและต่อท้ายออกจากเนื้อเพลง</string>
+    <string name="lyrics_settings_disable_animations">ปิดการใช้งานภาพเคลื่อนไหว</string>
+    <string name="lyrics_settings_disable_animations_desc">ปิดการใช้งานการเปลี่ยนภาพและภาพเคลื่อนไหวในมุมมองเนื้อเพลง</string>
+    <string name="lyrics_settings_word_by_word_translation">การแปลแบบคำต่อคำ</string>
+    <string name="lyrics_settings_word_by_word_translation_desc">พยายามซิงค์พยางค์หรือการแปลคำโดยอัตโนมัติ</string>
+    <string name="lyrics_settings_info_bullets">รายละเอียดการซิงค์เพิ่มเติม:\n• API ออนไลน์ให้เนื้อเพลงที่ซิงค์คุณภาพสูง\n• Rhythm เสนอการซิงค์แบบคำต่อคำ\n• LRCLib ให้การซิงค์แบบบรรทัดต่อบรรทัดฟรี</string>
+
+    <!-- AutoEQ Preset Picker additions -->
+    <string name="autoeqpresetpickerbottomsheet_search_presets">ค้นหาที่ตั้งไว้ล่วงหน้า...</string>
+    <string name="autoeqpresetpickerbottomsheet_disable">ไม่มี / ปิดการใช้งาน AutoEQ</string>
+    <string name="autoeqpresetpickerbottomsheet_disable_desc">ล้างโปรไฟล์หูฟัง ใช้การตั้งค่า EQ มาตรฐาน</string>
+    <string name="autoeqpresetpickerbottomsheet_unknown_brand">แบรนด์ที่ไม่รู้จัก</string>
+
+    <!-- Device Configuration additions -->
+    <string name="device_configuration_devices_configured">%1$d กำหนดค่าอุปกรณ์แล้ว</string>
+    <string name="device_configuration_device_recognized">รู้จักอุปกรณ์แล้ว</string>
+    <string name="device_configuration_new_device_detected">ตรวจพบอุปกรณ์ใหม่</string>
+    <string name="device_configuration_configured_with">%1$s ได้รับการกำหนดค่าด้วย %2$s</string>
+    <string name="device_configuration_configured_no_profile">%1$s ได้รับการกำหนดค่าแล้ว</string>
+    <string name="device_configuration_connected_not_configured">%1$s เชื่อมต่อแล้ว แต่ไม่ได้กำหนดค่า</string>
+    <string name="device_configuration_applied_profile">ใช้โปรไฟล์ %1$s แล้ว</string>
+    <string name="device_configuration_imported_profile">โปรไฟล์ที่นำเข้า</string>
+    <string name="device_configuration_parse_error">ไม่สามารถแยกวิเคราะห์การตั้งค่า EQ ตรวจสอบรูปแบบ</string>
+    <string name="device_configuration_custom_eq">อีคิวแบบกำหนดเอง</string>
+    <string name="device_configuration_custom_preset">พรีเซ็ตแบบกำหนดเอง</string>
+    <string name="device_configuration_custom">กำหนดเอง</string>
+    <string name="device_configuration_active_profile_label">โปรไฟล์ที่ใช้งานอยู่: %1$s</string>
+    <string name="device_configuration_share_subject">Rhythm โปรไฟล์ EQ: %1$s</string>
+    <string name="device_configuration_share_title">แบ่งปันโปรไฟล์ EQ</string>
+    <string name="device_configuration_edit_device">แก้ไขอุปกรณ์</string>
+    <string name="device_configuration_add_device">เพิ่มอุปกรณ์</string>
+    <string name="device_configuration_save">บันทึก</string>
+    <string name="device_configuration_add">เพิ่ม</string>
+    <string name="device_configuration_for_device">สำหรับ %1$s</string>
+    <string name="device_configuration_profiles_available">%1$d มีโปรไฟล์</string>
+    <string name="device_configuration_disable_compensation">ปิดใช้งานการชดเชยหูฟัง</string>
+
+    <!-- Common UI element strings -->
+    <string name="common_none">ไม่มี</string>
+    <string name="common_cancel">ยกเลิก</string>
+    <string name="common_back">ย้อนกลับ</string>
+    <string name="common_remove">ลบ</string>
+    <string name="common_add">เพิ่ม</string>
+    <string name="common_active">ใช้งานอยู่</string>
+    <string name="common_disabled">ปิดการใช้งาน</string>
+    <string name="common_unavailable">ไม่พร้อมใช้งาน</string>
+    <string name="common_success">สำเร็จ</string>
+    <string name="common_error">เกิดข้อผิดพลาด</string>
+    <string name="common_unknown">ไม่ทราบ</string>
+
+    <!-- Blacklist UI additions -->
+    <string name="blacklist_remove_song_title">ลบออกจากบัญชีดำใช่ไหม</string>
+    <string name="blacklist_add_song_title">เพิ่มเข้าแบล็คลิสต์เหรอ?</string>
+    <string name="blacklist_remove_song_desc">เพลงนี้จะไม่ถูกซ่อนจากห้องสมุดของคุณอีกต่อไป</string>
+    <string name="blacklist_add_song_desc">เพลงนี้จะถูกซ่อนจากห้องสมุดของคุณและแยกออกจากการเล่น</string>
+    <string name="blacklist_undo_warning">การดำเนินการนี้สามารถยกเลิกได้ตลอดเวลา</string>
+    <string name="blacklist_song_removed_msg">เพลงถูกลบออกจากบัญชีดำ</string>
+    <string name="blacklist_song_added_msg">เพลงถูกเพิ่มเข้าไปในบัญชีดำ</string>
+    <string name="blacklist_button_remove">ลบ</string>
+    <string name="blacklist_button_blacklist">บัญชีดำ</string>
+    <string name="blacklist_remove_folder_title">ลบโฟลเดอร์ออกจากบัญชีดำใช่ไหม</string>
+    <string name="blacklist_add_folder_title">โฟลเดอร์บัญชีดำ?</string>
+    <string name="blacklist_remove_folder_desc">เพลงทั้งหมดในโฟลเดอร์นี้จะปรากฏอีกครั้ง</string>
+    <string name="blacklist_add_folder_desc">เพลงทั้งหมดในโฟลเดอร์นี้จะถูกซ่อนและแยกออกจากการเล่น</string>
+    <string name="blacklist_folder_removed_msg">โฟลเดอร์ถูกลบออกจากบัญชีดำ</string>
+    <string name="blacklist_folder_added_msg">เพิ่มโฟลเดอร์ในบัญชีดำแล้ว</string>
+    <string name="blacklist_disc_label">ดิสก์ %1$d</string>
+    <string name="blacklist_track_label">ติดตาม %1$d</string>
+
+    <!-- Library & Playlist Dialog additions -->
+    <string name="dialog_add_song_to_playlist">เพิ่ม \"%1$s\" ลงในเพลย์ลิสต์นี้</string>
+    <string name="dialog_songs_in_queue">คุณมี %1$d เพลงในคิวปัจจุบัน</string>
+    <string name="dialog_play_song_how">คุณต้องการเล่น \"%1$s\" อย่างไร?</string>
+    <string name="dialog_clear_and_play">เคลียร์และเล่น</string>
+    <string name="dialog_clear_and_play_desc">แทนที่คิวและเล่นเพลงนี้</string>
+    <string name="dialog_add_to_queue">เพิ่มในคิว</string>
+    <string name="dialog_add_to_queue_desc">เก็บคิวปัจจุบันและเพิ่มเพลง</string>
+    <string name="dialog_restart_warning_message">เพื่อให้แน่ใจว่าเพลย์ลิสต์ที่นำเข้าทั้งหมดทำงานอย่างถูกต้อง เราขอแนะนำให้รีสตาร์ทแอป คุณสามารถใช้แอปต่อไปได้ตามปกติ แต่ฟีเจอร์บางอย่างอาจไม่ทำงานตามที่คาดไว้จนกว่าจะรีสตาร์ท</string>
+    <string name="dialog_export_playlist_to">ส่งออก \"%1$s\" ไปที่:</string>
+    <string name="dialog_export_playlists_to">ส่งออกเพลย์ลิสต์ %1$d ไปที่:</string>
+    <string name="dialog_operation_importing">กำลังนำเข้า</string>
+    <string name="dialog_operation_exporting">กำลังส่งออก</string>
+
+    <!-- Mode dialog strings -->
+    <string name="dialog_switch_to_go">เปลี่ยนเป็น Rhythm ไปไหม</string>
+    <string name="dialog_switch_to_local">เปลี่ยนเป็นท้องถิ่นใช่ไหม</string>
+    <string name="dialog_switch_to_go_desc">รายการนี้เป็นของ Rhythm ไป เปลี่ยนเป็นโหมดสตรีมมิ่งทันทีเพื่อสตรีมและเล่นหรือไม่</string>
+    <string name="dialog_switch_to_local_desc">รายการนี้เป็นของห้องสมุดท้องถิ่นของคุณ เปลี่ยนเป็นโหมด Local ตอนนี้เพื่อเล่นแทร็กแบบออฟไลน์ของคุณไหม</string>
+
+    <!-- Section order content descriptions -->
+    <string name="home_section_hide_carousel">ซ่อนภาพหมุน</string>
+    <string name="home_section_show_carousel">แสดงภาพหมุน</string>
+    <string name="home_section_hide_section">ซ่อนส่วน</string>
+    <string name="home_section_show_section">แสดงส่วน</string>
+    <string name="library_tab_show">แสดงแท็บ</string>
+    <string name="library_tab_hide">ซ่อนแท็บ</string>
+
+    <!-- Add To Playlist additions -->
+    <string name="add_to_playlist_selected_count">%1$d เลือกแล้ว</string>
+    <string name="add_to_playlist_title">เพิ่มใน %1$s</string>
+    <string name="add_to_playlist_no_songs">ไม่มีเพลง</string>
+    <string name="add_to_playlist_all_songs_present">เพลงทั้งหมดอยู่ในเพลย์ลิสต์นี้แล้ว</string>
+
+    <!-- Artist details -->
+    <string name="artist_detail_albums_count">%1$d อัลบั้ม</string>
+    <string name="artist_detail_songs_count">%1$d เพลง</string>
+
+    <!-- Equalizer presets & UI -->
+    <string name="eq_preset_flat">แบน</string>
+    <string name="eq_preset_rock">ร็อค</string>
+    <string name="eq_preset_pop">ป๊อป</string>
+    <string name="eq_preset_jazz">แจ๊ส</string>
+    <string name="eq_preset_classical">คลาสสิค</string>
+    <string name="eq_preset_electronic">อิเล็กทรอนิกส์</string>
+    <string name="eq_preset_hiphop">ฮิปฮอป</string>
+    <string name="eq_preset_vocal">เสียงร้อง</string>
+    <string name="eq_preset_bass_boost">เพิ่มเสียงเบส</string>
+    <string name="eq_preset_treble_boost">เพิ่มเสียงแหลม</string>
+    <string name="eq_preset_v_shape">รูปตัว V</string>
+    <string name="eq_preset_harman">ฮาร์แมน</string>
+    <string name="eq_preset_custom">กำหนดเอง</string>
+    <string name="eq_autoeq_profiles">โปรไฟล์ AutoEQ</string>
+    <string name="eq_manage_device">จัดการอุปกรณ์</string>
+    <string name="eq_system_equalizer">ระบบอีควอไลเซอร์</string>
+    <string name="eq_enhance_lows">เพิ่มระดับต่ำ</string>
+    <string name="eq_widen_sound">เสียงขยาย</string>
+    <string name="eq_mono_only">โมโนเท่านั้น</string>
+
+    <!-- Library updates, sorting & categories -->
+    <string name="library_updated_songs_success">อัปเดตเพลง %1$d</string>
+    <string name="library_updated_songs_failed">อัปเดตเพลง %1$d %2$d ล้มเหลว</string>
+    <string name="library_switch_to_grid">สลับไปที่มุมมองตาราง</string>
+    <string name="library_switch_to_list">สลับไปที่มุมมองรายการ</string>
+    <string name="library_sort_title">หัวข้อ</string>
+    <string name="library_sort_artist">ศิลปิน</string>
+    <string name="library_sort_date_added">เพิ่มวันที่แล้ว</string>
+    <string name="library_sort_date_modified">วันที่แก้ไข</string>
+    <string name="library_sort_ascending">จากน้อยไปมาก</string>
+    <string name="library_sort_descending">จากมากไปน้อย</string>
+    <string name="library_sort_name_asc">ชื่อ (ก-ฮ)</string>
+    <string name="library_sort_name_desc">ชื่อ (Z-A)</string>
+    <string name="library_sort_songs_desc">เพลง (สูงไปต่ำ)</string>
+    <string name="library_sort_albums_desc">อัลบั้ม (สูงไปต่ำ)</string>
+    <string name="library_scan_songs">กำลังสแกนเพลง...</string>
+    <string name="library_scan_albums">กำลังประมวลผลอัลบั้ม...</string>
+    <string name="library_scan_artists">กำลังประมวลผลศิลปิน...</string>
+    <string name="library_scan_genres">กำลังตรวจหาแนวเพลง...</string>
+    <string name="library_scan_media">กำลังสแกนสื่อ...</string>
+    <string name="library_export_failed">การส่งออกล้มเหลว</string>
+    <string name="library_import_failed">การนำเข้าล้มเหลว</string>
+    <string name="library_category_all">ทั้งหมด</string>
+    <string name="library_category_favorites">❤️ รายการโปรด</string>
+    <string name="library_category_absolute_favorites">⭐⭐⭐⭐⭐ รายการโปรดที่แน่นอน</string>
+    <string name="library_category_loved">⭐⭐⭐⭐ รักเลย</string>
+    <string name="library_category_great">⭐⭐⭐ เยี่ยมเลย</string>
+    <string name="library_category_good">⭐⭐ ดี</string>
+    <string name="library_category_liked">⭐ ถูกใจแล้ว</string>
+    <string name="library_category_short">สั้น (&lt; 3 นาที)</string>
+    <string name="library_category_medium">ปานกลาง (3-5 นาที)</string>
+    <string name="library_category_long">ยาว (&gt; 5 นาที)</string>
+    <string name="library_category_hi_res_lossless">ความละเอียดสูงแบบไม่สูญเสีย</string>
+    <string name="library_category_lossless">ไร้การสูญเสีย</string>
+    <string name="library_category_dolby">ดอลบี้</string>
+    <string name="library_category_mono">โมโน</string>
+    <string name="library_category_stereo">สเตอริโอ</string>
+    <string name="library_category_high_quality">คุณภาพสูง</string>
+    <string name="library_category_standard">มาตรฐาน</string>
+    <string name="library_removed_from_favorites">ลบ %1$d ออกจากรายการโปรด</string>
+    <string name="library_added_to_favorites">เพิ่ม %1$d ในรายการโปรด</string>
+    <string name="library_unlike_all">ไม่เหมือนทั้งหมด</string>
+    <string name="library_like_all">ชอบทั้งหมด</string>
+    <string name="library_tracks_count_format">%1$d จาก %2$d แทร็ก</string>
+    <string name="library_no_playlists_yet">ยังไม่มีเพลย์ลิสต์\nสร้างเพลย์ลิสต์แรกของคุณโดยใช้ปุ่ม +</string>
+    <string name="library_no_albums_yet">ยังไม่มีอัลบั้ม</string>
+    <string name="library_no_artists_yet">ยังไม่มีศิลปินเลย</string>
+    <string name="library_action_play_next">เล่นต่อไป</string>
+    <string name="library_action_add_to_queue">เพิ่มลงในคิว</string>
+    <string name="library_action_add_to_blacklist">เพิ่มไปยังบัญชีดำ</string>
+    <string name="library_action_song_info">ข้อมูลเพลง</string>
+    <string name="library_action_add_to_playlist">เพิ่มลงในเพลย์ลิสต์</string>
+    <string name="library_action_rate_song">อัตราเพลง</string>
+    <string name="library_menu_new_playlist">เพลย์ลิสต์ใหม่</string>
+    <string name="library_menu_import_playlist">นำเข้าเพลย์ลิสต์</string>
+    <string name="library_menu_export_playlists">ส่งออกเพลย์ลิสต์</string>
+    <string name="library_menu_close_playlist">ปิดเมนูเพลย์ลิสต์</string>
+    <string name="library_menu_open_playlist">เปิดเมนูเพลย์ลิสต์</string>
+    <string name="library_menu_close">ปิดเมนู</string>
+    <string name="library_selected_count_format">%1$d เลือกแล้ว</string>
+    <string name="library_from_tracks_format">จากเพลง %1$d</string>
+    <string name="library_playlist_count_singular">%1$d เพลย์ลิสต์</string>
+    <string name="library_playlist_count_plural">%1$d เพลย์ลิสต์</string>
+    <string name="library_album_count_singular">%1$d อัลบั้ม</string>
+    <string name="library_album_count_plural">%1$d อัลบั้ม</string>
+    <string name="library_artist_count_singular">%1$d ศิลปิน</string>
+    <string name="library_artist_count_plural">%1$d ศิลปิน</string>
+    <string name="library_duration_hours_minutes">%1$dh %2$dm</string>
+    <string name="library_duration_minutes">%1$dm</string>
+
+    <!-- Onboarding, Backup & Settings additions -->
+    <string name="onboarding_blacklist_label">บัญชีดำ</string>
+    <string name="onboarding_whitelist_label">ไวท์ลิสต์</string>
+    <string name="onboarding_full_player_label">ผู้เล่นเต็ม</string>
+    <string name="onboarding_mini_player_label">เครื่องเล่นขนาดเล็ก</string>
+    <string name="onboarding_blocked_folders">%1$d โฟลเดอร์ที่ถูกบล็อก</string>
+    <string name="onboarding_whitelisted_folders">%1$d โฟลเดอร์ที่อนุญาตพิเศษ</string>
+    <string name="onboarding_sample_button">ปุ่มตัวอย่าง</string>
+    <string name="onboarding_primary_label">ประถม</string>
+    <string name="onboarding_secondary_label">รอง</string>
+    <string name="onboarding_tertiary_label">ระดับอุดมศึกษา</string>
+    <string name="onboarding_rhythm_material">Rhythm (Material)</string>
+    
+    <string name="backup_restored_success">กู้คืนข้อมูลสำรองสำเร็จแล้ว รีสตาร์ทแอปเพื่อใช้การเปลี่ยนแปลงทั้งหมด</string>
+    <string name="backup_copied_to_clipboard">สร้างข้อมูลสำรองและคัดลอกไปยังคลิปบอร์ดแล้ว</string>
+    <string name="backup_failed_to_create">ไม่สามารถสร้างข้อมูลสำรอง: %1$s</string>
+    <string name="backup_failed_to_restore_file">ไม่สามารถกู้คืนจากไฟล์: %1$s</string>
+    <string name="backup_no_backup_clipboard">ไม่พบข้อมูลสำรองในคลิปบอร์ด</string>
+    <string name="backup_failed_to_restore_clipboard">ไม่สามารถกู้คืนจากคลิปบอร์ด: %1$s</string>
+    
+    <string name="updater_ready_to_install">เวอร์ชัน %1$s พร้อมสำหรับการติดตั้งแล้ว</string>
+    <string name="updater_download_progress">%1$d%% • %2$s / %3$s</string>
+    <string name="updater_version_info">เวอร์ชัน %1$s • %2$s</string>
+    <string name="updater_error_occurred">เกิดข้อผิดพลาด</string>
+    <string name="updater_channel_stable">เสถียร</string>
+    <string name="updater_channel_beta">เบต้า</string>
+
+    <!-- Expressive shape preset & group names -->
+    <string name="shape_preset_default">ค่าเริ่มต้น</string>
+    <string name="shape_preset_default_desc">รูปทรงที่แสดงออกอย่างอ่อนโยนสำหรับทุกวัย</string>
+    <string name="shape_preset_friendly">เป็นมิตร</string>
+    <string name="shape_preset_friendly_desc">รูปร่างที่อบอุ่นและเข้าถึงได้</string>
+    <string name="shape_preset_cheerful">ร่าเริง</string>
+    <string name="shape_preset_cheerful_desc">รูปร่างที่สดใสและแสดงออก</string>
+    <string name="shape_preset_modern">ทันสมัย</string>
+    <string name="shape_preset_modern_desc">การออกแบบที่แสดงออกถึงความร่วมสมัย</string>
+    <string name="shape_preset_playful">ขี้เล่น</string>
+    <string name="shape_preset_playful_desc">รูปร่างที่สนุกสนานและแสดงออก</string>
+    <string name="shape_preset_organic">ออร์แกนิก</string>
+    <string name="shape_preset_organic_desc">รูปทรงที่ได้แรงบันดาลใจจากธรรมชาติ</string>
+    <string name="shape_preset_geometric">เรขาคณิต</string>
+    <string name="shape_preset_geometric_desc">รูปทรงที่สะอาดตาและทันสมัย</string>
+    <string name="shape_preset_retro">ย้อนยุค</string>
+    <string name="shape_preset_retro_desc">รูปทรงย้อนยุคแบบพิกเซล</string>
+    <string name="shape_preset_custom">กำหนดเอง</string>
+    <string name="shape_preset_custom_desc">การเลือกส่วนตัวของคุณ</string>
+    <string name="shape_option_square">สี่เหลี่ยม</string>
+    <string name="shape_option_square_desc">สี่เหลี่ยมโค้งมน</string>
+    <string name="shape_option_oval">วงรี</string>
+    <string name="shape_option_oval_desc">วงรียาว</string>
+    <string name="shape_option_pill">ยาเม็ด</string>
+    <string name="shape_option_pill_desc">รูปทรงแคปซูล</string>
+    <string name="shape_option_diamond">เพชร</string>
+    <string name="shape_option_diamond_desc">ทรงเพชร</string>
+    <string name="shape_option_triangle">สามเหลี่ยม</string>
+    <string name="shape_option_triangle_desc">สามเหลี่ยมโค้งมน</string>
+    <string name="shape_option_pentagon">เพนตากอน</string>
+    <string name="shape_option_pentagon_desc">รูปหลายเหลี่ยมห้าด้าน</string>
+    <string name="shape_option_flower">ดอกไม้</string>
+    <string name="shape_option_flower_desc">ดอกไม้ที่มีกลีบดอก</string>
+    <string name="shape_option_clover4">โคลเวอร์ 4 ลีฟ</string>
+    <string name="shape_option_clover4_desc">โคลเวอร์สี่แฉก</string>
+    <string name="shape_option_clover8">โคลเวอร์ 8 ลีฟ</string>
+    <string name="shape_option_clover8_desc">โคลเวอร์แปดแฉก</string>
+    <string name="shape_option_heart">หัวใจ</string>
+    <string name="shape_option_heart_desc">รูปหัวใจ</string>
+    <string name="shape_option_bun">บุญ</string>
+    <string name="shape_option_bun_desc">รูปทรงขนมปัง/ขนมปัง</string>
+    <string name="shape_option_boom">บูม</string>
+    <string name="shape_option_boom_desc">รูปร่างระเบิด</string>
+    <string name="shape_option_soft_boom">ซอฟต์บูม</string>
+    <string name="shape_option_soft_boom_desc">การระเบิดที่นุ่มนวลขึ้น</string>
+    <string name="shape_option_burst">ระเบิด</string>
+    <string name="shape_option_burst_desc">รูปร่างแฉก</string>
+    <string name="shape_option_soft_burst">ระเบิดนุ่มนวล</string>
+    <string name="shape_option_soft_burst_desc">แฉกแสงที่นุ่มนวลยิ่งขึ้น</string>
+    <string name="shape_option_sunny">ซันนี่</string>
+    <string name="shape_option_sunny_desc">ดวงอาทิตย์พร้อมรังสี</string>
+    <string name="shape_option_very_sunny">แดดแรงมาก</string>
+    <string name="shape_option_very_sunny_desc">ดวงอาทิตย์ที่มีรังสีมากขึ้น</string>
+    <string name="shape_option_cookie4">คุกกี้ 4</string>
+    <string name="shape_option_cookie4_desc">คุกกี้ 4 ด้าน</string>
+    <string name="shape_option_cookie6">คุกกี้ 6</string>
+    <string name="shape_option_cookie6_desc">คุกกี้ 6 ด้าน</string>
+    <string name="shape_option_cookie7">คุกกี้ 7</string>
+    <string name="shape_option_cookie7_desc">คุกกี้ 7 ด้าน</string>
+    <string name="shape_option_cookie9">คุกกี้ 9</string>
+    <string name="shape_option_cookie9_desc">คุกกี้ 9 ด้าน</string>
+    <string name="shape_option_cookie12">คุกกี้ 12</string>
+    <string name="shape_option_cookie12_desc">คุกกี้ 12 ด้าน</string>
+    <string name="shape_option_ghostish">ผีเลย</string>
+    <string name="shape_option_ghostish_desc">รูปร่างเหมือนผี</string>
+    <string name="shape_option_puffy">อ้วน</string>
+    <string name="shape_option_puffy_desc">รูปร่างคล้ายเมฆ</string>
+    <string name="shape_option_puffy_diamond">พัฟฟี่ไดมอนด์</string>
+    <string name="shape_option_puffy_diamond_desc">เพชรพองๆ</string>
+    <string name="shape_option_fan">แฟน</string>
+    <string name="shape_option_fan_desc">รูปร่างพัดลม</string>
+    <string name="shape_option_circle">วงกลม</string>
+    <string name="shape_option_circle_desc">วงกลมที่สมบูรณ์แบบ</string>
+    <string name="shape_option_clover_4_leaf">โคลเวอร์ 4 ลีฟ</string>
+    <string name="shape_option_clover_4_leaf_desc">โคลเวอร์สี่แฉก</string>
+    <string name="shape_option_clover_8_leaf">โคลเวอร์ 8 ลีฟ</string>
+    <string name="shape_option_clover_8_leaf_desc">โคลเวอร์แปดแฉก</string>
+    <string name="shape_option_arrow">ลูกศร</string>
+    <string name="shape_option_arrow_desc">ตัวชี้ลูกศร</string>
+    <string name="shape_option_arch">อาร์ค</string>
+    <string name="shape_option_arch_desc">รูปร่างโค้ง</string>
+    <string name="shape_option_clam_shell">เปลือกหอย</string>
+    <string name="shape_option_clam_shell_desc">รูปทรงเปลือกหอย</string>
+    <string name="shape_option_gem">อัญมณี</string>
+    <string name="shape_option_gem_desc">รูปทรงพลอย</string>
+    <string name="shape_option_semi_circle">ครึ่งวงกลม</string>
+    <string name="shape_option_semi_circle_desc">ครึ่งวงกลม</string>
+    <string name="shape_option_slanted">เอียง</string>
+    <string name="shape_option_slanted_desc">สี่เหลี่ยมจัตุรัสเอียง</string>
+    <string name="shape_option_pixel_circle">วงกลมพิกเซล</string>
+    <string name="shape_option_pixel_circle_desc">วงกลมพิกเซล</string>
+    <string name="shape_option_pixel_triangle">สามเหลี่ยมพิกเซล</string>
+    <string name="shape_option_pixel_triangle_desc">สามเหลี่ยมพิกเซล</string>
+    <string name="shape_group_basic">พื้นฐาน</string>
+    <string name="shape_group_organic">ออร์แกนิก</string>
+    <string name="shape_group_playful">ขี้เล่น</string>
+    <string name="shape_group_cookie">คุกกี้</string>
+    <string name="shape_group_whimsical">แปลกๆ</string>
+    <string name="shape_group_special">พิเศษ</string>
+    <string name="shape_group_pixel">พิกเซล</string>
+
+    <!-- Customization Choices -->
+    <string name="option_always">เสมอ</string>
+    <string name="option_expanded">ขยายแล้ว</string>
+    <string name="option_collapsed">ยุบแล้ว</string>
+    <string name="option_linear">เชิงเส้น</string>
+    <string name="option_circular">หนังสือเวียน</string>
+    <string name="option_auto">อัตโนมัติ</string>
+    <string name="option_manual">คู่มือ</string>
+    <string name="option_both">ทั้งคู่</string>
+    <string name="option_icon">ไอคอน</string>
+    <string name="option_name">ชื่อ</string>
+
+    <!-- Theme settings additions -->
+    <string name="theme_color_red">สีแดง</string>
+    <string name="theme_color_green">สีเขียว</string>
+    <string name="theme_color_blue">สีฟ้า</string>
+    <string name="theme_font_restart_warning">เปลี่ยนแบบอักษรแล้ว รีสตาร์ทแอปเพื่อใช้แบบอักษรใหม่</string>
+    <string name="theme_source_album_art">ปกอัลบั้ม</string>
+    <string name="theme_source_album_art_desc">แยกสีจากปกอัลบั้มที่กำลังเล่นอยู่</string>
+    <string name="theme_source_system_colors">สีของระบบ</string>
+    <string name="theme_source_system_colors_desc">ใช้ Material คุณระบายสีจากวอลเปเปอร์ของคุณ</string>
+    <string name="theme_source_custom_scheme">รูปแบบที่กำหนดเอง</string>
+    <string name="theme_source_custom_scheme_desc">เลือกจากโทนสีที่กำหนดไว้ล่วงหน้า</string>
+    <string name="theme_font_system">แบบอักษรของระบบ</string>
+    <string name="theme_font_system_desc">ใช้แบบอักษรเริ่มต้นของอุปกรณ์</string>
+    <string name="theme_font_custom">แบบอักษรที่กำหนดเอง</string>
+    <string name="theme_font_custom_desc">นำเข้าและใช้ไฟล์แบบอักษรที่กำหนดเอง</string>
+
+    <!-- Color Scheme names -->
+    <string name="scheme_default">ค่าเริ่มต้น</string>
+    <string name="scheme_warm">อบอุ่น</string>
+    <string name="scheme_cool">เจ๋งเลย</string>
+    <string name="scheme_forest">ป่า</string>
+    <string name="scheme_rose">โรส</string>
+    <string name="scheme_monochrome">ขาวดำ</string>
+    <string name="scheme_lavender">ลาเวนเดอร์</string>
+    <string name="scheme_ocean">มหาสมุทร</string>
+    <string name="scheme_aurora">ออโรร่า</string>
+    <string name="scheme_amber">แอมเบอร์</string>
+    <string name="scheme_crimson">สีแดงเข้ม</string>
+    <string name="scheme_emerald">มรกต</string>
+    <string name="scheme_mint">มิ้นท์</string>
+
+    <!-- Shape Utils category and descriptions -->
+    <string name="shape_utils_fab">ปุ่มการดำเนินการแบบลอยตัว</string>
+    <string name="shape_utils_fab_desc">รูปร่างสำหรับปุ่ม FAB</string>
+    <string name="shape_utils_cards">การ์ด</string>
+    <string name="shape_utils_cards_desc">รูปร่างสำหรับการ์ดและคอนเทนเนอร์</string>
+    <string name="shape_utils_buttons">ปุ่ม</string>
+    <string name="shape_utils_buttons_desc">รูปร่างของปุ่ม</string>
+    <string name="shape_utils_chips">ชิป</string>
+    <string name="shape_utils_chips_desc">รูปร่างสำหรับชิปและแท็ก</string>
+    <string name="shape_utils_player_controls">การควบคุมผู้เล่น</string>
+    <string name="shape_utils_player_controls_desc">รูปร่างสำหรับปุ่มควบคุมเครื่องเล่น</string>
+    <string name="shape_utils_mini_player">เครื่องเล่นขนาดเล็ก</string>
+    <string name="shape_utils_mini_player_desc">รูปร่างสำหรับอาร์ตเวิร์กของเครื่องเล่นขนาดเล็ก</string>
+
+    <!-- Metadata properties and labels -->
+    <string name="metadata_duration">ระยะเวลา</string>
+    <string name="metadata_disc">แผ่นดิสก์</string>
+    <string name="metadata_composer">ผู้แต่ง</string>
+    <string name="metadata_album_artist">ศิลปินอัลบั้ม</string>
+    <string name="metadata_play_count">จำนวนการเล่น</string>
+    <string name="metadata_total_played">เล่นทั้งหมด</string>
+    <string name="metadata_rating">เรตติ้ง</string>
+    <string name="metadata_quality">คุณภาพ</string>
+    <string name="metadata_audio_tech">เทคโนโลยีเสียง</string>
+    <string name="metadata_bit_depth">ความลึกบิต</string>
+    <string name="metadata_bitrate">บิตเรต</string>
+    <string name="metadata_sample_rate">อัตราตัวอย่าง</string>
+    <string name="metadata_channels">ช่อง</string>
+    <string name="metadata_format">รูปแบบ</string>
+    <string name="metadata_location">ที่ตั้ง</string>
+    <string name="metadata_lyrics">เนื้อเพลง</string>
+    <string name="metadata_mime_type">ประเภท MIME</string>
+    <string name="metadata_date_added">เพิ่มวันที่แล้ว</string>
+    <string name="metadata_modified">แก้ไขแล้ว</string>
+    <string name="metadata_lyrics_available">ว่างครับ</string>
+    <string name="metadata_dts">ดีทีเอส</string>
+    <string name="metadata_hi_res">ความละเอียดสูง</string>
+    <string name="metadata_dolby">ดอลบี้</string>
+    <string name="metadata_lossless">ไร้การสูญเสีย</string>
+
+    <!-- Discover settings specific -->
+    <string name="settings_discover_album_name">ชื่ออัลบั้ม</string>
+    <string name="settings_discover_album_name_desc">แสดงชื่ออัลบั้มบนการ์ด</string>
+    <string name="settings_discover_artist_name">ชื่อศิลปิน</string>
+    <string name="settings_discover_artist_name_desc">แสดงชื่อศิลปินบนการ์ด</string>
+    <string name="settings_discover_release_year">ปีที่วางจำหน่าย</string>
+    <string name="settings_discover_release_year_desc">แสดงปีที่ออกอัลบั้ม</string>
+    <string name="settings_discover_play_button">ปุ่มเล่น</string>
+    <string name="settings_discover_play_button_desc">แสดงปุ่มเล่นด่วน</string>
+    <string name="settings_discover_gradient_overlay">การซ้อนทับแบบไล่ระดับสี</string>
+    <string name="settings_discover_gradient_overlay_desc">แสดงการไล่ระดับสีด้านหลังข้อความ</string>
+
+    <!-- Carousel Style selector strings -->
+    <string name="carousel_style_default">ค่าเริ่มต้น</string>
+    <string name="carousel_style_default_desc">อัลบั้มแอบดู 2 ด้าน</string>
+    <string name="carousel_style_hero">ฮีโร่</string>
+    <string name="carousel_style_hero_desc">อัลบั้มดู 1 ด้าน</string>
+
+    <!-- Theme names -->
+    <string name="theme_rhythm">Rhythm</string>
+    <string name="theme_expressive">แสดงออก</string>
+    <string name="settings_managed_by_expressive_shapes">จัดการโดยรูปร่างที่แสดงออก</string>
+
+    <!-- Shape targets -->
+    <string name="shape_target_album_art">อาร์ตเวิร์กอัลบั้ม</string>
+    <string name="shape_target_album_art_desc">รูปร่างสำหรับปกอัลบั้ม</string>
+    <string name="shape_target_player_art">งานศิลปะของผู้เล่น</string>
+    <string name="shape_target_player_art_desc">รูปร่างสำหรับงานศิลปะหน้าจอผู้เล่น</string>
+    <string name="shape_target_song_art">งานศิลปะเพลง</string>
+    <string name="shape_target_song_art_desc">รูปร่างสำหรับอาร์ตเวิร์กเพลงในรายการ</string>
+    <string name="shape_target_playlist_art">อาร์ตเวิร์กเพลย์ลิสต์</string>
+    <string name="shape_target_playlist_art_desc">รูปร่างสำหรับหน้าปกเพลย์ลิสต์</string>
+    <string name="shape_target_artist_art">งานศิลปะของศิลปิน</string>
+    <string name="shape_target_artist_art_desc">รูปร่างสำหรับภาพศิลปิน</string>
+    <string name="settings_shape_for">รูปร่างสำหรับ %1$s</string>
 </resources>
+

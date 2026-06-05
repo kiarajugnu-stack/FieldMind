@@ -2739,7 +2739,7 @@ fun EnhancedBackupRestoreContent(
     fun handleRestorePayload(backupJson: String?) {
         if (backupJson.isNullOrEmpty()) {
             backupStatusIsError = true
-            backupStatusMessage = "Unable to read backup data"
+            backupStatusMessage = context.getString(R.string.backup_unable_to_read)
             showRestartHint = false
             return
         }
@@ -2747,11 +2747,11 @@ fun EnhancedBackupRestoreContent(
         if (appSettings.restoreFromBackup(backupJson)) {
             musicViewModel.reloadPlaylistsFromSettings()
             backupStatusIsError = false
-            backupStatusMessage = "Backup restored successfully. Restart the app to apply all changes."
+            backupStatusMessage = context.getString(R.string.backup_restored_success)
             showRestartHint = true
         } else {
             backupStatusIsError = true
-            backupStatusMessage = "Invalid backup format or corrupted data"
+            backupStatusMessage = context.getString(R.string.backup_invalid_format)
             showRestartHint = false
         }
     }
@@ -2783,11 +2783,11 @@ fun EnhancedBackupRestoreContent(
                         clipboard.setPrimaryClip(clip)
 
                         backupStatusIsError = false
-                        backupStatusMessage = "Backup created and copied to clipboard."
+                        backupStatusMessage = context.getString(R.string.backup_copied_to_clipboard)
                         showRestartHint = false
                     } catch (e: Exception) {
                         backupStatusIsError = true
-                        backupStatusMessage = "Failed to create backup: ${e.message}"
+                        backupStatusMessage = context.getString(R.string.backup_failed_to_create, e.message ?: "")
                         showRestartHint = false
                     } finally {
                         isCreatingBackup = false
@@ -2816,7 +2816,7 @@ fun EnhancedBackupRestoreContent(
                         handleRestorePayload(backupJson)
                     } catch (e: Exception) {
                         backupStatusIsError = true
-                        backupStatusMessage = "Failed to restore from file: ${e.message}"
+                        backupStatusMessage = context.getString(R.string.backup_failed_to_restore_file, e.message ?: "")
                         showRestartHint = false
                     } finally {
                         isRestoringFromFile = false
@@ -2845,14 +2845,14 @@ fun EnhancedBackupRestoreContent(
 
                 if (backupJson == null) {
                     backupStatusIsError = true
-                    backupStatusMessage = "No backup found in clipboard"
+                    backupStatusMessage = context.getString(R.string.backup_no_backup_clipboard)
                     showRestartHint = false
                 } else {
                     handleRestorePayload(backupJson)
                 }
             } catch (e: Exception) {
                 backupStatusIsError = true
-                backupStatusMessage = "Failed to restore from clipboard: ${e.message}"
+                backupStatusMessage = context.getString(R.string.backup_failed_to_restore_clipboard, e.message ?: "")
                 showRestartHint = false
             } finally {
                 isRestoringFromClipboard = false
@@ -6068,11 +6068,11 @@ fun EnhancedUpdaterContent(
                 // Description shows version info or default text
                 Text(
                     text = when {
-                        error != null -> error ?: "An error occurred"
-                        downloadedFile != null -> "Version ${latestVersion?.versionName ?: "?"} is ready to install"
-                        isDownloading -> "${downloadProgress.toInt()}% • ${((latestVersion?.apkSize ?: 0) * downloadProgress / 100).toLong().let { updaterViewModel.getReadableFileSize(it) }} / ${latestVersion?.let { updaterViewModel.getReadableFileSize(it.apkSize) } ?: ""}"
+                        error != null -> error ?: context.getString(R.string.updater_error_occurred)
+                        downloadedFile != null -> context.getString(R.string.updater_ready_to_install, latestVersion?.versionName ?: "?")
+                        isDownloading -> context.getString(R.string.updater_download_progress, downloadProgress.toInt(), ((latestVersion?.apkSize ?: 0) * downloadProgress / 100).toLong().let { updaterViewModel.getReadableFileSize(it) }, latestVersion?.let { updaterViewModel.getReadableFileSize(it.apkSize) } ?: "")
                         isCheckingForUpdates -> context.getString(R.string.fetching_latest_version)
-                        updateAvailable -> "Version ${latestVersion?.versionName ?: "?"} • ${latestVersion?.let { updaterViewModel.getReadableFileSize(it.apkSize) } ?: ""}"
+                        updateAvailable -> context.getString(R.string.updater_version_info, latestVersion?.versionName ?: "?", latestVersion?.let { updaterViewModel.getReadableFileSize(it.apkSize) } ?: "")
                         else -> context.getString(R.string.onboarding_update_default_desc)
                     },
                     style = MaterialTheme.typography.bodyMedium,
@@ -6326,11 +6326,11 @@ fun EnhancedUpdaterContent(
             // Description shows version info or default text
             Text(
                 text = when {
-                    error != null -> error ?: "An error occurred"
-                    downloadedFile != null -> "Version ${latestVersion?.versionName ?: "?"} is ready to install"
-                    isDownloading -> "${downloadProgress.toInt()}% • ${((latestVersion?.apkSize ?: 0) * downloadProgress / 100).toLong().let { updaterViewModel.getReadableFileSize(it) }} / ${latestVersion?.let { updaterViewModel.getReadableFileSize(it.apkSize) } ?: ""}"
+                    error != null -> error ?: context.getString(R.string.updater_error_occurred)
+                    downloadedFile != null -> context.getString(R.string.updater_ready_to_install, latestVersion?.versionName ?: "?")
+                    isDownloading -> context.getString(R.string.updater_download_progress, downloadProgress.toInt(), ((latestVersion?.apkSize ?: 0) * downloadProgress / 100).toLong().let { updaterViewModel.getReadableFileSize(it) }, latestVersion?.let { updaterViewModel.getReadableFileSize(it.apkSize) } ?: "")
                     isCheckingForUpdates -> context.getString(R.string.fetching_latest_version)
-                    updateAvailable -> "Version ${latestVersion?.versionName ?: "?"} • ${latestVersion?.let { updaterViewModel.getReadableFileSize(it.apkSize) } ?: ""}"
+                    updateAvailable -> context.getString(R.string.updater_version_info, latestVersion?.versionName ?: "?", latestVersion?.let { updaterViewModel.getReadableFileSize(it.apkSize) } ?: "")
                     else -> context.getString(R.string.onboarding_update_default_desc)
                 },
                 style = MaterialTheme.typography.bodyMedium,

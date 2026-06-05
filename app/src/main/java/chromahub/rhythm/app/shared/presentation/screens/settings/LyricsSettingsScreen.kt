@@ -187,7 +187,7 @@ fun LyricsSettingsScreen(onBackClick: () -> Unit) {
     val showLyricsRomanization by appSettings.showLyricsRomanization.collectAsState()
 
     CollapsibleHeaderScreen(
-        title = "Lyrics",
+        title = context.getString(R.string.lyrics_settings_title),
         showBackButton = true,
         onBackClick = {
             HapticUtils.performHapticFeedback(context, hapticFeedback, HapticType.HEAVY)
@@ -206,7 +206,7 @@ fun LyricsSettingsScreen(onBackClick: () -> Unit) {
             // 1. General & Behavior Settings
             item {
                 Text(
-                    text = "General Settings",
+                    text = context.getString(R.string.lyrics_settings_general),
                     style = MaterialTheme.typography.titleSmall.copy(
                         fontWeight = FontWeight.SemiBold
                     ),
@@ -237,7 +237,7 @@ fun LyricsSettingsScreen(onBackClick: () -> Unit) {
                                     item = SettingItem(
                                         icon = MaterialSymbolIcon("fullscreen", filled = true),
                                         title = stringResource(R.string.playercustomizationsettingsscreen_tap_lyrics_for_immersive),
-                                        description = "Open a full-screen lyrics screen by tapping the lyrics view",
+                                        description = context.getString(R.string.lyrics_settings_open_fullscreen_desc),
                                         toggleState = tapLyricsToFullScreen,
                                         onToggleChange = { appSettings.setTapLyricsToFullScreen(it) }
                                     )
@@ -301,8 +301,8 @@ fun LyricsSettingsScreen(onBackClick: () -> Unit) {
                                     hapticFeedback = hapticFeedback,
                                     item = SettingItem(
                                         icon = MaterialSymbolIcon("visibility_off"),
-                                        title = "Auto-hide lyrics controls",
-                                        description = "Automatically hide controls in full-screen lyrics screen after a few seconds of inactivity",
+                                        title = context.getString(R.string.lyrics_settings_autohide_controls),
+                                        description = context.getString(R.string.lyrics_settings_autohide_controls_desc),
                                         toggleState = autoHideLyricsControls,
                                         onToggleChange = { appSettings.setAutoHideLyricsControls(it) }
                                     )
@@ -335,18 +335,18 @@ fun LyricsSettingsScreen(onBackClick: () -> Unit) {
 
             val sourceOptions = listOf<Pair<chromahub.rhythm.app.shared.data.model.LyricsSourcePreference, Triple<String, String, MaterialSymbolIcon>>>(
                 chromahub.rhythm.app.shared.data.model.LyricsSourcePreference.EMBEDDED_FIRST to Triple(
-                    "Embedded First",
-                    "Prefer lyrics embedded in audio files, fallback to online APIs",
+                    context.getString(R.string.lyrics_settings_embedded_first),
+                    context.getString(R.string.lyrics_settings_embedded_first_desc),
                     RhythmIcons.MusicNote
                 ),
                 chromahub.rhythm.app.shared.data.model.LyricsSourcePreference.API_FIRST to Triple(
-                    "Online First",
-                    "Prefer online APIs (Rhythm word-by-word, LRCLib), fallback to embedded",
+                    context.getString(R.string.lyrics_settings_online_first),
+                    context.getString(R.string.lyrics_settings_online_first_desc),
                     MaterialSymbolIcon("cloud_queue")
                 ),
                 chromahub.rhythm.app.shared.data.model.LyricsSourcePreference.LOCAL_FIRST to Triple(
-                    "Local First",
-                    "Prefer local .lrc files, then embedded lyrics, then online APIs",
+                    context.getString(R.string.lyrics_settings_local_first),
+                    context.getString(R.string.lyrics_settings_local_first_desc),
                     RhythmIcons.Storage
                 )
             )
@@ -466,7 +466,7 @@ fun LyricsSettingsScreen(onBackClick: () -> Unit) {
                             title = { Text(stringResource(R.string.lyricssourcesettingsscreen_lyrics_api_priority)) },
                             description = {
                                 Text(
-                                    text = if (apiPriority == chromahub.rhythm.app.shared.data.model.LyricsApiPriority.APPLE_MUSIC_FIRST) "Apple Music First" else "LRCLib First",
+                                    text = if (apiPriority == chromahub.rhythm.app.shared.data.model.LyricsApiPriority.APPLE_MUSIC_FIRST) context.getString(R.string.lyrics_settings_apple_music_first) else context.getString(R.string.lyrics_settings_lrclib_first),
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
@@ -482,7 +482,7 @@ fun LyricsSettingsScreen(onBackClick: () -> Unit) {
                             item = SettingItem(
                                 icon = MaterialSymbolIcon("compare_arrows"),
                                 title = stringResource(R.string.lyricssourcesettingsscreen_retry_using_fallbacks),
-                                description = "Attempt fallback APIs if the preferred API fails to return lyrics",
+                                description = context.getString(R.string.lyrics_settings_fallback_apis_desc),
                                 toggleState = apiFallback,
                                 onToggleChange = { appSettings.setLyricsApiFallbackRetry(it) }
                             )
@@ -497,7 +497,7 @@ fun LyricsSettingsScreen(onBackClick: () -> Unit) {
                 item {
                     Spacer(modifier = Modifier.height(12.dp))
                     Text(
-                        text = "Display & Styling",
+                        text = context.getString(R.string.lyrics_settings_display_styling),
                         style = MaterialTheme.typography.titleSmall.copy(
                             fontWeight = FontWeight.SemiBold
                         ),
@@ -513,7 +513,7 @@ fun LyricsSettingsScreen(onBackClick: () -> Unit) {
                                 item = SettingItem(
                                     icon = MaterialSymbolIcon("format_size"),
                                     title = context.getString(R.string.settings_lyrics_text_size),
-                                    description = "Size: ${(playerLyricsTextSize * 100).toInt()}%"
+                                    description = context.getString(R.string.lyrics_settings_size_percentage, (playerLyricsTextSize * 100).toInt())
                                 ),
                                 description = {
                                     Column(
@@ -523,7 +523,7 @@ fun LyricsSettingsScreen(onBackClick: () -> Unit) {
                                         verticalArrangement = Arrangement.spacedBy(8.dp)
                                     ) {
                                         Text(
-                                            text = "Size: ${(playerLyricsTextSize * 100).toInt()}%",
+                                            text = context.getString(R.string.lyrics_settings_size_percentage, (playerLyricsTextSize * 100).toInt()),
                                             style = MaterialTheme.typography.bodyMedium,
                                             color = MaterialTheme.colorScheme.primary
                                         )
@@ -566,7 +566,11 @@ fun LyricsSettingsScreen(onBackClick: () -> Unit) {
                                             color = MaterialTheme.colorScheme.onSurfaceVariant
                                         )
                                         ExpressiveButtonGroup(
-                                            items = listOf("Left", "Center", "Right"),
+                                            items = listOf(
+                                                context.getString(R.string.alignment_left),
+                                                context.getString(R.string.alignment_center),
+                                                context.getString(R.string.alignment_right)
+                                            ),
                                             selectedIndex = when (playerLyricsAlignment) {
                                                 "START" -> 0
                                                 "END" -> 2
@@ -593,7 +597,7 @@ fun LyricsSettingsScreen(onBackClick: () -> Unit) {
                                 item = SettingItem(
                                     icon = MaterialSymbolIcon("animation"),
                                     title = context.getString(R.string.settings_lyrics_transition),
-                                    description = "Art ↔ Lyrics switch animation"
+                                    description = context.getString(R.string.lyrics_settings_switch_animation_desc)
                                 ),
                                 description = {
                                     Column(
@@ -608,7 +612,12 @@ fun LyricsSettingsScreen(onBackClick: () -> Unit) {
                                             color = MaterialTheme.colorScheme.onSurfaceVariant
                                         )
                                         ExpressiveButtonGroup(
-                                            items = listOf("Slide", "Fade", "Scale", "Up"),
+                                            items = listOf(
+                                                context.getString(R.string.animation_slide),
+                                                context.getString(R.string.animation_fade),
+                                                context.getString(R.string.animation_scale),
+                                                context.getString(R.string.animation_up)
+                                            ),
                                             selectedIndex = playerLyricsTransition,
                                             onItemClick = { index ->
                                                 HapticUtils.performHapticFeedback(context, hapticFeedback, HapticType.LIGHT)
@@ -627,7 +636,7 @@ fun LyricsSettingsScreen(onBackClick: () -> Unit) {
                                 item = SettingItem(
                                     icon = RhythmIcons.Image,
                                     title = context.getString(R.string.settings_show_art_below_lyrics),
-                                    description = if (isExpressiveActive) "Not supported by Expressive theme" else context.getString(R.string.settings_show_art_below_lyrics_desc),
+                                    description = if (isExpressiveActive) context.getString(R.string.lyrics_settings_not_supported_expressive) else context.getString(R.string.settings_show_art_below_lyrics_desc),
                                     toggleState = playerShowArtBelowLyrics,
                                     onToggleChange = { appSettings.setPlayerShowArtBelowLyrics(it) },
                                     enabled = !isExpressiveActive
@@ -647,7 +656,7 @@ fun LyricsSettingsScreen(onBackClick: () -> Unit) {
             item {
                 Spacer(modifier = Modifier.height(12.dp))
                 Text(
-                    text = "Formatting & Behaviors",
+                    text = context.getString(R.string.lyrics_settings_formatting_behaviors),
                     style = MaterialTheme.typography.titleSmall.copy(
                         fontWeight = FontWeight.SemiBold
                     ),
@@ -662,8 +671,8 @@ fun LyricsSettingsScreen(onBackClick: () -> Unit) {
                             hapticFeedback = hapticFeedback,
                             item = SettingItem(
                                 icon = MaterialSymbolIcon("format_bold"),
-                                title = "Bold Text",
-                                description = "Make the text of active lyrics bold",
+                                title = context.getString(R.string.lyrics_settings_bold_text),
+                                description = context.getString(R.string.lyrics_settings_bold_text_desc),
                                 toggleState = lyricBold,
                                 onToggleChange = { appSettings.setLyricBold(it) }
                             )
@@ -673,8 +682,8 @@ fun LyricsSettingsScreen(onBackClick: () -> Unit) {
                             hapticFeedback = hapticFeedback,
                             item = SettingItem(
                                 icon = MaterialSymbolIcon("content_cut"),
-                                title = "Trim Lyrics",
-                                description = "Trim leading and trailing whitespace from lyric lines",
+                                title = context.getString(R.string.lyrics_settings_trim_lyrics),
+                                description = context.getString(R.string.lyrics_settings_trim_lyrics_desc),
                                 toggleState = trimLyrics,
                                 onToggleChange = { appSettings.setTrimLyrics(it) }
                             )
@@ -684,8 +693,8 @@ fun LyricsSettingsScreen(onBackClick: () -> Unit) {
                             hapticFeedback = hapticFeedback,
                             item = SettingItem(
                                 icon = MaterialSymbolIcon("motion_photos_off"),
-                                title = "Disable Animations",
-                                description = "Disable transitions and animations in the lyrics view",
+                                title = context.getString(R.string.lyrics_settings_disable_animations),
+                                description = context.getString(R.string.lyrics_settings_disable_animations_desc),
                                 toggleState = lyricNoAnimation,
                                 onToggleChange = { appSettings.setLyricNoAnimation(it) }
                             )
@@ -695,8 +704,8 @@ fun LyricsSettingsScreen(onBackClick: () -> Unit) {
                             hapticFeedback = hapticFeedback,
                             item = SettingItem(
                                 icon = MaterialSymbolIcon("translate"),
-                                title = "Word-by-word Translation",
-                                description = "Try to automatically sync syllable or word translations",
+                                title = context.getString(R.string.lyrics_settings_word_by_word_translation),
+                                description = context.getString(R.string.lyrics_settings_word_by_word_translation_desc),
                                 toggleState = translationAutoWord,
                                 onToggleChange = { appSettings.setTranslationAutoWord(it) }
                             )
@@ -738,9 +747,7 @@ fun LyricsSettingsScreen(onBackClick: () -> Unit) {
 
                         Text(
                             text = stringResource(R.string.lyricssourcesettingsscreen_embedded_lyrics_are_stored) +
-                                    "• Online APIs provide high-quality synced lyrics\n" +
-                                "• Rhythm offers word-by-word sync\n" +
-                                    "• LRCLib provides free line-by-line sync",
+                                    stringResource(R.string.lyrics_settings_info_bullets),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onTertiaryContainer,
                             lineHeight = 20.sp

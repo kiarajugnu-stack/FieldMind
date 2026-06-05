@@ -517,7 +517,7 @@ fun EqualizerScreen(
                     DropdownMenuItem(
                         text = {
                             Text(
-                                "AutoEQ Profiles",
+                                stringResource(R.string.equalizerscreen_autoeq_profiles),
                                 style = MaterialTheme.typography.bodyMedium,
                                 fontWeight = FontWeight.Medium,
                                 color = MaterialTheme.colorScheme.onSurface
@@ -557,7 +557,7 @@ fun EqualizerScreen(
                     DropdownMenuItem(
                         text = {
                             Text(
-                                "Manage Device",
+                                stringResource(R.string.eq_manage_device),
                                 style = MaterialTheme.typography.bodyMedium,
                                 fontWeight = FontWeight.Medium,
                                 color = MaterialTheme.colorScheme.onSurface
@@ -597,7 +597,7 @@ fun EqualizerScreen(
                     DropdownMenuItem(
                         text = {
                             Text(
-                                "System Equalizer",
+                                stringResource(R.string.eq_system_equalizer),
                                 style = MaterialTheme.typography.bodyMedium,
                                 fontWeight = FontWeight.Medium,
                                 color = MaterialTheme.colorScheme.onSurface
@@ -662,8 +662,8 @@ fun EqualizerScreen(
                         ) {
                             Text(
                                 text = when {
-                                    isEqualizerEnabled -> "Active"
-                                    else -> "Disabled"
+                                    isEqualizerEnabled -> stringResource(R.string.common_active)
+                                    else -> stringResource(R.string.common_disabled)
                                 },
                                 style = MaterialTheme.typography.titleLarge,
                                 fontWeight = FontWeight.Bold
@@ -748,7 +748,7 @@ fun EqualizerScreen(
                                 SmallTabAnimation(
                                     index = index,
                                     selectedIndex = selectedIndex,
-                                    title = preset.name,
+                                    title = getLocalizedPresetName(preset.name),
                                     selectedColor = MaterialTheme.colorScheme.primaryContainer,
                                     onSelectedColor = MaterialTheme.colorScheme.onPrimaryContainer,
                                     unselectedColor = MaterialTheme.colorScheme.surfaceContainerHigh,
@@ -766,7 +766,7 @@ fun EqualizerScreen(
                                                 modifier = Modifier.size(18.dp)
                                             )
                                             Text(
-                                                text = preset.name,
+                                                text = getLocalizedPresetName(preset.name),
                                                 style = MaterialTheme.typography.labelLarge,
                                                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
                                             )
@@ -1007,9 +1007,9 @@ fun EqualizerScreen(
                                 }
                             },
                             statusText = if (isBassBoostAvailableState) {
-                                if (isBassBoostEnabled) "Active" else "Enhance lows"
+                                if (isBassBoostEnabled) stringResource(R.string.common_active) else stringResource(R.string.eq_enhance_lows)
                             } else {
-                                "Unavailable"
+                                stringResource(R.string.common_unavailable)
                             },
                             modifier = Modifier.weight(1f)
                         )
@@ -1037,9 +1037,9 @@ fun EqualizerScreen(
                                 }
                             },
                             statusText = when {
-                                !isSpatializationAvailable -> "Mono only"
-                                isVirtualizerEnabled -> "Active"
-                                else -> "Widen sound"
+                                !isSpatializationAvailable -> stringResource(R.string.eq_mono_only)
+                                isVirtualizerEnabled -> stringResource(R.string.common_active)
+                                else -> stringResource(R.string.eq_widen_sound)
                             },
                             modifier = Modifier.weight(1f)
                         )
@@ -1225,5 +1225,25 @@ private fun ExpressiveEffectCard(
                 textAlign = TextAlign.Center
             )
         }
+    }
+}
+
+@Composable
+private fun getLocalizedPresetName(name: String): String {
+    return when (name) {
+        "Flat" -> stringResource(R.string.eq_preset_flat)
+        "Rock" -> stringResource(R.string.eq_preset_rock)
+        "Pop" -> stringResource(R.string.eq_preset_pop)
+        "Jazz" -> stringResource(R.string.eq_preset_jazz)
+        "Classical" -> stringResource(R.string.eq_preset_classical)
+        "Electronic" -> stringResource(R.string.eq_preset_electronic)
+        "Hip Hop" -> stringResource(R.string.eq_preset_hiphop)
+        "Vocal" -> stringResource(R.string.eq_preset_vocal)
+        "Bass Boost" -> stringResource(R.string.eq_preset_bass_boost)
+        "Treble Boost" -> stringResource(R.string.eq_preset_treble_boost)
+        "V-Shape" -> stringResource(R.string.eq_preset_v_shape)
+        "Harman" -> stringResource(R.string.eq_preset_harman)
+        "Custom" -> stringResource(R.string.eq_preset_custom)
+        else -> name
     }
 }

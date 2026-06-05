@@ -28,11 +28,11 @@ val ErrorContainerLight = Color(0xFFF9DEDC) // Light red container
 val OnErrorContainerLight = Color(0xFF410E0B) // Dark text on error container
 
 // Background and surface colors
-val BackgroundLight = Color(0xFFFFFBFE) // Near-white background (M3 baseline)
+val BackgroundLight = Color(0xFFFAF5FF) // Softened — subtle purple tint, less stark white
 val OnBackgroundLight = Color(0xFF1C1B1F) // Dark text on background
-val SurfaceLight = Color(0xFFFFFBFE) // Surface same as background
+val SurfaceLight = Color(0xFFFAF5FF) // Surface same as background
 val OnSurfaceLight = Color(0xFF1C1B1F) // Dark text on surface
-val SurfaceVariantLight = Color(0xFFE7E0EE) // Light gray-purple surface variant
+val SurfaceVariantLight = Color(0xFFE4DCF0) // Slightly richer purple-gray surface variant
 val OnSurfaceVariantLight = Color(0xFF49454F) // Medium gray text
 
 // Outline colors for borders and dividers
@@ -40,11 +40,11 @@ val OutlineLight = Color(0xFF79747E) // Medium gray outline
 val OutlineVariantLight = Color(0xFFCAC4D0) // Light gray outline variant
 
 // Surface containers for different elevation levels
-val SurfaceContainerLowestLight = Color(0xFFFFFFFF) // Lowest elevation (pure white)
-val SurfaceContainerLowLight = Color(0xFFF7F2FA) // Low elevation
-val SurfaceContainerLight = Color(0xFFF3EDF7) // Medium elevation
-val SurfaceContainerHighLight = Color(0xFFECE6F0) // High elevation
-val SurfaceContainerHighestLight = Color(0xFFE6E0E9) // Highest elevation
+val SurfaceContainerLowestLight = Color(0xFFF5EFFE) // Lowest elevation — faint purple tint
+val SurfaceContainerLowLight = Color(0xFFF0E9F9) // Low elevation
+val SurfaceContainerLight = Color(0xFFEAE3F3) // Medium elevation
+val SurfaceContainerHighLight = Color(0xFFE4DDED) // High elevation
+val SurfaceContainerHighestLight = Color(0xFFDED6E7) // Highest elevation
 
 // Inverse colors for special cases
 val InverseSurfaceLight = Color(0xFF313033) // Dark surface for light theme
@@ -77,9 +77,9 @@ val ErrorContainerDark = Color(0xFF8C1D18) // Medium red container
 val OnErrorContainerDark = Color(0xFFF9DEDC) // Light text on error container
 
 // Background and surface colors
-val BackgroundDark = Color(0xFF1C1B1F) // M3 baseline dark background
+val BackgroundDark = Color(0xFF141218) // Slightly deeper than M3 baseline for better depth
 val OnBackgroundDark = Color(0xFFE6E1E5) // Light text on background
-val SurfaceDark = Color(0xFF1C1B1F) // Surface same as background
+val SurfaceDark = Color(0xFF141218) // Surface same as background
 val OnSurfaceDark = Color(0xFFE6E1E5) // Light text on surface
 val SurfaceVariantDark = Color(0xFF49454F) // Medium gray surface variant
 val OnSurfaceVariantDark = Color(0xFFCAC4D0) // Light gray text
@@ -89,11 +89,11 @@ val OutlineDark = Color(0xFF938F99) // Light gray outline
 val OutlineVariantDark = Color(0xFF49454F) // Medium gray outline variant
 
 // Surface containers for different elevation levels
-val SurfaceContainerLowestDark = Color(0xFF0F0D13) // Lowest elevation
-val SurfaceContainerLowDark = Color(0xFF1D1B20) // Low elevation
-val SurfaceContainerDark = Color(0xFF211F26) // Medium elevation
-val SurfaceContainerHighDark = Color(0xFF2B2930) // High elevation
-val SurfaceContainerHighestDark = Color(0xFF36343B) // Highest elevation
+val SurfaceContainerLowestDark = Color(0xFF0D0B10) // Lowest elevation — slightly deeper
+val SurfaceContainerLowDark = Color(0xFF1A1820) // Low elevation
+val SurfaceContainerDark = Color(0xFF201E25) // Medium elevation
+val SurfaceContainerHighDark = Color(0xFF2A282F) // High elevation
+val SurfaceContainerHighestDark = Color(0xFF35333A) // Highest elevation
 
 // Inverse colors for special cases
 val InverseSurfaceDark = Color(0xFFE6E1E5) // Light surface for dark theme

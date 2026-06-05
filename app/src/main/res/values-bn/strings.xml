@@ -3538,10 +3538,13 @@
     <string name="fullscreenlyricsview_translation">অনুবাদ</string>
     <string name="fullscreenlyricsview_realtime_sync_adjustment">রিয়েল-টাইম সিঙ্ক অ্যাডজাস্টমেন্ট</string>
     <string name="fullscreenlyricsview_str_05s">-0.5 সেকেন্ড</string>
-    <string name="fullscreenlyricsview_str_05s_1">+0.5s</string>
+    <string name="fullscreenlyricsview_str_05s_1">+0.5s
+__FMT0__ এর জন্য</string>
     <string name="fullscreenlyricsview_reset_offset">রিসেট অফসেট</string>
-    <string name="lyricseditorbottomsheet_str_500ms">500ms</string>
-    <string name="lyricseditorbottomsheet_str_100ms">100ms</string>
+    <string name="lyricseditorbottomsheet_str_500ms">500ms
+__FMT0__ এর জন্য</string>
+    <string name="lyricseditorbottomsheet_str_100ms">100ms
+__FMT0__ এর জন্য</string>
     <string name="rhythmnavigation_choose_your_experience">আপনার অভিজ্ঞতা চয়ন করুন</string>
     <string name="rhythmnavigation_switch_between_local_music">স্থানীয় সঙ্গীত এবং স্ট্রিমিং পরিষেবাগুলির মধ্যে পরিবর্তন করুন</string>
     <string name="rhythmnavigation_local">স্থানীয়</string>
@@ -3671,7 +3674,8 @@
     <string name="deviceconfiguration_profile_imported">প্রোফাইল আমদানি করা হয়েছে: %1$s</string>
     <string name="drag_to_reorder">পুনরায় সাজাতে টেনে আনুন
 __FMT0__ এর জন্য</string>
-    <string name="artist_artwork_description">শিল্পীর শিল্পকর্ম</string>
+    <string name="artist_artwork_description">শিল্পীর শিল্পকর্ম
+%1$s এর জন্য</string>
     <string name="explorer_item_icon_description">%1$s আইকন</string>
     <string name="song_added_to_blacklist_format">%1$s কালো তালিকায় যোগ করা হয়েছে</string>
     <string name="playlist_import_success">সফলভাবে %1$d প্লেলিস্ট আমদানি করা হয়েছে।\n%2$s\n\nপরিবর্তনগুলি প্রয়োগ করতে অ্যাপটি পুনরায় চালু করুন।</string>
@@ -3730,5 +3734,599 @@ __FMT0__ এর জন্য</string>
     <string name="widget_theme_solid_purple_signature">কঠিন বেগুনি (স্বাক্ষর)</string>
     <string name="widget_theme_solid_purple_desc">স্বাক্ষর অ্যাকসেন্ট টিন্ট এবং হাইলাইট সহ স্বাক্ষর গভীর বেগুনি ব্যাকড্রপ</string>
     <string name="widget_theme_glance_suffix">%1$s (শুধুমাত্র Glance উইজেট)</string>
-    <string name="unit_dp">%1$ddp</string>
+    <string name="unit_dp">%1$ddp
+%1$d এর জন্য</string>
+
+    <!-- Settings Suggestions and Tips -->
+    <string name="settings_suggestions">সেটিংস পরামর্শ</string>
+    <string name="settings_suggestions_desc">শীর্ষে প্রাসঙ্গিক পরামর্শ দেখান</string>
+    <string name="settings_performance_desc_optimized">ল্যাগ কমাতে হ্যাপটিক্স, ডিকোডিং, মার্কি এবং আর্টওয়ার্ক আনার অপ্টিমাইজ করুন</string>
+    <string name="moment_morning">আজ সকালে</string>
+    <string name="moment_afternoon">আজ বিকেলে</string>
+    <string name="moment_evening">আজ সন্ধ্যায়</string>
+    <string name="moment_night">আজ রাতে</string>
+    <string name="pulse_fresh">তাজা অধিবেশন শক্তি</string>
+    <string name="pulse_steady">অবিচলিত খাঁজ</string>
+    <string name="pulse_heavy">ভারী শোনা</string>
+    <string name="pulse_marathon">ম্যারাথন মোড</string>
+    
+    <!-- Settings Tips Details -->
+    <string name="settings_tip_theme_desc_1">প্রাণবন্ত AMOLED কালো এবং সুন্দর প্যাস্টেল রং দিয়ে আপনার মিউজিক প্লেয়ারকে রিফ্রেশ করুন।</string>
+    <string name="settings_tip_theme_desc_2">আপনার সিস্টেমের সাথে অ্যাপের উচ্চারণ মেলে Rhythm কে সত্যিকারের আপনার করুন।</string>
+    <string name="settings_tip_media_scan_desc_1">অবাঞ্ছিত অডিও ক্লিপ এড়িয়ে চলুন। সঙ্গীতের জন্য আমাদের কোন ফোল্ডারগুলি স্ক্যান করা উচিত তা স্পষ্টভাবে সংজ্ঞায়িত করুন।</string>
+    <string name="settings_tip_media_scan_desc_2">ফোকাস ফোল্ডার ব্যবহার করে ভয়েস নোট এবং রিংটোনগুলিকে আপনার প্লেলিস্ট থেকে দূরে রাখুন৷</string>
+    <string name="settings_tip_sleep_timer_desc_1">আপনার মিউজিক বাজানোর সময় ঘুমাতে যান। আমরা স্বয়ংক্রিয়ভাবে এটি বিরাম দেব।</string>
+    <string name="settings_tip_sleep_timer_desc_2">ঘুমানোর আগে একটি স্বয়ংক্রিয় ঘুমের টাইমার সেট করুন যাতে প্লেব্যাক পুরোপুরি বন্ধ হয়ে যায়।</string>
+    <string name="settings_tip_equalizer_desc_1">আপনার অভিজ্ঞতা উন্নত করুন। ইকুয়ালাইজার ব্যবহার করে বেস বুস্ট করুন এবং ফ্রিকোয়েন্সি সামঞ্জস্য করুন।</string>
+    <string name="settings_tip_equalizer_desc_2">আমাদের উন্নত অডিও প্রভাবগুলির সাথে সুরক্ষিতভাবে আপনার হেডফোনে শব্দ টিউন করুন৷</string>
+    <string name="settings_tip_backup_active_desc_1">স্বয়ংক্রিয় ব্যাকআপ সক্রিয়। আপনার ব্যাকআপ বিভাগগুলি যাচাই করুন যাতে পুনরুদ্ধারগুলি পরিষ্কার থাকে৷</string>
+    <string name="settings_tip_backup_active_desc_2">সুরক্ষা সক্রিয়: সময়সূচী ভাল দেখাচ্ছে। বড় সম্পাদনার আগে একটি ম্যানুয়াল ব্যাকআপ চালান।</string>
+    <string name="settings_tip_backup_inactive_desc_1">স্বয়ংক্রিয় ব্যাকআপ বন্ধ। প্লেলিস্ট এবং Rhythm গার্ড পরিসংখ্যান সুরক্ষিত করতে এটি সক্ষম করুন।</string>
+    <string name="settings_tip_backup_inactive_desc_2">এখনো কোনো নিরাপত্তা জাল নেই। আপনার সেটআপ হারানো এড়াতে ব্যাকআপ চালু করুন।</string>
+    <string name="settings_tip_updates_active_desc_1">আপডেটগুলি সক্ষম করা হয়েছে৷ ফিক্স এবং কর্মক্ষমতা উন্নতির জন্য তাদের রাখুন।</string>
+    <string name="settings_tip_updates_active_desc_2">আপনি আপডেট পেতে প্রস্তুত। স্থিতিশীলতা বনাম সতেজতার জন্য চ্যানেল পছন্দগুলি পরীক্ষা করুন।</string>
+    <string name="settings_tip_updates_inactive_desc_1">আপডেটগুলি অক্ষম করা হয়েছে৷ সুরক্ষিত এবং বর্তমান থাকার জন্য তাদের পুনরায় সক্ষম করুন।</string>
+    <string name="settings_tip_updates_inactive_desc_2">আপনাকে বর্তমান বিল্ডে পিন করা হয়েছে। প্রস্তুত হলে আপডেটগুলি আবার চালু করুন।</string>
+    <string name="settings_tip_queue_active_desc_1">প্লেয়ার সোয়াইপ-টু-স্কিপ সক্রিয়। মসৃণ রূপান্তরের জন্য টিউন সারি নিয়ম।</string>
+    <string name="settings_tip_queue_active_desc_2">অঙ্গভঙ্গি স্কিপ চালু আছে। আপনার শ্রবণ প্রবাহের সাথে সারি আচরণের সাথে মিল করুন।</string>
+    <string name="settings_tip_queue_inactive_desc_1">সোয়াইপ-টু-স্কিপ বন্ধ আছে। সারি নিয়ন্ত্রণ প্লেব্যাক দক্ষ রাখতে সাহায্য করতে পারে।</string>
+    <string name="settings_tip_queue_inactive_desc_2">স্পষ্ট নিয়ন্ত্রণ পছন্দ করেন? অনুমানযোগ্য প্লেব্যাকের জন্য ফাইন-টিউন সারি আচরণ।</string>
+    <string name="settings_tip_controls_active_desc_1">অনুসন্ধান বোতামগুলি দৃশ্যমান। বিশৃঙ্খলা কমাতে প্লেয়ার নিয়ন্ত্রণ কাস্টমাইজ করুন।</string>
+    <string name="settings_tip_controls_active_desc_2">নিয়ন্ত্রণ সমৃদ্ধ প্লেয়ার সক্ষম। আপনার থাম্ব নাগালের জন্য লেআউট টুইক করুন।</string>
+    <string name="settings_tip_controls_inactive_desc_1">ন্যূনতম প্লেয়ার নিয়ন্ত্রণ সক্ষম। আপনি যদি সুনির্দিষ্ট জাম্প মিস করেন তবে সিক বোতাম যোগ করুন।</string>
+    <string name="settings_tip_controls_inactive_desc_2">ক্লিন লেআউট সক্রিয়। সূক্ষ্ম প্লেব্যাক পরিচালনার জন্য অনুসন্ধান নিয়ন্ত্রণগুলি পুনরায় সক্ষম করুন৷</string>
+    <string name="settings_tip_miniplayer_active_desc_1">মিনি প্লেয়ারের অগ্রগতি দৃশ্যমান। আপনার থিমের সাথে মেলে এমন একটি শৈলী চয়ন করুন৷</string>
+    <string name="settings_tip_miniplayer_active_desc_2">মিনি প্লেয়ারে প্রগ্রেস বার সক্রিয় আছে। পরবর্তী আকার এবং কোণার tweaks চেষ্টা করুন.</string>
+    <string name="settings_tip_miniplayer_inactive_desc_1">মিনি প্লেয়ারের অগ্রগতি লুকানো আছে। দ্রুত ট্র্যাক সচেতনতার জন্য এটি সক্ষম করুন।</string>
+    <string name="settings_tip_miniplayer_inactive_desc_2">কমপ্যাক্ট মোড এখন ন্যূনতম। আরও ভাল নজরে পড়ার জন্য অগ্রগতি চালু করুন।</string>
+    <string name="settings_tip_library_active_desc_1">রেটিং সক্ষম করা হয়েছে। আবিষ্কার এবং বাছাই তীক্ষ্ণ করতে লাইব্রেরি সেটিংস ব্যবহার করুন।</string>
+    <string name="settings_tip_library_active_desc_2">আপনার লাইব্রেরি রেটিং সমর্থন করে। ক্লিনার ব্রাউজিংয়ের জন্য স্ক্যান এবং গ্রুপিং টিউন করুন।</string>
+    <string name="settings_tip_library_inactive_desc_1">রেটিং অক্ষম করা হয়েছে। লাইব্রেরি সেটিংস এখনও গঠন এবং গতি উন্নত করতে পারে।</string>
+    <string name="settings_tip_library_inactive_desc_2">সরলীকৃত লাইব্রেরি মোড সনাক্ত করা হয়েছে৷ দ্রুত নেভিগেশনের জন্য গ্রুপিং সামঞ্জস্য করুন।</string>
+
+    <!-- Lyrics Source Dialog -->
+    <string name="lyrics_source_embedded_first">প্রথমে এম্বেড করা হয়েছে</string>
+    <string name="lyrics_source_embedded_first_desc">অডিও ফাইল মেটাডেটা → অনলাইন APIs → .lrc ফাইল ব্যবহার করে দেখুন</string>
+    <string name="lyrics_source_api_first">API প্রথমে</string>
+    <string name="lyrics_source_api_first_desc">অনলাইন পরিষেবাগুলি চেষ্টা করুন → অডিও মেটাডেটা → .lrc ফাইল৷</string>
+    <string name="lyrics_source_local_first">স্থানীয় .lrc প্রথমে</string>
+    <string name="lyrics_source_local_first_desc">চেষ্টা করুন .lrc ফাইল → অডিও মেটাডেটা → অনলাইন APIs</string>
+
+    <!-- Font / Color Customization Dialogs -->
+    <string name="theme_font_source_changed_restart">হরফের উৎস পরিবর্তন করা হয়েছে। নতুন ফন্ট প্রয়োগ করতে অ্যাপটি পুনরায় চালু করুন।</string>
+    <string name="color_source_album_art">অ্যালবাম আর্ট</string>
+    <string name="color_source_album_art_desc">বর্তমানে অ্যালবাম আর্টওয়ার্ক বাজানো থেকে রং বের করুন</string>
+    <string name="color_source_system_colors">সিস্টেমের রং</string>
+    <string name="color_source_system_colors_desc">ব্যবহার করুন Material আপনি আপনার ওয়ালপেপার থেকে রং করুন</string>
+    <string name="color_source_custom_scheme">কাস্টম স্কিম</string>
+    <string name="color_source_custom_scheme_desc">পূর্বনির্ধারিত রঙের স্কিম থেকে বেছে নিন</string>
+    <string name="font_source_system_font">সিস্টেম ফন্ট</string>
+    <string name="font_source_system_font_desc">ডিভাইসের ডিফল্ট ফন্ট ব্যবহার করুন</string>
+    <string name="font_source_custom_font">কাস্টম ফন্ট</string>
+    <string name="font_source_custom_font_desc">আমদানি করুন এবং একটি কাস্টম ফন্ট ফাইল ব্যবহার করুন</string>
+    <string name="font_system_title">সিস্টেম ডিফল্ট</string>
+    <string name="font_system_desc">আপনার ডিভাইসের ডিফল্ট ফন্ট ব্যবহার করুন</string>
+    <string name="font_geom_desc">Google থেকে আধুনিক, পরিষ্কার sans-serif ফন্ট</string>
+    <string name="font_slate_desc">একটি ক্লাসিক, ঐতিহ্যবাহী চেহারা সহ মার্জিত সেরিফ ফন্ট</string>
+    <string name="font_inter_desc">পরিষ্কার এবং আধুনিক সান-সেরিফ ফন্ট, অত্যন্ত পাঠযোগ্য</string>
+    <string name="font_jetbrains_desc">প্রযুক্তিগত বিষয়বস্তুর জন্য মনোস্পেস ফন্ট নিখুঁত</string>
+    <string name="font_quicksand_desc">একটি নরম, বন্ধুত্বপূর্ণ চেহারা সহ গোলাকার ফন্ট</string>
+
+    <!-- Predefined Color Schemes -->
+    <string name="color_scheme_default_title">Rhythm ডিফল্ট</string>
+    <string name="color_scheme_default_desc">Material 3 বেসলাইন বেগুনি গোলাপী গোলাপী উচ্চারণ সহ</string>
+    <string name="color_scheme_warm_title">উষ্ণ সূর্যাস্ত</string>
+    <string name="color_scheme_warm_desc">উষ্ণ পরিবেশের জন্য আরামদায়ক কমলা এবং লাল টোন</string>
+    <string name="color_scheme_cool_title">শীতল মহাসাগর</string>
+    <string name="color_scheme_cool_desc">শান্ত পরিবেশের জন্য রিফ্রেশিং নীল এবং টিল টোন</string>
+    <string name="color_scheme_forest_title">বন সবুজ</string>
+    <string name="color_scheme_forest_desc">প্রকৃতি দ্বারা অনুপ্রাণিত প্রাকৃতিক সবুজ টোন</string>
+    <string name="color_scheme_rose_title">গোলাপ গোলাপী</string>
+    <string name="color_scheme_rose_desc">মার্জিত গোলাপী এবং ম্যাজেন্টা টোন</string>
+    <string name="color_scheme_monochrome_title">একরঙা</string>
+    <string name="color_scheme_monochrome_desc">একটি পরিষ্কার, আধুনিক চেহারার জন্য ন্যূনতম গ্রেস্কেল</string>
+    <string name="color_scheme_lavender_title">ল্যাভেন্ডার</string>
+    <string name="color_scheme_lavender_desc">শিথিল করার জন্য বেগুনি এবং ল্যাভেন্ডার টোন শান্ত করে</string>
+    <string name="color_scheme_ocean_title">গভীর মহাসাগর</string>
+    <string name="color_scheme_ocean_desc">সমুদ্রের প্রশান্তির জন্য গভীর ব্লুজ এবং অ্যাকোয়ামেরিন</string>
+    <string name="color_scheme_aurora_title">নর্দান লাইটস</string>
+    <string name="color_scheme_aurora_desc">অরোরা বোরিয়ালিস দ্বারা অনুপ্রাণিত প্রাণবন্ত সবুজ এবং ব্লুজ</string>
+    <string name="color_scheme_amber_title">গোল্ডেন অ্যাম্বার</string>
+    <string name="color_scheme_amber_desc">একটি বিলাসবহুল অনুভূতির জন্য সমৃদ্ধ অ্যাম্বার এবং সোনার টোন</string>
+    <string name="color_scheme_crimson_title">গভীর ক্রিমসন</string>
+    <string name="color_scheme_crimson_desc">নাটকের জন্য বোল্ড বারগান্ডি এবং ক্রিমসন শেড</string>
+    <string name="color_scheme_emerald_title">পান্না স্বপ্ন</string>
+    <string name="color_scheme_emerald_desc">প্রাকৃতিক বনের রঙ সহ তাজা পান্না সবুজ শাক</string>
+    <string name="color_scheme_mint_title">মিন্ট</string>
+    <string name="color_scheme_mint_desc">টাটকা এবং পরিষ্কার সায়ান এবং মিন্ট সবুজ টোন</string>
+
+    <!-- Color Preview Chips -->
+    <string name="theme_color_primary">প্রাথমিক</string>
+    <string name="theme_color_secondary">মাধ্যমিক</string>
+    <string name="theme_color_tertiary">টারশিয়ারি</string>
+
+    <!-- Lyrics Settings Screen -->
+    <string name="lyrics_settings_title">গানের কথা</string>
+    <string name="lyrics_settings_general">সাধারণ সেটিংস</string>
+    <string name="lyrics_settings_open_fullscreen_desc">লিরিক্স ভিউ ট্যাপ করে একটি পূর্ণ-স্ক্রীন লিরিক্স স্ক্রীন খুলুন</string>
+    <string name="lyrics_settings_autohide_controls">গানের নিয়ন্ত্রণ স্বয়ং-লুকান</string>
+    <string name="lyrics_settings_autohide_controls_desc">কয়েক সেকেন্ড নিষ্ক্রিয়তার পরে স্বয়ংক্রিয়ভাবে পূর্ণ-স্ক্রীন লিরিক্স স্ক্রিনে নিয়ন্ত্রণগুলি লুকান</string>
+    <string name="lyrics_settings_embedded_first">প্রথমে এম্বেড করা হয়েছে</string>
+    <string name="lyrics_settings_embedded_first_desc">অডিও ফাইলে এম্বেড করা গান পছন্দ করুন, অনলাইন এপিআই-এ ফলব্যাক করুন</string>
+    <string name="lyrics_settings_online_first">প্রথমে অনলাইন</string>
+    <string name="lyrics_settings_online_first_desc">অনলাইন এপিআই পছন্দ করুন (Rhythm শব্দ-দ্বারা-শব্দ, LRCLIb), এম্বেডে ফলব্যাক করুন</string>
+    <string name="lyrics_settings_local_first">স্থানীয় প্রথম</string>
+    <string name="lyrics_settings_local_first_desc">স্থানীয় .lrc ফাইল পছন্দ করুন, তারপর এম্বেড করা গান, তারপর অনলাইন API</string>
+    <string name="lyrics_settings_apple_music_first">অ্যাপল মিউজিক প্রথম</string>
+    <string name="lyrics_settings_lrclib_first">LRCLIb প্রথমে</string>
+    <string name="lyrics_settings_fallback_apis_desc">পছন্দের API লিরিক্স ফিরিয়ে দিতে ব্যর্থ হলে ফলব্যাক API-এর চেষ্টা করুন</string>
+    <string name="lyrics_settings_display_styling">প্রদর্শন এবং স্টাইলিং</string>
+    <string name="lyrics_settings_size_percentage">আকার: %1$d%%</string>
+    <string name="alignment_left">বাম</string>
+    <string name="alignment_center">কেন্দ্র</string>
+    <string name="alignment_right">ঠিক</string>
+    <string name="animation_slide">স্লাইড</string>
+    <string name="animation_fade">বিবর্ণ</string>
+    <string name="animation_scale">স্কেল</string>
+    <string name="animation_up">উপরে</string>
+    <string name="lyrics_settings_switch_animation_desc">শিল্প ↔ লিরিক্স স্যুইচ অ্যানিমেশন</string>
+    <string name="lyrics_settings_not_supported_expressive">এক্সপ্রেসিভ থিম দ্বারা সমর্থিত নয়</string>
+    <string name="lyrics_settings_formatting_behaviors">বিন্যাস এবং আচরণ</string>
+    <string name="lyrics_settings_bold_text">বোল্ড টেক্সট</string>
+    <string name="lyrics_settings_bold_text_desc">সক্রিয় লিরিক্সের টেক্সটকে বোল্ড করুন</string>
+    <string name="lyrics_settings_trim_lyrics">ট্রিম লিরিক্স</string>
+    <string name="lyrics_settings_trim_lyrics_desc">লিরিক লাইন থেকে লিডিং এবং ট্রেইলিং হোয়াইটস্পেস ট্রিম করুন</string>
+    <string name="lyrics_settings_disable_animations">অ্যানিমেশন অক্ষম করুন</string>
+    <string name="lyrics_settings_disable_animations_desc">লিরিক্স ভিউতে ট্রানজিশন এবং অ্যানিমেশন অক্ষম করুন</string>
+    <string name="lyrics_settings_word_by_word_translation">শব্দ দ্বারা শব্দ অনুবাদ</string>
+    <string name="lyrics_settings_word_by_word_translation_desc">স্বয়ংক্রিয়ভাবে সিলেবল বা শব্দ অনুবাদ সিঙ্ক করার চেষ্টা করুন</string>
+    <string name="lyrics_settings_info_bullets">অতিরিক্ত সিঙ্ক বিশদ:\n• অনলাইন APIগুলি উচ্চ-মানের সিঙ্ক করা লিরিক্স প্রদান করে\n• Rhythm ওয়ার্ড-বাই-ওয়ার্ড সিঙ্ক অফার করে\n• LRCLIb বিনামূল্যে লাইন-বাই-লাইন সিঙ্ক প্রদান করে</string>
+
+    <!-- AutoEQ Preset Picker additions -->
+    <string name="autoeqpresetpickerbottomsheet_search_presets">প্রিসেট অনুসন্ধান করুন...</string>
+    <string name="autoeqpresetpickerbottomsheet_disable">কিছুই নেই / AutoEQ অক্ষম করুন</string>
+    <string name="autoeqpresetpickerbottomsheet_disable_desc">হেডফোন প্রোফাইল পরিষ্কার করুন, স্ট্যান্ডার্ড EQ প্রিসেট ব্যবহার করুন</string>
+    <string name="autoeqpresetpickerbottomsheet_unknown_brand">অজানা ব্র্যান্ড</string>
+
+    <!-- Device Configuration additions -->
+    <string name="device_configuration_devices_configured">%1$d ডিভাইস কনফিগার করা হয়েছে</string>
+    <string name="device_configuration_device_recognized">ডিভাইস স্বীকৃত</string>
+    <string name="device_configuration_new_device_detected">নতুন ডিভাইস শনাক্ত হয়েছে</string>
+    <string name="device_configuration_configured_with">%1$s %2$s দিয়ে কনফিগার করা হয়েছে</string>
+    <string name="device_configuration_configured_no_profile">%1$s কনফিগার করা হয়েছে</string>
+    <string name="device_configuration_connected_not_configured">%1$s সংযুক্ত কিন্তু কনফিগার করা হয়নি</string>
+    <string name="device_configuration_applied_profile">প্রয়োগ করা হয়েছে %1$s প্রোফাইল</string>
+    <string name="device_configuration_imported_profile">আমদানি করা প্রোফাইল</string>
+    <string name="device_configuration_parse_error">EQ সেটিংস পার্স করা যায়নি। বিন্যাস পরীক্ষা করুন.</string>
+    <string name="device_configuration_custom_eq">কাস্টম EQ</string>
+    <string name="device_configuration_custom_preset">কাস্টম প্রিসেট</string>
+    <string name="device_configuration_custom">কাস্টম</string>
+    <string name="device_configuration_active_profile_label">সক্রিয় প্রোফাইল: %1$s</string>
+    <string name="device_configuration_share_subject">Rhythm EQ প্রোফাইল: %1$s</string>
+    <string name="device_configuration_share_title">EQ প্রোফাইল শেয়ার করুন</string>
+    <string name="device_configuration_edit_device">ডিভাইস সম্পাদনা করুন</string>
+    <string name="device_configuration_add_device">ডিভাইস যোগ করুন</string>
+    <string name="device_configuration_save">সংরক্ষণ করুন</string>
+    <string name="device_configuration_add">যোগ করুন
+__FMT0__ এর জন্য</string>
+    <string name="device_configuration_for_device">__FMT1__ ট্র্যাকের মধ্যে</string>
+    <string name="device_configuration_profiles_available">%1$d প্রোফাইল উপলব্ধ</string>
+    <string name="device_configuration_disable_compensation">হেডফোন ক্ষতিপূরণ অক্ষম করুন</string>
+
+    <!-- Common UI element strings -->
+    <string name="common_none">কোনোটিই নয়</string>
+    <string name="common_cancel">বাতিল করুন</string>
+    <string name="common_back">ফিরে</string>
+    <string name="common_remove">সরান</string>
+    <string name="common_add">যোগ করুন</string>
+    <string name="common_active">সক্রিয়</string>
+    <string name="common_disabled">নিষ্ক্রিয়</string>
+    <string name="common_unavailable">অনুপলব্ধ৷</string>
+    <string name="common_success">সাফল্য</string>
+    <string name="common_error">ত্রুটি</string>
+    <string name="common_unknown">অজানা</string>
+
+    <!-- Blacklist UI additions -->
+    <string name="blacklist_remove_song_title">কালো তালিকা থেকে সরান?</string>
+    <string name="blacklist_add_song_title">কালো তালিকায় যোগ করবেন?</string>
+    <string name="blacklist_remove_song_desc">এই গানটি আর আপনার লাইব্রেরি থেকে লুকানো থাকবে না৷</string>
+    <string name="blacklist_add_song_desc">এই গানটি আপনার লাইব্রেরি থেকে লুকানো হবে এবং প্লেব্যাক থেকে বাদ দেওয়া হবে৷</string>
+    <string name="blacklist_undo_warning">এই ক্রিয়াটি যে কোনো সময় পূর্বাবস্থায় ফেরানো যেতে পারে৷</string>
+    <string name="blacklist_song_removed_msg">গানটি কালো তালিকা থেকে সরানো হয়েছে</string>
+    <string name="blacklist_song_added_msg">গানটি কালো তালিকায় যোগ করা হয়েছে</string>
+    <string name="blacklist_button_remove">সরান</string>
+    <string name="blacklist_button_blacklist">কালো তালিকা</string>
+    <string name="blacklist_remove_folder_title">কালো তালিকা থেকে ফোল্ডার সরাতে চান?</string>
+    <string name="blacklist_add_folder_title">ব্ল্যাকলিস্ট ফোল্ডার?</string>
+    <string name="blacklist_remove_folder_desc">এই ফোল্ডারের সমস্ত গান আবার দৃশ্যমান হবে৷</string>
+    <string name="blacklist_add_folder_desc">এই ফোল্ডারের সমস্ত গান লুকানো হবে এবং প্লেব্যাক থেকে বাদ দেওয়া হবে৷</string>
+    <string name="blacklist_folder_removed_msg">ফোল্ডার কালো তালিকা থেকে সরানো হয়েছে৷</string>
+    <string name="blacklist_folder_added_msg">ফোল্ডারটি কালো তালিকায় যোগ করা হয়েছে</string>
+    <string name="blacklist_disc_label">ডিস্ক %1$d</string>
+    <string name="blacklist_track_label">ট্র্যাক %1$d</string>
+
+    <!-- Library & Playlist Dialog additions -->
+    <string name="dialog_add_song_to_playlist">এই প্লেলিস্টে \"%1$s\" যোগ করুন</string>
+    <string name="dialog_songs_in_queue">বর্তমান সারিতে আপনার %1$d গান আছে।</string>
+    <string name="dialog_play_song_how">আপনি কিভাবে \"%1$s\" খেলতে চান?</string>
+    <string name="dialog_clear_and_play">ক্লিয়ার অ্যান্ড প্লে</string>
+    <string name="dialog_clear_and_play_desc">সারি প্রতিস্থাপন করুন এবং এই গানটি চালান</string>
+    <string name="dialog_add_to_queue">সারিতে যোগ করুন</string>
+    <string name="dialog_add_to_queue_desc">বর্তমান সারি রাখুন এবং গান যোগ করুন</string>
+    <string name="dialog_restart_warning_message">সমস্ত আমদানি করা প্লেলিস্ট সঠিকভাবে কাজ করে তা নিশ্চিত করতে, আমরা অ্যাপটি পুনরায় চালু করার পরামর্শ দিই। আপনি সাধারণত অ্যাপ ব্যবহার চালিয়ে যেতে পারেন, তবে কিছু বৈশিষ্ট্য রিস্টার্ট না হওয়া পর্যন্ত আশানুরূপ কাজ নাও করতে পারে।</string>
+    <string name="dialog_export_playlist_to">এতে \"%1$s\" রপ্তানি করুন:</string>
+    <string name="dialog_export_playlists_to">এতে %1$d প্লেলিস্ট রপ্তানি করুন:</string>
+    <string name="dialog_operation_importing">আমদানি করা হচ্ছে</string>
+    <string name="dialog_operation_exporting">রপ্তানি করা হচ্ছে</string>
+
+    <!-- Mode dialog strings -->
+    <string name="dialog_switch_to_go">Rhythm এ স্যুইচ করবেন?</string>
+    <string name="dialog_switch_to_local">স্থানীয় এ স্যুইচ করবেন?</string>
+    <string name="dialog_switch_to_go_desc">এই আইটেমটি Rhythm Go এর অন্তর্গত। স্ট্রিমিং মোডে স্যুইচ করে এখনই স্ট্রিম করতে চান এবং এটি চালাবেন?</string>
+    <string name="dialog_switch_to_local_desc">এই আইটেমটি আপনার স্থানীয় লাইব্রেরির অন্তর্গত। আপনার অফলাইন ট্র্যাকগুলি চালানোর জন্য এখন স্থানীয় মোডে স্যুইচ করবেন?</string>
+
+    <!-- Section order content descriptions -->
+    <string name="home_section_hide_carousel">ক্যারোজেল লুকান</string>
+    <string name="home_section_show_carousel">ক্যারোজেল দেখান</string>
+    <string name="home_section_hide_section">বিভাগ লুকান</string>
+    <string name="home_section_show_section">বিভাগ দেখান</string>
+    <string name="library_tab_show">ট্যাব দেখান</string>
+    <string name="library_tab_hide">ট্যাব লুকান</string>
+
+    <!-- Add To Playlist additions -->
+    <string name="add_to_playlist_selected_count">%1$d নির্বাচিত</string>
+    <string name="add_to_playlist_title">%1$s এ যোগ করুন</string>
+    <string name="add_to_playlist_no_songs">কোনো গান উপলব্ধ নেই৷</string>
+    <string name="add_to_playlist_all_songs_present">সমস্ত গান ইতিমধ্যেই এই প্লেলিস্টে আছে৷</string>
+
+    <!-- Artist details -->
+    <string name="artist_detail_albums_count">%1$d অ্যালবাম</string>
+    <string name="artist_detail_songs_count">%1$d গান</string>
+
+    <!-- Equalizer presets & UI -->
+    <string name="eq_preset_flat">ফ্ল্যাট</string>
+    <string name="eq_preset_rock">রক</string>
+    <string name="eq_preset_pop">পপ</string>
+    <string name="eq_preset_jazz">জ্যাজ</string>
+    <string name="eq_preset_classical">ক্লাসিক্যাল</string>
+    <string name="eq_preset_electronic">ইলেকট্রনিক</string>
+    <string name="eq_preset_hiphop">হিপ হপ</string>
+    <string name="eq_preset_vocal">ভোকাল</string>
+    <string name="eq_preset_bass_boost">বাস বুস্ট</string>
+    <string name="eq_preset_treble_boost">ট্রেবল বুস্ট</string>
+    <string name="eq_preset_v_shape">V-আকৃতি</string>
+    <string name="eq_preset_harman">হারমান</string>
+    <string name="eq_preset_custom">কাস্টম</string>
+    <string name="eq_autoeq_profiles">AutoEQ প্রোফাইল</string>
+    <string name="eq_manage_device">ডিভাইস পরিচালনা করুন</string>
+    <string name="eq_system_equalizer">সিস্টেম ইকুয়ালাইজার</string>
+    <string name="eq_enhance_lows">লো উন্নত করুন</string>
+    <string name="eq_widen_sound">শব্দ প্রশস্ত করুন</string>
+    <string name="eq_mono_only">শুধুমাত্র মনো</string>
+
+    <!-- Library updates, sorting & categories -->
+    <string name="library_updated_songs_success">আপডেট করা হয়েছে %1$d গান</string>
+    <string name="library_updated_songs_failed">আপডেট করা হয়েছে %1$d গান, %2$d ব্যর্থ হয়েছে৷</string>
+    <string name="library_switch_to_grid">গ্রিড ভিউতে স্যুইচ করুন</string>
+    <string name="library_switch_to_list">তালিকা দৃশ্যে স্যুইচ করুন</string>
+    <string name="library_sort_title">শিরোনাম</string>
+    <string name="library_sort_artist">শিল্পী</string>
+    <string name="library_sort_date_added">তারিখ যোগ করা হয়েছে</string>
+    <string name="library_sort_date_modified">তারিখ পরিবর্তন করা হয়েছে</string>
+    <string name="library_sort_ascending">আরোহী</string>
+    <string name="library_sort_descending">অবরোহী</string>
+    <string name="library_sort_name_asc">নাম (A-Z)</string>
+    <string name="library_sort_name_desc">নাম (Z-A)</string>
+    <string name="library_sort_songs_desc">গান (উচ্চ থেকে নিম্ন)</string>
+    <string name="library_sort_albums_desc">অ্যালবাম (উচ্চ থেকে নিম্ন)</string>
+    <string name="library_scan_songs">গান স্ক্যান করা হচ্ছে...</string>
+    <string name="library_scan_albums">অ্যালবামগুলি প্রক্রিয়া করা হচ্ছে...</string>
+    <string name="library_scan_artists">শিল্পীদের প্রক্রিয়াকরণ...</string>
+    <string name="library_scan_genres">ধরন সনাক্ত করা হচ্ছে...</string>
+    <string name="library_scan_media">মিডিয়া স্ক্যান করা হচ্ছে...</string>
+    <string name="library_export_failed">রপ্তানি ব্যর্থ হয়েছে৷</string>
+    <string name="library_import_failed">আমদানি ব্যর্থ হয়েছে৷</string>
+    <string name="library_category_all">সব</string>
+    <string name="library_category_favorites">❤️ প্রিয়</string>
+    <string name="library_category_absolute_favorites">⭐⭐⭐⭐⭐ পরম প্রিয়</string>
+    <string name="library_category_loved">⭐⭐⭐⭐ ভালো লেগেছে</string>
+    <string name="library_category_great">⭐⭐⭐ দারুণ</string>
+    <string name="library_category_good">⭐⭐ ভালো</string>
+    <string name="library_category_liked">⭐ পছন্দ হয়েছে</string>
+    <string name="library_category_short">ছোট (&lt;3 মিনিট)</string>
+    <string name="library_category_medium">মাঝারি (3-5 মিনিট)</string>
+    <string name="library_category_long">দীর্ঘ (&gt; 5 মিনিট)</string>
+    <string name="library_category_hi_res_lossless">হাই-রেস লসলেস</string>
+    <string name="library_category_lossless">ক্ষতিহীন</string>
+    <string name="library_category_dolby">ডলবি</string>
+    <string name="library_category_mono">মনো</string>
+    <string name="library_category_stereo">স্টেরিও</string>
+    <string name="library_category_high_quality">উচ্চ গুণমান</string>
+    <string name="library_category_standard">স্ট্যান্ডার্ড</string>
+    <string name="library_removed_from_favorites">পছন্দসই থেকে %1$d সরানো হয়েছে</string>
+    <string name="library_added_to_favorites">ফেভারিটে %1$d যোগ করা হয়েছে</string>
+    <string name="library_unlike_all">সবার থেকে আলাদা</string>
+    <string name="library_like_all">সকলের মত
+__FMT1__ ট্র্যাকের মধ্যে</string>
+    <string name="library_tracks_count_format">%1$d</string>
+    <string name="library_no_playlists_yet">এখনো কোনো প্লেলিস্ট নেই\n+ বোতাম ব্যবহার করে আপনার প্রথম প্লেলিস্ট তৈরি করুন৷</string>
+    <string name="library_no_albums_yet">এখনো কোনো অ্যালবাম নেই৷</string>
+    <string name="library_no_artists_yet">এখনো কোনো শিল্পী নেই</string>
+    <string name="library_action_play_next">পরবর্তী খেলুন</string>
+    <string name="library_action_add_to_queue">সারিতে যোগ করুন</string>
+    <string name="library_action_add_to_blacklist">কালো তালিকায় যোগ করুন</string>
+    <string name="library_action_song_info">গানের তথ্য</string>
+    <string name="library_action_add_to_playlist">প্লেলিস্টে যোগ করুন</string>
+    <string name="library_action_rate_song">হার গান</string>
+    <string name="library_menu_new_playlist">নতুন প্লেলিস্ট</string>
+    <string name="library_menu_import_playlist">প্লেলিস্ট আমদানি করুন</string>
+    <string name="library_menu_export_playlists">প্লেলিস্ট রপ্তানি করুন</string>
+    <string name="library_menu_close_playlist">প্লেলিস্ট মেনু বন্ধ করুন</string>
+    <string name="library_menu_open_playlist">প্লেলিস্ট মেনু খুলুন</string>
+    <string name="library_menu_close">মেনু বন্ধ করুন</string>
+    <string name="library_selected_count_format">%1$d নির্বাচিত
+%1$d ট্র্যাক থেকে</string>
+    <string name="library_from_tracks_format">from %1$d tracks</string>
+    <string name="library_playlist_count_singular">%1$d প্লেলিস্ট</string>
+    <string name="library_playlist_count_plural">%1$d প্লেলিস্ট</string>
+    <string name="library_album_count_singular">%1$d অ্যালবাম</string>
+    <string name="library_album_count_plural">%1$d অ্যালবাম</string>
+    <string name="library_artist_count_singular">%1$d শিল্পী</string>
+    <string name="library_artist_count_plural">%1$d শিল্পী</string>
+    <string name="library_duration_hours_minutes">%1$dh %2$dমি</string>
+    <string name="library_duration_minutes">%1$dমি</string>
+
+    <!-- Onboarding, Backup & Settings additions -->
+    <string name="onboarding_blacklist_label">কালো তালিকা</string>
+    <string name="onboarding_whitelist_label">হোয়াইটলিস্ট</string>
+    <string name="onboarding_full_player_label">সম্পূর্ণ প্লেয়ার</string>
+    <string name="onboarding_mini_player_label">মিনি প্লেয়ার</string>
+    <string name="onboarding_blocked_folders">%1$d ব্লক করা ফোল্ডার</string>
+    <string name="onboarding_whitelisted_folders">%1$d সাদা তালিকাভুক্ত ফোল্ডার</string>
+    <string name="onboarding_sample_button">নমুনা বোতাম</string>
+    <string name="onboarding_primary_label">প্রাথমিক</string>
+    <string name="onboarding_secondary_label">মাধ্যমিক</string>
+    <string name="onboarding_tertiary_label">টারশিয়ারি</string>
+    <string name="onboarding_rhythm_material">Rhythm (Material)</string>
+    
+    <string name="backup_restored_success">ব্যাকআপ সফলভাবে পুনরুদ্ধার করা হয়েছে৷ সমস্ত পরিবর্তন প্রয়োগ করতে অ্যাপটি পুনরায় চালু করুন।</string>
+    <string name="backup_copied_to_clipboard">ব্যাকআপ তৈরি করা হয়েছে এবং ক্লিপবোর্ডে অনুলিপি করা হয়েছে৷</string>
+    <string name="backup_failed_to_create">ব্যাকআপ তৈরি করতে ব্যর্থ হয়েছে: %1$s</string>
+    <string name="backup_failed_to_restore_file">ফাইল থেকে পুনরুদ্ধার করতে ব্যর্থ হয়েছে: %1$s</string>
+    <string name="backup_no_backup_clipboard">ক্লিপবোর্ডে কোনো ব্যাকআপ পাওয়া যায়নি</string>
+    <string name="backup_failed_to_restore_clipboard">ক্লিপবোর্ড থেকে পুনরুদ্ধার করতে ব্যর্থ হয়েছে: %1$s</string>
+    
+    <string name="updater_ready_to_install">সংস্করণ %1$s ইনস্টল করার জন্য প্রস্তুত</string>
+    <string name="updater_download_progress">%1$d%% • %2$s / %3$s</string>
+    <string name="updater_version_info">সংস্করণ %1$s • %2$s</string>
+    <string name="updater_error_occurred">একটি ত্রুটি ঘটেছে৷</string>
+    <string name="updater_channel_stable">স্থিতিশীল</string>
+    <string name="updater_channel_beta">বিটা</string>
+
+    <!-- Expressive shape preset & group names -->
+    <string name="shape_preset_default">ডিফল্ট</string>
+    <string name="shape_preset_default_desc">সব বয়সের জন্য মৃদু অভিব্যক্তিপূর্ণ আকার</string>
+    <string name="shape_preset_friendly">বন্ধুত্বপূর্ণ</string>
+    <string name="shape_preset_friendly_desc">উষ্ণ এবং অ্যাক্সেসযোগ্য আকার</string>
+    <string name="shape_preset_cheerful">প্রফুল্ল</string>
+    <string name="shape_preset_cheerful_desc">উজ্জ্বল এবং অভিব্যক্তিপূর্ণ আকার</string>
+    <string name="shape_preset_modern">আধুনিক</string>
+    <string name="shape_preset_modern_desc">সমসাময়িক অভিব্যক্তিপূর্ণ নকশা</string>
+    <string name="shape_preset_playful">কৌতুকপূর্ণ</string>
+    <string name="shape_preset_playful_desc">মজাদার এবং অভিব্যক্তিপূর্ণ আকার</string>
+    <string name="shape_preset_organic">জৈব</string>
+    <string name="shape_preset_organic_desc">প্রকৃতি-অনুপ্রাণিত আকার</string>
+    <string name="shape_preset_geometric">জ্যামিতিক</string>
+    <string name="shape_preset_geometric_desc">পরিষ্কার এবং আধুনিক আকার</string>
+    <string name="shape_preset_retro">বিপরীতমুখী</string>
+    <string name="shape_preset_retro_desc">পিক্সেলেটেড নস্টালজিক আকৃতি</string>
+    <string name="shape_preset_custom">কাস্টম</string>
+    <string name="shape_preset_custom_desc">আপনার ব্যক্তিগতকৃত নির্বাচন</string>
+    <string name="shape_option_square">স্কোয়ার</string>
+    <string name="shape_option_square_desc">গোলাকার বর্গক্ষেত্র</string>
+    <string name="shape_option_oval">ওভাল</string>
+    <string name="shape_option_oval_desc">দীর্ঘায়িত ডিম্বাকৃতি</string>
+    <string name="shape_option_pill">পিল</string>
+    <string name="shape_option_pill_desc">ক্যাপসুল আকৃতি</string>
+    <string name="shape_option_diamond">ডায়মন্ড</string>
+    <string name="shape_option_diamond_desc">ডায়মন্ড আকৃতি</string>
+    <string name="shape_option_triangle">ত্রিভুজ</string>
+    <string name="shape_option_triangle_desc">গোলাকার ত্রিভুজ</string>
+    <string name="shape_option_pentagon">পেন্টাগন</string>
+    <string name="shape_option_pentagon_desc">পঞ্চমুখী বহুভুজ</string>
+    <string name="shape_option_flower">ফুল</string>
+    <string name="shape_option_flower_desc">পাপড়ি সহ ফুল</string>
+    <string name="shape_option_clover4">4-পাতার ক্লোভার</string>
+    <string name="shape_option_clover4_desc">চার পাতার ক্লোভার</string>
+    <string name="shape_option_clover8">8-পাতার ক্লোভার</string>
+    <string name="shape_option_clover8_desc">আট পাতার ক্লোভার</string>
+    <string name="shape_option_heart">হৃদয়</string>
+    <string name="shape_option_heart_desc">হার্ট আকৃতি</string>
+    <string name="shape_option_bun">বান</string>
+    <string name="shape_option_bun_desc">বান/রুটির আকৃতি</string>
+    <string name="shape_option_boom">বুম</string>
+    <string name="shape_option_boom_desc">বিস্ফোরণের আকৃতি</string>
+    <string name="shape_option_soft_boom">নরম বুম</string>
+    <string name="shape_option_soft_boom_desc">নরম বিস্ফোরণ</string>
+    <string name="shape_option_burst">বিস্ফোরণ</string>
+    <string name="shape_option_burst_desc">স্টারবার্স্ট আকৃতি</string>
+    <string name="shape_option_soft_burst">নরম বিস্ফোরণ</string>
+    <string name="shape_option_soft_burst_desc">নরম স্টারবার্স্ট</string>
+    <string name="shape_option_sunny">সানি</string>
+    <string name="shape_option_sunny_desc">রশ্মি সহ সূর্য</string>
+    <string name="shape_option_very_sunny">খুব রোদ</string>
+    <string name="shape_option_very_sunny_desc">আরো রশ্মি সহ সূর্য</string>
+    <string name="shape_option_cookie4">কুকি 4</string>
+    <string name="shape_option_cookie4_desc">4-পার্শ্বযুক্ত কুকি</string>
+    <string name="shape_option_cookie6">কুকি 6</string>
+    <string name="shape_option_cookie6_desc">6-পার্শ্বযুক্ত কুকি</string>
+    <string name="shape_option_cookie7">কুকি 7</string>
+    <string name="shape_option_cookie7_desc">7-পার্শ্বযুক্ত কুকি</string>
+    <string name="shape_option_cookie9">কুকি 9</string>
+    <string name="shape_option_cookie9_desc">9-পার্শ্বযুক্ত কুকি</string>
+    <string name="shape_option_cookie12">কুকি 12</string>
+    <string name="shape_option_cookie12_desc">12-পার্শ্বযুক্ত কুকি</string>
+    <string name="shape_option_ghostish">ভূতুড়ে</string>
+    <string name="shape_option_ghostish_desc">ভূতের মতো আকৃতি</string>
+    <string name="shape_option_puffy">ফোলা</string>
+    <string name="shape_option_puffy_desc">মেঘের মতো আকৃতি</string>
+    <string name="shape_option_puffy_diamond">পাফি ডায়মন্ড</string>
+    <string name="shape_option_puffy_diamond_desc">পাফি হীরা</string>
+    <string name="shape_option_fan">ফ্যান</string>
+    <string name="shape_option_fan_desc">ফ্যানের আকৃতি</string>
+    <string name="shape_option_circle">বৃত্ত</string>
+    <string name="shape_option_circle_desc">একটি নিখুঁত বৃত্ত</string>
+    <string name="shape_option_clover_4_leaf">4-পাতার ক্লোভার</string>
+    <string name="shape_option_clover_4_leaf_desc">চার পাতার ক্লোভার</string>
+    <string name="shape_option_clover_8_leaf">8-পাতার ক্লোভার</string>
+    <string name="shape_option_clover_8_leaf_desc">আট পাতার ক্লোভার</string>
+    <string name="shape_option_arrow">তীর</string>
+    <string name="shape_option_arrow_desc">তীর নির্দেশক</string>
+    <string name="shape_option_arch">খিলান</string>
+    <string name="shape_option_arch_desc">খিলান আকৃতি</string>
+    <string name="shape_option_clam_shell">ক্ল্যাম শেল</string>
+    <string name="shape_option_clam_shell_desc">শেল আকৃতি</string>
+    <string name="shape_option_gem">রত্ন</string>
+    <string name="shape_option_gem_desc">রত্নপাথরের আকৃতি</string>
+    <string name="shape_option_semi_circle">সেমি সার্কেল</string>
+    <string name="shape_option_semi_circle_desc">অর্ধ বৃত্ত</string>
+    <string name="shape_option_slanted">তির্যক</string>
+    <string name="shape_option_slanted_desc">তির্যক বর্গক্ষেত্র</string>
+    <string name="shape_option_pixel_circle">পিক্সেল সার্কেল</string>
+    <string name="shape_option_pixel_circle_desc">পিক্সেলেটেড বৃত্ত</string>
+    <string name="shape_option_pixel_triangle">পিক্সেল ত্রিভুজ</string>
+    <string name="shape_option_pixel_triangle_desc">পিক্সেলেটেড ত্রিভুজ</string>
+    <string name="shape_group_basic">মৌলিক</string>
+    <string name="shape_group_organic">জৈব</string>
+    <string name="shape_group_playful">কৌতুকপূর্ণ</string>
+    <string name="shape_group_cookie">কুকি</string>
+    <string name="shape_group_whimsical">বাতিক</string>
+    <string name="shape_group_special">বিশেষ</string>
+    <string name="shape_group_pixel">পিক্সেল</string>
+
+    <!-- Customization Choices -->
+    <string name="option_always">সর্বদা</string>
+    <string name="option_expanded">প্রসারিত</string>
+    <string name="option_collapsed">সঙ্কুচিত হয়েছে</string>
+    <string name="option_linear">লিনিয়ার</string>
+    <string name="option_circular">সার্কুলার</string>
+    <string name="option_auto">অটো</string>
+    <string name="option_manual">ম্যানুয়াল</string>
+    <string name="option_both">উভয়ই</string>
+    <string name="option_icon">আইকন</string>
+    <string name="option_name">নাম</string>
+
+    <!-- Theme settings additions -->
+    <string name="theme_color_red">লাল</string>
+    <string name="theme_color_green">সবুজ</string>
+    <string name="theme_color_blue">নীল</string>
+    <string name="theme_font_restart_warning">ফন্ট পরিবর্তন করা হয়েছে। নতুন ফন্ট প্রয়োগ করতে অ্যাপটি পুনরায় চালু করুন।</string>
+    <string name="theme_source_album_art">অ্যালবাম আর্ট</string>
+    <string name="theme_source_album_art_desc">বর্তমানে অ্যালবাম আর্টওয়ার্ক বাজানো থেকে রং বের করুন</string>
+    <string name="theme_source_system_colors">সিস্টেমের রং</string>
+    <string name="theme_source_system_colors_desc">ব্যবহার করুন Material আপনি আপনার ওয়ালপেপার থেকে রং করুন</string>
+    <string name="theme_source_custom_scheme">কাস্টম স্কিম</string>
+    <string name="theme_source_custom_scheme_desc">পূর্বনির্ধারিত রঙের স্কিম থেকে বেছে নিন</string>
+    <string name="theme_font_system">সিস্টেম ফন্ট</string>
+    <string name="theme_font_system_desc">ডিভাইসের ডিফল্ট ফন্ট ব্যবহার করুন</string>
+    <string name="theme_font_custom">কাস্টম ফন্ট</string>
+    <string name="theme_font_custom_desc">আমদানি করুন এবং একটি কাস্টম ফন্ট ফাইল ব্যবহার করুন</string>
+
+    <!-- Color Scheme names -->
+    <string name="scheme_default">ডিফল্ট</string>
+    <string name="scheme_warm">উষ্ণ</string>
+    <string name="scheme_cool">চমৎকার</string>
+    <string name="scheme_forest">বন</string>
+    <string name="scheme_rose">গোলাপ</string>
+    <string name="scheme_monochrome">একরঙা</string>
+    <string name="scheme_lavender">ল্যাভেন্ডার</string>
+    <string name="scheme_ocean">মহাসাগর</string>
+    <string name="scheme_aurora">অরোরা</string>
+    <string name="scheme_amber">অ্যাম্বার</string>
+    <string name="scheme_crimson">ক্রিমসন</string>
+    <string name="scheme_emerald">পান্না</string>
+    <string name="scheme_mint">মিন্ট</string>
+
+    <!-- Shape Utils category and descriptions -->
+    <string name="shape_utils_fab">ফ্লোটিং অ্যাকশন বোতাম
+FAB বোতামের জন্য</string>
+    <string name="shape_utils_fab_desc">আকৃতি</string>
+    <string name="shape_utils_cards">কার্ড</string>
+    <string name="shape_utils_cards_desc">কার্ড এবং পাত্রের জন্য আকৃতি</string>
+    <string name="shape_utils_buttons">বোতাম</string>
+    <string name="shape_utils_buttons_desc">বোতামের আকৃতি</string>
+    <string name="shape_utils_chips">চিপস</string>
+    <string name="shape_utils_chips_desc">চিপস এবং ট্যাগের জন্য আকৃতি</string>
+    <string name="shape_utils_player_controls">প্লেয়ার কন্ট্রোল
+প্লেয়ার কন্ট্রোল বোতামের জন্য</string>
+    <string name="shape_utils_player_controls_desc">আকৃতি</string>
+    <string name="shape_utils_mini_player">মিনি প্লেয়ার
+মিনি প্লেয়ার আর্টওয়ার্কের জন্য</string>
+    <string name="shape_utils_mini_player_desc">আকৃতি</string>
+
+    <!-- Metadata properties and labels -->
+    <string name="metadata_duration">সময়কাল</string>
+    <string name="metadata_disc">ডিস্ক</string>
+    <string name="metadata_composer">সুরকার</string>
+    <string name="metadata_album_artist">অ্যালবাম শিল্পী</string>
+    <string name="metadata_play_count">প্লে কাউন্ট</string>
+    <string name="metadata_total_played">মোট খেলা</string>
+    <string name="metadata_rating">রেটিং</string>
+    <string name="metadata_quality">গুণমান</string>
+    <string name="metadata_audio_tech">অডিও টেক</string>
+    <string name="metadata_bit_depth">বিট গভীরতা</string>
+    <string name="metadata_bitrate">বিটরেট</string>
+    <string name="metadata_sample_rate">নমুনা হার</string>
+    <string name="metadata_channels">চ্যানেল</string>
+    <string name="metadata_format">বিন্যাস</string>
+    <string name="metadata_location">অবস্থান</string>
+    <string name="metadata_lyrics">গানের কথা</string>
+    <string name="metadata_mime_type">MIME প্রকার</string>
+    <string name="metadata_date_added">তারিখ যোগ করা হয়েছে</string>
+    <string name="metadata_modified">পরিবর্তিত</string>
+    <string name="metadata_lyrics_available">উপলব্ধ</string>
+    <string name="metadata_dts">DTS</string>
+    <string name="metadata_hi_res">Hi-Res</string>
+    <string name="metadata_dolby">ডলবি</string>
+    <string name="metadata_lossless">ক্ষতিহীন</string>
+
+    <!-- Discover settings specific -->
+    <string name="settings_discover_album_name">অ্যালবামের নাম</string>
+    <string name="settings_discover_album_name_desc">কার্ডে অ্যালবামের শিরোনাম দেখান</string>
+    <string name="settings_discover_artist_name">শিল্পীর নাম</string>
+    <string name="settings_discover_artist_name_desc">কার্ডে শিল্পীর নাম দেখান</string>
+    <string name="settings_discover_release_year">প্রকাশের বছর</string>
+    <string name="settings_discover_release_year_desc">অ্যালবাম প্রকাশের বছর দেখান</string>
+    <string name="settings_discover_play_button">প্লে বোতাম</string>
+    <string name="settings_discover_play_button_desc">দ্রুত খেলার বোতাম দেখান</string>
+    <string name="settings_discover_gradient_overlay">গ্রেডিয়েন্ট ওভারলে</string>
+    <string name="settings_discover_gradient_overlay_desc">পাঠ্যের পিছনে গ্রেডিয়েন্ট দেখান</string>
+
+    <!-- Carousel Style selector strings -->
+    <string name="carousel_style_default">ডিফল্ট</string>
+    <string name="carousel_style_default_desc">2 সাইড পিক অ্যালবাম</string>
+    <string name="carousel_style_hero">হিরো</string>
+    <string name="carousel_style_hero_desc">1 সাইড পিক অ্যালবাম</string>
+
+    <!-- Theme names -->
+    <string name="theme_rhythm">Rhythm</string>
+    <string name="theme_expressive">অভিব্যক্তিপূর্ণ</string>
+    <string name="settings_managed_by_expressive_shapes">এক্সপ্রেসিভ আকৃতি দ্বারা পরিচালিত</string>
+
+    <!-- Shape targets -->
+    <string name="shape_target_album_art">অ্যালবাম আর্টওয়ার্ক
+অ্যালবাম আর্টওয়ার্কের জন্য</string>
+    <string name="shape_target_album_art_desc">আকৃতি</string>
+    <string name="shape_target_player_art">প্লেয়ার আর্টওয়ার্ক
+প্লেয়ার স্ক্রীন আর্টওয়ার্কের জন্য</string>
+    <string name="shape_target_player_art_desc">আকৃতি</string>
+    <string name="shape_target_song_art">গানের শিল্পকর্ম</string>
+    <string name="shape_target_song_art_desc">তালিকায় গানের শিল্পকর্মের আকৃতি</string>
+    <string name="shape_target_playlist_art">প্লেলিস্ট আর্টওয়ার্ক
+প্লেলিস্ট কভারের জন্য</string>
+    <string name="shape_target_playlist_art_desc">আকৃতি</string>
+    <string name="shape_target_artist_art">শিল্পী শিল্পকর্ম</string>
+    <string name="shape_target_artist_art_desc">শিল্পীর ছবির জন্য আকৃতি</string>
+    <string name="settings_shape_for">%1$s এর আকৃতি</string>
 </resources>
+

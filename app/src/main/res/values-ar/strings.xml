@@ -3733,4 +3733,591 @@
     <string name="widget_theme_solid_purple_desc">خلفية بنفسجية عميقة مميزة مع صبغات وإبرازات مميزة</string>
     <string name="widget_theme_glance_suffix">%1$s (Glance الأدوات فقط)</string>
     <string name="unit_dp">%1$ddp</string>
+
+    <!-- Settings Suggestions and Tips -->
+    <string name="settings_suggestions">اقتراحات الإعدادات</string>
+    <string name="settings_suggestions_desc">عرض الاقتراحات السياقية في الأعلى</string>
+    <string name="settings_performance_desc_optimized">تحسين اللمس وفك التشفير وإطار التحديد وجلب الأعمال الفنية لتقليل التأخير</string>
+    <string name="moment_morning">هذا الصباح</string>
+    <string name="moment_afternoon">بعد ظهر هذا اليوم</string>
+    <string name="moment_evening">هذا المساء</string>
+    <string name="moment_night">الليلة</string>
+    <string name="pulse_fresh">طاقة الجلسة المنعشة</string>
+    <string name="pulse_steady">أخدود ثابت</string>
+    <string name="pulse_heavy">الاستماع الثقيل</string>
+    <string name="pulse_marathon">وضع الماراثون</string>
+    
+    <!-- Settings Tips Details -->
+    <string name="settings_tip_theme_desc_1">قم بتحديث مشغل الموسيقى الخاص بك باستخدام ألوان AMOLED السوداء النابضة بالحياة وألوان الباستيل الجميلة.</string>
+    <string name="settings_tip_theme_desc_2">اجعل Rhythm ملكك حقًا من خلال مطابقة لهجة التطبيق مع نظامك.</string>
+    <string name="settings_tip_media_scan_desc_1">تجنب المقاطع الصوتية غير المرغوب فيها. حدد بوضوح المجلدات التي يجب علينا فحصها بحثًا عن الموسيقى.</string>
+    <string name="settings_tip_media_scan_desc_2">احتفظ بالملاحظات الصوتية ونغمات الرنين بعيدًا عن قوائم التشغيل الخاصة بك باستخدام مجلدات التركيز.</string>
+    <string name="settings_tip_sleep_timer_desc_1">انجرف إلى النوم أثناء تشغيل الموسيقى. سنقوم بإيقافه مؤقتًا تلقائيًا.</string>
+    <string name="settings_tip_sleep_timer_desc_2">اضبط مؤقتًا تلقائيًا للنوم قبل النوم حتى يتوقف التشغيل تمامًا.</string>
+    <string name="settings_tip_equalizer_desc_1">ارفع مستوى تجربتك. قم بتعزيز الجهير وضبط الترددات باستخدام المعادل.</string>
+    <string name="settings_tip_equalizer_desc_2">قم بضبط الصوت على سماعات الرأس الخاصة بك بشكل آمن باستخدام تأثيراتنا الصوتية المتقدمة.</string>
+    <string name="settings_tip_backup_active_desc_1">النسخ الاحتياطي التلقائي نشط. تحقق من أقسام النسخ الاحتياطي الخاصة بك حتى تظل عمليات الاستعادة نظيفة.</string>
+    <string name="settings_tip_backup_active_desc_2">تم تمكين الحماية: يبدو الجدول الزمني جيدًا. قم بإجراء نسخة احتياطية يدوية قبل إجراء التعديلات الكبيرة.</string>
+    <string name="settings_tip_backup_inactive_desc_1">النسخ الاحتياطي التلقائي متوقف. قم بتمكينه لحماية قوائم التشغيل وإحصائيات الحماية Rhythm.</string>
+    <string name="settings_tip_backup_inactive_desc_2">لا توجد شبكة أمان حتى الآن. قم بتشغيل النسخ الاحتياطية لتجنب فقدان الإعداد.</string>
+    <string name="settings_tip_updates_active_desc_1">التحديثات ممكّنة. احتفظ بها لإجراء الإصلاحات وتحسينات الأداء.</string>
+    <string name="settings_tip_updates_active_desc_2">أنت جاهز لتلقي التحديثات. تحقق من تفضيلات القناة للتأكد من الاستقرار مقابل الحداثة.</string>
+    <string name="settings_tip_updates_inactive_desc_1">التحديثات معطلة. أعد تمكينهم من البقاء محميين وحديثين.</string>
+    <string name="settings_tip_updates_inactive_desc_2">لقد تم تثبيتك في الإصدار الحالي. قم بتشغيل التحديثات مرة أخرى عندما تكون جاهزة.</string>
+    <string name="settings_tip_queue_active_desc_1">خاصية التمرير السريع للتخطي للاعب نشطة. ضبط قواعد قائمة الانتظار لانتقالات أكثر سلاسة.</string>
+    <string name="settings_tip_queue_active_desc_2">تخطي الإيماءات قيد التشغيل. قم بمطابقة سلوك قائمة الانتظار مع تدفق الاستماع الخاص بك.</string>
+    <string name="settings_tip_queue_inactive_desc_1">تم إيقاف السحب للتخطي. يمكن أن تساعد عناصر التحكم في قائمة الانتظار في الحفاظ على كفاءة التشغيل.</string>
+    <string name="settings_tip_queue_inactive_desc_2">هل تفضل عناصر التحكم الصريحة؟ ضبط سلوك قائمة الانتظار للتشغيل المتوقع.</string>
+    <string name="settings_tip_controls_active_desc_1">أزرار البحث مرئية. قم بتخصيص عناصر التحكم في المشغل لتقليل الفوضى.</string>
+    <string name="settings_tip_controls_active_desc_2">تم تمكين المشغل الغني بالتحكم. قرص التخطيط للوصول إلى الإبهام الخاص بك.</string>
+    <string name="settings_tip_controls_inactive_desc_1">تم تمكين الحد الأدنى من عناصر التحكم في المشغل. أضف أزرار البحث إذا فاتتك القفزات الدقيقة.</string>
+    <string name="settings_tip_controls_inactive_desc_2">التخطيط النظيف نشط. أعد تمكين عناصر التحكم في البحث للتعامل بشكل أفضل مع التشغيل.</string>
+    <string name="settings_tip_miniplayer_active_desc_1">تقدم اللاعب المصغر مرئي. اختر النمط الذي يتناسب مع موضوعك.</string>
+    <string name="settings_tip_miniplayer_active_desc_2">شريط التقدم نشط في المشغل المصغر. جرب تعديلات الشكل والزاوية بعد ذلك.</string>
+    <string name="settings_tip_miniplayer_inactive_desc_1">تقدم اللاعب الصغير مخفي. تمكينه للتوعية المسار السريع.</string>
+    <string name="settings_tip_miniplayer_inactive_desc_2">الوضع المضغوط هو الحد الأدنى الآن. قم بتشغيل التقدم للحصول على إمكانية رؤية أفضل.</string>
+    <string name="settings_tip_library_active_desc_1">التقييمات ممكّنة. استخدم إعدادات المكتبة لتحسين الاكتشاف والفرز.</string>
+    <string name="settings_tip_library_active_desc_2">مكتبتك تدعم التقييمات. ضبط المسح والتجميع للتصفح الأنظف.</string>
+    <string name="settings_tip_library_inactive_desc_1">التقييمات معطلة. لا يزال بإمكان إعدادات المكتبة تحسين البنية والسرعة.</string>
+    <string name="settings_tip_library_inactive_desc_2">تم اكتشاف وضع المكتبة المبسطة. اضبط التجميع للتنقل بشكل أسرع.</string>
+
+    <!-- Lyrics Source Dialog -->
+    <string name="lyrics_source_embedded_first">مضمن أولاً</string>
+    <string name="lyrics_source_embedded_first_desc">جرّب البيانات التعريفية للملفات الصوتية ← واجهات برمجة التطبيقات عبر الإنترنت ← ملفات .lrc</string>
+    <string name="lyrics_source_api_first">API أولاً</string>
+    <string name="lyrics_source_api_first_desc">جرب الخدمات عبر الإنترنت → بيانات التعريف الصوتية → ملفات .lrc</string>
+    <string name="lyrics_source_local_first">محلي .lrc أولاً</string>
+    <string name="lyrics_source_local_first_desc">جرّب ملفات .lrc ← بيانات تعريف الصوت ← واجهات برمجة التطبيقات عبر الإنترنت</string>
+
+    <!-- Font / Color Customization Dialogs -->
+    <string name="theme_font_source_changed_restart">تم تغيير مصدر الخط. أعد تشغيل التطبيق لتطبيق الخط الجديد.</string>
+    <string name="color_source_album_art">صورة الألبوم</string>
+    <string name="color_source_album_art_desc">استخراج الألوان من العمل الفني للألبوم الذي يتم تشغيله حاليًا</string>
+    <string name="color_source_system_colors">ألوان النظام</string>
+    <string name="color_source_system_colors_desc">استخدم Material الألوان من ورق الحائط الخاص بك</string>
+    <string name="color_source_custom_scheme">مخطط مخصص</string>
+    <string name="color_source_custom_scheme_desc">اختر من بين أنظمة الألوان المحددة مسبقًا</string>
+    <string name="font_source_system_font">خط النظام</string>
+    <string name="font_source_system_font_desc">استخدم الخط الافتراضي للجهاز</string>
+    <string name="font_source_custom_font">الخط المخصص</string>
+    <string name="font_source_custom_font_desc">قم باستيراد واستخدام ملف خط مخصص</string>
+    <string name="font_system_title">النظام الافتراضي</string>
+    <string name="font_system_desc">استخدم الخط الافتراضي لجهازك</string>
+    <string name="font_geom_desc">خط sans-serif حديث ونظيف من Google</string>
+    <string name="font_slate_desc">خط serif أنيق ذو مظهر كلاسيكي تقليدي</string>
+    <string name="font_inter_desc">خط sans-serif نظيف وحديث، وسهل القراءة</string>
+    <string name="font_jetbrains_desc">خط Monospace مثالي للمحتوى التقني</string>
+    <string name="font_quicksand_desc">خط مستدير بمظهر أكثر نعومة وأكثر ودية</string>
+
+    <!-- Predefined Color Schemes -->
+    <string name="color_scheme_default_title">Rhythm الافتراضي</string>
+    <string name="color_scheme_default_desc">Material 3 خط أرجواني مع لمسات وردية اللون</string>
+    <string name="color_scheme_warm_title">غروب الشمس الدافئ</string>
+    <string name="color_scheme_warm_desc">درجات اللون البرتقالي والأحمر المريحة لجو دافئ</string>
+    <string name="color_scheme_cool_title">محيط بارد</string>
+    <string name="color_scheme_cool_desc">درجات اللون الأزرق والأزرق المخضر المنعشة لإضفاء أجواء هادئة</string>
+    <string name="color_scheme_forest_title">الغابة الخضراء</string>
+    <string name="color_scheme_forest_desc">نغمات خضراء طبيعية مستوحاة من الطبيعة</string>
+    <string name="color_scheme_rose_title">وردي وردي</string>
+    <string name="color_scheme_rose_desc">درجات اللون الوردي والأرجواني الأنيقة</string>
+    <string name="color_scheme_monochrome_title">أحادية اللون</string>
+    <string name="color_scheme_monochrome_desc">تدرج رمادي بسيط للحصول على مظهر عصري ونظيف</string>
+    <string name="color_scheme_lavender_title">لافندر</string>
+    <string name="color_scheme_lavender_desc">درجات اللون الأرجواني والخزامى الهادئة للاسترخاء</string>
+    <string name="color_scheme_ocean_title">أعماق المحيط</string>
+    <string name="color_scheme_ocean_desc">اللون الأزرق العميق والزبرجد لصفاء المحيط</string>
+    <string name="color_scheme_aurora_title">الأضواء الشمالية</string>
+    <string name="color_scheme_aurora_desc">ألوان خضراء وزرقاء نابضة بالحياة مستوحاة من الشفق القطبي</string>
+    <string name="color_scheme_amber_title">العنبر الذهبي</string>
+    <string name="color_scheme_amber_desc">نغمات غنية باللون الكهرماني والذهبي لإحساس فاخر</string>
+    <string name="color_scheme_crimson_title">قرمزي عميق</string>
+    <string name="color_scheme_crimson_desc">ظلال بورجوندي وقرمزية جريئة للدراما</string>
+    <string name="color_scheme_emerald_title">حلم الزمرد</string>
+    <string name="color_scheme_emerald_desc">اللون الأخضر الزمردي الطازج مع ألوان الغابات الطبيعية</string>
+    <string name="color_scheme_mint_title">نعناع</string>
+    <string name="color_scheme_mint_desc">درجات اللون الأخضر السماوي والنعناع المنعشة والنظيفة</string>
+
+    <!-- Color Preview Chips -->
+    <string name="theme_color_primary">الابتدائية</string>
+    <string name="theme_color_secondary">ثانوي</string>
+    <string name="theme_color_tertiary">التعليم العالي</string>
+
+    <!-- Lyrics Settings Screen -->
+    <string name="lyrics_settings_title">كلمات</string>
+    <string name="lyrics_settings_general">الإعدادات العامة</string>
+    <string name="lyrics_settings_open_fullscreen_desc">افتح شاشة كلمات الأغاني بملء الشاشة من خلال النقر على عرض كلمات الأغاني</string>
+    <string name="lyrics_settings_autohide_controls">عناصر التحكم في إخفاء كلمات الأغاني تلقائيًا</string>
+    <string name="lyrics_settings_autohide_controls_desc">إخفاء عناصر التحكم تلقائيًا في شاشة كلمات الأغاني بملء الشاشة بعد بضع ثوانٍ من عدم النشاط</string>
+    <string name="lyrics_settings_embedded_first">مضمن أولاً</string>
+    <string name="lyrics_settings_embedded_first_desc">تفضل الكلمات المضمنة في الملفات الصوتية، والرجوع إلى واجهات برمجة التطبيقات عبر الإنترنت</string>
+    <string name="lyrics_settings_online_first">عبر الإنترنت أولاً</string>
+    <string name="lyrics_settings_online_first_desc">تفضل واجهات برمجة التطبيقات عبر الإنترنت (Rhythm كلمة بكلمة، LRCLib)، والرجوع إلى المضمنة</string>
+    <string name="lyrics_settings_local_first">محلي أولاً</string>
+    <string name="lyrics_settings_local_first_desc">تفضل ملفات .lrc المحلية، ثم كلمات الأغاني المضمنة، ثم واجهات برمجة التطبيقات عبر الإنترنت</string>
+    <string name="lyrics_settings_apple_music_first">أبل ميوزك أولا</string>
+    <string name="lyrics_settings_lrclib_first">LRCLib أولا</string>
+    <string name="lyrics_settings_fallback_apis_desc">حاول واجهات برمجة التطبيقات الاحتياطية إذا فشل API المفضل في إرجاع كلمات الأغاني</string>
+    <string name="lyrics_settings_display_styling">العرض والتصميم</string>
+    <string name="lyrics_settings_size_percentage">الحجم: %1$d%%</string>
+    <string name="alignment_left">اليسار</string>
+    <string name="alignment_center">المركز</string>
+    <string name="alignment_right">صحيح</string>
+    <string name="animation_slide">الشريحة</string>
+    <string name="animation_fade">تتلاشى</string>
+    <string name="animation_scale">مقياس</string>
+    <string name="animation_up">لأعلى</string>
+    <string name="lyrics_settings_switch_animation_desc">فن ↔ تبديل الأغاني للرسوم المتحركة</string>
+    <string name="lyrics_settings_not_supported_expressive">غير مدعوم بالموضوع التعبيري</string>
+    <string name="lyrics_settings_formatting_behaviors">التنسيق والسلوكيات</string>
+    <string name="lyrics_settings_bold_text">نص غامق</string>
+    <string name="lyrics_settings_bold_text_desc">اجعل نص الكلمات النشطة غامقًا</string>
+    <string name="lyrics_settings_trim_lyrics">تقليم الأغاني</string>
+    <string name="lyrics_settings_trim_lyrics_desc">اقتطاع المسافة البيضاء البادئة واللاحقة من السطور الغنائية</string>
+    <string name="lyrics_settings_disable_animations">تعطيل الرسوم المتحركة</string>
+    <string name="lyrics_settings_disable_animations_desc">تعطيل التحولات والرسوم المتحركة في عرض كلمات الأغاني</string>
+    <string name="lyrics_settings_word_by_word_translation">ترجمة كلمة بكلمة</string>
+    <string name="lyrics_settings_word_by_word_translation_desc">حاول مزامنة ترجمات المقاطع أو الكلمات تلقائيًا</string>
+    <string name="lyrics_settings_info_bullets">تفاصيل المزامنة الإضافية:\n• توفر واجهات برمجة التطبيقات عبر الإنترنت كلمات متزامنة عالية الجودة\n• يقدم Rhythm مزامنة كلمة تلو الأخرى\n• يوفر LRCLib مزامنة مجانية سطرًا تلو الآخر</string>
+
+    <!-- AutoEQ Preset Picker additions -->
+    <string name="autoeqpresetpickerbottomsheet_search_presets">إعدادات البحث المسبقة...</string>
+    <string name="autoeqpresetpickerbottomsheet_disable">لا شيء / تعطيل AutoEQ</string>
+    <string name="autoeqpresetpickerbottomsheet_disable_desc">مسح ملف تعريف سماعة الرأس، واستخدام إعدادات EQ القياسية المسبقة</string>
+    <string name="autoeqpresetpickerbottomsheet_unknown_brand">ماركة غير معروفة
+تم تكوين أجهزة</string>
+
+    <!-- Device Configuration additions -->
+    <string name="device_configuration_devices_configured">%1$d</string>
+    <string name="device_configuration_device_recognized">تم التعرف على الجهاز</string>
+    <string name="device_configuration_new_device_detected">تم اكتشاف جهاز جديد
+تم تكوين</string>
+    <string name="device_configuration_configured_with">%1$s مع %2$s
+تم تكوين</string>
+    <string name="device_configuration_configured_no_profile">%1$s</string>
+    <string name="device_configuration_connected_not_configured">%1$s متصل ولكن لم يتم تكوينه</string>
+    <string name="device_configuration_applied_profile">ملف تعريف %1$s المطبق</string>
+    <string name="device_configuration_imported_profile">ملف التعريف المستورد</string>
+    <string name="device_configuration_parse_error">لا يمكن تحليل إعدادات EQ. تحقق من التنسيق.</string>
+    <string name="device_configuration_custom_eq">معادل مخصص</string>
+    <string name="device_configuration_custom_preset">إعداد مسبق مخصص</string>
+    <string name="device_configuration_custom">مخصص</string>
+    <string name="device_configuration_active_profile_label">الملف الشخصي النشط: %1$s</string>
+    <string name="device_configuration_share_subject">Rhythm ملف تعريف المعادل: %1$s</string>
+    <string name="device_configuration_share_title">مشاركة ملف تعريف EQ</string>
+    <string name="device_configuration_edit_device">تحرير الجهاز</string>
+    <string name="device_configuration_add_device">إضافة جهاز</string>
+    <string name="device_configuration_save">حفظ</string>
+    <string name="device_configuration_add">إضافة</string>
+    <string name="device_configuration_for_device">لـ %1$s</string>
+    <string name="device_configuration_profiles_available">%1$d الملفات الشخصية المتاحة</string>
+    <string name="device_configuration_disable_compensation">تعطيل تعويض سماعة الرأس</string>
+
+    <!-- Common UI element strings -->
+    <string name="common_none">لا شيء</string>
+    <string name="common_cancel">إلغاء</string>
+    <string name="common_back">العودة</string>
+    <string name="common_remove">إزالة</string>
+    <string name="common_add">إضافة</string>
+    <string name="common_active">نشط</string>
+    <string name="common_disabled">معطل</string>
+    <string name="common_unavailable">غير متوفر</string>
+    <string name="common_success">النجاح</string>
+    <string name="common_error">خطأ</string>
+    <string name="common_unknown">غير معروف</string>
+
+    <!-- Blacklist UI additions -->
+    <string name="blacklist_remove_song_title">هل تريد الإزالة من القائمة السوداء؟</string>
+    <string name="blacklist_add_song_title">أضف إلى القائمة السوداء؟</string>
+    <string name="blacklist_remove_song_desc">لن تكون هذه الأغنية مخفية من مكتبتك بعد الآن.</string>
+    <string name="blacklist_add_song_desc">سيتم إخفاء هذه الأغنية من مكتبتك واستبعادها من التشغيل.</string>
+    <string name="blacklist_undo_warning">يمكن التراجع عن هذا الإجراء في أي وقت.</string>
+    <string name="blacklist_song_removed_msg">تمت إزالة الأغنية من القائمة السوداء</string>
+    <string name="blacklist_song_added_msg">تمت إضافة الأغنية إلى القائمة السوداء</string>
+    <string name="blacklist_button_remove">إزالة</string>
+    <string name="blacklist_button_blacklist">القائمة السوداء</string>
+    <string name="blacklist_remove_folder_title">هل تريد إزالة المجلد من القائمة السوداء؟</string>
+    <string name="blacklist_add_folder_title">مجلد القائمة السوداء؟</string>
+    <string name="blacklist_remove_folder_desc">ستكون جميع الأغاني الموجودة في هذا المجلد مرئية مرة أخرى.</string>
+    <string name="blacklist_add_folder_desc">سيتم إخفاء جميع الأغاني الموجودة في هذا المجلد واستبعادها من التشغيل.</string>
+    <string name="blacklist_folder_removed_msg">تمت إزالة المجلد من القائمة السوداء</string>
+    <string name="blacklist_folder_added_msg">تمت إضافة المجلد إلى القائمة السوداء</string>
+    <string name="blacklist_disc_label">القرص %1$d</string>
+    <string name="blacklist_track_label">المسار %1$d</string>
+
+    <!-- Library & Playlist Dialog additions -->
+    <string name="dialog_add_song_to_playlist">أضف \"%1$s\" إلى قائمة التشغيل هذه</string>
+    <string name="dialog_songs_in_queue">لديك %1$d من الأغاني في قائمة الانتظار الحالية.</string>
+    <string name="dialog_play_song_how">كيف تريد تشغيل \"%1$s\"؟</string>
+    <string name="dialog_clear_and_play">مسح وتشغيل</string>
+    <string name="dialog_clear_and_play_desc">استبدل قائمة الانتظار وقم بتشغيل هذه الأغنية</string>
+    <string name="dialog_add_to_queue">أضف إلى قائمة الانتظار</string>
+    <string name="dialog_add_to_queue_desc">احتفظ بقائمة الانتظار الحالية وأضف الأغنية</string>
+    <string name="dialog_restart_warning_message">للتأكد من أن جميع قوائم التشغيل المستوردة تعمل بشكل صحيح، نوصي بإعادة تشغيل التطبيق. يمكنك الاستمرار في استخدام التطبيق بشكل طبيعي، ولكن قد لا تعمل بعض الميزات كما هو متوقع حتى يتم إعادة تشغيله.</string>
+    <string name="dialog_export_playlist_to">تصدير \"%1$s\" إلى:</string>
+    <string name="dialog_export_playlists_to">تصدير قوائم التشغيل %1$d إلى:</string>
+    <string name="dialog_operation_importing">الاستيراد</string>
+    <string name="dialog_operation_exporting">التصدير</string>
+
+    <!-- Mode dialog strings -->
+    <string name="dialog_switch_to_go">قم بالتبديل إلى Rhythm اذهب؟</string>
+    <string name="dialog_switch_to_local">هل تريد التبديل إلى المستوى المحلي؟</string>
+    <string name="dialog_switch_to_go_desc">ينتمي هذا العنصر إلى Rhythm Go. هل تريد التبديل إلى وضع البث الآن لبثه وتشغيله؟</string>
+    <string name="dialog_switch_to_local_desc">ينتمي هذا العنصر إلى مكتبتك المحلية. هل تريد التبديل إلى الوضع المحلي الآن لتشغيل مقطوعاتك غير المتصلة بالإنترنت؟</string>
+
+    <!-- Section order content descriptions -->
+    <string name="home_section_hide_carousel">إخفاء الرف الدائري</string>
+    <string name="home_section_show_carousel">عرض الرف الدائري</string>
+    <string name="home_section_hide_section">إخفاء القسم</string>
+    <string name="home_section_show_section">عرض القسم</string>
+    <string name="library_tab_show">إظهار علامة التبويب</string>
+    <string name="library_tab_hide">إخفاء علامة التبويب</string>
+
+    <!-- Add To Playlist additions -->
+    <string name="add_to_playlist_selected_count">%1$d تم التحديد</string>
+    <string name="add_to_playlist_title">أضف إلى %1$s</string>
+    <string name="add_to_playlist_no_songs">لا توجد أغاني متاحة</string>
+    <string name="add_to_playlist_all_songs_present">جميع الأغاني موجودة بالفعل في قائمة التشغيل هذه</string>
+
+    <!-- Artist details -->
+    <string name="artist_detail_albums_count">%1$d ألبومات</string>
+    <string name="artist_detail_songs_count">%1$d الأغاني</string>
+
+    <!-- Equalizer presets & UI -->
+    <string name="eq_preset_flat">شقة</string>
+    <string name="eq_preset_rock">روك</string>
+    <string name="eq_preset_pop">البوب</string>
+    <string name="eq_preset_jazz">موسيقى الجاز</string>
+    <string name="eq_preset_classical">كلاسيكي</string>
+    <string name="eq_preset_electronic">إلكتروني</string>
+    <string name="eq_preset_hiphop">الهيب هوب</string>
+    <string name="eq_preset_vocal">صوتي</string>
+    <string name="eq_preset_bass_boost">تعزيز الجهير</string>
+    <string name="eq_preset_treble_boost">تعزيز التريبل</string>
+    <string name="eq_preset_v_shape">على شكل حرف V</string>
+    <string name="eq_preset_harman">هارمان</string>
+    <string name="eq_preset_custom">مخصص</string>
+    <string name="eq_autoeq_profiles">ملفات تعريف AutoEQ</string>
+    <string name="eq_manage_device">إدارة الجهاز</string>
+    <string name="eq_system_equalizer">نظام التعادل</string>
+    <string name="eq_enhance_lows">تعزيز المستويات المنخفضة</string>
+    <string name="eq_widen_sound">توسيع الصوت</string>
+    <string name="eq_mono_only">أحادي فقط</string>
+
+    <!-- Library updates, sorting & categories -->
+    <string name="library_updated_songs_success">تم تحديث أغاني %1$d</string>
+    <string name="library_updated_songs_failed">تم تحديث أغاني %1$d، فشل %2$d</string>
+    <string name="library_switch_to_grid">قم بالتبديل إلى عرض الشبكة</string>
+    <string name="library_switch_to_list">قم بالتبديل إلى عرض القائمة</string>
+    <string name="library_sort_title">العنوان</string>
+    <string name="library_sort_artist">الفنان</string>
+    <string name="library_sort_date_added">تاريخ الإضافة</string>
+    <string name="library_sort_date_modified">تاريخ التعديل</string>
+    <string name="library_sort_ascending">تصاعدي</string>
+    <string name="library_sort_descending">تنازلي</string>
+    <string name="library_sort_name_asc">الاسم (من الألف إلى الياء)</string>
+    <string name="library_sort_name_desc">الاسم (Z-A)</string>
+    <string name="library_sort_songs_desc">الأغاني (من الأعلى إلى الأدنى)</string>
+    <string name="library_sort_albums_desc">الألبومات (من الأعلى إلى الأدنى)</string>
+    <string name="library_scan_songs">جارٍ مسح الأغاني...</string>
+    <string name="library_scan_albums">جارٍ معالجة الألبومات...</string>
+    <string name="library_scan_artists">معالجة الفنانين...</string>
+    <string name="library_scan_genres">جارٍ اكتشاف الأنواع...</string>
+    <string name="library_scan_media">جارٍ فحص الوسائط...</string>
+    <string name="library_export_failed">فشل التصدير</string>
+    <string name="library_import_failed">فشل الاستيراد</string>
+    <string name="library_category_all">الكل</string>
+    <string name="library_category_favorites">❤️ المفضلة</string>
+    <string name="library_category_absolute_favorites">⭐⭐⭐⭐⭐ المفضلة المطلقة</string>
+    <string name="library_category_loved">⭐⭐⭐⭐ أحببت</string>
+    <string name="library_category_great">⭐⭐⭐رائع</string>
+    <string name="library_category_good">⭐⭐ جيد</string>
+    <string name="library_category_liked">⭐ أعجبني</string>
+    <string name="library_category_short">قصير (أقل من 3 دقائق)</string>
+    <string name="library_category_medium">متوسط (3-5 دقائق)</string>
+    <string name="library_category_long">طويل (&gt; 5 دقائق)</string>
+    <string name="library_category_hi_res_lossless">مرحبا الدقة ضياع</string>
+    <string name="library_category_lossless">بلا خسارة</string>
+    <string name="library_category_dolby">دولبي</string>
+    <string name="library_category_mono">مونو</string>
+    <string name="library_category_stereo">ستيريو</string>
+    <string name="library_category_high_quality">جودة عالية</string>
+    <string name="library_category_standard">قياسي</string>
+    <string name="library_removed_from_favorites">تمت إزالة %1$d من المفضلة</string>
+    <string name="library_added_to_favorites">تمت إضافة %1$d إلى المفضلة</string>
+    <string name="library_unlike_all">على عكس الجميع</string>
+    <string name="library_like_all">مثل الجميع</string>
+    <string name="library_tracks_count_format">%1$d من مسارات %2$d</string>
+    <string name="library_no_playlists_yet">لا توجد قوائم تشغيل حتى الآن\nأنشئ قائمة التشغيل الأولى باستخدام الزر +</string>
+    <string name="library_no_albums_yet">لا يوجد ألبومات بعد</string>
+    <string name="library_no_artists_yet">لا يوجد فنانين بعد</string>
+    <string name="library_action_play_next">العب بعد ذلك</string>
+    <string name="library_action_add_to_queue">أضف إلى قائمة الانتظار</string>
+    <string name="library_action_add_to_blacklist">أضف إلى القائمة السوداء</string>
+    <string name="library_action_song_info">معلومات الأغنية</string>
+    <string name="library_action_add_to_playlist">أضف إلى قائمة التشغيل</string>
+    <string name="library_action_rate_song">قيم الأغنية</string>
+    <string name="library_menu_new_playlist">قائمة تشغيل جديدة</string>
+    <string name="library_menu_import_playlist">استيراد قائمة التشغيل</string>
+    <string name="library_menu_export_playlists">تصدير قوائم التشغيل</string>
+    <string name="library_menu_close_playlist">أغلق قائمة التشغيل</string>
+    <string name="library_menu_open_playlist">افتح قائمة التشغيل</string>
+    <string name="library_menu_close">إغلاق القائمة</string>
+    <string name="library_selected_count_format">%1$d تم التحديد</string>
+    <string name="library_from_tracks_format">من مسارات %1$d</string>
+    <string name="library_playlist_count_singular">%1$d قائمة التشغيل</string>
+    <string name="library_playlist_count_plural">%1$d قوائم التشغيل</string>
+    <string name="library_album_count_singular">%1$d الألبوم</string>
+    <string name="library_album_count_plural">%1$d ألبومات</string>
+    <string name="library_artist_count_singular">%1$d فنان</string>
+    <string name="library_artist_count_plural">%1$d الفنانين</string>
+    <string name="library_duration_hours_minutes">%1$dh %2$dm</string>
+    <string name="library_duration_minutes">%1$dm</string>
+
+    <!-- Onboarding, Backup & Settings additions -->
+    <string name="onboarding_blacklist_label">القائمة السوداء</string>
+    <string name="onboarding_whitelist_label">القائمة البيضاء</string>
+    <string name="onboarding_full_player_label">لاعب كامل</string>
+    <string name="onboarding_mini_player_label">مشغل صغير</string>
+    <string name="onboarding_blocked_folders">%1$d المجلدات المحظورة</string>
+    <string name="onboarding_whitelisted_folders">%1$d المجلدات المدرجة في القائمة البيضاء</string>
+    <string name="onboarding_sample_button">زر العينة</string>
+    <string name="onboarding_primary_label">الابتدائية</string>
+    <string name="onboarding_secondary_label">ثانوي</string>
+    <string name="onboarding_tertiary_label">التعليم العالي</string>
+    <string name="onboarding_rhythm_material">Rhythm (Material)</string>
+    
+    <string name="backup_restored_success">تمت استعادة النسخة الاحتياطية بنجاح. أعد تشغيل التطبيق لتطبيق كافة التغييرات.</string>
+    <string name="backup_copied_to_clipboard">تم إنشاء نسخة احتياطية ونسخها إلى الحافظة.</string>
+    <string name="backup_failed_to_create">فشل في إنشاء نسخة احتياطية: %1$s</string>
+    <string name="backup_failed_to_restore_file">فشل في الاستعادة من الملف: %1$s</string>
+    <string name="backup_no_backup_clipboard">لم يتم العثور على نسخة احتياطية في الحافظة</string>
+    <string name="backup_failed_to_restore_clipboard">فشل في الاستعادة من الحافظة: %1$s</string>
+    
+    <string name="updater_ready_to_install">الإصدار %1$s جاهز للتثبيت</string>
+    <string name="updater_download_progress">%1$d%% • %2$s / %3$s</string>
+    <string name="updater_version_info">الإصدار %1$s • %2$s</string>
+    <string name="updater_error_occurred">حدث خطأ</string>
+    <string name="updater_channel_stable">مستقر</string>
+    <string name="updater_channel_beta">بيتا</string>
+
+    <!-- Expressive shape preset & group names -->
+    <string name="shape_preset_default">الافتراضي</string>
+    <string name="shape_preset_default_desc">أشكال معبرة لطيفة لجميع الأعمار</string>
+    <string name="shape_preset_friendly">ودية</string>
+    <string name="shape_preset_friendly_desc">أشكال دافئة ودودة</string>
+    <string name="shape_preset_cheerful">مرح</string>
+    <string name="shape_preset_cheerful_desc">أشكال مشرقة ومعبرة</string>
+    <string name="shape_preset_modern">حديث</string>
+    <string name="shape_preset_modern_desc">تصميم معبر معاصر</string>
+    <string name="shape_preset_playful">مرح</string>
+    <string name="shape_preset_playful_desc">أشكال ممتعة ومعبرة</string>
+    <string name="shape_preset_organic">عضوي</string>
+    <string name="shape_preset_organic_desc">أشكال مستوحاة من الطبيعة</string>
+    <string name="shape_preset_geometric">هندسية</string>
+    <string name="shape_preset_geometric_desc">أشكال نظيفة وحديثة</string>
+    <string name="shape_preset_retro">ريترو</string>
+    <string name="shape_preset_retro_desc">أشكال حنين منقطة</string>
+    <string name="shape_preset_custom">مخصص</string>
+    <string name="shape_preset_custom_desc">اختيارك الشخصي</string>
+    <string name="shape_option_square">ساحة</string>
+    <string name="shape_option_square_desc">مربع مدور</string>
+    <string name="shape_option_oval">البيضاوي</string>
+    <string name="shape_option_oval_desc">بيضاوية ممدودة</string>
+    <string name="shape_option_pill">حبة</string>
+    <string name="shape_option_pill_desc">شكل كبسولة</string>
+    <string name="shape_option_diamond">الماس</string>
+    <string name="shape_option_diamond_desc">شكل الماس</string>
+    <string name="shape_option_triangle">مثلث</string>
+    <string name="shape_option_triangle_desc">مثلث مستدير الزوايا</string>
+    <string name="shape_option_pentagon">البنتاغون</string>
+    <string name="shape_option_pentagon_desc">مضلع ذو خمسة جوانب</string>
+    <string name="shape_option_flower">زهرة</string>
+    <string name="shape_option_flower_desc">زهرة ذات بتلات</string>
+    <string name="shape_option_clover4">4-ورق البرسيم</string>
+    <string name="shape_option_clover4_desc">البرسيم ذو أربع أوراق</string>
+    <string name="shape_option_clover8">8-ورق البرسيم</string>
+    <string name="shape_option_clover8_desc">البرسيم ذو ثماني أوراق</string>
+    <string name="shape_option_heart">القلب</string>
+    <string name="shape_option_heart_desc">شكل قلب</string>
+    <string name="shape_option_bun">كعكة</string>
+    <string name="shape_option_bun_desc">شكل الكعكة/الخبز</string>
+    <string name="shape_option_boom">بوم</string>
+    <string name="shape_option_boom_desc">شكل الانفجار</string>
+    <string name="shape_option_soft_boom">بوم ناعم</string>
+    <string name="shape_option_soft_boom_desc">انفجار أكثر ليونة</string>
+    <string name="shape_option_burst">انفجار</string>
+    <string name="shape_option_burst_desc">شكل النجمي</string>
+    <string name="shape_option_soft_burst">انفجار ناعم</string>
+    <string name="shape_option_soft_burst_desc">انفجار نجمي أكثر ليونة</string>
+    <string name="shape_option_sunny">مشمس</string>
+    <string name="shape_option_sunny_desc">الشمس بأشعتها</string>
+    <string name="shape_option_very_sunny">مشمس جدًا</string>
+    <string name="shape_option_very_sunny_desc">شمس بأشعة أكثر</string>
+    <string name="shape_option_cookie4">ملف تعريف الارتباط 4</string>
+    <string name="shape_option_cookie4_desc">ملف تعريف الارتباط ذو الأربعة جوانب</string>
+    <string name="shape_option_cookie6">ملف تعريف الارتباط 6</string>
+    <string name="shape_option_cookie6_desc">ملف تعريف الارتباط ذو 6 جوانب</string>
+    <string name="shape_option_cookie7">ملف تعريف الارتباط 7</string>
+    <string name="shape_option_cookie7_desc">ملف تعريف الارتباط ذو 7 جوانب</string>
+    <string name="shape_option_cookie9">ملف تعريف الارتباط 9</string>
+    <string name="shape_option_cookie9_desc">ملف تعريف ارتباط ذو 9 جوانب</string>
+    <string name="shape_option_cookie12">ملف تعريف الارتباط 12</string>
+    <string name="shape_option_cookie12_desc">ملف تعريف الارتباط ذو 12 جانبًا</string>
+    <string name="shape_option_ghostish">شبحي</string>
+    <string name="shape_option_ghostish_desc">شكل يشبه الشبح</string>
+    <string name="shape_option_puffy">منتفخ</string>
+    <string name="shape_option_puffy_desc">شكل يشبه السحابة</string>
+    <string name="shape_option_puffy_diamond">الماس المنتفخ</string>
+    <string name="shape_option_puffy_diamond_desc">الماسة المنتفخة</string>
+    <string name="shape_option_fan">معجب</string>
+    <string name="shape_option_fan_desc">شكل المروحة</string>
+    <string name="shape_option_circle">الدائرة</string>
+    <string name="shape_option_circle_desc">دائرة مثالية</string>
+    <string name="shape_option_clover_4_leaf">4-ورق البرسيم</string>
+    <string name="shape_option_clover_4_leaf_desc">البرسيم ذو أربع أوراق</string>
+    <string name="shape_option_clover_8_leaf">8-ورق البرسيم</string>
+    <string name="shape_option_clover_8_leaf_desc">البرسيم ذو ثماني أوراق</string>
+    <string name="shape_option_arrow">السهم</string>
+    <string name="shape_option_arrow_desc">مؤشر السهم</string>
+    <string name="shape_option_arch">القوس</string>
+    <string name="shape_option_arch_desc">شكل القوس</string>
+    <string name="shape_option_clam_shell">شل البطلينوس</string>
+    <string name="shape_option_clam_shell_desc">شكل الصدفة</string>
+    <string name="shape_option_gem">جوهرة</string>
+    <string name="shape_option_gem_desc">شكل الأحجار الكريمة</string>
+    <string name="shape_option_semi_circle">نصف دائرة</string>
+    <string name="shape_option_semi_circle_desc">نصف دائرة</string>
+    <string name="shape_option_slanted">مائل</string>
+    <string name="shape_option_slanted_desc">مربع مائل</string>
+    <string name="shape_option_pixel_circle">دائرة البكسل</string>
+    <string name="shape_option_pixel_circle_desc">دائرة منقطة</string>
+    <string name="shape_option_pixel_triangle">مثلث البكسل</string>
+    <string name="shape_option_pixel_triangle_desc">مثلث منقطة</string>
+    <string name="shape_group_basic">أساسي</string>
+    <string name="shape_group_organic">عضوي</string>
+    <string name="shape_group_playful">لعوب</string>
+    <string name="shape_group_cookie">ملف تعريف الارتباط</string>
+    <string name="shape_group_whimsical">غريب الأطوار</string>
+    <string name="shape_group_special">خاص</string>
+    <string name="shape_group_pixel">بكسل</string>
+
+    <!-- Customization Choices -->
+    <string name="option_always">دائماً</string>
+    <string name="option_expanded">موسعة</string>
+    <string name="option_collapsed">انهار</string>
+    <string name="option_linear">خطي</string>
+    <string name="option_circular">دائري</string>
+    <string name="option_auto">آلي</string>
+    <string name="option_manual">يدوي</string>
+    <string name="option_both">كلاهما</string>
+    <string name="option_icon">رمز</string>
+    <string name="option_name">اسم</string>
+
+    <!-- Theme settings additions -->
+    <string name="theme_color_red">أحمر</string>
+    <string name="theme_color_green">أخضر</string>
+    <string name="theme_color_blue">أزرق</string>
+    <string name="theme_font_restart_warning">تم تغيير الخط. أعد تشغيل التطبيق لتطبيق الخط الجديد.</string>
+    <string name="theme_source_album_art">فن الألبوم</string>
+    <string name="theme_source_album_art_desc">استخراج الألوان من العمل الفني للألبوم حاليًا</string>
+    <string name="theme_source_system_colors">ألوان النظام</string>
+    <string name="theme_source_system_colors_desc">استخدم Material الألوان من ورق الحائط الخاص بك</string>
+    <string name="theme_source_custom_scheme">مخطط مخصص</string>
+    <string name="theme_source_custom_scheme_desc">اختر من بين أنظمة الألوان المحددة مسبقًا</string>
+    <string name="theme_font_system">خط النظام</string>
+    <string name="theme_font_system_desc">استخدم الخط الافتراضي للجهاز</string>
+    <string name="theme_font_custom">الخط المخصص</string>
+    <string name="theme_font_custom_desc">استيراد واستخدام ملف خط مخصص</string>
+
+    <!-- Color Scheme names -->
+    <string name="scheme_default">تقصير</string>
+    <string name="scheme_warm">دافيء</string>
+    <string name="scheme_cool">رائع</string>
+    <string name="scheme_forest">غابة</string>
+    <string name="scheme_rose">وَردَة</string>
+    <string name="scheme_monochrome">أحادية اللون</string>
+    <string name="scheme_lavender">لافندر</string>
+    <string name="scheme_ocean">محيط</string>
+    <string name="scheme_aurora">أورورا</string>
+    <string name="scheme_amber">العنبر</string>
+    <string name="scheme_crimson">قرمزي</string>
+    <string name="scheme_emerald">الزمرد</string>
+    <string name="scheme_mint">نعناع</string>
+
+    <!-- Shape Utils category and descriptions -->
+    <string name="shape_utils_fab">زر العمل العائم</string>
+    <string name="shape_utils_fab_desc">شكل لأزرار FAB</string>
+    <string name="shape_utils_cards">بطاقات</string>
+    <string name="shape_utils_cards_desc">شكل للبطاقات والحاويات</string>
+    <string name="shape_utils_buttons">أزرار</string>
+    <string name="shape_utils_buttons_desc">شكل للأزرار</string>
+    <string name="shape_utils_chips">رقائق</string>
+    <string name="shape_utils_chips_desc">شكل للرقائق والعلامات</string>
+    <string name="shape_utils_player_controls">ضوابط اللاعب</string>
+    <string name="shape_utils_player_controls_desc">شكل أزرار التحكم في المشغل</string>
+    <string name="shape_utils_mini_player">مشغل صغير</string>
+    <string name="shape_utils_mini_player_desc">شكل للعمل الفني للاعب الصغير</string>
+
+    <!-- Metadata properties and labels -->
+    <string name="metadata_duration">مدة</string>
+    <string name="metadata_disc">القرص</string>
+    <string name="metadata_composer">الملحن</string>
+    <string name="metadata_album_artist">فنان الألبوم</string>
+    <string name="metadata_play_count">عدد اللعب</string>
+    <string name="metadata_total_played">إجمالي اللعب</string>
+    <string name="metadata_rating">تصنيف</string>
+    <string name="metadata_quality">جودة</string>
+    <string name="metadata_audio_tech">تكنولوجيا الصوت</string>
+    <string name="metadata_bit_depth">عمق البت</string>
+    <string name="metadata_bitrate">معدل البت</string>
+    <string name="metadata_sample_rate">معدل العينة</string>
+    <string name="metadata_channels">القنوات</string>
+    <string name="metadata_format">شكل</string>
+    <string name="metadata_location">موقع</string>
+    <string name="metadata_lyrics">كلمات</string>
+    <string name="metadata_mime_type">نوع MIME</string>
+    <string name="metadata_date_added">تاريخ الإضافة</string>
+    <string name="metadata_modified">معدل</string>
+    <string name="metadata_lyrics_available">متاح</string>
+    <string name="metadata_dts">دتس</string>
+    <string name="metadata_hi_res">مرحبا الدقة</string>
+    <string name="metadata_dolby">دولبي</string>
+    <string name="metadata_lossless">ضياع</string>
+
+    <!-- Discover settings specific -->
+    <string name="settings_discover_album_name">اسم الألبوم</string>
+    <string name="settings_discover_album_name_desc">إظهار عنوان الألبوم على البطاقة</string>
+    <string name="settings_discover_artist_name">اسم الفنان</string>
+    <string name="settings_discover_artist_name_desc">أظهر اسم الفنان على البطاقة</string>
+    <string name="settings_discover_release_year">سنة الإصدار</string>
+    <string name="settings_discover_release_year_desc">عرض سنة إصدار الألبوم</string>
+    <string name="settings_discover_play_button">زر التشغيل</string>
+    <string name="settings_discover_play_button_desc">إظهار زر التشغيل السريع</string>
+    <string name="settings_discover_gradient_overlay">تراكب متدرج</string>
+    <string name="settings_discover_gradient_overlay_desc">إظهار التدرج خلف النص</string>
+
+    <!-- Carousel Style selector strings -->
+    <string name="carousel_style_default">الافتراضي</string>
+    <string name="carousel_style_default_desc">2 ألبومات نظرة خاطفة جانبية</string>
+    <string name="carousel_style_hero">البطل</string>
+    <string name="carousel_style_hero_desc">ألبوم نظرة خاطفة واحدة</string>
+
+    <!-- Theme names -->
+    <string name="theme_rhythm">Rhythm</string>
+    <string name="theme_expressive">معبرة</string>
+    <string name="settings_managed_by_expressive_shapes">تدار بواسطة الأشكال التعبيرية</string>
+
+    <!-- Shape targets -->
+    <string name="shape_target_album_art">عمل فني للألبوم</string>
+    <string name="shape_target_album_art_desc">شكل العمل الفني للألبوم</string>
+    <string name="shape_target_player_art">العمل الفني للاعب</string>
+    <string name="shape_target_player_art_desc">شكل العمل الفني لشاشة المشغل</string>
+    <string name="shape_target_song_art">عمل فني للأغنية</string>
+    <string name="shape_target_song_art_desc">شكل العمل الفني للأغنية في القوائم</string>
+    <string name="shape_target_playlist_art">العمل الفني لقائمة التشغيل</string>
+    <string name="shape_target_playlist_art_desc">شكل أغلفة قائمة التشغيل</string>
+    <string name="shape_target_artist_art">عمل فني للفنان</string>
+    <string name="shape_target_artist_art_desc">شكل لصور الفنان</string>
+    <string name="settings_shape_for">شكل %1$s</string>
 </resources>
+

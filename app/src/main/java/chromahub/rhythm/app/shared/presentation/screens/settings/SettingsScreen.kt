@@ -281,8 +281,8 @@ fun SettingsScreen(
                     ))
                     add(SettingItem(
                         MaterialSymbolIcon("lightbulb"),
-                        "Settings Suggestions",
-                        "Show contextual suggestions at the top",
+                        context.getString(R.string.settings_suggestions),
+                        context.getString(R.string.settings_suggestions_desc),
                         toggleState = showSettingsSuggestions,
                         onToggleChange = { appSettings.setShowSettingsSuggestions(it) }
                     ))
@@ -313,7 +313,7 @@ fun SettingsScreen(
                     add(SettingItem(
                         icon = MaterialSymbolIcon("speed"),
                         title = stringResource(R.string.performancesettingsscreen_performance),
-                        description = "Optimize haptics, decoding, marquee, and artwork fetching to reduce lag",
+                        description = context.getString(R.string.settings_performance_desc_optimized),
                         onClick = { onNavigateTo(SettingsRoutes.BATTERY_SAVER) }
                     ))
                 }
@@ -1347,16 +1347,16 @@ fun SettingsTipsRow(
         val isLocalMode = appMode == "LOCAL"
         val hourOfDay = java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY)
         val dayMomentLabel = when (hourOfDay) {
-            in 5..11 -> "this morning"
-            in 12..16 -> "this afternoon"
-            in 17..21 -> "this evening"
-            else -> "tonight"
+            in 5..11 -> context.getString(R.string.moment_morning)
+            in 12..16 -> context.getString(R.string.moment_afternoon)
+            in 17..21 -> context.getString(R.string.moment_evening)
+            else -> context.getString(R.string.moment_night)
         }
         val listeningPulseLabel = when {
-            todayExposureMinutes < 20 -> "Fresh session energy"
-            todayExposureMinutes < 60 -> "Steady groove"
-            todayExposureMinutes < 120 -> "Heavy listening"
-            else -> "Marathon mode"
+            todayExposureMinutes < 20 -> context.getString(R.string.pulse_fresh)
+            todayExposureMinutes < 60 -> context.getString(R.string.pulse_steady)
+            todayExposureMinutes < 120 -> context.getString(R.string.pulse_heavy)
+            else -> context.getString(R.string.pulse_marathon)
         }
 
         buildList {
@@ -1385,8 +1385,8 @@ fun SettingsTipsRow(
             if ("theme" !in dismissedIds) {
                 val descs = listOf(
                     context.getString(R.string.settings_tip_theme),
-                    "Refresh your music player with lively AMOLED black and beautiful pastel colors.",
-                    "Make Rhythm truly yours by matching the app's accent to your system."
+                    context.getString(R.string.settings_tip_theme_desc_1),
+                    context.getString(R.string.settings_tip_theme_desc_2)
                 )
                 add(
                     SettingsTipData(
@@ -1417,8 +1417,8 @@ fun SettingsTipsRow(
             if (isLocalMode && "media_scan" !in dismissedIds) {
                 val descs = listOf(
                     context.getString(R.string.settings_tip_media_scan),
-                    "Avoid unwanted audio clips. Explicitly define which folders we should scan for music.",
-                    "Keep voice notes and ringtones away from your playlists using focus folders."
+                    context.getString(R.string.settings_tip_media_scan_desc_1),
+                    context.getString(R.string.settings_tip_media_scan_desc_2)
                 )
                 add(
                     SettingsTipData(
@@ -1432,8 +1432,8 @@ fun SettingsTipsRow(
             }
             if (isLocalMode && "sleep_timer" !in dismissedIds) {
                 val descs = listOf(
-                    "Drift off to sleep while your music is playing. We'll automatically pause it.",
-                    "Set an automated sleep timer before bed so playback stops perfectly."
+                    context.getString(R.string.settings_tip_sleep_timer_desc_1),
+                    context.getString(R.string.settings_tip_sleep_timer_desc_2)
                 )
                 add(
                     SettingsTipData(
@@ -1447,8 +1447,8 @@ fun SettingsTipsRow(
             }
             if (isLocalMode && "equalizer" !in dismissedIds) {
                 val descs = listOf(
-                    "Elevate your experience. Boost the bass and adjust frequencies using the Equalizer.",
-                    "Tune the sound to your headphones securely with our advanced audio effects."
+                    context.getString(R.string.settings_tip_equalizer_desc_1),
+                    context.getString(R.string.settings_tip_equalizer_desc_2)
                 )
                 add(
                     SettingsTipData(
@@ -1463,13 +1463,13 @@ fun SettingsTipsRow(
             if (isLocalMode && "backup_restore" !in dismissedIds) {
                 val descs = if (autoBackupEnabled) {
                     listOf(
-                        "Auto backup is active. Verify your backup sections so restores stay clean.",
-                        "Protection enabled: schedule looks good. Run a manual backup before big edits."
+                        context.getString(R.string.settings_tip_backup_active_desc_1),
+                        context.getString(R.string.settings_tip_backup_active_desc_2)
                     )
                 } else {
                     listOf(
-                        "Auto backup is off. Enable it to protect playlists and Rhythm Guard stats.",
-                        "No safety net yet. Turn on backups to avoid losing your setup."
+                        context.getString(R.string.settings_tip_backup_inactive_desc_1),
+                        context.getString(R.string.settings_tip_backup_inactive_desc_2)
                     )
                 }
                 add(
@@ -1485,13 +1485,13 @@ fun SettingsTipsRow(
             if ("updates" !in dismissedIds) {
                 val descs = if (updatesEnabled) {
                     listOf(
-                        "Updates are enabled. Keep them on for fixes and performance improvements.",
-                        "You are set to receive updates. Check channel preferences for stability vs freshness."
+                        context.getString(R.string.settings_tip_updates_active_desc_1),
+                        context.getString(R.string.settings_tip_updates_active_desc_2)
                     )
                 } else {
                     listOf(
-                        "Updates are disabled. Re-enable them to stay protected and current.",
-                        "You are pinned to the current build. Turn updates back on when ready."
+                        context.getString(R.string.settings_tip_updates_inactive_desc_1),
+                        context.getString(R.string.settings_tip_updates_inactive_desc_2)
                     )
                 }
                 add(
@@ -1507,13 +1507,13 @@ fun SettingsTipsRow(
             if ("queue_playback" !in dismissedIds) {
                 val descs = if (gesturePlayerSwipeTracks) {
                     listOf(
-                        "Player swipe-to-skip is active. Tune queue rules for smoother transitions.",
-                        "Gesture skip is on. Match queue behavior to your listening flow."
+                        context.getString(R.string.settings_tip_queue_active_desc_1),
+                        context.getString(R.string.settings_tip_queue_active_desc_2)
                     )
                 } else {
                     listOf(
-                        "Swipe-to-skip is off. Queue controls can help keep playback efficient.",
-                        "Prefer explicit controls? Fine-tune queue behavior for predictable playback."
+                        context.getString(R.string.settings_tip_queue_inactive_desc_1),
+                        context.getString(R.string.settings_tip_queue_inactive_desc_2)
                     )
                 }
                 add(
@@ -1529,13 +1529,13 @@ fun SettingsTipsRow(
             if ("player_controls" !in dismissedIds) {
                 val descs = if (playerShowSeekButtons) {
                     listOf(
-                        "Seek buttons are visible. Customize player controls to reduce clutter.",
-                        "Control-rich player enabled. Tweak layout for your thumb reach."
+                        context.getString(R.string.settings_tip_controls_active_desc_1),
+                        context.getString(R.string.settings_tip_controls_active_desc_2)
                     )
                 } else {
                     listOf(
-                        "Minimal player controls enabled. Add seek buttons if you miss precise jumps.",
-                        "Clean layout active. Re-enable seek controls for finer playback handling."
+                        context.getString(R.string.settings_tip_controls_inactive_desc_1),
+                        context.getString(R.string.settings_tip_controls_inactive_desc_2)
                     )
                 }
                 add(
@@ -1551,13 +1551,13 @@ fun SettingsTipsRow(
             if ("miniplayer" !in dismissedIds) {
                 val descs = if (miniPlayerShowProgress) {
                     listOf(
-                        "Mini player progress is visible. Choose a style that matches your theme.",
-                        "Progress bar is active on mini player. Try shape and corner tweaks next."
+                        context.getString(R.string.settings_tip_miniplayer_active_desc_1),
+                        context.getString(R.string.settings_tip_miniplayer_active_desc_2)
                     )
                 } else {
                     listOf(
-                        "Mini player progress is hidden. Enable it for quick track awareness.",
-                        "Compact mode is minimal now. Turn progress on for better glanceability."
+                        context.getString(R.string.settings_tip_miniplayer_inactive_desc_1),
+                        context.getString(R.string.settings_tip_miniplayer_inactive_desc_2)
                     )
                 }
                 add(
@@ -1573,13 +1573,13 @@ fun SettingsTipsRow(
             if (isLocalMode && "library_settings" !in dismissedIds) {
                 val descs = if (enableRatingSystem) {
                     listOf(
-                        "Ratings are enabled. Use library settings to sharpen discovery and sorting.",
-                        "Your library supports ratings. Tune scan and grouping for cleaner browsing."
+                        context.getString(R.string.settings_tip_library_active_desc_1),
+                        context.getString(R.string.settings_tip_library_active_desc_2)
                     )
                 } else {
                     listOf(
-                        "Ratings are disabled. Library settings can still improve structure and speed.",
-                        "Simplified library mode detected. Adjust grouping for faster navigation."
+                        context.getString(R.string.settings_tip_library_inactive_desc_1),
+                        context.getString(R.string.settings_tip_library_inactive_desc_2)
                     )
                 }
                 add(

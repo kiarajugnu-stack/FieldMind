@@ -139,7 +139,7 @@ fun AutoEQPresetPickerBottomSheet(
                             modifier = Modifier
                                 .weight(1f)
                                 .heightIn(min = 48.dp),
-                            hint = "Search presets..."
+                            hint = context.getString(R.string.autoeqpresetpickerbottomsheet_search_presets)
                         )
 
                         FilledTonalIconButton(
@@ -282,7 +282,7 @@ fun AutoEQPresetPickerBottomSheet(
                             ListItem(
                                 headlineContent = {
                                     Text(
-                                        "None / Disable AutoEQ",
+                                        context.getString(R.string.autoeqpresetpickerbottomsheet_disable),
                                         style = MaterialTheme.typography.bodyLarge,
                                         fontWeight = if (isCurrentlyActive) FontWeight.SemiBold else FontWeight.Normal,
                                         color = if (isCurrentlyActive) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.onSurface,
@@ -292,7 +292,7 @@ fun AutoEQPresetPickerBottomSheet(
                                 },
                                 supportingContent = {
                                     Text(
-                                        "Clear headphone profile, use standard EQ presets",
+                                        context.getString(R.string.autoeqpresetpickerbottomsheet_disable_desc),
                                         color = if (isCurrentlyActive) MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.8f) else MaterialTheme.colorScheme.onSurfaceVariant,
                                         maxLines = 1,
                                         overflow = TextOverflow.Ellipsis
@@ -363,7 +363,7 @@ fun AutoEQPresetPickerBottomSheet(
                                     },
                                     supportingContent = {
                                         Text(
-                                            profile.brand ?: "Unknown Brand",
+                                            profile.brand ?: context.getString(R.string.autoeqpresetpickerbottomsheet_unknown_brand),
                                             color = if (isCurrentlyActive) MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.8f) else MaterialTheme.colorScheme.onSurfaceVariant,
                                             maxLines = 1,
                                             overflow = TextOverflow.Ellipsis

@@ -3729,4 +3729,596 @@
     <string name="widget_theme_solid_purple_desc">Фірмове насичено-фіолетове тло з фірмовими акцентними відтінками та відблисками</string>
     <string name="widget_theme_glance_suffix">%1$s (лише віджети Glance)</string>
     <string name="unit_dp">%1$ddp</string>
+
+    <!-- Settings Suggestions and Tips -->
+    <string name="settings_suggestions">Пропозиції налаштувань</string>
+    <string name="settings_suggestions_desc">Показати контекстні пропозиції вгорі</string>
+    <string name="settings_performance_desc_optimized">Оптимізуйте тактильні дії, декодування, виділення рамок і зображення, щоб зменшити затримку</string>
+    <string name="moment_morning">сьогодні вранці</string>
+    <string name="moment_afternoon">сьогодні вдень</string>
+    <string name="moment_evening">сьогодні ввечері</string>
+    <string name="moment_night">сьогодні ввечері</string>
+    <string name="pulse_fresh">Свіжа енергія сесії</string>
+    <string name="pulse_steady">Стабільна канавка</string>
+    <string name="pulse_heavy">Важке прослуховування</string>
+    <string name="pulse_marathon">Марафонський режим</string>
+    
+    <!-- Settings Tips Details -->
+    <string name="settings_tip_theme_desc_1">Оновіть свій музичний плеєр живим чорним AMOLED і красивими пастельними кольорами.</string>
+    <string name="settings_tip_theme_desc_2">Зробіть Rhythm справді вашим, підібравши акцент програми до вашої системи.</string>
+    <string name="settings_tip_media_scan_desc_1">Уникайте небажаних аудіокліпів. Чітко визначте, які папки ми повинні сканувати на наявність музики.</string>
+    <string name="settings_tip_media_scan_desc_2">Тримайте голосові нотатки та мелодії подалі від ваших списків відтворення за допомогою папок фокусу.</string>
+    <string name="settings_tip_sleep_timer_desc_1">Засинайте, поки грає музика. Ми автоматично призупинимо його.</string>
+    <string name="settings_tip_sleep_timer_desc_2">Встановіть автоматичний таймер сну перед сном, щоб відтворення повністю зупинилося.</string>
+    <string name="settings_tip_equalizer_desc_1">Покращуйте свій досвід. Підсилюйте баси та регулюйте частоти за допомогою еквалайзера.</string>
+    <string name="settings_tip_equalizer_desc_2">Надійно налаштуйте звук у своїх навушниках за допомогою наших вдосконалених звукових ефектів.</string>
+    <string name="settings_tip_backup_active_desc_1">Автоматичне резервне копіювання активне. Перевірте розділи резервної копії, щоб відновлення залишалося чистим.</string>
+    <string name="settings_tip_backup_active_desc_2">Захист увімкнено: розклад виглядає добре. Перед великими редагуваннями створіть резервну копію вручну.</string>
+    <string name="settings_tip_backup_inactive_desc_1">Автоматичне резервне копіювання вимкнено. Увімкніть його, щоб захистити списки відтворення та статистику Rhythm Guard.</string>
+    <string name="settings_tip_backup_inactive_desc_2">Ще немає мережі безпеки. Увімкніть резервне копіювання, щоб не втратити налаштування.</string>
+    <string name="settings_tip_updates_active_desc_1">Оновлення ввімкнено. Залиште їх увімкненими для виправлення та покращення продуктивності.</string>
+    <string name="settings_tip_updates_active_desc_2">Ви налаштовані на отримання оновлень. Перевірте параметри каналу на стабільність чи свіжість.
+Оновлення</string>
+    <string name="settings_tip_updates_inactive_desc_1">вимкнено. Знову ввімкніть їх, щоб залишатися захищеними та актуальними.</string>
+    <string name="settings_tip_updates_inactive_desc_2">Ви закріплені на поточній збірці. Увімкніть оновлення, коли будете готові.</string>
+    <string name="settings_tip_queue_active_desc_1">Увімкнуто функцію пропуску пальцем. Налаштуйте правила черги для плавніших переходів.</string>
+    <string name="settings_tip_queue_active_desc_2">Пропуск жестів увімкнено. Зіставте поведінку черги з вашим потоком прослуховування.</string>
+    <string name="settings_tip_queue_inactive_desc_1">Проведіть пальцем, щоб пропустити, вимкнено. Керування чергою може допомогти зберегти ефективне відтворення.</string>
+    <string name="settings_tip_queue_inactive_desc_2">Віддаєте перевагу явним елементам керування? Точне налаштування поведінки черги для передбачуваного відтворення.</string>
+    <string name="settings_tip_controls_active_desc_1">Видно кнопки пошуку. Налаштуйте елементи керування гравцем, щоб зменшити безлад.</string>
+    <string name="settings_tip_controls_active_desc_2">Програвач із багатим контролем увімкнено. Налаштуйте макет, щоб ваш великий палець досягав.</string>
+    <string name="settings_tip_controls_inactive_desc_1">Увімкнено мінімальні елементи керування програвачем. Додайте кнопки пошуку, якщо ви пропустите точні стрибки.</string>
+    <string name="settings_tip_controls_inactive_desc_2">Чистий макет активний. Знову ввімкніть елементи керування пошуком для кращого керування відтворенням.</string>
+    <string name="settings_tip_miniplayer_active_desc_1">Прогрес міні-програвача видно. Виберіть стиль, який відповідає вашій темі.</string>
+    <string name="settings_tip_miniplayer_active_desc_2">Індикатор прогресу активний у міні-програвачі. Далі спробуйте змінити форму та кути.</string>
+    <string name="settings_tip_miniplayer_inactive_desc_1">Прогрес міні-програвача приховано. Увімкніть його для швидкого відстеження.</string>
+    <string name="settings_tip_miniplayer_inactive_desc_2">Компактний режим тепер мінімальний. Увімкніть прогрес для кращої видимості.</string>
+    <string name="settings_tip_library_active_desc_1">Рейтинги ввімкнено. Використовуйте налаштування бібліотеки, щоб покращити виявлення та сортування.</string>
+    <string name="settings_tip_library_active_desc_2">Ваша бібліотека підтримує рейтинги. Налаштуйте сканування та групування для чистішого перегляду.</string>
+    <string name="settings_tip_library_inactive_desc_1">Рейтинги вимкнено. Налаштування бібліотеки можуть покращити структуру та швидкість.</string>
+    <string name="settings_tip_library_inactive_desc_2">Виявлено режим спрощеної бібліотеки. Налаштуйте групування для швидшої навігації.</string>
+
+    <!-- Lyrics Source Dialog -->
+    <string name="lyrics_source_embedded_first">Спочатку вбудовано</string>
+    <string name="lyrics_source_embedded_first_desc">Спробуйте метадані аудіофайлу → Онлайн-інтерфейси API → Файли .lrc</string>
+    <string name="lyrics_source_api_first">API Перший</string>
+    <string name="lyrics_source_api_first_desc">Спробуйте онлайн-сервіси → Метадані звуку → Файли .lrc</string>
+    <string name="lyrics_source_local_first">Спочатку локальний .lrc</string>
+    <string name="lyrics_source_local_first_desc">Спробуйте файли .lrc → Аудіо метадані → Онлайн API</string>
+
+    <!-- Font / Color Customization Dialogs -->
+    <string name="theme_font_source_changed_restart">Джерело шрифту змінено. Перезапустіть програму, щоб застосувати новий шрифт.</string>
+    <string name="color_source_album_art">Обкладинка альбому</string>
+    <string name="color_source_album_art_desc">Витягувати кольори з обкладинок альбомів, які зараз відтворюються</string>
+    <string name="color_source_system_colors">Системні кольори</string>
+    <string name="color_source_system_colors_desc">Використовуйте Material свої кольори зі своїх шпалер</string>
+    <string name="color_source_custom_scheme">Спеціальна схема</string>
+    <string name="color_source_custom_scheme_desc">Виберіть із попередньо визначених схем кольорів</string>
+    <string name="font_source_system_font">Системний шрифт</string>
+    <string name="font_source_system_font_desc">Використовуйте стандартний шрифт пристрою</string>
+    <string name="font_source_custom_font">Спеціальний шрифт</string>
+    <string name="font_source_custom_font_desc">Імпортуйте та використовуйте власний файл шрифту</string>
+    <string name="font_system_title">Системне значення за замовчуванням</string>
+    <string name="font_system_desc">Використовуйте стандартний шрифт свого пристрою</string>
+    <string name="font_geom_desc">Сучасний чистий шрифт без зарубок від Google</string>
+    <string name="font_slate_desc">Елегантний шрифт із засічками класичного традиційного вигляду</string>
+    <string name="font_inter_desc">Чистий і сучасний шрифт без засічок, добре читається</string>
+    <string name="font_jetbrains_desc">Моноширинний шрифт ідеально підходить для технічного вмісту</string>
+    <string name="font_quicksand_desc">Округлий шрифт із м’якшим і зручнішим виглядом</string>
+
+    <!-- Predefined Color Schemes -->
+    <string name="color_scheme_default_title">Rhythm За замовчуванням</string>
+    <string name="color_scheme_default_desc">Material 3 базовий фіолетовий з рожево-рожевими акцентами</string>
+    <string name="color_scheme_warm_title">Теплий захід сонця</string>
+    <string name="color_scheme_warm_desc">Затишні помаранчеві та червоні тони для теплої атмосфери</string>
+    <string name="color_scheme_cool_title">Крутий океан</string>
+    <string name="color_scheme_cool_desc">Освіжаючі блакитні та блакитні тони для заспокійливої атмосфери</string>
+    <string name="color_scheme_forest_title">Зелений ліс</string>
+    <string name="color_scheme_forest_desc">Природні зелені тони, натхненні природою</string>
+    <string name="color_scheme_rose_title">Рожева троянда</string>
+    <string name="color_scheme_rose_desc">Елегантні рожеві та пурпурні тони</string>
+    <string name="color_scheme_monochrome_title">Монохромний</string>
+    <string name="color_scheme_monochrome_desc">Мінімалістичний відтінок сірого для чистого, сучасного вигляду</string>
+    <string name="color_scheme_lavender_title">Лаванда</string>
+    <string name="color_scheme_lavender_desc">Спокійні фіолетові та лавандові тони для релаксації</string>
+    <string name="color_scheme_ocean_title">Глибокий океан</string>
+    <string name="color_scheme_ocean_desc">Глибокий блюз і аквамарин для океанської безтурботності</string>
+    <string name="color_scheme_aurora_title">Північне сяйво</string>
+    <string name="color_scheme_aurora_desc">Яскраві зелені та сині відтінки, натхненні полярним сяйвом</string>
+    <string name="color_scheme_amber_title">Золотий бурштин</string>
+    <string name="color_scheme_amber_desc">Насичені бурштинові та золотисті тони для відчуття розкоші</string>
+    <string name="color_scheme_crimson_title">Deep Crimson</string>
+    <string name="color_scheme_crimson_desc">Яскраві бордові та малинові відтінки для драматизму</string>
+    <string name="color_scheme_emerald_title">Смарагдова мрія</string>
+    <string name="color_scheme_emerald_desc">Свіжа смарагдова зелень із природними лісовими відтінками</string>
+    <string name="color_scheme_mint_title">Монетний двір</string>
+    <string name="color_scheme_mint_desc">Свіжі та чисті блакитні та м’ятно-зелені тони</string>
+
+    <!-- Color Preview Chips -->
+    <string name="theme_color_primary">Основний</string>
+    <string name="theme_color_secondary">Вторинний</string>
+    <string name="theme_color_tertiary">Третинний</string>
+
+    <!-- Lyrics Settings Screen -->
+    <string name="lyrics_settings_title">Тексти пісень</string>
+    <string name="lyrics_settings_general">Загальні налаштування</string>
+    <string name="lyrics_settings_open_fullscreen_desc">Відкрийте повноекранний екран тексту, торкнувшись перегляду тексту</string>
+    <string name="lyrics_settings_autohide_controls">Автоматично приховувати елементи керування текстом</string>
+    <string name="lyrics_settings_autohide_controls_desc">Автоматично приховувати елементи керування на повноекранному екрані тексту пісень після кількох секунд бездіяльності</string>
+    <string name="lyrics_settings_embedded_first">Спочатку вбудовано</string>
+    <string name="lyrics_settings_embedded_first_desc">Віддавайте перевагу текстам пісень, вбудованим у аудіофайли, повертайтеся до онлайнових API</string>
+    <string name="lyrics_settings_online_first">Спочатку онлайн</string>
+    <string name="lyrics_settings_online_first_desc">Віддавайте перевагу онлайн-інтерфейсам API (Rhythm слово за словом, LRCLib), повертайтеся до вбудованих</string>
+    <string name="lyrics_settings_local_first">Спочатку локально</string>
+    <string name="lyrics_settings_local_first_desc">Віддавайте перевагу локальним файлам .lrc, потім вбудованим текстам пісень, а потім онлайн-API</string>
+    <string name="lyrics_settings_apple_music_first">Apple Music First</string>
+    <string name="lyrics_settings_lrclib_first">LRCLib Перший</string>
+    <string name="lyrics_settings_fallback_apis_desc">Спроба резервних API, якщо бажаний API не повертає тексти пісень</string>
+    <string name="lyrics_settings_display_styling">Дисплей і стиль</string>
+    <string name="lyrics_settings_size_percentage">Розмір: %1$d%%</string>
+    <string name="alignment_left">Ліворуч</string>
+    <string name="alignment_center">Центр</string>
+    <string name="alignment_right">Правильно</string>
+    <string name="animation_slide">Слайд</string>
+    <string name="animation_fade">Зникнення</string>
+    <string name="animation_scale">Масштаб</string>
+    <string name="animation_up">Вгору</string>
+    <string name="lyrics_settings_switch_animation_desc">Мистецтво ↔ Анімація перемикання тексту</string>
+    <string name="lyrics_settings_not_supported_expressive">Не підтримується темою Expressive</string>
+    <string name="lyrics_settings_formatting_behaviors">Форматування та поведінка</string>
+    <string name="lyrics_settings_bold_text">Жирний текст</string>
+    <string name="lyrics_settings_bold_text_desc">Зробіть текст активних текстів напівжирним</string>
+    <string name="lyrics_settings_trim_lyrics">Trim Lyrics</string>
+    <string name="lyrics_settings_trim_lyrics_desc">Вирізати пробіли на початку та в кінці рядків лірики</string>
+    <string name="lyrics_settings_disable_animations">Вимкнути анімацію</string>
+    <string name="lyrics_settings_disable_animations_desc">Вимкнути переходи та анімацію в режимі перегляду тексту</string>
+    <string name="lyrics_settings_word_by_word_translation">Послівний переклад</string>
+    <string name="lyrics_settings_word_by_word_translation_desc">Спробуйте автоматично синхронізувати переклади складів або слів</string>
+    <string name="lyrics_settings_info_bullets">Додаткові відомості про синхронізацію:\n• Онлайн-інтерфейси API забезпечують високоякісні синхронізовані тексти пісень\n• Rhythm пропонує синхронізацію слово за словом\n• LRCLib забезпечує безкоштовну синхронізацію рядків за рядками</string>
+
+    <!-- AutoEQ Preset Picker additions -->
+    <string name="autoeqpresetpickerbottomsheet_search_presets">Попередні налаштування пошуку...</string>
+    <string name="autoeqpresetpickerbottomsheet_disable">Немає / Вимкнути AutoEQ</string>
+    <string name="autoeqpresetpickerbottomsheet_disable_desc">Очистити профіль навушників, використовувати стандартні налаштування еквалайзера</string>
+    <string name="autoeqpresetpickerbottomsheet_unknown_brand">Невідомий бренд
+Налаштовано пристроїв</string>
+
+    <!-- Device Configuration additions -->
+    <string name="device_configuration_devices_configured">%1$d</string>
+    <string name="device_configuration_device_recognized">Пристрій розпізнано</string>
+    <string name="device_configuration_new_device_detected">Виявлено новий пристрій</string>
+    <string name="device_configuration_configured_with">%1$s налаштовано за допомогою %2$s</string>
+    <string name="device_configuration_configured_no_profile">%1$s налаштовано</string>
+    <string name="device_configuration_connected_not_configured">%1$s підключено, але не налаштовано</string>
+    <string name="device_configuration_applied_profile">Застосовано профіль %1$s</string>
+    <string name="device_configuration_imported_profile">Імпортований профіль</string>
+    <string name="device_configuration_parse_error">Не вдалося проаналізувати налаштування еквалайзера. Перевірте формат.</string>
+    <string name="device_configuration_custom_eq">Користувацький еквалайзер</string>
+    <string name="device_configuration_custom_preset">Користувацькі налаштування</string>
+    <string name="device_configuration_custom">Custom</string>
+    <string name="device_configuration_active_profile_label">Активний профіль: %1$s</string>
+    <string name="device_configuration_share_subject">Rhythm Профіль еквалайзера: %1$s</string>
+    <string name="device_configuration_share_title">Поділитися профілем EQ</string>
+    <string name="device_configuration_edit_device">Редагувати пристрій</string>
+    <string name="device_configuration_add_device">Додати пристрій</string>
+    <string name="device_configuration_save">Зберегти</string>
+    <string name="device_configuration_add">Додати</string>
+    <string name="device_configuration_for_device">Для %1$s
+Доступні профілі</string>
+    <string name="device_configuration_profiles_available">%1$d</string>
+    <string name="device_configuration_disable_compensation">Вимкнути компенсацію навушників</string>
+
+    <!-- Common UI element strings -->
+    <string name="common_none">Жодного</string>
+    <string name="common_cancel">Скасувати</string>
+    <string name="common_back">Назад</string>
+    <string name="common_remove">Видалити</string>
+    <string name="common_add">Додати</string>
+    <string name="common_active">Активний</string>
+    <string name="common_disabled">Вимкнено</string>
+    <string name="common_unavailable">Недоступний</string>
+    <string name="common_success">Успіх</string>
+    <string name="common_error">Помилка</string>
+    <string name="common_unknown">Невідомо</string>
+
+    <!-- Blacklist UI additions -->
+    <string name="blacklist_remove_song_title">Видалити з чорного списку?</string>
+    <string name="blacklist_add_song_title">Додати до чорного списку?</string>
+    <string name="blacklist_remove_song_desc">Цю пісню більше не буде приховано у вашій бібліотеці.</string>
+    <string name="blacklist_add_song_desc">Цю пісню буде приховано у вашій бібліотеці та виключено з відтворення.</string>
+    <string name="blacklist_undo_warning">Цю дію можна будь-коли скасувати.</string>
+    <string name="blacklist_song_removed_msg">Пісню видалено з чорного списку</string>
+    <string name="blacklist_song_added_msg">Пісню додано до чорного списку</string>
+    <string name="blacklist_button_remove">Видалити</string>
+    <string name="blacklist_button_blacklist">Чорний список</string>
+    <string name="blacklist_remove_folder_title">Видалити папку з чорного списку?</string>
+    <string name="blacklist_add_folder_title">Чорна папка?</string>
+    <string name="blacklist_remove_folder_desc">Усі пісні в цій папці знову будуть видимі.</string>
+    <string name="blacklist_add_folder_desc">Усі пісні в цій папці буде приховано та виключено з відтворення.</string>
+    <string name="blacklist_folder_removed_msg">Папку вилучено з чорного списку</string>
+    <string name="blacklist_folder_added_msg">Папку додано до чорного списку</string>
+    <string name="blacklist_disc_label">Диск %1$d</string>
+    <string name="blacklist_track_label">Трек %1$d</string>
+
+    <!-- Library & Playlist Dialog additions -->
+    <string name="dialog_add_song_to_playlist">Додайте \"%1$s\" до цього списку відтворення</string>
+    <string name="dialog_songs_in_queue">У вас є %1$d пісень у поточній черзі.</string>
+    <string name="dialog_play_song_how">Як би ви хотіли зіграти в \"%1$s\"?</string>
+    <string name="dialog_clear_and_play">Clear &amp; Play</string>
+    <string name="dialog_clear_and_play_desc">Замінити чергу та відтворити цю пісню</string>
+    <string name="dialog_add_to_queue">Додати до черги</string>
+    <string name="dialog_add_to_queue_desc">Зберегти поточну чергу та додати пісню</string>
+    <string name="dialog_restart_warning_message">Щоб переконатися, що всі імпортовані списки відтворення працюють правильно, рекомендуємо перезапустити програму. Ви можете продовжувати користуватися програмою в звичайному режимі, але деякі функції можуть не працювати належним чином до перезавантаження.</string>
+    <string name="dialog_export_playlist_to">Експорт \"%1$s\" до:</string>
+    <string name="dialog_export_playlists_to">Експортувати списки відтворення %1$d до:</string>
+    <string name="dialog_operation_importing">Імпорт</string>
+    <string name="dialog_operation_exporting">Експорт</string>
+
+    <!-- Mode dialog strings -->
+    <string name="dialog_switch_to_go">Перейти на Rhythm Go?</string>
+    <string name="dialog_switch_to_local">Перейти на локальний?</string>
+    <string name="dialog_switch_to_go_desc">Цей елемент належить Rhythm Go. Перейти в режим потокового передавання зараз, щоб транслювати та відтворювати?</string>
+    <string name="dialog_switch_to_local_desc">Цей елемент належить до вашої локальної бібліотеки. Перейти в локальний режим зараз, щоб відтворювати композиції в автономному режимі?</string>
+
+    <!-- Section order content descriptions -->
+    <string name="home_section_hide_carousel">Сховати карусель</string>
+    <string name="home_section_show_carousel">Показати карусель</string>
+    <string name="home_section_hide_section">Приховати розділ</string>
+    <string name="home_section_show_section">Показати розділ</string>
+    <string name="library_tab_show">Показати вкладку</string>
+    <string name="library_tab_hide">Сховати вкладку
+Вибрано</string>
+
+    <!-- Add To Playlist additions -->
+    <string name="add_to_playlist_selected_count">%1$d</string>
+    <string name="add_to_playlist_title">Додати до %1$s</string>
+    <string name="add_to_playlist_no_songs">Пісень немає</string>
+    <string name="add_to_playlist_all_songs_present">Усі пісні вже є в цьому списку відтворення</string>
+
+    <!-- Artist details -->
+    <string name="artist_detail_albums_count">%1$d альбомів</string>
+    <string name="artist_detail_songs_count">%1$d пісень</string>
+
+    <!-- Equalizer presets & UI -->
+    <string name="eq_preset_flat">Плоский</string>
+    <string name="eq_preset_rock">Рок</string>
+    <string name="eq_preset_pop">Поп</string>
+    <string name="eq_preset_jazz">Джаз</string>
+    <string name="eq_preset_classical">Класика</string>
+    <string name="eq_preset_electronic">Електронний</string>
+    <string name="eq_preset_hiphop">Хіп-хоп</string>
+    <string name="eq_preset_vocal">Вокал</string>
+    <string name="eq_preset_bass_boost">Підсилення басів</string>
+    <string name="eq_preset_treble_boost">Підвищення високих частот</string>
+    <string name="eq_preset_v_shape">V-подібна форма</string>
+    <string name="eq_preset_harman">Harman</string>
+    <string name="eq_preset_custom">Custom</string>
+    <string name="eq_autoeq_profiles">Профілі AutoEQ</string>
+    <string name="eq_manage_device">Керування пристроєм</string>
+    <string name="eq_system_equalizer">Системний еквалайзер</string>
+    <string name="eq_enhance_lows">Покращення низьких частот</string>
+    <string name="eq_widen_sound">Розширити звук</string>
+    <string name="eq_mono_only">Лише моно</string>
+
+    <!-- Library updates, sorting & categories -->
+    <string name="library_updated_songs_success">Оновлено %1$d пісень</string>
+    <string name="library_updated_songs_failed">Оновлено %1$d пісень, %2$d не вдалося</string>
+    <string name="library_switch_to_grid">Перейти в режим сітки</string>
+    <string name="library_switch_to_list">Перейти до списку</string>
+    <string name="library_sort_title">Назва</string>
+    <string name="library_sort_artist">Виконавець</string>
+    <string name="library_sort_date_added">Дата додавання</string>
+    <string name="library_sort_date_modified">Дата зміни</string>
+    <string name="library_sort_ascending">За зростанням</string>
+    <string name="library_sort_descending">За спаданням</string>
+    <string name="library_sort_name_asc">Ім\'я (A-Z)</string>
+    <string name="library_sort_name_desc">Ім\'я (Я-А)</string>
+    <string name="library_sort_songs_desc">Пісні (від високого до низького)</string>
+    <string name="library_sort_albums_desc">Альбоми (від високого до низького)</string>
+    <string name="library_scan_songs">Сканування пісень...</string>
+    <string name="library_scan_albums">Обробка альбомів...</string>
+    <string name="library_scan_artists">Обробка виконавців...</string>
+    <string name="library_scan_genres">Виявлення жанрів...</string>
+    <string name="library_scan_media">Сканування носія...</string>
+    <string name="library_export_failed">Помилка експорту</string>
+    <string name="library_import_failed">Помилка імпорту</string>
+    <string name="library_category_all">Усі</string>
+    <string name="library_category_favorites">❤️ Вибране</string>
+    <string name="library_category_absolute_favorites">⭐⭐⭐⭐⭐ Абсолютні фаворити</string>
+    <string name="library_category_loved">⭐⭐⭐⭐ Люблю</string>
+    <string name="library_category_great">⭐⭐⭐ Чудово</string>
+    <string name="library_category_good">⭐⭐ Добре</string>
+    <string name="library_category_liked">⭐ Сподобалось</string>
+    <string name="library_category_short">Короткий (&lt; 3 хв)</string>
+    <string name="library_category_medium">Середній (3-5 хв)</string>
+    <string name="library_category_long">Довгий (&gt; 5 хв)</string>
+    <string name="library_category_hi_res_lossless">Висока роздільна здатність без втрат</string>
+    <string name="library_category_lossless">Без втрат</string>
+    <string name="library_category_dolby">Dolby</string>
+    <string name="library_category_mono">Моно</string>
+    <string name="library_category_stereo">Стерео</string>
+    <string name="library_category_high_quality">Висока якість</string>
+    <string name="library_category_standard">Стандартний</string>
+    <string name="library_removed_from_favorites">Видалено %1$d з вибраного</string>
+    <string name="library_added_to_favorites">Додано %1$d до вибраного</string>
+    <string name="library_unlike_all">На відміну від усіх</string>
+    <string name="library_like_all">Як і всі</string>
+    <string name="library_tracks_count_format">%1$d з %2$d треків</string>
+    <string name="library_no_playlists_yet">Ще немає списків відтворення\nСтворіть свій перший список відтворення за допомогою кнопки +</string>
+    <string name="library_no_albums_yet">Ще немає альбомів</string>
+    <string name="library_no_artists_yet">Виконавців ще немає</string>
+    <string name="library_action_play_next">Грати далі</string>
+    <string name="library_action_add_to_queue">Додати до черги</string>
+    <string name="library_action_add_to_blacklist">Додати до чорного списку</string>
+    <string name="library_action_song_info">Інформація про пісню</string>
+    <string name="library_action_add_to_playlist">Додати до списку відтворення</string>
+    <string name="library_action_rate_song">Оцініть пісню</string>
+    <string name="library_menu_new_playlist">Новий список відтворення</string>
+    <string name="library_menu_import_playlist">Імпорт списку відтворення</string>
+    <string name="library_menu_export_playlists">Експортувати списки відтворення</string>
+    <string name="library_menu_close_playlist">Закрити меню списку відтворення</string>
+    <string name="library_menu_open_playlist">Відкрити меню списку відтворення</string>
+    <string name="library_menu_close">Закрити меню</string>
+    <string name="library_selected_count_format">%1$d Вибрано</string>
+    <string name="library_from_tracks_format">з %1$d треків</string>
+    <string name="library_playlist_count_singular">%1$d список відтворення</string>
+    <string name="library_playlist_count_plural">%1$d списки відтворення</string>
+    <string name="library_album_count_singular">%1$d альбом</string>
+    <string name="library_album_count_plural">%1$d альбомів</string>
+    <string name="library_artist_count_singular">%1$d художник</string>
+    <string name="library_artist_count_plural">%1$d артисти</string>
+    <string name="library_duration_hours_minutes">%1$dh %2$dхв</string>
+    <string name="library_duration_minutes">%1$dm</string>
+
+    <!-- Onboarding, Backup & Settings additions -->
+    <string name="onboarding_blacklist_label">Чорний список</string>
+    <string name="onboarding_whitelist_label">Білий список</string>
+    <string name="onboarding_full_player_label">Повний програвач</string>
+    <string name="onboarding_mini_player_label">Міні-плеєр</string>
+    <string name="onboarding_blocked_folders">%1$d заблоковані папки</string>
+    <string name="onboarding_whitelisted_folders">%1$d папки з білого списку</string>
+    <string name="onboarding_sample_button">Зразок кнопки</string>
+    <string name="onboarding_primary_label">Основний</string>
+    <string name="onboarding_secondary_label">Вторинний</string>
+    <string name="onboarding_tertiary_label">Третинний</string>
+    <string name="onboarding_rhythm_material">Rhythm (Material)</string>
+    
+    <string name="backup_restored_success">Резервну копію успішно відновлено. Перезапустіть програму, щоб застосувати всі зміни.</string>
+    <string name="backup_copied_to_clipboard">Резервну копію створено та скопійовано в буфер обміну.</string>
+    <string name="backup_failed_to_create">Не вдалося створити резервну копію: %1$s</string>
+    <string name="backup_failed_to_restore_file">Не вдалося відновити з файлу: %1$s</string>
+    <string name="backup_no_backup_clipboard">Не знайдено резервну копію в буфері обміну</string>
+    <string name="backup_failed_to_restore_clipboard">Не вдалося відновити з буфера обміну: %1$s</string>
+    
+    <string name="updater_ready_to_install">Версія %1$s готова до встановлення</string>
+    <string name="updater_download_progress">%1$d%% • %2$s / %3$s</string>
+    <string name="updater_version_info">Версія %1$s • %2$s</string>
+    <string name="updater_error_occurred">Сталася помилка</string>
+    <string name="updater_channel_stable">стабільний</string>
+    <string name="updater_channel_beta">бета</string>
+
+    <!-- Expressive shape preset & group names -->
+    <string name="shape_preset_default">За замовчуванням</string>
+    <string name="shape_preset_default_desc">Ніжні виразні форми для будь-якого віку</string>
+    <string name="shape_preset_friendly">Дружній</string>
+    <string name="shape_preset_friendly_desc">Теплі та доступні форми</string>
+    <string name="shape_preset_cheerful">Веселий</string>
+    <string name="shape_preset_cheerful_desc">Яскраві та виразні форми</string>
+    <string name="shape_preset_modern">Сучасний</string>
+    <string name="shape_preset_modern_desc">Сучасний виразний дизайн</string>
+    <string name="shape_preset_playful">Грайливий</string>
+    <string name="shape_preset_playful_desc">Веселі та виразні форми</string>
+    <string name="shape_preset_organic">Органічний</string>
+    <string name="shape_preset_organic_desc">Форми, натхненні природою</string>
+    <string name="shape_preset_geometric">Геометричний</string>
+    <string name="shape_preset_geometric_desc">Чисті та сучасні форми</string>
+    <string name="shape_preset_retro">Ретро</string>
+    <string name="shape_preset_retro_desc">Нерівні ностальгічні форми</string>
+    <string name="shape_preset_custom">Custom</string>
+    <string name="shape_preset_custom_desc">Ваш персоналізований вибір</string>
+    <string name="shape_option_square">Квадрат</string>
+    <string name="shape_option_square_desc">Округлений квадрат</string>
+    <string name="shape_option_oval">Овал</string>
+    <string name="shape_option_oval_desc">Подовжений овал</string>
+    <string name="shape_option_pill">таблетка</string>
+    <string name="shape_option_pill_desc">Форма капсули</string>
+    <string name="shape_option_diamond">Діамант</string>
+    <string name="shape_option_diamond_desc">Форма ромба</string>
+    <string name="shape_option_triangle">Трикутник</string>
+    <string name="shape_option_triangle_desc">Округлений трикутник</string>
+    <string name="shape_option_pentagon">Пентагон</string>
+    <string name="shape_option_pentagon_desc">П\'ятикутник</string>
+    <string name="shape_option_flower">Квітка</string>
+    <string name="shape_option_flower_desc">Квітка з пелюстками</string>
+    <string name="shape_option_clover4">4-лисна конюшина</string>
+    <string name="shape_option_clover4_desc">Чотирилисник</string>
+    <string name="shape_option_clover8">8-листкова конюшина</string>
+    <string name="shape_option_clover8_desc">Восьмилисник</string>
+    <string name="shape_option_heart">Серце</string>
+    <string name="shape_option_heart_desc">Форма серця</string>
+    <string name="shape_option_bun">Булочка</string>
+    <string name="shape_option_bun_desc">Форма булочки/хліба</string>
+    <string name="shape_option_boom">Бум</string>
+    <string name="shape_option_boom_desc">Форма вибуху</string>
+    <string name="shape_option_soft_boom">М\'яка стріла</string>
+    <string name="shape_option_soft_boom_desc">М\'якший вибух</string>
+    <string name="shape_option_burst">Вибух</string>
+    <string name="shape_option_burst_desc">Форма зорепаду</string>
+    <string name="shape_option_soft_burst">Soft Burst</string>
+    <string name="shape_option_soft_burst_desc">М\'якше зорепад</string>
+    <string name="shape_option_sunny">Сонячно</string>
+    <string name="shape_option_sunny_desc">Сонце з променями</string>
+    <string name="shape_option_very_sunny">Дуже сонячно</string>
+    <string name="shape_option_very_sunny_desc">Сонце з більшою кількістю променів</string>
+    <string name="shape_option_cookie4">Файл cookie 4</string>
+    <string name="shape_option_cookie4_desc">4-сторонній файл cookie</string>
+    <string name="shape_option_cookie6">Файл cookie 6</string>
+    <string name="shape_option_cookie6_desc">6-сторонній файл cookie</string>
+    <string name="shape_option_cookie7">Файл cookie 7</string>
+    <string name="shape_option_cookie7_desc">7-сторонній файл cookie</string>
+    <string name="shape_option_cookie9">Файл cookie 9</string>
+    <string name="shape_option_cookie9_desc">9-сторонній файл cookie</string>
+    <string name="shape_option_cookie12">Файл cookie 12</string>
+    <string name="shape_option_cookie12_desc">12-сторонній файл cookie</string>
+    <string name="shape_option_ghostish">Ghostish</string>
+    <string name="shape_option_ghostish_desc">Примарна форма</string>
+    <string name="shape_option_puffy">Puffy</string>
+    <string name="shape_option_puffy_desc">Хмароподібна форма</string>
+    <string name="shape_option_puffy_diamond">Puffy Diamond</string>
+    <string name="shape_option_puffy_diamond_desc">Роздутий діамант</string>
+    <string name="shape_option_fan">Фанат</string>
+    <string name="shape_option_fan_desc">Форма віяла</string>
+    <string name="shape_option_circle">Коло</string>
+    <string name="shape_option_circle_desc">Ідеальне коло</string>
+    <string name="shape_option_clover_4_leaf">4-лисна конюшина</string>
+    <string name="shape_option_clover_4_leaf_desc">Чотирилисник</string>
+    <string name="shape_option_clover_8_leaf">8-листкова конюшина</string>
+    <string name="shape_option_clover_8_leaf_desc">Восьмилисник</string>
+    <string name="shape_option_arrow">Стрілка</string>
+    <string name="shape_option_arrow_desc">Покажчик зі стрілкою</string>
+    <string name="shape_option_arch">Арх</string>
+    <string name="shape_option_arch_desc">Форма арки</string>
+    <string name="shape_option_clam_shell">Мушля молюска</string>
+    <string name="shape_option_clam_shell_desc">Форма оболонки</string>
+    <string name="shape_option_gem">Gem</string>
+    <string name="shape_option_gem_desc">Форма дорогоцінного каменю</string>
+    <string name="shape_option_semi_circle">Півколо</string>
+    <string name="shape_option_semi_circle_desc">Півколо</string>
+    <string name="shape_option_slanted">Похилий</string>
+    <string name="shape_option_slanted_desc">Похилий квадрат</string>
+    <string name="shape_option_pixel_circle">Pixel Circle
+Піктограма</string>
+    <string name="shape_option_pixel_circle_desc">Нерівне коло</string>
+    <string name="shape_option_pixel_triangle">піксельний трикутник</string>
+    <string name="shape_option_pixel_triangle_desc">Нерівний трикутник</string>
+    <string name="shape_group_basic">Базовий</string>
+    <string name="shape_group_organic">Органічний</string>
+    <string name="shape_group_playful">Грайливий</string>
+    <string name="shape_group_cookie">Файли cookie</string>
+    <string name="shape_group_whimsical">Химерний</string>
+    <string name="shape_group_special">Особливий</string>
+    <string name="shape_group_pixel">піксель</string>
+
+    <!-- Customization Choices -->
+    <string name="option_always">Завжди</string>
+    <string name="option_expanded">Розгорнуто</string>
+    <string name="option_collapsed">Згорнуто</string>
+    <string name="option_linear">Лінійний</string>
+    <string name="option_circular">Циркуляр</string>
+    <string name="option_auto">Авто</string>
+    <string name="option_manual">Посібник</string>
+    <string name="option_both">Обидва
+Піктограма</string>
+    <string name="option_icon">Icon</string>
+    <string name="option_name">Ім\'я</string>
+
+    <!-- Theme settings additions -->
+    <string name="theme_color_red">Червоний</string>
+    <string name="theme_color_green">Зелений</string>
+    <string name="theme_color_blue">Синій</string>
+    <string name="theme_font_restart_warning">Шрифт змінено. Перезапустіть програму, щоб застосувати новий шрифт.</string>
+    <string name="theme_source_album_art">Обкладинка альбому</string>
+    <string name="theme_source_album_art_desc">Витягувати кольори з обкладинок альбомів, які зараз відтворюються</string>
+    <string name="theme_source_system_colors">Системні кольори</string>
+    <string name="theme_source_system_colors_desc">Використовуйте Material свої кольори зі своїх шпалер</string>
+    <string name="theme_source_custom_scheme">Спеціальна схема</string>
+    <string name="theme_source_custom_scheme_desc">Виберіть із попередньо визначених схем кольорів</string>
+    <string name="theme_font_system">Системний шрифт</string>
+    <string name="theme_font_system_desc">Використовуйте стандартний шрифт пристрою</string>
+    <string name="theme_font_custom">Спеціальний шрифт</string>
+    <string name="theme_font_custom_desc">Імпортуйте та використовуйте власний файл шрифту</string>
+
+    <!-- Color Scheme names -->
+    <string name="scheme_default">За замовчуванням</string>
+    <string name="scheme_warm">Теплий</string>
+    <string name="scheme_cool">Круто</string>
+    <string name="scheme_forest">Ліс</string>
+    <string name="scheme_rose">Роза</string>
+    <string name="scheme_monochrome">Монохромний</string>
+    <string name="scheme_lavender">Лаванда</string>
+    <string name="scheme_ocean">Океан</string>
+    <string name="scheme_aurora">Аврора</string>
+    <string name="scheme_amber">Янтар</string>
+    <string name="scheme_crimson">Багряний</string>
+    <string name="scheme_emerald">Смарагд</string>
+    <string name="scheme_mint">Монетний двір</string>
+
+    <!-- Shape Utils category and descriptions -->
+    <string name="shape_utils_fab">Плаваюча кнопка дії</string>
+    <string name="shape_utils_fab_desc">Форма для кнопок FAB</string>
+    <string name="shape_utils_cards">Картки</string>
+    <string name="shape_utils_cards_desc">Форма для карток і контейнерів</string>
+    <string name="shape_utils_buttons">Кнопки</string>
+    <string name="shape_utils_buttons_desc">Форма для кнопок</string>
+    <string name="shape_utils_chips">Чіпи</string>
+    <string name="shape_utils_chips_desc">Форма для фішок і тегів</string>
+    <string name="shape_utils_player_controls">Елементи керування гравцем</string>
+    <string name="shape_utils_player_controls_desc">Форма кнопок керування гравцем</string>
+    <string name="shape_utils_mini_player">Міні-плеєр</string>
+    <string name="shape_utils_mini_player_desc">Форма для ілюстрації міні-плеєра</string>
+
+    <!-- Metadata properties and labels -->
+    <string name="metadata_duration">Тривалість</string>
+    <string name="metadata_disc">Диск</string>
+    <string name="metadata_composer">Композитор</string>
+    <string name="metadata_album_artist">Виконавець альбому</string>
+    <string name="metadata_play_count">Кількість відтворень</string>
+    <string name="metadata_total_played">Усього зіграно</string>
+    <string name="metadata_rating">Рейтинг</string>
+    <string name="metadata_quality">Якість</string>
+    <string name="metadata_audio_tech">Audio Tech
+Формат</string>
+    <string name="metadata_bit_depth">Розрядність</string>
+    <string name="metadata_bitrate">Бітрейт</string>
+    <string name="metadata_sample_rate">Частота дискретизації</string>
+    <string name="metadata_channels">Канали
+Формат</string>
+    <string name="metadata_format">Format</string>
+    <string name="metadata_location">Розташування</string>
+    <string name="metadata_lyrics">Тексти пісень</string>
+    <string name="metadata_mime_type">Тип MIME</string>
+    <string name="metadata_date_added">Дата додавання</string>
+    <string name="metadata_modified">Змінено</string>
+    <string name="metadata_lyrics_available">Доступний</string>
+    <string name="metadata_dts">DTS</string>
+    <string name="metadata_hi_res">Висока роздільна здатність</string>
+    <string name="metadata_dolby">Dolby</string>
+    <string name="metadata_lossless">Без втрат</string>
+
+    <!-- Discover settings specific -->
+    <string name="settings_discover_album_name">Назва альбому</string>
+    <string name="settings_discover_album_name_desc">Показати назву альбому на картці</string>
+    <string name="settings_discover_artist_name">Ім\'я виконавця</string>
+    <string name="settings_discover_artist_name_desc">Показати ім’я виконавця на картці</string>
+    <string name="settings_discover_release_year">Рік випуску</string>
+    <string name="settings_discover_release_year_desc">Показати рік випуску альбому</string>
+    <string name="settings_discover_play_button">Кнопка відтворення</string>
+    <string name="settings_discover_play_button_desc">Показати кнопку швидкого відтворення</string>
+    <string name="settings_discover_gradient_overlay">Накладання градієнта</string>
+    <string name="settings_discover_gradient_overlay_desc">Показати градієнт за текстом</string>
+
+    <!-- Carousel Style selector strings -->
+    <string name="carousel_style_default">За замовчуванням</string>
+    <string name="carousel_style_default_desc">2 альбоми зі сторони</string>
+    <string name="carousel_style_hero">Герой</string>
+    <string name="carousel_style_hero_desc">1 бічний альбом</string>
+
+    <!-- Theme names -->
+    <string name="theme_rhythm">Rhythm</string>
+    <string name="theme_expressive">Виразний</string>
+    <string name="settings_managed_by_expressive_shapes">Керується Expressive Shapes</string>
+
+    <!-- Shape targets -->
+    <string name="shape_target_album_art">Обкладинка альбому</string>
+    <string name="shape_target_album_art_desc">Форма для обкладинки альбому</string>
+    <string name="shape_target_player_art">Ілюстрація гравця</string>
+    <string name="shape_target_player_art_desc">Форма зображення екрана програвача</string>
+    <string name="shape_target_song_art">Обкладинка пісні</string>
+    <string name="shape_target_song_art_desc">Форма для оформлення пісні в списках</string>
+    <string name="shape_target_playlist_art">Ілюстрація списку відтворення</string>
+    <string name="shape_target_playlist_art_desc">Форма для обкладинок списків відтворення</string>
+    <string name="shape_target_artist_art">Ілюстрація художника</string>
+    <string name="shape_target_artist_art_desc">Форма для зображень художника</string>
+    <string name="settings_shape_for">Форма для %1$s</string>
 </resources>
+

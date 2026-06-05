@@ -185,8 +185,8 @@ fun GesturesSettingsScreen(onBackClick: () -> Unit) {
                 val miniPlayerItems = listOf(
                     SettingItem(
                         MaterialSymbolIcon("swipe", filled = true),
-                        "Swipe Gestures",
-                        "Swipe up/down to open/dismiss, left/right to skip tracks",
+                        context.getString(R.string.settings_swipe_gestures),
+                        context.getString(R.string.settings_swipe_gestures_desc),
                         toggleState = miniPlayerSwipeGestures,
                         onToggleChange = {
                             HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
@@ -211,8 +211,8 @@ fun GesturesSettingsScreen(onBackClick: () -> Unit) {
                 val playerGestureItems = listOf(
                     SettingItem(
                         MaterialSymbolIcon("swipe_down", filled = true),
-                        "Swipe Down to Dismiss",
-                        "Close player by swiping down on the screen",
+                        context.getString(R.string.settings_swipe_down_dismiss),
+                        context.getString(R.string.settings_swipe_down_dismiss_desc),
                         toggleState = gesturePlayerSwipeDismiss,
                         onToggleChange = {
                             HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
@@ -221,8 +221,8 @@ fun GesturesSettingsScreen(onBackClick: () -> Unit) {
                     ),
                     SettingItem(
                         MaterialSymbolIcon("swipe_left", filled = true),
-                        "Swipe Artwork for Tracks",
-                        "Swipe left/right on album artwork to skip tracks",
+                        context.getString(R.string.settings_swipe_artwork_tracks),
+                        context.getString(R.string.settings_swipe_artwork_tracks_desc),
                         toggleState = gesturePlayerSwipeTracks,
                         onToggleChange = {
                             HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
@@ -231,8 +231,8 @@ fun GesturesSettingsScreen(onBackClick: () -> Unit) {
                     ),
                     SettingItem(
                         MaterialSymbolIcon("touch_app", filled = true),
-                        "Double Tap Artwork",
-                        "Double tap on album art to play/pause",
+                        context.getString(R.string.settings_double_tap_artwork),
+                        context.getString(R.string.settings_double_tap_artwork_desc),
                         toggleState = gestureArtworkDoubleTap,
                         onToggleChange = {
                             HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)

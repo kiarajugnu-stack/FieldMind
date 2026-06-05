@@ -89,6 +89,7 @@ import chromahub.rhythm.app.network.YTMusicContext
 import chromahub.rhythm.app.network.YTMusicClient
 import chromahub.rhythm.app.network.extractAlbumImageUrl
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.painterResource
 
 // Data class to hold additional song metadata
 // 
@@ -342,18 +343,18 @@ fun SongInfoBottomSheet(
                         modifier = Modifier.size(28.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text(if (isBlacklisted) "Remove from Blacklist?" else "Add to Blacklist?")
+                    Text(if (isBlacklisted) stringResource(R.string.blacklist_remove_song_title) else stringResource(R.string.blacklist_add_song_title))
                 }
             },
             text = {
                 Column {
                     Text(
-                        if (isBlacklisted) "This song will no longer be hidden from your library." else "This song will be hidden from your library and excluded from playback.",
+                        if (isBlacklisted) stringResource(R.string.blacklist_remove_song_desc) else stringResource(R.string.blacklist_add_song_desc),
                         style = MaterialTheme.typography.bodyMedium
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        "This action can be undone anytime.",
+                        stringResource(R.string.blacklist_undo_warning),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                     )
@@ -370,7 +371,7 @@ fun SongInfoBottomSheet(
                                 appSettings.addToBlacklist(songToBlock.id)
                             }
                             isLoadingBlacklist = false
-                            val message = if (isBlacklisted) "Song removed from blacklist" else "Song added to blacklist"
+                            val message = if (isBlacklisted) context.getString(R.string.blacklist_song_removed_msg) else context.getString(R.string.blacklist_song_added_msg)
                             Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
                         }
                         showBlacklistTrackConfirm = false
@@ -385,7 +386,7 @@ fun SongInfoBottomSheet(
                         modifier = Modifier.size(18.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text(if (isBlacklisted) "Remove" else "Blacklist")
+                    Text(if (isBlacklisted) stringResource(R.string.blacklist_button_remove) else stringResource(R.string.blacklist_button_blacklist))
                 }
             },
             dismissButton = {
@@ -420,18 +421,18 @@ fun SongInfoBottomSheet(
                         modifier = Modifier.size(28.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text(if (isInBlacklistedFolder) "Remove Folder from Blacklist?" else "Blacklist Folder?")
+                    Text(if (isInBlacklistedFolder) stringResource(R.string.blacklist_remove_folder_title) else stringResource(R.string.blacklist_add_folder_title))
                 }
             },
             text = {
                 Column {
                     Text(
-                        if (isInBlacklistedFolder) "All songs in this folder will be visible again." else "All songs in this folder will be hidden and excluded from playback.",
+                        if (isInBlacklistedFolder) stringResource(R.string.blacklist_remove_folder_desc) else stringResource(R.string.blacklist_add_folder_desc),
                         style = MaterialTheme.typography.bodyMedium
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        "This action can be undone anytime.",
+                        stringResource(R.string.blacklist_undo_warning),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                     )
@@ -449,7 +450,7 @@ fun SongInfoBottomSheet(
                             }
                         }
                         isLoadingBlacklist = false
-                        val message = if (isInBlacklistedFolder) "Folder removed from blacklist" else "Folder added to blacklist"
+                        val message = if (isInBlacklistedFolder) context.getString(R.string.blacklist_folder_removed_msg) else context.getString(R.string.blacklist_folder_added_msg)
                         Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
                         showBlacklistFolderConfirm = false
                     },
@@ -463,7 +464,7 @@ fun SongInfoBottomSheet(
                         modifier = Modifier.size(18.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text(if (isInBlacklistedFolder) "Remove" else "Blacklist")
+                    Text(if (isInBlacklistedFolder) stringResource(R.string.blacklist_button_remove) else stringResource(R.string.blacklist_button_blacklist))
                 }
             },
             dismissButton = {
@@ -588,8 +589,8 @@ fun SongInfoBottomSheet(
                                         .takeIf { it > 0 }
                                         ?: displaySong.discNumber.takeIf { it > 0 }
                                     val tabletSongDescriptor = buildList {
-                                        tabletDiscNumber?.let { add("Disc $it") }
-                                        if (displaySong.trackNumber > 0) add("Track ${displaySong.trackNumber}")
+                                        tabletDiscNumber?.let { add(context.getString(R.string.blacklist_disc_label, it)) }
+                                        if (displaySong.trackNumber > 0) add(context.getString(R.string.blacklist_track_label, displaySong.trackNumber))
                                     }.joinToString(" • ")
 
                                     if (tabletSongDescriptor.isNotEmpty()) {
@@ -854,8 +855,8 @@ fun SongInfoBottomSheet(
                                 .takeIf { it > 0 }
                                 ?: displaySong.discNumber.takeIf { it > 0 }
                             val phoneSongDescriptor = buildList {
-                                phoneDiscNumber?.let { add("Disc $it") }
-                                if (displaySong.trackNumber > 0) add("Track ${displaySong.trackNumber}")
+                                phoneDiscNumber?.let { add(context.getString(R.string.blacklist_disc_label, it)) }
+                                if (displaySong.trackNumber > 0) add(context.getString(R.string.blacklist_track_label, displaySong.trackNumber))
                             }.joinToString(" • ")
 
                             if (phoneSongDescriptor.isNotEmpty()) {
@@ -1183,7 +1184,7 @@ private fun SongInfoCard(
     val context = LocalContext.current
     val songInfoItems = buildList {
         // Basic song info
-        add(MetadataItem("Duration", formatDuration(song.duration, useHoursFormat), RhythmIcons.AccessTime))
+        add(MetadataItem(context.getString(R.string.metadata_duration), formatDuration(song.duration, useHoursFormat), RhythmIcons.AccessTime))
 
         // Track info (prefer extended info if available)
         val trackNum = if (song.trackNumber > 0) song.trackNumber else 0
@@ -1191,36 +1192,36 @@ private fun SongInfoCard(
             ?: song.discNumber.takeIf { it > 0 }
             ?: 0
         if (discNum > 0) {
-            add(MetadataItem("Disc", discNum.toString(), RhythmIcons.AlbumFilled))
+            add(MetadataItem(context.getString(R.string.metadata_disc), discNum.toString(), RhythmIcons.AlbumFilled))
         }
         if (trackNum > 0) {
-            add(MetadataItem("Track", trackNum.toString(), RhythmIcons.FormatListNumbered))
+            add(MetadataItem(context.getString(R.string.metadata_track), trackNum.toString(), RhythmIcons.FormatListNumbered))
         }
 
         // Year (prefer song data, fallback to extended info)
         val yearValue = if (song.year > 0) song.year else extendedInfo?.year ?: 0
         if (yearValue > 0) {
-            add(MetadataItem("Year", yearValue.toString(), RhythmIcons.DateRange))
+            add(MetadataItem(context.getString(R.string.metadata_year), yearValue.toString(), RhythmIcons.DateRange))
         }
 
         // Genre (prefer song data, fallback to extended info)
         val genreValue = if (!song.genre.isNullOrEmpty()) song.genre else extendedInfo?.genre
         if (!genreValue.isNullOrEmpty()) {
-            add(MetadataItem("Genre", genreValue.trim(), RhythmIcons.Category))
+            add(MetadataItem(context.getString(R.string.metadata_genre), genreValue.trim(), RhythmIcons.Category))
         }
 
         // Album
         if (!song.album.isNullOrEmpty()) {
-            add(MetadataItem("Album", song.album, RhythmIcons.AlbumFilled))
+            add(MetadataItem(context.getString(R.string.metadata_album), song.album, RhythmIcons.AlbumFilled))
         }
 
         // Composer (moved from FileInfoCard)
         extendedInfo?.let { info ->
             if (info.composer.isNotEmpty() && info.composer != song.artist) {
-                add(MetadataItem("Composer", info.composer, MaterialSymbolIcon("edit_note", filled = true)))
+                add(MetadataItem(context.getString(R.string.metadata_composer), info.composer, MaterialSymbolIcon("edit_note", filled = true)))
             }
             if (info.albumArtist.isNotEmpty() && info.albumArtist != song.artist) {
-                add(MetadataItem("Album Artist", info.albumArtist, RhythmIcons.ArtistFilled))
+                add(MetadataItem(context.getString(R.string.metadata_album_artist), info.albumArtist, RhythmIcons.ArtistFilled))
             }
         }
     }
@@ -1318,16 +1319,16 @@ private fun RhythmStatsCard(
         // Rhythm stats
         songPlaybackStats?.let { stats ->
             if (stats.playCount > 0) {
-                add(MetadataItem("Play Count", stats.playCount.toString(), RhythmIcons.Play))
+                add(MetadataItem(context.getString(R.string.metadata_play_count), stats.playCount.toString(), RhythmIcons.Play))
             }
             if (stats.totalDurationMs > 0) {
-                add(MetadataItem("Total Played", formatDuration(stats.totalDurationMs, useHoursFormat), RhythmIcons.AccessTime))
+                add(MetadataItem(context.getString(R.string.metadata_total_played), formatDuration(stats.totalDurationMs, useHoursFormat), RhythmIcons.AccessTime))
             }
         }
 
         // Star rating
         if (songRating > 0) {
-            add(MetadataItem("Rating", "${songRating}★", MaterialSymbolIcon("star", filled = true)))
+            add(MetadataItem(context.getString(R.string.metadata_rating), "${songRating}★", MaterialSymbolIcon("star", filled = true)))
         }
     }
 
@@ -1409,70 +1410,77 @@ private fun FileInfoCard(
         extendedInfo?.let { info ->
             // Enhanced Audio Quality Badge - show detailed quality type
             if (info.qualityLabel != "Unknown" && info.qualityLabel.isNotEmpty()) {
-                val qualityIcon = when {
-                    info.isDolby -> MaterialSymbolIcon("surround_sound", filled = true)
-                    info.isDTS -> MaterialSymbolIcon("surround_sound", filled = true)
-                    info.isLossless -> MaterialSymbolIcon("high_quality", filled = true)
-                    info.isHiRes -> MaterialSymbolIcon("high_quality", filled = true)
+                val qualityIcon: Any = when {
+                    info.isDolby -> R.drawable.ic_dolby
+                    info.isDTS -> R.drawable.ic_dts
+                    info.isLossless -> {
+                        if (info.qualityLabel.contains("Hi-Res", ignoreCase = true) || info.isHiRes) {
+                            R.drawable.ic_high_res
+                        } else {
+                            R.drawable.ic_cd
+                        }
+                    }
+                    info.isHiRes -> R.drawable.ic_high_res
                     else -> MaterialSymbolIcon("graphic_eq", filled = true)
                 }
-                add(MetadataItem("Quality", info.qualityLabel, qualityIcon))
+                val localizedLabel = info.qualityLabel
+                add(MetadataItem(context.getString(R.string.metadata_quality), localizedLabel, qualityIcon))
             }
 
             // Legacy quality badges for backward compatibility (only if not covered by qualityLabel)
             if (info.qualityLabel == "Unknown") {
                 if (info.isLossless) {
-                    add(MetadataItem("Quality", "Lossless", MaterialSymbolIcon("high_quality", filled = true)))
+                    add(MetadataItem(context.getString(R.string.metadata_quality), "Lossless", R.drawable.ic_cd))
                 }
                 if (info.isDolby) {
-                    add(MetadataItem("Audio Tech", "Dolby", MaterialSymbolIcon("surround_sound", filled = true)))
+                    add(MetadataItem(context.getString(R.string.metadata_audio_tech), "Dolby", R.drawable.ic_dolby))
                 }
                 if (info.isDTS) {
-                    add(MetadataItem("Audio Tech", "DTS", MaterialSymbolIcon("surround_sound", filled = true)))
+                    add(MetadataItem(context.getString(R.string.metadata_audio_tech), "DTS", R.drawable.ic_dts))
                 }
                 if (info.isHiRes && !info.isLossless) {
-                    add(MetadataItem("Quality", "Hi-Res", MaterialSymbolIcon("high_quality", filled = true)))
+                    add(MetadataItem(context.getString(R.string.metadata_quality), "Hi-Res", R.drawable.ic_high_res))
                 }
             }
 
             // Audio quality info
             if (info.bitDepth > 0) {
-                add(MetadataItem("Bit Depth", "${info.bitDepth}-bit", MaterialSymbolIcon("high_quality", filled = true)))
+                add(MetadataItem(context.getString(R.string.metadata_bit_depth), "${info.bitDepth}-bit", MaterialSymbolIcon("high_quality", filled = true)))
             }
             if (info.bitrate != "Unknown") {
-                add(MetadataItem("Bitrate", info.bitrate, MaterialSymbolIcon("graphic_eq", filled = true)))
+                add(MetadataItem(context.getString(R.string.metadata_bitrate), info.bitrate, MaterialSymbolIcon("graphic_eq", filled = true)))
             }
             if (info.sampleRate != "Unknown") {
-                add(MetadataItem("Sample Rate", info.sampleRate, RhythmIcons.Tune))
+                add(MetadataItem(context.getString(R.string.metadata_sample_rate), info.sampleRate, RhythmIcons.Tune))
             }
             if (info.channels != "Unknown") {
-                add(MetadataItem("Channels", info.channels, MaterialSymbolIcon("settings_input_component", filled = true)))
+                add(MetadataItem(context.getString(R.string.metadata_channels), info.channels, MaterialSymbolIcon("settings_input_component", filled = true)))
             }
             if (info.formatName != "Unknown") {
-                add(MetadataItem("Format", info.formatName, RhythmIcons.MusicNote))
+                add(MetadataItem(context.getString(R.string.metadata_format), info.formatName, RhythmIcons.MusicNote))
             } else if (info.format != "Unknown") {
-                add(MetadataItem("Format", info.format, RhythmIcons.MusicNote))
+                add(MetadataItem(context.getString(R.string.metadata_format), info.format, RhythmIcons.MusicNote))
             }
 
             // File info
             folderPath?.let {
-                add(MetadataItem("Location", it, RhythmIcons.FolderOpen))
+                add(MetadataItem(context.getString(R.string.metadata_location), it, RhythmIcons.FolderOpen))
             }
 
             // Additional metadata (non-duplicating)
             if (info.hasLyrics) {
-                add(MetadataItem("Lyrics", "Available", MaterialSymbolIcon("lyrics", filled = true)))
+                add(MetadataItem(context.getString(R.string.metadata_lyrics), context.getString(R.string.metadata_lyrics_available), MaterialSymbolIcon("lyrics", filled = true)))
             }
             if (info.mimeType.isNotEmpty()) {
-                add(MetadataItem("MIME Type", info.mimeType.substringAfter("/").uppercase(), RhythmIcons.Code))
+                add(MetadataItem(context.getString(R.string.metadata_mime_type), info.mimeType.substringAfter("/").uppercase(), RhythmIcons.Code))
             }
 
             // Date info
             if (info.dateAdded > 0) {
-                add(MetadataItem("Date Added", formatDate(info.dateAdded), RhythmIcons.Add))
+                add(MetadataItem(context.getString(R.string.metadata_date_added), formatDate(context, info.dateAdded), RhythmIcons.Add))
             }
             if (info.dateModified > 0 && info.dateModified != info.dateAdded) {
-                add(MetadataItem("Modified", formatDate(info.dateModified), RhythmIcons.Update))
+                add(MetadataItem(context.getString(R.string.metadata_modified), formatDate(context, info.dateModified), RhythmIcons.Update))
             }
         }
     }
@@ -1581,12 +1589,24 @@ private fun SongInfoGridItem(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
-                Icon(
-                    imageVector = item.icon,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.tertiary,
-                    modifier = Modifier.size(16.dp)
-                )
+                when (val icon = item.icon) {
+                    is MaterialSymbolIcon -> {
+                        Icon(
+                            imageVector = icon,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.tertiary,
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
+                    is Int -> {
+                        Icon(
+                            painter = painterResource(id = icon),
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.tertiary,
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
+                }
                 Text(
                     text = item.label,
                     style = MaterialTheme.typography.labelSmall,
@@ -1645,12 +1665,24 @@ private fun RhythmStatsGridItem(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
-                Icon(
-                    imageVector = item.icon,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.tertiary,
-                    modifier = Modifier.size(16.dp)
-                )
+                when (val icon = item.icon) {
+                    is MaterialSymbolIcon -> {
+                        Icon(
+                            imageVector = icon,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.tertiary,
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
+                    is Int -> {
+                        Icon(
+                            painter = painterResource(id = icon),
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.tertiary,
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
+                }
                 Text(
                     text = item.label,
                     style = MaterialTheme.typography.labelSmall,
@@ -1695,12 +1727,24 @@ private fun FileInfoGridItem(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
-                Icon(
-                    imageVector = item.icon,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.tertiary,
-                    modifier = Modifier.size(16.dp)
-                )
+                when (val icon = item.icon) {
+                    is MaterialSymbolIcon -> {
+                        Icon(
+                            imageVector = icon,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.tertiary,
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
+                    is Int -> {
+                        Icon(
+                            painter = painterResource(id = icon),
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.tertiary,
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
+                }
                 Text(
                     text = item.label,
                     style = MaterialTheme.typography.labelSmall,
@@ -2977,7 +3021,7 @@ private fun EditSongSheet(
 data class MetadataItem(
     val label: String,
     val value: String,
-    val icon: MaterialSymbolIcon
+    val icon: Any
 )
 
 // Helper functions
@@ -2994,12 +3038,12 @@ private fun formatFileSize(bytes: Long): String {
     }
 }
 
-private fun formatDate(timestamp: Long): String {
+private fun formatDate(context: android.content.Context, timestamp: Long): String {
     return if (timestamp > 0) {
         val date = java.util.Date(timestamp)
         val formatter = java.text.SimpleDateFormat("MMM dd, yyyy", java.util.Locale.getDefault())
         formatter.format(date)
     } else {
-        "Unknown"
+        context.getString(R.string.common_unknown)
     }
 }

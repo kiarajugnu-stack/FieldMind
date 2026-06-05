@@ -401,7 +401,8 @@
     <string name="status_disabled">已停用</string>
     
     <!-- HomeScreen -->
-    <string name="home_title">Rhythm</string>
+    <string name="home_title">Rhythm
+本月</string>
     <string name="home_settings_cd">設定</string>
     <string name="home_discover_albums">發現專輯</string>
     <string name="home_explore_music">探索美妙的音樂</string>
@@ -611,7 +612,8 @@
     <string name="ui_cancel_download">取消下載</string>
     
     <!-- Common Terms -->
-    <string name="common_rhythm">Rhythm</string>
+    <string name="common_rhythm">Rhythm
+本月</string>
     <string name="common_songs">歌曲</string>
     <string name="common_home">首頁</string>
     <string name="common_library">圖書館</string>
@@ -661,7 +663,8 @@
     
     <!-- Onboarding -->
     <string name="onboarding_welcome_to">歡迎來到</string>
-    <string name="onboarding_welcome_title">Rhythm</string>
+    <string name="onboarding_welcome_title">Rhythm
+本月</string>
     <string name="onboarding_welcome_subtitle">你的音樂，你的 Rhythm</string>
     <string name="onboarding_welcome_desc">透過強大的功能和完全的隱私來個人化您聆聽體驗的各個方面。離線播放音樂，無廣告，完全掌控。</string>
     <string name="onboarding_get_started">開始使用</string>
@@ -3587,7 +3590,8 @@
     <string name="aboutscreen_discord_community">不和諧社區</string>
     <string name="aboutscreen_support">支持</string>
     <string name="apimanagementsettingsscreen_apple_music">蘋果音樂</string>
-    <string name="apimanagementsettingsscreen_github">GitHub</string>
+    <string name="apimanagementsettingsscreen_github">GitHub
+今晚</string>
     <string name="apimanagementsettingsscreen_app_updates_and_release">應用程式更新和發布訊息</string>
     <string name="backuprestoresettingsscreen_choose_backup_sections">選擇備份部分</string>
     <string name="backuprestoresettingsscreen_select_what_to_include">選擇要包含在此備份檔案中的內容。</string>
@@ -3741,5 +3745,592 @@
     <string name="widget_theme_solid_purple_signature">純紫色（簽名）</string>
     <string name="widget_theme_solid_purple_desc">標誌性深紫色背景，帶有標誌性色調和亮點</string>
     <string name="widget_theme_glance_suffix">%1$s （僅限 Glance 小工具）</string>
-    <string name="unit_dp">%1$ddp</string>
+    <string name="unit_dp">%1$ddp
+今晚</string>
+
+    <!-- Settings Suggestions and Tips -->
+    <string name="settings_suggestions">設定建議</string>
+    <string name="settings_suggestions_desc">在頂部顯示上下文建議</string>
+    <string name="settings_performance_desc_optimized">優化觸覺、解碼、選取框和藝術品獲取以減少延遲
+今天早上</string>
+    <string name="moment_morning">今天下午</string>
+    <string name="moment_afternoon">今天晚上</string>
+    <string name="moment_evening">今晚</string>
+    <string name="moment_night">tonight</string>
+    <string name="pulse_fresh">新鮮的會議能量</string>
+    <string name="pulse_steady">穩定凹槽</string>
+    <string name="pulse_heavy">重聽</string>
+    <string name="pulse_marathon">馬拉松模式</string>
+    
+    <!-- Settings Tips Details -->
+    <string name="settings_tip_theme_desc_1">用生動的 AMOLED 黑色和美麗柔和的色彩刷新您的音樂播放器。</string>
+    <string name="settings_tip_theme_desc_2">透過將應用程式的口音與您的系統相匹配，使 Rhythm 真正屬於您。</string>
+    <string name="settings_tip_media_scan_desc_1">避免不必要的音訊剪輯。明確定義我們應該掃描哪些資料夾來尋找音樂。</string>
+    <string name="settings_tip_media_scan_desc_2">使用焦點資料夾將語音註解和鈴聲遠離播放清單。</string>
+    <string name="settings_tip_sleep_timer_desc_1">在播放音樂的同時入睡。我們會自動暫停它。</string>
+    <string name="settings_tip_sleep_timer_desc_2">在睡前設定自動睡眠定時器，以便播放完美停止。</string>
+    <string name="settings_tip_equalizer_desc_1">提升您的體驗。使用均衡器增強低音並調整頻率。</string>
+    <string name="settings_tip_equalizer_desc_2">使用我們先進的音訊效果安全地調整耳機的聲音。</string>
+    <string name="settings_tip_backup_active_desc_1">自動備份已啟動。驗證您的備份部分，以便恢復保持乾淨。</string>
+    <string name="settings_tip_backup_active_desc_2">保護已啟用：時間表看起來不錯。在進行大編輯之前運行手動備份。</string>
+    <string name="settings_tip_backup_inactive_desc_1">自動備份已關閉。啟用它來保護播放清單和 Rhythm Guard 統計資料。</string>
+    <string name="settings_tip_backup_inactive_desc_2">還沒有安全網。開啟備份​​以避免遺失設定。</string>
+    <string name="settings_tip_updates_active_desc_1">更新已啟用。保持它們打開以進行修復和性能改進。</string>
+    <string name="settings_tip_updates_active_desc_2">您已準備好接收更新。檢視渠道偏好的穩定性與新鮮度。</string>
+    <string name="settings_tip_updates_inactive_desc_1">更新已停用。重新使它們保持受保護和最新狀態。</string>
+    <string name="settings_tip_updates_inactive_desc_2">您已固定到目前版本。準備好後重新開啟更新。</string>
+    <string name="settings_tip_queue_active_desc_1">玩家滑動跳過已啟動。調整佇列規則以實現更平滑的轉換。</string>
+    <string name="settings_tip_queue_active_desc_2">手勢跳過已開啟。將佇列行為與您的監聽流程相符。</string>
+    <string name="settings_tip_queue_inactive_desc_1">滑動跳過已關閉。隊列控制有助於保持播放效率。</string>
+    <string name="settings_tip_queue_inactive_desc_2">喜歡明確控制？微調隊列行為以實現可預測的播放。</string>
+    <string name="settings_tip_controls_active_desc_1">搜尋按鈕可見。自訂播放器控制項以減少混亂。</string>
+    <string name="settings_tip_controls_active_desc_2">啟用控制豐富的播放器。調整拇指可觸及的版面。</string>
+    <string name="settings_tip_controls_inactive_desc_1">啟用最小播放器控制。如果您錯過了精確跳轉，請新增搜尋按鈕。</string>
+    <string name="settings_tip_controls_inactive_desc_2">乾淨佈局處於作用中狀態。重新啟用搜尋控制項以實現更精細的播放處理。</string>
+    <string name="settings_tip_miniplayer_active_desc_1">迷你玩家進度可見。選擇與您的主題相符的風格。</string>
+    <string name="settings_tip_miniplayer_active_desc_2">進度條在迷你播放器上處於作用中狀態。接下來嘗試調整形狀和角落。</string>
+    <string name="settings_tip_miniplayer_inactive_desc_1">迷你玩家進度隱藏。啟用它以實現快速跟踪意識。</string>
+    <string name="settings_tip_miniplayer_inactive_desc_2">緊湊模式現在是最小的。打開進度以獲得更好的一目了然。</string>
+    <string name="settings_tip_library_active_desc_1">評級已啟用。使用庫設定來加強發現和排序。</string>
+    <string name="settings_tip_library_active_desc_2">您的圖書館支援評級。調整掃描和分組以實現更清晰的瀏覽。</string>
+    <string name="settings_tip_library_inactive_desc_1">評級已停用。庫設定仍然可以提高結構和速度。</string>
+    <string name="settings_tip_library_inactive_desc_2">偵測到簡化庫模式。調整分組以加快導航速度。</string>
+
+    <!-- Lyrics Source Dialog -->
+    <string name="lyrics_source_embedded_first">嵌入式優先</string>
+    <string name="lyrics_source_embedded_first_desc">嘗試音訊檔案元資料 → 線上 API → .lrc 文件</string>
+    <string name="lyrics_source_api_first">API 第一</string>
+    <string name="lyrics_source_api_first_desc">嘗試線上服務 → 音訊元資料 → .lrc 文件</string>
+    <string name="lyrics_source_local_first">本機 .lrc 首先</string>
+    <string name="lyrics_source_local_first_desc">嘗試 .lrc 檔案 → 音訊元資料 → 線上 API</string>
+
+    <!-- Font / Color Customization Dialogs -->
+    <string name="theme_font_source_changed_restart">字體來源已變更。重新啟動應用程式以應用新字體。</string>
+    <string name="color_source_album_art">專輯封面</string>
+    <string name="color_source_album_art_desc">從目前播放的專輯插圖中提取顏色</string>
+    <string name="color_source_system_colors">系統顏色</string>
+    <string name="color_source_system_colors_desc">使用 Material 你壁紙中的顏色</string>
+    <string name="color_source_custom_scheme">客製化方案</string>
+    <string name="color_source_custom_scheme_desc">從預先定義的配色方案中選擇</string>
+    <string name="font_source_system_font">系統字體</string>
+    <string name="font_source_system_font_desc">使用裝置的預設字體</string>
+    <string name="font_source_custom_font">自訂字體</string>
+    <string name="font_source_custom_font_desc">匯入並使用自訂字體文件</string>
+    <string name="font_system_title">系統預設</string>
+    <string name="font_system_desc">使用裝置的預設字體</string>
+    <string name="font_geom_desc">來自 Google 的現代、乾淨的無襯線字體</string>
+    <string name="font_slate_desc">優雅的襯線字體，具有經典、傳統的外觀</string>
+    <string name="font_inter_desc">乾淨現代的無襯線字體，可讀性強</string>
+    <string name="font_jetbrains_desc">等寬字體非常適合技術內容</string>
+    <string name="font_quicksand_desc">圓形字體，外觀更柔和、更友好</string>
+
+    <!-- Predefined Color Schemes -->
+    <string name="color_scheme_default_title">Rhythm 預設</string>
+    <string name="color_scheme_default_desc">Material 3 基線紫色，帶有玫瑰粉色點綴</string>
+    <string name="color_scheme_warm_title">溫暖的夕陽</string>
+    <string name="color_scheme_warm_desc">舒適的橙色和紅色色調營造出溫暖的氛圍</string>
+    <string name="color_scheme_cool_title">酷海洋</string>
+    <string name="color_scheme_cool_desc">清爽的藍色和青色色調營造出平靜的氛圍</string>
+    <string name="color_scheme_forest_title">森林綠</string>
+    <string name="color_scheme_forest_desc">受大自然啟發的天然綠色調</string>
+    <string name="color_scheme_rose_title">玫瑰粉色</string>
+    <string name="color_scheme_rose_desc">優雅的粉紅色和洋紅色調</string>
+    <string name="color_scheme_monochrome_title">單色</string>
+    <string name="color_scheme_monochrome_desc">極簡灰度打造乾淨、現代的外觀</string>
+    <string name="color_scheme_lavender_title">薰衣草</string>
+    <string name="color_scheme_lavender_desc">平靜的紫色和薰衣草色調，帶來放鬆</string>
+    <string name="color_scheme_ocean_title">深海</string>
+    <string name="color_scheme_ocean_desc">深藍色和海藍寶石帶來海洋般的寧靜</string>
+    <string name="color_scheme_aurora_title">北極光</string>
+    <string name="color_scheme_aurora_desc">受北極光啟發的充滿活力的綠色和藍色</string>
+    <string name="color_scheme_amber_title">金琥珀</string>
+    <string name="color_scheme_amber_desc">豐富的琥珀色和金色色調，營造奢華感覺</string>
+    <string name="color_scheme_crimson_title">深紅色</string>
+    <string name="color_scheme_crimson_desc">戲劇性的大膽酒紅色和深紅色調</string>
+    <string name="color_scheme_emerald_title">翡翠夢境</string>
+    <string name="color_scheme_emerald_desc">清新翠綠，帶有天然森林色調</string>
+    <string name="color_scheme_mint_title">薄荷</string>
+    <string name="color_scheme_mint_desc">清新乾淨的青色和薄荷綠色調</string>
+
+    <!-- Color Preview Chips -->
+    <string name="theme_color_primary">小學</string>
+    <string name="theme_color_secondary">中學</string>
+    <string name="theme_color_tertiary">三級</string>
+
+    <!-- Lyrics Settings Screen -->
+    <string name="lyrics_settings_title">歌詞</string>
+    <string name="lyrics_settings_general">常規設定</string>
+    <string name="lyrics_settings_open_fullscreen_desc">透過點擊歌詞視圖開啟全螢幕歌詞螢幕</string>
+    <string name="lyrics_settings_autohide_controls">自動隱藏歌詞控件</string>
+    <string name="lyrics_settings_autohide_controls_desc">在幾秒鐘不活動後自動隱藏全螢幕歌詞螢幕中的控件</string>
+    <string name="lyrics_settings_embedded_first">嵌入式優先</string>
+    <string name="lyrics_settings_embedded_first_desc">偏好嵌入音訊檔案中的歌詞，回退到線上 API</string>
+    <string name="lyrics_settings_online_first">線上優先</string>
+    <string name="lyrics_settings_online_first_desc">偏好線上 API（Rhythm 逐字、LRCLib），回退到嵌入式</string>
+    <string name="lyrics_settings_local_first">本地優先</string>
+    <string name="lyrics_settings_local_first_desc">優先選擇本地 .lrc 文件，然後是嵌入歌詞，然後是線上 API</string>
+    <string name="lyrics_settings_apple_music_first">Apple Music 第一</string>
+    <string name="lyrics_settings_lrclib_first">LRCLib 首先
+如果首選 __KW0__ 無法傳回歌詞，</string>
+    <string name="lyrics_settings_fallback_apis_desc">嘗試後備 API</string>
+    <string name="lyrics_settings_display_styling">顯示和樣式</string>
+    <string name="lyrics_settings_size_percentage">大小：%1$d%%</string>
+    <string name="alignment_left">左</string>
+    <string name="alignment_center">中心</string>
+    <string name="alignment_right">對</string>
+    <string name="animation_slide">投影片</string>
+    <string name="animation_fade">淡入淡出</string>
+    <string name="animation_scale">規模</string>
+    <string name="animation_up">向上</string>
+    <string name="lyrics_settings_switch_animation_desc">藝術 ↔ 歌詞切換動畫</string>
+    <string name="lyrics_settings_not_supported_expressive">Expressive 主題不支援</string>
+    <string name="lyrics_settings_formatting_behaviors">格式和行為</string>
+    <string name="lyrics_settings_bold_text">粗體文本</string>
+    <string name="lyrics_settings_bold_text_desc">將活動歌詞文字設為粗體</string>
+    <string name="lyrics_settings_trim_lyrics">修剪歌詞</string>
+    <string name="lyrics_settings_trim_lyrics_desc">修剪歌詞行中的前導和尾隨空白</string>
+    <string name="lyrics_settings_disable_animations">停用動畫</string>
+    <string name="lyrics_settings_disable_animations_desc">停用歌詞檢視中的過渡和動畫</string>
+    <string name="lyrics_settings_word_by_word_translation">逐字翻譯</string>
+    <string name="lyrics_settings_word_by_word_translation_desc">嘗試自動同步音節或單字翻譯</string>
+    <string name="lyrics_settings_info_bullets">其他同步詳細資訊：\n• 線上 API 提供高品質同步歌詞\n• Rhythm 提供逐字同步\n• LRCLib 提供免費的逐行同步</string>
+
+    <!-- AutoEQ Preset Picker additions -->
+    <string name="autoeqpresetpickerbottomsheet_search_presets">搜尋預設...</string>
+    <string name="autoeqpresetpickerbottomsheet_disable">無/停用 AutoEQ</string>
+    <string name="autoeqpresetpickerbottomsheet_disable_desc">清晰的耳機配置文件，使用標準EQ預設</string>
+    <string name="autoeqpresetpickerbottomsheet_unknown_brand">未知品牌</string>
+
+    <!-- Device Configuration additions -->
+    <string name="device_configuration_devices_configured">%1$d 設備已配置</string>
+    <string name="device_configuration_device_recognized">設備已識別</string>
+    <string name="device_configuration_new_device_detected">偵測到新設備</string>
+    <string name="device_configuration_configured_with">%1$s 配置為 %2$s</string>
+    <string name="device_configuration_configured_no_profile">%1$s 已配置</string>
+    <string name="device_configuration_connected_not_configured">%1$s 已連接但未配置</string>
+    <string name="device_configuration_applied_profile">應用 %1$s 設定檔</string>
+    <string name="device_configuration_imported_profile">導入的設定檔</string>
+    <string name="device_configuration_parse_error">無法解析 EQ 設定。檢查格式。</string>
+    <string name="device_configuration_custom_eq">自訂等化器</string>
+    <string name="device_configuration_custom_preset">自訂預設</string>
+    <string name="device_configuration_custom">自訂</string>
+    <string name="device_configuration_active_profile_label">活動設定檔：%1$s</string>
+    <string name="device_configuration_share_subject">Rhythm EQ 設定檔：%1$s</string>
+    <string name="device_configuration_share_title">分享 EQ 設定檔</string>
+    <string name="device_configuration_edit_device">編輯設備</string>
+    <string name="device_configuration_add_device">新增設備</string>
+    <string name="device_configuration_save">保存</string>
+    <string name="device_configuration_add">新增</string>
+    <string name="device_configuration_for_device">對於 %1$s</string>
+    <string name="device_configuration_profiles_available">%1$d 可用設定檔</string>
+    <string name="device_configuration_disable_compensation">停用耳機補償</string>
+
+    <!-- Common UI element strings -->
+    <string name="common_none">無</string>
+    <string name="common_cancel">取消</string>
+    <string name="common_back">返回</string>
+    <string name="common_remove">刪除</string>
+    <string name="common_add">新增</string>
+    <string name="common_active">活躍</string>
+    <string name="common_disabled">已停用</string>
+    <string name="common_unavailable">不可用</string>
+    <string name="common_success">成功</string>
+    <string name="common_error">錯誤</string>
+    <string name="common_unknown">未知</string>
+
+    <!-- Blacklist UI additions -->
+    <string name="blacklist_remove_song_title">從黑名單中刪除？</string>
+    <string name="blacklist_add_song_title">加入黑名單？</string>
+    <string name="blacklist_remove_song_desc">這首歌曲將不再從您的音樂庫中隱藏。</string>
+    <string name="blacklist_add_song_desc">這首歌曲將從您的資料庫中隱藏並排除在播放之外。</string>
+    <string name="blacklist_undo_warning">此操作可以隨時撤銷。</string>
+    <string name="blacklist_song_removed_msg">歌曲已從黑名單中刪除</string>
+    <string name="blacklist_song_added_msg">歌曲已新增至黑名單</string>
+    <string name="blacklist_button_remove">刪除</string>
+    <string name="blacklist_button_blacklist">黑名單</string>
+    <string name="blacklist_remove_folder_title">從黑名單中刪除資料夾？</string>
+    <string name="blacklist_add_folder_title">黑名單資料夾？</string>
+    <string name="blacklist_remove_folder_desc">此資料夾中的所有歌曲都將再次可見。</string>
+    <string name="blacklist_add_folder_desc">此資料夾中的所有歌曲都將被隱藏並排除在播放之外。</string>
+    <string name="blacklist_folder_removed_msg">資料夾已從黑名單中刪除</string>
+    <string name="blacklist_folder_added_msg">資料夾已新增至黑名單</string>
+    <string name="blacklist_disc_label">光碟 %1$d</string>
+    <string name="blacklist_track_label">曲目 %1$d</string>
+
+    <!-- Library & Playlist Dialog additions -->
+    <string name="dialog_add_song_to_playlist">將「%1$s」新增至此播放清單</string>
+    <string name="dialog_songs_in_queue">目前佇列中有 %1$d 首歌曲。</string>
+    <string name="dialog_play_song_how">您想如何玩「%1$s」？</string>
+    <string name="dialog_clear_and_play">清除並播放</string>
+    <string name="dialog_clear_and_play_desc">取代佇列並播放這首歌曲</string>
+    <string name="dialog_add_to_queue">新增到佇列</string>
+    <string name="dialog_add_to_queue_desc">保留目前佇列並新增歌曲</string>
+    <string name="dialog_restart_warning_message">為了確保所有匯入的播放清單正常運作，我們建議重新啟動應用程式。您可以繼續正常使用該應用程序，但某些功能可能無法按預期工作，直到重新啟動為止。</string>
+    <string name="dialog_export_playlist_to">將「%1$s」匯出至：</string>
+    <string name="dialog_export_playlists_to">將 %1$d 播放清單匯出至：</string>
+    <string name="dialog_operation_importing">導入</string>
+    <string name="dialog_operation_exporting">正在匯出</string>
+
+    <!-- Mode dialog strings -->
+    <string name="dialog_switch_to_go">切換到 Rhythm 繼續嗎？</string>
+    <string name="dialog_switch_to_local">切換到本地？</string>
+    <string name="dialog_switch_to_go_desc">該項目屬於 Rhythm Go。現在切換到串流模式來進行串流媒體播放嗎？</string>
+    <string name="dialog_switch_to_local_desc">此項目屬於您的本地圖書館。立即切換到本機模式來播放離線曲目嗎？</string>
+
+    <!-- Section order content descriptions -->
+    <string name="home_section_hide_carousel">隱藏輪播</string>
+    <string name="home_section_show_carousel">顯示輪播</string>
+    <string name="home_section_hide_section">隱藏部分</string>
+    <string name="home_section_show_section">顯示部分</string>
+    <string name="library_tab_show">顯示選項卡</string>
+    <string name="library_tab_hide">隱藏式選項卡</string>
+
+    <!-- Add To Playlist additions -->
+    <string name="add_to_playlist_selected_count">%1$d 已選擇</string>
+    <string name="add_to_playlist_title">加入 %1$s</string>
+    <string name="add_to_playlist_no_songs">沒有可用的歌曲</string>
+    <string name="add_to_playlist_all_songs_present">所有歌曲已在此播放清單中</string>
+
+    <!-- Artist details -->
+    <string name="artist_detail_albums_count">%1$d 專輯</string>
+    <string name="artist_detail_songs_count">%1$d 歌曲</string>
+
+    <!-- Equalizer presets & UI -->
+    <string name="eq_preset_flat">平</string>
+    <string name="eq_preset_rock">搖滾</string>
+    <string name="eq_preset_pop">流行音樂</string>
+    <string name="eq_preset_jazz">爵士樂</string>
+    <string name="eq_preset_classical">古典</string>
+    <string name="eq_preset_electronic">電子</string>
+    <string name="eq_preset_hiphop">嘻哈</string>
+    <string name="eq_preset_vocal">聲樂</string>
+    <string name="eq_preset_bass_boost">低音增強</string>
+    <string name="eq_preset_treble_boost">高音增強</string>
+    <string name="eq_preset_v_shape">V 形</string>
+    <string name="eq_preset_harman">哈曼</string>
+    <string name="eq_preset_custom">自訂</string>
+    <string name="eq_autoeq_profiles">AutoEQ 設定檔</string>
+    <string name="eq_manage_device">管理設備</string>
+    <string name="eq_system_equalizer">系統平衡器</string>
+    <string name="eq_enhance_lows">增強低點</string>
+    <string name="eq_widen_sound">擴大聲音</string>
+    <string name="eq_mono_only">僅單聲道</string>
+
+    <!-- Library updates, sorting & categories -->
+    <string name="library_updated_songs_success">更新了 %1$d 歌曲</string>
+    <string name="library_updated_songs_failed">更新了 %1$d 歌曲，%2$d 失敗</string>
+    <string name="library_switch_to_grid">切換到網格視圖</string>
+    <string name="library_switch_to_list">切換到清單視圖</string>
+    <string name="library_sort_title">標題</string>
+    <string name="library_sort_artist">藝術家</string>
+    <string name="library_sort_date_added">新增日期</string>
+    <string name="library_sort_date_modified">修改日期</string>
+    <string name="library_sort_ascending">升序</string>
+    <string name="library_sort_descending">降序</string>
+    <string name="library_sort_name_asc">姓名 (A-Z)</string>
+    <string name="library_sort_name_desc">姓名 (Z-A)</string>
+    <string name="library_sort_songs_desc">歌曲（從高到低）</string>
+    <string name="library_sort_albums_desc">專輯（從高到低）</string>
+    <string name="library_scan_songs">正在掃描歌曲...</string>
+    <string name="library_scan_albums">正在處理相簿...</string>
+    <string name="library_scan_artists">處理藝術家...</string>
+    <string name="library_scan_genres">偵測流派...</string>
+    <string name="library_scan_media">掃描媒體...</string>
+    <string name="library_export_failed">匯出失敗</string>
+    <string name="library_import_failed">導入失敗</string>
+    <string name="library_category_all">全部</string>
+    <string name="library_category_favorites">❤️ 最愛</string>
+    <string name="library_category_absolute_favorites">⭐⭐⭐⭐⭐ 絕對收藏</string>
+    <string name="library_category_loved">⭐⭐⭐⭐ 喜歡</string>
+    <string name="library_category_great">⭐⭐⭐ 太棒了</string>
+    <string name="library_category_good">⭐⭐ 好</string>
+    <string name="library_category_liked">⭐ 喜歡</string>
+    <string name="library_category_short">短篇（&lt; 3 分鐘）</string>
+    <string name="library_category_medium">中（3-5 分鐘）</string>
+    <string name="library_category_long">長（&gt; 5 分鐘）</string>
+    <string name="library_category_hi_res_lossless">高解析度無損</string>
+    <string name="library_category_lossless">無損</string>
+    <string name="library_category_dolby">杜比</string>
+    <string name="library_category_mono">單聲道</string>
+    <string name="library_category_stereo">立體聲</string>
+    <string name="library_category_high_quality">高品質</string>
+    <string name="library_category_standard">標準</string>
+    <string name="library_removed_from_favorites">從收藏夾中刪除了 %1$d</string>
+    <string name="library_added_to_favorites">將 %1$d 新增至收藏夾</string>
+    <string name="library_unlike_all">與所有不同</string>
+    <string name="library_like_all">喜歡</string>
+    <string name="library_tracks_count_format">%1$d（共 %2$d 曲目）</string>
+    <string name="library_no_playlists_yet">還沒有播放清單\n使用 + 按鈕建立您的第一個播放清單</string>
+    <string name="library_no_albums_yet">還沒有專輯</string>
+    <string name="library_no_artists_yet">還沒有藝術家</string>
+    <string name="library_action_play_next">播放下一個</string>
+    <string name="library_action_add_to_queue">新增到佇列</string>
+    <string name="library_action_add_to_blacklist">加入黑名單</string>
+    <string name="library_action_song_info">歌曲訊息</string>
+    <string name="library_action_add_to_playlist">新增到播放列表</string>
+    <string name="library_action_rate_song">評價歌曲</string>
+    <string name="library_menu_new_playlist">新播放列表</string>
+    <string name="library_menu_import_playlist">匯入播放清單</string>
+    <string name="library_menu_export_playlists">匯出播放清單</string>
+    <string name="library_menu_close_playlist">關閉播放清單選單</string>
+    <string name="library_menu_open_playlist">開啟播放清單選單</string>
+    <string name="library_menu_close">關閉選單</string>
+    <string name="library_selected_count_format">%1$d 已選擇</string>
+    <string name="library_from_tracks_format">來自 %1$d 曲目</string>
+    <string name="library_playlist_count_singular">%1$d 播放清單</string>
+    <string name="library_playlist_count_plural">%1$d 播放清單</string>
+    <string name="library_album_count_singular">%1$d 專輯</string>
+    <string name="library_album_count_plural">%1$d 專輯</string>
+    <string name="library_artist_count_singular">%1$d 藝術家</string>
+    <string name="library_artist_count_plural">%1$d 藝術家</string>
+    <string name="library_duration_hours_minutes">%1$dh %2$dm</string>
+    <string name="library_duration_minutes">%1$dm</string>
+
+    <!-- Onboarding, Backup & Settings additions -->
+    <string name="onboarding_blacklist_label">黑名單</string>
+    <string name="onboarding_whitelist_label">白名單</string>
+    <string name="onboarding_full_player_label">完整播放器</string>
+    <string name="onboarding_mini_player_label">迷你播放器</string>
+    <string name="onboarding_blocked_folders">%1$d 被封鎖的資料夾</string>
+    <string name="onboarding_whitelisted_folders">%1$d 白名單資料夾</string>
+    <string name="onboarding_sample_button">範例按鈕</string>
+    <string name="onboarding_primary_label">小學</string>
+    <string name="onboarding_secondary_label">中學</string>
+    <string name="onboarding_tertiary_label">三級</string>
+    <string name="onboarding_rhythm_material">Rhythm (Material)</string>
+    
+    <string name="backup_restored_success">備份復原成功。重新啟動應用程式以應用所有變更。</string>
+    <string name="backup_copied_to_clipboard">備份已建立並複製到剪貼簿。</string>
+    <string name="backup_failed_to_create">建立備份失敗：%1$s</string>
+    <string name="backup_failed_to_restore_file">無法從檔案復原：%1$s</string>
+    <string name="backup_no_backup_clipboard">在剪貼簿中找不到備份</string>
+    <string name="backup_failed_to_restore_clipboard">無法從剪貼簿恢復：%1$s</string>
+    
+    <string name="updater_ready_to_install">版本 %1$s 已準備好安裝</string>
+    <string name="updater_download_progress">%1$d%% • %2$s / %3$s</string>
+    <string name="updater_version_info">版本 %1$s • %2$s</string>
+    <string name="updater_error_occurred">發生錯誤</string>
+    <string name="updater_channel_stable">穩定</string>
+    <string name="updater_channel_beta">測試版</string>
+
+    <!-- Expressive shape preset & group names -->
+    <string name="shape_preset_default">預設</string>
+    <string name="shape_preset_default_desc">適合所有年齡層的柔和而富有表現力的形狀</string>
+    <string name="shape_preset_friendly">友善</string>
+    <string name="shape_preset_friendly_desc">溫暖平易近人的造型</string>
+    <string name="shape_preset_cheerful">開朗</string>
+    <string name="shape_preset_cheerful_desc">明亮而富有表現力的形狀</string>
+    <string name="shape_preset_modern">現代</string>
+    <string name="shape_preset_modern_desc">當代表現力設計</string>
+    <string name="shape_preset_playful">好玩</string>
+    <string name="shape_preset_playful_desc">有趣且富有表現力的形狀</string>
+    <string name="shape_preset_organic">有機</string>
+    <string name="shape_preset_organic_desc">自然形狀</string>
+    <string name="shape_preset_geometric">幾何</string>
+    <string name="shape_preset_geometric_desc">乾淨而現代的形狀</string>
+    <string name="shape_preset_retro">復古</string>
+    <string name="shape_preset_retro_desc">像素化懷舊形狀</string>
+    <string name="shape_preset_custom">自訂</string>
+    <string name="shape_preset_custom_desc">您的個人化選擇</string>
+    <string name="shape_option_square">廣場</string>
+    <string name="shape_option_square_desc">圓角正方形</string>
+    <string name="shape_option_oval">橢圓形</string>
+    <string name="shape_option_oval_desc">細長橢圓形</string>
+    <string name="shape_option_pill">藥丸</string>
+    <string name="shape_option_pill_desc">膠囊形狀</string>
+    <string name="shape_option_diamond">鑽石</string>
+    <string name="shape_option_diamond_desc">鑽石形狀</string>
+    <string name="shape_option_triangle">三角形</string>
+    <string name="shape_option_triangle_desc">圓角三角形</string>
+    <string name="shape_option_pentagon">五角大廈</string>
+    <string name="shape_option_pentagon_desc">五邊形</string>
+    <string name="shape_option_flower">花</string>
+    <string name="shape_option_flower_desc">有花瓣的花</string>
+    <string name="shape_option_clover4">四葉草</string>
+    <string name="shape_option_clover4_desc">四葉草</string>
+    <string name="shape_option_clover8">八葉三葉草</string>
+    <string name="shape_option_clover8_desc">八葉草</string>
+    <string name="shape_option_heart">心</string>
+    <string name="shape_option_heart_desc">心形</string>
+    <string name="shape_option_bun">包子</string>
+    <string name="shape_option_bun_desc">小圓麵包/麵包形狀</string>
+    <string name="shape_option_boom">繁榮</string>
+    <string name="shape_option_boom_desc">爆炸形狀</string>
+    <string name="shape_option_soft_boom">軟繁榮</string>
+    <string name="shape_option_soft_boom_desc">較柔和的爆炸</string>
+    <string name="shape_option_burst">爆發</string>
+    <string name="shape_option_burst_desc">星爆形狀</string>
+    <string name="shape_option_soft_burst">軟突發</string>
+    <string name="shape_option_soft_burst_desc">柔和的星芒</string>
+    <string name="shape_option_sunny">陽光明媚</string>
+    <string name="shape_option_sunny_desc">太陽與光線</string>
+    <string name="shape_option_very_sunny">非常晴朗</string>
+    <string name="shape_option_very_sunny_desc">太陽光線較多</string>
+    <string name="shape_option_cookie4">餅乾 4</string>
+    <string name="shape_option_cookie4_desc">四面餅乾</string>
+    <string name="shape_option_cookie6">餅乾 6</string>
+    <string name="shape_option_cookie6_desc">六面餅乾</string>
+    <string name="shape_option_cookie7">餅乾 7</string>
+    <string name="shape_option_cookie7_desc">7 面餅乾</string>
+    <string name="shape_option_cookie9">餅乾 9</string>
+    <string name="shape_option_cookie9_desc">9面餅乾</string>
+    <string name="shape_option_cookie12">餅乾 12</string>
+    <string name="shape_option_cookie12_desc">12面餅乾</string>
+    <string name="shape_option_ghostish">幽靈般</string>
+    <string name="shape_option_ghostish_desc">幽靈般的形狀</string>
+    <string name="shape_option_puffy">浮腫</string>
+    <string name="shape_option_puffy_desc">雲狀形狀</string>
+    <string name="shape_option_puffy_diamond">蓬鬆鑽石</string>
+    <string name="shape_option_puffy_diamond_desc">蓬鬆鑽石</string>
+    <string name="shape_option_fan">範</string>
+    <string name="shape_option_fan_desc">扇形</string>
+    <string name="shape_option_circle">圈子</string>
+    <string name="shape_option_circle_desc">一個完美的圓</string>
+    <string name="shape_option_clover_4_leaf">四葉草</string>
+    <string name="shape_option_clover_4_leaf_desc">四葉草</string>
+    <string name="shape_option_clover_8_leaf">八葉三葉草</string>
+    <string name="shape_option_clover_8_leaf_desc">八葉草</string>
+    <string name="shape_option_arrow">箭頭</string>
+    <string name="shape_option_arrow_desc">箭頭指針</string>
+    <string name="shape_option_arch">拱門</string>
+    <string name="shape_option_arch_desc">拱形</string>
+    <string name="shape_option_clam_shell">蛤殼</string>
+    <string name="shape_option_clam_shell_desc">貝殼形狀</string>
+    <string name="shape_option_gem">寶石</string>
+    <string name="shape_option_gem_desc">寶石形狀</string>
+    <string name="shape_option_semi_circle">半圓</string>
+    <string name="shape_option_semi_circle_desc">半圓</string>
+    <string name="shape_option_slanted">傾斜</string>
+    <string name="shape_option_slanted_desc">傾斜的正方形</string>
+    <string name="shape_option_pixel_circle">像素圓</string>
+    <string name="shape_option_pixel_circle_desc">像素化圓圈</string>
+    <string name="shape_option_pixel_triangle">像素三角形</string>
+    <string name="shape_option_pixel_triangle_desc">像素化三角形</string>
+    <string name="shape_group_basic">基礎</string>
+    <string name="shape_group_organic">有機</string>
+    <string name="shape_group_playful">好玩</string>
+    <string name="shape_group_cookie">餅乾</string>
+    <string name="shape_group_whimsical">異想天開</string>
+    <string name="shape_group_special">特別</string>
+    <string name="shape_group_pixel">像素</string>
+
+    <!-- Customization Choices -->
+    <string name="option_always">總是</string>
+    <string name="option_expanded">展開</string>
+    <string name="option_collapsed">折疊</string>
+    <string name="option_linear">線性</string>
+    <string name="option_circular">通告</string>
+    <string name="option_auto">汽車</string>
+    <string name="option_manual">手冊</string>
+    <string name="option_both">兩者</string>
+    <string name="option_icon">圖示</string>
+    <string name="option_name">姓名</string>
+
+    <!-- Theme settings additions -->
+    <string name="theme_color_red">紅色</string>
+    <string name="theme_color_green">綠色</string>
+    <string name="theme_color_blue">藍色</string>
+    <string name="theme_font_restart_warning">字體已變更。重新啟動應用程式以應用新字體。</string>
+    <string name="theme_source_album_art">專輯封面</string>
+    <string name="theme_source_album_art_desc">從目前播放的專輯插圖中提取顏色</string>
+    <string name="theme_source_system_colors">系統顏色</string>
+    <string name="theme_source_system_colors_desc">使用 Material 你壁紙中的顏色</string>
+    <string name="theme_source_custom_scheme">客製化方案</string>
+    <string name="theme_source_custom_scheme_desc">從預先定義的配色方案中選擇</string>
+    <string name="theme_font_system">系統字體</string>
+    <string name="theme_font_system_desc">使用裝置的預設字體</string>
+    <string name="theme_font_custom">自訂字體</string>
+    <string name="theme_font_custom_desc">匯入並使用自訂字體文件</string>
+
+    <!-- Color Scheme names -->
+    <string name="scheme_default">預設</string>
+    <string name="scheme_warm">溫暖</string>
+    <string name="scheme_cool">酷</string>
+    <string name="scheme_forest">森林</string>
+    <string name="scheme_rose">玫瑰</string>
+    <string name="scheme_monochrome">單色</string>
+    <string name="scheme_lavender">薰衣草</string>
+    <string name="scheme_ocean">海洋</string>
+    <string name="scheme_aurora">極光</string>
+    <string name="scheme_amber">琥珀色</string>
+    <string name="scheme_crimson">深紅</string>
+    <string name="scheme_emerald">翡翠</string>
+    <string name="scheme_mint">薄荷</string>
+
+    <!-- Shape Utils category and descriptions -->
+    <string name="shape_utils_fab">浮動操作按鈕</string>
+    <string name="shape_utils_fab_desc">FAB 按鈕的形狀</string>
+    <string name="shape_utils_cards">卡</string>
+    <string name="shape_utils_cards_desc">卡片和容器的形狀</string>
+    <string name="shape_utils_buttons">按鈕</string>
+    <string name="shape_utils_buttons_desc">按鈕形狀</string>
+    <string name="shape_utils_chips">晶片</string>
+    <string name="shape_utils_chips_desc">晶片和標籤的形狀</string>
+    <string name="shape_utils_player_controls">播放器控制</string>
+    <string name="shape_utils_player_controls_desc">播放器控制按鈕的形狀</string>
+    <string name="shape_utils_mini_player">迷你播放器</string>
+    <string name="shape_utils_mini_player_desc">迷你玩家圖稿的形狀</string>
+
+    <!-- Metadata properties and labels -->
+    <string name="metadata_duration">持續時間</string>
+    <string name="metadata_disc">光碟</string>
+    <string name="metadata_composer">作曲家</string>
+    <string name="metadata_album_artist">專輯藝術家</string>
+    <string name="metadata_play_count">播放次數</string>
+    <string name="metadata_total_played">總共玩過</string>
+    <string name="metadata_rating">評級</string>
+    <string name="metadata_quality">質量</string>
+    <string name="metadata_audio_tech">音訊技術</string>
+    <string name="metadata_bit_depth">位元深度</string>
+    <string name="metadata_bitrate">位元率</string>
+    <string name="metadata_sample_rate">取樣率</string>
+    <string name="metadata_channels">頻道</string>
+    <string name="metadata_format">格式</string>
+    <string name="metadata_location">地點</string>
+    <string name="metadata_lyrics">歌詞</string>
+    <string name="metadata_mime_type">MIME 類型</string>
+    <string name="metadata_date_added">新增日期</string>
+    <string name="metadata_modified">已修改</string>
+    <string name="metadata_lyrics_available">可用</string>
+    <string name="metadata_dts">DTS</string>
+    <string name="metadata_hi_res">高解析度</string>
+    <string name="metadata_dolby">杜比</string>
+    <string name="metadata_lossless">無損</string>
+
+    <!-- Discover settings specific -->
+    <string name="settings_discover_album_name">專輯名稱</string>
+    <string name="settings_discover_album_name_desc">在卡片上顯示專輯名稱</string>
+    <string name="settings_discover_artist_name">藝術家姓名</string>
+    <string name="settings_discover_artist_name_desc">在卡片上顯示藝術家姓名</string>
+    <string name="settings_discover_release_year">發布年份</string>
+    <string name="settings_discover_release_year_desc">顯示專輯發行年份</string>
+    <string name="settings_discover_play_button">播放按鈕</string>
+    <string name="settings_discover_play_button_desc">顯示快速播放按鈕</string>
+    <string name="settings_discover_gradient_overlay">漸層疊加</string>
+    <string name="settings_discover_gradient_overlay_desc">在文字後方顯示漸變</string>
+
+    <!-- Carousel Style selector strings -->
+    <string name="carousel_style_default">預設</string>
+    <string name="carousel_style_default_desc">2 張側面專輯</string>
+    <string name="carousel_style_hero">英雄</string>
+    <string name="carousel_style_hero_desc">1 張側面專輯</string>
+
+    <!-- Theme names -->
+    <string name="theme_rhythm">Rhythm</string>
+    <string name="theme_expressive">富有表現力</string>
+    <string name="settings_managed_by_expressive_shapes">由富有表現力的形狀管理</string>
+
+    <!-- Shape targets -->
+    <string name="shape_target_album_art">專輯封面</string>
+    <string name="shape_target_album_art_desc">專輯封面形狀</string>
+    <string name="shape_target_player_art">球員作品</string>
+    <string name="shape_target_player_art_desc">播放器螢幕圖稿的形狀</string>
+    <string name="shape_target_song_art">歌曲作品</string>
+    <string name="shape_target_song_art_desc">清單中歌曲插圖的形狀</string>
+    <string name="shape_target_playlist_art">播放清單圖稿</string>
+    <string name="shape_target_playlist_art_desc">播放清單封面的形狀</string>
+    <string name="shape_target_artist_art">藝術家作品</string>
+    <string name="shape_target_artist_art_desc">藝術家圖像的形狀</string>
+    <string name="settings_shape_for">%1$s 的形狀</string>
 </resources>
+

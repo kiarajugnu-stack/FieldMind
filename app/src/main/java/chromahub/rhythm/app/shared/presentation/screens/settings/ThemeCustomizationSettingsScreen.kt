@@ -177,11 +177,39 @@ enum class ColorSource(val displayName: String, val description: String, val ico
     CUSTOM("Custom Scheme", "Choose from predefined color schemes", RhythmIcons.Palette)
 }
 
+fun ColorSource.getDisplayName(context: Context): String {
+    return when (this) {
+        ColorSource.ALBUM_ART -> context.getString(R.string.color_source_album_art)
+        ColorSource.MONET -> context.getString(R.string.color_source_system_colors)
+        ColorSource.CUSTOM -> context.getString(R.string.color_source_custom_scheme)
+    }
+}
 
+fun ColorSource.getDescription(context: Context): String {
+    return when (this) {
+        ColorSource.ALBUM_ART -> context.getString(R.string.color_source_album_art_desc)
+        ColorSource.MONET -> context.getString(R.string.color_source_system_colors_desc)
+        ColorSource.CUSTOM -> context.getString(R.string.color_source_custom_scheme_desc)
+    }
+}
 
 enum class FontSource(val displayName: String, val description: String, val icon: MaterialSymbolIcon) {
     SYSTEM("System Font", "Use the device's default font", MaterialSymbolIcon("phone_android", filled = true)),
     CUSTOM("Custom Font", "Import and use a custom font file", MaterialSymbolIcon("text_fields", filled = true))
+}
+
+fun FontSource.getDisplayName(context: Context): String {
+    return when (this) {
+        FontSource.SYSTEM -> context.getString(R.string.font_source_system_font)
+        FontSource.CUSTOM -> context.getString(R.string.font_source_custom_font)
+    }
+}
+
+fun FontSource.getDescription(context: Context): String {
+    return when (this) {
+        FontSource.SYSTEM -> context.getString(R.string.font_source_system_font_desc)
+        FontSource.CUSTOM -> context.getString(R.string.font_source_custom_font_desc)
+    }
 }
 
 
@@ -322,108 +350,108 @@ fun ThemeCustomizationSettingsScreen(onBackClick: () -> Unit) {
     }
 
     // Color schemes - expanded list matching bottomsheet
-    val colorSchemes = remember {
+    val colorSchemes = remember(context) {
         listOf(
             ColorSchemeOption(
                 name = "Default",
-                displayName = "Rhythm Default",
-                description = "The classic Rhythm experience with vibrant purple tones",
-                primaryColor = Color(0xFF5C4AD5),
-                secondaryColor = Color(0xFF5D5D6B),
-                tertiaryColor = Color(0xFFFFDDB6)
+                displayName = context.getString(R.string.color_scheme_default_title),
+                description = context.getString(R.string.color_scheme_default_desc),
+                primaryColor = Color(0xFF6750A4),
+                secondaryColor = Color(0xFF625B71),
+                tertiaryColor = Color(0xFF7D5260)
             ),
             ColorSchemeOption(
                 name = "Warm",
-                displayName = "Warm Sunset",
-                description = "Cozy orange and red tones for a warm atmosphere",
+                displayName = context.getString(R.string.color_scheme_warm_title),
+                description = context.getString(R.string.color_scheme_warm_desc),
                 primaryColor = Color(0xFFFF6B35),
                 secondaryColor = Color(0xFFF7931E),
                 tertiaryColor = Color(0xFFFFC857)
             ),
             ColorSchemeOption(
                 name = "Cool",
-                displayName = "Cool Ocean",
-                description = "Refreshing blue and teal tones for a calming vibe",
+                displayName = context.getString(R.string.color_scheme_cool_title),
+                description = context.getString(R.string.color_scheme_cool_desc),
                 primaryColor = Color(0xFF1E88E5),
                 secondaryColor = Color(0xFF00897B),
                 tertiaryColor = Color(0xFF80DEEA)
             ),
             ColorSchemeOption(
                 name = "Forest",
-                displayName = "Forest Green",
-                description = "Natural green tones inspired by nature",
+                displayName = context.getString(R.string.color_scheme_forest_title),
+                description = context.getString(R.string.color_scheme_forest_desc),
                 primaryColor = Color(0xFF2E7D32),
                 secondaryColor = Color(0xFF558B2F),
                 tertiaryColor = Color(0xFF9CCC65)
             ),
             ColorSchemeOption(
                 name = "Rose",
-                displayName = "Rose Pink",
-                description = "Elegant pink and magenta tones",
+                displayName = context.getString(R.string.color_scheme_rose_title),
+                description = context.getString(R.string.color_scheme_rose_desc),
                 primaryColor = Color(0xFFE91E63),
                 secondaryColor = Color(0xFFC2185B),
                 tertiaryColor = Color(0xFFF8BBD0)
             ),
             ColorSchemeOption(
                 name = "Monochrome",
-                displayName = "Monochrome",
-                description = "Minimalist grayscale for a clean, modern look",
+                displayName = context.getString(R.string.color_scheme_monochrome_title),
+                description = context.getString(R.string.color_scheme_monochrome_desc),
                 primaryColor = Color(0xFF424242),
                 secondaryColor = Color(0xFF616161),
                 tertiaryColor = Color(0xFF9E9E9E)
             ),
             ColorSchemeOption(
                 name = "Lavender",
-                displayName = "Lavender",
-                description = "Calming purple and lavender tones for relaxation",
+                displayName = context.getString(R.string.color_scheme_lavender_title),
+                description = context.getString(R.string.color_scheme_lavender_desc),
                 primaryColor = Color(0xFF7C4DFF),
                 secondaryColor = Color(0xFF9575CD),
                 tertiaryColor = Color(0xFFBA68C8)
             ),
             ColorSchemeOption(
                 name = "Ocean",
-                displayName = "Deep Ocean",
-                description = "Deep blues and aquamarines for oceanic serenity",
+                displayName = context.getString(R.string.color_scheme_ocean_title),
+                description = context.getString(R.string.color_scheme_ocean_desc),
                 primaryColor = Color(0xFF006064),
                 secondaryColor = Color(0xFF00838F),
                 tertiaryColor = Color(0xFF00ACC1)
             ),
             ColorSchemeOption(
                 name = "Aurora",
-                displayName = "Northern Lights",
-                description = "Vibrant greens and blues inspired by the aurora borealis",
+                displayName = context.getString(R.string.color_scheme_aurora_title),
+                description = context.getString(R.string.color_scheme_aurora_desc),
                 primaryColor = Color(0xFF00C853),
                 secondaryColor = Color(0xFF00E676),
                 tertiaryColor = Color(0xFF69F0AE)
             ),
             ColorSchemeOption(
                 name = "Amber",
-                displayName = "Golden Amber",
-                description = "Rich amber and gold tones for a luxurious feel",
+                displayName = context.getString(R.string.color_scheme_amber_title),
+                description = context.getString(R.string.color_scheme_amber_desc),
                 primaryColor = Color(0xFFFF6F00),
                 secondaryColor = Color(0xFFFF8F00),
                 tertiaryColor = Color(0xFFFFC107)
             ),
             ColorSchemeOption(
                 name = "Crimson",
-                displayName = "Deep Crimson",
-                description = "Bold burgundy and crimson shades for drama",
+                displayName = context.getString(R.string.color_scheme_crimson_title),
+                description = context.getString(R.string.color_scheme_crimson_desc),
                 primaryColor = Color(0xFFB71C1C),
                 secondaryColor = Color(0xFFC62828),
                 tertiaryColor = Color(0xFFD32F2F)
             ),
             ColorSchemeOption(
                 name = "Emerald",
-                displayName = "Emerald Dream",
-                description = "Fresh emerald greens with natural forest hues",
+                displayName = context.getString(R.string.color_scheme_emerald_title),
+                description = context.getString(R.string.color_scheme_emerald_desc),
                 primaryColor = Color(0xFF2E7D32),
                 secondaryColor = Color(0xFF388E3C),
                 tertiaryColor = Color(0xFF4CAF50)
             ),
             ColorSchemeOption(
                 name = "Mint",
-                displayName = "Mint",
-                description = "Fresh and clean cyan and mint green tones",
+                displayName = context.getString(R.string.color_scheme_mint_title),
+                description = context.getString(R.string.color_scheme_mint_desc),
                 primaryColor = Color(0xFF0097A7),
                 secondaryColor = Color(0xFF00ACC1),
                 tertiaryColor = Color(0xFF00BCD4)
@@ -432,37 +460,37 @@ fun ThemeCustomizationSettingsScreen(onBackClick: () -> Unit) {
     }
 
     // Font options - matching bottomsheet
-    val fontOptions = remember {
+    val fontOptions = remember(context) {
         listOf(
             FontOption(
                 name = "Geom",
                 displayName = "Geom",
-                description = "Modern, clean sans-serif font from Google"
+                description = context.getString(R.string.font_geom_desc)
             ),
             FontOption(
                 name = "System",
-                displayName = "System Default",
-                description = "Use your device's default font"
+                displayName = context.getString(R.string.font_system_title),
+                description = context.getString(R.string.font_system_desc)
             ),
             FontOption(
                 name = "Slate",
                 displayName = "Slate",
-                description = "Elegant serif font with a classic, traditional appearance"
+                description = context.getString(R.string.font_slate_desc)
             ),
             FontOption(
                 name = "Inter",
                 displayName = "Inter",
-                description = "Clean and modern sans-serif font, highly readable"
+                description = context.getString(R.string.font_inter_desc)
             ),
             FontOption(
                 name = "JetBrains",
                 displayName = "JetBrains Mono",
-                description = "Monospace font perfect for technical content"
+                description = context.getString(R.string.font_jetbrains_desc)
             ),
             FontOption(
                 name = "Quicksand",
                 displayName = "Quicksand",
-                description = "Rounded font with a softer, friendlier appearance"
+                description = context.getString(R.string.font_quicksand_desc)
             )
         )
     }
@@ -1971,7 +1999,7 @@ fun ExpressiveColorPickerControls(
                     )
 
                     ExpressiveColorSlider(
-                        label = "Red",
+                        label = stringResource(R.string.theme_color_red),
                         value = redValue,
                         onValueChange = { redValue = it },
                         color = Color.Red,
@@ -1981,7 +2009,7 @@ fun ExpressiveColorPickerControls(
                     Spacer(modifier = Modifier.height(16.dp))
 
                     ExpressiveColorSlider(
-                        label = "Green",
+                        label = stringResource(R.string.theme_color_green),
                         value = greenValue,
                         onValueChange = { greenValue = it },
                         color = Color.Green,
@@ -1991,7 +2019,7 @@ fun ExpressiveColorPickerControls(
                     Spacer(modifier = Modifier.height(16.dp))
 
                     ExpressiveColorSlider(
-                        label = "Blue",
+                        label = stringResource(R.string.theme_color_blue),
                         value = blueValue,
                         onValueChange = { blueValue = it },
                         color = Color.Blue,

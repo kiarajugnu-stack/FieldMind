@@ -3729,4 +3729,588 @@
     <string name="widget_theme_solid_purple_desc">Signature deep violet backdrop with signature accent tints and highlights</string>
     <string name="widget_theme_glance_suffix">%1$s (Glance widgets only)</string>
     <string name="unit_dp">%1$ddp</string>
+
+    <!-- Settings Suggestions and Tips -->
+    <string name="settings_suggestions">Settings Suggestions</string>
+    <string name="settings_suggestions_desc">Show contextual suggestions at the top</string>
+    <string name="settings_performance_desc_optimized">Optimize haptics, decoding, marquee, and artwork fetching to reduce lag</string>
+    <string name="moment_morning">this morning</string>
+    <string name="moment_afternoon">this afternoon</string>
+    <string name="moment_evening">this evening</string>
+    <string name="moment_night">tonight</string>
+    <string name="pulse_fresh">Fresh session energy</string>
+    <string name="pulse_steady">Steady groove</string>
+    <string name="pulse_heavy">Heavy listening</string>
+    <string name="pulse_marathon">Marathon mode</string>
+    
+    <!-- Settings Tips Details -->
+    <string name="settings_tip_theme_desc_1">Refresh your music player with lively AMOLED black and beautiful pastel colors.</string>
+    <string name="settings_tip_theme_desc_2">Make Rhythm truly yours by matching the app\'s accent to your system.</string>
+    <string name="settings_tip_media_scan_desc_1">Avoid unwanted audio clips. Explicitly define which folders we should scan for music.</string>
+    <string name="settings_tip_media_scan_desc_2">Keep voice notes and ringtones away from your playlists using focus folders.</string>
+    <string name="settings_tip_sleep_timer_desc_1">Drift off to sleep while your music is playing. We\'ll automatically pause it.</string>
+    <string name="settings_tip_sleep_timer_desc_2">Set an automated sleep timer before bed so playback stops perfectly.</string>
+    <string name="settings_tip_equalizer_desc_1">Elevate your experience. Boost the bass and adjust frequencies using the Equalizer.</string>
+    <string name="settings_tip_equalizer_desc_2">Tune the sound to your headphones securely with our advanced audio effects.</string>
+    <string name="settings_tip_backup_active_desc_1">Auto backup is active. Verify your backup sections so restores stay clean.</string>
+    <string name="settings_tip_backup_active_desc_2">Protection enabled: schedule looks good. Run a manual backup before big edits.</string>
+    <string name="settings_tip_backup_inactive_desc_1">Auto backup is off. Enable it to protect playlists and Rhythm Guard stats.</string>
+    <string name="settings_tip_backup_inactive_desc_2">No safety net yet. Turn on backups to avoid losing your setup.</string>
+    <string name="settings_tip_updates_active_desc_1">Updates are enabled. Keep them on for fixes and performance improvements.</string>
+    <string name="settings_tip_updates_active_desc_2">You are set to receive updates. Check channel preferences for stability vs freshness.</string>
+    <string name="settings_tip_updates_inactive_desc_1">Updates are disabled. Re-enable them to stay protected and current.</string>
+    <string name="settings_tip_updates_inactive_desc_2">You are pinned to the current build. Turn updates back on when ready.</string>
+    <string name="settings_tip_queue_active_desc_1">Player swipe-to-skip is active. Tune queue rules for smoother transitions.</string>
+    <string name="settings_tip_queue_active_desc_2">Gesture skip is on. Match queue behavior to your listening flow.</string>
+    <string name="settings_tip_queue_inactive_desc_1">Swipe-to-skip is off. Queue controls can help keep playback efficient.</string>
+    <string name="settings_tip_queue_inactive_desc_2">Prefer explicit controls? Fine-tune queue behavior for predictable playback.</string>
+    <string name="settings_tip_controls_active_desc_1">Seek buttons are visible. Customize player controls to reduce clutter.</string>
+    <string name="settings_tip_controls_active_desc_2">Control-rich player enabled. Tweak layout for your thumb reach.</string>
+    <string name="settings_tip_controls_inactive_desc_1">Minimal player controls enabled. Add seek buttons if you miss precise jumps.</string>
+    <string name="settings_tip_controls_inactive_desc_2">Clean layout active. Re-enable seek controls for finer playback handling.</string>
+    <string name="settings_tip_miniplayer_active_desc_1">Mini player progress is visible. Choose a style that matches your theme.</string>
+    <string name="settings_tip_miniplayer_active_desc_2">Progress bar is active on mini player. Try shape and corner tweaks next.</string>
+    <string name="settings_tip_miniplayer_inactive_desc_1">Mini player progress is hidden. Enable it for quick track awareness.</string>
+    <string name="settings_tip_miniplayer_inactive_desc_2">Compact mode is minimal now. Turn progress on for better glanceability.</string>
+    <string name="settings_tip_library_active_desc_1">Ratings are enabled. Use library settings to sharpen discovery and sorting.</string>
+    <string name="settings_tip_library_active_desc_2">Your library supports ratings. Tune scan and grouping for cleaner browsing.</string>
+    <string name="settings_tip_library_inactive_desc_1">Ratings are disabled. Library settings can still improve structure and speed.</string>
+    <string name="settings_tip_library_inactive_desc_2">Simplified library mode detected. Adjust grouping for faster navigation.</string>
+
+    <!-- Lyrics Source Dialog -->
+    <string name="lyrics_source_embedded_first">Embedded First</string>
+    <string name="lyrics_source_embedded_first_desc">Try audio file metadata → Online APIs → .lrc files</string>
+    <string name="lyrics_source_api_first">API First</string>
+    <string name="lyrics_source_api_first_desc">Try online services → Audio metadata → .lrc files</string>
+    <string name="lyrics_source_local_first">Local .lrc First</string>
+    <string name="lyrics_source_local_first_desc">Try .lrc files → Audio metadata → Online APIs</string>
+
+    <!-- Font / Color Customization Dialogs -->
+    <string name="theme_font_source_changed_restart">Font source changed. Restart the app to apply the new font.</string>
+    <string name="color_source_album_art">Album Art</string>
+    <string name="color_source_album_art_desc">Extract colors from currently playing album artwork</string>
+    <string name="color_source_system_colors">System Colors</string>
+    <string name="color_source_system_colors_desc">Use Material You colors from your wallpaper</string>
+    <string name="color_source_custom_scheme">Custom Scheme</string>
+    <string name="color_source_custom_scheme_desc">Choose from predefined color schemes</string>
+    <string name="font_source_system_font">System Font</string>
+    <string name="font_source_system_font_desc">Use the device\'s default font</string>
+    <string name="font_source_custom_font">Custom Font</string>
+    <string name="font_source_custom_font_desc">Import and use a custom font file</string>
+    <string name="font_system_title">System Default</string>
+    <string name="font_system_desc">Use your device\'s default font</string>
+    <string name="font_geom_desc">Modern, clean sans-serif font from Google</string>
+    <string name="font_slate_desc">Elegant serif font with a classic, traditional appearance</string>
+    <string name="font_inter_desc">Clean and modern sans-serif font, highly readable</string>
+    <string name="font_jetbrains_desc">Monospace font perfect for technical content</string>
+    <string name="font_quicksand_desc">Rounded font with a softer, friendlier appearance</string>
+
+    <!-- Predefined Color Schemes -->
+    <string name="color_scheme_default_title">Rhythm Default</string>
+    <string name="color_scheme_default_desc">Material 3 baseline purple with rosy pink accents</string>
+    <string name="color_scheme_warm_title">Warm Sunset</string>
+    <string name="color_scheme_warm_desc">Cozy orange and red tones for a warm atmosphere</string>
+    <string name="color_scheme_cool_title">Cool Ocean</string>
+    <string name="color_scheme_cool_desc">Refreshing blue and teal tones for a calming vibe</string>
+    <string name="color_scheme_forest_title">Forest Green</string>
+    <string name="color_scheme_forest_desc">Natural green tones inspired by nature</string>
+    <string name="color_scheme_rose_title">Rose Pink</string>
+    <string name="color_scheme_rose_desc">Elegant pink and magenta tones</string>
+    <string name="color_scheme_monochrome_title">Monochrome</string>
+    <string name="color_scheme_monochrome_desc">Minimalist grayscale for a clean, modern look</string>
+    <string name="color_scheme_lavender_title">Lavender</string>
+    <string name="color_scheme_lavender_desc">Calming purple and lavender tones for relaxation</string>
+    <string name="color_scheme_ocean_title">Deep Ocean</string>
+    <string name="color_scheme_ocean_desc">Deep blues and aquamarines for oceanic serenity</string>
+    <string name="color_scheme_aurora_title">Northern Lights</string>
+    <string name="color_scheme_aurora_desc">Vibrant greens and blues inspired by the aurora borealis</string>
+    <string name="color_scheme_amber_title">Golden Amber</string>
+    <string name="color_scheme_amber_desc">Rich amber and gold tones for a luxurious feel</string>
+    <string name="color_scheme_crimson_title">Deep Crimson</string>
+    <string name="color_scheme_crimson_desc">Bold burgundy and crimson shades for drama</string>
+    <string name="color_scheme_emerald_title">Emerald Dream</string>
+    <string name="color_scheme_emerald_desc">Fresh emerald greens with natural forest hues</string>
+    <string name="color_scheme_mint_title">Mint</string>
+    <string name="color_scheme_mint_desc">Fresh and clean cyan and mint green tones</string>
+
+    <!-- Color Preview Chips -->
+    <string name="theme_color_primary">Primary</string>
+    <string name="theme_color_secondary">Secondary</string>
+    <string name="theme_color_tertiary">Tertiary</string>
+
+    <!-- Lyrics Settings Screen -->
+    <string name="lyrics_settings_title">Lyrics</string>
+    <string name="lyrics_settings_general">General Settings</string>
+    <string name="lyrics_settings_open_fullscreen_desc">Open a full-screen lyrics screen by tapping the lyrics view</string>
+    <string name="lyrics_settings_autohide_controls">Auto-hide lyrics controls</string>
+    <string name="lyrics_settings_autohide_controls_desc">Automatically hide controls in full-screen lyrics screen after a few seconds of inactivity</string>
+    <string name="lyrics_settings_embedded_first">Embedded First</string>
+    <string name="lyrics_settings_embedded_first_desc">Prefer lyrics embedded in audio files, fallback to online APIs</string>
+    <string name="lyrics_settings_online_first">Online First</string>
+    <string name="lyrics_settings_online_first_desc">Prefer online APIs (Rhythm word-by-word, LRCLib), fallback to embedded</string>
+    <string name="lyrics_settings_local_first">Local First</string>
+    <string name="lyrics_settings_local_first_desc">Prefer local .lrc files, then embedded lyrics, then online APIs</string>
+    <string name="lyrics_settings_apple_music_first">Apple Music First</string>
+    <string name="lyrics_settings_lrclib_first">LRCLib First</string>
+    <string name="lyrics_settings_fallback_apis_desc">Attempt fallback APIs if the preferred API fails to return lyrics</string>
+    <string name="lyrics_settings_display_styling">Display &amp; Styling</string>
+    <string name="lyrics_settings_size_percentage">Size: %1$d%%</string>
+    <string name="alignment_left">Left</string>
+    <string name="alignment_center">Center</string>
+    <string name="alignment_right">Right</string>
+    <string name="animation_slide">Slide</string>
+    <string name="animation_fade">Fade</string>
+    <string name="animation_scale">Scale</string>
+    <string name="animation_up">Up</string>
+    <string name="lyrics_settings_switch_animation_desc">Art ↔ Lyrics switch animation</string>
+    <string name="lyrics_settings_not_supported_expressive">Not supported by Expressive theme</string>
+    <string name="lyrics_settings_formatting_behaviors">Formatting &amp; Behaviors</string>
+    <string name="lyrics_settings_bold_text">Bold Text</string>
+    <string name="lyrics_settings_bold_text_desc">Make the text of active lyrics bold</string>
+    <string name="lyrics_settings_trim_lyrics">Trim Lyrics</string>
+    <string name="lyrics_settings_trim_lyrics_desc">Trim leading and trailing whitespace from lyric lines</string>
+    <string name="lyrics_settings_disable_animations">Disable Animations</string>
+    <string name="lyrics_settings_disable_animations_desc">Disable transitions and animations in the lyrics view</string>
+    <string name="lyrics_settings_word_by_word_translation">Word-by-word Translation</string>
+    <string name="lyrics_settings_word_by_word_translation_desc">Try to automatically sync syllable or word translations</string>
+    <string name="lyrics_settings_info_bullets">Additional Sync Details:\n• Online APIs provide high-quality synced lyrics\n• Rhythm offers word-by-word sync\n• LRCLib provides free line-by-line sync</string>
+
+    <!-- AutoEQ Preset Picker additions -->
+    <string name="autoeqpresetpickerbottomsheet_search_presets">Search presets...</string>
+    <string name="autoeqpresetpickerbottomsheet_disable">None / Disable AutoEQ</string>
+    <string name="autoeqpresetpickerbottomsheet_disable_desc">Clear headphone profile, use standard EQ presets</string>
+    <string name="autoeqpresetpickerbottomsheet_unknown_brand">Unknown Brand</string>
+
+    <!-- Device Configuration additions -->
+    <string name="device_configuration_devices_configured">%1$d devices configured</string>
+    <string name="device_configuration_device_recognized">Device Recognized</string>
+    <string name="device_configuration_new_device_detected">New Device Detected</string>
+    <string name="device_configuration_configured_with">%1$s is configured with %2$s</string>
+    <string name="device_configuration_configured_no_profile">%1$s is configured</string>
+    <string name="device_configuration_connected_not_configured">%1$s is connected but not configured</string>
+    <string name="device_configuration_applied_profile">Applied %1$s profile</string>
+    <string name="device_configuration_imported_profile">Imported Profile</string>
+    <string name="device_configuration_parse_error">Could not parse EQ settings. Check the format.</string>
+    <string name="device_configuration_custom_eq">Custom EQ</string>
+    <string name="device_configuration_custom_preset">Custom Preset</string>
+    <string name="device_configuration_custom">Custom</string>
+    <string name="device_configuration_active_profile_label">Active Profile: %1$s</string>
+    <string name="device_configuration_share_subject">Rhythm EQ Profile: %1$s</string>
+    <string name="device_configuration_share_title">Share EQ Profile</string>
+    <string name="device_configuration_edit_device">Edit Device</string>
+    <string name="device_configuration_add_device">Add Device</string>
+    <string name="device_configuration_save">Save</string>
+    <string name="device_configuration_add">Add</string>
+    <string name="device_configuration_for_device">For %1$s</string>
+    <string name="device_configuration_profiles_available">%1$d profiles available</string>
+    <string name="device_configuration_disable_compensation">Disable headphone compensation</string>
+
+    <!-- Common UI element strings -->
+    <string name="common_none">None</string>
+    <string name="common_cancel">Cancel</string>
+    <string name="common_back">Back</string>
+    <string name="common_remove">Remove</string>
+    <string name="common_add">Add</string>
+    <string name="common_active">Active</string>
+    <string name="common_disabled">Disabled</string>
+    <string name="common_unavailable">Unavailable</string>
+    <string name="common_success">Success</string>
+    <string name="common_error">Error</string>
+    <string name="common_unknown">Unknown</string>
+
+    <!-- Blacklist UI additions -->
+    <string name="blacklist_remove_song_title">Remove from Blacklist?</string>
+    <string name="blacklist_add_song_title">Add to Blacklist?</string>
+    <string name="blacklist_remove_song_desc">This song will no longer be hidden from your library.</string>
+    <string name="blacklist_add_song_desc">This song will be hidden from your library and excluded from playback.</string>
+    <string name="blacklist_undo_warning">This action can be undone anytime.</string>
+    <string name="blacklist_song_removed_msg">Song removed from blacklist</string>
+    <string name="blacklist_song_added_msg">Song added to blacklist</string>
+    <string name="blacklist_button_remove">Remove</string>
+    <string name="blacklist_button_blacklist">Blacklist</string>
+    <string name="blacklist_remove_folder_title">Remove Folder from Blacklist?</string>
+    <string name="blacklist_add_folder_title">Blacklist Folder?</string>
+    <string name="blacklist_remove_folder_desc">All songs in this folder will be visible again.</string>
+    <string name="blacklist_add_folder_desc">All songs in this folder will be hidden and excluded from playback.</string>
+    <string name="blacklist_folder_removed_msg">Folder removed from blacklist</string>
+    <string name="blacklist_folder_added_msg">Folder added to blacklist</string>
+    <string name="blacklist_disc_label">Disc %1$d</string>
+    <string name="blacklist_track_label">Track %1$d</string>
+
+    <!-- Library & Playlist Dialog additions -->
+    <string name="dialog_add_song_to_playlist">Add \"%1$s\" to this playlist</string>
+    <string name="dialog_songs_in_queue">You have %1$d songs in the current queue.</string>
+    <string name="dialog_play_song_how">How would you like to play \"%1$s\"?</string>
+    <string name="dialog_clear_and_play">Clear &amp; Play</string>
+    <string name="dialog_clear_and_play_desc">Replace queue and play this song</string>
+    <string name="dialog_add_to_queue">Add to Queue</string>
+    <string name="dialog_add_to_queue_desc">Keep current queue and add song</string>
+    <string name="dialog_restart_warning_message">To ensure all imported playlists work correctly, we recommend restarting the app. You can continue using the app normally, but some features may not work as expected until restart.</string>
+    <string name="dialog_export_playlist_to">Export \"%1$s\" to:</string>
+    <string name="dialog_export_playlists_to">Export %1$d playlists to:</string>
+    <string name="dialog_operation_importing">Importing</string>
+    <string name="dialog_operation_exporting">Exporting</string>
+
+    <!-- Mode dialog strings -->
+    <string name="dialog_switch_to_go">Switch to Rhythm Go?</string>
+    <string name="dialog_switch_to_local">Switch to Local?</string>
+    <string name="dialog_switch_to_go_desc">This item belongs to Rhythm Go. Switch to Streaming Mode now to stream and play it?</string>
+    <string name="dialog_switch_to_local_desc">This item belongs to your Local Library. Switch to Local Mode now to play your offline tracks?</string>
+
+    <!-- Section order content descriptions -->
+    <string name="home_section_hide_carousel">Hide carousel</string>
+    <string name="home_section_show_carousel">Show carousel</string>
+    <string name="home_section_hide_section">Hide section</string>
+    <string name="home_section_show_section">Show section</string>
+    <string name="library_tab_show">Show tab</string>
+    <string name="library_tab_hide">Hide tab</string>
+
+    <!-- Add To Playlist additions -->
+    <string name="add_to_playlist_selected_count">%1$d selected</string>
+    <string name="add_to_playlist_title">Add to %1$s</string>
+    <string name="add_to_playlist_no_songs">No songs available</string>
+    <string name="add_to_playlist_all_songs_present">All songs are already in this playlist</string>
+
+    <!-- Artist details -->
+    <string name="artist_detail_albums_count">%1$d albums</string>
+    <string name="artist_detail_songs_count">%1$d songs</string>
+
+    <!-- Equalizer presets & UI -->
+    <string name="eq_preset_flat">Flat</string>
+    <string name="eq_preset_rock">Rock</string>
+    <string name="eq_preset_pop">Pop</string>
+    <string name="eq_preset_jazz">Jazz</string>
+    <string name="eq_preset_classical">Classical</string>
+    <string name="eq_preset_electronic">Electronic</string>
+    <string name="eq_preset_hiphop">Hip Hop</string>
+    <string name="eq_preset_vocal">Vocal</string>
+    <string name="eq_preset_bass_boost">Bass Boost</string>
+    <string name="eq_preset_treble_boost">Treble Boost</string>
+    <string name="eq_preset_v_shape">V-Shape</string>
+    <string name="eq_preset_harman">Harman</string>
+    <string name="eq_preset_custom">Custom</string>
+    <string name="eq_autoeq_profiles">AutoEQ Profiles</string>
+    <string name="eq_manage_device">Manage Device</string>
+    <string name="eq_system_equalizer">System Equalizer</string>
+    <string name="eq_enhance_lows">Enhance lows</string>
+    <string name="eq_widen_sound">Widen sound</string>
+    <string name="eq_mono_only">Mono only</string>
+
+    <!-- Library updates, sorting & categories -->
+    <string name="library_updated_songs_success">Updated %1$d songs</string>
+    <string name="library_updated_songs_failed">Updated %1$d songs, %2$d failed</string>
+    <string name="library_switch_to_grid">Switch to Grid View</string>
+    <string name="library_switch_to_list">Switch to List View</string>
+    <string name="library_sort_title">Title</string>
+    <string name="library_sort_artist">Artist</string>
+    <string name="library_sort_date_added">Date Added</string>
+    <string name="library_sort_date_modified">Date Modified</string>
+    <string name="library_sort_ascending">Ascending</string>
+    <string name="library_sort_descending">Descending</string>
+    <string name="library_sort_name_asc">Name (A-Z)</string>
+    <string name="library_sort_name_desc">Name (Z-A)</string>
+    <string name="library_sort_songs_desc">Songs (High to Low)</string>
+    <string name="library_sort_albums_desc">Albums (High to Low)</string>
+    <string name="library_scan_songs">Scanning songs...</string>
+    <string name="library_scan_albums">Processing albums...</string>
+    <string name="library_scan_artists">Processing artists...</string>
+    <string name="library_scan_genres">Detecting genres...</string>
+    <string name="library_scan_media">Scanning media...</string>
+    <string name="library_export_failed">Export failed</string>
+    <string name="library_import_failed">Import failed</string>
+    <string name="library_category_all">All</string>
+    <string name="library_category_favorites">❤️ Favorites</string>
+    <string name="library_category_absolute_favorites">⭐⭐⭐⭐⭐ Absolute Favorites</string>
+    <string name="library_category_loved">⭐⭐⭐⭐ Loved</string>
+    <string name="library_category_great">⭐⭐⭐ Great</string>
+    <string name="library_category_good">⭐⭐ Good</string>
+    <string name="library_category_liked">⭐ Liked</string>
+    <string name="library_category_short">Short (&lt; 3 min)</string>
+    <string name="library_category_medium">Medium (3-5 min)</string>
+    <string name="library_category_long">Long (&gt; 5 min)</string>
+    <string name="library_category_hi_res_lossless">Hi-Res Lossless</string>
+    <string name="library_category_lossless">Lossless</string>
+    <string name="library_category_dolby">Dolby</string>
+    <string name="library_category_mono">Mono</string>
+    <string name="library_category_stereo">Stereo</string>
+    <string name="library_category_high_quality">High Quality</string>
+    <string name="library_category_standard">Standard</string>
+    <string name="library_removed_from_favorites">Removed %1$d from favorites</string>
+    <string name="library_added_to_favorites">Added %1$d to favorites</string>
+    <string name="library_unlike_all">Unlike all</string>
+    <string name="library_like_all">Like all</string>
+    <string name="library_tracks_count_format">%1$d of %2$d tracks</string>
+    <string name="library_no_playlists_yet">No playlists yet\nCreate your first playlist using the + button</string>
+    <string name="library_no_albums_yet">No albums yet</string>
+    <string name="library_no_artists_yet">No artists yet</string>
+    <string name="library_action_play_next">Play next</string>
+    <string name="library_action_add_to_queue">Add to queue</string>
+    <string name="library_action_add_to_blacklist">Add to blacklist</string>
+    <string name="library_action_song_info">Song info</string>
+    <string name="library_action_add_to_playlist">Add to playlist</string>
+    <string name="library_action_rate_song">Rate Song</string>
+    <string name="library_menu_new_playlist">New playlist</string>
+    <string name="library_menu_import_playlist">Import playlist</string>
+    <string name="library_menu_export_playlists">Export playlists</string>
+    <string name="library_menu_close_playlist">Close playlist menu</string>
+    <string name="library_menu_open_playlist">Open playlist menu</string>
+    <string name="library_menu_close">Close menu</string>
+    <string name="library_selected_count_format">%1$d Selected</string>
+    <string name="library_from_tracks_format">from %1$d tracks</string>
+    <string name="library_playlist_count_singular">%1$d playlist</string>
+    <string name="library_playlist_count_plural">%1$d playlists</string>
+    <string name="library_album_count_singular">%1$d album</string>
+    <string name="library_album_count_plural">%1$d albums</string>
+    <string name="library_artist_count_singular">%1$d artist</string>
+    <string name="library_artist_count_plural">%1$d artists</string>
+    <string name="library_duration_hours_minutes">%1$dh %2$dm</string>
+    <string name="library_duration_minutes">%1$dm</string>
+
+    <!-- Onboarding, Backup & Settings additions -->
+    <string name="onboarding_blacklist_label">Blacklist</string>
+    <string name="onboarding_whitelist_label">Whitelist</string>
+    <string name="onboarding_full_player_label">Full Player</string>
+    <string name="onboarding_mini_player_label">Mini Player</string>
+    <string name="onboarding_blocked_folders">%1$d blocked folders</string>
+    <string name="onboarding_whitelisted_folders">%1$d whitelisted folders</string>
+    <string name="onboarding_sample_button">Sample Button</string>
+    <string name="onboarding_primary_label">Primary</string>
+    <string name="onboarding_secondary_label">Secondary</string>
+    <string name="onboarding_tertiary_label">Tertiary</string>
+    <string name="onboarding_rhythm_material">Rhythm (Material)</string>
+    
+    <string name="backup_restored_success">Backup restored successfully. Restart the app to apply all changes.</string>
+    <string name="backup_copied_to_clipboard">Backup created and copied to clipboard.</string>
+    <string name="backup_failed_to_create">Failed to create backup: %1$s</string>
+    <string name="backup_failed_to_restore_file">Failed to restore from file: %1$s</string>
+    <string name="backup_no_backup_clipboard">No backup found in clipboard</string>
+    <string name="backup_failed_to_restore_clipboard">Failed to restore from clipboard: %1$s</string>
+    
+    <string name="updater_ready_to_install">Version %1$s is ready to install</string>
+    <string name="updater_download_progress">%1$d%% • %2$s / %3$s</string>
+    <string name="updater_version_info">Version %1$s • %2$s</string>
+    <string name="updater_error_occurred">An error occurred</string>
+    <string name="updater_channel_stable">stable</string>
+    <string name="updater_channel_beta">beta</string>
+
+    <!-- Expressive shape preset & group names -->
+    <string name="shape_preset_default">Default</string>
+    <string name="shape_preset_default_desc">Gentle expressive shapes for all ages</string>
+    <string name="shape_preset_friendly">Friendly</string>
+    <string name="shape_preset_friendly_desc">Warm and approachable shapes</string>
+    <string name="shape_preset_cheerful">Cheerful</string>
+    <string name="shape_preset_cheerful_desc">Bright and expressive shapes</string>
+    <string name="shape_preset_modern">Modern</string>
+    <string name="shape_preset_modern_desc">Contemporary expressive design</string>
+    <string name="shape_preset_playful">Playful</string>
+    <string name="shape_preset_playful_desc">Fun and expressive shapes</string>
+    <string name="shape_preset_organic">Organic</string>
+    <string name="shape_preset_organic_desc">Nature-inspired shapes</string>
+    <string name="shape_preset_geometric">Geometric</string>
+    <string name="shape_preset_geometric_desc">Clean and modern shapes</string>
+    <string name="shape_preset_retro">Retro</string>
+    <string name="shape_preset_retro_desc">Pixelated nostalgic shapes</string>
+    <string name="shape_preset_custom">Custom</string>
+    <string name="shape_preset_custom_desc">Your personalized selection</string>
+    <string name="shape_option_square">Square</string>
+    <string name="shape_option_square_desc">Rounded square</string>
+    <string name="shape_option_oval">Oval</string>
+    <string name="shape_option_oval_desc">Elongated oval</string>
+    <string name="shape_option_pill">Pill</string>
+    <string name="shape_option_pill_desc">Capsule shape</string>
+    <string name="shape_option_diamond">Diamond</string>
+    <string name="shape_option_diamond_desc">Diamond shape</string>
+    <string name="shape_option_triangle">Triangle</string>
+    <string name="shape_option_triangle_desc">Rounded triangle</string>
+    <string name="shape_option_pentagon">Pentagon</string>
+    <string name="shape_option_pentagon_desc">Five-sided polygon</string>
+    <string name="shape_option_flower">Flower</string>
+    <string name="shape_option_flower_desc">Flower with petals</string>
+    <string name="shape_option_clover4">4-Leaf Clover</string>
+    <string name="shape_option_clover4_desc">Four-leaf clover</string>
+    <string name="shape_option_clover8">8-Leaf Clover</string>
+    <string name="shape_option_clover8_desc">Eight-leaf clover</string>
+    <string name="shape_option_heart">Heart</string>
+    <string name="shape_option_heart_desc">Heart shape</string>
+    <string name="shape_option_bun">Bun</string>
+    <string name="shape_option_bun_desc">Bun/bread shape</string>
+    <string name="shape_option_boom">Boom</string>
+    <string name="shape_option_boom_desc">Explosion shape</string>
+    <string name="shape_option_soft_boom">Soft Boom</string>
+    <string name="shape_option_soft_boom_desc">Softer explosion</string>
+    <string name="shape_option_burst">Burst</string>
+    <string name="shape_option_burst_desc">Starburst shape</string>
+    <string name="shape_option_soft_burst">Soft Burst</string>
+    <string name="shape_option_soft_burst_desc">Softer starburst</string>
+    <string name="shape_option_sunny">Sunny</string>
+    <string name="shape_option_sunny_desc">Sun with rays</string>
+    <string name="shape_option_very_sunny">Very Sunny</string>
+    <string name="shape_option_very_sunny_desc">Sun with more rays</string>
+    <string name="shape_option_cookie4">Cookie 4</string>
+    <string name="shape_option_cookie4_desc">4-sided cookie</string>
+    <string name="shape_option_cookie6">Cookie 6</string>
+    <string name="shape_option_cookie6_desc">6-sided cookie</string>
+    <string name="shape_option_cookie7">Cookie 7</string>
+    <string name="shape_option_cookie7_desc">7-sided cookie</string>
+    <string name="shape_option_cookie9">Cookie 9</string>
+    <string name="shape_option_cookie9_desc">9-sided cookie</string>
+    <string name="shape_option_cookie12">Cookie 12</string>
+    <string name="shape_option_cookie12_desc">12-sided cookie</string>
+    <string name="shape_option_ghostish">Ghostish</string>
+    <string name="shape_option_ghostish_desc">Ghost-like shape</string>
+    <string name="shape_option_puffy">Puffy</string>
+    <string name="shape_option_puffy_desc">Cloud-like shape</string>
+    <string name="shape_option_puffy_diamond">Puffy Diamond</string>
+    <string name="shape_option_puffy_diamond_desc">Puffy diamond</string>
+    <string name="shape_option_fan">Fan</string>
+    <string name="shape_option_fan_desc">Fan shape</string>
+    <string name="shape_option_circle">Circle</string>
+    <string name="shape_option_circle_desc">A perfect circle</string>
+    <string name="shape_option_clover_4_leaf">4-Leaf Clover</string>
+    <string name="shape_option_clover_4_leaf_desc">Four-leaf clover</string>
+    <string name="shape_option_clover_8_leaf">8-Leaf Clover</string>
+    <string name="shape_option_clover_8_leaf_desc">Eight-leaf clover</string>
+    <string name="shape_option_arrow">Arrow</string>
+    <string name="shape_option_arrow_desc">Arrow pointer</string>
+    <string name="shape_option_arch">Arch</string>
+    <string name="shape_option_arch_desc">Arch shape</string>
+    <string name="shape_option_clam_shell">Clam Shell</string>
+    <string name="shape_option_clam_shell_desc">Shell shape</string>
+    <string name="shape_option_gem">Gem</string>
+    <string name="shape_option_gem_desc">Gemstone shape</string>
+    <string name="shape_option_semi_circle">Semi Circle</string>
+    <string name="shape_option_semi_circle_desc">Half circle</string>
+    <string name="shape_option_slanted">Slanted</string>
+    <string name="shape_option_slanted_desc">Slanted square</string>
+    <string name="shape_option_pixel_circle">Pixel Circle</string>
+    <string name="shape_option_pixel_circle_desc">Pixelated circle</string>
+    <string name="shape_option_pixel_triangle">Pixel Triangle</string>
+    <string name="shape_option_pixel_triangle_desc">Pixelated triangle</string>
+    <string name="shape_group_basic">Basic</string>
+    <string name="shape_group_organic">Organic</string>
+    <string name="shape_group_playful">Playful</string>
+    <string name="shape_group_cookie">Cookie</string>
+    <string name="shape_group_whimsical">Whimsical</string>
+    <string name="shape_group_special">Special</string>
+    <string name="shape_group_pixel">Pixel</string>
+
+    <!-- Customization Choices -->
+    <string name="option_always">Always</string>
+    <string name="option_expanded">Expanded</string>
+    <string name="option_collapsed">Collapsed</string>
+    <string name="option_linear">Linear</string>
+    <string name="option_circular">Circular</string>
+    <string name="option_auto">Auto</string>
+    <string name="option_manual">Manual</string>
+    <string name="option_both">Both</string>
+    <string name="option_icon">Icon</string>
+    <string name="option_name">Name</string>
+
+    <!-- Theme settings additions -->
+    <string name="theme_color_red">Red</string>
+    <string name="theme_color_green">Green</string>
+    <string name="theme_color_blue">Blue</string>
+    <string name="theme_font_restart_warning">Font changed. Restart the app to apply the new font.</string>
+    <string name="theme_source_album_art">Album Art</string>
+    <string name="theme_source_album_art_desc">Extract colors from currently playing album artwork</string>
+    <string name="theme_source_system_colors">System Colors</string>
+    <string name="theme_source_system_colors_desc">Use Material You colors from your wallpaper</string>
+    <string name="theme_source_custom_scheme">Custom Scheme</string>
+    <string name="theme_source_custom_scheme_desc">Choose from predefined color schemes</string>
+    <string name="theme_font_system">System Font</string>
+    <string name="theme_font_system_desc">Use the device\'s default font</string>
+    <string name="theme_font_custom">Custom Font</string>
+    <string name="theme_font_custom_desc">Import and use a custom font file</string>
+
+    <!-- Color Scheme names -->
+    <string name="scheme_default">Default</string>
+    <string name="scheme_warm">Warm</string>
+    <string name="scheme_cool">Cool</string>
+    <string name="scheme_forest">Forest</string>
+    <string name="scheme_rose">Rose</string>
+    <string name="scheme_monochrome">Monochrome</string>
+    <string name="scheme_lavender">Lavender</string>
+    <string name="scheme_ocean">Ocean</string>
+    <string name="scheme_aurora">Aurora</string>
+    <string name="scheme_amber">Amber</string>
+    <string name="scheme_crimson">Crimson</string>
+    <string name="scheme_emerald">Emerald</string>
+    <string name="scheme_mint">Mint</string>
+
+    <!-- Shape Utils category and descriptions -->
+    <string name="shape_utils_fab">Floating Action Button</string>
+    <string name="shape_utils_fab_desc">Shape for FAB buttons</string>
+    <string name="shape_utils_cards">Cards</string>
+    <string name="shape_utils_cards_desc">Shape for cards and containers</string>
+    <string name="shape_utils_buttons">Buttons</string>
+    <string name="shape_utils_buttons_desc">Shape for buttons</string>
+    <string name="shape_utils_chips">Chips</string>
+    <string name="shape_utils_chips_desc">Shape for chips and tags</string>
+    <string name="shape_utils_player_controls">Player Controls</string>
+    <string name="shape_utils_player_controls_desc">Shape for player control buttons</string>
+    <string name="shape_utils_mini_player">Mini Player</string>
+    <string name="shape_utils_mini_player_desc">Shape for mini player artwork</string>
+
+    <!-- Metadata properties and labels -->
+    <string name="metadata_duration">Duration</string>
+    <string name="metadata_disc">Disc</string>
+    <string name="metadata_composer">Composer</string>
+    <string name="metadata_album_artist">Album Artist</string>
+    <string name="metadata_play_count">Play Count</string>
+    <string name="metadata_total_played">Total Played</string>
+    <string name="metadata_rating">Rating</string>
+    <string name="metadata_quality">Quality</string>
+    <string name="metadata_audio_tech">Audio Tech</string>
+    <string name="metadata_bit_depth">Bit Depth</string>
+    <string name="metadata_bitrate">Bitrate</string>
+    <string name="metadata_sample_rate">Sample Rate</string>
+    <string name="metadata_channels">Channels</string>
+    <string name="metadata_format">Format</string>
+    <string name="metadata_location">Location</string>
+    <string name="metadata_lyrics">Lyrics</string>
+    <string name="metadata_mime_type">MIME Type</string>
+    <string name="metadata_date_added">Date Added</string>
+    <string name="metadata_modified">Modified</string>
+    <string name="metadata_lyrics_available">Available</string>
+    <string name="metadata_dts">DTS</string>
+    <string name="metadata_hi_res">Hi-Res</string>
+    <string name="metadata_dolby">Dolby</string>
+    <string name="metadata_lossless">Lossless</string>
+
+    <!-- Discover settings specific -->
+    <string name="settings_discover_album_name">Album Name</string>
+    <string name="settings_discover_album_name_desc">Show album title on card</string>
+    <string name="settings_discover_artist_name">Artist Name</string>
+    <string name="settings_discover_artist_name_desc">Show artist name on card</string>
+    <string name="settings_discover_release_year">Release Year</string>
+    <string name="settings_discover_release_year_desc">Show album release year</string>
+    <string name="settings_discover_play_button">Play Button</string>
+    <string name="settings_discover_play_button_desc">Show quick play button</string>
+    <string name="settings_discover_gradient_overlay">Gradient Overlay</string>
+    <string name="settings_discover_gradient_overlay_desc">Show gradient behind text</string>
+
+    <!-- Carousel Style selector strings -->
+    <string name="carousel_style_default">Default</string>
+    <string name="carousel_style_default_desc">2 side peek albums</string>
+    <string name="carousel_style_hero">Hero</string>
+    <string name="carousel_style_hero_desc">1 side peek album</string>
+
+    <!-- Theme names -->
+    <string name="theme_rhythm">Rhythm</string>
+    <string name="theme_expressive">Expressive</string>
+    <string name="settings_managed_by_expressive_shapes">Managed by Expressive Shapes</string>
+
+    <!-- Shape targets -->
+    <string name="shape_target_album_art">Album Artwork</string>
+    <string name="shape_target_album_art_desc">Shape for album artwork</string>
+    <string name="shape_target_player_art">Player Artwork</string>
+    <string name="shape_target_player_art_desc">Shape for player screen artwork</string>
+    <string name="shape_target_song_art">Song Artwork</string>
+    <string name="shape_target_song_art_desc">Shape for song artwork in lists</string>
+    <string name="shape_target_playlist_art">Playlist Artwork</string>
+    <string name="shape_target_playlist_art_desc">Shape for playlist covers</string>
+    <string name="shape_target_artist_art">Artist Artwork</string>
+    <string name="shape_target_artist_art_desc">Shape for artist images</string>
+    <string name="settings_shape_for">Shape for %1$s</string>
 </resources>
+

@@ -210,8 +210,8 @@ fun MiniPlayerCustomizationSettingsScreen(onBackClick: () -> Unit) {
                                     Spacer(modifier = Modifier.height(12.dp))
                                     ExpressiveButtonGroup(
                                         items = listOf(
-                                            "Rhythm",
-                                            "Expressive"
+                                            stringResource(R.string.theme_rhythm),
+                                            stringResource(R.string.theme_expressive)
                                         ),
                                         selectedIndex = if (miniPlayerThemeId == "EXPRESSIVE") 1 else 0,
                                         onItemClick = { index ->
@@ -300,7 +300,7 @@ fun MiniPlayerCustomizationSettingsScreen(onBackClick: () -> Unit) {
                             item = SettingItem(
                                 icon = RhythmIcons.Visibility,
                                 title = context.getString(R.string.settings_show_progress),
-                                description = if (isExpressiveActive) "Not supported by Expressive theme" else context.getString(R.string.settings_show_progress_desc),
+                                description = if (isExpressiveActive) context.getString(R.string.lyrics_settings_not_supported_expressive) else context.getString(R.string.settings_show_progress_desc),
                                 toggleState = miniPlayerShowProgress,
                                 onToggleChange = { appSettings.setMiniPlayerShowProgress(it) },
                                 enabled = !isExpressiveActive
@@ -331,7 +331,10 @@ fun MiniPlayerCustomizationSettingsScreen(onBackClick: () -> Unit) {
                                             color = MaterialTheme.colorScheme.onSurfaceVariant
                                         )
                                         ExpressiveButtonGroup(
-                                            items = listOf("Linear", "Circular"),
+                                            items = listOf(
+                                                stringResource(R.string.option_linear),
+                                                stringResource(R.string.option_circular)
+                                            ),
                                             selectedIndex = if (miniPlayerUseCircularProgress) 1 else 0,
                                             onItemClick = { index ->
                                                 HapticUtils.performHapticFeedback(context, haptics, HapticType.LIGHT)
@@ -384,7 +387,7 @@ fun MiniPlayerCustomizationSettingsScreen(onBackClick: () -> Unit) {
                             item = SettingItem(
                                 icon = RhythmIcons.Album,
                                 title = context.getString(R.string.settings_show_artwork),
-                                description = if (isExpressiveActive) "Not supported by Expressive theme" else context.getString(R.string.settings_show_artwork_desc),
+                                description = if (isExpressiveActive) context.getString(R.string.lyrics_settings_not_supported_expressive) else context.getString(R.string.settings_show_artwork_desc),
                                 toggleState = miniPlayerShowArtwork,
                                 onToggleChange = { appSettings.setMiniPlayerShowArtwork(it) },
                                 enabled = !isExpressiveActive
@@ -396,7 +399,7 @@ fun MiniPlayerCustomizationSettingsScreen(onBackClick: () -> Unit) {
                             item = SettingItem(
                                 icon = MaterialSymbolIcon("photo_size_select_large"),
                                 title = stringResource(R.string.settings_miniplayer_artwork_size),
-                                description = if (isExpressiveActive) "Not supported by Expressive theme" else "${miniPlayerArtworkSize}dp",
+                                description = if (isExpressiveActive) context.getString(R.string.lyrics_settings_not_supported_expressive) else "${miniPlayerArtworkSize}dp",
                                 onClick = { showMiniPlayerArtworkSizeSheet = true },
                                 enabled = !isExpressiveActive
                             )
@@ -408,7 +411,7 @@ fun MiniPlayerCustomizationSettingsScreen(onBackClick: () -> Unit) {
                                 SettingItem(
                                     icon = MaterialSymbolIcon("rounded_corner"),
                                     title = stringResource(R.string.settings_miniplayer_corner_radius),
-                                    description = "Managed by Expressive Shapes"
+                                    description = context.getString(R.string.settings_managed_by_expressive_shapes)
                                 )
                             } else {
                                 SettingItem(
@@ -441,7 +444,7 @@ fun MiniPlayerCustomizationSettingsScreen(onBackClick: () -> Unit) {
                             item = SettingItem(
                                 icon = MaterialSymbolIcon("timer"),
                                 title = context.getString(R.string.settings_show_time),
-                                description = if (isExpressiveActive) "Not supported by Expressive theme" else context.getString(R.string.settings_show_time_desc),
+                                description = if (isExpressiveActive) context.getString(R.string.lyrics_settings_not_supported_expressive) else context.getString(R.string.settings_show_time_desc),
                                 toggleState = miniPlayerShowTime,
                                 onToggleChange = { appSettings.setMiniPlayerShowTime(it) },
                                 enabled = !isExpressiveActive
@@ -453,7 +456,7 @@ fun MiniPlayerCustomizationSettingsScreen(onBackClick: () -> Unit) {
                             item = SettingItem(
                                 icon = MaterialSymbolIcon("tablet"),
                                 title = context.getString(R.string.settings_tablet_layout),
-                                description = if (isExpressiveActive) "Not supported by Expressive theme" else context.getString(R.string.settings_tablet_layout_desc),
+                                description = if (isExpressiveActive) context.getString(R.string.lyrics_settings_not_supported_expressive) else context.getString(R.string.settings_tablet_layout_desc),
                                 toggleState = miniPlayerAlwaysShowTablet,
                                 onToggleChange = { appSettings.setMiniPlayerAlwaysShowTablet(it) },
                                 enabled = !isExpressiveActive

@@ -261,7 +261,7 @@ fun FontSourceDialog(
                                     }
                                 }
                                 onDismiss()
-                                onShowRestartDialog("Font source changed. Restart the app to apply the new font.")
+                                onShowRestartDialog(context.getString(R.string.theme_font_source_changed_restart))
                             },
                             colors = CardDefaults.cardColors(
                                 containerColor = if (isSelected)
@@ -311,7 +311,7 @@ fun FontSourceDialog(
 
                                 Column(modifier = Modifier.weight(1f)) {
                                     Text(
-                                        text = source.displayName,
+                                        text = source.getDisplayName(context),
                                         style = MaterialTheme.typography.titleMedium,
                                         fontWeight = FontWeight.SemiBold,
                                         color = if (isSelected)
@@ -321,7 +321,7 @@ fun FontSourceDialog(
                                     )
                                     Spacer(modifier = Modifier.height(4.dp))
                                     Text(
-                                        text = source.description,
+                                        text = source.getDescription(context),
                                         style = MaterialTheme.typography.bodySmall,
                                         color = if (isSelected)
                                             MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)

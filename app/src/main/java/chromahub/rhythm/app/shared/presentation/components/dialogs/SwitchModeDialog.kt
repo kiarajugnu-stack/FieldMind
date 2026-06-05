@@ -22,11 +22,15 @@ fun SwitchModeDialog(
     onConfirm: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val title = if (targetMode == "STREAMING") "Switch to Rhythm Go?" else "Switch to Local?"
-    val text = if (targetMode == "STREAMING") {
-        "This item belongs to Rhythm Go. Switch to Streaming Mode now to stream and play it?"
+    val title = if (targetMode == "STREAMING") {
+        stringResource(R.string.dialog_switch_to_go)
     } else {
-        "This item belongs to your Local Library. Switch to Local Mode now to play your offline tracks?"
+        stringResource(R.string.dialog_switch_to_local)
+    }
+    val text = if (targetMode == "STREAMING") {
+        stringResource(R.string.dialog_switch_to_go_desc)
+    } else {
+        stringResource(R.string.dialog_switch_to_local_desc)
     }
 
     AlertDialog(

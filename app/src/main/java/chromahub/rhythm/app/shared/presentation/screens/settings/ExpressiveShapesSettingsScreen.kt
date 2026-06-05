@@ -409,8 +409,8 @@ fun ExpressiveShapesSettingsScreen(onBackClick: () -> Unit) {
                                     hapticFeedback = haptic,
                                     item = SettingItem(
                                         MaterialSymbolIcon("style"),
-                                        "Shape Preset",
-                                        presets.find { it.id == currentPreset }?.displayName ?: "Default",
+                                        stringResource(R.string.settings_shape_preset),
+                                        getLocalizedPresetName(currentPreset),
                                         onClick = {
                                             HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
                                             showPresetDialog = true
@@ -464,7 +464,7 @@ fun ExpressiveShapesSettingsScreen(onBackClick: () -> Unit) {
                                 ) {
                                     Icon(
                                         imageVector = preset.icon,
-                                        contentDescription = preset.displayName,
+                                        contentDescription = getLocalizedPresetName(preset.id),
                                         modifier = Modifier.size(28.dp),
                                         tint = if (isSelected)
                                             MaterialTheme.colorScheme.onPrimaryContainer
@@ -473,7 +473,7 @@ fun ExpressiveShapesSettingsScreen(onBackClick: () -> Unit) {
                                     )
                                     Spacer(modifier = Modifier.height(8.dp))
                                     Text(
-                                        text = preset.displayName,
+                                        text = getLocalizedPresetName(preset.id),
                                         style = MaterialTheme.typography.labelMedium,
                                         fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
                                         color = if (isSelected)
@@ -550,9 +550,9 @@ fun ExpressiveShapesSettingsScreen(onBackClick: () -> Unit) {
                         modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
                     )
                     Material3SettingsGroup(
-                        items = shapeTargets.map { (targetId, namePair, currentShape) ->
-                            val (targetName, _) = namePair
-                            val currentShapeName = allShapes.find { it.id == currentShape }?.displayName ?: currentShape
+                        items = shapeTargets.map { (targetId, _, currentShape) ->
+                            val targetName = getLocalizedTargetName(targetId)
+                            val currentShapeName = getLocalizedShapeName(currentShape)
                             toMaterial3SettingsItem(
                                 context = context,
                                 hapticFeedback = haptic,
@@ -753,7 +753,7 @@ fun ExpressiveShapesSettingsScreen(onBackClick: () -> Unit) {
                                     }
                                     Column {
                                         Text(
-                                            text = preset.displayName,
+                                            text = getLocalizedPresetName(preset.id),
                                             style = MaterialTheme.typography.bodyLarge,
                                             fontWeight = FontWeight.Medium,
                                             color = if (isSelected)
@@ -762,7 +762,7 @@ fun ExpressiveShapesSettingsScreen(onBackClick: () -> Unit) {
                                                 MaterialTheme.colorScheme.onSurface
                                         )
                                         Text(
-                                            text = preset.description,
+                                            text = getLocalizedPresetDesc(preset.id),
                                             style = MaterialTheme.typography.bodySmall,
                                             color = if (isSelected)
                                                 MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
@@ -842,10 +842,10 @@ fun ExpressiveShapesSettingsScreen(onBackClick: () -> Unit) {
             ) {
                 // Header with animation
                 StandardBottomSheetHeader(
-                    title = "Shape for $targetName",
-                    subtitle = stringResource(R.string.expressiveshapessettingsscreen_choose_an_expressive_shape),
-                    visible = showShapeContent
-                )
+                                    title = stringResource(R.string.settings_shape_for, getLocalizedTargetName(targetId)),
+                                    subtitle = stringResource(R.string.expressiveshapessettingsscreen_choose_an_expressive_shape),
+                                    visible = showShapeContent
+                                )
 
                 Spacer(modifier = Modifier.height(16.dp))
 
@@ -862,7 +862,7 @@ fun ExpressiveShapesSettingsScreen(onBackClick: () -> Unit) {
                     groupedShapes.forEach { (category, shapes) ->
                         item(key = "category_$category", span = { GridItemSpan(2) }) {
                             Text(
-                                text = category,
+                                text = getLocalizedShapeCategory(category),
                                 style = MaterialTheme.typography.labelLarge,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.primary,
@@ -950,7 +950,7 @@ fun ExpressiveShapesSettingsScreen(onBackClick: () -> Unit) {
                                     Spacer(modifier = Modifier.height(8.dp))
 
                                     Text(
-                                        text = shape.displayName,
+                                        text = getLocalizedShapeName(shape.id),
                                         style = MaterialTheme.typography.labelMedium,
                                         fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
                                         color = if (isSelected)
@@ -963,7 +963,7 @@ fun ExpressiveShapesSettingsScreen(onBackClick: () -> Unit) {
                                     )
 
                                     Text(
-                                        text = shape.description,
+                                        text = getLocalizedShapeDesc(shape.id),
                                         style = MaterialTheme.typography.labelSmall,
                                         color = if (isSelected)
                                             MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
@@ -1043,4 +1043,154 @@ fun ColorPreviewItem(
             fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal
         )
     }
+}
+
+@Composable
+private fun getLocalizedShapeName(id: String): String {
+    val resId = when (id) {
+        "CIRCLE" -> R.string.shape_option_circle
+        "SQUARE" -> R.string.shape_option_square
+        "OVAL" -> R.string.shape_option_oval
+        "PILL" -> R.string.shape_option_pill
+        "DIAMOND" -> R.string.shape_option_diamond
+        "TRIANGLE" -> R.string.shape_option_triangle
+        "PENTAGON" -> R.string.shape_option_pentagon
+        "FLOWER" -> R.string.shape_option_flower
+        "CLOVER_4_LEAF" -> R.string.shape_option_clover_4_leaf
+        "CLOVER_8_LEAF" -> R.string.shape_option_clover_8_leaf
+        "HEART" -> R.string.shape_option_heart
+        "BUN" -> R.string.shape_option_bun
+        "BOOM" -> R.string.shape_option_boom
+        "SOFT_BOOM" -> R.string.shape_option_soft_boom
+        "BURST" -> R.string.shape_option_burst
+        "SOFT_BURST" -> R.string.shape_option_soft_burst
+        "SUNNY" -> R.string.shape_option_sunny
+        "VERY_SUNNY" -> R.string.shape_option_very_sunny
+        "COOKIE_4" -> R.string.shape_option_cookie4
+        "COOKIE_6" -> R.string.shape_option_cookie6
+        "COOKIE_7" -> R.string.shape_option_cookie7
+        "COOKIE_9" -> R.string.shape_option_cookie9
+        "COOKIE_12" -> R.string.shape_option_cookie12
+        "GHOSTISH" -> R.string.shape_option_ghostish
+        "PUFFY" -> R.string.shape_option_puffy
+        "PUFFY_DIAMOND" -> R.string.shape_option_puffy_diamond
+        "FAN" -> R.string.shape_option_fan
+        "ARROW" -> R.string.shape_option_arrow
+        "ARCH" -> R.string.shape_option_arch
+        "CLAM_SHELL" -> R.string.shape_option_clam_shell
+        "GEM" -> R.string.shape_option_gem
+        "SEMI_CIRCLE" -> R.string.shape_option_semi_circle
+        "SLANTED" -> R.string.shape_option_slanted
+        "PIXEL_CIRCLE" -> R.string.shape_option_pixel_circle
+        "PIXEL_TRIANGLE" -> R.string.shape_option_pixel_triangle
+        else -> null
+    }
+    return if (resId != null) stringResource(resId) else id
+}
+
+@Composable
+private fun getLocalizedShapeDesc(id: String): String {
+    val resId = when (id) {
+        "CIRCLE" -> R.string.shape_option_circle_desc
+        "SQUARE" -> R.string.shape_option_square_desc
+        "OVAL" -> R.string.shape_option_oval_desc
+        "PILL" -> R.string.shape_option_pill_desc
+        "DIAMOND" -> R.string.shape_option_diamond_desc
+        "TRIANGLE" -> R.string.shape_option_triangle_desc
+        "PENTAGON" -> R.string.shape_option_pentagon_desc
+        "FLOWER" -> R.string.shape_option_flower_desc
+        "CLOVER_4_LEAF" -> R.string.shape_option_clover_4_leaf_desc
+        "CLOVER_8_LEAF" -> R.string.shape_option_clover_8_leaf_desc
+        "HEART" -> R.string.shape_option_heart_desc
+        "BUN" -> R.string.shape_option_bun_desc
+        "BOOM" -> R.string.shape_option_boom_desc
+        "SOFT_BOOM" -> R.string.shape_option_soft_boom_desc
+        "BURST" -> R.string.shape_option_burst_desc
+        "SOFT_BURST" -> R.string.shape_option_soft_burst_desc
+        "SUNNY" -> R.string.shape_option_sunny_desc
+        "VERY_SUNNY" -> R.string.shape_option_very_sunny_desc
+        "COOKIE_4" -> R.string.shape_option_cookie4_desc
+        "COOKIE_6" -> R.string.shape_option_cookie6_desc
+        "COOKIE_7" -> R.string.shape_option_cookie7_desc
+        "COOKIE_9" -> R.string.shape_option_cookie9_desc
+        "COOKIE_12" -> R.string.shape_option_cookie12_desc
+        "GHOSTISH" -> R.string.shape_option_ghostish_desc
+        "PUFFY" -> R.string.shape_option_puffy_desc
+        "PUFFY_DIAMOND" -> R.string.shape_option_puffy_diamond_desc
+        "FAN" -> R.string.shape_option_fan_desc
+        "ARROW" -> R.string.shape_option_arrow_desc
+        "ARCH" -> R.string.shape_option_arch_desc
+        "CLAM_SHELL" -> R.string.shape_option_clam_shell_desc
+        "GEM" -> R.string.shape_option_gem_desc
+        "SEMI_CIRCLE" -> R.string.shape_option_semi_circle_desc
+        "SLANTED" -> R.string.shape_option_slanted_desc
+        "PIXEL_CIRCLE" -> R.string.shape_option_pixel_circle_desc
+        "PIXEL_TRIANGLE" -> R.string.shape_option_pixel_triangle_desc
+        else -> null
+    }
+    return if (resId != null) stringResource(resId) else ""
+}
+
+@Composable
+private fun getLocalizedPresetName(id: String): String {
+    val resId = when (id) {
+        "DEFAULT" -> R.string.shape_preset_default
+        "FRIENDLY" -> R.string.shape_preset_friendly
+        "CHEERFUL" -> R.string.shape_preset_cheerful
+        "MODERN" -> R.string.shape_preset_modern
+        "PLAYFUL" -> R.string.shape_preset_playful
+        "ORGANIC" -> R.string.shape_preset_organic
+        "GEOMETRIC" -> R.string.shape_preset_geometric
+        "RETRO" -> R.string.shape_preset_retro
+        "CUSTOM" -> R.string.shape_preset_custom
+        else -> null
+    }
+    return if (resId != null) stringResource(resId) else id
+}
+
+@Composable
+private fun getLocalizedPresetDesc(id: String): String {
+    val resId = when (id) {
+        "DEFAULT" -> R.string.shape_preset_default_desc
+        "FRIENDLY" -> R.string.shape_preset_friendly_desc
+        "CHEERFUL" -> R.string.shape_preset_cheerful_desc
+        "MODERN" -> R.string.shape_preset_modern_desc
+        "PLAYFUL" -> R.string.shape_preset_playful_desc
+        "ORGANIC" -> R.string.shape_preset_organic_desc
+        "GEOMETRIC" -> R.string.shape_preset_geometric_desc
+        "RETRO" -> R.string.shape_preset_retro_desc
+        "CUSTOM" -> R.string.shape_preset_custom_desc
+        else -> null
+    }
+    return if (resId != null) stringResource(resId) else ""
+}
+
+@Composable
+private fun getLocalizedShapeCategory(category: String): String {
+    val resId = when (category) {
+        "Basic" -> R.string.shape_group_basic
+        "Organic" -> R.string.shape_group_organic
+        "Playful" -> R.string.shape_group_playful
+        "Cookie" -> R.string.shape_group_cookie
+        "Whimsical" -> R.string.shape_group_whimsical
+        "Special" -> R.string.shape_group_special
+        "Pixel" -> R.string.shape_group_pixel
+        else -> null
+    }
+    return if (resId != null) stringResource(resId) else category
+}
+
+@Composable
+private fun getLocalizedTargetName(targetId: String): String {
+    val resId = when (targetId) {
+        "ALBUM_ART" -> R.string.shape_target_album_art
+        "PLAYER_ART" -> R.string.shape_target_player_art
+        "SONG_ART" -> R.string.shape_target_song_art
+        "PLAYLIST_ART" -> R.string.shape_target_playlist_art
+        "ARTIST_ART" -> R.string.shape_target_artist_art
+        "PLAYER_CONTROLS" -> R.string.shape_utils_player_controls
+        "MINI_PLAYER" -> R.string.shape_utils_mini_player
+        else -> null
+    }
+    return if (resId != null) stringResource(resId) else targetId
 }

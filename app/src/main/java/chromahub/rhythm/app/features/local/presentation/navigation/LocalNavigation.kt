@@ -978,22 +978,22 @@ private fun LocalNavigationContent(
                                     val libraryRoute =
                                         Screen.Library.createRoute(firstVisibleLibraryTab)
                                     val items = listOf(
-                                        Triple(
-                                            Screen.Home.route, "Home",
-                                            Pair(RhythmIcons.HomeFilled, RhythmIcons.Home)
-                                        ),
-                                        Triple(
-                                            libraryRoute, "Library",
-                                            Pair(RhythmIcons.Navigation.Library, RhythmIcons.Navigation.LibraryOutlined)
-                                        )
-                                    )
+                                         Triple(
+                                             Screen.Home.route, context.getString(R.string.common_home),
+                                             Pair(RhythmIcons.HomeFilled, RhythmIcons.Home)
+                                         ),
+                                         Triple(
+                                             libraryRoute, context.getString(R.string.common_library),
+                                             Pair(RhythmIcons.Navigation.Library, RhythmIcons.Navigation.LibraryOutlined)
+                                         )
+                                     )
 
-                                    items.forEachIndexed { index, (route, title, icons) ->
-                                        val isSelected = when (title) {
-                                            "Home" -> currentRoute == Screen.Home.route
-                                            "Library" -> currentRoute.startsWith("library")
-                                            else -> false
-                                        }
+                                     items.forEachIndexed { index, (route, title, icons) ->
+                                         val isSelected = when (route) {
+                                             Screen.Home.route -> currentRoute == Screen.Home.route
+                                             libraryRoute -> currentRoute.startsWith("library")
+                                             else -> false
+                                         }
 
                                         val (selectedIcon, unselectedIcon) = icons
 
@@ -2931,12 +2931,12 @@ private fun LocalNavigationRail(
             items.forEach { item ->
                 LocalNavigationRailItemWithAnimation(
                     item = item,
-                    isSelected = when (item.title) {
-                        "Home" -> currentRoute == Screen.Home.route
-                        "Library" -> currentRoute.substringBefore("?") == Screen.Library.route.substringBefore("?")
-                        "Search" -> currentRoute == Screen.Search.route
-                        "Settings" -> currentRoute.contains("settings")
-                        "Stats" -> currentRoute == Screen.RhythmStats.route
+                    isSelected = when {
+                        item.route == Screen.Home.route -> currentRoute == Screen.Home.route
+                        item.route.substringBefore("?") == Screen.Library.route.substringBefore("?") -> currentRoute.substringBefore("?") == Screen.Library.route.substringBefore("?")
+                        item.route == Screen.Search.route -> currentRoute == Screen.Search.route
+                        item.route.contains("settings") -> currentRoute.contains("settings")
+                        item.route == Screen.RhythmStats.route -> currentRoute == Screen.RhythmStats.route
                         else -> false
                     },
                     haptic = haptic,

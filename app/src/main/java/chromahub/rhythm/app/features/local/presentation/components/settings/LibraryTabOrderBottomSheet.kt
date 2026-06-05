@@ -87,11 +87,11 @@ fun LibraryTabOrderBottomSheet(
     // Helper function to get display name and icon for tab
     fun getTabInfo(tabId: String): Pair<String, MaterialSymbolIcon> {
         return when (tabId) {
-            "SONGS" -> Pair("Songs", RhythmIcons.Relax)
-            "PLAYLISTS" -> Pair("Playlists", RhythmIcons.PlaylistFilled)
-            "ALBUMS" -> Pair("Albums", RhythmIcons.Music.Album)
-            "ARTISTS" -> Pair("Artists", RhythmIcons.Artist)
-            "EXPLORER" -> Pair("Explorer", RhythmIcons.Folder)
+            "SONGS" -> Pair(context.getString(R.string.settings_tab_songs), RhythmIcons.Relax)
+            "PLAYLISTS" -> Pair(context.getString(R.string.settings_tab_playlists), RhythmIcons.PlaylistFilled)
+            "ALBUMS" -> Pair(context.getString(R.string.settings_tab_albums), RhythmIcons.Music.Album)
+            "ARTISTS" -> Pair(context.getString(R.string.settings_tab_artists), RhythmIcons.Artist)
+            "EXPLORER" -> Pair(context.getString(R.string.settings_tab_explorer), RhythmIcons.Folder)
             else -> Pair(tabId, RhythmIcons.Music.Song)
         }
     }

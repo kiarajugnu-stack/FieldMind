@@ -237,7 +237,7 @@ fun MultiSelectionBottomSheet(
                         Box(modifier = Modifier.fillMaxWidth()) {
                             SongOptionGridItem(
                                 icon = if (allAreLiked) MaterialSymbolIcon("heart_broken", filled = true) else RhythmIcons.FavoriteFilled,
-                                text = if (allAreLiked) "Remove from favorites" else "Add to favorites",
+                                text = if (allAreLiked) stringResource(R.string.action_remove_from_favorites) else stringResource(R.string.action_add_to_favorites),
                                 containerColor = MaterialTheme.colorScheme.tertiaryContainer,
                                 iconColor = MaterialTheme.colorScheme.onTertiaryContainer,
                                 onClick = {
@@ -404,7 +404,7 @@ private fun MultiSelectionHeader(
                     modifier = Modifier.weight(1f)
                 ) {
                     Text(
-                        text = "${selectedSongs.size} songs",
+                        text = stringResource(R.string.ui_songs_count, selectedSongs.size),
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.primary,
                         fontWeight = FontWeight.SemiBold

@@ -27,6 +27,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import chromahub.rhythm.app.R
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.painterResource
 
 /**
  * Quality level for badge styling
@@ -135,15 +136,15 @@ fun AudioQualityBadges(
                     AudioQualityDetector.QualityType.DSD_HIGH_RES -> {
                         QualityBadge(
                             text = quality.qualityLabel,
-                            icon = MaterialSymbolIcon("high_quality", filled = true),
+                            icon = R.drawable.ic_high_res,
                             qualityLevel = QualityLevel.EXCELLENT
                         )
                     }
 
                     AudioQualityDetector.QualityType.HI_RES_STUDIO_MASTER -> {
                         QualityBadge(
-                            text = stringResource(R.string.audio_quality_studio_master),
-                            icon = MaterialSymbolIcon("high_quality", filled = true),
+                            text = "STUDIO MASTER",
+                            icon = R.drawable.ic_high_res,
                             qualityLevel = QualityLevel.EXCELLENT
                         )
                     }
@@ -156,7 +157,7 @@ fun AudioQualityBadges(
                         }
                         QualityBadge(
                             text = badgeText,
-                            icon = MaterialSymbolIcon("surround_sound", filled = true),
+                            icon = R.drawable.ic_dolby,
                             qualityLevel = QualityLevel.EXCELLENT
                         )
                     }
@@ -168,7 +169,7 @@ fun AudioQualityBadges(
                         }
                         QualityBadge(
                             text = badgeText,
-                            icon = MaterialSymbolIcon("surround_sound", filled = true),
+                            icon = R.drawable.ic_dolby,
                             qualityLevel = QualityLevel.STANDARD
                         )
                     }
@@ -180,7 +181,7 @@ fun AudioQualityBadges(
                         }
                         QualityBadge(
                             text = badgeText,
-                            icon = MaterialSymbolIcon("surround_sound", filled = true),
+                            icon = R.drawable.ic_dts,
                             qualityLevel = if (quality.isLossless) QualityLevel.EXCELLENT else QualityLevel.STANDARD
                         )
                     }
@@ -189,23 +190,23 @@ fun AudioQualityBadges(
                         // Show full label: "DOLBY SURROUND 5.1" or "DOLBY SURROUND 7.1"
                         QualityBadge(
                             text = quality.qualityLabel.uppercase(),
-                            icon = MaterialSymbolIcon("surround_sound", filled = true),
+                            icon = R.drawable.ic_surround_sound,
                             qualityLevel = QualityLevel.EXCELLENT
                         )
                     }
 
                     AudioQualityDetector.QualityType.HI_RES_LOSSLESS -> {
                         QualityBadge(
-                            text = stringResource(R.string.song_info_quality_hires_lossless),
-                            icon = MaterialSymbolIcon("high_quality", filled = true),
+                            text = "HI-RES LOSSLESS",
+                            icon = R.drawable.ic_high_res,
                             qualityLevel = QualityLevel.GOOD
                         )
                     }
 
                     AudioQualityDetector.QualityType.CD_QUALITY_LOSSLESS -> {
                         QualityBadge(
-                            text = stringResource(R.string.streaming_quality_lossless),
-                            icon = MaterialSymbolIcon("high_quality", filled = true),
+                            text = "LOSSLESS",
+                            icon = R.drawable.ic_cd,
                             qualityLevel = QualityLevel.GOOD
                         )
                     }
@@ -214,8 +215,8 @@ fun AudioQualityBadges(
                         // Only show high-quality lossy badges (320kbps+)
                         if (quality.qualityDescription.contains("320")) {
                             QualityBadge(
-                                text = stringResource(R.string.audioqualitybadges_str_320k),
-                                icon = MaterialSymbolIcon("high_quality", filled = true),
+                                text = "320 KBPS",
+                                icon = R.drawable.ic_hq,
                                 qualityLevel = QualityLevel.STANDARD
                             )
                         }
@@ -236,7 +237,7 @@ fun AudioQualityBadges(
 @Composable
 private fun QualityBadge(
     text: String,
-    icon: chromahub.rhythm.app.shared.presentation.components.icons.MaterialSymbolIcon,
+    icon: Any,
     qualityLevel: QualityLevel,
     modifier: Modifier = Modifier
 ) {
@@ -277,12 +278,24 @@ private fun QualityBadge(
                 horizontalArrangement = Arrangement.spacedBy(6.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = null,
-                    modifier = Modifier.size(16.dp),
-                    tint = contentColor
-                )
+                when (icon) {
+                    is MaterialSymbolIcon -> {
+                        Icon(
+                            imageVector = icon,
+                            contentDescription = null,
+                            modifier = Modifier.size(16.dp),
+                            tint = contentColor
+                        )
+                    }
+                    is Int -> {
+                        Icon(
+                            painter = painterResource(id = icon),
+                            contentDescription = null,
+                            modifier = Modifier.size(16.dp),
+                            tint = contentColor
+                        )
+                    }
+                }
                 Text(
                     text = text,
                     style = MaterialTheme.typography.labelSmall.copy(

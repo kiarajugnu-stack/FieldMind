@@ -299,11 +299,11 @@ fun LibraryScreen(
             .filter { !hiddenTabs.contains(it) }
             .map { tabId ->
                 when (tabId) {
-                    "SONGS" -> "Songs"
-                    "PLAYLISTS" -> "Playlists"
-                    "ALBUMS" -> "Albums"
-                    "ARTISTS" -> "Artists"
-                    "EXPLORER" -> "Explorer"
+                    "SONGS" -> context.getString(R.string.settings_tab_songs)
+                    "PLAYLISTS" -> context.getString(R.string.settings_tab_playlists)
+                    "ALBUMS" -> context.getString(R.string.settings_tab_albums)
+                    "ARTISTS" -> context.getString(R.string.settings_tab_artists)
+                    "EXPLORER" -> context.getString(R.string.settings_tab_explorer)
                     else -> tabId
                 }
             }
@@ -857,10 +857,10 @@ fun LibraryScreen(
                             Spacer(modifier = Modifier.width(8.dp))
 
                             val sortText = when (sortOrder) {
-                                MusicViewModel.SortOrder.TITLE_ASC, MusicViewModel.SortOrder.TITLE_DESC -> "Title"
-                                MusicViewModel.SortOrder.ARTIST_ASC, MusicViewModel.SortOrder.ARTIST_DESC -> "Artist"
-                                MusicViewModel.SortOrder.DATE_ADDED_ASC, MusicViewModel.SortOrder.DATE_ADDED_DESC -> "Date Added"
-                                MusicViewModel.SortOrder.DATE_MODIFIED_ASC, MusicViewModel.SortOrder.DATE_MODIFIED_DESC -> "Date Modified"
+                                MusicViewModel.SortOrder.TITLE_ASC, MusicViewModel.SortOrder.TITLE_DESC -> context.getString(R.string.library_sort_title)
+                                MusicViewModel.SortOrder.ARTIST_ASC, MusicViewModel.SortOrder.ARTIST_DESC -> context.getString(R.string.library_sort_artist)
+                                MusicViewModel.SortOrder.DATE_ADDED_ASC, MusicViewModel.SortOrder.DATE_ADDED_DESC -> context.getString(R.string.library_sort_date_added)
+                                MusicViewModel.SortOrder.DATE_MODIFIED_ASC, MusicViewModel.SortOrder.DATE_MODIFIED_DESC -> context.getString(R.string.library_sort_date_modified)
                             }
 
                             Text(
@@ -878,7 +878,7 @@ fun LibraryScreen(
                             
                             Icon(
                                 imageVector = sortArrowIcon,
-                                contentDescription = if (sortOrder.name.endsWith("_ASC")) "Ascending" else "Descending",
+                                contentDescription = if (sortOrder.name.endsWith("_ASC")) context.getString(R.string.library_sort_ascending) else context.getString(R.string.library_sort_descending),
                                 modifier = Modifier.size(18.dp)
                             )
                         }
@@ -905,10 +905,10 @@ fun LibraryScreen(
                                         text = { 
                                             Text(
                                                 text = when (order) {
-                                                    MusicViewModel.SortOrder.TITLE_ASC, MusicViewModel.SortOrder.TITLE_DESC -> "Title"
-                                                    MusicViewModel.SortOrder.ARTIST_ASC, MusicViewModel.SortOrder.ARTIST_DESC -> "Artist"
-                                                    MusicViewModel.SortOrder.DATE_ADDED_ASC, MusicViewModel.SortOrder.DATE_ADDED_DESC -> "Date Added"
-                                                    MusicViewModel.SortOrder.DATE_MODIFIED_ASC, MusicViewModel.SortOrder.DATE_MODIFIED_DESC -> "Date Modified"
+                                                    MusicViewModel.SortOrder.TITLE_ASC, MusicViewModel.SortOrder.TITLE_DESC -> context.getString(R.string.library_sort_title)
+                                                    MusicViewModel.SortOrder.ARTIST_ASC, MusicViewModel.SortOrder.ARTIST_DESC -> context.getString(R.string.library_sort_artist)
+                                                    MusicViewModel.SortOrder.DATE_ADDED_ASC, MusicViewModel.SortOrder.DATE_ADDED_DESC -> context.getString(R.string.library_sort_date_added)
+                                                    MusicViewModel.SortOrder.DATE_MODIFIED_ASC, MusicViewModel.SortOrder.DATE_MODIFIED_DESC -> context.getString(R.string.library_sort_date_modified)
                                                 },
                                                 style = MaterialTheme.typography.bodyMedium,
                                                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
@@ -1033,7 +1033,7 @@ fun LibraryScreen(
                                 
                                 Icon(
                                     imageVector = sortArrowIcon,
-                                    contentDescription = if (playlistSortOrder.name.endsWith("_ASC")) "Ascending" else "Descending",
+                                    contentDescription = if (playlistSortOrder.name.endsWith("_ASC")) context.getString(R.string.library_sort_ascending) else context.getString(R.string.library_sort_descending),
                                     modifier = Modifier.size(18.dp)
                                 )
                             }
@@ -1090,7 +1090,7 @@ fun LibraryScreen(
                                             trailingIcon = {
                                                 Icon(
                                                     imageVector = if (order.name.endsWith("_ASC")) RhythmIcons.ArrowUpward else RhythmIcons.ArrowDownward,
-                                                    contentDescription = if (order.name.endsWith("_ASC")) "Ascending" else "Descending",
+                                                    contentDescription = if (order.name.endsWith("_ASC")) context.getString(R.string.library_sort_ascending) else context.getString(R.string.library_sort_descending),
                                                     modifier = Modifier.size(18.dp),
                                                     tint = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
                                                 )
@@ -1510,11 +1510,11 @@ fun LibraryScreen(
                                     Column(modifier = Modifier.weight(1f)) {
                                         Text(
                                             text = when (scanProgress.stage) {
-                                                "Songs" -> "Scanning songs..."
-                                                "Albums" -> "Processing albums..."
-                                                "Artists" -> "Processing artists..."
-                                                "Genres" -> "Detecting genres..."
-                                                else -> "Scanning media..."
+                                                "Songs" -> context.getString(R.string.library_scan_songs)
+                                                "Albums" -> context.getString(R.string.library_scan_albums)
+                                                "Artists" -> context.getString(R.string.library_scan_artists)
+                                                "Genres" -> context.getString(R.string.library_scan_genres)
+                                                else -> context.getString(R.string.library_scan_media)
                                             },
                                             style = MaterialTheme.typography.bodyMedium,
                                             fontWeight = FontWeight.SemiBold,
@@ -2161,7 +2161,11 @@ fun SingleCardSongsContent(
                                     HapticUtils.performHapticFeedback(context, haptics, HapticType.LIGHT)
                                     val allAreLiked = selectedSongs.all { favoriteSongs.contains(it.id) }
                                     selectedSongs.forEach { onToggleFavorite(it) }
-                                    val msg = if (allAreLiked) "Removed ${selectedSongs.size} from favorites" else "Added ${selectedSongs.size} to favorites"
+                                    val msg = if (allAreLiked) {
+                                        context.getString(R.string.library_removed_from_favorites, selectedSongs.size)
+                                    } else {
+                                        context.getString(R.string.library_added_to_favorites, selectedSongs.size)
+                                    }
                                     android.widget.Toast.makeText(context, msg, android.widget.Toast.LENGTH_SHORT).show()
                                 },
                                 modifier = Modifier.size(44.dp)
@@ -2169,7 +2173,7 @@ fun SingleCardSongsContent(
                                 val allAreLiked = selectedSongs.all { favoriteSongs.contains(it.id) }
                                 Icon(
                                     imageVector = if (allAreLiked) RhythmIcons.FavoriteFilled else RhythmIcons.Favorite,
-                                    contentDescription = if (allAreLiked) "Unlike all" else "Like all",
+                                    contentDescription = if (allAreLiked) context.getString(R.string.library_unlike_all) else context.getString(R.string.library_like_all),
                                     tint = if (allAreLiked) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSecondaryContainer
                                 )
                             }
@@ -2187,7 +2191,7 @@ fun SingleCardSongsContent(
                     } else {
                         ExpressiveSectionHeader(
                             title = context.getString(R.string.library_your_music),
-                            countText = "${filteredSongs.size} of ${preparedSongs.size} tracks",
+                            countText = context.getString(R.string.library_tracks_count_format, filteredSongs.size, preparedSongs.size),
                             icon = RhythmIcons.Relax,
                             countIcon = RhythmIcons.MusicNote
                         ) {
@@ -2319,7 +2323,26 @@ fun SingleCardSongsContent(
                                         },
                                         label = {
                                             Text(
-                                                text = category,
+                                                text = when (category) {
+                                                    "All" -> context.getString(R.string.library_category_all)
+                                                    "❤️ Favorites" -> context.getString(R.string.library_category_favorites)
+                                                    "⭐⭐⭐⭐⭐ Absolute Favorites" -> context.getString(R.string.library_category_absolute_favorites)
+                                                    "⭐⭐⭐⭐ Loved" -> context.getString(R.string.library_category_loved)
+                                                    "⭐⭐⭐ Great" -> context.getString(R.string.library_category_great)
+                                                    "⭐⭐ Good" -> context.getString(R.string.library_category_good)
+                                                    "⭐ Liked" -> context.getString(R.string.library_category_liked)
+                                                    "Short (< 3 min)" -> context.getString(R.string.library_category_short)
+                                                    "Medium (3-5 min)" -> context.getString(R.string.library_category_medium)
+                                                    "Long (> 5 min)" -> context.getString(R.string.library_category_long)
+                                                    "Hi-Res Lossless" -> "Hi-Res Lossless"
+                                                    "Lossless" -> "Lossless"
+                                                    "Dolby" -> "Dolby"
+                                                    "Mono" -> context.getString(R.string.library_category_mono)
+                                                    "Stereo" -> context.getString(R.string.library_category_stereo)
+                                                    "High Quality" -> "High Quality"
+                                                    "Standard" -> "Standard"
+                                                    else -> category
+                                                },
                                                 style = MaterialTheme.typography.labelMedium,
                                                 fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal
                                             )
@@ -2489,7 +2512,7 @@ fun SingleCardPlaylistsContent(
 
     if (preparedPlaylists.isEmpty()) {
         EmptyState(
-            message = "No playlists yet\nCreate your first playlist using the + button",
+            message = context.getString(R.string.library_no_playlists_yet),
             icon = RhythmIcons.Music.Playlist,
             onRefresh = onRefreshClick
         )
@@ -2623,7 +2646,7 @@ fun SingleCardAlbumsContent(
 
     if (preparedAlbums.isEmpty()) {
         EmptyState(
-            message = "No albums yet",
+            message = context.getString(R.string.library_no_albums_yet),
             icon = RhythmIcons.Music.Album,
             onRefresh = onRefreshClick
         )
@@ -2769,7 +2792,7 @@ fun PlaylistsTab(
     val context = LocalContext.current
     if (playlists.isEmpty()) {
         EmptyState(
-            message = "No playlists yet\nCreate your first playlist using the + button",
+            message = context.getString(R.string.library_no_playlists_yet),
             icon = RhythmIcons.Music.Playlist
         )
     } else {
@@ -2883,7 +2906,7 @@ fun AlbumsTab(
 
     if (albums.isEmpty()) {
         EmptyState(
-            message = "No albums yet",
+            message = context.getString(R.string.library_no_albums_yet),
             icon = RhythmIcons.Music.Album
         )
     } else {
@@ -3227,7 +3250,7 @@ fun LibrarySongItem(
                     DropdownMenuItem(
                         text = {
                             Text(
-                                "Play next",
+                                text = context.getString(R.string.action_play_next),
                                 style = MaterialTheme.typography.bodyMedium,
                                 fontWeight = FontWeight.Medium,
                                 color = MaterialTheme.colorScheme.onSurface
@@ -3266,7 +3289,7 @@ fun LibrarySongItem(
                     DropdownMenuItem(
                         text = {
                             Text(
-                                "Add to queue",
+                                text = context.getString(R.string.action_add_to_queue),
                                 style = MaterialTheme.typography.bodyMedium,
                                 fontWeight = FontWeight.Medium,
                                 color = MaterialTheme.colorScheme.onSurface
@@ -3305,7 +3328,7 @@ fun LibrarySongItem(
                     DropdownMenuItem(
                         text = {
                             Text(
-                                if (isFavorite) "Remove from favorites" else "Add to favorites",
+                                text = if (isFavorite) context.getString(R.string.action_remove_from_favorites) else context.getString(R.string.action_add_to_favorites),
                                 style = MaterialTheme.typography.bodyMedium,
                                 fontWeight = FontWeight.Medium,
                                 color = MaterialTheme.colorScheme.onSurface
@@ -3345,7 +3368,7 @@ fun LibrarySongItem(
                     DropdownMenuItem(
                         text = {
                             Text(
-                                "Add to playlist",
+                                text = context.getString(R.string.library_action_add_to_playlist),
                                 style = MaterialTheme.typography.bodyMedium,
                                 fontWeight = FontWeight.Medium,
                                 color = MaterialTheme.colorScheme.onSurface
@@ -3413,7 +3436,7 @@ fun LibrarySongItem(
                                         )
                                     }
                                     Text(
-                                        "Rate Song",
+                                        text = context.getString(R.string.library_action_rate_song),
                                         style = MaterialTheme.typography.bodyMedium,
                                         fontWeight = FontWeight.Medium,
                                         color = MaterialTheme.colorScheme.onSurface
@@ -3448,7 +3471,7 @@ fun LibrarySongItem(
                     DropdownMenuItem(
                         text = {
                             Text(
-                                "Song info",
+                                text = context.getString(R.string.action_song_info),
                                 style = MaterialTheme.typography.bodyMedium,
                                 fontWeight = FontWeight.Medium,
                                 color = MaterialTheme.colorScheme.onSurface
@@ -3488,7 +3511,7 @@ fun LibrarySongItem(
                     DropdownMenuItem(
                         text = {
                             Text(
-                                "Add to blacklist",
+                                text = context.getString(R.string.action_add_to_blacklist),
                                 style = MaterialTheme.typography.bodyMedium,
                                 fontWeight = FontWeight.Medium,
                                 color = MaterialTheme.colorScheme.error
@@ -4687,7 +4710,7 @@ fun SingleCardArtistsContent(
     
     if (sortedArtists.isEmpty()) {
         EmptyState(
-            message = "No artists yet",
+            message = context.getString(R.string.library_no_artists_yet),
             icon = RhythmIcons.Artist,
             onRefresh = onRefreshClick
         )
@@ -5722,11 +5745,11 @@ fun ExpressiveSelectionHeader(
 
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = "$selectedCount Selected",
+                        text = stringResource(R.string.library_selected_count_format, selectedCount),
                         style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.ExtraBold)
                     )
                     Text(
-                        text = "from $totalCount tracks",
+                        text = stringResource(R.string.library_from_tracks_format, totalCount),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.8f)
                     )

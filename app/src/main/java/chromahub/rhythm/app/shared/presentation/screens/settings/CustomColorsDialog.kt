@@ -317,7 +317,7 @@ fun CustomColorsDialog(
                                             horizontalArrangement = Arrangement.spacedBy(16.dp)
                                         ) {
                                             ColorPreviewItem(
-                                                label = "Primary",
+                                                label = context.getString(R.string.theme_color_primary),
                                                 color = primaryColor,
                                                 isSelected = selectedColorType == ColorType.PRIMARY,
                                                 onClick = {
@@ -326,7 +326,7 @@ fun CustomColorsDialog(
                                                 }
                                             )
                                             ColorPreviewItem(
-                                                label = "Secondary",
+                                                label = context.getString(R.string.theme_color_secondary),
                                                 color = secondaryColor,
                                                 isSelected = selectedColorType == ColorType.SECONDARY,
                                                 onClick = {
@@ -335,7 +335,7 @@ fun CustomColorsDialog(
                                                 }
                                             )
                                             ColorPreviewItem(
-                                                label = "Tertiary",
+                                                label = context.getString(R.string.theme_color_tertiary),
                                                 color = tertiaryColor,
                                                 isSelected = selectedColorType == ColorType.TERTIARY,
                                                 onClick = {

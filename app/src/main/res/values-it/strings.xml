@@ -3731,4 +3731,594 @@ L\'avatar di</string>
     <string name="widget_theme_solid_purple_desc">Fondale viola intenso con accenti e riflessi distintivi</string>
     <string name="widget_theme_glance_suffix">%1$s (solo widget Glance)</string>
     <string name="unit_dp">%1$ddp</string>
+
+    <!-- Settings Suggestions and Tips -->
+    <string name="settings_suggestions">Suggerimenti per le impostazioni</string>
+    <string name="settings_suggestions_desc">Mostra suggerimenti contestuali in alto</string>
+    <string name="settings_performance_desc_optimized">Ottimizza l\'aspetto tattile, la decodifica, la selezione e il recupero delle illustrazioni per ridurre il ritardo</string>
+    <string name="moment_morning">stamattina</string>
+    <string name="moment_afternoon">questo pomeriggio</string>
+    <string name="moment_evening">questa sera</string>
+    <string name="moment_night">stasera</string>
+    <string name="pulse_fresh">Fresca energia per la sessione</string>
+    <string name="pulse_steady">Scanalatura costante</string>
+    <string name="pulse_heavy">Ascolto pesante</string>
+    <string name="pulse_marathon">Modalità maratona</string>
+    
+    <!-- Settings Tips Details -->
+    <string name="settings_tip_theme_desc_1">Aggiorna il tuo lettore musicale con il vivace nero AMOLED e i bellissimi colori pastello.</string>
+    <string name="settings_tip_theme_desc_2">Rendi Rhythm veramente tuo abbinando l\'accento dell\'app al tuo sistema.</string>
+    <string name="settings_tip_media_scan_desc_1">Evita clip audio indesiderati. Definire esplicitamente quali cartelle dovremmo scansionare per la musica.</string>
+    <string name="settings_tip_media_scan_desc_2">Tieni le note vocali e le suonerie lontane dalle tue playlist utilizzando le cartelle focus.</string>
+    <string name="settings_tip_sleep_timer_desc_1">Addormentati mentre ascolti la musica. Lo metteremo automaticamente in pausa.</string>
+    <string name="settings_tip_sleep_timer_desc_2">Imposta un timer di spegnimento automatico prima di andare a letto in modo che la riproduzione si interrompa perfettamente.</string>
+    <string name="settings_tip_equalizer_desc_1">Migliora la tua esperienza. Potenzia i bassi e regola le frequenze utilizzando l\'equalizzatore.</string>
+    <string name="settings_tip_equalizer_desc_2">Sintonizza l\'audio sulle tue cuffie in tutta sicurezza con i nostri effetti audio avanzati.</string>
+    <string name="settings_tip_backup_active_desc_1">Il backup automatico è attivo. Verifica le sezioni di backup in modo che i ripristini rimangano puliti.</string>
+    <string name="settings_tip_backup_active_desc_2">Protezione abilitata: la pianificazione sembra buona. Esegui un backup manuale prima di grandi modifiche.</string>
+    <string name="settings_tip_backup_inactive_desc_1">Il backup automatico è disattivato. Abilitalo per proteggere le playlist e le statistiche di Rhythm Guard.</string>
+    <string name="settings_tip_backup_inactive_desc_2">Ancora nessuna rete di sicurezza. Attiva i backup per evitare di perdere la configurazione.</string>
+    <string name="settings_tip_updates_active_desc_1">Gli aggiornamenti sono abilitati. Tienili attivi per correzioni e miglioramenti delle prestazioni.</string>
+    <string name="settings_tip_updates_active_desc_2">Sei pronto per ricevere gli aggiornamenti. Controlla le preferenze del canale per stabilità e freschezza.</string>
+    <string name="settings_tip_updates_inactive_desc_1">Gli aggiornamenti sono disabilitati. Riattivali per rimanere protetti e aggiornati.</string>
+    <string name="settings_tip_updates_inactive_desc_2">Sei bloccato sulla build corrente. Riattiva gli aggiornamenti quando sei pronto.</string>
+    <string name="settings_tip_queue_active_desc_1">Lo scorrimento per saltare del player è attivo. Ottimizza le regole della coda per transizioni più fluide.</string>
+    <string name="settings_tip_queue_active_desc_2">Il salto dei gesti è attivo. Adatta il comportamento della coda al tuo flusso di ascolto.</string>
+    <string name="settings_tip_queue_inactive_desc_1">Lo scorrimento per saltare è disattivato. I controlli della coda possono aiutare a mantenere efficiente la riproduzione.</string>
+    <string name="settings_tip_queue_inactive_desc_2">Preferisci i controlli espliciti? Ottimizza il comportamento della coda per una riproduzione prevedibile.</string>
+    <string name="settings_tip_controls_active_desc_1">I pulsanti di ricerca sono visibili. Personalizza i controlli del lettore per ridurre la confusione.</string>
+    <string name="settings_tip_controls_active_desc_2">Player ricco di controlli abilitato. Modifica il layout per la portata del tuo pollice.</string>
+    <string name="settings_tip_controls_inactive_desc_1">Controlli minimi del player abilitati. Aggiungi pulsanti di ricerca se perdi salti precisi.</string>
+    <string name="settings_tip_controls_inactive_desc_2">Layout pulito attivo. Riabilita i controlli di ricerca per una gestione più precisa della riproduzione.</string>
+    <string name="settings_tip_miniplayer_active_desc_1">I progressi del mini player sono visibili. Scegli uno stile che corrisponda al tuo tema.</string>
+    <string name="settings_tip_miniplayer_active_desc_2">La barra di avanzamento è attiva sul mini player. Successivamente prova a modificare la forma e gli angoli.</string>
+    <string name="settings_tip_miniplayer_inactive_desc_1">I progressi del mini player sono nascosti. Abilitalo per una rapida consapevolezza.</string>
+    <string name="settings_tip_miniplayer_inactive_desc_2">La modalità compatta ora è minima. Attiva l\'avanzamento per una migliore visibilità.</string>
+    <string name="settings_tip_library_active_desc_1">Le valutazioni sono abilitate. Utilizza le impostazioni della libreria per migliorare la scoperta e l\'ordinamento.</string>
+    <string name="settings_tip_library_active_desc_2">La tua raccolta supporta le classificazioni. Ottimizza la scansione e il raggruppamento per una navigazione più pulita.</string>
+    <string name="settings_tip_library_inactive_desc_1">Le valutazioni sono disabilitate. Le impostazioni della libreria possono comunque migliorare la struttura e la velocità.</string>
+    <string name="settings_tip_library_inactive_desc_2">Rilevata modalità libreria semplificata. Regola il raggruppamento per una navigazione più rapida.</string>
+
+    <!-- Lyrics Source Dialog -->
+    <string name="lyrics_source_embedded_first">Incorporato per primo</string>
+    <string name="lyrics_source_embedded_first_desc">Prova i metadati dei file audio → API online → file .lrc</string>
+    <string name="lyrics_source_api_first">API Primo</string>
+    <string name="lyrics_source_api_first_desc">Prova i servizi online → Metadati audio → File .lrc</string>
+    <string name="lyrics_source_local_first">.lrc locale Prima</string>
+    <string name="lyrics_source_local_first_desc">Prova i file .lrc → Metadati audio → API online</string>
+
+    <!-- Font / Color Customization Dialogs -->
+    <string name="theme_font_source_changed_restart">Origine carattere modificata. Riavvia l\'app per applicare il nuovo carattere.</string>
+    <string name="color_source_album_art">Copertina dell\'album</string>
+    <string name="color_source_album_art_desc">Estrai i colori dalle copertine degli album attualmente in riproduzione</string>
+    <string name="color_source_system_colors">Colori di sistema</string>
+    <string name="color_source_system_colors_desc">Usa Material I tuoi colori dal tuo sfondo</string>
+    <string name="color_source_custom_scheme">Schema personalizzato</string>
+    <string name="color_source_custom_scheme_desc">Scegli tra combinazioni di colori predefinite</string>
+    <string name="font_source_system_font">Carattere di sistema</string>
+    <string name="font_source_system_font_desc">Utilizza il carattere predefinito del dispositivo</string>
+    <string name="font_source_custom_font">Carattere personalizzato</string>
+    <string name="font_source_custom_font_desc">Importa e utilizza un file di caratteri personalizzato</string>
+    <string name="font_system_title">Predefinito del sistema</string>
+    <string name="font_system_desc">Utilizza il carattere predefinito del tuo dispositivo</string>
+    <string name="font_geom_desc">Carattere sans-serif moderno e pulito di Google</string>
+    <string name="font_slate_desc">Elegante carattere serif dall\'aspetto classico e tradizionale</string>
+    <string name="font_inter_desc">Carattere sans-serif pulito e moderno, altamente leggibile</string>
+    <string name="font_jetbrains_desc">Carattere monospace perfetto per contenuti tecnici</string>
+    <string name="font_quicksand_desc">Carattere arrotondato con un aspetto più morbido e amichevole</string>
+
+    <!-- Predefined Color Schemes -->
+    <string name="color_scheme_default_title">Rhythm Predefinito</string>
+    <string name="color_scheme_default_desc">Material 3 viola di base con accenti rosa rosato</string>
+    <string name="color_scheme_warm_title">Caldo tramonto</string>
+    <string name="color_scheme_warm_desc">Accoglienti toni arancioni e rossi per un\'atmosfera calda</string>
+    <string name="color_scheme_cool_title">Oceano fantastico</string>
+    <string name="color_scheme_cool_desc">Tonalità rinfrescanti di blu e verde acqua per un\'atmosfera rilassante</string>
+    <string name="color_scheme_forest_title">Verde foresta</string>
+    <string name="color_scheme_forest_desc">Toni verdi naturali ispirati alla natura</string>
+    <string name="color_scheme_rose_title">Rosa Rosa</string>
+    <string name="color_scheme_rose_desc">Eleganti tonalità rosa e magenta</string>
+    <string name="color_scheme_monochrome_title">Monocromatico</string>
+    <string name="color_scheme_monochrome_desc">Scala di grigi minimalista per un look pulito e moderno</string>
+    <string name="color_scheme_lavender_title">Lavanda</string>
+    <string name="color_scheme_lavender_desc">Calmanti toni viola e lavanda per il relax</string>
+    <string name="color_scheme_ocean_title">Oceano profondo</string>
+    <string name="color_scheme_ocean_desc">Blu profondi e acquamarine per la serenità oceanica</string>
+    <string name="color_scheme_aurora_title">Aurora boreale</string>
+    <string name="color_scheme_aurora_desc">Verdi e blu vibranti ispirati all\'aurora boreale</string>
+    <string name="color_scheme_amber_title">Ambra dorata</string>
+    <string name="color_scheme_amber_desc">Ricchi toni ambrati e dorati per una sensazione lussuosa</string>
+    <string name="color_scheme_crimson_title">Cremisi intenso</string>
+    <string name="color_scheme_crimson_desc">Audaci sfumature bordeaux e cremisi per un effetto drammatico</string>
+    <string name="color_scheme_emerald_title">Sogno di Smeraldo</string>
+    <string name="color_scheme_emerald_desc">Freschi verdi smeraldo con sfumature naturali della foresta</string>
+    <string name="color_scheme_mint_title">Nuovo</string>
+    <string name="color_scheme_mint_desc">Toni freschi e puliti del ciano e del verde menta</string>
+
+    <!-- Color Preview Chips -->
+    <string name="theme_color_primary">Primario</string>
+    <string name="theme_color_secondary">Secondario</string>
+    <string name="theme_color_tertiary">Terziario</string>
+
+    <!-- Lyrics Settings Screen -->
+    <string name="lyrics_settings_title">Testo</string>
+    <string name="lyrics_settings_general">Impostazioni generali</string>
+    <string name="lyrics_settings_open_fullscreen_desc">Apri la schermata dei testi a schermo intero toccando la visualizzazione dei testi</string>
+    <string name="lyrics_settings_autohide_controls">Controlli per nascondere automaticamente i testi</string>
+    <string name="lyrics_settings_autohide_controls_desc">Nascondi automaticamente i controlli nella schermata dei testi a schermo intero dopo alcuni secondi di inattività</string>
+    <string name="lyrics_settings_embedded_first">Incorporato per primo</string>
+    <string name="lyrics_settings_embedded_first_desc">Preferisci i testi incorporati nei file audio, ripiego sulle API online</string>
+    <string name="lyrics_settings_online_first">Prima online</string>
+    <string name="lyrics_settings_online_first_desc">Preferisco API online (Rhythm parola per parola, LRCLib), fallback su embedded</string>
+    <string name="lyrics_settings_local_first">Prima locale</string>
+    <string name="lyrics_settings_local_first_desc">Preferisci i file .lrc locali, quindi i testi incorporati, quindi le API online</string>
+    <string name="lyrics_settings_apple_music_first">Apple Music innanzitutto</string>
+    <string name="lyrics_settings_lrclib_first">LRCLib Primo</string>
+    <string name="lyrics_settings_fallback_apis_desc">Tenta le API di fallback se il API preferito non riesce a restituire i testi</string>
+    <string name="lyrics_settings_display_styling">Visualizzazione e stile</string>
+    <string name="lyrics_settings_size_percentage">Dimensione: %1$d%%</string>
+    <string name="alignment_left">A sinistra</string>
+    <string name="alignment_center">Centro</string>
+    <string name="alignment_right">Giusto</string>
+    <string name="animation_slide">Diapositiva</string>
+    <string name="animation_fade">Dissolvenza</string>
+    <string name="animation_scale">Scala</string>
+    <string name="animation_up">Su</string>
+    <string name="lyrics_settings_switch_animation_desc">Arte ↔ Animazione del cambio testo</string>
+    <string name="lyrics_settings_not_supported_expressive">Non supportato dal tema Expressive</string>
+    <string name="lyrics_settings_formatting_behaviors">Formattazione e comportamenti</string>
+    <string name="lyrics_settings_bold_text">Testo in grassetto</string>
+    <string name="lyrics_settings_bold_text_desc">Rendi in grassetto il testo dei testi attivi</string>
+    <string name="lyrics_settings_trim_lyrics">Taglia i testi</string>
+    <string name="lyrics_settings_trim_lyrics_desc">Taglia gli spazi bianchi iniziali e finali dalle righe del testo</string>
+    <string name="lyrics_settings_disable_animations">Disabilita animazioni</string>
+    <string name="lyrics_settings_disable_animations_desc">Disabilita transizioni e animazioni nella vista dei testi</string>
+    <string name="lyrics_settings_word_by_word_translation">Traduzione parola per parola</string>
+    <string name="lyrics_settings_word_by_word_translation_desc">Prova a sincronizzare automaticamente le traduzioni di sillabe o parole</string>
+    <string name="lyrics_settings_info_bullets">Dettagli aggiuntivi sulla sincronizzazione:\n• Le API online forniscono testi sincronizzati di alta qualità\n• Rhythm offre la sincronizzazione parola per parola\n• LRCLib fornisce la sincronizzazione riga per riga gratuita</string>
+
+    <!-- AutoEQ Preset Picker additions -->
+    <string name="autoeqpresetpickerbottomsheet_search_presets">Cerca preimpostazioni...</string>
+    <string name="autoeqpresetpickerbottomsheet_disable">Nessuno/Disabilita EQ automatico</string>
+    <string name="autoeqpresetpickerbottomsheet_disable_desc">Cancella il profilo delle cuffie, usa le preimpostazioni EQ standard</string>
+    <string name="autoeqpresetpickerbottomsheet_unknown_brand">Marchio sconosciuto</string>
+
+    <!-- Device Configuration additions -->
+    <string name="device_configuration_devices_configured">%1$d dispositivi configurati</string>
+    <string name="device_configuration_device_recognized">Dispositivo riconosciuto</string>
+    <string name="device_configuration_new_device_detected">Rilevato nuovo dispositivo</string>
+    <string name="device_configuration_configured_with">%1$s è configurato con %2$s</string>
+    <string name="device_configuration_configured_no_profile">%1$s è configurato</string>
+    <string name="device_configuration_connected_not_configured">%1$s è connesso ma non configurato</string>
+    <string name="device_configuration_applied_profile">Profilo %1$s applicato</string>
+    <string name="device_configuration_imported_profile">Profilo importato</string>
+    <string name="device_configuration_parse_error">Impossibile analizzare le impostazioni dell\'equalizzatore. Controlla il formato.</string>
+    <string name="device_configuration_custom_eq">EQ personalizzato</string>
+    <string name="device_configuration_custom_preset">Preimpostazione personalizzata</string>
+    <string name="device_configuration_custom">Personalizzato</string>
+    <string name="device_configuration_active_profile_label">Profilo attivo: %1$s</string>
+    <string name="device_configuration_share_subject">Rhythm Profilo EQ: %1$s</string>
+    <string name="device_configuration_share_title">Condividi il profilo EQ</string>
+    <string name="device_configuration_edit_device">Modifica dispositivo</string>
+    <string name="device_configuration_add_device">Aggiungi dispositivo</string>
+    <string name="device_configuration_save">Salva</string>
+    <string name="device_configuration_add">Aggiungi</string>
+    <string name="device_configuration_for_device">Per %1$s</string>
+    <string name="device_configuration_profiles_available">%1$d profili disponibili</string>
+    <string name="device_configuration_disable_compensation">Disabilita la compensazione delle cuffie</string>
+
+    <!-- Common UI element strings -->
+    <string name="common_none">Nessuno</string>
+    <string name="common_cancel">Annulla</string>
+    <string name="common_back">Indietro</string>
+    <string name="common_remove">Rimuovi</string>
+    <string name="common_add">Aggiungi</string>
+    <string name="common_active">Attivo</string>
+    <string name="common_disabled">Disabilitato</string>
+    <string name="common_unavailable">Non disponibile</string>
+    <string name="common_success">Successo</string>
+    <string name="common_error">Errore</string>
+    <string name="common_unknown">Sconosciuto</string>
+
+    <!-- Blacklist UI additions -->
+    <string name="blacklist_remove_song_title">Rimuovere dalla lista nera?</string>
+    <string name="blacklist_add_song_title">Aggiungere alla lista nera?</string>
+    <string name="blacklist_remove_song_desc">Questo brano non sarà più nascosto dalla tua libreria.</string>
+    <string name="blacklist_add_song_desc">Questo brano verrà nascosto dalla tua libreria ed escluso dalla riproduzione.</string>
+    <string name="blacklist_undo_warning">Questa azione può essere annullata in qualsiasi momento.</string>
+    <string name="blacklist_song_removed_msg">Canzone rimossa dalla lista nera</string>
+    <string name="blacklist_song_added_msg">Canzone aggiunta alla lista nera</string>
+    <string name="blacklist_button_remove">Rimuovi</string>
+    <string name="blacklist_button_blacklist">Lista nera</string>
+    <string name="blacklist_remove_folder_title">Rimuovere la cartella dalla lista nera?</string>
+    <string name="blacklist_add_folder_title">Cartella della lista nera?</string>
+    <string name="blacklist_remove_folder_desc">Tutti i brani in questa cartella saranno nuovamente visibili.</string>
+    <string name="blacklist_add_folder_desc">Tutti i brani in questa cartella verranno nascosti ed esclusi dalla riproduzione.</string>
+    <string name="blacklist_folder_removed_msg">Cartella rimossa dalla lista nera</string>
+    <string name="blacklist_folder_added_msg">Cartella aggiunta alla lista nera</string>
+    <string name="blacklist_disc_label">Disco %1$d</string>
+    <string name="blacklist_track_label">Traccia %1$d</string>
+
+    <!-- Library & Playlist Dialog additions -->
+    <string name="dialog_add_song_to_playlist">Aggiungi \"%1$s\" a questa playlist</string>
+    <string name="dialog_songs_in_queue">Hai %1$d brani nella coda corrente.</string>
+    <string name="dialog_play_song_how">Come ti piacerebbe giocare a \"%1$s\"?</string>
+    <string name="dialog_clear_and_play">Cancella e gioca</string>
+    <string name="dialog_clear_and_play_desc">Sostituisci la coda e riproduci questo brano</string>
+    <string name="dialog_add_to_queue">Aggiungi alla coda</string>
+    <string name="dialog_add_to_queue_desc">Mantieni la coda corrente e aggiungi brano</string>
+    <string name="dialog_restart_warning_message">Per garantire che tutte le playlist importate funzionino correttamente, ti consigliamo di riavviare l\'app. Puoi continuare a utilizzare l\'app normalmente, ma alcune funzionalità potrebbero non funzionare come previsto fino al riavvio.</string>
+    <string name="dialog_export_playlist_to">Esporta \"%1$s\" in:</string>
+    <string name="dialog_export_playlists_to">Esporta le playlist %1$d in:</string>
+    <string name="dialog_operation_importing">Importazione</string>
+    <string name="dialog_operation_exporting">Esportazione</string>
+
+    <!-- Mode dialog strings -->
+    <string name="dialog_switch_to_go">Passa a Rhythm Vai?</string>
+    <string name="dialog_switch_to_local">Passare a locale?</string>
+    <string name="dialog_switch_to_go_desc">Questo oggetto appartiene a Rhythm Go. Passare subito alla modalità streaming per eseguire lo streaming e riprodurlo?</string>
+    <string name="dialog_switch_to_local_desc">Questo elemento appartiene alla tua Biblioteca locale. Passare subito alla modalità locale per riprodurre i tuoi brani offline?</string>
+
+    <!-- Section order content descriptions -->
+    <string name="home_section_hide_carousel">Nascondi carosello</string>
+    <string name="home_section_show_carousel">Mostra carosello</string>
+    <string name="home_section_hide_section">Nascondi sezione</string>
+    <string name="home_section_show_section">Mostra sezione</string>
+    <string name="library_tab_show">Mostra scheda</string>
+    <string name="library_tab_hide">Nascondi scheda</string>
+
+    <!-- Add To Playlist additions -->
+    <string name="add_to_playlist_selected_count">%1$d selezionato</string>
+    <string name="add_to_playlist_title">Aggiungi a %1$s</string>
+    <string name="add_to_playlist_no_songs">Nessun brano disponibile</string>
+    <string name="add_to_playlist_all_songs_present">Tutti i brani sono già in questa playlist</string>
+
+    <!-- Artist details -->
+    <string name="artist_detail_albums_count">%1$d album</string>
+    <string name="artist_detail_songs_count">%1$d brani</string>
+
+    <!-- Equalizer presets & UI -->
+    <string name="eq_preset_flat">Piatto</string>
+    <string name="eq_preset_rock">Roccia</string>
+    <string name="eq_preset_pop">Pop</string>
+    <string name="eq_preset_jazz">Jazz</string>
+    <string name="eq_preset_classical">Classico</string>
+    <string name="eq_preset_electronic">Elettronico</string>
+    <string name="eq_preset_hiphop">Hip Hop</string>
+    <string name="eq_preset_vocal">Vocale</string>
+    <string name="eq_preset_bass_boost">Potenziamento dei bassi</string>
+    <string name="eq_preset_treble_boost">Aumento degli alti</string>
+    <string name="eq_preset_v_shape">Forma a V</string>
+    <string name="eq_preset_harman">Harman</string>
+    <string name="eq_preset_custom">Personalizzato</string>
+    <string name="eq_autoeq_profiles">Profili AutoEQ</string>
+    <string name="eq_manage_device">Gestisci dispositivo</string>
+    <string name="eq_system_equalizer">Equalizzatore di sistema</string>
+    <string name="eq_enhance_lows">Migliora i bassi</string>
+    <string name="eq_widen_sound">Amplia il suono</string>
+    <string name="eq_mono_only">Solo mono</string>
+
+    <!-- Library updates, sorting & categories -->
+    <string name="library_updated_songs_success">Canzoni %1$d aggiornate</string>
+    <string name="library_updated_songs_failed">Aggiornati brani %1$d, %2$d non riuscito</string>
+    <string name="library_switch_to_grid">Passa alla visualizzazione griglia</string>
+    <string name="library_switch_to_list">Passa alla visualizzazione elenco</string>
+    <string name="library_sort_title">Titolo</string>
+    <string name="library_sort_artist">Artista</string>
+    <string name="library_sort_date_added">Data aggiunta</string>
+    <string name="library_sort_date_modified">Data di modifica</string>
+    <string name="library_sort_ascending">Crescente</string>
+    <string name="library_sort_descending">Discendente</string>
+    <string name="library_sort_name_asc">Nome (A-Z)</string>
+    <string name="library_sort_name_desc">Nome (Z-A)</string>
+    <string name="library_sort_songs_desc">Canzoni (da alto a basso)</string>
+    <string name="library_sort_albums_desc">Album (dal più alto al più basso)</string>
+    <string name="library_scan_songs">Scansione brani...</string>
+    <string name="library_scan_albums">Elaborazione album...</string>
+    <string name="library_scan_artists">Elaborazione artisti...</string>
+    <string name="library_scan_genres">Rilevamento dei generi...</string>
+    <string name="library_scan_media">Scansione supporto...</string>
+    <string name="library_export_failed">Esportazione non riuscita</string>
+    <string name="library_import_failed">Importazione non riuscita</string>
+    <string name="library_category_all">Tutti</string>
+    <string name="library_category_favorites">❤️ Preferiti</string>
+    <string name="library_category_absolute_favorites">⭐⭐⭐⭐⭐ Preferiti assoluti</string>
+    <string name="library_category_loved">⭐⭐⭐⭐ Amato</string>
+    <string name="library_category_great">⭐⭐⭐ Ottimo</string>
+    <string name="library_category_good">⭐⭐ Bene</string>
+    <string name="library_category_liked">⭐ Mi è piaciuto</string>
+    <string name="library_category_short">Breve (&lt; 3 minuti)</string>
+    <string name="library_category_medium">Medio (3-5 minuti)</string>
+    <string name="library_category_long">Lungo (&gt; 5 minuti)</string>
+    <string name="library_category_hi_res_lossless">Alta risoluzione senza perdita di dati</string>
+    <string name="library_category_lossless">Senza perdite</string>
+    <string name="library_category_dolby">Dolby</string>
+    <string name="library_category_mono">Mono</string>
+    <string name="library_category_stereo">Stereo</string>
+    <string name="library_category_high_quality">Alta qualità</string>
+    <string name="library_category_standard">Standard</string>
+    <string name="library_removed_from_favorites">Rimosso %1$d dai preferiti</string>
+    <string name="library_added_to_favorites">Aggiunto %1$d ai preferiti</string>
+    <string name="library_unlike_all">A differenza di tutti</string>
+    <string name="library_like_all">Come tutti</string>
+    <string name="library_tracks_count_format">%1$d di %2$d brani</string>
+    <string name="library_no_playlists_yet">Ancora nessuna playlist\nCrea la tua prima playlist utilizzando il pulsante +</string>
+    <string name="library_no_albums_yet">Nessun album ancora</string>
+    <string name="library_no_artists_yet">Nessun artista ancora</string>
+    <string name="library_action_play_next">Riproduci dopo</string>
+    <string name="library_action_add_to_queue">Aggiungi alla coda</string>
+    <string name="library_action_add_to_blacklist">Aggiungi alla lista nera</string>
+    <string name="library_action_song_info">Informazioni sul brano</string>
+    <string name="library_action_add_to_playlist">Aggiungi alla playlist</string>
+    <string name="library_action_rate_song">Valuta la canzone</string>
+    <string name="library_menu_new_playlist">Nuova playlist</string>
+    <string name="library_menu_import_playlist">Importa playlist</string>
+    <string name="library_menu_export_playlists">Esporta playlist</string>
+    <string name="library_menu_close_playlist">Chiude il menu della playlist</string>
+    <string name="library_menu_open_playlist">Apri il menu della playlist</string>
+    <string name="library_menu_close">Chiudi il menu</string>
+    <string name="library_selected_count_format">%1$d Selezionato</string>
+    <string name="library_from_tracks_format">dalle tracce %1$d</string>
+    <string name="library_playlist_count_singular">%1$d playlist</string>
+    <string name="library_playlist_count_plural">%1$d playlist</string>
+    <string name="library_album_count_singular">%1$d album</string>
+    <string name="library_album_count_plural">%1$d album</string>
+    <string name="library_artist_count_singular">%1$d artista</string>
+    <string name="library_artist_count_plural">%1$d artisti</string>
+    <string name="library_duration_hours_minutes">%1$dh %2$dm</string>
+    <string name="library_duration_minutes">%1$dm</string>
+
+    <!-- Onboarding, Backup & Settings additions -->
+    <string name="onboarding_blacklist_label">Lista nera</string>
+    <string name="onboarding_whitelist_label">Lista bianca</string>
+    <string name="onboarding_full_player_label">Lettore completo</string>
+    <string name="onboarding_mini_player_label">Minilettore</string>
+    <string name="onboarding_blocked_folders">%1$d cartelle bloccate</string>
+    <string name="onboarding_whitelisted_folders">%1$d cartelle autorizzate</string>
+    <string name="onboarding_sample_button">Pulsante di esempio</string>
+    <string name="onboarding_primary_label">Primario</string>
+    <string name="onboarding_secondary_label">Secondario</string>
+    <string name="onboarding_tertiary_label">Terziario</string>
+    <string name="onboarding_rhythm_material">Rhythm (Material)</string>
+    
+    <string name="backup_restored_success">Backup ripristinato correttamente. Riavvia l\'app per applicare tutte le modifiche.</string>
+    <string name="backup_copied_to_clipboard">Backup creato e copiato negli appunti.</string>
+    <string name="backup_failed_to_create">Impossibile creare il backup: %1$s</string>
+    <string name="backup_failed_to_restore_file">Impossibile ripristinare dal file: %1$s</string>
+    <string name="backup_no_backup_clipboard">Nessun backup trovato negli appunti</string>
+    <string name="backup_failed_to_restore_clipboard">Impossibile ripristinare dagli appunti: %1$s</string>
+    
+    <string name="updater_ready_to_install">La versione %1$s è pronta per l\'installazione</string>
+    <string name="updater_download_progress">%1$d%% • %2$s / %3$s</string>
+    <string name="updater_version_info">Versione %1$s • %2$s</string>
+    <string name="updater_error_occurred">Si è verificato un errore</string>
+    <string name="updater_channel_stable">stabile</string>
+    <string name="updater_channel_beta">beta</string>
+
+    <!-- Expressive shape preset & group names -->
+    <string name="shape_preset_default">Predefinito</string>
+    <string name="shape_preset_default_desc">Forme espressive delicate per tutte le età</string>
+    <string name="shape_preset_friendly">Cordiale</string>
+    <string name="shape_preset_friendly_desc">Forme calde e accessibili</string>
+    <string name="shape_preset_cheerful">Allegro</string>
+    <string name="shape_preset_cheerful_desc">Forme luminose ed espressive</string>
+    <string name="shape_preset_modern">Moderno</string>
+    <string name="shape_preset_modern_desc">Design espressivo contemporaneo</string>
+    <string name="shape_preset_playful">Giocoso</string>
+    <string name="shape_preset_playful_desc">Forme divertenti ed espressive</string>
+    <string name="shape_preset_organic">Biologico</string>
+    <string name="shape_preset_organic_desc">Forme ispirate alla natura</string>
+    <string name="shape_preset_geometric">Geometrico</string>
+    <string name="shape_preset_geometric_desc">Forme pulite e moderne</string>
+    <string name="shape_preset_retro">Retro</string>
+    <string name="shape_preset_retro_desc">Forme nostalgiche pixelate</string>
+    <string name="shape_preset_custom">Personalizzato</string>
+    <string name="shape_preset_custom_desc">La tua selezione personalizzata</string>
+    <string name="shape_option_square">Quadrato</string>
+    <string name="shape_option_square_desc">Quadrato arrotondato</string>
+    <string name="shape_option_oval">Ovale</string>
+    <string name="shape_option_oval_desc">Ovale allungato</string>
+    <string name="shape_option_pill">Pillola</string>
+    <string name="shape_option_pill_desc">Forma a capsula</string>
+    <string name="shape_option_diamond">Diamante</string>
+    <string name="shape_option_diamond_desc">Forma a diamante</string>
+    <string name="shape_option_triangle">Triangolo</string>
+    <string name="shape_option_triangle_desc">Triangolo arrotondato</string>
+    <string name="shape_option_pentagon">Pentagono</string>
+    <string name="shape_option_pentagon_desc">Poligono a cinque lati</string>
+    <string name="shape_option_flower">Fiore</string>
+    <string name="shape_option_flower_desc">Fiore con petali</string>
+    <string name="shape_option_clover4">Quadrifoglio</string>
+    <string name="shape_option_clover4_desc">Quadrifoglio</string>
+    <string name="shape_option_clover8">Trifoglio a 8 foglie</string>
+    <string name="shape_option_clover8_desc">Trifoglio a otto foglie</string>
+    <string name="shape_option_heart">Cuore</string>
+    <string name="shape_option_heart_desc">A forma di cuore</string>
+    <string name="shape_option_bun">Panino</string>
+    <string name="shape_option_bun_desc">Forma di panino/pane</string>
+    <string name="shape_option_boom">Bum</string>
+    <string name="shape_option_boom_desc">Forma di esplosione</string>
+    <string name="shape_option_soft_boom">Boom morbido</string>
+    <string name="shape_option_soft_boom_desc">Esplosione più morbida</string>
+    <string name="shape_option_burst">Scoppio</string>
+    <string name="shape_option_burst_desc">Forma a stella</string>
+    <string name="shape_option_soft_burst">Raffica morbida</string>
+    <string name="shape_option_soft_burst_desc">Esplosione di stelle più morbida</string>
+    <string name="shape_option_sunny">Soleggiato</string>
+    <string name="shape_option_sunny_desc">Sole con raggi</string>
+    <string name="shape_option_very_sunny">Molto soleggiato</string>
+    <string name="shape_option_very_sunny_desc">Sole con più raggi</string>
+    <string name="shape_option_cookie4">Biscotto 4</string>
+    <string name="shape_option_cookie4_desc">Biscotto a 4 facce</string>
+    <string name="shape_option_cookie6">Biscotto 6</string>
+    <string name="shape_option_cookie6_desc">Biscotto a 6 facce</string>
+    <string name="shape_option_cookie7">Biscotto 7</string>
+    <string name="shape_option_cookie7_desc">Biscotto a 7 facce</string>
+    <string name="shape_option_cookie9">Biscotto 9</string>
+    <string name="shape_option_cookie9_desc">Biscotto a 9 facce</string>
+    <string name="shape_option_cookie12">Biscotto 12</string>
+    <string name="shape_option_cookie12_desc">Biscotto a 12 facce</string>
+    <string name="shape_option_ghostish">Fantasma</string>
+    <string name="shape_option_ghostish_desc">Forma simile a un fantasma</string>
+    <string name="shape_option_puffy">Gonfio</string>
+    <string name="shape_option_puffy_desc">Forma simile a una nuvola</string>
+    <string name="shape_option_puffy_diamond">Diamante gonfio</string>
+    <string name="shape_option_puffy_diamond_desc">Diamante gonfio</string>
+    <string name="shape_option_fan">Ventilatore</string>
+    <string name="shape_option_fan_desc">Forma a ventaglio</string>
+    <string name="shape_option_circle">Cerchio</string>
+    <string name="shape_option_circle_desc">Un cerchio perfetto</string>
+    <string name="shape_option_clover_4_leaf">Quadrifoglio</string>
+    <string name="shape_option_clover_4_leaf_desc">Quadrifoglio</string>
+    <string name="shape_option_clover_8_leaf">Trifoglio a 8 foglie</string>
+    <string name="shape_option_clover_8_leaf_desc">Trifoglio a otto foglie</string>
+    <string name="shape_option_arrow">Freccia</string>
+    <string name="shape_option_arrow_desc">Puntatore a freccia</string>
+    <string name="shape_option_arch">Arch</string>
+    <string name="shape_option_arch_desc">Forma ad arco</string>
+    <string name="shape_option_clam_shell">Conchiglia</string>
+    <string name="shape_option_clam_shell_desc">Forma a conchiglia</string>
+    <string name="shape_option_gem">Gemma</string>
+    <string name="shape_option_gem_desc">Forma di pietra preziosa</string>
+    <string name="shape_option_semi_circle">Semicerchio</string>
+    <string name="shape_option_semi_circle_desc">Mezzo cerchio</string>
+    <string name="shape_option_slanted">Inclinato</string>
+    <string name="shape_option_slanted_desc">Quadrato inclinato</string>
+    <string name="shape_option_pixel_circle">Cerchio di pixel</string>
+    <string name="shape_option_pixel_circle_desc">Cerchio pixelato</string>
+    <string name="shape_option_pixel_triangle">Triangolo di pixel</string>
+    <string name="shape_option_pixel_triangle_desc">Triangolo pixelato</string>
+    <string name="shape_group_basic">Di base</string>
+    <string name="shape_group_organic">Biologico</string>
+    <string name="shape_group_playful">Giocoso</string>
+    <string name="shape_group_cookie">Biscotto</string>
+    <string name="shape_group_whimsical">Stravagante</string>
+    <string name="shape_group_special">Speciale</string>
+    <string name="shape_group_pixel">Pixel
+Icona</string>
+
+    <!-- Customization Choices -->
+    <string name="option_always">Sempre</string>
+    <string name="option_expanded">Espanso</string>
+    <string name="option_collapsed">Collassato</string>
+    <string name="option_linear">Lineare</string>
+    <string name="option_circular">Circolare</string>
+    <string name="option_auto">Automatico</string>
+    <string name="option_manual">Manuale</string>
+    <string name="option_both">Entrambi
+Icona</string>
+    <string name="option_icon">Icon</string>
+    <string name="option_name">Nome</string>
+
+    <!-- Theme settings additions -->
+    <string name="theme_color_red">Rosso</string>
+    <string name="theme_color_green">Verde</string>
+    <string name="theme_color_blue">Blu</string>
+    <string name="theme_font_restart_warning">Carattere cambiato. Riavvia l\'app per applicare il nuovo carattere.</string>
+    <string name="theme_source_album_art">Copertina dell\'album</string>
+    <string name="theme_source_album_art_desc">Estrai i colori dalle copertine degli album attualmente in riproduzione</string>
+    <string name="theme_source_system_colors">Colori di sistema</string>
+    <string name="theme_source_system_colors_desc">Usa Material I tuoi colori dal tuo sfondo</string>
+    <string name="theme_source_custom_scheme">Schema personalizzato</string>
+    <string name="theme_source_custom_scheme_desc">Scegli tra combinazioni di colori predefinite</string>
+    <string name="theme_font_system">Carattere di sistema</string>
+    <string name="theme_font_system_desc">Utilizza il carattere predefinito del dispositivo</string>
+    <string name="theme_font_custom">Carattere personalizzato</string>
+    <string name="theme_font_custom_desc">Importa e utilizza un file di caratteri personalizzato</string>
+
+    <!-- Color Scheme names -->
+    <string name="scheme_default">Predefinito</string>
+    <string name="scheme_warm">Caldo</string>
+    <string name="scheme_cool">Fantastico</string>
+    <string name="scheme_forest">Foresta</string>
+    <string name="scheme_rose">Rosa</string>
+    <string name="scheme_monochrome">Monocromatico</string>
+    <string name="scheme_lavender">Lavanda</string>
+    <string name="scheme_ocean">Oceano</string>
+    <string name="scheme_aurora">Aurora
+Formato</string>
+    <string name="scheme_amber">Ambra</string>
+    <string name="scheme_crimson">Cremisi</string>
+    <string name="scheme_emerald">Smeraldo</string>
+    <string name="scheme_mint">Nuovo</string>
+
+    <!-- Shape Utils category and descriptions -->
+    <string name="shape_utils_fab">Pulsante di azione mobile</string>
+    <string name="shape_utils_fab_desc">Forma per i pulsanti FAB</string>
+    <string name="shape_utils_cards">Carte</string>
+    <string name="shape_utils_cards_desc">Forma per carte e contenitori</string>
+    <string name="shape_utils_buttons">Pulsanti</string>
+    <string name="shape_utils_buttons_desc">Forma per i pulsanti</string>
+    <string name="shape_utils_chips">Patatine</string>
+    <string name="shape_utils_chips_desc">Forma per chip e tag</string>
+    <string name="shape_utils_player_controls">Controlli del lettore</string>
+    <string name="shape_utils_player_controls_desc">Forma per i pulsanti di controllo del lettore</string>
+    <string name="shape_utils_mini_player">Minilettore</string>
+    <string name="shape_utils_mini_player_desc">Forma per la grafica del mini player</string>
+
+    <!-- Metadata properties and labels -->
+    <string name="metadata_duration">Durata</string>
+    <string name="metadata_disc">Disco</string>
+    <string name="metadata_composer">Compositore</string>
+    <string name="metadata_album_artist">Artista dell\'album</string>
+    <string name="metadata_play_count">Conteggio riproduzioni</string>
+    <string name="metadata_total_played">Totale riprodotto</string>
+    <string name="metadata_rating">Valutazione</string>
+    <string name="metadata_quality">Qualità</string>
+    <string name="metadata_audio_tech">Tecnologia audio</string>
+    <string name="metadata_bit_depth">Profondità di bit</string>
+    <string name="metadata_bitrate">Velocità in bit</string>
+    <string name="metadata_sample_rate">Frequenza di campionamento</string>
+    <string name="metadata_channels">Canali
+Formato</string>
+    <string name="metadata_format">Format</string>
+    <string name="metadata_location">Posizione</string>
+    <string name="metadata_lyrics">Testo</string>
+    <string name="metadata_mime_type">Tipo MIME</string>
+    <string name="metadata_date_added">Data aggiunta</string>
+    <string name="metadata_modified">Modificato</string>
+    <string name="metadata_lyrics_available">Disponibile</string>
+    <string name="metadata_dts">DTS</string>
+    <string name="metadata_hi_res">Alta risoluzione</string>
+    <string name="metadata_dolby">Dolby</string>
+    <string name="metadata_lossless">Senza perdite</string>
+
+    <!-- Discover settings specific -->
+    <string name="settings_discover_album_name">Nome dell\'album</string>
+    <string name="settings_discover_album_name_desc">Mostra il titolo dell\'album sulla scheda</string>
+    <string name="settings_discover_artist_name">Nome dell\'artista</string>
+    <string name="settings_discover_artist_name_desc">Mostra il nome dell\'artista sulla carta</string>
+    <string name="settings_discover_release_year">Anno di rilascio</string>
+    <string name="settings_discover_release_year_desc">Mostra l\'anno di uscita dell\'album</string>
+    <string name="settings_discover_play_button">Pulsante Riproduci</string>
+    <string name="settings_discover_play_button_desc">Mostra il pulsante di riproduzione rapida</string>
+    <string name="settings_discover_gradient_overlay">Sovrapposizione sfumatura</string>
+    <string name="settings_discover_gradient_overlay_desc">Mostra il gradiente dietro il testo</string>
+
+    <!-- Carousel Style selector strings -->
+    <string name="carousel_style_default">Predefinito</string>
+    <string name="carousel_style_default_desc">2 album con sbirciatina laterale</string>
+    <string name="carousel_style_hero">Eroe</string>
+    <string name="carousel_style_hero_desc">1 album di sbirciatina laterale</string>
+
+    <!-- Theme names -->
+    <string name="theme_rhythm">Rhythm
+Grafica del giocatore</string>
+    <string name="theme_expressive">Espressivo</string>
+    <string name="settings_managed_by_expressive_shapes">Gestito da forme espressive</string>
+
+    <!-- Shape targets -->
+    <string name="shape_target_album_art">Grafica dell\'album</string>
+    <string name="shape_target_album_art_desc">Forma per la copertina dell\'album
+Grafica del giocatore</string>
+    <string name="shape_target_player_art">Player Artwork</string>
+    <string name="shape_target_player_art_desc">Forma per la grafica dello schermo del giocatore</string>
+    <string name="shape_target_song_art">Grafica della canzone</string>
+    <string name="shape_target_song_art_desc">Forma per la grafica dei brani negli elenchi</string>
+    <string name="shape_target_playlist_art">Grafica della playlist</string>
+    <string name="shape_target_playlist_art_desc">Forma per le copertine delle playlist</string>
+    <string name="shape_target_artist_art">Opere d\'arte dell\'artista</string>
+    <string name="shape_target_artist_art_desc">Forma per immagini d\'artista</string>
+    <string name="settings_shape_for">Forma per %1$s</string>
 </resources>
+

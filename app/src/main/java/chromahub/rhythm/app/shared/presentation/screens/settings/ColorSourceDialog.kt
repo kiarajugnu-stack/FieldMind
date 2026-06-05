@@ -312,7 +312,7 @@ fun ColorSourceDialog(
 
                                 Column(modifier = Modifier.weight(1f)) {
                                     Text(
-                                        text = source.displayName,
+                                        text = source.getDisplayName(context),
                                         style = MaterialTheme.typography.titleMedium,
                                         fontWeight = FontWeight.SemiBold,
                                         color = if (isSelected)
@@ -322,7 +322,7 @@ fun ColorSourceDialog(
                                     )
                                     Spacer(modifier = Modifier.height(4.dp))
                                     Text(
-                                        text = source.description,
+                                        text = source.getDescription(context),
                                         style = MaterialTheme.typography.bodySmall,
                                         color = if (isSelected)
                                             MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)

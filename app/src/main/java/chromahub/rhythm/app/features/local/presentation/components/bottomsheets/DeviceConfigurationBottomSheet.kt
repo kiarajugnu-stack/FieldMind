@@ -221,7 +221,7 @@ fun DeviceConfigurationBottomSheet(
                         Text(
                             modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
                             style = MaterialTheme.typography.labelLarge,
-                            text = "${userDevices.size} device${if (userDevices.size != 1) "s" else ""} configured",
+                            text = stringResource(R.string.device_configuration_devices_configured, userDevices.size),
                             color = MaterialTheme.colorScheme.onSurface
                         )
                     }
@@ -276,16 +276,20 @@ fun DeviceConfigurationBottomSheet(
                             )
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
-                                    text = if (matchedDevice != null) "Device Recognized" else "New Device Detected",
+                                    text = if (matchedDevice != null) stringResource(R.string.device_configuration_device_recognized) else stringResource(R.string.device_configuration_new_device_detected),
                                     style = MaterialTheme.typography.labelLarge,
                                     fontWeight = FontWeight.SemiBold,
                                     color = MaterialTheme.colorScheme.onSurface
                                 )
                                 Text(
                                     text = if (matchedDevice != null) {
-                                        "${currentLocation.name} is configured${if (matchedDevice.autoEQProfileName != null) " with ${matchedDevice.autoEQProfileName}" else ""}"
+                                        if (matchedDevice.autoEQProfileName != null) {
+                                            stringResource(R.string.device_configuration_configured_with, currentLocation.name, matchedDevice.autoEQProfileName)
+                                        } else {
+                                            stringResource(R.string.device_configuration_configured_no_profile, currentLocation.name)
+                                        }
                                     } else {
-                                        "${currentLocation.name} is connected but not configured"
+                                        stringResource(R.string.device_configuration_connected_not_configured, currentLocation.name)
                                     },
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -512,7 +516,7 @@ fun DeviceConfigurationBottomSheet(
                 // Show feedback
                 Toast.makeText(
                     context,
-                    "Applied ${profile.name} profile",
+                    context.getString(R.string.device_configuration_applied_profile, profile.name),
                     Toast.LENGTH_SHORT
                 ).show()
                 
@@ -631,7 +635,7 @@ fun DeviceConfigurationBottomSheet(
             confirmButton = {
                 Button(
                     onClick = {
-                        val parsedProfiles = AutoEQImportExport.autoDetectAndParse(importText, "Imported Profile")
+                        val parsedProfiles = AutoEQImportExport.autoDetectAndParse(importText, context.getString(R.string.device_configuration_imported_profile))
                         
                         if (parsedProfiles.isNotEmpty()) {
                             val profile = parsedProfiles.first()
@@ -641,7 +645,7 @@ fun DeviceConfigurationBottomSheet(
                             importError = null
                             Toast.makeText(context, context.getString(R.string.deviceconfiguration_profile_imported, profile.name), Toast.LENGTH_SHORT).show()
                         } else {
-                            importError = "Could not parse EQ settings. Check the format."
+                            importError = context.getString(R.string.device_configuration_parse_error)
                         }
                     },
                     enabled = importText.isNotBlank()
@@ -702,7 +706,7 @@ fun DeviceConfigurationBottomSheet(
                 AutoEQProfile(
                     name = currentPreset,
                     brand = "",
-                    type = "Custom Preset",
+                    type = context.getString(R.string.device_configuration_custom_preset),
                     bands = bands
                 )
             } else null
@@ -713,9 +717,9 @@ fun DeviceConfigurationBottomSheet(
                 .take(10)
             if (bands.size == 10 && equalizerEnabled) {
                 AutoEQProfile(
-                    name = "Custom EQ",
+                    name = context.getString(R.string.device_configuration_custom_eq),
                     brand = "",
-                    type = "Custom",
+                    type = context.getString(R.string.device_configuration_custom),
                     bands = bands
                 )
             } else null
@@ -754,7 +758,7 @@ fun DeviceConfigurationBottomSheet(
                         ) {
                             Column(modifier = Modifier.padding(12.dp)) {
                                 Text(
-                                    text = "Active Profile: ${profileToExport.name}",
+                                    text = context.getString(R.string.device_configuration_active_profile_label, profileToExport.name),
                                     style = MaterialTheme.typography.titleSmall,
                                     fontWeight = FontWeight.SemiBold,
                                     color = MaterialTheme.colorScheme.primary
@@ -790,10 +794,10 @@ fun DeviceConfigurationBottomSheet(
                                 onClick = {
                                     val shareIntent = Intent(Intent.ACTION_SEND).apply {
                                         type = "text/plain"
-                                        putExtra(Intent.EXTRA_SUBJECT, "Rhythm EQ Profile: ${profileToExport.name}")
+                                        putExtra(Intent.EXTRA_SUBJECT, context.getString(R.string.device_configuration_share_subject, profileToExport.name))
                                         putExtra(Intent.EXTRA_TEXT, exportText)
                                     }
-                                    context.startActivity(Intent.createChooser(shareIntent, "Share EQ Profile"))
+                                    context.startActivity(Intent.createChooser(shareIntent, context.getString(R.string.device_configuration_share_title)))
                                 },
                                 modifier = Modifier.weight(1f),
                                 shape = RoundedCornerShape(12.dp)
@@ -1053,7 +1057,7 @@ private fun AddEditDeviceDialog(
             )
         },
         title = {
-            Text(if (isEditing) "Edit Device" else "Add Device")
+            Text(if (isEditing) stringResource(R.string.device_configuration_edit_device) else stringResource(R.string.device_configuration_add_device))
         },
         text = {
             Column(
@@ -1138,7 +1142,7 @@ private fun AddEditDeviceDialog(
                     modifier = Modifier.size(18.dp)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
-                Text(if (isEditing) "Save" else "Add")
+                Text(if (isEditing) stringResource(R.string.device_configuration_save) else stringResource(R.string.device_configuration_add))
             }
         },
         dismissButton = {
@@ -1227,7 +1231,7 @@ private fun DeviceAutoEQSelector(
                     fontWeight = FontWeight.Bold
                 )
                 Text(
-                    text = "For ${device.name}",
+                    text = stringResource(R.string.device_configuration_for_device, device.name),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -1350,7 +1354,7 @@ private fun DeviceAutoEQSelector(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text(
-                        text = "${filteredProfiles.size} profile${if (filteredProfiles.size != 1) "s" else ""} available",
+                        text = stringResource(R.string.device_configuration_profiles_available, filteredProfiles.size),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
@@ -1366,8 +1370,8 @@ private fun DeviceAutoEQSelector(
                         val isNoneSelected = device.autoEQProfileName.isNullOrBlank() || device.autoEQProfileName == "None"
                         EQProfileCard(
                             profile = AutoEQProfile(
-                                name = "None",
-                                brand = "Disable headphone compensation",
+                                name = context.getString(R.string.common_none),
+                                brand = context.getString(R.string.device_configuration_disable_compensation),
                                 type = "",
                                 bands = List(10) { 0f }
                             ),
