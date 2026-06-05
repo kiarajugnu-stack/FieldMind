@@ -391,14 +391,13 @@ fun MaterialPlayerScreen(
                         .thenBy { it.title.lowercase(Locale.getDefault()) }
                 )
 
-            val matchedAlbum = when {
-                baseAlbumId != null -> albums.firstOrNull { album -> album.id == baseAlbumId }
-                else -> albums.firstOrNull { album ->
-                    album.title.equals(targetSong.album, ignoreCase = true) &&
-                        album.artist.equals(baseAlbumArtist, ignoreCase = true)
-                } ?: albums.firstOrNull { album ->
-                    album.title.equals(targetSong.album, ignoreCase = true)
-                }
+            val matchedAlbum = (if (baseAlbumId != null) {
+                albums.firstOrNull { album -> album.id == baseAlbumId }
+            } else null) ?: albums.firstOrNull { album ->
+                album.title.equals(targetSong.album, ignoreCase = true) &&
+                    album.artist.equals(baseAlbumArtist, ignoreCase = true)
+            } ?: albums.firstOrNull { album ->
+                album.title.equals(targetSong.album, ignoreCase = true)
             }
 
             val mergedSongs = ((matchedAlbum?.songs ?: emptyList()) + matchedSongs)

@@ -228,11 +228,18 @@ fun PlayerScreen(
         }
 
         fun resolveAlbumForSong(currentSong: Song): Album? {
+            val albumArtist = currentSong.albumArtist?.trim().orEmpty()
+            val baseAlbumArtist = if (albumArtist.isNotBlank() && !albumArtist.equals("<unknown>", ignoreCase = true)) {
+                albumArtist
+            } else {
+                currentSong.artist
+            }
             return albums.firstOrNull { album ->
                 (currentSong.albumId.isNotBlank() && album.id == currentSong.albumId) ||
-                        album.title.equals(currentSong.album, ignoreCase = true) ||
                         (album.title.equals(currentSong.album, ignoreCase = true) &&
-                                album.artist.equals(currentSong.artist, ignoreCase = true))
+                                album.artist.equals(baseAlbumArtist, ignoreCase = true))
+            } ?: albums.firstOrNull { album ->
+                album.title.equals(currentSong.album, ignoreCase = true)
             }
         }
 

@@ -2010,7 +2010,7 @@ fun SingleCardSongsContent(
             allCategories
         }
         categories = result
-        preparedSongs = songs
+        preparedSongs = songs.distinctBy { "${it.id}_${it.uri}" }
         isLoading = false
     }
 
@@ -2452,13 +2452,14 @@ fun SingleCardPlaylistsContent(
     LaunchedEffect(playlists, playlistSortOrder) {
         isLoading = true
         preparedPlaylists = withContext(Dispatchers.Default) {
+            val baseList = playlists.distinctBy { it.id }
             when (playlistSortOrder) {
-                LibraryPlaylistSortOrder.NAME_ASC -> playlists.sortedBy { it.name.lowercase() }
-                LibraryPlaylistSortOrder.NAME_DESC -> playlists.sortedByDescending { it.name.lowercase() }
-                LibraryPlaylistSortOrder.DATE_CREATED_ASC -> playlists.sortedBy { it.id.toLongOrNull() ?: 0L }
-                LibraryPlaylistSortOrder.DATE_CREATED_DESC -> playlists.sortedByDescending { it.id.toLongOrNull() ?: 0L }
-                LibraryPlaylistSortOrder.SONG_COUNT_ASC -> playlists.sortedBy { it.songs.size }
-                LibraryPlaylistSortOrder.SONG_COUNT_DESC -> playlists.sortedByDescending { it.songs.size }
+                LibraryPlaylistSortOrder.NAME_ASC -> baseList.sortedBy { it.name.lowercase() }
+                LibraryPlaylistSortOrder.NAME_DESC -> baseList.sortedByDescending { it.name.lowercase() }
+                LibraryPlaylistSortOrder.DATE_CREATED_ASC -> baseList.sortedBy { it.id.toLongOrNull() ?: 0L }
+                LibraryPlaylistSortOrder.DATE_CREATED_DESC -> baseList.sortedByDescending { it.id.toLongOrNull() ?: 0L }
+                LibraryPlaylistSortOrder.SONG_COUNT_ASC -> baseList.sortedBy { it.songs.size }
+                LibraryPlaylistSortOrder.SONG_COUNT_DESC -> baseList.sortedByDescending { it.songs.size }
             }
         }
         isLoading = false
@@ -2593,7 +2594,7 @@ fun SingleCardAlbumsContent(
     LaunchedEffect(albums) {
         isLoading = true
         preparedAlbums = withContext(Dispatchers.Default) {
-            albums.toList()
+            albums.distinctBy { it.id }
         }
         isLoading = false
     }
@@ -2970,6 +2971,7 @@ fun AlbumsTab(
                 }
             }
 
+            val uniqueAlbums = remember(albums) { albums.distinctBy { it.id } }
             Surface(
                 color = MaterialTheme.colorScheme.surfaceContainer,
                 shape = RoundedCornerShape(20.dp),
@@ -2979,7 +2981,7 @@ fun AlbumsTab(
             ) {
                 if (albumViewType == AlbumViewType.GRID) {
                     AlbumsGrid(
-                        albums = albums,
+                        albums = uniqueAlbums,
                         onAlbumClick = { album ->
                             onAlbumBottomSheetClick(album)
                         },
@@ -2996,7 +2998,7 @@ fun AlbumsTab(
                         verticalArrangement = Arrangement.spacedBy(0.dp)
                     ) {
                         items(
-                            items = albums,
+                            items = uniqueAlbums,
                             key = { it.id }
                         ) { album ->
                             AnimateIn {
@@ -4296,6 +4298,7 @@ fun AlbumsGrid(
     onSongClick: (Song) -> Unit,
     haptics: androidx.compose.ui.hapticfeedback.HapticFeedback
 ) {
+    val uniqueAlbums = remember(albums) { albums.distinctBy { it.id } }
     LazyVerticalGrid(
         columns = GridCells.Fixed(2),
         modifier = Modifier
@@ -4309,7 +4312,7 @@ fun AlbumsGrid(
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         items(
-            items = albums,
+            items = uniqueAlbums,
             key = { it.id }
         ) { album ->
             AnimateIn {
@@ -4647,11 +4650,12 @@ fun SingleCardArtistsContent(
     LaunchedEffect(artists, currentSortOption) {
         isLoading = true
         sortedArtists = withContext(Dispatchers.Default) {
+            val baseList = artists.distinctBy { it.id }
             when (currentSortOption) {
-                ArtistSortOption.NAME_ASC -> artists.sortedBy { it.name.lowercase() }
-                ArtistSortOption.NAME_DESC -> artists.sortedByDescending { it.name.lowercase() }
-                ArtistSortOption.TRACK_COUNT_DESC -> artists.sortedByDescending { it.numberOfTracks }
-                ArtistSortOption.ALBUM_COUNT_DESC -> artists.sortedByDescending { it.numberOfAlbums }
+                ArtistSortOption.NAME_ASC -> baseList.sortedBy { it.name.lowercase() }
+                ArtistSortOption.NAME_DESC -> baseList.sortedByDescending { it.name.lowercase() }
+                ArtistSortOption.TRACK_COUNT_DESC -> baseList.sortedByDescending { it.numberOfTracks }
+                ArtistSortOption.ALBUM_COUNT_DESC -> baseList.sortedByDescending { it.numberOfAlbums }
             }
         }
         isLoading = false

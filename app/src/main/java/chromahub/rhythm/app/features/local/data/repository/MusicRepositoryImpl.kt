@@ -2032,11 +2032,8 @@ class MusicRepository(context: Context) {
                 ?: firstSong.artist.trim().takeIf { it.isNotBlank() }
                 ?: "Unknown Artist"
             
-            // Generate a stable album ID. Use the first song's albumId if it exists and is not blank,
-            // otherwise generate a hash.
-            val albumId = firstSong.albumId.trim().ifBlank {
-                "hash_${(albumName + "|" + albumArtist).lowercase(Locale.ROOT).hashCode()}"
-            }
+            // Generate a stable unique album ID by hashing the album name and artist combination.
+            val albumId = "hash_${(albumName + "|" + albumArtist).lowercase(Locale.ROOT).hashCode()}"
             
             // Find the maximum year among the songs
             val year = albumSongs.maxOfOrNull { it.year } ?: 0

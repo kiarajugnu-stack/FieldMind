@@ -58,6 +58,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOn
@@ -614,7 +615,9 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     private val _albums = MutableStateFlow<List<Album>>(emptyList())
-    val albums: StateFlow<List<Album>> = _albums.asStateFlow()
+    val albums: StateFlow<List<Album>> = _albums
+        .map { list -> list.distinctBy { it.id } }
+        .stateIn(viewModelScope, kotlinx.coroutines.flow.SharingStarted.Eagerly, emptyList())
     
     // Filtered albums excluding albums with all songs blacklisted
     val filteredAlbums: StateFlow<List<Album>> = kotlinx.coroutines.flow.combine(
@@ -624,7 +627,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
         albums.filter { album ->
             // Include album if it has at least one non-blacklisted song
             filteredSongs.any { song -> song.album == album.title && song.artist == album.artist }
-        }
+        }.distinctBy { it.id }
     }.flowOn(Dispatchers.Default).stateIn(viewModelScope, kotlinx.coroutines.flow.SharingStarted.Eagerly, emptyList())
 
     private val _artists = MutableStateFlow<List<Artist>>(emptyList())

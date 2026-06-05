@@ -1386,6 +1386,7 @@ private fun StreamingSongsTabPage(
     onPlayAll: () -> Unit,
     onShuffle: () -> Unit
 ) {
+    val uniqueSongs = remember(songs) { songs.distinctBy { it.id } }
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.spacedBy(10.dp),
@@ -1396,14 +1397,14 @@ private fun StreamingSongsTabPage(
                 title = stringResource(id = R.string.library_your_music),
                 subtitle = stringResource(
                     id = R.string.streaming_home_widget_playlist_track_count,
-                    songs.size
+                    uniqueSongs.size
                 ),
-                onPlayAll = if (songs.isNotEmpty()) onPlayAll else null,
-                onShufflePlay = if (songs.size > 1) onShuffle else null
+                onPlayAll = if (uniqueSongs.isNotEmpty()) onPlayAll else null,
+                onShufflePlay = if (uniqueSongs.size > 1) onShuffle else null
             )
         }
 
-        if (isLoading && songs.isEmpty()) {
+        if (isLoading && uniqueSongs.isEmpty()) {
             item {
                 Box(
                     modifier = Modifier
@@ -1414,7 +1415,7 @@ private fun StreamingSongsTabPage(
                     StreamingLibraryLoadingCard()
                 }
             }
-        } else if (songs.isEmpty()) {
+        } else if (uniqueSongs.isEmpty()) {
             item {
                 StreamingLibraryEmptyCard(
                     icon = MaterialSymbolIcon("history", filled = true),
@@ -1423,10 +1424,15 @@ private fun StreamingSongsTabPage(
                 )
             }
         } else {
-            itemsIndexed(songs, key = { _, song -> song.id }) { index, song ->
+            itemsIndexed(uniqueSongs, key = { _, song -> song.id }) { index, song ->
                 StreamingLibrarySongRow(
                     song = song,
-                    onClick = { onPlaySongAtIndex(index) }
+                    onClick = {
+                        val originalIndex = songs.indexOf(song)
+                        if (originalIndex >= 0) {
+                            onPlaySongAtIndex(originalIndex)
+                        }
+                    }
                 )
             }
         }
@@ -1439,6 +1445,7 @@ private fun StreamingAlbumsTabPage(
     isLoading: Boolean,
     onOpenAlbum: (StreamingAlbum) -> Unit
 ) {
+    val uniqueAlbums = remember(albums) { albums.distinctBy { it.id } }
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.spacedBy(10.dp),
@@ -1449,12 +1456,12 @@ private fun StreamingAlbumsTabPage(
                 title = stringResource(id = R.string.library_your_albums),
                 subtitle = stringResource(
                     id = R.string.library_albums_count,
-                    albums.size
+                    uniqueAlbums.size
                 )
             )
         }
 
-        if (isLoading && albums.isEmpty()) {
+        if (isLoading && uniqueAlbums.isEmpty()) {
             item {
                 Box(
                     modifier = Modifier
@@ -1465,7 +1472,7 @@ private fun StreamingAlbumsTabPage(
                     StreamingLibraryLoadingCard()
                 }
             }
-        } else if (albums.isEmpty()) {
+        } else if (uniqueAlbums.isEmpty()) {
             item {
                 StreamingLibraryEmptyCard(
                     icon = RhythmIcons.AlbumFilled,
@@ -1474,7 +1481,7 @@ private fun StreamingAlbumsTabPage(
                 )
             }
         } else {
-            items(albums, key = { it.id }) { album ->
+            items(uniqueAlbums, key = { it.id }) { album ->
                 StreamingLibraryAlbumRow(
                     album = album,
                     onClick = { onOpenAlbum(album) }
@@ -1490,6 +1497,7 @@ private fun StreamingArtistsTabPage(
     isLoading: Boolean,
     onOpenArtist: (StreamingArtist) -> Unit
 ) {
+    val uniqueArtists = remember(artists) { artists.distinctBy { it.id } }
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.spacedBy(10.dp),
@@ -1498,11 +1506,11 @@ private fun StreamingArtistsTabPage(
         item {
             StreamingLibrarySectionHeader(
                 title = stringResource(id = R.string.library_your_artists),
-                subtitle = "${artists.size} artists"
+                subtitle = "${uniqueArtists.size} artists"
             )
         }
 
-        if (isLoading && artists.isEmpty()) {
+        if (isLoading && uniqueArtists.isEmpty()) {
             item {
                 Box(
                     modifier = Modifier
@@ -1513,7 +1521,7 @@ private fun StreamingArtistsTabPage(
                     StreamingLibraryLoadingCard()
                 }
             }
-        } else if (artists.isEmpty()) {
+        } else if (uniqueArtists.isEmpty()) {
             item {
                 StreamingLibraryEmptyCard(
                     icon = RhythmIcons.ArtistFilled,
@@ -1522,7 +1530,7 @@ private fun StreamingArtistsTabPage(
                 )
             }
         } else {
-            items(artists, key = { it.id }) { artist ->
+            items(uniqueArtists, key = { it.id }) { artist ->
                 StreamingLibraryArtistRow(
                     artist = artist,
                     onClick = { onOpenArtist(artist) }
@@ -1538,6 +1546,7 @@ private fun StreamingPlaylistsTabPage(
     isLoading: Boolean,
     onOpenPlaylist: (StreamingPlaylist) -> Unit
 ) {
+    val uniquePlaylists = remember(playlists) { playlists.distinctBy { it.id } }
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.spacedBy(10.dp),
@@ -1548,12 +1557,12 @@ private fun StreamingPlaylistsTabPage(
                 title = stringResource(id = R.string.library_your_playlists),
                 subtitle = stringResource(
                     id = R.string.library_playlists_count,
-                    playlists.size
+                    uniquePlaylists.size
                 )
             )
         }
 
-        if (isLoading && playlists.isEmpty()) {
+        if (isLoading && uniquePlaylists.isEmpty()) {
             item {
                 Box(
                     modifier = Modifier
@@ -1564,7 +1573,7 @@ private fun StreamingPlaylistsTabPage(
                     StreamingLibraryLoadingCard()
                 }
             }
-        } else if (playlists.isEmpty()) {
+        } else if (uniquePlaylists.isEmpty()) {
             item {
                 StreamingLibraryEmptyCard(
                     icon = RhythmIcons.Queue,
@@ -1573,7 +1582,7 @@ private fun StreamingPlaylistsTabPage(
                 )
             }
         } else {
-            items(playlists, key = { it.id }) { playlist ->
+            items(uniquePlaylists, key = { it.id }) { playlist ->
                 StreamingLibraryPlaylistRow(
                     playlist = playlist,
                     onClick = { onOpenPlaylist(playlist) }
