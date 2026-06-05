@@ -3,102 +3,102 @@ package chromahub.rhythm.app.ui.theme
 import androidx.compose.ui.graphics.Color
 
 // Material Design 3 Color System - Light Theme
-// Primary color palette based on purple/violet for music app
-val PrimaryLight = Color(0xFF5C4AD5) // Vibrant purple - main brand color
+// Primary palette derived from seed #6750A4 (matches app logo exactly)
+val PrimaryLight = Color(0xFF6750A4) // M3 baseline purple — matches logo stroke color
 val OnPrimaryLight = Color(0xFFFFFFFF) // White text on primary
-val PrimaryContainerLight = Color(0xFFE6DEFF) // Lighter purple container
-val OnPrimaryContainerLight = Color(0xFF170C3E) // Dark text on primary container
+val PrimaryContainerLight = Color(0xFFEADDFF) // Light purple container
+val OnPrimaryContainerLight = Color(0xFF21005D) // Dark text on primary container
 
-// Secondary color palette - complementary teal/green
-val SecondaryLight = Color(0xFF5D5D6B) // Neutral gray-purple for balance
+// Secondary color palette — neutral violet
+val SecondaryLight = Color(0xFF625B71) // Neutral gray-purple for balance
 val OnSecondaryLight = Color(0xFFFFFFFF) // White text on secondary
-val SecondaryContainerLight = Color(0xFFE3E1F0) // Light gray-purple container
-val OnSecondaryContainerLight = Color(0xFF1A1A25) // Dark text on secondary container
+val SecondaryContainerLight = Color(0xFFE8DEF8) // Light gray-purple container
+val OnSecondaryContainerLight = Color(0xFF1D192B) // Dark text on secondary container
 
-// Tertiary color palette - accent orange/amber for music controls
-val TertiaryLight = Color(0xFFFFDDB6) // Warm brown for accent
-val OnTertiaryLight = Color(0xFF2C1600) // White text on tertiary
-val TertiaryContainerLight = Color(0xFFFFDDB6) // Light orange container
-val OnTertiaryContainerLight = Color(0xFF2C1600) // Dark text on tertiary container
+// Tertiary color palette — rosy pink (matches logo center pill gradient)
+val TertiaryLight = Color(0xFF7D5260) // Rosy pink accent
+val OnTertiaryLight = Color(0xFFFFFFFF) // White text on tertiary
+val TertiaryContainerLight = Color(0xFFFFD8E4) // Light pink container (matches logo)
+val OnTertiaryContainerLight = Color(0xFF31111D) // Dark text on tertiary container
 
 // Error color palette
-val ErrorLight = Color(0xFFBA1A1A) // Standard Material error red
+val ErrorLight = Color(0xFFB3261E) // Standard Material error red
 val OnErrorLight = Color(0xFFFFFFFF) // White text on error
-val ErrorContainerLight = Color(0xFFFFDAD6) // Light red container
-val OnErrorContainerLight = Color(0xFF410002) // Dark text on error container
+val ErrorContainerLight = Color(0xFFF9DEDC) // Light red container
+val OnErrorContainerLight = Color(0xFF410E0B) // Dark text on error container
 
 // Background and surface colors
-val BackgroundLight = Color(0xFFFEFBFF) // Pure white background
-val OnBackgroundLight = Color(0xFF1B1B1F) // Dark text on background
-val SurfaceLight = Color(0xFFFEFBFF) // Surface same as background
-val OnSurfaceLight = Color(0xFF1B1B1F) // Dark text on surface
-val SurfaceVariantLight = Color(0xFFE6E1EC) // Light gray-purple surface variant
-val OnSurfaceVariantLight = Color(0xFF48454E) // Medium gray text
+val BackgroundLight = Color(0xFFFFFBFE) // Near-white background (M3 baseline)
+val OnBackgroundLight = Color(0xFF1C1B1F) // Dark text on background
+val SurfaceLight = Color(0xFFFFFBFE) // Surface same as background
+val OnSurfaceLight = Color(0xFF1C1B1F) // Dark text on surface
+val SurfaceVariantLight = Color(0xFFE7E0EE) // Light gray-purple surface variant
+val OnSurfaceVariantLight = Color(0xFF49454F) // Medium gray text
 
 // Outline colors for borders and dividers
-val OutlineLight = Color(0xFF79767F) // Medium gray outline
-val OutlineVariantLight = Color(0xFFCAC6D0) // Light gray outline variant
+val OutlineLight = Color(0xFF79747E) // Medium gray outline
+val OutlineVariantLight = Color(0xFFCAC4D0) // Light gray outline variant
 
 // Surface containers for different elevation levels
 val SurfaceContainerLowestLight = Color(0xFFFFFFFF) // Lowest elevation (pure white)
-val SurfaceContainerLowLight = Color(0xFFF8F6FA) // Low elevation
-val SurfaceContainerLight = Color(0xFFF2F0F4) // Medium elevation
-val SurfaceContainerHighLight = Color(0xFFECEAEE) // High elevation
-val SurfaceContainerHighestLight = Color(0xFFE6E4E8) // Highest elevation
+val SurfaceContainerLowLight = Color(0xFFF7F2FA) // Low elevation
+val SurfaceContainerLight = Color(0xFFF3EDF7) // Medium elevation
+val SurfaceContainerHighLight = Color(0xFFECE6F0) // High elevation
+val SurfaceContainerHighestLight = Color(0xFFE6E0E9) // Highest elevation
 
 // Inverse colors for special cases
-val InverseSurfaceLight = Color(0xFF303033) // Dark surface for light theme
-val InverseOnSurfaceLight = Color(0xFFF3F0F4) // Light text on inverse surface
-val InversePrimaryLight = Color(0xFFCBC2FF) // Light primary on dark surface
+val InverseSurfaceLight = Color(0xFF313033) // Dark surface for light theme
+val InverseOnSurfaceLight = Color(0xFFF4EFF4) // Light text on inverse surface
+val InversePrimaryLight = Color(0xFFD0BCFF) // Light primary on dark surface
 
 // Material Design 3 Color System - Dark Theme
-// Primary color palette based on purple/violet for music app
-val PrimaryDark = Color(0xFFCBC2FF) // Light purple for dark theme
-val OnPrimaryDark = Color(0xFF170C3E) // Dark text on primary
-val PrimaryContainerDark = Color(0xFF433499) // Medium purple container
-val OnPrimaryContainerDark = Color(0xFFE6DEFF) // Light text on primary container
+// Primary palette derived from seed #6750A4 (matches app logo exactly)
+val PrimaryDark = Color(0xFFD0BCFF) // Light purple for dark theme (M3 baseline)
+val OnPrimaryDark = Color(0xFF381E72) // Dark text on primary
+val PrimaryContainerDark = Color(0xFF4F378B) // Medium purple container
+val OnPrimaryContainerDark = Color(0xFFEADDFF) // Light text on primary container
 
-// Secondary color palette - complementary neutral
-val SecondaryDark = Color(0xFFC7C5D4) // Light gray-purple for balance
-val OnSecondaryDark = Color(0xFF30303C) // Dark text on secondary
-val SecondaryContainerDark = Color(0xFF464653) // Medium gray-purple container
-val OnSecondaryContainerDark = Color(0xFFE3E1F0) // Light text on secondary container
+// Secondary color palette — neutral violet
+val SecondaryDark = Color(0xFFCCC2DC) // Light gray-purple for balance
+val OnSecondaryDark = Color(0xFF332D41) // Dark text on secondary
+val SecondaryContainerDark = Color(0xFF4A4458) // Medium gray-purple container
+val OnSecondaryContainerDark = Color(0xFFE8DEF8) // Light text on secondary container
 
-// Tertiary color palette - accent orange/amber for music controls
-val TertiaryDark = Color(0xFFE8BD88) // Light orange for accent
-val OnTertiaryDark = Color(0xFF432A0D) // Dark text on tertiary
-val TertiaryContainerDark = Color(0xFF624020) // Medium orange container
-val OnTertiaryContainerDark = Color(0xFFFFDDB6) // Light text on tertiary container
+// Tertiary color palette — rosy pink (matches logo center pill gradient)
+val TertiaryDark = Color(0xFFEFB8C8) // Rosy pink for dark theme
+val OnTertiaryDark = Color(0xFF492532) // Dark text on tertiary
+val TertiaryContainerDark = Color(0xFF633B48) // Medium rose container
+val OnTertiaryContainerDark = Color(0xFFFFD8E4) // Light text on tertiary container
 
 // Error color palette
-val ErrorDark = Color(0xFFFFB4AB) // Light red for dark theme
-val OnErrorDark = Color(0xFF690005) // Dark text on error
-val ErrorContainerDark = Color(0xFF93000A) // Medium red container
-val OnErrorContainerDark = Color(0xFFFFDAD6) // Light text on error container
+val ErrorDark = Color(0xFFF2B8B5) // Light red for dark theme
+val OnErrorDark = Color(0xFF601410) // Dark text on error
+val ErrorContainerDark = Color(0xFF8C1D18) // Medium red container
+val OnErrorContainerDark = Color(0xFFF9DEDC) // Light text on error container
 
 // Background and surface colors
-val BackgroundDark = Color(0xFF131316) // Dark background
-val OnBackgroundDark = Color(0xFFE5E1E6) // Light text on background
-val SurfaceDark = Color(0xFF131316) // Surface same as background
-val OnSurfaceDark = Color(0xFFE5E1E6) // Light text on surface
-val SurfaceVariantDark = Color(0xFF48454E) // Medium gray surface variant
-val OnSurfaceVariantDark = Color(0xFFCAC6D0) // Light gray text
+val BackgroundDark = Color(0xFF1C1B1F) // M3 baseline dark background
+val OnBackgroundDark = Color(0xFFE6E1E5) // Light text on background
+val SurfaceDark = Color(0xFF1C1B1F) // Surface same as background
+val OnSurfaceDark = Color(0xFFE6E1E5) // Light text on surface
+val SurfaceVariantDark = Color(0xFF49454F) // Medium gray surface variant
+val OnSurfaceVariantDark = Color(0xFFCAC4D0) // Light gray text
 
 // Outline colors for borders and dividers
 val OutlineDark = Color(0xFF938F99) // Light gray outline
-val OutlineVariantDark = Color(0xFF48454E) // Medium gray outline variant
+val OutlineVariantDark = Color(0xFF49454F) // Medium gray outline variant
 
 // Surface containers for different elevation levels
-val SurfaceContainerLowestDark = Color(0xFF0E0E11) // Lowest elevation
-val SurfaceContainerLowDark = Color(0xFF1B1B1F) // Low elevation
-val SurfaceContainerDark = Color(0xFF1F1F23) // Medium elevation
-val SurfaceContainerHighDark = Color(0xFF2A2A2E) // High elevation
-val SurfaceContainerHighestDark = Color(0xFF353539) // Highest elevation
+val SurfaceContainerLowestDark = Color(0xFF0F0D13) // Lowest elevation
+val SurfaceContainerLowDark = Color(0xFF1D1B20) // Low elevation
+val SurfaceContainerDark = Color(0xFF211F26) // Medium elevation
+val SurfaceContainerHighDark = Color(0xFF2B2930) // High elevation
+val SurfaceContainerHighestDark = Color(0xFF36343B) // Highest elevation
 
 // Inverse colors for special cases
-val InverseSurfaceDark = Color(0xFFE5E1E6) // Light surface for dark theme
-val InverseOnSurfaceDark = Color(0xFF303033) // Dark text on inverse surface
-val InversePrimaryDark = Color(0xFF5C4AD5) // Dark primary on light surface
+val InverseSurfaceDark = Color(0xFFE6E1E5) // Light surface for dark theme
+val InverseOnSurfaceDark = Color(0xFF313033) // Dark text on inverse surface
+val InversePrimaryDark = Color(0xFF6750A4) // Dark primary on light surface (= logo color)
 
 // Legacy music-specific colors (for backward compatibility)
 val MusicPrimaryLight = PrimaryLight
