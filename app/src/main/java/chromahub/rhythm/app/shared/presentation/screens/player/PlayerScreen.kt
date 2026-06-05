@@ -467,13 +467,13 @@ fun PlayerScreen(
                                     ).build()
                                     writePermissionLauncher.launch(intentSenderRequest)
                                 } catch (e: Exception) {
-                                    Toast.makeText(context, "Failed to request permission: ${e.message}", Toast.LENGTH_LONG).show()
+                                    Toast.makeText(context, context.getString(R.string.failed_to_request_permission, e.message ?: ""), Toast.LENGTH_LONG).show()
                                     musicViewModel.cancelPendingMetadataWrite()
                                 }
                             }
                         )
                     } catch (e: Exception) {
-                        Toast.makeText(context, "Unexpected error: ${e.message}", Toast.LENGTH_LONG).show()
+                        Toast.makeText(context, context.getString(R.string.unexpected_error, e.message ?: ""), Toast.LENGTH_LONG).show()
                         android.util.Log.w("PlayerScreen", "Metadata update failed for song: ${song.title}", e)
                     }
                 },

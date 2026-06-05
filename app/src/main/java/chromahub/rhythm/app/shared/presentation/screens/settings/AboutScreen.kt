@@ -632,7 +632,7 @@ fun CommunityMember(
                 .data(avatarUrl)
                 .crossfade(true)
                 .build(),
-            contentDescription = "$name's avatar",
+            contentDescription = stringResource(R.string.about_avatar_description, name),
             modifier = Modifier
                 .size(40.dp)
                 .clip(CircleShape)

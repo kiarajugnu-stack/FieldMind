@@ -551,8 +551,8 @@ fun PlaylistDetailScreen(
                     modifier = Modifier.size(28.dp)
                 )
             },
-            title = { Text("Remove ${selectedSongs.size} Songs") },
-            text = { Text("Are you sure you want to remove ${selectedSongs.size} song${if (selectedSongs.size > 1) "s" else ""} from this playlist?") },
+            title = { Text(stringResource(R.string.playlist_remove_songs_count, selectedSongs.size)) },
+            text = { Text(stringResource(R.string.playlist_remove_songs_confirm, selectedSongs.size)) },
             confirmButton = {
                 Button(
                     onClick = {
@@ -560,7 +560,7 @@ fun PlaylistDetailScreen(
                         // Remove selected songs
                         selectedSongs.forEach { songId ->
                             playlist.songs.find { it.id == songId }?.let { song ->
-                                onRemoveSong(song, "Song removed from playlist")
+                                onRemoveSong(song, context.getString(R.string.playlist_removed_from_playlist, song.title))
                             }
                         }
                         selectedSongs = emptySet()
@@ -655,18 +655,18 @@ fun PlaylistDetailScreen(
             song = selectedSongForOptions!!,
             onDismiss = { showSongOptionsSheet = false },
             onRemoveFromPlaylist = {
-                onRemoveSong(selectedSongForOptions!!, "Removed ${selectedSongForOptions!!.title} from playlist")
+                onRemoveSong(selectedSongForOptions!!, context.getString(R.string.playlist_removed_from_playlist, selectedSongForOptions!!.title))
                 showSongOptionsSheet = false
             },
             onPlayNext = {
                 onPlayNext(selectedSongForOptions!!)
                 showSongOptionsSheet = false
-                Toast.makeText(context, "${selectedSongForOptions!!.title} will play next", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, context.getString(R.string.will_play_next, selectedSongForOptions!!.title), Toast.LENGTH_SHORT).show()
             },
             onAddToQueue = {
                 onAddToQueue(selectedSongForOptions!!)
                 showSongOptionsSheet = false
-                Toast.makeText(context, "${selectedSongForOptions!!.title} added to queue", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, context.getString(R.string.added_to_queue, selectedSongForOptions!!.title), Toast.LENGTH_SHORT).show()
             },
             onAddToPlaylist = {
                 onAddToPlaylist(selectedSongForOptions!!)
@@ -754,13 +754,13 @@ fun PlaylistDetailScreen(
                                 ).build()
                                 writePermissionLauncher.launch(intentSenderRequest)
                             } catch (e: Exception) {
-                                Toast.makeText(context, "Failed to request permission: ${e.message}", Toast.LENGTH_LONG).show()
+                                Toast.makeText(context, context.getString(R.string.failed_to_request_permission, e.message ?: ""), Toast.LENGTH_LONG).show()
                                 musicViewModel.cancelPendingMetadataWrite()
                             }
                         }
                     )
                 } catch (e: Exception) {
-                    Toast.makeText(context, "Unexpected error: ${e.message}", Toast.LENGTH_LONG).show()
+                    Toast.makeText(context, context.getString(R.string.unexpected_error, e.message ?: ""), Toast.LENGTH_LONG).show()
                     android.util.Log.w("PlaylistDetailScreen", "Metadata update failed for song: ${selectedSongForInfo!!.title}", e)
                 }
             },
@@ -2817,12 +2817,12 @@ fun PlaylistSongItem(
                 )
             },
             title = { Text(stringResource(R.string.playlist_remove_song)) },
-            text = { Text("Remove '${song.title}' from this playlist?") },
+            text = { Text(stringResource(R.string.playlist_remove_song_confirm, song.title)) },
             confirmButton = {
                 Button(
                     onClick = {
                         HapticUtils.performHapticFeedback(context, haptics, HapticType.LIGHT) // Use captured haptics
-                        onRemove("Removed ${song.title} from playlist")
+                        onRemove(context.getString(R.string.playlist_removed_from_playlist, song.title))
                         showRemoveDialog = false
                     },
                     colors = ButtonDefaults.buttonColors(

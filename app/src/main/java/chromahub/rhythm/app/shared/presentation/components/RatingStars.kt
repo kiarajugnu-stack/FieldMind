@@ -18,6 +18,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.res.stringResource
+import chromahub.rhythm.app.R
+import android.content.Context
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.layout.size
@@ -45,17 +49,21 @@ fun RatingStars(
     emptyColor: Color = MaterialTheme.colorScheme.surfaceVariant
 ) {
     val ratingLabels = listOf(
-        "Not Rated",
-        "Liked",
-        "Good",
-        "Great",
-        "Loved",
-        "Absolute Favorite"
+        stringResource(R.string.rating_not_rated),
+        stringResource(R.string.rating_liked),
+        stringResource(R.string.rating_good),
+        stringResource(R.string.rating_great),
+        stringResource(R.string.rating_loved),
+        stringResource(R.string.rating_absolute_favorite)
     )
     
+    val unknownRatingLabel = stringResource(R.string.rating_unknown)
+    val label = ratingLabels.getOrNull(rating) ?: unknownRatingLabel
+    val accessibilityDescription = stringResource(R.string.rating_stars_desc, label, rating)
+
     Row(
         modifier = modifier.semantics {
-            contentDescription = "${ratingLabels.getOrNull(rating) ?: "Unknown"} - $rating stars"
+            contentDescription = accessibilityDescription
         },
         horizontalArrangement = Arrangement.spacedBy(4.dp)
     ) {
@@ -83,7 +91,7 @@ fun RatingStars(
             
             Icon(
                 imageVector = if (isFilled) MaterialSymbolIcon("star", filled = true) else MaterialSymbolIcon("star"),
-                contentDescription = "${starRating} stars",
+                contentDescription = stringResource(R.string.rating_stars_count, starRating),
                 tint = starColor,
                 modifier = Modifier
                     .size(starSize)
@@ -136,29 +144,29 @@ fun RatingStarsDisplay(
 /**
  * Get rating label based on rating value
  */
-fun getRatingLabel(rating: Int): String {
+fun getRatingLabel(context: Context, rating: Int): String {
     return when (rating) {
-        0 -> "Not Rated"
-        1 -> "Liked"
-        2 -> "Good"
-        3 -> "Great"
-        4 -> "Loved"
-        5 -> "Absolute Favorite"
-        else -> "Unknown"
+        0 -> context.getString(R.string.rating_not_rated)
+        1 -> context.getString(R.string.rating_liked)
+        2 -> context.getString(R.string.rating_good)
+        3 -> context.getString(R.string.rating_great)
+        4 -> context.getString(R.string.rating_loved)
+        5 -> context.getString(R.string.rating_absolute_favorite)
+        else -> context.getString(R.string.rating_unknown)
     }
 }
 
 /**
  * Get rating description for accessibility
  */
-fun getRatingDescription(rating: Int): String {
+fun getRatingDescription(context: Context, rating: Int): String {
     return when (rating) {
-        0 -> "No rating"
-        1 -> "Liked - Good for occasional listening"
-        2 -> "Good - Solid track"
-        3 -> "Great - Really enjoying this one"
-        4 -> "Loved - One of my favorites"
-        5 -> "Absolute Favorite - Top tier track"
-        else -> "Unknown rating"
+        0 -> context.getString(R.string.rating_desc_not_rated)
+        1 -> context.getString(R.string.rating_desc_liked)
+        2 -> context.getString(R.string.rating_desc_good)
+        3 -> context.getString(R.string.rating_desc_great)
+        4 -> context.getString(R.string.rating_desc_loved)
+        5 -> context.getString(R.string.rating_desc_absolute_favorite)
+        else -> context.getString(R.string.rating_desc_unknown)
     }
 }

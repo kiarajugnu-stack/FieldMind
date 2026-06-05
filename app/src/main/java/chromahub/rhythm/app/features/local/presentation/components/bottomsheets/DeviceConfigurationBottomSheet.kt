@@ -467,7 +467,7 @@ fun DeviceConfigurationBottomSheet(
                 )
             },
             title = { Text(stringResource(R.string.autoeq_delete_device_title)) },
-            text = { Text("Are you sure you want to delete '${device.name}'? This action cannot be undone.") },
+            text = { Text(stringResource(R.string.deviceconfiguration_delete_confirm, device.name)) },
             confirmButton = {
                 Button(
                     onClick = {
@@ -639,7 +639,7 @@ fun DeviceConfigurationBottomSheet(
                             showImportDialog = false
                             importText = ""
                             importError = null
-                            Toast.makeText(context, "Profile imported: ${profile.name}", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, context.getString(R.string.deviceconfiguration_profile_imported, profile.name), Toast.LENGTH_SHORT).show()
                         } else {
                             importError = "Could not parse EQ settings. Check the format."
                         }

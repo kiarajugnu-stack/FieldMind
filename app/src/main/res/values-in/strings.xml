@@ -3665,4 +3665,70 @@
     <string name="festivethemeexamples_using_app_settings">Menggunakan Pengaturan Aplikasi</string>
     <string name="playback_paused_zero_volume">Pemutaran dijeda karena volume mencapai nol. Naikkan volume untuk melanjutkan mendengarkan.</string>
     <string name="zero_volume_raise_volume">Naikkan Volume</string>
+
+    <!-- New UI strings for translation -->
+    <string name="deviceconfiguration_delete_confirm">Apakah Anda yakin ingin menghapus \'%1$s\'? Tindakan ini tidak dapat dibatalkan.</string>
+    <string name="deviceconfiguration_profile_imported">Profil diimpor: %1$s</string>
+    <string name="drag_to_reorder">Tarik untuk menyusun ulang</string>
+    <string name="artist_artwork_description">Karya seni artis untuk %1$s
+ikon</string>
+    <string name="explorer_item_icon_description">%1$s</string>
+    <string name="song_added_to_blacklist_format">%1$s ditambahkan ke daftar hitam</string>
+    <string name="playlist_import_success">Berhasil mengimpor daftar putar %1$d.\n%2$s\n\nMulai ulang aplikasi untuk menerapkan perubahan.</string>
+    <string name="play_artist">Mainkan %1$s</string>
+    <string name="will_play_next">%1$s akan diputar berikutnya</string>
+    <string name="added_to_queue">%1$s ditambahkan ke antrian</string>
+    <string name="added_to_queue_simple">Ditambahkan ke antrian: %1$s</string>
+    <string name="playing_next_simple">Diputar berikutnya: %1$s</string>
+    <string name="failed_to_request_permission">Gagal meminta izin: %1$s</string>
+    <string name="unexpected_error">Kesalahan tak terduga: %1$s</string>
+    <string name="rating_stars_desc">%1$s - %2$d bintang</string>
+    <string name="rating_stars_count">%1$d bintang</string>
+    <string name="rating_unknown">Tidak Diketahui</string>
+    <string name="album_artwork_description">Karya seni album untuk %1$s</string>
+    <string name="error_fetching_artwork">Kesalahan saat mengambil karya seni: %1$s</string>
+    <string name="edit_lyrics">Edit Lirik</string>
+    <string name="lyrics_settings">Pengaturan Lirik</string>
+    <string name="error_loading_lyrics">Kesalahan saat memuat lirik: %1$s</string>
+    <string name="error_saving_lyrics">Kesalahan saat menyimpan lirik: %1$s</string>
+    <string name="song_metadata_details">%1$s\nArtis: %2$s\nAlbum: %3$s
+Avatar</string>
+    <string name="about_avatar_description">%1$s</string>
+    <string name="crash_log_title">Hancur pada: %1$s</string>
+    <string name="widget_settings_radius_desc">%1$ddp (khusus widget Glance)</string>
+    <string name="equalizer_open_error">Tidak dapat membuka equalizer: %1$s</string>
+    <string name="track_artwork_description">Gambar untuk trek %1$s</string>
+    <string name="playlist_artwork_description">Gambar untuk daftar putar %1$s</string>
+    <string name="play">Mainkan</string>
+    <string name="pause">Jeda</string>
+    <string name="playlist_remove_songs_confirm">Apakah Anda yakin ingin menghapus lagu %1$d dari playlist ini?</string>
+    <string name="rating_not_rated">Tidak Dinilai</string>
+    <string name="rating_liked">Menyukai</string>
+    <string name="rating_good">Bagus</string>
+    <string name="rating_great">Bagus</string>
+    <string name="rating_loved">Dicintai</string>
+    <string name="rating_absolute_favorite">Favorit Mutlak</string>
+    <string name="rating_desc_not_rated">Tidak ada peringkat</string>
+    <string name="rating_desc_liked">Disukai - Cocok untuk didengarkan sesekali</string>
+    <string name="rating_desc_good">Bagus - Trek yang solid</string>
+    <string name="rating_desc_great">Hebat - Sangat menikmati yang ini</string>
+    <string name="rating_desc_loved">Suka - Salah satu favoritku</string>
+    <string name="rating_desc_absolute_favorite">Favorit Mutlak - Lagu tingkat atas</string>
+    <string name="rating_desc_unknown">Peringkat tidak diketahui</string>
+
+    <!-- Settings Toggles / Options Descriptions -->
+    <string name="widget_show_favorite_button_desc">Tampilkan tombol favorit di widget besar</string>
+    <string name="settings_clear_all_logs_desc">Hapus semua laporan kerusakan yang tersimpan</string>
+    <string name="widget_theme_dynamic">Warna Dinamis</string>
+    <string name="widget_theme_dynamic_system">Warna Dinamis (Sistem)</string>
+    <string name="widget_theme_dynamic_desc">Beradaptasi secara dinamis dengan palet wallpaper perangkat dan nada aksen sistem</string>
+    <string name="widget_theme_solid_dark">Gelap pekat</string>
+    <string name="widget_theme_solid_dark_desc">Latar belakang arang datar dan dalam, optimal untuk gaya layar gelap OLED premium</string>
+    <string name="widget_theme_translucent_dark">Tembus Gelap</string>
+    <string name="widget_theme_translucent_dark_desc">Kaca tembus pandang ramping mengambang dengan elegan di atas wallpaper layar utama</string>
+    <string name="widget_theme_solid_purple">Ungu Padat</string>
+    <string name="widget_theme_solid_purple_signature">Ungu Padat (Tanda Tangan)</string>
+    <string name="widget_theme_solid_purple_desc">Latar belakang ungu tua yang khas dengan rona dan highlight aksen yang khas</string>
+    <string name="widget_theme_glance_suffix">%1$s (khusus widget Glance)</string>
+    <string name="unit_dp">%1$ddp</string>
 </resources>

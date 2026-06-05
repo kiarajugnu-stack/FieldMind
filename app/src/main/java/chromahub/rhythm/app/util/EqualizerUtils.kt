@@ -57,7 +57,7 @@ object EqualizerUtils {
             false
         } catch (e: Exception) {
             Log.e(TAG, "Error opening system equalizer", e)
-            Toast.makeText(context, "Could not open equalizer: ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, context.getString(R.string.equalizer_open_error, e.localizedMessage ?: ""), Toast.LENGTH_SHORT).show()
             false
         }
     }

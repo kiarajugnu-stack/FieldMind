@@ -3665,4 +3665,70 @@
     <string name="festivethemeexamples_using_app_settings">Utilizzo delle impostazioni dell\'app</string>
     <string name="playback_paused_zero_volume">La riproduzione è stata messa in pausa perché il volume ha raggiunto lo zero. Alzare il volume per riprendere l\'ascolto.</string>
     <string name="zero_volume_raise_volume">Alza il volume</string>
+
+    <!-- New UI strings for translation -->
+    <string name="deviceconfiguration_delete_confirm">Sei sicuro di voler eliminare \'%1$s\'? Questa azione non può essere annullata.</string>
+    <string name="deviceconfiguration_profile_imported">Profilo importato: %1$s</string>
+    <string name="drag_to_reorder">Trascina per riordinare</string>
+    <string name="artist_artwork_description">Opere d\'arte dell\'artista per %1$s
+Icona</string>
+    <string name="explorer_item_icon_description">%1$s</string>
+    <string name="song_added_to_blacklist_format">%1$s aggiunto alla lista nera</string>
+    <string name="playlist_import_success">Playlist %1$d importate con successo.\n%2$s\n\nRiavvia l\'app per applicare le modifiche.</string>
+    <string name="play_artist">Riproduci %1$s</string>
+    <string name="will_play_next">%1$s verrà riprodotto successivamente</string>
+    <string name="added_to_queue">%1$s aggiunto alla coda</string>
+    <string name="added_to_queue_simple">Aggiunto alla coda: %1$s</string>
+    <string name="playing_next_simple">Riproduzione successiva: %1$s</string>
+    <string name="failed_to_request_permission">Impossibile richiedere l\'autorizzazione: %1$s</string>
+    <string name="unexpected_error">Errore imprevisto: %1$s</string>
+    <string name="rating_stars_desc">%1$s - %2$d stelle</string>
+    <string name="rating_stars_count">%1$d stelle</string>
+    <string name="rating_unknown">Sconosciuto</string>
+    <string name="album_artwork_description">Copertina dell\'album per %1$s</string>
+    <string name="error_fetching_artwork">Errore durante il recupero dell\'immagine: %1$s</string>
+    <string name="edit_lyrics">Modifica testi</string>
+    <string name="lyrics_settings">Impostazioni dei testi</string>
+    <string name="error_loading_lyrics">Errore durante il caricamento del testo: %1$s</string>
+    <string name="error_saving_lyrics">Errore nel salvataggio del testo: %1$s</string>
+    <string name="song_metadata_details">%1$s\nArtista: %2$s\nAlbum: %3$s
+L\'avatar di</string>
+    <string name="about_avatar_description">%1$s</string>
+    <string name="crash_log_title">Si è bloccato il: %1$s</string>
+    <string name="widget_settings_radius_desc">%1$ddp (solo widget Glance)</string>
+    <string name="equalizer_open_error">Impossibile aprire l\'equalizzatore: %1$s</string>
+    <string name="track_artwork_description">Immagine per la traccia %1$s</string>
+    <string name="playlist_artwork_description">Immagine per playlist %1$s</string>
+    <string name="play">Riproduci</string>
+    <string name="pause">Pausa</string>
+    <string name="playlist_remove_songs_confirm">Sei sicuro di voler rimuovere i brani %1$d da questa playlist?</string>
+    <string name="rating_not_rated">Non valutato</string>
+    <string name="rating_liked">Mi è piaciuto</string>
+    <string name="rating_good">Bene</string>
+    <string name="rating_great">Ottimo</string>
+    <string name="rating_loved">Mi è piaciuto molto</string>
+    <string name="rating_absolute_favorite">Preferito assoluto</string>
+    <string name="rating_desc_not_rated">Nessuna valutazione</string>
+    <string name="rating_desc_liked">Piaciuto - Buono per l\'ascolto occasionale</string>
+    <string name="rating_desc_good">Buono: traccia solida</string>
+    <string name="rating_desc_great">Fantastico - Mi sto davvero divertendo</string>
+    <string name="rating_desc_loved">Adorato - Uno dei miei preferiti</string>
+    <string name="rating_desc_absolute_favorite">Preferito assoluto: traccia di livello superiore</string>
+    <string name="rating_desc_unknown">Valutazione sconosciuta</string>
+
+    <!-- Settings Toggles / Options Descriptions -->
+    <string name="widget_show_favorite_button_desc">Visualizza l\'attivazione/disattivazione dei preferiti sui widget di grandi dimensioni</string>
+    <string name="settings_clear_all_logs_desc">Rimuovi tutti i rapporti sugli arresti anomali memorizzati</string>
+    <string name="widget_theme_dynamic">Colore dinamico</string>
+    <string name="widget_theme_dynamic_system">Colore dinamico (Sistema)</string>
+    <string name="widget_theme_dynamic_desc">Si adatta dinamicamente alla tavolozza degli sfondi del dispositivo e ai toni accentati del sistema</string>
+    <string name="widget_theme_solid_dark">Solido scuro</string>
+    <string name="widget_theme_solid_dark_desc">Fondale color carbone piatto e profondo, ottimale per lo stile premium dello schermo scuro OLED</string>
+    <string name="widget_theme_translucent_dark">Traslucido scuro</string>
+    <string name="widget_theme_translucent_dark_desc">Elegante vetro traslucido che fluttua elegantemente sugli sfondi della schermata iniziale</string>
+    <string name="widget_theme_solid_purple">Viola solido</string>
+    <string name="widget_theme_solid_purple_signature">Viola solido (Firma)</string>
+    <string name="widget_theme_solid_purple_desc">Fondale viola intenso con accenti e riflessi distintivi</string>
+    <string name="widget_theme_glance_suffix">%1$s (solo widget Glance)</string>
+    <string name="unit_dp">%1$ddp</string>
 </resources>

@@ -329,7 +329,7 @@ fun LyricsEditorBottomSheet(
                     }
                 } catch (e: Exception) {
                     Log.e("LyricsEditor", "Error loading lyrics file", e)
-                    Toast.makeText(context, "Error loading lyrics: ${e.message}", Toast.LENGTH_LONG).show()
+                    Toast.makeText(context, context.getString(R.string.error_loading_lyrics, e.message ?: ""), Toast.LENGTH_LONG).show()
                 }
             }
         }
@@ -369,7 +369,7 @@ fun LyricsEditorBottomSheet(
                 onDismiss()
             } catch (e: Exception) {
                 Log.e("LyricsEditor", "Error saving lyrics file", e)
-                Toast.makeText(context, "Error saving lyrics: ${e.message}", Toast.LENGTH_LONG).show()
+                Toast.makeText(context, context.getString(R.string.error_saving_lyrics, e.message ?: ""), Toast.LENGTH_LONG).show()
             }
         }
     }

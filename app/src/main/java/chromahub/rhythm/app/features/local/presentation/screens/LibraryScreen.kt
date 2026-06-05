@@ -1677,7 +1677,7 @@ fun LibraryScreen(
             title = { Text(stringResource(R.string.import_complete_title)) },
             text = {
                 val (count, message) = importResult!!
-                Text("Successfully imported $count playlists.\n$message\n\nRestart the app to apply changes.")
+                Text(stringResource(R.string.playlist_import_success, count, message))
             },
             confirmButton = {
                 Button(onClick = {
@@ -4998,7 +4998,7 @@ private fun ArtistGridCard(
                         ) {
                             Icon(
                                 imageVector = RhythmIcons.Play,
-                                contentDescription = "Play ${artist.name}",
+                                contentDescription = stringResource(R.string.play_artist, artist.name),
                                 tint = MaterialTheme.colorScheme.onPrimary,
                                 modifier = Modifier.size(24.dp)
                             )
@@ -5205,7 +5205,7 @@ private fun ArtistListCard(
             ) {
                 Icon(
                     imageVector = RhythmIcons.Play,
-                    contentDescription = "Play ${artist.name}",
+                    contentDescription = stringResource(R.string.play_artist, artist.name),
                     modifier = Modifier.size(24.dp)
                 )
             }

@@ -1000,7 +1000,7 @@ fun UniversalSearchScreen(
                     handleAction("LOCAL") {
                         if (isLocal) {
                             appSettings.addToBlacklist((songObj as Song).id)
-                            Toast.makeText(context, "${(songObj as Song).title} added to blacklist", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, context.getString(R.string.song_added_to_blacklist_format, (songObj as Song).title), Toast.LENGTH_SHORT).show()
                         }
                     }
                     showSongOptionsSheet = false
@@ -1060,13 +1060,13 @@ fun UniversalSearchScreen(
                                     ).build()
                                     writePermissionLauncher.launch(intentSenderRequest)
                                 } catch (e: Exception) {
-                                    Toast.makeText(context, "Failed to request permission: ${e.message}", Toast.LENGTH_LONG).show()
+                                    Toast.makeText(context, context.getString(R.string.failed_to_request_permission, e.message ?: ""), Toast.LENGTH_LONG).show()
                                     localViewModel.cancelPendingMetadataWrite()
                                 }
                             }
                         )
                     } catch (e: Exception) {
-                        Toast.makeText(context, "Unexpected error: ${e.message}", Toast.LENGTH_LONG).show()
+                        Toast.makeText(context, context.getString(R.string.unexpected_error, e.message ?: ""), Toast.LENGTH_LONG).show()
                         android.util.Log.w("UniversalSearchScreen", "Metadata update failed for song: ${selectedSongForInfo!!.title}", e)
                     }
                 },

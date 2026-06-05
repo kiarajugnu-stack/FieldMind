@@ -3665,4 +3665,69 @@
     <string name="festivethemeexamples_using_app_settings">Использование настроек приложения</string>
     <string name="playback_paused_zero_volume">Воспроизведение было приостановлено, поскольку громкость достигла нуля. Увеличьте громкость, чтобы возобновить прослушивание.</string>
     <string name="zero_volume_raise_volume">Увеличение громкости</string>
+
+    <!-- New UI strings for translation -->
+    <string name="deviceconfiguration_delete_confirm">Вы уверены, что хотите удалить «%1$s»? Это действие невозможно отменить.</string>
+    <string name="deviceconfiguration_profile_imported">Импортирован профиль: %1$s</string>
+    <string name="drag_to_reorder">Перетащите, чтобы изменить порядок</string>
+    <string name="artist_artwork_description">Работа художника для %1$s
+Значок</string>
+    <string name="explorer_item_icon_description">%1$s</string>
+    <string name="song_added_to_blacklist_format">%1$s добавлен в черный список</string>
+    <string name="playlist_import_success">Плейлисты %1$d успешно импортированы.\n%2$s\n\nПерезапустите приложение, чтобы применить изменения.</string>
+    <string name="play_artist">Воспроизвести %1$s</string>
+    <string name="will_play_next">%1$s будет играть следующим</string>
+    <string name="added_to_queue">%1$s добавлен в очередь</string>
+    <string name="added_to_queue_simple">Добавлен в очередь: %1$s</string>
+    <string name="playing_next_simple">Следующий играет: %1$s</string>
+    <string name="failed_to_request_permission">Не удалось запросить разрешение: %1$s</string>
+    <string name="unexpected_error">Непредвиденная ошибка: %1$s</string>
+    <string name="rating_stars_desc">%1$s - %2$d звезд</string>
+    <string name="rating_stars_count">%1$d звезд</string>
+    <string name="rating_unknown">Неизвестно</string>
+    <string name="album_artwork_description">Обложка альбома %1$s</string>
+    <string name="error_fetching_artwork">Ошибка при получении изображения: %1$s.</string>
+    <string name="edit_lyrics">Редактировать текст</string>
+    <string name="lyrics_settings">Настройки текста</string>
+    <string name="error_loading_lyrics">Ошибка при загрузке текста: %1$s.</string>
+    <string name="error_saving_lyrics">Ошибка при сохранении текста: %1$s.</string>
+    <string name="song_metadata_details">%1$s\nИсполнитель: %2$s\nАльбом: %3$s</string>
+    <string name="about_avatar_description">аватар %1$s</string>
+    <string name="crash_log_title">Сбой: %1$s</string>
+    <string name="widget_settings_radius_desc">%1$ddp (только виджеты Glance)</string>
+    <string name="equalizer_open_error">Не удалось открыть эквалайзер: %1$s</string>
+    <string name="track_artwork_description">Изображение для трека %1$s</string>
+    <string name="playlist_artwork_description">Изображение для плейлиста %1$s</string>
+    <string name="play">Воспроизвести</string>
+    <string name="pause">Пауза</string>
+    <string name="playlist_remove_songs_confirm">Вы уверены, что хотите удалить песни %1$d из этого плейлиста?</string>
+    <string name="rating_not_rated">Без рейтинга</string>
+    <string name="rating_liked">Понравилось</string>
+    <string name="rating_good">Хорошо</string>
+    <string name="rating_great">Отлично</string>
+    <string name="rating_loved">Очень понравилось</string>
+    <string name="rating_absolute_favorite">Абсолютный фаворит</string>
+    <string name="rating_desc_not_rated">Нет рейтинга</string>
+    <string name="rating_desc_liked">Понравилось — подходит для периодического прослушивания.</string>
+    <string name="rating_desc_good">Хорошо – сплошной трек</string>
+    <string name="rating_desc_great">Отлично! Мне очень нравится.</string>
+    <string name="rating_desc_loved">Очень понравился — один из моих любимых</string>
+    <string name="rating_desc_absolute_favorite">Абсолютный фаворит — трек высшего уровня</string>
+    <string name="rating_desc_unknown">Неизвестный рейтинг</string>
+
+    <!-- Settings Toggles / Options Descriptions -->
+    <string name="widget_show_favorite_button_desc">Отображение избранного переключателя на больших виджетах</string>
+    <string name="settings_clear_all_logs_desc">Удалить все сохраненные отчеты о сбоях</string>
+    <string name="widget_theme_dynamic">Динамический цвет</string>
+    <string name="widget_theme_dynamic_system">Динамический цвет (система)</string>
+    <string name="widget_theme_dynamic_desc">Динамически адаптируется к палитре обоев устройства и тонам акцента системы.</string>
+    <string name="widget_theme_solid_dark">Сплошной темный</string>
+    <string name="widget_theme_solid_dark_desc">Глубокий плоский угольный фон, оптимальный для оформления темного OLED-экрана премиум-класса.</string>
+    <string name="widget_theme_translucent_dark">Полупрозрачный темный</string>
+    <string name="widget_theme_translucent_dark_desc">Гладкое полупрозрачное стекло элегантно парит над обоями рабочего экрана</string>
+    <string name="widget_theme_solid_purple">Сплошной фиолетовый</string>
+    <string name="widget_theme_solid_purple_signature">Сплошной фиолетовый (подпись)</string>
+    <string name="widget_theme_solid_purple_desc">Фирменный глубокий фиолетовый фон с фирменными акцентными оттенками и бликами.</string>
+    <string name="widget_theme_glance_suffix">%1$s (только виджеты Glance)</string>
+    <string name="unit_dp">%1$ddp</string>
 </resources>

@@ -3665,4 +3665,72 @@
     <string name="festivethemeexamples_using_app_settings">استخدام إعدادات التطبيق</string>
     <string name="playback_paused_zero_volume">تم إيقاف التشغيل مؤقتًا لأن مستوى الصوت وصل إلى الصفر. ارفع مستوى الصوت لاستئناف الاستماع.</string>
     <string name="zero_volume_raise_volume">رفع مستوى الصوت</string>
+
+    <!-- New UI strings for translation -->
+    <string name="deviceconfiguration_delete_confirm">هل أنت متأكد من أنك تريد حذف \"%1$s\"؟ لا يمكن التراجع عن هذا الإجراء.</string>
+    <string name="deviceconfiguration_profile_imported">الملف الشخصي الذي تم استيراده: %1$s</string>
+    <string name="drag_to_reorder">اسحب لإعادة الترتيب</string>
+    <string name="artist_artwork_description">عمل فني للفنان %1$s</string>
+    <string name="explorer_item_icon_description">%1$s أيقونة
+تمت إضافة</string>
+    <string name="song_added_to_blacklist_format">%1$s إلى القائمة السوداء</string>
+    <string name="playlist_import_success">تم استيراد قوائم التشغيل %1$d بنجاح.\n%2$s\n\nأعد تشغيل التطبيق لتطبيق التغييرات.</string>
+    <string name="play_artist">تشغيل %1$s</string>
+    <string name="will_play_next">%1$s سيتم تشغيله بعد ذلك
+تمت إضافة</string>
+    <string name="added_to_queue">%1$s إلى قائمة الانتظار
+تمت إضافة</string>
+    <string name="added_to_queue_simple">إلى قائمة الانتظار: %1$s</string>
+    <string name="playing_next_simple">التشغيل التالي: %1$s</string>
+    <string name="failed_to_request_permission">فشل طلب الإذن: %1$s</string>
+    <string name="unexpected_error">خطأ غير متوقع: %1$s</string>
+    <string name="rating_stars_desc">%1$s - %2$d نجوم</string>
+    <string name="rating_stars_count">%1$d نجوم</string>
+    <string name="rating_unknown">غير معروف</string>
+    <string name="album_artwork_description">العمل الفني للألبوم لـ %1$s</string>
+    <string name="error_fetching_artwork">حدث خطأ أثناء جلب العمل الفني: %1$s</string>
+    <string name="edit_lyrics">تحرير كلمات الأغاني</string>
+    <string name="lyrics_settings">إعدادات كلمات الأغاني</string>
+    <string name="error_loading_lyrics">حدث خطأ أثناء تحميل كلمات الأغاني: %1$s</string>
+    <string name="error_saving_lyrics">خطأ في حفظ كلمات الأغاني: %1$s</string>
+    <string name="song_metadata_details">%1$s\nالفنان: %2$s\nالألبوم: %3$s
+الصورة الرمزية</string>
+    <string name="about_avatar_description">%1$s</string>
+    <string name="crash_log_title">تعطلت في: %1$s</string>
+    <string name="widget_settings_radius_desc">%1$ddp (Glance الأدوات فقط)</string>
+    <string name="equalizer_open_error">لا يمكن فتح المعادل: %1$s</string>
+    <string name="track_artwork_description">صورة للمسار %1$s</string>
+    <string name="playlist_artwork_description">صورة لقائمة التشغيل %1$s</string>
+    <string name="play">العب</string>
+    <string name="pause">وقفة</string>
+    <string name="playlist_remove_songs_confirm">هل أنت متأكد من أنك تريد إزالة أغاني %1$d من قائمة التشغيل هذه؟</string>
+    <string name="rating_not_rated">غير مصنف</string>
+    <string name="rating_liked">أعجبني</string>
+    <string name="rating_good">جيد</string>
+    <string name="rating_great">عظيم</string>
+    <string name="rating_loved">أحببت</string>
+    <string name="rating_absolute_favorite">المفضلة المطلقة</string>
+    <string name="rating_desc_not_rated">لا يوجد تقييم</string>
+    <string name="rating_desc_liked">أعجبني - جيد للاستماع من حين لآخر</string>
+    <string name="rating_desc_good">جيد - مسار قوي</string>
+    <string name="rating_desc_great">رائع - أستمتع حقًا بهذا</string>
+    <string name="rating_desc_loved">أحببت - واحدة من المفضلة لدي</string>
+    <string name="rating_desc_absolute_favorite">المفضلة المطلقة - المسار الأعلى</string>
+    <string name="rating_desc_unknown">تقييم غير معروف</string>
+
+    <!-- Settings Toggles / Options Descriptions -->
+    <string name="widget_show_favorite_button_desc">عرض التبديل المفضل على الأدوات الكبيرة</string>
+    <string name="settings_clear_all_logs_desc">إزالة كافة تقارير الأعطال المخزنة</string>
+    <string name="widget_theme_dynamic">اللون الديناميكي</string>
+    <string name="widget_theme_dynamic_system">اللون الديناميكي (النظام)</string>
+    <string name="widget_theme_dynamic_desc">يتكيف ديناميكيًا مع لوحة خلفية الجهاز ونغمات لهجة النظام</string>
+    <string name="widget_theme_solid_dark">داكن متين</string>
+    <string name="widget_theme_solid_dark_desc">خلفية فحم مسطحة وعميقة، مثالية لتصميم شاشة OLED الداكنة المتميزة</string>
+    <string name="widget_theme_translucent_dark">داكن شفاف</string>
+    <string name="widget_theme_translucent_dark_desc">زجاج شفاف أملس يطفو بأناقة فوق خلفيات الشاشة الرئيسية</string>
+    <string name="widget_theme_solid_purple">أرجواني خالص</string>
+    <string name="widget_theme_solid_purple_signature">أرجواني خالص (التوقيع)</string>
+    <string name="widget_theme_solid_purple_desc">خلفية بنفسجية عميقة مميزة مع صبغات وإبرازات مميزة</string>
+    <string name="widget_theme_glance_suffix">%1$s (Glance الأدوات فقط)</string>
+    <string name="unit_dp">%1$ddp</string>
 </resources>

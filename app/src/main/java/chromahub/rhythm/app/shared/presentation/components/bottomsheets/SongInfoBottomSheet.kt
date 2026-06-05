@@ -2351,7 +2351,7 @@ private fun EditSongSheet(
                                                     }
                                                 } catch (e: Exception) {
                                                     withContext(Dispatchers.Main) {
-                                                        Toast.makeText(context, "Error fetching artwork: ${e.message}", Toast.LENGTH_LONG).show()
+                                                        Toast.makeText(context, context.getString(R.string.error_fetching_artwork, e.message ?: ""), Toast.LENGTH_LONG).show()
                                                     }
                                                 } finally {
                                                     withContext(Dispatchers.Main) {
@@ -2674,7 +2674,7 @@ private fun EditSongSheet(
                                                 }
                                             } catch (e: Exception) {
                                                 withContext(Dispatchers.Main) {
-                                                    Toast.makeText(context, "Error fetching artwork: ${e.message}", Toast.LENGTH_LONG).show()
+                                                    Toast.makeText(context, context.getString(R.string.error_fetching_artwork, e.message ?: ""), Toast.LENGTH_LONG).show()
                                                 }
                                             } finally {
                                                 withContext(Dispatchers.Main) {

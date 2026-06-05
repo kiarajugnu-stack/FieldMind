@@ -449,7 +449,7 @@ fun AlbumBottomSheet(
                                                         )
                                                     )
                                                     .build(),
-                                                contentDescription = "Album artwork for ${album.title}",
+                                                contentDescription = stringResource(R.string.album_artwork_description, album.title),
                                                 contentScale = ContentScale.Crop,
                                                 modifier = Modifier.fillMaxSize()
                                             )
@@ -1247,7 +1247,7 @@ fun AlbumBottomSheet(
                                                         )
                                                     )
                                                     .build(),
-                                                contentDescription = "Album artwork for ${album.title}",
+                                                contentDescription = stringResource(R.string.album_artwork_description, album.title),
                                                 contentScale = ContentScale.Crop,
                                                 modifier = Modifier.fillMaxSize()
                                             )

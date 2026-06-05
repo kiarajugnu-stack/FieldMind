@@ -392,7 +392,7 @@ fun HomeScreen(
             onAddToBlacklist = { song ->
                 val appSettings = AppSettings.getInstance(context)
                 appSettings.addToBlacklist(song.id)
-                Toast.makeText(context, "${song.title} added to blacklist", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, context.getString(R.string.song_added_to_blacklist_format, song.title), Toast.LENGTH_SHORT).show()
             },
             currentSong = currentSong,
             isPlaying = isPlaying

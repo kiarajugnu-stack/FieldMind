@@ -344,7 +344,8 @@
     <string name="settings_spotify_client_secret_placeholder">Su secreto de cliente Spotify</string>
     <string name="settings_spotify_test_connection">Conexión de prueba</string>
     <string name="settings_spotify_testing">Probando…</string>
-    <string name="settings_spotify_error">Error: %1$s</string>
+    <string name="settings_spotify_error">Error: %1$s
+Error</string>
     <string name="settings_spotify_instructions">Para obtener sus credenciales Spotify API:\n• Vaya a desarrollador.spotify.com\n• Cree una nueva aplicación\n• Copie el ID del cliente y el secreto del cliente</string>
     
     <!-- Settings - About -->
@@ -922,7 +923,8 @@ Error</string>
     <string name="onboarding_integrations_desc">Mejore su experiencia auditiva conectándose a servicios externos. Obtén carátulas de álbumes, letras, explora tus obras y comparte lo que estás escuchando.</string>
     <string name="onboarding_integrations_apis">API Servicios</string>
     <string name="onboarding_integrations_social">Funciones sociales</string>
-    <string name="onboarding_integration_deezer">Deezer</string>
+    <string name="onboarding_integration_deezer">Deezer
+Error</string>
     <string name="onboarding_integration_deezer_desc">Obtenga metadatos y carátulas de álbumes de alta calidad</string>
     <string name="onboarding_integration_lrclib">LrcLib
 Error</string>
@@ -1728,7 +1730,8 @@ Error</string>
     
     <!-- Audio Quality Labels -->
     <string name="audio_quality_dolby_atmos">Dolby Atmos</string>
-    <string name="audio_quality_dolby_truehd">Dolby TrueHD</string>
+    <string name="audio_quality_dolby_truehd">Dolby TrueHD
+Error</string>
     <string name="audio_quality_dolby_digital">Dolby Digital
 Error</string>
     <string name="audio_quality_apple_lossless">Apple sin pérdidas</string>
@@ -2589,7 +2592,8 @@ Error</string>
     <string name="settings_version_prefix">V %1$s</string>
     <string name="settings_version_format">Versión %1$s</string>
     <string name="settings_app_version">v%1$s</string>
-    <string name="settings_github_username">\@%1$s</string>
+    <string name="settings_github_username">\@%1$s
+Error</string>
     <string name="settings_readable_size">%1$s
 Error</string>
     <string name="settings_cache_size_2gb">2GB</string>
@@ -3685,4 +3689,69 @@ Error</string>
     <string name="festivethemeexamples_using_app_settings">Uso de la configuración de la aplicación</string>
     <string name="playback_paused_zero_volume">La reproducción se pausó porque el volumen llegó a cero. Suba el volumen para continuar escuchando.</string>
     <string name="zero_volume_raise_volume">Subir volumen</string>
+
+    <!-- New UI strings for translation -->
+    <string name="deviceconfiguration_delete_confirm">¿Está seguro de que desea eliminar \'%1$s\'? Esta acción no se puede deshacer.</string>
+    <string name="deviceconfiguration_profile_imported">Perfil importado: %1$s</string>
+    <string name="drag_to_reorder">Arrastra para reordenar</string>
+    <string name="artist_artwork_description">Obra de arte del artista para %1$s</string>
+    <string name="explorer_item_icon_description">%1$s icono</string>
+    <string name="song_added_to_blacklist_format">%1$s agregado a la lista negra</string>
+    <string name="playlist_import_success">Listas de reproducción %1$d importadas correctamente.\n%2$s\n\nReinicie la aplicación para aplicar los cambios.</string>
+    <string name="play_artist">Reproducir %1$s</string>
+    <string name="will_play_next">%1$s se reproducirá a continuación</string>
+    <string name="added_to_queue">%1$s agregado a la cola</string>
+    <string name="added_to_queue_simple">Agregado a la cola: %1$s</string>
+    <string name="playing_next_simple">Reproduciendo a continuación: %1$s</string>
+    <string name="failed_to_request_permission">No se pudo solicitar permiso: %1$s</string>
+    <string name="unexpected_error">Error inesperado: %1$s</string>
+    <string name="rating_stars_desc">%1$s - %2$d estrellas</string>
+    <string name="rating_stars_count">%1$d estrellas</string>
+    <string name="rating_unknown">Desconocido</string>
+    <string name="album_artwork_description">Carátula del álbum para %1$s</string>
+    <string name="error_fetching_artwork">Error al recuperar la obra de arte: %1$s</string>
+    <string name="edit_lyrics">Editar Letra</string>
+    <string name="lyrics_settings">Configuración de letras</string>
+    <string name="error_loading_lyrics">Error al cargar letra: %1$s</string>
+    <string name="error_saving_lyrics">Error al guardar la letra: %1$s</string>
+    <string name="song_metadata_details">%1$s\nArtista: %2$s\nÁlbum: %3$s
+Avatar de</string>
+    <string name="about_avatar_description">%1$s</string>
+    <string name="crash_log_title">se estrelló en: %1$s</string>
+    <string name="widget_settings_radius_desc">%1$ddp (solo widgets Glance)</string>
+    <string name="equalizer_open_error">No se pudo abrir el ecualizador: %1$s</string>
+    <string name="track_artwork_description">Imagen de la pista %1$s</string>
+    <string name="playlist_artwork_description">Imagen para lista de reproducción %1$s</string>
+    <string name="play">Reproducir</string>
+    <string name="pause">Pausa</string>
+    <string name="playlist_remove_songs_confirm">¿Estás seguro de que deseas eliminar %1$d canciones de esta lista de reproducción?</string>
+    <string name="rating_not_rated">No clasificado</string>
+    <string name="rating_liked">Me gustó</string>
+    <string name="rating_good">Bueno</string>
+    <string name="rating_great">Genial</string>
+    <string name="rating_loved">Me encantó</string>
+    <string name="rating_absolute_favorite">Favorito absoluto</string>
+    <string name="rating_desc_not_rated">Sin calificación</string>
+    <string name="rating_desc_liked">Me gustó: bueno para escuchar ocasionalmente</string>
+    <string name="rating_desc_good">Bueno - Pista sólida</string>
+    <string name="rating_desc_great">Genial. Realmente lo disfruto.</string>
+    <string name="rating_desc_loved">Me encantó - Uno de mis favoritos</string>
+    <string name="rating_desc_absolute_favorite">Favorito absoluto: pista de primer nivel</string>
+    <string name="rating_desc_unknown">Clasificación desconocida</string>
+
+    <!-- Settings Toggles / Options Descriptions -->
+    <string name="widget_show_favorite_button_desc">Mostrar alternancia de favoritos en widgets grandes</string>
+    <string name="settings_clear_all_logs_desc">Eliminar todos los informes de fallos almacenados</string>
+    <string name="widget_theme_dynamic">Color dinámico</string>
+    <string name="widget_theme_dynamic_system">Color dinámico (Sistema)</string>
+    <string name="widget_theme_dynamic_desc">Se adapta dinámicamente a la paleta de fondos de pantalla del dispositivo y a los tonos de acento del sistema.</string>
+    <string name="widget_theme_solid_dark">Sólido Oscuro</string>
+    <string name="widget_theme_solid_dark_desc">Fondo profundo y plano en color carbón, óptimo para un estilo premium de pantalla oscura OLED</string>
+    <string name="widget_theme_translucent_dark">Translúcido Oscuro</string>
+    <string name="widget_theme_translucent_dark_desc">Vidrio translúcido elegante flotando elegantemente sobre los fondos de pantalla de la pantalla de inicio</string>
+    <string name="widget_theme_solid_purple">Púrpura sólido</string>
+    <string name="widget_theme_solid_purple_signature">Púrpura sólido (Firma)</string>
+    <string name="widget_theme_solid_purple_desc">Fondo violeta intenso característico con matices y reflejos característicos</string>
+    <string name="widget_theme_glance_suffix">%1$s (solo widgets Glance)</string>
+    <string name="unit_dp">%1$ddp</string>
 </resources>

@@ -553,7 +553,7 @@ fun FullScreenLyricsView(
                         ) {
                             Icon(
                                 imageVector = MaterialSymbolIcon("edit"),
-                                contentDescription = "Edit Lyrics",
+                                contentDescription = stringResource(R.string.edit_lyrics),
                                 modifier = Modifier.size(22.dp)
                             )
                         }
@@ -568,7 +568,7 @@ fun FullScreenLyricsView(
                         ) {
                             Icon(
                                 imageVector = MaterialSymbolIcon("settings"),
-                                contentDescription = "Lyrics Settings",
+                                contentDescription = stringResource(R.string.lyrics_settings),
                                 modifier = Modifier.size(22.dp)
                             )
                         }

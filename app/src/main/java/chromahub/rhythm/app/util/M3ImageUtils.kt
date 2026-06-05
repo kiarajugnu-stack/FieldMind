@@ -26,6 +26,8 @@ import chromahub.rhythm.app.shared.presentation.components.common.PlaylistPlaceh
 import chromahub.rhythm.app.shared.presentation.components.common.TrackPlaceholder
 import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveShapeTarget
 import chromahub.rhythm.app.shared.presentation.components.common.rememberExpressiveShapeFor
+import androidx.compose.ui.res.stringResource
+import chromahub.rhythm.app.R
 
 /**
  * Modern Material 3 style utilities for image handling using Compose and Coil
@@ -114,7 +116,7 @@ object M3ImageUtils {
         
         M3MediaImage(
             data = imageUrl,
-            contentDescription = "Album art for $albumName",
+            contentDescription = stringResource(R.string.album_artwork_description, albumName ?: ""),
             modifier = modifier,
             shape = finalShape,
             type = M3PlaceholderType.ALBUM,
@@ -146,7 +148,7 @@ object M3ImageUtils {
         
         M3MediaImage(
             data = imageUrl,
-            contentDescription = "Image of artist $artistName",
+            contentDescription = stringResource(R.string.artist_artwork_description, artistName ?: ""),
             modifier = modifier,
             shape = finalShape,
             type = M3PlaceholderType.ARTIST,
@@ -178,7 +180,7 @@ object M3ImageUtils {
         
         M3MediaImage(
             data = imageUrl,
-            contentDescription = "Image for track $trackName",
+            contentDescription = stringResource(R.string.track_artwork_description, trackName ?: ""),
             modifier = modifier,
             shape = finalShape,
             type = M3PlaceholderType.TRACK,
@@ -210,7 +212,7 @@ object M3ImageUtils {
         
         M3MediaImage(
             data = imageUrl,
-            contentDescription = "Image for playlist $playlistName",
+            contentDescription = stringResource(R.string.playlist_artwork_description, playlistName ?: ""),
             modifier = modifier,
             shape = finalShape,
             type = M3PlaceholderType.PLAYLIST,

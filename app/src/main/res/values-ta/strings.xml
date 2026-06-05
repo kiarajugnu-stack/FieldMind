@@ -253,7 +253,8 @@ __FMT0__ இல்</string>
 %1$s உடன்</string>
     <string name="notification_streaming_error_no_internet">இணையம் இல்லை. தொடர்ந்து கேட்க ஆஃப்லைன் பயன்முறைக்கு மாறவும்.
 __FMT0__ உடன்</string>
-    <string name="notification_streaming_error_account_issue">கணக்குச் சிக்கல். தயவுசெய்து மீண்டும் இணைக்கவும்.</string>
+    <string name="notification_streaming_error_account_issue">கணக்குச் சிக்கல். தயவுசெய்து மீண்டும் இணைக்கவும்.
+__FMT1__ தடங்களில்</string>
     
     <!-- Dialogs -->
     <string name="dialog_cleanup_empty_playlists_title">பிளேலிஸ்ட்களை சுத்தம் செய்யவா?</string>
@@ -745,7 +746,8 @@ __FMT1__ தடங்களில்</string>
     <string name="onboarding_full_tour_prompt_tip_3">இங்கு எதுவும் நிரந்தரம் இல்லை. அனைத்து தேர்வுகளும் பின்னர் மாற்றப்படலாம்.</string>
     <string name="onboarding_continue_full_tour">முழு சுற்றுப்பயணத்தைத் தொடரவும்</string>
     <string name="onboarding_finish_now">இப்போது அமைவை முடிக்கவும்</string>
-    <string name="onboarding_step_progress">%1$d of %2$d</string>
+    <string name="onboarding_step_progress">%1$d of %2$d
+%1$d இல்</string>
     <string name="onboarding_advanced_customization">மேம்பட்ட தனிப்பயனாக்கம்</string>
     <string name="onboarding_advanced_customization_desc">தனிப்பயன் வண்ணத் திட்டங்கள், ஆல்பம் கலை வண்ணங்கள் மற்றும் எழுத்துருக்கள்</string>
     
@@ -3733,4 +3735,70 @@ __KW0__ மற்றும் பலவற்றிலிருந்து</str
 ஒலியளவு பூஜ்ஜியத்தை எட்டியதால்</string>
     <string name="playback_paused_zero_volume">பிளேபேக் இடைநிறுத்தப்பட்டது. கேட்பதைத் தொடங்க ஒலியளவை உயர்த்தவும்.</string>
     <string name="zero_volume_raise_volume">ஒலியளவை உயர்த்தவும்</string>
+
+    <!-- New UI strings for translation -->
+    <string name="deviceconfiguration_delete_confirm">\'%1$s\' ஐ நிச்சயமாக நீக்க விரும்புகிறீர்களா? இந்தச் செயலைச் செயல்தவிர்க்க முடியாது.</string>
+    <string name="deviceconfiguration_profile_imported">சுயவிவரம் இறக்குமதி செய்யப்பட்டது: %1$s</string>
+    <string name="drag_to_reorder">மறுவரிசைப்படுத்த இழுக்கவும்
+__FMT0__க்கான</string>
+    <string name="artist_artwork_description">கலைஞர் கலைப்படைப்பு</string>
+    <string name="explorer_item_icon_description">%1$s ஐகான்</string>
+    <string name="song_added_to_blacklist_format">%1$s தடுப்புப்பட்டியலில் சேர்க்கப்பட்டது</string>
+    <string name="playlist_import_success">%1$d பிளேலிஸ்ட்கள் வெற்றிகரமாக இறக்குமதி செய்யப்பட்டன.\n%2$s\n\nமாற்றங்களைப் பயன்படுத்த பயன்பாட்டை மறுதொடக்கம் செய்யவும்.</string>
+    <string name="play_artist">விளையாடு %1$s</string>
+    <string name="will_play_next">%1$s அடுத்து விளையாடும்</string>
+    <string name="added_to_queue">%1$s வரிசையில் சேர்க்கப்பட்டது</string>
+    <string name="added_to_queue_simple">வரிசையில் சேர்க்கப்பட்டது: %1$s</string>
+    <string name="playing_next_simple">அடுத்து விளையாடுகிறது: %1$s</string>
+    <string name="failed_to_request_permission">அனுமதி கோருவதில் தோல்வி: %1$s</string>
+    <string name="unexpected_error">எதிர்பாராத பிழை: %1$s</string>
+    <string name="rating_stars_desc">%1$s - %2$d நட்சத்திரங்கள்</string>
+    <string name="rating_stars_count">%1$d நட்சத்திரங்கள்</string>
+    <string name="rating_unknown">தெரியவில்லை
+__FMT0__க்கான</string>
+    <string name="album_artwork_description">ஆல்பம் கலைப்படைப்பு</string>
+    <string name="error_fetching_artwork">கலைப்படைப்பைப் பெறுவதில் பிழை: %1$s</string>
+    <string name="edit_lyrics">பாடல் வரிகளைத் திருத்து</string>
+    <string name="lyrics_settings">பாடல் வரிகள் அமைப்புகள்</string>
+    <string name="error_loading_lyrics">பாடல் வரிகளை ஏற்றுவதில் பிழை: %1$s</string>
+    <string name="error_saving_lyrics">பாடல் வரிகளைச் சேமிப்பதில் பிழை: %1$s</string>
+    <string name="song_metadata_details">%1$s\nகலைஞர்: %2$s\nஆல்பம்: %3$s</string>
+    <string name="about_avatar_description">%1$s இன் அவதார்</string>
+    <string name="crash_log_title">செயலிழந்தது: %1$s</string>
+    <string name="widget_settings_radius_desc">%1$ddp (Glance விட்ஜெட்டுகள் மட்டும்)</string>
+    <string name="equalizer_open_error">சமநிலையை திறக்க முடியவில்லை: %1$s</string>
+    <string name="track_artwork_description">பாதைக்கான படம் %1$s</string>
+    <string name="playlist_artwork_description">பிளேலிஸ்ட்டிற்கான படம் %1$s</string>
+    <string name="play">விளையாடு</string>
+    <string name="pause">இடைநிறுத்தம்</string>
+    <string name="playlist_remove_songs_confirm">இந்த பிளேலிஸ்ட்டில் இருந்து %1$d பாடல்களை நிச்சயமாக அகற்ற விரும்புகிறீர்களா?</string>
+    <string name="rating_not_rated">மதிப்பிடப்படவில்லை</string>
+    <string name="rating_liked">விரும்பப்பட்டது</string>
+    <string name="rating_good">நல்லது</string>
+    <string name="rating_great">அருமை</string>
+    <string name="rating_loved">நேசித்தேன்</string>
+    <string name="rating_absolute_favorite">முற்றிலும் பிடித்தமானது</string>
+    <string name="rating_desc_not_rated">மதிப்பீடு இல்லை</string>
+    <string name="rating_desc_liked">விரும்பப்பட்டது - அவ்வப்போது கேட்பதற்கு ஏற்றது</string>
+    <string name="rating_desc_good">நல்லது - திடமான பாதை</string>
+    <string name="rating_desc_great">அருமை - இதை மிகவும் ரசிக்கிறேன்</string>
+    <string name="rating_desc_loved">நேசித்தேன் - எனக்குப் பிடித்த ஒன்று</string>
+    <string name="rating_desc_absolute_favorite">முற்றிலும் பிடித்தமானது - மேல் அடுக்கு டிராக்</string>
+    <string name="rating_desc_unknown">அறியப்படாத மதிப்பீடு</string>
+
+    <!-- Settings Toggles / Options Descriptions -->
+    <string name="widget_show_favorite_button_desc">பெரிய விட்ஜெட்களில் பிடித்த நிலைமாற்றத்தைக் காண்பி</string>
+    <string name="settings_clear_all_logs_desc">சேமிக்கப்பட்ட அனைத்து செயலிழப்பு அறிக்கைகளையும் அகற்றவும்</string>
+    <string name="widget_theme_dynamic">டைனமிக் கலர்</string>
+    <string name="widget_theme_dynamic_system">டைனமிக் கலர் (அமைப்பு)</string>
+    <string name="widget_theme_dynamic_desc">சாதன வால்பேப்பர் தட்டு மற்றும் கணினி உச்சரிப்பு டோன்களுக்கு மாறும் வகையில் மாற்றியமைக்கிறது</string>
+    <string name="widget_theme_solid_dark">சாலிட் டார்க்</string>
+    <string name="widget_theme_solid_dark_desc">ஆழமான தட்டையான கரி பின்னணி, பிரீமியம் OLED டார்க் ஸ்கிரீன் ஸ்டைலிங்கிற்கு உகந்தது</string>
+    <string name="widget_theme_translucent_dark">ஒளிஊடுருவக்கூடிய இருண்ட</string>
+    <string name="widget_theme_translucent_dark_desc">முகப்புத் திரை வால்பேப்பர்களுக்கு மேல் நேர்த்தியாக மிதக்கும் நேர்த்தியான ஒளிஊடுருவக்கூடிய கண்ணாடி</string>
+    <string name="widget_theme_solid_purple">திட ஊதா</string>
+    <string name="widget_theme_solid_purple_signature">திட ஊதா (கையொப்பம்)</string>
+    <string name="widget_theme_solid_purple_desc">கையொப்ப உச்சரிப்பு சாயல்கள் மற்றும் சிறப்பம்சங்களுடன் கூடிய ஆழமான ஊதா பின்னணி</string>
+    <string name="widget_theme_glance_suffix">%1$s (Glance விட்ஜெட்டுகள் மட்டும்)</string>
+    <string name="unit_dp">%1$ddp</string>
 </resources>

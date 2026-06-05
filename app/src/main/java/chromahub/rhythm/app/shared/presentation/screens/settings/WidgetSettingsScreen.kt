@@ -112,7 +112,7 @@ fun WidgetSettingsScreen(
                     buildToggleSettingsItem(
                         icon = RhythmIcons.Image,
                         title = stringResource(R.string.onboarding_widget_album_art),
-                        description = "Display album artwork in widget",
+                        description = stringResource(R.string.widget_show_album_art_desc),
                         checked = showAlbumArt,
                         onToggle = {
                             appSettings.setWidgetShowAlbumArt(it)
@@ -122,7 +122,7 @@ fun WidgetSettingsScreen(
                     buildToggleSettingsItem(
                         icon = RhythmIcons.Artist,
                         title = stringResource(R.string.onboarding_widget_artist),
-                        description = "Display artist information",
+                        description = stringResource(R.string.widget_show_artist_desc),
                         checked = showArtist,
                         onToggle = {
                             appSettings.setWidgetShowArtist(it)
@@ -132,7 +132,7 @@ fun WidgetSettingsScreen(
                     buildToggleSettingsItem(
                         icon = RhythmIcons.Album,
                         title = stringResource(R.string.onboarding_widget_album),
-                        description = "Display album information",
+                        description = stringResource(R.string.widget_show_album_desc),
                         checked = showAlbum,
                         onToggle = {
                             appSettings.setWidgetShowAlbum(it)
@@ -142,7 +142,7 @@ fun WidgetSettingsScreen(
                     buildToggleSettingsItem(
                         icon = RhythmIcons.FavoriteFilled,
                         title = stringResource(R.string.widgetsettingsscreen_show_favorite_button),
-                        description = "Display favorite toggle on large widgets",
+                        description = stringResource(R.string.widget_show_favorite_button_desc),
                         checked = showFavoriteButton,
                         onToggle = {
                             appSettings.setWidgetShowFavoriteButton(it)
@@ -167,7 +167,7 @@ fun WidgetSettingsScreen(
                         Material3SettingsItem(
                             icon = MaterialSymbolIcon("rounded_corner"),
                             title = { Text(stringResource(R.string.settings_miniplayer_corner_radius)) },
-                            description = { Text("${cornerRadius}dp (Glance widgets only)") },
+                            description = { Text(stringResource(R.string.widget_settings_radius_desc, cornerRadius)) },
                             trailingContent = {
                                 Icon(
                                     imageVector = RhythmIcons.Forward,
@@ -184,14 +184,13 @@ fun WidgetSettingsScreen(
                             icon = MaterialSymbolIcon("palette"),
                             title = { Text(stringResource(R.string.widgetsettingsscreen_widget_theme)) },
                             description = {
-                                Text(
-                                    when (widgetTheme) {
-                                        1 -> "Solid Dark"
-                                        2 -> "Translucent Dark"
-                                        3 -> "Solid Purple"
-                                        else -> "Dynamic Color"
-                                    } + " (Glance widgets only)"
-                                )
+                                val themeName = when (widgetTheme) {
+                                    1 -> stringResource(R.string.widget_theme_solid_dark)
+                                    2 -> stringResource(R.string.widget_theme_translucent_dark)
+                                    3 -> stringResource(R.string.widget_theme_solid_purple)
+                                    else -> stringResource(R.string.widget_theme_dynamic)
+                                }
+                                Text(stringResource(R.string.widget_theme_glance_suffix, themeName))
                             },
                             trailingContent = {
                                 Icon(
@@ -312,7 +311,7 @@ fun WidgetSettingsScreen(
                                 Text(
                                     modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
                                     style = MaterialTheme.typography.labelLarge,
-                                    text = "${tempRadius}dp",
+                                    text = stringResource(R.string.unit_dp, tempRadius),
                                     overflow = TextOverflow.Ellipsis,
                                     maxLines = 1,
                                     color = MaterialTheme.colorScheme.onSurface
@@ -394,10 +393,10 @@ fun WidgetSettingsScreen(
             }
 
             val themes = listOf(
-                Triple(0, "Dynamic Color (System)", "Adapts dynamically to device wallpaper palette and system accent tones"),
-                Triple(1, "Solid Dark", "Deep flat charcoal backdrop, optimal for premium OLED dark screen styling"),
-                Triple(2, "Translucent Dark", "Sleek translucent glass floating elegantly over home screen wallpapers"),
-                Triple(3, "Solid Purple (Signature)", "Signature deep violet backdrop with signature accent tints and highlights")
+                Triple(0, stringResource(R.string.widget_theme_dynamic_system), stringResource(R.string.widget_theme_dynamic_desc)),
+                Triple(1, stringResource(R.string.widget_theme_solid_dark), stringResource(R.string.widget_theme_solid_dark_desc)),
+                Triple(2, stringResource(R.string.widget_theme_translucent_dark), stringResource(R.string.widget_theme_translucent_dark_desc)),
+                Triple(3, stringResource(R.string.widget_theme_solid_purple_signature), stringResource(R.string.widget_theme_solid_purple_desc))
             )
             
             ModalBottomSheet(

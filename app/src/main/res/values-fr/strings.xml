@@ -2581,7 +2581,8 @@ Version</string>
     <string name="settings_version_prefix">V %1$s</string>
     <string name="settings_version_format">Version %1$s</string>
     <string name="settings_app_version">v%1$s</string>
-    <string name="settings_github_username">\@%1$s</string>
+    <string name="settings_github_username">\@%1$s
+Cache</string>
     <string name="settings_readable_size">%1$s
 Cache</string>
     <string name="settings_cache_size_2gb">2 Go</string>
@@ -2677,7 +2678,7 @@ Cache</string>
     <string name="settings_storage_rebuild_failed">Échec de la reconstruction de la base de données de la salle</string>
 
     <!-- Cache Management -->
-    <string name="settings_cache">Cache</string>
+    <string name="settings_cache">Actions</string>
     <string name="settings_cache_settings">Paramètres du cache</string>
     <string name="settings_cache_clear_on_exit_desc">Effacer automatiquement le cache lorsque vous quittez l\'application</string>
     <string name="settings_cache_actions">Actions de cache</string>
@@ -3678,4 +3679,71 @@ Actions</string>
     <string name="festivethemeexamples_using_app_settings">Utilisation des paramètres de l\'application</string>
     <string name="playback_paused_zero_volume">La lecture a été interrompue car le volume a atteint zéro. Augmentez le volume pour reprendre l\'écoute.</string>
     <string name="zero_volume_raise_volume">Augmenter le volume</string>
+
+    <!-- New UI strings for translation -->
+    <string name="deviceconfiguration_delete_confirm">Etes-vous sûr de vouloir supprimer « %1$s » ? Cette action ne peut pas être annulée.</string>
+    <string name="deviceconfiguration_profile_imported">Profil importé : %1$s</string>
+    <string name="drag_to_reorder">Faites glisser pour réorganiser</string>
+    <string name="artist_artwork_description">Oeuvre d\'artiste pour %1$s
+Icône</string>
+    <string name="explorer_item_icon_description">%1$s</string>
+    <string name="song_added_to_blacklist_format">%1$s ajouté à la liste noire</string>
+    <string name="playlist_import_success">Les listes de lecture %1$d ont été importées avec succès.\n%2$s\n\nRedémarrez l\'application pour appliquer les modifications.</string>
+    <string name="play_artist">Lire %1$s</string>
+    <string name="will_play_next">%1$s sera joué ensuite</string>
+    <string name="added_to_queue">%1$s ajouté à la file d\'attente</string>
+    <string name="added_to_queue_simple">Ajouté à la file d\'attente : %1$s</string>
+    <string name="playing_next_simple">Lecture suivante : %1$s</string>
+    <string name="failed_to_request_permission">Échec de la demande d\'autorisation : %1$s</string>
+    <string name="unexpected_error">Erreur inattendue : %1$s</string>
+    <string name="rating_stars_desc">%1$s - %2$d étoiles</string>
+    <string name="rating_stars_count">%1$d étoiles</string>
+    <string name="rating_unknown">Inconnu</string>
+    <string name="album_artwork_description">Illustration de l\'album pour %1$s</string>
+    <string name="error_fetching_artwork">Erreur lors de la récupération de l\'illustration : %1$s</string>
+    <string name="edit_lyrics">Modifier les paroles
+Paramètres des paroles</string>
+    <string name="lyrics_settings">Lyrics Settings</string>
+    <string name="error_loading_lyrics">Erreur lors du chargement des paroles : %1$s</string>
+    <string name="error_saving_lyrics">Erreur lors de l\'enregistrement des paroles : %1$s</string>
+    <string name="song_metadata_details">%1$s\nArtiste : %2$s\nAlbum : %3$s
+Avatar de</string>
+    <string name="about_avatar_description">%1$s</string>
+    <string name="crash_log_title">Crashé le : %1$s</string>
+    <string name="widget_settings_radius_desc">%1$ddp (widgets Glance uniquement)</string>
+    <string name="equalizer_open_error">Impossible d\'ouvrir l\'égaliseur : %1$s</string>
+    <string name="track_artwork_description">Image de la piste %1$s</string>
+    <string name="playlist_artwork_description">Image de la liste de lecture %1$s</string>
+    <string name="play">Lire</string>
+    <string name="pause">Pause</string>
+    <string name="playlist_remove_songs_confirm">Êtes-vous sûr de vouloir supprimer les chansons %1$d de cette playlist ?</string>
+    <string name="rating_not_rated">Non noté</string>
+    <string name="rating_liked">J\'ai aimé</string>
+    <string name="rating_good">Bien</string>
+    <string name="rating_great">Super</string>
+    <string name="rating_loved">J\'ai adoré</string>
+    <string name="rating_absolute_favorite">Favoris absolu</string>
+    <string name="rating_desc_not_rated">Aucune note</string>
+    <string name="rating_desc_liked">J\'ai aimé - Idéal pour une écoute occasionnelle</string>
+    <string name="rating_desc_good">Bon - Piste solide</string>
+    <string name="rating_desc_great">Génial - J\'apprécie vraiment celui-ci</string>
+    <string name="rating_desc_loved">J\'ai adoré - Un de mes favoris</string>
+    <string name="rating_desc_absolute_favorite">Absolute Favorite – Piste de premier plan</string>
+    <string name="rating_desc_unknown">Note inconnue</string>
+
+    <!-- Settings Toggles / Options Descriptions -->
+    <string name="widget_show_favorite_button_desc">Afficher la bascule des favoris sur les grands widgets</string>
+    <string name="settings_clear_all_logs_desc">Supprimer tous les rapports d\'erreur stockés</string>
+    <string name="widget_theme_dynamic">Couleur dynamique</string>
+    <string name="widget_theme_dynamic_system">Couleur dynamique (Système)</string>
+    <string name="widget_theme_dynamic_desc">S\'adapte dynamiquement à la palette de papier peint de l\'appareil et aux tons d\'accentuation du système</string>
+    <string name="widget_theme_solid_dark">Foncé uni</string>
+    <string name="widget_theme_solid_dark_desc">Fond anthracite plat et profond, optimal pour un style d\'écran sombre OLED haut de gamme</string>
+    <string name="widget_theme_translucent_dark">Translucide Foncé</string>
+    <string name="widget_theme_translucent_dark_desc">Verre translucide élégant flottant élégamment sur les fonds d\'écran de l\'écran d\'accueil</string>
+    <string name="widget_theme_solid_purple">Violet uni</string>
+    <string name="widget_theme_solid_purple_signature">Violet uni (Signature)</string>
+    <string name="widget_theme_solid_purple_desc">Toile de fond violet foncé emblématique avec des teintes et des reflets emblématiques</string>
+    <string name="widget_theme_glance_suffix">%1$s (widgets Glance uniquement)</string>
+    <string name="unit_dp">%1$ddp</string>
 </resources>

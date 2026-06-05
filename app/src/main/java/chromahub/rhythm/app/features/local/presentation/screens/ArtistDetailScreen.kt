@@ -400,7 +400,7 @@ private fun ArtistHeroHeader(
                     )
                 )
                 .build(),
-            contentDescription = "Artist artwork for $artistName",
+            contentDescription = stringResource(R.string.artist_artwork_description, artistName),
             contentScale = ContentScale.Crop,
             modifier = Modifier.fillMaxSize()
         )

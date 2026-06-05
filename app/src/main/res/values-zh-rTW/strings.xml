@@ -918,7 +918,8 @@
     <string name="onboarding_integrations_desc">透過連接外部服務來增強您的聆聽體驗。取得專輯封面、歌詞，記錄您的戲劇，並分享您正在聽的內容。</string>
     <string name="onboarding_integrations_apis">API 服務</string>
     <string name="onboarding_integrations_social">社交功能</string>
-    <string name="onboarding_integration_deezer">Deezer</string>
+    <string name="onboarding_integration_deezer">Deezer
+本月</string>
     <string name="onboarding_integration_deezer_desc">獲取高品質的專輯插圖和元數據</string>
     <string name="onboarding_integration_lrclib">LrcLib
 本月</string>
@@ -3676,4 +3677,69 @@
     <string name="festivethemeexamples_using_app_settings">使用應用程式設定</string>
     <string name="playback_paused_zero_volume">由於音量達到零，播放暫停。提高音量以繼續收聽。</string>
     <string name="zero_volume_raise_volume">提高音量</string>
+
+    <!-- New UI strings for translation -->
+    <string name="deviceconfiguration_delete_confirm">您確定要刪除「%1$s」嗎？此操作無法撤銷。</string>
+    <string name="deviceconfiguration_profile_imported">匯入的設定檔：%1$s</string>
+    <string name="drag_to_reorder">拖曳以重新排序</string>
+    <string name="artist_artwork_description">%1$s 的藝術家作品</string>
+    <string name="explorer_item_icon_description">%1$s 圖標</string>
+    <string name="song_added_to_blacklist_format">%1$s 加入黑名單</string>
+    <string name="playlist_import_success">已成功匯入 %1$d 播放清單。\n%2$s\n\n重新啟動應用程式以應用變更。</string>
+    <string name="play_artist">播放 %1$s
+接下來將播放</string>
+    <string name="will_play_next">%1$s</string>
+    <string name="added_to_queue">%1$s 加入佇列</string>
+    <string name="added_to_queue_simple">新增到佇列：%1$s</string>
+    <string name="playing_next_simple">下一個播放：%1$s</string>
+    <string name="failed_to_request_permission">請求權限失敗：%1$s</string>
+    <string name="unexpected_error">意外錯誤：%1$s</string>
+    <string name="rating_stars_desc">%1$s - %2$d 星星</string>
+    <string name="rating_stars_count">%1$d 星星</string>
+    <string name="rating_unknown">未知</string>
+    <string name="album_artwork_description">%1$s 的專輯封面</string>
+    <string name="error_fetching_artwork">取得圖稿時發生錯誤：%1$s</string>
+    <string name="edit_lyrics">編輯歌詞</string>
+    <string name="lyrics_settings">歌詞設定</string>
+    <string name="error_loading_lyrics">載入歌詞時發生錯誤：%1$s</string>
+    <string name="error_saving_lyrics">儲存歌詞時發生錯誤：%1$s</string>
+    <string name="song_metadata_details">%1$s\n藝人：%2$s\n專輯：%3$s</string>
+    <string name="about_avatar_description">%1$s 的頭像</string>
+    <string name="crash_log_title">崩潰於：%1$s</string>
+    <string name="widget_settings_radius_desc">%1$ddp（僅限 Glance 小工具）</string>
+    <string name="equalizer_open_error">無法開啟等化器：%1$s</string>
+    <string name="track_artwork_description">軌道 %1$s 的圖像</string>
+    <string name="playlist_artwork_description">播放清單的圖片 %1$s</string>
+    <string name="play">播放</string>
+    <string name="pause">暫停</string>
+    <string name="playlist_remove_songs_confirm">您確定要從此播放清單中刪除 %1$d 歌曲嗎？</string>
+    <string name="rating_not_rated">未評級</string>
+    <string name="rating_liked">喜歡</string>
+    <string name="rating_good">好</string>
+    <string name="rating_great">太棒了</string>
+    <string name="rating_loved">喜歡</string>
+    <string name="rating_absolute_favorite">絕對的最愛</string>
+    <string name="rating_desc_not_rated">沒有評級</string>
+    <string name="rating_desc_liked">喜歡 - 適合偶爾聽聽</string>
+    <string name="rating_desc_good">好 - 堅實的軌道</string>
+    <string name="rating_desc_great">太棒了 - 真的很喜歡這個</string>
+    <string name="rating_desc_loved">愛 - 我的最愛之一</string>
+    <string name="rating_desc_absolute_favorite">絕對最愛 - 頂級曲目</string>
+    <string name="rating_desc_unknown">未知評級</string>
+
+    <!-- Settings Toggles / Options Descriptions -->
+    <string name="widget_show_favorite_button_desc">在大型小工具上顯示最喜歡的切換</string>
+    <string name="settings_clear_all_logs_desc">刪除所有儲存的崩潰報告</string>
+    <string name="widget_theme_dynamic">動態顏色</string>
+    <string name="widget_theme_dynamic_system">動態顏色（系統）</string>
+    <string name="widget_theme_dynamic_desc">動態適應裝置桌布調色盤和系統重音</string>
+    <string name="widget_theme_solid_dark">純色深色</string>
+    <string name="widget_theme_solid_dark_desc">深平木炭背景，最適合優質 OLED 暗屏造型</string>
+    <string name="widget_theme_translucent_dark">半透明深色</string>
+    <string name="widget_theme_translucent_dark_desc">光滑的半透明玻璃優雅地漂浮在主螢幕壁紙上</string>
+    <string name="widget_theme_solid_purple">純紫色</string>
+    <string name="widget_theme_solid_purple_signature">純紫色（簽名）</string>
+    <string name="widget_theme_solid_purple_desc">標誌性深紫色背景，帶有標誌性色調和亮點</string>
+    <string name="widget_theme_glance_suffix">%1$s （僅限 Glance 小工具）</string>
+    <string name="unit_dp">%1$ddp</string>
 </resources>

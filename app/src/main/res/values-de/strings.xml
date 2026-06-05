@@ -3665,4 +3665,69 @@
     <string name="festivethemeexamples_using_app_settings">Verwenden der App-Einstellungen</string>
     <string name="playback_paused_zero_volume">Die Wiedergabe wurde angehalten, da die Lautstärke Null erreichte. Erhöhen Sie die Lautstärke, um mit dem Hören fortzufahren.</string>
     <string name="zero_volume_raise_volume">Erhöhen Sie die Lautstärke</string>
+
+    <!-- New UI strings for translation -->
+    <string name="deviceconfiguration_delete_confirm">Sind Sie sicher, dass Sie „%1$s“ löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.</string>
+    <string name="deviceconfiguration_profile_imported">Profil importiert: %1$s</string>
+    <string name="drag_to_reorder">Zum Neuordnen ziehen</string>
+    <string name="artist_artwork_description">Künstler-Artwork für %1$s</string>
+    <string name="explorer_item_icon_description">%1$s-Symbol</string>
+    <string name="song_added_to_blacklist_format">%1$s zur Blacklist hinzugefügt</string>
+    <string name="playlist_import_success">%1$d-Wiedergabelisten wurden erfolgreich importiert.\n%2$s\n\nStarten Sie die App neu, um die Änderungen zu übernehmen.</string>
+    <string name="play_artist">Abspielen %1$s
+Als nächstes wird</string>
+    <string name="will_play_next">%1$s abgespielt</string>
+    <string name="added_to_queue">%1$s zur Warteschlange hinzugefügt</string>
+    <string name="added_to_queue_simple">Zur Warteschlange hinzugefügt: %1$s</string>
+    <string name="playing_next_simple">Wird als Nächstes abgespielt: %1$s</string>
+    <string name="failed_to_request_permission">Die Berechtigung konnte nicht angefordert werden: %1$s</string>
+    <string name="unexpected_error">Unerwarteter Fehler: %1$s</string>
+    <string name="rating_stars_desc">%1$s - %2$d Sterne</string>
+    <string name="rating_stars_count">%1$d Sterne</string>
+    <string name="rating_unknown">Unbekannt</string>
+    <string name="album_artwork_description">Albumcover für %1$s</string>
+    <string name="error_fetching_artwork">Fehler beim Abrufen des Bildmaterials: %1$s</string>
+    <string name="edit_lyrics">Liedtext bearbeiten</string>
+    <string name="lyrics_settings">Liedtext-Einstellungen</string>
+    <string name="error_loading_lyrics">Fehler beim Laden des Liedtextes: %1$s</string>
+    <string name="error_saving_lyrics">Fehler beim Speichern des Liedtextes: %1$s</string>
+    <string name="song_metadata_details">%1$s\nKünstler: %2$s\nAlbum: %3$s</string>
+    <string name="about_avatar_description">%1$ss Avatar</string>
+    <string name="crash_log_title">Absturz am: %1$s</string>
+    <string name="widget_settings_radius_desc">%1$ddp (nur Glance-Widgets)</string>
+    <string name="equalizer_open_error">Equalizer konnte nicht geöffnet werden: %1$s</string>
+    <string name="track_artwork_description">Bild für Titel %1$s</string>
+    <string name="playlist_artwork_description">Bild für Playlist %1$s</string>
+    <string name="play">Spielen</string>
+    <string name="pause">Pause</string>
+    <string name="playlist_remove_songs_confirm">Sind Sie sicher, dass Sie %1$d-Titel aus dieser Wiedergabeliste entfernen möchten?</string>
+    <string name="rating_not_rated">Nicht bewertet</string>
+    <string name="rating_liked">Gefällt mir</string>
+    <string name="rating_good">Gut</string>
+    <string name="rating_great">Großartig</string>
+    <string name="rating_loved">Geliebt</string>
+    <string name="rating_absolute_favorite">Absoluter Favorit</string>
+    <string name="rating_desc_not_rated">Keine Bewertung</string>
+    <string name="rating_desc_liked">Gefällt mir – Gut zum gelegentlichen Hören</string>
+    <string name="rating_desc_good">Gut – Solide Spur</string>
+    <string name="rating_desc_great">Großartig – das macht mir wirklich Spaß</string>
+    <string name="rating_desc_loved">Geliebt – Einer meiner Favoriten</string>
+    <string name="rating_desc_absolute_favorite">Absoluter Favorit – Erstklassiger Titel</string>
+    <string name="rating_desc_unknown">Unbekannte Bewertung</string>
+
+    <!-- Settings Toggles / Options Descriptions -->
+    <string name="widget_show_favorite_button_desc">Favoritenumschaltung bei großen Widgets anzeigen</string>
+    <string name="settings_clear_all_logs_desc">Alle gespeicherten Absturzberichte entfernen</string>
+    <string name="widget_theme_dynamic">Dynamische Farbe</string>
+    <string name="widget_theme_dynamic_system">Dynamische Farbe (System)</string>
+    <string name="widget_theme_dynamic_desc">Passt sich dynamisch an die Hintergrundpalette des Geräts und die Akzenttöne des Systems an</string>
+    <string name="widget_theme_solid_dark">Durchgehend dunkel</string>
+    <string name="widget_theme_solid_dark_desc">Tiefer, flacher, anthrazitfarbener Hintergrund, optimal für erstklassiges dunkles OLED-Bildschirmdesign</string>
+    <string name="widget_theme_translucent_dark">Durchscheinend dunkel</string>
+    <string name="widget_theme_translucent_dark_desc">Schlankes, durchscheinendes Glas, das elegant über den Hintergrundbildern des Startbildschirms schwebt</string>
+    <string name="widget_theme_solid_purple">Solides Lila</string>
+    <string name="widget_theme_solid_purple_signature">Einfarbiges Lila (Signatur)</string>
+    <string name="widget_theme_solid_purple_desc">Charakteristischer tiefvioletter Hintergrund mit charakteristischen Akzenttönen und Highlights</string>
+    <string name="widget_theme_glance_suffix">%1$s (nur Glance-Widgets)</string>
+    <string name="unit_dp">%1$ddp</string>
 </resources>

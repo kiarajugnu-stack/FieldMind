@@ -221,7 +221,7 @@ fun CrashLogHistorySettingsScreen(onBackClick: () -> Unit, appSettings: AppSetti
                     val crashLogItems = crashLogHistory.map { entry ->
                         Material3SettingsItem(
                             icon = MaterialSymbolIcon("error", filled = true),
-                            title = { Text("Crashed on: ${dateFormat.format(Date(entry.timestamp))}") },
+                            title = { Text(stringResource(R.string.crash_log_title, dateFormat.format(Date(entry.timestamp)))) },
                             description = {
                                 Text(
                                     text = entry.log.lines().firstOrNull() ?: "No details available.",
@@ -254,7 +254,7 @@ fun CrashLogHistorySettingsScreen(onBackClick: () -> Unit, appSettings: AppSetti
                             item = SettingItem(
                                 icon = MaterialSymbolIcon("delete_sweep", filled = true),
                                 title = context.getString(R.string.settings_clear_all_logs),
-                                description = "Remove all stored crash reports",
+                                description = context.getString(R.string.settings_clear_all_logs_desc),
                                 enabled = crashLogHistory.isNotEmpty(),
                                 onClick = { appSettings.clearCrashLogHistory() }
                             )

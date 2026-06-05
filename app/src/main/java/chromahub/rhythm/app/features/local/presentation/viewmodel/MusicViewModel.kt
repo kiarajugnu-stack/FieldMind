@@ -6646,8 +6646,8 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
                 // Save queue to persistence
                 saveQueueToPersistence()
                 
-                Log.d(TAG, "Successfully added '${song.title}' to queue. Queue now has ${controller.mediaItemCount} songs in MediaController")
-                android.widget.Toast.makeText(getApplication<android.app.Application>().applicationContext, "Added to queue: ${song.title}", android.widget.Toast.LENGTH_SHORT).show()
+                val toastContext = getApplication<android.app.Application>().applicationContext
+                android.widget.Toast.makeText(toastContext, toastContext.getString(R.string.added_to_queue_simple, song.title), android.widget.Toast.LENGTH_SHORT).show()
             } catch (e: Exception) {
                 Log.e(TAG, "Error adding song to queue", e)
                 val errorMsg = "Failed to add '${song.title}' to queue: ${e.message}"
@@ -6728,7 +6728,8 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
                 if (controller.mediaItemCount != _currentQueue.value.songs.size) {
                     Log.w(TAG, "Queue size mismatch after playNext - MediaController: ${controller.mediaItemCount}, ViewModel: ${_currentQueue.value.songs.size}")
                 }
-                android.widget.Toast.makeText(getApplication<android.app.Application>().applicationContext, "Playing next: ${song.title}", android.widget.Toast.LENGTH_SHORT).show()
+                val toastContext = getApplication<android.app.Application>().applicationContext
+                android.widget.Toast.makeText(toastContext, toastContext.getString(R.string.playing_next_simple, song.title), android.widget.Toast.LENGTH_SHORT).show()
             } catch (e: Exception) {
                 Log.e(TAG, "Error adding song to play next", e)
                 val errorMsg = "Failed to add '${song.title}' to play next: ${e.message}"

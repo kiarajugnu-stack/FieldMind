@@ -3665,4 +3665,69 @@
     <string name="festivethemeexamples_using_app_settings">使用应用程序设置</string>
     <string name="playback_paused_zero_volume">由于音量达到零，播放暂停。提高音量以继续收听。</string>
     <string name="zero_volume_raise_volume">提高音量</string>
+
+    <!-- New UI strings for translation -->
+    <string name="deviceconfiguration_delete_confirm">您确定要删除“%1$s”吗？此操作无法撤消。</string>
+    <string name="deviceconfiguration_profile_imported">导入的配置文件：%1$s</string>
+    <string name="drag_to_reorder">拖动以重新排序</string>
+    <string name="artist_artwork_description">%1$s 的艺术家作品</string>
+    <string name="explorer_item_icon_description">%1$s 图标</string>
+    <string name="song_added_to_blacklist_format">%1$s 添加到黑名单</string>
+    <string name="playlist_import_success">已成功导入 %1$d 播放列表。\n%2$s\n\n重新启动应用程序以应用更改。</string>
+    <string name="play_artist">播放 %1$s
+接下来将播放</string>
+    <string name="will_play_next">%1$s</string>
+    <string name="added_to_queue">%1$s 添加到队列</string>
+    <string name="added_to_queue_simple">添加到队列：%1$s</string>
+    <string name="playing_next_simple">下一个播放：%1$s</string>
+    <string name="failed_to_request_permission">请求权限失败：%1$s</string>
+    <string name="unexpected_error">意外错误：%1$s</string>
+    <string name="rating_stars_desc">%1$s - %2$d 星星</string>
+    <string name="rating_stars_count">%1$d 星星</string>
+    <string name="rating_unknown">未知</string>
+    <string name="album_artwork_description">%1$s 的专辑封面</string>
+    <string name="error_fetching_artwork">获取图稿时出错：%1$s</string>
+    <string name="edit_lyrics">编辑歌词</string>
+    <string name="lyrics_settings">歌词设置</string>
+    <string name="error_loading_lyrics">加载歌词时出错：%1$s</string>
+    <string name="error_saving_lyrics">保存歌词时出错：%1$s</string>
+    <string name="song_metadata_details">%1$s\n艺术家：%2$s\n专辑：%3$s</string>
+    <string name="about_avatar_description">%1$s 的头像</string>
+    <string name="crash_log_title">崩溃于：%1$s</string>
+    <string name="widget_settings_radius_desc">%1$ddp（仅限 Glance 小部件）</string>
+    <string name="equalizer_open_error">无法打开均衡器：%1$s</string>
+    <string name="track_artwork_description">轨道 %1$s 的图像</string>
+    <string name="playlist_artwork_description">播放列表的图像 %1$s</string>
+    <string name="play">播放</string>
+    <string name="pause">暂停</string>
+    <string name="playlist_remove_songs_confirm">您确定要从此播放列表中删除 %1$d 歌曲吗？</string>
+    <string name="rating_not_rated">未评级</string>
+    <string name="rating_liked">喜欢</string>
+    <string name="rating_good">好</string>
+    <string name="rating_great">太棒了</string>
+    <string name="rating_loved">喜欢</string>
+    <string name="rating_absolute_favorite">绝对的最爱</string>
+    <string name="rating_desc_not_rated">没有评级</string>
+    <string name="rating_desc_liked">喜欢 - 适合偶尔听听</string>
+    <string name="rating_desc_good">好 - 坚实的轨道</string>
+    <string name="rating_desc_great">太棒了 - 真的很喜欢这个</string>
+    <string name="rating_desc_loved">爱 - 我的最爱之一</string>
+    <string name="rating_desc_absolute_favorite">绝对最爱 - 顶级曲目</string>
+    <string name="rating_desc_unknown">未知评级</string>
+
+    <!-- Settings Toggles / Options Descriptions -->
+    <string name="widget_show_favorite_button_desc">在大型小部件上显示最喜欢的切换</string>
+    <string name="settings_clear_all_logs_desc">删除所有存储的崩溃报告</string>
+    <string name="widget_theme_dynamic">动态颜色</string>
+    <string name="widget_theme_dynamic_system">动态颜色（系统）</string>
+    <string name="widget_theme_dynamic_desc">动态适应设备壁纸调色板和系统重音</string>
+    <string name="widget_theme_solid_dark">纯色深色</string>
+    <string name="widget_theme_solid_dark_desc">深平木炭背景，最适合优质 OLED 暗屏造型</string>
+    <string name="widget_theme_translucent_dark">半透明深色</string>
+    <string name="widget_theme_translucent_dark_desc">光滑的半透明玻璃优雅地漂浮在主屏幕壁纸上</string>
+    <string name="widget_theme_solid_purple">纯紫色</string>
+    <string name="widget_theme_solid_purple_signature">纯紫色（签名）</string>
+    <string name="widget_theme_solid_purple_desc">标志性深紫色背景，带有标志性色调和亮点</string>
+    <string name="widget_theme_glance_suffix">%1$s （仅限 Glance 小部件）</string>
+    <string name="unit_dp">%1$ddp</string>
 </resources>

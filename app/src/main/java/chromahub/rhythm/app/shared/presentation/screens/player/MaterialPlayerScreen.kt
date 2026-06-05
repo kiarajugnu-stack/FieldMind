@@ -598,7 +598,7 @@ fun MaterialPlayerScreen(
                     }
                 } catch (e: Exception) {
                     Log.e("MaterialPlayerScreen", "Error loading lyrics file", e)
-                    Toast.makeText(context, "Error loading lyrics: ${e.message}", Toast.LENGTH_LONG).show()
+                    Toast.makeText(context, context.getString(R.string.error_loading_lyrics, e.message ?: ""), Toast.LENGTH_LONG).show()
                 }
             }
         }
@@ -1062,11 +1062,11 @@ fun MaterialPlayerScreen(
             favoriteSongs = musicViewModel.favoriteSongs.collectAsState().value,
             onShowSongInfo = { song ->
                 // Song info can be shown via a toast or separate sheet if needed
-                Toast.makeText(context, "${song.title}\nArtist: ${song.artist}\nAlbum: ${song.album}", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, context.getString(R.string.song_metadata_details, song.title, song.artist, song.album), Toast.LENGTH_SHORT).show()
             },
             onAddToBlacklist = { song ->
                 appSettings.addToBlacklist(song.id)
-                Toast.makeText(context, "${song.title} added to blacklist", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, context.getString(R.string.song_added_to_blacklist_format, song.title), Toast.LENGTH_SHORT).show()
             },
             currentSong = song,
             isPlaying = isPlaying
@@ -1110,11 +1110,11 @@ fun MaterialPlayerScreen(
             favoriteSongs = musicViewModel.favoriteSongs.collectAsState().value,
             onShowSongInfo = { song ->
                 // Song info can be shown via a toast or separate sheet if needed
-                Toast.makeText(context, "${song.title}\nArtist: ${song.artist}\nAlbum: ${song.album}", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, context.getString(R.string.song_metadata_details, song.title, song.artist, song.album), Toast.LENGTH_SHORT).show()
             },
             onAddToBlacklist = { song ->
                 appSettings.addToBlacklist(song.id)
-                Toast.makeText(context, "${song.title} added to blacklist", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, context.getString(R.string.song_added_to_blacklist_format, song.title), Toast.LENGTH_SHORT).show()
             },
             currentSong = song,
             isPlaying = isPlaying,
@@ -1651,7 +1651,7 @@ fun MaterialPlayerScreen(
                                                     .placeholder(chromahub.rhythm.app.R.drawable.rhythm_logo)
                                                     .error(chromahub.rhythm.app.R.drawable.rhythm_logo)
                                                     .build(),
-                                                contentDescription = "Album artwork for ${song.title}",
+                                                contentDescription = stringResource(R.string.album_artwork_description, song.title),
                                                 contentScale = ContentScale.Crop,
                                                 onSuccess = { imageLoaded = true },
                                                 onError = { imageLoaded = true },
@@ -1700,7 +1700,7 @@ fun MaterialPlayerScreen(
                                         ) {
                                             Icon(
                                                 painter = painterResource(id = chromahub.rhythm.app.R.drawable.rhythm_logo),
-                                                contentDescription = "Album artwork for ${song.title}",
+                                                contentDescription = stringResource(R.string.album_artwork_description, song.title),
                                                 tint = MaterialTheme.colorScheme.primary.copy(
                                                     alpha = 0.7f
                                                 ),

@@ -277,7 +277,7 @@ fun PlayerChipOrderBottomSheet(
                             // Drag Handle Icon
                             Icon(
                                 imageVector = RhythmIcons.DragHandle,
-                                contentDescription = "Drag to reorder",
+                                contentDescription = stringResource(R.string.drag_to_reorder),
                                 tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
                                 modifier = Modifier
                                     .size(24.dp)

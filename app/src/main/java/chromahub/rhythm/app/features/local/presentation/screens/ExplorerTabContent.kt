@@ -2176,7 +2176,7 @@ fun ExplorerItemCard(
                                     "Internal Storage" -> RhythmIcons.Storage
                                     else -> MaterialSymbolIcon("sd_storage")
                                 },
-                                contentDescription = "${item.name} icon",
+                                contentDescription = stringResource(R.string.explorer_item_icon_description, item.name),
                                 modifier = Modifier.size(36.dp)
                             )
                         }

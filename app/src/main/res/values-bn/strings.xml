@@ -3665,4 +3665,70 @@
     <string name="festivethemeexamples_using_app_settings">অ্যাপ সেটিংস ব্যবহার করে</string>
     <string name="playback_paused_zero_volume">প্লেব্যাক থামানো হয়েছে কারণ ভলিউম শূন্যে পৌঁছেছে৷ শোনা পুনরায় শুরু করতে ভলিউম বাড়ান।</string>
     <string name="zero_volume_raise_volume">ভলিউম বাড়ান</string>
+
+    <!-- New UI strings for translation -->
+    <string name="deviceconfiguration_delete_confirm">আপনি কি \'%1$s\' মুছে ফেলার বিষয়ে নিশ্চিত? এই ক্রিয়াটি পূর্বাবস্থায় ফেরানো যাবে না৷</string>
+    <string name="deviceconfiguration_profile_imported">প্রোফাইল আমদানি করা হয়েছে: %1$s</string>
+    <string name="drag_to_reorder">পুনরায় সাজাতে টেনে আনুন
+__FMT0__ এর জন্য</string>
+    <string name="artist_artwork_description">শিল্পীর শিল্পকর্ম</string>
+    <string name="explorer_item_icon_description">%1$s আইকন</string>
+    <string name="song_added_to_blacklist_format">%1$s কালো তালিকায় যোগ করা হয়েছে</string>
+    <string name="playlist_import_success">সফলভাবে %1$d প্লেলিস্ট আমদানি করা হয়েছে।\n%2$s\n\nপরিবর্তনগুলি প্রয়োগ করতে অ্যাপটি পুনরায় চালু করুন।</string>
+    <string name="play_artist">খেলুন %1$s</string>
+    <string name="will_play_next">%1$s পরবর্তী বাজবে৷</string>
+    <string name="added_to_queue">%1$s সারিতে যোগ করা হয়েছে</string>
+    <string name="added_to_queue_simple">সারিতে যোগ করা হয়েছে: %1$s</string>
+    <string name="playing_next_simple">পরবর্তী বাজানো হচ্ছে: %1$s</string>
+    <string name="failed_to_request_permission">অনুমতির অনুরোধ করতে ব্যর্থ হয়েছে: %1$s</string>
+    <string name="unexpected_error">অপ্রত্যাশিত ত্রুটি: %1$s</string>
+    <string name="rating_stars_desc">%1$s - %2$d তারা</string>
+    <string name="rating_stars_count">%1$d তারা</string>
+    <string name="rating_unknown">অজানা
+__FMT0__ এর জন্য</string>
+    <string name="album_artwork_description">অ্যালবাম আর্টওয়ার্ক</string>
+    <string name="error_fetching_artwork">আর্টওয়ার্ক আনতে ত্রুটি: %1$s</string>
+    <string name="edit_lyrics">গানের কথা সম্পাদনা করুন</string>
+    <string name="lyrics_settings">গানের সেটিংস</string>
+    <string name="error_loading_lyrics">গানের কথা লোড করার সময় ত্রুটি: %1$s</string>
+    <string name="error_saving_lyrics">গান সংরক্ষণে ত্রুটি: %1$s</string>
+    <string name="song_metadata_details">%1$s\nশিল্পী: %2$s\nঅ্যালবাম: %3$s</string>
+    <string name="about_avatar_description">%1$s এর অবতার</string>
+    <string name="crash_log_title">ক্র্যাশ হয়েছে: %1$s</string>
+    <string name="widget_settings_radius_desc">%1$ddp (শুধুমাত্র Glance উইজেট)</string>
+    <string name="equalizer_open_error">ইকুয়ালাইজার খুলতে পারেনি: %1$s</string>
+    <string name="track_artwork_description">ট্র্যাকের জন্য চিত্র %1$s</string>
+    <string name="playlist_artwork_description">প্লেলিস্টের জন্য চিত্র %1$s</string>
+    <string name="play">চালান</string>
+    <string name="pause">বিরতি</string>
+    <string name="playlist_remove_songs_confirm">আপনি কি এই প্লেলিস্ট থেকে %1$d গানগুলি সরাতে চান?</string>
+    <string name="rating_not_rated">রেট করা হয়নি</string>
+    <string name="rating_liked">পছন্দ হয়েছে</string>
+    <string name="rating_good">ভালো</string>
+    <string name="rating_great">দারুণ</string>
+    <string name="rating_loved">ভালো লেগেছে</string>
+    <string name="rating_absolute_favorite">পরম প্রিয়</string>
+    <string name="rating_desc_not_rated">কোনো রেটিং নেই</string>
+    <string name="rating_desc_liked">পছন্দ হয়েছে - মাঝে মাঝে শোনার জন্য ভাল</string>
+    <string name="rating_desc_good">ভালো - কঠিন ট্র্যাক</string>
+    <string name="rating_desc_great">দারুণ - সত্যিই এটি উপভোগ করছি</string>
+    <string name="rating_desc_loved">ভালো লেগেছে - আমার পছন্দের একটি</string>
+    <string name="rating_desc_absolute_favorite">পরম প্রিয় - শীর্ষ স্তরের ট্র্যাক</string>
+    <string name="rating_desc_unknown">অজানা রেটিং</string>
+
+    <!-- Settings Toggles / Options Descriptions -->
+    <string name="widget_show_favorite_button_desc">বড় উইজেটগুলিতে প্রিয় টগল প্রদর্শন করুন</string>
+    <string name="settings_clear_all_logs_desc">সমস্ত সঞ্চিত ক্র্যাশ রিপোর্ট সরান</string>
+    <string name="widget_theme_dynamic">গতিশীল রঙ</string>
+    <string name="widget_theme_dynamic_system">গতিশীল রঙ (সিস্টেম)</string>
+    <string name="widget_theme_dynamic_desc">ডিভাইস ওয়ালপেপার প্যালেট এবং সিস্টেম অ্যাকসেন্ট টোনগুলির সাথে গতিশীলভাবে মানিয়ে নেয়</string>
+    <string name="widget_theme_solid_dark">কঠিন অন্ধকার</string>
+    <string name="widget_theme_solid_dark_desc">গভীর ফ্ল্যাট চারকোল ব্যাকড্রপ, প্রিমিয়াম OLED ডার্ক স্ক্রিন স্টাইলিং এর জন্য সর্বোত্তম</string>
+    <string name="widget_theme_translucent_dark">স্বচ্ছ অন্ধকার</string>
+    <string name="widget_theme_translucent_dark_desc">হোম স্ক্রীন ওয়ালপেপারের উপর মার্জিতভাবে ভাসমান মসৃণ স্বচ্ছ গ্লাস</string>
+    <string name="widget_theme_solid_purple">কঠিন বেগুনি</string>
+    <string name="widget_theme_solid_purple_signature">কঠিন বেগুনি (স্বাক্ষর)</string>
+    <string name="widget_theme_solid_purple_desc">স্বাক্ষর অ্যাকসেন্ট টিন্ট এবং হাইলাইট সহ স্বাক্ষর গভীর বেগুনি ব্যাকড্রপ</string>
+    <string name="widget_theme_glance_suffix">%1$s (শুধুমাত্র Glance উইজেট)</string>
+    <string name="unit_dp">%1$ddp</string>
 </resources>
