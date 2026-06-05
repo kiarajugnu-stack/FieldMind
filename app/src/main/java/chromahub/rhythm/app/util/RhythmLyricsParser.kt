@@ -44,12 +44,14 @@ object RhythmLyricsParser {
                 } ?: emptyList()
 
                 if (words.isNotEmpty()) {
-                    words = words
+                    val sortedWords = words
                         .sortedWith(compareBy<WordByWordWord> { it.timestamp }.thenBy { it.endtime })
                         .map { word ->
                             val normalizedEnd = maxOf(word.endtime, word.timestamp)
                             word.copy(endtime = normalizedEnd)
                         }
+                    
+                    words = sortedWords
                 }
                 
                 // Check if first word contains voice tag and extract it
@@ -466,15 +468,32 @@ object RhythmLyricsParser {
         if (parsed is SemanticLyrics.SyncedLyrics) {
             return parsed.text.map { semanticLine ->
                 val rhythmLyricsWords = semanticLine.words?.mapIndexed { idx, word ->
-                    val isPart = if (idx > 0) {
+                    val rawText = semanticLine.text.substring(word.charRange)
+                    val trimmedText = rawText.trim()
+                    
+                    val leadingSpaces = rawText.takeWhile { it.isWhitespace() }.length
+                    val trailingSpaces = rawText.takeLastWhile { it.isWhitespace() }.length
+                    val trimmedStart = word.charRange.first + leadingSpaces
+                    val trimmedEnd = word.charRange.last - trailingSpaces
+
+                    val isPart = if (idx > 0 && trimmedText.isNotEmpty()) {
                         val prevWord = semanticLine.words[idx - 1]
-                        val gap = semanticLine.text.substring(prevWord.charRange.last + 1, word.charRange.first)
-                        gap.isEmpty()
+                        val prevRawText = semanticLine.text.substring(prevWord.charRange)
+                        val prevTrimmedText = prevRawText.trim()
+                        if (prevTrimmedText.isNotEmpty()) {
+                            val prevTrailingSpaces = prevRawText.takeLastWhile { it.isWhitespace() }.length
+                            val prevTrimmedEnd = prevWord.charRange.last - prevTrailingSpaces
+                            
+                            val gap = semanticLine.text.substring(prevTrimmedEnd + 1, trimmedStart)
+                            gap.isEmpty()
+                        } else {
+                            false
+                        }
                     } else {
                         false
                     }
                     RhythmLyricsWord(
-                        text = semanticLine.text.substring(word.charRange),
+                        text = trimmedText,
                         part = isPart,
                         timestamp = word.begin.toLong(),
                         endtime = (word.endInclusive ?: word.begin).toLong()

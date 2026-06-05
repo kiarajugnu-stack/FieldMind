@@ -4337,15 +4337,42 @@ class MusicRepository(context: Context) {
                         Log.d(TAG, "Apple Music API: Found matching iTunes track ID: ${track.trackId} (${track.trackName})")
                         val lyricsResponse = rhythmLyricsApiService.getLyrics(track.trackId.toString())
                         
-                        var content = lyricsResponse.content
-                        var isSyllable = lyricsResponse.type == "Syllable"
+                        var content: List<RhythmLyricsLine>? = null
+                        var isSyllable = false
                         
-                        if ((content == null || content.isEmpty()) && !lyricsResponse.ttmlContent.isNullOrBlank()) {
-                            Log.d(TAG, "Apple Music API: Content is empty, but TTML content is present. Parsing TTML...")
+                        if (!lyricsResponse.ttmlContent.isNullOrBlank()) {
+                            Log.d(TAG, "Apple Music API: TTML content is present. Parsing TTML on client...")
                             val parsedTtml = RhythmLyricsParser.parseTtmlLyrics(lyricsResponse.ttmlContent)
                             if (parsedTtml.isNotEmpty()) {
                                 content = parsedTtml
                                 isSyllable = true
+                            }
+                        }
+                        
+                        if (content == null || content.isEmpty()) {
+                            Log.d(TAG, "Apple Music API: Using pre-parsed content from response...")
+                            val rawContent = lyricsResponse.content
+                            isSyllable = lyricsResponse.type == "Syllable"
+                            if (isSyllable && rawContent != null) {
+                                // Shift the part flags to the right for each line to correct the server-side bug
+                                content = rawContent.map { line ->
+                                    val words = line.text
+                                    if (words != null && words.isNotEmpty()) {
+                                        val shiftedWords = words.mapIndexed { idx, word ->
+                                            val isPart = if (idx > 0) {
+                                                words[idx - 1].part ?: false
+                                            } else {
+                                                false
+                                            }
+                                            word.copy(part = isPart)
+                                        }
+                                        line.copy(text = shiftedWords)
+                                    } else {
+                                        line
+                                    }
+                                }
+                            } else {
+                                content = rawContent
                             }
                         }
                         
@@ -4361,7 +4388,8 @@ class MusicRepository(context: Context) {
                                     plainLyrics = plain,
                                     syncedLyrics = lrc,
                                     wordByWordLyrics = wordByWordJson,
-                                    source = "Apple Music"
+                                    source = "Apple Music",
+                                    isCorrected = true
                                 )
                             } else {
                                 Log.d(TAG, "Apple Music API: Line-synced or plain lyrics found (non-Syllable), caching as backup")
@@ -4539,8 +4567,53 @@ class MusicRepository(context: Context) {
         return try {
             if (file.exists()) {
                 val json = file.readText()
-                val data = Gson().fromJson(json, LyricsData::class.java)
-                Log.d(TAG, "===== LOADED LYRICS FROM SAVED JSON FILE (THIS IS THE OLD CACHE!) =====")
+                var data = Gson().fromJson(json, LyricsData::class.java)
+                Log.d(TAG, "===== LOADED LYRICS FROM SAVED JSON FILE =====")
+                
+                // Self-healing migration for old cached Apple Music lyrics containing the shift bug
+                if (data.source == "Apple Music" && !data.wordByWordLyrics.isNullOrBlank() && data.isCorrected != true) {
+                    Log.d(TAG, "===== OLD CACHED APPLE MUSIC LYRICS DETECTED, APPLYING CORRECTION PASS =====")
+                    try {
+                        val originalListType = object : com.google.gson.reflect.TypeToken<List<RhythmLyricsLine>>() {}.type
+                        val originalLines: List<RhythmLyricsLine> = Gson().fromJson(data.wordByWordLyrics, originalListType)
+                        
+                        // Shift the part flags to the right for each line
+                        val correctedContent = originalLines.map { line ->
+                            val words = line.text
+                            if (words != null && words.isNotEmpty()) {
+                                val shiftedWords = words.mapIndexed { idx, word ->
+                                    val isPart = if (idx > 0) {
+                                        words[idx - 1].part ?: false
+                                    } else {
+                                        false
+                                    }
+                                    word.copy(part = isPart)
+                                }
+                                line.copy(text = shiftedWords)
+                            } else {
+                                line
+                            }
+                        }
+                        
+                        val correctedWordByWordJson = Gson().toJson(correctedContent)
+                        val parsedLines = RhythmLyricsParser.parseWordByWordLyrics(correctedWordByWordJson)
+                        val lrc = RhythmLyricsParser.toLRCFormat(parsedLines)
+                        val plain = RhythmLyricsParser.toPlainText(parsedLines)
+                        
+                        data = data.copy(
+                            plainLyrics = plain,
+                            syncedLyrics = lrc,
+                            wordByWordLyrics = correctedWordByWordJson,
+                            isCorrected = true
+                        )
+                        
+                        // Save the corrected version back to cache
+                        saveLocalLyrics(artist, title, data)
+                        Log.d(TAG, "===== SUCCESSFULLY CORRECTED AND RESAVED CACHED LYRICS =====")
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Failed to correct cached Apple Music lyrics", e)
+                    }
+                }
                 data
             } else {
                 Log.d(TAG, "===== NO SAVED JSON FILE FOUND =====")

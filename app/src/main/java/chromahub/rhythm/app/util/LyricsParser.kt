@@ -483,15 +483,32 @@ object LyricsParser {
                 }
                 
                 val enhancedWords = mainLine.words?.mapIndexed { idx, word ->
-                    val isPart = if (idx > 0) {
+                    val rawText = mainLine.text.substring(word.charRange)
+                    val trimmedText = rawText.trim()
+                    
+                    val leadingSpaces = rawText.takeWhile { it.isWhitespace() }.length
+                    val trailingSpaces = rawText.takeLastWhile { it.isWhitespace() }.length
+                    val trimmedStart = word.charRange.first + leadingSpaces
+                    val trimmedEnd = word.charRange.last - trailingSpaces
+
+                    val isPart = if (idx > 0 && trimmedText.isNotEmpty()) {
                         val prevWord = mainLine.words[idx - 1]
-                        val gap = mainLine.text.substring(prevWord.charRange.last + 1, word.charRange.first)
-                        gap.isEmpty()
+                        val prevRawText = mainLine.text.substring(prevWord.charRange)
+                        val prevTrimmedText = prevRawText.trim()
+                        if (prevTrimmedText.isNotEmpty()) {
+                            val prevTrailingSpaces = prevRawText.takeLastWhile { it.isWhitespace() }.length
+                            val prevTrimmedEnd = prevWord.charRange.last - prevTrailingSpaces
+                            
+                            val gap = mainLine.text.substring(prevTrimmedEnd + 1, trimmedStart)
+                            gap.isEmpty()
+                        } else {
+                            false
+                        }
                     } else {
                         false
                     }
                     EnhancedWord(
-                        text = mainLine.text.substring(word.charRange),
+                        text = trimmedText,
                         timestamp = word.begin.toLong(),
                         endtime = (word.endInclusive ?: word.begin).toLong(),
                         isPart = isPart
