@@ -49,6 +49,7 @@ import chromahub.rhythm.app.util.GsonUtils
 import chromahub.rhythm.app.util.MediaUtils
 import chromahub.rhythm.app.util.PlaylistImportExportUtils
 import chromahub.rhythm.app.util.PlaybackCommandSerializer
+import chromahub.rhythm.app.util.RhythmLyricsParser
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.MoreExecutors
 import kotlinx.coroutines.Job
@@ -534,7 +535,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
                     shouldInclude = false
                 } else if (blacklistedFolders.isNotEmpty()) {
                     // Check if song is in a blacklisted folder
-                    val songPath = getPathFromUriCached(song.uri)
+                    val songPath = song.path ?: if (song.uri.scheme == "file") song.uri.path else getPathFromUriCached(song.uri)
                     shouldInclude = songPath == null || !isPathBlacklisted(songPath, blacklistedFolders)
                 } else {
                     shouldInclude = true
@@ -547,7 +548,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
                     shouldInclude = true
                 } else if (whitelistedFolders.isNotEmpty()) {
                     // Check if song is in a whitelisted folder
-                    val songPath = getPathFromUriCached(song.uri)
+                    val songPath = song.path ?: if (song.uri.scheme == "file") song.uri.path else getPathFromUriCached(song.uri)
                     shouldInclude = songPath != null && isPathWhitelisted(songPath, whitelistedFolders)
                 }
             }
@@ -578,27 +579,37 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
         result
     }
     
+    private fun normalizeStoragePath(path: String): String {
+        var normalized = path.trim().replace('\\', '/')
+        if (normalized.length > 1 && normalized.endsWith('/')) {
+            normalized = normalized.substring(0, normalized.length - 1)
+        }
+        val symlinks = listOf("/sdcard", "/storage/self/primary")
+        for (symlink in symlinks) {
+            if (normalized.startsWith(symlink, ignoreCase = true)) {
+                normalized = "/storage/emulated/0" + normalized.substring(symlink.length)
+                break
+            }
+        }
+        return normalized
+    }
+
+    private fun isFolderSubdirectoryOrEqual(parent: String, child: String): Boolean {
+        val normParent = normalizeStoragePath(parent)
+        val normChild = normalizeStoragePath(child)
+        return normParent.equals(normChild, ignoreCase = true) ||
+            normChild.startsWith(if (normParent.endsWith('/')) normParent else "$normParent/", ignoreCase = true)
+    }
+
     private fun isPathBlacklisted(songPath: String, blacklistedFolders: List<String>): Boolean {
-        // Normalize song path for consistent comparison
-        val normalizedSongPath = songPath.replace("\\", "/").trimEnd('/')
-        
         return blacklistedFolders.any { folderPath ->
-            val normalizedFolderPath = folderPath.replace("\\", "/").trimEnd('/')
-            // Exact match or child of folder
-            normalizedSongPath == normalizedFolderPath ||
-            normalizedSongPath.startsWith("$normalizedFolderPath/", ignoreCase = true)
+            isFolderSubdirectoryOrEqual(folderPath, songPath)
         }
     }
     
     private fun isPathWhitelisted(songPath: String, whitelistedFolders: List<String>): Boolean {
-        // Normalize song path for consistent comparison
-        val normalizedSongPath = songPath.replace("\\", "/").trimEnd('/')
-        
         return whitelistedFolders.any { folderPath ->
-            val normalizedFolderPath = folderPath.replace("\\", "/").trimEnd('/')
-            // Exact match or child of folder
-            normalizedSongPath == normalizedFolderPath ||
-            normalizedSongPath.startsWith("$normalizedFolderPath/", ignoreCase = true)
+            isFolderSubdirectoryOrEqual(folderPath, songPath)
         }
     }
 
@@ -6293,7 +6304,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
     /**
      * Save edited lyrics for the current song to cache
      */
-    fun saveEditedLyrics(editedLyrics: String, timeOffset: Int = 0) {
+    fun saveEditedLyrics(editedLyrics: String, timeOffset: Int = 0, format: String? = null) {
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 val song = _currentSong.value
@@ -6314,36 +6325,96 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
                     // Store the time offset
                     _lyricsTimeOffset.value = timeOffset
                     
-                    // Determine if lyrics are synced (contains timestamps)
-                    val isSynced = sanitizedLyrics.contains(Regex("\\[\\d{2}:\\d{2}\\.\\d{2}]"))
+                    // Determine what format to treat the lyrics as
+                    val isWordByWord = format == "WORD_BY_WORD" || 
+                        (sanitizedLyrics.trim().startsWith("[") && 
+                         (sanitizedLyrics.contains("\"timestamp\"") || sanitizedLyrics.contains("\"words\"")))
                     
-                    // Normalize fragmented words in LRC format if synced
-                    val normalizedLyrics = if (isSynced) {
-                        normalizePlainLRC(sanitizedLyrics)
-                    } else {
-                        sanitizedLyrics
-                    }
+                    val isSynced = format == "LINE_BY_LINE" || 
+                        (!isWordByWord && sanitizedLyrics.contains(Regex("\\[\\d{2}:\\d{2}\\.\\d{2,3}]")))
                     
-                    val lyricsData = if (isSynced) {
-                        LyricsData(plainLyrics = null, syncedLyrics = normalizedLyrics)
-                    } else {
-                        LyricsData(plainLyrics = normalizedLyrics, syncedLyrics = null)
-                    }
-                    
-                    // Save to cache (internal storage)
+                    // Load existing cache if exists to preserve other formats
                     val fileName = "${artist}_${title}.json".replace(Regex("[^a-zA-Z0-9._-]"), "_")
                     val lyricsDir = File(getApplication<Application>().filesDir, "lyrics")
                     if (!lyricsDir.exists()) {
                         lyricsDir.mkdirs()
                     }
                     val file = File(lyricsDir, fileName)
+                    
+                    val existingLyricsData = if (file.exists()) {
+                        try {
+                            val cachedJson = file.readText()
+                            Gson().fromJson(cachedJson, LyricsData::class.java)
+                        } catch (e: Exception) {
+                            null
+                        }
+                    } else {
+                        null
+                    }
+                    
+                    // Normalize LRC if synced
+                    val normalizedLyrics = if (isSynced) {
+                        normalizePlainLRC(sanitizedLyrics)
+                    } else {
+                        sanitizedLyrics
+                    }
+                    
+                    val lyricsData = if (isWordByWord) {
+                        // Parse JSON to generate synced and plain versions
+                        val parsed = try {
+                            RhythmLyricsParser.parseWordByWordLyrics(sanitizedLyrics)
+                        } catch (e: Exception) {
+                            emptyList()
+                        }
+                        
+                        val generatedLrc = if (parsed.isNotEmpty()) {
+                            try {
+                                RhythmLyricsParser.toLRCFormat(parsed)
+                            } catch (e: Exception) {
+                                null
+                            }
+                        } else null
+                        
+                        val generatedPlain = if (parsed.isNotEmpty()) {
+                            try {
+                                RhythmLyricsParser.toPlainText(parsed)
+                            } catch (e: Exception) {
+                                null
+                            }
+                        } else null
+                        
+                        LyricsData(
+                            plainLyrics = generatedPlain ?: existingLyricsData?.plainLyrics,
+                            syncedLyrics = generatedLrc ?: existingLyricsData?.syncedLyrics,
+                            wordByWordLyrics = sanitizedLyrics
+                        )
+                    } else if (isSynced) {
+                        // Generate plain text by removing LRC timestamps
+                        val generatedPlain = normalizedLyrics.lines().joinToString("\n") { line ->
+                            line.replace(Regex("\\[\\d{2}:\\d{2}\\.\\d{2,3}]"), "").trim()
+                        }
+                        
+                        LyricsData(
+                            plainLyrics = generatedPlain,
+                            syncedLyrics = normalizedLyrics,
+                            wordByWordLyrics = existingLyricsData?.wordByWordLyrics
+                        )
+                    } else {
+                        LyricsData(
+                            plainLyrics = sanitizedLyrics,
+                            syncedLyrics = existingLyricsData?.syncedLyrics,
+                            wordByWordLyrics = existingLyricsData?.wordByWordLyrics
+                        )
+                    }
+                    
+                    // Save to cache (internal storage)
                     val json = Gson().toJson(lyricsData)
                     file.writeText(json)
                     
                     // Update in-memory state
                     _currentLyrics.value = lyricsData
                     
-                    Log.d(TAG, "Saved edited lyrics for: $title by $artist")
+                    Log.d(TAG, "Saved edited lyrics for: $title by $artist (format: $format, isSynced: $isSynced, isWordByWord: $isWordByWord)")
                 } else {
                     Log.w(TAG, "Cannot save lyrics - no current song")
                 }

@@ -3387,9 +3387,31 @@ private val _autoCheckForUpdates = MutableStateFlow(prefs.getBoolean(KEY_AUTO_CH
         }
     }
     
+    fun normalizeStoragePath(path: String): String {
+        var normalized = path.trim().replace('\\', '/')
+        if (normalized.length > 1 && normalized.endsWith('/')) {
+            normalized = normalized.substring(0, normalized.length - 1)
+        }
+        val symlinks = listOf("/sdcard", "/storage/self/primary")
+        for (symlink in symlinks) {
+            if (normalized.startsWith(symlink, ignoreCase = true)) {
+                normalized = "/storage/emulated/0" + normalized.substring(symlink.length)
+                break
+            }
+        }
+        return normalized
+    }
+
+    private fun isFolderSubdirectoryOrEqual(parent: String, child: String): Boolean {
+        val normParent = normalizeStoragePath(parent)
+        val normChild = normalizeStoragePath(child)
+        return normParent.equals(normChild, ignoreCase = true) ||
+            normChild.startsWith(if (normParent.endsWith('/')) normParent else "$normParent/", ignoreCase = true)
+    }
+
     fun isFolderBlacklisted(folderPath: String): Boolean {
         return _blacklistedFolders.value.any { blacklistedPath ->
-            folderPath.startsWith(blacklistedPath, ignoreCase = true)
+            isFolderSubdirectoryOrEqual(blacklistedPath, folderPath)
         }
     }
     
@@ -3454,7 +3476,7 @@ private val _autoCheckForUpdates = MutableStateFlow(prefs.getBoolean(KEY_AUTO_CH
         // Check folder blacklist
         if (songPath != null) {
             return _blacklistedFolders.value.any { folderPath ->
-                songPath.startsWith(folderPath, ignoreCase = true)
+                isFolderSubdirectoryOrEqual(folderPath, songPath)
             }
         }
         
@@ -3598,11 +3620,8 @@ private val _autoCheckForUpdates = MutableStateFlow(prefs.getBoolean(KEY_AUTO_CH
     }
     
     fun isFolderWhitelisted(folderPath: String): Boolean {
-        val normalizedFolderPath = folderPath.replace("\\", "/").trimEnd('/')
         return _whitelistedFolders.value.any { whitelistedPath ->
-            val normalizedWhitelistedPath = whitelistedPath.replace("\\", "/").trimEnd('/')
-            normalizedFolderPath == normalizedWhitelistedPath ||
-                normalizedFolderPath.startsWith("$normalizedWhitelistedPath/", ignoreCase = true)
+            isFolderSubdirectoryOrEqual(whitelistedPath, folderPath)
         }
     }
     
@@ -3665,7 +3684,7 @@ private val _autoCheckForUpdates = MutableStateFlow(prefs.getBoolean(KEY_AUTO_CH
         // Check folder whitelist
         if (songPath != null) {
             return _whitelistedFolders.value.any { folderPath ->
-                songPath.startsWith(folderPath, ignoreCase = true)
+                isFolderSubdirectoryOrEqual(folderPath, songPath)
             }
         }
         

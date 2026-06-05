@@ -72,27 +72,79 @@ import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveGrou
 import chromahub.rhythm.app.util.HapticUtils
 import chromahub.rhythm.app.util.HapticType
 import chromahub.rhythm.app.util.LyricsFileUtils
+import chromahub.rhythm.app.util.RhythmLyricsParser
+import chromahub.rhythm.app.shared.data.model.LyricsData
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import androidx.compose.ui.res.stringResource
 
+enum class LyricFormat {
+    SOURCE,
+    LINE_BY_LINE,
+    WORD_BY_WORD
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LyricsEditorBottomSheet(
-    currentLyrics: String,
+    lyricsData: LyricsData?,
     songTitle: String,
     initialTimeOffset: Int = 0,
     onDismiss: () -> Unit,
-    onSave: (String, Int) -> Unit,
+    onSave: (String, Int, String) -> Unit,
     onRefresh: () -> Unit = {},
     onEmbedInFile: (String) -> Unit = {}
 ) {
     val context = LocalContext.current
     val haptic = LocalHapticFeedback.current
     val scope = rememberCoroutineScope()
-    var editedLyrics by remember { mutableStateOf(currentLyrics) }
+    
+    var selectedFormat by remember { mutableStateOf(LyricFormat.SOURCE) }
+    
+    val sourceForm = remember(lyricsData) {
+        lyricsData?.wordByWordLyrics?.takeIf { it.isNotBlank() }
+            ?: lyricsData?.syncedLyrics?.takeIf { it.isNotBlank() }
+            ?: lyricsData?.plainLyrics?.takeIf { it.isNotBlank() }
+            ?: ""
+    }
+    
+    val lineByLineForm = remember(lyricsData) {
+        lyricsData?.syncedLyrics?.takeIf { it.isNotBlank() }
+            ?: lyricsData?.wordByWordLyrics?.takeIf { it.isNotBlank() }?.let {
+                try {
+                    RhythmLyricsParser.toLRCFormat(RhythmLyricsParser.parseWordByWordLyrics(it))
+                } catch (e: Exception) {
+                    ""
+                }
+            }
+            ?: lyricsData?.plainLyrics?.takeIf { it.isNotBlank() }
+            ?: ""
+    }
+    
+    val wordByWordForm = remember(lyricsData) {
+        lyricsData?.wordByWordLyrics?.takeIf { it.isNotBlank() } ?: ""
+    }
+    
+    var editedSource by remember { mutableStateOf(sourceForm) }
+    var editedLineByLine by remember { mutableStateOf(lineByLineForm) }
+    var editedWordByWord by remember { mutableStateOf(wordByWordForm) }
+    
+    val editedLyrics = when (selectedFormat) {
+        LyricFormat.SOURCE -> editedSource
+        LyricFormat.LINE_BY_LINE -> editedLineByLine
+        LyricFormat.WORD_BY_WORD -> editedWordByWord
+    }
+    
+    fun updateEditedLyrics(newText: String) {
+        when (selectedFormat) {
+            LyricFormat.SOURCE -> editedSource = newText
+            LyricFormat.LINE_BY_LINE -> editedLineByLine = newText
+            LyricFormat.WORD_BY_WORD -> editedWordByWord = newText
+        }
+    }
+    
     var timeOffset by remember { mutableIntStateOf(initialTimeOffset) }
     val sheetState = rememberModalBottomSheetState(
         skipPartiallyExpanded = true
@@ -162,11 +214,11 @@ fun LyricsEditorBottomSheet(
         editedLyrics.contains(Regex("""\[\d{2}:\d{2}\.\d{2,3}\]"""))
     }
     
-    // Update editedLyrics when currentLyrics changes (from refresh)
-    LaunchedEffect(currentLyrics) {
-        if (currentLyrics != editedLyrics) {
-            editedLyrics = currentLyrics
-        }
+    // Update edited states when lyricsData changes
+    LaunchedEffect(lyricsData) {
+        editedSource = sourceForm
+        editedLineByLine = lineByLineForm
+        editedWordByWord = wordByWordForm
     }
     
     // Update timeOffset when initialTimeOffset changes
@@ -241,7 +293,32 @@ fun LyricsEditorBottomSheet(
                     }
 
                     if (result.lyrics != null) {
-                        editedLyrics = result.lyrics
+                        val loadedLyrics = result.lyrics
+                        val loadedTrimmed = loadedLyrics.trim()
+                        
+                        val isWordByWordJson = (loadedTrimmed.startsWith("[") || loadedTrimmed.startsWith("{")) && 
+                            (loadedTrimmed.contains("\"timestamp\"") || loadedTrimmed.contains("\"words\""))
+                            
+                        val isLrc = loadedLyrics.contains(Regex("\\[\\d{2}:\\d{2}\\.\\d{2,3}]"))
+                        
+                        if (isWordByWordJson) {
+                            editedWordByWord = loadedLyrics
+                            editedSource = loadedLyrics
+                            try {
+                                val parsed = RhythmLyricsParser.parseWordByWordLyrics(loadedLyrics)
+                                editedLineByLine = RhythmLyricsParser.toLRCFormat(parsed)
+                            } catch (_: Exception) {
+                                editedLineByLine = ""
+                            }
+                        } else if (isLrc) {
+                            editedLineByLine = loadedLyrics
+                            editedSource = loadedLyrics
+                            editedWordByWord = ""
+                        } else {
+                            editedSource = loadedLyrics
+                            editedLineByLine = loadedLyrics
+                            editedWordByWord = ""
+                        }
                         Toast.makeText(context, R.string.lyrics_loaded_success, Toast.LENGTH_SHORT).show()
                     } else {
                         Toast.makeText(
@@ -265,7 +342,14 @@ fun LyricsEditorBottomSheet(
             .trim('_')  // Remove leading/trailing underscores
             .takeIf { it.isNotEmpty() } ?: "lyrics"  // Fallback to "lyrics" if empty
     }
-    val defaultLyricsFileName = remember(sanitizedTitle) { "$sanitizedTitle.lrc" }
+
+    val defaultLyricsFileName = remember(sanitizedTitle, selectedFormat) {
+        if (selectedFormat == LyricFormat.WORD_BY_WORD) {
+            "$sanitizedTitle.json"
+        } else {
+            "$sanitizedTitle.lrc"
+        }
+    }
 
     // File picker launcher for saving .lrc files
     val saveLyricsLauncher = rememberLauncherForActivityResult(
@@ -281,7 +365,7 @@ fun LyricsEditorBottomSheet(
                 maybeRenameLyricsDocument(it, defaultLyricsFileName)
 
                 Toast.makeText(context, R.string.lyrics_saved_success, Toast.LENGTH_SHORT).show()
-                onSave(editedLyrics, timeOffset)
+                onSave(editedLyrics, timeOffset, selectedFormat.name)
                 onDismiss()
             } catch (e: Exception) {
                 Log.e("LyricsEditor", "Error saving lyrics file", e)
@@ -317,6 +401,43 @@ fun LyricsEditorBottomSheet(
                     songTitle = songTitle,
                     hasLyrics = editedLyrics.isNotBlank()
                 )
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Format Selector Button Group like Theme Switcher
+            AnimatedVisibility(
+                visible = showContent,
+                enter = fadeIn() + slideInVertically { it },
+                exit = fadeOut() + slideOutVertically { it }
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 24.dp)
+                ) {
+                    ExpressiveButtonGroup(
+                        items = listOf(
+                            "Source",
+                            "Line-by-line",
+                            "Word-by-word"
+                        ),
+                        selectedIndex = when (selectedFormat) {
+                            LyricFormat.SOURCE -> 0
+                            LyricFormat.LINE_BY_LINE -> 1
+                            LyricFormat.WORD_BY_WORD -> 2
+                        },
+                        onItemClick = { index ->
+                            HapticUtils.performHapticFeedback(context, haptic, HapticType.LIGHT)
+                            selectedFormat = when (index) {
+                                0 -> LyricFormat.SOURCE
+                                1 -> LyricFormat.LINE_BY_LINE
+                                else -> LyricFormat.WORD_BY_WORD
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -408,8 +529,9 @@ fun LyricsEditorBottomSheet(
                             onClick = {
                                 HapticUtils.performHapticFeedback(context, haptic, HapticType.HEAVY)
                                 timeOffset -= 500
-                                editedLyrics = adjustLyricsTimestamps(editedLyrics, -500)
-                                onSave(editedLyrics, timeOffset) // Apply changes immediately with offset
+                                val adjusted = adjustLyricsTimestamps(editedLyrics, -500)
+                                updateEditedLyrics(adjusted)
+                                onSave(adjusted, timeOffset, selectedFormat.name) // Apply changes immediately with offset
                             },
                             enabled = hasSyncedLyrics,
                             isStart = true,
@@ -457,8 +579,9 @@ fun LyricsEditorBottomSheet(
                             onClick = {
                                 HapticUtils.performHapticFeedback(context, haptic, HapticType.HEAVY)
                                 timeOffset -= 100
-                                editedLyrics = adjustLyricsTimestamps(editedLyrics, -100)
-                                onSave(editedLyrics, timeOffset) // Apply changes immediately with offset
+                                val adjusted = adjustLyricsTimestamps(editedLyrics, -100)
+                                updateEditedLyrics(adjusted)
+                                onSave(adjusted, timeOffset, selectedFormat.name) // Apply changes immediately with offset
                             },
                             enabled = hasSyncedLyrics,
                             isStart = false,
@@ -506,8 +629,9 @@ fun LyricsEditorBottomSheet(
                             onClick = {
                                 HapticUtils.performHapticFeedback(context, haptic, HapticType.HEAVY)
                                 timeOffset += 100
-                                editedLyrics = adjustLyricsTimestamps(editedLyrics, 100)
-                                onSave(editedLyrics, timeOffset) // Apply changes immediately with offset
+                                val adjusted = adjustLyricsTimestamps(editedLyrics, 100)
+                                updateEditedLyrics(adjusted)
+                                onSave(adjusted, timeOffset, selectedFormat.name) // Apply changes immediately with offset
                             },
                             enabled = hasSyncedLyrics,
                             isStart = false,
@@ -555,8 +679,9 @@ fun LyricsEditorBottomSheet(
                             onClick = {
                                 HapticUtils.performHapticFeedback(context, haptic, HapticType.HEAVY)
                                 timeOffset += 500
-                                editedLyrics = adjustLyricsTimestamps(editedLyrics, 500)
-                                onSave(editedLyrics, timeOffset) // Apply changes immediately with offset
+                                val adjusted = adjustLyricsTimestamps(editedLyrics, 500)
+                                updateEditedLyrics(adjusted)
+                                onSave(adjusted, timeOffset, selectedFormat.name) // Apply changes immediately with offset
                             },
                             enabled = hasSyncedLyrics,
                             isStart = false,
@@ -620,13 +745,16 @@ fun LyricsEditorBottomSheet(
                         
                         OutlinedTextField(
                             value = editedLyrics,
-                            onValueChange = { editedLyrics = it },
+                            onValueChange = { updateEditedLyrics(it) },
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(maxHeight),
                             placeholder = {
                                 Text(
-                                    text = context.getString(R.string.lyrics_placeholder),
+                                    text = when (selectedFormat) {
+                                        LyricFormat.WORD_BY_WORD -> "Enter word-by-word lyrics JSON here…"
+                                        else -> context.getString(R.string.lyrics_placeholder)
+                                    },
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
                                 )
@@ -663,6 +791,7 @@ fun LyricsEditorBottomSheet(
                                 "text/*",
                                 "text/x-lrc",
                                 "application/x-lrc",
+                                "application/json",
                                 "application/octet-stream",
                                 "*/*"
                             )

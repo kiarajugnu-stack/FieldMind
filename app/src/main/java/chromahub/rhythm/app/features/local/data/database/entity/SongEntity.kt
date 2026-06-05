@@ -23,5 +23,6 @@ data class SongEntity(
     val sampleRate: Int?,
     val channels: Int?,
     val codec: String?,
-    val discNumber: Int = 1
+    val discNumber: Int = 1,
+    val path: String? = null
 )

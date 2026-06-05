@@ -13,7 +13,7 @@ import chromahub.rhythm.app.features.local.data.database.entity.ArtistEntity
 import chromahub.rhythm.app.features.local.data.database.entity.SongArtistEntity
 import chromahub.rhythm.app.features.local.data.database.entity.SongEntity
 
-@Database(entities = [SongEntity::class, ArtistEntity::class, SongArtistEntity::class], version = 6, exportSchema = false)
+@Database(entities = [SongEntity::class, ArtistEntity::class, SongArtistEntity::class], version = 7, exportSchema = false)
 abstract class RhythmDatabase : RoomDatabase() {
     abstract fun songDao(): SongDao
     abstract fun artistDao(): ArtistDao
@@ -80,6 +80,13 @@ abstract class RhythmDatabase : RoomDatabase() {
             }
         }
 
+        // Migration from version 6 to 7: Add path column to songs table
+        val MIGRATION_6_7 = object : Migration(6, 7) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE songs ADD COLUMN path TEXT")
+            }
+        }
+
         fun getInstance(context: Context): RhythmDatabase {
             return INSTANCE ?: synchronized(this) {
                 INSTANCE ?: Room.databaseBuilder(
@@ -87,7 +94,7 @@ abstract class RhythmDatabase : RoomDatabase() {
                     RhythmDatabase::class.java,
                     "rhythm_database"
                 )
-                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7)
                     .build()
                     .also { INSTANCE = it }
             }

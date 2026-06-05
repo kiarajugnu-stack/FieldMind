@@ -211,7 +211,8 @@ class MusicRepository(context: Context) {
                     sampleRate = song.sampleRate,
                     channels = song.channels,
                     codec = song.codec,
-                    discNumber = song.discNumber
+                    discNumber = song.discNumber,
+                    path = song.path
                 )
             }
 
@@ -259,7 +260,8 @@ class MusicRepository(context: Context) {
                             sampleRate = song.sampleRate,
                             channels = song.channels,
                             codec = song.codec,
-                            discNumber = song.discNumber
+                            discNumber = song.discNumber,
+                            path = song.path
                         )
                     }
                     val chunkSongIds = chunk.map { it.id }
@@ -442,7 +444,8 @@ class MusicRepository(context: Context) {
                         sampleRate = entity.sampleRate,
                         channels = entity.channels,
                         codec = entity.codec,
-                        discNumber = entity.discNumber
+                        discNumber = entity.discNumber,
+                        path = entity.path
                     )
                 } catch (e: Exception) {
                     Log.w(TAG, "Skipping corrupted Room entry: ${entity.id}", e)
@@ -624,6 +627,21 @@ class MusicRepository(context: Context) {
                 apiCallCounts[apiName] = 0
             }
         }
+    }
+
+    fun normalizeStoragePath(path: String): String {
+        var normalized = path.trim().replace('\\', '/')
+        if (normalized.length > 1 && normalized.endsWith('/')) {
+            normalized = normalized.substring(0, normalized.length - 1)
+        }
+        val symlinks = listOf("/sdcard", "/storage/self/primary")
+        for (symlink in symlinks) {
+            if (normalized.startsWith(symlink, ignoreCase = true)) {
+                normalized = "/storage/emulated/0" + normalized.substring(symlink.length)
+                break
+            }
+        }
+        return normalized
     }
 
     suspend fun loadSongs(
@@ -825,24 +843,27 @@ class MusicRepository(context: Context) {
                             // Duplicate detection by path
                             if (pathColumnIndex >= 0) {
                                 val path = cursor.getString(pathColumnIndex)
-                                if (path != null && seenPaths.contains(path)) {
-                                    Log.d(TAG, "Skipping duplicate path: $path - ${song.title}")
-                                    duplicatesFound++
-                                    processedCount++
-                                    continue
-                                }
-                                
-                                // Format filtering
-                                if (allowedFormats != null && path.isNotEmpty()) {
-                                    val extension = path.substringAfterLast('.', "").lowercase()
-                                    if (extension.isNotEmpty() && !allowedFormats.contains(extension)) {
-                                        filteredByFormat++
+                                if (path != null) {
+                                    val normalizedPath = normalizeStoragePath(path)
+                                    if (seenPaths.contains(normalizedPath)) {
+                                        Log.d(TAG, "Skipping duplicate path: $path (normalized: $normalizedPath) - ${song.title}")
+                                        duplicatesFound++
                                         processedCount++
                                         continue
                                     }
+                                    
+                                    // Format filtering
+                                    if (allowedFormats != null && path.isNotEmpty()) {
+                                        val extension = path.substringAfterLast('.', "").lowercase()
+                                        if (extension.isNotEmpty() && !allowedFormats.contains(extension)) {
+                                            filteredByFormat++
+                                            processedCount++
+                                            continue
+                                        }
+                                    }
+                                    
+                                    seenPaths.add(normalizedPath)
                                 }
-                                
-                                seenPaths.add(path)
                             }
 
                             // Duration filtering (quality check)
@@ -1111,7 +1132,8 @@ class MusicRepository(context: Context) {
                 }
 
                 val absolutePath = file.absolutePath
-                if (seenPaths.contains(absolutePath)) {
+                val normalizedPath = normalizeStoragePath(absolutePath)
+                if (seenPaths.contains(normalizedPath)) {
                     return@forEach
                 }
 
@@ -1123,7 +1145,7 @@ class MusicRepository(context: Context) {
                     return@forEach
                 }
 
-                seenPaths.add(absolutePath)
+                seenPaths.add(normalizedPath)
                 discovered.add(song)
             }
         }
@@ -1255,7 +1277,8 @@ class MusicRepository(context: Context) {
                 sampleRate = null,
                 channels = null,
                 codec = file.extension.uppercase().ifBlank { null },
-                discNumber = fallbackDiscNumber.coerceAtLeast(1)
+                discNumber = fallbackDiscNumber.coerceAtLeast(1),
+                path = file.absolutePath
             )
         } catch (e: Exception) {
             null
@@ -1642,7 +1665,8 @@ class MusicRepository(context: Context) {
                 sampleRate = null,
                 channels = null,
                 codec = null,
-                discNumber = discNumber
+                discNumber = discNumber,
+                path = filePath
             )
         } catch (e: Exception) {
             Log.w(TAG, "Error creating song from cursor", e)
@@ -1988,81 +2012,58 @@ class MusicRepository(context: Context) {
     }
 
     suspend fun loadAlbums(): List<Album> = withContext(Dispatchers.IO) {
-        val albums = mutableListOf<Album>()
-        val seenAlbums = mutableSetOf<String>() // Dedup albums by normalized title and artist
-        val collection = MediaStore.Audio.Albums.EXTERNAL_CONTENT_URI
-
-        val projection = arrayOf(
-            MediaStore.Audio.Albums._ID,
-            MediaStore.Audio.Albums.ALBUM,
-            MediaStore.Audio.Albums.ARTIST,
-            MediaStore.Audio.Albums.NUMBER_OF_SONGS,
-            MediaStore.Audio.Albums.FIRST_YEAR
-        )
-
-        val sortOrder = "${MediaStore.Audio.Albums.ALBUM} ASC"
-
-        // Load all songs once
         val allSongs = loadSongs()
-        val songsByAlbumId = allSongs.groupBy { it.albumId }
-
-        context.contentResolver.query(
-            collection,
-            projection,
-            null,
-            null,
-            sortOrder
-        )?.use { cursor ->
-            // Cache column indices
-            val idColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Albums._ID)
-            val albumColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Albums.ALBUM)
-            val artistColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Albums.ARTIST)
-            val songsCountColumn =
-                cursor.getColumnIndexOrThrow(MediaStore.Audio.Albums.NUMBER_OF_SONGS)
-            val yearColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Albums.FIRST_YEAR)
-
-            while (cursor.moveToNext()) {
-                val id = cursor.getLong(idColumn)
-                val title = cursor.getString(albumColumn) ?: continue // Skip if null
-                val artist = cursor.getString(artistColumn) ?: "Unknown Artist"
-                val songsCount = cursor.getInt(songsCountColumn)
-                val year = cursor.getInt(yearColumn)
-
-                // Deduplicate albums by normalized title and artist (case-insensitive, trimmed)
-                val normalizedTitle = title.lowercase().trim()
-                val normalizedArtist = artist.lowercase().trim()
-                val albumKey = "$normalizedTitle|$normalizedArtist"
-                if (seenAlbums.contains(albumKey)) {
-                    Log.d(TAG, "Skipping duplicate album: $title by $artist")
-                    continue
-                }
-                seenAlbums.add(albumKey)
-
-                // Get songs for this album from the pre-loaded map by albumId
-                val albumSongs = songsByAlbumId[id.toString()] ?: emptyList()
-                
-                // Use album art from the first song in the album if available
-                // This ensures consistency with the song's album art (whether embedded or from MediaStore)
-                val albumArtUri = albumSongs.firstOrNull()?.artworkUri 
-                    ?: ContentUris.withAppendedId(
-                        Uri.parse("content://media/external/audio/albumart"),
-                        id
-                    )
-
-                val album = Album(
-                    id = id.toString(),
-                    title = title,
-                    artist = artist,
-                    artworkUri = albumArtUri,
-                    year = year,
-                    songs = albumSongs,
-                    numberOfSongs = albumSongs.size
-                )
-                albums.add(album)
-            }
+        
+        // Group songs by a combination of album name and album artist/artist
+        // (case-insensitive comparison) to ensure songs with same album name
+        // but different artists, or vice versa, are grouped properly.
+        val groupedSongs = allSongs.groupBy { song ->
+            val albumName = song.album.trim().lowercase(Locale.ROOT)
+            val albumArtist = (song.albumArtist?.trim()?.takeIf { it.isNotBlank() }
+                ?: song.artist.trim().takeIf { it.isNotBlank() }
+                ?: "Unknown Artist").lowercase(Locale.ROOT)
+            albumName to albumArtist
         }
 
-        Log.d(TAG, "Loaded ${albums.size} albums")
+        val albums = groupedSongs.map { (key, albumSongs) ->
+            val firstSong = albumSongs.first()
+            val albumName = firstSong.album.trim().ifBlank { "Unknown Album" }
+            val albumArtist = firstSong.albumArtist?.trim()?.takeIf { it.isNotBlank() }
+                ?: firstSong.artist.trim().takeIf { it.isNotBlank() }
+                ?: "Unknown Artist"
+            
+            // Generate a stable album ID. Use the first song's albumId if it exists and is not blank,
+            // otherwise generate a hash.
+            val albumId = firstSong.albumId.trim().ifBlank {
+                "hash_${(albumName + "|" + albumArtist).lowercase(Locale.ROOT).hashCode()}"
+            }
+            
+            // Find the maximum year among the songs
+            val year = albumSongs.maxOfOrNull { it.year } ?: 0
+            
+            // Get dateModified from the songs
+            val dateModified = albumSongs.maxOfOrNull { it.dateModified } ?: System.currentTimeMillis()
+
+            // Sort songs in the album by track number, then by disc number, then by title
+            val sortedSongs = albumSongs.sortedWith(
+                compareBy<Song> { it.discNumber }
+                    .thenBy { it.trackNumber }
+                    .thenBy { it.title.lowercase(Locale.ROOT) }
+            )
+
+            Album(
+                id = albumId,
+                title = albumName,
+                artist = albumArtist,
+                artworkUri = firstSong.artworkUri,
+                year = year,
+                songs = sortedSongs,
+                numberOfSongs = sortedSongs.size,
+                dateModified = dateModified
+            )
+        }.sortedBy { it.title.lowercase(Locale.ROOT) }
+
+        Log.d(TAG, "Loaded ${albums.size} albums from songs directly")
         albums
     }
 
@@ -3712,6 +3713,33 @@ class MusicRepository(context: Context) {
         // Log the first 200 characters to see what we're parsing
         Log.d(TAG, "Parsing lyrics data: ${lyrics.take(200)}${if (lyrics.length > 200) "..." else ""}")
         
+        // Check for word-by-word JSON format before sanitizing
+        val trimmedInput = lyrics.trim()
+        val isWordByWordJson = (trimmedInput.startsWith("[") || trimmedInput.startsWith("{")) && 
+            (trimmedInput.contains("\"timestamp\"") || trimmedInput.contains("\"words\""))
+            
+        if (isWordByWordJson) {
+            try {
+                val parsed = RhythmLyricsParser.parseWordByWordLyrics(lyrics)
+                if (parsed.isNotEmpty()) {
+                    val plainText = try {
+                        RhythmLyricsParser.toPlainText(parsed)
+                    } catch (e: Exception) {
+                        null
+                    }
+                    val syncedLrc = try {
+                        RhythmLyricsParser.toLRCFormat(parsed)
+                    } catch (e: Exception) {
+                        null
+                    }
+                    Log.d(TAG, "Successfully parsed embedded word-by-word JSON lyrics")
+                    return LyricsData(plainText, syncedLrc, lyrics)
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Error parsing embedded word-by-word JSON", e)
+            }
+        }
+        
         // Clean up the lyrics text
         val cleanedLyrics = sanitizeLyricsText(lyrics)
 
@@ -4938,14 +4966,15 @@ class MusicRepository(context: Context) {
             }
 
             // Check if album has artwork - if yes, we don't need track-specific artwork
-            if (song.albumId.isNotBlank()) {
-                val albums = loadAlbums()
-                val album = albums.find { it.id == song.albumId }
-                if (album?.artworkUri != null) {
-                    // Album has artwork, no need for track-specific image
-                    updatedSongs.add(song)
-                    continue
-                }
+            val albums = loadAlbums()
+            val album = albums.find { 
+                it.title.trim().equals(song.album.trim(), ignoreCase = true) &&
+                it.artist.trim().equals(song.albumArtist?.trim() ?: song.artist.trim(), ignoreCase = true)
+            }
+            if (album?.artworkUri != null) {
+                // Album has artwork, no need for track-specific image
+                updatedSongs.add(song)
+                continue
             }
 
             val cacheKey = "${song.artist}:${song.title}"
@@ -5754,9 +5783,10 @@ class MusicRepository(context: Context) {
 
             // Filter songs that match the album's title and ID
             val albumSongs = allSongs.filter { song ->
-                val albumTitleMatch = song.album == album.title
-                val albumIdMatch = song.albumId == albumId
-                albumTitleMatch && albumIdMatch
+                val albumTitleMatch = song.album.trim().equals(album.title.trim(), ignoreCase = true)
+                val albumArtist = song.albumArtist?.trim() ?: song.artist.trim()
+                val albumArtistMatch = albumArtist.equals(album.artist.trim(), ignoreCase = true)
+                albumTitleMatch && albumArtistMatch
             }
 
             Log.d(TAG, "Found ${albumSongs.size} songs for album: ${album.title}")
@@ -5803,9 +5833,10 @@ class MusicRepository(context: Context) {
 
             // Filter songs that match the album's title and ID
             val albumSongs = allSongs.filter { song ->
-                val albumTitleMatch = song.album == album.title
-                val albumIdMatch = song.albumId == albumId
-                albumTitleMatch && albumIdMatch
+                val albumTitleMatch = song.album.trim().equals(album.title.trim(), ignoreCase = true)
+                val albumArtist = song.albumArtist?.trim() ?: song.artist.trim()
+                val albumArtistMatch = albumArtist.equals(album.artist.trim(), ignoreCase = true)
+                albumTitleMatch && albumArtistMatch
             }
 
             Log.d(TAG, "Found ${albumSongs.size} songs for album: ${album.title}")

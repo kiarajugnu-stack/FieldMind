@@ -3926,13 +3926,13 @@ fun MaterialPlayerScreen(
     // Lyrics Editor Bottom Sheet
     if (showLyricsEditorDialog) {
         LyricsEditorBottomSheet(
-            currentLyrics = lyrics?.getBestLyrics() ?: "",
+            lyricsData = lyrics,
             songTitle = song?.title ?: "Unknown",
             initialTimeOffset = musicViewModel.lyricsTimeOffset.collectAsState().value,
             onDismiss = { showLyricsEditorDialog = false },
-            onSave = { editedLyrics, timeOffset ->
+            onSave = { editedLyrics, timeOffset, format ->
                 // Save lyrics to cache and update current lyrics immediately with offset
-                musicViewModel.saveEditedLyrics(editedLyrics, timeOffset)
+                musicViewModel.saveEditedLyrics(editedLyrics, timeOffset, format)
             },
             onRefresh = {
                 // Clear cache and refetch lyrics from source priority
