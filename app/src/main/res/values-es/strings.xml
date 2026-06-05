@@ -1,6 +1,5 @@
 <resources>
-    <string name="app_name">Rhythm
-Error</string>
+    <string name="app_name">Rhythm</string>
     
     <!-- Common Labels -->
     <string name="home">Inicio</string>
@@ -406,8 +405,7 @@ Error</string>
     <string name="status_disabled">Deshabilitado</string>
     
     <!-- HomeScreen -->
-    <string name="home_title">Rhythm
-Error</string>
+    <string name="home_title">Rhythm</string>
     <string name="home_settings_cd">Configuración</string>
     <string name="home_discover_albums">Descubrir álbumes</string>
     <string name="home_explore_music">Explora música increíble</string>
@@ -617,8 +615,7 @@ Error</string>
     <string name="ui_cancel_download">Cancelar Descargar</string>
     
     <!-- Common Terms -->
-    <string name="common_rhythm">Rhythm
-Error</string>
+    <string name="common_rhythm">Rhythm</string>
     <string name="common_songs">Canciones</string>
     <string name="common_home">Inicio</string>
     <string name="common_library">Biblioteca</string>
@@ -668,8 +665,7 @@ Error</string>
     
     <!-- Onboarding -->
     <string name="onboarding_welcome_to">Bienvenido a</string>
-    <string name="onboarding_welcome_title">Rhythm
-Error</string>
+    <string name="onboarding_welcome_title">Rhythm</string>
     <string name="onboarding_welcome_subtitle">Tu música, tu Rhythm</string>
     <string name="onboarding_welcome_desc">Personalice cada aspecto de su experiencia auditiva con potentes funciones y total privacidad. Reproduce tu música sin conexión, sin publicidad y con control total.</string>
     <string name="onboarding_get_started">Empezar</string>
@@ -1548,8 +1544,7 @@ Error</string>
     <string name="cd_albums">Álbumes</string>
     <string name="cd_artists">Artistas</string>
     <string name="cd_songs">Canciones</string>
-    <string name="cd_rhythm_splash">Rhythm
-Error</string>
+    <string name="cd_rhythm_splash">Rhythm</string>
     <string name="cd_search_in_playlist">Buscar canciones en la lista de reproducción</string>
     <string name="cd_shuffle_play_action">Reproducción aleatoria</string>
     <string name="cd_add_songs_to_playlist">Agregar canciones a la lista de reproducción</string>
