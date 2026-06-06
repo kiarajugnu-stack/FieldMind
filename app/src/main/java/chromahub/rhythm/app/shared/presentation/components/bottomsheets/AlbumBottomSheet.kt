@@ -62,8 +62,10 @@ import chromahub.rhythm.app.shared.presentation.components.AudioQualityBadges
 import chromahub.rhythm.app.util.ImageUtils
 import chromahub.rhythm.app.util.HapticUtils
 import chromahub.rhythm.app.util.HapticType
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 enum class AlbumSortOrder {
     TRACK_NUMBER,
@@ -71,6 +73,84 @@ enum class AlbumSortOrder {
     TITLE_DESC,
     DURATION_ASC,
     DURATION_DESC
+}
+
+private data class AlbumSongDisplayState(
+    val visibleSongs: List<Song> = emptyList(),
+    val availableDiscs: List<Int> = emptyList(),
+    val selectedDisc: Int = 0,
+    val totalDuration: Long = 0L,
+    val tracksDuration: Long = 0L,
+    val hasMultipleDiscs: Boolean = false,
+    val isPreparing: Boolean = true
+)
+
+private fun prepareAlbumSongDisplayState(
+    songs: List<Song>,
+    sortOrder: AlbumSortOrder,
+    libraryCombineDiscs: Boolean,
+    savedDiscFilter: Int
+): AlbumSongDisplayState {
+    val trackComparator = Comparator<Song> { a, b ->
+        when {
+            a.trackNumber > 0 && b.trackNumber > 0 -> a.trackNumber.compareTo(b.trackNumber)
+            a.trackNumber > 0 -> -1
+            b.trackNumber > 0 -> 1
+            else -> a.title.compareTo(b.title, ignoreCase = true)
+        }
+    }
+
+    fun sortByOrder(albumSongs: List<Song>): List<Song> {
+        return when (sortOrder) {
+            AlbumSortOrder.TRACK_NUMBER -> albumSongs.sortedWith(trackComparator)
+            AlbumSortOrder.TITLE_ASC -> albumSongs.sortedBy { it.title.lowercase() }
+            AlbumSortOrder.TITLE_DESC -> albumSongs.sortedByDescending { it.title.lowercase() }
+            AlbumSortOrder.DURATION_ASC -> albumSongs.sortedBy { it.duration }
+            AlbumSortOrder.DURATION_DESC -> albumSongs.sortedByDescending { it.duration }
+        }
+    }
+
+    val sortedSongs = if (libraryCombineDiscs) {
+        sortByOrder(songs)
+    } else {
+        songs
+            .groupBy { it.discNumber.coerceAtLeast(1) }
+            .toSortedMap()
+            .values
+            .flatMap { discSongs -> sortByOrder(discSongs) }
+    }
+
+    val availableDiscs = songs
+        .map { it.discNumber.coerceAtLeast(1) }
+        .distinct()
+        .sorted()
+    val shouldShowDiscFilter = !libraryCombineDiscs && availableDiscs.size > 1
+    val selectedDisc = if (shouldShowDiscFilter && savedDiscFilter in availableDiscs) {
+        savedDiscFilter
+    } else {
+        0
+    }
+    val visibleSongs = if (selectedDisc == 0) {
+        sortedSongs
+    } else {
+        sortedSongs.filter { it.discNumber.coerceAtLeast(1) == selectedDisc }
+    }
+    val hasMultipleDiscs = !libraryCombineDiscs &&
+        sortedSongs.asSequence()
+            .map { it.discNumber.coerceAtLeast(1) }
+            .distinct()
+            .take(2)
+            .count() > 1
+
+    return AlbumSongDisplayState(
+        visibleSongs = visibleSongs,
+        availableDiscs = availableDiscs,
+        selectedDisc = selectedDisc,
+        totalDuration = sortedSongs.sumOf { it.duration },
+        tracksDuration = visibleSongs.sumOf { it.duration },
+        hasMultipleDiscs = hasMultipleDiscs,
+        isPreparing = false
+    )
 }
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class)
@@ -159,8 +239,10 @@ fun AlbumBottomSheet(
     var showDiscMenu by remember { mutableStateOf(false) }
 
     // Save sort order when changed
-    LaunchedEffect(sortOrder) {
-        appSettings.setAlbumSortOrder(sortOrder.name)
+    LaunchedEffect(sortOrder, savedSortOrder) {
+        if (savedSortOrder != sortOrder.name) {
+            appSettings.setAlbumSortOrder(sortOrder.name)
+        }
     }
 
     // Staggered animation states
@@ -207,67 +289,40 @@ fun AlbumBottomSheet(
         label = "contentOffset"
     )
 
-    // Sort songs
-    val sortedSongs = remember(album.songs, sortOrder, libraryCombineDiscs) {
-        val trackComparator = Comparator<Song> { a, b ->
-            when {
-                a.trackNumber > 0 && b.trackNumber > 0 -> a.trackNumber.compareTo(b.trackNumber)
-                a.trackNumber > 0 -> -1
-                b.trackNumber > 0 -> 1
-                else -> a.title.compareTo(b.title, ignoreCase = true)
-            }
-        }
+    var songDisplayState by remember(album.id) { mutableStateOf(AlbumSongDisplayState()) }
+    val albumSongs = album.songs
+    val firstAlbumSongId = albumSongs.firstOrNull()?.id
+    val lastAlbumSongId = albumSongs.lastOrNull()?.id
 
-        fun sortByOrder(songs: List<Song>): List<Song> {
-            return when (sortOrder) {
-                AlbumSortOrder.TRACK_NUMBER -> songs.sortedWith(trackComparator)
-                AlbumSortOrder.TITLE_ASC -> songs.sortedBy { it.title.lowercase() }
-                AlbumSortOrder.TITLE_DESC -> songs.sortedByDescending { it.title.lowercase() }
-                AlbumSortOrder.DURATION_ASC -> songs.sortedBy { it.duration }
-                AlbumSortOrder.DURATION_DESC -> songs.sortedByDescending { it.duration }
-            }
-        }
-
-        if (libraryCombineDiscs) {
-            sortByOrder(album.songs)
-        } else {
-            album.songs
-                .groupBy { it.discNumber.coerceAtLeast(1) }
-                .toSortedMap()
-                .values
-                .flatMap { discSongs -> sortByOrder(discSongs) }
+    LaunchedEffect(
+        album.id,
+        album.numberOfSongs,
+        album.dateModified,
+        firstAlbumSongId,
+        lastAlbumSongId,
+        sortOrder,
+        libraryCombineDiscs,
+        savedDiscFilter
+    ) {
+        songDisplayState = AlbumSongDisplayState()
+        songDisplayState = withContext(Dispatchers.Default) {
+            prepareAlbumSongDisplayState(
+                songs = albumSongs,
+                sortOrder = sortOrder,
+                libraryCombineDiscs = libraryCombineDiscs,
+                savedDiscFilter = savedDiscFilter
+            )
         }
     }
 
-    val hasMultipleDiscs = remember(sortedSongs, libraryCombineDiscs) {
-        !libraryCombineDiscs &&
-            sortedSongs.map { it.discNumber.coerceAtLeast(1) }.distinct().size > 1
-    }
-
-    val availableDiscs = remember(album.songs) {
-        album.songs
-            .map { it.discNumber.coerceAtLeast(1) }
-            .distinct()
-            .sorted()
-    }
-
+    val visibleSongs = songDisplayState.visibleSongs
+    val availableDiscs = songDisplayState.availableDiscs
+    val selectedDiscFilterForAlbum = songDisplayState.selectedDisc
+    val totalDuration = songDisplayState.totalDuration
+    val tracksDuration = songDisplayState.tracksDuration
+    val hasMultipleDiscs = songDisplayState.hasMultipleDiscs
+    val isPreparingSongs = songDisplayState.isPreparing
     val shouldShowDiscFilter = !libraryCombineDiscs && availableDiscs.size > 1
-    val selectedDiscFilterForAlbum = remember(savedDiscFilter, shouldShowDiscFilter, availableDiscs) {
-        if (shouldShowDiscFilter && savedDiscFilter in availableDiscs) {
-            savedDiscFilter
-        } else {
-            0
-        }
-    }
-
-    val visibleSongs = remember(sortedSongs, selectedDiscFilterForAlbum) {
-        if (selectedDiscFilterForAlbum == 0) {
-            sortedSongs
-        } else {
-            sortedSongs.filter { it.discNumber.coerceAtLeast(1) == selectedDiscFilterForAlbum }
-        }
-    }
-
     val showDiscSections = hasMultipleDiscs && selectedDiscFilterForAlbum == 0
     val selectedDiscLabel = if (selectedDiscFilterForAlbum == 0) {
         context.getString(R.string.bottomsheet_all_discs)
@@ -279,15 +334,6 @@ fun AlbumBottomSheet(
         if (!shouldShowDiscFilter) {
             showDiscMenu = false
         }
-    }
-
-    // Calculate total duration
-    val totalDuration = remember(sortedSongs) {
-        sortedSongs.sumOf { it.duration }
-    }
-
-    val tracksDuration = remember(visibleSongs) {
-        visibleSongs.sumOf { it.duration }
     }
 
     // Lazy list state for scroll-based effects
@@ -898,7 +944,14 @@ fun AlbumBottomSheet(
                                             .padding(horizontal = 12.dp)
                                             .graphicsLayer { translationY = contentOffset }
                                     ) {
-                                        if (visibleSongs.isNotEmpty()) {
+                                        if (isPreparingSongs) {
+                                            Box(
+                                                modifier = Modifier.fillMaxSize(),
+                                                contentAlignment = Alignment.Center
+                                            ) {
+                                                CircularProgressIndicator()
+                                            }
+                                        } else if (visibleSongs.isNotEmpty()) {
                                             LazyColumn(
                                                 state = listState,
                                                 modifier = Modifier.fillMaxSize(),
@@ -1868,7 +1921,14 @@ fun AlbumBottomSheet(
                             .padding(horizontal = 12.dp)
                             .graphicsLayer { translationY = contentOffset }
                     ) {
-                        if (visibleSongs.isNotEmpty()) {
+                        if (isPreparingSongs) {
+                            Box(
+                                modifier = Modifier.fillMaxSize(),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                CircularProgressIndicator()
+                            }
+                        } else if (visibleSongs.isNotEmpty()) {
                             LazyColumn(
                                 state = listState,
                                 modifier = Modifier.fillMaxSize(),
