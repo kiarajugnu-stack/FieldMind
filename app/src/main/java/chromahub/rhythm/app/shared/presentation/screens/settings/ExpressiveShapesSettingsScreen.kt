@@ -340,7 +340,7 @@ fun ExpressiveShapesSettingsScreen(onBackClick: () -> Unit) {
                     else
                         MaterialTheme.colorScheme.surfaceContainer
                 ),
-                shape = RoundedCornerShape(40.dp),
+                shape = RoundedCornerShape(28.dp),
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 24.dp)
@@ -349,7 +349,7 @@ fun ExpressiveShapesSettingsScreen(onBackClick: () -> Unit) {
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(20.dp)
+                        .padding(horizontal = 20.dp, vertical = 12.dp)
                 ) {
                     Icon(
                         imageVector = MaterialSymbolIcon("interests"),
@@ -359,7 +359,7 @@ fun ExpressiveShapesSettingsScreen(onBackClick: () -> Unit) {
                         } else {
                             MaterialTheme.colorScheme.onSurfaceVariant
                         },
-                        modifier = Modifier.size(32.dp)
+                        modifier = Modifier.size(35.dp)
                     )
                     Spacer(modifier = Modifier.width(16.dp))
                     Column(modifier = Modifier.weight(1f)) {

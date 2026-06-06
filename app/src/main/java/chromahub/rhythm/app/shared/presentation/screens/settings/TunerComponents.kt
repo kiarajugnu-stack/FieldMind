@@ -310,7 +310,7 @@ fun TunerSettingRow(item: SettingItem) {
 }
 
 
-
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TunerAnimatedSwitch(
     checked: Boolean,
@@ -318,78 +318,23 @@ fun TunerAnimatedSwitch(
     enabled: Boolean = true,
     modifier: Modifier = Modifier
 ) {
-    val isAppDarkTheme = MaterialTheme.colorScheme.background.luminance() < 0.5f
-    val thumbColor by animateColorAsState(
-        targetValue = when {
-            checked && !enabled -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f)
-            checked -> MaterialTheme.colorScheme.onPrimary
-            else -> if (isAppDarkTheme) Color.White else Color.Black
-        },
-        animationSpec = spring(
-            dampingRatio = Spring.DampingRatioMediumBouncy,
-            stiffness = Spring.StiffnessMedium
-        ),
-        label = "tuner_thumb_color"
-    )
-    
-    val trackColor by animateColorAsState(
-        targetValue = when {
-            !enabled && checked -> MaterialTheme.colorScheme.primary.copy(alpha = 0.38f)
-            !enabled -> MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.75f)
-            checked -> MaterialTheme.colorScheme.primary
-            else -> MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.82f)
-        },
-        animationSpec = spring(
-            dampingRatio = Spring.DampingRatioMediumBouncy,
-            stiffness = Spring.StiffnessMedium
-        ),
-        label = "tuner_track_color"
-    )
-
-    val iconTint by animateColorAsState(
-        targetValue = if (checked) {
-            MaterialTheme.colorScheme.primary
-        } else {
-            MaterialTheme.colorScheme.onPrimary.copy(alpha = if (enabled) 1f else 0.55f)
-        },
-        animationSpec = spring(
-            dampingRatio = Spring.DampingRatioNoBouncy,
-            stiffness = Spring.StiffnessMedium
-        ),
-        label = "tuner_switch_icon_tint"
-    )
-    
     Switch(
         checked = checked,
         onCheckedChange = onCheckedChange,
         enabled = enabled,
         modifier = modifier,
-        colors = SwitchDefaults.colors(
-            checkedThumbColor = thumbColor,
-            checkedTrackColor = trackColor,
-            checkedBorderColor = Color.Transparent,
-            uncheckedThumbColor = thumbColor,
-            uncheckedTrackColor = trackColor,
-            uncheckedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f),
-            disabledCheckedThumbColor = thumbColor,
-            disabledCheckedTrackColor = trackColor,
-            disabledUncheckedThumbColor = thumbColor,
-            disabledUncheckedTrackColor = trackColor,
-        ),
         thumbContent = {
             AnimatedContent(
                 targetState = checked,
                 transitionSpec = {
-                    (fadeIn(animationSpec = tween(140)) + scaleIn(initialScale = 0.85f)) togetherWith
-                        (fadeOut(animationSpec = tween(120)) + scaleOut(targetScale = 0.85f))
+                    fadeIn(animationSpec = tween(220)) togetherWith fadeOut(animationSpec = tween(110))
                 },
-                label = "tuner_switch_icon"
+                label = "switch_icon_animation"
             ) { isChecked ->
                 Icon(
                     imageVector = if (isChecked) RhythmIcons.Check else RhythmIcons.Close,
                     contentDescription = null,
-                    modifier = Modifier.size(14.dp),
-                    tint = iconTint
+                    modifier = Modifier.size(SwitchDefaults.IconSize)
                 )
             }
         }

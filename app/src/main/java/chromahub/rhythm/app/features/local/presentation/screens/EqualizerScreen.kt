@@ -629,7 +629,7 @@ fun EqualizerScreen(
             }
         },
         headerContent = {
-            // Equalizer Enable/Disable Card (moved to header)
+            // Equalizer Enable/Disable Card 
             Card(
                 colors = CardDefaults.cardColors(
                     containerColor = if (isEqualizerEnabled)
@@ -637,7 +637,7 @@ fun EqualizerScreen(
                     else
                         MaterialTheme.colorScheme.surfaceContainer
                 ),
-                shape = RoundedCornerShape(40.dp),
+                shape = RoundedCornerShape(28.dp), 
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 24.dp)
@@ -646,13 +646,13 @@ fun EqualizerScreen(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(20.dp)
+                        .padding(horizontal = 20.dp, vertical = 12.dp) 
                 ) {
                     Icon(
                         imageVector = RhythmIcons.Equalizer,
                         contentDescription = null,
                         tint = if (isEqualizerEnabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.size(32.dp)
+                        modifier = Modifier.size(35.dp)
                     )
                     Spacer(modifier = Modifier.width(16.dp))
                     Column(modifier = Modifier.weight(1f)) {
@@ -665,7 +665,7 @@ fun EqualizerScreen(
                                     isEqualizerEnabled -> stringResource(R.string.common_active)
                                     else -> stringResource(R.string.common_disabled)
                                 },
-                                style = MaterialTheme.typography.titleLarge,
+                                style = MaterialTheme.typography.titleLarge, 
                                 fontWeight = FontWeight.Bold
                             )
                         }

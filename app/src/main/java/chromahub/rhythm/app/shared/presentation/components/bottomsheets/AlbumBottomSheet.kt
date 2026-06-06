@@ -1,5 +1,3 @@
-
-
 package chromahub.rhythm.app.shared.presentation.components.bottomsheets
 
 import chromahub.rhythm.app.shared.presentation.components.icons.RhythmIcons
@@ -304,7 +302,6 @@ fun AlbumBottomSheet(
         libraryCombineDiscs,
         savedDiscFilter
     ) {
-        songDisplayState = AlbumSongDisplayState()
         songDisplayState = withContext(Dispatchers.Default) {
             prepareAlbumSongDisplayState(
                 songs = albumSongs,
@@ -1165,67 +1162,67 @@ fun AlbumBottomSheet(
                                                 ),
                                                 start = Offset(shimmerOffset - 500f, 0f),
                                                 end = Offset(shimmerOffset, size.height)
-                                            )
-                                        )
-                                    }
-                            )
-                        }
-
-                        // Multi-layer gradient overlay for depth (conditional)
-                        if (albumBottomSheetGradientBlur) {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .background(
-                                        Brush.verticalGradient(
-                                            colorStops = arrayOf(
-                                                0f to MaterialTheme.colorScheme.surfaceContainerLow.copy(
-                                                    alpha = 0.3f
-                                                ),
-                                                0.4f to Color.Transparent,
-                                                0.7f to MaterialTheme.colorScheme.surface.copy(alpha = 0.5f),
-                                                1f to MaterialTheme.colorScheme.surface
-                                            )
                                         )
                                     )
-                            )
-                        }
+                                }
+                        )
+                    }
 
-                        // Radial highlight accent (conditional)
-                        if (albumBottomSheetGradientBlur) {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .background(
-                                        Brush.radialGradient(
-                                            colors = listOf(
-                                                MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
-                                                Color.Transparent
-                                            ),
-                                            center = Offset(0.3f, 0.3f),
-                                            radius = 800f
-                                        )
-                                    )
-                            )
-                        }
-
-                        // Drag handle with animation
+                    // Multi-layer gradient overlay for depth (conditional)
+                    if (albumBottomSheetGradientBlur) {
                         Box(
                             modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(top = 12.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Surface(
-                                modifier = Modifier
-                                    .width(40.dp)
-                                    .height(4.dp),
-                                shape = RoundedCornerShape(2.dp),
-                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
-                            ) {}
-                        }
+                                .fillMaxSize()
+                                .background(
+                                    Brush.verticalGradient(
+                                        colorStops = arrayOf(
+                                            0f to MaterialTheme.colorScheme.surfaceContainerLow.copy(
+                                                alpha = 0.3f
+                                            ),
+                                            0.4f to Color.Transparent,
+                                            0.7f to MaterialTheme.colorScheme.surface.copy(alpha = 0.5f),
+                                            1f to MaterialTheme.colorScheme.surface
+                                        )
+                                    )
+                                )
+                        )
+                    }
 
-                        // Close button
+                    // Radial highlight accent (conditional)
+                    if (albumBottomSheetGradientBlur) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(
+                                    Brush.radialGradient(
+                                        colors = listOf(
+                                            MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+                                            Color.Transparent
+                                        ),
+                                        center = Offset(0.3f, 0.3f),
+                                        radius = 800f
+                                    )
+                                )
+                        )
+                    }
+
+                    // Drag handle with animation
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 12.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Surface(
+                            modifier = Modifier
+                                .width(40.dp)
+                                .height(4.dp),
+                            shape = RoundedCornerShape(2.dp),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
+                        ) {}
+                    }
+
+                    // Close button
 //                    Surface(
 //                        onClick = {
 //                            HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)

@@ -327,108 +327,163 @@ fun CacheManagementSettingsScreen(onBackClick: () -> Unit) {
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
 
-            // Current Cache Status
             item {
-                Card(
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
-                    shape = RoundedCornerShape(16.dp),
-                    modifier = Modifier.fillMaxWidth()
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 4.dp),
+                    verticalArrangement = Arrangement.spacedBy(24.dp)
                 ) {
-                    Column(
-                        modifier = Modifier.padding(20.dp)
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.fillMaxWidth()
+                    if (isCalculatingSize) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(200.dp),
+                            contentAlignment = Alignment.Center
                         ) {
-                            Icon(
-                                imageVector = MaterialSymbolIcon("pie_chart", filled = true),
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.primary
-                            )
-                            Spacer(modifier = Modifier.width(12.dp))
+                            CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
+                        }
+                    } else {
+                        // Hero Stat
+                        Column(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            Box(
+                                modifier = Modifier.fillMaxWidth(),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = chromahub.rhythm.app.util.CacheManager.formatBytes(currentCacheSize),
+                                    style = MaterialTheme.typography.displayMedium,
+                                    fontWeight = FontWeight.ExtraBold,
+                                    color = MaterialTheme.colorScheme.onSurface,
+                                    maxLines = 1,
+                                    textAlign = TextAlign.Center
+                                )
+                            }
                             Text(
-                                text = context.getString(R.string.cache_current_status),
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.SemiBold
+                                text = context.getString(R.string.cache_total_size) + " / ${String.format(Locale.getDefault(), "%.1f", maxCacheSize / (1024f * 1024f))} MB",
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                textAlign = TextAlign.Center
                             )
                         }
 
-                        Spacer(modifier = Modifier.height(16.dp))
+                        // Segmented Timeline Bar
+                        val totalLimit = maxCacheSize.toFloat().coerceAtLeast(1f)
+                        val remainingSpace = (totalLimit - currentCacheSize.toFloat()).coerceAtLeast(0f)
+                        val cacheEntries = cacheDetails.entries.toList()
+                        
+                        val segmentColors = listOf(
+                            MaterialTheme.colorScheme.primary,
+                            MaterialTheme.colorScheme.secondary,
+                            MaterialTheme.colorScheme.tertiary,
+                            MaterialTheme.colorScheme.error
+                        )
 
-                        if (isCalculatingSize) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                CircularProgressIndicator(
-                                    modifier = Modifier.size(16.dp),
-                                    strokeWidth = 2.dp
-                                )
-                                Spacer(modifier = Modifier.width(12.dp))
-                                Text(
-                                    text = context.getString(R.string.cache_calculating),
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(48.dp),
+                            horizontalArrangement = Arrangement.spacedBy(3.dp)
+                        ) {
+                            if (cacheEntries.isNotEmpty()) {
+                                cacheEntries.forEachIndexed { index, entry ->
+                                    val weight = (entry.value.toFloat() / totalLimit).coerceAtLeast(0.02f)
+                                    Surface(
+                                        shape = when (index) {
+                                            0 -> RoundedCornerShape(topStart = 18.dp, bottomStart = 18.dp, topEnd = 4.dp, bottomEnd = 4.dp)
+                                            else -> RoundedCornerShape(4.dp)
+                                        },
+                                        color = segmentColors[index % segmentColors.size],
+                                        modifier = Modifier
+                                            .weight(weight)
+                                            .fillMaxHeight()
+                                    ) {}
+                                }
+                                
+                                // Free space segment
+                                if (remainingSpace > 0) {
+                                    Surface(
+                                        shape = RoundedCornerShape(topStart = 4.dp, bottomStart = 4.dp, topEnd = 18.dp, bottomEnd = 18.dp),
+                                        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                                        modifier = Modifier
+                                            .weight((remainingSpace / totalLimit).coerceAtLeast(0.05f))
+                                            .fillMaxHeight()
+                                    ) {}
+                                }
+                            } else {
+                                // Fallback empty state
+                                Surface(
+                                    shape = RoundedCornerShape(18.dp),
+                                    color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                                    modifier = Modifier.fillMaxSize()
+                                ) {}
                             }
-                        } else {
-                            // Total cache size
-                            Row(
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                modifier = Modifier.fillMaxWidth()
+                        }
+
+                        // Detailed Breakdown Settings Group
+                        if (cacheEntries.isNotEmpty()) {
+                            Column(
+                                modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                                verticalArrangement = Arrangement.spacedBy(16.dp)
                             ) {
                                 Text(
-                                    text = context.getString(R.string.cache_total_size),
-                                    style = MaterialTheme.typography.bodyLarge,
-                                    fontWeight = FontWeight.Medium
+                                    text = context.getString(R.string.cache_current_status),
+                                    style = MaterialTheme.typography.titleLarge,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.onSurface
                                 )
-                                Text(
-                                    text = chromahub.rhythm.app.util.CacheManager.formatBytes(currentCacheSize),
-                                    style = MaterialTheme.typography.bodyLarge,
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = MaterialTheme.colorScheme.primary
-                                )
-                            }
 
-                            Spacer(modifier = Modifier.height(12.dp))
+                                val breakdownItems = cacheEntries.mapIndexed { index, entry ->
+                                    val progress = (entry.value.toFloat() / maxCacheSize.toFloat()).coerceIn(0f, 1f)
+                                    val accentColor = segmentColors[index % segmentColors.size]
 
-                            // Cache breakdown
-                            cacheDetails.forEach { (label, size) ->
-                                Row(
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    modifier = Modifier.fillMaxWidth()
-                                ) {
-                                    Text(
-                                        text = "  • $label:",
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                    Text(
-                                        text = chromahub.rhythm.app.util.CacheManager.formatBytes(size),
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    Material3SettingsItem(
+                                        leadingContent = {
+                                            Icon(
+                                                imageVector = MaterialSymbolIcon("folder", filled = true),
+                                                contentDescription = null,
+                                                tint = accentColor
+                                            )
+                                        },
+                                        title = {
+                                            Text(
+                                                text = entry.key,
+                                                style = MaterialTheme.typography.titleSmall,
+                                                color = MaterialTheme.colorScheme.onSurface,
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis
+                                            )
+                                        },
+                                        description = {
+                                            LinearProgressIndicator(
+                                                progress = { progress },
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .padding(top = 8.dp, bottom = 4.dp)
+                                                    .height(6.dp)
+                                                    .clip(CircleShape),
+                                                color = accentColor,
+                                                trackColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+                                            )
+                                        },
+                                        trailingContent = {
+                                            Text(
+                                                text = chromahub.rhythm.app.util.CacheManager.formatBytes(entry.value),
+                                                style = MaterialTheme.typography.labelMedium,
+                                                fontWeight = FontWeight.Bold,
+                                                color = MaterialTheme.colorScheme.onSurface
+                                            )
+                                        }
                                     )
                                 }
-                                Spacer(modifier = Modifier.height(4.dp))
-                            }
 
-                            Spacer(modifier = Modifier.height(12.dp))
-
-                            // Cache limit
-                            Row(
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                Text(
-                                    text = context.getString(R.string.cache_limit),
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                                Text(
-                                    text = "${String.format("%.1f", maxCacheSize / (1024f * 1024f))} MB",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                Material3SettingsGroup(
+                                    items = breakdownItems,
+                                    containerColor = MaterialTheme.colorScheme.surfaceContainerLow
                                 )
                             }
                         }

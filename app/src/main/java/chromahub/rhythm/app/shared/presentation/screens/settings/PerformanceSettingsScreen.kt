@@ -183,12 +183,12 @@ fun PerformanceSettingsScreen(onBackClick: () -> Unit) {
                     else
                         MaterialTheme.colorScheme.surfaceContainer
                 ),
-                shape = MaterialTheme.shapes.extraLarge,
+                shape = RoundedCornerShape(28.dp),
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 24.dp, vertical = 8.dp)
             ) {
-                Column(modifier = Modifier.padding(20.dp)) {
+                Column(modifier = Modifier.padding(horizontal = 20.dp, vertical = 12.dp)) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier.fillMaxWidth()
@@ -201,7 +201,7 @@ fun PerformanceSettingsScreen(onBackClick: () -> Unit) {
                             } else {
                                 MaterialTheme.colorScheme.onSurfaceVariant
                             },
-                            modifier = Modifier.size(32.dp)
+                            modifier = Modifier.size(35.dp)
                         )
                         Spacer(modifier = Modifier.width(16.dp))
                         Column(modifier = Modifier.weight(1f)) {

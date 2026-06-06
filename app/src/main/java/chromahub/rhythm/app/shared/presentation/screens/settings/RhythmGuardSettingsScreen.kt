@@ -370,12 +370,12 @@ fun RhythmGuardSettingsScreen(onBackClick: () -> Unit) {
                     else
                         MaterialTheme.colorScheme.surfaceContainer
                 ),
-                shape = MaterialTheme.shapes.extraLarge,
+                shape = RoundedCornerShape(28.dp),
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 24.dp, vertical = 8.dp)
             ) {
-                Column(modifier = Modifier.padding(20.dp)) {
+                Column(modifier = Modifier.padding(horizontal = 20.dp, vertical = 12.dp)) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier.fillMaxWidth()
@@ -388,7 +388,7 @@ fun RhythmGuardSettingsScreen(onBackClick: () -> Unit) {
                             } else {
                                 MaterialTheme.colorScheme.onSurfaceVariant
                             },
-                            modifier = Modifier.size(32.dp)
+                            modifier = Modifier.size(35.dp)
                         )
                         Spacer(modifier = Modifier.width(16.dp))
                         Column(modifier = Modifier.weight(1f)) {
@@ -2017,20 +2017,13 @@ fun RhythmGuardExpressiveDashboard(
     volumeWarning: Boolean,
     modifier: Modifier = Modifier
 ) {
-    // 100% Material 3 Theme Integration
-    val containerColor = when (level) {
-        RhythmGuardOverallHealthLevel.GOOD -> MaterialTheme.colorScheme.primaryContainer
-        RhythmGuardOverallHealthLevel.FAIR -> MaterialTheme.colorScheme.tertiaryContainer
-        RhythmGuardOverallHealthLevel.RISK, RhythmGuardOverallHealthLevel.TIMEOUT -> MaterialTheme.colorScheme.errorContainer
-        RhythmGuardOverallHealthLevel.COOLDOWN -> MaterialTheme.colorScheme.secondaryContainer
-        RhythmGuardOverallHealthLevel.OFF -> MaterialTheme.colorScheme.surfaceContainer
-    }
-
-    val contentColor = when (level) {
-        RhythmGuardOverallHealthLevel.GOOD -> MaterialTheme.colorScheme.onPrimaryContainer
-        RhythmGuardOverallHealthLevel.FAIR -> MaterialTheme.colorScheme.onTertiaryContainer
-        RhythmGuardOverallHealthLevel.RISK, RhythmGuardOverallHealthLevel.TIMEOUT -> MaterialTheme.colorScheme.onErrorContainer
-        RhythmGuardOverallHealthLevel.COOLDOWN -> MaterialTheme.colorScheme.onSecondaryContainer
+    // Since we aren't using a background card, these colors will be applied directly 
+    // to the text and elements against the screen's default surface.
+    val heroColor = when (level) {
+        RhythmGuardOverallHealthLevel.GOOD -> MaterialTheme.colorScheme.primary
+        RhythmGuardOverallHealthLevel.FAIR -> MaterialTheme.colorScheme.tertiary
+        RhythmGuardOverallHealthLevel.RISK, RhythmGuardOverallHealthLevel.TIMEOUT -> MaterialTheme.colorScheme.error
+        RhythmGuardOverallHealthLevel.COOLDOWN -> MaterialTheme.colorScheme.secondary
         RhythmGuardOverallHealthLevel.OFF -> MaterialTheme.colorScheme.onSurfaceVariant
     }
 
@@ -2047,109 +2040,105 @@ fun RhythmGuardExpressiveDashboard(
     val comicSubtitle = when (level) {
         RhythmGuardOverallHealthLevel.GOOD -> "Your ears are throwing a perfectly-volumed party. Keep vibing responsibly! 🎉"
         RhythmGuardOverallHealthLevel.FAIR -> "Getting a little spicy in there. Maybe turn it down a notch before the guard steps in? 🌶️"
-        RhythmGuardOverallHealthLevel.RISK -> "Whoa rockstar, you are in the eardrum danger zone! Dial it back before the locks trigger! 🎸🔥"
+        RhythmGuardOverallHealthLevel.RISK -> "Whoa rockstar, you're in the eardrum danger zone! Dial it back before the locks trigger! 🎸🔥"
         RhythmGuardOverallHealthLevel.COOLDOWN -> "Safe zone active! Rhythm Guard is on coffee break, so jam freely without timeouts! 🎫☕"
         RhythmGuardOverallHealthLevel.TIMEOUT -> "Acoustic time-out active. A mandatory ear nap is in progress to protect your hearing! 😴🛑"
         RhythmGuardOverallHealthLevel.OFF -> "Rhythm Guard is off duty. You are flying completely solo on volume safety. Godspeed! 🏍️💨"
     }
 
-    Card(
-        modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(32.dp),
-        colors = CardDefaults.cardColors(containerColor = containerColor),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(vertical = 16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(24.dp)
-        ) {
-            // Header: Status Title & Optional Detail Chip
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.Top
+        // Expressive API loves floating pills for status badges
+        if (!statusDetail.isNullOrBlank()) {
+            Surface(
+                shape = CircleShape,
+                color = heroColor.copy(alpha = 0.12f),
+                modifier = Modifier.padding(bottom = 20.dp)
             ) {
                 Text(
-                    text = headerText,
-                    style = MaterialTheme.typography.displaySmall,
-                    color = contentColor,
-                    fontWeight = FontWeight.Black
-                )
-
-                if (!statusDetail.isNullOrBlank()) {
-                    Surface(
-                        shape = CircleShape,
-                        color = contentColor.copy(alpha = 0.12f) // Standard M3 state layer alpha
-                    ) {
-                        Text(
-                            text = statusDetail,
-                            style = MaterialTheme.typography.labelMedium,
-                            color = contentColor,
-                            fontWeight = FontWeight.SemiBold,
-                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
-                        )
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // Subtitle
-            Text(
-                text = comicSubtitle,
-                style = MaterialTheme.typography.bodyLarge,
-                color = contentColor.copy(alpha = 0.85f),
-                lineHeight = 22.sp
-            )
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            // Overall Progress Indicator Wavy
-            StyledProgressBar(
-                progress = overallProgress.coerceIn(0f, 1f),
-                style = ProgressStyle.WAVY,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(10.dp),
-                progressColor = contentColor,
-                trackColor = contentColor.copy(alpha = 0.2f),
-                isPlaying = level != RhythmGuardOverallHealthLevel.OFF,
-                showThumb = false,
-                waveAmplitudeWhenPlaying = 3.dp,
-                waveLength = 60.dp,
-                height = 6.dp
-            )
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            // Integrated Metrics Row
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                DashboardMetricPill(
-                    title = stringResource(R.string.settings_rhythm_guard_snapshot_exposure_title),
-                    value = exposureValue,
-                    subtitle = "/$exposureSubtitle",
-                    progress = exposureProgress,
-                    isWarning = exposureWarning,
-                    icon = RhythmIcons.AccessTime,
-                    baseContentColor = contentColor,
-                    modifier = Modifier.weight(1f)
-                )
-
-                DashboardMetricPill(
-                    title = stringResource(R.string.settings_rhythm_guard_snapshot_volume_title),
-                    value = volumeValue,
-                    subtitle = "of $volumeSubtitle",
-                    progress = volumeProgress,
-                    isWarning = volumeWarning,
-                    icon = MaterialSymbolIcon("graphic_eq"),
-                    baseContentColor = contentColor,
-                    modifier = Modifier.weight(1f)
+                    text = statusDetail.uppercase(),
+                    style = MaterialTheme.typography.labelLarge,
+                    color = heroColor,
+                    fontWeight = FontWeight.Black,
+                    letterSpacing = 1.5.sp,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
                 )
             }
+        }
+
+        // Massive, unconstrained typography
+        Text(
+            text = headerText,
+            style = MaterialTheme.typography.displayLarge,
+            color = heroColor,
+            fontWeight = FontWeight.Black,
+            textAlign = TextAlign.Center,
+            lineHeight = 52.sp,
+            letterSpacing = (-1.5).sp 
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Text(
+            text = comicSubtitle,
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.75f),
+            textAlign = TextAlign.Center,
+            lineHeight = 26.sp,
+            modifier = Modifier.padding(horizontal = 16.dp)
+        )
+
+        Spacer(modifier = Modifier.height(36.dp))
+
+        // Chunky Wavy Progress Indicator sitting directly on the surface
+        StyledProgressBar(
+            progress = overallProgress.coerceIn(0f, 1f),
+            style = ProgressStyle.WAVY,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(20.dp)
+                .clip(CircleShape),
+            progressColor = heroColor,
+            trackColor = heroColor.copy(alpha = 0.15f),
+            isPlaying = level != RhythmGuardOverallHealthLevel.OFF,
+            showThumb = false,
+            waveAmplitudeWhenPlaying = 5.dp,
+            waveLength = 60.dp,
+            height = 12.dp
+        )
+
+        Spacer(modifier = Modifier.height(40.dp))
+
+        // Integrated Metrics Row (These retain the card/pill shape to ground the UI)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            DashboardMetricPill(
+                title = stringResource(R.string.settings_rhythm_guard_snapshot_exposure_title),
+                value = exposureValue,
+                subtitle = "/$exposureSubtitle",
+                progress = exposureProgress,
+                isWarning = exposureWarning,
+                icon = RhythmIcons.AccessTime,
+                baseColor = heroColor,
+                modifier = Modifier.weight(1f)
+            )
+
+            DashboardMetricPill(
+                title = stringResource(R.string.settings_rhythm_guard_snapshot_volume_title),
+                value = volumeValue,
+                subtitle = "of $volumeSubtitle",
+                progress = volumeProgress,
+                isWarning = volumeWarning,
+                icon = MaterialSymbolIcon("graphic_eq"),
+                baseColor = heroColor,
+                modifier = Modifier.weight(1f)
+            )
         }
     }
 }
@@ -2162,81 +2151,96 @@ private fun DashboardMetricPill(
     progress: Float,
     isWarning: Boolean,
     icon: Any,
-    baseContentColor: Color,
+    baseColor: Color,
     modifier: Modifier = Modifier
 ) {
     val dynamicValueFontSize = rememberRhythmGuardHeroValueFontSize(value)
 
-    // If warning triggers on a specific metric, override with error colors.
-    // Otherwise, create a subtle tonal separation using standard M3 alpha blending.
-    val metricContainerColor = if (isWarning) MaterialTheme.colorScheme.errorContainer else baseContentColor.copy(alpha = 0.08f)
-    val metricContentColor = if (isWarning) MaterialTheme.colorScheme.onErrorContainer else baseContentColor
-
+    // Using tonal containers for the metrics to make them pop against the uncarded background
+    val metricContainerColor = if (isWarning) MaterialTheme.colorScheme.errorContainer else MaterialTheme.colorScheme.surfaceContainerHigh
+    val metricContentColor = if (isWarning) MaterialTheme.colorScheme.onErrorContainer else MaterialTheme.colorScheme.onSurface
+    val progressTint = if (isWarning) MaterialTheme.colorScheme.error else baseColor
+    
+    // Hyper-rounded pill aesthetic
     Surface(
-        modifier = modifier.height(140.dp),
-        shape = RoundedCornerShape(20.dp),
+        modifier = modifier.height(180.dp),
+        shape = RoundedCornerShape(36.dp),
         color = metricContainerColor,
-        border = if (!isWarning) BorderStroke(1.dp, baseContentColor.copy(alpha = 0.1f)) else null
     ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(16.dp),
-            verticalArrangement = Arrangement.SpaceBetween
+                .padding(20.dp),
+            verticalArrangement = Arrangement.SpaceBetween,
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            // Top section: Icon and Title
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                if (icon is ImageVector) {
-                    Icon(imageVector = icon, contentDescription = null, modifier = Modifier.size(18.dp), tint = metricContentColor)
-                } else if (icon is MaterialSymbolIcon) {
-                    Icon(imageVector = icon, contentDescription = null, modifier = Modifier.size(18.dp), tint = metricContentColor)
+                Surface(
+                    shape = CircleShape,
+                    color = progressTint.copy(alpha = 0.15f),
+                    modifier = Modifier.size(44.dp)
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        if (icon is ImageVector) {
+                            Icon(imageVector = icon, contentDescription = null, modifier = Modifier.size(22.dp), tint = progressTint)
+                        } else if (icon is MaterialSymbolIcon) {
+                            Icon(imageVector = icon, contentDescription = null, modifier = Modifier.size(22.dp), tint = progressTint)
+                        }
+                    }
                 }
                 Text(
-                    text = title,
-                    style = MaterialTheme.typography.labelMedium,
-                    fontWeight = FontWeight.Medium,
-                    color = metricContentColor.copy(alpha = 0.85f),
+                    text = title.uppercase(),
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = metricContentColor.copy(alpha = 0.7f),
                     maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
+                    overflow = TextOverflow.Ellipsis,
+                    letterSpacing = 0.5.sp
                 )
             }
 
-            Column {
+            // Middle section: Giant Values
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
                     text = value,
-                    style = MaterialTheme.typography.headlineSmall.copy(
+                    style = MaterialTheme.typography.headlineMedium.copy(
                         fontSize = dynamicValueFontSize,
-                        lineHeight = (dynamicValueFontSize.value + 2f).sp
+                        letterSpacing = (-0.5).sp
                     ),
-                    fontWeight = FontWeight.Bold,
+                    fontWeight = FontWeight.Black,
                     color = metricContentColor,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
                 Text(
                     text = subtitle,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = metricContentColor.copy(alpha = 0.7f),
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Medium,
+                    color = metricContentColor.copy(alpha = 0.6f),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
             }
 
+            // Bottom section: Thick mini progress
             StyledProgressBar(
                 progress = progress.coerceIn(0f, 1f),
                 style = ProgressStyle.WAVY,
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .height(6.dp),
-                progressColor = metricContentColor,
-                trackColor = metricContentColor.copy(alpha = 0.2f),
+                    .fillMaxWidth(0.85f)
+                    .height(8.dp)
+                    .clip(CircleShape),
+                progressColor = progressTint,
+                trackColor = progressTint.copy(alpha = 0.2f),
                 isPlaying = true,
                 showThumb = false,
                 waveAmplitudeWhenPlaying = 2.dp,
-                waveLength = 40.dp,
-                height = 3.dp
+                waveLength = 35.dp,
+                height = 5.dp
             )
         }
     }

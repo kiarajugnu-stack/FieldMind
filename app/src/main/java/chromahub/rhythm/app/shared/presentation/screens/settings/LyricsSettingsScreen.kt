@@ -313,7 +313,6 @@ fun LyricsSettingsScreen(onBackClick: () -> Unit) {
                     containerColor = MaterialTheme.colorScheme.surfaceContainer
                 )
             }
-
             // 2. Lyrics Source Priority
             item {
                 Spacer(modifier = Modifier.height(12.dp))
@@ -325,123 +324,53 @@ fun LyricsSettingsScreen(onBackClick: () -> Unit) {
                     color = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
                 )
-                Text(
-                    text = context.getString(R.string.lyrics_source_priority_desc_placeholder),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
-                )
-            }
 
-            val sourceOptions = listOf<Pair<chromahub.rhythm.app.shared.data.model.LyricsSourcePreference, Triple<String, String, MaterialSymbolIcon>>>(
-                chromahub.rhythm.app.shared.data.model.LyricsSourcePreference.EMBEDDED_FIRST to Triple(
-                    context.getString(R.string.lyrics_settings_embedded_first),
-                    context.getString(R.string.lyrics_settings_embedded_first_desc),
-                    RhythmIcons.MusicNote
-                ),
-                chromahub.rhythm.app.shared.data.model.LyricsSourcePreference.API_FIRST to Triple(
-                    context.getString(R.string.lyrics_settings_online_first),
-                    context.getString(R.string.lyrics_settings_online_first_desc),
-                    MaterialSymbolIcon("cloud_queue")
-                ),
-                chromahub.rhythm.app.shared.data.model.LyricsSourcePreference.LOCAL_FIRST to Triple(
-                    context.getString(R.string.lyrics_settings_local_first),
-                    context.getString(R.string.lyrics_settings_local_first_desc),
-                    RhythmIcons.Storage
-                )
-            )
-
-            items(sourceOptions, key = { (pref, _) -> "source_${pref.name}" }) { (preference, info) ->
-                val (title, description, icon) = info
-                val isSelected = lyricsSourcePreference == preference
-
-                Card(
-                    onClick = {
-                        HapticUtils.performHapticFeedback(
-                            context,
-                            hapticFeedback,
-                            HapticType.LIGHT
-                        )
-                        appSettings.setLyricsSourcePreference(preference)
-                    },
-                    colors = CardDefaults.cardColors(
-                        containerColor = if (isSelected)
-                            MaterialTheme.colorScheme.primaryContainer
-                        else
-                            MaterialTheme.colorScheme.surfaceContainer
+                val sourceOptions = listOf<Pair<chromahub.rhythm.app.shared.data.model.LyricsSourcePreference, Triple<String, String, MaterialSymbolIcon>>>(
+                    chromahub.rhythm.app.shared.data.model.LyricsSourcePreference.EMBEDDED_FIRST to Triple(
+                        context.getString(R.string.lyrics_settings_embedded_first),
+                        context.getString(R.string.lyrics_settings_embedded_first_desc),
+                        RhythmIcons.MusicNote
                     ),
-                    shape = RoundedCornerShape(18.dp),
-                    border = if (isSelected) {
-                        BorderStroke(2.dp, MaterialTheme.colorScheme.primary)
-                    } else null,
-                    elevation = CardDefaults.cardElevation(
-                        defaultElevation = if (isSelected) 2.dp else 0.dp
+                    chromahub.rhythm.app.shared.data.model.LyricsSourcePreference.API_FIRST to Triple(
+                        context.getString(R.string.lyrics_settings_online_first),
+                        context.getString(R.string.lyrics_settings_online_first_desc),
+                        MaterialSymbolIcon("cloud_queue")
                     ),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(20.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Surface(
-                            shape = CircleShape,
-                            color = if (isSelected)
-                                MaterialTheme.colorScheme.primary
-                            else
-                                MaterialTheme.colorScheme.surfaceVariant,
-                            modifier = Modifier.size(48.dp)
-                        ) {
-                            Box(
-                                contentAlignment = Alignment.Center,
-                                modifier = Modifier.fillMaxSize()
-                            ) {
-                                Icon(
-                                    imageVector = icon,
-                                    contentDescription = null,
-                                    tint = if (isSelected)
-                                        MaterialTheme.colorScheme.onPrimary
-                                    else
-                                        MaterialTheme.colorScheme.onSurfaceVariant,
-                                    modifier = Modifier.size(24.dp)
+                    chromahub.rhythm.app.shared.data.model.LyricsSourcePreference.LOCAL_FIRST to Triple(
+                        context.getString(R.string.lyrics_settings_local_first),
+                        context.getString(R.string.lyrics_settings_local_first_desc),
+                        RhythmIcons.Storage
+                    )
+                )
+
+                Material3SettingsGroup(
+                    items = sourceOptions.map { (preference, info) ->
+                        val (title, description, icon) = info
+                        val isSelected = lyricsSourcePreference == preference
+                        
+                        Material3SettingsItem(
+                            icon = icon,
+                            title = { Text(title) },
+                            description = { Text(description) },
+                            isHighlighted = isSelected, 
+                            trailingContent = {
+                                RadioButton(
+                                    selected = isSelected,
+                                    onClick = null 
                                 )
+                            },
+                            onClick = {
+                                HapticUtils.performHapticFeedback(
+                                    context,
+                                    hapticFeedback,
+                                    HapticType.LIGHT
+                                )
+                                appSettings.setLyricsSourcePreference(preference)
                             }
-                        }
-
-                        Spacer(modifier = Modifier.width(16.dp))
-
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = title,
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.SemiBold,
-                                color = if (isSelected)
-                                    MaterialTheme.colorScheme.onPrimaryContainer
-                                else
-                                    MaterialTheme.colorScheme.onSurface
-                            )
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Text(
-                                text = description,
-                                style = MaterialTheme.typography.bodySmall,
-                                color = if (isSelected)
-                                    MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
-                                else
-                                    MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-
-                        if (isSelected) {
-                            Icon(
-                                imageVector = RhythmIcons.CheckCircle,
-                                contentDescription = stringResource(R.string.streaming_selected),
-                                
-                                modifier = Modifier.size(28.dp)
-                            )
-                        }
-                    }
-                }
+                        )
+                    },
+                    containerColor = MaterialTheme.colorScheme.surfaceContainer
+                )
             }
 
             // 3. Online APIs

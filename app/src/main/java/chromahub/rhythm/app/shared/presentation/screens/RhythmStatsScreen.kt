@@ -789,34 +789,143 @@ private fun ListeningHabitsCard(
     stats: PlaybackStatsRepository.PlaybackStatsSummary,
     useHoursFormat: Boolean
 ) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(28.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh)
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 8.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        Column(
-            modifier = Modifier.padding(24.dp),
-            verticalArrangement = Arrangement.spacedBy(20.dp)
-        ) {
-            Text(
-                text = stringResource(R.string.rhythmstatsscreen_listening_habits),
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface
+        Text(
+            text = stringResource(R.string.rhythmstatsscreen_listening_habits),
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+
+        val items = buildList {
+            add(
+                Material3SettingsItem(
+                    leadingContent = {
+                        Icon(MaterialSymbolIcon("event_available"), contentDescription = null, tint = MaterialTheme.colorScheme.secondary)
+                    },
+                    title = {
+                        Text(
+                            text = "Active Days",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    },
+                    trailingContent = {
+                        Text(
+                            text = "${stats.activeDays} days",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                )
             )
 
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                HabitMetricRow(MaterialSymbolIcon("event_available"), "Active Days", "${stats.activeDays} days")
-                HabitMetricRow(MaterialSymbolIcon("local_fire_department"), "Longest Streak", "${stats.longestStreakDays} days")
-                HabitMetricRow(MaterialSymbolIcon("history"), "Total Sessions", "${stats.totalSessions}")
-                HabitMetricRow(MaterialSymbolIcon("hourglass_empty"), "Avg Session", formatDuration(stats.averageSessionDurationMs, useHoursFormat))
+            add(
+                Material3SettingsItem(
+                    leadingContent = {
+                        Icon(MaterialSymbolIcon("local_fire_department"), contentDescription = null, tint = MaterialTheme.colorScheme.secondary)
+                    },
+                    title = {
+                        Text(
+                            text = "Longest Streak",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    },
+                    trailingContent = {
+                        Text(
+                            text = "${stats.longestStreakDays} days",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                )
+            )
 
-                stats.peakDayOfWeek?.let {
-                    HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
-                    HabitMetricRow(MaterialSymbolIcon("whatshot"), "Peak Day", it, isHighlight = true)
-                }
+            add(
+                Material3SettingsItem(
+                    leadingContent = {
+                        Icon(MaterialSymbolIcon("history"), contentDescription = null, tint = MaterialTheme.colorScheme.secondary)
+                    },
+                    title = {
+                        Text(
+                            text = "Total Sessions",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    },
+                    trailingContent = {
+                        Text(
+                            text = "${stats.totalSessions}",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                )
+            )
+
+            add(
+                Material3SettingsItem(
+                    leadingContent = {
+                        Icon(MaterialSymbolIcon("hourglass_empty"), contentDescription = null, tint = MaterialTheme.colorScheme.secondary)
+                    },
+                    title = {
+                        Text(
+                            text = "Avg Session",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    },
+                    trailingContent = {
+                        Text(
+                            text = formatDuration(stats.averageSessionDurationMs, useHoursFormat),
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                )
+            )
+
+            stats.peakDayOfWeek?.let { peakDay ->
+                add(
+                    Material3SettingsItem(
+                        isHighlighted = true,
+                        leadingContent = {
+                            Icon(MaterialSymbolIcon("whatshot"), contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                        },
+                        title = {
+                            Text(
+                                text = "Peak Day",
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        },
+                        trailingContent = {
+                            Text(
+                                text = peakDay,
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                        }
+                    )
+                )
             }
         }
+
+        Material3SettingsGroup(
+            items = items,
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+        )
     }
 }
 

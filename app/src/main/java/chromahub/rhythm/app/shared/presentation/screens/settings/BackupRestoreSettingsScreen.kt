@@ -366,107 +366,211 @@ fun BackupRestoreSettingsScreen(onBackClick: () -> Unit) {
         }
     }
 
-    CollapsibleHeaderScreen(
-        title = context.getString(R.string.settings_backup_restore),
-        showBackButton = true,
-        onBackClick = onBackClick
-    ) { modifier ->
-        LazyColumn(
-            modifier = modifier
-                .fillMaxSize()
-                .background(MaterialTheme.colorScheme.background)
-                .padding(horizontal = 24.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
+    val infiniteTransition = rememberInfiniteTransition(label = "backup_animations")
+    val rotationAngle by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 360f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(2500, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "rotation"
+    )
 
-            item { Spacer(modifier = Modifier.height(8.dp)) }
+    // Determine status components dynamically
+    val hasBackup = lastBackupTimestamp > 0
+    val statusIcon = when {
+        isBusy -> MaterialSymbolIcon("autorenew", filled = true)
+        hasBackup -> RhythmIcons.CheckCircle
+        else -> RhythmIcons.Warning
+    }
 
-            item {
-                val hasBackup = lastBackupTimestamp > 0
+    val statusColor = when {
+        isBusy -> MaterialTheme.colorScheme.secondary
+        hasBackup -> MaterialTheme.colorScheme.primary
+        else -> MaterialTheme.colorScheme.error
+    }
 
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(
-                        containerColor = if (hasBackup)
-                            MaterialTheme.colorScheme.primaryContainer
-                        else
-                            MaterialTheme.colorScheme.errorContainer
-                    ),
-                    shape = RoundedCornerShape(28.dp)
-                ) {
-                    Column(
-                        modifier = Modifier.padding(24.dp)
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Surface(
-                                shape = CircleShape,
-                                color = if (hasBackup)
-                                    MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.1f)
-                                else
-                                    MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.1f),
-                                modifier = Modifier.size(56.dp)
+    val statusTitle = when {
+        isCreatingBackup -> "Creating Backup..."
+        isPreparingRestore || isRestoringFromFile || isRestoringFromClipboard -> "Restoring Data..."
+        hasBackup -> "Data Backed Up"
+        else -> "No Backups Found"
+    }
+
+    val statusDescription = when {
+        isBusy -> "Please wait while your data is being processed safely."
+        hasBackup -> {
+            val sdf = SimpleDateFormat("MMMM dd, yyyy • hh:mm a", Locale.getDefault())
+            "Last backup: ${sdf.format(Date(lastBackupTimestamp))}"
+        }
+        else -> "Protect your library, settings, and stats from accidental loss."
+    }
+
+    val headerBlendHeight = 24.dp
+    val headerBlendBaseColor = MaterialTheme.colorScheme.surface
+
+    Scaffold(
+        topBar = {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(Color.Transparent)
+            ) {
+                androidx.compose.material3.TopAppBar(
+                    title = {},
+                    navigationIcon = {
+                        IconButton(
+                            onClick = onBackClick,
+                            modifier = Modifier.padding(start = 12.dp)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(40.dp)
+                                    .clip(RoundedCornerShape(50))
+                                    .background(MaterialTheme.colorScheme.surfaceContainerHigh),
+                                contentAlignment = Alignment.Center
                             ) {
-                                Box(contentAlignment = Alignment.Center) {
-                                    Icon(
-                                        imageVector = if (hasBackup) RhythmIcons.CheckCircle else RhythmIcons.Warning,
-                                        contentDescription = null,
-                                        tint = if (hasBackup)
-                                            MaterialTheme.colorScheme.onPrimaryContainer
-                                        else
-                                            MaterialTheme.colorScheme.onErrorContainer,
-                                        modifier = Modifier.size(32.dp)
-                                    )
-                                }
-                            }
-
-                            Spacer(modifier = Modifier.width(16.dp))
-
-                            Column {
-                                Text(
-                                    text = if (hasBackup) "Data Backed Up" else "No Backups Found",
-                                    style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.Bold,
-                                    color = if (hasBackup)
-                                        MaterialTheme.colorScheme.onPrimaryContainer
-                                    else
-                                        MaterialTheme.colorScheme.onErrorContainer
-                                )
-                                Text(
-                                    text = if (hasBackup) {
-                                        val sdf = SimpleDateFormat("MMMM dd, yyyy • hh:mm a", Locale.getDefault())
-                                        sdf.format(Date(lastBackupTimestamp))
-                                    } else {
-                                        "Protect your library and settings"
-                                    },
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = if (hasBackup)
-                                        MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
-                                    else
-                                        MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.8f)
+                                Icon(
+                                    imageVector = RhythmIcons.Back,
+                                    contentDescription = stringResource(R.string.cd_back),
+                                    tint = MaterialTheme.colorScheme.onSurface,
+                                    modifier = Modifier.size(25.dp)
                                 )
                             }
                         }
-
-                        if (hasBackup && backupLocation != null) {
-                            Spacer(modifier = Modifier.height(20.dp))
-                            HorizontalDivider(
-                                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.1f)
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = MaterialTheme.colorScheme.surface,
+                        scrolledContainerColor = MaterialTheme.colorScheme.surface
+                    )
+                )
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(headerBlendHeight)
+                        .background(
+                            Brush.verticalGradient(
+                                colors = listOf(
+                                    headerBlendBaseColor,
+                                    headerBlendBaseColor.copy(alpha = 0.72f),
+                                    headerBlendBaseColor.copy(alpha = 0.32f),
+                                    Color.Transparent
+                                )
                             )
-                            Spacer(modifier = Modifier.height(16.dp))
+                        )
+                )
+            }
+        }
+    ) { paddingValues ->
+        val lazyListState = rememberSaveable(
+            saver = LazyListStateSaver
+        ) {
+            androidx.compose.foundation.lazy.LazyListState()
+        }
+
+        LazyColumn(
+            state = lazyListState,
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .offset(y = -headerBlendHeight)
+                .background(MaterialTheme.colorScheme.background),
+            contentPadding = PaddingValues(horizontal = 24.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            
+            item {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .animateContentSize(
+                            animationSpec = spring(
+                                dampingRatio = Spring.DampingRatioMediumBouncy,
+                                stiffness = Spring.StiffnessLow
+                            )
+                        )
+                        .padding(vertical = 12.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 0.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = statusIcon,
+                            contentDescription = null,
+                            tint = statusColor,
+                            modifier = Modifier
+                                .size(72.dp)
+                                .then(
+                                    if (isBusy) {
+                                        Modifier.graphicsLayer(rotationZ = rotationAngle)
+                                    } else {
+                                        Modifier
+                                    }
+                                )
+                        )
+                    }
+
+                    Text(
+                        text = statusTitle,
+                        style = MaterialTheme.typography.headlineMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = statusColor,
+                        textAlign = TextAlign.Start,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 24.dp)
+                    )
+
+                    if (isBusy) {
+                        LinearWavyProgressIndicator(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 24.dp)
+                                .height(8.dp),
+                            color = MaterialTheme.colorScheme.secondary,
+                            trackColor = MaterialTheme.colorScheme.secondary.copy(alpha = 0.2f)
+                        )
+                    }
+
+                    Text(
+                        text = statusDescription,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.Start,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 24.dp)
+                    )
+
+                    if (hasBackup && backupLocation != null && !isBusy) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        
+                        Surface(
+                            shape = RoundedCornerShape(12.dp),
+                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.08f),
+                            modifier = Modifier.padding(horizontal = 24.dp).fillMaxWidth()
+                        ) {
                             Row(
-                                verticalAlignment = Alignment.CenterVertically
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp)
                             ) {
                                 Icon(
                                     imageVector = RhythmIcons.Folder,
                                     contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f),
-                                    modifier = Modifier.size(16.dp)
+                                    tint = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f),
+                                    modifier = Modifier.size(20.dp)
                                 )
-                                Spacer(modifier = Modifier.width(8.dp))
+                                Spacer(modifier = Modifier.width(12.dp))
                                 Text(
                                     text = backupLocation!!.substringAfterLast("/"),
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f),
+                                    style = MaterialTheme.typography.labelLarge,
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer,
                                     maxLines = 1,
                                     overflow = TextOverflow.Ellipsis
                                 )
