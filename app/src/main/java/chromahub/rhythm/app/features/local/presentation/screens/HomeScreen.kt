@@ -192,6 +192,8 @@ import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveAnim
 import chromahub.rhythm.app.shared.presentation.components.bottomsheets.AlbumBottomSheet
 import chromahub.rhythm.app.shared.presentation.components.bottomsheets.AddToPlaylistBottomSheet
 import chromahub.rhythm.app.shared.presentation.components.bottomsheets.SongInfoBottomSheet
+import chromahub.rhythm.app.shared.presentation.components.AudioQualityBadges
+import chromahub.rhythm.app.shared.presentation.components.AudioQualityIcon
 import chromahub.rhythm.app.util.ImageUtils
 import chromahub.rhythm.app.util.M3ImageUtils
 import chromahub.rhythm.app.shared.presentation.viewmodel.AppVersion
@@ -1622,12 +1624,12 @@ private fun ModernFeaturedSection(
                     }
             ) {
                 // Background Artwork
-                M3ImageUtils.AlbumArt(
-                    imageUrl = album.artworkUri,
-                    albumName = album.title,
-                    modifier = Modifier.fillMaxSize(),
-                    applyExpressiveShape = false
-                )
+                                M3ImageUtils.AlbumArt(
+                                    imageUrl = album.artworkUri,
+                                    albumName = album.title,
+                                    modifier = Modifier.fillMaxSize(),
+                                    applyExpressiveShape = false
+                                )
 
                 // Heavy gradient using theme background
                 if (showGradient) {
@@ -1715,16 +1717,24 @@ private fun ModernFeaturedSection(
                             Spacer(modifier = Modifier.width(8.dp))
                         }
 
-                        // Display the Year on the bottom right
-                        if (showYear && album.year > 0) {
-                            Text(
-                                text = album.year.toString(),
-                                style = MaterialTheme.typography.headlineMedium,
-                                fontWeight = FontWeight.Black,
-                                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.35f), // Looks like a subtle watermark
-                                modifier = Modifier.padding(end = 8.dp)
-                            )
-                        }
+                            // Display Year and audio quality icon on the bottom right
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                if (showYear && album.year > 0) {
+                                    Text(
+                                        text = album.year.toString(),
+                                        style = MaterialTheme.typography.headlineMedium,
+                                        fontWeight = FontWeight.Black,
+                                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.35f),
+                                        modifier = Modifier.padding(end = 4.dp)
+                                    )
+                                }
+                                album.songs.firstOrNull()?.let { firstSong ->
+                                    AudioQualityIcon(song = firstSong)
+                                }
+                            }
                     }
                 }
             }

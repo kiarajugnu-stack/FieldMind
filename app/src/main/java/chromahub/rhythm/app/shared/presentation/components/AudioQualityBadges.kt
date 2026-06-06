@@ -51,7 +51,73 @@ private enum class QualityLevel {
  * - Bit depth is calculated from bitrate or explicitly provided by the codec
  */
 @Composable
+fun AudioQualityIcon(
+    song: Song,
+    modifier: Modifier = Modifier
+) {
+    val context = LocalContext.current
+    var audioQuality by remember(song.id) { mutableStateOf<AudioQualityDetector.AudioQuality?>(null) }
+
+    LaunchedEffect(song.id) {
+        withContext(Dispatchers.IO) {
+            try {
+                val formatInfo = AudioFormatDetector.detectFormat(context, song.uri, song)
+                val songBitrate = song.bitrate ?: 0
+                val songSampleRate = song.sampleRate ?: 0
+                val songChannels = song.channels ?: 0
+
+                val bitrateKbps = if (songBitrate > 0) songBitrate / 1000 else if (formatInfo.bitrateKbps > 0) formatInfo.bitrateKbps else 0
+                val sampleRateHz = if (songSampleRate > 0) songSampleRate else if (formatInfo.sampleRateHz > 0) formatInfo.sampleRateHz else 0
+                val channelCount = if (songChannels > 0) songChannels else if (formatInfo.channelCount > 0) formatInfo.channelCount else 2
+
+                audioQuality = AudioQualityDetector.detectQuality(
+                    codec = formatInfo.codec,
+                    sampleRateHz = sampleRateHz,
+                    bitrateKbps = bitrateKbps,
+                    bitDepth = formatInfo.bitDepth,
+                    channelCount = channelCount
+                )
+            } catch (e: Exception) {
+                Log.e("AudioQualityIcon", "Failed to detect audio quality", e)
+            }
+        }
+    }
+
+    audioQuality?.let { quality ->
+        val shouldShowIcon = quality.isLossless || quality.isDolby || quality.isDTS || quality.isHiRes ||
+                           quality.qualityType != AudioQualityDetector.QualityType.LOSSY_COMPRESSED
+
+        if (shouldShowIcon) {
+            val iconRes = when (quality.qualityType) {
+                AudioQualityDetector.QualityType.DSD_HIGH_RES,
+                AudioQualityDetector.QualityType.HI_RES_STUDIO_MASTER,
+                AudioQualityDetector.QualityType.HI_RES_LOSSLESS -> R.drawable.ic_high_res
+                AudioQualityDetector.QualityType.DOLBY_LOSSLESS,
+                AudioQualityDetector.QualityType.DOLBY_LOSSY_SURROUND -> R.drawable.ic_dolby
+                AudioQualityDetector.QualityType.DTS_SURROUND -> R.drawable.ic_dts
+                AudioQualityDetector.QualityType.LOSSLESS_SURROUND -> R.drawable.ic_surround_sound
+                AudioQualityDetector.QualityType.CD_QUALITY_LOSSLESS -> R.drawable.ic_cd
+                AudioQualityDetector.QualityType.LOSSY_COMPRESSED -> if (quality.qualityDescription.contains("320")) R.drawable.ic_hq else null
+                else -> null
+            }
+
+            iconRes?.let { res ->
+                Icon(
+                    painter = painterResource(id = res),
+                    contentDescription = quality.qualityLabel,
+                    modifier = modifier
+                        .padding(8.dp)
+                        .size(32.dp),
+                    tint = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
+                )
+            }
+        }
+    }
+}
+
+@Composable
 fun AudioQualityBadges(
+
     song: Song,
     modifier: Modifier = Modifier
 ) {
