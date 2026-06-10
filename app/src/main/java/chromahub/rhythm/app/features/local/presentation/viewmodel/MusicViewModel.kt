@@ -518,8 +518,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
         var processed = 0
         
         for (song in songs) {
-            // Check cache first (if filter settings unchanged)
-            val cacheKey = "${song.id}_$mediaScanMode"
+            val cacheKey = "${song.id}_${song.path}_$mediaScanMode"
             val cachedResult = filterCache[cacheKey]
             if (cachedResult != null) {
                 if (cachedResult) result.add(song)
@@ -2194,9 +2193,23 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
      */
     private fun refreshPlaylists(preserveMissingSongs: Boolean = false) {
         Log.d(TAG, "Refreshing playlists...")
-        val currentSongsMap = _songs.value.associateBy { it.id }
-        val currentSongsByStableKey = _songs.value.groupBy { playlistSongStableKey(it) }
-        val filteredSongsSet = filteredSongs.value.map { it.id }.toSet()
+        val currentSongs = _songs.value
+
+        if (currentSongs.isEmpty()) {
+            Log.w(TAG, "Skipping refreshPlaylists() — songs list is empty (library not yet loaded or scan in progress)")
+            return
+        }
+
+        val currentSongsMap = currentSongs.associateBy { it.id }
+        val currentSongsByStableKey = currentSongs.groupBy { playlistSongStableKey(it) }
+
+        val filteredSongsValue = filteredSongs.value
+        val filteredSongsSet: Set<String> = if (filteredSongsValue.isEmpty()) {
+            Log.w(TAG, "filteredSongs is empty while songs list has ${currentSongs.size} entries — using full songs list as fallback to prevent playlist wipe")
+            currentSongs.map { it.id }.toSet()
+        } else {
+            filteredSongsValue.map { it.id }.toSet()
+        }
         
         _playlists.value = _playlists.value.map { playlist ->
             var remappedByStableKey = 0

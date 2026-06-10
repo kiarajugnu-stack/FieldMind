@@ -97,7 +97,7 @@ fun ArtistBottomSheet(
 
     val isTablet = configuration.screenWidthDp >= 600
 
-    val allSongs by viewModel.songs.collectAsState()
+    val allSongs by viewModel.filteredSongs.collectAsState()
     val allAlbums by viewModel.albums.collectAsState()
     val displaySongs = songs ?: allSongs
     val displayAlbums = albums ?: allAlbums

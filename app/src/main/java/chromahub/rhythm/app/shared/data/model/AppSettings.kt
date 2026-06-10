@@ -17,6 +17,7 @@ import chromahub.rhythm.app.worker.BackupWorker
 import chromahub.rhythm.app.worker.RhythmPulseNotificationWorker
 import chromahub.rhythm.app.worker.UpdateNotificationWorker
 import chromahub.rhythm.app.BuildConfig
+import java.io.File
 import java.util.Date // Import Date for timestamp
 import java.util.concurrent.TimeUnit
 
@@ -4015,7 +4016,7 @@ private val _autoCheckForUpdates = MutableStateFlow(prefs.getBoolean(KEY_AUTO_CH
         backupData["preferences_types"] = preferencesTypes
         backupData["timestamp"] = System.currentTimeMillis()
         backupData["app_version"] = "1.0.0" // You might want to get this dynamically
-        backupData["backup_version"] = 3 // Includes explicit stats & Rhythm Guard payload
+        backupData["backup_version"] = 4 // Includes explicit stats, Rhythm Guard payload, and playback_history.json
         backupData["selected_sections"] = mapOf(
             "general_settings" to effectiveSections.includeGeneralSettings,
             "library_data" to effectiveSections.includeLibraryData,
@@ -4095,6 +4096,15 @@ private val _autoCheckForUpdates = MutableStateFlow(prefs.getBoolean(KEY_AUTO_CH
                 backupData["stats_rhythm_guard_data"] = statsPrefs
                 backupData["stats_rhythm_guard_types"] = statsPreferenceTypes
                 Log.d("AppSettings", "Including stats & Rhythm Guard data in backup: ${statsPrefs.size} keys")
+
+                val historyFile = File(context.filesDir, "playback_history.json")
+                if (historyFile.exists()) {
+                    val historyJson = historyFile.readText()
+                    if (historyJson.isNotBlank()) {
+                        backupData["playback_history"] = historyJson
+                        Log.d("AppSettings", "Including playback_history.json in backup: ${historyJson.length} chars")
+                    }
+                }
             } catch (e: Exception) {
                 Log.e("AppSettings", "Error including stats & Rhythm Guard data in backup", e)
             }
@@ -4182,6 +4192,17 @@ private val _autoCheckForUpdates = MutableStateFlow(prefs.getBoolean(KEY_AUTO_CH
                             applyBackupPreferenceValue(editor, guardKey, value, statsTypes[guardKey] ?: statsTypes[key] ?: preferencesTypes[key])
                             Log.d("AppSettings", "Migrated legacy stats key $key -> $guardKey during restore")
                         }
+                    }
+                }
+
+                val playbackHistoryJson = backupData["playback_history"] as? String
+                if (!playbackHistoryJson.isNullOrBlank()) {
+                    try {
+                        val historyFile = File(context.filesDir, "playback_history.json")
+                        historyFile.writeText(playbackHistoryJson)
+                        Log.d("AppSettings", "Restored playback_history.json: ${playbackHistoryJson.length} chars")
+                    } catch (e: Exception) {
+                        Log.e("AppSettings", "Failed to restore playback_history.json", e)
                     }
                 }
             }

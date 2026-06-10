@@ -104,7 +104,7 @@ fun ArtistDetailScreen(
     val useHoursFormat by appSettings.useHoursInTimeFormat.collectAsState()
     
     // Get songs and albums from viewModel
-    val allSongs by viewModel.songs.collectAsState()
+    val allSongs by viewModel.filteredSongs.collectAsState()
     val allAlbums by viewModel.albums.collectAsState()
     val allArtists by viewModel.artists.collectAsState()
     

@@ -236,7 +236,7 @@ fun PlaylistDetailScreen(
 
     // Song picker sheet state
     val coroutineScope = rememberCoroutineScope()
-    val allSongs by musicViewModel.songs.collectAsState()
+    val allSongs by musicViewModel.filteredSongs.collectAsState()
     var showSongPicker by remember { mutableStateOf(false) }
     val sheetState = rememberModalBottomSheetState()
 

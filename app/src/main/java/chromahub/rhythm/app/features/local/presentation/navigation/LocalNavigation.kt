@@ -2225,7 +2225,7 @@ private fun LocalNavigationContent(
                             // This is now handled internally by the PlayerScreen
                         },
                         // Pass album and artist data for bottom sheets
-                        songs = viewModel.songs.collectAsState().value,
+                        songs = viewModel.filteredSongs.collectAsState().value,
                         albums = viewModel.albums.collectAsState().value,
                         artists = viewModel.artists.collectAsState().value,
                         onPlayAlbumSongs = { songs -> viewModel.playSongs(songs) },
