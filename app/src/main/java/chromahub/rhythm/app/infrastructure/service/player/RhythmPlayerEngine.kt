@@ -633,11 +633,20 @@ class RhythmPlayerEngine(
     fun getActiveReplayGainProcessor(): ReplayGainAudioProcessor? = activeReplayGainProcessor
 
     private fun applyReplayGainSettingsOnProcessor(processor: ReplayGainAudioProcessor, enabled: Boolean) {
-        val mode = if (enabled) ReplayGainUtil.Mode.Track else ReplayGainUtil.Mode.None
+        val appSettings = AppSettings.getInstance(context)
+        val mode = if (enabled) {
+            when (appSettings.replayGainMode.value) {
+                1 -> ReplayGainUtil.Mode.Track
+                2 -> ReplayGainUtil.Mode.Album
+                else -> ReplayGainUtil.Mode.None
+            }
+        } else {
+            ReplayGainUtil.Mode.None
+        }
         processor.setMode(mode, false)
-        processor.setReduceGain(true) // clipping prevention (drc)
-        processor.setRgGain(0) // preamp = 0dB
-        processor.setNonRgGain(0) // 0dB preamp when no tag is present
+        processor.setReduceGain(appSettings.replayGainDrc.value) // clipping prevention (drc)
+        processor.setRgGain(appSettings.replayGainPreamp.value.toInt()) // preamp in dB
+        processor.setNonRgGain(appSettings.replayGainPreampUntagged.value.toInt()) // preamp in dB when no tag is present
     }
 
     fun applyReplayGainSettings(enabled: Boolean) {

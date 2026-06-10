@@ -127,7 +127,8 @@ fun SingleCardExplorerContent(
     musicViewModel: MusicViewModel,
     currentSong: Song? = null,
     isPlaying: Boolean = false,
-    enableRatingSystem: Boolean = true
+    enableRatingSystem: Boolean = true,
+    listState: LazyListState = rememberLazyListState()
 ) {
     val context = LocalContext.current
     val activity = context as Activity
@@ -466,6 +467,7 @@ fun SingleCardExplorerContent(
 
     Box(modifier = Modifier.fillMaxSize()) {
         LazyColumn(
+            state = listState,
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 16.dp),
             verticalArrangement = Arrangement.spacedBy(0.dp)

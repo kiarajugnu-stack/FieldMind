@@ -103,6 +103,10 @@ class AppSettings private constructor(context: Context) {
         private const val KEY_CROSSFADE_ON_SKIP = "crossfade_on_skip"
         private const val KEY_AUDIO_NORMALIZATION = "audio_normalization"
         private const val KEY_REPLAY_GAIN = "replay_gain"
+        private const val KEY_REPLAY_GAIN_MODE = "replay_gain_mode"
+        private const val KEY_REPLAY_GAIN_DRC = "replay_gain_drc"
+        private const val KEY_REPLAY_GAIN_PREAMP = "replay_gain_preamp"
+        private const val KEY_REPLAY_GAIN_PREAMP_UNTAGGED = "replay_gain_preamp_untagged"
         private const val KEY_SKIP_SILENCE = "skip_silence_enabled"
         private const val KEY_AUDIO_ROUTING_MODE = "audio_routing_mode" // "default", "app", "system"
         private const val KEY_RESUME_ON_DEVICE_RECONNECT = "resume_on_device_reconnect"
@@ -265,12 +269,6 @@ class AppSettings private constructor(context: Context) {
         private const val KEY_SPOTIFY_CLIENT_SECRET = "spotify_client_secret"
         private const val KEY_APPLEMUSIC_API_ENABLED = "applemusic_api_enabled"
         private const val KEY_AUTO_FETCH_ARTWORK = "auto_fetch_artwork"
-        
-        // Scrobbling Settings
-        private const val KEY_SCROBBLING_ENABLED = "scrobbling_enabled"
-        
-        // Discord Rich Presence Settings
-        private const val KEY_DISCORD_RICH_PRESENCE_ENABLED = "discord_rich_presence_enabled"
         
         // General Broadcast Status Settings (for Tasker, KWGT, etc.)
         private const val KEY_BROADCAST_STATUS_ENABLED = "broadcast_status_enabled"
@@ -614,6 +612,18 @@ class AppSettings private constructor(context: Context) {
     
     private val _replayGain = MutableStateFlow(prefs.getBoolean(KEY_REPLAY_GAIN, false))
     val replayGain: StateFlow<Boolean> = _replayGain.asStateFlow()
+
+    private val _replayGainMode = MutableStateFlow(prefs.getInt(KEY_REPLAY_GAIN_MODE, 1)) // 1 = Track, 2 = Album, 0 = None
+    val replayGainMode: StateFlow<Int> = _replayGainMode.asStateFlow()
+
+    private val _replayGainDrc = MutableStateFlow(prefs.getBoolean(KEY_REPLAY_GAIN_DRC, true))
+    val replayGainDrc: StateFlow<Boolean> = _replayGainDrc.asStateFlow()
+
+    private val _replayGainPreamp = MutableStateFlow(prefs.getFloat(KEY_REPLAY_GAIN_PREAMP, 0f))
+    val replayGainPreamp: StateFlow<Float> = _replayGainPreamp.asStateFlow()
+
+    private val _replayGainPreampUntagged = MutableStateFlow(prefs.getFloat(KEY_REPLAY_GAIN_PREAMP_UNTAGGED, 0f))
+    val replayGainPreampUntagged: StateFlow<Float> = _replayGainPreampUntagged.asStateFlow()
     
     private val _skipSilenceEnabled = MutableStateFlow(prefs.getBoolean(KEY_SKIP_SILENCE, false))
     val skipSilenceEnabled: StateFlow<Boolean> = _skipSilenceEnabled.asStateFlow()
@@ -1313,14 +1323,7 @@ class AppSettings private constructor(context: Context) {
     private val _spotifyClientSecret = MutableStateFlow(prefs.getString(KEY_SPOTIFY_CLIENT_SECRET, "") ?: "")
     val spotifyClientSecret: StateFlow<String> = _spotifyClientSecret.asStateFlow()
 
-    // Scrobbling Settings
-    private val _scrobblingEnabled = MutableStateFlow(prefs.getBoolean(KEY_SCROBBLING_ENABLED, false))
-    val scrobblingEnabled: StateFlow<Boolean> = _scrobblingEnabled.asStateFlow()
-    
-    // Discord Rich Presence Settings
-    private val _discordRichPresenceEnabled = MutableStateFlow(prefs.getBoolean(KEY_DISCORD_RICH_PRESENCE_ENABLED, false))
-    val discordRichPresenceEnabled: StateFlow<Boolean> = _discordRichPresenceEnabled.asStateFlow()
-    
+
     // General Broadcast Status Settings
     private val _broadcastStatusEnabled = MutableStateFlow(prefs.getBoolean(KEY_BROADCAST_STATUS_ENABLED, false))
     val broadcastStatusEnabled: StateFlow<Boolean> = _broadcastStatusEnabled.asStateFlow()
@@ -1945,6 +1948,26 @@ private val _autoCheckForUpdates = MutableStateFlow(prefs.getBoolean(KEY_AUTO_CH
     fun setReplayGain(enable: Boolean) {
         prefs.edit().putBoolean(KEY_REPLAY_GAIN, enable).apply()
         _replayGain.value = enable
+    }
+
+    fun setReplayGainMode(mode: Int) {
+        prefs.edit().putInt(KEY_REPLAY_GAIN_MODE, mode).apply()
+        _replayGainMode.value = mode
+    }
+
+    fun setReplayGainDrc(enable: Boolean) {
+        prefs.edit().putBoolean(KEY_REPLAY_GAIN_DRC, enable).apply()
+        _replayGainDrc.value = enable
+    }
+
+    fun setReplayGainPreamp(preamp: Float) {
+        prefs.edit().putFloat(KEY_REPLAY_GAIN_PREAMP, preamp).apply()
+        _replayGainPreamp.value = preamp
+    }
+
+    fun setReplayGainPreampUntagged(preamp: Float) {
+        prefs.edit().putFloat(KEY_REPLAY_GAIN_PREAMP_UNTAGGED, preamp).apply()
+        _replayGainPreampUntagged.value = preamp
     }
     
     // Lyrics Settings Methods
@@ -2972,18 +2995,7 @@ private val _autoCheckForUpdates = MutableStateFlow(prefs.getBoolean(KEY_AUTO_CH
         _spotifyClientSecret.value = clientSecret
     }
 
-    // Scrobbling Methods
-    fun setScrobblingEnabled(enabled: Boolean) {
-        prefs.edit().putBoolean(KEY_SCROBBLING_ENABLED, enabled).apply()
-        _scrobblingEnabled.value = enabled
-    }
-    
-    // Discord Rich Presence Methods
-    fun setDiscordRichPresenceEnabled(enabled: Boolean) {
-        prefs.edit().putBoolean(KEY_DISCORD_RICH_PRESENCE_ENABLED, enabled).apply()
-        _discordRichPresenceEnabled.value = enabled
-    }
-    
+
     // General Broadcast Status Methods
     fun setBroadcastStatusEnabled(enabled: Boolean) {
         prefs.edit().putBoolean(KEY_BROADCAST_STATUS_ENABLED, enabled).apply()
@@ -4464,6 +4476,10 @@ private val _autoCheckForUpdates = MutableStateFlow(prefs.getBoolean(KEY_AUTO_CH
         _crossfadeRepeatOne.value = prefs.getBoolean(KEY_CROSSFADE_REPEAT_ONE, true)
         _audioNormalization.value = prefs.getBoolean(KEY_AUDIO_NORMALIZATION, true)
         _replayGain.value = prefs.getBoolean(KEY_REPLAY_GAIN, false)
+        _replayGainMode.value = prefs.getInt(KEY_REPLAY_GAIN_MODE, 1)
+        _replayGainDrc.value = prefs.getBoolean(KEY_REPLAY_GAIN_DRC, true)
+        _replayGainPreamp.value = prefs.getFloat(KEY_REPLAY_GAIN_PREAMP, 0f)
+        _replayGainPreampUntagged.value = prefs.getFloat(KEY_REPLAY_GAIN_PREAMP_UNTAGGED, 0f)
         _audioOffloadEnabled.value = prefs.getBoolean(KEY_AUDIO_OFFLOAD_ENABLED, true)
         _skipSilenceEnabled.value = prefs.getBoolean(KEY_SKIP_SILENCE, false)
         _batterySaverEnabled.value = prefs.getBoolean(KEY_BATTERY_SAVER_ENABLED, false)
@@ -4606,13 +4622,7 @@ private val _autoCheckForUpdates = MutableStateFlow(prefs.getBoolean(KEY_AUTO_CH
         _autoFetchArtwork.value = prefs.getBoolean(KEY_AUTO_FETCH_ARTWORK, false)
         _spotifyClientId.value = prefs.getString(KEY_SPOTIFY_CLIENT_ID, "") ?: ""
         _spotifyClientSecret.value = prefs.getString(KEY_SPOTIFY_CLIENT_SECRET, "") ?: ""
-        
-        // Scrobbling Settings
-        _scrobblingEnabled.value = prefs.getBoolean(KEY_SCROBBLING_ENABLED, false)
-        
-        // Discord Rich Presence Settings
-        _discordRichPresenceEnabled.value = prefs.getBoolean(KEY_DISCORD_RICH_PRESENCE_ENABLED, false)
-        
+
         // General Broadcast Status Settings
         _broadcastStatusEnabled.value = prefs.getBoolean(KEY_BROADCAST_STATUS_ENABLED, false)
         _bluetoothLyricsEnabled.value = prefs.getBoolean(KEY_BLUETOOTH_LYRICS_ENABLED, false)

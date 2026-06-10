@@ -156,7 +156,11 @@ import chromahub.rhythm.app.shared.presentation.screens.settings.SettingGroup
 
 
 @Composable
-fun ExperimentalFeaturesScreen(onBackClick: () -> Unit, onNavigateToGoSettings: (() -> Unit)? = null) {
+fun ExperimentalFeaturesScreen(
+    onBackClick: () -> Unit,
+    onNavigateTo: (String) -> Unit = {},
+    onNavigateToGoSettings: (() -> Unit)? = null
+) {
     val context = LocalContext.current
     val appSettings = AppSettings.getInstance(context)
     val appMode by appSettings.appMode.collectAsState()
@@ -170,8 +174,6 @@ fun ExperimentalFeaturesScreen(onBackClick: () -> Unit, onNavigateToGoSettings: 
     val haptic = LocalHapticFeedback.current
     
     // Third-party integrations states
-    val scrobblingEnabled by appSettings.scrobblingEnabled.collectAsState()
-    val discordRichPresenceEnabled by appSettings.discordRichPresenceEnabled.collectAsState()
     val broadcastStatusEnabled by appSettings.broadcastStatusEnabled.collectAsState()
     val bluetoothLyricsEnabled by appSettings.bluetoothLyricsEnabled.collectAsState()
     
@@ -207,8 +209,7 @@ fun ExperimentalFeaturesScreen(onBackClick: () -> Unit, onNavigateToGoSettings: 
                             MaterialSymbolIcon("volume_up"),
                             context.getString(R.string.replay_gain),
                             context.getString(R.string.replay_gain_desc),
-                            toggleState = replayGain,
-                            onToggleChange = { appSettings.setReplayGain(it) }
+                            onClick = { onNavigateTo(SettingsRoutes.REPLAY_GAIN) }
                         )
                     )
                 )
@@ -305,20 +306,6 @@ fun ExperimentalFeaturesScreen(onBackClick: () -> Unit, onNavigateToGoSettings: 
                     title = context.getString(R.string.exp_third_party_integrations),
                     items = listOf(
                         SettingItem(
-                            RhythmIcons.MusicNote,
-                            context.getString(R.string.scrobbling_enabled),
-                            context.getString(R.string.scrobbling_desc),
-                            toggleState = scrobblingEnabled,
-                            onToggleChange = { appSettings.setScrobblingEnabled(it) }
-                        ),
-                        SettingItem(
-                            MaterialSymbolIcon("forum"),
-                            context.getString(R.string.discord_enabled),
-                            context.getString(R.string.discord_desc),
-                            toggleState = discordRichPresenceEnabled,
-                            onToggleChange = { appSettings.setDiscordRichPresenceEnabled(it) }
-                        ),
-                        SettingItem(
                             MaterialSymbolIcon("wifi"),
                             context.getString(R.string.broadcast_status_enabled),
                             context.getString(R.string.broadcast_status_desc),
@@ -361,6 +348,8 @@ fun ExperimentalFeaturesScreen(onBackClick: () -> Unit, onNavigateToGoSettings: 
                     containerColor = MaterialTheme.colorScheme.surfaceContainer
                 )
             }
+
+
 
             item(key = "experimental_audio_routing_section") {
                 Spacer(modifier = Modifier.height(24.dp))

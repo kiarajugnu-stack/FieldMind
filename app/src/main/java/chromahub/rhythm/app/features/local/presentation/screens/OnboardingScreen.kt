@@ -9745,8 +9745,6 @@ fun EnhancedIntegrationsContent(
     val appleMusicApiEnabled by appSettings.appleMusicApiEnabled.collectAsState()
     val ytMusicApiEnabled by appSettings.ytMusicApiEnabled.collectAsState()
     val spotifyApiEnabled by appSettings.spotifyApiEnabled.collectAsState()
-    val scrobblingEnabled by appSettings.scrobblingEnabled.collectAsState()
-    val discordRichPresenceEnabled by appSettings.discordRichPresenceEnabled.collectAsState()
     val broadcastStatusEnabled by appSettings.broadcastStatusEnabled.collectAsState()
     val bluetoothLyricsEnabled by appSettings.bluetoothLyricsEnabled.collectAsState()
 
@@ -9810,8 +9808,6 @@ fun EnhancedIntegrationsContent(
                     appleMusicApiEnabled = appleMusicApiEnabled,
                     ytMusicApiEnabled = ytMusicApiEnabled,
                     spotifyApiEnabled = spotifyApiEnabled,
-                    scrobblingEnabled = scrobblingEnabled,
-                    discordRichPresenceEnabled = discordRichPresenceEnabled,
                     broadcastStatusEnabled = broadcastStatusEnabled,
                     bluetoothLyricsEnabled = bluetoothLyricsEnabled,
                     onDeezerChange = { appSettings.setDeezerApiEnabled(it) },
@@ -9819,8 +9815,6 @@ fun EnhancedIntegrationsContent(
                     onAppleMusicChange = { appSettings.setAppleMusicApiEnabled(it) },
                     onYtMusicChange = { appSettings.setYTMusicApiEnabled(it) },
                     onSpotifyChange = { appSettings.setSpotifyApiEnabled(it) },
-                    onScrobblingChange = { appSettings.setScrobblingEnabled(it) },
-                    onDiscordChange = { appSettings.setDiscordRichPresenceEnabled(it) },
                     onBroadcastChange = { appSettings.setBroadcastStatusEnabled(it) },
                     onBluetoothLyricsChange = {
                         appSettings.setBluetoothLyricsEnabled(it)
@@ -9869,8 +9863,6 @@ fun EnhancedIntegrationsContent(
                 appleMusicApiEnabled = appleMusicApiEnabled,
                 ytMusicApiEnabled = ytMusicApiEnabled,
                 spotifyApiEnabled = spotifyApiEnabled,
-                scrobblingEnabled = scrobblingEnabled,
-                discordRichPresenceEnabled = discordRichPresenceEnabled,
                 broadcastStatusEnabled = broadcastStatusEnabled,
                 bluetoothLyricsEnabled = bluetoothLyricsEnabled,
                 onDeezerChange = { appSettings.setDeezerApiEnabled(it) },
@@ -9878,8 +9870,6 @@ fun EnhancedIntegrationsContent(
                 onAppleMusicChange = { appSettings.setAppleMusicApiEnabled(it) },
                 onYtMusicChange = { appSettings.setYTMusicApiEnabled(it) },
                 onSpotifyChange = { appSettings.setSpotifyApiEnabled(it) },
-                onScrobblingChange = { appSettings.setScrobblingEnabled(it) },
-                onDiscordChange = { appSettings.setDiscordRichPresenceEnabled(it) },
                 onBroadcastChange = { appSettings.setBroadcastStatusEnabled(it) },
                 onBluetoothLyricsChange = {
                     appSettings.setBluetoothLyricsEnabled(it)
@@ -9905,8 +9895,6 @@ private fun IntegrationsSettingsCards(
     appleMusicApiEnabled: Boolean,
     ytMusicApiEnabled: Boolean,
     spotifyApiEnabled: Boolean,
-    scrobblingEnabled: Boolean,
-    discordRichPresenceEnabled: Boolean,
     broadcastStatusEnabled: Boolean,
     bluetoothLyricsEnabled: Boolean,
     onDeezerChange: (Boolean) -> Unit,
@@ -9914,8 +9902,6 @@ private fun IntegrationsSettingsCards(
     onAppleMusicChange: (Boolean) -> Unit,
     onYtMusicChange: (Boolean) -> Unit,
     onSpotifyChange: (Boolean) -> Unit,
-    onScrobblingChange: (Boolean) -> Unit,
-    onDiscordChange: (Boolean) -> Unit,
     onBroadcastChange: (Boolean) -> Unit,
     onBluetoothLyricsChange: (Boolean) -> Unit
 ) {
@@ -9991,20 +9977,6 @@ private fun IntegrationsSettingsCards(
     }
 
     val socialItems = listOf(
-        onboardingToggleItem(
-            RhythmIcons.Share,
-            context.getString(R.string.onboarding_integration_scrobbling),
-            context.getString(R.string.onboarding_integration_scrobbling_desc),
-            scrobblingEnabled,
-            onScrobblingChange
-        ),
-        onboardingToggleItem(
-            MaterialSymbolIcon("gamepad"),
-            context.getString(R.string.onboarding_integration_discord),
-            context.getString(R.string.onboarding_integration_discord_desc),
-            discordRichPresenceEnabled,
-            onDiscordChange
-        ),
         onboardingToggleItem(
             RhythmIcons.Share,
             context.getString(R.string.onboarding_integration_broadcast),

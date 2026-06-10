@@ -10,18 +10,17 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Color // Added back to fix compilation
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import chromahub.rhythm.app.R
-import androidx.compose.ui.res.stringResource
 
 /**
  * Preview components for Glance widgets
- * 
- * This file provides previews for all widget sizes and states to help visualize
+ * * This file provides previews for all widget sizes and states to help visualize
  * the widget layouts during development. These previews show what the actual
  * Glance widgets will look like on the home screen.
  */
@@ -59,82 +58,296 @@ private fun WidgetPreviewCard(
 }
 
 @Composable
+private fun MockupArt(size: Int, corner: Int = 20) {
+    Box(
+        modifier = Modifier
+            .size(size.dp)
+            .clip(RoundedCornerShape(corner.dp))
+            .background(MaterialTheme.colorScheme.primaryContainer)
+    )
+}
+
+@Composable
+private fun MockupTextLines(modifier: Modifier = Modifier) {
+    Column(modifier = modifier) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth(0.8f)
+                .height(14.dp)
+                .clip(RoundedCornerShape(7.dp))
+                .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f))
+        )
+        Spacer(modifier = Modifier.height(6.dp))
+        Box(
+            modifier = Modifier
+                .fillMaxWidth(0.5f)
+                .height(10.dp)
+                .clip(RoundedCornerShape(5.dp))
+                .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
+        )
+    }
+}
+
+@Composable
+private fun MockupButton(isPlay: Boolean, modifier: Modifier = Modifier, size: Int = 48, corner: Int = 24) {
+    Box(
+        modifier = modifier
+            .size(size.dp)
+            .clip(RoundedCornerShape(corner.dp))
+            .background(
+                if (isPlay) MaterialTheme.colorScheme.primary 
+                else MaterialTheme.colorScheme.tertiary
+            )
+    )
+}
+
+@Composable
 private fun WidgetMockup(
     widthDp: Int,
     heightDp: Int,
     layoutName: String
 ) {
+    val baseModifier = Modifier
+        .width(widthDp.dp)
+        .height(heightDp.dp)
+        .clip(RoundedCornerShape(28.dp))
+        .background(MaterialTheme.colorScheme.surface)
+        .padding(16.dp)
+
+    Box(contentAlignment = Alignment.Center) {
+        when (layoutName) {
+            "OneByOne" -> {
+                Box(modifier = baseModifier, contentAlignment = Alignment.Center) {
+                    MockupButton(isPlay = true, modifier = Modifier.fillMaxSize(), size = 0, corner = 30)
+                }
+            }
+            "Gabe" -> {
+                Column(
+                    modifier = baseModifier,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    MockupArt(size = 48, corner = 24)
+                    Spacer(modifier = Modifier.height(14.dp))
+                    Column(verticalArrangement = Arrangement.SpaceEvenly, modifier = Modifier.weight(1f)) {
+                        MockupButton(isPlay = false, modifier = Modifier.fillMaxWidth().weight(1f))
+                        Spacer(modifier = Modifier.height(10.dp))
+                        MockupButton(isPlay = true, modifier = Modifier.fillMaxWidth().weight(1f))
+                        Spacer(modifier = Modifier.height(10.dp))
+                        MockupButton(isPlay = false, modifier = Modifier.fillMaxWidth().weight(1f))
+                    }
+                }
+            }
+            "Thin" -> {
+                Row(modifier = baseModifier, verticalAlignment = Alignment.CenterVertically) {
+                    MockupArt(size = heightDp - 32, corner = 16)
+                    Spacer(modifier = Modifier.width(14.dp))
+                    MockupTextLines(modifier = Modifier.weight(1f))
+                    Spacer(modifier = Modifier.width(8.dp))
+                    MockupButton(isPlay = true)
+                    Spacer(modifier = Modifier.width(10.dp))
+                    MockupButton(isPlay = false)
+                }
+            }
+            "Small" -> {
+                Column(modifier = baseModifier, horizontalAlignment = Alignment.CenterHorizontally) {
+                    Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
+                        Box(modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(20.dp)).background(MaterialTheme.colorScheme.primaryContainer))
+                    }
+                    Spacer(modifier = Modifier.height(12.dp))
+                    MockupButton(isPlay = true, modifier = Modifier.fillMaxWidth().height(48.dp), size = 0)
+                    Spacer(modifier = Modifier.height(10.dp))
+                    Row(modifier = Modifier.fillMaxWidth().height(48.dp)) {
+                        MockupButton(isPlay = false, modifier = Modifier.weight(1f).fillMaxHeight(), size = 0)
+                        Spacer(modifier = Modifier.width(10.dp))
+                        MockupButton(isPlay = false, modifier = Modifier.weight(1f).fillMaxHeight(), size = 0)
+                    }
+                }
+            }
+            "Medium" -> {
+                Column(modifier = baseModifier) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        MockupArt(size = 84, corner = 18)
+                        Spacer(modifier = Modifier.width(14.dp))
+                        MockupTextLines(modifier = Modifier.weight(1f))
+                    }
+                    Spacer(modifier = Modifier.weight(1f))
+                    Row(modifier = Modifier.fillMaxWidth().height(56.dp)) {
+                        MockupButton(isPlay = false, modifier = Modifier.weight(1f).fillMaxHeight(), size = 0)
+                        Spacer(modifier = Modifier.width(10.dp))
+                        MockupButton(isPlay = true, modifier = Modifier.weight(1f).fillMaxHeight(), size = 0)
+                        Spacer(modifier = Modifier.width(10.dp))
+                        MockupButton(isPlay = false, modifier = Modifier.weight(1f).fillMaxHeight(), size = 0)
+                    }
+                }
+            }
+            else -> {
+                Column(modifier = baseModifier) {
+                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+                        MockupArt(size = if (heightDp >= 260) 110 else 72, corner = 20)
+                        Spacer(modifier = Modifier.width(16.dp))
+                        MockupTextLines(modifier = Modifier.weight(1f))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Box(
+                            modifier = Modifier.size(36.dp).clip(RoundedCornerShape(12.dp)).background(MaterialTheme.colorScheme.surfaceVariant)
+                        )
+                    }
+                    Spacer(modifier = Modifier.weight(1f))
+                    Row(modifier = Modifier.fillMaxWidth().height(if (heightDp >= 260) 64.dp else 60.dp)) {
+                        MockupButton(isPlay = false, modifier = Modifier.weight(1f).fillMaxHeight(), size = 0)
+                        Spacer(modifier = Modifier.width(12.dp))
+                        MockupButton(isPlay = true, modifier = Modifier.weight(1f).fillMaxHeight(), size = 0)
+                        Spacer(modifier = Modifier.width(12.dp))
+                        MockupButton(isPlay = false, modifier = Modifier.weight(1f).fillMaxHeight(), size = 0)
+                    }
+                }
+            }
+        }
+        
+        Box(
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .offset(x = (-8).dp, y = (-8).dp)
+                .clip(RoundedCornerShape(4.dp))
+                .background(Color.Black.copy(alpha = 0.5f))
+                .padding(horizontal = 6.dp, vertical = 2.dp)
+        ) {
+            Text(
+                text = layoutName,
+                style = MaterialTheme.typography.labelSmall,
+                color = Color.White,
+                fontSize = 9.sp
+            )
+        }
+    }
+}
+
+@Composable
+private fun LyricsWidgetMockup(
+    widthDp: Int,
+    heightDp: Int,
+    layoutName: String
+) {
+    val isCompact = heightDp < 120
     Box(
         modifier = Modifier
             .width(widthDp.dp)
             .height(heightDp.dp)
             .clip(RoundedCornerShape(28.dp))
-            .background(MaterialTheme.colorScheme.surface),
-        contentAlignment = Alignment.Center
+            .background(MaterialTheme.colorScheme.surface)
+            .padding(16.dp)
     ) {
         Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.padding(16.dp)
+            modifier = Modifier.fillMaxSize(),
+            verticalArrangement = Arrangement.SpaceBetween
         ) {
-            // Album Art Mockup
-            Box(
-                modifier = Modifier
-                    .size((heightDp * 0.4).dp)
-                    .clip(RoundedCornerShape(16.dp))
-                    .background(MaterialTheme.colorScheme.primaryContainer)
-            )
+            // App branding
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(
+                    modifier = Modifier
+                        .size(12.dp)
+                        .clip(RoundedCornerShape(4.dp))
+                        .background(MaterialTheme.colorScheme.primary)
+                )
+                Spacer(modifier = Modifier.width(5.dp))
+                Box(
+                    modifier = Modifier
+                        .width(40.dp)
+                        .height(9.dp)
+                        .clip(RoundedCornerShape(4.dp))
+                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.6f))
+                )
+            }
             
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(6.dp))
             
-            // Title Mockup
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth(0.8f)
-                    .height(16.dp)
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f))
-            )
+            // Song title
+            Column {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth(0.75f)
+                        .height(12.dp)
+                        .clip(RoundedCornerShape(6.dp))
+                        .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.85f))
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth(0.5f)
+                        .height(9.dp)
+                        .clip(RoundedCornerShape(5.dp))
+                        .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.45f))
+                )
+            }
             
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.weight(1f))
             
-            // Artist Mockup
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth(0.6f)
-                    .height(12.dp)
-                    .clip(RoundedCornerShape(6.dp))
-                    .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
-            )
-            
-            Spacer(modifier = Modifier.height(16.dp))
-            
-            // Controls Row Mockup
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly
+            // Lyrics lines
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.fillMaxWidth()
             ) {
-                repeat(3) {
+                if (!isCompact) {
                     Box(
                         modifier = Modifier
-                            .size(48.dp)
-                            .clip(RoundedCornerShape(24.dp))
-                            .background(
-                                if (it == 1) MaterialTheme.colorScheme.primary 
-                                else MaterialTheme.colorScheme.tertiary
-                            )
+                            .fillMaxWidth(0.85f)
+                            .height(9.dp)
+                            .clip(RoundedCornerShape(4.dp))
+                            .background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.35f))
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                }
+                // Active lyric line (highlighted)
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth(0.95f)
+                        .height(if (isCompact) 11.dp else 13.dp)
+                        .clip(RoundedCornerShape(6.dp))
+                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.7f))
+                )
+                if (!isCompact) {
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth(0.7f)
+                            .height(9.dp)
+                            .clip(RoundedCornerShape(4.dp))
+                            .background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.35f))
                     )
                 }
             }
             
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.weight(1f))
             
-            // Layout Name
-            Text(
-                text = layoutName,
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-                fontSize = 10.sp
-            )
+            // Controls row
+            Row(
+                horizontalArrangement = Arrangement.End,
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                // Previous
+                Box(
+                    modifier = Modifier
+                        .size(36.dp)
+                        .clip(RoundedCornerShape(18.dp))
+                        .background(MaterialTheme.colorScheme.tertiary)
+                )
+                Spacer(modifier = Modifier.width(10.dp))
+                // Play/Pause
+                Box(
+                    modifier = Modifier
+                        .size(40.dp)
+                        .clip(RoundedCornerShape(14.dp))
+                        .background(MaterialTheme.colorScheme.primary)
+                )
+                Spacer(modifier = Modifier.width(10.dp))
+                // Next
+                Box(
+                    modifier = Modifier
+                        .size(36.dp)
+                        .clip(RoundedCornerShape(18.dp))
+                        .background(MaterialTheme.colorScheme.tertiary)
+                )
+            }
         }
     }
 }
@@ -250,6 +463,36 @@ fun GlanceWidgetPreviewsScreen() {
                 
                 Spacer(modifier = Modifier.height(32.dp))
                 
+                // ── Lyrics Widget Previews ──
+                Text(
+                    text = "Lyrics Widget",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(bottom = 16.dp)
+                )
+
+                // Lyrics 3×2
+                WidgetPreviewCard(
+                    title = "Lyrics Widget — 3×2",
+                    size = "250 × 150 dp"
+                ) {
+                    LyricsWidgetMockup(250, 150, "LyricsWidget3x2")
+                }
+
+                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+
+                // Lyrics 4×3
+                WidgetPreviewCard(
+                    title = "Lyrics Widget — 4×3",
+                    size = "350 × 220 dp"
+                ) {
+                    LyricsWidgetMockup(350, 220, "LyricsWidget4x3")
+                }
+
+                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+
+                Spacer(modifier = Modifier.height(32.dp))
+                
                 // Widget States Section
                 Text(
                     text = stringResource(R.string.rhythmwidgetpreview_widget_states),
@@ -265,13 +508,13 @@ fun GlanceWidgetPreviewsScreen() {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text(stringResource(R.string.rhythmwidgetpreview_playing), style = MaterialTheme.typography.labelMedium)
                         Spacer(modifier = Modifier.height(8.dp))
-                        WidgetMockup(180, 180, "Playing")
+                        WidgetMockup(180, 180, "Small")
                     }
                     
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text(stringResource(R.string.rhythmwidgetpreview_paused), style = MaterialTheme.typography.labelMedium)
                         Spacer(modifier = Modifier.height(8.dp))
-                        WidgetMockup(180, 180, "Paused")
+                        WidgetMockup(180, 180, "Small")
                     }
                 }
                 
@@ -340,7 +583,7 @@ fun SmallWidgetDetailPreview() {
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
             ) {
-                WidgetMockup(180, 180, "2×2 Small Widget")
+                WidgetMockup(180, 180, "Small")
             }
         }
     }
@@ -360,7 +603,7 @@ fun MediumWidgetDetailPreview() {
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
             ) {
-                WidgetMockup(250, 150, "3×2 Medium Widget")
+                WidgetMockup(250, 150, "Medium")
             }
         }
     }
@@ -380,9 +623,48 @@ fun LargeWidgetDetailPreview() {
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
             ) {
-                WidgetMockup(300, 220, "3×3 Extra Large Widget")
+                WidgetMockup(300, 220, "ExtraLarge")
             }
         }
     }
 }
 
+@Preview(name = "Lyrics 3x2 Widget Detail", showBackground = true)
+@Composable
+fun LyricsWidget3x2DetailPreview() {
+    MaterialTheme {
+        Surface(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background),
+            color = MaterialTheme.colorScheme.background
+        ) {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                LyricsWidgetMockup(250, 150, "LyricsWidget3x2")
+            }
+        }
+    }
+}
+
+@Preview(name = "Lyrics 4x3 Widget Detail", showBackground = true)
+@Composable
+fun LyricsWidget4x3DetailPreview() {
+    MaterialTheme {
+        Surface(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background),
+            color = MaterialTheme.colorScheme.background
+        ) {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                LyricsWidgetMockup(350, 220, "LyricsWidget4x3")
+            }
+        }
+    }
+}

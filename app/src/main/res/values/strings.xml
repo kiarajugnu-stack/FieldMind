@@ -4312,5 +4312,7 @@
     <string name="shape_target_artist_art">Artist Artwork</string>
     <string name="shape_target_artist_art_desc">Shape for artist images</string>
     <string name="settings_shape_for">Shape for %1$s</string>
+    <string name="no_lyric_found">No lyric found</string>
+    <string name="lyric_widget_description">Widget that shows lyrics of currently playing media</string>
 </resources>
 

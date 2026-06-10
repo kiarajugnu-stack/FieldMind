@@ -1,18 +1,32 @@
+/*
+ *     Copyright (C) 2025 nift4
+ *
+ *     Gramophone is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     (at your option) any later version.
+ *
+ *     Gramophone is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
 package chromahub.rhythm.app.infrastructure.widget
 
 import android.content.Context
-import android.net.Uri
 import chromahub.rhythm.app.shared.data.model.Song
 import chromahub.rhythm.app.infrastructure.widget.glance.GlanceWidgetUpdater
 
+/**
+ * Thin shim that forwards widget update calls to the Glance-based updater.
+ * The legacy RemoteViews widget (MusicWidgetProvider) has been removed.
+ */
 object WidgetUpdater {
-    
-    private const val PREFS_FILE = "widget_prefs"
-    private const val KEY_SONG_ID = "song_id"
-    private const val KEY_IS_PLAYING = "is_playing"
-    private const val KEY_SONG_TITLE = "song_title"
-    private const val KEY_ARTIST_NAME = "artist_name"
-    
+
     fun updateWidget(
         context: Context,
         song: Song?,
@@ -21,49 +35,10 @@ object WidgetUpdater {
         hasNext: Boolean = false,
         isFavorite: Boolean = false
     ) {
-        val prefs = context.getSharedPreferences(PREFS_FILE, Context.MODE_PRIVATE)
-        val editor = prefs.edit()
-        
-        if (song != null) {
-            editor.putString(KEY_SONG_ID, song.id)
-            editor.putString(KEY_SONG_TITLE, song.title)
-            editor.putString(KEY_ARTIST_NAME, song.artist)
-            editor.putString("album_name", song.album)
-            editor.putString("artwork_uri", song.artworkUri?.toString())
-        } else {
-            editor.putString(KEY_SONG_ID, "")
-            editor.putString(KEY_SONG_TITLE, "Rhythm")
-            editor.putString(KEY_ARTIST_NAME, "")
-            editor.putString("album_name", "")
-            editor.remove("artwork_uri")
-        }
-        
-        editor.putBoolean(KEY_IS_PLAYING, isPlaying)
-        editor.putBoolean("has_previous", hasPrevious)
-        editor.putBoolean("has_next", hasNext)
-        editor.putBoolean("is_favorite", isFavorite)
-        editor.apply() // Use apply for async write to prevent ANR
-        
-        // Update legacy RemoteViews widget
-        MusicWidgetProvider.updateWidgets(context)
-        
-        // Update modern Glance widget
         GlanceWidgetUpdater.updateWidget(context, song, isPlaying, hasPrevious, hasNext, isFavorite)
-
-        // Avoid forcing TileService listen cycles on every song change.
-        // The tile reads the latest snapshot from preferences in onStartListening.
     }
-    
-    fun clearWidget(context: Context) {
-        val prefs = context.getSharedPreferences(PREFS_FILE, Context.MODE_PRIVATE)
-        prefs.edit().clear().apply()
-        
-        // Update legacy RemoteViews widget
-        MusicWidgetProvider.updateWidgets(context)
-        
-        // Update modern Glance widget
-        GlanceWidgetUpdater.updateWidgetEmpty(context)
 
-        // Avoid forcing TileService listen cycles during clear operations.
+    fun clearWidget(context: Context) {
+        GlanceWidgetUpdater.updateWidgetEmpty(context)
     }
 }

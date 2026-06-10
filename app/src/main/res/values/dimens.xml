@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="lyric_widget_nn">20sp</dimen>
+    <dimen name="lyric_widget_tl">15sp</dimen>
+    <dimen name="lyric_widget_tb">12sp</dimen>
+</resources>

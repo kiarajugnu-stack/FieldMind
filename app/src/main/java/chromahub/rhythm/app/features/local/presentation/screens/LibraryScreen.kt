@@ -79,6 +79,7 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
+import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.ui.draw.shadow
@@ -596,6 +597,52 @@ fun LibraryScreen(
     val scanProgress by musicViewModel.scanProgress.collectAsState()
     val pullToRefreshState = rememberPullToRefreshState()
     var isRefreshing by remember { mutableStateOf(false) }
+
+    val songsListState = rememberLazyListState()
+    val playlistsListState = rememberLazyListState()
+    val playlistsGridState = rememberLazyGridState()
+    val albumsListState = rememberLazyListState()
+    val albumsGridState = rememberLazyGridState()
+    val artistsListState = rememberLazyListState()
+    val artistsGridState = rememberLazyGridState()
+    val explorerListState = rememberLazyListState()
+
+    val playlistViewType by appSettings.playlistViewType.collectAsState()
+    val albumViewType by appSettings.albumViewType.collectAsState()
+    val artistViewType by appSettings.artistViewType.collectAsState()
+
+    val isListAtTop by remember(
+        selectedTabIndex, visibleTabIds, playlistViewType, albumViewType, artistViewType
+    ) {
+        derivedStateOf {
+            when (visibleTabIds.getOrNull(selectedTabIndex)) {
+                "SONGS" -> songsListState.firstVisibleItemIndex == 0 && songsListState.firstVisibleItemScrollOffset == 0
+                "PLAYLISTS" -> {
+                    if (playlistViewType == PlaylistViewType.GRID) {
+                        playlistsGridState.firstVisibleItemIndex == 0 && playlistsGridState.firstVisibleItemScrollOffset == 0
+                    } else {
+                        playlistsListState.firstVisibleItemIndex == 0 && playlistsListState.firstVisibleItemScrollOffset == 0
+                    }
+                }
+                "ALBUMS" -> {
+                    if (albumViewType == AlbumViewType.GRID) {
+                        albumsGridState.firstVisibleItemIndex == 0 && albumsGridState.firstVisibleItemScrollOffset == 0
+                    } else {
+                        albumsListState.firstVisibleItemIndex == 0 && albumsListState.firstVisibleItemScrollOffset == 0
+                    }
+                }
+                "ARTISTS" -> {
+                    if (artistViewType == ArtistViewType.GRID) {
+                        artistsGridState.firstVisibleItemIndex == 0 && artistsGridState.firstVisibleItemScrollOffset == 0
+                    } else {
+                        artistsListState.firstVisibleItemIndex == 0 && artistsListState.firstVisibleItemScrollOffset == 0
+                    }
+                }
+                "EXPLORER" -> explorerListState.firstVisibleItemIndex == 0 && explorerListState.firstVisibleItemScrollOffset == 0
+                else -> true
+            }
+        }
+    }
     val isTabletLayout = LocalConfiguration.current.screenWidthDp >= 600
     val baseLibraryBottomPadding =
         if (isTabletLayout) 16.dp else (MusicDimensions.bottomNavigationHeight + 16.dp)
@@ -707,8 +754,6 @@ fun LibraryScreen(
                 actions = {
                     when (visibleTabIds.getOrNull(selectedTabIndex)) {
                         "ALBUMS" -> {
-                            val albumViewType by appSettings.albumViewType.collectAsState()
-                            
                             val buttonScale by animateFloatAsState(
                                 targetValue = 1f,
                                 animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy),
@@ -743,8 +788,6 @@ fun LibraryScreen(
                         }
                         
                         "ARTISTS" -> {
-                            val artistViewType by appSettings.artistViewType.collectAsState()
-                            
                             val buttonScale by animateFloatAsState(
                                 targetValue = 1f,
                                 animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy),
@@ -779,8 +822,6 @@ fun LibraryScreen(
                         }
                         
                         "PLAYLISTS" -> {
-                            val playlistViewType by appSettings.playlistViewType.collectAsState()
-                            
                             val buttonScale by animateFloatAsState(
                                 targetValue = 1f,
                                 animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy),
@@ -1315,6 +1356,7 @@ fun LibraryScreen(
                         }
                     },
                     state = pullToRefreshState,
+                    enabled = !isSelectionMode && isListAtTop,
                     modifier = Modifier.fillMaxSize(),
                     indicator = {
                         PullToRefreshDefaults.LoadingIndicator(
@@ -1347,46 +1389,49 @@ fun LibraryScreen(
                                 }
                             }
                             SingleCardSongsContent(
-                            songs = sortedSongs,
-                            albums = albums,
-                            artists = artists,
-                            onSongClick = onSongClick,
-                            onAddToPlaylist = { song ->
-                                selectedSong = song
-                                showAddToPlaylistSheet = true
-                            },
-                            onAddToQueue = onAddToQueue,
-                            onPlayNext = { song -> musicViewModel.playNext(song) },
-                            onToggleFavorite = { song -> musicViewModel.toggleFavorite(song) },
-                            favoriteSongs = musicViewModel.favoriteSongs.collectAsState().value,
-                            onGoToArtist = onArtistClick,
-                            onGoToAlbum = onAlbumClick,
-                            onShowSongInfo = { song ->
-                                selectedSong = song
-                                showSongInfoSheet = true
-                            },
-                            onAddToBlacklist = { song ->
-                                appSettings.addToBlacklist(song.id)
-                            },
-                            onPlayQueue = onPlayQueue,
-                            onPlayQueueFromIndex = onPlayQueueFromIndex,
-                            onShuffleQueue = onShuffleQueue,
-                            currentSong = currentSong,
-                            isPlaying = isPlaying,
-                            haptics = haptics,
-                            enableRatingSystem = enableRatingSystem,
-                            isSelectionMode = isSelectionMode,
-                            selectedSongIds = selectedSongIds,
-                            multiSelectionState = multiSelectionState,
-                            onSongLongPress = onSongLongPress,
-                            onSongSelectionToggle = onSongSelectionToggle,
-                            onShowMultiSelectionSheet = { showMultiSelectionSheet = true },
-                            onRefreshClick = onRefreshClick
-                        )
+                                songs = sortedSongs,
+                                listState = songsListState,
+                                albums = albums,
+                                artists = artists,
+                                onSongClick = onSongClick,
+                                onAddToPlaylist = { song ->
+                                    selectedSong = song
+                                    showAddToPlaylistSheet = true
+                                },
+                                onAddToQueue = onAddToQueue,
+                                onPlayNext = { song -> musicViewModel.playNext(song) },
+                                onToggleFavorite = { song -> musicViewModel.toggleFavorite(song) },
+                                favoriteSongs = musicViewModel.favoriteSongs.collectAsState().value,
+                                onGoToArtist = onArtistClick,
+                                onGoToAlbum = onAlbumClick,
+                                onShowSongInfo = { song ->
+                                    selectedSong = song
+                                    showSongInfoSheet = true
+                                },
+                                onAddToBlacklist = { song ->
+                                    appSettings.addToBlacklist(song.id)
+                                },
+                                onPlayQueue = onPlayQueue,
+                                onPlayQueueFromIndex = onPlayQueueFromIndex,
+                                onShuffleQueue = onShuffleQueue,
+                                currentSong = currentSong,
+                                isPlaying = isPlaying,
+                                haptics = haptics,
+                                enableRatingSystem = enableRatingSystem,
+                                isSelectionMode = isSelectionMode,
+                                selectedSongIds = selectedSongIds,
+                                multiSelectionState = multiSelectionState,
+                                onSongLongPress = onSongLongPress,
+                                onSongSelectionToggle = onSongSelectionToggle,
+                                onShowMultiSelectionSheet = { showMultiSelectionSheet = true },
+                                onRefreshClick = onRefreshClick
+                            )
                         }
                         "PLAYLISTS" -> SingleCardPlaylistsContent(
                             playlists = playlists,
                             onPlaylistClick = onPlaylistClick,
+                            listState = playlistsListState,
+                            gridState = playlistsGridState,
                             haptics = haptics,
                             onCreatePlaylist = { showCreatePlaylistDialog = true },
                             onImportPlaylist = { showImportDialog = true },
@@ -1397,6 +1442,8 @@ fun LibraryScreen(
                         "ALBUMS" -> SingleCardAlbumsContent(
                             albums = albums,
                             onAlbumClick = onAlbumClick,
+                            listState = albumsListState,
+                            gridState = albumsGridState,
                             onSongClick = onSongClick,
                             onAlbumBottomSheetClick = { album ->
                                 selectedAlbum = album
@@ -1413,6 +1460,8 @@ fun LibraryScreen(
                             onArtistClick = { artist ->
                                 onNavigateToArtist(artist)
                             },
+                            listState = artistsListState,
+                            gridState = artistsGridState,
                             haptics = haptics,
                             onPlayQueue = onPlayQueue,
                             onShuffleQueue = onShuffleQueue,
@@ -1421,6 +1470,7 @@ fun LibraryScreen(
                         "EXPLORER" -> SingleCardExplorerContent(
                             songs = songs,
                             onSongClick = onSongClick,
+                            listState = explorerListState,
                             onAddToPlaylist = { song ->
                                 selectedSong = song
                                 showAddToPlaylistSheet = true
@@ -1718,6 +1768,7 @@ fun LibraryScreen(
 @Composable
 fun SingleCardSongsContent(
     songs: List<Song>,
+    listState: LazyListState = rememberLazyListState(),
     albums: List<Album> = emptyList(),
     artists: List<Artist> = emptyList(),
     onSongClick: (Song) -> Unit,
@@ -2098,6 +2149,7 @@ fun SingleCardSongsContent(
         )
     } else {
         LazyColumn(
+            state = listState,
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(
                 start = 16.dp,
@@ -2453,6 +2505,8 @@ fun SingleCardSongsContent(
 fun SingleCardPlaylistsContent(
     playlists: List<Playlist>,
     onPlaylistClick: (Playlist) -> Unit,
+    listState: LazyListState = rememberLazyListState(),
+    gridState: LazyGridState = rememberLazyGridState(),
     haptics: androidx.compose.ui.hapticfeedback.HapticFeedback,
     onCreatePlaylist: (() -> Unit)? = null,
     onImportPlaylist: (() -> Unit)? = null,
@@ -2519,6 +2573,7 @@ fun SingleCardPlaylistsContent(
     } else {
         if (playlistViewType == PlaylistViewType.GRID) {
             LazyVerticalGrid(
+                state = gridState,
                 columns = GridCells.Fixed(2),
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(
@@ -2557,6 +2612,7 @@ fun SingleCardPlaylistsContent(
             }
         } else {
         LazyColumn(
+            state = listState,
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(
                 start = 16.dp,
@@ -2600,6 +2656,8 @@ fun SingleCardPlaylistsContent(
 fun SingleCardAlbumsContent(
     albums: List<Album>,
     onAlbumClick: (Album) -> Unit,
+    listState: LazyListState = rememberLazyListState(),
+    gridState: LazyGridState = rememberLazyGridState(),
     onSongClick: (Song) -> Unit,
     onAlbumBottomSheetClick: (Album) -> Unit = {},
     haptics: androidx.compose.ui.hapticfeedback.HapticFeedback,
@@ -2653,6 +2711,7 @@ fun SingleCardAlbumsContent(
     } else {
         if (albumViewType == AlbumViewType.GRID) {
             LazyVerticalGrid(
+                state = gridState,
                 columns = GridCells.Fixed(2),
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(
@@ -2716,6 +2775,7 @@ fun SingleCardAlbumsContent(
             }
         } else {
             LazyColumn(
+                state = listState,
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(
                     start = 16.dp,
@@ -4651,7 +4711,9 @@ fun SingleCardArtistsContent(
     haptics: androidx.compose.ui.hapticfeedback.HapticFeedback,
     onPlayQueue: (List<Song>) -> Unit = { _ -> },
     onShuffleQueue: (List<Song>) -> Unit = { _ -> },
-    onRefreshClick: (() -> Unit)? = null
+    onRefreshClick: (() -> Unit)? = null,
+    listState: LazyListState = rememberLazyListState(),
+    gridState: LazyGridState = rememberLazyGridState()
 ) {
     val context = LocalContext.current
     val viewModel = viewModel<chromahub.rhythm.app.viewmodel.MusicViewModel>()
@@ -4719,6 +4781,7 @@ fun SingleCardArtistsContent(
     
     if (isGridView) {
         LazyVerticalGrid(
+            state = gridState,
             columns = GridCells.Fixed(2),
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(
@@ -4784,6 +4847,7 @@ fun SingleCardArtistsContent(
         }
     } else {
         LazyColumn(
+            state = listState,
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(
                 start = 16.dp,

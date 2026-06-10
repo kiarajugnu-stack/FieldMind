@@ -36,7 +36,7 @@ import chromahub.rhythm.app.shared.presentation.components.Material3SettingsItem
 import chromahub.rhythm.app.shared.presentation.components.common.CollapsibleHeaderScreen
 import chromahub.rhythm.app.util.HapticUtils
 import chromahub.rhythm.app.util.HapticType
-import chromahub.rhythm.app.infrastructure.widget.MusicWidgetProvider
+import chromahub.rhythm.app.infrastructure.widget.glance.GlanceWidgetUpdater
 import chromahub.rhythm.app.infrastructure.widget.glance.RhythmWidgetReceiver
 import chromahub.rhythm.app.R
 import androidx.compose.ui.res.stringResource
@@ -581,10 +581,7 @@ fun WidgetTipItem(
 }
 
 fun updateAllWidgets(context: Context) {
-    // Update legacy RemoteViews widgets
-    MusicWidgetProvider.updateWidgets(context)
-    
-    // Update Glance widgets
+    // Update Glance widgets via broadcast
     val glanceIntent = android.content.Intent(context, RhythmWidgetReceiver::class.java).apply {
         action = AppWidgetManager.ACTION_APPWIDGET_UPDATE
     }
@@ -592,4 +589,5 @@ fun updateAllWidgets(context: Context) {
         .getAppWidgetIds(ComponentName(context, RhythmWidgetReceiver::class.java))
     glanceIntent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, glanceIds)
     context.sendBroadcast(glanceIntent)
+    GlanceWidgetUpdater.forceUpdateAll(context)
 }

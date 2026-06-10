@@ -461,7 +461,7 @@ class MusicRepository(context: Context) {
         }
     }
 
-    private fun isEmbeddedArtworkCacheUri(uri: Uri?): Boolean {
+    fun isEmbeddedArtworkCacheUri(uri: Uri?): Boolean {
         if (uri == null) return false
 
         if (uri.scheme != "file" && uri.scheme != null) {

@@ -1561,20 +1561,19 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
                 val isCompleted = appSettings.embeddedArtworkExtractionCompleted.value
                 if (preferSongArtwork && !isCompleted) {
                     val initialSongs = _songs.value
-
-                    // A song needs embedded art extraction only if it has NO artwork at all.
-                    // Songs with any non-null artworkUri (MediaStore, content://, file://, etc.)
-                    // already have artwork; extractEmbeddedArtworkForSongs skips them individually.
-                    // Only songs with artworkUri == null are candidates for extraction.
-                    val songsNeedingExtraction = initialSongs.count { it.artworkUri == null }
+                    // A song needs embedded art extraction if it has NO artwork at all OR
+                    // if its artwork is NOT a cached embedded artwork URI (e.g. it is a MediaStore fallback).
+                    val songsNeedingExtraction = initialSongs.count {
+                        it.artworkUri == null || !repository.isEmbeddedArtworkCacheUri(it.artworkUri)
+                    }
 
                     if (songsNeedingExtraction == 0) {
-                        Log.d(TAG, "All ${initialSongs.size} songs already have artwork URIs, skipping embedded art extraction")
+                        Log.d(TAG, "All ${initialSongs.size} songs already have cached embedded artwork, skipping extraction")
                         appSettings.setEmbeddedArtworkExtractionCompleted(true)
                         return@launch
                     }
 
-                    Log.d(TAG, "$songsNeedingExtraction/${initialSongs.size} songs have no artwork, starting embedded art extraction after delay")
+                    Log.d(TAG, "$songsNeedingExtraction/${initialSongs.size} songs need embedded artwork extraction, starting after delay")
                     delay(1500L) // Allow UI to fully settle before heavy IO
 
                     Log.d(TAG, "Starting background embedded album art extraction (preferSongArtwork=$preferSongArtwork, lossless=$losslessArtwork)")
@@ -3120,22 +3119,80 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     private fun maybeBroadcastBluetoothLyricsLine(controller: MediaController) {
+        val song = _currentSong.value ?: return
+        val currentLyricsVal = _currentLyrics.value
+        
+        // Track raw lyrics key (synced or plain) to send updates to service
+        val rawLyricsKey = currentLyricsVal?.syncedLyrics ?: currentLyricsVal?.plainLyrics ?: ""
+        if (cachedSyncedLyricsRaw != rawLyricsKey) {
+            cachedSyncedLyricsRaw = rawLyricsKey
+            val synced = currentLyricsVal?.syncedLyrics
+            if (!synced.isNullOrBlank()) {
+                cachedParsedSyncedLyrics = LyricsParser.parseLyrics(synced)
+            } else {
+                cachedParsedSyncedLyrics = emptyList()
+            }
+            lastBroadcastLyricLine = null
+            lastAppliedBluetoothLyricLine = null
+            
+            // Send lyrics data to service for launcher widget
+            try {
+                val args = Bundle().apply {
+                    putStringArrayList("lyric_texts", ArrayList(cachedParsedSyncedLyrics.map { it.text }))
+                    putLongArray("lyric_timestamps", cachedParsedSyncedLyrics.map { it.timestamp }.toLongArray())
+                    val plain = currentLyricsVal?.plainLyrics
+                    if (plain != null) {
+                        putString("plain_lyrics", plain)
+                    }
+                }
+                controller.sendCustomCommand(
+                    androidx.media3.session.SessionCommand("UPDATE_LYRICS_DATA", Bundle.EMPTY),
+                    args
+                )
+            } catch (e: Exception) {
+                Log.w(TAG, "Failed to send UPDATE_LYRICS_DATA command", e)
+            }
+        }
+
+        val lyricLine = resolveCurrentSyncedLyricLine(
+            syncedLyrics = currentLyricsVal?.syncedLyrics,
+            currentPositionMs = controller.currentPosition,
+            syncOffsetMs = _lyricsTimeOffset.value.toLong()
+        )
+
+        // Determine active lyric index
+        val effectivePosition = (controller.currentPosition + _lyricsTimeOffset.value.toLong()).coerceAtLeast(0L)
+        val activeIndex = if (cachedParsedSyncedLyrics.isNotEmpty()) {
+            cachedParsedSyncedLyrics.indexOfLast { it.timestamp <= effectivePosition }
+        } else {
+            -1
+        }
+
+        // Send active lyric line to service for status bar lyrics and widgets
+        if (lyricLine != lastBroadcastLyricLine) {
+            try {
+                val args = Bundle().apply {
+                    putString("lyric_line", lyricLine)
+                    putInt("lyric_index", activeIndex)
+                }
+                controller.sendCustomCommand(
+                    androidx.media3.session.SessionCommand("UPDATE_ACTIVE_LYRIC", Bundle.EMPTY),
+                    args
+                )
+            } catch (e: Exception) {
+                Log.w(TAG, "Failed to send UPDATE_ACTIVE_LYRIC command", e)
+            }
+        }
+
         val bluetoothLyricsActive = appSettings.broadcastStatusEnabled.value && appSettings.bluetoothLyricsEnabled.value
         if (!bluetoothLyricsActive) {
             if (lastAppliedBluetoothLyricSongId != null || lastAppliedBluetoothLyricLine != null) {
                 restoreStandardNowPlayingMetadata(controller, _currentSong.value)
             }
             lastBroadcastLyricSongId = null
-            lastBroadcastLyricLine = null
+            lastBroadcastLyricLine = lyricLine
             return
         }
-
-        val song = _currentSong.value ?: return
-        val lyricLine = resolveCurrentSyncedLyricLine(
-            syncedLyrics = _currentLyrics.value?.syncedLyrics,
-            currentPositionMs = controller.currentPosition,
-            syncOffsetMs = _lyricsTimeOffset.value.toLong()
-        )
 
         if (song.id == lastBroadcastLyricSongId && lyricLine == lastBroadcastLyricLine) {
             return
@@ -4851,6 +4908,15 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
                 // Save shuffle state preference
                 if (shuffleModePersistence.value) {
                     appSettings.setSavedShuffleState(false)
+                }
+
+                if (useExoPlayerShuffle) {
+                    controller.shuffleModeEnabled = false
+                    _isShuffleEnabled.value = false
+                    queueStateHolder.clearOriginalQueue()
+                    syncQueueWithMediaController()
+                    saveQueueToPersistence()
+                    return@executeCommand
                 }
 
                 if (!queueStateHolder.hasOriginalQueue()) {

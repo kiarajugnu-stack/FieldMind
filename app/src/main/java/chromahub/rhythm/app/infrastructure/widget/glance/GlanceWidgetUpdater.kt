@@ -14,6 +14,7 @@ import kotlinx.coroutines.launch
 import java.util.concurrent.TimeUnit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.core.booleanPreferencesKey
+import androidx.datastore.preferences.core.intPreferencesKey
 import coil.ImageLoader
 import coil.request.ImageRequest
 import coil.size.Size
@@ -113,8 +114,30 @@ object GlanceWidgetUpdater {
                     }
                 }
                 
+                // Update RhythmLyricsWidget as well
+                val lyricGlanceIds = manager.getGlanceIds(RhythmLyricsWidget::class.java)
+                lyricGlanceIds.forEach { glanceId ->
+                    updateAppWidgetState(context, glanceId) { prefs ->
+                        if (song != null) {
+                            prefs[stringPreferencesKey(RhythmLyricsWidget.KEY_SONG_TITLE)] = song.title
+                            prefs[stringPreferencesKey(RhythmLyricsWidget.KEY_ARTIST_NAME)] = song.artist
+                            song.artworkUri?.let {
+                                prefs[stringPreferencesKey(RhythmLyricsWidget.KEY_ARTWORK_URI)] = it.toString()
+                            } ?: prefs.remove(stringPreferencesKey(RhythmLyricsWidget.KEY_ARTWORK_URI))
+                        } else {
+                            prefs[stringPreferencesKey(RhythmLyricsWidget.KEY_SONG_TITLE)] = "Rhythm"
+                            prefs[stringPreferencesKey(RhythmLyricsWidget.KEY_ARTIST_NAME)] = ""
+                            prefs[stringPreferencesKey(RhythmLyricsWidget.KEY_LYRIC_LINES)] = ""
+                            prefs[intPreferencesKey(RhythmLyricsWidget.KEY_ACTIVE_INDEX)] = -1
+                            prefs.remove(stringPreferencesKey(RhythmLyricsWidget.KEY_ARTWORK_URI))
+                        }
+                        prefs[booleanPreferencesKey(RhythmLyricsWidget.KEY_IS_PLAYING)] = isPlaying
+                    }
+                }
+                
                 // Force update all widgets
-                RhythmMusicWidget().updateAll(context)
+                try { RhythmMusicWidget().updateAll(context) } catch (_: Exception) {}
+                try { RhythmLyricsWidget().updateAll(context) } catch (_: Exception) {}
             } catch (e: Exception) {
                 android.util.Log.e("GlanceWidgetUpdater", "Error updating widget", e)
             }
@@ -144,6 +167,11 @@ object GlanceWidgetUpdater {
             } catch (e: Exception) {
                 android.util.Log.e("GlanceWidgetUpdater", "Error forcing widget update", e)
             }
+            try {
+                RhythmLyricsWidget().updateAll(context)
+            } catch (e: Exception) {
+                android.util.Log.e("GlanceWidgetUpdater", "Error forcing lyrics widget update", e)
+            }
         }
         
         // Also trigger worker update
@@ -162,6 +190,34 @@ object GlanceWidgetUpdater {
             WorkManager.getInstance(context).enqueue(updateRequest)
         } catch (e: Exception) {
             android.util.Log.e("GlanceWidgetUpdater", "Error scheduling widget update", e)
+        }
+    }
+    
+    /**
+     * Update lyrics widget with dynamic lyric lines and active index
+     */
+    fun updateLyrics(
+        context: Context,
+        lyricTexts: List<String>,
+        activeIndex: Int
+    ) {
+        scope.launch {
+            try {
+                val manager = GlanceAppWidgetManager(context)
+                val glanceIds = manager.getGlanceIds(RhythmLyricsWidget::class.java)
+                if (glanceIds.isEmpty()) return@launch
+                
+                val joined = lyricTexts.joinToString("##LINE##")
+                glanceIds.forEach { glanceId ->
+                    updateAppWidgetState(context, glanceId) { prefs ->
+                        prefs[stringPreferencesKey(RhythmLyricsWidget.KEY_LYRIC_LINES)] = joined
+                        prefs[intPreferencesKey(RhythmLyricsWidget.KEY_ACTIVE_INDEX)] = activeIndex
+                    }
+                }
+                try { RhythmLyricsWidget().updateAll(context) } catch (_: Exception) {}
+            } catch (e: Exception) {
+                android.util.Log.e("GlanceWidgetUpdater", "Error updating lyrics widget", e)
+            }
         }
     }
 }

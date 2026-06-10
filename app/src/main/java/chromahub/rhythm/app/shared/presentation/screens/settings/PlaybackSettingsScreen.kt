@@ -40,7 +40,10 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import chromahub.rhythm.app.features.local.presentation.viewmodel.MusicViewModel
 
 @Composable
-fun PlaybackSettingsScreen(onBackClick: () -> Unit) {
+fun PlaybackSettingsScreen(
+    onBackClick: () -> Unit,
+    onNavigateTo: (String) -> Unit = {}
+) {
     val context = LocalContext.current
     val appSettings = AppSettings.getInstance(context)
     val hapticFeedback = LocalHapticFeedback.current
@@ -143,6 +146,12 @@ fun PlaybackSettingsScreen(onBackClick: () -> Unit) {
                         toggleState = crossfadeOnSkip,
                         onToggleChange = { appSettings.setCrossfadeOnSkip(it) },
                         enabled = crossfadeEnabled
+                    ),
+                    SettingItem(
+                        MaterialSymbolIcon("volume_up"),
+                        context.getString(R.string.replay_gain),
+                        context.getString(R.string.replay_gain_desc),
+                        onClick = { onNavigateTo(SettingsRoutes.REPLAY_GAIN) }
                     )
                 )
             ),

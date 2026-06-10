@@ -494,7 +494,7 @@ fun buildSettingsSearchIndex(context: Context): List<SearchableSettingItem> {
             id = "api_management",
             title = context.getString(R.string.settings_api_management),
             description = context.getString(R.string.settings_api_management_desc),
-            keywords = listOf("api", "spotify", "last.fm", "scrobble", "integration", "services", "discord", "rich presence"),
+            keywords = listOf("api", "spotify", "integration", "services"),
             icon = MaterialSymbolIcon("api"),
             route = SettingsRoutes.API_MANAGEMENT,
             parentScreen = context.getString(R.string.settings_section_notifications_services)
@@ -1327,10 +1327,10 @@ fun buildSettingsSearchIndex(context: Context): List<SearchableSettingItem> {
             id = "replay_gain",
             title = context.getString(R.string.replay_gain),
             description = context.getString(R.string.replay_gain_desc),
-            keywords = listOf("replay gain", "replaygain", "volume normalization", "normalization", "gain", "audio effects", "experimental"),
+            keywords = listOf("replay gain", "replaygain", "volume normalization", "normalization", "gain", "audio effects"),
             icon = MaterialSymbolIcon("volume_up"),
-            route = SettingsRoutes.EXPERIMENTAL_FEATURES,
-            parentScreen = "Experimental",
+            route = SettingsRoutes.REPLAY_GAIN,
+            parentScreen = context.getString(R.string.settings_section_audio_lyrics),
             settingKey = "replayGain"
         ))
         add(SearchableSettingItem(
@@ -1408,26 +1408,7 @@ fun buildSettingsSearchIndex(context: Context): List<SearchableSettingItem> {
             route = SettingsRoutes.EXPERIMENTAL_FEATURES,
             parentScreen = "Experimental"
         ))
-        add(SearchableSettingItem(
-            id = "scrobbling_enabled",
-            title = context.getString(R.string.settings_scrobbling_enabled),
-            description = context.getString(R.string.settings_scrobbling_enabled_desc),
-            keywords = listOf("scrobbling", "last.fm", "listening data", "music tracking"),
-            icon = RhythmIcons.MusicNote,
-            route = SettingsRoutes.EXPERIMENTAL_FEATURES,
-            parentScreen = "Experimental",
-            settingKey = "scrobblingEnabled"
-        ))
-        add(SearchableSettingItem(
-            id = "discord_enabled",
-            title = context.getString(R.string.settings_discord_enabled_search),
-            description = context.getString(R.string.settings_discord_enabled_search_desc),
-            keywords = listOf("discord", "rich presence", "status", "show listening"),
-            icon = RhythmIcons.Info,
-            route = SettingsRoutes.EXPERIMENTAL_FEATURES,
-            parentScreen = "Experimental",
-            settingKey = "discordRichPresenceEnabled"
-        ))
+
         add(SearchableSettingItem(
             id = "broadcast_status_enabled",
             title = context.getString(R.string.settings_broadcast_status_enabled),

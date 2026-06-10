@@ -2106,7 +2106,84 @@ object MediaUtils {
         try {
             retriever.setDataSource(context, songUri)
 
-            val embeddedArt = retriever.embeddedPicture
+            var embeddedArt = retriever.embeddedPicture
+            var filePath: String? = null
+            if (embeddedArt == null || embeddedArt.isEmpty()) {
+                // Try jaudiotagger fallback
+                filePath = when (songUri.scheme) {
+                    "content" -> {
+                        val projection = arrayOf(MediaStore.Audio.Media.DATA)
+                        context.contentResolver.query(songUri, projection, null, null, null)
+                            ?.use { cursor ->
+                                if (cursor.moveToFirst()) {
+                                    val dataIndex = cursor.getColumnIndex(MediaStore.Audio.Media.DATA)
+                                    if (dataIndex != -1) cursor.getString(dataIndex) else null
+                                } else null
+                            }
+                    }
+                    "file" -> songUri.path
+                    else -> null
+                }
+                if (filePath != null) {
+                    try {
+                        val file = File(filePath)
+                        if (file.exists() && isSupportedByJaudiotagger(file.extension)) {
+                            val audioFile = org.jaudiotagger.audio.AudioFileIO.read(file)
+                            val tag = audioFile.tag
+                            if (tag != null) {
+                                val artwork = tag.firstArtwork
+                                if (artwork != null) {
+                                    val artworkBytes = artwork.binaryData
+                                    if (artworkBytes != null && artworkBytes.isNotEmpty()) {
+                                        embeddedArt = artworkBytes
+                                    }
+                                }
+                            }
+                        }
+                    } catch (e: Exception) {
+                        Log.w(TAG, "Failed to extract embedded art via jaudiotagger fallback: ${e.message}")
+                    }
+                }
+            }
+
+            // Fallback to folder cover discovery if embeddedArt is still not found
+            if (embeddedArt == null || embeddedArt.isEmpty()) {
+                if (filePath == null) {
+                    filePath = when (songUri.scheme) {
+                        "content" -> {
+                            val projection = arrayOf(MediaStore.Audio.Media.DATA)
+                            context.contentResolver.query(songUri, projection, null, null, null)
+                                ?.use { cursor ->
+                                    if (cursor.moveToFirst()) {
+                                        val dataIndex = cursor.getColumnIndex(MediaStore.Audio.Media.DATA)
+                                        if (dataIndex != -1) cursor.getString(dataIndex) else null
+                                    } else null
+                                }
+                        }
+                        "file" -> songUri.path
+                        else -> null
+                    }
+                }
+                if (filePath != null) {
+                    try {
+                        val file = File(filePath)
+                        val parentFolder = file.parentFile
+                        if (parentFolder != null && parentFolder.exists() && parentFolder.isDirectory) {
+                            val coverFile = findBestCover(parentFolder)
+                            if (coverFile != null && coverFile.exists()) {
+                                val coverBytes = coverFile.readBytes()
+                                if (coverBytes.isNotEmpty()) {
+                                    embeddedArt = coverBytes
+                                    Log.d(TAG, "Found folder cover art: ${coverFile.absolutePath}")
+                                }
+                            }
+                        }
+                    } catch (e: Exception) {
+                        Log.w(TAG, "Failed to find folder cover artwork: ${e.message}")
+                    }
+                }
+            }
+
             if (embeddedArt != null && embeddedArt.isNotEmpty()) {
                 return cacheEmbeddedArtworkBytes(songUri, cacheDir, embeddedArt, lossless)
             }
@@ -2468,5 +2545,56 @@ object MediaUtils {
             TAG,
             "Pruned artwork cache to ${totalSize / (1024 * 1024)}MB across $fileCount files"
         )
+    }
+
+    /*
+     *     Copyright (C) 2025 nift4
+     *
+     *     Gramophone is free software: you can redistribute it and/or modify
+     *     it under the terms of the GNU General Public License as published by
+     *     the Free Software Foundation, either version 3 of the License, or
+     *     (at your option) any later version.
+     *
+     *     Gramophone is distributed in the hope that it will be useful,
+     *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+     *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+     *     GNU General Public License for more details.
+     *
+     *     You should have received a copy of the GNU General Public License
+     *     along with this program.  If not, see <https://www.gnu.org/licenses/>.
+     */
+    fun findBestCover(songFolder: File): File? {
+        val allowedExt = listOf("jpg", "png", "jpeg", "bmp", "tiff", "tif", "webp")
+        var bestScore = 0
+        var bestFile: File? = null
+        try {
+            val files = songFolder.listFiles() ?: return null
+            for (file in files) {
+                if (file.extension.lowercase() !in allowedExt)
+                    continue
+                var score = 1
+                when (file.extension.lowercase()) {
+                    "jpg" -> score += 3
+                    "png" -> score += 2
+                    "jpeg" -> score += 1
+                }
+                if (file.nameWithoutExtension.contentEquals("albumart", true)) score += 24
+                else if (file.nameWithoutExtension.contentEquals("cover", true)) score += 20
+                else if (file.nameWithoutExtension.startsWith("albumart", true)) score += 16
+                else if (file.nameWithoutExtension.startsWith("cover", true)) score += 12
+                else if (file.nameWithoutExtension.contains("albumart", true)) score += 8
+                else if (file.nameWithoutExtension.contains("cover", true)) score += 4
+                if (bestScore < score) {
+                    bestScore = score
+                    bestFile = file
+                }
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error listing files for best cover", e)
+        }
+        if (bestScore >= 3) {
+            return bestFile
+        }
+        return null
     }
 }

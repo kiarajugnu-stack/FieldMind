@@ -146,6 +146,7 @@ object SettingsRoutes {
     const val RHYTHM_AURA = RHYTHM_GUARD
     const val GO_SETTINGS = "go_settings"
     const val BATTERY_SAVER = "battery_saver_settings"
+    const val REPLAY_GAIN = "replay_gain_settings"
 }
 
 data class SettingItem(
@@ -304,6 +305,12 @@ fun SettingsScreen(
                 items = buildList {
                     // Equalizer is available in both LOCAL and STREAMING modes
                     add(SettingItem(RhythmIcons.Equalizer, context.getString(R.string.settings_equalizer_title), context.getString(R.string.settings_equalizer_desc), onClick = { onNavigateTo(SettingsRoutes.EQUALIZER) }))
+                    add(SettingItem(
+                        icon = MaterialSymbolIcon("volume_up"),
+                        title = context.getString(R.string.replay_gain),
+                        description = context.getString(R.string.replay_gain_desc),
+                        onClick = { onNavigateTo(SettingsRoutes.REPLAY_GAIN) }
+                    ))
                     add(SettingItem(
                         icon = MaterialSymbolIcon("lyrics"),
                         title = context.getString(R.string.settings_lyrics_source),
@@ -1068,7 +1075,11 @@ fun SettingsScreenWrapper(
                             onNavigateToUpdates = { currentRoute = SettingsRoutes.UPDATES }
                         )
                         SettingsRoutes.UPDATES -> UpdatesSettingsScreen(onBackClick = { currentRoute = null })
-                        SettingsRoutes.EXPERIMENTAL_FEATURES -> ExperimentalFeaturesScreen(onBackClick = { currentRoute = null }, onNavigateToGoSettings = { currentRoute = SettingsRoutes.GO_SETTINGS })
+                        SettingsRoutes.EXPERIMENTAL_FEATURES -> ExperimentalFeaturesScreen(
+                            onBackClick = { currentRoute = null },
+                            onNavigateTo = { currentRoute = it },
+                            onNavigateToGoSettings = { currentRoute = SettingsRoutes.GO_SETTINGS }
+                        )
                         SettingsRoutes.GO_SETTINGS -> chromahub.rhythm.app.features.streaming.presentation.screens.GoSettingsScreen(
                             onBackClick = { currentRoute = null },
                             onConfigureCurrentProvider = { serviceId ->
@@ -1088,7 +1099,14 @@ fun SettingsScreenWrapper(
                         SettingsRoutes.MINIPLAYER_CUSTOMIZATION -> MiniPlayerCustomizationSettingsScreen(onBackClick = { currentRoute = null })
                         SettingsRoutes.CRASH_LOG_HISTORY -> CrashLogHistorySettingsScreen(onBackClick = { currentRoute = null }, appSettings = appSettings)
                         SettingsRoutes.QUEUE -> QueueSettingsScreen(onBackClick = { currentRoute = null })
-                        SettingsRoutes.PLAYBACK -> PlaybackSettingsScreen(onBackClick = { currentRoute = null })
+                        SettingsRoutes.PLAYBACK -> PlaybackSettingsScreen(
+                            onBackClick = { currentRoute = null },
+                            onNavigateTo = { currentRoute = it }
+                        )
+                        SettingsRoutes.REPLAY_GAIN -> ReplayGainSettingsScreen(
+                            onBackClick = { currentRoute = null },
+                            onNavigateTo = { currentRoute = it }
+                        )
                         SettingsRoutes.LYRICS -> LyricsSettingsScreen(onBackClick = { currentRoute = null })
                         SettingsRoutes.WIDGET -> WidgetSettingsScreen(onBackClick = { currentRoute = null })
                         SettingsRoutes.HOME_SCREEN -> HomeScreenCustomizationSettingsScreen(onBackClick = { currentRoute = null })
@@ -1192,7 +1210,11 @@ fun SettingsScreenWrapper(
                     onNavigateToUpdates = { currentRoute = SettingsRoutes.UPDATES }
                 )
                 SettingsRoutes.UPDATES -> UpdatesSettingsScreen(onBackClick = { currentRoute = null })
-                SettingsRoutes.EXPERIMENTAL_FEATURES -> ExperimentalFeaturesScreen(onBackClick = { currentRoute = null }, onNavigateToGoSettings = { currentRoute = SettingsRoutes.GO_SETTINGS })
+                SettingsRoutes.EXPERIMENTAL_FEATURES -> ExperimentalFeaturesScreen(
+                    onBackClick = { currentRoute = null },
+                    onNavigateTo = { currentRoute = it },
+                    onNavigateToGoSettings = { currentRoute = SettingsRoutes.GO_SETTINGS }
+                )
                 SettingsRoutes.GO_SETTINGS -> chromahub.rhythm.app.features.streaming.presentation.screens.GoSettingsScreen(
                     onBackClick = { currentRoute = null },
                     onConfigureCurrentProvider = { serviceId ->
@@ -1212,7 +1234,14 @@ fun SettingsScreenWrapper(
                 SettingsRoutes.MINIPLAYER_CUSTOMIZATION -> MiniPlayerCustomizationSettingsScreen(onBackClick = { currentRoute = null })
                 SettingsRoutes.CRASH_LOG_HISTORY -> CrashLogHistorySettingsScreen(onBackClick = { currentRoute = null }, appSettings = appSettings)
                 SettingsRoutes.QUEUE -> QueueSettingsScreen(onBackClick = { currentRoute = null })
-                SettingsRoutes.PLAYBACK -> PlaybackSettingsScreen(onBackClick = { currentRoute = null })
+                SettingsRoutes.PLAYBACK -> PlaybackSettingsScreen(
+                    onBackClick = { currentRoute = null },
+                    onNavigateTo = { currentRoute = it }
+                )
+                SettingsRoutes.REPLAY_GAIN -> ReplayGainSettingsScreen(
+                    onBackClick = { currentRoute = null },
+                    onNavigateTo = { currentRoute = it }
+                )
                 SettingsRoutes.LYRICS -> LyricsSettingsScreen(onBackClick = { currentRoute = null })
                 SettingsRoutes.WIDGET -> WidgetSettingsScreen(onBackClick = { currentRoute = null })
                 SettingsRoutes.HOME_SCREEN -> HomeScreenCustomizationSettingsScreen(onBackClick = { currentRoute = null })

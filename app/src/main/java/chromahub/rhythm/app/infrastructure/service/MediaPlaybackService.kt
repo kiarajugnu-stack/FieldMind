@@ -5,6 +5,7 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.content.BroadcastReceiver
 import android.content.Context
+import android.widget.Toast
 import android.media.AudioDeviceInfo
 import android.media.AudioManager
 import android.media.AudioMixerAttributes
@@ -142,6 +143,54 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
                 }
             }
         }
+    }
+
+    private var btInfo: chromahub.rhythm.app.util.BtCodecInfo? = null
+    private var btProxy: chromahub.rhythm.app.util.BtCodecInfo.Companion.Proxy? = null
+
+    var currentLyricTexts: List<String> = emptyList()
+    var currentLyricTimestamps: LongArray = longArrayOf()
+    var currentPlainLyricsLines: List<String> = emptyList()
+    var currentLyricIndex: Int = -1
+
+    private fun clearLyricsState() {
+        currentLyricTexts = emptyList()
+        currentLyricTimestamps = longArrayOf()
+        currentPlainLyricsLines = emptyList()
+        currentLyricIndex = -1
+        chromahub.rhythm.app.infrastructure.widget.glance.GlanceWidgetUpdater.updateLyrics(this, emptyList(), -1)
+    }
+
+    private val btReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            if (intent?.action == "android.bluetooth.a2dp.profile.action.CODEC_CONFIG_CHANGED" &&
+                Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
+            ) {
+                val codecStatus = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    intent.getParcelableExtra("android.bluetooth.extra.CODEC_STATUS", android.bluetooth.BluetoothCodecStatus::class.java)
+                } else {
+                    @Suppress("DEPRECATION")
+                    intent.getParcelableExtra("android.bluetooth.extra.CODEC_STATUS") as? android.bluetooth.BluetoothCodecStatus
+                }
+                val newBtInfo = chromahub.rhythm.app.util.BtCodecInfo.fromCodecConfig(codecStatus?.codecConfig)
+                if (newBtInfo != null && newBtInfo != btInfo) {
+                    btInfo = newBtInfo
+                    Log.d(TAG, "New Bluetooth codec config: $btInfo")
+                    if (appSettings.codecMonitoringEnabled.value && appSettings.showCodecNotifications.value) {
+                        showCodecNotification(newBtInfo)
+                    }
+                }
+            }
+        }
+    }
+
+    private fun showCodecNotification(info: chromahub.rhythm.app.util.BtCodecInfo) {
+        val codecName = info.codec ?: "Unknown"
+        val sampleRate = info.sampleRateHz?.let { "$it Hz" } ?: "Unknown Rate"
+        val bits = info.bitsPerSample?.let { "$it bits" } ?: ""
+        val quality = info.quality?.let { " ($it)" } ?: ""
+        val message = "Bluetooth Codec: $codecName, $sampleRate, $bits$quality"
+        Toast.makeText(this, message, Toast.LENGTH_LONG).show()
     }
 
     /**
@@ -366,17 +415,12 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
     // Settings manager
     private lateinit var appSettings: AppSettings
     
-    // Scrobbler manager for Last.fm / Pano Scrobbler integration
-    private lateinit var scrobblerManager: chromahub.rhythm.app.utils.ScrobblerManager
-    
-    // Discord Rich Presence manager
-    private lateinit var discordRichPresenceManager: chromahub.rhythm.app.utils.DiscordRichPresenceManager
-    
     // Status broadcaster for Tasker, KWGT, and other automation apps
     private lateinit var statusBroadcaster: chromahub.rhythm.app.utils.StatusBroadcaster
     
     // SharedPreferences keys
     companion object {
+        var instanceForWidgetAndLyricsOnly: MediaPlaybackService? = null
         private const val TAG = "MediaPlaybackService"
         private const val NOTIFICATION_ID = 1001
         private const val CHANNEL_ID = "RhythmMediaPlayback"
@@ -459,7 +503,14 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
 
     override fun onCreate() {
         super.onCreate()
+        instanceForWidgetAndLyricsOnly = this
         Log.d(TAG, "Service created")
+
+        setMediaNotificationProvider(
+            androidx.media3.session.DefaultMediaNotificationProvider(this).apply {
+                setSmallIcon(chromahub.rhythm.app.R.drawable.ic_notification)
+            }
+        )
 
         // Create notification channel first (required for Android 8.0+)
         createNotificationChannel()
@@ -496,12 +547,6 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
             appSettings.setBassBoostAvailable(false)
         }
         
-        // Initialize scrobbler manager
-        scrobblerManager = chromahub.rhythm.app.utils.ScrobblerManager(applicationContext)
-        
-        // Initialize Discord Rich Presence manager
-        discordRichPresenceManager = chromahub.rhythm.app.utils.DiscordRichPresenceManager(applicationContext)
-        
         // Initialize status broadcaster for Tasker/KWGT
         statusBroadcaster = chromahub.rhythm.app.utils.StatusBroadcaster(applicationContext)
 
@@ -522,6 +567,26 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
             registerReceiver(volumeChangeReceiver, volumeFilter, Context.RECEIVER_EXPORTED)
         } else {
             registerReceiver(volumeChangeReceiver, volumeFilter)
+        }
+
+        try {
+            val btFilter = IntentFilter("android.bluetooth.a2dp.profile.action.CODEC_CONFIG_CHANGED")
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                registerReceiver(btReceiver, btFilter, Context.RECEIVER_EXPORTED)
+            } else {
+                registerReceiver(btReceiver, btFilter)
+            }
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                btProxy = chromahub.rhythm.app.util.BtCodecInfo.getCodec(this) { info ->
+                    if (info != null) {
+                        btInfo = info
+                        Log.d(TAG, "First Bluetooth codec config: $btInfo")
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error setting up Bluetooth codec monitoring", e)
         }
 
         try {
@@ -928,32 +993,6 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
             }
             
             override fun onIsPlayingChanged(isPlaying: Boolean) {
-                // Send scrobble broadcast when play/pause state changes
-                if (appSettings.scrobblingEnabled.value) {
-                    val position = player.currentPosition
-                    if (isPlaying) {
-                        scrobblerManager.scrobbleResumed(position)
-                    } else {
-                        scrobblerManager.scrobblePaused(position)
-                    }
-                }
-                
-                // Update Discord Rich Presence when play/pause state changes
-                if (appSettings.discordRichPresenceEnabled.value) {
-                    val currentMediaItem = player.currentMediaItem
-                    if (currentMediaItem != null) {
-                        val song = convertMediaItemToSong(currentMediaItem)
-                        if (song != null) {
-                            if (isPlaying) {
-                                discordRichPresenceManager.updateNowPlaying(song, true, player.currentPosition)
-                            } else {
-                                discordRichPresenceManager.updatePaused(song)
-                            }
-                        }
-                    } else if (!isPlaying) {
-                        discordRichPresenceManager.clearPresence()
-                    }
-                }
                 
                 // Broadcast status for Tasker/KWGT/automation apps
                 if (appSettings.broadcastStatusEnabled.value) {
@@ -998,30 +1037,7 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
                     return
                 }
 
-                // Send scrobble broadcast when track changes
-                if (appSettings.scrobblingEnabled.value && mediaItem != null) {
-                    try {
-                        val song = convertMediaItemToSong(mediaItem)
-                        if (song != null) {
-                            scrobblerManager.scrobbleNowPlaying(song, player.currentPosition)
-                        }
-                    } catch (e: Exception) {
-                        Log.e(TAG, "Error scrobbling track change", e)
-                    }
-                }
-                
-                // Update Discord Rich Presence when track changes
-                if (appSettings.discordRichPresenceEnabled.value && mediaItem != null) {
-                    try {
-                        val song = convertMediaItemToSong(mediaItem)
-                        if (song != null) {
-                            discordRichPresenceManager.resetStartTime()
-                            discordRichPresenceManager.updateNowPlaying(song, player.isPlaying, player.currentPosition)
-                        }
-                    } catch (e: Exception) {
-                        Log.e(TAG, "Error updating Discord presence on track change", e)
-                    }
-                }
+
                 
                 // Broadcast status for Tasker/KWGT/automation apps
                 if (appSettings.broadcastStatusEnabled.value && mediaItem != null) {
@@ -1073,7 +1089,15 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
 
         // Collect replayGain setting reactively
         serviceScope.launch {
-            appSettings.replayGain.collect { enabled ->
+            kotlinx.coroutines.flow.combine(
+                appSettings.replayGain,
+                appSettings.replayGainMode,
+                appSettings.replayGainDrc,
+                appSettings.replayGainPreamp,
+                appSettings.replayGainPreampUntagged
+            ) { enabled, _, _, _, _ ->
+                enabled
+            }.collect { enabled ->
                 rhythmPlayerEngine.applyReplayGainSettings(enabled)
             }
         }
@@ -2032,6 +2056,7 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
     }
 
     override fun onDestroy() {
+        instanceForWidgetAndLyricsOnly = null
         Log.d(TAG, "Service being destroyed")
 
         // Persist final playback position and index on destroy
@@ -2059,6 +2084,10 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
         } catch (e: Exception) {
             Log.w(TAG, "Error unregistering favorite change receiver", e)
         }
+        try {
+            unregisterReceiver(btReceiver)
+        } catch (_: Exception) {}
+        btProxy = null
         try {
             unregisterReceiver(volumeChangeReceiver)
         } catch (e: Exception) {
@@ -2125,6 +2154,8 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
                     commandButton.sessionCommand?.let { availableCommands.add(it) }
                 }
             }
+            availableCommands.add(SessionCommand("UPDATE_ACTIVE_LYRIC", Bundle.EMPTY))
+            availableCommands.add(SessionCommand("UPDATE_LYRICS_DATA", Bundle.EMPTY))
             return MediaSession.ConnectionResult.AcceptedResultBuilder(session)
                 .setAvailableSessionCommands(availableCommands.build())
                 .build()
@@ -2145,6 +2176,53 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
             
             return Futures.immediateFuture(
                 when (customCommand.customAction) {
+                    "UPDATE_LYRICS_DATA" -> {
+                        val texts = args.getStringArrayList("lyric_texts")
+                        val timestamps = args.getLongArray("lyric_timestamps")
+                        currentLyricTexts = texts ?: emptyList()
+                        currentLyricTimestamps = timestamps ?: longArrayOf()
+                        
+                        val plainLyrics = args.getString("plain_lyrics")
+                        currentPlainLyricsLines = if (!plainLyrics.isNullOrBlank()) {
+                            plainLyrics.split("\n").map { it.trim() }.filter { it.isNotEmpty() }
+                        } else {
+                            emptyList()
+                        }
+                        
+                        currentLyricIndex = -1
+                        chromahub.rhythm.app.infrastructure.widget.glance.GlanceWidgetUpdater.updateLyrics(this@MediaPlaybackService, currentLyricTexts, -1)
+                        SessionResult(SessionResult.RESULT_SUCCESS)
+                    }
+
+                    "UPDATE_ACTIVE_LYRIC" -> {
+                        val lyricLine = args.getString("lyric_line")
+                        val lyricIndex = args.getInt("lyric_index", -1)
+                        currentLyricIndex = lyricIndex
+                        
+                        // Update widgets
+                        chromahub.rhythm.app.infrastructure.widget.glance.GlanceWidgetUpdater.updateLyrics(this@MediaPlaybackService, currentLyricTexts, lyricIndex)
+                        
+                        // Update Bluetooth metadata lyrics
+                        if (appSettings.bluetoothLyricsEnabled.value) {
+                            val currentMediaItem = player.currentMediaItem
+                            if (currentMediaItem != null) {
+                                val song = convertMediaItemToSong(currentMediaItem)
+                                if (song != null) {
+                                    statusBroadcaster.broadcastNowPlaying(
+                                        song = song,
+                                        isPlaying = player.isPlaying,
+                                        position = player.currentPosition,
+                                        queueSize = player.mediaItemCount,
+                                        queuePosition = player.currentMediaItemIndex,
+                                        bluetoothLyricsMode = true,
+                                        currentLyricLine = lyricLine
+                                    )
+                                }
+                            }
+                        }
+                        SessionResult(SessionResult.RESULT_SUCCESS)
+                    }
+
                     SHUFFLE_MODE_ON -> {
                         serviceController.shuffleModeEnabled = true
                         SessionResult(SessionResult.RESULT_SUCCESS)
@@ -2323,6 +2401,7 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
 
     override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
         super.onMediaItemTransition(mediaItem, reason)
+        clearLyricsState()
         val transitionMediaId = mediaItem?.mediaId
         if (
             reason == Player.MEDIA_ITEM_TRANSITION_REASON_PLAYLIST_CHANGED &&
@@ -2657,7 +2736,7 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
     }
     
     private fun getPlayerAudioSessionId(): Int {
-        return (player as? ExoPlayer)?.audioSessionId ?: 0
+        return if (::rhythmPlayerEngine.isInitialized) rhythmPlayerEngine.getAudioSessionId() else 0
     }
 
     // Audio Effects (Equalizer) functionality
