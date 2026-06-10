@@ -1918,35 +1918,152 @@ fun BackupRestoreSectionPickerBottomSheet(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            Column(
-                modifier = Modifier.padding(horizontal = 20.dp),
-                verticalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                BackupRestoreSectionRow(
+            val pickerItems = listOf(
+                Material3SettingsItem(
                     icon = RhythmIcons.Settings,
-                    title = stringResource(R.string.rhythmguardsettingsscreen_general_settings),
-                    description = "Theme, player, UI, API, and app preferences.",
-                    checked = sections.includeGeneralSettings,
-                    badge = "Core",
-                    onCheckedChange = { onSectionsChange(sections.copy(includeGeneralSettings = it)) }
-                )
-
-                BackupRestoreSectionRow(
+                    title = {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Text(
+                                text = stringResource(R.string.rhythmguardsettingsscreen_general_settings),
+                                fontWeight = FontWeight.SemiBold
+                            )
+                            Surface(
+                                shape = RoundedCornerShape(999.dp),
+                                color = MaterialTheme.colorScheme.surfaceVariant
+                            ) {
+                                Text(
+                                    text = "Core",
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                    },
+                    description = {
+                        Text("Theme, player, UI, API, and app preferences.")
+                    },
+                    trailingContent = {
+                        Column(horizontalAlignment = Alignment.End) {
+                            TunerAnimatedSwitch(
+                                checked = sections.includeGeneralSettings,
+                                onCheckedChange = { onSectionsChange(sections.copy(includeGeneralSettings = it)) }
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = if (sections.includeGeneralSettings) "Included" else "Excluded",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    },
+                    onClick = {
+                        onSectionsChange(sections.copy(includeGeneralSettings = !sections.includeGeneralSettings))
+                    }
+                ),
+                Material3SettingsItem(
                     icon = RhythmIcons.Library,
-                    title = stringResource(R.string.rhythmguardsettingsscreen_library_data),
-                    description = "Playlists, favorites, blacklist/whitelist, pinned folders.",
-                    checked = sections.includeLibraryData,
-                    badge = "Collection",
-                    onCheckedChange = { onSectionsChange(sections.copy(includeLibraryData = it)) }
-                )
-
-                BackupRestoreSectionRow(
+                    title = {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Text(
+                                text = stringResource(R.string.rhythmguardsettingsscreen_library_data),
+                                fontWeight = FontWeight.SemiBold
+                            )
+                            Surface(
+                                shape = RoundedCornerShape(999.dp),
+                                color = MaterialTheme.colorScheme.surfaceVariant
+                            ) {
+                                Text(
+                                    text = "Collection",
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                    },
+                    description = {
+                        Text("Playlists, favorites, blacklist/whitelist, pinned folders.")
+                    },
+                    trailingContent = {
+                        Column(horizontalAlignment = Alignment.End) {
+                            TunerAnimatedSwitch(
+                                checked = sections.includeLibraryData,
+                                onCheckedChange = { onSectionsChange(sections.copy(includeLibraryData = it)) }
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = if (sections.includeLibraryData) "Included" else "Excluded",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    },
+                    onClick = {
+                        onSectionsChange(sections.copy(includeLibraryData = !sections.includeLibraryData))
+                    }
+                ),
+                Material3SettingsItem(
                     icon = MaterialSymbolIcon("auto_graph"),
-                    title = stringResource(R.string.rhythmguardsettingsscreen_stats_rhythm_guard),
-                    description = "Play counts, daily stats, genres, and Rhythm Guard configuration.",
-                    checked = sections.includeStatsAndRhythmGuard,
-                    badge = "Insight",
-                    onCheckedChange = { onSectionsChange(sections.copy(includeStatsAndRhythmGuard = it)) }
+                    title = {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Text(
+                                text = stringResource(R.string.rhythmguardsettingsscreen_stats_rhythm_guard),
+                                fontWeight = FontWeight.SemiBold
+                            )
+                            Surface(
+                                shape = RoundedCornerShape(999.dp),
+                                color = MaterialTheme.colorScheme.surfaceVariant
+                            ) {
+                                Text(
+                                    text = "Insight",
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                    },
+                    description = {
+                        Text("Play counts, daily stats, genres, and Rhythm Guard configuration.")
+                    },
+                    trailingContent = {
+                        Column(horizontalAlignment = Alignment.End) {
+                            TunerAnimatedSwitch(
+                                checked = sections.includeStatsAndRhythmGuard,
+                                onCheckedChange = { onSectionsChange(sections.copy(includeStatsAndRhythmGuard = it)) }
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = if (sections.includeStatsAndRhythmGuard) "Included" else "Excluded",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    },
+                    onClick = {
+                        onSectionsChange(sections.copy(includeStatsAndRhythmGuard = !sections.includeStatsAndRhythmGuard))
+                    }
+                )
+            )
+
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp)
+            ) {
+                Material3SettingsGroup(
+                    items = pickerItems,
+                    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
                 )
             }
 

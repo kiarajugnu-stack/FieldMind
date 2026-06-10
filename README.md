@@ -161,8 +161,10 @@ We welcome contributions! See our [CONTRIBUTING.md](https://github.com/cromaguy/
 **Huge Thanks To:**
 * [Izzy](https://github.com/IzzySoft) - IzzyOnDroid repository management
 * [theovilardo](https://github.com/theovilardo) - Project PixelPlayer collaboration & Lead Dev
+* [Nick](https://github.com/nift4) - Gramophone project's maintainer (code helper & testing)
 * [Christian](https://github.com/mardous) - Project Booming collaboration & Lead Dev
 * [Alex](https://github.com/Paxsenix0) - Network API integrations
+* [linsui](https://github.com/linsui) & [Licaon_Kter](https://github.com/licaon-kter) - F-Droid repository management
 * The **Google Material Design Team**, **AOSP**, **JetBrains**, and the fantastic **Open Source Community**.
 
 ---

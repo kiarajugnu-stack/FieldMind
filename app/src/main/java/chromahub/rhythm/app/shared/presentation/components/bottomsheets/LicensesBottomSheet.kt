@@ -51,6 +51,33 @@ fun LicensesBottomSheet(
 
     val licenseItems = listOf(
         licenseItem(
+            name = "Gramophone",
+            description = "Feature-rich, privacy-focused music player for Android",
+            license = "GPL v3.0 License",
+            url = "https://github.com/FoedusProgramme/Gramophone",
+            icon = RhythmIcons.Connectivity.OpenInNew,
+            context = context,
+            haptic = haptic
+        ),
+        licenseItem(
+            name = "PixelPlayer",
+            description = "Offline-first, Material 3 Expressive music player for Android",
+            license = "GPL v3.0 License",
+            url = "https://github.com/theovilardo/PixelPlayer",
+            icon = RhythmIcons.Connectivity.OpenInNew,
+            context = context,
+            haptic = haptic
+        ),
+        licenseItem(
+            name = "Booming Music",
+            description = "Modern, offline-focused local music player for Android",
+            license = "GPL v3.0 License",
+            url = "https://github.com/mardous/BoomingMusic",
+            icon = RhythmIcons.Connectivity.OpenInNew,
+            context = context,
+            haptic = haptic
+        ),
+        licenseItem(
             name = "AutoEQ",
             description = "Automatic headphone equalization from frequency responses",
             license = "MIT License",

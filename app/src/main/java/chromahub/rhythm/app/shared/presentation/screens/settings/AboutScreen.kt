@@ -479,6 +479,20 @@ fun AboutScreen(
                                 context = context
                             )
                             CommunityMember(
+                                name = "Nick",
+                                role = "Gramophone project's maintainer (testing, suggestions & code)",
+                                githubUsername = "nift4",
+                                avatarUrl = "https://github.com/nift4.png",
+                                context = context
+                            )
+                            CommunityMember(
+                                name = "Alex",
+                                role = "Network API integrations",
+                                githubUsername = "Paxsenix0",
+                                avatarUrl = "https://github.com/Paxsenix0.png",
+                                context = context
+                            )
+                            CommunityMember(
                                 name = "itzKane",
                                 role = "UI Concept Designer",
                                 githubUsername = "soykane",
