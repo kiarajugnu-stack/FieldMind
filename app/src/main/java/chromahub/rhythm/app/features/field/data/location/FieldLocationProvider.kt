@@ -19,12 +19,16 @@ data class CapturedLocation(
     val longitude: Double,
     val accuracyMeters: Float?,
     val provider: String,
-    val capturedAt: Long = System.currentTimeMillis()
+    val capturedAt: Long = System.currentTimeMillis(),
+    val placeName: String? = null
 ) {
+    /** Decimal coordinates only, e.g. "12.97160, 77.59456". */
+    fun coordinateText(): String = "%.5f, %.5f".format(latitude, longitude)
+
     fun asDisplayText(): String = buildString {
-        append("GPS: %.5f, %.5f".format(latitude, longitude))
+        placeName?.takeIf { it.isNotBlank() }?.let { append(it); append(" • ") }
+        append("GPS: ${coordinateText()}")
         accuracyMeters?.let { append(" • ±${it.toInt()}m") }
-        append(" • $provider")
     }
 }
 
@@ -100,4 +104,38 @@ class FieldLocationProvider(private val context: Context) {
 
     private fun Location.toCaptured(): CapturedLocation =
         CapturedLocation(latitude, longitude, accuracy.takeIf { it > 0f }, provider ?: "device")
+
+    /**
+     * Reverse-geocodes coordinates into a short, human-readable place name (e.g.
+     * "Cubbon Park, Bengaluru"). Delivers on the main thread; returns null if geocoding is
+     * unavailable or fails. Geocoding may require connectivity, so callers must handle null.
+     */
+    fun resolvePlaceName(latitude: Double, longitude: Double, onResult: (String?) -> Unit) {
+        if (!android.location.Geocoder.isPresent()) { onResult(null); return }
+        val geocoder = android.location.Geocoder(context, java.util.Locale.getDefault())
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            runCatching {
+                geocoder.getFromLocation(latitude, longitude, 1) { results ->
+                    onResult(results.firstOrNull()?.let(::formatPlace))
+                }
+            }.onFailure { onResult(null) }
+        } else {
+            Thread {
+                val name = runCatching {
+                    @Suppress("DEPRECATION")
+                    geocoder.getFromLocation(latitude, longitude, 1)?.firstOrNull()?.let(::formatPlace)
+                }.getOrNull()
+                Handler(Looper.getMainLooper()).post { onResult(name) }
+            }.start()
+        }
+    }
+
+    private fun formatPlace(address: android.location.Address): String {
+        val locality = address.locality ?: address.subAdminArea ?: address.adminArea
+        val feature = address.featureName?.takeIf { it != locality && !it.all(Char::isDigit) }
+            ?: address.subLocality ?: address.thoroughfare
+        return listOfNotNull(feature, locality).distinct().joinToString(", ").ifBlank {
+            address.getAddressLine(0) ?: "Unknown place"
+        }
+    }
 }

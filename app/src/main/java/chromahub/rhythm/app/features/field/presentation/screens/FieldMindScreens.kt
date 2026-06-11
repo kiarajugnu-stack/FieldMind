@@ -489,6 +489,13 @@ private fun ObservationCaptureCard(viewModel: FieldMindViewModel, compact: Boole
             if (captured != null) {
                 capturedLocation = captured
                 manualLocation = captured.asDisplayText()
+                locationProvider.resolvePlaceName(captured.latitude, captured.longitude) { place ->
+                    if (!place.isNullOrBlank()) {
+                        val withPlace = captured.copy(placeName = place)
+                        capturedLocation = withPlace
+                        manualLocation = withPlace.asDisplayText()
+                    }
+                }
             }
             scope.launch { snackbar.showSnackbar(captured?.let { "Location captured." } ?: "Couldn't get a fix. Check that location is on, then try again or type a place.") }
         }
@@ -1323,6 +1330,7 @@ fun DetailScreen(kind: String, id: Long, viewModel: FieldMindViewModel, onBack: 
         when (kind) {
             "observation" -> observations.firstOrNull { it.id == id }?.let { o ->
                 item { DetailBody(o.subject, "observation", listOf("Date" to "${o.date} ${o.time}", "Category" to o.category, "Confidence" to o.confidenceLevel, "Location" to o.manualLocation.ifBlank { "None" }, "GPS" to (o.latitude?.let { "${o.latitude}, ${o.longitude}" } ?: "Not captured"), "Tags" to o.tags, "Facts" to o.factsOnlyNotes, "Evidence" to o.evidenceSummary, "Context" to o.moodOrContext)) }
+                if (o.latitude != null && o.longitude != null) item { ObservationLocationCard(o.latitude, o.longitude, o.manualLocation) }
                 item { ObservationAttachmentsPanel(viewModel, o.id) }
                 item { BacklinksPanel(buildList {
                     projects.firstOrNull { it.id == o.projectId }?.let { add(Triple("project", it.title, it.id)) }
@@ -1868,6 +1876,44 @@ private fun EditFlashcardDialog(entity: FlashcardEntity, viewModel: FieldMindVie
     }) {
         FormChoice("Card type", listOf("term", "definition", "concept", "question-answer", "mistake card"), type) { type = it }
         FieldTextField(front, { front = it }, "Front"); FieldTextField(back, { back = it }, "Back", minLines = 3)
+    }
+}
+
+/**
+ * Map card for an observation detail: a small offline preview marker, the resolved place name
+ * (when known), the exact coordinates, and a link out to the device map app.
+ */
+@Composable
+private fun ObservationLocationCard(latitude: Double, longitude: Double, manualLocation: String) {
+    val colors = FieldMindTheme.colors
+    val uriHandler = LocalUriHandler.current
+    val coords = "%.5f, %.5f".format(latitude, longitude)
+    val placeName = manualLocation.substringBefore(" • GPS").trim().takeIf { it.isNotBlank() && !it.startsWith("GPS") }
+    Card(
+        Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Icon(icon = FieldMindIcons.Location, contentDescription = null, tint = colors.observation, size = 20.dp)
+                Text("Location", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+            }
+            if (placeName != null) Text(placeName, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold)
+            Box(Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp))) {
+                MiniMap(listOf(latitude to longitude), pointColor = colors.observation, height = 160.dp)
+            }
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(coords, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1f))
+                TextButton(onClick = {
+                    val label = Uri.encode(placeName ?: "Observation")
+                    runCatching { uriHandler.openUri("geo:$latitude,$longitude?q=$latitude,$longitude($label)") }
+                }) {
+                    Icon(icon = FieldMindIcons.Location, contentDescription = null, size = 18.dp); Spacer(Modifier.size(6.dp)); Text("Open in maps")
+                }
+            }
+        }
     }
 }
 
