@@ -54,6 +54,8 @@ data class QuestionEntity(
     val sourceType: String,
     val status: String,
     val priority: String = "Medium",
+    val answer: String = "",
+    val answeredAt: Long? = null,
     val relatedObservationIds: String = "",
     val relatedSourceIds: String = "",
     val relatedProjectId: Long? = null,

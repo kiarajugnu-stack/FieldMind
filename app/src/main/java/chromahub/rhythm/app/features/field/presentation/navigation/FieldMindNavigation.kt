@@ -21,6 +21,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavDestination.Companion.hierarchy
+import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -74,11 +75,19 @@ fun FieldMindApp(appSettings: AppSettings, viewModel: FieldMindViewModel) {
 }
 
 private fun NavHostController.navigateToTab(route: String) {
+    val current = currentDestination?.route
+    if (current == route) return
     navigate(route) {
-        popUpTo(FieldMindScreen.Home.route) { saveState = true }
+        popUpTo(graph.findStartDestination().id) { saveState = true }
         launchSingleTop = true
         restoreState = true
     }
+}
+
+/** Navigate to a non-tab destination, de-duplicating taps so the page always opens reliably. */
+private fun NavHostController.navigateToDestination(route: String) {
+    if (currentDestination?.route == route) return
+    navigate(route) { launchSingleTop = true }
 }
 
 @Composable
@@ -103,7 +112,7 @@ fun FieldMindNavigation(viewModel: FieldMindViewModel, onResetOnboarding: () -> 
                     NavigationRail(
                         header = {
                             FloatingActionButton(
-                                onClick = { navController.navigate(FieldMindScreen.FieldMode.route) },
+                                onClick = { navController.navigateToDestination(FieldMindScreen.FieldMode.route) },
                                 containerColor = MaterialTheme.colorScheme.tertiaryContainer,
                                 contentColor = MaterialTheme.colorScheme.onTertiaryContainer
                             ) { Icon(icon = FieldMindIcons.Bolt, contentDescription = "Field mode capture", size = 26.dp) }
@@ -128,7 +137,7 @@ fun FieldMindNavigation(viewModel: FieldMindViewModel, onResetOnboarding: () -> 
                 floatingActionButton = {
                     if (!hideChrome) {
                         ExtendedFloatingActionButton(
-                            onClick = { navController.navigate(FieldMindScreen.FieldMode.route) },
+                            onClick = { navController.navigateToDestination(FieldMindScreen.FieldMode.route) },
                             containerColor = MaterialTheme.colorScheme.tertiaryContainer,
                             contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
                             icon = { Icon(icon = FieldMindIcons.Bolt, contentDescription = null, size = 22.dp) },
@@ -174,22 +183,22 @@ private fun FieldMindNavHost(
         popEnterTransition = { slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.Right, tween(240)) },
         popExitTransition = { slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.Right, tween(240)) }
     ) {
-        val openDetail: (String, Long) -> Unit = { kind, id -> navController.navigate("field_detail/$kind/$id") }
-        composable(FieldMindScreen.Home.route) { HomeScreen(viewModel = viewModel, onOpenSettings = { navController.navigate(FieldMindScreen.Settings.route) }, onNavigate = { navController.navigate(it.route) }, onOpenDetail = openDetail) }
+        val openDetail: (String, Long) -> Unit = { kind, id -> navController.navigateToDestination("field_detail/$kind/$id") }
+        composable(FieldMindScreen.Home.route) { HomeScreen(viewModel = viewModel, onOpenSettings = { navController.navigateToDestination(FieldMindScreen.Settings.route) }, onNavigate = { navController.navigateToDestination(it.route) }, onOpenDetail = openDetail) }
         composable(FieldMindScreen.Observe.route) { ObserveScreen(viewModel = viewModel, onOpenDetail = openDetail) }
         composable(FieldMindScreen.Projects.route) { ProjectsScreen(viewModel = viewModel, onOpenDetail = openDetail) }
-        composable(FieldMindScreen.Library.route) { KnowledgeLibraryScreen(viewModel = viewModel, onNavigate = { navController.navigate(it.route) }, onOpenDetail = openDetail) }
-        composable(FieldMindScreen.Insights.route) { InsightsScreen(viewModel = viewModel, onNavigate = { navController.navigate(it.route) }, onOpenDetail = openDetail) }
-        composable(FieldMindScreen.Learn.route) { KnowledgeLibraryScreen(viewModel = viewModel, startTab = 3, onNavigate = { navController.navigate(it.route) }, onOpenDetail = openDetail) }
+        composable(FieldMindScreen.Library.route) { KnowledgeLibraryScreen(viewModel = viewModel, onNavigate = { navController.navigateToDestination(it.route) }, onOpenDetail = openDetail) }
+        composable(FieldMindScreen.Insights.route) { InsightsScreen(viewModel = viewModel, onNavigate = { navController.navigateToDestination(it.route) }, onOpenDetail = openDetail) }
+        composable(FieldMindScreen.Learn.route) { KnowledgeLibraryScreen(viewModel = viewModel, startTab = 3, onNavigate = { navController.navigateToDestination(it.route) }, onOpenDetail = openDetail) }
         composable(FieldMindScreen.FieldMode.route) { ObserveScreen(viewModel = viewModel, compactFieldMode = true, onBack = { navController.popBackStack() }, onOpenDetail = openDetail) }
         composable(FieldMindScreen.Questions.route) { ProjectsScreen(viewModel = viewModel, startTab = 1, onOpenDetail = openDetail) }
         composable(FieldMindScreen.Hypotheses.route) { ProjectsScreen(viewModel = viewModel, startTab = 2, onOpenDetail = openDetail) }
         composable(FieldMindScreen.DataTools.route) { ProjectsScreen(viewModel = viewModel, startTab = 3, onOpenDetail = openDetail) }
-        composable(FieldMindScreen.Analysis.route) { InsightsScreen(viewModel = viewModel, onNavigate = { navController.navigate(it.route) }, onOpenDetail = openDetail) }
+        composable(FieldMindScreen.Analysis.route) { InsightsScreen(viewModel = viewModel, onNavigate = { navController.navigateToDestination(it.route) }, onOpenDetail = openDetail) }
         composable(FieldMindScreen.Reports.route) { ProjectsScreen(viewModel = viewModel, startTab = 4, onOpenDetail = openDetail) }
         composable(FieldMindScreen.Search.route) { ArchiveScreen(viewModel = viewModel, onOpenDetail = openDetail) }
         composable(FieldMindScreen.BackupExport.route) { BackupExportScreen(viewModel = viewModel) }
-        composable(FieldMindScreen.Progress.route) { InsightsScreen(viewModel = viewModel, onNavigate = { navController.navigate(it.route) }, onOpenDetail = openDetail) }
+        composable(FieldMindScreen.Progress.route) { InsightsScreen(viewModel = viewModel, onNavigate = { navController.navigateToDestination(it.route) }, onOpenDetail = openDetail) }
         composable(FieldMindScreen.Flashcards.route) { FlashcardSessionScreen(viewModel = viewModel, onBack = { navController.popBackStack() }) }
         composable(FieldMindScreen.Settings.route) { FieldMindSettingsScreen(viewModel = viewModel, onBack = { navController.popBackStack() }, onResetOnboarding = onResetOnboarding) }
         composable("field_detail/{kind}/{id}") { entry ->

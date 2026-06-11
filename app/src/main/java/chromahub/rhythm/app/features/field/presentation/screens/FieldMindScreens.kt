@@ -198,17 +198,39 @@ fun HomeScreen(
         }
         item { SectionHeader("Recent activity", if (tags.isNotEmpty()) "Top tag: ${tags.first().name}" else null) }
         val activity = buildList {
-            observations.take(4).forEach { add(Triple("observation", it.subject, "${it.category} • ${it.date} ${it.time}") to it.id) }
-            questions.take(2).forEach { add(Triple("question", it.questionText, "${it.status} • ${it.priority}") to it.id) }
-        }
+            observations.forEach { add(RecentEntry("observation", it.id, it.timestamp, it.subject.ifBlank { "Observation" }, "${it.category} • ${it.date} ${it.time}")) }
+            questions.forEach { add(RecentEntry("question", it.id, it.updatedAt, it.questionText, "${it.status} • ${it.priority}")) }
+            sources.forEach { add(RecentEntry("source", it.id, it.updatedAt, it.title, "${it.type} • ${it.readingStatus}")) }
+            data.forEach { add(RecentEntry("data", it.id, it.timestamp, it.label, "${it.toolType} • ${it.value} ${it.unit}".trim())) }
+            reports.forEach { add(RecentEntry("report", it.id, it.updatedAt, it.title, "${it.type} • ${it.status}")) }
+        }.sortedByDescending { it.time }.take(12)
         if (activity.isEmpty()) {
             item { EmptyState("No activity yet", "Start with one factual observation. Small notes become research when you can revisit them.", icon = FieldMindIcons.Observation, actionLabel = "Add observation") { onNavigate(FieldMindScreen.Observe) } }
         } else {
-            items(activity) { (entry, id) ->
-                val (kind, title, sub) = entry
-                EntityCard(title = title, kind = kind, body = sub, onClick = { onOpenDetail(kind, id) })
+            items(activity, key = { "${it.kind}-${it.id}" }) { entry ->
+                EntityCard(
+                    title = entry.title,
+                    kind = entry.kind,
+                    body = entry.sub,
+                    meta = listOf(recentRelativeTime(entry.time)),
+                    onClick = { onOpenDetail(entry.kind, entry.id) }
+                )
             }
         }
+    }
+}
+
+private data class RecentEntry(val kind: String, val id: Long, val time: Long, val title: String, val sub: String)
+
+private fun recentRelativeTime(time: Long): String {
+    val diff = System.currentTimeMillis() - time
+    val mins = diff / 60_000
+    return when {
+        mins < 1 -> "just now"
+        mins < 60 -> "${mins}m ago"
+        mins < 1440 -> "${mins / 60}h ago"
+        mins < 1440 * 7 -> "${mins / 1440}d ago"
+        else -> SimpleDateFormat("MMM d", Locale.getDefault()).format(Date(time))
     }
 }
 
@@ -1176,7 +1198,69 @@ fun FieldMindSettingsScreen(viewModel: FieldMindViewModel? = null, onBack: () ->
             }
         }
 
+        if (viewModel != null) item { SettingsExportSection(viewModel) }
+
+        item { AboutSection() }
+
         item { OutlinedButton(onClick = onResetOnboarding, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp)) { Text("Reset onboarding") } }
+    }
+}
+
+@Composable
+private fun SettingsExportSection(viewModel: FieldMindViewModel) {
+    val context = LocalContext.current
+    val observations by viewModel.observations.collectAsState()
+    val questions by viewModel.questions.collectAsState()
+    val hypotheses by viewModel.hypotheses.collectAsState()
+    val projects by viewModel.projects.collectAsState()
+    val sources by viewModel.sources.collectAsState()
+    val data by viewModel.dataRecords.collectAsState()
+    val reports by viewModel.reports.collectAsState()
+    val flashcards by viewModel.flashcards.collectAsState()
+    var pendingText by remember { mutableStateOf("") }
+    val createDoc = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("text/plain")) { uri ->
+        if (uri != null) runCatching { context.contentResolver.openOutputStream(uri)?.use { it.write(pendingText.toByteArray()) } }
+            .onSuccess { android.widget.Toast.makeText(context, "Export written.", android.widget.Toast.LENGTH_SHORT).show() }
+            .onFailure { android.widget.Toast.makeText(context, "Export failed: ${it.localizedMessage}", android.widget.Toast.LENGTH_LONG).show() }
+    }
+    SettingsGroup("Export data", "Your research notes stay portable and owned by you.") {
+        Column(Modifier.padding(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            ExportRow("Observations CSV", FieldMindIcons.Observation) { pendingText = FieldMindExport.observationsCsv(observations); createDoc.launch("fieldmind-observations.csv") }
+            ExportRow("Data CSV", FieldMindIcons.Data) { pendingText = FieldMindExport.dataCsv(data); createDoc.launch("fieldmind-data.csv") }
+            ExportRow("Archive JSON", FieldMindIcons.Archive) { pendingText = FieldMindExport.archiveJson(observations, questions, hypotheses, projects, sources, data, reports, flashcards); createDoc.launch("fieldmind-archive.json") }
+            ExportRow("Reports Markdown", FieldMindIcons.Report) { pendingText = reports.joinToString("\n\n---\n\n") { FieldMindExport.buildMarkdownReport(it) }; createDoc.launch("fieldmind-reports.md") }
+        }
+    }
+}
+
+@Composable
+private fun AboutSection() {
+    val uriHandler = LocalUriHandler.current
+    SettingsGroup("About", "FieldMind — observe, question, research clearly.") {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+            Text("FieldMind is a free, offline-first research notebook for curious naturalists, students, and citizen scientists.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text("Credits & acknowledgements", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+            CreditRow("Rhythm", "The open-source app this project is built upon.", "https://github.com/cromaguy/Rhythm", uriHandler)
+            CreditRow("Material Symbols & Material 3", "Google's icon set and design system.", "https://fonts.google.com/icons", uriHandler)
+            CreditRow("Jetpack Compose", "Android's modern declarative UI toolkit.", "https://developer.android.com/jetpack/compose", uriHandler)
+            CreditRow("Crossref", "Free scholarly metadata API.", "https://www.crossref.org", uriHandler)
+            CreditRow("OpenAlex", "Open catalog of papers, authors, and venues.", "https://openalex.org", uriHandler)
+            CreditRow("arXiv", "Open-access research preprints.", "https://arxiv.org", uriHandler)
+            CreditRow("Open Library", "Open, editable library catalog.", "https://openlibrary.org", uriHandler)
+            CreditRow("Semantic Scholar", "AI-powered research paper search.", "https://www.semanticscholar.org", uriHandler)
+            Text("Made with care for people who learn by looking closely.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+    }
+}
+
+@Composable
+private fun CreditRow(title: String, subtitle: String, url: String, uriHandler: androidx.compose.ui.platform.UriHandler) {
+    Row(Modifier.fillMaxWidth().clickable { runCatching { uriHandler.openUri(url) } }, verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        Icon(icon = FieldMindIcons.OpenLink, contentDescription = null, tint = MaterialTheme.colorScheme.primary, size = 20.dp)
+        Column(Modifier.weight(1f)) {
+            Text(title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+            Text(subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
     }
 }
 
@@ -1195,8 +1279,12 @@ fun DetailScreen(kind: String, id: Long, viewModel: FieldMindViewModel, onBack: 
     val reports by viewModel.reports.collectAsState()
     val flashcards by viewModel.flashcards.collectAsState()
     val title = kind.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
+    var showEdit by remember(kind, id) { mutableStateOf(false) }
+    var showDelete by remember(kind, id) { mutableStateOf(false) }
+    val editable = kind in setOf("observation", "question", "hypothesis", "project", "source", "data", "report", "flashcard")
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(20.dp, 20.dp, 20.dp, 40.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
         item { FieldScreenHeader(title, "Record detail workspace", icon = FieldMindIcons.iconFor(kind), actionIcon = FieldMindIcons.Back, onAction = onBack) }
+        if (editable) item { DetailActions(onEdit = { showEdit = true }, onDelete = { showDelete = true }) }
         when (kind) {
             "observation" -> observations.firstOrNull { it.id == id }?.let { o ->
                 item { DetailBody(o.subject, "observation", listOf("Date" to "${o.date} ${o.time}", "Category" to o.category, "Confidence" to o.confidenceLevel, "Location" to o.manualLocation.ifBlank { "None" }, "GPS" to (o.latitude?.let { "${o.latitude}, ${o.longitude}" } ?: "Not captured"), "Tags" to o.tags, "Facts" to o.factsOnlyNotes, "Evidence" to o.evidenceSummary, "Context" to o.moodOrContext)) }
@@ -1208,6 +1296,7 @@ fun DetailScreen(kind: String, id: Long, viewModel: FieldMindViewModel, onBack: 
             }
             "question" -> questions.firstOrNull { it.id == id }?.let { qn ->
                 item { DetailBody(qn.questionText, "question", listOf("Category" to qn.category, "Source" to qn.sourceType, "Status" to qn.status, "Priority" to qn.priority)) }
+                item { QuestionAnswerCard(qn) { ans -> viewModel.setQuestionAnswer(qn, ans) } }
                 item { BacklinksPanel(buildList {
                     projects.firstOrNull { it.id == qn.relatedProjectId }?.let { add(Triple("project", it.title, it.id)) }
                     hypotheses.filter { it.linkedQuestionId == qn.id }.forEach { add(Triple("hypothesis", it.prediction, it.id)) }
@@ -1256,7 +1345,79 @@ fun DetailScreen(kind: String, id: Long, viewModel: FieldMindViewModel, onBack: 
                 }, onOpenDetail) }
             }
         }
-        item { AssistantPanel(viewModel) }
+    }
+    if (showEdit) EditEntityDialog(kind, id, viewModel) { showEdit = false }
+    if (showDelete) ConfirmDeleteDialog(kind, onDismiss = { showDelete = false }) {
+        deleteEntityByKind(kind, id, viewModel); showDelete = false; onBack()
+    }
+}
+
+@Composable
+private fun DetailActions(onEdit: () -> Unit, onDelete: () -> Unit) {
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+        FilledTonalButton(onClick = onEdit, modifier = Modifier.weight(1f), shape = RoundedCornerShape(16.dp)) {
+            Icon(icon = FieldMindIcons.Edit, contentDescription = null, size = 18.dp); Spacer(Modifier.size(8.dp)); Text("Edit")
+        }
+        OutlinedButton(
+            onClick = onDelete,
+            modifier = Modifier.weight(1f),
+            shape = RoundedCornerShape(16.dp),
+            colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error)
+        ) {
+            Icon(icon = FieldMindIcons.Delete, contentDescription = null, size = 18.dp); Spacer(Modifier.size(8.dp)); Text("Delete")
+        }
+    }
+}
+
+/** Inline answer editor on a question detail screen. */
+@Composable
+private fun QuestionAnswerCard(question: QuestionEntity, onSave: (String) -> Unit) {
+    var editing by remember(question.id, question.answer) { mutableStateOf(question.answer.isBlank()) }
+    var draft by remember(question.id) { mutableStateOf(question.answer) }
+    Card(shape = RoundedCornerShape(24.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)) {
+        Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Icon(icon = FieldMindIcons.Answer, contentDescription = null, tint = MaterialTheme.colorScheme.primary, size = 20.dp)
+                Text("Answer", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            }
+            if (editing) {
+                FieldTextField(draft, { draft = it }, "What did you conclude?", minLines = 3, supportingText = "Saving marks this question as Answered.")
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Button(onClick = { onSave(draft); editing = false }, shape = RoundedCornerShape(14.dp), enabled = draft.isNotBlank()) { Text("Save answer") }
+                    if (question.answer.isNotBlank()) TextButton(onClick = { draft = question.answer; editing = false }) { Text("Cancel") }
+                }
+            } else {
+                Text(question.answer, style = MaterialTheme.typography.bodyMedium)
+                TextButton(onClick = { editing = true }, contentPadding = PaddingValues(0.dp)) {
+                    Icon(icon = FieldMindIcons.Edit, contentDescription = null, size = 16.dp); Spacer(Modifier.size(6.dp)); Text("Edit answer")
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ConfirmDeleteDialog(kind: String, onDismiss: () -> Unit, onConfirm: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        icon = { Icon(icon = FieldMindIcons.Delete, contentDescription = null, tint = MaterialTheme.colorScheme.error) },
+        title = { Text("Delete $kind?") },
+        text = { Text("This removes the $kind from your active records. This can't be undone from the app.") },
+        confirmButton = { Button(onClick = onConfirm, colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)) { Text("Delete") } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } }
+    )
+}
+
+private fun deleteEntityByKind(kind: String, id: Long, viewModel: FieldMindViewModel) {
+    when (kind) {
+        "observation" -> viewModel.deleteObservation(id)
+        "question" -> viewModel.deleteQuestion(id)
+        "hypothesis" -> viewModel.deleteHypothesis(id)
+        "project" -> viewModel.deleteProject(id)
+        "source" -> viewModel.deleteSource(id)
+        "data" -> viewModel.deleteDataRecord(id)
+        "report" -> viewModel.deleteReport(id)
+        "flashcard" -> viewModel.deleteFlashcard(id)
     }
 }
 
@@ -1339,6 +1500,7 @@ private fun BacklinksPanel(links: List<Triple<String, String, Long>>, onOpenDeta
 @Composable
 private fun AssistantPanel(viewModel: FieldMindViewModel, seedText: String = "") {
     val enabled by viewModel.fieldSettings.geminiEnabled.collectAsState()
+    if (!enabled) return
     val key by viewModel.fieldSettings.geminiApiKey.collectAsState()
     val model by viewModel.fieldSettings.geminiModel.collectAsState()
     val assistant = remember(enabled, key, model) {
@@ -1543,6 +1705,101 @@ private fun NewReportDialog(viewModel: FieldMindViewModel, onDismiss: () -> Unit
 private fun NewFlashcardDialog(viewModel: FieldMindViewModel, onDismiss: () -> Unit) {
     var type by remember { mutableStateOf("concept") }; var front by remember { mutableStateOf("") }; var back by remember { mutableStateOf("") }
     FormDialog("Create Flashcard", onDismiss, { if (front.isNotBlank() && back.isNotBlank()) { viewModel.addFlashcard(front, back, type); onDismiss() } }) {
+        ChoiceChips(listOf("term", "definition", "concept", "question-answer", "mistake card"), type) { type = it }; FieldTextField(front, { front = it }, "Front"); FieldTextField(back, { back = it }, "Back", minLines = 3)
+    }
+}
+
+@Composable
+private fun EditEntityDialog(kind: String, id: Long, viewModel: FieldMindViewModel, onDismiss: () -> Unit) {
+    when (kind) {
+        "observation" -> viewModel.observations.collectAsState().value.firstOrNull { it.id == id }?.let { EditObservationDialog(it, viewModel, onDismiss) }
+        "question" -> viewModel.questions.collectAsState().value.firstOrNull { it.id == id }?.let { EditQuestionDialog(it, viewModel, onDismiss) }
+        "hypothesis" -> viewModel.hypotheses.collectAsState().value.firstOrNull { it.id == id }?.let { EditHypothesisDialog(it, viewModel, onDismiss) }
+        "project" -> viewModel.projects.collectAsState().value.firstOrNull { it.id == id }?.let { EditProjectDialog(it, viewModel, onDismiss) }
+        "source" -> viewModel.sources.collectAsState().value.firstOrNull { it.id == id }?.let { EditSourceDialog(it, viewModel, onDismiss) }
+        "data" -> viewModel.dataRecords.collectAsState().value.firstOrNull { it.id == id }?.let { EditDataRecordDialog(it, viewModel, onDismiss) }
+        "report" -> viewModel.reports.collectAsState().value.firstOrNull { it.id == id }?.let { EditReportDialog(it, viewModel, onDismiss) }
+        "flashcard" -> viewModel.flashcards.collectAsState().value.firstOrNull { it.id == id }?.let { EditFlashcardDialog(it, viewModel, onDismiss) }
+        else -> onDismiss()
+    }
+}
+
+@Composable
+private fun EditObservationDialog(entity: ObservationEntity, viewModel: FieldMindViewModel, onDismiss: () -> Unit) {
+    var subject by remember { mutableStateOf(entity.subject) }; var category by remember { mutableStateOf(entity.category) }; var facts by remember { mutableStateOf(entity.factsOnlyNotes) }; var confidence by remember { mutableStateOf(entity.confidenceLevel) }; var location by remember { mutableStateOf(entity.manualLocation) }; var tags by remember { mutableStateOf(entity.tags) }; var evidence by remember { mutableStateOf(entity.evidenceSummary) }; var context by remember { mutableStateOf(entity.moodOrContext) }
+    FormDialog("Edit Observation", onDismiss, {
+        if (subject.isNotBlank()) { viewModel.updateObservation(entity.copy(subject = subject.trim(), category = category, factsOnlyNotes = facts.trim(), confidenceLevel = confidence, manualLocation = location.trim(), evidenceSummary = evidence.trim(), moodOrContext = context.trim()), tags); onDismiss() }
+    }) {
+        FieldTextField(subject, { subject = it }, "Subject"); ChoiceChips(observationCategories, category) { category = it }; FieldTextField(facts, { facts = it }, "Facts only", minLines = 3); ChoiceChips(confidenceOptions, confidence) { confidence = it }; FieldTextField(location, { location = it }, "Location"); FieldTextField(tags, { tags = it }, "Tags (comma separated)"); FieldTextField(evidence, { evidence = it }, "Evidence summary", minLines = 2); FieldTextField(context, { context = it }, "Context / mood", minLines = 2)
+    }
+}
+
+@Composable
+private fun EditQuestionDialog(entity: QuestionEntity, viewModel: FieldMindViewModel, onDismiss: () -> Unit) {
+    var question by remember { mutableStateOf(entity.questionText) }; var category by remember { mutableStateOf(entity.category) }; var source by remember { mutableStateOf(entity.sourceType) }; var status by remember { mutableStateOf(entity.status) }; var priority by remember { mutableStateOf(entity.priority) }; var answer by remember { mutableStateOf(entity.answer) }
+    FormDialog("Edit Question", onDismiss, {
+        if (question.isNotBlank()) { viewModel.updateQuestionEntity(entity.copy(questionText = question.trim(), category = category, sourceType = source, status = status, priority = priority, answer = answer.trim(), answeredAt = if (answer.isBlank()) null else (entity.answeredAt ?: System.currentTimeMillis()))); onDismiss() }
+    }) {
+        FieldTextField(question, { question = it }, "Question", minLines = 2); ChoiceChips(observationCategories, category) { category = it }; ChoiceChips(sourceTypes, source) { source = it }; ChoiceChips(questionStatuses, status) { status = it }; ChoiceChips(listOf("Low", "Medium", "High"), priority) { priority = it }; FieldTextField(answer, { answer = it }, "Answer", minLines = 2)
+    }
+}
+
+@Composable
+private fun EditHypothesisDialog(entity: HypothesisEntity, viewModel: FieldMindViewModel, onDismiss: () -> Unit) {
+    var prediction by remember { mutableStateOf(entity.prediction) }; var reasoning by remember { mutableStateOf(entity.reasoning) }; var evidence by remember { mutableStateOf(entity.evidenceNeeded) }; var support by remember { mutableStateOf(entity.supportCriteria) }; var weaken by remember { mutableStateOf(entity.weakeningCriteria) }; var test by remember { mutableStateOf(entity.testMethod) }; var result by remember { mutableStateOf(entity.resultStatus) }; var confidence by remember { mutableStateOf(entity.confidencePercent.toFloat()) }
+    FormDialog("Edit Hypothesis", onDismiss, {
+        if (prediction.isNotBlank()) { viewModel.updateHypothesisEntity(entity.copy(prediction = prediction.trim(), reasoning = reasoning.trim(), evidenceNeeded = evidence.trim(), supportCriteria = support.trim(), weakeningCriteria = weaken.trim(), testMethod = test.trim(), resultStatus = result, confidencePercent = confidence.toInt())); onDismiss() }
+    }) {
+        FieldTextField(prediction, { prediction = it }, "Prediction", minLines = 2); FieldTextField(reasoning, { reasoning = it }, "Reasoning", minLines = 2); FieldTextField(evidence, { evidence = it }, "Evidence needed", minLines = 2); FieldTextField(support, { support = it }, "Support criteria"); FieldTextField(weaken, { weaken = it }, "Weakening criteria"); FieldTextField(test, { test = it }, "Test method"); ChoiceChips(listOf("Unknown", "Supported", "Weakened", "Inconclusive"), result) { result = it }; Text("Confidence: ${confidence.toInt()}%"); Slider(confidence, { confidence = it }, valueRange = 0f..100f)
+    }
+}
+
+@Composable
+private fun EditProjectDialog(entity: ProjectEntity, viewModel: FieldMindViewModel, onDismiss: () -> Unit) {
+    var title by remember { mutableStateOf(entity.title) }; var topic by remember { mutableStateOf(entity.topicType) }; var objective by remember { mutableStateOf(entity.objective) }; var question by remember { mutableStateOf(entity.researchQuestion) }; var background by remember { mutableStateOf(entity.backgroundNotes) }; var methods by remember { mutableStateOf(entity.methods) }; var conclusion by remember { mutableStateOf(entity.conclusion) }
+    FormDialog("Edit Project", onDismiss, {
+        if (title.isNotBlank()) { viewModel.updateProjectEntity(entity.copy(title = title.trim(), topicType = topic.trim().ifBlank { "General" }, objective = objective.trim(), researchQuestion = question.trim(), backgroundNotes = background.trim(), methods = methods.trim(), conclusion = conclusion.trim())); onDismiss() }
+    }) {
+        FieldTextField(title, { title = it }, "Project title"); ChoiceChips(listOf("Biology", "Geology", "Wildlife", "Ecology", "Plant Study", "Weather", "Human Pattern", "Other"), topic) { topic = it }; FieldTextField(objective, { objective = it }, "Objective", minLines = 2); FieldTextField(question, { question = it }, "Research question", minLines = 2); FieldTextField(background, { background = it }, "Background notes", minLines = 2); FieldTextField(methods, { methods = it }, "Methods", minLines = 2); FieldTextField(conclusion, { conclusion = it }, "Conclusion", minLines = 2)
+    }
+}
+
+@Composable
+private fun EditSourceDialog(entity: SourceEntity, viewModel: FieldMindViewModel, onDismiss: () -> Unit) {
+    var type by remember { mutableStateOf(entity.type) }; var title by remember { mutableStateOf(entity.title) }; var author by remember { mutableStateOf(entity.author) }; var link by remember { mutableStateOf(entity.link) }; var summary by remember { mutableStateOf(entity.personalSummary) }; var findings by remember { mutableStateOf(entity.keyFindings) }; var taught by remember { mutableStateOf(entity.whatThisSourceTaughtMe) }; var notes by remember { mutableStateOf(entity.paperNotes) }; var reliability by remember { mutableStateOf(entity.reliabilityScore.toFloat()) }
+    FormDialog("Edit Source", onDismiss, {
+        if (title.isNotBlank()) { viewModel.updateSourceEntity(entity.copy(type = type, title = title.trim(), author = author.trim(), link = link.trim(), personalSummary = summary.trim(), keyFindings = findings.trim(), whatThisSourceTaughtMe = taught.trim(), paperNotes = notes.trim(), reliabilityScore = reliability.toInt())); onDismiss() }
+    }) {
+        ChoiceChips(sourceLibraryTypes, type) { type = it }; FieldTextField(title, { title = it }, "Title"); FieldTextField(author, { author = it }, "Author / creator"); FieldTextField(link, { link = it }, "Link / citation"); FieldTextField(summary, { summary = it }, "Main idea", minLines = 2); FieldTextField(findings, { findings = it }, "Key findings", minLines = 2); FieldTextField(taught, { taught = it }, "What this taught me", minLines = 2); FieldTextField(notes, { notes = it }, "Paper notes", minLines = 3); Text("Credibility: ${reliability.toInt()}/5"); Slider(reliability, { reliability = it }, valueRange = 1f..5f, steps = 3)
+    }
+}
+
+@Composable
+private fun EditDataRecordDialog(entity: DataRecordEntity, viewModel: FieldMindViewModel, onDismiss: () -> Unit) {
+    var tool by remember { mutableStateOf(entity.toolType) }; var label by remember { mutableStateOf(entity.label) }; var value by remember { mutableStateOf(entity.value) }; var unit by remember { mutableStateOf(entity.unit) }; var location by remember { mutableStateOf(entity.location) }; var notes by remember { mutableStateOf(entity.notes) }
+    FormDialog("Edit Data Record", onDismiss, {
+        if (label.isNotBlank()) { viewModel.updateDataRecordEntity(entity.copy(toolType = tool, label = label.trim(), value = value.trim(), unit = unit.trim(), location = location.trim(), notes = notes.trim())); onDismiss() }
+    }) {
+        ChoiceChips(dataTools, tool) { tool = it }; FieldTextField(label, { label = it }, "Label"); FieldTextField(value, { value = it }, "Value"); FieldTextField(unit, { unit = it }, "Unit"); FieldTextField(location, { location = it }, "Location / site"); FieldTextField(notes, { notes = it }, "Notes", minLines = 3)
+    }
+}
+
+@Composable
+private fun EditReportDialog(entity: ReportEntity, viewModel: FieldMindViewModel, onDismiss: () -> Unit) {
+    var type by remember { mutableStateOf(entity.type) }; var title by remember { mutableStateOf(entity.title) }; var question by remember { mutableStateOf(entity.question) }; var methods by remember { mutableStateOf(entity.methods) }; var results by remember { mutableStateOf(entity.results) }; var conclusion by remember { mutableStateOf(entity.conclusion) }; var next by remember { mutableStateOf(entity.nextSteps) }
+    FormDialog("Edit Report", onDismiss, {
+        if (title.isNotBlank()) { viewModel.updateReportEntity(entity.copy(type = type, title = title.trim(), question = question.trim(), methods = methods.trim(), results = results.trim(), conclusion = conclusion.trim(), nextSteps = next.trim())); onDismiss() }
+    }) {
+        ChoiceChips(reportTypes, type) { type = it }; FieldTextField(title, { title = it }, "Title"); FieldTextField(question, { question = it }, "Question", minLines = 2); FieldTextField(methods, { methods = it }, "Methods", minLines = 2); FieldTextField(results, { results = it }, "Data / results", minLines = 2); FieldTextField(conclusion, { conclusion = it }, "Conclusion", minLines = 2); FieldTextField(next, { next = it }, "Next steps", minLines = 2)
+    }
+}
+
+@Composable
+private fun EditFlashcardDialog(entity: FlashcardEntity, viewModel: FieldMindViewModel, onDismiss: () -> Unit) {
+    var type by remember { mutableStateOf(entity.type) }; var front by remember { mutableStateOf(entity.front) }; var back by remember { mutableStateOf(entity.back) }
+    FormDialog("Edit Flashcard", onDismiss, {
+        if (front.isNotBlank() && back.isNotBlank()) { viewModel.updateFlashcardEntity(entity.copy(type = type, front = front.trim(), back = back.trim())); onDismiss() }
+    }) {
         ChoiceChips(listOf("term", "definition", "concept", "question-answer", "mistake card"), type) { type = it }; FieldTextField(front, { front = it }, "Front"); FieldTextField(back, { back = it }, "Back", minLines = 3)
     }
 }

@@ -72,6 +72,9 @@ object FieldMindIcons {
     val Download = MaterialSymbolIcon("download")
     val Lightbulb = MaterialSymbolIcon("lightbulb")
     val Done = MaterialSymbolIcon("done")
+    val Info = MaterialSymbolIcon("info")
+    val Answer = MaterialSymbolIcon("question_answer")
+    val Favorite = MaterialSymbolIcon("favorite", filled = true)
 
     // Observation category icons
     val Bird = MaterialSymbolIcon("raven")
