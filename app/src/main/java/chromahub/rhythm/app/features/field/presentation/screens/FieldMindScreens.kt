@@ -713,8 +713,36 @@ private fun FieldModeScreen(viewModel: FieldMindViewModel, onBack: () -> Unit) {
     val snackbar = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     val defaultConfidence by viewModel.fieldSettings.defaultConfidence.collectAsState()
+    val context = LocalContext.current
     val haptics = rememberFieldMindHaptics()
     var showFull by remember { mutableStateOf(false) }
+    var quickSnapCategory by remember { mutableStateOf(observationCategories.first()) }
+    var quickSnapUri by remember { mutableStateOf<Uri?>(null) }
+    var showQuickSnapCategory by remember { mutableStateOf(false) }
+    val quickSnapCamera = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { saved ->
+        val uri = quickSnapUri
+        if (saved && uri != null) {
+            viewModel.addObservation(
+                subject = quickSnapCategory,
+                category = quickSnapCategory,
+                facts = "Quick snap — add details later.",
+                confidence = defaultConfidence,
+                manualLocation = "",
+                tags = "quick-snap",
+                evidence = "Camera quick snap",
+                context = "",
+                attachments = listOf(DraftEvidenceAttachment("Photo", uri.toString(), "Quick snap"))
+            ) { scope.launch { snackbar.showSnackbar("Quick snap saved as $quickSnapCategory.") } }
+        } else scope.launch { snackbar.showSnackbar("Quick snap cancelled.") }
+        quickSnapUri = null
+    }
+    val quickSnapPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        if (granted) {
+            val uri = createFieldMindFileUri(context, "quick-snap", ".jpg")
+            quickSnapUri = uri
+            quickSnapCamera.launch(uri)
+        } else scope.launch { snackbar.showSnackbar("Camera permission denied.") }
+    }
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
         snackbarHost = { SnackbarHost(snackbar) }
@@ -730,6 +758,13 @@ private fun FieldModeScreen(viewModel: FieldMindViewModel, onBack: () -> Unit) {
             } else {
                 item {
                     Text("Tap a type to save instantly", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                }
+                item {
+                    Button(onClick = { haptics.light(); showQuickSnapCategory = true }, Modifier.fillMaxWidth(), shape = RoundedCornerShape(18.dp)) {
+                        Icon(icon = FieldMindIcons.Camera, contentDescription = null, size = 18.dp)
+                        Spacer(Modifier.size(8.dp))
+                        Text("Quick snap")
+                    }
                 }
                 items(observationCategories.chunked(2)) { row ->
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -765,6 +800,25 @@ private fun FieldModeScreen(viewModel: FieldMindViewModel, onBack: () -> Unit) {
                 }
             }
         }
+    }
+    if (showQuickSnapCategory) {
+        AlertDialog(
+            onDismissRequest = { showQuickSnapCategory = false },
+            icon = { Icon(icon = FieldMindIcons.Camera, contentDescription = null) },
+            title = { Text("Choose quick snap category") },
+            text = { ChoiceChips(observationCategories, quickSnapCategory) { quickSnapCategory = it } },
+            confirmButton = {
+                Button(onClick = {
+                    showQuickSnapCategory = false
+                    if (ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
+                        val uri = createFieldMindFileUri(context, "quick-snap", ".jpg")
+                        quickSnapUri = uri
+                        quickSnapCamera.launch(uri)
+                    } else quickSnapPermission.launch(Manifest.permission.CAMERA)
+                }) { Text("Open camera") }
+            },
+            dismissButton = { TextButton(onClick = { showQuickSnapCategory = false }) { Text("Cancel") } }
+        )
     }
 }
 
@@ -1239,7 +1293,7 @@ fun KnowledgeLibraryScreen(
         }
         when (tab) {
             0 -> SourcePanel(viewModel, sources, onOpenDetail)
-            1 -> NotePanel(notes, onOpenDetail)
+            1 -> NotePanel(viewModel, notes, onOpenDetail)
             2 -> PaperReadingPanel(sources, onOpenDetail)
             3 -> FlashcardPanel(viewModel, flashcards, onOpenDetail) { onNavigate(FieldMindScreen.Flashcards) }
             4 -> LearnPanel(viewModel, onOpenReader)
@@ -1259,11 +1313,31 @@ private fun SourcePanel(viewModel: FieldMindViewModel, items: List<SourceEntity>
 }
 
 @Composable
-private fun NotePanel(items: List<NoteEntity>, onOpenDetail: (String, Long) -> Unit) {
+private fun NotePanel(viewModel: FieldMindViewModel, items: List<NoteEntity>, onOpenDetail: (String, Long) -> Unit) {
+    var showAdd by remember { mutableStateOf(false) }
+    var categoriesExpanded by remember { mutableStateOf(false) }
+    var selectedCategory by remember { mutableStateOf("All") }
+    val categories = remember(items) { listOf("All") + items.map { it.category.ifBlank { "Other" } }.distinct().sorted() }
+    val filtered = remember(items, selectedCategory) { if (selectedCategory == "All") items else items.filter { it.category == selectedCategory } }
     LazyColumn(contentPadding = panelPadding(), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-        item { SectionHeader("Notes", "Free-form thinking, separate from facts-only observations.") }
-        if (items.isEmpty()) item { EmptyState("No notes yet", "Create one from Capture → Note.", icon = FieldMindIcons.Note) }
-        items(items) { EntityCard(it.title, "note", body = it.body.ifBlank { "No body yet." }, meta = listOf(it.category, recentRelativeTime(it.updatedAt), if (it.attachmentUris.isBlank()) "No attachments" else "Attachments")) { onOpenDetail("note", it.id) } }
+        item { SectionHeader("Notes", "Add quick notes here. Categories stay collapsed until you need filtering.") }
+        item { AddButton(if (showAdd) "Close note composer" else "Add note") { showAdd = !showAdd } }
+        if (showAdd) item { NoteCaptureCard(viewModel = viewModel, initialCategory = selectedCategory.takeIf { it != "All" } ?: observationCategories.last()) { showAdd = false } }
+        item {
+            Card(shape = RoundedCornerShape(20.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)) {
+                Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Row(Modifier.fillMaxWidth().clickable { categoriesExpanded = !categoriesExpanded }, verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Icon(icon = FieldMindIcons.Category, contentDescription = null, tint = MaterialTheme.colorScheme.primary, size = 20.dp)
+                        Text("Categories", Modifier.weight(1f), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+                        InfoChip(selectedCategory)
+                        Icon(icon = if (categoriesExpanded) FieldMindIcons.Up else FieldMindIcons.Down, contentDescription = null, size = 20.dp)
+                    }
+                    AnimatedVisibility(categoriesExpanded) { ChoiceChips(categories, selectedCategory) { selectedCategory = it } }
+                }
+            }
+        }
+        if (filtered.isEmpty()) item { EmptyState("No notes yet", "Create one from this Notes tab or Capture → Note.", icon = FieldMindIcons.Note) }
+        items(filtered) { EntityCard(it.title, "note", body = it.body.ifBlank { "No body yet." }, meta = listOf(it.category, recentRelativeTime(it.updatedAt), if (it.attachmentUris.isBlank()) "No attachments" else "Attachments")) { onOpenDetail("note", it.id) } }
     }
 }
 
@@ -1599,76 +1673,83 @@ private fun GuidedPathCard(path: GuidedPath, onOpenReader: (String, String) -> U
 @Composable
 fun LearnReaderScreen(url: String, title: String, onBack: () -> Unit) {
     val uriHandler = LocalUriHandler.current
-    var loading by remember(url) { mutableStateOf(true) }
-    var errorMessage by remember(url) { mutableStateOf<String?>(null) }
-    var retryKey by remember(url) { mutableIntStateOf(0) }
+    val readerUrl = remember(url) {
+        if (uriLooksPdf(url) && url.startsWith("http", ignoreCase = true)) {
+            "https://docs.google.com/gview?embedded=1&url=${Uri.encode(url)}"
+        } else url
+    }
+    var loading by remember(readerUrl) { mutableStateOf(!uriLooksImage(url)) }
+    var errorMessage by remember(readerUrl) { mutableStateOf<String?>(null) }
+    var retryKey by remember(readerUrl) { mutableIntStateOf(0) }
     var webView by remember { mutableStateOf<WebView?>(null) }
     val background = MaterialTheme.colorScheme.background
-    LaunchedEffect(url, retryKey) {
-        loading = true
-        errorMessage = null
-        kotlinx.coroutines.delay(10_000)
-        if (loading) errorMessage = "Still loading. This page may block embedded readers."
+    LaunchedEffect(readerUrl, retryKey) {
+        if (!uriLooksImage(url)) {
+            loading = true
+            errorMessage = null
+            kotlinx.coroutines.delay(10_000)
+            if (loading) errorMessage = "Still loading. This file may block embedded readers."
+        }
     }
     BackHandler(enabled = true) {
         val wv = webView
         if (wv != null && wv.canGoBack()) wv.goBack() else onBack()
     }
     Column(Modifier.fillMaxSize().background(background)) {
-        Row(
-            Modifier.fillMaxWidth().padding(start = 8.dp, end = 8.dp, top = 8.dp, bottom = 8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
+        Row(Modifier.fillMaxWidth().padding(start = 8.dp, end = 8.dp, top = 8.dp, bottom = 8.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             IconButton(onClick = onBack) { Icon(icon = FieldMindIcons.Back, contentDescription = "Back", size = 22.dp) }
             Text(title.ifBlank { "Reader" }, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
-            IconButton(onClick = { runCatching { uriHandler.openUri(url) } }) { Icon(icon = FieldMindIcons.OpenLink, contentDescription = "Open in browser", size = 22.dp) }
+            IconButton(onClick = { runCatching { uriHandler.openUri(url) } }) { Icon(icon = FieldMindIcons.OpenLink, contentDescription = "Open externally", size = 22.dp) }
         }
         if (loading) LinearProgressIndicator(Modifier.fillMaxWidth())
         Box(Modifier.fillMaxSize()) {
-            AndroidView(
-                modifier = Modifier.fillMaxSize(),
-                factory = { ctx ->
-                    WebView(ctx).apply {
-                        setBackgroundColor(android.graphics.Color.TRANSPARENT)
-                        webViewClient = object : WebViewClient() {
-                            override fun onPageStarted(view: WebView?, startedUrl: String?, favicon: android.graphics.Bitmap?) {
-                                loading = true
-                                errorMessage = null
-                            }
-                            override fun onPageFinished(view: WebView?, finishedUrl: String?) { loading = false }
-                            override fun onReceivedError(view: WebView?, request: WebResourceRequest?, error: WebResourceError?) {
-                                if (request?.isForMainFrame != false) {
-                                    loading = false
-                                    errorMessage = error?.description?.toString() ?: "Could not load this page inside FieldMind."
+            when {
+                uriLooksImage(url) -> AsyncImage(model = url, contentDescription = title, contentScale = ContentScale.Fit, modifier = Modifier.fillMaxSize().padding(16.dp).clip(RoundedCornerShape(24.dp)).background(MaterialTheme.colorScheme.surfaceContainerLow))
+                url.startsWith("content://") && uriLooksPdf(url) -> ReaderFallbackCard("Local PDF selected. Android WebView cannot render every provider PDF directly, but it is stored in FieldMind and can be opened from the system document viewer.", url, { runCatching { uriHandler.openUri(url) } }, Modifier.align(Alignment.TopCenter))
+                else -> {
+                    AndroidView(
+                        modifier = Modifier.fillMaxSize(),
+                        factory = { ctx ->
+                            WebView(ctx).apply {
+                                setBackgroundColor(android.graphics.Color.TRANSPARENT)
+                                webViewClient = object : WebViewClient() {
+                                    override fun onPageStarted(view: WebView?, startedUrl: String?, favicon: android.graphics.Bitmap?) { loading = true; errorMessage = null }
+                                    override fun onPageFinished(view: WebView?, finishedUrl: String?) { loading = false }
+                                    override fun onReceivedError(view: WebView?, request: WebResourceRequest?, error: WebResourceError?) {
+                                        if (request?.isForMainFrame != false) { loading = false; errorMessage = error?.description?.toString() ?: "Could not load this file inside FieldMind." }
+                                    }
                                 }
+                                settings.javaScriptEnabled = true
+                                settings.domStorageEnabled = true
+                                settings.loadWithOverviewMode = true
+                                settings.useWideViewPort = true
+                                loadUrl(readerUrl)
+                                webView = this
                             }
-                        }
-                        settings.javaScriptEnabled = true
-                        settings.domStorageEnabled = true
-                        settings.loadWithOverviewMode = true
-                        settings.useWideViewPort = true
-                        loadUrl(url)
-                        webView = this
-                    }
-                },
-                update = { if (it.url != url) it.loadUrl(url) }
-            )
-            errorMessage?.let { message ->
-                Card(Modifier.align(Alignment.TopCenter).padding(20.dp), shape = RoundedCornerShape(24.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh)) {
-                    Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
-                            Icon(FieldMindIcons.Info, null, tint = MaterialTheme.colorScheme.primary, size = 22.dp)
-                            Text("Reader fallback", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                        }
-                        Text(message, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        Text(url, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2, overflow = TextOverflow.Ellipsis)
-                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            FilledTonalButton(onClick = { retryKey++; webView?.reload() }, shape = RoundedCornerShape(14.dp)) { Text("Retry") }
-                            Button(onClick = { runCatching { uriHandler.openUri(url) } }, shape = RoundedCornerShape(14.dp)) { Text("Open browser") }
-                        }
-                    }
+                        },
+                        update = { if (it.url != readerUrl) it.loadUrl(readerUrl) }
+                    )
+                    errorMessage?.let { message -> ReaderFallbackCard(message, url, { retryKey++; webView?.reload() }, Modifier.align(Alignment.TopCenter)) }
                 }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ReaderFallbackCard(message: String, url: String, onPrimary: () -> Unit, modifier: Modifier = Modifier) {
+    val uriHandler = LocalUriHandler.current
+    Card(modifier.padding(20.dp), shape = RoundedCornerShape(24.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh)) {
+        Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
+                Icon(FieldMindIcons.Info, null, tint = MaterialTheme.colorScheme.primary, size = 22.dp)
+                Text("Reader fallback", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            }
+            Text(message, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(url, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2, overflow = TextOverflow.Ellipsis)
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                FilledTonalButton(onClick = onPrimary, shape = RoundedCornerShape(14.dp)) { Text("Retry") }
+                Button(onClick = { runCatching { uriHandler.openUri(url) } }, shape = RoundedCornerShape(14.dp)) { Text("Open externally") }
             }
         }
     }
@@ -1724,21 +1805,23 @@ fun BackupExportScreen(viewModel: FieldMindViewModel) {
     val reports by viewModel.reports.collectAsState()
     val flashcards by viewModel.flashcards.collectAsState()
     val attachmentMode by viewModel.fieldSettings.attachmentExportMode.collectAsState()
-    var pendingText by remember { mutableStateOf("") }
+    var pendingBytes by remember { mutableStateOf(ByteArray(0)) }
     val createDoc = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("text/plain")) { uri ->
-        if (uri == null) scope.launch { snackbar.showSnackbar("Export cancelled.") } else runCatching { context.contentResolver.openOutputStream(uri)?.use { it.write(pendingText.toByteArray()) } }.onSuccess { scope.launch { snackbar.showSnackbar("Export written.") } }.onFailure { scope.launch { snackbar.showSnackbar("Export failed: ${it.localizedMessage}") } }
+        if (uri == null) scope.launch { snackbar.showSnackbar("Export cancelled.") } else runCatching { context.contentResolver.openOutputStream(uri)?.use { it.write(pendingBytes) } }.onSuccess { scope.launch { snackbar.showSnackbar("Export written.") } }.onFailure { scope.launch { snackbar.showSnackbar("Export failed: ${it.localizedMessage}") } }
     }
+    fun queueText(text: String) { pendingBytes = text.toByteArray() }
     Scaffold(snackbarHost = { SnackbarHost(snackbar) }, containerColor = MaterialTheme.colorScheme.background) { padding ->
         LazyColumn(Modifier.fillMaxSize().padding(padding), contentPadding = PaddingValues(20.dp, 20.dp, 20.dp, 96.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
             item { FieldScreenHeader("Backup & export", "Your research notes remain portable and owned by you.", icon = FieldMindIcons.Export) }
             item { EntityCard("Attachment mode", "data", body = "$attachmentMode. Choose a different default in Settings.") }
-            item { ExportRow("Observations CSV", FieldMindIcons.Observation) { pendingText = FieldMindExport.observationsCsv(observations); createDoc.launch("fieldmind-observations.csv") } }
-            item { ExportRow("Data CSV", FieldMindIcons.Data) { pendingText = FieldMindExport.dataCsv(data); createDoc.launch("fieldmind-data.csv") } }
-            item { ExportRow("Sources CSV", FieldMindIcons.Source) { pendingText = FieldMindExport.sourcesCsv(sources); createDoc.launch("fieldmind-sources.csv") } }
-            item { ExportRow("PDF-ready HTML", FieldMindIcons.Article) { pendingText = FieldMindExport.pdfReadyHtml(projects, observations, sources, reports); createDoc.launch("fieldmind-print-export.html") } }
-            item { ExportRow("Dashboard SVG", FieldMindIcons.Graph) { pendingText = FieldMindExport.dashboardSvg(observations, sources, projects, notes); createDoc.launch("fieldmind-dashboard.svg") } }
-            item { ExportRow("Archive JSON", FieldMindIcons.Archive) { pendingText = FieldMindExport.archiveJson(observations, notes, questions, hypotheses, projects, sources, data, reports, flashcards); createDoc.launch("fieldmind-archive.json") } }
-            item { ExportRow("Reports Markdown", FieldMindIcons.Report) { pendingText = reports.joinToString("\n\n---\n\n") { FieldMindExport.buildMarkdownReport(it) }; createDoc.launch("fieldmind-reports.md") } }
+            item { ExportRow("Observations CSV", FieldMindIcons.Observation) { queueText(FieldMindExport.observationsCsv(observations)); createDoc.launch("fieldmind-observations.csv") } }
+            item { ExportRow("Data CSV", FieldMindIcons.Data) { queueText(FieldMindExport.dataCsv(data)); createDoc.launch("fieldmind-data.csv") } }
+            item { ExportRow("Sources CSV", FieldMindIcons.Source) { queueText(FieldMindExport.sourcesCsv(sources)); createDoc.launch("fieldmind-sources.csv") } }
+            item { ExportRow("PDF-ready HTML", FieldMindIcons.Article) { queueText(FieldMindExport.pdfReadyHtml(projects, observations, sources, reports)); createDoc.launch("fieldmind-print-export.html") } }
+            item { ExportRow("Research PDF", FieldMindIcons.Report) { pendingBytes = FieldMindExport.simplePdfBytes("FieldMind Research Export", FieldMindExport.pdfReadyHtml(projects, observations, sources, reports).replace(Regex("<[^>]+>"), " ")); createDoc.launch("fieldmind-research-export.pdf") } }
+            item { ExportRow("Dashboard SVG", FieldMindIcons.Graph) { queueText(FieldMindExport.dashboardSvg(observations, sources, projects, notes)); createDoc.launch("fieldmind-dashboard.svg") } }
+            item { ExportRow("Archive JSON", FieldMindIcons.Archive) { queueText(FieldMindExport.archiveJson(observations, notes, questions, hypotheses, projects, sources, data, reports, flashcards)); createDoc.launch("fieldmind-archive.json") } }
+            item { ExportRow("Reports Markdown", FieldMindIcons.Report) { queueText(reports.joinToString("\n\n---\n\n") { FieldMindExport.buildMarkdownReport(it) }); createDoc.launch("fieldmind-reports.md") } }
         }
     }
 }
@@ -1779,11 +1862,14 @@ fun FieldMindSettingsScreen(viewModel: FieldMindViewModel? = null, onBack: () ->
     val exportFormat by settings.defaultExportFormat.collectAsState()
     val privacy by settings.privacyLockEnabled.collectAsState()
     val dynamicColor by settings.dynamicColorEnabled.collectAsState()
+    val themeMode by settings.themeMode.collectAsState()
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(20.dp, 20.dp, 20.dp, 40.dp), verticalArrangement = Arrangement.spacedBy(20.dp)) {
         item { FieldScreenHeader("Settings", "Capture, appearance, AI, export, and privacy.", icon = FieldMindIcons.Settings, actionIcon = FieldMindIcons.Back, onAction = onBack) }
 
         item {
             SettingsGroup("Appearance") {
+                ChoiceItem("Theme", listOf("System", "Light", "Dark"), themeMode, FieldMindIcons.Palette, settings::setThemeMode)
+                SettingDivider()
                 ToggleItem("Material You dynamic color", "Use system wallpaper colors that auto-adapt to light/dark. Off keeps the FieldMind brand palette.", dynamicColor, settings::setDynamicColorEnabled, FieldMindIcons.Palette)
             }
         }
@@ -1872,13 +1958,13 @@ private fun SettingsExportSection(viewModel: FieldMindViewModel) {
     }
     SettingsGroup("Export data", "Your research notes stay portable and owned by you.") {
         Column(Modifier.padding(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            ExportRow("Observations CSV", FieldMindIcons.Observation) { pendingText = FieldMindExport.observationsCsv(observations); createDoc.launch("fieldmind-observations.csv") }
-            ExportRow("Data CSV", FieldMindIcons.Data) { pendingText = FieldMindExport.dataCsv(data); createDoc.launch("fieldmind-data.csv") }
-            ExportRow("Sources CSV", FieldMindIcons.Source) { pendingText = FieldMindExport.sourcesCsv(sources); createDoc.launch("fieldmind-sources.csv") }
-            ExportRow("PDF-ready HTML", FieldMindIcons.Article) { pendingText = FieldMindExport.pdfReadyHtml(projects, observations, sources, reports); createDoc.launch("fieldmind-print-export.html") }
-            ExportRow("Dashboard SVG", FieldMindIcons.Graph) { pendingText = FieldMindExport.dashboardSvg(observations, sources, projects, notes); createDoc.launch("fieldmind-dashboard.svg") }
-            ExportRow("Archive JSON", FieldMindIcons.Archive) { pendingText = FieldMindExport.archiveJson(observations, notes, questions, hypotheses, projects, sources, data, reports, flashcards); createDoc.launch("fieldmind-archive.json") }
-            ExportRow("Reports Markdown", FieldMindIcons.Report) { pendingText = reports.joinToString("\n\n---\n\n") { FieldMindExport.buildMarkdownReport(it) }; createDoc.launch("fieldmind-reports.md") }
+            ExportRow("Observations CSV", FieldMindIcons.Observation) { queueText(FieldMindExport.observationsCsv(observations)); createDoc.launch("fieldmind-observations.csv") }
+            ExportRow("Data CSV", FieldMindIcons.Data) { queueText(FieldMindExport.dataCsv(data)); createDoc.launch("fieldmind-data.csv") }
+            ExportRow("Sources CSV", FieldMindIcons.Source) { queueText(FieldMindExport.sourcesCsv(sources)); createDoc.launch("fieldmind-sources.csv") }
+            ExportRow("PDF-ready HTML", FieldMindIcons.Article) { queueText(FieldMindExport.pdfReadyHtml(projects, observations, sources, reports)); createDoc.launch("fieldmind-print-export.html") }
+            ExportRow("Dashboard SVG", FieldMindIcons.Graph) { queueText(FieldMindExport.dashboardSvg(observations, sources, projects, notes)); createDoc.launch("fieldmind-dashboard.svg") }
+            ExportRow("Archive JSON", FieldMindIcons.Archive) { queueText(FieldMindExport.archiveJson(observations, notes, questions, hypotheses, projects, sources, data, reports, flashcards)); createDoc.launch("fieldmind-archive.json") }
+            ExportRow("Reports Markdown", FieldMindIcons.Report) { queueText(reports.joinToString("\n\n---\n\n") { FieldMindExport.buildMarkdownReport(it) }); createDoc.launch("fieldmind-reports.md") }
         }
     }
 }
@@ -1890,7 +1976,7 @@ private fun AboutSection() {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
             Text("FieldMind is a free, offline-first research notebook for curious naturalists, students, and citizen scientists.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Text("Credits & acknowledgements", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
-            CreditRow("Rhythm", "The open-source app this project is built upon.", "https://github.com/cromaguy/Rhythm", uriHandler)
+            CreditRow("Open-source Android foundation", "FieldMind is built on a modern Compose app foundation.", "https://developer.android.com/jetpack/compose", uriHandler)
             CreditRow("Material Symbols & Material 3", "Google's icon set and design system.", "https://fonts.google.com/icons", uriHandler)
             CreditRow("Jetpack Compose", "Android's modern declarative UI toolkit.", "https://developer.android.com/jetpack/compose", uriHandler)
             CreditRow("Crossref", "Free scholarly metadata API.", "https://www.crossref.org", uriHandler)
@@ -1919,7 +2005,7 @@ private fun CreditRow(title: String, subtitle: String, url: String, uriHandler: 
 // ══════════════════════════════════════════════════════════════════════
 
 @Composable
-fun DetailScreen(kind: String, id: Long, viewModel: FieldMindViewModel, onBack: () -> Unit, onOpenDetail: (String, Long) -> Unit = { _, _ -> }) {
+fun DetailScreen(kind: String, id: Long, viewModel: FieldMindViewModel, onBack: () -> Unit, onOpenDetail: (String, Long) -> Unit = { _, _ -> }, onOpenReader: (String, String) -> Unit = { _, _ -> }) {
     val observations by viewModel.observations.collectAsState()
     val notes by viewModel.notes.collectAsState()
     val questions by viewModel.questions.collectAsState()
@@ -1938,7 +2024,8 @@ fun DetailScreen(kind: String, id: Long, viewModel: FieldMindViewModel, onBack: 
         if (editable) item { DetailActions(onEdit = { showEdit = true }, onDelete = { showDelete = true }) }
         when (kind) {
             "note" -> notes.firstOrNull { it.id == id }?.let { n ->
-                item { DetailBody(n.title, "note", listOf("Category" to n.category, "Tags" to n.tags, "Body" to n.body, "Attachments" to n.attachmentUris, "Updated" to recentRelativeTime(n.updatedAt))) }
+                item { DetailBody(n.title, "note", listOf("Category" to n.category, "Tags" to n.tags, "Body" to n.body, "Updated" to recentRelativeTime(n.updatedAt))) }
+                item { NoteAttachmentsPanel(n.attachmentUris, onOpenReader) }
                 item { BacklinksPanel(buildList {
                     projects.firstOrNull { it.id == n.projectId }?.let { add(Triple("project", it.title, it.id)) }
                     sources.firstOrNull { it.id == n.sourceId }?.let { add(Triple("source", it.title, it.id)) }
@@ -1947,7 +2034,7 @@ fun DetailScreen(kind: String, id: Long, viewModel: FieldMindViewModel, onBack: 
             "observation" -> observations.firstOrNull { it.id == id }?.let { o ->
                 item { DetailBody(o.subject, "observation", listOf("Date" to "${o.date} ${o.time}", "Category" to o.category, "Confidence" to o.confidenceLevel, "Location" to o.manualLocation.ifBlank { "None" }, "GPS" to (o.latitude?.let { "${o.latitude}, ${o.longitude}" } ?: "Not captured"), "Tags" to o.tags, "Facts" to o.factsOnlyNotes, "Evidence" to o.evidenceSummary, "Context" to o.moodOrContext)) }
                 if (o.latitude != null && o.longitude != null) item { ObservationLocationCard(o.latitude, o.longitude, o.manualLocation) }
-                item { ObservationAttachmentsPanel(viewModel, o.id) }
+                item { ObservationAttachmentsPanel(viewModel, o.id, onOpenReader) }
                 item { BacklinksPanel(buildList {
                     projects.firstOrNull { it.id == o.projectId }?.let { add(Triple("project", it.title, it.id)) }
                     data.filter { it.observationId == o.id }.forEach { add(Triple("data", it.label, it.id)) }
@@ -1978,7 +2065,8 @@ fun DetailScreen(kind: String, id: Long, viewModel: FieldMindViewModel, onBack: 
                 }, onOpenDetail) }
             }
             "source" -> sources.firstOrNull { it.id == id }?.let { s ->
-                item { DetailBody(s.title, "source", listOf("Type" to s.type, "Author" to s.author, "Year" to s.dateOrYear, "DOI / ISBN" to s.doiOrIsbn, "Publisher / journal" to s.publisherOrJournal, "Link" to s.link, "Access date" to s.accessDate, "File" to s.fileUri, "Citation note" to s.citationStyleNote, "Importance" to s.importance, "Reading status" to s.readingStatus, "Project" to (projects.firstOrNull { it.id == s.relatedProjectId }?.title ?: "None"), "Main idea" to s.personalSummary, "Key findings" to s.keyFindings, "Taught me" to s.whatThisSourceTaughtMe, "Paper prompts" to s.paperNotes, "Questions" to s.questionsGenerated)) }
+                item { DetailBody(s.title, "source", listOf("Type" to s.type, "Author" to s.author, "Year" to s.dateOrYear, "DOI / ISBN" to s.doiOrIsbn, "Publisher / journal" to s.publisherOrJournal, "Link" to s.link, "Access date" to s.accessDate, "Citation note" to s.citationStyleNote, "Importance" to s.importance, "Reading status" to s.readingStatus, "Project" to (projects.firstOrNull { it.id == s.relatedProjectId }?.title ?: "None"), "Main idea" to s.personalSummary, "Key findings" to s.keyFindings, "Taught me" to s.whatThisSourceTaughtMe, "Paper prompts" to s.paperNotes, "Questions" to s.questionsGenerated)) }
+                item { SourcePreviewPanel(s, onOpenReader) }
                 item { SourceActionPanel(s, projects, viewModel, onOpenDetail) }
                 item { BacklinksPanel(buildList {
                     projects.firstOrNull { it.id == s.relatedProjectId }?.let { add(Triple("project", it.title, it.id)) }
@@ -2169,7 +2257,7 @@ private fun DetailBody(title: String, kind: String, fields: List<Pair<String, St
 
 /** Evidence gallery for a saved observation: image thumbnails plus file/audio chips. */
 @Composable
-private fun ObservationAttachmentsPanel(viewModel: FieldMindViewModel, observationId: Long) {
+private fun ObservationAttachmentsPanel(viewModel: FieldMindViewModel, observationId: Long, onOpenReader: (String, String) -> Unit = { _, _ -> }) {
     val attachments by viewModel.attachmentsForObservation(observationId).collectAsState(initial = emptyList())
     if (attachments.isEmpty()) return
     val images = attachments.filter { it.type.equals("Photo", true) || it.type.equals("Gallery", true) || it.uri.contains(Regex("\\.(jpg|jpeg|png|webp|gif|heic|bmp)", RegexOption.IGNORE_CASE)) }
@@ -2188,7 +2276,7 @@ private fun ObservationAttachmentsPanel(viewModel: FieldMindViewModel, observati
                                 model = img.uri,
                                 contentDescription = img.caption.ifBlank { "Observation photo" },
                                 contentScale = ContentScale.Crop,
-                                modifier = Modifier.fillMaxWidth().height(140.dp).clip(RoundedCornerShape(16.dp)).background(MaterialTheme.colorScheme.surfaceContainerHighest)
+                                modifier = Modifier.fillMaxWidth().height(140.dp).clip(RoundedCornerShape(16.dp)).background(MaterialTheme.colorScheme.surfaceContainerHighest).clickable { onOpenReader(img.uri, img.caption.ifBlank { "Observation image" }) }
                             )
                             if (img.caption.isNotBlank()) Text(img.caption, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2, overflow = TextOverflow.Ellipsis)
                         }
@@ -2196,7 +2284,7 @@ private fun ObservationAttachmentsPanel(viewModel: FieldMindViewModel, observati
                 }
             }
             others.forEach { att ->
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).clickable { onOpenReader(att.uri, att.caption.ifBlank { att.type }) }.padding(4.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     Box(Modifier.size(38.dp).clip(RoundedCornerShape(12.dp)).background(MaterialTheme.colorScheme.surfaceContainerHighest), contentAlignment = Alignment.Center) {
                         Icon(icon = if (att.type.equals("Audio", true)) FieldMindIcons.Mic else FieldMindIcons.File, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, size = 20.dp)
                     }
@@ -2207,6 +2295,62 @@ private fun ObservationAttachmentsPanel(viewModel: FieldMindViewModel, observati
                 }
             }
         }
+    }
+}
+
+private fun storedAttachmentRows(raw: String): List<DraftEvidenceAttachment> = raw.lines().mapNotNull { line ->
+    val parts = line.split("|")
+    when {
+        parts.size >= 3 -> DraftEvidenceAttachment(parts[0], parts.drop(2).joinToString("|"), parts[1])
+        line.isNotBlank() -> DraftEvidenceAttachment("File", line, "Attachment")
+        else -> null
+    }
+}
+
+private fun uriLooksImage(uri: String): Boolean = uri.contains(Regex("\\.(jpg|jpeg|png|webp|gif|heic|bmp)(\\?.*)?$", RegexOption.IGNORE_CASE))
+private fun uriLooksPdf(uri: String): Boolean = uri.contains(Regex("\\.pdf(\\?.*)?$", RegexOption.IGNORE_CASE))
+
+@Composable
+private fun NoteAttachmentsPanel(raw: String, onOpenReader: (String, String) -> Unit) {
+    val attachments = remember(raw) { storedAttachmentRows(raw) }
+    if (attachments.isEmpty()) return
+    Card(shape = RoundedCornerShape(24.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)) {
+        Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Text("Attachments (${attachments.size})", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            attachments.forEach { att -> AttachmentOpenRow(att.uri, att.caption.ifBlank { att.type }, att.type, onOpenReader) }
+        }
+    }
+}
+
+@Composable
+private fun SourcePreviewPanel(source: SourceEntity, onOpenReader: (String, String) -> Unit) {
+    val target = source.fileUri.ifBlank { source.link }
+    if (target.isBlank()) return
+    Card(shape = RoundedCornerShape(24.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)) {
+        Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Text("Source preview", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            if (source.type.equals("Image", true) || uriLooksImage(target)) {
+                AsyncImage(
+                    model = target,
+                    contentDescription = source.title,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.fillMaxWidth().height(220.dp).clip(RoundedCornerShape(18.dp)).background(MaterialTheme.colorScheme.surfaceContainerHighest).clickable { onOpenReader(target, source.title) }
+                )
+            }
+            AttachmentOpenRow(target, source.title, source.type, onOpenReader)
+        }
+    }
+}
+
+@Composable
+private fun AttachmentOpenRow(uri: String, title: String, type: String, onOpenReader: (String, String) -> Unit) {
+    Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).clickable { onOpenReader(uri, title) }.background(MaterialTheme.colorScheme.surfaceContainerHigh).padding(12.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+        Icon(icon = if (type.equals("Image", true) || type.equals("Gallery", true) || type.equals("Photo", true) || uriLooksImage(uri)) FieldMindIcons.Gallery else FieldMindIcons.File, contentDescription = null, tint = MaterialTheme.colorScheme.primary, size = 22.dp)
+        Column(Modifier.weight(1f)) {
+            Text(title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(uri, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        }
+        Icon(icon = FieldMindIcons.OpenLink, contentDescription = null, size = 18.dp)
     }
 }
 

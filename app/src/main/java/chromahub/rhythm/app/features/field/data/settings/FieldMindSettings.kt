@@ -60,6 +60,10 @@ class FieldMindSettings private constructor(context: Context) {
     /** When true, use Material You wallpaper colors instead of the FieldMind brand palette. */
     val dynamicColorEnabled: StateFlow<Boolean> = _dynamicColorEnabled.asStateFlow()
 
+    private val _themeMode = MutableStateFlow(prefs.getString(KEY_THEME_MODE, "System") ?: "System")
+    /** System, Light, or Dark. MainActivity observes this so Settings has an immediate theme toggle. */
+    val themeMode: StateFlow<String> = _themeMode.asStateFlow()
+
     fun setDailyObservationGoal(value: Int) = edit(KEY_DAILY_GOAL, value.coerceAtLeast(0)) { _dailyObservationGoal.value = value.coerceAtLeast(0) }
     fun setDefaultCategory(value: String) = edit(KEY_DEFAULT_CATEGORY, value) { _defaultCategory.value = value }
     fun setDefaultConfidence(value: String) = edit(KEY_DEFAULT_CONFIDENCE, value) { _defaultConfidence.value = value }
@@ -77,6 +81,7 @@ class FieldMindSettings private constructor(context: Context) {
     fun setDefaultExportFormat(value: String) = edit(KEY_EXPORT_FORMAT, value) { _defaultExportFormat.value = value }
     fun setPrivacyLockEnabled(value: Boolean) = edit(KEY_PRIVACY_LOCK, value) { _privacyLockEnabled.value = value }
     fun setDynamicColorEnabled(value: Boolean) = edit(KEY_DYNAMIC_COLOR, value) { _dynamicColorEnabled.value = value }
+    fun setThemeMode(value: String) = edit(KEY_THEME_MODE, value) { _themeMode.value = value }
 
     private inline fun edit(key: String, value: String, after: () -> Unit) { prefs.edit().putString(key, value).apply(); after() }
     private inline fun edit(key: String, value: Boolean, after: () -> Unit) { prefs.edit().putBoolean(key, value).apply(); after() }
@@ -105,5 +110,6 @@ class FieldMindSettings private constructor(context: Context) {
         private const val KEY_EXPORT_FORMAT = "export_format"
         private const val KEY_PRIVACY_LOCK = "privacy_lock"
         private const val KEY_DYNAMIC_COLOR = "dynamic_color"
+        private const val KEY_THEME_MODE = "theme_mode"
     }
 }

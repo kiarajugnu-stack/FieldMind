@@ -1,6 +1,8 @@
 package chromahub.rhythm.app.activities
 
 import android.os.Build
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -46,6 +48,7 @@ class MainActivity : FragmentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         appSettings = AppSettings.getInstance(applicationContext)
+        handleSharedSource(intent)
 
         setContent {
             val useSystemTheme by themeViewModel.useSystemTheme.collectAsState()
@@ -58,7 +61,12 @@ class MainActivity : FragmentActivity() {
             val customFontPath by appSettings.customFontPath.collectAsState()
             val colorSource by appSettings.colorSource.collectAsState()
             val extractedAlbumColors by appSettings.extractedAlbumColors.collectAsState()
-            val isDarkTheme = if (useSystemTheme) isSystemInDarkTheme() else darkMode
+            val fieldThemeMode by fieldMindViewModel.fieldSettings.themeMode.collectAsState()
+            val isDarkTheme = when (fieldThemeMode) {
+                "Light" -> false
+                "Dark" -> true
+                else -> if (useSystemTheme) isSystemInDarkTheme() else darkMode
+            }
 
             RhythmTheme(
                 darkTheme = isDarkTheme,
@@ -85,4 +93,61 @@ class MainActivity : FragmentActivity() {
             }
         }
     }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        handleSharedSource(intent)
+    }
+
+    private fun handleSharedSource(intent: Intent?) {
+        if (intent == null) return
+        when (intent.action) {
+            Intent.ACTION_SEND -> {
+                val text = intent.getStringExtra(Intent.EXTRA_TEXT).orEmpty()
+                val title = intent.getStringExtra(Intent.EXTRA_TITLE)
+                    ?: intent.getStringExtra(Intent.EXTRA_SUBJECT)
+                    ?: text.lineSequence().firstOrNull()?.take(80)
+                    ?: "Shared source"
+                val stream = intent.getParcelableExtra<Uri>(Intent.EXTRA_STREAM)
+                stream?.let { runCatching { contentResolver.takePersistableUriPermission(it, Intent.FLAG_GRANT_READ_URI_PERMISSION) } }
+                val mime = intent.type.orEmpty()
+                fieldMindViewModel.addSource(
+                    type = when {
+                        mime.startsWith("image/") -> "Image"
+                        mime == "application/pdf" -> "PDF"
+                        stream != null -> "Local document"
+                        text.startsWith("http", ignoreCase = true) -> "Website"
+                        else -> "Note"
+                    },
+                    title = title.ifBlank { "Shared source" },
+                    author = "",
+                    link = if (stream == null && text.startsWith("http", ignoreCase = true)) text else "",
+                    summary = if (stream == null && !text.startsWith("http", ignoreCase = true)) text else "Shared into FieldMind from another app.",
+                    taught = "",
+                    reliability = 3,
+                    fileUri = stream?.toString().orEmpty(),
+                    readingStatus = "Not started"
+                )
+            }
+            Intent.ACTION_SEND_MULTIPLE -> {
+                val streams = intent.getParcelableArrayListExtra<Uri>(Intent.EXTRA_STREAM).orEmpty()
+                streams.forEachIndexed { index, uri ->
+                    runCatching { contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION) }
+                    fieldMindViewModel.addSource(
+                        type = if (intent.type.orEmpty().startsWith("image/")) "Image" else "Local document",
+                        title = "Shared source ${index + 1}",
+                        author = "",
+                        link = "",
+                        summary = "Shared into FieldMind from another app.",
+                        taught = "",
+                        reliability = 3,
+                        fileUri = uri.toString(),
+                        readingStatus = "Not started"
+                    )
+                }
+            }
+        }
+    }
+
 }

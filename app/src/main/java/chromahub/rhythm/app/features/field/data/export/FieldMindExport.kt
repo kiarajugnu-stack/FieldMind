@@ -1,5 +1,8 @@
 package chromahub.rhythm.app.features.field.data.export
 
+import android.graphics.Paint
+import android.graphics.pdf.PdfDocument
+import java.io.ByteArrayOutputStream
 import chromahub.rhythm.app.features.field.data.database.entity.*
 
 object FieldMindExport {
@@ -77,6 +80,29 @@ ${report.nextSteps}
         appendLine("<h2>Reports</h2>")
         reports.forEach { report -> appendLine("<div class=\"card\"><pre>${html(buildMarkdownReport(report))}</pre></div>") }
         appendLine("</body></html>")
+    }
+
+    fun simplePdfBytes(title: String, body: String): ByteArray {
+        val document = PdfDocument()
+        val paint = Paint().apply { textSize = 12f; isAntiAlias = true }
+        val titlePaint = Paint(paint).apply { textSize = 20f; isFakeBoldText = true }
+        val lines = body.lines().flatMap { line -> line.chunked(92).ifEmpty { listOf("") } }
+        var pageNumber = 1
+        var index = 0
+        do {
+            val page = document.startPage(PdfDocument.PageInfo.Builder(595, 842, pageNumber).create())
+            val canvas = page.canvas
+            var y = 48f
+            if (pageNumber == 1) { canvas.drawText(title, 40f, y, titlePaint); y += 34f }
+            while (index < lines.size && y < 800f) {
+                canvas.drawText(lines[index], 40f, y, paint)
+                y += 17f
+                index++
+            }
+            document.finishPage(page)
+            pageNumber++
+        } while (index < lines.size)
+        return ByteArrayOutputStream().use { out -> document.writeTo(out); document.close(); out.toByteArray() }
     }
 
     fun dashboardSvg(observations: List<ObservationEntity>, sources: List<SourceEntity>, projects: List<ProjectEntity>, notes: List<NoteEntity>): String = """
