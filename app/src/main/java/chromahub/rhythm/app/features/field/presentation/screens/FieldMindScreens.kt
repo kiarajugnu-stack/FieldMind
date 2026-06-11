@@ -10,82 +10,135 @@ import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
+import coil.compose.AsyncImage
+import chromahub.rhythm.app.features.field.data.ai.AssistantTask
 import chromahub.rhythm.app.features.field.data.ai.GeminiResearchAssistant
 import chromahub.rhythm.app.features.field.data.database.entity.*
 import chromahub.rhythm.app.features.field.data.export.FieldMindExport
+import chromahub.rhythm.app.features.field.data.learn.LearnCategory
+import chromahub.rhythm.app.features.field.data.learn.LearnLibrary
+import chromahub.rhythm.app.features.field.data.learn.SuggestedOnlineApis
 import chromahub.rhythm.app.features.field.data.location.CapturedLocation
 import chromahub.rhythm.app.features.field.data.location.FieldLocationProvider
 import chromahub.rhythm.app.features.field.presentation.components.*
 import chromahub.rhythm.app.features.field.presentation.navigation.FieldMindScreen
+import chromahub.rhythm.app.features.field.presentation.theme.FieldMindTheme
 import chromahub.rhythm.app.features.field.presentation.viewmodel.DraftEvidenceAttachment
 import chromahub.rhythm.app.features.field.presentation.viewmodel.FieldMindViewModel
+import chromahub.rhythm.app.shared.presentation.components.icons.Icon
+import chromahub.rhythm.app.shared.presentation.components.icons.MaterialSymbolIcon
 import kotlinx.coroutines.launch
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-private val observationCategories = listOf("Bird", "Animal", "Insect", "Plant", "Rock", "Weather", "Water", "Human Behavior", "Reading Insight", "Other")
-private val confidenceOptions = listOf("Sure", "Guess", "Needs Verification")
+internal val observationCategories = listOf("Bird", "Animal", "Insect", "Plant", "Rock", "Weather", "Water", "Human Behavior", "Reading Insight", "Other")
+internal val confidenceOptions = listOf("Sure", "Guess", "Needs Verification")
 private val sourceTypes = listOf("Observation", "Reading", "Video", "Thought", "Discussion")
 private val questionStatuses = listOf("New", "Researching", "Tested", "Answered", "Abandoned")
 private val sourceLibraryTypes = listOf("Article", "Paper", "Book", "Video", "Website", "PDF", "Note")
 private val dataTools = listOf("Counter", "Measurement Log", "Checklist", "Event Log", "Weather Log", "Site Log", "Species Tracker", "Comparison Table")
 private val reportTypes = listOf("Summary", "Field Report", "Literature Review", "Project Draft", "Findings Note", "Final Report")
-private val learningModules = listOf(
+internal val learningModules = listOf(
     "Beginner" to listOf("Scientific thinking", "Observation", "Note-taking", "Identifying bias", "Basic biology", "Basic geology", "Reading graphs", "Asking testable questions", "Variables", "Simple data collection"),
     "Intermediate" to listOf("Research design", "Sampling", "Comparison", "Classification", "Literature review", "Writing summaries", "Data interpretation"),
     "Advanced" to listOf("Proposal writing", "Structured projects", "Analysis", "Citations", "Presentation", "Field methods", "Ethics")
 )
 
+private fun today(): String = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
+
+// ══════════════════════════════════════════════════════════════════════
+//  Onboarding
+// ══════════════════════════════════════════════════════════════════════
+
 @Composable
 fun FieldMindOnboardingScreen(onFinish: () -> Unit) {
     var step by remember { mutableIntStateOf(0) }
     val pages = listOf(
-        "Welcome to FieldMind" to "A local-first research notebook for Observe → Question → Research → Hypothesize → Collect Data → Analyze → Conclude → Archive.",
-        "Research begins with evidence" to "Capture facts, media, location, questions, and confidence without inventing conclusions.",
-        "Build projects" to "Turn repeated curiosity into objectives, methods, data, sources, reports, and next steps.",
-        "Optional AI" to "Gemini can assist only after you add a key and confirm what to send. AI suggestions are previews, never automatic truth.",
-        "Own your work" to "Everything core works offline and can be exported as Markdown, CSV, JSON, or plain text."
+        Triple(FieldMindIcons.Nature, "Welcome to FieldMind", "A local-first research notebook for Observe → Question → Research → Hypothesize → Collect Data → Analyze → Conclude → Archive."),
+        Triple(FieldMindIcons.Observation, "Research begins with evidence", "Capture facts, media, location, questions, and confidence without inventing conclusions."),
+        Triple(FieldMindIcons.Project, "Build projects", "Turn repeated curiosity into objectives, methods, data, sources, reports, and next steps."),
+        Triple(FieldMindIcons.Bolt, "Capture in two taps", "Field mode logs an observation instantly with one big button, so you never miss a moment outdoors."),
+        Triple(FieldMindIcons.Export, "Own your work", "Everything core works offline and can be exported as Markdown, CSV, JSON, or plain text.")
     )
     Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         Column(Modifier.fillMaxSize().padding(24.dp), verticalArrangement = Arrangement.SpaceBetween) {
-            Column(Modifier.padding(top = 40.dp), verticalArrangement = Arrangement.spacedBy(20.dp)) {
-                EntityTypeBadge("Setup ${step + 1}/${pages.size}")
-                Text(pages[step].first, style = MaterialTheme.typography.displaySmall, fontWeight = FontWeight.Bold)
-                Text(pages[step].second, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                ResearchCard("Field notebook rhythm", "Home for direction, Observe for fast evidence, Projects for structure, Library for sources, Learn for skill growth.", "Rhythm UI")
+            Column(Modifier.padding(top = 48.dp), verticalArrangement = Arrangement.spacedBy(20.dp)) {
+                Box(
+                    Modifier.size(72.dp).background(MaterialTheme.colorScheme.primaryContainer, RoundedCornerShape(22.dp)),
+                    contentAlignment = Alignment.Center
+                ) { Icon(icon = pages[step].first, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimaryContainer, size = 38.dp) }
+                Text("Step ${step + 1} of ${pages.size}", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.SemiBold)
+                Text(pages[step].second, style = MaterialTheme.typography.displaySmall, fontWeight = FontWeight.Bold)
+                Text(pages[step].third, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                OutlinedButton(onClick = onFinish, Modifier.weight(1f)) { Text("Skip") }
-                Button(onClick = { if (step < pages.lastIndex) step++ else onFinish() }, Modifier.weight(1f)) { Text(if (step < pages.lastIndex) "Next" else "Enter") }
+            Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    pages.indices.forEach { i ->
+                        Box(
+                            Modifier
+                                .height(6.dp)
+                                .weight(1f)
+                                .background(
+                                    if (i <= step) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceContainerHighest,
+                                    RoundedCornerShape(3.dp)
+                                )
+                        )
+                    }
+                }
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    OutlinedButton(onClick = onFinish, Modifier.weight(1f)) { Text("Skip") }
+                    Button(onClick = { if (step < pages.lastIndex) step++ else onFinish() }, Modifier.weight(1f)) { Text(if (step < pages.lastIndex) "Next" else "Enter") }
+                }
             }
         }
     }
 }
 
+// ══════════════════════════════════════════════════════════════════════
+//  Today (Home)
+// ══════════════════════════════════════════════════════════════════════
+
 @Composable
-fun HomeScreen(viewModel: FieldMindViewModel, onOpenSettings: () -> Unit, onNavigate: (FieldMindScreen) -> Unit) {
+fun HomeScreen(
+    viewModel: FieldMindViewModel,
+    onOpenSettings: () -> Unit,
+    onNavigate: (FieldMindScreen) -> Unit,
+    onOpenDetail: (String, Long) -> Unit = { _, _ -> }
+) {
     val observations by viewModel.observations.collectAsState()
     val questions by viewModel.questions.collectAsState()
     val projects by viewModel.projects.collectAsState()
@@ -95,37 +148,251 @@ fun HomeScreen(viewModel: FieldMindViewModel, onOpenSettings: () -> Unit, onNavi
     val data by viewModel.dataRecords.collectAsState()
     val tags by viewModel.commonTags.collectAsState()
     val goal by viewModel.fieldSettings.dailyObservationGoal.collectAsState()
-    val today = remember { SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date()) }
-    val todayCount = observations.count { it.date == today }
-    LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(20.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
-        item { FieldMindTopBar("FieldMind", "Observe. Question. Research clearly.", action = "Settings", onAction = onOpenSettings) }
-        item { FieldProgressCard("Today’s observation", "$todayCount / $goal logged", todayCount >= goal, onClick = { onNavigate(FieldMindScreen.Observe) }) }
-        item { ResearchCard(projects.firstOrNull { it.status == "Active" }?.title ?: "Start a local research project", projects.firstOrNull()?.objective?.ifBlank { "Projects collect questions, observations, sources, data, reports, and next steps." } ?: "Create a project when curiosity becomes repeated work.", "Current project", onClick = { onNavigate(FieldMindScreen.Projects) }) }
-        item { Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) { StatPill("Observations", observations.size.toString(), Modifier.weight(1f)); StatPill("Questions", questions.count { it.status != "Answered" }.toString(), Modifier.weight(1f)); StatPill("Sources", sources.size.toString(), Modifier.weight(1f)) } }
-        item { Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) { StatPill("Data", data.size.toString(), Modifier.weight(1f)); StatPill("Reports", reports.size.toString(), Modifier.weight(1f)); StatPill("Cards", flashcards.size.toString(), Modifier.weight(1f)) } }
-        item { FieldSectionTitle("Quick add", "Every shortcut opens a real workflow.") }
-        item { ActionGrid(listOf("Today’s observation" to FieldMindScreen.Observe, "Field mode" to FieldMindScreen.FieldMode, "New project" to FieldMindScreen.Projects, "Add source" to FieldMindScreen.Library, "Question bank" to FieldMindScreen.Questions, "Search archive" to FieldMindScreen.Search)) { onNavigate(it) } }
-        item { FieldSectionTitle("Reading progress") }
-        item { ResearchCard("${sources.count { it.readingStatus == "Finished" }} finished • ${sources.count { it.readingStatus != "Finished" }} in progress", sources.firstOrNull()?.title ?: "Save articles, PDFs, books, videos, and notes with active reading prompts.", "Library", onClick = { onNavigate(FieldMindScreen.Library) }) }
-        item { FieldSectionTitle("Patterns", "Simple offline analysis from your archive.") }
-        item { ResearchCard("Top tag: ${tags.firstOrNull()?.name ?: "None yet"}", "Common tags, repeated subjects, pending questions, and project progress appear as your archive grows.", "Analysis", onClick = { onNavigate(FieldMindScreen.Analysis) }) }
-        item { FieldSectionTitle("Recent notes") }
-        val activity = buildList { observations.take(3).forEach { add(Triple(it.subject, "${it.category} • ${it.date} ${it.time}", "Observation")) }; questions.take(2).forEach { add(Triple(it.questionText, "${it.status} • ${it.priority}", "Question")) }; reports.take(1).forEach { add(Triple(it.title, it.type, "Report")) } }
-        if (activity.isEmpty()) item { EmptyResearchState("No activity yet", "Start with one factual observation. Small notes become research when you can revisit them.") } else items(activity) { TimelineItem(it.first, it.second, it.third) }
+    val todayKey = remember { today() }
+    val todayCount = observations.count { it.date == todayKey }
+    val activeProject = projects.firstOrNull { it.status == "Active" } ?: projects.firstOrNull()
+
+    LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(20.dp, 20.dp, 20.dp, 96.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
+        item { FieldScreenHeader("FieldMind", "Observe. Question. Research clearly.", icon = FieldMindIcons.Nature, actionIcon = FieldMindIcons.Settings, onAction = onOpenSettings) }
+        item { DailyGoalCard(todayCount, goal, observations.map { it.date }.distinct().size) { onNavigate(FieldMindScreen.Observe) } }
+        item {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                MetricTile("Observations", observations.size.toString(), FieldMindIcons.Observation, Modifier.weight(1f), FieldMindTheme.colors.observation, onClick = { onNavigate(FieldMindScreen.Observe) })
+                MetricTile("Open questions", questions.count { it.status != "Answered" }.toString(), FieldMindIcons.Question, Modifier.weight(1f), FieldMindTheme.colors.question, onClick = { onNavigate(FieldMindScreen.Questions) })
+                MetricTile("Sources", sources.size.toString(), FieldMindIcons.Source, Modifier.weight(1f), FieldMindTheme.colors.source, onClick = { onNavigate(FieldMindScreen.Library) })
+            }
+        }
+        item { SectionHeader("Quick add", "Every shortcut opens a real workflow.") }
+        item {
+            QuickActionGrid(
+                listOf(
+                    QuickAction("New observation", FieldMindIcons.Observation, FieldMindTheme.colors.observation, FieldMindScreen.Observe),
+                    QuickAction("Field mode", FieldMindIcons.Bolt, FieldMindTheme.colors.warning, FieldMindScreen.FieldMode),
+                    QuickAction("New project", FieldMindIcons.Project, FieldMindTheme.colors.project, FieldMindScreen.Projects),
+                    QuickAction("Add source", FieldMindIcons.Source, FieldMindTheme.colors.source, FieldMindScreen.Library),
+                    QuickAction("Question bank", FieldMindIcons.Question, FieldMindTheme.colors.question, FieldMindScreen.Questions),
+                    QuickAction("Search archive", FieldMindIcons.Search, FieldMindTheme.colors.info, FieldMindScreen.Search)
+                ),
+                onNavigate
+            )
+        }
+        if (activeProject != null) {
+            item { SectionHeader("Current project") }
+            item {
+                EntityCard(
+                    title = activeProject.title,
+                    kind = "project",
+                    body = activeProject.objective.ifBlank { activeProject.researchQuestion.ifBlank { "Open the project workspace." } },
+                    meta = listOf(activeProject.status, activeProject.topicType),
+                    onClick = { onOpenDetail("project", activeProject.id) }
+                )
+            }
+        }
+        item { SectionHeader("Reading & review", "${sources.count { it.readingStatus == "Finished" }} finished • ${flashcards.size} cards") }
+        item {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                MetricTile("Reports", reports.size.toString(), FieldMindIcons.Report, Modifier.weight(1f), FieldMindTheme.colors.report, onClick = { onNavigate(FieldMindScreen.Reports) })
+                MetricTile("Data", data.size.toString(), FieldMindIcons.Data, Modifier.weight(1f), FieldMindTheme.colors.data, onClick = { onNavigate(FieldMindScreen.DataTools) })
+                MetricTile("Flashcards", flashcards.size.toString(), FieldMindIcons.Flashcard, Modifier.weight(1f), FieldMindTheme.colors.flashcard, onClick = { onNavigate(FieldMindScreen.Library) })
+            }
+        }
+        item { SectionHeader("Recent activity", if (tags.isNotEmpty()) "Top tag: ${tags.first().name}" else null) }
+        val activity = buildList {
+            observations.take(4).forEach { add(Triple("observation", it.subject, "${it.category} • ${it.date} ${it.time}") to it.id) }
+            questions.take(2).forEach { add(Triple("question", it.questionText, "${it.status} • ${it.priority}") to it.id) }
+        }
+        if (activity.isEmpty()) {
+            item { EmptyState("No activity yet", "Start with one factual observation. Small notes become research when you can revisit them.", icon = FieldMindIcons.Observation, actionLabel = "Add observation") { onNavigate(FieldMindScreen.Observe) } }
+        } else {
+            items(activity) { (entry, id) ->
+                val (kind, title, sub) = entry
+                EntityCard(title = title, kind = kind, body = sub, onClick = { onOpenDetail(kind, id) })
+            }
+        }
     }
 }
 
 @Composable
-fun ObserveScreen(viewModel: FieldMindViewModel, onOpenDetail: (String, Long) -> Unit = { _, _ -> }, compactFieldMode: Boolean = false) {
+private fun DailyGoalCard(todayCount: Int, goal: Int, sessions: Int, onClick: () -> Unit) {
+    val complete = todayCount >= goal && goal > 0
+    Card(
+        Modifier.fillMaxWidth().clickable(onClick = onClick).animateContentSize(),
+        shape = RoundedCornerShape(28.dp),
+        colors = CardDefaults.cardColors(containerColor = if (complete) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainerLow),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Row(Modifier.padding(20.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(18.dp)) {
+            ProgressRing(
+                progress = if (goal > 0) todayCount.toFloat() / goal else 0f,
+                centerValue = "$todayCount/$goal",
+                caption = "today",
+                color = if (complete) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.primary,
+                size = 92.dp
+            )
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Text(if (complete) "Daily goal met" else "Today's observations", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                Text(
+                    if (complete) "Great discipline — keep the streak going." else "Log $goal observation${if (goal == 1) "" else "s"} to hit today's goal.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = if (complete) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Icon(icon = FieldMindIcons.Streak, contentDescription = null, tint = FieldMindTheme.colors.warning, size = 16.dp)
+                    Text("$sessions active day${if (sessions == 1) "" else "s"} logged", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+        }
+    }
+}
+
+private data class QuickAction(val label: String, val icon: MaterialSymbolIcon, val color: androidx.compose.ui.graphics.Color, val screen: FieldMindScreen)
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun QuickActionGrid(actions: List<QuickAction>, onNavigate: (FieldMindScreen) -> Unit) {
+    FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalArrangement = Arrangement.spacedBy(12.dp), maxItemsInEachRow = 3) {
+        actions.forEach { action ->
+            Card(
+                modifier = Modifier
+                    .weight(1f)
+                    .clickable { onNavigate(action.screen) },
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+            ) {
+                Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Box(
+                        Modifier.size(38.dp).background(action.color.copy(alpha = if (FieldMindTheme.colors.isDark) 0.22f else 0.14f), RoundedCornerShape(12.dp)),
+                        contentAlignment = Alignment.Center
+                    ) { Icon(icon = action.icon, contentDescription = null, tint = action.color, size = 20.dp) }
+                    Text(action.label, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Medium, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                }
+            }
+        }
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════════
+//  Capture / Field mode
+// ══════════════════════════════════════════════════════════════════════
+
+@Composable
+fun ObserveScreen(
+    viewModel: FieldMindViewModel,
+    onOpenDetail: (String, Long) -> Unit = { _, _ -> },
+    compactFieldMode: Boolean = false,
+    onBack: (() -> Unit)? = null
+) {
+    if (compactFieldMode) { FieldModeScreen(viewModel, onBack ?: {}); return }
     val observations by viewModel.observations.collectAsState()
-    var showCapture by remember { mutableStateOf(compactFieldMode) }
-    LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        item { FieldMindTopBar(if (compactFieldMode) "Field mode" else "Observe", if (compactFieldMode) "Fast capture outside with minimal friction." else "Journal facts, evidence, confidence, location, and tags.") }
-        item { Button(onClick = { showCapture = !showCapture }, modifier = Modifier.fillMaxWidth()) { Text(if (showCapture) "Hide capture form" else if (compactFieldMode) "One-tap field note" else "New observation") } }
-        if (showCapture) item { ObservationCaptureCard(viewModel = viewModel, compact = compactFieldMode) { showCapture = compactFieldMode } }
-        item { FieldSectionTitle("Observation journal", "${observations.size} saved entries") }
-        if (observations.isEmpty()) item { EmptyResearchState("No observations yet", "Capture subject, facts, evidence, location, context, confidence, and tags.") }
-        items(observations) { item -> ResearchCard(item.subject, "${item.category} • ${item.confidenceLevel} • ${item.date} ${item.time}\n${item.manualLocation.ifBlank { "No manual place" }}${if (item.latitude != null) " • GPS saved" else ""}\n${item.factsOnlyNotes.take(140)}", "Observation") { onOpenDetail("observation", item.id) } }
+    var showCapture by remember { mutableStateOf(false) }
+    LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(20.dp, 20.dp, 20.dp, 96.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        item { FieldScreenHeader("Capture", "Journal facts, evidence, confidence, location, and tags.", icon = FieldMindIcons.Capture) }
+        item {
+            Button(onClick = { showCapture = !showCapture }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp)) {
+                Icon(icon = if (showCapture) FieldMindIcons.Close else FieldMindIcons.Add, contentDescription = null, size = 20.dp)
+                Spacer(Modifier.size(8.dp))
+                Text(if (showCapture) "Hide capture form" else "New observation")
+            }
+        }
+        if (showCapture) item { ObservationCaptureCard(viewModel = viewModel, compact = false) { showCapture = false } }
+        item { SectionHeader("Observation journal", "${observations.size} saved ${if (observations.size == 1) "entry" else "entries"}") }
+        if (observations.isEmpty()) item { EmptyState("No observations yet", "Capture subject, facts, evidence, location, context, confidence, and tags.", icon = FieldMindIcons.Observation, actionLabel = "Add the first one") { showCapture = true } }
+        items(observations) { item ->
+            EntityCard(
+                title = item.subject,
+                kind = "observation",
+                body = item.factsOnlyNotes.take(140).ifBlank { "No factual notes recorded." },
+                confidence = item.confidenceLevel,
+                meta = buildList {
+                    add(item.category)
+                    add("${item.date} ${item.time}")
+                    if (item.manualLocation.isNotBlank()) add(item.manualLocation)
+                    if (item.latitude != null) add("GPS")
+                },
+                onClick = { onOpenDetail("observation", item.id) }
+            )
+        }
+    }
+}
+
+/** Two-tap field capture: one big button per observation type, instant save with undo. */
+@Composable
+private fun FieldModeScreen(viewModel: FieldMindViewModel, onBack: () -> Unit) {
+    val snackbar = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
+    val defaultConfidence by viewModel.fieldSettings.defaultConfidence.collectAsState()
+    var showFull by remember { mutableStateOf(false) }
+    Scaffold(
+        containerColor = MaterialTheme.colorScheme.background,
+        snackbarHost = { SnackbarHost(snackbar) }
+    ) { padding ->
+        LazyColumn(
+            Modifier.fillMaxSize().padding(padding),
+            contentPadding = PaddingValues(20.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            item { FieldScreenHeader("Field mode", "One tap logs an observation. Add details later.", icon = FieldMindIcons.Bolt, actionIcon = FieldMindIcons.Close, onAction = onBack) }
+            if (showFull) {
+                item { ObservationCaptureCard(viewModel = viewModel, compact = true) { showFull = false } }
+            } else {
+                item {
+                    Text("Tap a type to save instantly", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                }
+                items(observationCategories.chunked(2)) { row ->
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        row.forEach { category ->
+                            FieldModeButton(category, Modifier.weight(1f)) {
+                                viewModel.addObservation(
+                                    subject = category,
+                                    category = category,
+                                    facts = "Quick field capture — add details later.",
+                                    confidence = defaultConfidence,
+                                    manualLocation = "",
+                                    tags = "",
+                                    evidence = "",
+                                    context = ""
+                                ) { savedId ->
+                                    scope.launch {
+                                        val result = snackbar.showSnackbar("Saved $category", actionLabel = "Undo", duration = SnackbarDuration.Short)
+                                        if (result == SnackbarResult.ActionPerformed) viewModel.archiveObservation(savedId)
+                                    }
+                                }
+                            }
+                        }
+                        if (row.size == 1) Spacer(Modifier.weight(1f))
+                    }
+                }
+                item {
+                    OutlinedButton(onClick = { showFull = true }, Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp)) {
+                        Icon(icon = FieldMindIcons.Edit, contentDescription = null, size = 18.dp)
+                        Spacer(Modifier.size(8.dp))
+                        Text("Add full details instead")
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun FieldModeButton(category: String, modifier: Modifier = Modifier, onClick: () -> Unit) {
+    val accent = FieldMindTheme.colors.accentFor("observation")
+    Card(
+        modifier = modifier.height(104.dp).clickable(onClick = onClick),
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Column(Modifier.fillMaxSize().padding(horizontal = 12.dp, vertical = 14.dp), verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterVertically), horizontalAlignment = Alignment.CenterHorizontally) {
+            Box(
+                Modifier.size(44.dp).clip(CircleShape).background(accent.copy(alpha = 0.16f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(icon = FieldMindIcons.iconForCategory(category), contentDescription = null, tint = accent, size = 24.dp)
+            }
+            Text(category, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis, textAlign = TextAlign.Center)
+        }
     }
 }
 
@@ -154,12 +421,33 @@ private fun ObservationCaptureCard(viewModel: FieldMindViewModel, compact: Boole
     var recorder by remember { mutableStateOf<MediaRecorder?>(null) }
     var audioFile by remember { mutableStateOf<File?>(null) }
     var recording by remember { mutableStateOf(false) }
+    var recordSeconds by remember { mutableIntStateOf(0) }
+    var locating by remember { mutableStateOf(false) }
+    val locationProvider = remember { FieldLocationProvider(context) }
+
+    val startLocating = {
+        locating = true
+        locationProvider.requestCurrentLocation { captured ->
+            locating = false
+            if (captured != null) {
+                capturedLocation = captured
+                manualLocation = captured.asDisplayText()
+            }
+            scope.launch { snackbar.showSnackbar(captured?.let { "Location captured." } ?: "Couldn't get a fix. Check that location is on, then try again or type a place.") }
+        }
+    }
+
+    LaunchedEffect(recording) {
+        if (recording) {
+            recordSeconds = 0
+            while (recording) { kotlinx.coroutines.delay(1000); recordSeconds++ }
+        }
+    }
 
     val cameraPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
         if (granted) {
             val uri = createFieldMindFileUri(context, "photo", ".jpg")
             pendingPhotoUri = uri
-            // launched by effect below to keep launcher stable
         } else scope.launch { snackbar.showSnackbar("Camera permission denied. Text notes and gallery/file attachments still work.") }
     }
     val takePicture = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { saved ->
@@ -182,12 +470,8 @@ private fun ObservationCaptureCard(viewModel: FieldMindViewModel, compact: Boole
     }
     val locationPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { result ->
         val granted = result.values.any { it }
-        if (granted) {
-            val captured = FieldLocationProvider(context).lastKnownLocation()
-            capturedLocation = captured
-            manualLocation = captured?.asDisplayText().orEmpty()
-            scope.launch { snackbar.showSnackbar(captured?.let { "Location captured." } ?: "Permission granted, but no recent device location was available. Enter a place manually.") }
-        } else scope.launch { snackbar.showSnackbar("Location denied. Manual place names remain available.") }
+        if (granted) startLocating()
+        else scope.launch { snackbar.showSnackbar("Location denied. Manual place names remain available.") }
     }
     val audioPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
         if (granted) {
@@ -210,229 +494,1082 @@ private fun ObservationCaptureCard(viewModel: FieldMindViewModel, compact: Boole
         } else scope.launch { snackbar.showSnackbar("Audio permission denied.") }
     }
 
-    Scaffold(snackbarHost = { SnackbarHost(snackbar) }) { padding ->
-        Card(shape = RoundedCornerShape(30.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer), modifier = Modifier.padding(padding).fillMaxWidth()) {
-            Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-                FieldSectionTitle(if (compact) "Quick field note" else "New observation", "Date/time are saved automatically. Separate facts from interpretation.")
-                LabeledTextField(subject, { subject = it }, "Subject", supportingText = "Example: Crow on wire")
-                if (!compact) ChoiceChips(observationCategories, category) { category = it }
-                LabeledTextField(facts, { facts = it }, "Facts-only notes", minLines = if (compact) 3 else 6, supportingText = "Write only what you saw/heard/measured. Put guesses in a question or hypothesis.")
-                if (!compact) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        SnackbarHost(snackbar)
+        Card(shape = RoundedCornerShape(28.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow), modifier = Modifier.fillMaxWidth()) {
+            Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Box(Modifier.size(44.dp).clip(RoundedCornerShape(14.dp)).background(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)), contentAlignment = Alignment.Center) {
+                        Icon(icon = FieldMindIcons.Observation, contentDescription = null, tint = MaterialTheme.colorScheme.primary, size = 24.dp)
+                    }
+                    Column(Modifier.weight(1f)) {
+                        Text(if (compact) "Quick field note" else "New observation", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                        Text("Date and time are stamped automatically.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                }
+
+                CaptureStep("Subject", "What did you observe, and how sure are you?", FieldMindIcons.iconForCategory(category)) {
+                    FieldTextField(subject, { subject = it }, "Subject", supportingText = "Example: Crow on wire")
+                    if (!compact) {
+                        Text("Category", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        ChoiceChips(observationCategories, category) { category = it }
+                    }
+                    Text("Confidence", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     ChoiceChips(confidenceOptions, confidence) { confidence = it }
-                    LabeledTextField(fieldContext, { fieldContext = it }, "Mood / field context", supportingText = "Weather, light, surrounding activity, or constraints.")
                 }
-                FieldSectionTitle("Location", "GPS is optional; manual place names always work offline.")
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    OutlinedButton(onClick = { manualLocation = ""; capturedLocation = null }, Modifier.weight(1f)) { Text("Manual") }
-                    FilledTonalButton(onClick = { locationPermission.launch(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION)) }, Modifier.weight(1f)) { Text("Use GPS") }
+
+                CaptureStep("Facts", "Record only what you observed — keep guesses out.", FieldMindIcons.Edit) {
+                    FactsInterpretationBanner()
+                    FieldTextField(facts, { facts = it }, "Facts-only notes", minLines = if (compact) 3 else 5, supportingText = "Write only what you saw/heard/measured. Put guesses in a question or hypothesis.")
+                    if (!compact) FieldTextField(fieldContext, { fieldContext = it }, "Mood / field context", supportingText = "Weather, light, surrounding activity, or constraints.")
                 }
-                LabeledTextField(manualLocation, { manualLocation = it }, "Place / GPS note")
+
+                CaptureStep("Location", "GPS is optional; manual place names work offline.", FieldMindIcons.Location) {
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        OutlinedButton(onClick = { manualLocation = ""; capturedLocation = null }, Modifier.weight(1f)) { Text("Manual") }
+                        FilledTonalButton(
+                            onClick = {
+                                if (locating) return@FilledTonalButton
+                                if (locationProvider.hasAnyLocationPermission()) startLocating()
+                                else locationPermission.launch(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION))
+                            },
+                            modifier = Modifier.weight(1f),
+                            enabled = !locating
+                        ) {
+                            if (locating) {
+                                CircularProgressIndicator(Modifier.size(16.dp), strokeWidth = 2.dp, color = MaterialTheme.colorScheme.onSecondaryContainer)
+                                Spacer(Modifier.size(6.dp)); Text("Locating…")
+                            } else {
+                                Icon(icon = FieldMindIcons.Location, contentDescription = null, size = 18.dp); Spacer(Modifier.size(6.dp)); Text("Use GPS")
+                            }
+                        }
+                    }
+                    capturedLocation?.let { loc ->
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            Icon(icon = FieldMindIcons.Check, contentDescription = null, tint = FieldMindTheme.colors.confidenceSure, size = 16.dp)
+                            Text(loc.asDisplayText(), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                    }
+                    FieldTextField(manualLocation, { manualLocation = it }, "Place / GPS note")
+                }
+
                 if (mediaEnabled) {
-                    FieldSectionTitle("Evidence", "Attach real media or files before saving.")
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        OutlinedButton(onClick = { if (ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) { val uri = createFieldMindFileUri(context, "photo", ".jpg"); pendingPhotoUri = uri } else cameraPermission.launch(Manifest.permission.CAMERA) }, Modifier.weight(1f)) { Text("Camera") }
-                        OutlinedButton(onClick = { mediaPicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageAndVideo)) }, Modifier.weight(1f)) { Text("Gallery") }
-                        OutlinedButton(onClick = { filePicker.launch(arrayOf("application/pdf", "text/*", "image/*", "video/*", "audio/*")) }, Modifier.weight(1f)) { Text("File") }
+                    CaptureStep("Evidence", "Back your observation with photos, files, or a voice note.", FieldMindIcons.Camera) {
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            OutlinedButton(onClick = { if (ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) { val uri = createFieldMindFileUri(context, "photo", ".jpg"); pendingPhotoUri = uri } else cameraPermission.launch(Manifest.permission.CAMERA) }, Modifier.weight(1f)) {
+                                Icon(icon = FieldMindIcons.Camera, contentDescription = "Camera", size = 18.dp)
+                            }
+                            OutlinedButton(onClick = { mediaPicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageAndVideo)) }, Modifier.weight(1f)) {
+                                Icon(icon = FieldMindIcons.Gallery, contentDescription = "Gallery", size = 18.dp)
+                            }
+                            OutlinedButton(onClick = { filePicker.launch(arrayOf("application/pdf", "text/*", "image/*", "video/*", "audio/*")) }, Modifier.weight(1f)) {
+                                Icon(icon = FieldMindIcons.File, contentDescription = "File", size = 18.dp)
+                            }
+                        }
+                        if (audioEnabled) {
+                            if (recording) RecordingIndicator(recordSeconds)
+                            Button(onClick = {
+                                if (recording) {
+                                    val file = audioFile
+                                    runCatching { recorder?.stop() }
+                                    recorder?.release(); recorder = null; recording = false
+                                    file?.let { attachments = attachments + DraftEvidenceAttachment("Audio", Uri.fromFile(it).toString(), "Voice note", localPath = it.absolutePath, mimeType = "audio/mp4") }
+                                    scope.launch { snackbar.showSnackbar("Voice note attached.") }
+                                } else if (ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) audioPermission.launch(Manifest.permission.RECORD_AUDIO) else audioPermission.launch(Manifest.permission.RECORD_AUDIO)
+                            }, modifier = Modifier.fillMaxWidth(), colors = if (recording) ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.errorContainer, contentColor = MaterialTheme.colorScheme.onErrorContainer) else ButtonDefaults.buttonColors()) {
+                                Icon(icon = if (recording) FieldMindIcons.Stop else FieldMindIcons.Mic, contentDescription = null, size = 18.dp); Spacer(Modifier.size(6.dp)); Text(if (recording) "Stop voice note" else "Record voice note")
+                            }
+                        }
+                        AttachmentPreviewList(attachments, onCaptionChange = { index, caption -> attachments = attachments.mapIndexed { i, item -> if (i == index) item.copy(caption = caption) else item } }, onRemove = { remove -> attachments = attachments.filterIndexed { index, _ -> index != remove } })
                     }
-                    if (audioEnabled) {
-                        Button(onClick = {
-                            if (recording) {
-                                val file = audioFile
-                                runCatching { recorder?.stop() }
-                                recorder?.release(); recorder = null; recording = false
-                                file?.let { attachments = attachments + DraftEvidenceAttachment("Audio", Uri.fromFile(it).toString(), "Voice note", localPath = it.absolutePath, mimeType = "audio/mp4") }
-                                scope.launch { snackbar.showSnackbar("Voice note attached.") }
-                            } else if (ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) audioPermission.launch(Manifest.permission.RECORD_AUDIO) else audioPermission.launch(Manifest.permission.RECORD_AUDIO)
-                        }, modifier = Modifier.fillMaxWidth()) { Text(if (recording) "Stop voice note" else "Record voice note") }
-                    }
-                    AttachmentPreviewList(attachments, onCaptionChange = { index, caption -> attachments = attachments.mapIndexed { i, item -> if (i == index) item.copy(caption = caption) else item } }, onRemove = { remove -> attachments = attachments.filterIndexed { index, _ -> index != remove } })
                 }
-                LabeledTextField(evidence, { evidence = it }, "Evidence summary")
-                LabeledTextField(tags, { tags = it }, "Tags", supportingText = "Comma-separated: birds, behavior, evening")
-                if (projects.isNotEmpty()) ChoiceChips(listOf("No project") + projects.map { it.title }, projects.firstOrNull { it.id == projectId }?.title ?: "No project") { selected -> projectId = projects.firstOrNull { it.title == selected }?.id }
+
+                CaptureStep("Connect & tag", "Summarize the evidence, tag it, and link a project.", FieldMindIcons.Link) {
+                    FieldTextField(evidence, { evidence = it }, "Evidence summary")
+                    FieldTextField(tags, { tags = it }, "Tags", supportingText = "Comma-separated: birds, behavior, evening")
+                    if (projects.isNotEmpty()) {
+                        Text("Link to project", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        ChoiceChips(listOf("No project") + projects.map { it.title }, projects.firstOrNull { it.id == projectId }?.title ?: "No project") { selected -> projectId = projects.firstOrNull { it.title == selected }?.id }
+                    }
+                }
+
                 Button(onClick = {
                     if (subject.isBlank() || facts.isBlank()) scope.launch { snackbar.showSnackbar("Subject and factual notes are required.") } else viewModel.addObservation(subject, category, facts, confidence, manualLocation, tags, evidence, fieldContext, projectId, capturedLocation?.latitude, capturedLocation?.longitude, attachments) {
                         subject = ""; facts = ""; manualLocation = ""; tags = ""; evidence = ""; fieldContext = ""; attachments = emptyList(); capturedLocation = null
                         scope.launch { snackbar.showSnackbar("Observation saved to your archive.") }
                         onSaved()
                     }
-                }, modifier = Modifier.fillMaxWidth()) { Text("Save observation") }
+                }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp)) {
+                    Icon(icon = FieldMindIcons.Check, contentDescription = null, size = 18.dp); Spacer(Modifier.size(8.dp)); Text("Save observation")
+                }
+            }
+        }
+    }
+}
+
+/** A labeled capture step: an icon + title/subtitle header above its grouped inputs. */
+@Composable
+private fun CaptureStep(title: String, subtitle: String, icon: MaterialSymbolIcon, content: @Composable ColumnScope.() -> Unit) {
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            Box(Modifier.size(30.dp).clip(RoundedCornerShape(9.dp)).background(MaterialTheme.colorScheme.secondaryContainer), contentAlignment = Alignment.Center) {
+                Icon(icon = icon, contentDescription = null, tint = MaterialTheme.colorScheme.onSecondaryContainer, size = 18.dp)
+            }
+            Column(Modifier.weight(1f)) {
+                Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                Text(subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+        }
+        Column(Modifier.padding(start = 40.dp), verticalArrangement = Arrangement.spacedBy(10.dp), content = content)
+    }
+}
+
+/** Reminds the researcher to separate observed facts from interpretation. */
+@Composable
+private fun FactsInterpretationBanner() {
+    Row(
+        Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.5f)).padding(12.dp),
+        horizontalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        Icon(icon = FieldMindIcons.Lightbulb, contentDescription = null, tint = MaterialTheme.colorScheme.onTertiaryContainer, size = 18.dp)
+        Text("Facts vs. interpretation: log what you sensed here; save guesses as a question or hypothesis.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onTertiaryContainer)
+    }
+}
+
+/** A blinking red dot + elapsed timer shown while a voice note is being recorded. */
+@Composable
+private fun RecordingIndicator(seconds: Int) {
+    val transition = rememberInfiniteTransition(label = "rec")
+    val alpha by transition.animateFloat(
+        initialValue = 1f, targetValue = 0.25f,
+        animationSpec = infiniteRepeatable(tween(700), RepeatMode.Reverse), label = "recDot"
+    )
+    Row(
+        Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(MaterialTheme.colorScheme.errorContainer).padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        Box(Modifier.size(12.dp).graphicsLayer { this.alpha = alpha }.clip(CircleShape).background(MaterialTheme.colorScheme.error))
+        Text("Recording…", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onErrorContainer)
+        Spacer(Modifier.weight(1f))
+        Text("%d:%02d".format(seconds / 60, seconds % 60), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onErrorContainer)
+    }
+}
+
+private fun DraftEvidenceAttachment.isImage(): Boolean =
+    mimeType?.startsWith("image/") == true ||
+        type.equals("Photo", true) || type.equals("Gallery", true) ||
+        Regex("\\.(jpg|jpeg|png|webp|gif|heic|bmp)(\\?.*)?$", RegexOption.IGNORE_CASE).containsMatchIn(uri)
+
+@Composable
+private fun AttachmentPreviewList(items: List<DraftEvidenceAttachment>, onCaptionChange: (Int, String) -> Unit, onRemove: (Int) -> Unit) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        items.forEachIndexed { index, item ->
+            Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh), shape = RoundedCornerShape(20.dp)) {
+                Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                        if (item.isImage()) {
+                            AsyncImage(
+                                model = item.uri,
+                                contentDescription = item.caption.ifBlank { "Attached image" },
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier.size(64.dp).clip(RoundedCornerShape(14.dp)).background(MaterialTheme.colorScheme.surfaceContainerHighest)
+                            )
+                        } else {
+                            Box(Modifier.size(64.dp).clip(RoundedCornerShape(14.dp)).background(MaterialTheme.colorScheme.surfaceContainerHighest), contentAlignment = Alignment.Center) {
+                                Icon(icon = if (item.type.equals("Audio", true)) FieldMindIcons.Mic else FieldMindIcons.File, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, size = 26.dp)
+                            }
+                        }
+                        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                            InfoChip(item.type, icon = if (item.isImage()) FieldMindIcons.Gallery else FieldMindIcons.File)
+                            Text(item.uri, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        }
+                        TextButton({ onRemove(index) }) { Text("Remove") }
+                    }
+                    FieldTextField(item.caption, { onCaptionChange(index, it) }, "Caption")
+                }
+            }
+        }
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════════
+//  Projects workspace
+// ══════════════════════════════════════════════════════════════════════
+
+@Composable
+fun ProjectsScreen(viewModel: FieldMindViewModel, onOpenDetail: (String, Long) -> Unit = { _, _ -> }, startTab: Int = 0) {
+    val questions by viewModel.questions.collectAsState()
+    val hypotheses by viewModel.hypotheses.collectAsState()
+    val projects by viewModel.projects.collectAsState()
+    val data by viewModel.dataRecords.collectAsState()
+    val reports by viewModel.reports.collectAsState()
+    var tab by remember(startTab) { mutableIntStateOf(startTab) }
+    val tabs = listOf("Projects", "Questions", "Hypotheses", "Data", "Reports")
+    Column(Modifier.fillMaxSize()) {
+        Column(Modifier.padding(20.dp, 20.dp, 20.dp, 8.dp)) {
+            FieldScreenHeader("Projects", "Tie questions, evidence, data, and reports together.", icon = FieldMindIcons.Projects)
+        }
+        ScrollableTabRow(selectedTabIndex = tab, edgePadding = 20.dp, containerColor = MaterialTheme.colorScheme.background) {
+            tabs.forEachIndexed { i, label -> Tab(tab == i, { tab = i }, text = { Text(label) }) }
+        }
+        when (tab) {
+            0 -> ProjectPanel(viewModel, projects, onOpenDetail)
+            1 -> QuestionPanel(viewModel, questions, onOpenDetail)
+            2 -> HypothesisPanel(viewModel, hypotheses, questions, onOpenDetail)
+            3 -> DataToolPanel(viewModel, data, onOpenDetail)
+            4 -> ReportPanel(viewModel, reports, onOpenDetail)
+        }
+    }
+}
+
+@Composable
+private fun AddButton(label: String, onClick: () -> Unit) {
+    Button(onClick = onClick, Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp)) {
+        Icon(icon = FieldMindIcons.Add, contentDescription = null, size = 20.dp); Spacer(Modifier.size(8.dp)); Text(label)
+    }
+}
+
+private fun panelPadding() = PaddingValues(20.dp, 4.dp, 20.dp, 96.dp)
+
+@Composable
+private fun ProjectPanel(viewModel: FieldMindViewModel, items: List<ProjectEntity>, onOpenDetail: (String, Long) -> Unit) {
+    var show by remember { mutableStateOf(false) }
+    LazyColumn(contentPadding = panelPadding(), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+        item { AddButton("Create project") { show = true } }
+        if (items.isEmpty()) item { EmptyState("No projects yet", "A workspace ties questions, observations, sources, data, analysis, conclusions, and reports together.", icon = FieldMindIcons.Project) }
+        items(items) { EntityCard(it.title, "project", body = it.objective.ifBlank { it.researchQuestion.ifBlank { "Open project workspace" } }, meta = listOf(it.status, it.topicType)) { onOpenDetail("project", it.id) } }
+    }
+    if (show) NewProjectDialog(viewModel) { show = false }
+}
+
+@Composable
+private fun QuestionPanel(viewModel: FieldMindViewModel, items: List<QuestionEntity>, onOpenDetail: (String, Long) -> Unit) {
+    var show by remember { mutableStateOf(false) }
+    LazyColumn(contentPadding = panelPadding(), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+        item { AddButton("Create question") { show = true } }
+        if (items.isEmpty()) item { EmptyState("No questions yet", "Researchers collect questions before answers. Keep them testable and linked to evidence.", icon = FieldMindIcons.Question) }
+        items(items) { EntityCard(it.questionText, "question", meta = listOf(it.status, it.priority, it.sourceType)) { onOpenDetail("question", it.id) } }
+    }
+    if (show) NewQuestionDialog(viewModel) { show = false }
+}
+
+@Composable
+private fun HypothesisPanel(viewModel: FieldMindViewModel, items: List<HypothesisEntity>, questions: List<QuestionEntity>, onOpenDetail: (String, Long) -> Unit) {
+    var show by remember { mutableStateOf(false) }
+    LazyColumn(contentPadding = panelPadding(), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+        item { AddButton("Create hypothesis") { show = true } }
+        if (items.isEmpty()) item { EmptyState("No hypotheses yet", "State predictions, support/weaken criteria, and test method before looking for results.", icon = FieldMindIcons.Hypothesis) }
+        items(items) { EntityCard(it.prediction, "hypothesis", body = "Evidence: ${it.evidenceNeeded}", meta = listOf(it.resultStatus, "confidence ${it.confidencePercent}%")) { onOpenDetail("hypothesis", it.id) } }
+    }
+    if (show) NewHypothesisDialog(viewModel, questions) { show = false }
+}
+
+@Composable
+private fun DataToolPanel(viewModel: FieldMindViewModel, items: List<DataRecordEntity>, onOpenDetail: (String, Long) -> Unit) {
+    var show by remember { mutableStateOf(false) }
+    val grouped = items.groupBy { it.toolType.ifBlank { "Other" } }
+    LazyColumn(contentPadding = panelPadding(), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+        item { AddButton("Open data collection tools") { show = true } }
+        if (items.isEmpty()) {
+            item { EmptyState("Offline data tools", "Counter, measurement log, checklist, event log, weather log, site log, species tracker, comparison table.", icon = FieldMindIcons.Data) }
+        } else {
+            grouped.forEach { (tool, records) ->
+                item { SectionHeader(tool, "${records.size} ${if (records.size == 1) "entry" else "entries"}") }
+                items(records) { EntityCard(it.label, "data", body = it.notes.ifBlank { it.location }, meta = listOf("${it.value} ${it.unit}".trim())) { onOpenDetail("data", it.id) } }
+            }
+        }
+    }
+    if (show) NewDataRecordDialog(viewModel) { show = false }
+}
+
+@Composable
+private fun ReportPanel(viewModel: FieldMindViewModel, items: List<ReportEntity>, onOpenDetail: (String, Long) -> Unit) {
+    var show by remember { mutableStateOf(false) }
+    LazyColumn(contentPadding = panelPadding(), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+        item { AddButton("Build report") { show = true } }
+        if (items.isEmpty()) item { EmptyState("No reports yet", "Write background, question, method, observations, results, interpretation, conclusion, limitations, and next steps.", icon = FieldMindIcons.Report) }
+        items(items) { EntityCard(it.title, "report", body = it.conclusion.ifBlank { it.question }, meta = listOf(it.type, it.status)) { onOpenDetail("report", it.id) } }
+    }
+    if (show) NewReportDialog(viewModel) { show = false }
+}
+
+// ══════════════════════════════════════════════════════════════════════
+//  Library (Sources / Reading / Flashcards / Learn)
+// ══════════════════════════════════════════════════════════════════════
+
+@Composable
+fun KnowledgeLibraryScreen(
+    viewModel: FieldMindViewModel,
+    onNavigate: (FieldMindScreen) -> Unit = {},
+    onOpenDetail: (String, Long) -> Unit = { _, _ -> },
+    startTab: Int = 0
+) {
+    val sources by viewModel.sources.collectAsState()
+    val flashcards by viewModel.flashcards.collectAsState()
+    var tab by remember(startTab) { mutableIntStateOf(startTab) }
+    val tabs = listOf("Sources", "Reading", "Flashcards", "Learn")
+    Column(Modifier.fillMaxSize()) {
+        Column(Modifier.padding(20.dp, 20.dp, 20.dp, 8.dp)) {
+            FieldScreenHeader("Library", "Sources, active reading, review cards, and skills.", icon = FieldMindIcons.Library)
+        }
+        ScrollableTabRow(selectedTabIndex = tab, edgePadding = 20.dp, containerColor = MaterialTheme.colorScheme.background) {
+            tabs.forEachIndexed { i, label -> Tab(tab == i, { tab = i }, text = { Text(label) }) }
+        }
+        when (tab) {
+            0 -> SourcePanel(viewModel, sources, onOpenDetail)
+            1 -> PaperReadingPanel(sources, onOpenDetail)
+            2 -> FlashcardPanel(viewModel, flashcards, onOpenDetail) { onNavigate(FieldMindScreen.Flashcards) }
+            3 -> LearnPanel(viewModel)
+        }
+    }
+}
+
+@Composable
+private fun SourcePanel(viewModel: FieldMindViewModel, items: List<SourceEntity>, onOpenDetail: (String, Long) -> Unit) {
+    var show by remember { mutableStateOf(false) }
+    LazyColumn(contentPadding = panelPadding(), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+        item { AddButton("Add source") { show = true } }
+        if (items.isEmpty()) item { EmptyState("No sources yet", "Save articles, videos, PDFs, books, summaries, citations, and what each source taught you.", icon = FieldMindIcons.Source) }
+        items(items) { EntityCard(it.title, "source", body = it.whatThisSourceTaughtMe.ifBlank { it.personalSummary }, meta = listOf(it.type, it.author.ifBlank { "Unknown author" }, "reliability ${it.reliabilityScore}/5")) { onOpenDetail("source", it.id) } }
+    }
+    if (show) NewSourceDialog(viewModel) { show = false }
+}
+
+@Composable
+private fun PaperReadingPanel(items: List<SourceEntity>, onOpenDetail: (String, Long) -> Unit) {
+    LazyColumn(contentPadding = panelPadding(), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+        item { SectionHeader("Paper reading mode", "Prompts: topic, problem, method, result, unclear points, new question, next verification.") }
+        if (items.isEmpty()) item { EmptyState("Add a source first", "Paper prompts are saved inside each source note.", icon = FieldMindIcons.Source) }
+        items(items) { EntityCard(it.title, "read", body = it.paperNotes.ifBlank { "Open source detail and answer active-reading prompts." }, meta = listOf(it.readingStatus.ifBlank { "Not started" })) { onOpenDetail("source", it.id) } }
+    }
+}
+
+@Composable
+private fun FlashcardPanel(viewModel: FieldMindViewModel, items: List<FlashcardEntity>, onOpenDetail: (String, Long) -> Unit, onStartReview: () -> Unit) {
+    var show by remember { mutableStateOf(false) }
+    LazyColumn(contentPadding = panelPadding(), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+        item {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                Button(onClick = onStartReview, Modifier.weight(1f), shape = RoundedCornerShape(16.dp), enabled = items.isNotEmpty()) {
+                    Icon(icon = FieldMindIcons.Flip, contentDescription = null, size = 18.dp); Spacer(Modifier.size(8.dp)); Text("Review (${items.size})")
+                }
+                OutlinedButton(onClick = { show = true }, Modifier.weight(1f), shape = RoundedCornerShape(16.dp)) {
+                    Icon(icon = FieldMindIcons.Add, contentDescription = null, size = 18.dp); Spacer(Modifier.size(8.dp)); Text("New card")
+                }
+            }
+        }
+        if (items.isEmpty()) item { EmptyState("No flashcards yet", "Turn terms, definitions, mistakes, source concepts, and questions into review cards.", icon = FieldMindIcons.Flashcard) }
+        items(items) { LibraryFlashcard(it) { onOpenDetail("flashcard", it.id) } }
+    }
+    if (show) NewFlashcardDialog(viewModel) { show = false }
+}
+
+/** A single library flashcard: shows the prompt; the answer stays hidden until tapped. */
+@Composable
+private fun LibraryFlashcard(card: FlashcardEntity, onOpenDetail: () -> Unit) {
+    var revealed by remember(card.id) { mutableStateOf(false) }
+    val accent = FieldMindTheme.colors.flashcard
+    Card(
+        modifier = Modifier.fillMaxWidth().animateContentSize().clickable { revealed = !revealed },
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Column(Modifier.fillMaxWidth().padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                Box(
+                    Modifier.size(34.dp).clip(RoundedCornerShape(11.dp)).background(accent.copy(alpha = if (FieldMindTheme.colors.isDark) 0.22f else 0.14f)),
+                    contentAlignment = Alignment.Center
+                ) { Icon(icon = FieldMindIcons.Flashcard, contentDescription = null, tint = accent, size = 18.dp) }
+                Text(card.type, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Spacer(Modifier.weight(1f))
+                Icon(
+                    icon = if (revealed) FieldMindIcons.VisibilityOff else FieldMindIcons.Visibility,
+                    contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, size = 18.dp
+                )
+            }
+            Text(card.front, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+            if (revealed) {
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+                Text(card.back, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface)
+                TextButton(onClick = onOpenDetail, contentPadding = PaddingValues(horizontal = 0.dp)) {
+                    Text("Open card"); Spacer(Modifier.size(4.dp)); Icon(icon = FieldMindIcons.Forward, contentDescription = null, size = 16.dp)
+                }
+            } else {
+                Text("Tap to reveal answer", style = MaterialTheme.typography.labelMedium, color = accent)
             }
         }
     }
 }
 
 @Composable
-fun ProjectsScreen(viewModel: FieldMindViewModel, onOpenDetail: (String, Long) -> Unit = { _, _ -> }, startTab: Int = 0) {
-    val questions by viewModel.questions.collectAsState(); val hypotheses by viewModel.hypotheses.collectAsState(); val projects by viewModel.projects.collectAsState(); val data by viewModel.dataRecords.collectAsState(); val reports by viewModel.reports.collectAsState(); val observations by viewModel.observations.collectAsState(); val sources by viewModel.sources.collectAsState(); val tags by viewModel.commonTags.collectAsState()
-    var tab by remember(startTab) { mutableIntStateOf(startTab) }
-    val tabs = listOf("Projects", "Questions", "Hypotheses", "Data", "Analysis", "Reports")
-    Column(Modifier.fillMaxSize()) {
-        ScrollableTabRow(selectedTabIndex = tab) { tabs.forEachIndexed { i, label -> Tab(tab == i, { tab = i }, text = { Text(label) }) } }
-        when (tab) {
-            0 -> ProjectPanel(viewModel, projects, onOpenDetail)
-            1 -> QuestionPanel(viewModel, questions, onOpenDetail)
-            2 -> HypothesisPanel(viewModel, hypotheses, questions, onOpenDetail)
-            3 -> DataToolPanel(viewModel, data, onOpenDetail)
-            4 -> AnalysisPanel(observations, questions, hypotheses, projects, sources, data, reports, tags)
-            5 -> ReportPanel(viewModel, reports, onOpenDetail)
+private fun LearnPanel(viewModel: FieldMindViewModel) {
+    val uriHandler = LocalUriHandler.current
+    LazyColumn(contentPadding = panelPadding(), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+        item { SectionHeader("Learn", "Curated, offline-ready resources by topic. Tap a category to expand.") }
+
+        items(LearnLibrary) { category -> LearnCategoryCard(category) { url -> runCatching { uriHandler.openUri(url) } } }
+
+        item { SectionHeader("Ask Gemini for papers & books", "Optional online suggestions tailored to your topic.") }
+        item { AssistantPanel(viewModel) }
+
+        item { OnlineApiProposalCard() }
+
+        item { SectionHeader("Skill tree", "Practice these as you run your own projects.") }
+        learningModules.forEach { (level, modules) ->
+            item { Text(level, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 4.dp)) }
+            items(modules) { module -> EntityCard(module, "learn", body = learningModuleBody(module), meta = listOf(level)) }
         }
     }
 }
 
-@Composable fun ResearchScreen(viewModel: FieldMindViewModel, onOpenDetail: (String, Long) -> Unit = { _, _ -> }) = ProjectsScreen(viewModel, onOpenDetail)
-@Composable fun CaptureScreen(viewModel: FieldMindViewModel) = ObserveScreen(viewModel)
-
-@Composable private fun ProjectPanel(viewModel: FieldMindViewModel, items: List<ProjectEntity>, onOpenDetail: (String, Long) -> Unit) { var show by remember { mutableStateOf(false) }; LazyColumn(contentPadding = PaddingValues(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) { item { Button({ show = true }, Modifier.fillMaxWidth()) { Text("Create project") } }; if (items.isEmpty()) item { EmptyResearchState("No projects yet", "A workspace ties questions, observations, sources, data, analysis, conclusions, and reports together.") }; items(items) { ResearchCard(it.title, "${it.status} • ${it.topicType}\n${it.objective.ifBlank { it.researchQuestion.ifBlank { "Open project workspace" } }}", "Project") { onOpenDetail("project", it.id) } } }; if (show) NewProjectDialog(viewModel) { show = false } }
-@Composable private fun QuestionPanel(viewModel: FieldMindViewModel, items: List<QuestionEntity>, onOpenDetail: (String, Long) -> Unit) { var show by remember { mutableStateOf(false) }; LazyColumn(contentPadding = PaddingValues(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) { item { Button({ show = true }, Modifier.fillMaxWidth()) { Text("Create question") } }; if (items.isEmpty()) item { EmptyResearchState("No questions yet", "Researchers collect questions before answers. Keep them testable and linked to evidence.") }; items(items) { ResearchCard(it.questionText, "${it.status} • ${it.priority} • ${it.sourceType}", "Question") { onOpenDetail("question", it.id) } } }; if (show) NewQuestionDialog(viewModel) { show = false } }
-@Composable private fun HypothesisPanel(viewModel: FieldMindViewModel, items: List<HypothesisEntity>, questions: List<QuestionEntity>, onOpenDetail: (String, Long) -> Unit) { var show by remember { mutableStateOf(false) }; LazyColumn(contentPadding = PaddingValues(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) { item { Button({ show = true }, Modifier.fillMaxWidth()) { Text("Create hypothesis") } }; if (items.isEmpty()) item { EmptyResearchState("No hypotheses yet", "State predictions, support/weaken criteria, and test method before looking for results.") }; items(items) { ResearchCard(it.prediction, "${it.resultStatus} • confidence ${it.confidencePercent}%\nEvidence: ${it.evidenceNeeded}", "Hypothesis") { onOpenDetail("hypothesis", it.id) } } }; if (show) NewHypothesisDialog(viewModel, questions) { show = false } }
-@Composable private fun DataToolPanel(viewModel: FieldMindViewModel, items: List<DataRecordEntity>, onOpenDetail: (String, Long) -> Unit) { var show by remember { mutableStateOf(false) }; LazyColumn(contentPadding = PaddingValues(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) { item { Button({ show = true }, Modifier.fillMaxWidth()) { Text("Open data collection tools") } }; item { ResearchCard("Tools", "Counter, measurement log, checklist, event log, weather log, site log, species tracker, comparison table.", "Offline") }; items(items) { ResearchCard(it.label, "${it.toolType} • ${it.value} ${it.unit}\n${it.location}\n${it.notes}", "Data") { onOpenDetail("data", it.id) } } }; if (show) NewDataRecordDialog(viewModel) { show = false } }
-@Composable private fun ReportPanel(viewModel: FieldMindViewModel, items: List<ReportEntity>, onOpenDetail: (String, Long) -> Unit) { var show by remember { mutableStateOf(false) }; LazyColumn(contentPadding = PaddingValues(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) { item { Button({ show = true }, Modifier.fillMaxWidth()) { Text("Build report") } }; if (items.isEmpty()) item { EmptyResearchState("No reports yet", "Write background, question, method, observations, results, interpretation, conclusion, limitations, and next steps.") }; items(items) { ResearchCard(it.title, "${it.type} • ${it.status}\n${it.conclusion.ifBlank { it.question }}", "Report") { onOpenDetail("report", it.id) } } }; if (show) NewReportDialog(viewModel) { show = false } }
-
 @Composable
-fun KnowledgeLibraryScreen(viewModel: FieldMindViewModel, onOpenDetail: (String, Long) -> Unit = { _, _ -> }) {
-    val sources by viewModel.sources.collectAsState(); val flashcards by viewModel.flashcards.collectAsState(); var tab by remember { mutableIntStateOf(0) }
-    Column(Modifier.fillMaxSize()) { TabRow(selectedTabIndex = tab) { listOf("Sources", "Paper Reading", "Flashcards").forEachIndexed { i, label -> Tab(tab == i, { tab = i }, text = { Text(label) }) } }; when (tab) { 0 -> SourcePanel(viewModel, sources, onOpenDetail); 1 -> PaperReadingPanel(sources, onOpenDetail); 2 -> FlashcardPanel(viewModel, flashcards, onOpenDetail) } }
-}
-@Composable private fun SourcePanel(viewModel: FieldMindViewModel, items: List<SourceEntity>, onOpenDetail: (String, Long) -> Unit) { var show by remember { mutableStateOf(false) }; LazyColumn(contentPadding = PaddingValues(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) { item { Button({ show = true }, Modifier.fillMaxWidth()) { Text("Add source") } }; if (items.isEmpty()) item { EmptyResearchState("No sources yet", "Save articles, videos, PDFs, books, summaries, citations, and what each source taught you.") }; items(items) { ResearchCard(it.title, "${it.type} • ${it.author.ifBlank { "Unknown author" }} • reliability ${it.reliabilityScore}/5\n${it.whatThisSourceTaughtMe.ifBlank { it.personalSummary }}", "Source") { onOpenDetail("source", it.id) } } }; if (show) NewSourceDialog(viewModel) { show = false } }
-@Composable private fun PaperReadingPanel(items: List<SourceEntity>, onOpenDetail: (String, Long) -> Unit) { LazyColumn(contentPadding = PaddingValues(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) { item { FieldSectionTitle("Paper reading mode", "Prompts: topic, problem, method, result, unclear points, new question, next verification.") }; if (items.isEmpty()) item { EmptyResearchState("Add a source first", "Paper prompts are saved inside each source note.") }; items(items) { ResearchCard(it.title, it.paperNotes.ifBlank { "Open source detail and answer active-reading prompts." }, "Read") { onOpenDetail("source", it.id) } } } }
-@Composable private fun FlashcardPanel(viewModel: FieldMindViewModel, items: List<FlashcardEntity>, onOpenDetail: (String, Long) -> Unit) { var show by remember { mutableStateOf(false) }; LazyColumn(contentPadding = PaddingValues(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) { item { Button({ show = true }, Modifier.fillMaxWidth()) { Text("Create flashcard") } }; if (items.isEmpty()) item { EmptyResearchState("No flashcards yet", "Turn terms, definitions, mistakes, source concepts, and questions into review cards.") }; items(items) { ResearchCard(it.front, it.back, it.type) { onOpenDetail("flashcard", it.id) } } }; if (show) NewFlashcardDialog(viewModel) { show = false } }
-
-@Composable
-fun LearnScreen(viewModel: FieldMindViewModel, onNavigate: (FieldMindScreen) -> Unit) {
-    val observations by viewModel.observations.collectAsState(); val questions by viewModel.questions.collectAsState(); val sources by viewModel.sources.collectAsState(); val reports by viewModel.reports.collectAsState(); val projects by viewModel.projects.collectAsState()
-    LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        item { FieldMindTopBar("Learn", "Skill tree, progress, revision, and research discipline.") }
-        item { Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) { StatPill("Entries", observations.size.toString(), Modifier.weight(1f)); StatPill("Questions", questions.size.toString(), Modifier.weight(1f)); StatPill("Sources", sources.size.toString(), Modifier.weight(1f)) } }
-        item { Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) { StatPill("Projects", projects.size.toString(), Modifier.weight(1f)); StatPill("Reports", reports.size.toString(), Modifier.weight(1f)); StatPill("Sessions", observations.map { it.date }.distinct().size.toString(), Modifier.weight(1f)) } }
-        item { ActionGrid(listOf("Flashcards" to FieldMindScreen.Library, "Reports" to FieldMindScreen.Reports, "Backup/export" to FieldMindScreen.BackupExport, "Progress" to FieldMindScreen.Progress)) { onNavigate(it) } }
-        learningModules.forEach { (level, modules) -> item { FieldSectionTitle(level, "Tap modules as you practice them in your own projects.") }; items(modules) { module -> ResearchCard(module, learningModuleBody(module), level) } }
+private fun LearnCategoryCard(category: LearnCategory, onOpenLink: (String) -> Unit) {
+    var expanded by remember { mutableStateOf(false) }
+    val accent = FieldMindTheme.colors.accentFor("learn")
+    Card(
+        modifier = Modifier.fillMaxWidth().animateContentSize().clickable { expanded = !expanded },
+        shape = RoundedCornerShape(22.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                Box(Modifier.size(40.dp).clip(RoundedCornerShape(13.dp)).background(accent.copy(alpha = if (FieldMindTheme.colors.isDark) 0.22f else 0.14f)), contentAlignment = Alignment.Center) {
+                    Icon(icon = FieldMindIcons.iconForCategory(category.name), contentDescription = null, tint = accent, size = 22.dp)
+                }
+                Column(Modifier.weight(1f)) {
+                    Text(category.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    Text(category.description, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                Icon(icon = if (expanded) FieldMindIcons.Up else FieldMindIcons.Down, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, size = 22.dp)
+            }
+            if (expanded) {
+                category.topics.forEach { topic ->
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+                    Text(topic.name, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+                    Text(topic.summary, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    topic.resources.forEach { res ->
+                        Row(
+                            Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).clickable { onOpenLink(res.url) }.background(MaterialTheme.colorScheme.surfaceContainerHigh).padding(12.dp),
+                            verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            Box(Modifier.size(30.dp).clip(RoundedCornerShape(9.dp)).background(accent.copy(alpha = 0.16f)), contentAlignment = Alignment.Center) {
+                                Icon(icon = learnKindIcon(res.kind), contentDescription = null, tint = accent, size = 16.dp)
+                            }
+                            Column(Modifier.weight(1f)) {
+                                Text(res.title, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
+                                Text("${res.kind} · ${res.why}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                            }
+                            Icon(icon = FieldMindIcons.OpenLink, contentDescription = "Open link", tint = MaterialTheme.colorScheme.onSurfaceVariant, size = 18.dp)
+                        }
+                    }
+                }
+            } else {
+                Text("${category.topics.size} topics · ${category.topics.sumOf { it.resources.size }} resources", style = MaterialTheme.typography.labelMedium, color = accent)
+            }
+        }
     }
 }
+
+private fun learnKindIcon(kind: String): MaterialSymbolIcon = when (kind.lowercase()) {
+    "book" -> FieldMindIcons.Book
+    "paper" -> FieldMindIcons.Article
+    "course", "video" -> FieldMindIcons.Play
+    "tool" -> FieldMindIcons.Bolt
+    "dataset" -> FieldMindIcons.Trend
+    else -> FieldMindIcons.Article
+}
+
+@Composable
+private fun OnlineApiProposalCard() {
+    var expanded by remember { mutableStateOf(false) }
+    val uriHandler = LocalUriHandler.current
+    Card(
+        modifier = Modifier.fillMaxWidth().animateContentSize().clickable { expanded = !expanded },
+        shape = RoundedCornerShape(22.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                Icon(icon = FieldMindIcons.Download, contentDescription = null, tint = MaterialTheme.colorScheme.primary, size = 20.dp)
+                Column(Modifier.weight(1f)) {
+                    Text("Free APIs for live fetching", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                    Text("Proposal: power in-app paper/book search without an API key.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                Icon(icon = if (expanded) FieldMindIcons.Up else FieldMindIcons.Down, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, size = 22.dp)
+            }
+            if (expanded) {
+                SuggestedOnlineApis.forEach { api ->
+                    Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).clickable { runCatching { uriHandler.openUri(api.baseUrl.substringBefore("?").ifBlank { api.baseUrl }) } }.background(MaterialTheme.colorScheme.surfaceContainerHigh).padding(12.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                        Text(api.name, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
+                        Text(api.notes, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                }
+            }
+        }
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════════
+//  Search archive
+// ══════════════════════════════════════════════════════════════════════
 
 @Composable
 fun ArchiveScreen(viewModel: FieldMindViewModel, onOpenDetail: (String, Long) -> Unit = { _, _ -> }) {
-    val observations by viewModel.observations.collectAsState(); val questions by viewModel.questions.collectAsState(); val projects by viewModel.projects.collectAsState(); val sources by viewModel.sources.collectAsState(); val reports by viewModel.reports.collectAsState(); val flashcards by viewModel.flashcards.collectAsState(); var query by remember { mutableStateOf("") }
-    LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-        item { FieldMindTopBar("Search archive", "Search forever by topic, date, place, source, project, status, and keyword.") }
-        item { LabeledTextField(query, { query = it }, "Search") }
-        item { Text("Filters supported: keyword, date range, project, category, source type, location, tag, status, and record type.", color = MaterialTheme.colorScheme.onSurfaceVariant) }
+    val observations by viewModel.observations.collectAsState()
+    val questions by viewModel.questions.collectAsState()
+    val projects by viewModel.projects.collectAsState()
+    val sources by viewModel.sources.collectAsState()
+    val reports by viewModel.reports.collectAsState()
+    val flashcards by viewModel.flashcards.collectAsState()
+    var query by remember { mutableStateOf("") }
+    LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(20.dp, 20.dp, 20.dp, 96.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+        item { FieldScreenHeader("Search archive", "Search forever by topic, date, place, source, project, and keyword.", icon = FieldMindIcons.Search) }
+        item {
+            OutlinedTextField(query, { query = it }, label = { Text("Search") }, leadingIcon = { Icon(icon = FieldMindIcons.Search, contentDescription = null, size = 20.dp) }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(18.dp), singleLine = true)
+        }
         val q = query.trim().lowercase()
         fun matches(vararg parts: String) = q.isBlank() || parts.any { it.lowercase().contains(q) }
-        items(observations.filter { matches(it.subject, it.category, it.factsOnlyNotes, it.manualLocation, it.tags) }) { ResearchCard(it.subject, it.factsOnlyNotes, "Observation") { onOpenDetail("observation", it.id) } }
-        items(questions.filter { matches(it.questionText, it.category, it.status) }) { ResearchCard(it.questionText, it.status, "Question") { onOpenDetail("question", it.id) } }
-        items(projects.filter { matches(it.title, it.topicType, it.objective, it.researchQuestion) }) { ResearchCard(it.title, it.objective, "Project") { onOpenDetail("project", it.id) } }
-        items(sources.filter { matches(it.title, it.author, it.type, it.personalSummary) }) { ResearchCard(it.title, it.whatThisSourceTaughtMe, "Source") { onOpenDetail("source", it.id) } }
-        items(reports.filter { matches(it.title, it.type, it.question, it.conclusion) }) { ResearchCard(it.title, it.conclusion, "Report") { onOpenDetail("report", it.id) } }
-        items(flashcards.filter { matches(it.front, it.back, it.type) }) { ResearchCard(it.front, it.back, "Flashcard") { onOpenDetail("flashcard", it.id) } }
+        items(observations.filter { matches(it.subject, it.category, it.factsOnlyNotes, it.manualLocation, it.tags) }) { EntityCard(it.subject, "observation", body = it.factsOnlyNotes.take(120), confidence = it.confidenceLevel, meta = listOf(it.category)) { onOpenDetail("observation", it.id) } }
+        items(questions.filter { matches(it.questionText, it.category, it.status) }) { EntityCard(it.questionText, "question", meta = listOf(it.status)) { onOpenDetail("question", it.id) } }
+        items(projects.filter { matches(it.title, it.topicType, it.objective, it.researchQuestion) }) { EntityCard(it.title, "project", body = it.objective, meta = listOf(it.topicType)) { onOpenDetail("project", it.id) } }
+        items(sources.filter { matches(it.title, it.author, it.type, it.personalSummary) }) { EntityCard(it.title, "source", body = it.whatThisSourceTaughtMe, meta = listOf(it.type)) { onOpenDetail("source", it.id) } }
+        items(reports.filter { matches(it.title, it.type, it.question, it.conclusion) }) { EntityCard(it.title, "report", body = it.conclusion, meta = listOf(it.type)) { onOpenDetail("report", it.id) } }
+        items(flashcards.filter { matches(it.front, it.back, it.type) }) { EntityCard(it.front, "flashcard", body = it.back, meta = listOf(it.type)) { onOpenDetail("flashcard", it.id) } }
     }
 }
 
-@Composable
-fun AnalysisScreen(viewModel: FieldMindViewModel) {
-    val observations by viewModel.observations.collectAsState(); val questions by viewModel.questions.collectAsState(); val hypotheses by viewModel.hypotheses.collectAsState(); val projects by viewModel.projects.collectAsState(); val sources by viewModel.sources.collectAsState(); val data by viewModel.dataRecords.collectAsState(); val reports by viewModel.reports.collectAsState(); val tags by viewModel.commonTags.collectAsState()
-    AnalysisPanel(observations, questions, hypotheses, projects, sources, data, reports, tags)
-}
-
-@Composable
-private fun AnalysisPanel(observations: List<ObservationEntity>, questions: List<QuestionEntity>, hypotheses: List<HypothesisEntity>, projects: List<ProjectEntity>, sources: List<SourceEntity>, data: List<DataRecordEntity>, reports: List<ReportEntity>, tags: List<TagStatistic>) {
-    LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-        item { FieldMindTopBar("Analysis", "Offline pattern cards and simple progress summaries.") }
-        item { Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) { StatPill("Subjects", observations.map { it.subject }.distinct().size.toString(), Modifier.weight(1f)); StatPill("Open Q", questions.count { it.status != "Answered" }.toString(), Modifier.weight(1f)); StatPill("Sources", sources.size.toString(), Modifier.weight(1f)) } }
-        item { ResearchCard("Repeated patterns", observations.groupingBy { it.category }.eachCount().entries.sortedByDescending { it.value }.joinToString { "${it.key}: ${it.value}" }.ifBlank { "Add observations to discover repeated categories." }, "Trends") }
-        item { ResearchCard("Common tags", tags.take(8).joinToString { "${it.name} (${it.observationCount})" }.ifBlank { "No tags yet." }, "Tags") }
-        item { ResearchCard("Project progress", "${projects.count { it.status == "Active" }} active • ${reports.size} reports • ${data.size} data records • ${hypotheses.size} hypotheses", "Projects") }
-        item { ResearchCard("Reading progress", "${sources.count { it.readingStatus == "Finished" }} finished • ${sources.count { it.readingStatus != "Finished" }} still active", "Library") }
-    }
-}
+// ══════════════════════════════════════════════════════════════════════
+//  Backup & export
+// ══════════════════════════════════════════════════════════════════════
 
 @Composable
 fun BackupExportScreen(viewModel: FieldMindViewModel) {
-    val context = LocalContext.current; val scope = rememberCoroutineScope(); val snackbar = remember { SnackbarHostState() }
-    val observations by viewModel.observations.collectAsState(); val questions by viewModel.questions.collectAsState(); val hypotheses by viewModel.hypotheses.collectAsState(); val projects by viewModel.projects.collectAsState(); val sources by viewModel.sources.collectAsState(); val data by viewModel.dataRecords.collectAsState(); val reports by viewModel.reports.collectAsState(); val flashcards by viewModel.flashcards.collectAsState(); val attachmentMode by viewModel.fieldSettings.attachmentExportMode.collectAsState()
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val snackbar = remember { SnackbarHostState() }
+    val observations by viewModel.observations.collectAsState()
+    val questions by viewModel.questions.collectAsState()
+    val hypotheses by viewModel.hypotheses.collectAsState()
+    val projects by viewModel.projects.collectAsState()
+    val sources by viewModel.sources.collectAsState()
+    val data by viewModel.dataRecords.collectAsState()
+    val reports by viewModel.reports.collectAsState()
+    val flashcards by viewModel.flashcards.collectAsState()
+    val attachmentMode by viewModel.fieldSettings.attachmentExportMode.collectAsState()
     var pendingText by remember { mutableStateOf("") }
     val createDoc = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("text/plain")) { uri ->
         if (uri == null) scope.launch { snackbar.showSnackbar("Export cancelled.") } else runCatching { context.contentResolver.openOutputStream(uri)?.use { it.write(pendingText.toByteArray()) } }.onSuccess { scope.launch { snackbar.showSnackbar("Export written.") } }.onFailure { scope.launch { snackbar.showSnackbar("Export failed: ${it.localizedMessage}") } }
     }
-    Scaffold(snackbarHost = { SnackbarHost(snackbar) }) { padding -> LazyColumn(Modifier.fillMaxSize().padding(padding), contentPadding = PaddingValues(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-        item { FieldMindTopBar("Backup & export", "Your research notes remain portable and owned by you.") }
-        item { ResearchCard("Attachment mode", "$attachmentMode. Choose a different default in Settings.", "Media") }
-        item { Button({ pendingText = FieldMindExport.observationsCsv(observations); createDoc.launch("fieldmind-observations.csv") }, Modifier.fillMaxWidth()) { Text("Export observations CSV") } }
-        item { Button({ pendingText = FieldMindExport.dataCsv(data); createDoc.launch("fieldmind-data.csv") }, Modifier.fillMaxWidth()) { Text("Export data CSV") } }
-        item { Button({ pendingText = FieldMindExport.archiveJson(observations, questions, hypotheses, projects, sources, data, reports, flashcards); createDoc.launch("fieldmind-archive.json") }, Modifier.fillMaxWidth()) { Text("Export archive JSON") } }
-        item { Button({ pendingText = reports.joinToString("\n\n---\n\n") { FieldMindExport.buildMarkdownReport(it) }; createDoc.launch("fieldmind-reports.md") }, Modifier.fillMaxWidth()) { Text("Export reports Markdown") } }
-    } }
+    Scaffold(snackbarHost = { SnackbarHost(snackbar) }, containerColor = MaterialTheme.colorScheme.background) { padding ->
+        LazyColumn(Modifier.fillMaxSize().padding(padding), contentPadding = PaddingValues(20.dp, 20.dp, 20.dp, 96.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+            item { FieldScreenHeader("Backup & export", "Your research notes remain portable and owned by you.", icon = FieldMindIcons.Export) }
+            item { EntityCard("Attachment mode", "data", body = "$attachmentMode. Choose a different default in Settings.") }
+            item { ExportRow("Observations CSV", FieldMindIcons.Observation) { pendingText = FieldMindExport.observationsCsv(observations); createDoc.launch("fieldmind-observations.csv") } }
+            item { ExportRow("Data CSV", FieldMindIcons.Data) { pendingText = FieldMindExport.dataCsv(data); createDoc.launch("fieldmind-data.csv") } }
+            item { ExportRow("Archive JSON", FieldMindIcons.Archive) { pendingText = FieldMindExport.archiveJson(observations, questions, hypotheses, projects, sources, data, reports, flashcards); createDoc.launch("fieldmind-archive.json") } }
+            item { ExportRow("Reports Markdown", FieldMindIcons.Report) { pendingText = reports.joinToString("\n\n---\n\n") { FieldMindExport.buildMarkdownReport(it) }; createDoc.launch("fieldmind-reports.md") } }
+        }
+    }
 }
+
+@Composable
+private fun ExportRow(label: String, icon: MaterialSymbolIcon, onClick: () -> Unit) {
+    Card(Modifier.fillMaxWidth().clickable(onClick = onClick), shape = RoundedCornerShape(18.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)) {
+        Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Icon(icon = icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary, size = 22.dp)
+            Text(label, Modifier.weight(1f), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+            Icon(icon = FieldMindIcons.Export, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, size = 20.dp)
+        }
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════════
+//  Settings
+// ══════════════════════════════════════════════════════════════════════
 
 @Composable
 fun FieldMindSettingsScreen(viewModel: FieldMindViewModel? = null, onBack: () -> Unit, onResetOnboarding: () -> Unit) {
     val context = LocalContext.current
     val settings = viewModel?.fieldSettings ?: chromahub.rhythm.app.features.field.data.settings.FieldMindSettings.getInstance(context)
-    val goal by settings.dailyObservationGoal.collectAsState(); val category by settings.defaultCategory.collectAsState(); val confidence by settings.defaultConfidence.collectAsState(); val locationMode by settings.locationMode.collectAsState(); val media by settings.mediaAttachmentsEnabled.collectAsState(); val audio by settings.audioRecordingEnabled.collectAsState(); val exportMode by settings.attachmentExportMode.collectAsState(); val ai by settings.geminiEnabled.collectAsState(); val key by settings.geminiApiKey.collectAsState(); val model by settings.geminiModel.collectAsState(); val confirm by settings.aiRequireConfirmBeforeSave.collectAsState(); val sendAttachments by settings.aiSendAttachments.collectAsState(); val reminders by settings.remindersEnabled.collectAsState(); val streaks by settings.streaksEnabled.collectAsState(); val exportFormat by settings.defaultExportFormat.collectAsState(); val privacy by settings.privacyLockEnabled.collectAsState()
-    LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-        item { FieldMindTopBar("FieldMind settings", "Durable controls for capture, AI, export, privacy, and Rhythm-style behavior.", "Back", onBack) }
-        item { SettingsNumberRow("Daily observation goal", goal, { settings.setDailyObservationGoal(it) }, "Used by the Home dashboard and progress view.") }
-        item { SettingChoice("Default category", observationCategories, category, settings::setDefaultCategory) }
-        item { SettingChoice("Default confidence", confidenceOptions, confidence, settings::setDefaultConfidence) }
-        item { SettingChoice("Location mode", listOf("Manual only", "Approximate", "Precise"), locationMode, settings::setLocationMode) }
-        item { SettingsSwitchRow("Media attachments", media, settings::setMediaAttachmentsEnabled, "Enable camera, gallery, and file evidence tools.") }
-        item { SettingsSwitchRow("Audio recording", audio, settings::setAudioRecordingEnabled, "Enable voice-note evidence capture.") }
-        item { SettingChoice("Attachment export", listOf("Reference URIs", "Copy media later", "Skip media"), exportMode, settings::setAttachmentExportMode) }
-        item { FieldSectionTitle("Gemini assistant", "Optional. Nothing is sent without user action.") }
-        item { SettingsSwitchRow("Enable Gemini", ai, settings::setGeminiEnabled, "Requires API key and explicit confirmation before use.") }
-        item { OutlinedTextField(value = key, onValueChange = settings::setGeminiApiKey, label = { Text("Gemini API key") }, visualTransformation = PasswordVisualTransformation(), modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(20.dp), supportingText = { Text(if (key.isBlank()) "No key saved." else "Key saved locally in FieldMind settings.") }) }
-        item { SettingChoice("Gemini model", listOf("gemini-1.5-flash", "gemini-1.5-pro", "gemini-2.0-flash"), model, settings::setGeminiModel) }
-        item { SettingsSwitchRow("Confirm before saving AI output", confirm, settings::setAiRequireConfirmBeforeSave, "AI suggestions always stay as previews unless you apply them.") }
-        item { SettingsSwitchRow("Allow attachment context for AI", sendAttachments, settings::setAiSendAttachments, "Off by default to protect field evidence privacy.") }
-        item { FieldSectionTitle("Discipline and ownership") }
-        item { SettingsSwitchRow("Reminders", reminders, settings::setRemindersEnabled, "Notification permission is only needed if reminders are enabled.") }
-        item { SettingsSwitchRow("Streaks", streaks, settings::setStreaksEnabled, "Discipline made visible without replacing real work.") }
-        item { SettingChoice("Default export", listOf("Markdown", "CSV", "JSON", "Plain text", "PDF later"), exportFormat, settings::setDefaultExportFormat) }
-        item { SettingsSwitchRow("Privacy lock placeholder", privacy, settings::setPrivacyLockEnabled, "Persisted toggle; wire to app lock flow if the main app exposes one.") }
-        item { ResearchCard("Theme", "FieldMind inherits Rhythm Material 3 light/dark/dynamic color controls and uses the same rounded settings rhythm.", "Appearance") }
-        item { OutlinedButton(onClick = onResetOnboarding, modifier = Modifier.fillMaxWidth()) { Text("Reset onboarding") } }
+    val goal by settings.dailyObservationGoal.collectAsState()
+    val category by settings.defaultCategory.collectAsState()
+    val confidence by settings.defaultConfidence.collectAsState()
+    val locationMode by settings.locationMode.collectAsState()
+    val media by settings.mediaAttachmentsEnabled.collectAsState()
+    val audio by settings.audioRecordingEnabled.collectAsState()
+    val exportMode by settings.attachmentExportMode.collectAsState()
+    val ai by settings.geminiEnabled.collectAsState()
+    val key by settings.geminiApiKey.collectAsState()
+    val model by settings.geminiModel.collectAsState()
+    val confirm by settings.aiRequireConfirmBeforeSave.collectAsState()
+    val sendAttachments by settings.aiSendAttachments.collectAsState()
+    val reminders by settings.remindersEnabled.collectAsState()
+    val streaks by settings.streaksEnabled.collectAsState()
+    val exportFormat by settings.defaultExportFormat.collectAsState()
+    val privacy by settings.privacyLockEnabled.collectAsState()
+    val dynamicColor by settings.dynamicColorEnabled.collectAsState()
+    LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(20.dp, 20.dp, 20.dp, 40.dp), verticalArrangement = Arrangement.spacedBy(20.dp)) {
+        item { FieldScreenHeader("Settings", "Capture, appearance, AI, export, and privacy.", icon = FieldMindIcons.Settings, actionIcon = FieldMindIcons.Back, onAction = onBack) }
+
+        item {
+            SettingsGroup("Appearance") {
+                ToggleItem("Material You dynamic color", "Use system wallpaper colors that auto-adapt to light/dark. Off keeps the FieldMind brand palette.", dynamicColor, settings::setDynamicColorEnabled, FieldMindIcons.Palette)
+            }
+        }
+
+        item {
+            SettingsGroup("Capture defaults") {
+                StepperItem("Daily observation goal", "Drives the Today dashboard and progress ring.", goal, FieldMindIcons.Today) { settings.setDailyObservationGoal(it) }
+                SettingDivider()
+                ChoiceItem("Default category", observationCategories, category, FieldMindIcons.Observation, settings::setDefaultCategory)
+                SettingDivider()
+                ChoiceItem("Default confidence", confidenceOptions, confidence, FieldMindIcons.Check, settings::setDefaultConfidence)
+                SettingDivider()
+                ChoiceItem("Location mode", listOf("Manual only", "Approximate", "Precise"), locationMode, FieldMindIcons.Location, settings::setLocationMode)
+            }
+        }
+
+        item {
+            SettingsGroup("Evidence & media") {
+                ToggleItem("Media attachments", "Enable camera, gallery, and file evidence tools.", media, settings::setMediaAttachmentsEnabled, FieldMindIcons.Camera)
+                SettingDivider()
+                ToggleItem("Audio recording", "Enable voice-note evidence capture with an in-app recording indicator.", audio, settings::setAudioRecordingEnabled, FieldMindIcons.Mic)
+                SettingDivider()
+                ChoiceItem("Attachment export", listOf("Reference URIs", "Copy media later", "Skip media"), exportMode, FieldMindIcons.Export, settings::setAttachmentExportMode)
+            }
+        }
+
+        item {
+            SettingsGroup("Gemini assistant", "Optional. Nothing is sent without an explicit action.") {
+                ToggleItem("Enable Gemini", "Review factuality, suggest papers, and answer questions.", ai, settings::setGeminiEnabled, FieldMindIcons.Sparkle)
+                if (ai) {
+                    SettingDivider()
+                    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        OutlinedTextField(value = key, onValueChange = settings::setGeminiApiKey, label = { Text("Gemini API key") }, visualTransformation = PasswordVisualTransformation(), modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(18.dp), singleLine = true, supportingText = { Text(if (key.isBlank()) "No key saved — get one at aistudio.google.com/apikey." else "Key saved locally on this device only.") })
+                    }
+                    SettingDivider()
+                    ChoiceItem("Model", listOf("gemini-1.5-flash", "gemini-1.5-pro", "gemini-2.0-flash"), model, FieldMindIcons.Bolt, settings::setGeminiModel)
+                    SettingDivider()
+                    ToggleItem("Confirm before saving AI output", "AI suggestions stay as previews unless you apply them.", confirm, settings::setAiRequireConfirmBeforeSave, FieldMindIcons.Check)
+                    SettingDivider()
+                    ToggleItem("Allow attachment context", "Off by default to protect field evidence privacy.", sendAttachments, settings::setAiSendAttachments, FieldMindIcons.File)
+                }
+            }
+        }
+
+        item {
+            SettingsGroup("Discipline & ownership") {
+                ToggleItem("Reminders", "Notification permission is only requested when enabled.", reminders, settings::setRemindersEnabled, FieldMindIcons.Notifications)
+                SettingDivider()
+                ToggleItem("Streaks", "Discipline made visible without replacing real work.", streaks, settings::setStreaksEnabled, FieldMindIcons.Streak)
+            }
+        }
+
+        item {
+            SettingsGroup("Export & privacy") {
+                ChoiceItem("Default export format", listOf("Markdown", "CSV", "JSON", "Plain text"), exportFormat, FieldMindIcons.Export, settings::setDefaultExportFormat)
+                SettingDivider()
+                ToggleItem("Privacy lock", "Persisted toggle; wires to the app lock flow when available.", privacy, settings::setPrivacyLockEnabled, FieldMindIcons.Lock)
+            }
+        }
+
+        item { OutlinedButton(onClick = onResetOnboarding, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp)) { Text("Reset onboarding") } }
     }
 }
 
+// ══════════════════════════════════════════════════════════════════════
+//  Detail + backlinks
+// ══════════════════════════════════════════════════════════════════════
+
 @Composable
-fun DetailScreen(kind: String, id: Long, viewModel: FieldMindViewModel, onBack: () -> Unit) {
-    val observations by viewModel.observations.collectAsState(); val questions by viewModel.questions.collectAsState(); val hypotheses by viewModel.hypotheses.collectAsState(); val projects by viewModel.projects.collectAsState(); val sources by viewModel.sources.collectAsState(); val data by viewModel.dataRecords.collectAsState(); val reports by viewModel.reports.collectAsState(); val flashcards by viewModel.flashcards.collectAsState()
+fun DetailScreen(kind: String, id: Long, viewModel: FieldMindViewModel, onBack: () -> Unit, onOpenDetail: (String, Long) -> Unit = { _, _ -> }) {
+    val observations by viewModel.observations.collectAsState()
+    val questions by viewModel.questions.collectAsState()
+    val hypotheses by viewModel.hypotheses.collectAsState()
+    val projects by viewModel.projects.collectAsState()
+    val sources by viewModel.sources.collectAsState()
+    val data by viewModel.dataRecords.collectAsState()
+    val reports by viewModel.reports.collectAsState()
+    val flashcards by viewModel.flashcards.collectAsState()
     val title = kind.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
-    LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-        item { FieldMindTopBar(title, "Record detail workspace", "Back", onBack) }
+    LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(20.dp, 20.dp, 20.dp, 40.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+        item { FieldScreenHeader(title, "Record detail workspace", icon = FieldMindIcons.iconFor(kind), actionIcon = FieldMindIcons.Back, onAction = onBack) }
         when (kind) {
-            "observation" -> observations.firstOrNull { it.id == id }?.let { o -> item { ResearchCard(o.subject, "${o.date} ${o.time} • ${o.category} • ${o.confidenceLevel}\nLocation: ${o.manualLocation.ifBlank { "None" }}\nGPS: ${o.latitude?.let { "${o.latitude}, ${o.longitude}" } ?: "Not captured"}\nTags: ${o.tags}\n\n${o.factsOnlyNotes}\n\nEvidence: ${o.evidenceSummary}\nContext: ${o.moodOrContext}", "Observation") } }
-            "question" -> questions.firstOrNull { it.id == id }?.let { q -> item { ResearchCard(q.questionText, "${q.category} • ${q.sourceType} • ${q.status} • ${q.priority}\nRelated project: ${q.relatedProjectId ?: "None"}", "Question") } }
-            "hypothesis" -> hypotheses.firstOrNull { it.id == id }?.let { h -> item { ResearchCard(h.prediction, "Reasoning: ${h.reasoning}\nSupport: ${h.supportCriteria}\nWeaken: ${h.weakeningCriteria}\nTest: ${h.testMethod}\nResult: ${h.resultStatus}", "Hypothesis") } }
-            "project" -> projects.firstOrNull { it.id == id }?.let { p -> item { ResearchCard(p.title, "Objective: ${p.objective}\nQuestion: ${p.researchQuestion}\nBackground: ${p.backgroundNotes}\nMethods: ${p.methods}\nData: ${p.dataSummary}\nAnalysis: ${p.analysis}\nConclusion: ${p.conclusion}\nFuture questions: ${p.futureQuestions}", "Project") } }
-            "source" -> sources.firstOrNull { it.id == id }?.let { s -> item { ResearchCard(s.title, "${s.type} • ${s.author} • ${s.dateOrYear}\nLink: ${s.link}\nMain idea: ${s.personalSummary}\nKey findings: ${s.keyFindings}\nWhat this taught me: ${s.whatThisSourceTaughtMe}\nPaper prompts: ${s.paperNotes}\nQuestions: ${s.questionsGenerated}", "Source") } }
-            "data" -> data.firstOrNull { it.id == id }?.let { d -> item { ResearchCard(d.label, "${d.toolType} • ${d.value} ${d.unit}\n${d.location}\n${d.notes}", "Data") } }
-            "report" -> reports.firstOrNull { it.id == id }?.let { r -> item { ResearchCard(r.title, FieldMindExport.buildMarkdownReport(r), "Report") } }
-            "flashcard" -> flashcards.firstOrNull { it.id == id }?.let { f -> item { ResearchCard(f.front, f.back, f.type) } }
+            "observation" -> observations.firstOrNull { it.id == id }?.let { o ->
+                item { DetailBody(o.subject, "observation", listOf("Date" to "${o.date} ${o.time}", "Category" to o.category, "Confidence" to o.confidenceLevel, "Location" to o.manualLocation.ifBlank { "None" }, "GPS" to (o.latitude?.let { "${o.latitude}, ${o.longitude}" } ?: "Not captured"), "Tags" to o.tags, "Facts" to o.factsOnlyNotes, "Evidence" to o.evidenceSummary, "Context" to o.moodOrContext)) }
+                item { ObservationAttachmentsPanel(viewModel, o.id) }
+                item { BacklinksPanel(buildList {
+                    projects.firstOrNull { it.id == o.projectId }?.let { add(Triple("project", it.title, it.id)) }
+                    data.filter { it.observationId == o.id }.forEach { add(Triple("data", it.label, it.id)) }
+                }, onOpenDetail) }
+            }
+            "question" -> questions.firstOrNull { it.id == id }?.let { qn ->
+                item { DetailBody(qn.questionText, "question", listOf("Category" to qn.category, "Source" to qn.sourceType, "Status" to qn.status, "Priority" to qn.priority)) }
+                item { BacklinksPanel(buildList {
+                    projects.firstOrNull { it.id == qn.relatedProjectId }?.let { add(Triple("project", it.title, it.id)) }
+                    hypotheses.filter { it.linkedQuestionId == qn.id }.forEach { add(Triple("hypothesis", it.prediction, it.id)) }
+                }, onOpenDetail) }
+            }
+            "hypothesis" -> hypotheses.firstOrNull { it.id == id }?.let { h ->
+                item { DetailBody(h.prediction, "hypothesis", listOf("Reasoning" to h.reasoning, "Support" to h.supportCriteria, "Weaken" to h.weakeningCriteria, "Test" to h.testMethod, "Result" to h.resultStatus, "Confidence" to "${h.confidencePercent}%")) }
+                item { BacklinksPanel(buildList {
+                    questions.firstOrNull { it.id == h.linkedQuestionId }?.let { add(Triple("question", it.questionText, it.id)) }
+                }, onOpenDetail) }
+            }
+            "project" -> projects.firstOrNull { it.id == id }?.let { p ->
+                item { DetailBody(p.title, "project", listOf("Objective" to p.objective, "Question" to p.researchQuestion, "Background" to p.backgroundNotes, "Methods" to p.methods, "Data" to p.dataSummary, "Analysis" to p.analysis, "Conclusion" to p.conclusion, "Future" to p.futureQuestions)) }
+                item { BacklinksPanel(buildList {
+                    observations.filter { it.projectId == p.id }.forEach { add(Triple("observation", it.subject, it.id)) }
+                    questions.filter { it.relatedProjectId == p.id }.forEach { add(Triple("question", it.questionText, it.id)) }
+                    sources.filter { it.relatedProjectId == p.id }.forEach { add(Triple("source", it.title, it.id)) }
+                    data.filter { it.projectId == p.id }.forEach { add(Triple("data", it.label, it.id)) }
+                    reports.filter { it.projectId == p.id }.forEach { add(Triple("report", it.title, it.id)) }
+                }, onOpenDetail) }
+            }
+            "source" -> sources.firstOrNull { it.id == id }?.let { s ->
+                item { DetailBody(s.title, "source", listOf("Type" to s.type, "Author" to s.author, "Year" to s.dateOrYear, "Link" to s.link, "Main idea" to s.personalSummary, "Key findings" to s.keyFindings, "Taught me" to s.whatThisSourceTaughtMe, "Paper prompts" to s.paperNotes, "Questions" to s.questionsGenerated)) }
+                item { BacklinksPanel(buildList {
+                    projects.firstOrNull { it.id == s.relatedProjectId }?.let { add(Triple("project", it.title, it.id)) }
+                    flashcards.filter { it.sourceId == s.id }.forEach { add(Triple("flashcard", it.front, it.id)) }
+                }, onOpenDetail) }
+            }
+            "data" -> data.firstOrNull { it.id == id }?.let { d ->
+                item { DetailBody(d.label, "data", listOf("Tool" to d.toolType, "Value" to "${d.value} ${d.unit}".trim(), "Location" to d.location, "Notes" to d.notes)) }
+                item { BacklinksPanel(buildList {
+                    projects.firstOrNull { it.id == d.projectId }?.let { add(Triple("project", it.title, it.id)) }
+                    observations.firstOrNull { it.id == d.observationId }?.let { add(Triple("observation", it.subject, it.id)) }
+                }, onOpenDetail) }
+            }
+            "report" -> reports.firstOrNull { it.id == id }?.let { r ->
+                item { DetailBody(r.title, "report", listOf("Type" to r.type, "Status" to r.status, "Question" to r.question, "Conclusion" to r.conclusion)) }
+                item { Card(shape = RoundedCornerShape(20.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)) { Text(FieldMindExport.buildMarkdownReport(r), Modifier.padding(16.dp), style = MaterialTheme.typography.bodySmall) } }
+                item { BacklinksPanel(buildList { projects.firstOrNull { it.id == r.projectId }?.let { add(Triple("project", it.title, it.id)) } }, onOpenDetail) }
+            }
+            "flashcard" -> flashcards.firstOrNull { it.id == id }?.let { f ->
+                item { DetailBody(f.front, "flashcard", listOf("Type" to f.type, "Back" to f.back)) }
+                item { BacklinksPanel(buildList {
+                    sources.firstOrNull { it.id == f.sourceId }?.let { add(Triple("source", it.title, it.id)) }
+                    projects.firstOrNull { it.id == f.projectId }?.let { add(Triple("project", it.title, it.id)) }
+                }, onOpenDetail) }
+            }
         }
         item { AssistantPanel(viewModel) }
     }
 }
 
-@Composable private fun AssistantPanel(viewModel: FieldMindViewModel) { val enabled by viewModel.fieldSettings.geminiEnabled.collectAsState(); val key by viewModel.fieldSettings.geminiApiKey.collectAsState(); val assistant = remember(enabled, key) { GeminiResearchAssistant(enabled = enabled, apiKeyProvider = { key }) }; var suggestion by remember { mutableStateOf(assistant.researchMentorSuggestion()) }; ResearchCard(if (assistant.isAvailable()) "Gemini assistant ready" else "AI assistant disabled", suggestion.body, "AI preview"); Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) { listOf("Factuality" to assistant.observationFactualityReview(""), "Testability" to assistant.questionTestabilityCheck(""), "Writing" to assistant.writingImprovementPrompt()).forEach { (label, item) -> OutlinedButton({ suggestion = item }, Modifier.weight(1f)) { Text(label) } } } }
+@Composable
+private fun DetailBody(title: String, kind: String, fields: List<Pair<String, String>>) {
+    Card(shape = RoundedCornerShape(24.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)) {
+        Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                EntityBadge(kind)
+            }
+            Text(title, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+            fields.filter { it.second.isNotBlank() }.forEach { (label, value) ->
+                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    Text(label.uppercase(), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.SemiBold)
+                    Text(value, style = MaterialTheme.typography.bodyMedium)
+                }
+            }
+        }
+    }
+}
 
-@Composable private fun AttachmentPreviewList(items: List<DraftEvidenceAttachment>, onCaptionChange: (Int, String) -> Unit, onRemove: (Int) -> Unit) { Column(verticalArrangement = Arrangement.spacedBy(8.dp)) { items.forEachIndexed { index, item -> Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh), shape = RoundedCornerShape(22.dp)) { Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) { Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) { EntityTypeBadge(item.type); TextButton({ onRemove(index) }) { Text("Remove") } }; Text(item.uri, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant); LabeledTextField(item.caption, { onCaptionChange(index, it) }, "Caption") } } } } }
-@Composable private fun FieldMindTopBar(title: String, subtitle: String, action: String? = null, onAction: (() -> Unit)? = null) { Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) { Column(Modifier.weight(1f)) { Text(title, style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Bold); Text(subtitle, color = MaterialTheme.colorScheme.onSurfaceVariant) }; if (action != null && onAction != null) TextButton(onClick = onAction) { Text(action) } } }
-@Composable private fun FieldProgressCard(title: String, body: String, complete: Boolean, onClick: () -> Unit) { Card(Modifier.fillMaxWidth().clickable(onClick = onClick).animateContentSize(), colors = CardDefaults.cardColors(containerColor = if (complete) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainer), shape = RoundedCornerShape(30.dp)) { Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) { EntityTypeBadge(if (complete) "Complete" else "Today"); Text(title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold); Text(body, color = if (complete) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant) } } }
-@Composable private fun ActionGrid(actions: List<Pair<String, FieldMindScreen>>, onNavigate: (FieldMindScreen) -> Unit) { Column(verticalArrangement = Arrangement.spacedBy(10.dp)) { actions.chunked(2).forEach { row -> Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) { row.forEach { (label, screen) -> FilledTonalButton({ onNavigate(screen) }, Modifier.weight(1f)) { Text(label) } }; if (row.size == 1) Spacer(Modifier.weight(1f)) } } } }
-@Composable private fun SettingsSwitchRow(title: String, checked: Boolean, onCheckedChange: (Boolean) -> Unit, body: String) { Card(shape = RoundedCornerShape(24.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)) { Row(Modifier.fillMaxWidth().padding(16.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) { Column(Modifier.weight(1f)) { Text(title, fontWeight = FontWeight.SemiBold); Text(body, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }; Switch(checked, onCheckedChange) } } }
-@Composable private fun SettingsNumberRow(title: String, value: Int, onValueChange: (Int) -> Unit, body: String) { Card(shape = RoundedCornerShape(24.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)) { Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) { Text(title, fontWeight = FontWeight.SemiBold); Text(body, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant); Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) { OutlinedButton({ onValueChange((value - 1).coerceAtLeast(0)) }) { Text("−") }; Text(value.toString(), style = MaterialTheme.typography.titleLarge); Button({ onValueChange(value + 1) }) { Text("+") } } } } }
-@Composable private fun SettingChoice(title: String, options: List<String>, selected: String, onSelected: (String) -> Unit) { Card(shape = RoundedCornerShape(24.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)) { Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) { Text(title, fontWeight = FontWeight.SemiBold); ChoiceChips(options, selected, onSelected = onSelected) } } }
+/** Evidence gallery for a saved observation: image thumbnails plus file/audio chips. */
+@Composable
+private fun ObservationAttachmentsPanel(viewModel: FieldMindViewModel, observationId: Long) {
+    val attachments by viewModel.attachmentsForObservation(observationId).collectAsState(initial = emptyList())
+    if (attachments.isEmpty()) return
+    val images = attachments.filter { it.type.equals("Photo", true) || it.type.equals("Gallery", true) || it.uri.contains(Regex("\\.(jpg|jpeg|png|webp|gif|heic|bmp)", RegexOption.IGNORE_CASE)) }
+    val others = attachments - images.toSet()
+    Card(shape = RoundedCornerShape(24.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)) {
+        Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Icon(icon = FieldMindIcons.Gallery, contentDescription = null, tint = MaterialTheme.colorScheme.primary, size = 20.dp)
+                Text("Evidence (${attachments.size})", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            }
+            if (images.isNotEmpty()) {
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    items(images) { img ->
+                        Column(Modifier.width(140.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            AsyncImage(
+                                model = img.uri,
+                                contentDescription = img.caption.ifBlank { "Observation photo" },
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier.fillMaxWidth().height(140.dp).clip(RoundedCornerShape(16.dp)).background(MaterialTheme.colorScheme.surfaceContainerHighest)
+                            )
+                            if (img.caption.isNotBlank()) Text(img.caption, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                        }
+                    }
+                }
+            }
+            others.forEach { att ->
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Box(Modifier.size(38.dp).clip(RoundedCornerShape(12.dp)).background(MaterialTheme.colorScheme.surfaceContainerHighest), contentAlignment = Alignment.Center) {
+                        Icon(icon = if (att.type.equals("Audio", true)) FieldMindIcons.Mic else FieldMindIcons.File, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, size = 20.dp)
+                    }
+                    Column(Modifier.weight(1f)) {
+                        Text(att.caption.ifBlank { att.type }, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        Text(att.uri, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    }
+                }
+            }
+        }
+    }
+}
 
-@Composable private fun NewQuestionDialog(viewModel: FieldMindViewModel, onDismiss: () -> Unit) { var question by remember { mutableStateOf("") }; var category by remember { mutableStateOf("Other") }; var source by remember { mutableStateOf("Observation") }; var status by remember { mutableStateOf("New") }; var priority by remember { mutableStateOf("Medium") }; FormDialog("New Question", onDismiss, { if (question.isNotBlank()) { viewModel.addQuestion(question, category, source, status, priority); onDismiss() } }) { LabeledTextField(question, { question = it }, "Question", minLines = 2); ChoiceChips(observationCategories, category) { category = it }; ChoiceChips(sourceTypes, source) { source = it }; ChoiceChips(questionStatuses, status) { status = it }; ChoiceChips(listOf("Low", "Medium", "High"), priority) { priority = it }; Text("Testable questions name something you can observe, measure, compare, or verify.", color = MaterialTheme.colorScheme.onSurfaceVariant) } }
-@Composable private fun NewProjectDialog(viewModel: FieldMindViewModel, onDismiss: () -> Unit) { var title by remember { mutableStateOf("") }; var topic by remember { mutableStateOf("Biology") }; var objective by remember { mutableStateOf("") }; var question by remember { mutableStateOf("") }; FormDialog("New Project", onDismiss, { if (title.isNotBlank()) { viewModel.addProject(title, topic, objective, question); onDismiss() } }) { LabeledTextField(title, { title = it }, "Project title"); ChoiceChips(listOf("Biology", "Geology", "Wildlife", "Ecology", "Plant Study", "Weather", "Human Pattern", "Other"), topic) { topic = it }; LabeledTextField(objective, { objective = it }, "Objective", minLines = 2); LabeledTextField(question, { question = it }, "Research question", minLines = 2) } }
-@Composable private fun NewSourceDialog(viewModel: FieldMindViewModel, onDismiss: () -> Unit) { var type by remember { mutableStateOf("Article") }; var title by remember { mutableStateOf("") }; var author by remember { mutableStateOf("") }; var link by remember { mutableStateOf("") }; var summary by remember { mutableStateOf("") }; var taught by remember { mutableStateOf("") }; var findings by remember { mutableStateOf("") }; var questions by remember { mutableStateOf("") }; var notes by remember { mutableStateOf("") }; var reliability by remember { mutableStateOf(3f) }; FormDialog("Add Source", onDismiss, { if (title.isNotBlank()) { viewModel.addSource(type, title, author, link, summary, taught, reliability.toInt(), findings, questions, notes); onDismiss() } }) { ChoiceChips(sourceLibraryTypes, type) { type = it }; LabeledTextField(title, { title = it }, "Title"); LabeledTextField(author, { author = it }, "Author / creator"); LabeledTextField(link, { link = it }, "Link / citation"); LabeledTextField(summary, { summary = it }, "Main idea", minLines = 2); LabeledTextField(findings, { findings = it }, "Key findings / definitions", minLines = 2); LabeledTextField(taught, { taught = it }, "What this source taught me", minLines = 2); LabeledTextField(questions, { questions = it }, "New questions", minLines = 2); LabeledTextField(notes, { notes = it }, "Paper reading prompts: topic, problem, method, result, unclear, new question, verify next", minLines = 4); Text("Credibility: ${reliability.toInt()}/5"); Slider(reliability, { reliability = it }, valueRange = 1f..5f, steps = 3) } }
-@Composable private fun NewHypothesisDialog(viewModel: FieldMindViewModel, questions: List<QuestionEntity>, onDismiss: () -> Unit) { var prediction by remember { mutableStateOf("") }; var reasoning by remember { mutableStateOf("") }; var evidence by remember { mutableStateOf("") }; var support by remember { mutableStateOf("") }; var weaken by remember { mutableStateOf("") }; var test by remember { mutableStateOf("") }; var confidence by remember { mutableStateOf(50f) }; val linked = questions.firstOrNull(); FormDialog("New Hypothesis", onDismiss, { if (prediction.isNotBlank()) { viewModel.addHypothesis(linked?.id, prediction, evidence, confidence.toInt(), reasoning, support, weaken, test); onDismiss() } }) { linked?.let { Text("Linked question: ${it.questionText}", color = MaterialTheme.colorScheme.onSurfaceVariant) }; LabeledTextField(prediction, { prediction = it }, "Prediction", minLines = 2); LabeledTextField(reasoning, { reasoning = it }, "Reasoning", minLines = 2); LabeledTextField(evidence, { evidence = it }, "Evidence needed", minLines = 2); LabeledTextField(support, { support = it }, "Support criteria"); LabeledTextField(weaken, { weaken = it }, "Weakening criteria"); LabeledTextField(test, { test = it }, "Test method"); Text("Confidence: ${confidence.toInt()}%"); Slider(confidence, { confidence = it }, valueRange = 0f..100f) } }
-@Composable private fun NewDataRecordDialog(viewModel: FieldMindViewModel, onDismiss: () -> Unit) { var tool by remember { mutableStateOf("Counter") }; var label by remember { mutableStateOf("") }; var value by remember { mutableStateOf("0") }; var unit by remember { mutableStateOf("") }; var location by remember { mutableStateOf("") }; var notes by remember { mutableStateOf("") }; FormDialog("Data Collection Tool", onDismiss, { if (label.isNotBlank()) { viewModel.addDataRecord(tool, label, value, unit, notes, location); onDismiss() } }) { ChoiceChips(dataTools, tool) { tool = it }; LabeledTextField(label, { label = it }, "Label"); Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) { OutlinedButton({ value = ((value.toIntOrNull() ?: 0) - 1).toString() }) { Text("−1") }; Text(value, style = MaterialTheme.typography.headlineSmall); Button({ value = ((value.toIntOrNull() ?: 0) + 1).toString() }) { Text("+1") }; TextButton({ value = "0" }) { Text("Reset") } }; LabeledTextField(value, { value = it }, "Value / checklist items / comparison samples"); LabeledTextField(unit, { unit = it }, "Unit", supportingText = "count, cm, °C, minutes"); LabeledTextField(location, { location = it }, "Location / site"); LabeledTextField(notes, { notes = it }, "Notes", minLines = 3) } }
-@Composable private fun NewReportDialog(viewModel: FieldMindViewModel, onDismiss: () -> Unit) { var type by remember { mutableStateOf("Field Report") }; var title by remember { mutableStateOf("") }; var background by remember { mutableStateOf("") }; var question by remember { mutableStateOf("") }; var methods by remember { mutableStateOf("") }; var observations by remember { mutableStateOf("") }; var results by remember { mutableStateOf("") }; var interpretation by remember { mutableStateOf("") }; var conclusion by remember { mutableStateOf("") }; var limitations by remember { mutableStateOf("") }; var next by remember { mutableStateOf("") }; FormDialog("Report Builder", onDismiss, { if (title.isNotBlank()) { viewModel.addReport(type, title, background, question, methods, observations, results, interpretation, conclusion, limitations, next); onDismiss() } }) { ChoiceChips(reportTypes, type) { type = it }; LabeledTextField(title, { title = it }, "Title"); LabeledTextField(background, { background = it }, "Background", minLines = 2); LabeledTextField(question, { question = it }, "Question", minLines = 2); LabeledTextField(methods, { methods = it }, "Methods", minLines = 2); LabeledTextField(observations, { observations = it }, "Observations", minLines = 2); LabeledTextField(results, { results = it }, "Data / results", minLines = 2); LabeledTextField(interpretation, { interpretation = it }, "Interpretation", minLines = 2); LabeledTextField(conclusion, { conclusion = it }, "Conclusion", minLines = 2); LabeledTextField(limitations, { limitations = it }, "Limitations", minLines = 2); LabeledTextField(next, { next = it }, "Next steps", minLines = 2); Text("Save generates a local Markdown draft for export.") } }
-@Composable private fun NewFlashcardDialog(viewModel: FieldMindViewModel, onDismiss: () -> Unit) { var type by remember { mutableStateOf("concept") }; var front by remember { mutableStateOf("") }; var back by remember { mutableStateOf("") }; FormDialog("Create Flashcard", onDismiss, { if (front.isNotBlank() && back.isNotBlank()) { viewModel.addFlashcard(front, back, type); onDismiss() } }) { ChoiceChips(listOf("term", "definition", "concept", "question-answer", "mistake card"), type) { type = it }; LabeledTextField(front, { front = it }, "Front"); LabeledTextField(back, { back = it }, "Back", minLines = 3) } }
-@Composable private fun FormDialog(title: String, onDismiss: () -> Unit, onSave: () -> Unit, content: @Composable ColumnScope.() -> Unit) { AlertDialog(onDismissRequest = onDismiss, title = { Text(title) }, text = { Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp), content = content) }, confirmButton = { Button(onClick = onSave) { Text("Save") } }, dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } }) }
+@Composable
+private fun BacklinksPanel(links: List<Triple<String, String, Long>>, onOpenDetail: (String, Long) -> Unit) {
+    if (links.isEmpty()) return
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Icon(icon = FieldMindIcons.Link, contentDescription = null, tint = MaterialTheme.colorScheme.primary, size = 20.dp)
+            Text("Linked records", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Text("${links.size}", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        links.forEach { (lkKind, lkTitle, lkId) ->
+            EntityCard(lkTitle, lkKind, onClick = { onOpenDetail(lkKind, lkId) })
+        }
+    }
+}
 
-private fun learningModuleBody(module: String): String = when (module) { "Observation" -> "Practice separating facts from guesses in the observation journal."; "Asking testable questions" -> "Convert curiosity into questions that can be observed, compared, or verified."; "Literature review" -> "Use sources, paper prompts, and what-this-taught-me summaries."; "Analysis" -> "Use tags, dates, projects, subjects, and data tools to find patterns."; else -> "Track this skill by applying it in notes, sources, projects, reports, and revision cards." }
-private fun createFieldMindFile(context: Context, prefix: String, suffix: String): File { val dir = File(context.getExternalFilesDir(null), "fieldmind").apply { mkdirs() }; return File(dir, "$prefix-${System.currentTimeMillis()}$suffix") }
-private fun createFieldMindFileUri(context: Context, prefix: String, suffix: String): Uri = FileProvider.getUriForFile(context, "${context.packageName}.provider", createFieldMindFile(context, prefix, suffix))
+@Composable
+private fun AssistantPanel(viewModel: FieldMindViewModel, seedText: String = "") {
+    val enabled by viewModel.fieldSettings.geminiEnabled.collectAsState()
+    val key by viewModel.fieldSettings.geminiApiKey.collectAsState()
+    val model by viewModel.fieldSettings.geminiModel.collectAsState()
+    val assistant = remember(enabled, key, model) {
+        GeminiResearchAssistant(enabled = enabled, apiKeyProvider = { key }, modelProvider = { model })
+    }
+    val available = assistant.isAvailable()
+    val scope = rememberCoroutineScope()
+    var input by remember(seedText) { mutableStateOf(seedText) }
+    var selectedTask by remember { mutableStateOf(AssistantTask.PAPER_BOOK_SUGGESTIONS) }
+    var loading by remember { mutableStateOf(false) }
+    var result by remember { mutableStateOf<String?>(null) }
+
+    val tasks = listOf(
+        AssistantTask.PAPER_BOOK_SUGGESTIONS to FieldMindIcons.Book,
+        AssistantTask.FACTUALITY to FieldMindIcons.Check,
+        AssistantTask.TESTABILITY to FieldMindIcons.Question,
+        AssistantTask.HYPOTHESIS to FieldMindIcons.Hypothesis,
+        AssistantTask.NEXT_STEPS to FieldMindIcons.Trend,
+        AssistantTask.WRITING to FieldMindIcons.Edit
+    )
+
+    Card(shape = RoundedCornerShape(24.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                Box(Modifier.size(36.dp).clip(RoundedCornerShape(11.dp)).background(MaterialTheme.colorScheme.tertiaryContainer), contentAlignment = Alignment.Center) {
+                    Icon(icon = FieldMindIcons.Sparkle, contentDescription = null, tint = MaterialTheme.colorScheme.onTertiaryContainer, size = 20.dp)
+                }
+                Column(Modifier.weight(1f)) {
+                    Text("Gemini research assistant", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                    Text(if (available) "Helps you think — never invents evidence." else "Disabled — enable it in Settings.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+
+            ChoiceChips(tasks.map { it.first.title }, selectedTask.title) { title -> tasks.firstOrNull { it.first.title == title }?.let { selectedTask = it.first } }
+
+            FieldTextField(
+                input, { input = it },
+                if (selectedTask == AssistantTask.PAPER_BOOK_SUGGESTIONS) "Topic for papers & books" else "Text to review",
+                minLines = 2,
+                supportingText = "Stays on device until you press Ask Gemini."
+            )
+
+            Button(
+                onClick = {
+                    if (!available) return@Button
+                    loading = true; result = null
+                    scope.launch {
+                        val suggestion = assistant.generateContent(selectedTask, input.trim())
+                        result = suggestion.body
+                        loading = false
+                    }
+                },
+                modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp),
+                enabled = available && !loading && (selectedTask == AssistantTask.NEXT_STEPS || input.isNotBlank())
+            ) {
+                if (loading) {
+                    CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp, color = MaterialTheme.colorScheme.onPrimary)
+                    Spacer(Modifier.size(8.dp)); Text("Asking Gemini…")
+                } else {
+                    Icon(icon = FieldMindIcons.Send, contentDescription = null, size = 18.dp); Spacer(Modifier.size(8.dp)); Text("Ask Gemini")
+                }
+            }
+
+            if (!available) {
+                Text("Add a Gemini API key in Settings → Gemini assistant to enable live suggestions.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+
+            result?.let { text ->
+                Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(MaterialTheme.colorScheme.surfaceContainerHigh).padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Text(selectedTask.title, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.SemiBold)
+                    Text(text, style = MaterialTheme.typography.bodyMedium)
+                    Text("Draft only. Verify any titles, authors, or links before trusting them.", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+        }
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════════
+//  Settings rows + dialogs + helpers
+// ══════════════════════════════════════════════════════════════════════
+
+/** A grouped settings section: a header above a single rounded card holding related rows. */
+@Composable
+private fun SettingsGroup(title: String, subtitle: String? = null, content: @Composable ColumnScope.() -> Unit) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Column(Modifier.padding(start = 4.dp)) {
+            Text(title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.primary)
+            if (subtitle != null) Text(subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        Card(shape = RoundedCornerShape(22.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)) {
+            Column(content = content)
+        }
+    }
+}
+
+@Composable
+private fun SettingDivider() = HorizontalDivider(Modifier.padding(start = 56.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+
+@Composable
+private fun SettingLeading(icon: MaterialSymbolIcon?) {
+    if (icon == null) { Spacer(Modifier.size(40.dp)); return }
+    Box(Modifier.size(40.dp).clip(RoundedCornerShape(12.dp)).background(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)), contentAlignment = Alignment.Center) {
+        Icon(icon = icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary, size = 22.dp)
+    }
+}
+
+/** A whole-row clickable toggle inside a [SettingsGroup]. */
+@Composable
+private fun ToggleItem(title: String, body: String, checked: Boolean, onCheckedChange: (Boolean) -> Unit, icon: MaterialSymbolIcon? = null) {
+    Row(
+        Modifier.fillMaxWidth().clickable { onCheckedChange(!checked) }.padding(16.dp),
+        horizontalArrangement = Arrangement.spacedBy(14.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        SettingLeading(icon)
+        Column(Modifier.weight(1f)) {
+            Text(title, fontWeight = FontWeight.SemiBold)
+            Text(body, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        Switch(checked = checked, onCheckedChange = onCheckedChange)
+    }
+}
+
+@Composable
+private fun StepperItem(title: String, body: String, value: Int, icon: MaterialSymbolIcon? = null, onValueChange: (Int) -> Unit) {
+    Row(Modifier.fillMaxWidth().padding(16.dp), horizontalArrangement = Arrangement.spacedBy(14.dp), verticalAlignment = Alignment.CenterVertically) {
+        SettingLeading(icon)
+        Column(Modifier.weight(1f)) {
+            Text(title, fontWeight = FontWeight.SemiBold)
+            Text(body, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            FilledTonalIconButton(onClick = { onValueChange((value - 1).coerceAtLeast(0)) }) { Icon(icon = MaterialSymbolIcon("remove"), contentDescription = "Decrease", size = 18.dp) }
+            Text(value.toString(), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, modifier = Modifier.widthIn(min = 24.dp), textAlign = TextAlign.Center)
+            FilledTonalIconButton(onClick = { onValueChange(value + 1) }) { Icon(icon = FieldMindIcons.Add, contentDescription = "Increase", size = 18.dp) }
+        }
+    }
+}
+
+@Composable
+private fun ChoiceItem(title: String, options: List<String>, selected: String, icon: MaterialSymbolIcon? = null, onSelected: (String) -> Unit) {
+    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Row(horizontalArrangement = Arrangement.spacedBy(14.dp), verticalAlignment = Alignment.CenterVertically) {
+            SettingLeading(icon)
+            Text(title, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
+        }
+        ChoiceChips(options, selected, onSelected = onSelected)
+    }
+}
+
+@Composable
+private fun NewQuestionDialog(viewModel: FieldMindViewModel, onDismiss: () -> Unit) {
+    var question by remember { mutableStateOf("") }; var category by remember { mutableStateOf("Other") }; var source by remember { mutableStateOf("Observation") }; var status by remember { mutableStateOf("New") }; var priority by remember { mutableStateOf("Medium") }
+    FormDialog("New Question", onDismiss, { if (question.isNotBlank()) { viewModel.addQuestion(question, category, source, status, priority); onDismiss() } }) {
+        FieldTextField(question, { question = it }, "Question", minLines = 2); ChoiceChips(observationCategories, category) { category = it }; ChoiceChips(sourceTypes, source) { source = it }; ChoiceChips(questionStatuses, status) { status = it }; ChoiceChips(listOf("Low", "Medium", "High"), priority) { priority = it }
+        Text("Testable questions name something you can observe, measure, compare, or verify.", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
+    }
+}
+
+@Composable
+private fun NewProjectDialog(viewModel: FieldMindViewModel, onDismiss: () -> Unit) {
+    var title by remember { mutableStateOf("") }; var topic by remember { mutableStateOf("Biology") }; var objective by remember { mutableStateOf("") }; var question by remember { mutableStateOf("") }
+    FormDialog("New Project", onDismiss, { if (title.isNotBlank()) { viewModel.addProject(title, topic, objective, question); onDismiss() } }) {
+        FieldTextField(title, { title = it }, "Project title"); ChoiceChips(listOf("Biology", "Geology", "Wildlife", "Ecology", "Plant Study", "Weather", "Human Pattern", "Other"), topic) { topic = it }; FieldTextField(objective, { objective = it }, "Objective", minLines = 2); FieldTextField(question, { question = it }, "Research question", minLines = 2)
+    }
+}
+
+@Composable
+private fun NewSourceDialog(viewModel: FieldMindViewModel, onDismiss: () -> Unit) {
+    var type by remember { mutableStateOf("Article") }; var title by remember { mutableStateOf("") }; var author by remember { mutableStateOf("") }; var link by remember { mutableStateOf("") }; var summary by remember { mutableStateOf("") }; var taught by remember { mutableStateOf("") }; var findings by remember { mutableStateOf("") }; var questions by remember { mutableStateOf("") }; var notes by remember { mutableStateOf("") }; var reliability by remember { mutableStateOf(3f) }
+    FormDialog("Add Source", onDismiss, { if (title.isNotBlank()) { viewModel.addSource(type, title, author, link, summary, taught, reliability.toInt(), findings, questions, notes); onDismiss() } }) {
+        ChoiceChips(sourceLibraryTypes, type) { type = it }; FieldTextField(title, { title = it }, "Title"); FieldTextField(author, { author = it }, "Author / creator"); FieldTextField(link, { link = it }, "Link / citation"); FieldTextField(summary, { summary = it }, "Main idea", minLines = 2); FieldTextField(findings, { findings = it }, "Key findings / definitions", minLines = 2); FieldTextField(taught, { taught = it }, "What this source taught me", minLines = 2); FieldTextField(questions, { questions = it }, "New questions", minLines = 2); FieldTextField(notes, { notes = it }, "Paper reading prompts", minLines = 4); Text("Credibility: ${reliability.toInt()}/5"); Slider(reliability, { reliability = it }, valueRange = 1f..5f, steps = 3)
+    }
+}
+
+@Composable
+private fun NewHypothesisDialog(viewModel: FieldMindViewModel, questions: List<QuestionEntity>, onDismiss: () -> Unit) {
+    var prediction by remember { mutableStateOf("") }; var reasoning by remember { mutableStateOf("") }; var evidence by remember { mutableStateOf("") }; var support by remember { mutableStateOf("") }; var weaken by remember { mutableStateOf("") }; var test by remember { mutableStateOf("") }; var confidence by remember { mutableStateOf(50f) }; val linked = questions.firstOrNull()
+    FormDialog("New Hypothesis", onDismiss, { if (prediction.isNotBlank()) { viewModel.addHypothesis(linked?.id, prediction, evidence, confidence.toInt(), reasoning, support, weaken, test); onDismiss() } }) {
+        linked?.let { Text("Linked question: ${it.questionText}", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall) }; FieldTextField(prediction, { prediction = it }, "Prediction", minLines = 2); FieldTextField(reasoning, { reasoning = it }, "Reasoning", minLines = 2); FieldTextField(evidence, { evidence = it }, "Evidence needed", minLines = 2); FieldTextField(support, { support = it }, "Support criteria"); FieldTextField(weaken, { weaken = it }, "Weakening criteria"); FieldTextField(test, { test = it }, "Test method"); Text("Confidence: ${confidence.toInt()}%"); Slider(confidence, { confidence = it }, valueRange = 0f..100f)
+    }
+}
+
+@Composable
+private fun NewDataRecordDialog(viewModel: FieldMindViewModel, onDismiss: () -> Unit) {
+    var tool by remember { mutableStateOf("Counter") }; var label by remember { mutableStateOf("") }; var value by remember { mutableStateOf("0") }; var unit by remember { mutableStateOf("") }; var location by remember { mutableStateOf("") }; var notes by remember { mutableStateOf("") }
+    FormDialog("Data Collection Tool", onDismiss, { if (label.isNotBlank()) { viewModel.addDataRecord(tool, label, value, unit, notes, location); onDismiss() } }) {
+        ChoiceChips(dataTools, tool) { tool = it }; FieldTextField(label, { label = it }, "Label"); Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) { OutlinedButton({ value = ((value.toIntOrNull() ?: 0) - 1).toString() }) { Text("−1") }; Text(value, style = MaterialTheme.typography.headlineSmall); Button({ value = ((value.toIntOrNull() ?: 0) + 1).toString() }) { Text("+1") }; TextButton({ value = "0" }) { Text("Reset") } }; FieldTextField(value, { value = it }, "Value / items / samples"); FieldTextField(unit, { unit = it }, "Unit", supportingText = "count, cm, °C, minutes"); FieldTextField(location, { location = it }, "Location / site"); FieldTextField(notes, { notes = it }, "Notes", minLines = 3)
+    }
+}
+
+@Composable
+private fun NewReportDialog(viewModel: FieldMindViewModel, onDismiss: () -> Unit) {
+    var type by remember { mutableStateOf("Field Report") }; var title by remember { mutableStateOf("") }; var background by remember { mutableStateOf("") }; var question by remember { mutableStateOf("") }; var methods by remember { mutableStateOf("") }; var observations by remember { mutableStateOf("") }; var results by remember { mutableStateOf("") }; var interpretation by remember { mutableStateOf("") }; var conclusion by remember { mutableStateOf("") }; var limitations by remember { mutableStateOf("") }; var next by remember { mutableStateOf("") }
+    FormDialog("Report Builder", onDismiss, { if (title.isNotBlank()) { viewModel.addReport(type, title, background, question, methods, observations, results, interpretation, conclusion, limitations, next); onDismiss() } }) {
+        ChoiceChips(reportTypes, type) { type = it }; FieldTextField(title, { title = it }, "Title"); FieldTextField(background, { background = it }, "Background", minLines = 2); FieldTextField(question, { question = it }, "Question", minLines = 2); FieldTextField(methods, { methods = it }, "Methods", minLines = 2); FieldTextField(observations, { observations = it }, "Observations", minLines = 2); FieldTextField(results, { results = it }, "Data / results", minLines = 2); FieldTextField(interpretation, { interpretation = it }, "Interpretation", minLines = 2); FieldTextField(conclusion, { conclusion = it }, "Conclusion", minLines = 2); FieldTextField(limitations, { limitations = it }, "Limitations", minLines = 2); FieldTextField(next, { next = it }, "Next steps", minLines = 2); Text("Save generates a local Markdown draft for export.", style = MaterialTheme.typography.bodySmall)
+    }
+}
+
+@Composable
+private fun NewFlashcardDialog(viewModel: FieldMindViewModel, onDismiss: () -> Unit) {
+    var type by remember { mutableStateOf("concept") }; var front by remember { mutableStateOf("") }; var back by remember { mutableStateOf("") }
+    FormDialog("Create Flashcard", onDismiss, { if (front.isNotBlank() && back.isNotBlank()) { viewModel.addFlashcard(front, back, type); onDismiss() } }) {
+        ChoiceChips(listOf("term", "definition", "concept", "question-answer", "mistake card"), type) { type = it }; FieldTextField(front, { front = it }, "Front"); FieldTextField(back, { back = it }, "Back", minLines = 3)
+    }
+}
+
+@Composable
+private fun FormDialog(title: String, onDismiss: () -> Unit, onSave: () -> Unit, content: @Composable ColumnScope.() -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(title) },
+        text = { Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp), content = content) },
+        confirmButton = { Button(onClick = onSave) { Text("Save") } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } }
+    )
+}
+
+internal fun learningModuleBody(module: String): String = when (module) {
+    "Observation" -> "Practice separating facts from guesses in the observation journal."
+    "Asking testable questions" -> "Convert curiosity into questions that can be observed, compared, or verified."
+    "Literature review" -> "Use sources, paper prompts, and what-this-taught-me summaries."
+    "Analysis" -> "Use tags, dates, projects, subjects, and data tools to find patterns."
+    else -> "Track this skill by applying it in notes, sources, projects, reports, and revision cards."
+}
+
+private fun createFieldMindFile(context: Context, prefix: String, suffix: String): File {
+    val dir = File(context.getExternalFilesDir(null), "fieldmind").apply { mkdirs() }
+    return File(dir, "$prefix-${System.currentTimeMillis()}$suffix")
+}
+
+private fun createFieldMindFileUri(context: Context, prefix: String, suffix: String): Uri =
+    FileProvider.getUriForFile(context, "${context.packageName}.provider", createFieldMindFile(context, prefix, suffix))
