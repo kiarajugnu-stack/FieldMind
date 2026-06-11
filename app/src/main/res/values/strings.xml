@@ -508,6 +508,7 @@
     <string name="library_loading_albums">Loading albums…</string>
     <string name="library_loading_artists">Loading artists…</string>
     <string name="library_records_count">%1$d of %2$d records</string>
+    <string name="library_tracks_count">%1$d of %2$d tracks</string>
 
     <!-- Background Processing States -->
     <string name="scanning_media">Indexing audio files…</string>
@@ -2040,6 +2041,7 @@
     <string name="stats_total_listening_time">Total Listening Time</string>
     <string name="stats_total_plays">Total Plays</string>
     <string name="stats_unique_records">Unique Tracks</string>
+    <string name="stats_unique_tracks">Unique Tracks</string>
     <string name="stats_top_vibes">Top Vibes</string>
     <string name="stats_star_artists">Star Artists</string>
     <string name="stats_genre_mix">Genre Mix</string>
@@ -2095,7 +2097,9 @@
     <string name="gestures_player_swipe_dismiss">Swipe Down to Dismiss</string>
     <string name="gestures_player_swipe_dismiss_desc">Swipe down on player to close it</string>
     <string name="gestures_player_swipe_records">Swipe to Change Tracks</string>
+    <string name="gestures_player_swipe_tracks">Swipe to Change Tracks</string>
     <string name="gestures_player_swipe_records_desc">Swipe left/right on artwork to skip records</string>
+    <string name="gestures_player_swipe_tracks_desc">Swipe left/right on artwork to skip tracks</string>
     <string name="gestures_artwork_double_tap">Double Tap Artwork</string>
     <string name="gestures_artwork_double_tap_desc">Double tap on artwork to play/pause</string>
 
