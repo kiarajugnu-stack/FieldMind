@@ -34,6 +34,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
@@ -46,6 +47,9 @@ import chromahub.rhythm.app.features.field.data.ai.AssistantTask
 import chromahub.rhythm.app.features.field.data.ai.GeminiResearchAssistant
 import chromahub.rhythm.app.features.field.data.database.entity.*
 import chromahub.rhythm.app.features.field.data.export.FieldMindExport
+import chromahub.rhythm.app.features.field.data.learn.LearnCategory
+import chromahub.rhythm.app.features.field.data.learn.LearnLibrary
+import chromahub.rhythm.app.features.field.data.learn.SuggestedOnlineApis
 import chromahub.rhythm.app.features.field.data.location.CapturedLocation
 import chromahub.rhythm.app.features.field.data.location.FieldLocationProvider
 import chromahub.rhythm.app.features.field.presentation.components.*
@@ -808,7 +812,7 @@ fun KnowledgeLibraryScreen(
             0 -> SourcePanel(viewModel, sources, onOpenDetail)
             1 -> PaperReadingPanel(sources, onOpenDetail)
             2 -> FlashcardPanel(viewModel, flashcards, onOpenDetail) { onNavigate(FieldMindScreen.Flashcards) }
-            3 -> LearnPanel()
+            3 -> LearnPanel(viewModel)
         }
     }
 }
@@ -892,12 +896,111 @@ private fun LibraryFlashcard(card: FlashcardEntity, onOpenDetail: () -> Unit) {
 }
 
 @Composable
-private fun LearnPanel() {
+private fun LearnPanel(viewModel: FieldMindViewModel) {
+    val uriHandler = LocalUriHandler.current
     LazyColumn(contentPadding = panelPadding(), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-        item { SectionHeader("Skill tree", "Tap modules as you practice them in your own projects.") }
+        item { SectionHeader("Learn", "Curated, offline-ready resources by topic. Tap a category to expand.") }
+
+        items(LearnLibrary) { category -> LearnCategoryCard(category) { url -> runCatching { uriHandler.openUri(url) } } }
+
+        item { SectionHeader("Ask Gemini for papers & books", "Optional online suggestions tailored to your topic.") }
+        item { AssistantPanel(viewModel) }
+
+        item { OnlineApiProposalCard() }
+
+        item { SectionHeader("Skill tree", "Practice these as you run your own projects.") }
         learningModules.forEach { (level, modules) ->
             item { Text(level, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 4.dp)) }
             items(modules) { module -> EntityCard(module, "learn", body = learningModuleBody(module), meta = listOf(level)) }
+        }
+    }
+}
+
+@Composable
+private fun LearnCategoryCard(category: LearnCategory, onOpenLink: (String) -> Unit) {
+    var expanded by remember { mutableStateOf(false) }
+    val accent = FieldMindTheme.colors.accentFor("learn")
+    Card(
+        modifier = Modifier.fillMaxWidth().animateContentSize().clickable { expanded = !expanded },
+        shape = RoundedCornerShape(22.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                Box(Modifier.size(40.dp).clip(RoundedCornerShape(13.dp)).background(accent.copy(alpha = if (FieldMindTheme.colors.isDark) 0.22f else 0.14f)), contentAlignment = Alignment.Center) {
+                    Icon(icon = FieldMindIcons.iconForCategory(category.name), contentDescription = null, tint = accent, size = 22.dp)
+                }
+                Column(Modifier.weight(1f)) {
+                    Text(category.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    Text(category.description, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                Icon(icon = if (expanded) FieldMindIcons.Up else FieldMindIcons.Down, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, size = 22.dp)
+            }
+            if (expanded) {
+                category.topics.forEach { topic ->
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+                    Text(topic.name, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+                    Text(topic.summary, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    topic.resources.forEach { res ->
+                        Row(
+                            Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).clickable { onOpenLink(res.url) }.background(MaterialTheme.colorScheme.surfaceContainerHigh).padding(12.dp),
+                            verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            Box(Modifier.size(30.dp).clip(RoundedCornerShape(9.dp)).background(accent.copy(alpha = 0.16f)), contentAlignment = Alignment.Center) {
+                                Icon(icon = learnKindIcon(res.kind), contentDescription = null, tint = accent, size = 16.dp)
+                            }
+                            Column(Modifier.weight(1f)) {
+                                Text(res.title, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
+                                Text("${res.kind} · ${res.why}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                            }
+                            Icon(icon = FieldMindIcons.OpenLink, contentDescription = "Open link", tint = MaterialTheme.colorScheme.onSurfaceVariant, size = 18.dp)
+                        }
+                    }
+                }
+            } else {
+                Text("${category.topics.size} topics · ${category.topics.sumOf { it.resources.size }} resources", style = MaterialTheme.typography.labelMedium, color = accent)
+            }
+        }
+    }
+}
+
+private fun learnKindIcon(kind: String): MaterialSymbolIcon = when (kind.lowercase()) {
+    "book" -> FieldMindIcons.Book
+    "paper" -> FieldMindIcons.Article
+    "course", "video" -> FieldMindIcons.Play
+    "tool" -> FieldMindIcons.Bolt
+    "dataset" -> FieldMindIcons.Trend
+    else -> FieldMindIcons.Article
+}
+
+@Composable
+private fun OnlineApiProposalCard() {
+    var expanded by remember { mutableStateOf(false) }
+    val uriHandler = LocalUriHandler.current
+    Card(
+        modifier = Modifier.fillMaxWidth().animateContentSize().clickable { expanded = !expanded },
+        shape = RoundedCornerShape(22.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                Icon(icon = FieldMindIcons.Download, contentDescription = null, tint = MaterialTheme.colorScheme.primary, size = 20.dp)
+                Column(Modifier.weight(1f)) {
+                    Text("Free APIs for live fetching", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                    Text("Proposal: power in-app paper/book search without an API key.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                Icon(icon = if (expanded) FieldMindIcons.Up else FieldMindIcons.Down, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, size = 22.dp)
+            }
+            if (expanded) {
+                SuggestedOnlineApis.forEach { api ->
+                    Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).clickable { runCatching { uriHandler.openUri(api.baseUrl.substringBefore("?").ifBlank { api.baseUrl }) } }.background(MaterialTheme.colorScheme.surfaceContainerHigh).padding(12.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                        Text(api.name, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
+                        Text(api.notes, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                }
+            }
         }
     }
 }

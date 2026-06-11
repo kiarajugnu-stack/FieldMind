@@ -33,6 +33,8 @@ object FieldMindIcons {
     val Search = MaterialSymbolIcon("search")
     val Back = MaterialSymbolIcon("arrow_back")
     val Forward = MaterialSymbolIcon("chevron_right")
+    val Up = MaterialSymbolIcon("expand_less")
+    val Down = MaterialSymbolIcon("expand_more")
     val Camera = MaterialSymbolIcon("photo_camera")
     val Gallery = MaterialSymbolIcon("image")
     val File = MaterialSymbolIcon("attach_file")
