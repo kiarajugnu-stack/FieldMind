@@ -96,6 +96,8 @@ class FieldMindViewModel(application: Application) : AndroidViewModel(applicatio
 
     fun archiveObservation(id: Long) = viewModelScope.launch { repository.archiveObservation(id) }
 
+    fun attachmentsForObservation(id: Long) = repository.observeAttachmentsForObservation(id)
+
     fun addQuestion(question: String, category: String, sourceType: String, status: String, priority: String, observationId: Long? = null, sourceId: Long? = null, projectId: Long? = null) = viewModelScope.launch {
         val id = repository.addQuestion(QuestionEntity(questionText = question.trim(), category = category, sourceType = sourceType, status = status, priority = priority, relatedProjectId = projectId))
         observationId?.let { repository.linkQuestionObservation(id, it) }

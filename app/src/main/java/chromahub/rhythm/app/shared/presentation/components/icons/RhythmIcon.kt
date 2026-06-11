@@ -186,8 +186,10 @@ fun Icon(
         },
         contentAlignment = Alignment.Center
     ) {
+        // `size` is authoritative: never let a bounded slot inflate the glyph beyond the
+        // requested size (it may still shrink to fit a smaller slot).
         val slotSize = if (maxWidth != Dp.Infinity && maxHeight != Dp.Infinity) {
-            minOf(maxWidth, maxHeight)
+            minOf(maxWidth, maxHeight, size)
         } else {
             size
         }

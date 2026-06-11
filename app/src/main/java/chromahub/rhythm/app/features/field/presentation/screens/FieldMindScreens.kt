@@ -11,25 +11,37 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
+import coil.compose.AsyncImage
 import chromahub.rhythm.app.features.field.data.ai.GeminiResearchAssistant
 import chromahub.rhythm.app.features.field.data.database.entity.*
 import chromahub.rhythm.app.features.field.data.export.FieldMindExport
@@ -362,15 +374,19 @@ private fun FieldModeScreen(viewModel: FieldMindViewModel, onBack: () -> Unit) {
 private fun FieldModeButton(category: String, modifier: Modifier = Modifier, onClick: () -> Unit) {
     val accent = FieldMindTheme.colors.accentFor("observation")
     Card(
-        modifier = modifier.height(96.dp).clickable(onClick = onClick),
+        modifier = modifier.height(104.dp).clickable(onClick = onClick),
         shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
-        Column(Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
-            Icon(icon = FieldMindIcons.iconFor("observation"), contentDescription = null, tint = accent, size = 28.dp)
-            Spacer(Modifier.size(8.dp))
-            Text(category, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        Column(Modifier.fillMaxSize().padding(horizontal = 12.dp, vertical = 14.dp), verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterVertically), horizontalAlignment = Alignment.CenterHorizontally) {
+            Box(
+                Modifier.size(44.dp).clip(CircleShape).background(accent.copy(alpha = 0.16f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(icon = FieldMindIcons.iconForCategory(category), contentDescription = null, tint = accent, size = 24.dp)
+            }
+            Text(category, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis, textAlign = TextAlign.Center)
         }
     }
 }
@@ -400,6 +416,28 @@ private fun ObservationCaptureCard(viewModel: FieldMindViewModel, compact: Boole
     var recorder by remember { mutableStateOf<MediaRecorder?>(null) }
     var audioFile by remember { mutableStateOf<File?>(null) }
     var recording by remember { mutableStateOf(false) }
+    var recordSeconds by remember { mutableIntStateOf(0) }
+    var locating by remember { mutableStateOf(false) }
+    val locationProvider = remember { FieldLocationProvider(context) }
+
+    val startLocating = {
+        locating = true
+        locationProvider.requestCurrentLocation { captured ->
+            locating = false
+            if (captured != null) {
+                capturedLocation = captured
+                manualLocation = captured.asDisplayText()
+            }
+            scope.launch { snackbar.showSnackbar(captured?.let { "Location captured." } ?: "Couldn't get a fix. Check that location is on, then try again or type a place.") }
+        }
+    }
+
+    LaunchedEffect(recording) {
+        if (recording) {
+            recordSeconds = 0
+            while (recording) { kotlinx.coroutines.delay(1000); recordSeconds++ }
+        }
+    }
 
     val cameraPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
         if (granted) {
@@ -427,12 +465,8 @@ private fun ObservationCaptureCard(viewModel: FieldMindViewModel, compact: Boole
     }
     val locationPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { result ->
         val granted = result.values.any { it }
-        if (granted) {
-            val captured = FieldLocationProvider(context).lastKnownLocation()
-            capturedLocation = captured
-            manualLocation = captured?.asDisplayText().orEmpty()
-            scope.launch { snackbar.showSnackbar(captured?.let { "Location captured." } ?: "Permission granted, but no recent device location was available. Enter a place manually.") }
-        } else scope.launch { snackbar.showSnackbar("Location denied. Manual place names remain available.") }
+        if (granted) startLocating()
+        else scope.launch { snackbar.showSnackbar("Location denied. Manual place names remain available.") }
     }
     val audioPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
         if (granted) {
@@ -469,8 +503,27 @@ private fun ObservationCaptureCard(viewModel: FieldMindViewModel, compact: Boole
                 SectionHeader("Location", "GPS is optional; manual place names always work offline.")
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     OutlinedButton(onClick = { manualLocation = ""; capturedLocation = null }, Modifier.weight(1f)) { Text("Manual") }
-                    FilledTonalButton(onClick = { locationPermission.launch(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION)) }, Modifier.weight(1f)) {
-                        Icon(icon = FieldMindIcons.Location, contentDescription = null, size = 18.dp); Spacer(Modifier.size(6.dp)); Text("Use GPS")
+                    FilledTonalButton(
+                        onClick = {
+                            if (locating) return@FilledTonalButton
+                            if (locationProvider.hasAnyLocationPermission()) startLocating()
+                            else locationPermission.launch(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION))
+                        },
+                        modifier = Modifier.weight(1f),
+                        enabled = !locating
+                    ) {
+                        if (locating) {
+                            CircularProgressIndicator(Modifier.size(16.dp), strokeWidth = 2.dp, color = MaterialTheme.colorScheme.onSecondaryContainer)
+                            Spacer(Modifier.size(6.dp)); Text("Locating…")
+                        } else {
+                            Icon(icon = FieldMindIcons.Location, contentDescription = null, size = 18.dp); Spacer(Modifier.size(6.dp)); Text("Use GPS")
+                        }
+                    }
+                }
+                capturedLocation?.let { loc ->
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Icon(icon = FieldMindIcons.Check, contentDescription = null, tint = FieldMindTheme.colors.confidenceSure, size = 16.dp)
+                        Text(loc.asDisplayText(), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
                 FieldTextField(manualLocation, { manualLocation = it }, "Place / GPS note")
@@ -488,6 +541,7 @@ private fun ObservationCaptureCard(viewModel: FieldMindViewModel, compact: Boole
                         }
                     }
                     if (audioEnabled) {
+                        if (recording) RecordingIndicator(recordSeconds)
                         Button(onClick = {
                             if (recording) {
                                 val file = audioFile
@@ -496,7 +550,7 @@ private fun ObservationCaptureCard(viewModel: FieldMindViewModel, compact: Boole
                                 file?.let { attachments = attachments + DraftEvidenceAttachment("Audio", Uri.fromFile(it).toString(), "Voice note", localPath = it.absolutePath, mimeType = "audio/mp4") }
                                 scope.launch { snackbar.showSnackbar("Voice note attached.") }
                             } else if (ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) audioPermission.launch(Manifest.permission.RECORD_AUDIO) else audioPermission.launch(Manifest.permission.RECORD_AUDIO)
-                        }, modifier = Modifier.fillMaxWidth()) {
+                        }, modifier = Modifier.fillMaxWidth(), colors = if (recording) ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.errorContainer, contentColor = MaterialTheme.colorScheme.onErrorContainer) else ButtonDefaults.buttonColors()) {
                             Icon(icon = if (recording) FieldMindIcons.Stop else FieldMindIcons.Mic, contentDescription = null, size = 18.dp); Spacer(Modifier.size(6.dp)); Text(if (recording) "Stop voice note" else "Record voice note")
                         }
                     }
@@ -522,17 +576,55 @@ private fun ObservationCaptureCard(viewModel: FieldMindViewModel, compact: Boole
     }
 }
 
+/** A blinking red dot + elapsed timer shown while a voice note is being recorded. */
+@Composable
+private fun RecordingIndicator(seconds: Int) {
+    val transition = rememberInfiniteTransition(label = "rec")
+    val alpha by transition.animateFloat(
+        initialValue = 1f, targetValue = 0.25f,
+        animationSpec = infiniteRepeatable(tween(700), RepeatMode.Reverse), label = "recDot"
+    )
+    Row(
+        Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(MaterialTheme.colorScheme.errorContainer).padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        Box(Modifier.size(12.dp).graphicsLayer { this.alpha = alpha }.clip(CircleShape).background(MaterialTheme.colorScheme.error))
+        Text("Recording…", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onErrorContainer)
+        Spacer(Modifier.weight(1f))
+        Text("%d:%02d".format(seconds / 60, seconds % 60), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onErrorContainer)
+    }
+}
+
+private fun DraftEvidenceAttachment.isImage(): Boolean =
+    mimeType?.startsWith("image/") == true ||
+        type.equals("Photo", true) || type.equals("Gallery", true) ||
+        Regex("\\.(jpg|jpeg|png|webp|gif|heic|bmp)(\\?.*)?$", RegexOption.IGNORE_CASE).containsMatchIn(uri)
+
 @Composable
 private fun AttachmentPreviewList(items: List<DraftEvidenceAttachment>, onCaptionChange: (Int, String) -> Unit, onRemove: (Int) -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         items.forEachIndexed { index, item ->
             Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh), shape = RoundedCornerShape(20.dp)) {
                 Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                        InfoChip(item.type, icon = FieldMindIcons.File)
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                        if (item.isImage()) {
+                            AsyncImage(
+                                model = item.uri,
+                                contentDescription = item.caption.ifBlank { "Attached image" },
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier.size(64.dp).clip(RoundedCornerShape(14.dp)).background(MaterialTheme.colorScheme.surfaceContainerHighest)
+                            )
+                        } else {
+                            Box(Modifier.size(64.dp).clip(RoundedCornerShape(14.dp)).background(MaterialTheme.colorScheme.surfaceContainerHighest), contentAlignment = Alignment.Center) {
+                                Icon(icon = if (item.type.equals("Audio", true)) FieldMindIcons.Mic else FieldMindIcons.File, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, size = 26.dp)
+                            }
+                        }
+                        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                            InfoChip(item.type, icon = if (item.isImage()) FieldMindIcons.Gallery else FieldMindIcons.File)
+                            Text(item.uri, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        }
                         TextButton({ onRemove(index) }) { Text("Remove") }
                     }
-                    Text(item.uri, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     FieldTextField(item.caption, { onCaptionChange(index, it) }, "Caption")
                 }
             }
@@ -700,9 +792,47 @@ private fun FlashcardPanel(viewModel: FieldMindViewModel, items: List<FlashcardE
             }
         }
         if (items.isEmpty()) item { EmptyState("No flashcards yet", "Turn terms, definitions, mistakes, source concepts, and questions into review cards.", icon = FieldMindIcons.Flashcard) }
-        items(items) { EntityCard(it.front, "flashcard", body = it.back, meta = listOf(it.type)) { onOpenDetail("flashcard", it.id) } }
+        items(items) { LibraryFlashcard(it) { onOpenDetail("flashcard", it.id) } }
     }
     if (show) NewFlashcardDialog(viewModel) { show = false }
+}
+
+/** A single library flashcard: shows the prompt; the answer stays hidden until tapped. */
+@Composable
+private fun LibraryFlashcard(card: FlashcardEntity, onOpenDetail: () -> Unit) {
+    var revealed by remember(card.id) { mutableStateOf(false) }
+    val accent = FieldMindTheme.colors.flashcard
+    Card(
+        modifier = Modifier.fillMaxWidth().animateContentSize().clickable { revealed = !revealed },
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Column(Modifier.fillMaxWidth().padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                Box(
+                    Modifier.size(34.dp).clip(RoundedCornerShape(11.dp)).background(accent.copy(alpha = if (FieldMindTheme.colors.isDark) 0.22f else 0.14f)),
+                    contentAlignment = Alignment.Center
+                ) { Icon(icon = FieldMindIcons.Flashcard, contentDescription = null, tint = accent, size = 18.dp) }
+                Text(card.type, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Spacer(Modifier.weight(1f))
+                Icon(
+                    icon = if (revealed) FieldMindIcons.VisibilityOff else FieldMindIcons.Visibility,
+                    contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, size = 18.dp
+                )
+            }
+            Text(card.front, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+            if (revealed) {
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+                Text(card.back, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface)
+                TextButton(onClick = onOpenDetail, contentPadding = PaddingValues(horizontal = 0.dp)) {
+                    Text("Open card"); Spacer(Modifier.size(4.dp)); Icon(icon = FieldMindIcons.Forward, contentDescription = null, size = 16.dp)
+                }
+            } else {
+                Text("Tap to reveal answer", style = MaterialTheme.typography.labelMedium, color = accent)
+            }
+        }
+    }
 }
 
 @Composable
@@ -815,29 +945,71 @@ fun FieldMindSettingsScreen(viewModel: FieldMindViewModel? = null, onBack: () ->
     val exportFormat by settings.defaultExportFormat.collectAsState()
     val privacy by settings.privacyLockEnabled.collectAsState()
     val dynamicColor by settings.dynamicColorEnabled.collectAsState()
-    LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(20.dp, 20.dp, 20.dp, 40.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+    LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(20.dp, 20.dp, 20.dp, 40.dp), verticalArrangement = Arrangement.spacedBy(20.dp)) {
         item { FieldScreenHeader("Settings", "Capture, appearance, AI, export, and privacy.", icon = FieldMindIcons.Settings, actionIcon = FieldMindIcons.Back, onAction = onBack) }
-        item { SectionHeader("Appearance") }
-        item { SettingsSwitchRow("Material You dynamic color", dynamicColor, settings::setDynamicColorEnabled, "Use system wallpaper colors that auto-adapt to light/dark. Off keeps the FieldMind brand palette.", FieldMindIcons.Palette) }
-        item { SectionHeader("Capture") }
-        item { SettingsNumberRow("Daily observation goal", goal, { settings.setDailyObservationGoal(it) }, "Used by the Today dashboard and progress ring.") }
-        item { SettingChoice("Default category", observationCategories, category, settings::setDefaultCategory) }
-        item { SettingChoice("Default confidence", confidenceOptions, confidence, settings::setDefaultConfidence) }
-        item { SettingChoice("Location mode", listOf("Manual only", "Approximate", "Precise"), locationMode, settings::setLocationMode) }
-        item { SettingsSwitchRow("Media attachments", media, settings::setMediaAttachmentsEnabled, "Enable camera, gallery, and file evidence tools.", FieldMindIcons.Camera) }
-        item { SettingsSwitchRow("Audio recording", audio, settings::setAudioRecordingEnabled, "Enable voice-note evidence capture.", FieldMindIcons.Mic) }
-        item { SettingChoice("Attachment export", listOf("Reference URIs", "Copy media later", "Skip media"), exportMode, settings::setAttachmentExportMode) }
-        item { SectionHeader("Gemini assistant", "Optional. Nothing is sent without user action.") }
-        item { SettingsSwitchRow("Enable Gemini", ai, settings::setGeminiEnabled, "Requires API key and explicit confirmation before use.", FieldMindIcons.Bolt) }
-        item { OutlinedTextField(value = key, onValueChange = settings::setGeminiApiKey, label = { Text("Gemini API key") }, visualTransformation = PasswordVisualTransformation(), modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(18.dp), supportingText = { Text(if (key.isBlank()) "No key saved." else "Key saved locally in FieldMind settings.") }) }
-        item { SettingChoice("Gemini model", listOf("gemini-1.5-flash", "gemini-1.5-pro", "gemini-2.0-flash"), model, settings::setGeminiModel) }
-        item { SettingsSwitchRow("Confirm before saving AI output", confirm, settings::setAiRequireConfirmBeforeSave, "AI suggestions always stay as previews unless you apply them.", FieldMindIcons.Check) }
-        item { SettingsSwitchRow("Allow attachment context for AI", sendAttachments, settings::setAiSendAttachments, "Off by default to protect field evidence privacy.", FieldMindIcons.File) }
-        item { SectionHeader("Discipline & ownership") }
-        item { SettingsSwitchRow("Reminders", reminders, settings::setRemindersEnabled, "Notification permission is only needed if reminders are enabled.", FieldMindIcons.Calendar) }
-        item { SettingsSwitchRow("Streaks", streaks, settings::setStreaksEnabled, "Discipline made visible without replacing real work.", FieldMindIcons.Streak) }
-        item { SettingChoice("Default export", listOf("Markdown", "CSV", "JSON", "Plain text", "PDF later"), exportFormat, settings::setDefaultExportFormat) }
-        item { SettingsSwitchRow("Privacy lock placeholder", privacy, settings::setPrivacyLockEnabled, "Persisted toggle; wire to app lock flow if the main app exposes one.", FieldMindIcons.Settings) }
+
+        item {
+            SettingsGroup("Appearance") {
+                ToggleItem("Material You dynamic color", "Use system wallpaper colors that auto-adapt to light/dark. Off keeps the FieldMind brand palette.", dynamicColor, settings::setDynamicColorEnabled, FieldMindIcons.Palette)
+            }
+        }
+
+        item {
+            SettingsGroup("Capture defaults") {
+                StepperItem("Daily observation goal", "Drives the Today dashboard and progress ring.", goal, FieldMindIcons.Today) { settings.setDailyObservationGoal(it) }
+                SettingDivider()
+                ChoiceItem("Default category", observationCategories, category, FieldMindIcons.Observation, settings::setDefaultCategory)
+                SettingDivider()
+                ChoiceItem("Default confidence", confidenceOptions, confidence, FieldMindIcons.Check, settings::setDefaultConfidence)
+                SettingDivider()
+                ChoiceItem("Location mode", listOf("Manual only", "Approximate", "Precise"), locationMode, FieldMindIcons.Location, settings::setLocationMode)
+            }
+        }
+
+        item {
+            SettingsGroup("Evidence & media") {
+                ToggleItem("Media attachments", "Enable camera, gallery, and file evidence tools.", media, settings::setMediaAttachmentsEnabled, FieldMindIcons.Camera)
+                SettingDivider()
+                ToggleItem("Audio recording", "Enable voice-note evidence capture with an in-app recording indicator.", audio, settings::setAudioRecordingEnabled, FieldMindIcons.Mic)
+                SettingDivider()
+                ChoiceItem("Attachment export", listOf("Reference URIs", "Copy media later", "Skip media"), exportMode, FieldMindIcons.Export, settings::setAttachmentExportMode)
+            }
+        }
+
+        item {
+            SettingsGroup("Gemini assistant", "Optional. Nothing is sent without an explicit action.") {
+                ToggleItem("Enable Gemini", "Review factuality, suggest papers, and answer questions.", ai, settings::setGeminiEnabled, FieldMindIcons.Sparkle)
+                if (ai) {
+                    SettingDivider()
+                    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        OutlinedTextField(value = key, onValueChange = settings::setGeminiApiKey, label = { Text("Gemini API key") }, visualTransformation = PasswordVisualTransformation(), modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(18.dp), singleLine = true, supportingText = { Text(if (key.isBlank()) "No key saved — get one at aistudio.google.com/apikey." else "Key saved locally on this device only.") })
+                    }
+                    SettingDivider()
+                    ChoiceItem("Model", listOf("gemini-1.5-flash", "gemini-1.5-pro", "gemini-2.0-flash"), model, FieldMindIcons.Bolt, settings::setGeminiModel)
+                    SettingDivider()
+                    ToggleItem("Confirm before saving AI output", "AI suggestions stay as previews unless you apply them.", confirm, settings::setAiRequireConfirmBeforeSave, FieldMindIcons.Check)
+                    SettingDivider()
+                    ToggleItem("Allow attachment context", "Off by default to protect field evidence privacy.", sendAttachments, settings::setAiSendAttachments, FieldMindIcons.File)
+                }
+            }
+        }
+
+        item {
+            SettingsGroup("Discipline & ownership") {
+                ToggleItem("Reminders", "Notification permission is only requested when enabled.", reminders, settings::setRemindersEnabled, FieldMindIcons.Notifications)
+                SettingDivider()
+                ToggleItem("Streaks", "Discipline made visible without replacing real work.", streaks, settings::setStreaksEnabled, FieldMindIcons.Streak)
+            }
+        }
+
+        item {
+            SettingsGroup("Export & privacy") {
+                ChoiceItem("Default export format", listOf("Markdown", "CSV", "JSON", "Plain text"), exportFormat, FieldMindIcons.Export, settings::setDefaultExportFormat)
+                SettingDivider()
+                ToggleItem("Privacy lock", "Persisted toggle; wires to the app lock flow when available.", privacy, settings::setPrivacyLockEnabled, FieldMindIcons.Lock)
+            }
+        }
+
         item { OutlinedButton(onClick = onResetOnboarding, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp)) { Text("Reset onboarding") } }
     }
 }
@@ -862,6 +1034,7 @@ fun DetailScreen(kind: String, id: Long, viewModel: FieldMindViewModel, onBack: 
         when (kind) {
             "observation" -> observations.firstOrNull { it.id == id }?.let { o ->
                 item { DetailBody(o.subject, "observation", listOf("Date" to "${o.date} ${o.time}", "Category" to o.category, "Confidence" to o.confidenceLevel, "Location" to o.manualLocation.ifBlank { "None" }, "GPS" to (o.latitude?.let { "${o.latitude}, ${o.longitude}" } ?: "Not captured"), "Tags" to o.tags, "Facts" to o.factsOnlyNotes, "Evidence" to o.evidenceSummary, "Context" to o.moodOrContext)) }
+                item { ObservationAttachmentsPanel(viewModel, o.id) }
                 item { BacklinksPanel(buildList {
                     projects.firstOrNull { it.id == o.projectId }?.let { add(Triple("project", it.title, it.id)) }
                     data.filter { it.observationId == o.id }.forEach { add(Triple("data", it.label, it.id)) }
@@ -939,6 +1112,49 @@ private fun DetailBody(title: String, kind: String, fields: List<Pair<String, St
     }
 }
 
+/** Evidence gallery for a saved observation: image thumbnails plus file/audio chips. */
+@Composable
+private fun ObservationAttachmentsPanel(viewModel: FieldMindViewModel, observationId: Long) {
+    val attachments by viewModel.attachmentsForObservation(observationId).collectAsState(initial = emptyList())
+    if (attachments.isEmpty()) return
+    val images = attachments.filter { it.type.equals("Photo", true) || it.type.equals("Gallery", true) || it.uri.contains(Regex("\\.(jpg|jpeg|png|webp|gif|heic|bmp)", RegexOption.IGNORE_CASE)) }
+    val others = attachments - images.toSet()
+    Card(shape = RoundedCornerShape(24.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)) {
+        Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Icon(icon = FieldMindIcons.Gallery, contentDescription = null, tint = MaterialTheme.colorScheme.primary, size = 20.dp)
+                Text("Evidence (${attachments.size})", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            }
+            if (images.isNotEmpty()) {
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    items(images) { img ->
+                        Column(Modifier.width(140.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            AsyncImage(
+                                model = img.uri,
+                                contentDescription = img.caption.ifBlank { "Observation photo" },
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier.fillMaxWidth().height(140.dp).clip(RoundedCornerShape(16.dp)).background(MaterialTheme.colorScheme.surfaceContainerHighest)
+                            )
+                            if (img.caption.isNotBlank()) Text(img.caption, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                        }
+                    }
+                }
+            }
+            others.forEach { att ->
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Box(Modifier.size(38.dp).clip(RoundedCornerShape(12.dp)).background(MaterialTheme.colorScheme.surfaceContainerHighest), contentAlignment = Alignment.Center) {
+                        Icon(icon = if (att.type.equals("Audio", true)) FieldMindIcons.Mic else FieldMindIcons.File, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, size = 20.dp)
+                    }
+                    Column(Modifier.weight(1f)) {
+                        Text(att.caption.ifBlank { att.type }, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        Text(att.uri, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    }
+                }
+            }
+        }
+    }
+}
+
 @Composable
 private fun BacklinksPanel(links: List<Triple<String, String, Long>>, onOpenDetail: (String, Long) -> Unit) {
     if (links.isEmpty()) return
@@ -980,42 +1196,72 @@ private fun AssistantPanel(viewModel: FieldMindViewModel) {
 //  Settings rows + dialogs + helpers
 // ══════════════════════════════════════════════════════════════════════
 
+/** A grouped settings section: a header above a single rounded card holding related rows. */
 @Composable
-private fun SettingsSwitchRow(title: String, checked: Boolean, onCheckedChange: (Boolean) -> Unit, body: String, icon: MaterialSymbolIcon? = null) {
-    Card(shape = RoundedCornerShape(20.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)) {
-        Row(Modifier.fillMaxWidth().padding(16.dp), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
-            if (icon != null) Icon(icon = icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary, size = 22.dp)
-            Column(Modifier.weight(1f)) {
-                Text(title, fontWeight = FontWeight.SemiBold)
-                Text(body, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
-            Switch(checked, onCheckedChange)
+private fun SettingsGroup(title: String, subtitle: String? = null, content: @Composable ColumnScope.() -> Unit) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Column(Modifier.padding(start = 4.dp)) {
+            Text(title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.primary)
+            if (subtitle != null) Text(subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        Card(shape = RoundedCornerShape(22.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)) {
+            Column(content = content)
         }
     }
 }
 
 @Composable
-private fun SettingsNumberRow(title: String, value: Int, onValueChange: (Int) -> Unit, body: String) {
-    Card(shape = RoundedCornerShape(20.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)) {
-        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+private fun SettingDivider() = HorizontalDivider(Modifier.padding(start = 56.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+
+@Composable
+private fun SettingLeading(icon: MaterialSymbolIcon?) {
+    if (icon == null) { Spacer(Modifier.size(40.dp)); return }
+    Box(Modifier.size(40.dp).clip(RoundedCornerShape(12.dp)).background(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)), contentAlignment = Alignment.Center) {
+        Icon(icon = icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary, size = 22.dp)
+    }
+}
+
+/** A whole-row clickable toggle inside a [SettingsGroup]. */
+@Composable
+private fun ToggleItem(title: String, body: String, checked: Boolean, onCheckedChange: (Boolean) -> Unit, icon: MaterialSymbolIcon? = null) {
+    Row(
+        Modifier.fillMaxWidth().clickable { onCheckedChange(!checked) }.padding(16.dp),
+        horizontalArrangement = Arrangement.spacedBy(14.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        SettingLeading(icon)
+        Column(Modifier.weight(1f)) {
             Text(title, fontWeight = FontWeight.SemiBold)
             Text(body, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
-                OutlinedButton({ onValueChange((value - 1).coerceAtLeast(0)) }) { Text("−") }
-                Text(value.toString(), style = MaterialTheme.typography.titleLarge)
-                Button({ onValueChange(value + 1) }) { Text("+") }
-            }
+        }
+        Switch(checked = checked, onCheckedChange = onCheckedChange)
+    }
+}
+
+@Composable
+private fun StepperItem(title: String, body: String, value: Int, icon: MaterialSymbolIcon? = null, onValueChange: (Int) -> Unit) {
+    Row(Modifier.fillMaxWidth().padding(16.dp), horizontalArrangement = Arrangement.spacedBy(14.dp), verticalAlignment = Alignment.CenterVertically) {
+        SettingLeading(icon)
+        Column(Modifier.weight(1f)) {
+            Text(title, fontWeight = FontWeight.SemiBold)
+            Text(body, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            FilledTonalIconButton(onClick = { onValueChange((value - 1).coerceAtLeast(0)) }) { Icon(icon = MaterialSymbolIcon("remove"), contentDescription = "Decrease", size = 18.dp) }
+            Text(value.toString(), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, modifier = Modifier.widthIn(min = 24.dp), textAlign = TextAlign.Center)
+            FilledTonalIconButton(onClick = { onValueChange(value + 1) }) { Icon(icon = FieldMindIcons.Add, contentDescription = "Increase", size = 18.dp) }
         }
     }
 }
 
 @Composable
-private fun SettingChoice(title: String, options: List<String>, selected: String, onSelected: (String) -> Unit) {
-    Card(shape = RoundedCornerShape(20.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)) {
-        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text(title, fontWeight = FontWeight.SemiBold)
-            ChoiceChips(options, selected, onSelected = onSelected)
+private fun ChoiceItem(title: String, options: List<String>, selected: String, icon: MaterialSymbolIcon? = null, onSelected: (String) -> Unit) {
+    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Row(horizontalArrangement = Arrangement.spacedBy(14.dp), verticalAlignment = Alignment.CenterVertically) {
+            SettingLeading(icon)
+            Text(title, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
         }
+        ChoiceChips(options, selected, onSelected = onSelected)
     }
 }
 

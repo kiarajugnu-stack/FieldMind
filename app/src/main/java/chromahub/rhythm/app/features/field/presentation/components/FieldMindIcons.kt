@@ -55,6 +55,48 @@ object FieldMindIcons {
     val Palette = MaterialSymbolIcon("palette")
     val Flip = MaterialSymbolIcon("flip")
     val Nature = MaterialSymbolIcon("eco")
+    val Visibility = MaterialSymbolIcon("visibility")
+    val VisibilityOff = MaterialSymbolIcon("visibility_off")
+    val Book = MaterialSymbolIcon("auto_stories")
+    val Article = MaterialSymbolIcon("article")
+    val Sparkle = MaterialSymbolIcon("auto_awesome", filled = true)
+    val Send = MaterialSymbolIcon("send", filled = true)
+    val Play = MaterialSymbolIcon("play_arrow", filled = true)
+    val Pause = MaterialSymbolIcon("pause", filled = true)
+    val FiberManualRecord = MaterialSymbolIcon("fiber_manual_record", filled = true)
+    val OpenLink = MaterialSymbolIcon("open_in_new")
+    val Lock = MaterialSymbolIcon("lock")
+    val Notifications = MaterialSymbolIcon("notifications")
+    val Download = MaterialSymbolIcon("download")
+    val Lightbulb = MaterialSymbolIcon("lightbulb")
+    val Done = MaterialSymbolIcon("done")
+
+    // Observation category icons
+    val Bird = MaterialSymbolIcon("raven")
+    val Animal = MaterialSymbolIcon("pets")
+    val Insect = MaterialSymbolIcon("bug_report")
+    val Plant = MaterialSymbolIcon("local_florist")
+    val Rock = MaterialSymbolIcon("landscape")
+    val Weather = MaterialSymbolIcon("partly_cloudy_day")
+    val Water = MaterialSymbolIcon("water_drop")
+    val HumanBehavior = MaterialSymbolIcon("groups")
+    val ReadingInsight = MaterialSymbolIcon("menu_book")
+    val Category = MaterialSymbolIcon("category")
+
+    /** Icon for an observation category (case-insensitive). Falls back to the observation icon. */
+    fun iconForCategory(category: String): MaterialSymbolIcon = when (category.trim().lowercase()) {
+        "bird", "birds" -> Bird
+        "animal", "animals", "mammal" -> Animal
+        "insect", "insects", "bug" -> Insect
+        "plant", "plants", "flora", "fungus" -> Plant
+        "rock", "rocks", "mineral", "geology" -> Rock
+        "weather", "climate", "sky" -> Weather
+        "water", "hydrology", "river", "lake" -> Water
+        "human behavior", "human", "people", "social" -> HumanBehavior
+        "reading insight", "reading", "insight" -> ReadingInsight
+        "other" -> Category
+        else -> Observation
+    }
 
     /** Icon for an entity kind keyword (case-insensitive). */
     fun iconFor(kind: String): MaterialSymbolIcon = when (kind.trim().lowercase()) {
