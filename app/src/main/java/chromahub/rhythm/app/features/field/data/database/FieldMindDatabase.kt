@@ -10,6 +10,7 @@ import chromahub.rhythm.app.features.field.data.database.entity.*
 @Database(
     entities = [
         ObservationEntity::class,
+        NoteEntity::class,
         QuestionEntity::class,
         HypothesisEntity::class,
         ProjectEntity::class,
@@ -28,7 +29,7 @@ import chromahub.rhythm.app.features.field.data.database.entity.*
         ProjectDataRecordCrossRef::class,
         HypothesisEvidenceCrossRef::class
     ],
-    version = 3,
+    version = 4,
     exportSchema = false
 )
 abstract class FieldMindDatabase : RoomDatabase() {

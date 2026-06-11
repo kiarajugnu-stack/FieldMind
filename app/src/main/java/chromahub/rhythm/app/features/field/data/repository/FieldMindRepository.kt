@@ -6,6 +6,7 @@ import kotlinx.coroutines.flow.Flow
 
 class FieldMindRepository(private val dao: FieldMindDao) {
     val observations: Flow<List<ObservationEntity>> = dao.observeObservations()
+    val notes: Flow<List<NoteEntity>> = dao.observeNotes()
     val questions: Flow<List<QuestionEntity>> = dao.observeQuestions()
     val hypotheses: Flow<List<HypothesisEntity>> = dao.observeHypotheses()
     val projects: Flow<List<ProjectEntity>> = dao.observeProjects()
@@ -17,6 +18,7 @@ class FieldMindRepository(private val dao: FieldMindDao) {
     val commonTags: Flow<List<TagStatistic>> = dao.observeCommonTagStatistics()
 
     fun observeObservation(id: Long) = dao.observeObservation(id)
+    fun observeNote(id: Long) = dao.observeNote(id)
     fun observeQuestion(id: Long) = dao.observeQuestion(id)
     fun observeHypothesis(id: Long) = dao.observeHypothesis(id)
     fun observeProject(id: Long) = dao.observeProject(id)
@@ -28,6 +30,8 @@ class FieldMindRepository(private val dao: FieldMindDao) {
     fun observeAttachmentsForObservation(id: Long) = dao.observeAttachmentsForObservation(id)
 
     suspend fun addObservation(entity: ObservationEntity): Long = dao.insertObservation(entity)
+    suspend fun addNote(entity: NoteEntity): Long = dao.insertNote(entity)
+    suspend fun updateNote(entity: NoteEntity) = dao.updateNote(entity.copy(updatedAt = System.currentTimeMillis()))
     suspend fun updateObservation(entity: ObservationEntity) = dao.updateObservation(entity.copy(updatedAt = System.currentTimeMillis()))
     suspend fun addQuestion(entity: QuestionEntity): Long = dao.insertQuestion(entity)
     suspend fun updateQuestion(entity: QuestionEntity) = dao.updateQuestion(entity.copy(updatedAt = System.currentTimeMillis()))
@@ -46,6 +50,7 @@ class FieldMindRepository(private val dao: FieldMindDao) {
     suspend fun addAttachment(entity: EvidenceAttachmentEntity): Long = dao.insertEvidenceAttachment(entity)
 
     suspend fun deleteObservation(id: Long) = dao.softDeleteObservation(id, System.currentTimeMillis())
+    suspend fun deleteNote(id: Long) = dao.softDeleteNote(id, System.currentTimeMillis())
     suspend fun deleteQuestion(id: Long) = dao.softDeleteQuestion(id, System.currentTimeMillis())
     suspend fun deleteHypothesis(id: Long) = dao.softDeleteHypothesis(id, System.currentTimeMillis())
     suspend fun deleteProject(id: Long) = dao.softDeleteProject(id, System.currentTimeMillis())
@@ -83,10 +88,12 @@ class FieldMindRepository(private val dao: FieldMindDao) {
     suspend fun linkProjectDataRecord(projectId: Long, dataRecordId: Long) = dao.linkProjectDataRecord(ProjectDataRecordCrossRef(projectId, dataRecordId))
     suspend fun linkHypothesisEvidence(hypothesisId: Long, observationId: Long) = dao.linkHypothesisEvidence(HypothesisEvidenceCrossRef(hypothesisId, observationId))
     suspend fun archiveObservation(id: Long) = dao.archiveObservation(id, System.currentTimeMillis())
+    suspend fun archiveNote(id: Long) = dao.archiveNote(id, System.currentTimeMillis())
     suspend fun archiveQuestion(id: Long) = dao.archiveQuestion(id, System.currentTimeMillis())
     suspend fun archiveProject(id: Long) = dao.archiveProject(id, System.currentTimeMillis())
 
     fun searchObservations(query: String) = dao.searchObservations(query)
+    fun searchNotes(query: String) = dao.searchNotes(query)
     fun searchQuestions(query: String) = dao.searchQuestions(query)
     fun searchHypotheses(query: String) = dao.searchHypotheses(query)
     fun searchProjects(query: String) = dao.searchProjects(query)

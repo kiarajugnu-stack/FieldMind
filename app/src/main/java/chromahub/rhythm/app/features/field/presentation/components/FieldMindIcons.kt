@@ -24,6 +24,7 @@ object FieldMindIcons {
     val Data = MaterialSymbolIcon("bar_chart")
     val Report = MaterialSymbolIcon("description")
     val Flashcard = MaterialSymbolIcon("style")
+    val Note = MaterialSymbolIcon("note_alt")
     val Tag = MaterialSymbolIcon("sell")
 
     // Actions
@@ -113,6 +114,7 @@ object FieldMindIcons {
         "data", "data record", "datarecord" -> Data
         "report", "reports" -> Report
         "flashcard", "flashcards", "card", "cards" -> Flashcard
+        "note", "notes" -> Note
         "tag", "tags" -> Tag
         else -> Nature
     }

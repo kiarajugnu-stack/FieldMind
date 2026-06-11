@@ -138,7 +138,7 @@ data class FieldMindColors(
         "question", "questions" -> question
         "hypothesis", "hypotheses" -> hypothesis
         "project", "projects" -> project
-        "source", "sources", "read", "reading", "library" -> source
+        "source", "sources", "read", "reading", "library", "note", "notes" -> source
         "data", "data record", "datarecord" -> data
         "report", "reports" -> report
         "flashcard", "flashcards", "card", "cards" -> flashcard

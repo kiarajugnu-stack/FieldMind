@@ -34,6 +34,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import chromahub.rhythm.app.features.field.presentation.components.FieldMindIcons
+import chromahub.rhythm.app.features.field.presentation.components.rememberFieldMindHaptics
 import chromahub.rhythm.app.features.field.presentation.screens.*
 import chromahub.rhythm.app.features.field.presentation.viewmodel.FieldMindViewModel
 import chromahub.rhythm.app.shared.data.model.AppSettings
@@ -66,6 +67,8 @@ sealed class FieldMindScreen(val route: String, val label: String, val icon: Mat
     data object Reader : FieldMindScreen("field_reader", "Reader", FieldMindIcons.Book)
     data object Settings : FieldMindScreen("field_settings", "Settings", FieldMindIcons.Settings)
 }
+
+private const val NavTransitionDurationMillis = 160
 
 private val bottomTabs = listOf(
     FieldMindScreen.Home,
@@ -107,6 +110,7 @@ fun FieldMindNavigation(viewModel: FieldMindViewModel, onResetOnboarding: () -> 
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = backStackEntry?.destination
     val currentRoute = currentDestination?.route
+    val haptics = rememberFieldMindHaptics()
     val hideChrome = currentRoute == FieldMindScreen.Settings.route ||
         currentRoute == FieldMindScreen.FieldMode.route ||
         currentRoute == FieldMindScreen.Flashcards.route ||
@@ -123,7 +127,7 @@ fun FieldMindNavigation(viewModel: FieldMindViewModel, onResetOnboarding: () -> 
                     NavigationRail(
                         header = {
                             FloatingActionButton(
-                                onClick = { navController.navigateToDestination(FieldMindScreen.FieldMode.route) },
+                                onClick = { haptics.light(); navController.navigateToDestination(FieldMindScreen.FieldMode.route) },
                                 containerColor = MaterialTheme.colorScheme.tertiaryContainer,
                                 contentColor = MaterialTheme.colorScheme.onTertiaryContainer
                             ) { Icon(icon = FieldMindIcons.Bolt, contentDescription = "Field mode capture", size = 26.dp) }
@@ -133,7 +137,7 @@ fun FieldMindNavigation(viewModel: FieldMindViewModel, onResetOnboarding: () -> 
                             val selected = isSelected(screen)
                             NavigationRailItem(
                                 selected = selected,
-                                onClick = { navController.navigateToTab(screen.route) },
+                                onClick = { haptics.light(); navController.navigateToTab(screen.route) },
                                 icon = { Icon(icon = if (selected) screen.icon.filled() else screen.icon, contentDescription = screen.label, size = 24.dp) },
                                 label = { Text(screen.label) }
                             )
@@ -148,7 +152,7 @@ fun FieldMindNavigation(viewModel: FieldMindViewModel, onResetOnboarding: () -> 
                 floatingActionButton = {
                     if (!hideChrome) {
                         ExtendedFloatingActionButton(
-                            onClick = { navController.navigateToDestination(FieldMindScreen.FieldMode.route) },
+                            onClick = { haptics.light(); navController.navigateToDestination(FieldMindScreen.FieldMode.route) },
                             containerColor = MaterialTheme.colorScheme.tertiaryContainer,
                             contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
                             icon = { Icon(icon = FieldMindIcons.Bolt, contentDescription = null, size = 22.dp) },
@@ -163,7 +167,7 @@ fun FieldMindNavigation(viewModel: FieldMindViewModel, onResetOnboarding: () -> 
                                 val selected = isSelected(screen)
                                 NavigationBarItem(
                                     selected = selected,
-                                    onClick = { navController.navigateToTab(screen.route) },
+                                    onClick = { haptics.light(); navController.navigateToTab(screen.route) },
                                     icon = { Icon(icon = if (selected) screen.icon.filled() else screen.icon, contentDescription = screen.label, size = 24.dp) },
                                     label = { Text(screen.label) }
                                 )
@@ -196,10 +200,10 @@ private fun FieldMindNavHost(
         navController = navController,
         startDestination = FieldMindScreen.Home.route,
         modifier = modifier,
-        enterTransition = { fadeIn(tween(160)) + scaleIn(initialScale = 0.98f, animationSpec = tween(160)) },
-        exitTransition = { fadeOut(tween(120)) },
-        popEnterTransition = { fadeIn(tween(160)) },
-        popExitTransition = { fadeOut(tween(120)) + scaleOut(targetScale = 0.98f, animationSpec = tween(120)) }
+        enterTransition = { fadeIn(tween(NavTransitionDurationMillis)) + scaleIn(initialScale = 0.98f, animationSpec = tween(NavTransitionDurationMillis)) },
+        exitTransition = { fadeOut(tween(NavTransitionDurationMillis)) },
+        popEnterTransition = { fadeIn(tween(NavTransitionDurationMillis)) + scaleIn(initialScale = 0.98f, animationSpec = tween(NavTransitionDurationMillis)) },
+        popExitTransition = { fadeOut(tween(NavTransitionDurationMillis)) + scaleOut(targetScale = 0.98f, animationSpec = tween(NavTransitionDurationMillis)) }
     ) {
         composable(FieldMindScreen.Home.route) { HomeScreen(viewModel = viewModel, onOpenSettings = { navController.navigateToDestination(FieldMindScreen.Settings.route) }, onNavigate = { navController.navigateToDestination(it.route) }, onOpenDetail = openDetail, onOpenReader = openReader) }
         composable(FieldMindScreen.Observe.route) { ObserveScreen(viewModel = viewModel, onOpenDetail = openDetail) }

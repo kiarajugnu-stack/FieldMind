@@ -29,6 +29,7 @@ class FieldMindViewModel(application: Application) : AndroidViewModel(applicatio
     val fieldSettings: FieldMindSettings = FieldMindSettings.getInstance(application)
 
     val observations: StateFlow<List<ObservationEntity>> = repository.observations.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+    val notes: StateFlow<List<NoteEntity>> = repository.notes.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
     val questions: StateFlow<List<QuestionEntity>> = repository.questions.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
     val hypotheses: StateFlow<List<HypothesisEntity>> = repository.hypotheses.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
     val projects: StateFlow<List<ProjectEntity>> = repository.projects.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
@@ -94,6 +95,23 @@ class FieldMindViewModel(application: Application) : AndroidViewModel(applicatio
         repository.setObservationTags(entity.id, tags)
     }
 
+    fun addNote(title: String, body: String, category: String, tags: String, projectId: Long? = null, sourceId: Long? = null, attachments: List<DraftEvidenceAttachment> = emptyList(), onSaved: ((Long) -> Unit)? = null) = viewModelScope.launch {
+        val id = repository.addNote(
+            NoteEntity(
+                title = title.trim(),
+                body = body.trim(),
+                category = category,
+                tags = tags.trim(),
+                projectId = projectId,
+                sourceId = sourceId,
+                attachmentUris = attachments.joinToString("\n") { listOf(it.type, it.caption, it.uri).joinToString("|") }
+            )
+        )
+        onSaved?.invoke(id)
+    }
+
+    fun updateNoteEntity(entity: NoteEntity) = viewModelScope.launch { repository.updateNote(entity) }
+
     fun archiveObservation(id: Long) = viewModelScope.launch { repository.archiveObservation(id) }
 
     fun updateQuestionEntity(entity: QuestionEntity) = viewModelScope.launch { repository.updateQuestion(entity) }
@@ -115,6 +133,7 @@ class FieldMindViewModel(application: Application) : AndroidViewModel(applicatio
     fun updateFlashcardEntity(entity: FlashcardEntity) = viewModelScope.launch { repository.updateFlashcard(entity) }
 
     fun deleteObservation(id: Long) = viewModelScope.launch { repository.deleteObservation(id) }
+    fun deleteNote(id: Long) = viewModelScope.launch { repository.deleteNote(id) }
     fun deleteQuestion(id: Long) = viewModelScope.launch { repository.deleteQuestion(id) }
     fun deleteHypothesis(id: Long) = viewModelScope.launch { repository.deleteHypothesis(id) }
     fun deleteProject(id: Long) = viewModelScope.launch { repository.deleteProject(id) }
@@ -131,6 +150,7 @@ class FieldMindViewModel(application: Application) : AndroidViewModel(applicatio
     fun observeDataRecord(id: Long) = repository.observeDataRecord(id)
     fun observeFlashcard(id: Long) = repository.observeFlashcard(id)
     fun observeObservation(id: Long) = repository.observeObservation(id)
+    fun observeNote(id: Long) = repository.observeNote(id)
 
     fun attachmentsForObservation(id: Long) = repository.observeAttachmentsForObservation(id)
 

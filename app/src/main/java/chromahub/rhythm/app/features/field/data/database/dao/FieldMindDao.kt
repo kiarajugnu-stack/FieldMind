@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface FieldMindDao {
     @Query("SELECT * FROM field_observations WHERE deletedAt IS NULL ORDER BY timestamp DESC") fun observeObservations(): Flow<List<ObservationEntity>>
+    @Query("SELECT * FROM field_notes WHERE deletedAt IS NULL ORDER BY updatedAt DESC") fun observeNotes(): Flow<List<NoteEntity>>
     @Query("SELECT * FROM field_questions WHERE deletedAt IS NULL ORDER BY updatedAt DESC") fun observeQuestions(): Flow<List<QuestionEntity>>
     @Query("SELECT * FROM field_hypotheses WHERE deletedAt IS NULL ORDER BY updatedAt DESC") fun observeHypotheses(): Flow<List<HypothesisEntity>>
     @Query("SELECT * FROM field_projects WHERE deletedAt IS NULL ORDER BY updatedAt DESC") fun observeProjects(): Flow<List<ProjectEntity>>
@@ -21,6 +22,7 @@ interface FieldMindDao {
     @Query("SELECT * FROM field_tags WHERE deletedAt IS NULL ORDER BY name COLLATE NOCASE ASC") fun observeTags(): Flow<List<TagEntity>>
 
     @Query("SELECT * FROM field_observations WHERE id = :id LIMIT 1") fun observeObservation(id: Long): Flow<ObservationEntity?>
+    @Query("SELECT * FROM field_notes WHERE id = :id LIMIT 1") fun observeNote(id: Long): Flow<NoteEntity?>
     @Query("SELECT * FROM field_questions WHERE id = :id LIMIT 1") fun observeQuestion(id: Long): Flow<QuestionEntity?>
     @Query("SELECT * FROM field_hypotheses WHERE id = :id LIMIT 1") fun observeHypothesis(id: Long): Flow<HypothesisEntity?>
     @Query("SELECT * FROM field_projects WHERE id = :id LIMIT 1") fun observeProject(id: Long): Flow<ProjectEntity?>
@@ -29,6 +31,7 @@ interface FieldMindDao {
     @Query("SELECT * FROM field_data_records WHERE id = :id LIMIT 1") fun observeDataRecord(id: Long): Flow<DataRecordEntity?>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun insertObservation(entity: ObservationEntity): Long
+    @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun insertNote(entity: NoteEntity): Long
     @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun insertQuestion(entity: QuestionEntity): Long
     @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun insertHypothesis(entity: HypothesisEntity): Long
     @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun insertProject(entity: ProjectEntity): Long
@@ -48,6 +51,7 @@ interface FieldMindDao {
     @Insert(onConflict = OnConflictStrategy.IGNORE) suspend fun linkHypothesisEvidence(ref: HypothesisEvidenceCrossRef)
 
     @Update suspend fun updateObservation(entity: ObservationEntity)
+    @Update suspend fun updateNote(entity: NoteEntity)
     @Update suspend fun updateQuestion(entity: QuestionEntity)
     @Update suspend fun updateHypothesis(entity: HypothesisEntity)
     @Update suspend fun updateProject(entity: ProjectEntity)
@@ -59,6 +63,7 @@ interface FieldMindDao {
     @Query("SELECT * FROM field_flashcards WHERE id = :id LIMIT 1") fun observeFlashcard(id: Long): Flow<FlashcardEntity?>
 
     @Query("UPDATE field_observations SET deletedAt = :time, updatedAt = :time WHERE id = :id") suspend fun softDeleteObservation(id: Long, time: Long)
+    @Query("UPDATE field_notes SET deletedAt = :time, updatedAt = :time WHERE id = :id") suspend fun softDeleteNote(id: Long, time: Long)
     @Query("UPDATE field_questions SET deletedAt = :time, updatedAt = :time WHERE id = :id") suspend fun softDeleteQuestion(id: Long, time: Long)
     @Query("UPDATE field_hypotheses SET deletedAt = :time, updatedAt = :time WHERE id = :id") suspend fun softDeleteHypothesis(id: Long, time: Long)
     @Query("UPDATE field_projects SET deletedAt = :time, updatedAt = :time WHERE id = :id") suspend fun softDeleteProject(id: Long, time: Long)
@@ -79,6 +84,7 @@ interface FieldMindDao {
     @Query("UPDATE field_evidence_attachments SET deletedAt = :deletedAt, updatedAt = :deletedAt WHERE id = :id") suspend fun softDeleteAttachment(id: Long, deletedAt: Long)
 
     @Query("UPDATE field_observations SET archivedAt = :time, status = 'Archived', updatedAt = :time WHERE id = :id") suspend fun archiveObservation(id: Long, time: Long)
+    @Query("UPDATE field_notes SET archivedAt = :time, status = 'Archived', updatedAt = :time WHERE id = :id") suspend fun archiveNote(id: Long, time: Long)
     @Query("UPDATE field_questions SET archivedAt = :time, status = 'Archived', updatedAt = :time WHERE id = :id") suspend fun archiveQuestion(id: Long, time: Long)
     @Query("UPDATE field_projects SET archivedAt = :time, status = 'Archived', updatedAt = :time WHERE id = :id") suspend fun archiveProject(id: Long, time: Long)
 
@@ -92,5 +98,6 @@ interface FieldMindDao {
     @Query("SELECT * FROM field_questions WHERE deletedAt IS NULL AND (questionText LIKE '%' || :query || '%' OR category LIKE '%' || :query || '%' OR sourceType LIKE '%' || :query || '%' OR status LIKE '%' || :query || '%') ORDER BY updatedAt DESC") fun searchQuestions(query: String): Flow<List<QuestionEntity>>
     @Query("SELECT * FROM field_hypotheses WHERE deletedAt IS NULL AND (prediction LIKE '%' || :query || '%' OR reasoning LIKE '%' || :query || '%' OR evidenceNeeded LIKE '%' || :query || '%' OR resultStatus LIKE '%' || :query || '%') ORDER BY updatedAt DESC") fun searchHypotheses(query: String): Flow<List<HypothesisEntity>>
     @Query("SELECT * FROM field_projects WHERE deletedAt IS NULL AND (title LIKE '%' || :query || '%' OR topicType LIKE '%' || :query || '%' OR objective LIKE '%' || :query || '%' OR researchQuestion LIKE '%' || :query || '%') ORDER BY updatedAt DESC") fun searchProjects(query: String): Flow<List<ProjectEntity>>
+    @Query("SELECT * FROM field_notes WHERE deletedAt IS NULL AND (title LIKE '%' || :query || '%' OR body LIKE '%' || :query || '%' OR category LIKE '%' || :query || '%' OR tags LIKE '%' || :query || '%') ORDER BY updatedAt DESC") fun searchNotes(query: String): Flow<List<NoteEntity>>
     @Query("SELECT * FROM field_sources WHERE deletedAt IS NULL AND (title LIKE '%' || :query || '%' OR author LIKE '%' || :query || '%' OR type LIKE '%' || :query || '%' OR personalSummary LIKE '%' || :query || '%' OR keyFindings LIKE '%' || :query || '%') ORDER BY updatedAt DESC") fun searchSources(query: String): Flow<List<SourceEntity>>
 }
