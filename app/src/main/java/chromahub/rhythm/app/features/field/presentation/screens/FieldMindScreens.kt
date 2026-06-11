@@ -108,20 +108,28 @@ fun FieldMindOnboardingScreen(onFinish: () -> Unit) {
         Triple(FieldMindIcons.Bolt, "Capture in two taps", "Field mode logs an observation instantly with one big button, so you never miss a moment outdoors."),
         Triple(FieldMindIcons.Export, "Own your work", "Everything core works offline and can be exported as Markdown, CSV, JSON, or plain text.")
     )
+    val totalSteps = pages.size + 1
+    val isPermissionStep = step == pages.size
     Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         Column(Modifier.fillMaxSize().padding(24.dp), verticalArrangement = Arrangement.SpaceBetween) {
-            Column(Modifier.padding(top = 48.dp), verticalArrangement = Arrangement.spacedBy(20.dp)) {
+            Column(Modifier.weight(1f, fill = false).padding(top = 48.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(20.dp)) {
                 Box(
                     Modifier.size(72.dp).background(MaterialTheme.colorScheme.primaryContainer, RoundedCornerShape(22.dp)),
                     contentAlignment = Alignment.Center
-                ) { Icon(icon = pages[step].first, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimaryContainer, size = 38.dp) }
-                Text("Step ${step + 1} of ${pages.size}", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.SemiBold)
-                Text(pages[step].second, style = MaterialTheme.typography.displaySmall, fontWeight = FontWeight.Bold)
-                Text(pages[step].third, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                ) { Icon(icon = if (isPermissionStep) FieldMindIcons.Lock else pages[step].first, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimaryContainer, size = 38.dp) }
+                Text("Step ${step + 1} of $totalSteps", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.SemiBold)
+                if (isPermissionStep) {
+                    Text("Optional permissions", style = MaterialTheme.typography.displaySmall, fontWeight = FontWeight.Bold)
+                    Text("FieldMind works fully offline. Grant only what helps you — you can skip all of these and the app still works. Change them anytime in system settings.", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    OnboardingPermissions()
+                } else {
+                    Text(pages[step].second, style = MaterialTheme.typography.displaySmall, fontWeight = FontWeight.Bold)
+                    Text(pages[step].third, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
             }
             Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
                 Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    pages.indices.forEach { i ->
+                    repeat(totalSteps) { i ->
                         Box(
                             Modifier
                                 .height(6.dp)
@@ -134,10 +142,66 @@ fun FieldMindOnboardingScreen(onFinish: () -> Unit) {
                     }
                 }
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    OutlinedButton(onClick = onFinish, Modifier.weight(1f)) { Text("Skip") }
-                    Button(onClick = { if (step < pages.lastIndex) step++ else onFinish() }, Modifier.weight(1f)) { Text(if (step < pages.lastIndex) "Next" else "Enter") }
+                    OutlinedButton(onClick = onFinish, Modifier.weight(1f)) { Text(if (isPermissionStep) "Skip all" else "Skip") }
+                    Button(onClick = { if (step < totalSteps - 1) step++ else onFinish() }, Modifier.weight(1f)) { Text(if (isPermissionStep) "Enter FieldMind" else "Next") }
                 }
             }
+        }
+    }
+}
+
+/**
+ * Optional permission requests shown on the last onboarding page. Each is independent and may be
+ * skipped; nothing here is required for the app to function. Granted state updates live so the
+ * user sees confirmation.
+ */
+@Composable
+private fun OnboardingPermissions() {
+    val context = LocalContext.current
+    fun granted(p: String) = ContextCompat.checkSelfPermission(context, p) == PackageManager.PERMISSION_GRANTED
+
+    var locationGranted by remember { mutableStateOf(granted(Manifest.permission.ACCESS_FINE_LOCATION)) }
+    var micGranted by remember { mutableStateOf(granted(Manifest.permission.RECORD_AUDIO)) }
+    val mediaPerm = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) Manifest.permission.READ_MEDIA_IMAGES else Manifest.permission.READ_EXTERNAL_STORAGE
+    var mediaGranted by remember { mutableStateOf(granted(mediaPerm)) }
+    var notifGranted by remember { mutableStateOf(Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU || granted("android.permission.POST_NOTIFICATIONS")) }
+
+    val locationLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { locationGranted = it }
+    val micLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { micGranted = it }
+    val mediaLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { mediaGranted = it }
+    val notifLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { notifGranted = it }
+
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        PermissionRow(FieldMindIcons.Location, "Location", "Tag observations with GPS coordinates and place names.", locationGranted) { locationLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION) }
+        PermissionRow(FieldMindIcons.Gallery, "Photos & media", "Attach images as visual evidence to observations.", mediaGranted) { mediaLauncher.launch(mediaPerm) }
+        PermissionRow(FieldMindIcons.Mic, "Microphone", "Record short audio notes in the field.", micGranted) { micLauncher.launch(Manifest.permission.RECORD_AUDIO) }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            PermissionRow(FieldMindIcons.Notifications, "Notifications", "Optional reminders to keep your research streak.", notifGranted) { notifLauncher.launch("android.permission.POST_NOTIFICATIONS") }
+        }
+    }
+}
+
+@Composable
+private fun PermissionRow(icon: MaterialSymbolIcon, title: String, desc: String, granted: Boolean, onRequest: () -> Unit) {
+    Row(
+        Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(MaterialTheme.colorScheme.surfaceContainerLow).padding(14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Box(Modifier.size(38.dp).clip(RoundedCornerShape(12.dp)).background(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)), contentAlignment = Alignment.Center) {
+            Icon(icon = icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary, size = 20.dp)
+        }
+        Column(Modifier.weight(1f)) {
+            Text(title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+            Text(desc, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        if (granted) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                Icon(icon = FieldMindIcons.Check, contentDescription = null, tint = FieldMindTheme.colors.positive, size = 18.dp)
+                Text("Allowed", style = MaterialTheme.typography.labelMedium, color = FieldMindTheme.colors.positive, fontWeight = FontWeight.SemiBold)
+            }
+        } else {
+            FilledTonalButton(onClick = onRequest, contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp)) { Text("Allow") }
         }
     }
 }
