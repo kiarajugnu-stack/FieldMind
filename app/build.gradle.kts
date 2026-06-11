@@ -159,7 +159,7 @@ androidComponents {
                 ?: ""
 
             output.outputFileName.set(
-                "Rhythm-${android.defaultConfig.versionName}-${variant.name}${abiSuffix}.apk"
+                "FieldMind-${android.defaultConfig.versionName}-${variant.name}${abiSuffix}.apk"
             )
         }
     }
