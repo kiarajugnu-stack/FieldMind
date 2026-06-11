@@ -890,6 +890,8 @@
     <string name="onboarding_gesture_dismiss_desc">Swipe down on full player to return to mini player</string>
     <string name="onboarding_gesture_records">Swipe for Tracks</string>
     <string name="onboarding_gesture_records_desc">Swipe on artwork to skip to next/previous song</string>
+    <string name="onboarding_gesture_tracks">Swipe for Tracks</string>
+    <string name="onboarding_gesture_tracks_desc">Swipe on artwork to skip to next/previous song</string>
     <string name="onboarding_gesture_doubletap">Double Tap Artwork</string>
     <string name="onboarding_gesture_doubletap_desc">Double tap album art to like the current song</string>
     <string name="onboarding_gestures_tips_title">Gesture Tips</string>
@@ -1627,6 +1629,7 @@
     <!-- Bottom Sheet: Album -->
     <string name="bottomsheet_play_all">Play All</string>
     <string name="bottomsheet_records">Tracks</string>
+    <string name="bottomsheet_tracks">Tracks</string>
     <string name="bottomsheet_sort_by">Sort by</string>
     <string name="bottomsheet_all_discs">All Discs</string>
     <string name="bottomsheet_disc_option">Disc %1$d</string>
@@ -2892,6 +2895,8 @@
     <string name="settings_swipe_down_dismiss_desc">Close player by swiping down on the screen</string>
     <string name="settings_swipe_artwork_records">Swipe Artwork for Tracks</string>
     <string name="settings_swipe_artwork_records_desc">Swipe left/right on album artwork to skip records</string>
+    <string name="settings_swipe_artwork_tracks">Swipe Artwork for Tracks</string>
+    <string name="settings_swipe_artwork_tracks_desc">Swipe left/right on album artwork to skip tracks</string>
     <string name="settings_double_tap_artwork">Double Tap Artwork</string>
     <string name="settings_double_tap_artwork_desc">Double tap on album art to play/pause</string>
     <string name="settings_gesture_tip_swipe_up">Swipe up on mini player to open full player</string>
@@ -4040,6 +4045,7 @@
     <string name="library_unlike_all">Unlike all</string>
     <string name="library_like_all">Like all</string>
     <string name="library_records_count_format">%1$d of %2$d records</string>
+    <string name="library_tracks_count_format">%1$d of %2$d tracks</string>
     <string name="library_no_playlists_yet">No playlists yet\nCreate your first playlist using the + button</string>
     <string name="library_no_albums_yet">No albums yet</string>
     <string name="library_no_artists_yet">No artists yet</string>
@@ -4057,6 +4063,7 @@
     <string name="library_menu_close">Close menu</string>
     <string name="library_selected_count_format">%1$d Selected</string>
     <string name="library_from_records_format">from %1$d records</string>
+    <string name="library_from_tracks_format">from %1$d tracks</string>
     <string name="library_playlist_count_singular">%1$d playlist</string>
     <string name="library_playlist_count_plural">%1$d playlists</string>
     <string name="library_album_count_singular">%1$d album</string>

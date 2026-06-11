@@ -88,8 +88,8 @@ fun EntityTypeBadge(text: String, modifier: Modifier = Modifier) {
 fun ChoiceChips(
     options: List<String>,
     selected: String,
-    onSelected: (String) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onSelected: (String) -> Unit
 ) {
     FlowRow(modifier = modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         options.forEach { option ->
