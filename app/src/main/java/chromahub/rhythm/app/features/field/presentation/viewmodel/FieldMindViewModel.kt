@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import chromahub.rhythm.app.features.field.data.database.FieldMindDatabase
 import chromahub.rhythm.app.features.field.data.database.entity.*
 import chromahub.rhythm.app.features.field.data.repository.FieldMindRepository
+import chromahub.rhythm.app.features.field.data.settings.FieldMindSettings
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
@@ -14,8 +15,18 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
+data class DraftEvidenceAttachment(
+    val type: String,
+    val uri: String,
+    val caption: String = "",
+    val localPath: String? = null,
+    val mimeType: String? = null,
+    val createdAt: Long = System.currentTimeMillis()
+)
+
 class FieldMindViewModel(application: Application) : AndroidViewModel(application) {
     private val repository = FieldMindRepository(FieldMindDatabase.getInstance(application).fieldMindDao())
+    val fieldSettings: FieldMindSettings = FieldMindSettings.getInstance(application)
 
     val observations: StateFlow<List<ObservationEntity>> = repository.observations.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
     val questions: StateFlow<List<QuestionEntity>> = repository.questions.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
@@ -40,7 +51,7 @@ class FieldMindViewModel(application: Application) : AndroidViewModel(applicatio
         projectId: Long? = null,
         latitude: Double? = null,
         longitude: Double? = null,
-        attachments: List<Pair<String, String>> = emptyList(),
+        attachments: List<DraftEvidenceAttachment> = emptyList(),
         onSaved: ((Long) -> Unit)? = null
     ) = viewModelScope.launch {
         val now = System.currentTimeMillis()
@@ -64,8 +75,16 @@ class FieldMindViewModel(application: Application) : AndroidViewModel(applicatio
         )
         repository.setObservationTags(id, tags)
         projectId?.let { repository.linkProjectObservation(it, id) }
-        attachments.forEach { (type, caption) ->
-            repository.addAttachment(EvidenceAttachmentEntity(observationId = id, type = type, uri = "pending://local/${type.lowercase()}/${System.currentTimeMillis()}", caption = caption))
+        attachments.forEach { attachment ->
+            repository.addAttachment(
+                EvidenceAttachmentEntity(
+                    observationId = id,
+                    type = attachment.type,
+                    uri = attachment.uri,
+                    localPath = attachment.localPath,
+                    caption = attachment.caption
+                )
+            )
         }
         onSaved?.invoke(id)
     }
