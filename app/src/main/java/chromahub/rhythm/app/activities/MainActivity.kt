@@ -15,6 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.fragment.app.FragmentActivity
 import chromahub.rhythm.app.features.field.presentation.navigation.FieldMindApp
+import chromahub.rhythm.app.features.field.presentation.theme.FieldMindTheme
 import chromahub.rhythm.app.features.field.presentation.viewmodel.FieldMindViewModel
 import chromahub.rhythm.app.shared.data.model.AppSettings
 import chromahub.rhythm.app.shared.presentation.viewmodel.ThemeViewModel
@@ -70,11 +71,16 @@ class MainActivity : FragmentActivity() {
                 colorSource = colorSource,
                 extractedAlbumColorsJson = extractedAlbumColors
             ) {
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background
-                ) {
-                    FieldMindApp(appSettings = appSettings, viewModel = fieldMindViewModel)
+                // FieldMind owns the active surface: apply the brand palette (or Material You
+                // when the user opts in) on top of the inherited Rhythm typography/shapes.
+                val fieldDynamicColor by fieldMindViewModel.fieldSettings.dynamicColorEnabled.collectAsState()
+                FieldMindTheme(darkTheme = isDarkTheme, dynamicColor = fieldDynamicColor) {
+                    Surface(
+                        modifier = Modifier.fillMaxSize(),
+                        color = MaterialTheme.colorScheme.background
+                    ) {
+                        FieldMindApp(appSettings = appSettings, viewModel = fieldMindViewModel)
+                    }
                 }
             }
         }

@@ -56,6 +56,10 @@ class FieldMindSettings private constructor(context: Context) {
     private val _privacyLockEnabled = MutableStateFlow(prefs.getBoolean(KEY_PRIVACY_LOCK, false))
     val privacyLockEnabled: StateFlow<Boolean> = _privacyLockEnabled.asStateFlow()
 
+    private val _dynamicColorEnabled = MutableStateFlow(prefs.getBoolean(KEY_DYNAMIC_COLOR, false))
+    /** When true, use Material You wallpaper colors instead of the FieldMind brand palette. */
+    val dynamicColorEnabled: StateFlow<Boolean> = _dynamicColorEnabled.asStateFlow()
+
     fun setDailyObservationGoal(value: Int) = edit(KEY_DAILY_GOAL, value.coerceAtLeast(0)) { _dailyObservationGoal.value = value.coerceAtLeast(0) }
     fun setDefaultCategory(value: String) = edit(KEY_DEFAULT_CATEGORY, value) { _defaultCategory.value = value }
     fun setDefaultConfidence(value: String) = edit(KEY_DEFAULT_CONFIDENCE, value) { _defaultConfidence.value = value }
@@ -72,6 +76,7 @@ class FieldMindSettings private constructor(context: Context) {
     fun setStreaksEnabled(value: Boolean) = edit(KEY_STREAKS, value) { _streaksEnabled.value = value }
     fun setDefaultExportFormat(value: String) = edit(KEY_EXPORT_FORMAT, value) { _defaultExportFormat.value = value }
     fun setPrivacyLockEnabled(value: Boolean) = edit(KEY_PRIVACY_LOCK, value) { _privacyLockEnabled.value = value }
+    fun setDynamicColorEnabled(value: Boolean) = edit(KEY_DYNAMIC_COLOR, value) { _dynamicColorEnabled.value = value }
 
     private inline fun edit(key: String, value: String, after: () -> Unit) { prefs.edit().putString(key, value).apply(); after() }
     private inline fun edit(key: String, value: Boolean, after: () -> Unit) { prefs.edit().putBoolean(key, value).apply(); after() }
@@ -99,5 +104,6 @@ class FieldMindSettings private constructor(context: Context) {
         private const val KEY_STREAKS = "streaks"
         private const val KEY_EXPORT_FORMAT = "export_format"
         private const val KEY_PRIVACY_LOCK = "privacy_lock"
+        private const val KEY_DYNAMIC_COLOR = "dynamic_color"
     }
 }
