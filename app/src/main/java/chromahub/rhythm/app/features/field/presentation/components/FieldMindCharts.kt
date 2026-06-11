@@ -182,6 +182,49 @@ fun BreakdownBar(
  * Lightweight offline "map": plots GPS points by normalizing lat/long into the canvas box.
  * No tiles, no network, no API key — just spatial distribution of observations.
  */
+/** A node in a [ConnectionGraph]: a labeled, colored dot. */
+data class GraphNode(val label: String, val color: Color, val emphasis: Boolean = false)
+
+/**
+ * Dependency-free knowledge graph drawn as a connection wheel: nodes are placed on a circle and
+ * relationships are drawn as chords across it. Emphasized (hub) nodes are larger and labeled.
+ */
+@Composable
+fun ConnectionGraph(
+    nodes: List<GraphNode>,
+    edges: List<Pair<Int, Int>>,
+    modifier: Modifier = Modifier,
+    height: androidx.compose.ui.unit.Dp = 240.dp,
+    edgeColor: Color = MaterialTheme.colorScheme.outline
+) {
+    Box(modifier.fillMaxWidth().height(height), contentAlignment = Alignment.Center) {
+        if (nodes.size < 2) {
+            Text("Link records to projects, questions, and sources to grow your graph.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            return@Box
+        }
+        androidx.compose.foundation.Canvas(Modifier.fillMaxWidth().height(height)) {
+            val cx = this.size.width / 2f
+            val cy = this.size.height / 2f
+            val radius = this.size.minDimension / 2f * 0.78f
+            val positions = nodes.indices.map { i ->
+                val angle = (2.0 * Math.PI * i / nodes.size) - Math.PI / 2.0
+                Offset(cx + (radius * Math.cos(angle)).toFloat(), cy + (radius * Math.sin(angle)).toFloat())
+            }
+            edges.forEach { (a, b) ->
+                if (a in positions.indices && b in positions.indices) {
+                    drawLine(edgeColor.copy(alpha = 0.4f), positions[a], positions[b], strokeWidth = 2f)
+                }
+            }
+            nodes.forEachIndexed { i, node ->
+                val p = positions[i]
+                val r = if (node.emphasis) 13f else 7f
+                drawCircle(node.color.copy(alpha = 0.25f), radius = r + 6f, center = p)
+                drawCircle(node.color, radius = r, center = p)
+            }
+        }
+    }
+}
+
 @Composable
 fun MiniMap(
     points: List<Pair<Double, Double>>,
