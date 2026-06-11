@@ -1,5 +1,7 @@
 package chromahub.rhythm.app.features.field.presentation.components
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -24,6 +26,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
@@ -81,6 +84,55 @@ fun ProgressRing(
 }
 
 /**
+ * Circular progress ring with a multi-color gradient sweep, an animated fill, a large centered
+ * value and a caption. Used for the Today daily-goal hero.
+ */
+@Composable
+fun GradientProgressRing(
+    progress: Float,
+    centerValue: String,
+    caption: String,
+    modifier: Modifier = Modifier,
+    gradient: List<Color>,
+    track: Color = MaterialTheme.colorScheme.surfaceContainerHighest,
+    size: androidx.compose.ui.unit.Dp = 112.dp
+) {
+    val target = progress.coerceIn(0f, 1f)
+    val animated by animateFloatAsState(targetValue = target, animationSpec = tween(700), label = "ring")
+    Box(modifier.size(size), contentAlignment = Alignment.Center) {
+        Canvas(Modifier.fillMaxWidth().aspectRatio(1f)) {
+            val stroke = this.size.minDimension * 0.13f
+            val inset = stroke / 2f
+            val arcSize = Size(this.size.width - stroke, this.size.height - stroke)
+            drawArc(
+                color = track,
+                startAngle = 0f,
+                sweepAngle = 360f,
+                useCenter = false,
+                topLeft = Offset(inset, inset),
+                size = arcSize,
+                style = Stroke(width = stroke, cap = StrokeCap.Round)
+            )
+            if (animated > 0f) {
+                drawArc(
+                    brush = Brush.sweepGradient(gradient),
+                    startAngle = -90f,
+                    sweepAngle = 360f * animated,
+                    useCenter = false,
+                    topLeft = Offset(inset, inset),
+                    size = arcSize,
+                    style = Stroke(width = stroke, cap = StrokeCap.Round)
+                )
+            }
+        }
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(centerValue, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.ExtraBold)
+            Text(caption, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+    }
+}
+
+/**
  * Vertical bar chart from labelled values. Each bar gets a distinct shade of [barColor], and tapping
  * a bar reveals its label and entry count above the chart.
  */
@@ -89,23 +141,26 @@ fun BarChart(
     data: List<Pair<String, Float>>,
     modifier: Modifier = Modifier,
     barColor: Color = MaterialTheme.colorScheme.primary,
+    barColors: List<Color>? = null,
     height: androidx.compose.ui.unit.Dp = 140.dp
 ) {
     if (data.isEmpty()) return
     val max = (data.maxOfOrNull { it.second } ?: 1f).coerceAtLeast(1f)
     val labelColor = MaterialTheme.colorScheme.onSurfaceVariant
     val n = data.size
-    val shades = remember(data, barColor) {
-        data.indices.map { i -> barColor.copy(alpha = (1f - 0.5f * (i.toFloat() / (n - 1).coerceAtLeast(1))).coerceIn(0.5f, 1f)) }
+    val shades = remember(data, barColor, barColors) {
+        if (barColors != null) data.indices.map { i -> barColors[i % barColors.size] }
+        else data.indices.map { i -> barColor.copy(alpha = (1f - 0.5f * (i.toFloat() / (n - 1).coerceAtLeast(1))).coerceIn(0.5f, 1f)) }
     }
     var selected by remember(data) { mutableStateOf(-1) }
     Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         val sel = data.getOrNull(selected)
+        val selColor = if (selected >= 0) shades[selected] else barColor
         Text(
             if (sel != null) "${sel.first}: ${sel.second.toInt()} ${if (sel.second.toInt() == 1) "entry" else "entries"}" else "Tap a bar to see its count",
             style = MaterialTheme.typography.labelMedium,
             fontWeight = if (sel != null) FontWeight.SemiBold else FontWeight.Normal,
-            color = if (sel != null) barColor else labelColor
+            color = if (sel != null) selColor else labelColor
         )
         Canvas(
             Modifier
@@ -127,14 +182,14 @@ fun BarChart(
                 val h = (v / max) * this.size.height
                 val left = gap + i * (barWidth + gap)
                 drawRoundRect(
-                    color = if (i == selected) barColor else shades[i],
+                    color = if (selected >= 0 && i != selected) shades[i].copy(alpha = 0.4f) else shades[i],
                     topLeft = Offset(left, this.size.height - h),
                     size = Size(barWidth, h),
                     cornerRadius = androidx.compose.ui.geometry.CornerRadius(radius, radius)
                 )
                 if (i == selected) {
                     drawRoundRect(
-                        color = barColor,
+                        color = shades[i],
                         topLeft = Offset(left, this.size.height - h),
                         size = Size(barWidth, h),
                         cornerRadius = androidx.compose.ui.geometry.CornerRadius(radius, radius),
@@ -145,7 +200,7 @@ fun BarChart(
         }
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             data.forEachIndexed { i, (label, _) ->
-                Text(label, style = MaterialTheme.typography.labelSmall, color = if (i == selected) barColor else labelColor, fontWeight = if (i == selected) FontWeight.SemiBold else FontWeight.Normal, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(label, style = MaterialTheme.typography.labelSmall, color = if (i == selected) shades[i] else labelColor, fontWeight = if (i == selected) FontWeight.SemiBold else FontWeight.Normal, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
         }
     }

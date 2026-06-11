@@ -31,6 +31,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -236,34 +237,63 @@ private fun recentRelativeTime(time: Long): String {
 
 @Composable
 private fun DailyGoalCard(todayCount: Int, goal: Int, sessions: Int, onClick: () -> Unit) {
+    val colors = FieldMindTheme.colors
     val complete = todayCount >= goal && goal > 0
-    Card(
-        Modifier.fillMaxWidth().clickable(onClick = onClick).animateContentSize(),
-        shape = RoundedCornerShape(28.dp),
-        colors = CardDefaults.cardColors(containerColor = if (complete) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainerLow),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    val progress = if (goal > 0) todayCount.toFloat() / goal else 0f
+    val percent = (progress.coerceIn(0f, 1f) * 100).toInt()
+    val remaining = (goal - todayCount).coerceAtLeast(0)
+    val ringGradient = if (complete)
+        listOf(colors.positive, colors.confidenceSure, MaterialTheme.colorScheme.primary, colors.positive)
+    else
+        listOf(MaterialTheme.colorScheme.primary, colors.data, colors.hypothesis, MaterialTheme.colorScheme.primary)
+    val bg = Brush.linearGradient(
+        if (complete) listOf(MaterialTheme.colorScheme.primaryContainer, colors.confidenceSure.copy(alpha = 0.30f))
+        else listOf(MaterialTheme.colorScheme.surfaceContainerHigh, MaterialTheme.colorScheme.primary.copy(alpha = 0.12f))
+    )
+    Box(
+        Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(28.dp))
+            .background(bg)
+            .clickable(onClick = onClick)
+            .animateContentSize()
     ) {
         Row(Modifier.padding(20.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(18.dp)) {
-            ProgressRing(
-                progress = if (goal > 0) todayCount.toFloat() / goal else 0f,
+            GradientProgressRing(
+                progress = progress,
                 centerValue = "$todayCount/$goal",
-                caption = "today",
-                color = if (complete) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.primary,
-                size = 92.dp
+                caption = "$percent%",
+                gradient = ringGradient,
+                size = 104.dp
             )
-            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(if (complete) "Daily goal met" else "Today's observations", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                 Text(
-                    if (complete) "Great discipline — keep the streak going." else "Log $goal observation${if (goal == 1) "" else "s"} to hit today's goal.",
+                    if (complete) "Great discipline — keep the streak going." else "$remaining more to hit today's goal of $goal.",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = if (complete) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Icon(icon = FieldMindIcons.Streak, contentDescription = null, tint = FieldMindTheme.colors.warning, size = 16.dp)
-                    Text("$sessions active day${if (sessions == 1) "" else "s"} logged", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    GoalStatChip(FieldMindIcons.Streak, "$sessions day${if (sessions == 1) "" else "s"}", colors.warning)
+                    GoalStatChip(if (complete) FieldMindIcons.Check else FieldMindIcons.Observation, if (complete) "Done" else "$todayCount logged", if (complete) colors.positive else colors.observation)
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun GoalStatChip(icon: MaterialSymbolIcon, label: String, tint: androidx.compose.ui.graphics.Color) {
+    Row(
+        Modifier
+            .clip(RoundedCornerShape(12.dp))
+            .background(tint.copy(alpha = if (FieldMindTheme.colors.isDark) 0.20f else 0.13f))
+            .padding(horizontal = 10.dp, vertical = 6.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(5.dp)
+    ) {
+        Icon(icon = icon, contentDescription = null, tint = tint, size = 14.dp)
+        Text(label, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold, color = tint)
     }
 }
 

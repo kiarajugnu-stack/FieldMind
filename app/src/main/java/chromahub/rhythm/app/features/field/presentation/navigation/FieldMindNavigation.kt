@@ -1,7 +1,10 @@
 package chromahub.rhythm.app.features.field.presentation.navigation
 
-import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -74,13 +77,17 @@ fun FieldMindApp(appSettings: AppSettings, viewModel: FieldMindViewModel) {
     if (!onboardingCompleted) FieldMindOnboardingScreen(onFinish = { appSettings.setOnboardingCompleted(true) }) else FieldMindNavigation(viewModel = viewModel, onResetOnboarding = { appSettings.setOnboardingCompleted(false) })
 }
 
+/**
+ * Switch primary tabs deterministically: a tab tap always lands on that tab's root screen.
+ * We intentionally avoid saveState/restoreState because restoring a tab's saved nested back
+ * stack could re-open a previously-visited detail page instead of the tab root (the reported
+ * "taps open a different page" bug).
+ */
 private fun NavHostController.navigateToTab(route: String) {
-    val current = currentDestination?.route
-    if (current == route) return
+    if (currentDestination?.route == route) return
     navigate(route) {
-        popUpTo(graph.findStartDestination().id) { saveState = true }
+        popUpTo(graph.findStartDestination().id) { inclusive = false }
         launchSingleTop = true
-        restoreState = true
     }
 }
 
@@ -178,10 +185,10 @@ private fun FieldMindNavHost(
         navController = navController,
         startDestination = FieldMindScreen.Home.route,
         modifier = modifier,
-        enterTransition = { slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.Left, tween(240)) },
-        exitTransition = { slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.Left, tween(240)) },
-        popEnterTransition = { slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.Right, tween(240)) },
-        popExitTransition = { slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.Right, tween(240)) }
+        enterTransition = { fadeIn(tween(160)) + scaleIn(initialScale = 0.98f, animationSpec = tween(160)) },
+        exitTransition = { fadeOut(tween(120)) },
+        popEnterTransition = { fadeIn(tween(160)) },
+        popExitTransition = { fadeOut(tween(120)) + scaleOut(targetScale = 0.98f, animationSpec = tween(120)) }
     ) {
         val openDetail: (String, Long) -> Unit = { kind, id -> navController.navigateToDestination("field_detail/$kind/$id") }
         composable(FieldMindScreen.Home.route) { HomeScreen(viewModel = viewModel, onOpenSettings = { navController.navigateToDestination(FieldMindScreen.Settings.route) }, onNavigate = { navController.navigateToDestination(it.route) }, onOpenDetail = openDetail) }
