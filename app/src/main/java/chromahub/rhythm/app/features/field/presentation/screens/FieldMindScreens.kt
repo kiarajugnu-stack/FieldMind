@@ -1,12 +1,16 @@
 package chromahub.rhythm.app.features.field.presentation.screens
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.webkit.WebView
+import android.webkit.WebViewClient
 import android.media.MediaRecorder
 import android.net.Uri
 import android.os.Build
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -44,6 +48,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.core.content.ContextCompat
@@ -53,8 +58,11 @@ import chromahub.rhythm.app.features.field.data.ai.AssistantTask
 import chromahub.rhythm.app.features.field.data.ai.GeminiResearchAssistant
 import chromahub.rhythm.app.features.field.data.database.entity.*
 import chromahub.rhythm.app.features.field.data.export.FieldMindExport
+import chromahub.rhythm.app.features.field.data.learn.GuidedPath
+import chromahub.rhythm.app.features.field.data.learn.GuidedPaths
 import chromahub.rhythm.app.features.field.data.learn.LearnCategory
 import chromahub.rhythm.app.features.field.data.learn.LearnLibrary
+import chromahub.rhythm.app.features.field.data.learn.LearnResource
 import chromahub.rhythm.app.features.field.data.learn.SuggestedOnlineApis
 import chromahub.rhythm.app.features.field.data.location.CapturedLocation
 import chromahub.rhythm.app.features.field.data.location.FieldLocationProvider
@@ -143,7 +151,8 @@ fun HomeScreen(
     viewModel: FieldMindViewModel,
     onOpenSettings: () -> Unit,
     onNavigate: (FieldMindScreen) -> Unit,
-    onOpenDetail: (String, Long) -> Unit = { _, _ -> }
+    onOpenDetail: (String, Long) -> Unit = { _, _ -> },
+    onOpenReader: (String, String) -> Unit = { _, _ -> }
 ) {
     val observations by viewModel.observations.collectAsState()
     val questions by viewModel.questions.collectAsState()
@@ -194,6 +203,16 @@ fun HomeScreen(
                 )
             }
         }
+        val learnSignals = buildList {
+            observations.sortedByDescending { it.timestamp }.take(10).forEach { add(it.category); add(it.subject); add(it.tags) }
+            questions.sortedByDescending { it.updatedAt }.take(10).forEach { add(it.category); add(it.questionText) }
+            projects.take(6).forEach { add(it.topicType); add(it.title) }
+        }
+        val recommendations = remember(learnSignals) { recommendedResources(learnSignals) }
+        if (recommendations.isNotEmpty()) {
+            item { SectionHeader("Recommended learning", if (learnSignals.any { it.isNotBlank() }) "Based on your recent activity" else "Foundations to start with") }
+            item { RecommendedLearningCard(recommendations, onOpenReader = onOpenReader, onSeeAll = { onNavigate(FieldMindScreen.Learn) }) }
+        }
         item { SectionHeader("Reading & review", "${sources.count { it.readingStatus == "Finished" }} finished • ${flashcards.size} cards") }
         item {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -227,6 +246,60 @@ fun HomeScreen(
 }
 
 private data class RecentEntry(val kind: String, val id: Long, val time: Long, val title: String, val sub: String)
+
+/** A learn resource paired with the category/topic path it came from. */
+internal data class LearnRecommendation(val resource: LearnResource, val path: String)
+
+/**
+ * Picks up to three Learn resources relevant to the user's recent activity by scoring every
+ * resource against keyword overlap with [signals] (recent categories, subjects, tags, topics).
+ * With no signals it falls back to foundational "scientific thinking" resources so the Today
+ * screen always has a useful suggestion.
+ */
+internal fun recommendedResources(signals: List<String>): List<LearnRecommendation> {
+    val all = LearnLibrary.flatMap { c -> c.topics.flatMap { t -> t.resources.map { Triple(c, t, it) } } }
+    val words = signals.joinToString(" ").lowercase().split(Regex("[^a-z0-9]+")).filter { it.length > 3 }.toSet()
+    if (words.isEmpty()) {
+        return all.take(3).map { (c, t, r) -> LearnRecommendation(r, "${c.name} · ${t.name}") }
+    }
+    return all.map { (c, t, r) ->
+        val hay = "${c.name} ${c.description} ${t.name} ${t.summary} ${r.title} ${r.why}".lowercase()
+        Triple(LearnRecommendation(r, "${c.name} · ${t.name}"), words.count { hay.contains(it) }, c)
+    }.sortedByDescending { it.second }
+        .let { scored -> if (scored.any { it.second > 0 }) scored.filter { it.second > 0 } else scored }
+        .take(3)
+        .map { it.first }
+}
+
+@Composable
+private fun RecommendedLearningCard(items: List<LearnRecommendation>, onOpenReader: (String, String) -> Unit, onSeeAll: () -> Unit) {
+    val accent = FieldMindTheme.colors.accentFor("learn")
+    Card(
+        Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(22.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            items.forEach { rec ->
+                Row(
+                    Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).clickable { onOpenReader(rec.resource.url, rec.resource.title) }.background(MaterialTheme.colorScheme.surfaceContainerHigh).padding(12.dp),
+                    verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Box(Modifier.size(34.dp).clip(RoundedCornerShape(10.dp)).background(accent.copy(alpha = if (FieldMindTheme.colors.isDark) 0.22f else 0.14f)), contentAlignment = Alignment.Center) {
+                        Icon(icon = learnKindIcon(rec.resource.kind), contentDescription = null, tint = accent, size = 18.dp)
+                    }
+                    Column(Modifier.weight(1f)) {
+                        Text(rec.resource.title, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                        Text("${rec.resource.kind} · ${rec.path}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    }
+                    Icon(icon = FieldMindIcons.Book, contentDescription = null, tint = accent, size = 18.dp)
+                }
+            }
+            TextButton(onClick = onSeeAll, modifier = Modifier.align(Alignment.End)) { Text("Open Learn"); Spacer(Modifier.size(4.dp)); Icon(icon = FieldMindIcons.Forward, contentDescription = null, size = 18.dp) }
+        }
+    }
+}
 
 private fun recentRelativeTime(time: Long): String {
     val diff = System.currentTimeMillis() - time
@@ -866,6 +939,7 @@ fun KnowledgeLibraryScreen(
     viewModel: FieldMindViewModel,
     onNavigate: (FieldMindScreen) -> Unit = {},
     onOpenDetail: (String, Long) -> Unit = { _, _ -> },
+    onOpenReader: (String, String) -> Unit = { _, _ -> },
     startTab: Int = 0
 ) {
     val sources by viewModel.sources.collectAsState()
@@ -883,7 +957,7 @@ fun KnowledgeLibraryScreen(
             0 -> SourcePanel(viewModel, sources, onOpenDetail)
             1 -> PaperReadingPanel(sources, onOpenDetail)
             2 -> FlashcardPanel(viewModel, flashcards, onOpenDetail) { onNavigate(FieldMindScreen.Flashcards) }
-            3 -> LearnPanel(viewModel)
+            3 -> LearnPanel(viewModel, onOpenReader)
         }
     }
 }
@@ -967,12 +1041,13 @@ private fun LibraryFlashcard(card: FlashcardEntity, onOpenDetail: () -> Unit) {
 }
 
 @Composable
-private fun LearnPanel(viewModel: FieldMindViewModel) {
-    val uriHandler = LocalUriHandler.current
+private fun LearnPanel(viewModel: FieldMindViewModel, onOpenReader: (String, String) -> Unit = { _, _ -> }) {
     LazyColumn(contentPadding = panelPadding(), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-        item { SectionHeader("Learn", "Curated, offline-ready resources by topic. Tap a category to expand.") }
+        item { SectionHeader("Guided paths", "Follow a sequence to learn a skill end to end. Resources open in-app.") }
+        items(GuidedPaths) { path -> GuidedPathCard(path, onOpenReader) }
 
-        items(LearnLibrary) { category -> LearnCategoryCard(category) { url -> runCatching { uriHandler.openUri(url) } } }
+        item { SectionHeader("Learn", "Curated, offline-ready resources by topic. Tap a category to expand; resources open in-app.") }
+        items(LearnLibrary) { category -> LearnCategoryCard(category) { res -> onOpenReader(res.url, res.title) } }
 
         item { SectionHeader("Ask Gemini for papers & books", "Optional online suggestions tailored to your topic.") }
         item { AssistantPanel(viewModel) }
@@ -988,7 +1063,95 @@ private fun LearnPanel(viewModel: FieldMindViewModel) {
 }
 
 @Composable
-private fun LearnCategoryCard(category: LearnCategory, onOpenLink: (String) -> Unit) {
+private fun GuidedPathCard(path: GuidedPath, onOpenReader: (String, String) -> Unit) {
+    var expanded by remember { mutableStateOf(false) }
+    val accent = FieldMindTheme.colors.accentFor("learn")
+    Card(
+        modifier = Modifier.fillMaxWidth().animateContentSize().clickable { expanded = !expanded },
+        shape = RoundedCornerShape(22.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                Box(Modifier.size(40.dp).clip(RoundedCornerShape(13.dp)).background(accent.copy(alpha = if (FieldMindTheme.colors.isDark) 0.22f else 0.14f)), contentAlignment = Alignment.Center) {
+                    Icon(icon = FieldMindIcons.School, contentDescription = null, tint = accent, size = 22.dp)
+                }
+                Column(Modifier.weight(1f)) {
+                    Text(path.title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    Text(path.goal, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                Icon(icon = if (expanded) FieldMindIcons.Up else FieldMindIcons.Down, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, size = 22.dp)
+            }
+            if (expanded) {
+                path.steps.forEachIndexed { i, res ->
+                    Row(
+                        Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).clickable { onOpenReader(res.url, res.title) }.background(MaterialTheme.colorScheme.surfaceContainerHigh).padding(12.dp),
+                        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Box(Modifier.size(28.dp).clip(CircleShape).background(accent.copy(alpha = 0.16f)), contentAlignment = Alignment.Center) {
+                            Text("${i + 1}", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = accent)
+                        }
+                        Column(Modifier.weight(1f)) {
+                            Text(res.title, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
+                            Text("${res.kind} · ${res.why}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                        }
+                        Icon(icon = FieldMindIcons.Book, contentDescription = null, tint = accent, size = 18.dp)
+                    }
+                }
+            } else {
+                Text("${path.steps.size} steps", style = MaterialTheme.typography.labelMedium, color = accent)
+            }
+        }
+    }
+}
+
+/**
+ * In-app reader for a Learn resource. Loads the page in a WebView so users can read without
+ * leaving FieldMind, with a top-bar action to open it in their browser for further reading.
+ */
+@SuppressLint("SetJavaScriptEnabled")
+@Composable
+fun LearnReaderScreen(url: String, title: String, onBack: () -> Unit) {
+    val uriHandler = LocalUriHandler.current
+    var loading by remember(url) { mutableStateOf(true) }
+    var webView by remember { mutableStateOf<WebView?>(null) }
+    BackHandler(enabled = true) {
+        val wv = webView
+        if (wv != null && wv.canGoBack()) wv.goBack() else onBack()
+    }
+    Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
+        Row(
+            Modifier.fillMaxWidth().padding(start = 8.dp, end = 8.dp, top = 8.dp, bottom = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            IconButton(onClick = onBack) { Icon(icon = FieldMindIcons.Back, contentDescription = "Back", size = 22.dp) }
+            Text(title.ifBlank { "Reader" }, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
+            IconButton(onClick = { runCatching { uriHandler.openUri(url) } }) { Icon(icon = FieldMindIcons.OpenLink, contentDescription = "Open in browser", size = 22.dp) }
+        }
+        if (loading) LinearProgressIndicator(Modifier.fillMaxWidth())
+        AndroidView(
+            modifier = Modifier.fillMaxSize(),
+            factory = { ctx ->
+                WebView(ctx).apply {
+                    webViewClient = object : WebViewClient() {
+                        override fun onPageFinished(view: WebView?, finishedUrl: String?) { loading = false }
+                    }
+                    settings.javaScriptEnabled = true
+                    settings.domStorageEnabled = true
+                    settings.loadWithOverviewMode = true
+                    settings.useWideViewPort = true
+                    loadUrl(url)
+                    webView = this
+                }
+            }
+        )
+    }
+}
+
+@Composable
+private fun LearnCategoryCard(category: LearnCategory, onOpenResource: (LearnResource) -> Unit) {
     var expanded by remember { mutableStateOf(false) }
     val accent = FieldMindTheme.colors.accentFor("learn")
     Card(
@@ -1015,7 +1178,7 @@ private fun LearnCategoryCard(category: LearnCategory, onOpenLink: (String) -> U
                     Text(topic.summary, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     topic.resources.forEach { res ->
                         Row(
-                            Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).clickable { onOpenLink(res.url) }.background(MaterialTheme.colorScheme.surfaceContainerHigh).padding(12.dp),
+                            Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).clickable { onOpenResource(res) }.background(MaterialTheme.colorScheme.surfaceContainerHigh).padding(12.dp),
                             verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
                             Box(Modifier.size(30.dp).clip(RoundedCornerShape(9.dp)).background(accent.copy(alpha = 0.16f)), contentAlignment = Alignment.Center) {
@@ -1025,7 +1188,7 @@ private fun LearnCategoryCard(category: LearnCategory, onOpenLink: (String) -> U
                                 Text(res.title, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
                                 Text("${res.kind} · ${res.why}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2, overflow = TextOverflow.Ellipsis)
                             }
-                            Icon(icon = FieldMindIcons.OpenLink, contentDescription = "Open link", tint = MaterialTheme.colorScheme.onSurfaceVariant, size = 18.dp)
+                            Icon(icon = FieldMindIcons.Book, contentDescription = "Read in app", tint = MaterialTheme.colorScheme.onSurfaceVariant, size = 18.dp)
                         }
                     }
                 }
