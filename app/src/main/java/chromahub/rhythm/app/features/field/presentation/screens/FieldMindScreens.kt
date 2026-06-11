@@ -767,10 +767,17 @@ private fun HypothesisPanel(viewModel: FieldMindViewModel, items: List<Hypothesi
 @Composable
 private fun DataToolPanel(viewModel: FieldMindViewModel, items: List<DataRecordEntity>, onOpenDetail: (String, Long) -> Unit) {
     var show by remember { mutableStateOf(false) }
+    val grouped = items.groupBy { it.toolType.ifBlank { "Other" } }
     LazyColumn(contentPadding = panelPadding(), verticalArrangement = Arrangement.spacedBy(14.dp)) {
         item { AddButton("Open data collection tools") { show = true } }
-        item { EmptyState("Offline data tools", "Counter, measurement log, checklist, event log, weather log, site log, species tracker, comparison table.", icon = FieldMindIcons.Data) }
-        items(items) { EntityCard(it.label, "data", body = it.notes.ifBlank { it.location }, meta = listOf(it.toolType, "${it.value} ${it.unit}".trim())) { onOpenDetail("data", it.id) } }
+        if (items.isEmpty()) {
+            item { EmptyState("Offline data tools", "Counter, measurement log, checklist, event log, weather log, site log, species tracker, comparison table.", icon = FieldMindIcons.Data) }
+        } else {
+            grouped.forEach { (tool, records) ->
+                item { SectionHeader(tool, "${records.size} ${if (records.size == 1) "entry" else "entries"}") }
+                items(records) { EntityCard(it.label, "data", body = it.notes.ifBlank { it.location }, meta = listOf("${it.value} ${it.unit}".trim())) { onOpenDetail("data", it.id) } }
+            }
+        }
     }
     if (show) NewDataRecordDialog(viewModel) { show = false }
 }
