@@ -205,7 +205,7 @@ android {
     compileSdk = <latest>
     
     defaultConfig {
-        applicationId = "chromahub.rhythm.app"
+        applicationId = "fieldmind.research.app"
         minSdk = <min_sdk>
         targetSdk = <latest>
         versionCode = <version_code>

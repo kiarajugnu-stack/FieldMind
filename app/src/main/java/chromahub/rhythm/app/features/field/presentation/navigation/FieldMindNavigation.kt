@@ -20,6 +20,7 @@ import androidx.navigation.compose.rememberNavController
 import chromahub.rhythm.app.features.field.presentation.screens.ArchiveScreen
 import chromahub.rhythm.app.features.field.presentation.screens.CaptureScreen
 import chromahub.rhythm.app.features.field.presentation.screens.FieldMindOnboardingScreen
+import chromahub.rhythm.app.features.field.presentation.screens.DetailScreen
 import chromahub.rhythm.app.features.field.presentation.screens.FieldMindSettingsScreen
 import chromahub.rhythm.app.features.field.presentation.screens.HomeScreen
 import chromahub.rhythm.app.features.field.presentation.screens.KnowledgeLibraryScreen
@@ -102,11 +103,22 @@ fun FieldMindNavigation(
                 HomeScreen(viewModel = viewModel, onOpenSettings = { navController.navigate(FieldMindScreen.Settings.route) }, onNavigate = { navController.navigate(it.route) })
             }
             composable(FieldMindScreen.Capture.route) { CaptureScreen(viewModel = viewModel) }
-            composable(FieldMindScreen.Research.route) { ResearchScreen(viewModel = viewModel) }
-            composable(FieldMindScreen.Library.route) { KnowledgeLibraryScreen(viewModel = viewModel) }
-            composable(FieldMindScreen.Archive.route) { ArchiveScreen(viewModel = viewModel) }
+            composable(FieldMindScreen.Research.route) {
+                ResearchScreen(viewModel = viewModel, onOpenDetail = { kind, id -> navController.navigate("field_detail/$kind/$id") })
+            }
+            composable(FieldMindScreen.Library.route) {
+                KnowledgeLibraryScreen(viewModel = viewModel, onOpenDetail = { kind, id -> navController.navigate("field_detail/$kind/$id") })
+            }
+            composable(FieldMindScreen.Archive.route) {
+                ArchiveScreen(viewModel = viewModel, onOpenDetail = { kind, id -> navController.navigate("field_detail/$kind/$id") })
+            }
             composable(FieldMindScreen.Settings.route) {
                 FieldMindSettingsScreen(onBack = { navController.popBackStack() }, onResetOnboarding = onResetOnboarding)
+            }
+            composable("field_detail/{kind}/{id}") { entry ->
+                val kind = entry.arguments?.getString("kind") ?: "observation"
+                val id = entry.arguments?.getString("id")?.toLongOrNull() ?: 0L
+                DetailScreen(kind = kind, id = id, viewModel = viewModel, onBack = { navController.popBackStack() })
             }
         }
     }

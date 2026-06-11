@@ -324,7 +324,7 @@ if (ytmusicApiService != null) {
 ```kotlin
 create("newvariant") {
     dimension = "distribution"
-    applicationId = "chromahub.rhythm.app"
+    applicationId = "fieldmind.research.app"
     buildConfigField("boolean", "ENABLE_YOUTUBE_MUSIC", "true")
     versionNameSuffix = "-new"
 }

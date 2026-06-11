@@ -43,8 +43,8 @@ fun FieldSectionTitle(title: String, subtitle: String? = null, modifier: Modifie
 fun ResearchCard(
     title: String,
     subtitle: String,
-    modifier: Modifier = Modifier,
     label: String? = null,
+    modifier: Modifier = Modifier,
     onClick: (() -> Unit)? = null
 ) {
     Card(
