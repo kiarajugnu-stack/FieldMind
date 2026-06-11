@@ -55,7 +55,7 @@ jobs:
         fi
 
     - name: Build with Gradle (GitHub flavor only)
-      run: ./gradlew assembleGithubRelease assembleGithubDebug
+      run: ./gradlew assembleGithubDebug assembleGithubRelease -PunsignedApkOnly=true
 
     - name: Generate build info
       if: github.event_name == 'pull_request'
@@ -68,9 +68,9 @@ jobs:
       if: github.event_name == 'pull_request'
       uses: actions/upload-artifact@v4
       with:
-        name: rhythm-pr-${{ github.event.pull_request.number }}
+        name: fieldmind-pr-${{ github.event.pull_request.number }}
         path: |
-          app/build/outputs/apk/github/release/*.apk
-          app/build/outputs/apk/github/debug/*.apk
+          app/build/outputs/apk/github/debug/FieldMind-*-githubDebug-unsigned-universal.apk
+          app/build/outputs/apk/github/release/FieldMind-*-githubRelease-unsigned-universal.apk
           build_info.txt
         retention-days: 14

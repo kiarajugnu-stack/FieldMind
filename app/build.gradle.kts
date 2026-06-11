@@ -1,5 +1,4 @@
 import java.util.Properties
-import com.android.build.api.variant.FilterConfiguration
 
 plugins {
     alias(libs.plugins.android.application)
@@ -8,6 +7,12 @@ plugins {
     id("kotlin-parcelize")
 //    alias(libs.plugins.kotlin.serialization)
 }
+
+
+val unsignedApkOnly = providers.gradleProperty("unsignedApkOnly")
+    .orElse(providers.environmentVariable("UNSIGNED_APK_ONLY"))
+    .map { it.equals("true", ignoreCase = true) }
+    .getOrElse(false)
 
 android {
     namespace = "chromahub.rhythm.app"
@@ -59,17 +64,14 @@ android {
     }
 
     val signingProperties = getProperties(".config/keystore.properties")
-    val releaseSigning = if (signingProperties != null) {
+    val releaseSigning = signingProperties?.let {
         signingConfigs.create("release") {
-            keyAlias = signingProperties.property("key_alias")
-            keyPassword = signingProperties.property("key_password")
-            storePassword = signingProperties.property("store_password")
-            storeFile = rootProject.file(signingProperties.property("store_file"))
+            keyAlias = it.property("key_alias")
+            keyPassword = it.property("key_password")
+            storePassword = it.property("store_password")
+            storeFile = rootProject.file(it.property("store_file"))
         }
-    } else {
-        signingConfigs.getByName("debug")
     }
-
     defaultConfig {
     }
 
@@ -81,7 +83,7 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            signingConfig = releaseSigning
+            signingConfig = if (unsignedApkOnly) null else releaseSigning
 //            ndk {
 //                debugSymbolLevel = "SYMBOL_TABLE"
 //            }
@@ -101,7 +103,7 @@ android {
             versionNameSuffix = "-debug"
             //isMinifyEnabled = false
             //isDebuggable = true
-            signingConfig = releaseSigning
+            signingConfig = if (unsignedApkOnly) null else signingConfigs.getByName("debug")
         }
     }
     compileOptions {
@@ -137,13 +139,12 @@ android {
         }
     }
 
-    // ABI splits: create smaller per-architecture APKs (reduces size by ~5–10 MB each)
+    // Build workflow releases exactly one universal APK per requested build type.
+    // ABI splits stay disabled so CI does not publish per-architecture artifacts.
     splits {
         abi {
-            isEnable = true
-            reset()
-            include("arm64-v8a", "armeabi-v7a", "x86_64", "x86")
-            isUniversalApk = true // also keep a universal APK for IzzyOnDroid/F-Droid
+            isEnable = false
+            isUniversalApk = false
         }
     }
 
@@ -152,14 +153,9 @@ android {
 androidComponents {
     onVariants { variant ->
         variant.outputs.forEach { output ->
-            val abiSuffix = output.filters
-                .find { it.filterType == FilterConfiguration.FilterType.ABI }
-                ?.identifier
-                ?.let { "-$it" }
-                ?: ""
-
+            val signatureLabel = if (unsignedApkOnly) "unsigned" else "signed"
             output.outputFileName.set(
-                "FieldMind-${android.defaultConfig.versionName}-${variant.name}${abiSuffix}.apk"
+                "FieldMind-${android.defaultConfig.versionName}-${variant.name}-$signatureLabel-universal.apk"
             )
         }
     }
