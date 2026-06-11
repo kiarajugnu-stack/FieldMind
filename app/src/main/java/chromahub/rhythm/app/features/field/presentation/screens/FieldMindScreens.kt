@@ -492,76 +492,102 @@ private fun ObservationCaptureCard(viewModel: FieldMindViewModel, compact: Boole
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         SnackbarHost(snackbar)
         Card(shape = RoundedCornerShape(28.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow), modifier = Modifier.fillMaxWidth()) {
-            Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-                SectionHeader(if (compact) "Quick field note" else "New observation", "Date/time saved automatically. Separate facts from interpretation.")
-                FieldTextField(subject, { subject = it }, "Subject", supportingText = "Example: Crow on wire")
-                if (!compact) ChoiceChips(observationCategories, category) { category = it }
-                FieldTextField(facts, { facts = it }, "Facts-only notes", minLines = if (compact) 3 else 5, supportingText = "Write only what you saw/heard/measured. Put guesses in a question or hypothesis.")
-                Text("Confidence", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                ChoiceChips(confidenceOptions, confidence) { confidence = it }
-                if (!compact) FieldTextField(fieldContext, { fieldContext = it }, "Mood / field context", supportingText = "Weather, light, surrounding activity, or constraints.")
-                SectionHeader("Location", "GPS is optional; manual place names always work offline.")
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    OutlinedButton(onClick = { manualLocation = ""; capturedLocation = null }, Modifier.weight(1f)) { Text("Manual") }
-                    FilledTonalButton(
-                        onClick = {
-                            if (locating) return@FilledTonalButton
-                            if (locationProvider.hasAnyLocationPermission()) startLocating()
-                            else locationPermission.launch(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION))
-                        },
-                        modifier = Modifier.weight(1f),
-                        enabled = !locating
-                    ) {
-                        if (locating) {
-                            CircularProgressIndicator(Modifier.size(16.dp), strokeWidth = 2.dp, color = MaterialTheme.colorScheme.onSecondaryContainer)
-                            Spacer(Modifier.size(6.dp)); Text("Locating…")
-                        } else {
-                            Icon(icon = FieldMindIcons.Location, contentDescription = null, size = 18.dp); Spacer(Modifier.size(6.dp)); Text("Use GPS")
+            Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Box(Modifier.size(44.dp).clip(RoundedCornerShape(14.dp)).background(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)), contentAlignment = Alignment.Center) {
+                        Icon(icon = FieldMindIcons.Observation, contentDescription = null, tint = MaterialTheme.colorScheme.primary, size = 24.dp)
+                    }
+                    Column(Modifier.weight(1f)) {
+                        Text(if (compact) "Quick field note" else "New observation", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                        Text("Date and time are stamped automatically.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                }
+
+                CaptureStep("Subject", "What did you observe, and how sure are you?", FieldMindIcons.iconForCategory(category)) {
+                    FieldTextField(subject, { subject = it }, "Subject", supportingText = "Example: Crow on wire")
+                    if (!compact) {
+                        Text("Category", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        ChoiceChips(observationCategories, category) { category = it }
+                    }
+                    Text("Confidence", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    ChoiceChips(confidenceOptions, confidence) { confidence = it }
+                }
+
+                CaptureStep("Facts", "Record only what you observed — keep guesses out.", FieldMindIcons.Edit) {
+                    FactsInterpretationBanner()
+                    FieldTextField(facts, { facts = it }, "Facts-only notes", minLines = if (compact) 3 else 5, supportingText = "Write only what you saw/heard/measured. Put guesses in a question or hypothesis.")
+                    if (!compact) FieldTextField(fieldContext, { fieldContext = it }, "Mood / field context", supportingText = "Weather, light, surrounding activity, or constraints.")
+                }
+
+                CaptureStep("Location", "GPS is optional; manual place names work offline.", FieldMindIcons.Location) {
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        OutlinedButton(onClick = { manualLocation = ""; capturedLocation = null }, Modifier.weight(1f)) { Text("Manual") }
+                        FilledTonalButton(
+                            onClick = {
+                                if (locating) return@FilledTonalButton
+                                if (locationProvider.hasAnyLocationPermission()) startLocating()
+                                else locationPermission.launch(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION))
+                            },
+                            modifier = Modifier.weight(1f),
+                            enabled = !locating
+                        ) {
+                            if (locating) {
+                                CircularProgressIndicator(Modifier.size(16.dp), strokeWidth = 2.dp, color = MaterialTheme.colorScheme.onSecondaryContainer)
+                                Spacer(Modifier.size(6.dp)); Text("Locating…")
+                            } else {
+                                Icon(icon = FieldMindIcons.Location, contentDescription = null, size = 18.dp); Spacer(Modifier.size(6.dp)); Text("Use GPS")
+                            }
                         }
                     }
-                }
-                capturedLocation?.let { loc ->
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        Icon(icon = FieldMindIcons.Check, contentDescription = null, tint = FieldMindTheme.colors.confidenceSure, size = 16.dp)
-                        Text(loc.asDisplayText(), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    capturedLocation?.let { loc ->
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            Icon(icon = FieldMindIcons.Check, contentDescription = null, tint = FieldMindTheme.colors.confidenceSure, size = 16.dp)
+                            Text(loc.asDisplayText(), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
                     }
+                    FieldTextField(manualLocation, { manualLocation = it }, "Place / GPS note")
                 }
-                FieldTextField(manualLocation, { manualLocation = it }, "Place / GPS note")
+
                 if (mediaEnabled) {
-                    SectionHeader("Evidence", "Attach real media or files before saving.")
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        OutlinedButton(onClick = { if (ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) { val uri = createFieldMindFileUri(context, "photo", ".jpg"); pendingPhotoUri = uri } else cameraPermission.launch(Manifest.permission.CAMERA) }, Modifier.weight(1f)) {
-                            Icon(icon = FieldMindIcons.Camera, contentDescription = null, size = 18.dp)
+                    CaptureStep("Evidence", "Back your observation with photos, files, or a voice note.", FieldMindIcons.Camera) {
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            OutlinedButton(onClick = { if (ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) { val uri = createFieldMindFileUri(context, "photo", ".jpg"); pendingPhotoUri = uri } else cameraPermission.launch(Manifest.permission.CAMERA) }, Modifier.weight(1f)) {
+                                Icon(icon = FieldMindIcons.Camera, contentDescription = "Camera", size = 18.dp)
+                            }
+                            OutlinedButton(onClick = { mediaPicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageAndVideo)) }, Modifier.weight(1f)) {
+                                Icon(icon = FieldMindIcons.Gallery, contentDescription = "Gallery", size = 18.dp)
+                            }
+                            OutlinedButton(onClick = { filePicker.launch(arrayOf("application/pdf", "text/*", "image/*", "video/*", "audio/*")) }, Modifier.weight(1f)) {
+                                Icon(icon = FieldMindIcons.File, contentDescription = "File", size = 18.dp)
+                            }
                         }
-                        OutlinedButton(onClick = { mediaPicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageAndVideo)) }, Modifier.weight(1f)) {
-                            Icon(icon = FieldMindIcons.Gallery, contentDescription = null, size = 18.dp)
+                        if (audioEnabled) {
+                            if (recording) RecordingIndicator(recordSeconds)
+                            Button(onClick = {
+                                if (recording) {
+                                    val file = audioFile
+                                    runCatching { recorder?.stop() }
+                                    recorder?.release(); recorder = null; recording = false
+                                    file?.let { attachments = attachments + DraftEvidenceAttachment("Audio", Uri.fromFile(it).toString(), "Voice note", localPath = it.absolutePath, mimeType = "audio/mp4") }
+                                    scope.launch { snackbar.showSnackbar("Voice note attached.") }
+                                } else if (ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) audioPermission.launch(Manifest.permission.RECORD_AUDIO) else audioPermission.launch(Manifest.permission.RECORD_AUDIO)
+                            }, modifier = Modifier.fillMaxWidth(), colors = if (recording) ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.errorContainer, contentColor = MaterialTheme.colorScheme.onErrorContainer) else ButtonDefaults.buttonColors()) {
+                                Icon(icon = if (recording) FieldMindIcons.Stop else FieldMindIcons.Mic, contentDescription = null, size = 18.dp); Spacer(Modifier.size(6.dp)); Text(if (recording) "Stop voice note" else "Record voice note")
+                            }
                         }
-                        OutlinedButton(onClick = { filePicker.launch(arrayOf("application/pdf", "text/*", "image/*", "video/*", "audio/*")) }, Modifier.weight(1f)) {
-                            Icon(icon = FieldMindIcons.File, contentDescription = null, size = 18.dp)
-                        }
+                        AttachmentPreviewList(attachments, onCaptionChange = { index, caption -> attachments = attachments.mapIndexed { i, item -> if (i == index) item.copy(caption = caption) else item } }, onRemove = { remove -> attachments = attachments.filterIndexed { index, _ -> index != remove } })
                     }
-                    if (audioEnabled) {
-                        if (recording) RecordingIndicator(recordSeconds)
-                        Button(onClick = {
-                            if (recording) {
-                                val file = audioFile
-                                runCatching { recorder?.stop() }
-                                recorder?.release(); recorder = null; recording = false
-                                file?.let { attachments = attachments + DraftEvidenceAttachment("Audio", Uri.fromFile(it).toString(), "Voice note", localPath = it.absolutePath, mimeType = "audio/mp4") }
-                                scope.launch { snackbar.showSnackbar("Voice note attached.") }
-                            } else if (ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) audioPermission.launch(Manifest.permission.RECORD_AUDIO) else audioPermission.launch(Manifest.permission.RECORD_AUDIO)
-                        }, modifier = Modifier.fillMaxWidth(), colors = if (recording) ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.errorContainer, contentColor = MaterialTheme.colorScheme.onErrorContainer) else ButtonDefaults.buttonColors()) {
-                            Icon(icon = if (recording) FieldMindIcons.Stop else FieldMindIcons.Mic, contentDescription = null, size = 18.dp); Spacer(Modifier.size(6.dp)); Text(if (recording) "Stop voice note" else "Record voice note")
-                        }
+                }
+
+                CaptureStep("Connect & tag", "Summarize the evidence, tag it, and link a project.", FieldMindIcons.Link) {
+                    FieldTextField(evidence, { evidence = it }, "Evidence summary")
+                    FieldTextField(tags, { tags = it }, "Tags", supportingText = "Comma-separated: birds, behavior, evening")
+                    if (projects.isNotEmpty()) {
+                        Text("Link to project", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        ChoiceChips(listOf("No project") + projects.map { it.title }, projects.firstOrNull { it.id == projectId }?.title ?: "No project") { selected -> projectId = projects.firstOrNull { it.title == selected }?.id }
                     }
-                    AttachmentPreviewList(attachments, onCaptionChange = { index, caption -> attachments = attachments.mapIndexed { i, item -> if (i == index) item.copy(caption = caption) else item } }, onRemove = { remove -> attachments = attachments.filterIndexed { index, _ -> index != remove } })
                 }
-                FieldTextField(evidence, { evidence = it }, "Evidence summary")
-                FieldTextField(tags, { tags = it }, "Tags", supportingText = "Comma-separated: birds, behavior, evening")
-                if (projects.isNotEmpty()) {
-                    Text("Link to project", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    ChoiceChips(listOf("No project") + projects.map { it.title }, projects.firstOrNull { it.id == projectId }?.title ?: "No project") { selected -> projectId = projects.firstOrNull { it.title == selected }?.id }
-                }
+
                 Button(onClick = {
                     if (subject.isBlank() || facts.isBlank()) scope.launch { snackbar.showSnackbar("Subject and factual notes are required.") } else viewModel.addObservation(subject, category, facts, confidence, manualLocation, tags, evidence, fieldContext, projectId, capturedLocation?.latitude, capturedLocation?.longitude, attachments) {
                         subject = ""; facts = ""; manualLocation = ""; tags = ""; evidence = ""; fieldContext = ""; attachments = emptyList(); capturedLocation = null
@@ -573,6 +599,35 @@ private fun ObservationCaptureCard(viewModel: FieldMindViewModel, compact: Boole
                 }
             }
         }
+    }
+}
+
+/** A labeled capture step: an icon + title/subtitle header above its grouped inputs. */
+@Composable
+private fun CaptureStep(title: String, subtitle: String, icon: MaterialSymbolIcon, content: @Composable ColumnScope.() -> Unit) {
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            Box(Modifier.size(30.dp).clip(RoundedCornerShape(9.dp)).background(MaterialTheme.colorScheme.secondaryContainer), contentAlignment = Alignment.Center) {
+                Icon(icon = icon, contentDescription = null, tint = MaterialTheme.colorScheme.onSecondaryContainer, size = 18.dp)
+            }
+            Column(Modifier.weight(1f)) {
+                Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                Text(subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+        }
+        Column(Modifier.padding(start = 40.dp), verticalArrangement = Arrangement.spacedBy(10.dp), content = content)
+    }
+}
+
+/** Reminds the researcher to separate observed facts from interpretation. */
+@Composable
+private fun FactsInterpretationBanner() {
+    Row(
+        Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.5f)).padding(12.dp),
+        horizontalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        Icon(icon = FieldMindIcons.Lightbulb, contentDescription = null, tint = MaterialTheme.colorScheme.onTertiaryContainer, size = 18.dp)
+        Text("Facts vs. interpretation: log what you sensed here; save guesses as a question or hypothesis.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onTertiaryContainer)
     }
 }
 
