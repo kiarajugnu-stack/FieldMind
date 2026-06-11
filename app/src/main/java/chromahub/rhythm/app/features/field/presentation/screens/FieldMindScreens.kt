@@ -10,6 +10,7 @@ import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -28,6 +29,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -41,6 +43,9 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import coil.compose.AsyncImage
@@ -1686,7 +1691,12 @@ private fun ChoiceItem(title: String, options: List<String>, selected: String, i
 private fun NewQuestionDialog(viewModel: FieldMindViewModel, onDismiss: () -> Unit) {
     var question by remember { mutableStateOf("") }; var category by remember { mutableStateOf("Other") }; var source by remember { mutableStateOf("Observation") }; var status by remember { mutableStateOf("New") }; var priority by remember { mutableStateOf("Medium") }
     FormDialog("New Question", onDismiss, { if (question.isNotBlank()) { viewModel.addQuestion(question, category, source, status, priority); onDismiss() } }) {
-        FieldTextField(question, { question = it }, "Question", minLines = 2); ChoiceChips(observationCategories, category) { category = it }; ChoiceChips(sourceTypes, source) { source = it }; ChoiceChips(questionStatuses, status) { status = it }; ChoiceChips(listOf("Low", "Medium", "High"), priority) { priority = it }
+        FieldTextField(question, { question = it }, "Question", minLines = 2)
+        FormSectionLabel("Classification")
+        FormChoice("Category", observationCategories, category) { category = it }
+        FormChoice("Source type", sourceTypes, source) { source = it }
+        FormChoice("Status", questionStatuses, status) { status = it }
+        FormChoice("Priority", listOf("Low", "Medium", "High"), priority) { priority = it }
         Text("Testable questions name something you can observe, measure, compare, or verify.", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
     }
 }
@@ -1695,7 +1705,9 @@ private fun NewQuestionDialog(viewModel: FieldMindViewModel, onDismiss: () -> Un
 private fun NewProjectDialog(viewModel: FieldMindViewModel, onDismiss: () -> Unit) {
     var title by remember { mutableStateOf("") }; var topic by remember { mutableStateOf("Biology") }; var objective by remember { mutableStateOf("") }; var question by remember { mutableStateOf("") }
     FormDialog("New Project", onDismiss, { if (title.isNotBlank()) { viewModel.addProject(title, topic, objective, question); onDismiss() } }) {
-        FieldTextField(title, { title = it }, "Project title"); ChoiceChips(listOf("Biology", "Geology", "Wildlife", "Ecology", "Plant Study", "Weather", "Human Pattern", "Other"), topic) { topic = it }; FieldTextField(objective, { objective = it }, "Objective", minLines = 2); FieldTextField(question, { question = it }, "Research question", minLines = 2)
+        FieldTextField(title, { title = it }, "Project title")
+        FormChoice("Topic / category", listOf("Biology", "Geology", "Wildlife", "Ecology", "Plant Study", "Weather", "Human Pattern", "Other"), topic) { topic = it }
+        FieldTextField(objective, { objective = it }, "Objective", minLines = 2); FieldTextField(question, { question = it }, "Research question", minLines = 2)
     }
 }
 
@@ -1703,7 +1715,10 @@ private fun NewProjectDialog(viewModel: FieldMindViewModel, onDismiss: () -> Uni
 private fun NewSourceDialog(viewModel: FieldMindViewModel, onDismiss: () -> Unit) {
     var type by remember { mutableStateOf("Article") }; var title by remember { mutableStateOf("") }; var author by remember { mutableStateOf("") }; var link by remember { mutableStateOf("") }; var summary by remember { mutableStateOf("") }; var taught by remember { mutableStateOf("") }; var findings by remember { mutableStateOf("") }; var questions by remember { mutableStateOf("") }; var notes by remember { mutableStateOf("") }; var reliability by remember { mutableStateOf(3f) }
     FormDialog("Add Source", onDismiss, { if (title.isNotBlank()) { viewModel.addSource(type, title, author, link, summary, taught, reliability.toInt(), findings, questions, notes); onDismiss() } }) {
-        ChoiceChips(sourceLibraryTypes, type) { type = it }; FieldTextField(title, { title = it }, "Title"); FieldTextField(author, { author = it }, "Author / creator"); FieldTextField(link, { link = it }, "Link / citation"); FieldTextField(summary, { summary = it }, "Main idea", minLines = 2); FieldTextField(findings, { findings = it }, "Key findings / definitions", minLines = 2); FieldTextField(taught, { taught = it }, "What this source taught me", minLines = 2); FieldTextField(questions, { questions = it }, "New questions", minLines = 2); FieldTextField(notes, { notes = it }, "Paper reading prompts", minLines = 4); Text("Credibility: ${reliability.toInt()}/5"); Slider(reliability, { reliability = it }, valueRange = 1f..5f, steps = 3)
+        FormChoice("Source type", sourceLibraryTypes, type) { type = it }
+        FieldTextField(title, { title = it }, "Title"); FieldTextField(author, { author = it }, "Author / creator"); FieldTextField(link, { link = it }, "Link / citation")
+        FormSectionLabel("What it says")
+        FieldTextField(summary, { summary = it }, "Main idea", minLines = 2); FieldTextField(findings, { findings = it }, "Key findings / definitions", minLines = 2); FieldTextField(taught, { taught = it }, "What this source taught me", minLines = 2); FieldTextField(questions, { questions = it }, "New questions", minLines = 2); FieldTextField(notes, { notes = it }, "Paper reading prompts", minLines = 4); Text("Credibility: ${reliability.toInt()}/5"); Slider(reliability, { reliability = it }, valueRange = 1f..5f, steps = 3)
     }
 }
 
@@ -1719,7 +1734,8 @@ private fun NewHypothesisDialog(viewModel: FieldMindViewModel, questions: List<Q
 private fun NewDataRecordDialog(viewModel: FieldMindViewModel, onDismiss: () -> Unit) {
     var tool by remember { mutableStateOf("Counter") }; var label by remember { mutableStateOf("") }; var value by remember { mutableStateOf("0") }; var unit by remember { mutableStateOf("") }; var location by remember { mutableStateOf("") }; var notes by remember { mutableStateOf("") }
     FormDialog("Data Collection Tool", onDismiss, { if (label.isNotBlank()) { viewModel.addDataRecord(tool, label, value, unit, notes, location); onDismiss() } }) {
-        ChoiceChips(dataTools, tool) { tool = it }; FieldTextField(label, { label = it }, "Label"); Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) { OutlinedButton({ value = ((value.toIntOrNull() ?: 0) - 1).toString() }) { Text("−1") }; Text(value, style = MaterialTheme.typography.headlineSmall); Button({ value = ((value.toIntOrNull() ?: 0) + 1).toString() }) { Text("+1") }; TextButton({ value = "0" }) { Text("Reset") } }; FieldTextField(value, { value = it }, "Value / items / samples"); FieldTextField(unit, { unit = it }, "Unit", supportingText = "count, cm, °C, minutes"); FieldTextField(location, { location = it }, "Location / site"); FieldTextField(notes, { notes = it }, "Notes", minLines = 3)
+        FormChoice("Tool", dataTools, tool) { tool = it }
+        FieldTextField(label, { label = it }, "Label"); Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) { OutlinedButton({ value = ((value.toIntOrNull() ?: 0) - 1).toString() }) { Text("−1") }; Text(value, style = MaterialTheme.typography.headlineSmall); Button({ value = ((value.toIntOrNull() ?: 0) + 1).toString() }) { Text("+1") }; TextButton({ value = "0" }) { Text("Reset") } }; FieldTextField(value, { value = it }, "Value / items / samples"); FieldTextField(unit, { unit = it }, "Unit", supportingText = "count, cm, °C, minutes"); FieldTextField(location, { location = it }, "Location / site"); FieldTextField(notes, { notes = it }, "Notes", minLines = 3)
     }
 }
 
@@ -1727,7 +1743,8 @@ private fun NewDataRecordDialog(viewModel: FieldMindViewModel, onDismiss: () -> 
 private fun NewReportDialog(viewModel: FieldMindViewModel, onDismiss: () -> Unit) {
     var type by remember { mutableStateOf("Field Report") }; var title by remember { mutableStateOf("") }; var background by remember { mutableStateOf("") }; var question by remember { mutableStateOf("") }; var methods by remember { mutableStateOf("") }; var observations by remember { mutableStateOf("") }; var results by remember { mutableStateOf("") }; var interpretation by remember { mutableStateOf("") }; var conclusion by remember { mutableStateOf("") }; var limitations by remember { mutableStateOf("") }; var next by remember { mutableStateOf("") }
     FormDialog("Report Builder", onDismiss, { if (title.isNotBlank()) { viewModel.addReport(type, title, background, question, methods, observations, results, interpretation, conclusion, limitations, next); onDismiss() } }) {
-        ChoiceChips(reportTypes, type) { type = it }; FieldTextField(title, { title = it }, "Title"); FieldTextField(background, { background = it }, "Background", minLines = 2); FieldTextField(question, { question = it }, "Question", minLines = 2); FieldTextField(methods, { methods = it }, "Methods", minLines = 2); FieldTextField(observations, { observations = it }, "Observations", minLines = 2); FieldTextField(results, { results = it }, "Data / results", minLines = 2); FieldTextField(interpretation, { interpretation = it }, "Interpretation", minLines = 2); FieldTextField(conclusion, { conclusion = it }, "Conclusion", minLines = 2); FieldTextField(limitations, { limitations = it }, "Limitations", minLines = 2); FieldTextField(next, { next = it }, "Next steps", minLines = 2); Text("Save generates a local Markdown draft for export.", style = MaterialTheme.typography.bodySmall)
+        FormChoice("Report type", reportTypes, type) { type = it }
+        FieldTextField(title, { title = it }, "Title"); FieldTextField(background, { background = it }, "Background", minLines = 2); FieldTextField(question, { question = it }, "Question", minLines = 2); FieldTextField(methods, { methods = it }, "Methods", minLines = 2); FieldTextField(observations, { observations = it }, "Observations", minLines = 2); FieldTextField(results, { results = it }, "Data / results", minLines = 2); FieldTextField(interpretation, { interpretation = it }, "Interpretation", minLines = 2); FieldTextField(conclusion, { conclusion = it }, "Conclusion", minLines = 2); FieldTextField(limitations, { limitations = it }, "Limitations", minLines = 2); FieldTextField(next, { next = it }, "Next steps", minLines = 2); Text("Save generates a local Markdown draft for export.", style = MaterialTheme.typography.bodySmall)
     }
 }
 
@@ -1735,7 +1752,8 @@ private fun NewReportDialog(viewModel: FieldMindViewModel, onDismiss: () -> Unit
 private fun NewFlashcardDialog(viewModel: FieldMindViewModel, onDismiss: () -> Unit) {
     var type by remember { mutableStateOf("concept") }; var front by remember { mutableStateOf("") }; var back by remember { mutableStateOf("") }
     FormDialog("Create Flashcard", onDismiss, { if (front.isNotBlank() && back.isNotBlank()) { viewModel.addFlashcard(front, back, type); onDismiss() } }) {
-        ChoiceChips(listOf("term", "definition", "concept", "question-answer", "mistake card"), type) { type = it }; FieldTextField(front, { front = it }, "Front"); FieldTextField(back, { back = it }, "Back", minLines = 3)
+        FormChoice("Card type", listOf("term", "definition", "concept", "question-answer", "mistake card"), type) { type = it }
+        FieldTextField(front, { front = it }, "Front"); FieldTextField(back, { back = it }, "Back", minLines = 3)
     }
 }
 
@@ -1760,7 +1778,11 @@ private fun EditObservationDialog(entity: ObservationEntity, viewModel: FieldMin
     FormDialog("Edit Observation", onDismiss, {
         if (subject.isNotBlank()) { viewModel.updateObservation(entity.copy(subject = subject.trim(), category = category, factsOnlyNotes = facts.trim(), confidenceLevel = confidence, manualLocation = location.trim(), evidenceSummary = evidence.trim(), moodOrContext = context.trim()), tags); onDismiss() }
     }) {
-        FieldTextField(subject, { subject = it }, "Subject"); ChoiceChips(observationCategories, category) { category = it }; FieldTextField(facts, { facts = it }, "Facts only", minLines = 3); ChoiceChips(confidenceOptions, confidence) { confidence = it }; FieldTextField(location, { location = it }, "Location"); FieldTextField(tags, { tags = it }, "Tags (comma separated)"); FieldTextField(evidence, { evidence = it }, "Evidence summary", minLines = 2); FieldTextField(context, { context = it }, "Context / mood", minLines = 2)
+        FieldTextField(subject, { subject = it }, "Subject")
+        FormChoice("Category", observationCategories, category) { category = it }
+        FieldTextField(facts, { facts = it }, "Facts only", minLines = 3)
+        FormChoice("Confidence", confidenceOptions, confidence) { confidence = it }
+        FieldTextField(location, { location = it }, "Location"); FieldTextField(tags, { tags = it }, "Tags (comma separated)"); FieldTextField(evidence, { evidence = it }, "Evidence summary", minLines = 2); FieldTextField(context, { context = it }, "Context / mood", minLines = 2)
     }
 }
 
@@ -1770,7 +1792,14 @@ private fun EditQuestionDialog(entity: QuestionEntity, viewModel: FieldMindViewM
     FormDialog("Edit Question", onDismiss, {
         if (question.isNotBlank()) { viewModel.updateQuestionEntity(entity.copy(questionText = question.trim(), category = category, sourceType = source, status = status, priority = priority, answer = answer.trim(), answeredAt = if (answer.isBlank()) null else (entity.answeredAt ?: System.currentTimeMillis()))); onDismiss() }
     }) {
-        FieldTextField(question, { question = it }, "Question", minLines = 2); ChoiceChips(observationCategories, category) { category = it }; ChoiceChips(sourceTypes, source) { source = it }; ChoiceChips(questionStatuses, status) { status = it }; ChoiceChips(listOf("Low", "Medium", "High"), priority) { priority = it }; FieldTextField(answer, { answer = it }, "Answer", minLines = 2)
+        FieldTextField(question, { question = it }, "Question", minLines = 2)
+        FormSectionLabel("Classification")
+        FormChoice("Category", observationCategories, category) { category = it }
+        FormChoice("Source type", sourceTypes, source) { source = it }
+        FormChoice("Status", questionStatuses, status) { status = it }
+        FormChoice("Priority", listOf("Low", "Medium", "High"), priority) { priority = it }
+        FormSectionLabel("Answer")
+        FieldTextField(answer, { answer = it }, "Answer", minLines = 2)
     }
 }
 
@@ -1780,7 +1809,9 @@ private fun EditHypothesisDialog(entity: HypothesisEntity, viewModel: FieldMindV
     FormDialog("Edit Hypothesis", onDismiss, {
         if (prediction.isNotBlank()) { viewModel.updateHypothesisEntity(entity.copy(prediction = prediction.trim(), reasoning = reasoning.trim(), evidenceNeeded = evidence.trim(), supportCriteria = support.trim(), weakeningCriteria = weaken.trim(), testMethod = test.trim(), resultStatus = result, confidencePercent = confidence.toInt())); onDismiss() }
     }) {
-        FieldTextField(prediction, { prediction = it }, "Prediction", minLines = 2); FieldTextField(reasoning, { reasoning = it }, "Reasoning", minLines = 2); FieldTextField(evidence, { evidence = it }, "Evidence needed", minLines = 2); FieldTextField(support, { support = it }, "Support criteria"); FieldTextField(weaken, { weaken = it }, "Weakening criteria"); FieldTextField(test, { test = it }, "Test method"); ChoiceChips(listOf("Unknown", "Supported", "Weakened", "Inconclusive"), result) { result = it }; Text("Confidence: ${confidence.toInt()}%"); Slider(confidence, { confidence = it }, valueRange = 0f..100f)
+        FieldTextField(prediction, { prediction = it }, "Prediction", minLines = 2); FieldTextField(reasoning, { reasoning = it }, "Reasoning", minLines = 2); FieldTextField(evidence, { evidence = it }, "Evidence needed", minLines = 2); FieldTextField(support, { support = it }, "Support criteria"); FieldTextField(weaken, { weaken = it }, "Weakening criteria"); FieldTextField(test, { test = it }, "Test method")
+        FormChoice("Result", listOf("Unknown", "Supported", "Weakened", "Inconclusive"), result) { result = it }
+        Text("Confidence: ${confidence.toInt()}%"); Slider(confidence, { confidence = it }, valueRange = 0f..100f)
     }
 }
 
@@ -1790,7 +1821,9 @@ private fun EditProjectDialog(entity: ProjectEntity, viewModel: FieldMindViewMod
     FormDialog("Edit Project", onDismiss, {
         if (title.isNotBlank()) { viewModel.updateProjectEntity(entity.copy(title = title.trim(), topicType = topic.trim().ifBlank { "General" }, objective = objective.trim(), researchQuestion = question.trim(), backgroundNotes = background.trim(), methods = methods.trim(), conclusion = conclusion.trim())); onDismiss() }
     }) {
-        FieldTextField(title, { title = it }, "Project title"); ChoiceChips(listOf("Biology", "Geology", "Wildlife", "Ecology", "Plant Study", "Weather", "Human Pattern", "Other"), topic) { topic = it }; FieldTextField(objective, { objective = it }, "Objective", minLines = 2); FieldTextField(question, { question = it }, "Research question", minLines = 2); FieldTextField(background, { background = it }, "Background notes", minLines = 2); FieldTextField(methods, { methods = it }, "Methods", minLines = 2); FieldTextField(conclusion, { conclusion = it }, "Conclusion", minLines = 2)
+        FieldTextField(title, { title = it }, "Project title")
+        FormChoice("Topic / category", listOf("Biology", "Geology", "Wildlife", "Ecology", "Plant Study", "Weather", "Human Pattern", "Other"), topic) { topic = it }
+        FieldTextField(objective, { objective = it }, "Objective", minLines = 2); FieldTextField(question, { question = it }, "Research question", minLines = 2); FieldTextField(background, { background = it }, "Background notes", minLines = 2); FieldTextField(methods, { methods = it }, "Methods", minLines = 2); FieldTextField(conclusion, { conclusion = it }, "Conclusion", minLines = 2)
     }
 }
 
@@ -1800,7 +1833,8 @@ private fun EditSourceDialog(entity: SourceEntity, viewModel: FieldMindViewModel
     FormDialog("Edit Source", onDismiss, {
         if (title.isNotBlank()) { viewModel.updateSourceEntity(entity.copy(type = type, title = title.trim(), author = author.trim(), link = link.trim(), personalSummary = summary.trim(), keyFindings = findings.trim(), whatThisSourceTaughtMe = taught.trim(), paperNotes = notes.trim(), reliabilityScore = reliability.toInt())); onDismiss() }
     }) {
-        ChoiceChips(sourceLibraryTypes, type) { type = it }; FieldTextField(title, { title = it }, "Title"); FieldTextField(author, { author = it }, "Author / creator"); FieldTextField(link, { link = it }, "Link / citation"); FieldTextField(summary, { summary = it }, "Main idea", minLines = 2); FieldTextField(findings, { findings = it }, "Key findings", minLines = 2); FieldTextField(taught, { taught = it }, "What this taught me", minLines = 2); FieldTextField(notes, { notes = it }, "Paper notes", minLines = 3); Text("Credibility: ${reliability.toInt()}/5"); Slider(reliability, { reliability = it }, valueRange = 1f..5f, steps = 3)
+        FormChoice("Source type", sourceLibraryTypes, type) { type = it }
+        FieldTextField(title, { title = it }, "Title"); FieldTextField(author, { author = it }, "Author / creator"); FieldTextField(link, { link = it }, "Link / citation"); FieldTextField(summary, { summary = it }, "Main idea", minLines = 2); FieldTextField(findings, { findings = it }, "Key findings", minLines = 2); FieldTextField(taught, { taught = it }, "What this taught me", minLines = 2); FieldTextField(notes, { notes = it }, "Paper notes", minLines = 3); Text("Credibility: ${reliability.toInt()}/5"); Slider(reliability, { reliability = it }, valueRange = 1f..5f, steps = 3)
     }
 }
 
@@ -1810,7 +1844,8 @@ private fun EditDataRecordDialog(entity: DataRecordEntity, viewModel: FieldMindV
     FormDialog("Edit Data Record", onDismiss, {
         if (label.isNotBlank()) { viewModel.updateDataRecordEntity(entity.copy(toolType = tool, label = label.trim(), value = value.trim(), unit = unit.trim(), location = location.trim(), notes = notes.trim())); onDismiss() }
     }) {
-        ChoiceChips(dataTools, tool) { tool = it }; FieldTextField(label, { label = it }, "Label"); FieldTextField(value, { value = it }, "Value"); FieldTextField(unit, { unit = it }, "Unit"); FieldTextField(location, { location = it }, "Location / site"); FieldTextField(notes, { notes = it }, "Notes", minLines = 3)
+        FormChoice("Tool", dataTools, tool) { tool = it }
+        FieldTextField(label, { label = it }, "Label"); FieldTextField(value, { value = it }, "Value"); FieldTextField(unit, { unit = it }, "Unit"); FieldTextField(location, { location = it }, "Location / site"); FieldTextField(notes, { notes = it }, "Notes", minLines = 3)
     }
 }
 
@@ -1820,7 +1855,8 @@ private fun EditReportDialog(entity: ReportEntity, viewModel: FieldMindViewModel
     FormDialog("Edit Report", onDismiss, {
         if (title.isNotBlank()) { viewModel.updateReportEntity(entity.copy(type = type, title = title.trim(), question = question.trim(), methods = methods.trim(), results = results.trim(), conclusion = conclusion.trim(), nextSteps = next.trim())); onDismiss() }
     }) {
-        ChoiceChips(reportTypes, type) { type = it }; FieldTextField(title, { title = it }, "Title"); FieldTextField(question, { question = it }, "Question", minLines = 2); FieldTextField(methods, { methods = it }, "Methods", minLines = 2); FieldTextField(results, { results = it }, "Data / results", minLines = 2); FieldTextField(conclusion, { conclusion = it }, "Conclusion", minLines = 2); FieldTextField(next, { next = it }, "Next steps", minLines = 2)
+        FormChoice("Report type", reportTypes, type) { type = it }
+        FieldTextField(title, { title = it }, "Title"); FieldTextField(question, { question = it }, "Question", minLines = 2); FieldTextField(methods, { methods = it }, "Methods", minLines = 2); FieldTextField(results, { results = it }, "Data / results", minLines = 2); FieldTextField(conclusion, { conclusion = it }, "Conclusion", minLines = 2); FieldTextField(next, { next = it }, "Next steps", minLines = 2)
     }
 }
 
@@ -1830,19 +1866,82 @@ private fun EditFlashcardDialog(entity: FlashcardEntity, viewModel: FieldMindVie
     FormDialog("Edit Flashcard", onDismiss, {
         if (front.isNotBlank() && back.isNotBlank()) { viewModel.updateFlashcardEntity(entity.copy(type = type, front = front.trim(), back = back.trim())); onDismiss() }
     }) {
-        ChoiceChips(listOf("term", "definition", "concept", "question-answer", "mistake card"), type) { type = it }; FieldTextField(front, { front = it }, "Front"); FieldTextField(back, { back = it }, "Back", minLines = 3)
+        FormChoice("Card type", listOf("term", "definition", "concept", "question-answer", "mistake card"), type) { type = it }
+        FieldTextField(front, { front = it }, "Front"); FieldTextField(back, { back = it }, "Back", minLines = 3)
     }
 }
 
+/**
+ * Full-screen form page (presented as an edge-to-edge dialog). Replaces the old cramped
+ * AlertDialog so add/edit flows read as real pages: a top bar with close + Save, then a
+ * scrolling body of clearly separated, ordered sections.
+ */
 @Composable
 private fun FormDialog(title: String, onDismiss: () -> Unit, onSave: () -> Unit, content: @Composable ColumnScope.() -> Unit) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(title) },
-        text = { Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp), content = content) },
-        confirmButton = { Button(onClick = onSave) { Text("Save") } },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } }
-    )
+    Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
+        Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+            Column(Modifier.fillMaxSize()) {
+                Row(
+                    Modifier.fillMaxWidth().padding(start = 8.dp, end = 16.dp, top = 8.dp, bottom = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    IconButton(onClick = onDismiss) { Icon(icon = MaterialSymbolIcon("close"), contentDescription = "Close", size = 22.dp) }
+                    Text(title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
+                    Button(onClick = onSave) { Text("Save") }
+                }
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                Column(
+                    Modifier.fillMaxWidth().weight(1f).verticalScroll(rememberScrollState()).padding(20.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                    content = content
+                )
+            }
+        }
+    }
+}
+
+/**
+ * A labelled, collapsible single-choice section used inside [FormDialog]. Collapsed it shows the
+ * field label and current value; tapping reveals the chips. Keeps long forms tidy and ordered.
+ */
+@Composable
+private fun FormChoice(
+    label: String,
+    options: List<String>,
+    selected: String,
+    onSelected: (String) -> Unit
+) {
+    var expanded by rememberSaveable(label) { mutableStateOf(false) }
+    val rotation by androidx.compose.animation.core.animateFloatAsState(if (expanded) 180f else 0f, label = "chev")
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .background(MaterialTheme.colorScheme.surfaceContainerLow)
+            .animateContentSize()
+    ) {
+        Row(
+            Modifier.fillMaxWidth().clickable { expanded = !expanded }.padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Column(Modifier.weight(1f)) {
+                Text(label, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(selected, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold)
+            }
+            Icon(icon = MaterialSymbolIcon("expand_more"), contentDescription = null, size = 22.dp, modifier = Modifier.graphicsLayer { rotationZ = rotation })
+        }
+        AnimatedVisibility(expanded) {
+            ChoiceChips(options, selected, modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 16.dp)) { onSelected(it); expanded = false }
+        }
+    }
+}
+
+/** A small section caption to group related fields inside a [FormDialog]. */
+@Composable
+private fun FormSectionLabel(text: String) {
+    Text(text.uppercase(), style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary, letterSpacing = 0.8.sp)
 }
 
 internal fun learningModuleBody(module: String): String = when (module) {
