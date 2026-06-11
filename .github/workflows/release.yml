@@ -41,6 +41,17 @@ jobs:
       - name: Build unsigned universal APKs
         run: ./gradlew assembleGithubDebug assembleGithubRelease -PunsignedApkOnly=true --stacktrace
 
+      - name: Verify unsigned universal APK outputs
+        run: |
+          set -euo pipefail
+          debug_count=$(find app/build/outputs/apk/github/debug -maxdepth 1 -name 'FieldMind-*-githubDebug-unsigned-universal.apk' | wc -l | tr -d ' ')
+          release_count=$(find app/build/outputs/apk/github/release -maxdepth 1 -name 'FieldMind-*-githubRelease-unsigned-universal.apk' | wc -l | tr -d ' ')
+          if [ "$debug_count" != "1" ] || [ "$release_count" != "1" ]; then
+            echo "Expected exactly one unsigned universal debug APK and one unsigned universal release APK."
+            find app/build/outputs/apk -type f -name '*.apk' -print
+            exit 1
+          fi
+
       - name: Set prerelease flag
         id: prerelease
         run: |

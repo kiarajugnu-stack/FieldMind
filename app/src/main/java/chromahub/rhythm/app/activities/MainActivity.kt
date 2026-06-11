@@ -21,6 +21,21 @@ import chromahub.rhythm.app.shared.presentation.viewmodel.ThemeViewModel
 import chromahub.rhythm.app.ui.theme.RhythmTheme
 
 class MainActivity : FragmentActivity() {
+    companion object {
+        /**
+         * Kept for legacy, currently inactive Rhythm notification/widget code that still compiles
+         * while FieldMind owns the active app surface. The FieldMind shell ignores this extra.
+         */
+        const val EXTRA_OPEN_PLAYER = "extra_open_player"
+
+        /**
+         * Legacy request code used by inactive equalizer screens that are no longer reachable
+         * from the FieldMind navigation graph, but still compile until the music modules are
+         * fully decommissioned.
+         */
+        const val DISPLAY_AUDIO_EFFECT_CONTROL_PANEL_REQUEST = 1001
+    }
+
     private val themeViewModel: ThemeViewModel by viewModels()
     private val fieldMindViewModel: FieldMindViewModel by viewModels()
     private lateinit var appSettings: AppSettings
