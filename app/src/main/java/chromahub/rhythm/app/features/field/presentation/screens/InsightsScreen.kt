@@ -85,7 +85,7 @@ fun InsightsScreen(
             item { EmptyState("No data yet", "Insights, charts, and your offline map appear as you log observations.", icon = FieldMindIcons.Insights, actionLabel = "Capture one") { onNavigate(FieldMindScreen.Observe) } }
         }
         if (categoryCounts.isNotEmpty()) {
-            item { InsightCard("Observations by category", FieldMindIcons.Data) { BarChart(categoryCounts, barColor = colors.observation) } }
+            item { InsightCard("Observations by category", FieldMindIcons.Data) { BarChart(categoryCounts, barColors = categoryCounts.map { colors.categoryColor(it.first) }) } }
         }
         if (trend.size >= 2) {
             item { InsightCard("Daily capture trend", FieldMindIcons.Trend) { LineChart(trend, lineColor = colors.positive) } }

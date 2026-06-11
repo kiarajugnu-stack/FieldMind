@@ -121,8 +121,17 @@ data class FieldMindColors(
     val confidenceVerify: Color,
     val positive: Color,
     val warning: Color,
-    val info: Color
+    val info: Color,
+    /** Distinct, harmonious series colors for charts and per-category accents. */
+    val categorical: List<Color>
 ) {
+    /** Stable distinct accent for an arbitrary label (e.g. an observation category). */
+    fun categoryColor(label: String): Color {
+        if (label.isBlank()) return info
+        val idx = (Math.floorMod(label.trim().lowercase().hashCode(), categorical.size))
+        return categorical[idx]
+    }
+
     /** Accent color for an entity kind keyword (case-insensitive). */
     fun accentFor(kind: String): Color = when (kind.trim().lowercase()) {
         "observation", "observations", "observe" -> observation
@@ -159,7 +168,19 @@ private val LightFieldMindColors = FieldMindColors(
     confidenceVerify = Color(0xFFC62828),
     positive = Color(0xFF2E7D32),
     warning = Color(0xFFC77800),
-    info = Color(0xFF455A64)
+    info = Color(0xFF455A64),
+    categorical = listOf(
+        Color(0xFF2E7D32), // green
+        Color(0xFF1565C0), // blue
+        Color(0xFFC77800), // amber
+        Color(0xFF5E35B1), // violet
+        Color(0xFF00838F), // teal
+        Color(0xFFAD1457), // magenta
+        Color(0xFF00695C), // deep teal
+        Color(0xFFD84315), // burnt orange
+        Color(0xFF455A64), // slate
+        Color(0xFF6D4C41)  // brown
+    )
 )
 
 private val DarkFieldMindColors = FieldMindColors(
@@ -177,7 +198,19 @@ private val DarkFieldMindColors = FieldMindColors(
     confidenceVerify = Color(0xFFEF9A9A),
     positive = Color(0xFFA5D6A7),
     warning = Color(0xFFFFCC80),
-    info = Color(0xFFB0BEC5)
+    info = Color(0xFFB0BEC5),
+    categorical = listOf(
+        Color(0xFFA5D6A7), // green
+        Color(0xFF90CAF9), // blue
+        Color(0xFFFFCC80), // amber
+        Color(0xFFB39DDB), // violet
+        Color(0xFF80DEEA), // teal
+        Color(0xFFF48FB1), // magenta
+        Color(0xFF80CBC4), // deep teal
+        Color(0xFFFFAB91), // burnt orange
+        Color(0xFFB0BEC5), // slate
+        Color(0xFFBCAAA4)  // brown
+    )
 )
 
 val LocalFieldMindColors = staticCompositionLocalOf { LightFieldMindColors }

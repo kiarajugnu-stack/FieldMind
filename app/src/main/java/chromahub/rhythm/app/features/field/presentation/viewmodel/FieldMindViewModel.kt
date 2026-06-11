@@ -96,6 +96,42 @@ class FieldMindViewModel(application: Application) : AndroidViewModel(applicatio
 
     fun archiveObservation(id: Long) = viewModelScope.launch { repository.archiveObservation(id) }
 
+    fun updateQuestionEntity(entity: QuestionEntity) = viewModelScope.launch { repository.updateQuestion(entity) }
+    fun setQuestionAnswer(entity: QuestionEntity, answer: String) = viewModelScope.launch {
+        val trimmed = answer.trim()
+        repository.updateQuestion(
+            entity.copy(
+                answer = trimmed,
+                answeredAt = if (trimmed.isBlank()) null else System.currentTimeMillis(),
+                status = if (trimmed.isBlank()) entity.status else "Answered"
+            )
+        )
+    }
+    fun updateHypothesisEntity(entity: HypothesisEntity) = viewModelScope.launch { repository.updateHypothesis(entity) }
+    fun updateProjectEntity(entity: ProjectEntity) = viewModelScope.launch { repository.updateProject(entity) }
+    fun updateSourceEntity(entity: SourceEntity) = viewModelScope.launch { repository.updateSource(entity) }
+    fun updateDataRecordEntity(entity: DataRecordEntity) = viewModelScope.launch { repository.updateDataRecord(entity) }
+    fun updateReportEntity(entity: ReportEntity) = viewModelScope.launch { repository.updateReport(entity) }
+    fun updateFlashcardEntity(entity: FlashcardEntity) = viewModelScope.launch { repository.updateFlashcard(entity) }
+
+    fun deleteObservation(id: Long) = viewModelScope.launch { repository.deleteObservation(id) }
+    fun deleteQuestion(id: Long) = viewModelScope.launch { repository.deleteQuestion(id) }
+    fun deleteHypothesis(id: Long) = viewModelScope.launch { repository.deleteHypothesis(id) }
+    fun deleteProject(id: Long) = viewModelScope.launch { repository.deleteProject(id) }
+    fun deleteSource(id: Long) = viewModelScope.launch { repository.deleteSource(id) }
+    fun deleteDataRecord(id: Long) = viewModelScope.launch { repository.deleteDataRecord(id) }
+    fun deleteReport(id: Long) = viewModelScope.launch { repository.deleteReport(id) }
+    fun deleteFlashcard(id: Long) = viewModelScope.launch { repository.deleteFlashcard(id) }
+
+    fun observeQuestion(id: Long) = repository.observeQuestion(id)
+    fun observeHypothesis(id: Long) = repository.observeHypothesis(id)
+    fun observeProject(id: Long) = repository.observeProject(id)
+    fun observeSource(id: Long) = repository.observeSource(id)
+    fun observeReport(id: Long) = repository.observeReport(id)
+    fun observeDataRecord(id: Long) = repository.observeDataRecord(id)
+    fun observeFlashcard(id: Long) = repository.observeFlashcard(id)
+    fun observeObservation(id: Long) = repository.observeObservation(id)
+
     fun attachmentsForObservation(id: Long) = repository.observeAttachmentsForObservation(id)
 
     fun addQuestion(question: String, category: String, sourceType: String, status: String, priority: String, observationId: Long? = null, sourceId: Long? = null, projectId: Long? = null) = viewModelScope.launch {

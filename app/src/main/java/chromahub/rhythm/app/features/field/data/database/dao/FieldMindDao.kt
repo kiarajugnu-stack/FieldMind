@@ -56,6 +56,17 @@ interface FieldMindDao {
     @Update suspend fun updateReport(entity: ReportEntity)
     @Update suspend fun updateFlashcard(entity: FlashcardEntity)
 
+    @Query("SELECT * FROM field_flashcards WHERE id = :id LIMIT 1") fun observeFlashcard(id: Long): Flow<FlashcardEntity?>
+
+    @Query("UPDATE field_observations SET deletedAt = :time, updatedAt = :time WHERE id = :id") suspend fun softDeleteObservation(id: Long, time: Long)
+    @Query("UPDATE field_questions SET deletedAt = :time, updatedAt = :time WHERE id = :id") suspend fun softDeleteQuestion(id: Long, time: Long)
+    @Query("UPDATE field_hypotheses SET deletedAt = :time, updatedAt = :time WHERE id = :id") suspend fun softDeleteHypothesis(id: Long, time: Long)
+    @Query("UPDATE field_projects SET deletedAt = :time, updatedAt = :time WHERE id = :id") suspend fun softDeleteProject(id: Long, time: Long)
+    @Query("UPDATE field_sources SET deletedAt = :time, updatedAt = :time WHERE id = :id") suspend fun softDeleteSource(id: Long, time: Long)
+    @Query("UPDATE field_data_records SET deletedAt = :time, updatedAt = :time WHERE id = :id") suspend fun softDeleteDataRecord(id: Long, time: Long)
+    @Query("UPDATE field_reports SET deletedAt = :time, updatedAt = :time WHERE id = :id") suspend fun softDeleteReport(id: Long, time: Long)
+    @Query("UPDATE field_flashcards SET deletedAt = :time, updatedAt = :time WHERE id = :id") suspend fun softDeleteFlashcard(id: Long, time: Long)
+
     @Query("SELECT * FROM field_tags WHERE normalizedName = :normalizedName LIMIT 1") suspend fun findTagByNormalizedName(normalizedName: String): TagEntity?
     @Query("DELETE FROM field_observation_tags WHERE observationId = :observationId AND tagId = :tagId") suspend fun unlinkObservationTag(observationId: Long, tagId: Long)
     @Query("DELETE FROM field_observation_tags WHERE observationId = :observationId") suspend fun clearObservationTags(observationId: Long)

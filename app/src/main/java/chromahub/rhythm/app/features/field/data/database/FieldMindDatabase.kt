@@ -28,7 +28,7 @@ import chromahub.rhythm.app.features.field.data.database.entity.*
         ProjectDataRecordCrossRef::class,
         HypothesisEvidenceCrossRef::class
     ],
-    version = 2,
+    version = 3,
     exportSchema = false
 )
 abstract class FieldMindDatabase : RoomDatabase() {

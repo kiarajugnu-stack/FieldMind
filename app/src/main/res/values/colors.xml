@@ -10,5 +10,5 @@
     <color name="splash_primary">#6750A4</color>
     <color name="splash_secondary_depth">#21005D</color>
     <color name="splash_content_on_primary">#FFFFFF</color>
-    <color name="launcher_bg">#FFFFFF</color>
+    <color name="launcher_bg">#1F6B4C</color>
 </resources>

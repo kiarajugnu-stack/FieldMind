@@ -213,3 +213,52 @@ val LearnLibrary: List<LearnCategory> = listOf(
         )
     )
 )
+
+/**
+ * An ordered "learn this skill" path: a short, opinionated sequence of resources that takes a
+ * curious beginner from zero to competent on a single topic. Steps reuse [LearnResource] so they
+ * open in the same in-app reader.
+ */
+data class GuidedPath(
+    val title: String,
+    val goal: String,
+    val steps: List<LearnResource>
+)
+
+val GuidedPaths: List<GuidedPath> = listOf(
+    GuidedPath(
+        "Start thinking like a scientist",
+        "Go from curiosity to a testable question you can actually investigate.",
+        listOf(
+            LearnResource("Understanding Science (UC Berkeley)", "Article", "https://undsci.berkeley.edu/", "How science really works — start here for the big picture."),
+            LearnResource("The scientific method", "Article", "https://en.wikipedia.org/wiki/Scientific_method", "Hypotheses, predictions, and tests in one place."),
+            LearnResource("List of cognitive biases", "Article", "https://en.wikipedia.org/wiki/List_of_cognitive_biases", "Learn the traps that distort your own observations.")
+        )
+    ),
+    GuidedPath(
+        "Keep field notes that last",
+        "Record observations so they're still useful and trustworthy years later.",
+        listOf(
+            LearnResource("How to keep a field notebook (Cornell Lab)", "Article", "https://www.birds.cornell.edu/home/keeping-a-field-notebook/", "A practical, proven field-notebook method."),
+            LearnResource("Grinnell method of field notes", "Article", "https://en.wikipedia.org/wiki/Joseph_Grinnell#Field_notes", "The rigorous system naturalists still rely on."),
+            LearnResource("iNaturalist", "Tool", "https://www.inaturalist.org/", "See how others document and verify observations.")
+        )
+    ),
+    GuidedPath(
+        "Make sense of your data",
+        "Turn raw counts and measurements into honest, readable conclusions.",
+        listOf(
+            LearnResource("Khan Academy: Statistics & probability", "Course", "https://www.khanacademy.org/math/statistics-probability", "Free lessons on describing and comparing data."),
+            LearnResource("OpenIntro Statistics", "Book", "https://www.openintro.org/book/os/", "A free, complete statistics textbook with exercises."),
+            LearnResource("Our World in Data", "Dataset", "https://ourworldindata.org/", "Worked examples of communicating data with charts.")
+        )
+    ),
+    GuidedPath(
+        "Write up what you found",
+        "Structure findings into a clear, well-cited report others can trust.",
+        listOf(
+            LearnResource("Purdue OWL", "Article", "https://owl.purdue.edu/owl/research_and_citation/resources.html", "Authoritative guides on writing and citing."),
+            LearnResource("On the Origin of Species (Darwin)", "Book", "https://www.gutenberg.org/ebooks/1228", "A masterclass in turning observation into argument.")
+        )
+    )
+)
