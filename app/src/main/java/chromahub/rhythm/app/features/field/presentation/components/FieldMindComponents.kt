@@ -43,8 +43,8 @@ fun FieldSectionTitle(title: String, subtitle: String? = null, modifier: Modifie
 fun ResearchCard(
     title: String,
     subtitle: String,
-    modifier: Modifier = Modifier,
     label: String? = null,
+    modifier: Modifier = Modifier,
     onClick: (() -> Unit)? = null
 ) {
     Card(
@@ -158,11 +158,3 @@ fun TimelineItem(title: String, subtitle: String, badge: String, modifier: Modif
         }
     }
 }
-
-@Composable
-fun ResearchCard(
-    title: String,
-    subtitle: String,
-    label: String,
-    onClick: (() -> Unit)? = null
-) = ResearchCard(title = title, subtitle = subtitle, label = label, onClick = onClick)

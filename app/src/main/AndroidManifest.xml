@@ -15,7 +15,7 @@
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" android:required="false" />
 
     <application
-        android:name=".RhythmApplication"
+        android:name="chromahub.rhythm.app.RhythmApplication"
         android:allowBackup="true"
         android:usesCleartextTraffic="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
@@ -40,13 +40,13 @@
         </provider>
 
         <activity
-            android:name=".activities.CrashActivity"
+            android:name="chromahub.rhythm.app.activities.CrashActivity"
             android:exported="false"
             android:theme="@style/Theme.Rhythm"
             android:process=":crash_process" />
 
         <activity
-            android:name=".activities.MainActivity"
+            android:name="chromahub.rhythm.app.activities.MainActivity"
             android:exported="true"
             android:label="FieldMind"
             android:theme="@style/Theme.App.Starting"

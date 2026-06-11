@@ -116,7 +116,7 @@ android {
     compileSdk = 36
     
     defaultConfig {
-        applicationId = "chromahub.rhythm.app"
+        applicationId = "fieldmind.research.app"
         minSdk = 26          // Android 8.0
         targetSdk = 36       // Android 16
         versionCode = 40310853

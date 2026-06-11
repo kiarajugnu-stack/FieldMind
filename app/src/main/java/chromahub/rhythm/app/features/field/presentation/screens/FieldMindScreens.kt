@@ -102,7 +102,7 @@ fun CaptureScreen(viewModel: FieldMindViewModel) {
             item { LabeledTextField(evidence, { evidence = it }, "Evidence summary", supportingText = "Do not invent evidence. Note only what exists.") }
             if (attachments.isNotEmpty()) items(attachments) { EvidenceAttachmentRow(it.first, it.second) }
             item { LabeledTextField(tags, { tags = it }, "Tags", supportingText = "Comma-separated now; saved as normalized tag links.") }
-            if (projects.isNotEmpty()) item { ChoiceChips(listOf("No project") + projects.map { it.title }, projects.firstOrNull { it.id == projectId }?.title ?: "No project") { selected -> projectId = projects.firstOrNull { it.title == selected }?.id } }
+            if (projects.isNotEmpty()) item { ChoiceChips(listOf("No project") + projects.map { it.title }, projects.firstOrNull { it.id == projectId }?.title ?: "No project") { selected: String -> projectId = projects.firstOrNull { it.title == selected }?.id } }
             item { Button(enabled = !saving, onClick = { if (subject.isBlank() || facts.isBlank()) scope.launch { snackbar.showSnackbar("Subject and factual notes are required.") } else { saving = true; viewModel.addObservation(subject, category, facts, confidence, location, tags, evidence, context, projectId, attachments = attachments, onSaved = { saving = false }); subject = ""; facts = ""; location = ""; tags = ""; evidence = ""; context = ""; attachments = emptyList(); scope.launch { snackbar.showSnackbar("Observation saved to your long-term archive.") } } }, modifier = Modifier.fillMaxWidth()) { Text(if (saving) "Saving…" else "Save Observation") } }
         }
     }

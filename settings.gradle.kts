@@ -23,6 +23,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "Rhythm"
+rootProject.name = "FieldMind"
 include(":app")
- 
