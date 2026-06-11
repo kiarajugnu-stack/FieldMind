@@ -26,6 +26,8 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -34,6 +36,21 @@ import androidx.compose.ui.unit.dp
 import chromahub.rhythm.app.features.field.presentation.theme.FieldMindTheme
 import chromahub.rhythm.app.shared.presentation.components.icons.Icon
 import chromahub.rhythm.app.shared.presentation.components.icons.MaterialSymbolIcon
+
+
+@Composable
+fun rememberFieldMindHaptics(): FieldMindHaptics {
+    val haptics = LocalHapticFeedback.current
+    return FieldMindHaptics(
+        light = { haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove) },
+        confirm = { haptics.performHapticFeedback(HapticFeedbackType.LongPress) }
+    )
+}
+
+class FieldMindHaptics internal constructor(
+    val light: () -> Unit,
+    val confirm: () -> Unit
+)
 
 // ──────────────────────────────────────────────────────────────────────
 //  Headers
@@ -174,11 +191,12 @@ fun ChoiceChips(
     modifier: Modifier = Modifier,
     onSelected: (String) -> Unit
 ) {
+    val haptics = rememberFieldMindHaptics()
     FlowRow(modifier = modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         options.forEach { option ->
             FilterChip(
                 selected = selected == option,
-                onClick = { onSelected(option) },
+                onClick = { if (selected != option) haptics.light(); onSelected(option) },
                 label = { Text(option) }
             )
         }

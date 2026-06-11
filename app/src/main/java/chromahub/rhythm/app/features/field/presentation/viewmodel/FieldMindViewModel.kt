@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import chromahub.rhythm.app.features.field.data.database.FieldMindDatabase
 import chromahub.rhythm.app.features.field.data.database.entity.*
 import chromahub.rhythm.app.features.field.data.repository.FieldMindRepository
+import chromahub.rhythm.app.features.field.data.export.FieldMindExport
 import chromahub.rhythm.app.features.field.data.settings.FieldMindSettings
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -29,6 +30,7 @@ class FieldMindViewModel(application: Application) : AndroidViewModel(applicatio
     val fieldSettings: FieldMindSettings = FieldMindSettings.getInstance(application)
 
     val observations: StateFlow<List<ObservationEntity>> = repository.observations.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+    val notes: StateFlow<List<NoteEntity>> = repository.notes.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
     val questions: StateFlow<List<QuestionEntity>> = repository.questions.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
     val hypotheses: StateFlow<List<HypothesisEntity>> = repository.hypotheses.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
     val projects: StateFlow<List<ProjectEntity>> = repository.projects.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
@@ -94,6 +96,23 @@ class FieldMindViewModel(application: Application) : AndroidViewModel(applicatio
         repository.setObservationTags(entity.id, tags)
     }
 
+    fun addNote(title: String, body: String, category: String, tags: String, projectId: Long? = null, sourceId: Long? = null, attachments: List<DraftEvidenceAttachment> = emptyList(), onSaved: ((Long) -> Unit)? = null) = viewModelScope.launch {
+        val id = repository.addNote(
+            NoteEntity(
+                title = title.trim(),
+                body = body.trim(),
+                category = category,
+                tags = tags.trim(),
+                projectId = projectId,
+                sourceId = sourceId,
+                attachmentUris = attachments.joinToString("\n") { listOf(it.type, it.caption, it.uri).joinToString("|") }
+            )
+        )
+        onSaved?.invoke(id)
+    }
+
+    fun updateNoteEntity(entity: NoteEntity) = viewModelScope.launch { repository.updateNote(entity) }
+
     fun archiveObservation(id: Long) = viewModelScope.launch { repository.archiveObservation(id) }
 
     fun updateQuestionEntity(entity: QuestionEntity) = viewModelScope.launch { repository.updateQuestion(entity) }
@@ -115,6 +134,7 @@ class FieldMindViewModel(application: Application) : AndroidViewModel(applicatio
     fun updateFlashcardEntity(entity: FlashcardEntity) = viewModelScope.launch { repository.updateFlashcard(entity) }
 
     fun deleteObservation(id: Long) = viewModelScope.launch { repository.deleteObservation(id) }
+    fun deleteNote(id: Long) = viewModelScope.launch { repository.deleteNote(id) }
     fun deleteQuestion(id: Long) = viewModelScope.launch { repository.deleteQuestion(id) }
     fun deleteHypothesis(id: Long) = viewModelScope.launch { repository.deleteHypothesis(id) }
     fun deleteProject(id: Long) = viewModelScope.launch { repository.deleteProject(id) }
@@ -131,6 +151,7 @@ class FieldMindViewModel(application: Application) : AndroidViewModel(applicatio
     fun observeDataRecord(id: Long) = repository.observeDataRecord(id)
     fun observeFlashcard(id: Long) = repository.observeFlashcard(id)
     fun observeObservation(id: Long) = repository.observeObservation(id)
+    fun observeNote(id: Long) = repository.observeNote(id)
 
     fun attachmentsForObservation(id: Long) = repository.observeAttachmentsForObservation(id)
 
@@ -140,13 +161,73 @@ class FieldMindViewModel(application: Application) : AndroidViewModel(applicatio
         sourceId?.let { repository.linkQuestionSource(id, it) }
     }
 
-    fun addProject(title: String, topicType: String, objective: String, researchQuestion: String) = viewModelScope.launch {
-        repository.addProject(ProjectEntity(title = title.trim(), topicType = topicType.trim().ifBlank { "General" }, objective = objective.trim(), researchQuestion = researchQuestion.trim()))
+    fun addProject(title: String, topicType: String, objective: String, researchQuestion: String, methods: String = "", futureQuestions: String = "") = viewModelScope.launch {
+        repository.addProject(ProjectEntity(title = title.trim(), topicType = topicType.trim().ifBlank { "General" }, objective = objective.trim(), researchQuestion = researchQuestion.trim(), methods = methods.trim(), futureQuestions = futureQuestions.trim()))
     }
 
-    fun addSource(type: String, title: String, author: String, link: String, summary: String, taught: String, reliability: Int, keyFindings: String = "", questionsGenerated: String = "", paperNotes: String = "", projectId: Long? = null) = viewModelScope.launch {
-        repository.addSource(SourceEntity(type = type, title = title.trim(), author = author.trim(), link = link.trim(), personalSummary = summary.trim(), keyFindings = keyFindings.trim(), whatThisSourceTaughtMe = taught.trim(), questionsGenerated = questionsGenerated.trim(), reliabilityScore = reliability, paperNotes = paperNotes.trim(), relatedProjectId = projectId))
+    fun addSource(
+        type: String,
+        title: String,
+        author: String,
+        link: String,
+        summary: String,
+        taught: String,
+        reliability: Int,
+        keyFindings: String = "",
+        questionsGenerated: String = "",
+        paperNotes: String = "",
+        projectId: Long? = null,
+        dateOrYear: String = "",
+        doiOrIsbn: String = "",
+        publisherOrJournal: String = "",
+        accessDate: String = "",
+        fileUri: String = "",
+        citationStyleNote: String = "",
+        importance: String = "Normal",
+        readingStatus: String = "In progress"
+    ) = viewModelScope.launch {
+        repository.addSource(
+            SourceEntity(
+                type = type,
+                title = title.trim(),
+                author = author.trim(),
+                dateOrYear = dateOrYear.trim(),
+                link = link.trim(),
+                doiOrIsbn = doiOrIsbn.trim(),
+                publisherOrJournal = publisherOrJournal.trim(),
+                accessDate = accessDate.trim(),
+                fileUri = fileUri.trim(),
+                citationStyleNote = citationStyleNote.trim(),
+                importance = importance,
+                personalSummary = summary.trim(),
+                keyFindings = keyFindings.trim(),
+                whatThisSourceTaughtMe = taught.trim(),
+                questionsGenerated = questionsGenerated.trim(),
+                reliabilityScore = reliability,
+                readingStatus = readingStatus,
+                paperNotes = paperNotes.trim(),
+                relatedProjectId = projectId
+            )
+        )
     }
+
+    fun toggleSourceImportant(source: SourceEntity) = viewModelScope.launch {
+        repository.toggleSourceImportant(source)
+    }
+
+    fun markSourceRead(source: SourceEntity) = viewModelScope.launch {
+        repository.markSourceRead(source)
+    }
+
+    fun linkSourceToProject(source: SourceEntity, projectId: Long?) = viewModelScope.launch {
+        repository.linkSourceToProject(source, projectId)
+    }
+
+    fun updateSourceFile(source: SourceEntity, fileUri: String) = viewModelScope.launch {
+        repository.updateSourceFile(source, fileUri)
+    }
+
+    fun buildSourceCitation(source: SourceEntity): String = FieldMindExport.sourceCitation(source)
 
     fun addHypothesis(questionId: Long?, prediction: String, evidenceNeeded: String, confidence: Int, reasoning: String = "", supportCriteria: String = "", weakeningCriteria: String = "", testMethod: String = "") = viewModelScope.launch {
         repository.addHypothesis(HypothesisEntity(linkedQuestionId = questionId, prediction = prediction.trim(), reasoning = reasoning.trim(), evidenceNeeded = evidenceNeeded.trim(), supportCriteria = supportCriteria.trim(), weakeningCriteria = weakeningCriteria.trim(), testMethod = testMethod.trim(), confidencePercent = confidence))

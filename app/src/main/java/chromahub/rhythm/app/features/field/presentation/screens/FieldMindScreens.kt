@@ -5,6 +5,8 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.webkit.WebResourceError
+import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.media.MediaRecorder
@@ -40,8 +42,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
@@ -83,7 +87,9 @@ internal val observationCategories = listOf("Bird", "Animal", "Insect", "Plant",
 internal val confidenceOptions = listOf("Sure", "Guess", "Needs Verification")
 private val sourceTypes = listOf("Observation", "Reading", "Video", "Thought", "Discussion")
 private val questionStatuses = listOf("New", "Researching", "Tested", "Answered", "Abandoned")
-private val sourceLibraryTypes = listOf("Article", "Paper", "Book", "Video", "Website", "PDF", "Note")
+private val sourceLibraryTypes = listOf("Article", "Paper", "Book", "Video", "Website", "PDF", "Image", "Local document", "Note")
+private val readingStatuses = listOf("Not started", "In progress", "Read", "Skimmed", "To revisit")
+private val sourceImportanceLevels = listOf("Normal", "Important", "Critical")
 private val dataTools = listOf("Counter", "Measurement Log", "Checklist", "Event Log", "Weather Log", "Site Log", "Species Tracker", "Comparison Table")
 private val reportTypes = listOf("Summary", "Field Report", "Literature Review", "Project Draft", "Findings Note", "Final Report")
 internal val learningModules = listOf(
@@ -219,6 +225,7 @@ fun HomeScreen(
     onOpenReader: (String, String) -> Unit = { _, _ -> }
 ) {
     val observations by viewModel.observations.collectAsState()
+    val notes by viewModel.notes.collectAsState()
     val questions by viewModel.questions.collectAsState()
     val projects by viewModel.projects.collectAsState()
     val sources by viewModel.sources.collectAsState()
@@ -242,18 +249,13 @@ fun HomeScreen(
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(20.dp, 20.dp, 20.dp, 96.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
         item { FieldScreenHeader("FieldMind", "Observe. Question. Research clearly.", icon = FieldMindIcons.Nature, actionIcon = FieldMindIcons.Settings, onAction = onOpenSettings) }
         item { DailyGoalCard(todayCount, goal, observations.map { it.date }.distinct().size) { onNavigate(FieldMindScreen.Observe) } }
-        item {
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                MetricTile("Observations", observations.size.toString(), FieldMindIcons.Observation, Modifier.weight(1f), FieldMindTheme.colors.observation, onClick = { onNavigate(FieldMindScreen.Observe) })
-                MetricTile("Open questions", questions.count { it.status != "Answered" }.toString(), FieldMindIcons.Question, Modifier.weight(1f), FieldMindTheme.colors.question, onClick = { onNavigate(FieldMindScreen.Questions) })
-                MetricTile("Sources", sources.size.toString(), FieldMindIcons.Source, Modifier.weight(1f), FieldMindTheme.colors.source, onClick = { onNavigate(FieldMindScreen.Library) })
-            }
-        }
-        item { SectionHeader("Quick add", "Every shortcut opens a real workflow.") }
+        item { HomeWidgetGrid(observations, notes, questions, sources, projects, reports, data) { onNavigate(it) } }
+        item { SectionHeader("Primary quick capture", "Start with Snap or Note, then continue only if needed.") }
         item {
             QuickActionGrid(
                 listOf(
-                    QuickAction("New observation", FieldMindIcons.Observation, FieldMindTheme.colors.observation, FieldMindScreen.Observe),
+                    QuickAction("Snap evidence", FieldMindIcons.Camera, FieldMindTheme.colors.observation, FieldMindScreen.Observe),
+                    QuickAction("New note", FieldMindIcons.Note, FieldMindTheme.colors.source, FieldMindScreen.Observe),
                     QuickAction("Field mode", FieldMindIcons.Bolt, FieldMindTheme.colors.warning, FieldMindScreen.FieldMode),
                     QuickAction("New project", FieldMindIcons.Project, FieldMindTheme.colors.project, FieldMindScreen.Projects),
                     QuickAction("Add source", FieldMindIcons.Source, FieldMindTheme.colors.source, FieldMindScreen.Library),
@@ -275,43 +277,57 @@ fun HomeScreen(
                 )
             }
         }
-        if (recommendations.isNotEmpty()) {
-            item { SectionHeader("Recommended learning", if (learnSignals.any { it.isNotBlank() }) "Based on your recent activity" else "Foundations to start with") }
-            item { RecommendedLearningCard(recommendations, onOpenReader = onOpenReader, onSeeAll = { onNavigate(FieldMindScreen.Learn) }) }
-        }
-        item { SectionHeader("Reading & review", "${sources.count { it.readingStatus == "Finished" }} finished • ${flashcards.size} cards") }
-        item {
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                MetricTile("Reports", reports.size.toString(), FieldMindIcons.Report, Modifier.weight(1f), FieldMindTheme.colors.report, onClick = { onNavigate(FieldMindScreen.Reports) })
-                MetricTile("Data", data.size.toString(), FieldMindIcons.Data, Modifier.weight(1f), FieldMindTheme.colors.data, onClick = { onNavigate(FieldMindScreen.DataTools) })
-                MetricTile("Flashcards", flashcards.size.toString(), FieldMindIcons.Flashcard, Modifier.weight(1f), FieldMindTheme.colors.flashcard, onClick = { onNavigate(FieldMindScreen.Library) })
-            }
-        }
-        item { SectionHeader("Recent activity", if (tags.isNotEmpty()) "Top tag: ${tags.first().name}" else null) }
+        item { SectionHeader("Recent activity", if (tags.isNotEmpty()) "Top tag: ${tags.first().name}" else "Collapsed by type and category") }
         val activity = buildList {
-            observations.forEach { add(RecentEntry("observation", it.id, it.timestamp, it.subject.ifBlank { "Observation" }, "${it.category} • ${it.date} ${it.time}")) }
-            questions.forEach { add(RecentEntry("question", it.id, it.updatedAt, it.questionText, "${it.status} • ${it.priority}")) }
-            sources.forEach { add(RecentEntry("source", it.id, it.updatedAt, it.title, "${it.type} • ${it.readingStatus}")) }
-            data.forEach { add(RecentEntry("data", it.id, it.timestamp, it.label, "${it.toolType} • ${it.value} ${it.unit}".trim())) }
-            reports.forEach { add(RecentEntry("report", it.id, it.updatedAt, it.title, "${it.type} • ${it.status}")) }
-        }.sortedByDescending { it.time }.take(12)
+            observations.forEach { add(RecentEntry("observation", it.id, it.timestamp, it.subject.ifBlank { "Observation" }, "${it.category} • ${it.date} ${it.time}", it.category)) }
+            notes.forEach { add(RecentEntry("note", it.id, it.updatedAt, it.title.ifBlank { "Untitled note" }, it.body.ifBlank { it.category }, it.category)) }
+            questions.forEach { add(RecentEntry("question", it.id, it.updatedAt, it.questionText, "${it.status} • ${it.priority}", it.status)) }
+            sources.forEach { add(RecentEntry("source", it.id, it.updatedAt, it.title, "${it.type} • ${it.readingStatus}", it.type)) }
+            data.forEach { add(RecentEntry("data", it.id, it.timestamp, it.label, "${it.toolType} • ${it.value} ${it.unit}".trim(), it.toolType)) }
+            reports.forEach { add(RecentEntry("report", it.id, it.updatedAt, it.title, "${it.type} • ${it.status}", it.type)) }
+        }.sortedByDescending { it.time }
+        val groups = activity.groupBy { "${it.kind}:${it.group}" }.values.map { it.sortedByDescending { entry -> entry.time } }.sortedByDescending { it.first().time }.take(10)
         if (activity.isEmpty()) {
-            item { EmptyState("No activity yet", "Start with one factual observation. Small notes become research when you can revisit them.", icon = FieldMindIcons.Observation, actionLabel = "Add observation") { onNavigate(FieldMindScreen.Observe) } }
+            item { EmptyState("No activity yet", "Start with one factual observation or a free-form note. Both stay clearly separated.", icon = FieldMindIcons.Observation, actionLabel = "Open capture") { onNavigate(FieldMindScreen.Observe) } }
         } else {
-            items(activity, key = { "${it.kind}-${it.id}" }) { entry ->
-                EntityCard(
-                    title = entry.title,
-                    kind = entry.kind,
-                    body = entry.sub,
-                    meta = listOf(recentRelativeTime(entry.time)),
-                    onClick = { onOpenDetail(entry.kind, entry.id) }
-                )
+            items(groups, key = { "${it.first().kind}-${it.first().group}" }) { group ->
+                RecentActivityGroupCard(group, onOpenDetail)
             }
         }
     }
 }
 
-private data class RecentEntry(val kind: String, val id: Long, val time: Long, val title: String, val sub: String)
+private data class RecentEntry(val kind: String, val id: Long, val time: Long, val title: String, val sub: String, val group: String)
+
+@Composable
+private fun RecentActivityGroupCard(group: List<RecentEntry>, onOpenDetail: (String, Long) -> Unit) {
+    var expanded by remember { mutableStateOf(false) }
+    val newest = group.first()
+    val more = group.size - 1
+    Column(Modifier.animateContentSize(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        EntityCard(
+            title = newest.title,
+            kind = newest.kind,
+            body = newest.sub,
+            meta = buildList { add(newest.group); add(recentRelativeTime(newest.time)); if (more > 0) add("+$more more ${newest.kind}${if (more == 1) "" else "s"}") },
+            onClick = { onOpenDetail(newest.kind, newest.id) }
+        )
+        if (more > 0) {
+            TextButton(onClick = { expanded = !expanded }, modifier = Modifier.align(Alignment.End)) {
+                Text(if (expanded) "Collapse group" else "Show $more more")
+                Spacer(Modifier.size(4.dp))
+                Icon(icon = if (expanded) FieldMindIcons.Up else FieldMindIcons.Down, contentDescription = null, size = 18.dp)
+            }
+            AnimatedVisibility(expanded) {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    group.drop(1).forEach { entry ->
+                        EntityCard(entry.title, entry.kind, body = entry.sub, meta = listOf(recentRelativeTime(entry.time))) { onOpenDetail(entry.kind, entry.id) }
+                    }
+                }
+            }
+        }
+    }
+}
 
 /** A learn resource paired with the category/topic path it came from. */
 internal data class LearnRecommendation(val resource: LearnResource, val path: String)
@@ -441,17 +457,61 @@ private fun GoalStatChip(icon: MaterialSymbolIcon, label: String, tint: androidx
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun HomeWidgetGrid(
+    observations: List<ObservationEntity>,
+    notes: List<NoteEntity>,
+    questions: List<QuestionEntity>,
+    sources: List<SourceEntity>,
+    projects: List<ProjectEntity>,
+    reports: List<ReportEntity>,
+    data: List<DataRecordEntity>,
+    onNavigate: (FieldMindScreen) -> Unit
+) {
+    val widgets = listOf(
+        HomeWidget("Capture", "${observations.size} observations", FieldMindIcons.Camera, FieldMindTheme.colors.observation, FieldMindScreen.Observe),
+        HomeWidget("Notes", "${notes.size} free-form", FieldMindIcons.Note, FieldMindTheme.colors.source, FieldMindScreen.Library),
+        HomeWidget("Questions", "${questions.count { it.status != "Answered" }} open", FieldMindIcons.Question, FieldMindTheme.colors.question, FieldMindScreen.Questions),
+        HomeWidget("Sources", "${sources.count { it.readingStatus == "Read" }}/${sources.size} read", FieldMindIcons.Source, FieldMindTheme.colors.source, FieldMindScreen.Library),
+        HomeWidget("Projects", "${projects.count { it.status == "Active" }} active", FieldMindIcons.Project, FieldMindTheme.colors.project, FieldMindScreen.Projects),
+        HomeWidget("Outputs", "${data.size} data • ${reports.size} reports", FieldMindIcons.Report, FieldMindTheme.colors.report, FieldMindScreen.Insights)
+    )
+    FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalArrangement = Arrangement.spacedBy(12.dp), maxItemsInEachRow = 2) {
+        widgets.forEach { widget -> HomeWidgetCard(widget, Modifier.weight(1f)) { onNavigate(widget.screen) } }
+    }
+}
+
+private data class HomeWidget(val title: String, val value: String, val icon: MaterialSymbolIcon, val color: androidx.compose.ui.graphics.Color, val screen: FieldMindScreen)
+
+@Composable
+private fun HomeWidgetCard(widget: HomeWidget, modifier: Modifier = Modifier, onClick: () -> Unit) {
+    val haptics = rememberFieldMindHaptics()
+    Card(modifier = modifier.height(112.dp).clickable { haptics.light(); onClick() }, shape = RoundedCornerShape(24.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)) {
+        Column(Modifier.fillMaxSize().padding(14.dp), verticalArrangement = Arrangement.SpaceBetween) {
+            Box(Modifier.size(38.dp).clip(RoundedCornerShape(12.dp)).background(widget.color.copy(alpha = if (FieldMindTheme.colors.isDark) 0.22f else 0.14f)), contentAlignment = Alignment.Center) {
+                Icon(widget.icon, null, tint = widget.color, size = 21.dp)
+            }
+            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text(widget.title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                Text(widget.value, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            }
+        }
+    }
+}
+
 private data class QuickAction(val label: String, val icon: MaterialSymbolIcon, val color: androidx.compose.ui.graphics.Color, val screen: FieldMindScreen)
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun QuickActionGrid(actions: List<QuickAction>, onNavigate: (FieldMindScreen) -> Unit) {
+    val haptics = rememberFieldMindHaptics()
     FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalArrangement = Arrangement.spacedBy(12.dp), maxItemsInEachRow = 3) {
         actions.forEach { action ->
             Card(
                 modifier = Modifier
                     .weight(1f)
-                    .clickable { onNavigate(action.screen) },
+                    .clickable { haptics.light(); onNavigate(action.screen) },
                 shape = RoundedCornerShape(20.dp),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
                 elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
@@ -472,6 +532,8 @@ private fun QuickActionGrid(actions: List<QuickAction>, onNavigate: (FieldMindSc
 //  Capture / Field mode
 // ══════════════════════════════════════════════════════════════════════
 
+private enum class CaptureState { Idle, ChooseMode, ChooseCategory, Snap, Note }
+
 @Composable
 fun ObserveScreen(
     viewModel: FieldMindViewModel,
@@ -481,43 +543,177 @@ fun ObserveScreen(
 ) {
     if (compactFieldMode) { FieldModeScreen(viewModel, onBack ?: {}); return }
     val observations by viewModel.observations.collectAsState()
-    var showCapture by remember { mutableStateOf(false) }
+    val notes by viewModel.notes.collectAsState()
+    val defaultCategory by viewModel.fieldSettings.defaultCategory.collectAsState()
+    var captureState by remember { mutableStateOf(CaptureState.Idle) }
+    var selectedCategory by remember(defaultCategory) { mutableStateOf(defaultCategory) }
+    val haptics = rememberFieldMindHaptics()
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(20.dp, 20.dp, 20.dp, 96.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        item { FieldScreenHeader("Capture", "Journal facts, evidence, confidence, location, and tags.", icon = FieldMindIcons.Capture) }
-        item {
-            Button(onClick = { showCapture = !showCapture }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp)) {
-                Icon(icon = if (showCapture) FieldMindIcons.Close else FieldMindIcons.Add, contentDescription = null, size = 20.dp)
-                Spacer(Modifier.size(8.dp))
-                Text(if (showCapture) "Hide capture form" else "New observation")
-            }
+        item { FieldScreenHeader("Capture", "Start with Snap evidence or a free-form Note, then add category and details.", icon = FieldMindIcons.Capture) }
+        item { PrimaryCaptureEntry(captureState, onStart = { haptics.light(); captureState = CaptureState.ChooseMode }, onClose = { haptics.light(); captureState = CaptureState.Idle }) }
+        when (captureState) {
+            CaptureState.ChooseMode -> item { CaptureModeChooser(
+                onSnap = { haptics.light(); captureState = CaptureState.ChooseCategory },
+                onNote = { haptics.light(); captureState = CaptureState.Note }
+            ) }
+            CaptureState.ChooseCategory -> item { CategoryFirstCard(selectedCategory, onCategory = { selectedCategory = it }, onSnap = { haptics.light(); captureState = CaptureState.Snap }) }
+            CaptureState.Snap -> item { ObservationCaptureCard(viewModel = viewModel, compact = false, initialCategory = selectedCategory, snapFirst = true) { captureState = CaptureState.Idle } }
+            CaptureState.Note -> item { NoteCaptureCard(viewModel = viewModel, initialCategory = selectedCategory) { captureState = CaptureState.Idle } }
+            CaptureState.Idle -> Unit
         }
-        if (showCapture) item { ObservationCaptureCard(viewModel = viewModel, compact = false) { showCapture = false } }
-        item { SectionHeader("Observation journal", "${observations.size} saved ${if (observations.size == 1) "entry" else "entries"}") }
-        if (observations.isEmpty()) item { EmptyState("No observations yet", "Capture subject, facts, evidence, location, context, confidence, and tags.", icon = FieldMindIcons.Observation, actionLabel = "Add the first one") { showCapture = true } }
-        items(observations) { item ->
+        item { SectionHeader("Recent captures", "${observations.size} observations • ${notes.size} notes") }
+        if (observations.isEmpty() && notes.isEmpty()) item { EmptyState("No captures yet", "Snap factual evidence or draft a note. Observations stay facts-only; notes stay free-form.", icon = FieldMindIcons.Observation, actionLabel = "Start capture") { captureState = CaptureState.ChooseMode } }
+        items(notes.take(6), key = { "note-${it.id}" }) { item ->
+            EntityCard(
+                title = item.title,
+                kind = "note",
+                body = item.body.take(140).ifBlank { "No body yet." },
+                meta = listOf(item.category, recentRelativeTime(item.updatedAt)),
+                onClick = { onOpenDetail("note", item.id) }
+            )
+        }
+        items(observations.take(10), key = { "obs-${it.id}" }) { item ->
             EntityCard(
                 title = item.subject,
                 kind = "observation",
                 body = item.factsOnlyNotes.take(140).ifBlank { "No factual notes recorded." },
                 confidence = item.confidenceLevel,
-                meta = buildList {
-                    add(item.category)
-                    add("${item.date} ${item.time}")
-                    if (item.manualLocation.isNotBlank()) add(item.manualLocation)
-                    if (item.latitude != null) add("GPS")
-                },
+                meta = buildList { add(item.category); add("${item.date} ${item.time}"); if (item.manualLocation.isNotBlank()) add(item.manualLocation); if (item.tags.isNotBlank()) add(item.tags) },
                 onClick = { onOpenDetail("observation", item.id) }
             )
         }
     }
 }
 
-/** Two-tap field capture: one big button per observation type, instant save with undo. */
+@Composable
+private fun PrimaryCaptureEntry(state: CaptureState, onStart: () -> Unit, onClose: () -> Unit) {
+    Button(onClick = if (state == CaptureState.Idle) onStart else onClose, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(18.dp)) {
+        Icon(icon = if (state == CaptureState.Idle) FieldMindIcons.Add else FieldMindIcons.Close, contentDescription = null, size = 20.dp)
+        Spacer(Modifier.size(8.dp))
+        Text(if (state == CaptureState.Idle) "Quick capture" else "Close capture")
+    }
+}
+
+@Composable
+private fun CaptureModeChooser(onSnap: () -> Unit, onNote: () -> Unit) {
+    Card(shape = RoundedCornerShape(28.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow), modifier = Modifier.fillMaxWidth()) {
+        Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+            SectionHeader("What are you capturing?", "Choose the smallest path that matches the moment.")
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                CaptureModeTile("Snap", "Photo, gallery, or file first", FieldMindIcons.Camera, FieldMindTheme.colors.observation, Modifier.weight(1f), onSnap)
+                CaptureModeTile("Note", "Title, facts, tags first", FieldMindIcons.Note, FieldMindTheme.colors.source, Modifier.weight(1f), onNote)
+            }
+        }
+    }
+}
+
+@Composable
+private fun CaptureModeTile(title: String, body: String, icon: MaterialSymbolIcon, color: androidx.compose.ui.graphics.Color, modifier: Modifier, onClick: () -> Unit) {
+    Card(modifier = modifier.height(132.dp).clickable(onClick = onClick), shape = RoundedCornerShape(24.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)) {
+        Column(Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterVertically), horizontalAlignment = Alignment.CenterHorizontally) {
+            Box(Modifier.size(48.dp).clip(RoundedCornerShape(16.dp)).background(color.copy(alpha = if (FieldMindTheme.colors.isDark) 0.24f else 0.14f)), contentAlignment = Alignment.Center) { Icon(icon = icon, contentDescription = null, tint = color, size = 26.dp) }
+            Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Text(body, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
+        }
+    }
+}
+
+@Composable
+private fun CategoryFirstCard(category: String, onCategory: (String) -> Unit, onSnap: () -> Unit) {
+    Card(shape = RoundedCornerShape(28.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow), modifier = Modifier.fillMaxWidth()) {
+        Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+            SectionHeader("Choose a category", "This labels the evidence before the full snap form.")
+            ChoiceChips(observationCategories, category, onSelected = onCategory)
+            Button(onClick = onSnap, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp)) { Text("Continue to snap evidence") }
+        }
+    }
+}
+
+@Composable
+private fun NoteCaptureCard(viewModel: FieldMindViewModel, initialCategory: String, onSaved: () -> Unit) {
+    val context = LocalContext.current
+    val snackbar = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
+    val projects by viewModel.projects.collectAsState()
+    val sources by viewModel.sources.collectAsState()
+    var title by remember { mutableStateOf("") }
+    var body by remember { mutableStateOf("") }
+    var category by remember(initialCategory) { mutableStateOf(initialCategory) }
+    var tags by remember { mutableStateOf("") }
+    var projectId by remember { mutableStateOf<Long?>(null) }
+    var sourceId by remember { mutableStateOf<Long?>(null) }
+    var attachments by remember { mutableStateOf<List<DraftEvidenceAttachment>>(emptyList()) }
+    val haptics = rememberFieldMindHaptics()
+    val mediaPicker = rememberLauncherForActivityResult(ActivityResultContracts.PickMultipleVisualMedia(10)) { uris ->
+        attachments = attachments + uris.map { DraftEvidenceAttachment("Gallery", it.toString(), "Note media") }
+        scope.launch { snackbar.showSnackbar(if (uris.isEmpty()) "Gallery selection cancelled." else "Media attached.") }
+    }
+    val filePicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        if (uri == null) scope.launch { snackbar.showSnackbar("File selection cancelled.") } else {
+            runCatching { context.contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION) }
+            attachments = attachments + DraftEvidenceAttachment("File", uri.toString(), "Note attachment")
+            scope.launch { snackbar.showSnackbar("File attached.") }
+        }
+    }
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        SnackbarHost(snackbar)
+        Card(shape = RoundedCornerShape(28.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow), modifier = Modifier.fillMaxWidth()) {
+            Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Box(Modifier.size(44.dp).clip(RoundedCornerShape(14.dp)).background(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)), contentAlignment = Alignment.Center) {
+                        Icon(icon = FieldMindIcons.Note, contentDescription = null, tint = MaterialTheme.colorScheme.primary, size = 24.dp)
+                    }
+                    Column(Modifier.weight(1f)) {
+                        Text("New note", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                        Text("Free-form notes are separate from facts-only observations.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                }
+                CaptureStep("Category", "Label the note before writing.", FieldMindIcons.Category) {
+                    ChoiceChips(observationCategories, category) { category = it }
+                }
+                CaptureStep("Title, body & tags", "Prioritize what you want to remember.", FieldMindIcons.Edit) {
+                    FieldTextField(title, { title = it }, "Title")
+                    FieldTextField(body, { body = it }, "Body / facts / reflection", minLines = 5, supportingText = "Free-form note. Use observations for facts-only evidence.")
+                    FieldTextField(tags, { tags = it }, "Tags", supportingText = "Comma-separated tags")
+                }
+                CaptureStep("Links", "Optionally connect a project or source.", FieldMindIcons.Link) {
+                    if (projects.isNotEmpty()) {
+                        Text("Project", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        ChoiceChips(listOf("No project") + projects.map { it.title }, projects.firstOrNull { it.id == projectId }?.title ?: "No project") { selected -> projectId = projects.firstOrNull { it.title == selected }?.id }
+                    }
+                    if (sources.isNotEmpty()) {
+                        Text("Source", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        ChoiceChips(listOf("No source") + sources.map { it.title }, sources.firstOrNull { it.id == sourceId }?.title ?: "No source") { selected -> sourceId = sources.firstOrNull { it.title == selected }?.id }
+                    }
+                }
+                CaptureStep("Optional evidence", "Attach supporting files without turning the note into an observation.", FieldMindIcons.File) {
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        OutlinedButton(onClick = { haptics.light(); mediaPicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageAndVideo)) }, Modifier.weight(1f)) { Icon(icon = FieldMindIcons.Gallery, contentDescription = "Gallery", size = 18.dp) }
+                        OutlinedButton(onClick = { haptics.light(); filePicker.launch(arrayOf("application/pdf", "text/*", "image/*", "video/*", "audio/*")) }, Modifier.weight(1f)) { Icon(icon = FieldMindIcons.File, contentDescription = "File", size = 18.dp) }
+                    }
+                    AttachmentPreviewList(attachments, onCaptionChange = { index, caption -> attachments = attachments.mapIndexed { i, item -> if (i == index) item.copy(caption = caption) else item } }, onRemove = { remove -> attachments = attachments.filterIndexed { index, _ -> index != remove } })
+                }
+                Button(onClick = {
+                    if (title.isBlank() && body.isBlank()) scope.launch { snackbar.showSnackbar("Add a title or body before saving.") } else { haptics.confirm(); viewModel.addNote(title.ifBlank { body.take(36) }, body, category, tags, projectId, sourceId, attachments) {
+                        title = ""; body = ""; tags = ""; attachments = emptyList(); projectId = null; sourceId = null
+                        scope.launch { snackbar.showSnackbar("Note saved to your library.") }
+                        onSaved()
+                    }
+                    }
+                }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp)) {
+                    Icon(icon = FieldMindIcons.Check, contentDescription = null, size = 18.dp); Spacer(Modifier.size(8.dp)); Text("Save note")
+                }
+            }
+        }
+    }
+}
+
 @Composable
 private fun FieldModeScreen(viewModel: FieldMindViewModel, onBack: () -> Unit) {
     val snackbar = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     val defaultConfidence by viewModel.fieldSettings.defaultConfidence.collectAsState()
+    val haptics = rememberFieldMindHaptics()
     var showFull by remember { mutableStateOf(false) }
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
@@ -539,6 +735,7 @@ private fun FieldModeScreen(viewModel: FieldMindViewModel, onBack: () -> Unit) {
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                         row.forEach { category ->
                             FieldModeButton(category, Modifier.weight(1f)) {
+                                haptics.confirm()
                                 viewModel.addObservation(
                                     subject = category,
                                     category = category,
@@ -593,7 +790,7 @@ private fun FieldModeButton(category: String, modifier: Modifier = Modifier, onC
 }
 
 @Composable
-private fun ObservationCaptureCard(viewModel: FieldMindViewModel, compact: Boolean, onSaved: () -> Unit) {
+private fun ObservationCaptureCard(viewModel: FieldMindViewModel, compact: Boolean, initialCategory: String? = null, snapFirst: Boolean = false, onSaved: () -> Unit) {
     val context = LocalContext.current
     val snackbar = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
@@ -603,7 +800,7 @@ private fun ObservationCaptureCard(viewModel: FieldMindViewModel, compact: Boole
     val mediaEnabled by viewModel.fieldSettings.mediaAttachmentsEnabled.collectAsState()
     val audioEnabled by viewModel.fieldSettings.audioRecordingEnabled.collectAsState()
     var subject by remember { mutableStateOf("") }
-    var category by remember(defaultCategory) { mutableStateOf(defaultCategory) }
+    var category by remember(defaultCategory, initialCategory) { mutableStateOf(initialCategory ?: defaultCategory) }
     var facts by remember { mutableStateOf("") }
     var confidence by remember(defaultConfidence) { mutableStateOf(defaultConfidence) }
     var manualLocation by remember { mutableStateOf("") }
@@ -620,6 +817,7 @@ private fun ObservationCaptureCard(viewModel: FieldMindViewModel, compact: Boole
     var recordSeconds by remember { mutableIntStateOf(0) }
     var locating by remember { mutableStateOf(false) }
     val locationProvider = remember { FieldLocationProvider(context) }
+    val haptics = rememberFieldMindHaptics()
 
     val startLocating = {
         locating = true
@@ -706,12 +904,29 @@ private fun ObservationCaptureCard(viewModel: FieldMindViewModel, compact: Boole
                         Icon(icon = FieldMindIcons.Observation, contentDescription = null, tint = MaterialTheme.colorScheme.primary, size = 24.dp)
                     }
                     Column(Modifier.weight(1f)) {
-                        Text(if (compact) "Quick field note" else "New observation", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-                        Text("Date and time are stamped automatically.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(if (compact) "Quick field note" else if (snapFirst) "Snap evidence" else "New observation", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                        Text(if (snapFirst) "Evidence first, then facts-only observation notes." else "Date and time are stamped automatically.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
 
-                CaptureStep("Subject", "What did you observe, and how sure are you?", FieldMindIcons.iconForCategory(category)) {
+                if (snapFirst && mediaEnabled) {
+                    CaptureStep("Evidence first", "Start with camera, gallery, or files before writing facts.", FieldMindIcons.Camera) {
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            OutlinedButton(onClick = { if (ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) { val uri = createFieldMindFileUri(context, "photo", ".jpg"); pendingPhotoUri = uri } else cameraPermission.launch(Manifest.permission.CAMERA) }, Modifier.weight(1f)) {
+                                Icon(icon = FieldMindIcons.Camera, contentDescription = "Camera", size = 18.dp)
+                            }
+                            OutlinedButton(onClick = { mediaPicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageAndVideo)) }, Modifier.weight(1f)) {
+                                Icon(icon = FieldMindIcons.Gallery, contentDescription = "Gallery", size = 18.dp)
+                            }
+                            OutlinedButton(onClick = { filePicker.launch(arrayOf("application/pdf", "text/*", "image/*", "video/*", "audio/*")) }, Modifier.weight(1f)) {
+                                Icon(icon = FieldMindIcons.File, contentDescription = "File", size = 18.dp)
+                            }
+                        }
+                        AttachmentPreviewList(attachments, onCaptionChange = { index, caption -> attachments = attachments.mapIndexed { i, item -> if (i == index) item.copy(caption = caption) else item } }, onRemove = { remove -> attachments = attachments.filterIndexed { index, _ -> index != remove } })
+                    }
+                }
+
+                CaptureStep(if (snapFirst) "Subject & confidence" else "Subject", "What did you observe, and how sure are you?", FieldMindIcons.iconForCategory(category)) {
                     FieldTextField(subject, { subject = it }, "Subject", supportingText = "Example: Crow on wire")
                     if (!compact) {
                         Text("Category", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -721,7 +936,7 @@ private fun ObservationCaptureCard(viewModel: FieldMindViewModel, compact: Boole
                     ChoiceChips(confidenceOptions, confidence) { confidence = it }
                 }
 
-                CaptureStep("Facts", "Record only what you observed — keep guesses out.", FieldMindIcons.Edit) {
+                CaptureStep(if (snapFirst) "Facts after evidence" else "Facts", "Record only what you observed — keep guesses out.", FieldMindIcons.Edit) {
                     FactsInterpretationBanner()
                     FieldTextField(facts, { facts = it }, "Facts-only notes", minLines = if (compact) 3 else 5, supportingText = "Write only what you saw/heard/measured. Put guesses in a question or hypothesis.")
                     if (!compact) FieldTextField(fieldContext, { fieldContext = it }, "Mood / field context", supportingText = "Weather, light, surrounding activity, or constraints.")
@@ -756,7 +971,7 @@ private fun ObservationCaptureCard(viewModel: FieldMindViewModel, compact: Boole
                     FieldTextField(manualLocation, { manualLocation = it }, "Place / GPS note")
                 }
 
-                if (mediaEnabled) {
+                if (mediaEnabled && !snapFirst) {
                     CaptureStep("Evidence", "Back your observation with photos, files, or a voice note.", FieldMindIcons.Camera) {
                         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             OutlinedButton(onClick = { if (ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) { val uri = createFieldMindFileUri(context, "photo", ".jpg"); pendingPhotoUri = uri } else cameraPermission.launch(Manifest.permission.CAMERA) }, Modifier.weight(1f)) {
@@ -797,10 +1012,11 @@ private fun ObservationCaptureCard(viewModel: FieldMindViewModel, compact: Boole
                 }
 
                 Button(onClick = {
-                    if (subject.isBlank() || facts.isBlank()) scope.launch { snackbar.showSnackbar("Subject and factual notes are required.") } else viewModel.addObservation(subject, category, facts, confidence, manualLocation, tags, evidence, fieldContext, projectId, capturedLocation?.latitude, capturedLocation?.longitude, attachments) {
+                    if (subject.isBlank() || facts.isBlank()) scope.launch { snackbar.showSnackbar("Subject and factual notes are required.") } else { haptics.confirm(); viewModel.addObservation(subject, category, facts, confidence, manualLocation, tags, evidence, fieldContext, projectId, capturedLocation?.latitude, capturedLocation?.longitude, attachments) {
                         subject = ""; facts = ""; manualLocation = ""; tags = ""; evidence = ""; fieldContext = ""; attachments = emptyList(); capturedLocation = null
                         scope.launch { snackbar.showSnackbar("Observation saved to your archive.") }
                         onSaved()
+                    }
                     }
                 }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp)) {
                     Icon(icon = FieldMindIcons.Check, contentDescription = null, size = 18.dp); Spacer(Modifier.size(8.dp)); Text("Save observation")
@@ -927,7 +1143,8 @@ fun ProjectsScreen(viewModel: FieldMindViewModel, onOpenDetail: (String, Long) -
 
 @Composable
 private fun AddButton(label: String, onClick: () -> Unit) {
-    Button(onClick = onClick, Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp)) {
+    val haptics = rememberFieldMindHaptics()
+    Button(onClick = { haptics.light(); onClick() }, Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp)) {
         Icon(icon = FieldMindIcons.Add, contentDescription = null, size = 20.dp); Spacer(Modifier.size(8.dp)); Text(label)
     }
 }
@@ -1009,9 +1226,10 @@ fun KnowledgeLibraryScreen(
     startTab: Int = 0
 ) {
     val sources by viewModel.sources.collectAsState()
+    val notes by viewModel.notes.collectAsState()
     val flashcards by viewModel.flashcards.collectAsState()
     var tab by remember(startTab) { mutableIntStateOf(startTab) }
-    val tabs = listOf("Sources", "Reading", "Flashcards", "Learn")
+    val tabs = listOf("Sources", "Notes", "Reading", "Flashcards", "Learn")
     Column(Modifier.fillMaxSize()) {
         Column(Modifier.padding(20.dp, 20.dp, 20.dp, 8.dp)) {
             FieldScreenHeader("Library", "Sources, active reading, review cards, and skills.", icon = FieldMindIcons.Library)
@@ -1021,9 +1239,10 @@ fun KnowledgeLibraryScreen(
         }
         when (tab) {
             0 -> SourcePanel(viewModel, sources, onOpenDetail)
-            1 -> PaperReadingPanel(sources, onOpenDetail)
-            2 -> FlashcardPanel(viewModel, flashcards, onOpenDetail) { onNavigate(FieldMindScreen.Flashcards) }
-            3 -> LearnPanel(viewModel, onOpenReader)
+            1 -> NotePanel(notes, onOpenDetail)
+            2 -> PaperReadingPanel(sources, onOpenDetail)
+            3 -> FlashcardPanel(viewModel, flashcards, onOpenDetail) { onNavigate(FieldMindScreen.Flashcards) }
+            4 -> LearnPanel(viewModel, onOpenReader)
         }
     }
 }
@@ -1034,9 +1253,18 @@ private fun SourcePanel(viewModel: FieldMindViewModel, items: List<SourceEntity>
     LazyColumn(contentPadding = panelPadding(), verticalArrangement = Arrangement.spacedBy(14.dp)) {
         item { AddButton("Add source") { show = true } }
         if (items.isEmpty()) item { EmptyState("No sources yet", "Save articles, videos, PDFs, books, summaries, citations, and what each source taught you.", icon = FieldMindIcons.Source) }
-        items(items) { EntityCard(it.title, "source", body = it.whatThisSourceTaughtMe.ifBlank { it.personalSummary }, meta = listOf(it.type, it.author.ifBlank { "Unknown author" }, "reliability ${it.reliabilityScore}/5")) { onOpenDetail("source", it.id) } }
+        items(items) { EntityCard(it.title, "source", body = it.whatThisSourceTaughtMe.ifBlank { it.personalSummary }, meta = listOf(it.type, it.author.ifBlank { "Unknown author" }, it.readingStatus, it.importance, "reliability ${it.reliabilityScore}/5")) { onOpenDetail("source", it.id) } }
     }
     if (show) NewSourceDialog(viewModel) { show = false }
+}
+
+@Composable
+private fun NotePanel(items: List<NoteEntity>, onOpenDetail: (String, Long) -> Unit) {
+    LazyColumn(contentPadding = panelPadding(), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+        item { SectionHeader("Notes", "Free-form thinking, separate from facts-only observations.") }
+        if (items.isEmpty()) item { EmptyState("No notes yet", "Create one from Capture → Note.", icon = FieldMindIcons.Note) }
+        items(items) { EntityCard(it.title, "note", body = it.body.ifBlank { "No body yet." }, meta = listOf(it.category, recentRelativeTime(it.updatedAt), if (it.attachmentUris.isBlank()) "No attachments" else "Attachments")) { onOpenDetail("note", it.id) } }
+    }
 }
 
 @Composable
@@ -1106,24 +1334,215 @@ private fun LibraryFlashcard(card: FlashcardEntity, onOpenDetail: () -> Unit) {
     }
 }
 
+private data class ResearchMilestone(val title: String, val body: String, val icon: MaterialSymbolIcon, val resource: LearnResource)
+
+private val beginnerResearchMilestones = listOf(
+    ResearchMilestone("Observe carefully", "Separate facts from interpretation, then document time, place, context, and evidence.", FieldMindIcons.Observation, LearnResource("Understanding Science", "Guide", "https://undsci.berkeley.edu/", "Science starts with careful observation and honest uncertainty.")),
+    ResearchMilestone("Ask researchable questions", "Turn curiosity into a question you can observe, compare, measure, or verify.", FieldMindIcons.Question, LearnResource("Research as inquiry", "Framework", "https://www.ala.org/acrl/standards/ilframework", "Research grows from increasingly focused questions.")),
+    ResearchMilestone("Evaluate sources", "Use DOI/ISBN, venue, author, and evidence quality before trusting a claim.", FieldMindIcons.Source, LearnResource("Crossref REST API", "Reference", "https://www.production.crossref.org/documentation/retrieve-metadata/rest-api/", "Look up DOI metadata and verify bibliographic details.")),
+    ResearchMilestone("Plan a small investigation", "Define method, site, sample, bias controls, and safety before collecting data.", FieldMindIcons.Project, LearnResource("Framework for Science Education", "Guide", "https://nap.nationalacademies.org/resource/13165/interactive/", "Science practices include planning investigations and analyzing evidence.")),
+    ResearchMilestone("Collect usable data", "Record measurements, counts, checklists, and metadata consistently.", FieldMindIcons.Data, LearnResource("OpenIntro Statistics", "Book", "https://www.openintro.org/book/os/", "A free introduction to variation, sampling, and data summaries.")),
+    ResearchMilestone("Explain with evidence", "Write claim, evidence, reasoning, limits, and next questions without overstating certainty.", FieldMindIcons.Report, LearnResource("Purdue OWL citation resources", "Guide", "https://owl.purdue.edu/owl/research_and_citation/resources.html", "Guides for writing, citing, and communicating research."))
+)
+
 @Composable
 private fun LearnPanel(viewModel: FieldMindViewModel, onOpenReader: (String, String) -> Unit = { _, _ -> }) {
-    LazyColumn(contentPadding = panelPadding(), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-        item { SectionHeader("Guided paths", "Follow a sequence to learn a skill end to end. Resources open in-app.") }
-        items(GuidedPaths) { path -> GuidedPathCard(path, onOpenReader) }
-
-        item { SectionHeader("Learn", "Curated, offline-ready resources by topic. Tap a category to expand; resources open in-app.") }
+    val observations by viewModel.observations.collectAsState()
+    val questions by viewModel.questions.collectAsState()
+    val sources by viewModel.sources.collectAsState()
+    val projects by viewModel.projects.collectAsState()
+    val reports by viewModel.reports.collectAsState()
+    val signals = remember(observations, questions, sources, projects) {
+        buildList {
+            observations.take(8).forEach { add(it.category); add(it.tags); add(it.subject) }
+            questions.take(6).forEach { add(it.category); add(it.questionText) }
+            sources.take(6).forEach { add(it.type); add(it.title); add(it.publisherOrJournal) }
+            projects.take(4).forEach { add(it.topicType); add(it.title) }
+        }.joinToString(" ")
+    }
+    val next = remember(observations.size, questions.size, sources.size, projects.size, reports.size) {
+        when {
+            observations.isEmpty() -> beginnerResearchMilestones[0]
+            questions.isEmpty() -> beginnerResearchMilestones[1]
+            sources.isEmpty() -> beginnerResearchMilestones[2]
+            projects.isEmpty() -> beginnerResearchMilestones[3]
+            reports.isEmpty() -> beginnerResearchMilestones[5]
+            else -> beginnerResearchMilestones[4]
+        }
+    }
+    LazyColumn(contentPadding = panelPadding(), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        item { ResearchJourneyHero(next, signals, onOpenReader) }
+        item { SectionHeader("Beginner researcher path", "A guided path from observation to evidence-based communication.") }
+        items(beginnerResearchMilestones) { milestone -> ResearchMilestoneCard(milestone, onOpenReader) }
+        item { SectionHeader("Based on your activity", if (signals.isBlank()) "Start capturing to personalize this section" else "Recent topics shape these suggestions") }
+        if (signals.isBlank()) {
+            item { EntityCard("Start with one observation", "observation", body = "Capture one facts-only observation, then return here for a tailored next step.") }
+        } else {
+            items(recommendedResources(listOf(signals))) { rec -> EntityCard(rec.resource.title, "learn", body = rec.resource.why, meta = listOf(rec.resource.kind, rec.path)) { onOpenReader(rec.resource.url, rec.resource.title) } }
+        }
+        item { SectionHeader("Curated reference library", "Expand when you want deeper subject-specific learning.") }
         items(LearnLibrary) { category -> LearnCategoryCard(category) { res -> onOpenReader(res.url, res.title) } }
-
-        item { SectionHeader("Ask Gemini for papers & books", "Optional online suggestions tailored to your topic.") }
+        item { SectionHeader("Optional online discovery", "Use verified metadata sources; never trust generated citations without checking.") }
         item { AssistantPanel(viewModel) }
-
         item { OnlineApiProposalCard() }
+    }
+}
 
-        item { SectionHeader("Skill tree", "Practice these as you run your own projects.") }
-        learningModules.forEach { (level, modules) ->
-            item { Text(level, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 4.dp)) }
-            items(modules) { module -> EntityCard(module, "learn", body = learningModuleBody(module), meta = listOf(level)) }
+
+@Composable
+private fun LearnCategoryCard(category: LearnCategory, onOpenResource: (LearnResource) -> Unit) {
+    var expanded by rememberSaveable(category.name) { mutableStateOf(false) }
+    val accent = FieldMindTheme.colors.accentFor(category.name)
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .animateContentSize(),
+        shape = RoundedCornerShape(26.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(18.dp))
+                    .clickable { expanded = !expanded }
+                    .padding(vertical = 2.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Box(
+                    Modifier
+                        .size(44.dp)
+                        .background(accent.copy(alpha = if (FieldMindTheme.colors.isDark) 0.22f else 0.14f), RoundedCornerShape(14.dp)),
+                    contentAlignment = Alignment.Center
+                ) { Icon(icon = FieldMindIcons.School, contentDescription = null, tint = accent, size = 24.dp) }
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text(category.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                    Text(category.description, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = if (expanded) 4 else 2, overflow = TextOverflow.Ellipsis)
+                }
+                Icon(icon = if (expanded) FieldMindIcons.Up else FieldMindIcons.Down, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, size = 20.dp)
+            }
+
+            AnimatedVisibility(expanded) {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    category.topics.forEach { topic ->
+                        Surface(
+                            shape = RoundedCornerShape(20.dp),
+                            color = MaterialTheme.colorScheme.surfaceContainerHigh
+                        ) {
+                            Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                                Text(topic.name, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+                                Text(topic.summary, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                topic.resources.forEach { resource ->
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .clip(RoundedCornerShape(14.dp))
+                                            .clickable { onOpenResource(resource) }
+                                            .padding(10.dp),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                                    ) {
+                                        Icon(icon = learnKindIcon(resource.kind), contentDescription = null, tint = accent, size = 18.dp)
+                                        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                                            Text(resource.title, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                                            Text(resource.why, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                                        }
+                                        Icon(icon = FieldMindIcons.OpenLink, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, size = 16.dp)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun OnlineApiProposalCard() {
+    var expanded by rememberSaveable { mutableStateOf(false) }
+    Card(
+        modifier = Modifier.fillMaxWidth().animateContentSize(),
+        shape = RoundedCornerShape(26.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(18.dp))
+                    .clickable { expanded = !expanded },
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Box(Modifier.size(44.dp).background(MaterialTheme.colorScheme.secondaryContainer, RoundedCornerShape(14.dp)), contentAlignment = Alignment.Center) {
+                    Icon(icon = FieldMindIcons.Source, contentDescription = null, tint = MaterialTheme.colorScheme.onSecondaryContainer, size = 23.dp)
+                }
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text("Verified discovery sources", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                    Text("Metadata APIs for DOI, ISBN, papers, books, biodiversity, and field context.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                Icon(icon = if (expanded) FieldMindIcons.Up else FieldMindIcons.Down, contentDescription = null, size = 20.dp)
+            }
+            AnimatedVisibility(expanded) {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    SuggestedOnlineApis.forEach { api ->
+                        EntityCard(
+                            title = api.name,
+                            kind = "source",
+                            body = api.notes,
+                            meta = listOf(api.baseUrl)
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+private fun learnKindIcon(kind: String): MaterialSymbolIcon = when (kind.trim().lowercase()) {
+    "article", "paper" -> FieldMindIcons.Article
+    "book" -> FieldMindIcons.Book
+    "course", "lesson" -> FieldMindIcons.School
+    "tool" -> FieldMindIcons.Bolt
+    "video" -> FieldMindIcons.Play
+    "dataset", "data" -> FieldMindIcons.Data
+    else -> FieldMindIcons.Source
+}
+
+@Composable
+private fun ResearchJourneyHero(next: ResearchMilestone, signals: String, onOpenReader: (String, String) -> Unit) {
+    Card(shape = RoundedCornerShape(30.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp), modifier = Modifier.fillMaxWidth().animateContentSize()) {
+        Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+            Row(horizontalArrangement = Arrangement.spacedBy(14.dp), verticalAlignment = Alignment.CenterVertically) {
+                Box(Modifier.size(56.dp).clip(RoundedCornerShape(18.dp)).background(MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.12f)), contentAlignment = Alignment.Center) { Icon(next.icon, null, tint = MaterialTheme.colorScheme.onPrimaryContainer, size = 30.dp) }
+                Column(Modifier.weight(1f)) {
+                    Text("Recommended next step", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.76f), fontWeight = FontWeight.SemiBold)
+                    Text(next.title, style = MaterialTheme.typography.headlineSmall, color = MaterialTheme.colorScheme.onPrimaryContainer, fontWeight = FontWeight.Bold)
+                }
+            }
+            Text(next.body, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.82f))
+            if (signals.isNotBlank()) InfoChip("Personalized from recent activity", icon = FieldMindIcons.Sparkle, color = MaterialTheme.colorScheme.onPrimaryContainer)
+            Button(onClick = { onOpenReader(next.resource.url, next.resource.title) }, shape = RoundedCornerShape(16.dp)) { Text("Open starter resource") }
+        }
+    }
+}
+
+@Composable
+private fun ResearchMilestoneCard(milestone: ResearchMilestone, onOpenReader: (String, String) -> Unit) {
+    var expanded by remember { mutableStateOf(false) }
+    EntityCard(milestone.title, "learn", body = milestone.body, meta = listOf(milestone.resource.kind), onClick = { expanded = !expanded })
+    AnimatedVisibility(expanded) {
+        Card(shape = RoundedCornerShape(20.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)) {
+            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Text(milestone.resource.title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+                Text(milestone.resource.why, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                TextButton(onClick = { onOpenReader(milestone.resource.url, milestone.resource.title) }, contentPadding = PaddingValues(0.dp)) { Text("Open resource"); Spacer(Modifier.size(4.dp)); Icon(FieldMindIcons.Forward, null, size = 18.dp) }
+            }
         }
     }
 }
@@ -1181,12 +1600,21 @@ private fun GuidedPathCard(path: GuidedPath, onOpenReader: (String, String) -> U
 fun LearnReaderScreen(url: String, title: String, onBack: () -> Unit) {
     val uriHandler = LocalUriHandler.current
     var loading by remember(url) { mutableStateOf(true) }
+    var errorMessage by remember(url) { mutableStateOf<String?>(null) }
+    var retryKey by remember(url) { mutableIntStateOf(0) }
     var webView by remember { mutableStateOf<WebView?>(null) }
+    val background = MaterialTheme.colorScheme.background
+    LaunchedEffect(url, retryKey) {
+        loading = true
+        errorMessage = null
+        kotlinx.coroutines.delay(10_000)
+        if (loading) errorMessage = "Still loading. This page may block embedded readers."
+    }
     BackHandler(enabled = true) {
         val wv = webView
         if (wv != null && wv.canGoBack()) wv.goBack() else onBack()
     }
-    Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
+    Column(Modifier.fillMaxSize().background(background)) {
         Row(
             Modifier.fillMaxWidth().padding(start = 8.dp, end = 8.dp, top = 8.dp, bottom = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
@@ -1197,107 +1625,48 @@ fun LearnReaderScreen(url: String, title: String, onBack: () -> Unit) {
             IconButton(onClick = { runCatching { uriHandler.openUri(url) } }) { Icon(icon = FieldMindIcons.OpenLink, contentDescription = "Open in browser", size = 22.dp) }
         }
         if (loading) LinearProgressIndicator(Modifier.fillMaxWidth())
-        AndroidView(
-            modifier = Modifier.fillMaxSize(),
-            factory = { ctx ->
-                WebView(ctx).apply {
-                    webViewClient = object : WebViewClient() {
-                        override fun onPageFinished(view: WebView?, finishedUrl: String?) { loading = false }
-                    }
-                    settings.javaScriptEnabled = true
-                    settings.domStorageEnabled = true
-                    settings.loadWithOverviewMode = true
-                    settings.useWideViewPort = true
-                    loadUrl(url)
-                    webView = this
-                }
-            }
-        )
-    }
-}
-
-@Composable
-private fun LearnCategoryCard(category: LearnCategory, onOpenResource: (LearnResource) -> Unit) {
-    var expanded by remember { mutableStateOf(false) }
-    val accent = FieldMindTheme.colors.accentFor("learn")
-    Card(
-        modifier = Modifier.fillMaxWidth().animateContentSize().clickable { expanded = !expanded },
-        shape = RoundedCornerShape(22.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-    ) {
-        Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                Box(Modifier.size(40.dp).clip(RoundedCornerShape(13.dp)).background(accent.copy(alpha = if (FieldMindTheme.colors.isDark) 0.22f else 0.14f)), contentAlignment = Alignment.Center) {
-                    Icon(icon = FieldMindIcons.iconForCategory(category.name), contentDescription = null, tint = accent, size = 22.dp)
-                }
-                Column(Modifier.weight(1f)) {
-                    Text(category.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                    Text(category.description, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-                Icon(icon = if (expanded) FieldMindIcons.Up else FieldMindIcons.Down, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, size = 22.dp)
-            }
-            if (expanded) {
-                category.topics.forEach { topic ->
-                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
-                    Text(topic.name, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
-                    Text(topic.summary, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    topic.resources.forEach { res ->
-                        Row(
-                            Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).clickable { onOpenResource(res) }.background(MaterialTheme.colorScheme.surfaceContainerHigh).padding(12.dp),
-                            verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)
-                        ) {
-                            Box(Modifier.size(30.dp).clip(RoundedCornerShape(9.dp)).background(accent.copy(alpha = 0.16f)), contentAlignment = Alignment.Center) {
-                                Icon(icon = learnKindIcon(res.kind), contentDescription = null, tint = accent, size = 16.dp)
+        Box(Modifier.fillMaxSize()) {
+            AndroidView(
+                modifier = Modifier.fillMaxSize(),
+                factory = { ctx ->
+                    WebView(ctx).apply {
+                        setBackgroundColor(android.graphics.Color.TRANSPARENT)
+                        webViewClient = object : WebViewClient() {
+                            override fun onPageStarted(view: WebView?, startedUrl: String?, favicon: android.graphics.Bitmap?) {
+                                loading = true
+                                errorMessage = null
                             }
-                            Column(Modifier.weight(1f)) {
-                                Text(res.title, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
-                                Text("${res.kind} · ${res.why}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                            override fun onPageFinished(view: WebView?, finishedUrl: String?) { loading = false }
+                            override fun onReceivedError(view: WebView?, request: WebResourceRequest?, error: WebResourceError?) {
+                                if (request?.isForMainFrame != false) {
+                                    loading = false
+                                    errorMessage = error?.description?.toString() ?: "Could not load this page inside FieldMind."
+                                }
                             }
-                            Icon(icon = FieldMindIcons.Book, contentDescription = "Read in app", tint = MaterialTheme.colorScheme.onSurfaceVariant, size = 18.dp)
                         }
+                        settings.javaScriptEnabled = true
+                        settings.domStorageEnabled = true
+                        settings.loadWithOverviewMode = true
+                        settings.useWideViewPort = true
+                        loadUrl(url)
+                        webView = this
                     }
-                }
-            } else {
-                Text("${category.topics.size} topics · ${category.topics.sumOf { it.resources.size }} resources", style = MaterialTheme.typography.labelMedium, color = accent)
-            }
-        }
-    }
-}
-
-private fun learnKindIcon(kind: String): MaterialSymbolIcon = when (kind.lowercase()) {
-    "book" -> FieldMindIcons.Book
-    "paper" -> FieldMindIcons.Article
-    "course", "video" -> FieldMindIcons.Play
-    "tool" -> FieldMindIcons.Bolt
-    "dataset" -> FieldMindIcons.Trend
-    else -> FieldMindIcons.Article
-}
-
-@Composable
-private fun OnlineApiProposalCard() {
-    var expanded by remember { mutableStateOf(false) }
-    val uriHandler = LocalUriHandler.current
-    Card(
-        modifier = Modifier.fillMaxWidth().animateContentSize().clickable { expanded = !expanded },
-        shape = RoundedCornerShape(22.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-    ) {
-        Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                Icon(icon = FieldMindIcons.Download, contentDescription = null, tint = MaterialTheme.colorScheme.primary, size = 20.dp)
-                Column(Modifier.weight(1f)) {
-                    Text("Free APIs for live fetching", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
-                    Text("Proposal: power in-app paper/book search without an API key.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-                Icon(icon = if (expanded) FieldMindIcons.Up else FieldMindIcons.Down, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, size = 22.dp)
-            }
-            if (expanded) {
-                SuggestedOnlineApis.forEach { api ->
-                    Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).clickable { runCatching { uriHandler.openUri(api.baseUrl.substringBefore("?").ifBlank { api.baseUrl }) } }.background(MaterialTheme.colorScheme.surfaceContainerHigh).padding(12.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                        Text(api.name, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
-                        Text(api.notes, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                },
+                update = { if (it.url != url) it.loadUrl(url) }
+            )
+            errorMessage?.let { message ->
+                Card(Modifier.align(Alignment.TopCenter).padding(20.dp), shape = RoundedCornerShape(24.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh)) {
+                    Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
+                            Icon(FieldMindIcons.Info, null, tint = MaterialTheme.colorScheme.primary, size = 22.dp)
+                            Text("Reader fallback", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                        }
+                        Text(message, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(url, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            FilledTonalButton(onClick = { retryKey++; webView?.reload() }, shape = RoundedCornerShape(14.dp)) { Text("Retry") }
+                            Button(onClick = { runCatching { uriHandler.openUri(url) } }, shape = RoundedCornerShape(14.dp)) { Text("Open browser") }
+                        }
                     }
                 }
             }
@@ -1312,6 +1681,7 @@ private fun OnlineApiProposalCard() {
 @Composable
 fun ArchiveScreen(viewModel: FieldMindViewModel, onOpenDetail: (String, Long) -> Unit = { _, _ -> }) {
     val observations by viewModel.observations.collectAsState()
+    val notes by viewModel.notes.collectAsState()
     val questions by viewModel.questions.collectAsState()
     val projects by viewModel.projects.collectAsState()
     val sources by viewModel.sources.collectAsState()
@@ -1326,9 +1696,10 @@ fun ArchiveScreen(viewModel: FieldMindViewModel, onOpenDetail: (String, Long) ->
         val q = query.trim().lowercase()
         fun matches(vararg parts: String) = q.isBlank() || parts.any { it.lowercase().contains(q) }
         items(observations.filter { matches(it.subject, it.category, it.factsOnlyNotes, it.manualLocation, it.tags) }) { EntityCard(it.subject, "observation", body = it.factsOnlyNotes.take(120), confidence = it.confidenceLevel, meta = listOf(it.category)) { onOpenDetail("observation", it.id) } }
+        items(notes.filter { matches(it.title, it.body, it.category, it.tags) }) { EntityCard(it.title, "note", body = it.body.take(120), meta = listOf(it.category, recentRelativeTime(it.updatedAt))) { onOpenDetail("note", it.id) } }
         items(questions.filter { matches(it.questionText, it.category, it.status) }) { EntityCard(it.questionText, "question", meta = listOf(it.status)) { onOpenDetail("question", it.id) } }
         items(projects.filter { matches(it.title, it.topicType, it.objective, it.researchQuestion) }) { EntityCard(it.title, "project", body = it.objective, meta = listOf(it.topicType)) { onOpenDetail("project", it.id) } }
-        items(sources.filter { matches(it.title, it.author, it.type, it.personalSummary) }) { EntityCard(it.title, "source", body = it.whatThisSourceTaughtMe, meta = listOf(it.type)) { onOpenDetail("source", it.id) } }
+        items(sources.filter { matches(it.title, it.author, it.type, it.dateOrYear, it.link, it.doiOrIsbn, it.publisherOrJournal, it.accessDate, it.fileUri, it.citationStyleNote, it.importance, it.readingStatus, it.personalSummary, it.keyFindings, it.questionsGenerated, it.paperNotes) }) { EntityCard(it.title, "source", body = it.whatThisSourceTaughtMe, meta = listOf(it.type)) { onOpenDetail("source", it.id) } }
         items(reports.filter { matches(it.title, it.type, it.question, it.conclusion) }) { EntityCard(it.title, "report", body = it.conclusion, meta = listOf(it.type)) { onOpenDetail("report", it.id) } }
         items(flashcards.filter { matches(it.front, it.back, it.type) }) { EntityCard(it.front, "flashcard", body = it.back, meta = listOf(it.type)) { onOpenDetail("flashcard", it.id) } }
     }
@@ -1344,6 +1715,7 @@ fun BackupExportScreen(viewModel: FieldMindViewModel) {
     val scope = rememberCoroutineScope()
     val snackbar = remember { SnackbarHostState() }
     val observations by viewModel.observations.collectAsState()
+    val notes by viewModel.notes.collectAsState()
     val questions by viewModel.questions.collectAsState()
     val hypotheses by viewModel.hypotheses.collectAsState()
     val projects by viewModel.projects.collectAsState()
@@ -1362,7 +1734,10 @@ fun BackupExportScreen(viewModel: FieldMindViewModel) {
             item { EntityCard("Attachment mode", "data", body = "$attachmentMode. Choose a different default in Settings.") }
             item { ExportRow("Observations CSV", FieldMindIcons.Observation) { pendingText = FieldMindExport.observationsCsv(observations); createDoc.launch("fieldmind-observations.csv") } }
             item { ExportRow("Data CSV", FieldMindIcons.Data) { pendingText = FieldMindExport.dataCsv(data); createDoc.launch("fieldmind-data.csv") } }
-            item { ExportRow("Archive JSON", FieldMindIcons.Archive) { pendingText = FieldMindExport.archiveJson(observations, questions, hypotheses, projects, sources, data, reports, flashcards); createDoc.launch("fieldmind-archive.json") } }
+            item { ExportRow("Sources CSV", FieldMindIcons.Source) { pendingText = FieldMindExport.sourcesCsv(sources); createDoc.launch("fieldmind-sources.csv") } }
+            item { ExportRow("PDF-ready HTML", FieldMindIcons.Article) { pendingText = FieldMindExport.pdfReadyHtml(projects, observations, sources, reports); createDoc.launch("fieldmind-print-export.html") } }
+            item { ExportRow("Dashboard SVG", FieldMindIcons.Graph) { pendingText = FieldMindExport.dashboardSvg(observations, sources, projects, notes); createDoc.launch("fieldmind-dashboard.svg") } }
+            item { ExportRow("Archive JSON", FieldMindIcons.Archive) { pendingText = FieldMindExport.archiveJson(observations, notes, questions, hypotheses, projects, sources, data, reports, flashcards); createDoc.launch("fieldmind-archive.json") } }
             item { ExportRow("Reports Markdown", FieldMindIcons.Report) { pendingText = reports.joinToString("\n\n---\n\n") { FieldMindExport.buildMarkdownReport(it) }; createDoc.launch("fieldmind-reports.md") } }
         }
     }
@@ -1481,6 +1856,7 @@ fun FieldMindSettingsScreen(viewModel: FieldMindViewModel? = null, onBack: () ->
 private fun SettingsExportSection(viewModel: FieldMindViewModel) {
     val context = LocalContext.current
     val observations by viewModel.observations.collectAsState()
+    val notes by viewModel.notes.collectAsState()
     val questions by viewModel.questions.collectAsState()
     val hypotheses by viewModel.hypotheses.collectAsState()
     val projects by viewModel.projects.collectAsState()
@@ -1498,7 +1874,10 @@ private fun SettingsExportSection(viewModel: FieldMindViewModel) {
         Column(Modifier.padding(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             ExportRow("Observations CSV", FieldMindIcons.Observation) { pendingText = FieldMindExport.observationsCsv(observations); createDoc.launch("fieldmind-observations.csv") }
             ExportRow("Data CSV", FieldMindIcons.Data) { pendingText = FieldMindExport.dataCsv(data); createDoc.launch("fieldmind-data.csv") }
-            ExportRow("Archive JSON", FieldMindIcons.Archive) { pendingText = FieldMindExport.archiveJson(observations, questions, hypotheses, projects, sources, data, reports, flashcards); createDoc.launch("fieldmind-archive.json") }
+            ExportRow("Sources CSV", FieldMindIcons.Source) { pendingText = FieldMindExport.sourcesCsv(sources); createDoc.launch("fieldmind-sources.csv") }
+            ExportRow("PDF-ready HTML", FieldMindIcons.Article) { pendingText = FieldMindExport.pdfReadyHtml(projects, observations, sources, reports); createDoc.launch("fieldmind-print-export.html") }
+            ExportRow("Dashboard SVG", FieldMindIcons.Graph) { pendingText = FieldMindExport.dashboardSvg(observations, sources, projects, notes); createDoc.launch("fieldmind-dashboard.svg") }
+            ExportRow("Archive JSON", FieldMindIcons.Archive) { pendingText = FieldMindExport.archiveJson(observations, notes, questions, hypotheses, projects, sources, data, reports, flashcards); createDoc.launch("fieldmind-archive.json") }
             ExportRow("Reports Markdown", FieldMindIcons.Report) { pendingText = reports.joinToString("\n\n---\n\n") { FieldMindExport.buildMarkdownReport(it) }; createDoc.launch("fieldmind-reports.md") }
         }
     }
@@ -1542,6 +1921,7 @@ private fun CreditRow(title: String, subtitle: String, url: String, uriHandler: 
 @Composable
 fun DetailScreen(kind: String, id: Long, viewModel: FieldMindViewModel, onBack: () -> Unit, onOpenDetail: (String, Long) -> Unit = { _, _ -> }) {
     val observations by viewModel.observations.collectAsState()
+    val notes by viewModel.notes.collectAsState()
     val questions by viewModel.questions.collectAsState()
     val hypotheses by viewModel.hypotheses.collectAsState()
     val projects by viewModel.projects.collectAsState()
@@ -1552,11 +1932,18 @@ fun DetailScreen(kind: String, id: Long, viewModel: FieldMindViewModel, onBack: 
     val title = kind.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
     var showEdit by remember(kind, id) { mutableStateOf(false) }
     var showDelete by remember(kind, id) { mutableStateOf(false) }
-    val editable = kind in setOf("observation", "question", "hypothesis", "project", "source", "data", "report", "flashcard")
+    val editable = kind in setOf("observation", "note", "question", "hypothesis", "project", "source", "data", "report", "flashcard")
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(20.dp, 20.dp, 20.dp, 40.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
         item { FieldScreenHeader(title, "Record detail workspace", icon = FieldMindIcons.iconFor(kind), actionIcon = FieldMindIcons.Back, onAction = onBack) }
         if (editable) item { DetailActions(onEdit = { showEdit = true }, onDelete = { showDelete = true }) }
         when (kind) {
+            "note" -> notes.firstOrNull { it.id == id }?.let { n ->
+                item { DetailBody(n.title, "note", listOf("Category" to n.category, "Tags" to n.tags, "Body" to n.body, "Attachments" to n.attachmentUris, "Updated" to recentRelativeTime(n.updatedAt))) }
+                item { BacklinksPanel(buildList {
+                    projects.firstOrNull { it.id == n.projectId }?.let { add(Triple("project", it.title, it.id)) }
+                    sources.firstOrNull { it.id == n.sourceId }?.let { add(Triple("source", it.title, it.id)) }
+                }, onOpenDetail) }
+            }
             "observation" -> observations.firstOrNull { it.id == id }?.let { o ->
                 item { DetailBody(o.subject, "observation", listOf("Date" to "${o.date} ${o.time}", "Category" to o.category, "Confidence" to o.confidenceLevel, "Location" to o.manualLocation.ifBlank { "None" }, "GPS" to (o.latitude?.let { "${o.latitude}, ${o.longitude}" } ?: "Not captured"), "Tags" to o.tags, "Facts" to o.factsOnlyNotes, "Evidence" to o.evidenceSummary, "Context" to o.moodOrContext)) }
                 if (o.latitude != null && o.longitude != null) item { ObservationLocationCard(o.latitude, o.longitude, o.manualLocation) }
@@ -1591,7 +1978,8 @@ fun DetailScreen(kind: String, id: Long, viewModel: FieldMindViewModel, onBack: 
                 }, onOpenDetail) }
             }
             "source" -> sources.firstOrNull { it.id == id }?.let { s ->
-                item { DetailBody(s.title, "source", listOf("Type" to s.type, "Author" to s.author, "Year" to s.dateOrYear, "Link" to s.link, "Main idea" to s.personalSummary, "Key findings" to s.keyFindings, "Taught me" to s.whatThisSourceTaughtMe, "Paper prompts" to s.paperNotes, "Questions" to s.questionsGenerated)) }
+                item { DetailBody(s.title, "source", listOf("Type" to s.type, "Author" to s.author, "Year" to s.dateOrYear, "DOI / ISBN" to s.doiOrIsbn, "Publisher / journal" to s.publisherOrJournal, "Link" to s.link, "Access date" to s.accessDate, "File" to s.fileUri, "Citation note" to s.citationStyleNote, "Importance" to s.importance, "Reading status" to s.readingStatus, "Project" to (projects.firstOrNull { it.id == s.relatedProjectId }?.title ?: "None"), "Main idea" to s.personalSummary, "Key findings" to s.keyFindings, "Taught me" to s.whatThisSourceTaughtMe, "Paper prompts" to s.paperNotes, "Questions" to s.questionsGenerated)) }
+                item { SourceActionPanel(s, projects, viewModel, onOpenDetail) }
                 item { BacklinksPanel(buildList {
                     projects.firstOrNull { it.id == s.relatedProjectId }?.let { add(Triple("project", it.title, it.id)) }
                     flashcards.filter { it.sourceId == s.id }.forEach { add(Triple("flashcard", it.front, it.id)) }
@@ -1626,12 +2014,13 @@ fun DetailScreen(kind: String, id: Long, viewModel: FieldMindViewModel, onBack: 
 
 @Composable
 private fun DetailActions(onEdit: () -> Unit, onDelete: () -> Unit) {
+    val haptics = rememberFieldMindHaptics()
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-        FilledTonalButton(onClick = onEdit, modifier = Modifier.weight(1f), shape = RoundedCornerShape(16.dp)) {
+        FilledTonalButton(onClick = { haptics.light(); onEdit() }, modifier = Modifier.weight(1f), shape = RoundedCornerShape(16.dp)) {
             Icon(icon = FieldMindIcons.Edit, contentDescription = null, size = 18.dp); Spacer(Modifier.size(8.dp)); Text("Edit")
         }
         OutlinedButton(
-            onClick = onDelete,
+            onClick = { haptics.light(); onDelete() },
             modifier = Modifier.weight(1f),
             shape = RoundedCornerShape(16.dp),
             colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error)
@@ -1642,6 +2031,71 @@ private fun DetailActions(onEdit: () -> Unit, onDelete: () -> Unit) {
 }
 
 /** Inline answer editor on a question detail screen. */
+@Composable
+private fun SourceActionPanel(source: SourceEntity, projects: List<ProjectEntity>, viewModel: FieldMindViewModel, onOpenDetail: (String, Long) -> Unit) {
+    val uriHandler = LocalUriHandler.current
+    val context = LocalContext.current
+    val clipboard = LocalClipboardManager.current
+    val haptics = rememberFieldMindHaptics()
+    var showProjects by remember { mutableStateOf(false) }
+    val citation = remember(source) { viewModel.buildSourceCitation(source) }
+    Card(shape = RoundedCornerShape(24.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)) {
+        Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+            SectionHeader("Source actions", "Open, cite, prioritize, and turn reading into review cards.")
+            SourcePreviewCard(source.link, source.fileUri)
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                FilledTonalButton(onClick = { haptics.light(); runCatching { uriHandler.openUri(source.link) } }, enabled = source.link.isNotBlank(), modifier = Modifier.weight(1f), shape = RoundedCornerShape(14.dp)) {
+                    Icon(FieldMindIcons.OpenLink, null, size = 18.dp); Spacer(Modifier.size(6.dp)); Text("Open link")
+                }
+                FilledTonalButton(onClick = {
+                    haptics.light()
+                    runCatching {
+                        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(source.fileUri)).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION))
+                    }
+                }, enabled = source.fileUri.isNotBlank(), modifier = Modifier.weight(1f), shape = RoundedCornerShape(14.dp)) {
+                    Icon(FieldMindIcons.File, null, size = 18.dp); Spacer(Modifier.size(6.dp)); Text("Open file")
+                }
+            }
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedButton(onClick = { haptics.light(); clipboard.setText(AnnotatedString(citation)) }, modifier = Modifier.weight(1f), shape = RoundedCornerShape(14.dp)) {
+                    Icon(FieldMindIcons.Article, null, size = 18.dp); Spacer(Modifier.size(6.dp)); Text("Copy citation")
+                }
+                OutlinedButton(onClick = { haptics.confirm(); viewModel.toggleSourceImportant(source) }, modifier = Modifier.weight(1f), shape = RoundedCornerShape(14.dp)) {
+                    Icon(FieldMindIcons.Favorite, null, size = 18.dp); Spacer(Modifier.size(6.dp)); Text(if (source.importance == "Normal") "Important" else "Normal")
+                }
+            }
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedButton(onClick = { haptics.confirm(); viewModel.markSourceRead(source) }, modifier = Modifier.weight(1f), shape = RoundedCornerShape(14.dp), enabled = source.readingStatus != "Read") {
+                    Icon(FieldMindIcons.Done, null, size = 18.dp); Spacer(Modifier.size(6.dp)); Text("Mark read")
+                }
+                OutlinedButton(onClick = {
+                    haptics.confirm()
+                    if (source.title.isNotBlank() && source.whatThisSourceTaughtMe.isNotBlank()) viewModel.addFlashcard(source.title, source.whatThisSourceTaughtMe, "source-takeaway", source.id, source.relatedProjectId)
+                    if (source.keyFindings.isNotBlank()) viewModel.addFlashcard("Key finding from ${source.title}", source.keyFindings, "source-finding", source.id, source.relatedProjectId)
+                    if (source.questionsGenerated.isNotBlank()) viewModel.addFlashcard("Question from ${source.title}", source.questionsGenerated, "source-question", source.id, source.relatedProjectId)
+                }, modifier = Modifier.weight(1f), shape = RoundedCornerShape(14.dp)) {
+                    Icon(FieldMindIcons.Flashcard, null, size = 18.dp); Spacer(Modifier.size(6.dp)); Text("Cards")
+                }
+            }
+            TextButton(onClick = { haptics.light(); showProjects = !showProjects }) {
+                Icon(FieldMindIcons.Project, null, size = 18.dp); Spacer(Modifier.size(6.dp)); Text("Link to project")
+            }
+            AnimatedVisibility(showProjects) {
+                ChoiceChips(listOf("No project") + projects.map { it.title }, projects.firstOrNull { it.id == source.relatedProjectId }?.title ?: "No project") { selected ->
+                    haptics.confirm()
+                    viewModel.linkSourceToProject(source, projects.firstOrNull { it.title == selected }?.id)
+                    showProjects = false
+                }
+            }
+            if (source.relatedProjectId != null) {
+                projects.firstOrNull { it.id == source.relatedProjectId }?.let { project ->
+                    EntityCard(project.title, "project", body = project.objective.ifBlank { project.researchQuestion }, meta = listOf("Linked project")) { onOpenDetail("project", project.id) }
+                }
+            }
+        }
+    }
+}
+
 @Composable
 private fun QuestionAnswerCard(question: QuestionEntity, onSave: (String) -> Unit) {
     var editing by remember(question.id, question.answer) { mutableStateOf(question.answer.isBlank()) }
@@ -1670,12 +2124,13 @@ private fun QuestionAnswerCard(question: QuestionEntity, onSave: (String) -> Uni
 
 @Composable
 private fun ConfirmDeleteDialog(kind: String, onDismiss: () -> Unit, onConfirm: () -> Unit) {
+    val haptics = rememberFieldMindHaptics()
     AlertDialog(
         onDismissRequest = onDismiss,
         icon = { Icon(icon = FieldMindIcons.Delete, contentDescription = null, tint = MaterialTheme.colorScheme.error) },
         title = { Text("Delete $kind?") },
         text = { Text("This removes the $kind from your active records. This can't be undone from the app.") },
-        confirmButton = { Button(onClick = onConfirm, colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)) { Text("Delete") } },
+        confirmButton = { Button(onClick = { haptics.confirm(); onConfirm() }, colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)) { Text("Delete") } },
         dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } }
     )
 }
@@ -1683,6 +2138,7 @@ private fun ConfirmDeleteDialog(kind: String, onDismiss: () -> Unit, onConfirm: 
 private fun deleteEntityByKind(kind: String, id: Long, viewModel: FieldMindViewModel) {
     when (kind) {
         "observation" -> viewModel.deleteObservation(id)
+        "note" -> viewModel.deleteNote(id)
         "question" -> viewModel.deleteQuestion(id)
         "hypothesis" -> viewModel.deleteHypothesis(id)
         "project" -> viewModel.deleteProject(id)
@@ -1941,21 +2397,191 @@ private fun NewQuestionDialog(viewModel: FieldMindViewModel, onDismiss: () -> Un
 @Composable
 private fun NewProjectDialog(viewModel: FieldMindViewModel, onDismiss: () -> Unit) {
     var title by remember { mutableStateOf("") }; var topic by remember { mutableStateOf("Biology") }; var objective by remember { mutableStateOf("") }; var question by remember { mutableStateOf("") }
-    FormDialog("New Project", onDismiss, { if (title.isNotBlank()) { viewModel.addProject(title, topic, objective, question); onDismiss() } }) {
-        FieldTextField(title, { title = it }, "Project title")
-        FormChoice("Topic / category", listOf("Biology", "Geology", "Wildlife", "Ecology", "Plant Study", "Weather", "Human Pattern", "Other"), topic) { topic = it }
-        FieldTextField(objective, { objective = it }, "Objective", minLines = 2); FieldTextField(question, { question = it }, "Research question", minLines = 2)
+    var methods by remember { mutableStateOf("") }; var nextAction by remember { mutableStateOf("") }
+    FormDialog("New Project", onDismiss, { if (title.isNotBlank()) { viewModel.addProject(title, topic, objective, question, methods, nextAction); onDismiss() } }) {
+        SourceFormHero("Build a project workspace", "Define the question, evidence plan, and next action before collecting more data.")
+        CaptureStep("Topic & title", "Name the project and choose the broad research area.", FieldMindIcons.Project) {
+            FieldTextField(title, { title = it }, "Project title")
+            ChoiceChips(listOf("Biology", "Geology", "Wildlife", "Ecology", "Plant Study", "Weather", "Human Pattern", "Other"), topic) { topic = it }
+        }
+        CaptureStep("Research purpose", "Write a concrete objective and a question that can guide observations.", FieldMindIcons.Question) {
+            FieldTextField(objective, { objective = it }, "Objective", minLines = 2)
+            FieldTextField(question, { question = it }, "Research question", minLines = 2)
+        }
+        CaptureStep("Plan", "Optional first-pass method and next action. You can expand this in project detail later.", FieldMindIcons.Data) {
+            FieldTextField(methods, { methods = it }, "Method / data plan", minLines = 3)
+            FieldTextField(nextAction, { nextAction = it }, "Next action", supportingText = "Example: observe the same site at sunset for 3 days")
+        }
+    }
+}
+
+@Composable
+private fun SourceFormHero(title: String, body: String) {
+    Card(shape = RoundedCornerShape(26.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)) {
+        Row(Modifier.fillMaxWidth().padding(18.dp), horizontalArrangement = Arrangement.spacedBy(14.dp), verticalAlignment = Alignment.CenterVertically) {
+            Box(Modifier.size(48.dp).clip(RoundedCornerShape(16.dp)).background(MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.12f)), contentAlignment = Alignment.Center) {
+                Icon(FieldMindIcons.Source, null, tint = MaterialTheme.colorScheme.onPrimaryContainer, size = 26.dp)
+            }
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onPrimaryContainer)
+                Text(body, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.78f))
+            }
+        }
+    }
+}
+
+@Composable
+private fun SourcePreviewCard(link: String, fileUri: String, modifier: Modifier = Modifier) {
+    val trimmedLink = link.trim()
+    val videoId = remember(trimmedLink) { youtubeVideoId(trimmedLink) }
+    if (trimmedLink.isBlank() && fileUri.isBlank()) return
+    Card(modifier = modifier.fillMaxWidth().animateContentSize(), shape = RoundedCornerShape(20.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)) {
+        Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                Icon(icon = if (videoId != null) FieldMindIcons.Play else if (fileUri.isNotBlank()) FieldMindIcons.File else FieldMindIcons.OpenLink, contentDescription = null, tint = MaterialTheme.colorScheme.primary, size = 20.dp)
+                Column(Modifier.weight(1f)) {
+                    Text(if (videoId != null) "YouTube preview" else if (fileUri.isNotBlank()) "Local file reference" else "Link preview", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+                    Text(if (videoId != null) "youtube.com/embed/$videoId" else fileUri.ifBlank { trimmedLink }, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                }
+            }
+            videoId?.let { id ->
+                AsyncImage(
+                    model = "https://img.youtube.com/vi/$id/hqdefault.jpg",
+                    contentDescription = "YouTube thumbnail",
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.fillMaxWidth().height(150.dp).clip(RoundedCornerShape(16.dp)).background(MaterialTheme.colorScheme.surfaceContainerHighest)
+                )
+            }
+            if (trimmedLink.isNotBlank() && videoId == null) {
+                InfoChip(trimmedLink.substringAfter("://", trimmedLink).substringBefore('/'), icon = FieldMindIcons.OpenLink)
+            }
+            if (fileUri.isNotBlank()) InfoChip(fileUri.substringAfterLast('/').take(48).ifBlank { "Attached file" }, icon = FieldMindIcons.File)
+        }
+    }
+}
+
+private fun youtubeVideoId(url: String): String? {
+    val value = url.trim()
+    return when {
+        "youtu.be/" in value -> value.substringAfter("youtu.be/").substringBefore('?').substringBefore('&').takeIf { it.isNotBlank() }
+        "youtube.com/embed/" in value -> value.substringAfter("youtube.com/embed/").substringBefore('?').substringBefore('&').takeIf { it.isNotBlank() }
+        "youtube.com/watch" in value && "v=" in value -> value.substringAfter("v=").substringBefore('&').takeIf { it.isNotBlank() }
+        else -> null
     }
 }
 
 @Composable
 private fun NewSourceDialog(viewModel: FieldMindViewModel, onDismiss: () -> Unit) {
-    var type by remember { mutableStateOf("Article") }; var title by remember { mutableStateOf("") }; var author by remember { mutableStateOf("") }; var link by remember { mutableStateOf("") }; var summary by remember { mutableStateOf("") }; var taught by remember { mutableStateOf("") }; var findings by remember { mutableStateOf("") }; var questions by remember { mutableStateOf("") }; var notes by remember { mutableStateOf("") }; var reliability by remember { mutableStateOf(3f) }
-    FormDialog("Add Source", onDismiss, { if (title.isNotBlank()) { viewModel.addSource(type, title, author, link, summary, taught, reliability.toInt(), findings, questions, notes); onDismiss() } }) {
-        FormChoice("Source type", sourceLibraryTypes, type) { type = it }
-        FieldTextField(title, { title = it }, "Title"); FieldTextField(author, { author = it }, "Author / creator"); FieldTextField(link, { link = it }, "Link / citation")
-        FormSectionLabel("What it says")
-        FieldTextField(summary, { summary = it }, "Main idea", minLines = 2); FieldTextField(findings, { findings = it }, "Key findings / definitions", minLines = 2); FieldTextField(taught, { taught = it }, "What this source taught me", minLines = 2); FieldTextField(questions, { questions = it }, "New questions", minLines = 2); FieldTextField(notes, { notes = it }, "Paper reading prompts", minLines = 4); Text("Credibility: ${reliability.toInt()}/5"); Slider(reliability, { reliability = it }, valueRange = 1f..5f, steps = 3)
+    val context = LocalContext.current
+    val projects by viewModel.projects.collectAsState()
+    val haptics = rememberFieldMindHaptics()
+    var type by remember { mutableStateOf("Article") }
+    var title by remember { mutableStateOf("") }
+    var author by remember { mutableStateOf("") }
+    var dateOrYear by remember { mutableStateOf("") }
+    var doiOrIsbn by remember { mutableStateOf("") }
+    var publisherOrJournal by remember { mutableStateOf("") }
+    var accessDate by remember { mutableStateOf(today()) }
+    var link by remember { mutableStateOf("") }
+    var fileUri by remember { mutableStateOf("") }
+    var citationStyleNote by remember { mutableStateOf("") }
+    var importance by remember { mutableStateOf("Normal") }
+    var readingStatus by remember { mutableStateOf("In progress") }
+    var summary by remember { mutableStateOf("") }
+    var taught by remember { mutableStateOf("") }
+    var findings by remember { mutableStateOf("") }
+    var questions by remember { mutableStateOf("") }
+    var notes by remember { mutableStateOf("") }
+    var reliability by remember { mutableStateOf(3f) }
+    var projectId by remember { mutableStateOf<Long?>(null) }
+    val docPicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        if (uri != null) {
+            runCatching { context.contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION) }
+            fileUri = uri.toString()
+            if (type !in listOf("PDF", "Image")) type = "Local document"
+            haptics.light()
+        }
+    }
+    val imagePicker = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
+        if (uri != null) {
+            fileUri = uri.toString()
+            type = "Image"
+            haptics.light()
+        }
+    }
+    FormDialog("Add Source", onDismiss, {
+        if (title.isNotBlank()) {
+            viewModel.addSource(
+                type = type,
+                title = title,
+                author = author,
+                link = link,
+                summary = summary,
+                taught = taught,
+                reliability = reliability.toInt(),
+                keyFindings = findings,
+                questionsGenerated = questions,
+                paperNotes = notes,
+                projectId = projectId,
+                dateOrYear = dateOrYear,
+                doiOrIsbn = doiOrIsbn,
+                publisherOrJournal = publisherOrJournal,
+                accessDate = accessDate,
+                fileUri = fileUri,
+                citationStyleNote = citationStyleNote,
+                importance = importance,
+                readingStatus = readingStatus
+            )
+            onDismiss()
+        }
+    }) {
+        SourceFormHero("Add a research source", "Save citation details, files, links, reading notes, and project context in one place.")
+        CaptureStep("Source type", "Choose what kind of material this is.", FieldMindIcons.Source) {
+            ChoiceChips(sourceLibraryTypes, type) { type = it }
+        }
+        CaptureStep("Identity", "Capture citation identifiers now so export stays useful later.", FieldMindIcons.Article) {
+            FieldTextField(title, { title = it }, "Title")
+            FieldTextField(author, { author = it }, "Author / creator")
+            FieldTextField(doiOrIsbn, { doiOrIsbn = it }, "DOI / ISBN", supportingText = "Crossref DOI or Open Library ISBN metadata can be checked later.")
+            FieldTextField(publisherOrJournal, { publisherOrJournal = it }, "Publisher / journal")
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                FieldTextField(dateOrYear, { dateOrYear = it }, "Date / year", modifier = Modifier.weight(1f))
+                FieldTextField(accessDate, { accessDate = it }, "Accessed", modifier = Modifier.weight(1f))
+            }
+        }
+        CaptureStep("Link or file", "Attach PDFs, images, local documents, or a web link.", FieldMindIcons.Link) {
+            FieldTextField(link, { link = it }, "Web link", supportingText = "Supports normal links and YouTube preview cards.")
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedButton(onClick = { haptics.light(); docPicker.launch(arrayOf("application/pdf", "text/*", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "image/*")) }, modifier = Modifier.weight(1f)) {
+                    Icon(FieldMindIcons.File, null, size = 18.dp); Spacer(Modifier.size(6.dp)); Text("Document")
+                }
+                OutlinedButton(onClick = { haptics.light(); imagePicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) }, modifier = Modifier.weight(1f)) {
+                    Icon(FieldMindIcons.Gallery, null, size = 18.dp); Spacer(Modifier.size(6.dp)); Text("Image")
+                }
+            }
+            if (fileUri.isNotBlank()) FieldTextField(fileUri, { fileUri = it }, "Attached file URI")
+            SourcePreviewCard(link = link, fileUri = fileUri)
+        }
+        CaptureStep("Reading notes", "Use Cornell-style cues: main idea, evidence, questions, and takeaways.", FieldMindIcons.Edit) {
+            FieldTextField(summary, { summary = it }, "Main idea", minLines = 2)
+            FieldTextField(findings, { findings = it }, "Key findings / definitions", minLines = 2)
+            FieldTextField(taught, { taught = it }, "What this source taught me", minLines = 2)
+            FieldTextField(questions, { questions = it }, "New questions / cue column", minLines = 2)
+            FieldTextField(notes, { notes = it }, "Paper / Cornell notes", minLines = 4)
+            FieldTextField(citationStyleNote, { citationStyleNote = it }, "Citation style note", supportingText = "APA/MLA/manual citation reminder.")
+        }
+        CaptureStep("Review & project", "Mark priority, reading state, credibility, and where it belongs.", FieldMindIcons.Check) {
+            Text("Reading status", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            ChoiceChips(readingStatuses, readingStatus) { readingStatus = it }
+            Text("Importance", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            ChoiceChips(sourceImportanceLevels, importance) { importance = it }
+            Text("Credibility: ${reliability.toInt()}/5")
+            Slider(reliability, { reliability = it }, valueRange = 1f..5f, steps = 3)
+            if (projects.isNotEmpty()) {
+                Text("Link to project", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                ChoiceChips(listOf("No project") + projects.map { it.title }, projects.firstOrNull { it.id == projectId }?.title ?: "No project") { selected -> projectId = projects.firstOrNull { it.title == selected }?.id }
+            }
+        }
     }
 }
 
@@ -1998,6 +2624,7 @@ private fun NewFlashcardDialog(viewModel: FieldMindViewModel, onDismiss: () -> U
 private fun EditEntityDialog(kind: String, id: Long, viewModel: FieldMindViewModel, onDismiss: () -> Unit) {
     when (kind) {
         "observation" -> viewModel.observations.collectAsState().value.firstOrNull { it.id == id }?.let { EditObservationDialog(it, viewModel, onDismiss) }
+        "note" -> viewModel.notes.collectAsState().value.firstOrNull { it.id == id }?.let { EditNoteDialog(it, viewModel, onDismiss) }
         "question" -> viewModel.questions.collectAsState().value.firstOrNull { it.id == id }?.let { EditQuestionDialog(it, viewModel, onDismiss) }
         "hypothesis" -> viewModel.hypotheses.collectAsState().value.firstOrNull { it.id == id }?.let { EditHypothesisDialog(it, viewModel, onDismiss) }
         "project" -> viewModel.projects.collectAsState().value.firstOrNull { it.id == id }?.let { EditProjectDialog(it, viewModel, onDismiss) }
@@ -2006,6 +2633,20 @@ private fun EditEntityDialog(kind: String, id: Long, viewModel: FieldMindViewMod
         "report" -> viewModel.reports.collectAsState().value.firstOrNull { it.id == id }?.let { EditReportDialog(it, viewModel, onDismiss) }
         "flashcard" -> viewModel.flashcards.collectAsState().value.firstOrNull { it.id == id }?.let { EditFlashcardDialog(it, viewModel, onDismiss) }
         else -> onDismiss()
+    }
+}
+
+@Composable
+private fun EditNoteDialog(entity: NoteEntity, viewModel: FieldMindViewModel, onDismiss: () -> Unit) {
+    var title by remember { mutableStateOf(entity.title) }; var body by remember { mutableStateOf(entity.body) }; var category by remember { mutableStateOf(entity.category) }; var tags by remember { mutableStateOf(entity.tags) }; var attachments by remember { mutableStateOf(entity.attachmentUris) }
+    FormDialog("Edit Note", onDismiss, {
+        if (title.isNotBlank() || body.isNotBlank()) { viewModel.updateNoteEntity(entity.copy(title = title.trim().ifBlank { body.take(36) }, body = body.trim(), category = category, tags = tags.trim(), attachmentUris = attachments.trim())); onDismiss() }
+    }) {
+        FormChoice("Category", observationCategories, category) { category = it }
+        FieldTextField(title, { title = it }, "Title")
+        FieldTextField(body, { body = it }, "Body", minLines = 5)
+        FieldTextField(tags, { tags = it }, "Tags")
+        FieldTextField(attachments, { attachments = it }, "Attachments", minLines = 2, supportingText = "One stored attachment per line: type|caption|uri")
     }
 }
 
@@ -2066,12 +2707,87 @@ private fun EditProjectDialog(entity: ProjectEntity, viewModel: FieldMindViewMod
 
 @Composable
 private fun EditSourceDialog(entity: SourceEntity, viewModel: FieldMindViewModel, onDismiss: () -> Unit) {
-    var type by remember { mutableStateOf(entity.type) }; var title by remember { mutableStateOf(entity.title) }; var author by remember { mutableStateOf(entity.author) }; var link by remember { mutableStateOf(entity.link) }; var summary by remember { mutableStateOf(entity.personalSummary) }; var findings by remember { mutableStateOf(entity.keyFindings) }; var taught by remember { mutableStateOf(entity.whatThisSourceTaughtMe) }; var notes by remember { mutableStateOf(entity.paperNotes) }; var reliability by remember { mutableStateOf(entity.reliabilityScore.toFloat()) }
+    val projects by viewModel.projects.collectAsState()
+    var type by remember { mutableStateOf(entity.type) }
+    var title by remember { mutableStateOf(entity.title) }
+    var author by remember { mutableStateOf(entity.author) }
+    var dateOrYear by remember { mutableStateOf(entity.dateOrYear) }
+    var doiOrIsbn by remember { mutableStateOf(entity.doiOrIsbn) }
+    var publisherOrJournal by remember { mutableStateOf(entity.publisherOrJournal) }
+    var accessDate by remember { mutableStateOf(entity.accessDate) }
+    var link by remember { mutableStateOf(entity.link) }
+    var fileUri by remember { mutableStateOf(entity.fileUri) }
+    var citationStyleNote by remember { mutableStateOf(entity.citationStyleNote) }
+    var importance by remember { mutableStateOf(entity.importance) }
+    var readingStatus by remember { mutableStateOf(entity.readingStatus) }
+    var projectId by remember { mutableStateOf(entity.relatedProjectId) }
+    var summary by remember { mutableStateOf(entity.personalSummary) }
+    var findings by remember { mutableStateOf(entity.keyFindings) }
+    var taught by remember { mutableStateOf(entity.whatThisSourceTaughtMe) }
+    var questions by remember { mutableStateOf(entity.questionsGenerated) }
+    var notes by remember { mutableStateOf(entity.paperNotes) }
+    var reliability by remember { mutableStateOf(entity.reliabilityScore.toFloat()) }
     FormDialog("Edit Source", onDismiss, {
-        if (title.isNotBlank()) { viewModel.updateSourceEntity(entity.copy(type = type, title = title.trim(), author = author.trim(), link = link.trim(), personalSummary = summary.trim(), keyFindings = findings.trim(), whatThisSourceTaughtMe = taught.trim(), paperNotes = notes.trim(), reliabilityScore = reliability.toInt())); onDismiss() }
+        if (title.isNotBlank()) {
+            viewModel.updateSourceEntity(
+                entity.copy(
+                    type = type,
+                    title = title.trim(),
+                    author = author.trim(),
+                    dateOrYear = dateOrYear.trim(),
+                    link = link.trim(),
+                    doiOrIsbn = doiOrIsbn.trim(),
+                    publisherOrJournal = publisherOrJournal.trim(),
+                    accessDate = accessDate.trim(),
+                    fileUri = fileUri.trim(),
+                    citationStyleNote = citationStyleNote.trim(),
+                    importance = importance,
+                    personalSummary = summary.trim(),
+                    keyFindings = findings.trim(),
+                    whatThisSourceTaughtMe = taught.trim(),
+                    questionsGenerated = questions.trim(),
+                    paperNotes = notes.trim(),
+                    reliabilityScore = reliability.toInt(),
+                    readingStatus = readingStatus,
+                    relatedProjectId = projectId
+                )
+            )
+            onDismiss()
+        }
     }) {
+        SourceFormHero("Edit source", "Keep source identity, file/link, notes, and status synchronized.")
         FormChoice("Source type", sourceLibraryTypes, type) { type = it }
-        FieldTextField(title, { title = it }, "Title"); FieldTextField(author, { author = it }, "Author / creator"); FieldTextField(link, { link = it }, "Link / citation"); FieldTextField(summary, { summary = it }, "Main idea", minLines = 2); FieldTextField(findings, { findings = it }, "Key findings", minLines = 2); FieldTextField(taught, { taught = it }, "What this taught me", minLines = 2); FieldTextField(notes, { notes = it }, "Paper notes", minLines = 3); Text("Credibility: ${reliability.toInt()}/5"); Slider(reliability, { reliability = it }, valueRange = 1f..5f, steps = 3)
+        FormSectionLabel("Identity")
+        FieldTextField(title, { title = it }, "Title")
+        FieldTextField(author, { author = it }, "Author / creator")
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            FieldTextField(dateOrYear, { dateOrYear = it }, "Date / year", modifier = Modifier.weight(1f))
+            FieldTextField(accessDate, { accessDate = it }, "Accessed", modifier = Modifier.weight(1f))
+        }
+        FieldTextField(doiOrIsbn, { doiOrIsbn = it }, "DOI / ISBN")
+        FieldTextField(publisherOrJournal, { publisherOrJournal = it }, "Publisher / journal")
+        FormSectionLabel("Link and file")
+        FieldTextField(link, { link = it }, "Web link")
+        FieldTextField(fileUri, { fileUri = it }, "File URI")
+        SourcePreviewCard(link, fileUri)
+        FormSectionLabel("Reading notes")
+        FieldTextField(summary, { summary = it }, "Main idea", minLines = 2)
+        FieldTextField(findings, { findings = it }, "Key findings", minLines = 2)
+        FieldTextField(taught, { taught = it }, "What this taught me", minLines = 2)
+        FieldTextField(questions, { questions = it }, "New questions", minLines = 2)
+        FieldTextField(notes, { notes = it }, "Paper / Cornell notes", minLines = 3)
+        FieldTextField(citationStyleNote, { citationStyleNote = it }, "Citation style note")
+        FormSectionLabel("Status")
+        Text("Reading status", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        ChoiceChips(readingStatuses, readingStatus) { readingStatus = it }
+        Text("Importance", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        ChoiceChips(sourceImportanceLevels, importance) { importance = it }
+        Text("Credibility: ${reliability.toInt()}/5")
+        Slider(reliability, { reliability = it }, valueRange = 1f..5f, steps = 3)
+        if (projects.isNotEmpty()) {
+            Text("Project", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            ChoiceChips(listOf("No project") + projects.map { it.title }, projects.firstOrNull { it.id == projectId }?.title ?: "No project") { selected -> projectId = projects.firstOrNull { it.title == selected }?.id }
+        }
     }
 }
 
@@ -2153,6 +2869,7 @@ private fun ObservationLocationCard(latitude: Double, longitude: Double, manualL
  */
 @Composable
 private fun FormDialog(title: String, onDismiss: () -> Unit, onSave: () -> Unit, content: @Composable ColumnScope.() -> Unit) {
+    val haptics = rememberFieldMindHaptics()
     Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
         Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
             Column(Modifier.fillMaxSize()) {
@@ -2163,7 +2880,7 @@ private fun FormDialog(title: String, onDismiss: () -> Unit, onSave: () -> Unit,
                 ) {
                     IconButton(onClick = onDismiss) { Icon(icon = MaterialSymbolIcon("close"), contentDescription = "Close", size = 22.dp) }
                     Text(title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
-                    Button(onClick = onSave) { Text("Save") }
+                    Button(onClick = { haptics.confirm(); onSave() }) { Text("Save") }
                 }
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                 Column(
@@ -2187,6 +2904,7 @@ private fun FormChoice(
     selected: String,
     onSelected: (String) -> Unit
 ) {
+    val haptics = rememberFieldMindHaptics()
     var expanded by rememberSaveable(label) { mutableStateOf(false) }
     val rotation by androidx.compose.animation.core.animateFloatAsState(if (expanded) 180f else 0f, label = "chev")
     Column(
@@ -2197,7 +2915,7 @@ private fun FormChoice(
             .animateContentSize()
     ) {
         Row(
-            Modifier.fillMaxWidth().clickable { expanded = !expanded }.padding(16.dp),
+            Modifier.fillMaxWidth().clickable { haptics.light(); expanded = !expanded }.padding(16.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {

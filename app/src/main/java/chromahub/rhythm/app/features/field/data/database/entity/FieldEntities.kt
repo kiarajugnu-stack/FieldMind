@@ -7,6 +7,23 @@ import androidx.room.PrimaryKey
 data class TagStatistic(val name: String, val observationCount: Int)
 data class AttachmentSearchResult(val id: Long, val observationId: Long, val type: String, val caption: String, val uri: String)
 
+@Entity(tableName = "field_notes")
+data class NoteEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val title: String,
+    val body: String = "",
+    val category: String = "Other",
+    val tags: String = "",
+    val projectId: Long? = null,
+    val sourceId: Long? = null,
+    val attachmentUris: String = "",
+    val status: String = "Active",
+    val archivedAt: Long? = null,
+    val deletedAt: Long? = null,
+    val createdAt: Long = System.currentTimeMillis(),
+    val updatedAt: Long = System.currentTimeMillis()
+)
+
 @Entity(tableName = "field_observations")
 data class ObservationEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
@@ -112,6 +129,12 @@ data class SourceEntity(
     val author: String = "",
     val dateOrYear: String = "",
     val link: String = "",
+    val doiOrIsbn: String = "",
+    val publisherOrJournal: String = "",
+    val accessDate: String = "",
+    val fileUri: String = "",
+    val citationStyleNote: String = "",
+    val importance: String = "Normal",
     val personalSummary: String = "",
     val keyFindings: String = "",
     val whatThisSourceTaughtMe: String = "",

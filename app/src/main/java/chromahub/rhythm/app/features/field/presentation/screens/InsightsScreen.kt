@@ -1,5 +1,6 @@
 package chromahub.rhythm.app.features.field.presentation.screens
 
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -8,6 +9,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -38,6 +40,9 @@ fun InsightsScreen(
     val projects by viewModel.projects.collectAsState()
     val sources by viewModel.sources.collectAsState()
     val reports by viewModel.reports.collectAsState()
+    val notes by viewModel.notes.collectAsState()
+    val dataRecords by viewModel.dataRecords.collectAsState()
+    val flashcards by viewModel.flashcards.collectAsState()
     val tags by viewModel.commonTags.collectAsState()
     val colors = FieldMindTheme.colors
 
@@ -71,6 +76,20 @@ fun InsightsScreen(
         }
         nodes.toList() to edges.toList()
     }
+    val achievements = remember(observations, questions, projects, sources, reports, notes, dataRecords, flashcards) {
+        listOf(
+            Achievement("First Observation", "Save one facts-only field observation.", FieldMindIcons.Observation, colors.observation, observations.size, 1),
+            Achievement("7-Day Observer", "Log observations across seven different dates.", FieldMindIcons.Streak, colors.warning, observations.map { it.date }.distinct().size, 7),
+            Achievement("Evidence Collector", "Attach or summarize evidence in 10 observations.", FieldMindIcons.Camera, colors.observation, observations.count { it.evidenceSummary.isNotBlank() }, 10),
+            Achievement("Source Curator", "Save five sources with citation metadata.", FieldMindIcons.Source, colors.source, sources.size, 5),
+            Achievement("Question Builder", "Write five researchable questions.", FieldMindIcons.Question, colors.question, questions.size, 5),
+            Achievement("Project Starter", "Create your first research project.", FieldMindIcons.Project, colors.project, projects.size, 1),
+            Achievement("Data Logger", "Record ten data entries.", FieldMindIcons.Data, colors.data, dataRecords.size, 10),
+            Achievement("Report Writer", "Draft a research report.", FieldMindIcons.Report, colors.report, reports.size, 1),
+            Achievement("Note Maker", "Save ten free-form notes.", FieldMindIcons.Note, colors.source, notes.size, 10),
+            Achievement("Review Builder", "Create five flashcards from sources or findings.", FieldMindIcons.Flashcard, colors.flashcard, flashcards.size, 5)
+        )
+    }
 
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(20.dp, 20.dp, 20.dp, 96.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
         item { FieldScreenHeader("Insights", "Offline analysis of your own archive.", icon = FieldMindIcons.Insights, actionIcon = FieldMindIcons.Search, onAction = { onNavigate(FieldMindScreen.Search) }) }
@@ -81,6 +100,8 @@ fun InsightsScreen(
                 MetricTile("Reports", reports.size.toString(), FieldMindIcons.Report, Modifier.weight(1f), colors.report)
             }
         }
+        item { SectionHeader("Achievements", "${achievements.count { it.unlocked }} unlocked • keep building your research practice") }
+        item { AchievementGrid(achievements) }
         if (observations.isEmpty()) {
             item { EmptyState("No data yet", "Insights, charts, and your offline map appear as you log observations.", icon = FieldMindIcons.Insights, actionLabel = "Capture one") { onNavigate(FieldMindScreen.Observe) } }
         }
@@ -130,6 +151,44 @@ fun InsightsScreen(
         item { SectionHeader("Active projects", "${projects.count { it.status == "Active" }} active • ${sources.size} sources") }
         items(projects.take(4)) { p ->
             EntityCard(p.title, "project", body = p.objective.ifBlank { p.researchQuestion }, meta = listOf(p.status)) { onOpenDetail("project", p.id) }
+        }
+    }
+}
+
+private data class Achievement(
+    val title: String,
+    val description: String,
+    val icon: chromahub.rhythm.app.shared.presentation.components.icons.MaterialSymbolIcon,
+    val accent: androidx.compose.ui.graphics.Color,
+    val progress: Int,
+    val target: Int
+) {
+    val unlocked: Boolean get() = progress >= target
+    val fraction: Float get() = (progress.toFloat() / target.coerceAtLeast(1)).coerceIn(0f, 1f)
+}
+
+@Composable
+private fun AchievementGrid(items: List<Achievement>) {
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalArrangement = Arrangement.spacedBy(12.dp), maxItemsInEachRow = 2) {
+        items.forEach { achievement -> AchievementCard(achievement, Modifier.weight(1f)) }
+    }
+}
+
+@Composable
+private fun AchievementCard(item: Achievement, modifier: Modifier = Modifier) {
+    Card(modifier = modifier.animateContentSize(), shape = RoundedCornerShape(22.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)) {
+        Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                Box(Modifier.size(38.dp).clip(RoundedCornerShape(12.dp)).background(item.accent.copy(alpha = if (FieldMindTheme.colors.isDark) 0.22f else 0.14f)), contentAlignment = Alignment.Center) {
+                    Icon(item.icon, null, tint = item.accent, size = 21.dp)
+                }
+                Column(Modifier.weight(1f)) {
+                    Text(item.title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                    Text(if (item.unlocked) "Unlocked" else "${item.progress}/${item.target}", style = MaterialTheme.typography.labelMedium, color = item.accent, fontWeight = FontWeight.SemiBold)
+                }
+            }
+            Text(item.description, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            LinearProgressIndicator(progress = item.fraction, modifier = Modifier.fillMaxWidth().height(6.dp).clip(RoundedCornerShape(999.dp)), color = item.accent, trackColor = MaterialTheme.colorScheme.surfaceContainerHighest)
         }
     }
 }
