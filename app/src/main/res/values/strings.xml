@@ -1,28 +1,28 @@
 <resources>
     <string name="app_name">FieldMind</string>
-    
+
     <!-- Common Labels -->
     <string name="home">Home</string>
     <string name="library">Library</string>
     <string name="search">Search</string>
     <string name="settings">Settings</string>
-    
+
     <!-- Media3 notification configuration -->
-    <string name="media3_notification_channel_name">Rhythm Music</string>
-    <string name="media3_notification_channel_description">Media playback controls</string>
-    
+    <string name="media3_notification_channel_name">FieldMind Research</string>
+    <string name="media3_notification_channel_description">Research reminder notifications</string>
+
     <!-- Widget strings -->
-    <string name="widget_description">Rhythm Music Widget - Control Playback with responsive layouts supporting 2x1 to 5x5 grid sizes</string>
-    <string name="widget_description_glance">Rhythm Music - Control Playback with 9 responsive layouts, Material 3 design, and real-time state updates</string>
-    <string name="widget_name_glance">Rhythm Music</string>
-    <string name="no_song_playing">No song playing</string>
-    <string name="unknown_artist">Unknown artist</string>
-    <string name="unknown_album">Unknown album</string>
-    <string name="album_art">Album Art</string>
-    <string name="play_pause">Play/Pause</string>
-    <string name="skip_next">Skip Next</string>
-    <string name="skip_previous">Skip Previous</string>
-    
+    <string name="widget_description">FieldMind Research Widget - Control Review with responsive layouts supporting 2x1 to 5x5 grid sizes</string>
+    <string name="widget_description_glance">FieldMind Research - Control Review with 9 responsive layouts, Material 3 design, and real-time state updates</string>
+    <string name="widget_name_glance">FieldMind Research</string>
+    <string name="no_song_playing">No active field note</string>
+    <string name="unknown_artist">Unknown author</string>
+    <string name="unknown_album">Unknown collection</string>
+    <string name="album_art">Evidence preview</string>
+    <string name="play_pause">Start/Pause</string>
+    <string name="skip_next">Next</string>
+    <string name="skip_previous">Previous</string>
+
     <!-- Widget Settings -->
     <string name="settings_widget">Widget</string>
     <string name="settings_widget_desc">Home screen widgets</string>
@@ -30,12 +30,12 @@
     <string name="widget_preview_desc">Changes will be applied to all active widgets on your home screen. Long-press the widget to resize it and see different layouts.</string>
     <string name="widget_refresh_all">Refresh All Widgets</string>
     <string name="widget_display_options">Display Options</string>
-    <string name="widget_show_album_art">Show Album Art</string>
-    <string name="widget_show_album_art_desc">Display album artwork in widget</string>
-    <string name="widget_show_artist">Show Artist Name</string>
-    <string name="widget_show_artist_desc">Display artist information</string>
-    <string name="widget_show_album">Show Album Name</string>
-    <string name="widget_show_album_desc">Display album information</string>
+    <string name="widget_show_album_art">Show Evidence preview</string>
+    <string name="widget_show_album_art_desc">Display evidence previews in widget</string>
+    <string name="widget_show_artist">Show Author Name</string>
+    <string name="widget_show_artist_desc">Display source author information</string>
+    <string name="widget_show_album">Show Project Name</string>
+    <string name="widget_show_album_desc">Display project information</string>
     <string name="widget_appearance">Appearance</string>
     <string name="widget_use_system_colors">Use System Colors</string>
     <string name="widget_use_system_colors_desc">Follow Material You color scheme</string>
@@ -45,79 +45,79 @@
     <string name="widget_transparency">Transparency</string>
     <string name="widget_behavior">Behavior</string>
     <string name="widget_auto_update">Auto Update</string>
-    <string name="widget_auto_update_desc">Automatically update widget when song changes</string>
+    <string name="widget_auto_update_desc">Automatically update widget when research records change</string>
     <string name="widget_tips_title">Widget Tips</string>
-    <string name="widget_tip_sizes">Rhythm supports multiple widget sizes from 2x1 to 5x5</string>
+    <string name="widget_tip_sizes">FieldMind supports multiple widget sizes from 2x1 to 5x5</string>
     <string name="widget_tip_types">Both legacy and modern Glance widgets are available</string>
-    <string name="widget_tip_controls">Tap the widget to open the app, buttons control playback</string>
+    <string name="widget_tip_controls">Tap the widget to open the app, buttons open quick research actions</string>
     <string name="widget_tip_resize">Long-press and resize for different layouts</string>
-    
+
     <!-- Content Descriptions -->
     <string name="cd_navigate">Navigate</string>
     <string name="cd_configure">Configure</string>
-    
+
     <!-- Settings - Notifications -->
     <string name="settings_notifications">Notifications</string>
     <string name="settings_notification_style">Notification Style</string>
     <string name="settings_custom_notifications">Custom Notifications</string>
     <string name="settings_custom_notifications_desc">Use app\'s custom notification style instead of system media notification</string>
     <string name="settings_notifications_updates_group">App Updates</string>
-    <string name="settings_notifications_rhythm_guard_group">Rhythm Guard</string>
-    <string name="settings_notifications_rhythm_pulse_group">Rhythm Tips</string>
+    <string name="settings_notifications_rhythm_guard_group">FieldMind Focus</string>
+    <string name="settings_notifications_rhythm_pulse_group">FieldMind Tips</string>
     <string name="settings_update_notifications_merged_desc">Get alerts for new versions and background update check results</string>
     <string name="settings_update_status_notifications">Update Status Notifications</string>
     <string name="settings_update_status_notifications_desc">Get background check results such as up-to-date and check errors</string>
     <string name="settings_rhythm_guard_alert_notifications">Safety Alert Notifications</string>
-    <string name="settings_rhythm_guard_alert_notifications_desc">Show a notification when Rhythm Guard detects risky volume or exposure</string>
+    <string name="settings_rhythm_guard_alert_notifications_desc">Show a notification when FieldMind Focus detects risky volume or exposure</string>
     <string name="settings_rhythm_guard_timer_notifications">Break Timer Notifications</string>
-    <string name="settings_rhythm_guard_timer_notifications_desc">Show notifications for scheduled breaks and active timeout countdowns</string>
-    <string name="settings_rhythm_pulse_notifications">Rhythm Tips Notifications</string>
+    <string name="settings_rhythm_guard_timer_notifications_desc">Show notifications for scheduled fieldwork breaks and reminder countdowns</string>
+    <string name="settings_rhythm_pulse_notifications">FieldMind Tips Notifications</string>
     <string name="settings_rhythm_pulse_notifications_desc">Receive friendly reminders and listening tips.</string>
     <string name="settings_rhythm_pulse_interval">Tips Interval</string>
-    <string name="settings_rhythm_pulse_interval_dialog_title">Rhythm Tips Interval</string>
-    
-    <!-- Settings - Queue & Playback -->
-    <string name="settings_queue_playback">Queue and Playback</string>
-    <!-- Settings - Queue -->
-    <string name="settings_queue">Queue</string>
-    <string name="settings_queue_desc">Queue rules, automatic generation, behavior</string>
-    <string name="settings_queue_title">Queue Settings</string>
+    <string name="settings_rhythm_pulse_interval_dialog_title">FieldMind Tips Interval</string>
 
-    <!-- Settings - Playback -->
-    <string name="settings_playback">Playback</string>
-    <string name="settings_playback_desc">Playback states, crossfade, time formatting</string>
-    <string name="settings_playback_title">Playback Settings</string>
-    <string name="settings_queue_behavior">Queue Rules and Shuffle</string>
+    <!-- Settings - Research Queue & Review -->
+    <string name="settings_queue_playback">Archive and Capture</string>
+    <!-- Settings - Research Queue -->
+    <string name="settings_queue">Research Queue</string>
+    <string name="settings_queue_desc">Research Queue rules, automatic generation, behavior</string>
+    <string name="settings_queue_title">Research Research Queue Settings</string>
+
+    <!-- Settings - Review -->
+    <string name="settings_playback">Review</string>
+    <string name="settings_playback_desc">Review states, crossfade, time formatting</string>
+    <string name="settings_playback_title">Review Settings</string>
+    <string name="settings_queue_behavior">Research Queue Rules and Shuffle</string>
     <string name="settings_use_exoplayer_shuffle">Shuffle Engine</string>
-    <string name="settings_use_exoplayer_shuffle_desc">Use the player timeline for shuffle order.</string>
-    <string name="settings_auto_queue">Context Queue</string>
-    <string name="settings_auto_queue_desc">Build a related queue when playback starts.</string>
-    <string name="settings_context_queue_preference">Context Queue Preference</string>
+    <string name="settings_use_exoplayer_shuffle_desc">Use the research timeline for shuffle order.</string>
+    <string name="settings_auto_queue">Context Research Queue</string>
+    <string name="settings_auto_queue_desc">Build a related queue when review starts.</string>
+    <string name="settings_context_queue_preference">Context Research Queue Preference</string>
     <string name="settings_context_queue_preference_desc">Choose which metadata the context queue should prioritize first.</string>
     <string name="settings_context_pref_artist_first">Artist first</string>
     <string name="settings_context_pref_genre_first">Genre first</string>
     <string name="settings_context_pref_artist_then_genre">Artist then genre</string>
-    <string name="settings_context_queue_persistence">Context Queue Persistence</string>
-    <string name="settings_context_queue_persistence_desc">Choose whether the context queue should stay available after playback ends.</string>
+    <string name="settings_context_queue_persistence">Context Research Queue Persistence</string>
+    <string name="settings_context_queue_persistence_desc">Choose whether the context queue should stay available after review ends.</string>
     <string name="settings_context_persistence_persistent">Persistent</string>
     <string name="settings_context_persistence_ephemeral">Ephemeral</string>
-    <string name="settings_context_queue_size">Context Queue Size</string>
-    <string name="settings_context_queue_size_desc">%1$d tracks</string>
-    <string name="settings_clear_queue_on_new_song">Replace Queue on Play</string>
-    <string name="settings_clear_queue_on_new_song_desc">Starting a track replaces the current queue.</string>
-    <string name="settings_playback_persistence">Playback State</string>
-    <string name="settings_remember_repeat_mode">Persist Repeat Mode</string>
+    <string name="settings_context_queue_size">Context Research Queue Size</string>
+    <string name="settings_context_queue_size_desc">%1$d records</string>
+    <string name="settings_clear_queue_on_new_song">Replace Research Queue on Play</string>
+    <string name="settings_clear_queue_on_new_song_desc">Starting a new review replaces the current working set.</string>
+    <string name="settings_playback_persistence">Review State</string>
+    <string name="settings_remember_repeat_mode">Remember Review Mode</string>
     <string name="settings_remember_repeat_mode_desc">Restore repeat mode after restart.</string>
-    <string name="settings_remember_shuffle_mode">Persist Shuffle Mode</string>
+    <string name="settings_remember_shuffle_mode">Remember Random Review</string>
     <string name="settings_remember_shuffle_mode_desc">Restore shuffle mode after restart.</string>
-    <string name="settings_audio_effects">Transitions and Output</string>
+    <string name="settings_audio_effects">Capture Transitions</string>
     <string name="settings_resume_on_device_reconnect">Auto Resume</string>
-    <string name="settings_resume_on_device_reconnect_desc">Auto-resume when audio devices reconnect</string>
-    <string name="settings_gapless_playback">Gapless Playback</string>
-    <string name="settings_gapless_playback_desc">Switch tracks without silence.</string>
-    <string name="settings_crossfade">Track Crossfade</string>
-    <string name="settings_crossfade_desc">Blend outgoing and incoming tracks.</string>
-    <string name="settings_crossfade_duration">Fade Duration</string>
+    <string name="settings_resume_on_device_reconnect_desc">Resume draft capture when returning to the app</string>
+    <string name="settings_gapless_playback">Gapless Review</string>
+    <string name="settings_gapless_playback_desc">Switch records without silence.</string>
+    <string name="settings_crossfade">Record Transition</string>
+    <string name="settings_crossfade_desc">Blend outgoing and incoming records.</string>
+    <string name="settings_crossfade_duration">Transition Duration</string>
     <string name="settings_crossfade_duration_desc">%1$.1f seconds</string>
     <string name="settings_crossfade_repeat_one">Crossfade in Repeat One</string>
     <string name="settings_crossfade_repeat_one_desc">Allow crossfade when repeating one track.</string>
@@ -127,9 +127,9 @@
     <string name="settings_stop_playback_on_close_desc">Stop music when the app is closed.</string>
     <string name="settings_time_display">Time Format</string>
     <string name="settings_use_hours">Use Hour Format</string>
-    <string name="settings_use_hours_enabled">Shows 1:32:26 for long tracks</string>
-    <string name="settings_use_hours_disabled">Shows 92:26 for long tracks</string>
-    
+    <string name="settings_use_hours_enabled">Shows 1:32:26 for long records</string>
+    <string name="settings_use_hours_disabled">Shows 92:26 for long records</string>
+
     <!-- Settings - Playlists -->
     <string name="settings_playlists">Playlists</string>
     <string name="settings_playlists_overview">Overview</string>
@@ -153,7 +153,7 @@
     <string name="settings_default">Default</string>
     <string name="settings_enable_default_playlists">Enable Default Playlists</string>
     <string name="settings_enable_default_playlists_desc">Automatically create Recently Added and Most Played playlists</string>
-    
+
     <!-- Operation Progress -->
     <string name="operation_exporting_playlists">Backing up your custom playlists…</string>
     <string name="operation_exporting_playlists_location">Backing up playlists to storage…</string>
@@ -161,17 +161,17 @@
     <string name="notification_operations_channel_name">Rhythm Library</string>
     <string name="notification_operations_channel_desc">Progress and results for library scans and playlist actions</string>
     <string name="notification_media_scan_title">Rhythm Library Scan</string>
-    <string name="notification_media_scan_stage_songs">Scanning device storage for audio tracks…</string>
+    <string name="notification_media_scan_stage_songs">Scanning device storage for audio records…</string>
     <string name="notification_media_scan_stage_saving">Optimizing and saving audio track database…</string>
     <string name="notification_media_scan_stage_finishing">Completing audio indexing…</string>
-    <string name="notification_media_scan_complete_summary">Library scan completed: %1$d tracks, %2$d albums, %3$d artists indexed</string>
+    <string name="notification_media_scan_complete_summary">Library scan completed: %1$d records, %2$d albums, %3$d artists indexed</string>
     <string name="notification_media_scan_complete_pending_setup">Audio scanning finished, initializing background tasks…</string>
     <string name="notification_media_scan_cancelled">Library scan was cancelled.</string>
     <string name="notification_media_scan_failed">Library scan failed. Check storage permissions and try again.</string>
     <string name="notification_playlist_export_title">Rhythm Library Export</string>
     <string name="notification_playlist_import_title">Rhythm Library Import</string>
     <string name="notification_library_setup_title">Rhythm Library Setup</string>
-    <string name="notification_library_setup_complete_summary">Library is optimized and ready: %1$d tracks, %2$d albums, %3$d artists</string>
+    <string name="notification_library_setup_complete_summary">Library is optimized and ready: %1$d records, %2$d albums, %3$d artists</string>
     <string name="notification_playlist_not_found">Export aborted: target playlist was not found.</string>
     <string name="notification_no_playlists_to_export">Export aborted: no playlists found to backup.</string>
     <string name="notification_operation_timed_out">The operation timed out. Please try again.</string>
@@ -192,29 +192,29 @@
     <string name="notification_sleep_timer_title">Rhythm Sleep Timer</string>
     <string name="notification_sleep_timer_pause_in">⏸ Pausing in %1$s</string>
     <string name="notification_sleep_timer_stop_in">⏹ Stopping in %1$s</string>
-    
+
     <!-- Streaming Notifications -->
     <string name="notification_streaming_channel_name">Rhythm Go</string>
     <string name="notification_streaming_channel_desc">Streaming service status and sync updates</string>
-    
+
     <!-- Streaming Authentication -->
     <string name="notification_streaming_auth_title">Streaming Connected</string>
     <string name="notification_streaming_auth_connected">🎵 %1$s is ready to play! Your library is syncing in the background.</string>
     <string name="notification_streaming_auth_failed">Connection failed for %1$s. Tap to retry setup.</string>
     <string name="notification_streaming_auth_expired">Session expired for %1$s. Tap to reconnect.</string>
-    
+
     <!-- Streaming Library Sync -->
     <string name="notification_streaming_sync_title">Syncing Your Library</string>
     <string name="notification_streaming_sync_started">Syncing with %1$s…</string>
     <string name="notification_streaming_sync_progress">Syncing: %1$d songs • %2$d albums • %3$d artists</string>
     <string name="notification_streaming_sync_complete">✓ Synced %1$d songs from %2$s!</string>
     <string name="notification_streaming_sync_failed">Sync failed. Check your connection and try again.</string>
-    
+
     <!-- Streaming Liked Songs -->
     <string name="notification_streaming_liked_title">Liked Songs Updated</string>
     <string name="notification_streaming_liked_added">♥ Added to liked songs on %1$s</string>
     <string name="notification_streaming_liked_removed">Removed from liked songs on %1$s</string>
-    
+
     <!-- Streaming Playlist Operations -->
     <string name="notification_streaming_playlist_title">Playlist Updated</string>
     <string name="notification_streaming_playlist_created">New playlist \"%1$s\" created on %2$s</string>
@@ -222,26 +222,26 @@
     <string name="notification_streaming_playlist_deleted">Playlist \"%1$s\" deleted from %2$s</string>
     <string name="notification_streaming_playlist_song_added">Added song to \"%1$s\"</string>
     <string name="notification_streaming_playlist_song_removed">Removed song from \"%1$s\"</string>
-    
+
     <!-- Streaming Network/Quality -->
     <string name="notification_streaming_quality_title">Streaming Quality</string>
     <string name="notification_streaming_quality_switched">Quality switched to %1$s due to network changes</string>
     <string name="notification_streaming_network_slow">Network is slow. Stream quality reduced.</string>
     <string name="notification_streaming_buffering">Buffering… Playing from %1$s</string>
     <string name="notification_streaming_buffering_complete">Ready to play!</string>
-    
+
     <!-- Streaming Offline -->
     <string name="notification_streaming_offline_title">Offline Mode</string>
     <string name="notification_streaming_offline_sync">Syncing offline cache with %1$s…</string>
     <string name="notification_streaming_offline_sync_complete">✓ Offline cache ready with %1$d songs</string>
     <string name="notification_streaming_offline_cache_cleared">Cache cleared. Saved %1$s of space.</string>
-    
+
     <!-- Streaming Errors -->
     <string name="notification_streaming_error_title">Streaming Issue</string>
     <string name="notification_streaming_error_generic">Streaming error on %1$s. Tap for details.</string>
     <string name="notification_streaming_error_no_internet">No internet. Switch to offline mode to continue listening.</string>
     <string name="notification_streaming_error_account_issue">Account issue with %1$s. Please reconnect.</string>
-    
+
     <!-- Dialogs -->
     <string name="dialog_cleanup_empty_playlists_title">Cleanup Empty Playlists?</string>
     <string name="dialog_cleanup_empty_playlists_message">This will permanently delete %1$d empty playlist%2$s. This action cannot be undone.</string>
@@ -253,7 +253,7 @@
     <string name="streaming_settings_switch_provider_confirm_title">Switch Streaming Provider?</string>
     <string name="streaming_settings_switch_provider_confirm_desc">Current provider: %1$s\nSwitch to: %2$s? This will disconnect the currently active provider.</string>
     <string name="action_switch">Switch</string>
-    
+
     <!-- Playlist Detail Screen -->
     <string name="playlist_rename_title">Rename Playlist</string>
     <string name="playlist_name_label">Playlist Name</string>
@@ -287,13 +287,13 @@
     <string name="playlist_remove">Remove</string>
     <string name="playlist_exporting">Exporting</string>
     <string name="playlist_importing">Importing</string>
-    
+
     <!-- Restart Dialog -->
     <string name="restart_recommended">Restart Recommended</string>
     <string name="restart_default_playlists_message">To apply changes to default playlists, we recommend restarting the app. You can continue using the app, but some playlists may not appear correctly until restart.</string>
     <string name="restart_now">Restart Now</string>
     <string name="continue_without_restart">Restart Later</string>
-    
+
     <!-- Settings - Media Scan -->
     <string name="settings_media_scan">Media Scan</string>
     <string name="settings_mode_selection">Mode Selection</string>
@@ -333,7 +333,7 @@
     <string name="settings_scan_behavior">Scan Behavior</string>
     <string name="settings_include_hidden_whitelisted_media">Include Hidden &amp; .nomedia Files</string>
     <string name="settings_include_hidden_whitelisted_media_desc">Enable scanning hidden and .nomedia audio paths during full media scans (strongest effect in whitelist folders).</string>
-    
+
     <!-- Settings - Spotify -->
     <string name="settings_spotify_api_config">Spotify API Configuration</string>
     <string name="settings_spotify_api_config_desc">Enter your Spotify API credentials to enable track search and Canvas videos.</string>
@@ -346,7 +346,7 @@
     <string name="settings_spotify_testing">Testing…</string>
     <string name="settings_spotify_error">Error: %1$s</string>
     <string name="settings_spotify_instructions">To get your Spotify API credentials:\n• Go to developer.spotify.com\n• Create a new app\n• Copy the Client ID and Client Secret</string>
-    
+
     <!-- Settings - About -->
     <string name="settings_about">About</string>
     <string name="settings_about_music_player">Music Player</string>
@@ -386,7 +386,7 @@
     <string name="settings_about_view_github">View on GitHub</string>
     <string name="settings_about_report_bug">Report Bug or Suggest Feature</string>
     <string name="settings_about_telegram_support">Telegram Support Group</string>
-    
+
     <!-- Settings - Updates -->
     <string name="settings_updates">Updates</string>
     <string name="settings_updates_error">Error</string>
@@ -395,10 +395,10 @@
     <string name="settings_updates_disabled">Updates Disabled</string>
     <string name="settings_updates_manual_check">Manual Check</string>
     <string name="settings_updates_up_to_date">Up to Date</string>
-    
+
     <!-- Status Labels -->
     <string name="status_disabled">Disabled</string>
-    
+
     <!-- HomeScreen -->
     <string name="home_title">Rhythm</string>
     <string name="home_settings_cd">Settings</string>
@@ -418,48 +418,48 @@
     <string name="home_latest_additions">Your latest additions</string>
     <string name="home_no_recently_added">No Recently Added Albums</string>
     <string name="home_no_recently_added_desc">Albums you add to your library will appear here</string>
-    
+
     <!-- Time-based quotes (0:00-4:59 - Late night) -->
     <string name="home_quote_late_night_1">Late night vibes for the dreamers 🌙</string>
     <string name="home_quote_late_night_2">Perfect time for your late night playlist 🎧</string>
     <string name="home_quote_late_night_3">Music sounds better at midnight ✨</string>
     <string name="home_quote_late_night_4">Let the night music play on 🌟</string>
-    
+
     <!-- Time-based quotes (5:00-11:59 - Morning) -->
     <string name="home_quote_morning_1">Start your day with the perfect soundtrack ✨</string>
     <string name="home_quote_morning_2">Let music energize your morning routine 🎵</string>
     <string name="home_quote_morning_3">Every morning is a new symphony waiting to begin 🌅</string>
     <string name="home_quote_morning_4">Coffee and music - the perfect morning blend ☕</string>
-    
+
     <!-- Time-based quotes (12:00-16:59 - Afternoon) -->
     <string name="home_quote_afternoon_1">Power through with your favorite beats 🚀</string>
     <string name="home_quote_afternoon_2">Music makes everything better 💪</string>
     <string name="home_quote_afternoon_3">Let the rhythm guide your day 🎯</string>
     <string name="home_quote_afternoon_4">Turn up the focus with great tunes 🔥</string>
-    
+
     <!-- Time-based quotes (17:00-20:59 - Evening) -->
     <string name="home_quote_evening_1">Time to unwind with soothing melodies 🌅</string>
     <string name="home_quote_evening_2">Let the evening soundtrack begin 🎶</string>
     <string name="home_quote_evening_3">Perfect time for your chill playlist 😌</string>
     <string name="home_quote_evening_4">Wind down with your favorite tunes 🌇</string>
-    
+
     <!-- Time-based quotes (21:00-23:59 - Night) -->
     <string name="home_quote_night_1">Night time is music time 🌙</string>
     <string name="home_quote_night_2">Let the night serenade you 🎵</string>
     <string name="home_quote_night_3">Perfect vibes for a peaceful night 🌟</string>
     <string name="home_quote_night_4">Embrace the calm of the night 😴</string>
-    
+
     <!-- Personalized messages -->
     <string name="home_continue_song">Continue where you left off with \"%1$s\"</string>
     <string name="home_adventure_continues">Your musical adventure continues</string>
     <string name="home_discover_next_favorite">Ready to discover your next favorite song?</string>
-    
+
     <!-- Recommended Section -->
     <string name="home_recommended_title">Recommended For You</string>
     <string name="home_recommended_subtitle">Based on your listening history</string>
     <string name="home_no_recommendations">No Recommendations</string>
     <string name="home_no_recommendations_desc">Listen to some music to get personalized recommendations</string>
-    
+
     <!-- Listening Stats -->
     <string name="home_listening_stats">Your Rhythm Stats</string>
     <string name="home_listening_stats_subtitle">This week\'s musical journey</string>
@@ -467,7 +467,7 @@
     <string name="home_stat_listening_time_short">Less than 1h</string>
     <string name="home_stat_songs_played">Songs Played</string>
     <string name="home_stat_artists">Artists</string>
-    
+
     <!-- Mood & Moments -->
     <string name="home_mood_title">Mood &amp; Moments</string>
     <string name="home_mood_subtitle">Music for every feeling</string>
@@ -477,18 +477,18 @@
     <string name="home_mood_relax_desc">Unwind and breathe</string>
     <string name="home_mood_focus">Focus</string>
     <string name="home_mood_focus_desc">Concentration mode</string>
-    
+
     <!-- Recently Played -->
     <string name="home_recently_played">Recently Played</string>
     <string name="home_recently_played_subtitle">Continue your musical journey</string>
     <string name="home_no_recent_activity">No Recent Activity</string>
     <string name="home_no_recent_activity_desc">Start listening to see your recently played songs here</string>
-    
+
     <!-- UI Actions -->
     <string name="ui_view_all">View All</string>
     <string name="ui_play_action">Play %1$s</string>
     <string name="ui_songs_count">%1$d songs</string>
-    
+
     <!-- Updates -->
     <string name="update_available_cd">Update available</string>
     <string name="update_available_title">Update Available</string>
@@ -496,7 +496,7 @@
     <string name="update_whats_new">What\'s New:</string>
     <string name="update_now">Update Now</string>
     <string name="update_downloading">Downloading…</string>
-    
+
     <!-- LibraryScreen -->
     <string name="library_title">Library</string>
     <string name="library_your_music">Your Music</string>
@@ -507,15 +507,15 @@
     <string name="library_loading_playlists">Loading playlists…</string>
     <string name="library_loading_albums">Loading albums…</string>
     <string name="library_loading_artists">Loading artists…</string>
-    <string name="library_tracks_count">%1$d of %2$d tracks</string>
-    
+    <string name="library_records_count">%1$d of %2$d records</string>
+
     <!-- Background Processing States -->
     <string name="scanning_media">Indexing audio files…</string>
     <string name="detecting_genres">Analyzing track genres…</string>
     <string name="fetching_artwork">Resolving album art…</string>
     <string name="extracting_metadata">Extracting track details…</string>
     <string name="processing_library">Optimizing library…</string>
-    
+
     <string name="library_no_songs">No songs yet</string>
     <string name="library_no_artists">No artists found</string>
     <string name="library_no_artists_desc">Add some music to see your artists here</string>
@@ -538,7 +538,7 @@
     <string name="library_playlists_count">%1$d playlists</string>
     <string name="library_album_count">%1$d album</string>
     <string name="library_albums_count">%1$d albums</string>
-    
+
     <!-- Sort Options -->
     <string name="sort_name">Name</string>
     <string name="sort_date_created">Date Created</string>
@@ -549,27 +549,27 @@
     <string name="sort_date_modified">Date Modified</string>
     <string name="sort_ascending">Ascending</string>
     <string name="sort_descending">Descending</string>
-    
+
     <!-- Storage Permission -->
     <string name="storage_permission_required">Storage Permission Required</string>
     <string name="storage_permission_desc">To browse your music files and explore your device\'s storage, Rhythm needs permission to access your files and media.</string>
     <string name="storage_permission_audio_only">This allows access only to audio files and folders containing music.</string>
-    
+
     <!-- PlayerScreen -->
     <string name="player_now_playing">NOW PLAYING</string>
     <string name="player_loading_lyrics">Loading lyrics…</string>
     <string name="player_shuffle">SHUFFLE</string>
     <string name="player_lyrics">LYRICS</string>
     <string name="player_repeat">REPEAT</string>
-    <string name="player_queue">Queue</string>
+    <string name="player_queue">Research Queue</string>
     <string name="player_playback_speed">Speed &amp; Pitch</string>
     <string name="player_playback_speed_desc">Adjust the speed and pitch of audio playback.</string>
     <string name="player_speed_label">Speed</string>
     <string name="player_pitch_label">Pitch</string>
-    <string name="playback_speed">Playback Speed</string>
+    <string name="playback_speed">Review Speed</string>
     <string name="sync_with_pitch">Sync with Pitch</string>
     <string name="sync_with_speed">Sync with Speed</string>
-    
+
     <!-- SearchScreen -->
     <string name="search_filter_results">Filter Results</string>
     <string name="search_results">Search Results</string>
@@ -595,7 +595,7 @@
     <string name="search_genre_suggestions">Genre suggestions will appear here once detected</string>
     <string name="search_no_genres">No genres detected in your library</string>
     <string name="search_no_recent">No recent searches</string>
-    
+
     <!-- Common UI -->
     <string name="ui_play">Play</string>
     <string name="ui_or">or</string>
@@ -608,27 +608,27 @@
     <string name="ui_download_update">Download Update</string>
     <string name="ui_install_update">Install Update</string>
     <string name="ui_cancel_download">Cancel Download</string>
-    
+
     <!-- Common Terms -->
     <string name="common_rhythm">Rhythm</string>
     <string name="common_songs">Songs</string>
     <string name="common_home">Home</string>
     <string name="common_library">Library</string>
-    
+
     <!-- Splash/Loading -->
     <string name="splash_tagline">Your Music, Your Rhythm</string>
     <string name="splash_loading">Preparing your music library…</string>
     <string name="splash_loading_streaming">Preparing your streaming setup…</string>
     <string name="splash_ready">Ready to groove!</string>
-    
+
     <!-- Audio Quality -->
     <string name="badge_studio_master">STUDIO MASTER</string>
     <string name="badge_lossless">LOSSLESS</string>
-    
+
     <!-- Navigation -->
     <string name="nav_no_matching_songs">No matching songs found</string>
     <string name="nav_try_different">Try a different search query</string>
-    
+
     <!-- Updates Section -->
     <string name="updates_title">Updates</string>
     <string name="updates_error">Error</string>
@@ -657,7 +657,7 @@
     <string name="updates_smart_polling">Smart Polling Active</string>
     <string name="updates_smart_polling_desc">Using efficient HTTP checks to detect updates while minimizing GitHub API calls. You\'ll get instant notifications when new versions are released.</string>
     <string name="updates_channel_desc">Choose which update channel to follow:</string>
-    
+
     <!-- Onboarding -->
     <string name="onboarding_welcome_to">Welcome to</string>
     <string name="onboarding_welcome_title">FieldMind</string>
@@ -682,7 +682,7 @@
     <string name="onboarding_backed_up_1">All settings, playlists, themes, and library customization</string>
     <string name="onboarding_backed_up_2">Restore from files or clipboard with one tap</string>
     <string name="onboarding_backed_up_3">Backups stored locally on your device for privacy</string>
-    <string name="onboarding_audio_title">Audio &amp; Playback Experience</string>
+    <string name="onboarding_audio_title">Audio &amp; Review Experience</string>
     <string name="onboarding_audio_desc">Customize your audio experience with haptic feedback, default screen, volume controls, queue behavior, shuffle settings, lyrics display, and equalizer settings.</string>
     <string name="onboarding_lyrics_sources">API: Online lyrics • Embedded: Metadata lyrics • Local: .lrc files</string>
     <string name="onboarding_additional_features">Additional Audio Features</string>
@@ -714,9 +714,9 @@
     <string name="onboarding_tuner_2">Font customization and typography settings</string>
     <string name="onboarding_tuner_3">Advanced theme options available in Settings > Theme Customization</string>
     <string name="onboarding_rhythm_guard_title">Protect Your Hearing</string>
-    <string name="onboarding_rhythm_guard_desc">Set up Rhythm Guard to keep your listening safer with age-aware defaults and manual protection controls.</string>
-    <string name="onboarding_rhythm_guard_mode_title">Rhythm Guard Mode</string>
-    <string name="onboarding_rhythm_guard_age_hint">Age profile helps Rhythm Guard recommend safer listening limits.</string>
+    <string name="onboarding_rhythm_guard_desc">Set up FieldMind Focus to keep your listening safer with age-aware defaults and manual protection controls.</string>
+    <string name="onboarding_rhythm_guard_mode_title">FieldMind Focus Mode</string>
+    <string name="onboarding_rhythm_guard_age_hint">Age profile helps FieldMind Focus recommend safer listening limits.</string>
     <string name="onboarding_rhythm_guard_tip_1">Auto mode applies safer defaults with minimal setup.</string>
     <string name="onboarding_rhythm_guard_tip_2">You can tune alerts and break reminders later in Settings.</string>
     <string name="onboarding_rhythm_guard_tip_3">Manual mode gives you full control over warnings and thresholds.</string>
@@ -730,7 +730,7 @@
     <string name="onboarding_step_progress">%1$d of %2$d</string>
     <string name="onboarding_advanced_customization">Advanced Customization</string>
     <string name="onboarding_advanced_customization_desc">Custom color schemes, album art colors, and fonts</string>
-    
+
     <string name="onboarding_media_scan_title">Filter Your Music Library</string>
     <string name="onboarding_media_scan_desc">Control which audio files appear in your library. Use Blacklist mode to hide unwanted files (ringtones, notifications), or Whitelist mode to only show specific music folders.</string>
     <string name="onboarding_media_scan_configure">Configure Media Scanning</string>
@@ -741,7 +741,7 @@
     <string name="onboarding_media_scan_configure_in_tuner">Configure scanning in Settings > Media Scan</string>
     <string name="onboarding_storage_title">Storage Management</string>
     <string name="onboarding_storage_desc">Manage cache size and storage in Settings > Cache Management</string>
-    
+
     <string name="onboarding_complete_title">You\'re All Set!</string>
     <string name="onboarding_complete_desc">Rhythm is ready to play! Your music library is being scanned in the background. Here\'s what\'s configured:</string>
     <string name="onboarding_whats_next">What\'s Next?</string>
@@ -750,7 +750,7 @@
     <string name="onboarding_next_finetune">Fine-tune audio with the Equalizer</string>
     <string name="onboarding_next_explore">Explore more settings anytime</string>
     <string name="onboarding_settings_change">All settings can be changed anytime in Settings</string>
-    
+
     <!-- Onboarding Navigation -->
     <string name="onboarding_back">Back</string>
     <string name="onboarding_next">Next</string>
@@ -761,7 +761,7 @@
     <string name="onboarding_open_settings">Open Settings</string>
     <string name="onboarding_grant_access">Grant Access</string>
     <string name="onboarding_language">Language</string>
-    
+
     <!-- Onboarding Permission Screen -->
     <string name="onboarding_permissions_granted_title">Permissions Granted!</string>
     <string name="onboarding_action_required_settings">Action Required: Open Settings</string>
@@ -777,23 +777,23 @@
     <string name="onboarding_permission_bluetooth_desc">Connect to Bluetooth speakers, headphones, and audio devices</string>
     <string name="onboarding_permission_notifications_title">Notifications</string>
     <string name="onboarding_permission_notifications_desc">Show playback controls and music information in notifications</string>
-    
+
     <!-- Permission Tips -->
     <string name="onboarding_permission_tips">Permission Tips</string>
     <string name="onboarding_permission_tip_1">Grant all permissions for the best experience</string>
     <string name="onboarding_permission_tip_2">You can change permissions later in Settings</string>
     <string name="onboarding_permission_tip_3">Rhythm respects your privacy and data</string>
-    
-    <!-- Onboarding Audio &amp; Playback -->
+
+    <!-- Onboarding Audio &amp; Review -->
     <string name="onboarding_haptic_title">Haptic Feedback</string>
     <string name="onboarding_haptic_desc">Enable subtle vibrations on interactions for a more tactile experience.</string>
     <string name="onboarding_default_screen_title">Default Landing Screen</string>
     <string name="onboarding_default_screen_desc">Choose which screen opens when you launch Rhythm</string>
     <string name="onboarding_system_volume_title">System Volume Control</string>
     <string name="onboarding_system_volume_desc">Allow your device\'s physical volume buttons to control Rhythm\'s playback volume.</string>
-    <string name="onboarding_auto_queue_title">Auto Add to Queue</string>
+    <string name="onboarding_auto_queue_title">Auto Add to Research Queue</string>
     <string name="onboarding_auto_queue_desc">Automatically create a contextual queue from the album/artist when playing a song.</string>
-    <string name="onboarding_clear_queue_title">Clear Queue on New Song</string>
+    <string name="onboarding_clear_queue_title">Clear Research Queue on New Song</string>
     <string name="onboarding_clear_queue_desc">Replace the entire queue when playing a new song instead of adding to it.</string>
     <string name="onboarding_repeat_mode_title">Remember Repeat Mode</string>
     <string name="onboarding_repeat_mode_desc">Keep your repeat mode setting across app restarts.</string>
@@ -805,11 +805,11 @@
     <string name="onboarding_show_lyrics_desc">Display synchronized lyrics when available for your favorite songs.</string>
     <string name="onboarding_lyrics_source_title">Lyrics Source Priority</string>
     <string name="onboarding_lyrics_source_desc">Choose which lyrics source to try first (with automatic fallback to others)</string>
-    
+
     <!-- Onboarding Library Setup -->
     <string name="onboarding_tab_order_title">Library Tab Order</string>
     <string name="onboarding_tab_order_desc">Reorder Songs, Playlists, Albums, Artists, and Explorer tabs</string>
-    
+
     <!-- Onboarding Theming -->
     <string name="onboarding_follow_system_title">Follow System Theme</string>
     <string name="onboarding_follow_system_desc">Automatically switch between light and dark themes based on your device\'s system settings.</string>
@@ -817,9 +817,9 @@
     <string name="onboarding_dark_mode_desc">Manually enable or disable dark mode for the application.</string>
     <string name="onboarding_dynamic_colors_title">Dynamic Colors (Material You)</string>
     <string name="onboarding_dynamic_colors_desc">Apply colors extracted from your device\'s wallpaper for a cohesive look.</string>
-    <string name="onboarding_player_theme_title">Playback &amp; Mini Player Themes</string>
+    <string name="onboarding_player_theme_title">Review &amp; Mini Player Themes</string>
     <string name="onboarding_player_theme_desc">Personalize your playback interfaces. Toggle between the clean, modern Rhythm design or the vibrant, fluid Expressive design.</string>
-    
+
     <!-- Onboarding Updater -->
     <string name="onboarding_update_check_failed">Update Check Failed</string>
     <string name="onboarding_ready_to_install">Ready to Install</string>
@@ -841,7 +841,7 @@
     <string name="onboarding_update_channel_title">Update Channel</string>
     <string name="onboarding_update_channel_desc">Stable or beta versions.</string>
     <string name="fetching_latest_version">Fetching latest version from GitHub…</string>
-    
+
     <!-- Onboarding Update Options -->
     <string name="option_every_hour">Every Hour</string>
     <string name="option_every_3_hours">Every 3 Hours</string>
@@ -852,10 +852,10 @@
     <string name="option_beta">Beta</string>
     <string name="option_home">Home</string>
     <string name="option_library">Library</string>
-    
+
     <!-- Onboarding Media Scan -->
     <string name="onboarding_how_it_works">How It Works</string>
-    
+
     <!-- Onboarding Setup Complete -->
     <string name="onboarding_library_configured">Library Configured</string>
     <string name="onboarding_library_configured_desc">Your music library organization preferences are set</string>
@@ -863,14 +863,14 @@
     <string name="onboarding_theme_applied_desc">Your custom theme and appearance settings are ready</string>
     <string name="onboarding_backup_options">Backup Options</string>
     <string name="onboarding_backup_options_desc">Auto-backup and restoration settings configured</string>
-    
+
     <!-- Onboarding Update Status UI -->
     <string name="onboarding_in_progress">In Progress</string>
     <string name="onboarding_dismiss">Dismiss</string>
     <string name="onboarding_retry">Retry</string>
-    
+
     <!-- Onboarding: Notifications Step -->
-    <string name="onboarding_notifications_title">Playback Notifications</string>
+    <string name="onboarding_notifications_title">Review Notifications</string>
     <string name="onboarding_notifications_desc">Control how Rhythm displays music playback in your notification shade. Choose between custom styled notifications or the standard system media controls.</string>
     <string name="onboarding_custom_notifications">Custom Notification Style</string>
     <string name="onboarding_custom_notifications_desc">Use Rhythm\'s enhanced notification design with additional controls and styling</string>
@@ -878,32 +878,32 @@
     <string name="onboarding_notification_tip_1">See current track info at a glance</string>
     <string name="onboarding_notification_tip_2">Control playback with quick actions</string>
     <string name="onboarding_notification_tip_3">Custom style matches your theme</string>
-    
+
     <!-- Onboarding: Gestures Step -->
     <string name="onboarding_gestures_title">Touch Gestures</string>
     <string name="onboarding_gestures_desc">Navigate your music library faster with intuitive swipe and tap gestures. Customize gestures for the mini player and full player screens.</string>
     <string name="onboarding_gestures_miniplayer">Mini Player</string>
     <string name="onboarding_gestures_player">Full Player</string>
     <string name="onboarding_gesture_swipe">Mini Player Swipe</string>
-    <string name="onboarding_gesture_swipe_desc">Swipe left/right on mini player to skip tracks</string>
+    <string name="onboarding_gesture_swipe_desc">Swipe left/right on mini player to skip records</string>
     <string name="onboarding_gesture_dismiss">Swipe to Dismiss</string>
     <string name="onboarding_gesture_dismiss_desc">Swipe down on full player to return to mini player</string>
-    <string name="onboarding_gesture_tracks">Swipe for Tracks</string>
-    <string name="onboarding_gesture_tracks_desc">Swipe on artwork to skip to next/previous song</string>
+    <string name="onboarding_gesture_records">Swipe for Tracks</string>
+    <string name="onboarding_gesture_records_desc">Swipe on artwork to skip to next/previous song</string>
     <string name="onboarding_gesture_doubletap">Double Tap Artwork</string>
     <string name="onboarding_gesture_doubletap_desc">Double tap album art to like the current song</string>
     <string name="onboarding_gestures_tips_title">Gesture Tips</string>
     <string name="onboarding_gesture_tip_1">Swipe gestures work in both directions</string>
     <string name="onboarding_gesture_tip_2">Quick swipes respond faster than slow ones</string>
-    
+
     <!-- Onboarding: Widgets Step -->
     <string name="onboarding_widgets_title">Launcher Widgets</string>
     <string name="onboarding_widgets_desc">Add Rhythm widgets to your launcher for quick music control. Customize what information is displayed and how the widget looks.</string>
-    <string name="onboarding_widget_album_art">Show Album Art</string>
+    <string name="onboarding_widget_album_art">Show Evidence preview</string>
     <string name="onboarding_widget_album_art_desc">Display album artwork in the widget</string>
-    <string name="onboarding_widget_artist">Show Artist Name</string>
+    <string name="onboarding_widget_artist">Show Author Name</string>
     <string name="onboarding_widget_artist_desc">Display the current artist in the widget</string>
-    <string name="onboarding_widget_album">Show Album Name</string>
+    <string name="onboarding_widget_album">Show Project Name</string>
     <string name="onboarding_widget_album_desc">Display the album title in the widget</string>
     <string name="onboarding_widget_auto_update">Auto Update Widget</string>
     <string name="onboarding_widget_auto_update_desc">Update widget automatically when song changes</string>
@@ -911,7 +911,7 @@
     <string name="onboarding_widget_tip_1">Tap the widget to open the app</string>
     <string name="onboarding_widget_tip_2">Resize widgets for different layouts (2x1 to 5x5)</string>
     <string name="onboarding_widget_tip_3">Widgets update in real-time during playback</string>
-    
+
     <!-- Onboarding: Integrations Step -->
     <string name="onboarding_integrations_title">Connect Your Services</string>
     <string name="onboarding_integrations_desc">Enhance your listening experience by connecting to external services. Get album art, lyrics, scrobble your plays, and share what you\'re listening to.</string>
@@ -933,7 +933,7 @@
     <string name="onboarding_integration_broadcast_desc">Share playback status with other apps</string>
     <string name="onboarding_integrations_info_title">Privacy Note</string>
     <string name="onboarding_integrations_info_desc">These features send limited data (song titles, artists) to external services. Your personal data and music files stay on your device. You can enable or disable these at any time in Settings.</string>
-    
+
     <!-- Onboarding: Rhythm Stats Step -->
     <string name="onboarding_stats_title">Rhythm Stats</string>
     <string name="onboarding_stats_desc">Discover insights about your music habits. Track your listening time, most played songs, favorite artists, and more with beautiful visualizations.</string>
@@ -948,36 +948,36 @@
     <string name="onboarding_stats_feature_4">Explore album listening patterns</string>
     <string name="onboarding_stats_info_title">How It Works</string>
     <string name="onboarding_stats_info_desc">Stats are calculated locally on your device based on your playback history. No data is sent to external servers. Access detailed stats anytime from the home screen or settings.</string>
-    
+
     <!-- MiniPlayer Swipe Hints -->
     <string name="miniplayer_swipe_up_hint">↑ Full Player</string>
     <string name="miniplayer_swipe_down_hint">↓ Dismiss</string>
     <string name="miniplayer_swipe_left_hint">Next →</string>
     <string name="miniplayer_swipe_right_hint">← Previous</string>
-    <string name="miniplayer_no_song">No song playing</string>
+    <string name="miniplayer_no_song">No active field note</string>
     <string name="badge_live">LIVE</string>
-    
+
     <!-- Festive Greetings -->
     <string name="festive_greeting_christmas">🎄 Merry Christmas! 🎅</string>
     <string name="festive_greeting_new_year">🎆 Happy New Year! 🎉</string>
     <string name="festive_greeting_halloween">🎃 Happy Halloween! 👻</string>
     <string name="festive_greeting_valentines">💝 Happy Valentine\'s Day! 💕</string>
-    
+
     <!-- Settings -->
     <string name="settings_tip_theme">Customize your theme with colors, fonts, and festive effects</string>
     <string name="settings_tip_haptic">Enable haptic feedback for tactile responses</string>
     <string name="settings_tip_gestures">Control playback faster with intuitive swipes and taps, no extra menus needed.</string>
     <string name="settings_tip_gestures_swipe">Swipe up on mini player to open full player, then swipe down to dismiss when done.</string>
-    <string name="settings_tip_gestures_artwork">Swipe artwork to switch tracks and double tap album art for quick play or pause.</string>
+    <string name="settings_tip_gestures_artwork">Swipe artwork to switch records and double tap album art for quick play or pause.</string>
     <string name="settings_tip_media_scan">Use media scan to hide unwanted files from your library</string>
-    <string name="settings_tip_rhythm_guard_off">Protect your hearing by enabling Rhythm Guard</string>
-    <string name="settings_tip_rhythm_guard_auto">Rhythm Guard automatically manages safe listening limits</string>
-    <string name="settings_tip_rhythm_guard_manual">You are manually controlling Rhythm Guard limits</string>
+    <string name="settings_tip_rhythm_guard_off">Protect your hearing by enabling FieldMind Focus</string>
+    <string name="settings_tip_rhythm_guard_auto">FieldMind Focus automatically manages safe listening limits</string>
+    <string name="settings_tip_rhythm_guard_manual">You are manually controlling FieldMind Focus limits</string>
     <string name="settings_default_screen">Default Landing Screen</string>
     <string name="settings_default_screen_desc">Choose your starting screen</string>
     <string name="settings_home_desc">Discover new music and recommendations</string>
     <string name="settings_library_desc">Quick access to your music collection</string>
-    
+
     <!-- Cache Management -->
     <string name="cache_current_status">Current Cache Status</string>
     <string name="cache_calculating">Calculating cache size…</string>
@@ -989,7 +989,7 @@
     <string name="cache_size_limit">Cache Size Limit</string>
     <string name="cache_clear_on_exit">Clear Cache on Exit</string>
     <string name="cache_clear_on_exit_desc">Automatically clear cached data when app closes</string>
-    
+
     <!-- Lyrics -->
     <string name="lyrics_source_priority">Lyrics Source Priority</string>
     <string name="lyrics_choose_source">Choose where to look for Lyrics</string>
@@ -1002,10 +1002,10 @@
     <string name="settings_keep_screen_on_lyrics_desc">Prevent screen from turning off while lyrics are visible</string>
     <string name="settings_show_lyrics_background_artwork">Show Background Artwork</string>
     <string name="settings_show_lyrics_background_artwork_desc">Display blurred album artwork behind full-screen lyrics</string>
-    
+
     <!-- Theme Customization -->
     <string name="theme_good_to_know">Good to Know</string>
-    <string name="theme_tip_album_art">Album Art colors adapt dynamically to your music</string>
+    <string name="theme_tip_album_art">Evidence preview colors adapt dynamically to your music</string>
     <string name="theme_tip_material_you">Material You uses system wallpaper colors (Android 12+)</string>
     <string name="theme_tip_custom_fonts">Import custom fonts to personalize typography</string>
     <string name="theme_color_source">Color Source</string>
@@ -1018,10 +1018,10 @@
     <string name="theme_custom_picker_desc">Create your own color scheme</string>
     <string name="theme_font_selection">Font Selection</string>
     <string name="theme_font_selection_desc">Choose from available system fonts</string>
-    
+
     <!-- Playlist Detail -->
     <string name="playlist_no_songs_yet">No songs yet</string>
-    
+
     <!-- Components: Backup & Restore -->
     <string name="backup_title">Backup &amp; Restore</string>
     <string name="backup_desc">Safeguard your personalized settings, playlists, and preferences. Create backups manually or enable automatic weekly backups for peace of mind.</string>
@@ -1035,7 +1035,7 @@
     <string name="backup_included_3">Backups stored locally on your device for privacy</string>
     <string name="backup_manage">MANAGE BACKUP</string>
     <string name="backup_restore">RESTORE BACKUP</string>
-    
+
     <!-- Components: Blacklist Management -->
     <string name="blacklist_title">Blacklist Management</string>
     <string name="blacklist_desc">Blocked songs and folders won\'t appear in search results, recommendations, or auto-play queues</string>
@@ -1048,77 +1048,77 @@
     <string name="blacklist_tap_to_add">Tap the button above to add folders to the blacklist</string>
     <string name="blacklist_blocked_songs">Blocked Songs</string>
     <string name="blacklist_available_songs">Available Songs</string>
-    
-    <!-- Components: Queue -->
+
+    <!-- Components: Research Queue -->
     <string name="queue_empty">Your queue is empty</string>
     <string name="queue_add_songs">Add songs from your library to start listening</string>
     <string name="queue_no_more">No more songs in queue</string>
     <string name="queue_add_more">Add more songs to keep the music playing</string>
-    
+
     <!-- Components: Create Playlist -->
     <string name="playlist_create">Create Playlist</string>
     <string name="playlist_name_empty">Playlist name cannot be empty</string>
-    <string name="playlist_queue_not_empty">Queue Not Empty</string>
+    <string name="playlist_queue_not_empty">Research Queue Not Empty</string>
     <string name="playlist_queue_songs">You have %1$d song%2$s in the current queue.</string>
     <string name="playlist_how_play">How would you like to play \"%1$s\"?</string>
-    
+
     <!-- Components: Licenses -->
     <string name="licenses_title">Open Source Licenses</string>
     <string name="licenses_desc">Built with amazing open source projects</string>
     <string name="licenses_apache">Open Source Licenses</string>
     <string name="licenses_attribution">This app is licensed under GPL-3.0. Libraries are licensed under Apache 2.0 or compatible licenses</string>
-    
+
     <!-- Components: Player Chip Order -->
     <string name="player_chip_order_title">Player Chip Order</string>
     <string name="player_chip_order_desc">Customize player chips</string>
     <string name="player_chip_reset">Reset to Default</string>
     <string name="player_chip_order_saved">Player chip order and visibility saved</string>
-    
+
     <!-- Components: Library Tab Order -->
     <string name="library_tab_order_title">Library Tab Order</string>
     <string name="library_tab_order_desc">Reorder and toggle visibility</string>
-    
-    <!-- Components: Playback Bottom Sheet -->
+
+    <!-- Components: Review Bottom Sheet -->
     <string name="playback_lyrics_priority">Lyrics Source Priority</string>
     <string name="playback_lyrics_priority_desc">Configure sources, behaviors, layout, size, and styling of lyrics</string>
-    <string name="playback_settings">Playback Settings</string>
+    <string name="playback_settings">Review Settings</string>
     <string name="playback_audio_settings">Audio Settings</string>
     <string name="playback_active_device">ACTIVE DEVICE</string>
     <string name="playback_no_device">No device connected</string>
     <string name="playback_tap_output">Tap to select output</string>
-    
+
     <!-- Components: Lyrics Editor -->
     <string name="lyrics_sync_adjustment">Sync Adjustment</string>
     <string name="lyrics_sync_note">Sync adjustment only works with time-synced lyrics (LRC format). Use Reset to fetch synced lyrics if available.</string>
     <string name="lyrics_placeholder">Enter lyrics here…\n\nYou can use LRC format:\n[00:12.00] Line one\n[00:17.00] Line two</string>
     <string name="lyrics_editor_title">Lyrics Editor</string>
-    
+
     <!-- Components: Song Info -->
     <string name="song_info_title">Song Information</string>
     <string name="song_info_no_metadata">No metadata available</string>
     <string name="song_info_permission">Rhythm needs permission to modify this audio file\'s metadata. You may see a system dialog asking for access - please allow it to save your changes.</string>
     <string name="rhythm_stats">Rhythm Stats</string>
     <string name="file_info">File Info</string>
-    
+
     <!-- Components: Add to Playlist -->
     <string name="add_to_playlists">Add to Playlists</string>
     <string name="add_to_playlist_action">Add to playlist</string>
     <string name="playlist_create_new">Create New Playlist</string>
     <string name="playlist_create_first">Create your first playlist to add songs</string>
-    
+
     <!-- Components: Cache Management (Bottom Sheet) -->
     <string name="cache_management">Cache</string>
     <string name="cache_manage_desc">Manage cached data including images, temporary files, and other app data.</string>
-    
+
     <!-- Components: Beta Program -->
     <string name="beta_welcome">Welcome to the Beta Program!</string>
     <string name="beta_desc">You are currently using the beta release of Rhythm. This version is still in development and may contain bugs, incomplete features, or unexpected behavior.</string>
-    
+
     <!-- Components: Equalizer -->
     <string name="equalizer_disabled">Equalizer is disabled</string>
     <string name="equalizer_enable_desc">Enable the equalizer to customize your audio experience.</string>
     <string name="equalizer_open_system">Open System Equalizer</string>
-    
+
     <!-- Theme Customization Notes -->
     <string name="theme_color_schemes_unavailable">Color schemes are only available when using Custom color source.</string>
     <string name="theme_color_schemes_switch">Switch to Custom in the Color Source setting to access predefined schemes.</string>
@@ -1126,7 +1126,7 @@
     <string name="theme_custom_colors_switch">Switch to Custom in the Color Source setting to create your own colors.</string>
     <string name="theme_system_fonts_unavailable">System fonts are only available when using System font source.</string>
     <string name="theme_system_fonts_switch">Switch to System in the Font Source setting to choose from available fonts.</string>
-    
+
     <!-- PlaceholderScreens Additional -->
     <string name="backup_whats_included_placeholder">What\'s Included in Backup?</string>
     <string name="backup_all_settings_placeholder">All settings, playlists, themes, and library customization</string>
@@ -1145,8 +1145,8 @@
     <string name="playlist_action_load_desc">Load playlist and start from selected track</string>
     <string name="playlist_action_single_title">Play only this song</string>
     <string name="playlist_action_single_desc">Play only selected track</string>
-    <string name="queue_action_title">Queue Conflict Action</string>
-    <string name="queue_action_desc">Default behavior when queue already has tracks</string>
+    <string name="queue_action_title">Research Queue Conflict Action</string>
+    <string name="queue_action_desc">Default behavior when queue already has records</string>
     <string name="queue_action_choose">Select the default queue conflict action</string>
     <string name="queue_action_ask_title">Ask each time</string>
     <string name="queue_action_ask_desc">Show an action chooser each time</string>
@@ -1158,7 +1158,7 @@
     <string name="queue_action_add_desc">Add song at the end of queue</string>
     <string name="queue_action_always_add_title">Always add to queue</string>
     <string name="queue_action_always_add_desc">Always add selected track to queue</string>
-    
+
     <!-- Additional UI Elements -->
     <string name="now_playing">NOW PLAYING</string>
     <string name="skip_for_now">Skip for now</string>
@@ -1174,7 +1174,7 @@
     <string name="manage_backup">MANAGE BACKUP</string>
     <string name="restore_backup">RESTORE BACKUP</string>
     <string name="edit_metadata">Edit Song Info</string>
-    
+
     <!-- Updates Messages -->
     <string name="updates_disabled_message">App updates have been disabled in settings</string>
     <string name="updates_auto_disabled">Automatic update checking is disabled. You can still check manually.</string>
@@ -1183,22 +1183,22 @@
     <string name="updates_experimental_coming">More experimental features coming soon in future updates</string>
     <string name="settings_interval_every_48_hours">Every 48 hours</string>
     <string name="settings_interval_every_72_hours">Every 72 hours</string>
-    
+
     <!-- Cache -->
     <string name="cache_total_size_label">Total Cache Size:</string>
     <string name="cache_limit_label">Cache Limit:</string>
-    
+
     <!-- Theme -->
     <string name="theme_featured_schemes">FEATURED SCHEMES</string>
     <string name="theme_more_schemes">MORE SCHEMES</string>
     <string name="theme_quick_presets">Quick Presets</string>
     <string name="theme_advanced_rgb">Advanced RGB Controls</string>
     <string name="theme_font_preview">The quick brown fox jumps over the lazy dog</string>
-    
+
     <!-- Services -->
     <string name="external_services">External Services</string>
     <string name="api_services">Integrated APIs</string>
-    
+
     <!-- Scrobbling -->
     <string name="scrobbling_title">Scrobbling Support</string>
     <string name="scrobbling_enabled">Enable Scrobbling</string>
@@ -1209,7 +1209,7 @@
     <string name="scrobbling_apps_list">• Last.fm for Android\n• Pano Scrobbler\n• Simple Last.fm Scrobbler\n• Other SLS API compatible apps</string>
     <string name="scrobbling_how_to">How to Use</string>
     <string name="scrobbling_setup_steps">1. Install a scrobbling app (e.g., Pano Scrobbler from F-Droid)\n2. Enable scrobbling here\n3. Your listening activity will be automatically tracked!</string>
-    
+
     <!-- Discord Rich Presence -->
     <string name="discord_title">Discord Rich Presence</string>
     <string name="discord_enabled">Enable Discord Rich Presence</string>
@@ -1222,7 +1222,7 @@
     <string name="discord_setup_steps">1. Install Discord for Android\n2. Enable this setting in Rhythm\n3. Open Discord and enable \"Display current activity\" in User Settings → Activity Status\n4. Your now playing info will appear in your Discord status!</string>
     <string name="discord_privacy_note">Privacy Note</string>
     <string name="discord_privacy_desc">Only broadcasts when music is playing. You can toggle this on/off anytime. Discord controls who can see your activity status.</string>
-    
+
     <!-- Broadcast Status (Tasker/KWGT) -->
     <string name="broadcast_status_title">Broadcast Status</string>
     <string name="broadcast_status_enabled">Enable Status Broadcasting</string>
@@ -1237,14 +1237,14 @@
     <string name="broadcast_setup_steps">1. Install your automation/widget app (e.g., Tasker, KWGT)\n2. Enable this setting\n3. Configure your app to listen for:\n   • com.android.music.metachanged (track changes)\n   • com.android.music.playstatechanged (play/pause)\n4. Access song data via standard intents!</string>
     <string name="broadcast_use_cases">Use Cases</string>
     <string name="broadcast_use_cases_list">• Display now playing in custom widgets\n• Trigger smart home scenes based on music\n• Auto-pause music when certain apps open\n• Log your listening history\n• Control other apps based on playback state</string>
-    
+
     <!-- Equalizer -->
     <string name="equalizer">Equalizer</string>
     <string name="frequency_bands">Frequency Bands</string>
     <string name="frequency_response">Frequency Response</string>
     <string name="audio_effects">Audio Effects</string>
     <string name="audio_normalization">Audio Normalization</string>
-    <string name="audio_normalization_desc">Normalize volume levels across tracks</string>
+    <string name="audio_normalization_desc">Normalize volume levels across records</string>
     <string name="replay_gain">Replay Gain</string>
     <string name="replay_gain_desc">Use embedded replay gain tags for volume</string>
     <string name="bass_boost">Bass Boost</string>
@@ -1268,22 +1268,22 @@
     <string name="sleep_timer_select_duration">Select Timer Duration</string>
     <string name="sleep_timer_set_hours_minutes">Set hours and minutes for the sleep timer</string>
     <string name="coming_soon">Coming Soon</string>
-    
+
     <!-- Crash Reports -->
     <string name="crash_reports">Crash Reports</string>
     <string name="crashed_on">Crashed on: %1$s</string>
-    
+
     <!-- Lyrics -->
     <string name="about_lyrics_sources">About Lyrics Sources</string>
     <string name="sync_adjustment">Sync Adjustment</string>
     <string name="synced_lyrics_unavailable">Synchronized lyrics not available for this format.</string>
     <string name="word_by_word_unavailable">Word-by-word lyrics not available.</string>
-    
+
     <!-- Library Operations -->
     <string name="exporting_playlists">Exporting playlists…</string>
     <string name="exporting_to_location">Exporting playlists to selected location…</string>
     <string name="importing_playlist">Importing playlist…</string>
-    
+
     <!-- Playlist Import/Export -->
     <string name="restart_app">Restart App?</string>
     <string name="export_playlist">Export Playlist</string>
@@ -1294,24 +1294,24 @@
     <string name="select_playlist_file">Select a playlist file to import:</string>
     <string name="supported_formats">Supported formats:</string>
     <string name="may_take_moments">This may take a few moments…</string>
-    
+
     <!-- Canvas Video Player -->
     <string name="canvas_unavailable">Canvas unavailable</string>
     <string name="canvas_couldnt_load">Canvas couldn\'t load</string>
-    
+
     <!-- Beta Program -->
     <string name="beta_program">BETA PROGRAM</string>
     <string name="lets_go">Let\'s Go! 🎵</string>
-    
+
     <!-- Special Thanks -->
     <string name="special_thanks">Special Thanks</string>
-    
+
     <!-- Plural Support -->
     <plurals name="playlist_count">
         <item quantity="one">playlist</item>
         <item quantity="other">playlists</item>
     </plurals>
-    
+
     <!-- Common Actions -->
     <string name="action_ok">OK</string>
     <string name="action_cancel">Cancel</string>
@@ -1337,7 +1337,7 @@
     <string name="action_default">Default</string>
     <string name="action_play">Play</string>
     <string name="action_shuffle">Shuffle</string>
-    
+
     <!-- Settings Screen -->
     <string name="settings_title">Settings</string>
     <string name="settings_section_appearance">Look &amp; Feel</string>
@@ -1351,9 +1351,9 @@
     <string name="settings_language_desc">English, Spanish</string>
     <string name="settings_haptic_feedback">Haptic Feedback</string>
     <string name="settings_haptic_feedback_desc">Tap feedback</string>
-    <string name="settings_section_queue_playback">Queue &amp; Playback</string>
+    <string name="settings_section_queue_playback">Research Queue &amp; Review</string>
     <string name="settings_section_audio_lyrics">Audio &amp; Effects</string>
-    <string name="settings_section_audio_playback">Audio &amp; Playback</string>
+    <string name="settings_section_audio_playback">Audio &amp; Review</string>
     <string name="settings_section_volume_device">Volume &amp; Device</string>
     <string name="settings_system_volume">System Volume</string>
     <string name="settings_system_volume_desc">System audio</string>
@@ -1361,21 +1361,21 @@
     <string name="settings_stop_playback_on_zero_volume_desc">Pause playback when volume reaches zero</string>
     <string name="settings_show_lyrics">Show Lyrics</string>
     <string name="settings_show_lyrics_desc">Lyrics display</string>
-    <string name="settings_queue_playback_title">Queue &amp; Playback</string>
+    <string name="settings_queue_playback_title">Research Queue &amp; Review</string>
     <string name="settings_queue_playback_desc">Auto-add, repeat</string>
     <string name="settings_equalizer_title">Equalizer</string>
     <string name="settings_equalizer_desc">Bass, treble</string>
     <string name="settings_sleep_timer_title">Sleep Timer</string>
     <string name="settings_sleep_timer_desc">Auto-stop playback</string>
     <string name="settings_section_library_content">Library &amp; Media</string>
-    <string name="settings_group_by_album_artist">Group by Album Artist</string>
+    <string name="settings_group_by_album_artist">Group by Evidence previewist</string>
     <string name="settings_group_by_album_artist_desc">Keep collaborations grouped under album artists</string>
     <string name="settings_media_scan_title">Media Scan</string>
     <string name="settings_media_scan_desc">Scan folders</string>
     <string name="settings_playlists_title">Playlists</string>
     <string name="settings_playlists_desc">Create, import</string>
     <string name="settings_section_notifications_services">Notifications &amp; Services</string>
-    <string name="settings_notifications_desc">Playback alerts, controls</string>
+    <string name="settings_notifications_desc">Review alerts, controls</string>
     <string name="settings_section_storage_data">Data &amp; Storage</string>
     <string name="settings_cache_management_title">Cache</string>
     <string name="settings_cache_management_desc">Images, lyrics</string>
@@ -1396,7 +1396,7 @@
     <string name="settings_experimental_features_desc">Cutting-edge features</string>
     <string name="settings_select_option">Rhythm Settings</string>
     <string name="settings_select_option_desc">Choose a setting from the list to configure</string>
-    
+
     <!-- Playlist Actions -->
     <string name="playlist_rename_action">Rename playlist</string>
     <string name="playlist_delete_action">Delete playlist</string>
@@ -1406,17 +1406,17 @@
     <string name="playlist_all_in_playlist">All songs are already in this playlist.</string>
     <string name="playlist_name_field">Playlist name</string>
     <string name="playlist_delete_confirm">Are you sure you want to delete \'%1$s\'? This action cannot be undone.</string>
-    
+
     <!-- Player Actions -->
     <string name="player_load_lyrics">Load Lyrics</string>
     <string name="player_retry_canvas">Retry Canvas</string>
-    
+
     <!-- Search -->
     <string name="search_songs_count">Songs (%1$d)</string>
     <string name="search_albums_count">Albums (%1$d)</string>
     <string name="search_artists_count">Artists (%1$d)</string>
     <string name="search_playlists_count">Playlists (%1$d)</string>
-    
+
     <!-- Song Metadata -->
     <string name="metadata_title">Title</string>
     <string name="metadata_artist">Artist</string>
@@ -1428,7 +1428,7 @@
     <string name="metadata_save_changes">Save Changes</string>
     <string name="metadata_irreversible_changes">Irreversible Changes</string>
     <string name="metadata_media_access_required">Media Access Required</string>
-    
+
     <!-- Updates Actions -->
     <string name="updates_check_now_action">Check Now</string>
     <string name="updates_check_again">Check Again</string>
@@ -1446,7 +1446,7 @@
     <string name="updates_source_github_desc">Always download the GitHub release assets.</string>
     <string name="updates_source_fdroid_desc">Always download the F-Droid release assets.</string>
     <string name="updates_check_interval_title">Update Check Interval</string>
-    
+
     <!-- Cache Actions -->
     <string name="cache_clearing">Clearing cache…</string>
     <string name="cache_cleared">Cache cleared!</string>
@@ -1454,31 +1454,31 @@
     <string name="cache_clearing_lyrics">Clearing lyrics…</string>
     <string name="cache_lyrics_cleared">Lyrics cache cleared!</string>
     <string name="cache_clear_lyrics_only">Clear Lyrics Cache Only</string>
-    
+
     <!-- Backup Actions -->
     <string name="backup_created_success">Backup Created Successfully</string>
     <string name="backup_restore_success">Restore Completed Successfully</string>
     <string name="backup_restart_now">Restart Now</string>
     <string name="backup_continue_without_restart">Continue Without Restart</string>
     <string name="backup_error_title">Error</string>
-    
+
     <!-- Import/Export -->
     <string name="import_export_json_format">JSON Format</string>
     <string name="import_export_pls_format">PLS Playlist</string>
     <string name="import_complete_title">Import Complete</string>
     <string name="import_complete_message">Successfully imported %1$d playlists.\n%2$s\n\nRestart the app to apply changes.</string>
     <string name="import_restart_app">Restart App</string>
-    
+
     <!-- Sleep Timer -->
     <string name="sleep_timer_set_custom">Set Custom Time</string>
     <string name="sleep_timer_set">Set Timer</string>
-    
+
     <!-- Crash Logs -->
     <string name="crash_logs_clear_all">Clear All Logs</string>
     <string name="crash_logs_test">Test Crash</string>
     <string name="crash_logs_copy">Copy Log</string>
     <string name="crash_logs_details_title">Crash Log Details</string>
-    
+
     <!-- Accessibility - Content Descriptions -->
     <string name="cd_back">Back</string>
     <string name="cd_navigate_back">Go back</string>
@@ -1518,14 +1518,14 @@
     <string name="cd_minimize">Minimize</string>
     <string name="cd_song_info">Song info</string>
     <string name="cd_album_artwork">Album artwork for %1$s</string>
-    <string name="cd_no_song_playing">No song playing</string>
+    <string name="cd_no_song_playing">No active field note</string>
     <string name="cd_toggle_shuffle">Toggle shuffle</string>
     <string name="cd_toggle_lyrics">Toggle lyrics</string>
     <string name="cd_toggle_repeat_mode">Toggle repeat mode</string>
     <string name="cd_show_actions">Show actions</string>
     <string name="cd_add_to_playlist_action">Add to playlist</string>
     <string name="cd_toggle_favorite">Toggle favorite</string>
-    <string name="cd_playback_speed_action">Playback speed</string>
+    <string name="cd_playback_speed_action">Review speed</string>
     <string name="cd_show_album">Show album</string>
     <string name="cd_show_artist">Show artist</string>
     <string name="cd_reorder_chips">Reorder chips</string>
@@ -1543,7 +1543,7 @@
     <string name="cd_permissions">Permissions</string>
     <string name="cd_backup_restore">Backup &amp; Restore</string>
     <string name="cd_open_backup_restore">Open backup &amp; restore</string>
-    <string name="cd_audio_playback_settings">Audio &amp; Playback Settings</string>
+    <string name="cd_audio_playback_settings">Audio &amp; Review Settings</string>
     <string name="cd_library_setup">Library Setup</string>
     <string name="cd_open_settings">Open</string>
     <string name="cd_theming">Theming</string>
@@ -1562,8 +1562,8 @@
     <string name="cd_volume">Volume</string>
     <string name="cd_decrease_volume">Decrease volume</string>
     <string name="cd_increase_volume">Increase volume</string>
-    <string name="cd_playback_speed">Playback Speed</string>
-    <string name="cd_playback_settings">Playback Settings</string>
+    <string name="cd_playback_speed">Review Speed</string>
+    <string name="cd_playback_settings">Review Settings</string>
     <string name="cd_move_up">Move up</string>
     <string name="cd_move_down">Move down</string>
     <string name="cd_add_songs">Add songs</string>
@@ -1580,17 +1580,17 @@
     <string name="cd_add_selected_songs">Add selected songs</string>
     <string name="cd_toggle_multi_select">Toggle multi-select</string>
     <string name="cd_add_song">Add song</string>
-    
+
     <!-- Bottom Sheet Titles -->
     <string name="bottomsheet_add_to_playlist">Add to playlist</string>
     <string name="bottomsheet_no_playlists">No playlists yet</string>
     <string name="bottomsheet_actions">Actions</string>
     <string name="bottomsheet_metadata">Metadata</string>
-    <string name="bottomsheet_queue">Queue</string>
+    <string name="bottomsheet_queue">Research Queue</string>
     <string name="bottomsheet_up_next">UP NEXT</string>
     <string name="bottomsheet_albums">Albums</string>
     <string name="bottomsheet_songs">Songs</string>
-    
+
     <!-- Bottom Sheet: Common -->
     <string name="bottomsheet_reset">Reset</string>
     <string name="bottomsheet_save">Save</string>
@@ -1601,7 +1601,7 @@
     <string name="bottomsheet_add">Add</string>
     <string name="bottomsheet_import">Import</string>
     <string name="bottomsheet_export">Export</string>
-    
+
     <!-- Bottom Sheet: Lyrics Editor -->
     <string name="bottomsheet_lyrics_earlier">Earlier</string>
     <string name="bottomsheet_lyrics_later">Later</string>
@@ -1610,7 +1610,7 @@
     <string name="bottomsheet_lyrics_embed">Embed in File</string>
     <string name="lyrics_embed_success">Lyrics embedded in file successfully</string>
     <string name="lyrics_embed_failed">Failed to embed lyrics in file</string>
-    
+
     <!-- Bottom Sheet: Sleep Timer -->
     <string name="bottomsheet_timer_remaining">remaining</string>
     <string name="bottomsheet_timer_custom_desc">Set a specific time duration</string>
@@ -1618,25 +1618,25 @@
     <string name="bottomsheet_timer_set">Set Timer</string>
     <string name="bottomsheet_timer_edit">Edit</string>
     <string name="bottomsheet_timer_hours_minutes">Set hours and minutes for the sleep timer</string>
-    
-    <!-- Bottom Sheet: Playback -->
-    <string name="bottomsheet_playback">Playback</string>
+
+    <!-- Bottom Sheet: Review -->
+    <string name="bottomsheet_playback">Review</string>
     <string name="bottomsheet_no_device">No device connected</string>
     <string name="bottomsheet_max">Max</string>
-    
+
     <!-- Bottom Sheet: Album -->
     <string name="bottomsheet_play_all">Play All</string>
-    <string name="bottomsheet_tracks">Tracks</string>
+    <string name="bottomsheet_records">Tracks</string>
     <string name="bottomsheet_sort_by">Sort by</string>
     <string name="bottomsheet_all_discs">All Discs</string>
     <string name="bottomsheet_disc_option">Disc %1$d</string>
     <string name="bottomsheet_disc_filter">Filter by Disc</string>
     <string name="bottomsheet_no_songs_album">No songs in this album</string>
-    
+
     <!-- Bottom Sheet: Home Section Order -->
     <string name="bottomsheet_home_section_order">Home Section Order</string>
     <string name="bottomsheet_reorder_toggle_visibility">Reorder and toggle visibility</string>
-    
+
     <!-- Bottom Sheet: Cast -->
     <string name="bottomsheet_cast_stream">Cast &amp; Stream</string>
     <string name="bottomsheet_playing_now">Playing Now</string>
@@ -1662,7 +1662,7 @@
     <string name="device_type_soundbar">Soundbar</string>
     <string name="device_type_phone">Phone</string>
     <string name="device_type_cast_device">Cast Device</string>
-    
+
     <!-- Bottom Sheet: Backup/Restore -->
     <string name="bottomsheet_backup_success_title">Backup Created Successfully</string>
     <string name="bottomsheet_backup_success_msg">Your complete Rhythm backup has been created including:\n\n• All playlists and their songs\n• Favorites and play history\n• App settings and preferences\n• Equalizer configurations\n• Theme customizations</string>
@@ -1671,18 +1671,18 @@
     <string name="bottomsheet_restart_now">Restart Now</string>
     <string name="bottomsheet_ok">OK</string>
     <string name="bottomsheet_error">Error</string>
-    
+
     <!-- Bottom Sheet: Cache Management -->
     <string name="bottomsheet_clearing_cache">Clearing cache…</string>
     <string name="bottomsheet_cache_cleared">Cache cleared!</string>
     <string name="bottomsheet_clear_all_cache">Clear All Cache</string>
-    
+
     <!-- Bottom Sheet: Blacklist -->
     <string name="bottomsheet_blacklist_close">Close</string>
-    
+
     <!-- Bottom Sheet: Library Tab Order -->
     <string name="bottomsheet_library_tab_order">Library Tab Order</string>
-    
+
     <!-- Bottom Sheet: Device Configuration / AutoEQ -->
     <string name="bottomsheet_manage_autoeq">Manage AutoEQ</string>
     <string name="bottomsheet_autoeq_desc">Configure your audio devices with optimized AutoEQ profiles for the best listening experience.</string>
@@ -1698,7 +1698,7 @@
     <string name="bottomsheet_choose_profile">Choose an AutoEQ profile for %1$s</string>
     <string name="bottomsheet_delete_device">Delete Device</string>
     <string name="bottomsheet_delete_device_confirm">Are you sure you want to delete \'%1$s\'? This action cannot be undone.</string>
-    
+
     <!-- Bottom Sheet: Song Info / Metadata Editor -->
     <string name="bottomsheet_change">Change</string>
     <string name="bottomsheet_remove">Remove</string>
@@ -1712,10 +1712,10 @@
     <string name="bottomsheet_save_changes">Save Changes</string>
     <string name="bottomsheet_irreversible">Irreversible Changes</string>
     <string name="bottomsheet_proceed">Proceed</string>
-    
+
     <!-- Bottom Sheet: Player Chip Order -->
     <string name="bottomsheet_player_chip_order">Player Chip Order</string>
-    
+
     <!-- Audio Quality Labels -->
     <string name="audio_quality_dolby_atmos">Dolby Atmos</string>
     <string name="audio_quality_dolby_truehd">Dolby TrueHD</string>
@@ -1730,30 +1730,30 @@
     <string name="audio_quality_lossless_surround">Lossless Surround</string>
     <string name="audio_quality_lossy_surround">Lossy Surround</string>
     <string name="audio_quality_dolby_surround">Dolby Surround</string>
-    
+
     <!-- Device Names -->
     <string name="device_phone_speaker">Phone Speaker</string>
     <string name="device_wired_headphones">Wired Headphones</string>
     <string name="device_wired_headset">Wired Headset</string>
     <string name="device_bluetooth_audio">Bluetooth Audio</string>
     <string name="device_unknown">Unknown Device</string>
-    
+
     <!-- Fallback Metadata -->
     <string name="fallback_unknown_artist">Unknown Artist</string>
     <string name="fallback_unknown_album">Unknown Album</string>
     <string name="fallback_unknown_file">Unknown File</string>
-    
+
     <!-- Service Notifications -->
     <string name="service_app_updates">Rhythm Updater</string>
     <string name="service_update_status">Rhythm Updater Status</string>
-    <string name="service_rhythm_pulse">Rhythm Tips</string>
-    <string name="service_rhythm_guard_alerts">Rhythm Guard Alerts</string>
-    <string name="service_rhythm_guard_timers">Rhythm Guard Timers</string>
-    <string name="service_rhythm_music">Rhythm Music</string>
+    <string name="service_rhythm_pulse">FieldMind Tips</string>
+    <string name="service_rhythm_guard_alerts">FieldMind Focus Alerts</string>
+    <string name="service_rhythm_guard_timers">FieldMind Focus Timers</string>
+    <string name="service_rhythm_music">FieldMind Research</string>
     <string name="service_update_status_desc">Status results for background update checks</string>
     <string name="service_rhythm_pulse_desc">Friendly listening reminders and tips from Rhythm</string>
-    <string name="service_rhythm_guard_alerts_desc">Safety alerts from Rhythm Guard</string>
-    <string name="service_rhythm_guard_timers_desc">Rhythm Guard break and timeout reminders</string>
+    <string name="service_rhythm_guard_alerts_desc">Safety alerts from FieldMind Focus</string>
+    <string name="service_rhythm_guard_timers_desc">FieldMind Focus break and timeout reminders</string>
     <string name="service_starting">Rhythm is starting.</string>
     <string name="service_loading_settings">Rhythm is loading your settings.</string>
     <string name="service_setup_components">Rhythm is preparing core components.</string>
@@ -1763,27 +1763,27 @@
     <string name="service_initializing_controller">Rhythm is connecting the media controller.</string>
     <string name="service_ready">Rhythm is ready.</string>
     <string name="service_init_failed">Rhythm could not start. Please reopen the app.</string>
-    
+
     <!-- Crash Activity -->
     <string name="crash_bug_report">Bug Report</string>
     <string name="crash_restart_app">Restart App</string>
-    
+
     <!-- Genre Detection -->
     <string name="genre_hip_hop">Hip Hop</string>
-    
+
     <!-- Cache Details -->
     <string name="cache_internal">Internal Cache</string>
     <string name="cache_external">External Cache</string>
     <string name="cache_canvas">Canvas Cache</string>
-    
+
     <!-- Default Playlists -->
     <string name="default_playlist_recently_added">Recently Added</string>
     <string name="default_playlist_most_played">Most Played</string>
-    
+
     <!-- Misc UI -->
     <string name="ui_clear_all">Clear All</string>
     <string name="ui_error_generic">Error</string>
-    
+
     <!-- Settings Screen - Complete -->
     <string name="settings_home_customization">Home</string>
     <string name="settings_home_customization_desc">Quick actions, recent music</string>
@@ -1795,7 +1795,7 @@
     <string name="settings_album_bottom_sheet_gradient_blur_desc">Control gradient and blur behind album sheets</string>
     <string name="settings_gestures">Gestures</string>
     <string name="settings_gestures_desc">Swipe to skip</string>
-    <string name="settings_ignore_mediastore_covers">Show Song Art Instead of Album Art</string>
+    <string name="settings_ignore_mediastore_covers">Show Song Art Instead of Evidence preview</string>
     <string name="settings_ignore_mediastore_covers_desc">Prefer embedded artwork from each audio file (formerly Ignore MediaStore Covers)</string>
     <string name="settings_lossless_artwork">Lossless Artwork</string>
     <string name="settings_lossless_artwork_desc">Show full-resolution embedded song artwork without compression</string>
@@ -1811,9 +1811,9 @@
     <string name="settings_artist_parsing">Artists</string>
     <string name="settings_artist_parsing_desc">Separators, display</string>
     <string name="settings_rhythm_stats">Rhythm Stats</string>
-    <string name="settings_rhythm_stats_desc">Listening time, top tracks and trends</string>
-    <string name="settings_rhythm_aura">Rhythm Guard</string>
-    <string name="settings_rhythm_guard">Rhythm Guard</string>
+    <string name="settings_rhythm_stats_desc">Listening time, top records and trends</string>
+    <string name="settings_rhythm_aura">FieldMind Focus</string>
+    <string name="settings_rhythm_guard">FieldMind Focus</string>
     <string name="settings_rhythm_aura_list_desc">Listening health guardrails powered by Rhythm Stats</string>
     <string name="settings_rhythm_guard_list_desc">Listening health guardrails powered by Rhythm Stats</string>
     <string name="settings_rhythm_aura_subtitle">Listening Health Monitor</string>
@@ -1822,8 +1822,8 @@
     <string name="settings_rhythm_guard_desc">Use your Rhythm Stats activity to keep listening habits safer with age-aware recommendations and manual warnings.</string>
     <string name="settings_rhythm_aura_mode_title">Protection Mode</string>
     <string name="settings_rhythm_guard_mode_title">Protection Mode</string>
-    <string name="settings_rhythm_aura_mode_desc">Choose how Rhythm Guard manages listening health</string>
-    <string name="settings_rhythm_guard_mode_desc">Choose how Rhythm Guard manages listening health</string>
+    <string name="settings_rhythm_aura_mode_desc">Choose how FieldMind Focus manages listening health</string>
+    <string name="settings_rhythm_guard_mode_desc">Choose how FieldMind Focus manages listening health</string>
     <string name="settings_rhythm_aura_mode_auto">Auto</string>
     <string name="settings_rhythm_guard_mode_auto">Auto</string>
     <string name="settings_rhythm_aura_mode_manual">Manual</string>
@@ -1870,10 +1870,10 @@
     <string name="settings_rhythm_guard_weekly_sessions">7-day average sessions/day: %1$s</string>
     <string name="settings_rhythm_aura_live_volume">Live volume: %1$d%% (warning above %2$d%%)</string>
     <string name="settings_rhythm_guard_live_volume">Live volume: %1$d%% (warning above %2$d%%)</string>
-    <string name="settings_rhythm_aura_auto_applied_title">Rhythm Guard Auto Profile Active</string>
-    <string name="settings_rhythm_guard_auto_applied_title">Rhythm Guard Auto Profile Active</string>
-    <string name="settings_rhythm_aura_auto_applied_desc">Rhythm Guard automatically keeps safer playback defaults based on your age profile.</string>
-    <string name="settings_rhythm_guard_auto_applied_desc">Rhythm Guard automatically keeps safer playback defaults based on your age profile.</string>
+    <string name="settings_rhythm_aura_auto_applied_title">FieldMind Focus Auto Profile Active</string>
+    <string name="settings_rhythm_guard_auto_applied_title">FieldMind Focus Auto Profile Active</string>
+    <string name="settings_rhythm_aura_auto_applied_desc">FieldMind Focus automatically keeps safer playback defaults based on your age profile.</string>
+    <string name="settings_rhythm_guard_auto_applied_desc">FieldMind Focus automatically keeps safer playback defaults based on your age profile.</string>
     <string name="settings_rhythm_aura_auto_state">System volume: %1$s, Pause at zero: %2$s, Normalization: %3$s, ReplayGain: %4$s</string>
     <string name="settings_rhythm_guard_auto_state">System volume: %1$s, Pause at zero: %2$s, Normalization: %3$s, ReplayGain: %4$s</string>
     <string name="settings_rhythm_aura_last_auto_applied">Last auto adjustment: %1$s</string>
@@ -1888,14 +1888,14 @@
     <string name="settings_rhythm_guard_manual_warning_toggle_desc">Warn when live volume or manual toggles may be risky</string>
     <string name="settings_rhythm_aura_manual_threshold_title">High-Volume Warning Threshold: %1$d%%</string>
     <string name="settings_rhythm_guard_manual_threshold_title">High-Volume Warning Threshold: %1$d%%</string>
-    <string name="settings_rhythm_aura_manual_threshold_desc">Set when Rhythm Guard should warn about potentially harmful volume.</string>
-    <string name="settings_rhythm_guard_manual_threshold_desc">Set when Rhythm Guard should warn about potentially harmful volume.</string>
+    <string name="settings_rhythm_aura_manual_threshold_desc">Set when FieldMind Focus should warn about potentially harmful volume.</string>
+    <string name="settings_rhythm_guard_manual_threshold_desc">Set when FieldMind Focus should warn about potentially harmful volume.</string>
     <string name="settings_rhythm_aura_device_controls_title">Output Controls</string>
     <string name="settings_rhythm_guard_device_controls_title">Output Controls</string>
     <string name="settings_rhythm_aura_device_controls_speaker_limit_title">Apply Volume Limits On Phone Speaker</string>
     <string name="settings_rhythm_guard_device_controls_speaker_limit_title">Apply Volume Limits On Phone Speaker</string>
-    <string name="settings_rhythm_aura_device_controls_speaker_limit_desc">When off, Rhythm Guard skips volume clamping and volume warnings on built-in speaker output.</string>
-    <string name="settings_rhythm_guard_device_controls_speaker_limit_desc">When off, Rhythm Guard skips volume clamping and volume warnings on built-in speaker output.</string>
+    <string name="settings_rhythm_aura_device_controls_speaker_limit_desc">When off, FieldMind Focus skips volume clamping and volume warnings on built-in speaker output.</string>
+    <string name="settings_rhythm_guard_device_controls_speaker_limit_desc">When off, FieldMind Focus skips volume clamping and volume warnings on built-in speaker output.</string>
     <string name="settings_rhythm_guard_alert_controls_title">Listening Alert Controls</string>
     <string name="settings_rhythm_guard_alert_controls_desc">Fine-tune exposure alerts, reminder timeout, and default break resume interval.</string>
     <string name="settings_rhythm_guard_alert_threshold_title">Exposure Alert Threshold: %1$s</string>
@@ -1916,8 +1916,8 @@
     <string name="settings_rhythm_guard_warning_disable_replay_gain">Turning off ReplayGain can raise peak volume unexpectedly.</string>
     <string name="settings_rhythm_aura_warning_disable_zero_volume">Disabling pause-on-zero removes a protective safeguard.</string>
     <string name="settings_rhythm_guard_warning_disable_zero_volume">Disabling pause-on-zero removes a protective safeguard.</string>
-    <string name="settings_rhythm_aura_warning_dialog_title">Rhythm Guard Protection Alert</string>
-    <string name="settings_rhythm_guard_warning_dialog_title">Rhythm Guard Protection Alert</string>
+    <string name="settings_rhythm_aura_warning_dialog_title">FieldMind Focus Protection Alert</string>
+    <string name="settings_rhythm_guard_warning_dialog_title">FieldMind Focus Protection Alert</string>
     <string name="settings_rhythm_aura_warning_dialog_volume_message">System media volume is %1$d%% in real time, above your current protection limit of %2$d%%. Lower volume to reduce hearing risk.</string>
     <string name="settings_rhythm_guard_warning_dialog_volume_message">System media volume is %1$d%% in real time, above your current protection limit of %2$d%%. Lower volume to reduce hearing risk.</string>
     <string name="settings_rhythm_aura_warning_dialog_exposure_message">Estimated listening today is %1$d minutes, above your recommended %2$d minutes. Consider a short break and lower volume for the next session.</string>
@@ -1975,8 +1975,8 @@
     <string name="settings_rhythm_guard_health_fair">Needs attention</string>
     <string name="settings_rhythm_guard_health_risk">Risky</string>
     <string name="settings_rhythm_guard_health_off">Guard off</string>
-    <string name="settings_rhythm_guard_state_active">Rhythm Guard is Active</string>
-    <string name="settings_rhythm_guard_state_inactive">Rhythm Guard is Inactive</string>
+    <string name="settings_rhythm_guard_state_active">FieldMind Focus is Active</string>
+    <string name="settings_rhythm_guard_state_inactive">FieldMind Focus is Inactive</string>
     <string name="settings_rhythm_guard_state_timeout_active">Listening timeout in progress</string>
     <string name="settings_rhythm_guard_state_cooldown_active">Grace period active</string>
     <string name="settings_rhythm_guard_state_timeout_remaining">Break ends in %1$s</string>
@@ -1989,16 +1989,16 @@
     <string name="settings_rhythm_guard_protection_preset_strict">Strict</string>
     <string name="settings_rhythm_guard_protection_preset_custom">Custom</string>
     <string name="settings_rhythm_guard_timeout_activity_title">Listening Timeout Active</string>
-    <string name="settings_rhythm_guard_timeout_activity_default_reason">Plot twist: your ears started a union and called for a snack break. Rhythm Guard paused playback so everyone can cool down.</string>
-    <string name="settings_rhythm_guard_timeout_activity_comic_desc">Plot twist: your ears started a union and called for a snack break. Rhythm Guard paused playback so everyone can cool down.</string>
+    <string name="settings_rhythm_guard_timeout_activity_default_reason">Plot twist: your ears started a union and called for a snack break. FieldMind Focus paused playback so everyone can cool down.</string>
+    <string name="settings_rhythm_guard_timeout_activity_comic_desc">Plot twist: your ears started a union and called for a snack break. FieldMind Focus paused playback so everyone can cool down.</string>
     <string name="settings_rhythm_guard_timeout_activity_countdown">Resume in %1$s</string>
     <string name="settings_rhythm_guard_timeout_activity_extend">Extend break (+%1$d min)</string>
     <string name="settings_rhythm_guard_timeout_activity_exit">Close Timeout Screen</string>
     <string name="settings_rhythm_guard_timeout_activity_close_app">Close App</string>
-    <string name="settings_rhythm_aura_off_title">Rhythm Guard is Off</string>
-    <string name="settings_rhythm_guard_off_title">Rhythm Guard is Off</string>
-    <string name="settings_rhythm_aura_off_desc">No automatic adjustments or warnings are applied. Playback behavior stays unchanged.</string>
-    <string name="settings_rhythm_guard_off_desc">No automatic adjustments or warnings are applied. Playback behavior stays unchanged.</string>
+    <string name="settings_rhythm_aura_off_title">FieldMind Focus is Off</string>
+    <string name="settings_rhythm_guard_off_title">FieldMind Focus is Off</string>
+    <string name="settings_rhythm_aura_off_desc">No automatic adjustments or warnings are applied. Review behavior stays unchanged.</string>
+    <string name="settings_rhythm_guard_off_desc">No automatic adjustments or warnings are applied. Review behavior stays unchanged.</string>
     <string name="settings_rhythm_aura_age_search_title">Age Profile</string>
     <string name="settings_rhythm_guard_age_search_title">Age Profile</string>
     <string name="settings_rhythm_aura_age_search_desc">Set age-based hearing safety profile</string>
@@ -2010,24 +2010,24 @@
     <string name="settings_rhythm_guard_alert_threshold_search_title">Exposure Alert Threshold</string>
     <string name="settings_rhythm_guard_alert_threshold_search_desc">Set how much daily listening triggers a safety alert</string>
     <string name="settings_rhythm_guard_warning_timeout_search_title">Alert Cooldown</string>
-    <string name="settings_rhythm_guard_warning_timeout_search_desc">Set the cooldown between repeated Rhythm Guard alerts</string>
+    <string name="settings_rhythm_guard_warning_timeout_search_desc">Set the cooldown between repeated FieldMind Focus alerts</string>
     <string name="settings_rhythm_guard_post_timeout_cooldown_search_title">Post-Timeout Cooldown</string>
     <string name="settings_rhythm_guard_post_timeout_cooldown_search_desc">Set cooldown after a timeout ends before another exposure timeout can trigger</string>
     <string name="settings_rhythm_guard_protection_presets_search_title">Protection Presets</string>
     <string name="settings_rhythm_guard_protection_presets_search_desc">Apply Gentle, Balanced, or Strict guardrail bundles in one tap</string>
     <string name="settings_rhythm_guard_break_resume_search_title">Default Break Resume</string>
     <string name="settings_rhythm_guard_break_resume_search_desc">Set how long scheduled listening breaks last by default</string>
-    <string name="settings_rhythm_guard_enable_search_title">Rhythm Guard Power</string>
-    <string name="settings_rhythm_guard_enable_search_desc">Enable or disable Rhythm Guard protections</string>
-    <string name="settings_rhythm_guard_notification_alert_title">Rhythm Guard Safety Alert</string>
-    <string name="settings_rhythm_guard_notification_timer_active_title">Rhythm Guard Timeout Active</string>
-    <string name="settings_rhythm_guard_notification_timer_active_text">Playback resumes in %1$s.</string>
-    <string name="settings_rhythm_guard_notification_timer_scheduled_title">Rhythm Guard Break Scheduled</string>
+    <string name="settings_rhythm_guard_enable_search_title">FieldMind Focus Power</string>
+    <string name="settings_rhythm_guard_enable_search_desc">Enable or disable FieldMind Focus protections</string>
+    <string name="settings_rhythm_guard_notification_alert_title">FieldMind Focus Safety Alert</string>
+    <string name="settings_rhythm_guard_notification_timer_active_title">FieldMind Focus Timeout Active</string>
+    <string name="settings_rhythm_guard_notification_timer_active_text">Review resumes in %1$s.</string>
+    <string name="settings_rhythm_guard_notification_timer_scheduled_title">FieldMind Focus Break Scheduled</string>
     <string name="settings_rhythm_guard_notification_timer_scheduled_text">A listening break starts in %1$s.</string>
     <string name="settings_rhythm_guard_notification_tap_open">Tap to view timeout details.</string>
     <string name="label_enabled">Enabled</string>
     <string name="label_disabled">Disabled</string>
-    
+
     <!-- Rhythm Stats Screen -->
     <string name="stats_title">Rhythm Stats</string>
     <string name="stats_today">Today</string>
@@ -2036,7 +2036,7 @@
     <string name="stats_all_time">All Time</string>
     <string name="stats_total_listening_time">Total Listening Time</string>
     <string name="stats_total_plays">Total Plays</string>
-    <string name="stats_unique_tracks">Unique Tracks</string>
+    <string name="stats_unique_records">Unique Tracks</string>
     <string name="stats_top_vibes">Top Vibes</string>
     <string name="stats_star_artists">Star Artists</string>
     <string name="stats_genre_mix">Genre Mix</string>
@@ -2055,7 +2055,7 @@
     <string name="stats_legendary">Legendary listener! 🌟</string>
     <string name="stats_maestro">Music maestro! 🎼</string>
     <string name="stats_sage">Ultimate music sage! 👑</string>
-    
+
     <!-- Cache Management Complete -->
     <string name="cache_artwork_images">Artwork Images</string>
     <string name="cache_artwork_images_desc">Album covers, artist photos, and thumbnails</string>
@@ -2073,29 +2073,29 @@
     <string name="cache_tip_auto">Cache helps load content faster and reduces data usage</string>
     <string name="cache_tip_limit">Set a cache limit to manage storage automatically</string>
     <string name="cache_tip_clear">Clearing cache will not delete your music or playlists</string>
-    
-    <!-- Queue Playback Settings -->
+
+    <!-- Research Queue Review Settings -->
     <string name="queue_use_exoplayer_shuffle">Use ExoPlayer Shuffle</string>
     <string name="queue_use_exoplayer_shuffle_desc">Let the media player handle shuffle</string>
-    <string name="queue_auto_add">Auto Add to Queue</string>
+    <string name="queue_auto_add">Auto Add to Research Queue</string>
     <string name="queue_auto_add_desc">Automatically add related songs when playing</string>
-    <string name="queue_clear_on_new">Replace Queue on New Song</string>
+    <string name="queue_clear_on_new">Replace Research Queue on New Song</string>
     <string name="queue_clear_on_new_desc">Playing a song directly clears the current queue.</string>
     <string name="queue_remember_repeat">Remember Repeat Mode</string>
     <string name="queue_remember_repeat_desc">Save repeat mode between app restarts</string>
     <string name="queue_remember_shuffle">Remember Shuffle Mode</string>
     <string name="queue_remember_shuffle_desc">Save shuffle state between app restarts</string>
-    <string name="queue_playback_speed">Playback Speed</string>
+    <string name="queue_playback_speed">Review Speed</string>
     <string name="queue_playback_speed_desc">Adjust playback speed</string>
 
     <!-- Gestures Settings -->
     <string name="gestures_player_swipe_dismiss">Swipe Down to Dismiss</string>
     <string name="gestures_player_swipe_dismiss_desc">Swipe down on player to close it</string>
-    <string name="gestures_player_swipe_tracks">Swipe to Change Tracks</string>
-    <string name="gestures_player_swipe_tracks_desc">Swipe left/right on artwork to skip tracks</string>
+    <string name="gestures_player_swipe_records">Swipe to Change Tracks</string>
+    <string name="gestures_player_swipe_records_desc">Swipe left/right on artwork to skip records</string>
     <string name="gestures_artwork_double_tap">Double Tap Artwork</string>
     <string name="gestures_artwork_double_tap_desc">Double tap on artwork to play/pause</string>
-    
+
     <!-- Playlist Settings Toggle -->
     <string name="playlist_ask_each_time">Ask each time</string>
     <string name="playlist_ask_each_time_desc">Show dialog with options</string>
@@ -2105,13 +2105,13 @@
     <string name="playlist_play_single_desc">Don\'t change the queue</string>
     <string name="queue_always_add">Always add to queue</string>
     <string name="queue_always_add_desc">Automatically add songs to queue without asking</string>
-    
+
     <!-- About Multi-Artist Parsing -->
     <string name="artist_parsing_about">About Multi-Artist Parsing</string>
     <string name="artist_parsing_tip_1">Songs with multiple artists are split using separators</string>
     <string name="artist_parsing_tip_2">Each artist appears separately in your library</string>
     <string name="artist_parsing_tip_3">Use custom separators for better organization</string>
-    
+
     <!-- Home Screen Greetings -->
     <string name="home_greeting_night">Good Night</string>
     <string name="home_greeting_morning">Good Morning</string>
@@ -2121,12 +2121,12 @@
     <string name="home_greeting_new_year">Happy New Year</string>
     <string name="home_greeting_halloween">Happy Halloween</string>
     <string name="home_greeting_valentines">Happy Valentine\'s</string>
-    
+
     <!-- Home Screen Section Titles -->
     <string name="home_top_artists">Artists</string>
     <string name="home_top_artists_subtitle">Your favorite musicians</string>
     <string name="home_no_top_artists">No artists yet</string>
-    
+
     <!-- Content Descriptions (additional) -->
     <string name="cd_reorder_home_sections">Reorder home sections</string>
     <string name="cd_artist">Artist %1$s</string>
@@ -2143,14 +2143,14 @@
     <string name="cd_update_available">Update available</string>
     <string name="cd_manual_check_only">Manual check only</string>
     <string name="cd_up_to_date">Up to date</string>
-    
-    <!-- Queue &amp; Playlist Dialogs -->
-    <string name="queue_action_dialog">Queue Action Dialog</string>
+
+    <!-- Research Queue &amp; Playlist Dialogs -->
+    <string name="queue_action_dialog">Research Queue Action Dialog</string>
     <string name="queue_ask_when_not_empty">Ask what to do when queue is not empty</string>
     <string name="playlist_action_dialog">Playlist Action Dialog</string>
     <string name="playlist_load_entire_queue">Load entire playlist to queue</string>
     <string name="playlist_play_only_selected">Play only selected song</string>
-    
+
     <!-- Artist Settings -->
     <string name="artists_title">Artists</string>
     <string name="artist_multi_parsing">Multi-Artist Parsing</string>
@@ -2159,7 +2159,7 @@
     <string name="artist_configure_delimiters">Configure Delimiters</string>
     <string name="artist_current_delimiters">Current: %1$s</string>
     <string name="artist_library_organization">Library Organization</string>
-    <string name="artist_group_by_album_artist">Group by Album Artist</string>
+    <string name="artist_group_by_album_artist">Group by Evidence previewist</string>
     <string name="artist_group_by_album_artist_desc">Show collaboration albums under main artist</string>
     <string name="artist_about_multi_parsing">About Multi-Artist Parsing</string>
     <string name="artist_parsing_description">When enabled, Rhythm will automatically split artist tags containing multiple artists. This is useful for songs downloaded with yt-dlp or other tools that use delimiters like \'/\' to separate artists.\n\nBackslash (\\\\) can be used to escape delimiters.</string>
@@ -2171,7 +2171,7 @@
     <string name="artist_delimiter_plus">Plus</string>
     <string name="artist_delimiter_ampersand">Ampersand</string>
     <string name="save_changes">Save Changes</string>
-    
+
     <!-- About Screen -->
     <string name="about_title">About</string>
     <string name="about_version">Version</string>
@@ -2183,11 +2183,11 @@
     <string name="about_manages_izzyondroid">Manages updates on IzzyOnDroid</string>
     <string name="about_collab_lead">Collab &amp; Project Booming\'s Lead Dev</string>
     <string name="about_canvas_api">Spotify Canvas API Integration</string>
-    
+
     <!-- Equalizer -->
     <string name="equalizer_title">Equalizer</string>
     <string name="equalizer_my_devices">My Devices</string>
-    
+
     <!-- Common Actions & Dialogs -->
     <string name="action_save_changes">Save Changes</string>
     <string name="content_desc_selected">Selected</string>
@@ -2200,8 +2200,8 @@
     <string name="content_desc_increase_volume">Increase volume</string>
     <string name="content_desc_mute">Mute</string>
     <string name="content_desc_unmute">Unmute</string>
-    <string name="content_desc_playback_speed">Playback Speed</string>
-    <string name="content_desc_playback_settings">Playback Settings</string>
+    <string name="content_desc_playback_speed">Review Speed</string>
+    <string name="content_desc_playback_settings">Review Settings</string>
     <string name="content_desc_shuffle_play">Shuffle play</string>
     <string name="content_desc_sort_songs">Sort songs</string>
     <string name="content_desc_ascending">Ascending</string>
@@ -2226,18 +2226,18 @@
     <string name="content_desc_show_chip">Show chip</string>
     <string name="content_desc_edit_metadata">Edit metadata</string>
     <string name="content_desc_album_artwork">Album artwork</string>
-    
+
     <!-- Additional UI strings -->
     <string name="playlist_play_one">Play only selected song</string>
     <string name="up_next_section">UP NEXT</string>
-    
+
     <!-- Sort Orders -->
     <string name="sort_track_number">Track Number</string>
     <string name="sort_title_asc">Title (A-Z)</string>
     <string name="sort_title_desc">Title (Z-A)</string>
     <string name="sort_duration_short_first">Duration (Short first)</string>
     <string name="sort_duration_long_first">Duration (Long first)</string>
-    
+
     <!-- Context Menu Actions -->
     <string name="action_play_next">Play next</string>
     <string name="action_add_to_queue">Add to queue</string>
@@ -2247,7 +2247,7 @@
     <string name="action_add_to_blacklist">Add to blacklist</string>
     <string name="action_hide_song">Hide song</string>
     <string name="action_play_all">Play All</string>
-    
+
     <!-- Blacklist/Whitelist -->
     <string name="blacklist_track">Blacklist Track</string>
     <string name="unblacklist_track">Un-Blacklist Track</string>
@@ -2261,7 +2261,7 @@
     <string name="song_removed_from_blacklist">Song removed from blacklist</string>
     <string name="folder_added_to_blacklist">Folder added to blacklist</string>
     <string name="folder_removed_from_blacklist">Folder removed from blacklist</string>
-    
+
     <!-- Device & Audio -->
     <string name="device_bluetooth">Bluetooth device</string>
     <string name="device_wired_headphones_alt">Wired headphones</string>
@@ -2272,9 +2272,9 @@
     <string name="volume_switch_hint">Tap to switch between app and system volume</string>
     <string name="playback_use_system_volume">Use System Volume</string>
     <string name="playback_use_system_volume_desc">Control system volume instead of app volume</string>
-    <string name="playback_gapless_title">Gapless Playback</string>
+    <string name="playback_gapless_title">Gapless Review</string>
     <string name="eq_profile_applied">Applied %1$s profile</string>
-    
+
     <!-- Multi-Artist Parsing -->
     <string name="multi_artist_parsing_title">Multi-Artist Parsing</string>
     <string name="multi_artist_parsing_about">About Multi-Artist Parsing</string>
@@ -2287,13 +2287,13 @@
     <string name="delimiter_comma">Comma</string>
     <string name="delimiter_plus">Plus</string>
     <string name="delimiter_ampersand">Ampersand</string>
-    
+
     <!-- About Screen (additional strings) -->
     <string name="about_app_description">A modern, feature-rich music player for Android</string>
     <string name="about_arch_value">ARM64 &amp; ARM32</string>
     <string name="about_lead_dev">Lead Developer &amp; Project Architect</string>
     <string name="about_izzy_role">Manages updates on IzzyOnDroid</string>
-    
+
     <!-- Sleep Timer -->
     <string name="sleep_timer_active_status">Active \u2022 %1$s remaining</string>
     <string name="sleep_timer_no_music">No music playing</string>
@@ -2301,7 +2301,7 @@
     <string name="sleep_timer_fade_out">Fade Out</string>
     <string name="sleep_timer_pause">Pause</string>
     <string name="sleep_timer_stop">Stop</string>
-    
+
     <!-- Home Sections -->
     <string name="home_section_greeting">Greeting</string>
     <string name="home_section_recently_played">Recently Played</string>
@@ -2313,7 +2313,7 @@
     <string name="home_section_listening_stats">Listening Stats</string>
     <string name="home_section_mood">Mood Sections</string>
     <string name="home_section_one_visible">At least one section must be visible</string>
-    
+
     <!-- Library Tabs -->
     <string name="library_tab_songs">Songs</string>
     <string name="library_tab_playlists">Playlists</string>
@@ -2323,10 +2323,10 @@
     <string name="library_tab_one_visible">At least one tab must be visible</string>
     <string name="library_tab_order_reset">Tab order and visibility reset to default</string>
     <string name="library_tab_order_saved">Tab order and visibility saved</string>
-    
+
     <!-- Player Chips -->
     <string name="player_chip_favorite">Favorite</string>
-    <string name="player_chip_speed">Playback Speed</string>
+    <string name="player_chip_speed">Review Speed</string>
     <string name="player_chip_equalizer">Equalizer</string>
     <string name="player_chip_sleep_timer">Sleep Timer</string>
     <string name="player_chip_lyrics">Lyrics</string>
@@ -2335,7 +2335,7 @@
     <string name="player_chip_cast">Cast</string>
     <string name="player_chip_one_visible">At least one chip must be visible</string>
     <string name="player_chip_order_reset">Reset to default order and visibility</string>
-    
+
     <!-- AutoEQ & Device Configuration -->
     <string name="autoeq_manage">Manage AutoEQ</string>
     <string name="autoeq_configure_desc">Configure your audio devices with optimized AutoEQ profiles for the best listening experience.</string>
@@ -2356,7 +2356,7 @@
     <string name="autoeq_button_import">Import</string>
     <string name="autoeq_button_export">Export</string>
     <string name="autoeq_failed_read_file">Failed to read file</string>
-    
+
     <!-- Backup/Restore -->
     <string name="backup_invalid_format">Invalid backup format or corrupted data</string>
     <string name="backup_unable_to_read">Unable to read the backup file</string>
@@ -2374,7 +2374,7 @@
     <string name="backup_opening">Opening\u2026</string>
     <string name="backup_no_clipboard_data">No backup data found in clipboard. Please copy a backup first.</string>
     <string name="backup_restore_clipboard_failed">Failed to restore backup: %1$s</string>
-    
+
     <!-- Licenses -->
     <string name="license_autoeq_name">AutoEQ</string>
     <string name="license_autoeq_desc">Automatic headphone equalization from frequency responses by Jaakko Pasanen</string>
@@ -2393,16 +2393,16 @@
     <string name="license_coil_desc">Image loading library for Android backed by Kotlin Coroutines</string>
     <string name="license_retrofit_name">Retrofit</string>
     <string name="license_retrofit_desc">Type-safe HTTP client for Android and Java</string>
-    
+
     <!-- Lyrics Editor -->
     <string name="lyrics_loaded_success">Lyrics loaded successfully</string>
     <string name="lyrics_load_error">Error loading lyrics: %1$s</string>
     <string name="lyrics_saved_success">Lyrics saved successfully</string>
     <string name="lyrics_save_error">Error saving lyrics: %1$s</string>
-    
+
     <!-- Media Scan -->
     <string name="media_scan_error_parsing_folder">Error parsing folder path</string>
-    
+
     <!-- Song Info -->
     <string name="song_info_unknown">Unknown</string>
     <string name="song_info_quality_hires_lossless">Hi-Res Lossless</string>
@@ -2413,7 +2413,7 @@
     <string name="song_info_category_lossless">Lossless</string>
     <string name="song_info_category_lossy">Lossy</string>
     <string name="song_info_category_surround">Surround</string>
-    
+
     <!-- Common UI Text -->
     <string name="exoplayer_settings">ExoPlayer Settings</string>
     <string name="button_add">Add</string>
@@ -2423,7 +2423,7 @@
     <string name="text_file">File</string>
     <string name="text_paste">Paste</string>
     <string name="logo_content_desc">Rhythm Logo</string>
-    
+
     <!-- PlaceholderScreens - Settings Labels -->
     <string name="settings_about_lyrics">About Lyrics Sources</string>
     <string name="settings_adjust_decorations">Adjust the amount of festive decorations shown</string>
@@ -2446,13 +2446,13 @@
     <string name="settings_show_examples">Show Examples</string>
     <string name="settings_example_original">Original</string>
     <string name="settings_example_result">Result</string>
-    
+
     <!-- Cache & Storage -->
     <string name="cache_mb_format">%1$.1f MB</string>
     <string name="cache_size_64mb">64 MB</string>
     <string name="cache_size_2gb">2 GB</string>
     <string name="cache_clear_all_desc">Remove all cached data</string>
-    
+
     <!-- Version Info -->
     <string name="version_format">V %1$s</string>
     <string name="version_with_code">v%1$s</string>
@@ -2460,19 +2460,19 @@
     <string name="crashed_on_date">Crashed on: %1$s</string>
     <string name="file_size_format">(%1$s)</string>
     <string name="download_progress">%1$d%%</string>
-    
+
     <!-- GitHub & Links -->
     <string name="github_username_format">\@%1$s</string>
     <string name="bullet_point">\u2022</string>
     <string name="original_quoted">\"%1$s\"</string>
-    
+
     <!-- Contributors -->
     <string name="credits_material_design">Google Material Design Team for design principles</string>
-    
+
     <!-- Counts & Numbers -->
     <string name="count_format">%1$d</string>
     <string name="index_number">%1$d</string>
-    
+
     <!-- More PlaceholderScreens Strings -->
     <string name="settings_double_tap_artwork_tip">Double tap artwork for quick play/pause</string>
     <string name="settings_enable_lyrics_hint">Enable lyrics to see synchronized lyrics while playing</string>
@@ -2507,21 +2507,21 @@
     <string name="settings_visibility">Visibility</string>
     <string name="settings_when_show_header">When to show %1$s in header</string>
     <string name="settings_widget_item_counts">Widget Item Counts</string>
-    
+
     <!-- Playlist Management -->
     <string name="playlist_user_count">%1$d</string>
     <string name="playlist_default_count">%1$d</string>
     <string name="playlist_total_count">%1$d</string>
-    
+
     <!-- Media Scan -->
     <string name="media_filtered_count">%1$d</string>
     <string name="media_all_songs_count">%1$d</string>
     <string name="media_folders_count">%1$d</string>
-    
+
     <!-- Time Formats -->
     <string name="time_half_second">0.5s</string>
     <string name="time_twelve_seconds">12s</string>
-    
+
     <!-- Additional PlaceholderScreens UI Strings -->
     <string name="settings_modern_music_player">A modern, feature-rich music player for Android</string>
     <string name="settings_about_lyrics_sources">About Lyrics Sources</string>
@@ -2567,7 +2567,7 @@
     <string name="settings_bullet_point">•</string>
     <string name="settings_backslash">\\</string>
     <string name="settings_db_unit">dB</string>
-    
+
     <!-- Format Strings with Placeholders -->
     <string name="settings_crashed_on">Crashed on: %1$s</string>
     <string name="settings_released_format">Released: %1$s</string>
@@ -2579,7 +2579,7 @@
     <string name="settings_cache_size_2gb">2 GB</string>
     <string name="settings_cache_size_64mb">64 MB</string>
     <string name="settings_list_item_prefix">  • %1$s:</string>
-    
+
     <!-- Common UI strings -->
     <string name="ui_close">Close</string>
     <string name="ui_save">Save</string>
@@ -2591,26 +2591,26 @@
     <string name="ui_selected">Selected</string>
     <string name="ui_done">Done</string>
 
-    <!-- Queue &amp; Playback -->
-    <string name="settings_queue_action_dialog">Single-Track Queue Action</string>
+    <!-- Research Queue &amp; Review -->
+    <string name="settings_queue_action_dialog">Single-Track Research Queue Action</string>
     <string name="settings_queue_action_dialog_desc_ask">Ask before replacing or extending queue for single-track play.</string>
     <string name="settings_queue_action_dialog_desc_always">Always add single-track play to the queue.</string>
-    <string name="settings_queue_action_dialog_desc_disabled">Disabled while Replace Queue on Play is on.</string>
+    <string name="settings_queue_action_dialog_desc_disabled">Disabled while Replace Research Queue on Play is on.</string>
     <string name="settings_playlist_action_dialog">Playlist Track Tap Action</string>
     <string name="settings_playlist_action_play_all">Load full playlist into queue</string>
     <string name="settings_playlist_action_play_one">Play only selected track</string>
     <string name="settings_playlist_action_ask">Ask each time</string>
-    <string name="settings_list_queue_action_dialog">List Play Queue Action</string>
+    <string name="settings_list_queue_action_dialog">List Play Research Queue Action</string>
     <string name="settings_list_queue_action_replace">Replace queue and play</string>
     <string name="settings_list_queue_action_ask">Ask each time</string>
     <string name="settings_list_queue_action_play_next">Insert next and play</string>
     <string name="settings_list_queue_action_add_to_end">Add to end and play</string>
-    <string name="settings_remember_queue">Persist Queue</string>
+    <string name="settings_remember_queue">Persist Research Queue</string>
     <string name="settings_remember_queue_desc">Restore queue and position after restart.</string>
     <string name="settings_crossfade_min">0.5s</string>
     <string name="settings_crossfade_max">12s</string>
 
-    <string name="list_queue_behavior_title">Play All Queue Rule</string>
+    <string name="list_queue_behavior_title">Play All Research Queue Rule</string>
     <string name="list_queue_behavior_desc">Choose how list actions modify an active queue</string>
     <string name="list_queue_behavior_replace_title">Replace queue</string>
     <string name="list_queue_behavior_replace_desc">Clear current queue and start this list immediately.</string>
@@ -2621,8 +2621,8 @@
     <string name="list_queue_behavior_add_end_title">Add to end</string>
     <string name="list_queue_behavior_add_end_desc">Append the list to the end of queue and start from your selected track.</string>
 
-    <string name="list_queue_action_dialog_title">Queue Already Active</string>
-    <string name="list_queue_action_dialog_body">Current queue has %1$d tracks. Incoming list has %2$d tracks.</string>
+    <string name="list_queue_action_dialog_title">Research Queue Already Active</string>
+    <string name="list_queue_action_dialog_body">Current queue has %1$d records. Incoming list has %2$d records.</string>
     <string name="list_queue_action_source">Source: %1$s</string>
     <string name="list_queue_action_replace_title">Replace queue</string>
     <string name="list_queue_action_replace_desc">Start this list as the active queue now.</string>
@@ -2736,7 +2736,7 @@
     <string name="streaming_home_subtitle">Connect at least one service to enter Rhythm Go streaming navigation.</string>
     <string name="streaming_settings_title">Settings</string>
     <string name="streaming_settings_group_services">Services</string>
-    <string name="streaming_settings_group_network">Network &amp; Playback</string>
+    <string name="streaming_settings_group_network">Network &amp; Review</string>
     <string name="streaming_settings_group_actions">Actions</string>
     <string name="streaming_settings_preferred_service">Preferred Service</string>
     <string name="streaming_settings_quality">Streaming Quality</string>
@@ -2751,7 +2751,7 @@
     <string name="streaming_quality_high_desc">High quality audio (~320 kbps).</string>
     <string name="streaming_quality_lossless_desc">Best quality where supported (FLAC/ALAC).</string>
     <string name="streaming_settings_offline_mode">Offline Mode</string>
-    <string name="streaming_settings_offline_mode_desc">Play downloaded tracks when enabled</string>
+    <string name="streaming_settings_offline_mode_desc">Play downloaded records when enabled</string>
     <string name="streaming_settings_group_wellbeing">Rhythm Insights</string>
     <string name="streaming_open_full_settings">Open Full Settings</string>
     <string name="streaming_open_full_settings_desc">Open app-wide settings shared across modes</string>
@@ -2812,7 +2812,7 @@
     <string name="streaming_library_empty">No library content yet</string>
     <string name="streaming_home_no_content_title">No home content yet</string>
     <string name="streaming_home_no_content_hint">Try refreshing after your service finishes syncing.</string>
-    <string name="streaming_home_widget_playlist_track_count">%1$d tracks</string>
+    <string name="streaming_home_widget_playlist_track_count">%1$d records</string>
     <string name="streaming_library_overview_title">%1$s Library</string>
     <string name="streaming_library_overview_stats">%1$d songs · %2$d albums · %3$d artists · %4$d playlists</string>
     <string name="streaming_library_play_all">Play all songs</string>
@@ -2886,12 +2886,12 @@
     <string name="settings_gestures_header">Gestures</string>
     <string name="settings_gestures_mini_player">Mini Player</string>
     <string name="settings_swipe_gestures">Swipe Gestures</string>
-    <string name="settings_swipe_gestures_desc">Swipe up/down to open/dismiss, left/right to skip tracks</string>
+    <string name="settings_swipe_gestures_desc">Swipe up/down to open/dismiss, left/right to skip records</string>
     <string name="settings_gestures_full_player">Full Player</string>
     <string name="settings_swipe_down_dismiss">Swipe Down to Dismiss</string>
     <string name="settings_swipe_down_dismiss_desc">Close player by swiping down on the screen</string>
-    <string name="settings_swipe_artwork_tracks">Swipe Artwork for Tracks</string>
-    <string name="settings_swipe_artwork_tracks_desc">Swipe left/right on album artwork to skip tracks</string>
+    <string name="settings_swipe_artwork_records">Swipe Artwork for Tracks</string>
+    <string name="settings_swipe_artwork_records_desc">Swipe left/right on album artwork to skip records</string>
     <string name="settings_double_tap_artwork">Double Tap Artwork</string>
     <string name="settings_double_tap_artwork_desc">Double tap on album art to play/pause</string>
     <string name="settings_gesture_tip_swipe_up">Swipe up on mini player to open full player</string>
@@ -2963,7 +2963,7 @@
     <string name="settings_amoled_theme_desc">Pure black theme for OLED displays</string>
     <string name="settings_color_customization">Color Customization</string>
     <string name="settings_color_source">Color Source</string>
-    <string name="settings_color_source_album">Album Art - Extracts from artwork</string>
+    <string name="settings_color_source_album">Evidence preview - Extracts from artwork</string>
     <string name="settings_color_source_monet">System Colors - Material You</string>
     <string name="settings_color_source_custom">Custom Scheme - %1$s</string>
     <string name="settings_color_schemes">Color Schemes</string>
@@ -3055,7 +3055,7 @@
     <string name="settings_shapes_preset">Shape Preset</string>
     <string name="settings_shapes_preset_desc">Choose a pre-made shape style</string>
     <string name="settings_shapes_individual">Individual Shapes</string>
-    <string name="settings_shapes_album_art">Album Art</string>
+    <string name="settings_shapes_album_art">Evidence preview</string>
     <string name="settings_shapes_player_art">Player Art</string>
     <string name="settings_shapes_song_art">Song Art</string>
     <string name="settings_shapes_playlist_art">Playlist Art</string>
@@ -3074,7 +3074,7 @@
     <string name="settings_shapes">Shapes</string>
     <string name="settings_shapes_desc">Expressive Shapes</string>
     <string name="settings_skip_silence">Skip Silence</string>
-    <string name="settings_skip_silence_desc">Automatically skip silent intervals in tracks.</string>
+    <string name="settings_skip_silence_desc">Automatically skip silent intervals in records.</string>
     <string name="settings_song_ratings">Song Ratings</string>
     <string name="settings_song_ratings_desc">Rate songs with stars to improve stats and sorting</string>
     <!-- Gestures Search Strings -->
@@ -3087,18 +3087,18 @@
     <string name="settings_gesture_double_tap">Double Tap Artwork</string>
     <string name="settings_gesture_double_tap_desc">Double tap play/pause</string>
 
-    <!-- Queue & Playback Search Strings -->
-    <string name="settings_queue_auto_add">Context Queue</string>
+    <!-- Research Queue & Review Search Strings -->
+    <string name="settings_queue_auto_add">Context Research Queue</string>
     <string name="settings_queue_auto_add_desc">Build related queue on play</string>
-    <string name="settings_queue_clear_on_new">Replace Queue on Play</string>
+    <string name="settings_queue_clear_on_new">Replace Research Queue on Play</string>
     <string name="settings_queue_clear_on_new_desc">Replace queue for direct play</string>
     <string name="settings_show_played_queue_songs">Show Played Tracks</string>
-    <string name="settings_show_played_queue_songs_desc">Keep played tracks visible in queue</string>
+    <string name="settings_show_played_queue_songs_desc">Keep played records visible in queue</string>
 
     <string name="settings_queue_action_dialog_desc">Single-track queue conflict policy</string>
-    <string name="settings_queue_repeat_persistence">Persist Repeat Mode</string>
+    <string name="settings_queue_repeat_persistence">Remember Review Mode</string>
     <string name="settings_queue_repeat_persistence_desc">Save repeat mode</string>
-    <string name="settings_queue_shuffle_persistence">Persist Shuffle Mode</string>
+    <string name="settings_queue_shuffle_persistence">Remember Random Review</string>
     <string name="settings_queue_shuffle_persistence_desc">Save shuffle mode</string>
     <string name="settings_queue_stop_on_close">Stop on App Close</string>
     <string name="settings_queue_stop_on_close_desc">Stop on app close</string>
@@ -3106,7 +3106,7 @@
     <string name="settings_sleep_timer_search_desc">Auto-stop playback</string>
     <string name="settings_queue_hours_format">Use Hours in Time Format</string>
     <string name="settings_queue_hours_format_desc">Hours in time format</string>
-    <string name="settings_queue_persistence">Persist Queue</string>
+    <string name="settings_queue_persistence">Persist Research Queue</string>
     <string name="settings_queue_persistence_desc">Restore queue on start</string>
     <string name="settings_playlist_action_dialog_desc">Behavior when tapping a track inside a playlist</string>
     <string name="settings_list_queue_action_dialog_desc">Behavior for list Play actions when queue is active</string>
@@ -3119,7 +3119,7 @@
     <string name="settings_exp_festive_theme_desc">Festive decorations</string>
     <string name="settings_exp_auto_detect_holidays">Auto-Detect Holidays</string>
     <string name="settings_exp_auto_detect_holidays_desc">Auto-show holiday themes</string>
-    <string name="settings_exp_ignore_mediastore">Show Song Art Instead of Album Art</string>
+    <string name="settings_exp_ignore_mediastore">Show Song Art Instead of Evidence preview</string>
     <string name="settings_exp_ignore_mediastore_desc">Prefer embedded artwork from each song</string>
     <string name="settings_exp_codec_monitoring">Codec Monitoring</string>
     <string name="settings_exp_codec_monitoring_desc">Log audio info</string>
@@ -3161,13 +3161,13 @@
     <string name="settings_notifications_update_available_desc">Alerts when a new app version is available</string>
     <string name="settings_notifications_update_status">Update Status Notifications</string>
     <string name="settings_notifications_update_status_desc">Background check result alerts</string>
-    <string name="settings_notifications_rhythm_guard_alerts">Rhythm Guard Safety Alerts</string>
+    <string name="settings_notifications_rhythm_guard_alerts">FieldMind Focus Safety Alerts</string>
     <string name="settings_notifications_rhythm_guard_alerts_desc">Notify when listening risk warnings are triggered</string>
-    <string name="settings_notifications_rhythm_guard_timers">Rhythm Guard Break Timers</string>
+    <string name="settings_notifications_rhythm_guard_timers">FieldMind Focus Break Timers</string>
     <string name="settings_notifications_rhythm_guard_timers_desc">Notify for scheduled breaks and timeout countdowns</string>
-    <string name="settings_notifications_rhythm_pulse">Rhythm Tips</string>
+    <string name="settings_notifications_rhythm_pulse">FieldMind Tips</string>
     <string name="settings_notifications_rhythm_pulse_desc">Friendly reminders and listening tips.</string>
-    <string name="settings_notifications_rhythm_pulse_interval">Rhythm Tips Interval</string>
+    <string name="settings_notifications_rhythm_pulse_interval">FieldMind Tips Interval</string>
     <string name="settings_notifications_rhythm_pulse_interval_desc">How often tips notifications are delivered</string>
 
     <!-- Expressive Shapes Search Strings -->
@@ -3175,7 +3175,7 @@
     <string name="settings_expressive_shapes_enabled_search_desc">Custom UI shapes</string>
     <string name="settings_shape_preset">Shape Preset</string>
     <string name="settings_shape_preset_desc">Predefined shape collections</string>
-    <string name="settings_shape_album_art">Album Artwork Shape</string>
+    <string name="settings_shape_album_art">Evidence previewwork Shape</string>
     <string name="settings_shape_album_art_desc">Album artwork shape</string>
     <string name="settings_shape_player_art">Player Artwork Shape</string>
     <string name="settings_shape_player_art_desc">Player artwork shape</string>
@@ -3223,7 +3223,7 @@
 
     <string name="settings_embed_lyrics_in_file">Embed Lyrics in File</string>
     <string name="settings_embed_lyrics_in_file_desc">Write lyrics directly into audio file metadata</string>
-    <string name="settings_playback_pitch">Playback Pitch</string>
+    <string name="settings_playback_pitch">Review Pitch</string>
     <string name="settings_playback_pitch_desc">Adjust audio pitch independently from speed</string>
 
     <string name="settings_player_gradient">Gradient Overlay</string>
@@ -3272,7 +3272,7 @@
     <string name="clear_search">Clear search</string>
     <string name="no_results_found">No results found</string>
     <string name="try_different_search">Try a different search term</string>
-    
+
 
     <!-- Additional Settings Strings -->
     <string name="exp_audio_device_logging">Audio Device Logging</string>
@@ -3408,7 +3408,7 @@
     <string name="explorertabcontent_browse_storage">Browse storage</string>
     <string name="explorertabcontent_folder_icon">Folder icon</string>
     <string name="explorertabcontent_play_folder_as_playlist">Play folder (as Playlist)</string>
-    <string name="explorertabcontent_add_all_to_queue">Add all to Queue</string>
+    <string name="explorertabcontent_add_all_to_queue">Add all to Research Queue</string>
     <string name="homescreen_view_all_stats">View all stats</string>
     <string name="homescreen_plays">Plays</string>
     <string name="libraryscreen_shuffle_selected">Shuffle selected</string>
@@ -3419,13 +3419,13 @@
     <string name="onboardingscreen_tap_the_remove_action">Tap the remove action to update folder access</string>
     <string name="onboardingscreen_enable_festive_decorations_and">Enable festive decorations and seasonal themes</string>
     <string name="onboardingscreen_interaction">Interaction</string>
-    <string name="onboardingscreen_choose_your_playback_mode">Choose Your Playback Mode</string>
+    <string name="onboardingscreen_choose_your_playback_mode">Choose Your Review Mode</string>
     <string name="onboardingscreen_select_how_youd_like">Select how you\'d like to experience your music. You can change this anytime in settings.</string>
     <string name="onboardingscreen_local_offline_player">Local Offline Player</string>
     <string name="onboardingscreen_play_audio_files_stored">Play audio files stored directly on your device. Supports advanced local directory scanning, statistics, and theme matching.</string>
     <string name="onboardingscreen_rhythm_go_streaming">Rhythm GO! (Streaming)</string>
     <string name="onboardingscreen_connect_to_jellyfin_subsonic">Connect to Jellyfin, Subsonic, or Navidrome servers to stream your entire library on the go, with caching support for offline listening.</string>
-    <string name="onboardingscreen_playback_mode_tips">Playback Mode Tips</string>
+    <string name="onboardingscreen_playback_mode_tips">Review Mode Tips</string>
     <string name="onboardingscreen_switch_easily_anytime_in">Switch easily anytime in Settings &gt; Integration.</string>
     <string name="onboardingscreen_local_mode_scans_and">Local mode scans and catalogs audio files on your device.</string>
     <string name="onboardingscreen_go_streaming_connects_via">GO Streaming connects via subsonic/jellyfin API server.</string>
@@ -3475,7 +3475,7 @@
     <string name="legacywidgetpreview_legacy_widget_features">Legacy Widget Features</string>
     <string name="legacywidgetpreview_migration_to_glance">Migration to Glance</string>
     <string name="legacywidgetpreview_consider_using_glance_widgets">Consider using Glance widgets for better Material 3 theming, dynamic colors, and more customization options.</string>
-    <string name="rhythmmusicwidget_album_art_placeholder">Album Art Placeholder</string>
+    <string name="rhythmmusicwidget_album_art_placeholder">Evidence preview Placeholder</string>
     <string name="rhythmwidgetpreview_rhythm_glance_widget_previews">Rhythm Glance Widget Previews</string>
     <string name="rhythmwidgetpreview_str_11_compact_widget">1×1 Compact Widget</string>
     <string name="rhythmwidgetpreview_str_21_horizontal_strip">2×1 Horizontal Strip</string>
@@ -3620,13 +3620,13 @@
     <string name="placeholdersettingsscreen_choose_a_setting_from">Choose a setting from the left panel</string>
     <string name="placeholdersettingsscreen_tap_on_any_setting">Tap on any setting option to view and modify its preferences here</string>
     <string name="playercustomizationsettingsscreen_player_theme">Player Theme</string>
-    <string name="playercustomizationsettingsscreen_playback_theme">Playback Theme</string>
+    <string name="playercustomizationsettingsscreen_playback_theme">Review Theme</string>
     <string name="playercustomizationsettingsscreen_tap_lyrics_for_immersive">Tap Lyrics for Immersive View</string>
     <string name="rhythmguardsettingsscreen_choose_sections">Choose sections</string>
     <string name="rhythmguardsettingsscreen_none">None</string>
     <string name="rhythmguardsettingsscreen_general_settings">General Settings</string>
     <string name="rhythmguardsettingsscreen_library_data">Library Data</string>
-    <string name="rhythmguardsettingsscreen_stats_rhythm_guard">Stats &amp; Rhythm Guard</string>
+    <string name="rhythmguardsettingsscreen_stats_rhythm_guard">Stats &amp; FieldMind Focus</string>
     <string name="settingsscreen_audio_offload">Audio Offload</string>
     <string name="settingsscreen_personalization">Personalization</string>
     <string name="settingsscreen_library_focus">Library Focus</string>
@@ -3663,7 +3663,7 @@
     <string name="festivethemeexamples_christmas">🎄 Christmas</string>
     <string name="festivethemeexamples_new_year">🎉 New Year</string>
     <string name="festivethemeexamples_using_app_settings">Using App Settings</string>
-    <string name="playback_paused_zero_volume">Playback was paused because the volume reached zero. Raise the volume to resume listening.</string>
+    <string name="playback_paused_zero_volume">Review was paused because the volume reached zero. Raise the volume to resume listening.</string>
     <string name="zero_volume_raise_volume">Raise Volume</string>
 
     <!-- New UI strings for translation -->
@@ -3742,7 +3742,7 @@
     <string name="pulse_steady">Steady groove</string>
     <string name="pulse_heavy">Heavy listening</string>
     <string name="pulse_marathon">Marathon mode</string>
-    
+
     <!-- Settings Tips Details -->
     <string name="settings_tip_theme_desc_1">Refresh your music player with lively AMOLED black and beautiful pastel colors.</string>
     <string name="settings_tip_theme_desc_2">Make Rhythm truly yours by matching the app\'s accent to your system.</string>
@@ -3754,7 +3754,7 @@
     <string name="settings_tip_equalizer_desc_2">Tune the sound to your headphones securely with our advanced audio effects.</string>
     <string name="settings_tip_backup_active_desc_1">Auto backup is active. Verify your backup sections so restores stay clean.</string>
     <string name="settings_tip_backup_active_desc_2">Protection enabled: schedule looks good. Run a manual backup before big edits.</string>
-    <string name="settings_tip_backup_inactive_desc_1">Auto backup is off. Enable it to protect playlists and Rhythm Guard stats.</string>
+    <string name="settings_tip_backup_inactive_desc_1">Auto backup is off. Enable it to protect playlists and FieldMind Focus stats.</string>
     <string name="settings_tip_backup_inactive_desc_2">No safety net yet. Turn on backups to avoid losing your setup.</string>
     <string name="settings_tip_updates_active_desc_1">Updates are enabled. Keep them on for fixes and performance improvements.</string>
     <string name="settings_tip_updates_active_desc_2">You are set to receive updates. Check channel preferences for stability vs freshness.</string>
@@ -3762,7 +3762,7 @@
     <string name="settings_tip_updates_inactive_desc_2">You are pinned to the current build. Turn updates back on when ready.</string>
     <string name="settings_tip_queue_active_desc_1">Player swipe-to-skip is active. Tune queue rules for smoother transitions.</string>
     <string name="settings_tip_queue_active_desc_2">Gesture skip is on. Match queue behavior to your listening flow.</string>
-    <string name="settings_tip_queue_inactive_desc_1">Swipe-to-skip is off. Queue controls can help keep playback efficient.</string>
+    <string name="settings_tip_queue_inactive_desc_1">Swipe-to-skip is off. Research Queue controls can help keep playback efficient.</string>
     <string name="settings_tip_queue_inactive_desc_2">Prefer explicit controls? Fine-tune queue behavior for predictable playback.</string>
     <string name="settings_tip_controls_active_desc_1">Seek buttons are visible. Customize player controls to reduce clutter.</string>
     <string name="settings_tip_controls_active_desc_2">Control-rich player enabled. Tweak layout for your thumb reach.</string>
@@ -3787,7 +3787,7 @@
 
     <!-- Font / Color Customization Dialogs -->
     <string name="theme_font_source_changed_restart">Font source changed. Restart the app to apply the new font.</string>
-    <string name="color_source_album_art">Album Art</string>
+    <string name="color_source_album_art">Evidence preview</string>
     <string name="color_source_album_art_desc">Extract colors from currently playing album artwork</string>
     <string name="color_source_system_colors">System Colors</string>
     <string name="color_source_system_colors_desc">Use Material You colors from your wallpaper</string>
@@ -3943,7 +3943,7 @@
     <string name="dialog_play_song_how">How would you like to play \"%1$s\"?</string>
     <string name="dialog_clear_and_play">Clear &amp; Play</string>
     <string name="dialog_clear_and_play_desc">Replace queue and play this song</string>
-    <string name="dialog_add_to_queue">Add to Queue</string>
+    <string name="dialog_add_to_queue">Add to Research Queue</string>
     <string name="dialog_add_to_queue_desc">Keep current queue and add song</string>
     <string name="dialog_restart_warning_message">To ensure all imported playlists work correctly, we recommend restarting the app. You can continue using the app normally, but some features may not work as expected until restart.</string>
     <string name="dialog_export_playlist_to">Export \"%1$s\" to:</string>
@@ -3955,7 +3955,7 @@
     <string name="dialog_switch_to_go">Switch to Rhythm Go?</string>
     <string name="dialog_switch_to_local">Switch to Local?</string>
     <string name="dialog_switch_to_go_desc">This item belongs to Rhythm Go. Switch to Streaming Mode now to stream and play it?</string>
-    <string name="dialog_switch_to_local_desc">This item belongs to your Local Library. Switch to Local Mode now to play your offline tracks?</string>
+    <string name="dialog_switch_to_local_desc">This item belongs to your Local Library. Switch to Local Mode now to play your offline records?</string>
 
     <!-- Section order content descriptions -->
     <string name="home_section_hide_carousel">Hide carousel</string>
@@ -4039,7 +4039,7 @@
     <string name="library_added_to_favorites">Added %1$d to favorites</string>
     <string name="library_unlike_all">Unlike all</string>
     <string name="library_like_all">Like all</string>
-    <string name="library_tracks_count_format">%1$d of %2$d tracks</string>
+    <string name="library_records_count_format">%1$d of %2$d records</string>
     <string name="library_no_playlists_yet">No playlists yet\nCreate your first playlist using the + button</string>
     <string name="library_no_albums_yet">No albums yet</string>
     <string name="library_no_artists_yet">No artists yet</string>
@@ -4056,7 +4056,7 @@
     <string name="library_menu_open_playlist">Open playlist menu</string>
     <string name="library_menu_close">Close menu</string>
     <string name="library_selected_count_format">%1$d Selected</string>
-    <string name="library_from_tracks_format">from %1$d tracks</string>
+    <string name="library_from_records_format">from %1$d records</string>
     <string name="library_playlist_count_singular">%1$d playlist</string>
     <string name="library_playlist_count_plural">%1$d playlists</string>
     <string name="library_album_count_singular">%1$d album</string>
@@ -4078,14 +4078,14 @@
     <string name="onboarding_secondary_label">Secondary</string>
     <string name="onboarding_tertiary_label">Tertiary</string>
     <string name="onboarding_rhythm_material">Rhythm (Material)</string>
-    
+
     <string name="backup_restored_success">Backup restored successfully. Restart the app to apply all changes.</string>
     <string name="backup_copied_to_clipboard">Backup created and copied to clipboard.</string>
     <string name="backup_failed_to_create">Failed to create backup: %1$s</string>
     <string name="backup_failed_to_restore_file">Failed to restore from file: %1$s</string>
     <string name="backup_no_backup_clipboard">No backup found in clipboard</string>
     <string name="backup_failed_to_restore_clipboard">Failed to restore from clipboard: %1$s</string>
-    
+
     <string name="updater_ready_to_install">Version %1$s is ready to install</string>
     <string name="updater_download_progress">%1$d%% • %2$s / %3$s</string>
     <string name="updater_version_info">Version %1$s • %2$s</string>
@@ -4211,7 +4211,7 @@
     <string name="theme_color_green">Green</string>
     <string name="theme_color_blue">Blue</string>
     <string name="theme_font_restart_warning">Font changed. Restart the app to apply the new font.</string>
-    <string name="theme_source_album_art">Album Art</string>
+    <string name="theme_source_album_art">Evidence preview</string>
     <string name="theme_source_album_art_desc">Extract colors from currently playing album artwork</string>
     <string name="theme_source_system_colors">System Colors</string>
     <string name="theme_source_system_colors_desc">Use Material You colors from your wallpaper</string>
@@ -4255,7 +4255,7 @@
     <string name="metadata_duration">Duration</string>
     <string name="metadata_disc">Disc</string>
     <string name="metadata_composer">Composer</string>
-    <string name="metadata_album_artist">Album Artist</string>
+    <string name="metadata_album_artist">Evidence previewist</string>
     <string name="metadata_play_count">Play Count</string>
     <string name="metadata_total_played">Total Played</string>
     <string name="metadata_rating">Rating</string>
@@ -4301,7 +4301,7 @@
     <string name="settings_managed_by_expressive_shapes">Managed by Expressive Shapes</string>
 
     <!-- Shape targets -->
-    <string name="shape_target_album_art">Album Artwork</string>
+    <string name="shape_target_album_art">Evidence previewwork</string>
     <string name="shape_target_album_art_desc">Shape for album artwork</string>
     <string name="shape_target_player_art">Player Artwork</string>
     <string name="shape_target_player_art_desc">Shape for player screen artwork</string>

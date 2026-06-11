@@ -1,7 +1,11 @@
 package chromahub.rhythm.app.features.field.data.database.entity
 
 import androidx.room.Entity
+import androidx.room.Index
 import androidx.room.PrimaryKey
+
+data class TagStatistic(val name: String, val observationCount: Int)
+data class AttachmentSearchResult(val id: Long, val observationId: Long, val type: String, val caption: String, val uri: String)
 
 @Entity(tableName = "field_observations")
 data class ObservationEntity(
@@ -20,6 +24,24 @@ data class ObservationEntity(
     val moodOrContext: String = "",
     val tags: String = "",
     val projectId: Long? = null,
+    val status: String = "Active",
+    val archivedAt: Long? = null,
+    val deletedAt: Long? = null,
+    val createdAt: Long = System.currentTimeMillis(),
+    val updatedAt: Long = System.currentTimeMillis()
+)
+
+@Entity(tableName = "field_evidence_attachments")
+data class EvidenceAttachmentEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val observationId: Long,
+    val type: String,
+    val uri: String,
+    val localPath: String? = null,
+    val caption: String = "",
+    val status: String = "Active",
+    val archivedAt: Long? = null,
+    val deletedAt: Long? = null,
     val createdAt: Long = System.currentTimeMillis(),
     val updatedAt: Long = System.currentTimeMillis()
 )
@@ -35,6 +57,8 @@ data class QuestionEntity(
     val relatedObservationIds: String = "",
     val relatedSourceIds: String = "",
     val relatedProjectId: Long? = null,
+    val archivedAt: Long? = null,
+    val deletedAt: Long? = null,
     val createdAt: Long = System.currentTimeMillis(),
     val updatedAt: Long = System.currentTimeMillis()
 )
@@ -51,6 +75,8 @@ data class HypothesisEntity(
     val testMethod: String = "",
     val confidencePercent: Int = 50,
     val resultStatus: String = "Unknown",
+    val archivedAt: Long? = null,
+    val deletedAt: Long? = null,
     val createdAt: Long = System.currentTimeMillis(),
     val updatedAt: Long = System.currentTimeMillis()
 )
@@ -70,6 +96,8 @@ data class ProjectEntity(
     val conclusion: String = "",
     val futureQuestions: String = "",
     val status: String = "Active",
+    val archivedAt: Long? = null,
+    val deletedAt: Long? = null,
     val createdAt: Long = System.currentTimeMillis(),
     val updatedAt: Long = System.currentTimeMillis()
 )
@@ -87,7 +115,11 @@ data class SourceEntity(
     val whatThisSourceTaughtMe: String = "",
     val questionsGenerated: String = "",
     val reliabilityScore: Int = 3,
+    val readingStatus: String = "In progress",
+    val paperNotes: String = "",
     val relatedProjectId: Long? = null,
+    val archivedAt: Long? = null,
+    val deletedAt: Long? = null,
     val createdAt: Long = System.currentTimeMillis(),
     val updatedAt: Long = System.currentTimeMillis()
 )
@@ -104,6 +136,9 @@ data class DataRecordEntity(
     val timestamp: Long = System.currentTimeMillis(),
     val location: String = "",
     val notes: String = "",
+    val status: String = "Active",
+    val archivedAt: Long? = null,
+    val deletedAt: Long? = null,
     val createdAt: Long = System.currentTimeMillis(),
     val updatedAt: Long = System.currentTimeMillis()
 )
@@ -112,6 +147,7 @@ data class DataRecordEntity(
 data class ReportEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val projectId: Long? = null,
+    val type: String = "Field Report",
     val title: String,
     val background: String = "",
     val question: String = "",
@@ -122,16 +158,41 @@ data class ReportEntity(
     val conclusion: String = "",
     val limitations: String = "",
     val nextSteps: String = "",
+    val markdownDraft: String = "",
+    val status: String = "Draft",
+    val archivedAt: Long? = null,
+    val deletedAt: Long? = null,
     val createdAt: Long = System.currentTimeMillis(),
     val updatedAt: Long = System.currentTimeMillis()
 )
 
-@Entity(tableName = "field_tags")
+@Entity(tableName = "field_flashcards")
+data class FlashcardEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val front: String,
+    val back: String,
+    val type: String,
+    val sourceId: Long? = null,
+    val projectId: Long? = null,
+    val reviewCount: Int = 0,
+    val lastReviewedAt: Long? = null,
+    val nextReviewAt: Long? = null,
+    val archivedAt: Long? = null,
+    val deletedAt: Long? = null,
+    val createdAt: Long = System.currentTimeMillis(),
+    val updatedAt: Long = System.currentTimeMillis()
+)
+
+@Entity(tableName = "field_tags", indices = [Index(value = ["normalizedName"], unique = true)])
 data class TagEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val name: String,
+    val normalizedName: String = name.trim().lowercase(),
     val color: Long = 0xFF5F7F52,
-    val createdAt: Long = System.currentTimeMillis()
+    val archivedAt: Long? = null,
+    val deletedAt: Long? = null,
+    val createdAt: Long = System.currentTimeMillis(),
+    val updatedAt: Long = System.currentTimeMillis()
 )
 
 @Entity(tableName = "field_observation_tags", primaryKeys = ["observationId", "tagId"])
@@ -151,3 +212,43 @@ data class ProjectSourceCrossRef(val projectId: Long, val sourceId: Long)
 
 @Entity(tableName = "field_report_sources", primaryKeys = ["reportId", "sourceId"])
 data class ReportSourceCrossRef(val reportId: Long, val sourceId: Long)
+
+@Entity(tableName = "field_project_data_records", primaryKeys = ["projectId", "dataRecordId"])
+data class ProjectDataRecordCrossRef(val projectId: Long, val dataRecordId: Long)
+
+@Entity(tableName = "field_hypothesis_evidence", primaryKeys = ["hypothesisId", "observationId"])
+data class HypothesisEvidenceCrossRef(val hypothesisId: Long, val observationId: Long)
+
+data class ObservationWithTagsAndAttachments(
+    val observation: ObservationEntity,
+    val tags: List<TagEntity>,
+    val attachments: List<EvidenceAttachmentEntity>
+)
+
+data class QuestionWithEvidence(
+    val question: QuestionEntity,
+    val observations: List<ObservationEntity>,
+    val sources: List<SourceEntity>,
+    val hypotheses: List<HypothesisEntity>
+)
+
+data class ProjectWorkspace(
+    val project: ProjectEntity,
+    val questions: List<QuestionEntity>,
+    val observations: List<ObservationEntity>,
+    val sources: List<SourceEntity>,
+    val dataRecords: List<DataRecordEntity>,
+    val reports: List<ReportEntity>
+)
+
+data class SourceWithLinks(
+    val source: SourceEntity,
+    val questions: List<QuestionEntity>,
+    val projects: List<ProjectEntity>,
+    val reports: List<ReportEntity>
+)
+
+data class ReportWithSources(
+    val report: ReportEntity,
+    val sources: List<SourceEntity>
+)

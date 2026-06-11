@@ -158,3 +158,11 @@ fun TimelineItem(title: String, subtitle: String, badge: String, modifier: Modif
         }
     }
 }
+
+@Composable
+fun ResearchCard(
+    title: String,
+    subtitle: String,
+    label: String,
+    onClick: (() -> Unit)? = null
+) = ResearchCard(title = title, subtitle = subtitle, label = label, onClick = onClick)
