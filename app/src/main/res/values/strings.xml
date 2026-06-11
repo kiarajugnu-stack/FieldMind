@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Rhythm</string>
+    <string name="app_name">FieldMind</string>
     
     <!-- Common Labels -->
     <string name="home">Home</string>
@@ -660,14 +660,14 @@
     
     <!-- Onboarding -->
     <string name="onboarding_welcome_to">Welcome to</string>
-    <string name="onboarding_welcome_title">Rhythm</string>
-    <string name="onboarding_welcome_subtitle">Your Music, Your Rhythm</string>
-    <string name="onboarding_welcome_desc">Personalize every aspect of your listening experience with powerful features and complete privacy. Play your music offline, ad-free, with full control.</string>
+    <string name="onboarding_welcome_title">FieldMind</string>
+    <string name="onboarding_welcome_subtitle">Observe. Question. Discover.</string>
+    <string name="onboarding_welcome_desc">Build a local-first research notebook for observations, questions, sources, projects, and findings.</string>
     <string name="onboarding_get_started">Get Started</string>
     <string name="onboarding_offline">Offline</string>
     <string name="onboarding_customizable">Customizable</string>
     <string name="onboarding_private">Private</string>
-    <string name="onboarding_tagline">Music player • Designed for Android</string>
+    <string name="onboarding_tagline">Field research notebook • Designed for Android</string>
     <string name="onboarding_android13_notice">Android 13+ Notice</string>
     <string name="onboarding_android13_desc">On newer Android versions, you\'ll see multiple permission requests. Please grant access to audio files and notifications for the best experience.</string>
     <string name="onboarding_granted">✓ Granted</string>

@@ -1,180 +1,50 @@
+# FieldMind
 
-<div align="center">
+**Observe. Question. Discover.**
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="assets/icon.png">
-  <source media="(prefers-color-scheme: light)" srcset="assets/icon.png">
-  <img src="assets/icon_full.png" alt="Rhythm Music Player" width="220" style="border-radius: 32px; margin: 20px 0; box-shadow: 0 8px 24px rgba(0,0,0,0.2);">
-</picture>
+FieldMind is a phone-first, offline-friendly Android research notebook built with Kotlin and Jetpack Compose. It transforms the former Rhythm app shell into a local-first workspace for observations, questions, hypotheses, projects, sources, data collection, analysis, reports, and archive search.
 
-# Project Rhythm
-**Your Music, Your Rhythm.**
+## Core flow
 
-<a href="https://trendshift.io/repositories/15217" target="_blank"><img src="https://trendshift.io/api/badge/repositories/15217" alt="cromaguy%2FRhythm | Trendshift" style="width: 250px; height: 55px;" width="250" height="55"/></a>
+> Observe → Question → Research → Hypothesize → Collect Data → Analyze → Conclude → Archive
 
-[![Platform](https://img.shields.io/badge/Android-34A853?style=flat-square&logo=android&logoColor=white)](https://android.com)
-[![API Level](https://img.shields.io/badge/API-26%2B-4285f4?style=flat-square&logo=android&logoColor=white)](https://android-arsenal.com/api?level=26)
-[![Kotlin](https://img.shields.io/badge/Kotlin-100%25-7c4dff?style=flat-square&logo=kotlin&logoColor=white)](https://kotlinlang.org/)
-[![License](https://img.shields.io/badge/License-GPL_v3-4285f4?style=flat-square)](docs/LICENSE)
-<br>
-[![Release](https://img.shields.io/github/v/release/cromaguy/Rhythm?style=flat-square&logo=github&color=673ab7&logoColor=white)](https://github.com/cromaguy/Rhythm/releases/latest)
-[![Downloads](https://img.shields.io/github/downloads/cromaguy/Rhythm/total?style=flat-square&logo=download&color=00bcd4&logoColor=white)](https://github.com/cromaguy/Rhythm/releases)
-[![Stars](https://img.shields.io/github/stars/cromaguy/Rhythm?style=flat-square&logo=star&color=ffc107&logoColor=white)](https://github.com/cromaguy/Rhythm/stargazers)
-[<img src="https://shields.rbtlog.dev/simple/chromahub.rhythm.app?style=flat-square" alt="RB shield">](https://shields.rbtlog.dev/chromahub.rhythm.app)
+Every active feature is designed to connect to this chain.
 
-### [🌐 Website](https://rhythmweb.vercel.app/) • [📥 Download](https://github.com/cromaguy/Rhythm/releases/latest) • [🎧 Discord](https://discord.gg/vpRrk8AdVW) • [💬 Telegram](https://t.me/RhythmSupport) • [📖 Wiki](https://github.com/cromaguy/Rhythm/wiki)
+## Current FieldMind scope
 
-</div>
+- Home dashboard for current project, goal, streak, stats, and recent activity
+- Capture tab for factual observations with category, certainty, evidence, location, tags, and context
+- Research tab for questions, hypotheses, projects, and simple data tools
+- Library tab for articles, papers, books, videos, websites, notes, and guided paper-reading prompts
+- Archive tab for universal search across research records
+- FieldMind settings for observation defaults, location/media planning, Gemini assistant planning, export, and data ownership
+- Offline-first Room database for observations, questions, hypotheses, projects, sources, data records, reports, tags, and relationship tables
 
----
+## Design principles
 
-## 💖 Support the Developer
+- Minimal, calm, research-focused UI
+- Reuses the existing Material 3 Compose theme and component foundation
+- Supports light and dark mode through theme tokens
+- Keeps spacing consistent and interactions clear
+- Uses subtle navigation and content feedback
 
-Building and maintaining **Rhythm** is a massive labor of love, provided completely free and open-source. Due to my recent hardware failure, I am currently unable to push updates. If you love using this app, please consider supporting my hardware fund so I can return to development!
+## Asset policy
 
-<div align="center">
+Existing image, vector, font, and media assets are intentionally kept in the repository. The active app flow no longer depends on music-player behavior, but assets are not deleted unless a future task explicitly approves that cleanup.
 
-| 🎯 **Main Goal** | ☕ **One-Time Support** | 🤝 **Ongoing Sponsorship** |
-| :---: | :---: | :---: |
-| [![Laptop Fund](https://img.shields.io/badge/Laptop_Fund-Ko--fi-FF5E5B?style=for-the-badge&logo=ko-fi&logoColor=white)](https://ko-fi.com/anjishnunandi/goal?g=0) | [![Ko-Fi](https://img.shields.io/badge/Buy_Me_A_Coffee-F16061?style=for-the-badge&logo=ko-fi&logoColor=white)](https://ko-fi.com/anjishnunandi)<br><br>[![PayPal](https://img.shields.io/badge/PayPal-00457C?style=for-the-badge&logo=paypal&logoColor=white)](http://paypal.me/AnjishnuNandi) | [![Patreon](https://img.shields.io/badge/Patreon-F96854?style=for-the-badge&logo=patreon&logoColor=white)](https://patreon.com/AnjishnuNandi)<br><br>[![GitHub Sponsor](https://img.shields.io/badge/GitHub_Sponsors-EA4AAA?style=for-the-badge&logo=github&logoColor=white)](https://github.com/sponsors/cromaguy) |
+## Android
 
-</div>
+- Kotlin
+- Jetpack Compose
+- Material 3
+- Room
+- Offline-first local storage
 
----
+## Future milestones
 
-## ✨ Why Choose Rhythm?
-
-Rhythm is a modern, open-source music player built with **Material 3 Expressive** design. It delivers professional-grade audio with High-Resolution playback, EAC3-JOC/Dolby Atmos via FFmpeg, and completely respects your privacy.
-
-| 🎨 **Design & UI** | 🎵 **Audio Engine** |
-| :--- | :--- |
-| **Material You:** Dynamic theming with wallpaper colors (Android 12+). | **Pro Audio:** Media3 ExoPlayer with gapless playback & High-Res mode. |
-| **Expressive UI:** Refined adaptive shapes and Material 3 design. | **10-Band EQ:** Professional equalizer with 6032+ AutoEQ device presets. |
-| **Modern Widgets:** Multiple responsive layouts for your home screen. | **Format Support:** FLAC, ALAC, MP3, AAC, EAC3-JOC, Opus, WAV, OGG. |
-
-| 🎤 **Features & Tools** | 🔒 **Privacy & Data** |
-| :--- | :--- |
-| **Synced Lyrics:** LRCLib integration with word-by-word highlighting. | **100% FOSS:** Completely open-source with zero tracking. |
-| **Smart Library:** Multi-select batch operations for songs and albums. | **Offline Capable:** Designed to work flawlessly without the internet. |
-| **Playback Stats:** Comprehensive listening statistics and insights. | **Local First:** Your data and habits stay securely on your device. |
-| **Streaming Mode:** Dual-mode architecture for local and server playback. | |
-| **Rhythm Guard:** Integrated hearing safety and volume protection. | |
-
-> **System Requirements:** Android 8.0+ (API 26) • 2GB RAM • 50MB Storage
-
----
-
-## 📱 Screenshots
-
-<div align="center">
-<table>
-<tr>
-<td align="center" width="25%">
-<img src="assets/ScreenShots/Home.png" alt="Home" width="180" style="border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);"/>
-<br/><b>🏠 Smart Home</b>
-</td>
-<td align="center" width="25%">
-<img src="assets/ScreenShots/Player_2.png" alt="Player" width="180" style="border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);"/>
-<br/><b>▶️ Beautiful Player</b>
-</td>
-<td align="center" width="25%">
-<img src="assets/ScreenShots/Player_Lyrics_View.png" alt="Lyrics" width="180" style="border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);"/>
-<br/><b>🎤 Synced Lyrics</b>
-</td>
-<td align="center" width="25%">
-<img src="assets/ScreenShots/Library_Songs.png" alt="Library" width="180" style="border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);"/>
-<br/><b>📚 Rich Library</b>
-</td>
-</tr>
-<tr>
-<td align="center">
-<img src="assets/ScreenShots/Queue.png" alt="Queue" width="180" style="border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);"/>
-<br/><b>📋 Smart Queue</b>
-</td>
-<td align="center">
-<img src="assets/ScreenShots/Search.png" alt="Search" width="180" style="border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);"/>
-<br/><b>🔍 Instant Search</b>
-</td>
-<td align="center">
-<img src="assets/ScreenShots/Settings.png" alt="Settings" width="180" style="border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);"/>
-<br/><b>⚙️ Deep Settings</b>
-</td>
-<td align="center">
-<img src="assets/ScreenShots/Artist.png" alt="Artist" width="180" style="border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);"/>
-<br/><b>🎤 Artist Pages</b>
-</td>
-</tr>
-</table>
-</div>
-
----
-
-## 📥 Download & Install
-
-Choose your preferred platform to download the latest version of Rhythm:
-
-<div align="center">
-
-| Source | Badge | Details |
-| :--- | :---: | :--- |
-| **GitHub** | [<img src="assets/badge-github.png" alt="Download APK" height="35">](https://github.com/cromaguy/Rhythm/releases/latest) | Direct APK download (Full Features) |
-| **F-Droid** | [<img src="assets/badge-fdroid.png" alt="F-Droid" height="35">](https://f-droid.org/packages/chromahub.rhythm.app) | Official repository (Full Features) |
-| **IzzyOnDroid** | [<img src="assets/badge-izzyondroid.png" alt="IzzyOnDroid" height="35">](https://apt.izzysoft.de/fdroid/index/apk/chromahub.rhythm.app) | Privacy-focused repo (Full Features) |
-| **Obtainium** | [<img src="assets/badge-obtainium.png" alt="Obtainium" height="35">](https://apps.obtainium.imranr.dev/redirect?r=obtainium://add/https://github.com/cromaguy/Rhythm/) | Auto-updates straight from GitHub |
-| **OpenAPK** | [<img src="assets/badge-openapk.png" alt="OpenAPK" height="35">](https://www.openapk.net/rhythm/chromahub.rhythm.app/) | Alternative APK source |
-
-</div>
-
-> 💡 **Note:** F-Droid, IzzyOnDroid, and GitHub releases include all features, including Deezer & YouTube Music artwork, LRCLib lyrics, and YouTube Music artwork. See [Build Variants](docs/BUILD_VARIANTS.md) for details. Need help? Check out the [Installation Guide](https://github.com/cromaguy/Rhythm/wiki/Installation-Guide).
-
----
-
-## 🛠 Technology Stack
-
-Built with modern tools and clean architecture:
-
-* **UI & Design:** Jetpack Compose, Material 3, Glance Widgets, Coil, AndroidX Palette.
-* **Audio Engine:** Media3 ExoPlayer, FFmpeg Decoder, JAudioTagger.
-* **Architecture:** MVVM + Clean Architecture, 100% Kotlin, Kotlin Coroutines + Flow.
-* **Data & Network:** Room + SQLite, Retrofit, OkHttp, Gson.
-* **Build & Management:** AGP, Kotlin, WorkManager, LeakCanary.
-
-📖 **Full tech stack:** Read more in the [Wiki](https://github.com/cromaguy/Rhythm/wiki/Technology-Stack).
-
----
-
-## 🤝 Contributing & Community
-
-We welcome contributions! See our [CONTRIBUTING.md](https://github.com/cromaguy/Rhythm/blob/main/docs/CONTRIBUTING.md) for guidelines.
-
-* 🐛 **Found a bug?** [Open an issue](https://github.com/cromaguy/Rhythm/issues)
-* 💡 **Have an idea?** [Request a feature](https://github.com/cromaguy/Rhythm/issues)
-* 💬 **Want to chat?** [Join Discord](https://discord.gg/vpRrk8AdVW), [Telegram](https://t.me/RhythmSupport) or [GitHub Discussions](https://github.com/cromaguy/Rhythm/discussions)
-* 📖 **Need help?** [Read the Wiki](https://github.com/cromaguy/Rhythm/wiki)
-
----
-
-## 🏆 Credits
-
-**Lead Developer & Architect:** [Anjishnu Nandi](https://github.com/cromaguy)
-
-**Huge Thanks To:**
-* [Izzy](https://github.com/IzzySoft) - IzzyOnDroid repository management
-* [theovilardo](https://github.com/theovilardo) - Project PixelPlayer collaboration & Lead Dev
-* [Nick](https://github.com/nift4) - Gramophone project's maintainer (code helper & testing)
-* [Christian](https://github.com/mardous) - Project Booming collaboration & Lead Dev
-* [Alex](https://github.com/Paxsenix0) - Network API integrations
-* [linsui](https://github.com/linsui) & [Licaon_Kter](https://github.com/licaon-kter) - F-Droid repository management
-* The **Google Material Design Team**, **AOSP**, **JetBrains**, and the fantastic **Open Source Community**.
-
----
-
-<div align="center">
-
-### ✨ Made with ❤️ by Team ChromaHub
-
-<sub>**License:** [GNU General Public License v3.0](docs/LICENSE)</sub><br>
-<sub>© 2026 Team ChromaHub. All rights reserved.</sub><br>
-<sub>⭐ If Rhythm improved your daily listening, don't forget to star the repository! ⭐</sub>
-
-</div>
+- Contextual camera/audio/location attachment flows
+- More data tools: measurement log, checklist, event log, weather log, site log, species tracker, comparison table
+- Markdown/CSV/JSON export
+- Report builder templates
+- Mature skill-tree progress tracking
+- Optional Gemini assistant that helps with observation review, question quality, hypotheses, summarization, flashcards, and research writing without inventing evidence
