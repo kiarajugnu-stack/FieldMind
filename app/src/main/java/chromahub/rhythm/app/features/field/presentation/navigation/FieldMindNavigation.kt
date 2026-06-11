@@ -185,6 +185,13 @@ private fun FieldMindNavHost(
     onResetOnboarding: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    var readerTarget by remember { mutableStateOf("" to "") }
+    val openDetail: (String, Long) -> Unit = { kind, id -> navController.navigateToDestination("field_detail/$kind/$id") }
+    val openReader: (String, String) -> Unit = { url, title ->
+        readerTarget = url to title
+        navController.navigateToDestination(FieldMindScreen.Reader.route)
+    }
+
     NavHost(
         navController = navController,
         startDestination = FieldMindScreen.Home.route,
@@ -194,9 +201,6 @@ private fun FieldMindNavHost(
         popEnterTransition = { fadeIn(tween(160)) },
         popExitTransition = { fadeOut(tween(120)) + scaleOut(targetScale = 0.98f, animationSpec = tween(120)) }
     ) {
-        val openDetail: (String, Long) -> Unit = { kind, id -> navController.navigateToDestination("field_detail/$kind/$id") }
-        var readerTarget by remember { mutableStateOf("" to "") }
-        val openReader: (String, String) -> Unit = { url, title -> readerTarget = url to title; navController.navigateToDestination(FieldMindScreen.Reader.route) }
         composable(FieldMindScreen.Home.route) { HomeScreen(viewModel = viewModel, onOpenSettings = { navController.navigateToDestination(FieldMindScreen.Settings.route) }, onNavigate = { navController.navigateToDestination(it.route) }, onOpenDetail = openDetail, onOpenReader = openReader) }
         composable(FieldMindScreen.Observe.route) { ObserveScreen(viewModel = viewModel, onOpenDetail = openDetail) }
         composable(FieldMindScreen.Projects.route) { ProjectsScreen(viewModel = viewModel, onOpenDetail = openDetail) }

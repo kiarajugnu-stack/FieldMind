@@ -230,6 +230,14 @@ fun HomeScreen(
     val todayKey = remember { today() }
     val todayCount = observations.count { it.date == todayKey }
     val activeProject = projects.firstOrNull { it.status == "Active" } ?: projects.firstOrNull()
+    val learnSignals = remember(observations, questions, projects) {
+        buildList {
+            observations.sortedByDescending { it.timestamp }.take(10).forEach { add(it.category); add(it.subject); add(it.tags) }
+            questions.sortedByDescending { it.updatedAt }.take(10).forEach { add(it.category); add(it.questionText) }
+            projects.take(6).forEach { add(it.topicType); add(it.title) }
+        }
+    }
+    val recommendations = remember(learnSignals) { recommendedResources(learnSignals) }
 
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(20.dp, 20.dp, 20.dp, 96.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
         item { FieldScreenHeader("FieldMind", "Observe. Question. Research clearly.", icon = FieldMindIcons.Nature, actionIcon = FieldMindIcons.Settings, onAction = onOpenSettings) }
@@ -267,12 +275,6 @@ fun HomeScreen(
                 )
             }
         }
-        val learnSignals = buildList {
-            observations.sortedByDescending { it.timestamp }.take(10).forEach { add(it.category); add(it.subject); add(it.tags) }
-            questions.sortedByDescending { it.updatedAt }.take(10).forEach { add(it.category); add(it.questionText) }
-            projects.take(6).forEach { add(it.topicType); add(it.title) }
-        }
-        val recommendations = remember(learnSignals) { recommendedResources(learnSignals) }
         if (recommendations.isNotEmpty()) {
             item { SectionHeader("Recommended learning", if (learnSignals.any { it.isNotBlank() }) "Based on your recent activity" else "Foundations to start with") }
             item { RecommendedLearningCard(recommendations, onOpenReader = onOpenReader, onSeeAll = { onNavigate(FieldMindScreen.Learn) }) }
