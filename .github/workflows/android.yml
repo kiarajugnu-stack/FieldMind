@@ -60,16 +60,16 @@ jobs:
           touch ./private.properties
         fi
 
-    - name: Build unsigned universal APKs for PR/release preview
-      run: ./gradlew assembleGithubDebug assembleGithubRelease -PunsignedApkOnly=true --stacktrace
+    - name: Build installable universal APKs for PR preview
+      run: ./gradlew assembleGithubDebug assembleGithubRelease --stacktrace
 
-    - name: Verify unsigned universal APK outputs
+    - name: Verify installable universal APK outputs
       run: |
         set -euo pipefail
-        debug_count=$(find app/build/outputs/apk/github/debug -maxdepth 1 -name 'FieldMind-*-githubDebug-unsigned-universal.apk' | wc -l | tr -d ' ')
-        release_count=$(find app/build/outputs/apk/github/release -maxdepth 1 -name 'FieldMind-*-githubRelease-unsigned-universal.apk' | wc -l | tr -d ' ')
+        debug_count=$(find app/build/outputs/apk/github/debug -maxdepth 1 -name 'FieldMind-*-githubDebug-signed-universal.apk' | wc -l | tr -d ' ')
+        release_count=$(find app/build/outputs/apk/github/release -maxdepth 1 -name 'FieldMind-*-githubRelease-signed-universal.apk' | wc -l | tr -d ' ')
         if [ "$debug_count" != "1" ] || [ "$release_count" != "1" ]; then
-          echo "Expected exactly one unsigned universal debug APK and one unsigned universal release APK."
+          echo "Expected exactly one signed universal debug APK and one signed universal release APK."
           find app/build/outputs/apk -type f -name '*.apk' -print
           exit 1
         fi
@@ -81,14 +81,14 @@ jobs:
         echo "Commit: ${{ github.sha }}" >> build_info.txt
         echo "Branch: ${{ github.head_ref }}" >> build_info.txt
 
-    - name: Upload PR unsigned APK release bundle
+    - name: Upload PR installable APK release bundle
       if: github.event_name == 'pull_request'
       uses: actions/upload-artifact@v4
       with:
-        name: fieldmind-pr-${{ github.event.pull_request.number }}-unsigned-apks
+        name: fieldmind-pr-${{ github.event.pull_request.number }}-installable-apks
         path: |
-          app/build/outputs/apk/github/debug/FieldMind-*-githubDebug-unsigned-universal.apk
-          app/build/outputs/apk/github/release/FieldMind-*-githubRelease-unsigned-universal.apk
+          app/build/outputs/apk/github/debug/FieldMind-*-githubDebug-signed-universal.apk
+          app/build/outputs/apk/github/release/FieldMind-*-githubRelease-signed-universal.apk
           build_info.txt
         if-no-files-found: error
         retention-days: 14

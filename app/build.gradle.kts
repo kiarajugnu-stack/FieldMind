@@ -83,7 +83,10 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            signingConfig = if (unsignedApkOnly) null else releaseSigning
+            // Android cannot install truly unsigned APKs. When no release keystore is
+            // configured (for PR previews), fall back to the standard debug signing
+            // config so the release-variant APK is still installable for testing.
+            signingConfig = if (unsignedApkOnly) null else releaseSigning ?: signingConfigs.getByName("debug")
 //            ndk {
 //                debugSymbolLevel = "SYMBOL_TABLE"
 //            }
@@ -139,7 +142,7 @@ android {
         }
     }
 
-    // Build workflow releases exactly one universal APK per requested build type.
+    // Build workflows release exactly one universal APK per requested build type.
     // ABI splits stay disabled so CI does not publish per-architecture artifacts.
     splits {
         abi {
