@@ -96,7 +96,14 @@ enum class AssistantTask(val title: String, val instructions: String) {
     KEYWORDS("Keyword extraction", "Extract tags only from supplied text; never infer locations, species, or evidence not present."),
     FLASHCARDS("Flashcard drafts", "Draft term, concept, Q/A, and mistake cards from confirmed source notes only."),
     NEXT_STEPS("Research mentor", "Suggest next observations, controls, sources, or data tools based on existing user-provided records only."),
-    WRITING("Writing improvement", "Improve clarity while preserving uncertainty and separating observations, analysis, and conclusions.")
+    WRITING("Writing improvement", "Improve clarity while preserving uncertainty and separating observations, analysis, and conclusions."),
+    PAPER_BOOK_SUGGESTIONS(
+        "Papers & books",
+        "Suggest 4-6 real, well-known research papers and books relevant to the topic. For each, give title, author(s), year, " +
+            "a one-line reason it is relevant, and where to find it (journal/DOI or publisher) if you are confident. " +
+            "Only list works you are confident actually exist; never fabricate titles, authors, DOIs, or links. " +
+            "If unsure about a detail, say so and suggest a search query instead. Group into 'Papers' and 'Books'."
+    )
 }
 
 data class AssistantSuggestion(

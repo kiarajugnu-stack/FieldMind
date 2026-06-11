@@ -42,6 +42,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import coil.compose.AsyncImage
+import chromahub.rhythm.app.features.field.data.ai.AssistantTask
 import chromahub.rhythm.app.features.field.data.ai.GeminiResearchAssistant
 import chromahub.rhythm.app.features.field.data.database.entity.*
 import chromahub.rhythm.app.features.field.data.export.FieldMindExport
@@ -1226,21 +1227,80 @@ private fun BacklinksPanel(links: List<Triple<String, String, Long>>, onOpenDeta
 }
 
 @Composable
-private fun AssistantPanel(viewModel: FieldMindViewModel) {
+private fun AssistantPanel(viewModel: FieldMindViewModel, seedText: String = "") {
     val enabled by viewModel.fieldSettings.geminiEnabled.collectAsState()
     val key by viewModel.fieldSettings.geminiApiKey.collectAsState()
-    val assistant = remember(enabled, key) { GeminiResearchAssistant(enabled = enabled, apiKeyProvider = { key }) }
-    var suggestion by remember { mutableStateOf(assistant.researchMentorSuggestion()) }
-    Card(shape = RoundedCornerShape(20.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)) {
-        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Icon(icon = FieldMindIcons.Bolt, contentDescription = null, tint = MaterialTheme.colorScheme.tertiary, size = 20.dp)
-                Text(if (assistant.isAvailable()) "Gemini assistant ready" else "AI assistant disabled", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+    val model by viewModel.fieldSettings.geminiModel.collectAsState()
+    val assistant = remember(enabled, key, model) {
+        GeminiResearchAssistant(enabled = enabled, apiKeyProvider = { key }, modelProvider = { model })
+    }
+    val available = assistant.isAvailable()
+    val scope = rememberCoroutineScope()
+    var input by remember(seedText) { mutableStateOf(seedText) }
+    var selectedTask by remember { mutableStateOf(AssistantTask.PAPER_BOOK_SUGGESTIONS) }
+    var loading by remember { mutableStateOf(false) }
+    var result by remember { mutableStateOf<String?>(null) }
+
+    val tasks = listOf(
+        AssistantTask.PAPER_BOOK_SUGGESTIONS to FieldMindIcons.Book,
+        AssistantTask.FACTUALITY to FieldMindIcons.Check,
+        AssistantTask.TESTABILITY to FieldMindIcons.Question,
+        AssistantTask.HYPOTHESIS to FieldMindIcons.Hypothesis,
+        AssistantTask.NEXT_STEPS to FieldMindIcons.Trend,
+        AssistantTask.WRITING to FieldMindIcons.Edit
+    )
+
+    Card(shape = RoundedCornerShape(24.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                Box(Modifier.size(36.dp).clip(RoundedCornerShape(11.dp)).background(MaterialTheme.colorScheme.tertiaryContainer), contentAlignment = Alignment.Center) {
+                    Icon(icon = FieldMindIcons.Sparkle, contentDescription = null, tint = MaterialTheme.colorScheme.onTertiaryContainer, size = 20.dp)
+                }
+                Column(Modifier.weight(1f)) {
+                    Text("Gemini research assistant", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                    Text(if (available) "Helps you think — never invents evidence." else "Disabled — enable it in Settings.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
             }
-            Text(suggestion.body, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                listOf("Factuality" to assistant.observationFactualityReview(""), "Testability" to assistant.questionTestabilityCheck(""), "Writing" to assistant.writingImprovementPrompt()).forEach { (label, item) ->
-                    OutlinedButton({ suggestion = item }, Modifier.weight(1f)) { Text(label, maxLines = 1) }
+
+            ChoiceChips(tasks.map { it.first.title }, selectedTask.title) { title -> tasks.firstOrNull { it.first.title == title }?.let { selectedTask = it.first } }
+
+            FieldTextField(
+                input, { input = it },
+                if (selectedTask == AssistantTask.PAPER_BOOK_SUGGESTIONS) "Topic for papers & books" else "Text to review",
+                minLines = 2,
+                supportingText = "Stays on device until you press Ask Gemini."
+            )
+
+            Button(
+                onClick = {
+                    if (!available) return@Button
+                    loading = true; result = null
+                    scope.launch {
+                        val suggestion = assistant.generateContent(selectedTask, input.trim())
+                        result = suggestion.body
+                        loading = false
+                    }
+                },
+                modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp),
+                enabled = available && !loading && (selectedTask == AssistantTask.NEXT_STEPS || input.isNotBlank())
+            ) {
+                if (loading) {
+                    CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp, color = MaterialTheme.colorScheme.onPrimary)
+                    Spacer(Modifier.size(8.dp)); Text("Asking Gemini…")
+                } else {
+                    Icon(icon = FieldMindIcons.Send, contentDescription = null, size = 18.dp); Spacer(Modifier.size(8.dp)); Text("Ask Gemini")
+                }
+            }
+
+            if (!available) {
+                Text("Add a Gemini API key in Settings → Gemini assistant to enable live suggestions.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+
+            result?.let { text ->
+                Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(MaterialTheme.colorScheme.surfaceContainerHigh).padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Text(selectedTask.title, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.SemiBold)
+                    Text(text, style = MaterialTheme.typography.bodyMedium)
+                    Text("Draft only. Verify any titles, authors, or links before trusting them.", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
         }
