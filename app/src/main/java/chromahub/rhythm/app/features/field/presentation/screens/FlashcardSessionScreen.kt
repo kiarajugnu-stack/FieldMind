@@ -56,7 +56,6 @@ import chromahub.rhythm.app.features.field.presentation.components.InfoChip
 import chromahub.rhythm.app.features.field.presentation.theme.FieldMindTheme
 import chromahub.rhythm.app.features.field.presentation.viewmodel.FieldMindViewModel
 import chromahub.rhythm.app.shared.presentation.components.icons.Icon
-import kotlinx.coroutines.delay
 
 /**
  * Flashcard review session screen supporting both basic flip and SM-2 spaced repetition modes.
