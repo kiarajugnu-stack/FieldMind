@@ -25,15 +25,11 @@ jobs:
       - name: Setup Android-SDK
         uses: android-actions/setup-android@v3
 
-      - name: Create private.properties for build
-        env:
-          PRIVATE_PROPERTIES: ${{ secrets.PRIVATE_PROPERTIES }}
+      - name: Setup keystore
         run: |
-          if [ -n "$PRIVATE_PROPERTIES" ]; then
-            printf '%s' "$PRIVATE_PROPERTIES" | base64 -di > ./private.properties
-          else
-            touch ./private.properties
-          fi
+          mkdir -p .config
+          echo "${{ secrets.KEYSTORE_FILE_BASE64 }}" | base64 -d > release.keystore
+          echo "${{ secrets.KEYSTORE_PROPERTIES_BASE64 }}" | base64 -d > .config/keystore.properties
 
       - name: Make Gradle executable
         run: chmod +x ./gradlew
