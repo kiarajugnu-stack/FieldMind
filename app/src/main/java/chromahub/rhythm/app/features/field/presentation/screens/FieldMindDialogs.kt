@@ -35,6 +35,14 @@ import chromahub.rhythm.app.features.field.presentation.viewmodel.DraftEvidenceA
 import chromahub.rhythm.app.features.field.presentation.viewmodel.FieldMindViewModel
 import chromahub.rhythm.app.shared.presentation.components.icons.Icon
 import chromahub.rhythm.app.shared.presentation.components.icons.MaterialSymbolIcon
+import androidx.compose.animation.animateContentSize
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import android.content.Intent
+import android.Manifest
+import android.content.pm.PackageManager
+import androidx.core.content.ContextCompat
+import androidx.compose.ui.platform.LocalUriHandler
 // ══════════════════════════════════════════════════════════════════════
 //  Settings rows + dialogs + helpers
 // ══════════════════════════════════════════════════════════════════════
@@ -747,153 +755,3 @@ private fun ObservationLocationCard(latitude: Double, longitude: Double, manualL
     }
 }
 
-/**
- * Full-screen form page (presented as an edge-to-edge dialog). Replaces the old cramped
- * AlertDialog so add/edit flows read as real pages: a top bar with close + Save, then a
- * scrolling body of clearly separated, ordered sections.
- */
-                        Text("Enable GPS when capturing observations to plot them on the map. You can also use the mini-map in Insight.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        Button(onClick = { onNavigate(FieldMindScreen.Observe) }, shape = RoundedCornerShape(16.dp)) { Text("Go to Capture") }
-                    }
-                }
-            }
-        } else {
-            item { OsmMap(points = points) }
-            item {
-                Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(24.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)) {
-                    Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        Text("${points.size} observation${if (points.size == 1) "" else "s"} with GPS", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
-                        Text("Pinch to zoom and pan the map. Tap a marker to see coordinates. Go to Insights for charts, achievements, and knowledge graph.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        OutlinedButton(onClick = { onNavigate(FieldMindScreen.Insights) }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp)) {
-                            Icon(icon = FieldMindIcons.Insights, contentDescription = null, size = 18.dp)
-                            Spacer(Modifier.size(8.dp))
-                            Text("Open Insights")
-                        }
-                    }
-                }
-            }
-            // Show recent GPS observations
-            val geoObs = observations.filter { it.latitude != null }.sortedByDescending { it.timestamp }.take(5)
-            if (geoObs.isNotEmpty()) {
-                item { SectionHeader("Recent tagged observations") }
-                items(geoObs) { obs ->
-                    EntityCard(
-                        title = obs.subject,
-                        kind = "observation",
-                        body = obs.manualLocation.ifBlank { "%.5f, %.5f".format(obs.latitude!!, obs.longitude!!) },
-                        meta = listOf(obs.category, obs.date),
-                        onClick = { onOpenDetail("observation", obs.id) }
-                    )
-                }
-            }
-        }
-    }
-}
-
-
-@Composable
-private fun FormDialog(title: String, onDismiss: () -> Unit, onSave: () -> Unit, content: @Composable ColumnScope.() -> Unit) {
-    val haptics = rememberFieldMindHaptics()
-    Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
-        Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-            Column(Modifier.fillMaxSize()) {
-                Row(
-                    Modifier.fillMaxWidth().padding(start = 8.dp, end = 16.dp, top = 8.dp, bottom = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    IconButton(onClick = onDismiss) { Icon(icon = MaterialSymbolIcon("close"), contentDescription = "Close", size = 22.dp) }
-                    Text(title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
-                    Button(onClick = { haptics.confirm(); onSave() }) { Text("Save") }
-                }
-                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-                Column(
-                    Modifier.fillMaxWidth().weight(1f).verticalScroll(rememberScrollState()).padding(20.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp),
-                    content = content
-                )
-            }
-        }
-    }
-}
-
-/**
- * A labelled, collapsible single-choice section used inside [FormDialog]. Collapsed it shows the
- * field label and current value; tapping reveals the chips. Keeps long forms tidy and ordered.
- */
-@Composable
-private fun FormChoice(
-    label: String,
-    options: List<String>,
-    selected: String,
-    onSelected: (String) -> Unit
-) {
-    val haptics = rememberFieldMindHaptics()
-    var expanded by rememberSaveable(label) { mutableStateOf(false) }
-    val rotation by androidx.compose.animation.core.animateFloatAsState(if (expanded) 180f else 0f, label = "chev")
-    Column(
-        Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
-            .background(MaterialTheme.colorScheme.surfaceContainerLow)
-            .animateContentSize()
-    ) {
-        Row(
-            Modifier.fillMaxWidth().clickable { haptics.light(); expanded = !expanded }.padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            Column(Modifier.weight(1f)) {
-                Text(label, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                Text(selected, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold)
-            }
-            Icon(icon = MaterialSymbolIcon("expand_more"), contentDescription = null, size = 22.dp, modifier = Modifier.graphicsLayer { rotationZ = rotation })
-        }
-        AnimatedVisibility(expanded) {
-            ChoiceChips(options, selected, modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 16.dp)) { onSelected(it); expanded = false }
-        }
-    }
-}
-
-/** A small section caption to group related fields inside a [FormDialog]. */
-@Composable
-private fun FormSectionLabel(text: String) {
-    Text(text.uppercase(), style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary, letterSpacing = 0.8.sp)
-}
-
-internal fun learningModuleBody(module: String): String = when (module) {
-    "Observation" -> "Practice separating facts from guesses in the observation journal."
-    "Asking testable questions" -> "Convert curiosity into questions that can be observed, compared, or verified."
-    "Literature review" -> "Use sources, paper prompts, and what-this-taught-me summaries."
-    "Analysis" -> "Use tags, dates, projects, subjects, and data tools to find patterns."
-    else -> "Track this skill by applying it in notes, sources, projects, reports, and revision cards."
-}
-
-
-private fun durableEvidenceAttachment(context: Context, type: String, uri: Uri, caption: String): DraftEvidenceAttachment {
-    val mimeType = context.contentResolver.getType(uri)
-    val copied = runCatching {
-        val dir = File(context.filesDir, "fieldmind/evidence").apply { mkdirs() }
-        val extension = when {
-            mimeType?.contains("png", ignoreCase = true) == true -> ".png"
-            mimeType?.contains("jpeg", ignoreCase = true) == true || mimeType?.contains("jpg", ignoreCase = true) == true -> ".jpg"
-            mimeType?.contains("pdf", ignoreCase = true) == true -> ".pdf"
-            mimeType?.contains("video", ignoreCase = true) == true -> ".video"
-            mimeType?.contains("audio", ignoreCase = true) == true -> ".audio"
-            else -> ".bin"
-        }
-        val target = File(dir, "evidence-${System.currentTimeMillis()}-${kotlin.random.Random.nextInt(1000, 9999)}$extension")
-        context.contentResolver.openInputStream(uri)?.use { input -> target.outputStream().use { output -> input.copyTo(output) } }
-            ?: error("Could not open selected evidence")
-        target.absolutePath
-    }.getOrNull()
-    return DraftEvidenceAttachment(type = type, uri = uri.toString(), caption = caption, localPath = copied, mimeType = mimeType)
-}
-
-private fun createFieldMindFile(context: Context, prefix: String, suffix: String): File {
-    val dir = File(context.getExternalFilesDir(null), "fieldmind").apply { mkdirs() }
-    return File(dir, "$prefix-${System.currentTimeMillis()}$suffix")
-}
-
-private fun createFieldMindFileUri(context: Context, prefix: String, suffix: String): Uri =
-    FileProvider.getUriForFile(context, "${context.packageName}.provider", createFieldMindFile(context, prefix, suffix))

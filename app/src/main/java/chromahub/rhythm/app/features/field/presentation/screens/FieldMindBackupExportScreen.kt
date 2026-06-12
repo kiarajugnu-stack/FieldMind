@@ -38,6 +38,8 @@ import java.util.Locale
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.text.style.TextAlign
+import android.app.KeyguardManager
 // ══════════════════════════════════════════════════════════════════════
 //  Backup & export
 // ══════════════════════════════════════════════════════════════════════

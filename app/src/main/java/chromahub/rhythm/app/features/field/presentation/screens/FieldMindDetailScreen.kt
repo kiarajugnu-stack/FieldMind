@@ -53,6 +53,9 @@ import chromahub.rhythm.app.features.field.presentation.viewmodel.FieldMindViewM
 import chromahub.rhythm.app.shared.presentation.components.icons.Icon
 import chromahub.rhythm.app.shared.presentation.components.icons.MaterialSymbolIcon
 import kotlinx.coroutines.launch
+import chromahub.rhythm.app.features.field.data.export.FieldMindExport
+import java.util.Locale
+import androidx.compose.foundation.lazy.LazyRow
 // ══════════════════════════════════════════════════════════════════════
 //  Detail + backlinks
 // ══════════════════════════════════════════════════════════════════════
