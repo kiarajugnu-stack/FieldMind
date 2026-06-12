@@ -43,6 +43,8 @@ import android.Manifest
 import android.content.pm.PackageManager
 import androidx.core.content.ContextCompat
 import androidx.compose.ui.platform.LocalUriHandler
+import androidx.activity.result.contract.PickVisualMediaRequest
+import chromahub.rhythm.app.features.field.data.location.FieldLocationProvider
 // ══════════════════════════════════════════════════════════════════════
 //  Settings rows + dialogs + helpers
 // ══════════════════════════════════════════════════════════════════════
