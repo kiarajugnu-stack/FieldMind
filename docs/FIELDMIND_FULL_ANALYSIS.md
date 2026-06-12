@@ -552,6 +552,34 @@ Overflow menu:
 
 ---
 
+## 8. June 2026 Follow-Up Implementation Status
+
+This section compares the original analysis against the current codebase and records what has now been converted from placeholder UI into runnable app logic.
+
+### Implemented since the original audit
+
+| Original finding | Current status | Code area |
+|------------------|----------------|-----------|
+| AI assistant compile/runtime fragility | The request helper now supports retrying network/server failures while keeping trailing-lambda call sites valid. | `data/ai/GeminiResearchAssistant.kt` |
+| Flashcard spaced repetition was basic | SM-2 scheduling now has a dedicated engine, per-card scheduling fields, and review rating controls. | `data/flashcard/SM2Engine.kt`, `presentation/screens/FlashcardSessionScreen.kt` |
+| Map view missing despite GPS data | Insights and observation detail now expose an offline mini-map preview from saved coordinates. | `presentation/screens/InsightsScreen.kt`, `presentation/components/FieldMindCharts.kt` |
+| Auto-backup was a settings-only toggle | Auto-backup now schedules WorkManager and writes rotating private JSON archives under app-private storage. | `data/background/FieldMindBackgroundScheduler.kt`, `data/background/FieldMindAutoBackupWorker.kt`, `data/settings/FieldMindSettings.kt` |
+| Reminders/streaks were settings-only toggles | Reminders now schedule WorkManager notifications that skip days with existing observations; the dashboard streak now calculates consecutive observation days instead of lifetime distinct days. | `data/background/FieldMindReminderWorker.kt`, `data/stats/FieldMindStreaks.kt`, `presentation/screens/FieldMindScreens.kt` |
+
+### Still remaining after this pass
+
+| Remaining item | Why it remains | Recommended next step |
+|----------------|----------------|-----------------------|
+| Split the 260K+ character `FieldMindScreens.kt` | This is high-risk because many composables share private helpers and state. | Move one feature at a time behind identical public composable signatures, starting with Settings and Backup/Export. |
+| Dependency injection | Adding Hilt changes app startup, generated code, and tests. | Introduce lightweight provider interfaces first, then migrate to Hilt once feature seams are stable. |
+| DataStore settings migration | Requires migration/compatibility handling for existing SharedPreferences keys. | Add Preferences DataStore migration preserving current keys and defaults. |
+| Full FTS search | Requires Room schema entities and migrations. | Add FTS virtual tables for observations, notes, questions, and sources with relevance-ranked DAO queries. |
+| Privacy lock | Needs a launch/sensitive-screen gate plus biometric/PIN fallback UX. | Implement BiometricPrompt with a non-destructive opt-out path if authentication fails. |
+| Attachment offline copy | Requires storage quotas, cleanup, and URI persistence behavior. | Copy selected evidence to app-private storage and keep original URI as provenance metadata. |
+| Interactive map provider | Current mini-map is offline and dependency-free, not a full map SDK. | Add a dedicated Map screen with clustering once a provider/privacy policy is chosen. |
+
+---
+
 ## Summary
 
 The FieldMind app has a **solid data model** and **good conceptual foundation** (research workflow: Observe → Question → Hypothesize → Collect Data → Analyze → Report). However, it suffers from:

@@ -45,7 +45,7 @@ class GeminiResearchAssistant(
         val body = postJson(endpoint, request) { connection ->
             connection.setRequestProperty("Content-Type", "application/json")
         }
-        if (body.first !in 200..299) return AssistantSuggestion(task.title, "Gemini request failed (${body.first}). ${body.second}", true, true)
+        if (body.first !in 200..299) return AssistantSuggestion(task.title, providerError("Gemini", body.first, body.second), true, true)
         val text = JSONObject(body.second)
             .optJSONArray("candidates")
             ?.optJSONObject(0)
@@ -69,7 +69,7 @@ class GeminiResearchAssistant(
             connection.setRequestProperty("Content-Type", "application/json")
             connection.setRequestProperty("Authorization", "Bearer $apiKey")
         }
-        if (body.first !in 200..299) return AssistantSuggestion(task.title, "OpenAI request failed (${body.first}). ${body.second}", true, true)
+        if (body.first !in 200..299) return AssistantSuggestion(task.title, providerError("OpenAI", body.first, body.second), true, true)
         val json = JSONObject(body.second)
         val outputText = json.optString("output_text").ifBlank {
             json.optJSONArray("output")
@@ -80,6 +80,24 @@ class GeminiResearchAssistant(
                 .orEmpty()
         }
         return AssistantSuggestion(task.title, outputText.ifBlank { "OpenAI returned an empty draft." }, true, true)
+    }
+
+
+    private fun providerError(providerName: String, code: Int, body: String): String {
+        val reason = when (code) {
+            0 -> "FieldMind could not reach $providerName after several attempts."
+            400 -> "The request was rejected. Check the selected model name and try again."
+            401, 403 -> "Authentication failed. Check the saved API key in FieldMind Settings."
+            404 -> "The selected model or endpoint was not found. Choose a supported model in Settings."
+            408, 409, 425, 429 -> "$providerName is busy or rate-limiting requests. Wait a moment, then retry."
+            in 500..599 -> "$providerName is temporarily unavailable. FieldMind already retried the request."
+            else -> "$providerName returned HTTP $code."
+        }
+        val safeDetail = body
+            .replace(Regex("(?i)(api[_-]?key|token|authorization)[^\\s,}]*"), "credential-hidden")
+            .take(240)
+            .ifBlank { "No extra details were returned." }
+        return "$reason\n\nDetails: $safeDetail"
     }
 
     private fun postJson(endpoint: URL, request: JSONObject, maxRetries: Int = 2, configure: (HttpURLConnection) -> Unit): Pair<Int, String> {

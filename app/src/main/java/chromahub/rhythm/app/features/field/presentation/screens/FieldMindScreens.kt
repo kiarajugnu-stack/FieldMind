@@ -72,6 +72,7 @@ import chromahub.rhythm.app.features.field.data.learn.LearnResource
 import chromahub.rhythm.app.features.field.data.learn.SuggestedOnlineApis
 import chromahub.rhythm.app.features.field.data.location.CapturedLocation
 import chromahub.rhythm.app.features.field.data.location.FieldLocationProvider
+import chromahub.rhythm.app.features.field.data.stats.FieldMindStreaks
 import chromahub.rhythm.app.features.field.presentation.components.*
 import chromahub.rhythm.app.features.field.presentation.navigation.FieldMindScreen
 import chromahub.rhythm.app.features.field.presentation.theme.FieldMindTheme
@@ -238,8 +239,10 @@ fun HomeScreen(
     val data by viewModel.dataRecords.collectAsState()
     val tags by viewModel.commonTags.collectAsState()
     val goal by viewModel.fieldSettings.dailyObservationGoal.collectAsState()
+    val streaksEnabled by viewModel.fieldSettings.streaksEnabled.collectAsState()
     val todayKey = remember { today() }
     val todayCount = observations.count { it.date == todayKey }
+    val currentStreak = remember(observations, streaksEnabled) { if (streaksEnabled) FieldMindStreaks.currentStreakDays(observations.map { it.date }) else 0 }
     val activeProject = projects.firstOrNull { it.status == "Active" } ?: projects.firstOrNull()
     val learnSignals = remember(observations, questions, projects) {
         buildList {
@@ -252,7 +255,7 @@ fun HomeScreen(
 
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(20.dp, 20.dp, 20.dp, 96.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
         item { FieldScreenHeader("FieldMind", "Observe. Question. Research clearly.", icon = FieldMindIcons.Nature, actionIcon = FieldMindIcons.Settings, onAction = onOpenSettings) }
-        item { DailyGoalCard(todayCount, goal, observations.map { it.date }.distinct().size) { onNavigate(FieldMindScreen.Observe) } }
+        item { DailyGoalCard(todayCount, goal, currentStreak) { onNavigate(FieldMindScreen.Observe) } }
         item { HomeWidgetGrid(observations, notes, questions, sources, projects, reports, data) { onNavigate(it) } }
         item { RecommendedLearningCard(recommendations, onOpenReader, onSeeAll = { onNavigate(FieldMindScreen.Learn) }) }
         item { ReadingReviewCard(sources, flashcards, onNavigate) }
@@ -420,7 +423,7 @@ private fun recentRelativeTime(time: Long): String {
 }
 
 @Composable
-private fun DailyGoalCard(todayCount: Int, goal: Int, sessions: Int, onClick: () -> Unit) {
+private fun DailyGoalCard(todayCount: Int, goal: Int, streakDays: Int, onClick: () -> Unit) {
     val colors = FieldMindTheme.colors
     val complete = todayCount >= goal && goal > 0
     val progress = if (goal > 0) todayCount.toFloat() / goal else 0f
@@ -458,7 +461,7 @@ private fun DailyGoalCard(todayCount: Int, goal: Int, sessions: Int, onClick: ()
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    GoalStatChip(FieldMindIcons.Streak, "$sessions day${if (sessions == 1) "" else "s"}", colors.warning)
+                    GoalStatChip(FieldMindIcons.Streak, "$streakDays day${if (streakDays == 1) "" else "s"} streak", colors.warning)
                     GoalStatChip(if (complete) FieldMindIcons.Check else FieldMindIcons.Observation, if (complete) "Done" else "$todayCount logged", if (complete) colors.positive else colors.observation)
                 }
             }
@@ -2275,20 +2278,20 @@ fun FieldMindSettingsScreen(viewModel: FieldMindViewModel? = null, onBack: () ->
 
         item {
             SettingsGroup("Backup & import", "Portable files only. Auto-backup scheduling is stored locally.") {
-                ToggleItem("Auto backup", "Remind FieldMind to prepare regular archive exports; choose where files go.", autoBackupEnabled, settings::setAutoBackupEnabled, FieldMindIcons.Archive)
+                ToggleItem("Auto backup", "Writes private archive JSON files on the selected schedule; manual export still chooses shared locations.", autoBackupEnabled, settings::setAutoBackupEnabled, FieldMindIcons.Archive)
                 SettingDivider()
                 ChoiceItem("Backup interval", listOf("Daily", "Weekly", "Monthly"), autoBackupInterval, FieldMindIcons.Today, settings::setAutoBackupInterval)
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("Use Export data below for manual backup/import. Nothing is uploaded automatically.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("Auto-backups stay in app-private storage at files/fieldmind/backups and keep the latest 8 archives. Nothing is uploaded automatically.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
         }
 
         item {
             SettingsGroup("Discipline & ownership") {
-                ToggleItem("Reminders", "Notification permission is only requested when enabled.", reminders, settings::setRemindersEnabled, FieldMindIcons.Notifications)
+                ToggleItem("Reminders", "Schedules a daily WorkManager prompt and skips it after you log today’s observation.", reminders, settings::setRemindersEnabled, FieldMindIcons.Notifications)
                 SettingDivider()
-                ToggleItem("Streaks", "Discipline made visible without replacing real work.", streaks, settings::setStreaksEnabled, FieldMindIcons.Streak)
+                ToggleItem("Streaks", "Shows consecutive observation days on the Today dashboard without replacing real work.", streaks, settings::setStreaksEnabled, FieldMindIcons.Streak)
             }
         }
 

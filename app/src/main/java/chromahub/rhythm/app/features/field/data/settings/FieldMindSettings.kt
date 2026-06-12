@@ -1,12 +1,14 @@
 package chromahub.rhythm.app.features.field.data.settings
 
 import android.content.Context
+import chromahub.rhythm.app.features.field.data.background.FieldMindBackgroundScheduler
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
 class FieldMindSettings private constructor(context: Context) {
-    private val prefs = context.applicationContext.getSharedPreferences("fieldmind_settings", Context.MODE_PRIVATE)
+    private val appContext = context.applicationContext
+    private val prefs = appContext.getSharedPreferences("fieldmind_settings", Context.MODE_PRIVATE)
 
     private val _dailyObservationGoal = MutableStateFlow(prefs.getInt(KEY_DAILY_GOAL, 1))
     val dailyObservationGoal: StateFlow<Int> = _dailyObservationGoal.asStateFlow()
@@ -100,6 +102,15 @@ class FieldMindSettings private constructor(context: Context) {
     private val _autoBackupInterval = MutableStateFlow(prefs.getString(KEY_AUTO_BACKUP_INTERVAL, "Weekly") ?: "Weekly")
     val autoBackupInterval: StateFlow<String> = _autoBackupInterval.asStateFlow()
 
+    init {
+        FieldMindBackgroundScheduler.syncAll(
+            appContext,
+            _autoBackupEnabled.value,
+            _autoBackupInterval.value,
+            _remindersEnabled.value
+        )
+    }
+
     fun setDailyObservationGoal(value: Int) = edit(KEY_DAILY_GOAL, value.coerceAtLeast(0)) { _dailyObservationGoal.value = value.coerceAtLeast(0) }
     fun setDefaultCategory(value: String) = edit(KEY_DEFAULT_CATEGORY, value) { _defaultCategory.value = value }
     fun setDefaultConfidence(value: String) = edit(KEY_DEFAULT_CONFIDENCE, value) { _defaultConfidence.value = value }
@@ -115,7 +126,10 @@ class FieldMindSettings private constructor(context: Context) {
     fun setOpenAiModel(value: String) = edit(KEY_OPENAI_MODEL, value) { _openAiModel.value = value }
     fun setAiRequireConfirmBeforeSave(value: Boolean) = edit(KEY_AI_CONFIRM, value) { _aiRequireConfirmBeforeSave.value = value }
     fun setAiSendAttachments(value: Boolean) = edit(KEY_AI_SEND_ATTACHMENTS, value) { _aiSendAttachments.value = value }
-    fun setRemindersEnabled(value: Boolean) = edit(KEY_REMINDERS, value) { _remindersEnabled.value = value }
+    fun setRemindersEnabled(value: Boolean) = edit(KEY_REMINDERS, value) {
+        _remindersEnabled.value = value
+        FieldMindBackgroundScheduler.scheduleDailyReminder(appContext, value)
+    }
     fun setStreaksEnabled(value: Boolean) = edit(KEY_STREAKS, value) { _streaksEnabled.value = value }
     fun setDefaultExportFormat(value: String) = edit(KEY_EXPORT_FORMAT, value) { _defaultExportFormat.value = value }
     fun setPrivacyLockEnabled(value: Boolean) = edit(KEY_PRIVACY_LOCK, value) { _privacyLockEnabled.value = value }
@@ -128,8 +142,14 @@ class FieldMindSettings private constructor(context: Context) {
     fun setLocalModelOption(value: String) = edit(KEY_LOCAL_MODEL_OPTION, value) { _localModelOption.value = value }
     fun setLocalModelDownloaded(value: Boolean) = edit(KEY_LOCAL_MODEL_DOWNLOADED, value) { _localModelDownloaded.value = value }
     fun setLocalModelUseForStudy(value: Boolean) = edit(KEY_LOCAL_MODEL_USE_STUDY, value) { _localModelUseForStudy.value = value }
-    fun setAutoBackupEnabled(value: Boolean) = edit(KEY_AUTO_BACKUP_ENABLED, value) { _autoBackupEnabled.value = value }
-    fun setAutoBackupInterval(value: String) = edit(KEY_AUTO_BACKUP_INTERVAL, value) { _autoBackupInterval.value = value }
+    fun setAutoBackupEnabled(value: Boolean) = edit(KEY_AUTO_BACKUP_ENABLED, value) {
+        _autoBackupEnabled.value = value
+        FieldMindBackgroundScheduler.scheduleAutoBackup(appContext, value, _autoBackupInterval.value)
+    }
+    fun setAutoBackupInterval(value: String) = edit(KEY_AUTO_BACKUP_INTERVAL, value) {
+        _autoBackupInterval.value = value
+        FieldMindBackgroundScheduler.scheduleAutoBackup(appContext, _autoBackupEnabled.value, value)
+    }
 
     private inline fun edit(key: String, value: String, after: () -> Unit) { prefs.edit().putString(key, value).apply(); after() }
     private inline fun edit(key: String, value: Boolean, after: () -> Unit) { prefs.edit().putBoolean(key, value).apply(); after() }
