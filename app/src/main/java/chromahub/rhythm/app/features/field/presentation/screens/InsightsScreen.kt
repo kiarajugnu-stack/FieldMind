@@ -27,6 +27,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.OutlinedButton
 import chromahub.rhythm.app.features.field.presentation.components.*
 import chromahub.rhythm.app.features.field.presentation.navigation.FieldMindScreen
 import chromahub.rhythm.app.features.field.presentation.theme.FieldMindTheme
@@ -136,7 +140,18 @@ fun InsightsScreen(
         if (confidenceParts.isNotEmpty()) {
             item { InsightCard("Confidence balance", FieldMindIcons.Check) { BreakdownBar(confidenceParts) } }
         }
-        item { InsightCard("Field map", FieldMindIcons.Location) { MiniMap(mapPoints, pointColor = colors.observation) } }
+        item {
+            InsightCard("Field map", FieldMindIcons.Location) {
+                OsmMap(points = mapPoints, markerColor = colors.observation)
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                    TextButton(onClick = { onNavigate(FieldMindScreen.MapScreen) }) {
+                        Text("Open full map")
+                        Spacer(Modifier.size(4.dp))
+                        Icon(icon = FieldMindIcons.Forward, contentDescription = null, size = 18.dp)
+                    }
+                }
+            }
+        }
         item {
             InsightCard("Knowledge graph", FieldMindIcons.Graph) {
                 ConnectionGraph(graphNodes.first, graphNodes.second)

@@ -57,6 +57,8 @@ sealed class FieldMindScreen(val route: String, val label: String, val icon: Mat
     data object Projects : FieldMindScreen("field_projects", "Workspace", FieldMindIcons.Projects)
     data object Library : FieldMindScreen("field_library", "Library", FieldMindIcons.Library)
     data object Insights : FieldMindScreen("field_insights", "Insights", FieldMindIcons.Insights)
+    data object MapScreen : FieldMindScreen("field_map", "Map", FieldMindIcons.Map)
+    data object ExportStudio : FieldMindScreen("field_export_studio", "Export", FieldMindIcons.Export)
 
     data object Learn : FieldMindScreen("field_learn", "Learn", FieldMindIcons.School)
     data object FieldMode : FieldMindScreen("field_mode", "Field Mode", FieldMindIcons.Bolt)
@@ -79,7 +81,8 @@ private val bottomTabs = listOf(
     FieldMindScreen.Home,
     FieldMindScreen.Observe,
     FieldMindScreen.Projects,
-    FieldMindScreen.Library
+    FieldMindScreen.Library,
+    FieldMindScreen.Insights
 )
 
 @Composable
@@ -267,7 +270,9 @@ private fun FieldMindNavHost(
         composable(FieldMindScreen.Analysis.route) { InsightsScreen(viewModel = viewModel, onNavigate = { navController.navigateToDestination(it.route) }, onOpenDetail = openDetail) }
         composable(FieldMindScreen.Reports.route) { ProjectsScreen(viewModel = viewModel, startTab = 4, onOpenDetail = openDetail) }
         composable(FieldMindScreen.Search.route) { ArchiveScreen(viewModel = viewModel, onOpenDetail = openDetail, onOpenReader = openReader) }
+        composable(FieldMindScreen.MapScreen.route) { MapFieldScreen(viewModel = viewModel, onNavigate = { navController.navigateToDestination(it.route) }, onOpenDetail = openDetail) }
         composable(FieldMindScreen.BackupExport.route) { BackupExportScreen(viewModel = viewModel) }
+        composable(FieldMindScreen.ExportStudio.route) { BackupExportScreen(viewModel = viewModel) }
         composable(FieldMindScreen.Progress.route) { InsightsScreen(viewModel = viewModel, onNavigate = { navController.navigateToDestination(it.route) }, onOpenDetail = openDetail) }
         composable(FieldMindScreen.Flashcards.route) { FlashcardSessionScreen(viewModel = viewModel, onBack = { navController.popBackStack() }) }
         composable(FieldMindScreen.Settings.route) { FieldMindSettingsScreen(viewModel = viewModel, onBack = { navController.popBackStack() }, onResetOnboarding = onResetOnboarding) }

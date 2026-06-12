@@ -3,20 +3,24 @@ package chromahub.rhythm.app.features.field.presentation.components
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -24,17 +28,27 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.viewinterop.AndroidView
+import org.osmdroid.events.MapEventsReceiver
+import org.osmdroid.tileprovider.tilesource.TileSourceFactory
+import org.osmdroid.util.GeoPoint
+import org.osmdroid.views.MapView
+import org.osmdroid.views.overlay.Marker
+import org.osmdroid.views.overlay.MapEventsOverlay
+import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider
+import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay
 
 /**
  * Dependency-free charting primitives drawn with Compose [Canvas]. These compute everything
@@ -386,7 +400,6 @@ fun MiniMap(
     pointColor: Color = MaterialTheme.colorScheme.primary,
     height: androidx.compose.ui.unit.Dp = 180.dp
 ) {
-    val grid = MaterialTheme.colorScheme.outlineVariant
     Box(
         modifier
             .fillMaxWidth()
@@ -404,12 +417,6 @@ fun MiniMap(
         val latRange = (maxLat - minLat).coerceAtLeast(0.0001)
         val lonRange = (maxLon - minLon).coerceAtLeast(0.0001)
         Canvas(Modifier.fillMaxWidth().height(height)) {
-            for (i in 1..3) {
-                val gx = this.size.width * i / 4f
-                val gy = this.size.height * i / 4f
-                drawLine(grid, Offset(gx, 0f), Offset(gx, this.size.height), strokeWidth = 1f)
-                drawLine(grid, Offset(0f, gy), Offset(this.size.width, gy), strokeWidth = 1f)
-            }
             val pad = this.size.minDimension * 0.1f
             points.forEach { (lat, lon) ->
                 val x = pad + ((lon - minLon) / lonRange).toFloat() * (this.size.width - 2 * pad)
@@ -418,5 +425,86 @@ fun MiniMap(
                 drawCircle(pointColor, radius = 6f, center = Offset(x, y))
             }
         }
+    }
+}
+
+/**
+ * Interactive OpenStreetMap (osmdroid) composable showing observation GPS markers.
+ * Supports pinch-to-zoom, pan, and tap-on-marker. Falls back gracefully when no points exist.
+ */
+@Composable
+fun OsmMap(
+    points: List<Pair<Double, Double>>,
+    modifier: Modifier = Modifier,
+    markerColor: Color = MaterialTheme.colorScheme.primary,
+    onTapPoint: ((Double, Double) -> Unit)? = null
+) {
+    if (points.isEmpty()) {
+        Box(modifier.fillMaxWidth().height(240.dp), contentAlignment = Alignment.Center) {
+            Text("No GPS-tagged observations yet", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        return
+    }
+    val context = LocalContext.current
+    var mapView by remember { mutableStateOf<MapView?>(null) }
+    val avgLat = points.map { it.first }.average()
+    val avgLon = points.map { it.second }.average()
+    val latSpread = (points.maxOf { it.first } - points.minOf { it.first }).coerceAtLeast(0.01)
+    val lonSpread = (points.maxOf { it.second } - points.minOf { it.second }).coerceAtLeast(0.01)
+    val zoomLevel = (16.0 - kotlin.math.log2((latSpread + lonSpread).coerceAtLeast(0.01))).coerceIn(4.0, 18.0)
+
+    Box(modifier.fillMaxWidth().height(300.dp).background(MaterialTheme.colorScheme.surfaceContainerHighest, RoundedCornerShape(16.dp))) {
+        AndroidView(
+            modifier = Modifier.fillMaxSize(),
+            factory = { ctx ->
+                MapView(ctx).apply {
+                    setTileSource(TileSourceFactory.MAPNIK)
+                    setMultiTouchControls(true)
+                    setBuiltInZoomControls(false)
+                    setTilesScaledToDpi(true)
+                    controller.setZoom(zoomLevel)
+                    controller.setCenter(GeoPoint(avgLat, avgLon))
+
+                    val gpsOverlay = MyLocationNewOverlay(GpsMyLocationProvider(ctx), this)
+                    gpsOverlay.enableMyLocation()
+                    overlays.add(gpsOverlay)
+
+                    // Add observation markers
+                    points.forEach { (lat, lon) ->
+                        val marker = Marker(this)
+                        marker.position = GeoPoint(lat, lon)
+                        marker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_CENTER)
+                        marker.icon = ctx.getDrawable(android.R.drawable.ic_menu_mylocation)
+                        marker.title = "%.5f, %.5f".format(lat, lon)
+                        marker.subDescription = "Tap to view"
+                        setMarkerOnClickListener(marker, lat, lon, onTapPoint)
+                        overlays.add(marker)
+                    }
+
+                    mapView = this
+                }
+            },
+            update = { }
+        )
+        // Attribution label overlay
+        Text(
+            "© OpenStreetMap contributors",
+            modifier = Modifier.align(Alignment.BottomEnd).padding(4.dp),
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+        )
+    }
+    DisposableEffect(Unit) {
+        onDispose {
+            mapView?.onDetach()
+        }
+    }
+}
+
+private fun setMarkerOnClickListener(marker: Marker, lat: Double, lon: Double, onTapPoint: ((Double, Double) -> Unit)?) {
+    marker.setOnMarkerClickListener { _, _ ->
+        onTapPoint?.invoke(lat, lon)
+        marker.showInfoWindow()
+        true
     }
 }

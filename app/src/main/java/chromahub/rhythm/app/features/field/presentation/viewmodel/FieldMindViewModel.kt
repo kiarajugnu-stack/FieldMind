@@ -301,8 +301,8 @@ class FieldMindViewModel(application: Application) : AndroidViewModel(applicatio
 
     fun addReport(title: String, question: String, methods: String, conclusion: String) = addReport("Field Report", title, "", question, methods, "", "", "", conclusion, "", "")
 
-    fun addFlashcard(front: String, back: String, type: String, sourceId: Long? = null, projectId: Long? = null) = viewModelScope.launch {
-        repository.addFlashcard(FlashcardEntity(front = front.trim(), back = back.trim(), type = type, sourceId = sourceId, projectId = projectId))
+    fun addFlashcard(front: String, back: String, type: String, sourceId: Long? = null, projectId: Long? = null, deckMode: String = "basic") = viewModelScope.launch {
+        repository.addFlashcard(FlashcardEntity(front = front.trim(), back = back.trim(), type = type, sourceId = sourceId, projectId = projectId, deckMode = deckMode))
     }
 
     private fun buildMarkdown(type: String, title: String, background: String, question: String, methods: String, observations: String, results: String, interpretation: String, conclusion: String, limitations: String, nextSteps: String): String = buildString {

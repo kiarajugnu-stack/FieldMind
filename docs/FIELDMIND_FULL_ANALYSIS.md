@@ -1,599 +1,562 @@
 # 🔬 FieldMind App — Comprehensive Analysis & Restructuring Plan
 
-> **Date:** June 12, 2026
-> **Scope:** Full codebase analysis covering architecture, missing features, broken features, UI/UX, design system, and a prioritized restructuring plan.
+> **Date:** June 12, 2026 (Updated)
+> **Scope:** Full codebase analysis covering architecture, implemented vs. broken features, missing capabilities, UI/UX, duplication risks, and a prioritized restructuring plan based on the latest `main` branch.
 
 ---
 
 ## Table of Contents
 
 1. [Architecture Overview](#1-architecture-overview)
-2. [Broken / Non-Functional Features](#2--broken--non-functional-features)
-3. [Poorly Implemented Features](#3--poorly-implemented-features)
-4. [Missing Features](#4--missing-features)
-5. [UI/UX Problems & Redesign Suggestions](#5--uiux-problems--redesign-suggestions)
-6. [Restructuring Plan](#6--restructuring-plan)
-7. [Priority Matrix](#7--priority-matrix)
+2. [Implemented & Working Features](#2--implemented--working-features)
+3. [🔴 Critical Issues](#3--critical-issues)
+4. [🟡 Code Quality Concerns](#4--code-quality-concerns)
+5. [🔵 Missing Features](#5--missing-features)
+6. [🎨 UI/UX Assessment](#6--uiux-assessment)
+7. [🔄 Duplicate / Fragmented Implementations](#7--duplicate--fragmented-implementations)
+8. [🔧 Restructuring Plan](#8--restructuring-plan)
+9. [Priority Matrix](#9--priority-matrix)
 
 ---
 
 ## 1. Architecture Overview
 
+### Data Layer
+
+```
+features/field/data/
+├── ai/GeminiResearchAssistant.kt          # Google Gemini + OpenAI providers
+├── background/
+│   ├── FieldMindAutoBackupWorker.kt       # WorkManager auto-backup (current)
+│   ├── FieldMindReminderWorker.kt         # WorkManager daily reminder
+│   └── FieldMindBackgroundScheduler.kt    # Central WorkManager wiring
+├── database/
+│   ├── FieldMindDatabase.kt               # Room database (v6, 19 entities)
+│   ├── dao/FieldMindDao.kt                # All DAOs in one file
+│   └── entity/FieldEntities.kt            # All 19 entity types
+├── export/FieldMindExport.kt              # Export (Markdown, CSV, JSON, PNG, SVG, PDF)
+├── flashcard/SM2Engine.kt                 # SM-2 spaced repetition algorithm
+├── learn/LearnLibrary.kt                  # Offline learning resources
+├── location/FieldLocationProvider.kt      # GPS & geocoding
+├── repository/FieldMindRepository.kt      # Single repository
+├── settings/FieldMindSettings.kt          # SharedPreferences wrapper (33 keys)
+└── stats/FieldMindStreaks.kt              # Streak calculation logic
+```
+
+### Presentation Layer
+
+```
+features/field/presentation/
+├── components/
+│   ├── FieldMindCharts.kt                 # Canvas-based charting (bar, line, donut, graph, map)
+│   ├── FieldMindComponents.kt             # Shared UI (headers, chips, cards, inputs)
+│   └── FieldMindIcons.kt                  # Icon definitions
+├── navigation/FieldMindNavigation.kt      # Nav graph + bottom bar + rail
+├── screens/
+│   ├── FieldMindScreens.kt                # ALL main screens (262K+ chars!)
+│   ├── InsightsScreen.kt                  # Dedicated insights/composables
+│   └── FlashcardSessionScreen.kt          # Dedicated flashcard review
+├── theme/FieldMindTheme.kt                # Brand palette + semantic colors
+└── viewmodel/FieldMindViewModel.kt        # Single ViewModel for everything
+```
+
+### Infrastructure Workers (Separate Package)
+
+```
+infrastructure/worker/
+├── FieldMindBackupWorker.kt               # DUPLICATE backup worker
+├── FieldMindStreakWorker.kt               # DUPLICATE streak/reminder worker
+└── ...
+```
+
 ### What's Working Well
 
-- **Clean Room database** with 10+ entity types, DAOs, and cross-reference tables
-- **Repository pattern** with `FieldMindRepository` → `FieldMindViewModel`
-- **StateFlow-based reactive data layer**
-- **Dedicated `FieldMindSettings`** with SharedPreferences
-- **Separate `FieldMindDatabase`** from the main music app database
-- **Soft-delete pattern** across all entities (archivedAt, deletedAt fields)
-- **Comprehensive entity model** covering the full research lifecycle
-
-### Architecture Problems
-
-| Problem | Severity | Detail |
-|---------|----------|--------|
-| **Monolithic screens file** | 🔴 Critical | `FieldMindScreens.kt` is **262,718+ characters** — a single file containing Home, Capture, Field Mode, Projects, Library, Insights, Settings, Detail, Learn, Reader, Flashcards, Search, Backup, and all dialogs. This is unmaintainable. |
-| **No dependency injection** | 🟡 High | `FieldMindViewModel` directly instantiates `FieldMindDatabase` and `FieldMindRepository` via `application` context. No Hilt/Dagger — makes testing impossible. |
-| **ViewModel does too much** | 🟡 High | One `FieldMindViewModel` holds state for ALL entity types (observations, notes, questions, hypotheses, projects, sources, data, reports, flashcards, tags). Should be split into feature-specific ViewModels. |
-| **No use-case layer** | 🟡 Medium | Business logic lives directly in ViewModel methods. A use-case layer would improve testability and reusability. |
-| **Settings uses raw SharedPreferences** | 🟡 Medium | No DataStore migration. No type safety. Manual serialization. |
-
-### File Structure Summary
-
-```
-features/field/
-├── data/
-│   ├── ai/GeminiResearchAssistant.kt          # AI integration (broken)
-│   ├── database/
-│   │   ├── FieldMindDatabase.kt               # Room database
-│   │   ├── dao/FieldMindDao.kt                # All DAOs in one file
-│   │   └── entity/FieldEntities.kt            # All entities in one file
-│   ├── export/FieldMindExport.kt              # Export utilities
-│   ├── learn/LearnLibrary.kt                  # Offline learning resources
-│   ├── location/FieldLocationProvider.kt      # GPS & geocoding
-│   ├── repository/FieldMindRepository.kt      # Data repository
-│   └── settings/FieldMindSettings.kt          # SharedPreferences wrapper
-└── presentation/
-    ├── components/
-    │   ├── FieldMindCharts.kt                 # Custom chart composables
-    │   ├── FieldMindComponents.kt             # Shared UI components
-    │   └── FieldMindIcons.kt                  # Icon definitions
-    ├── navigation/FieldMindNavigation.kt      # Nav graph + bottom bar
-    ├── screens/FieldMindScreens.kt            # ALL screens (262K+ chars!)
-    ├── theme/FieldMindTheme.kt                # Brand colors & semantic tokens
-    └── viewmodel/FieldMindViewModel.kt        # Single ViewModel for everything
-```
+- **19 Room entities** with cross-reference tables — comprehensive data model
+- **Reactive data layer** via `Flow<List<T>>` from DAO through Repository to ViewModel
+- **Soft-delete pattern** (`archivedAt`, `deletedAt`) across all entities
+- **StateFlow-based `FieldMindSettings`** with reactive observation
+- **Canvas-based charts** — bar, line, donut, knowledge graph, mini-map — fully offline
+- **Navigation** with bottom bar (phone) + rail (tablet), animated transitions, haptic feedback
+- **Brand theme** (`FieldMindTheme.kt`) with forest-green palette, semantic entity colors, dynamic Material You option
+- **Knowledge graph** visualization in insights with project→question→observation→hypothesis edges
+- **Achievement system** with 10 milestones, toast notifications, progress tracking
+- **Import/export** round-trip via portable `fieldmind-archive-v2` JSON format
+- **Onboarding flow** with 7-step intro before entering the app
 
 ---
 
-## 2. 🔴 Broken / Non-Functional Features
+## 2. ✅ Implemented & Working Features
 
-### 2.1 AI Assistant — Broken
+### 2.1 SM-2 Spaced Repetition — ✅ Fully Implemented
 
-- `GeminiResearchAssistant` uses raw `HttpURLConnection` — no retry, no error handling beyond status codes
-- OpenAI integration uses `v1/responses` endpoint which may not exist for all models
-- No streaming support — entire response must buffer before display
-- **No error UI** — if the API fails, the user sees a raw error string in a card
+`SM2Engine.kt` implements the full SM-2 algorithm:
+- Ease factor calculation with 1.3 minimum
+- Interval scheduling: 1 day → 3 days → EF * interval
+- Quality rating mapping (0=Again, 2=Good, 3=Easy)
+- `isDue()` and `reviewPriority()` helpers
+- `nextReviewLabel()` for human-readable intervals
 
-**What to fix:**
-- Add proper error handling with user-friendly messages
-- Add loading indicators during API calls
-- Implement streaming for better UX
-- Add retry logic with exponential backoff
-- Create a proper error state composable
+`FlashcardSessionScreen.kt` supports two deck modes:
+- **"basic"** — simple flip with Again/Good/Easy
+- **"sm2"** — full SM-2 with interval preview, ease factor display, stat pills
 
-### 2.2 Local Model — Placeholder Only
+`FlashcardEntity` now has SM-2 fields: `easeFactor`, `intervalDays`, `repetitionCount`, `deckMode`, `nextReviewAt`, `lastReviewedAt`.
 
-- `FieldMindSettings` has `localModelEnabled`, `localModelOption`, `localModelDownloaded` — but **there is zero code that actually downloads, loads, or runs a local model**
-- The settings toggle is purely cosmetic
+### 2.2 AI Assistant — ✅ Functioning with Retry Logic
 
-**What to fix:**
-- Either implement on-device inference (TensorFlow Lite, ONNX Runtime) or remove the settings entirely
-- If implementing: add model download manager, inference engine, and UI for model selection
+`GeminiResearchAssistant.kt` supports both Gemini and OpenAI:
+- Retry with exponential backoff (up to 2 retries on 5xx / timeouts)
+- 30s connect / 60s read timeouts
+- User-friendly error messages with categorized HTTP codes
+- API key redaction in error details
+- 8 task types: factuality, testability, hypothesis, source summary, keywords, flashcards, mentor, writing
 
-### 2.3 Knowledge Graph (Insights) — Incomplete
+⚠️ **Still concerning:** OpenAI integration uses `v1/responses` endpoint (the newer Responses API) — this may not be supported by all models listed.
 
-- `InsightsScreen.kt` exists but the knowledge graph visualization is likely basic
-- Entity relationships exist in cross-reference tables but the graph UI is not fully wired
+### 2.3 Auto-Backup — ✅ Fully Implemented
 
-**What to fix:**
-- Build a proper interactive graph using a canvas-based or library-based approach
-- Add tap-to-navigate from graph nodes to entity details
-- Add filtering by entity type and date range
+`FieldMindAutoBackupWorker.kt` writes rotating JSON archives:
+- Respects `autoBackupEnabled` setting
+- Archive includes all 9 entity types via `FieldMindExport.archiveJson()`
+- Saves to `fieldmind/backups/` in app-private storage
+- Prunes to keep the latest 8 backups
+- Scheduled by `FieldMindBackgroundScheduler` with Daily / Weekly / Monthly intervals
 
-### 2.4 Backup/Export — Partial
+### 2.4 Reminders — ✅ Fully Implemented
 
-- `FieldMindExport` supports Markdown, CSV, JSON, PNG, SVG, PDF
-- But **auto-backup** (`autoBackupEnabled` setting) has no background worker implementation — it's just a settings toggle with no actual WorkManager job
+`FieldMindReminderWorker.kt` sends daily notification prompts:
+- Respects `remindersEnabled` setting
+- Skips notification if user already captured an observation today
+- Includes current streak count in notification body
+- Creates notification channel on API 26+
+- Scheduled daily via `FieldMindBackgroundScheduler`
 
-**What to fix:**
-- Implement `BackupWorker` using WorkManager with periodic scheduling
-- Add backup destination selection (local storage, cloud)
-- Add backup status notifications
+### 2.5 Streaks — ✅ Fully Implemented
 
-### 2.5 Reminders/Streaks — Settings Only
+`FieldMindStreaks.kt` provides deterministic streak calculation:
+- `currentStreakDays()` works from date strings or epoch millis
+- Counts consecutive days backward from today
+- Used by reminder worker and dashboard
 
-- `remindersEnabled` and `streaksEnabled` settings exist but there's **no notification scheduler, no WorkManager job, no streak tracking logic**
+### 2.6 Export Suite — ✅ Comprehensive
 
-**What to fix:**
-- Implement `ReminderWorker` for daily observation reminders
-- Add streak calculation logic based on observation timestamps
-- Display streak counter on Home screen
+`FieldMindExport.kt` supports:
+- **JSON** archive (full round-trip import/export)
+- **Markdown** reports with structured sections
+- **CSV** observations, sources, data records
+- **HTML** for PDF-ready export
+- **PDF** via `android.graphics.pdf.PdfDocument`
+- **PNG** dashboard snapshot (1200×675)
+- **SVG** dashboard with animations
+- Citation formatting for sources
 
-### 2.6 Privacy Lock — Placeholder
+### 2.7 Evidence Attachments — ✅ Stored
 
-- `privacyLockEnabled` setting exists but there's **no biometric/PIN lock implementation**
+`EvidenceAttachmentEntity` stores attachments per observation with `localPath`, `caption`, soft-delete support.
 
-**What to fix:**
-- Implement BiometricPrompt for app launch
-- Add PIN fallback using EncryptedSharedPreferences
-- Lock sensitive screens (Settings, exports)
+### 2.8 Insights / Knowledge Graph — ✅ Built
 
-### 2.7 Flashcard Spaced Repetition — Basic
-
-- `FlashcardEntity` has `reviewCount`, `lastReviewedAt`, `nextReviewAt` fields but the review logic in `FlashcardSessionScreen` doesn't implement actual spaced repetition (SM-2 or similar)
-
-**What to fix:**
-- Implement SM-2 algorithm for review scheduling
-- Add "Again", "Hard", "Good", "Easy" buttons during review
-- Update `nextReviewAt` based on quality rating
-
-### 2.8 Evidence Attachments — URI Only
-
-- Attachments store URIs but there's **no offline copy mechanism** — if the user revokes permissions or the URI becomes stale, attachments are lost
-- No attachment size limits or cleanup
-
-**What to fix:**
-- Copy attachments to app-private storage on save
-- Add size limits and cleanup for old attachments
-- Handle URI permission revocation gracefully
-
----
-
-## 3. 🟡 Poorly Implemented Features
-
-### 3.1 Search — Full-Text SQL LIKE
-
-- All search queries use `LIKE '%query%'` — no FTS (Full-Text Search) table, no indexing
-- 6 separate search functions in the DAO, all scanning entire tables
-- No search result highlighting or relevance ranking
-
-**Improvement plan:**
-- Add Room FTS entities for each searchable table
-- Create FTS virtual tables with appropriate tokenizers
-- Implement relevance scoring
-- Add search result highlighting in the UI
-
-### 3.2 Tags — String + Cross-Reference Hybrid
-
-- Tags are stored as comma-separated strings AND in cross-reference tables
-- `setObservationTags()` parses the string, creates/finds tags, and links them — but the string field and cross-reference can drift out of sync
-- No tag auto-completion or suggestion
-
-**Improvement plan:**
-- Remove the comma-separated string field from entities
-- Use only cross-reference tables for tag associations
-- Add tag auto-completion in text fields
-- Add tag frequency display in the tag picker
-
-### 3.3 Navigation — Flat Structure
-
-- All 17+ screens are defined as top-level `composable()` routes in `FieldMindNavHost`
-- No nested navigation graphs — Questions, Hypotheses, Data, Reports all share `ProjectsScreen` with a `startTab` parameter
-- Deep linking is not set up
-
-**Improvement plan:**
-- Create nested navigation graphs for each tab
-- Add deep link support for sharing specific entities
-- Implement proper back stack management
-
-### 3.4 Detail Screen — Overloaded
-
-- `DetailScreen` is a single composable that handles ALL entity types via a `kind` string parameter
-- This means every entity type's edit UI is in one massive when/switch block
-
-**Improvement plan:**
-- Create separate detail screen composables per entity type
-- Use type-safe navigation arguments instead of string routing
-- Add entity-specific action bars
-
-### 3.5 Charts — Custom Drawing
-
-- `FieldMindCharts.kt` implements bar, line, donut, and graph charts using custom Canvas drawing
-- No chart library — means no tooltips, no animations, no accessibility, no responsive sizing
-
-**Improvement plan:**
-- Migrate to Vico chart library (Material 3 compatible)
-- Add interactive tooltips and tap-to-drill
-- Add chart animations
-- Ensure accessibility with content descriptions
-
-### 3.6 Onboarding — Too Long
-
-- 6 informational pages + 1 permission page = 7 steps before the user can use the app
-- Many research apps skip onboarding entirely or make it optional
-
-**Improvement plan:**
-- Reduce to 3 steps: Welcome → Permissions → Go
-- Make onboarding skippable at any point
-- Add progressive disclosure (teach features as they're first used)
+`InsightsScreen.kt` includes:
+- Bar chart (observations by category)
+- Line chart (daily capture trend)
+- Donut chart (confidence breakdown)
+- Mini-map (GPS coordinate scatter plot)
+- Knowledge graph (project→question→observation→source→hypothesis edges)
+- Collapsible achievements (10 milestones)
+- Top tags with frequency
+- Open questions & active projects lists
+- Research profile card
 
 ---
 
-## 4. 🔵 Missing Features
+## 3. 🔴 Critical Issues
 
-### 4.1 Core Research Workflow
+### 3.1 Monolithic Screens File — 🔴 Critical
 
-| Feature | Status | Priority |
-|---------|--------|----------|
-| **Undo/redo for edits** | Missing | 🔴 High |
-| **Bulk operations** (select multiple, bulk delete, bulk tag) | Missing | 🔴 High |
-| **Templates** for observations, questions, reports | Missing | 🟡 Medium |
-| **Observation clustering** (auto-group similar observations) | Missing | 🟡 Medium |
-| **Timeline view** (chronological across all entities) | Missing | 🟡 Medium |
-| **Map view** for observations with GPS | Missing | 🔴 High |
-| **Photo comparison** (before/after, side-by-side) | Missing | 🟡 Medium |
+`FieldMindScreens.kt` at **262,718+ characters** contains:
+- HomeScreen, ObserveScreen, FieldModeScreen, ProjectsScreen
+- KnowledgeLibraryScreen, LearnReaderScreen, DetailScreen
+- SettingsScreen, BackupExportScreen, ArchiveScreen
+- FieldMindOnboardingScreen
+- All dialogs and sub-composables
 
-### 4.2 Collaboration & Sync
+This is the single biggest maintenance risk in the codebase. It makes navigation, understanding, testing, and parallel development nearly impossible.
 
-| Feature | Status | Priority |
-|---------|--------|----------|
-| **Cloud sync** | Missing | 🔴 High |
-| **Multi-device access** | Missing | 🔴 High |
-| **Share observations** (share sheet) | Missing | 🟡 Medium |
-| **Export to Zotero/Mendeley** | Missing | 🟡 Medium |
+### 3.2 No Dependency Injection — 🔴 Critical
 
-### 4.3 Learning & Intelligence
-
-| Feature | Status | Priority |
-|---------|--------|----------|
-| **Smart suggestions** (based on observation patterns) | Partial | 🟡 Medium |
-| **Auto-categorization** using ML | Missing | 🟢 Low |
-| **Duplicate detection** | Missing | 🟡 Medium |
-| **Related observation finder** | Missing | 🟡 Medium |
-
-### 4.4 Data Collection Tools
-
-| Feature | Status | Priority |
-|---------|--------|----------|
-| **Timer/stopwatch** for behavioral observations | Missing | 🟡 Medium |
-| **Photo timer** (burst mode) | Missing | 🟢 Low |
-| **Audio transcription** | Missing | 🟢 Low |
-| **Barcode/QR scanner** for specimen tracking | Missing | 🟢 Low |
-| **Custom data collection forms** | Missing | 🟡 Medium |
-
-### 4.5 Reporting
-
-| Feature | Status | Priority |
-|---------|--------|----------|
-| **Report templates** | Missing | 🟡 Medium |
-| **Citation manager** (auto-format citations) | Missing | 🟡 Medium |
-| **Figure/table insertion** in reports | Missing | 🟡 Medium |
-| **Collaborative editing** | Missing | 🟢 Low |
-
----
-
-## 5. 🎨 UI/UX Problems & Redesign Suggestions
-
-### 5.1 Navigation Redesign
-
-**Current:** 5 bottom tabs + FAB + hidden overflow destinations
-
-**Problems:**
-- Users can't discover Questions, Hypotheses, Data Tools, Reports, Learn, Flashcards, Search, Backup without exploring
-- "Projects" tab is overloaded (Projects + Questions + Hypotheses + Data + Reports)
-- No back stack management for nested screens
-
-**Suggested redesign:**
-
-```
-Bottom Nav (4 tabs):
-├── 🏠 Dashboard (Today) — quick capture, daily goal, recent activity
-├── 📝 Capture — observation + note creation (prominent)
-├── 📂 Workspace — projects, questions, hypotheses, data, reports
-├── 📚 Library — sources, notes, reading, flashcards, learn
-
-Overflow menu:
-├── 🔍 Search
-├── 📊 Insights (charts, map, knowledge graph)
-├── 💾 Backup/Export
-├── ⚙️ Settings
+`FieldMindViewModel` extends `AndroidViewModel` and directly instantiates:
+```kotlin
+val repository = FieldMindRepository(FieldMindDatabase.getInstance(application).fieldMindDao())
+val fieldSettings: FieldMindSettings = FieldMindSettings.getInstance(application)
 ```
 
-### 5.2 Capture Flow Redesign
+This makes it impossible to:
+- Unit test the ViewModel (database dependency can't be mocked)
+- Swap implementations
+- Control lifecycle of dependencies
+- Support previews with fake data
 
-**Current:** Quick capture → Choose mode → Choose category → Fill form (4+ steps)
+### 3.3 Duplicate Worker Implementations — 🔴 Critical
 
-**Problems:**
-- Too many steps for "quick" capture
-- The category-first flow is unintuitive
-- Field mode is a separate screen instead of a mode toggle
+There are **two separate backup workers** and **two separate streak implementations**:
 
-**Suggested redesign:**
-- **One-tap capture:** Single button that opens a minimal form with category as a horizontal scrollable chip bar at the top
-- **Smart defaults:** Remember last category, auto-fill location if enabled
-- **Camera-first option:** Direct camera launch with post-capture metadata entry
-- **Field mode as overlay:** Instead of a separate screen, make it a floating action that shows a minimal capture sheet
+| What | Location | Status |
+|------|----------|--------|
+| `FieldMindAutoBackupWorker.kt` | `features/field/data/background/` | ✅ Active, used by `FieldMindBackgroundScheduler` |
+| `FieldMindBackupWorker.kt` | `infrastructure/worker/` | ❓ Orphaned, not wired to settings |
+| `FieldMindStreaks.kt` | `features/field/data/stats/` | ✅ Active, used by reminder + dashboard |
+| `FieldMindStreakWorker.kt` | `infrastructure/worker/` | ❓ Orphaned, separate streak logic in SharedPreferences |
 
-### 5.3 Detail Screen Redesign
+The infrastructure workers have their **own** SharedPreferences-based streak tracking (`KEY_LAST_STREAK_DATE`, `KEY_CURRENT_STREAK`, `KEY_BEST_STREAK`) that is independent of `FieldMindStreaks.currentStreakDays()`. This means streak values can diverge depending on which code path runs.
 
-**Current:** Single `DetailScreen` composable with massive when/switch on `kind`
+### 3.4 Settings Mixes Background Scheduling With Instantiation — 🔴 Critical
 
-**Problems:**
-- One file handles 10+ entity types
-- Edit mode is inline (no dedicated edit screen)
-- No visual distinction between entity types
-- Actions (delete, archive, export) are buried in the header
+`FieldMindSettings.init` calls `FieldMindBackgroundScheduler.syncAll()` immediately. This means:
+- Every time `getInstance()` is called, background jobs are re-scheduled
+- Settings changes cause immediate side effects in the constructor
+- Testing settings in isolation requires mocking WorkManager
 
-**Suggested redesign:**
-- **Separate detail screens per entity type** — each with tailored layouts
-- **Dedicated edit mode** — separate screen or bottom sheet
-- **Entity-specific actions** — floating action buttons relevant to each type
-- **Related entities section** — show linked questions, observations, sources
+### 3.5 Full-Text Search Uses `LIKE '%query%'` — 🟡 High
 
-### 5.4 Insights Screen Redesign
-
-**Current:** Charts + achievements + knowledge graph in one screen
-
-**Problems:**
-- Knowledge graph is likely too complex for a mobile screen
-- No filtering or drill-down
-- Charts are custom-drawn without interactivity
-
-**Suggested redesign:**
-- **Tabbed Insights:** Overview | Charts | Map | Graph | Achievements
-- **Interactive charts:** Use a chart library (Vico, MPAndroidChart) for tooltips and tap-to-drill
-- **Map-first:** Observations with GPS should default to map view
-- **Knowledge graph as optional:** Power users can access it, but don't make it the default
-
-### 5.5 Design System Issues
-
-| Issue | Current | Suggested |
-|-------|---------|-----------|
-| **Card radius** | Mixed (18dp, 22dp, 24dp, 28dp) | Standardize to 20dp for cards, 28dp for sheets |
-| **Spacing** | Inconsistent (8dp, 12dp, 14dp, 16dp, 18dp) | Use 8dp grid system consistently |
-| **Typography** | Uses Material3 defaults | Add FieldMind-specific heading styles |
-| **Color usage** | Semantic colors defined but not always used | Enforce semantic colors for all entity badges |
-| **Empty states** | Good but repetitive | Add illustrations, not just icons |
-| **Loading states** | Missing on many screens | Add skeleton loaders |
-| **Error states** | Snackbar only | Add error cards with retry actions |
-| **Animations** | Basic fade/scale transitions | Add shared element transitions for entity cards |
-| **Dark mode** | Supported but brand colors don't adapt well | Test and adjust contrast ratios |
-
-### 5.6 Accessibility Issues
-
-- No content descriptions on many icons
-- No semantic markup for screen readers
-- Touch targets may be too small on some chips
-- No high-contrast mode support
+All 6 search DAO methods scan entire tables with `LIKE '%query%'`. On datasets with thousands of records, this will be unusably slow. No FTS virtual tables exist.
 
 ---
 
-## 6. 🔧 Restructuring Plan
+## 4. 🟡 Code Quality Concerns
 
-### Phase 1: Foundation (Week 1-2)
+### 4.1 Single ViewModel Does Everything
 
-1. **Split `FieldMindScreens.kt`** into separate files per screen:
-   - `HomeScreen.kt`
-   - `ObserveScreen.kt` + `FieldModeScreen.kt`
-   - `ProjectsScreen.kt` + sub-panels
-   - `KnowledgeLibraryScreen.kt` + sub-panels
-   - `InsightsScreen.kt`
-   - `DetailScreen.kt` → split into per-entity screens
-   - `FieldMindSettingsScreen.kt`
-   - `FlashcardSessionScreen.kt`
-   - `ArchiveScreen.kt` (search)
-   - `BackupExportScreen.kt`
-   - Dialogs into separate files
+`FieldMindViewModel` has:
+- 9 entity state flows
+- 40+ methods for CRUD on all entity types
+- Direct export logic (`buildMarkdown`, `buildSourceCitation`)
+- Direct archive parsing (`restoreArchiveJson`)
+- Attachment management
 
-2. **Add Hilt/Dagger** for dependency injection:
-   - Create `@HiltViewModel` annotation for ViewModels
-   - Create database and repository modules
-   - Inject dependencies via constructor
+This violates the Single Responsibility Principle and makes the ViewModel a god object.
 
-3. **Migrate Settings to DataStore**:
-   - Replace SharedPreferences with Proto DataStore
-   - Add type-safe property delegates
-   - Migrate existing preferences
+### 4.2 Single DAO File
 
-4. **Add FTS (Full-Text Search)** table:
-   - Create FTS entities for observations, notes, questions, sources
-   - Update DAO with FTS queries
-   - Add relevance scoring
+`FieldMindDao.kt` contains all 60+ queries in one interface — observation queries, note queries, question queries, hypothesis queries, project queries, source queries, data record queries, report queries, flashcard queries, tag queries, attachment queries, cross-reference link queries, search queries.
 
-5. **Fix tag sync**:
-   - Remove redundant comma-separated string field from entities
-   - Use only cross-reference tables
-   - Add migration to clean up existing data
+Should be split into feature-specific DAOs.
 
-### Phase 2: Navigation & Core UX (Week 3-4)
+### 4.3 Single Entities File
 
-6. **Redesign navigation** with nested graphs:
-   - Create `DashboardNavGraph`, `CaptureNavGraph`, `WorkspaceNavGraph`, `LibraryNavGraph`
-   - Implement proper back stack management
-   - Add deep link support
+`FieldEntities.kt` contains all 19 entity types, 9 cross-reference tables, and 5 data classes. At this scale, entity files should be grouped by feature.
 
-7. **Separate detail screens** per entity type:
-   - `ObservationDetailScreen.kt`
-   - `NoteDetailScreen.kt`
-   - `QuestionDetailScreen.kt`
-   - `HypothesisDetailScreen.kt`
-   - `ProjectDetailScreen.kt`
-   - `SourceDetailScreen.kt`
-   - `DataRecordDetailScreen.kt`
-   - `ReportDetailScreen.kt`
+### 4.4 Single Repository
 
-8. **Add undo/redo** for edits:
-   - Implement command pattern for entity modifications
-   - Store edit history in memory (last 20 actions)
-   - Add undo snackbar after each edit
+`FieldMindRepository.kt` proxies all DAO methods — 70+ functions. One-stop-shop pattern makes it hard to reason about data access patterns per entity.
 
-9. **Add map view** for observations:
-   - Integrate Google Maps or Mapbox
-   - Plot observations as markers
-   - Add clustering for dense areas
-   - Tap marker to open detail
+### 4.5 Tag Sync Can Drift
 
-10. **Add timeline view** across all entities:
-    - Create `TimelineScreen.kt`
-    - Sort all entities by timestamp
-    - Add filter chips for entity type
-    - Add date range picker
+Tags are stored both as:
+1. Comma-separated string in `ObservationEntity.tags`
+2. Normalized entries in `TagEntity` with cross-reference via `ObservationTagCrossRef`
 
-### Phase 3: Data & Intelligence (Week 5-6)
+`setObservationTags()` clears and re-creates cross-references, but the string field is never updated to match. Editing an observation's tags through the string field without calling `setObservationTags()` can cause drift.
 
-11. **Implement auto-backup** with WorkManager:
-    - Create `BackupWorker` extending `CoroutineWorker`
-    - Schedule periodic backup (daily/weekly)
-    - Add backup destination selection
-    - Show backup status in Settings
+### 4.6 Settings Still Uses SharedPreferences
 
-12. **Add streak tracking** logic:
-    - Calculate consecutive days with observations
-    - Store streak data in Settings
-    - Display streak counter on Home screen
-    - Add streak milestones and celebrations
+33 settings keys are stored in raw `SharedPreferences` with manual get/put/edit boilerplate. No type-safe delegates, no DataStore migration, no migration path if keys change.
 
-13. **Add notification reminders**:
-    - Create `ReminderWorker` for daily prompts
-    - Allow user to set reminder time
-    - Send notification with observation count for the day
-    - Snooze/dismiss functionality
+### 4.7 OpenAI Uses Responses API
 
-14. **Fix AI assistant**:
-    - Add proper error handling with user-friendly messages
-    - Add loading indicators during API calls
-    - Implement streaming for better UX
-    - Add retry logic with exponential backoff
-    - Create error state composable
+The OpenAI provider sends requests to `v1/responses` which is OpenAI's newer Responses API. This endpoint:
+- May not support all models (especially older ones)
+- Has different response structure than Chat Completions
+- The app extracts `output_text` which may not always be present
+- Falls back to iterating `output` array for `content[0].text`
 
-15. **Implement spaced repetition** for flashcards:
-    - Implement SM-2 algorithm
-    - Add quality rating buttons (Again, Hard, Good, Easy)
-    - Update `nextReviewAt` based on rating
-    - Show review queue on Home screen
+Consider adding a `v1/chat/completions` fallback path for wider model compatibility.
 
-### Phase 4: Polish & Advanced Features (Week 7-8)
+### 4.8 Onboarding Is Mandatory
 
-16. **Add chart library** (Vico):
-    - Replace custom Canvas charts with Vico
-    - Add interactive tooltips
-    - Add tap-to-drill on data points
-    - Add chart animations
+The onboarding screen is shown before the main app and must be completed. It's 7 steps long with informational content. Users who want to explore the app first cannot skip.
 
-17. **Add shared element transitions**:
-    - Define shared element keys for entity cards
-    - Add `AnimatedContentScope` transitions
-    - Smooth navigation between list and detail
+### 4.9 No Loading / Error States in Many Screens
 
-18. **Add skeleton loaders**:
-    - Create skeleton composables for each screen
-    - Show skeletons while data loads
-    - Fade to real content when ready
+- `FieldMindScreens.kt` uses `collectAsState()` but few screens show skeleton loaders or error cards
+- Empty states exist but loading states are mostly absent
+- Network failures in AI assistant show a card with text, not a dedicated error composable
 
-19. **Add bulk operations**:
-    - Add selection mode to list screens
-    - Multi-select with checkboxes
-    - Bulk delete, tag, archive actions
-    - Select all / deselect all
+### 4.10 Inconsistent Card Radius
 
-20. **Add templates** for observations and reports:
-    - Create template entity in database
-    - Pre-fill forms from templates
-    - Allow users to save observations as templates
-    - Template library in Settings
+Card corner radius values: 18dp, 20dp, 22dp, 24dp, 26dp, 28dp, 999dp — inconsistent across the codebase.
 
-### Phase 5: Scale (Week 9+)
+### 4.11 Database Migration Uses Destructive Fallback
 
-21. **Cloud sync** architecture:
-    - Design sync protocol (CRDT or last-write-wins)
-    - Add Firebase/Supabase backend
-    - Implement conflict resolution
-    - Add offline-first with sync queue
+```kotlin
+.fallbackToDestructiveMigration()
+```
 
-22. **Export to reference managers**:
-    - Add Zotero export (RIS/BibTeX format)
-    - Add Mendeley export
-    - Add citation formatting (APA, MLA, Chicago)
-
-23. **Collaboration features**:
-    - Add project sharing via link
-    - Real-time collaboration on reports
-    - Comment system on observations
-    - Activity feed for shared projects
-
-24. **Advanced analytics**:
-    - Observation frequency heatmaps
-    - Category distribution charts
-    - Confidence level trends
-    - Research progress metrics
+This means any schema change that Room can't auto-migrate will **destroy all user data**. After version 6, this is risky.
 
 ---
 
-## 7. Priority Matrix
+## 5. 🔵 Missing Features
 
-| Priority | Feature | Effort | Impact |
-|----------|---------|--------|--------|
-| 🔴 P0 | Split monolithic screens file | Medium | High |
-| 🔴 P0 | Add DI (Hilt) | Medium | High |
-| 🔴 P0 | Fix AI assistant error handling | Low | High |
-| 🔴 P0 | Add map view for observations | Medium | High |
-| 🔴 P0 | Implement auto-backup worker | Low | High |
-| 🟡 P1 | Redesign navigation | High | High |
-| 🟡 P1 | Separate detail screens | High | Medium |
-| 🟡 P1 | Migrate to DataStore | Low | Medium |
-| 🟡 P1 | Add FTS for search | Low | Medium |
-| 🟡 P1 | Implement streaks/reminders | Medium | Medium |
-| 🟢 P2 | Add chart library | Medium | Medium |
-| 🟢 P2 | Add templates | Medium | Medium |
-| 🟢 P2 | Cloud sync | High | High |
-| 🟢 P2 | Collaboration | High | Medium |
+### 5.1 Privacy Lock — Placeholder Only
+
+`privacyLockEnabled` exists in settings but:
+- No `BiometricPrompt` implementation
+- No PIN fallback
+- No `EncryptedSharedPreferences` for storing credentials
+- Sensitive screens are not gated
+
+### 5.2 Local Model — Placeholder Only
+
+`localModelEnabled`, `localModelOption`, `localModelDownloaded`, `localModelUseForStudy` exist in settings but:
+- No model download manager
+- No inference engine (TensorFlow Lite, ONNX Runtime)
+- No actual model loading code
+- Settings are purely cosmetic
+
+### 5.3 No Offline Copy for Attachments
+
+`EvidenceAttachmentEntity` stores URIs and optional `localPath`, but the UI flow never copies attachments to app-private storage. If the user revokes permission or the URI provider is unavailable, attachments are lost.
+
+### 5.4 No Undo/Redo
+
+All edits are permanent with no undo snackbar or history. Users can accidentally delete or overwrite data.
+
+### 5.5 No Bulk Operations
+
+No multi-select, bulk delete, bulk tag, or bulk archive on any list screen. Users must delete items one at a time.
+
+### 5.6 No Templates
+
+No observation, report, or data collection templates. Users fill out forms from scratch each time.
+
+### 5.7 No Map View (Full)
+
+The mini-map in insights shows GPS point distribution, but there's no:
+- Interactive map with tiles/terrain
+- Marker clustering
+- Tap-to-open observation detail from map
+- Filter by category or date
+
+### 5.8 No Timeline View
+
+No chronological timeline that shows all entity types (observations, notes, questions, reports) in a unified stream.
+
+### 5.9 No Cloud Sync
+
+No sync protocol, no backend, no multi-device support. Data is entirely local.
+
+### 5.10 No Share Sheet Integration
+
+No Android share sheet to share observations, reports, or findings to other apps.
+
+### 5.11 No Citation Export (Zotero/Mendeley)
+
+Citations are formatted inline but there's no RIS/BibTeX export for reference managers.
+
+### 5.12 No Timer/Stopwatch for Behavioral Observations
+
+No built-in timer for timed behavioral observations — a common field research need.
 
 ---
 
-## 8. June 2026 Follow-Up Implementation Status
+## 6. 🎨 UI/UX Assessment
 
-This section compares the original analysis against the current codebase and records what has now been converted from placeholder UI into runnable app logic.
+### Navigation Flow
+- **4 bottom tabs** (Today, Capture, Workspace, Library) + **17+ composable routes** via nav controller
+- Overflow destinations (Insights, Search, Backup, Settings, etc.) are reached from within tabs
+- **Haptic feedback** on navigation taps ✅
+- **Animated tab icons** with scale/lift/alpha ✅
+- **Tablet support** via `NavigationRail` when width ≥ 720dp ✅
 
-### Implemented since the original audit
+### Capture Flow
+- Quick capture shows a form with subject, category, confidence, location, tags, evidence, and attachments
+- Field mode is a `compactFieldMode` variant of the same screen
+- **Missing:** one-tap capture, smart defaults, camera-first, progressive disclosure
 
-| Original finding | Current status | Code area |
-|------------------|----------------|-----------|
-| AI assistant compile/runtime fragility | The request helper now supports retrying network/server failures while keeping trailing-lambda call sites valid. | `data/ai/GeminiResearchAssistant.kt` |
-| Flashcard spaced repetition was basic | SM-2 scheduling now has a dedicated engine, per-card scheduling fields, and review rating controls. | `data/flashcard/SM2Engine.kt`, `presentation/screens/FlashcardSessionScreen.kt` |
-| Map view missing despite GPS data | Insights and observation detail now expose an offline mini-map preview from saved coordinates. | `presentation/screens/InsightsScreen.kt`, `presentation/components/FieldMindCharts.kt` |
-| Auto-backup was a settings-only toggle | Auto-backup now schedules WorkManager and writes rotating private JSON archives under app-private storage. | `data/background/FieldMindBackgroundScheduler.kt`, `data/background/FieldMindAutoBackupWorker.kt`, `data/settings/FieldMindSettings.kt` |
-| Reminders/streaks were settings-only toggles | Reminders now schedule WorkManager notifications that skip days with existing observations; the dashboard streak now calculates consecutive observation days instead of lifetime distinct days. | `data/background/FieldMindReminderWorker.kt`, `data/stats/FieldMindStreaks.kt`, `presentation/screens/FieldMindScreens.kt` |
+### Detail Screen
+- Single `DetailScreen` composable handles all entity types via `kind` string parameter
+- Massive `when` block with entity-specific fields
+- **Missing:** entity-specific layouts, dedicated edit mode, related entities section
 
-### Still remaining after this pass
+### Design System
+- Forest-green brand palette with semantic entity colors ✅
+- Dynamic Material You support (Android 12+) ✅
+- Light + dark color schemes with FieldMind-specific dark palette ✅
+- Card radius inconsistent (ranges from 18dp to 28dp) ❌
+- Spacing inconsistent (8dp, 12dp, 14dp, 16dp, 18dp) ❌
+- Skeleton loaders missing on most screens ❌
+- Loading states absent ❌
+- Error states use snackbar only, no dedicated error cards ❌
 
-| Remaining item | Why it remains | Recommended next step |
-|----------------|----------------|-----------------------|
-| Split the 260K+ character `FieldMindScreens.kt` | This is high-risk because many composables share private helpers and state. | Move one feature at a time behind identical public composable signatures, starting with Settings and Backup/Export. |
-| Dependency injection | Adding Hilt changes app startup, generated code, and tests. | Introduce lightweight provider interfaces first, then migrate to Hilt once feature seams are stable. |
-| DataStore settings migration | Requires migration/compatibility handling for existing SharedPreferences keys. | Add Preferences DataStore migration preserving current keys and defaults. |
-| Full FTS search | Requires Room schema entities and migrations. | Add FTS virtual tables for observations, notes, questions, and sources with relevance-ranked DAO queries. |
-| Privacy lock | Needs a launch/sensitive-screen gate plus biometric/PIN fallback UX. | Implement BiometricPrompt with a non-destructive opt-out path if authentication fails. |
-| Attachment offline copy | Requires storage quotas, cleanup, and URI persistence behavior. | Copy selected evidence to app-private storage and keep original URI as provenance metadata. |
-| Interactive map provider | Current mini-map is offline and dependency-free, not a full map SDK. | Add a dedicated Map screen with clustering once a provider/privacy policy is chosen. |
+### Accessibility
+- Content descriptions missing on many icons ❌
+- No semantic markup for screen readers ❌
+- Some chip touch targets may be too small ❌
+- No high-contrast mode ❌
+
+---
+
+## 7. 🔄 Duplicate / Fragmented Implementations
+
+### 7.1 Backup Workers — ⚠️ Duplicate
+
+| Aspect | `FieldMindAutoBackupWorker` | `FieldMindBackupWorker` |
+|--------|---------------------------|------------------------|
+| **Package** | `features.field.data.background` | `worker` (infrastructure) |
+| **Scheduling** | Via `FieldMindBackgroundScheduler` | Not wired to settings |
+| **Storage** | `filesDir/fieldmind/backups/` | `getExternalFilesDir(null)/FieldMindBackups/` |
+| **Pruning** | Keeps last 8 backups | Keeps last 7 backups |
+| **Settings awareness** | Reads `autoBackupEnabled` | No settings check |
+| **Tag** | Auto-generated | `fieldmind_auto_backup` |
+
+**Recommendation:** Decide on one canonical implementation, remove the other. Prefer `FieldMindAutoBackupWorker` as it's wired into settings and the scheduler.
+
+### 7.2 Streak Tracking — ⚠️ Fragmented
+
+| Aspect | `FieldMindStreaks` | `FieldMindStreakWorker` |
+|--------|-------------------|------------------------|
+| **Package** | `features.field.data.stats` | `worker` (infrastructure) |
+| **Calculation** | `currentStreakDays()` — date-based iterative | SharedPreferences with `KEY_CURRENT_STREAK` |
+| **Persistence** | Computed from observation dates each time | Persisted in `fieldmind_streak` SharedPreferences |
+| **Notification** | No | Yes — sends reminder notification |
+| **Used by** | `FieldMindReminderWorker`, dashboard | Nothing in the feature package |
+
+**Recommendation:** Consolidate streak logic into `FieldMindStreaks` and remove `FieldMindStreakWorker`. The reminder worker can calculate streaks from observations directly.
+
+### 7.3 Reminder Implementation — ⚠️ Fragmented
+
+`FieldMindReminderWorker` (feature package) and `FieldMindStreakWorker` (infrastructure) both send reminder-type notifications. They could conflict or duplicate notifications.
+
+---
+
+## 8. 🔧 Restructuring Plan
+
+### Phase 1: Critical Fixes (Immediate)
+
+| # | Task | Effort | Impact |
+|---|------|--------|--------|
+| 1 | **Remove duplicate workers** — decide on `FieldMindAutoBackupWorker` as canonical backup, `FieldMindStreaks` as canonical streak, remove infrastructure duplicates | Low | 🔴 Critical |
+| 2 | **Fix init-side-effect in `FieldMindSettings`** — move `syncAll()` call out of init block to explicit `initialize()` method | Low | 🔴 Critical |
+| 3 | **Fix OpenAI `v1/responses` endpoint** — add `v1/chat/completions` fallback, validate response parsing with gpt-4.1-mini | Low | 🟡 High |
+| 4 | **Add migration plan** — replace `fallbackToDestructiveMigration()` with actual migration steps or schema export | Low | 🟡 High |
+
+### Phase 2: Architecture (Week 1-2)
+
+| # | Task | Effort | Impact |
+|---|------|--------|--------|
+| 5 | **Split `FieldMindScreens.kt`** into separate files per screen (Home, Observe, Projects, Library, Insights, Detail, Settings, BackupExport, Search, Onboarding, etc.) | 🔴 High | 🔴 Critical |
+| 6 | **Add Hilt/Dagger** for dependency injection — `@HiltViewModel`, database module, repository module | 🟡 Medium | 🔴 Critical |
+| 7 | **Split `FieldMindDao.kt`** into per-feature DAOs (ObservationDao, NoteDao, QuestionDao, etc.) | 🟡 Medium | 🟡 High |
+| 8 | **Split `FieldEntities.kt`** into per-feature entity files | 🟡 Medium | 🟡 High |
+| 9 | **Split `FieldMindRepository.kt`** into per-feature repositories | 🟡 Medium | 🟡 High |
+
+### Phase 3: Data Layer Improvements (Week 3-4)
+
+| # | Task | Effort | Impact |
+|---|------|--------|--------|
+| 10 | **Migrate settings to Proto DataStore** — type-safe, coroutine-based, migration from SharedPreferences | 🟡 Medium | 🟡 High |
+| 11 | **Add FTS virtual tables** for observations, notes, questions, sources + relevance-ranked DAO queries | 🟡 Medium | 🟡 High |
+| 12 | **Fix tag sync** — remove comma-separated `tags` string field from entities, use only cross-reference tables | 🟡 Medium | 🟡 High |
+| 13 | **Add attachment offline copy** — copy selected evidence to app-private storage on save, add size limits | 🟡 Medium | 🟡 High |
+
+### Phase 4: New Features (Week 5-6)
+
+| # | Task | Effort | Impact |
+|---|------|--------|--------|
+| 14 | **Implement privacy lock** — `BiometricPrompt` + PIN fallback + `EncryptedSharedPreferences` | 🟡 Medium | 🟡 High |
+| 15 | **Add undo/redo** — command pattern for entity edits, undo snackbar after each action | 🟡 Medium | 🟡 High |
+| 16 | **Add map view** — integrate Google Maps SDK or Mapbox with clustering, tap-to-detail | 🔴 High | 🟡 High |
+| 17 | **Add timeline view** — unified chronological stream of all entity types with filters | 🟡 Medium | 🟡 Medium |
+| 18 | **Add bulk operations** — multi-select with checkboxes, bulk delete/tag/archive | 🟡 Medium | 🟡 High |
+
+### Phase 5: UI/UX Polish (Week 7-8)
+
+| # | Task | Effort | Impact |
+|---|------|--------|--------|
+| 19 | **Standardize design system** — consistent 20dp card radius, 8dp grid spacing | 🟢 Low | 🟡 Medium |
+| 20 | **Add skeleton loaders** — per-screen loading composables, fade-to-content transition | 🟢 Low | 🟡 Medium |
+| 21 | **Add error states** — error cards with retry actions on all data screens | 🟢 Low | 🟡 Medium |
+| 22 | **Add shared element transitions** — entity card → detail navigation | 🟡 Medium | 🟢 Low |
+| 23 | **Improve capture flow** — one-tap quick capture, smart defaults, camera-first option | 🟡 Medium | 🟡 High |
+| 24 | **Make onboarding skippable** — reduce to 3 steps (Welcome → Permissions → Go) + skip button | 🟢 Low | 🟡 Medium |
+
+### Phase 6: Advanced Features (Week 9+)
+
+| # | Task | Effort | Impact |
+|---|------|--------|--------|
+| 25 | **Cloud sync** — design sync protocol, add backend, conflict resolution, offline-first | 🔴 High | 🟡 High |
+| 26 | **Export to Zotero/Mendeley** — RIS/BibTeX format, citation formatting (APA, MLA, Chicago) | 🟡 Medium | 🟢 Low |
+| 27 | **Add templates** — template entity, pre-fill from templates, save observations as templates | 🟡 Medium | 🟡 Medium |
+| 28 | **Add timer/stopwatch** — behavioral observation timer with lap recording | 🟡 Medium | 🟢 Low |
+| 29 | **Add chart library** (Vico) — interactive tooltips, tap-to-drill, animations, accessibility | 🟡 Medium | 🟡 Medium |
+| 30 | **Implement local on-device model** — TensorFlow Lite downloader + inference engine | 🔴 High | 🟢 Low |
+
+---
+
+## 9. Priority Matrix
+
+| Priority | Task | Effort | Impact | Current Status |
+|----------|------|--------|--------|----------------|
+| 🔴 P0 | Consolidate duplicate workers | Low | 🛡️ Critical | ⚠️ Duplicate code |
+| 🔴 P0 | Fix settings init side-effects | Low | 🛡️ Critical | ❌ Existing |
+| 🔴 P0 | Split `FieldMindScreens.kt` | High | 🔥 High | ❌ Not started |
+| 🔴 P0 | Add dependency injection (Hilt) | Medium | 🔥 High | ❌ Not started |
+| 🟡 P1 | Split DAO into per-feature files | Medium | 🔥 High | ❌ Not started |
+| 🟡 P1 | Migrate to DataStore | Medium | 🟡 Medium | ❌ Not started |
+| 🟡 P1 | Add FTS for search | Medium | 🟡 Medium | ❌ Not started |
+| 🟡 P1 | Fix tag sync | Medium | 🟡 Medium | ❌ Not started |
+| 🟡 P1 | Add privacy lock | Medium | 🟡 Medium | ❌ Placeholder only |
+| 🟡 P1 | Add offline attachment copy | Medium | 🟡 Medium | ❌ Not started |
+| 🟡 P1 | Add map view | High | 🟡 Medium | ⚠️ Mini-map only |
+| 🟡 P1 | Standardize design system | Low | 🟡 Medium | ⚠️ Inconsistent |
+| 🟢 P2 | Add undo/redo | Medium | 🟡 Medium | ❌ Not started |
+| 🟢 P2 | Add bulk operations | Medium | 🟡 Medium | ❌ Not started |
+| 🟢 P2 | Add skeleton loaders | Low | 🟡 Medium | ❌ Not started |
+| 🟢 P2 | Add timeline view | Medium | 🟢 Low | ❌ Not started |
+| 🟢 P2 | Templates | Medium | 🟢 Low | ❌ Not started |
+| 🟢 P2 | Cloud sync | High | 🟡 Medium | ❌ Not started |
+
+---
+
+## 10. Key Metrics
+
+| Metric | Value |
+|--------|-------|
+| Total entities | 19 (10 data + 9 cross-reference) |
+| Room database version | 6 |
+| Migration strategy | Destructive fallback ⚠️ |
+| Settings keys | 33 SharedPreferences keys |
+| Screen files | 3 (1 monolithic ⚠️ + 2 dedicated) |
+| Backup implementations | 2 duplicate ⚠️ |
+| Streak implementations | 2 fragmented ⚠️ |
+| AI providers | 2 (Gemini + OpenAI) |
+| Export formats | 6 (Markdown, CSV, JSON, PNG, SVG, PDF) |
+| Navigation routes | 17+ composable destinations |
+| Chart types | 6 (bar, line, donut, breakdown, knowledge graph, mini-map) |
+| Achievement milestones | 10 |
+| SM-2 implementation | Complete ✅ |
+| Haptic feedback | Present ✅ |
+| Tablet adaptation | Present ✅ |
+| Dark mode | Present ✅ |
+| Dependency injection | Missing ❌ |
+| Unit tests | Missing ❌ |
 
 ---
 
 ## Summary
 
-The FieldMind app has a **solid data model** and **good conceptual foundation** (research workflow: Observe → Question → Hypothesize → Collect Data → Analyze → Report). However, it suffers from:
+The FieldMind feature has **significantly matured** with implemented SM-2 flashcards, auto-backup, reminders, streak tracking, AI assistant with retry logic, and comprehensive export. The **core data model is excellent** — 19 entities with cross-references, soft-delete, and full reactive data flow.
 
-1. **One massive 260K+ character file** that's unmaintainable
-2. **Multiple placeholder features** (local model, privacy lock, auto-backup, streaks, reminders) that have settings but no implementation
-3. **No dependency injection** making testing impossible
-4. **Overloaded ViewModels and screens** that handle too many concerns
-5. **Missing map view** despite having GPS data
-6. **Basic search** without FTS
-7. **Inconsistent design system** with mixed spacing and radius values
+However, the codebase now has **critical architectural debt**:
+1. **Duplicate implementations** — two backup workers and two streak trackers that could diverge
+2. **Monolithic 262K+ character file** that grows more unmanageable with every feature
+3. **No dependency injection** preventing testing
+4. **Settings with constructor side-effects** that schedule background jobs on every access
+5. **Single ViewModel, DAO, repository, and entities file** violating separation of concerns
+6. **Placeholder features** (privacy lock, local model) with settings but no implementation
 
-The highest-impact improvements would be splitting the monolithic file, adding DI, implementing the placeholder features, and adding a map view.
+The highest-impact immediate actions: consolidate the duplicates, fix the settings init issue, then tackle the architectural debt by splitting files and adding DI.
 
 ---
 
-*This analysis was generated on June 12, 2026 by analyzing the full FieldMind codebase.*
+*This analysis was generated on June 12, 2026 by re-analyzing the full FieldMind codebase on `main` (commit `e3fc8cd8`).*
