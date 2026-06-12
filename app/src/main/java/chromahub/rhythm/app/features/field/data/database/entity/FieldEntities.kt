@@ -202,6 +202,14 @@ data class FlashcardEntity(
     val reviewCount: Int = 0,
     val lastReviewedAt: Long? = null,
     val nextReviewAt: Long? = null,
+    /** SM-2 ease factor — lower means harder card (minimum 1.3). */
+    val easeFactor: Double = 2.5,
+    /** SM-2 interval in days until next review. */
+    val intervalDays: Int = 0,
+    /** Number of successful consecutive reviews (SM-2 repetition count). */
+    val repetitionCount: Int = 0,
+    /** Per-deck flashcard mode: "basic" = simple flip, "sm2" = spaced repetition. */
+    val deckMode: String = "basic",
     val archivedAt: Long? = null,
     val deletedAt: Long? = null,
     val createdAt: Long = System.currentTimeMillis(),

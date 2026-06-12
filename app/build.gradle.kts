@@ -1,3 +1,5 @@
+import java.io.File
+import java.security.KeyStore
 import java.util.Properties
 
 plugins {
@@ -63,7 +65,11 @@ android {
         }
     }
 
-    val signingProperties = getProperties(".config/keystore.properties")
+    val rawSigningProperties = getProperties(".config/keystore.properties")
+    val signingProperties = rawSigningProperties?.takeIf { it.hasValidSigningMaterial(rootProject.projectDir) }
+    if (rawSigningProperties != null && signingProperties == null) {
+        logger.warn("Release signing properties were present but invalid; using debug signing fallback for release builds.")
+    }
     val releaseSigning = signingProperties?.let {
         signingConfigs.create("release") {
             keyAlias = it.property("key_alias")
@@ -276,3 +282,20 @@ fun getProperties(fileName: String): Properties? {
 
 fun Properties.property(key: String) =
     this.getProperty(key) ?: "$key missing"
+
+fun Properties.hasValidSigningMaterial(rootDir: File): Boolean {
+    val alias = getProperty("key_alias")?.takeIf { it.isNotBlank() } ?: return false
+    val keyPassword = getProperty("key_password")?.takeIf { it.isNotBlank() } ?: return false
+    val storePassword = getProperty("store_password")?.takeIf { it.isNotBlank() } ?: return false
+    val storePath = getProperty("store_file")?.takeIf { it.isNotBlank() } ?: return false
+    val storeFile = File(storePath).let { if (it.isAbsolute) it else File(rootDir, storePath) }
+    if (!storeFile.isFile || storeFile.length() == 0L) return false
+
+    return listOf(KeyStore.getDefaultType(), "JKS", "PKCS12").distinct().any { type ->
+        runCatching {
+            val keyStore = KeyStore.getInstance(type)
+            storeFile.inputStream().use { keyStore.load(it, storePassword.toCharArray()) }
+            keyStore.containsAlias(alias) && keyStore.getKey(alias, keyPassword.toCharArray()) != null
+        }.getOrDefault(false)
+    }
+}
