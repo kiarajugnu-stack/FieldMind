@@ -9,7 +9,7 @@ import fieldmind.research.app.util.ANRWatchdog
 import fieldmind.research.app.util.CrashReporter
 
 /**
- * Custom Application class for Rhythm Music Player.
+ * Custom Application class for FieldMind.
  * Handles initialization of:
  * - AppSettings
  * - CrashReporter
@@ -17,19 +17,17 @@ import fieldmind.research.app.util.CrashReporter
  * - LeakCanary (debug builds)
  * - ANR Watchdog (debug builds)
  */
-class RhythmApplication : Application() {
+class FieldMindApplication : Application() {
     
     companion object {
-        private const val TAG = "RhythmApplication"
+        private const val TAG = "FieldMindApplication"
         private const val TRIM_MEMORY_RUNNING_MODERATE_LEVEL = 5
         private const val TRIM_MEMORY_RUNNING_LOW_LEVEL = 10
         private const val TRIM_MEMORY_RUNNING_CRITICAL_LEVEL = 15
         private const val TRIM_MEMORY_MODERATE_LEVEL = 60
         private const val TRIM_MEMORY_COMPLETE_LEVEL = 80
         
-        // Static reference to the application instance
-        // Using a static reference is safe for Application class
-        lateinit var instance: RhythmApplication
+        lateinit var instance: FieldMindApplication
             private set
     }
     
@@ -41,45 +39,35 @@ class RhythmApplication : Application() {
         instance = this
         
         Log.d(TAG, "═══════════════════════════════════════════════════")
-        Log.d(TAG, "RhythmApplication onCreate")
+        Log.d(TAG, "FieldMindApplication onCreate")
         Log.d(TAG, "Build Type: ${BuildConfig.BUILD_TYPE}")
         Log.d(TAG, "Version: ${BuildConfig.VERSION_NAME}")
         Log.d(TAG, "═══════════════════════════════════════════════════")
         
-        // Initialize AppSettings early (singleton, uses application context)
         AppSettings.getInstance(applicationContext)
         Log.d(TAG, "✓ AppSettings initialized")
         
-        // Initialize CrashReporter
         CrashReporter.init(this)
         Log.d(TAG, "✓ CrashReporter initialized")
         
-        // Initialize NetworkClient with AppSettings
         fieldmind.research.app.network.NetworkClient.initialize(
             AppSettings.getInstance(applicationContext)
         )
         Log.d(TAG, "✓ NetworkClient initialized")
         
-        // Configure LeakCanary for debug builds
         if (BuildConfig.DEBUG) {
             configureLeakCanary()
             startANRWatchdog()
         }
         
-        Log.d(TAG, "RhythmApplication initialization complete")
+        Log.d(TAG, "FieldMindApplication initialization complete")
     }
     
-    /**
-     * Configure LeakCanary for optimal memory leak detection
-     */
     private fun configureLeakCanary() {
         try {
-            // LeakCanary 2.x auto-configures itself, but we can still apply debug-only tuning.
-            // Reflection keeps main source free from debugImplementation class references.
             val debugConfigClass = Class.forName("fieldmind.research.app.debug.LeakCanaryDebugConfig")
             val applyMethod = debugConfigClass.getDeclaredMethod("applyKnownReferenceMatchers")
             applyMethod.invoke(null)
-
             Log.d(TAG, "✓ LeakCanary configured (auto-init + debug matcher tuning)")
         } catch (_: ClassNotFoundException) {
             Log.d(TAG, "✓ LeakCanary configured (auto-init)")
@@ -88,12 +76,8 @@ class RhythmApplication : Application() {
         }
     }
     
-    /**
-     * Start ANR watchdog to monitor UI thread responsiveness
-     */
     private fun startANRWatchdog() {
         try {
-            // Start with 5 second timeout (standard ANR threshold)
             anrWatchdog = ANRWatchdog(timeoutMs = 5000).apply {
                 start()
             }
@@ -104,12 +88,9 @@ class RhythmApplication : Application() {
     }
     
     override fun onTerminate() {
-        Log.d(TAG, "RhythmApplication onTerminate")
-        
-        // Stop ANR watchdog
+        Log.d(TAG, "FieldMindApplication onTerminate")
         anrWatchdog?.stopWatching()
         anrWatchdog = null
-        
         super.onTerminate()
     }
     
@@ -118,10 +99,6 @@ class RhythmApplication : Application() {
         Log.w(TAG, "═══════════════════════════════════════════════════")
         Log.w(TAG, "LOW MEMORY WARNING!")
         Log.w(TAG, "═══════════════════════════════════════════════════")
-        
-        // Notify app components to clear caches
-        // This could trigger cleanup in repositories, caches, etc.
-        // You can add a broadcast or event here to notify components
     }
     
     override fun onTrimMemory(level: Int) {
@@ -140,18 +117,14 @@ class RhythmApplication : Application() {
         
         Log.w(TAG, "onTrimMemory: $levelName")
         
-        // Perform cleanup based on memory pressure level
         when (level) {
             TRIM_MEMORY_RUNNING_CRITICAL_LEVEL,
             TRIM_MEMORY_COMPLETE_LEVEL -> {
                 Log.w(TAG, "Critical memory pressure - performing aggressive cleanup")
-                // Trigger aggressive cleanup
-                // You can broadcast an event here for repositories to clear caches
             }
             TRIM_MEMORY_RUNNING_LOW_LEVEL,
             TRIM_MEMORY_MODERATE_LEVEL -> {
                 Log.w(TAG, "Moderate memory pressure - performing standard cleanup")
-                // Trigger standard cleanup
             }
         }
     }
