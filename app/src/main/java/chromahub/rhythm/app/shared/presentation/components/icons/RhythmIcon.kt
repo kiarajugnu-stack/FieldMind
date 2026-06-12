@@ -4,7 +4,7 @@ import android.content.Context
 import android.graphics.Typeface
 import android.os.Build
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -177,23 +177,23 @@ fun Icon(
         opticalSize = size.value * MaterialSymbolGlyphScale
     )
 
-    BoxWithConstraints(
-        modifier = modifier.semantics(mergeDescendants = true) {
-            if (contentDescription != null) {
-                this.contentDescription = contentDescription
-            }
-            this.role = Role.Image
-        },
+    Box(
+        modifier = modifier
+            .size(size)
+            .semantics(mergeDescendants = true) {
+                if (contentDescription != null) {
+                    this.contentDescription = contentDescription
+                }
+                this.role = Role.Image
+            },
         contentAlignment = Alignment.Center
     ) {
-        // `size` is authoritative: never let a bounded slot inflate the glyph beyond the
-        // requested size (it may still shrink to fit a smaller slot).
-        val slotSize = if (maxWidth != Dp.Infinity && maxHeight != Dp.Infinity) {
-            minOf(maxWidth, maxHeight, size)
-        } else {
-            size
-        }
-        val glyphSize = slotSize * MaterialSymbolGlyphScale
+        // Keep Material Symbol icons on a concrete, fixed-size layout node. Components such
+        // as FlowRow query child intrinsics while arranging rows, and SubcomposeLayout-based
+        // wrappers (BoxWithConstraints, Lazy layouts, TabRow, etc.) cannot answer intrinsic
+        // measurements. A fixed Box avoids those startup crashes and still makes `size` the
+        // authoritative glyph slot.
+        val glyphSize = size * MaterialSymbolGlyphScale
 
         androidx.compose.material3.Text(
             text = icon.name,

@@ -163,8 +163,9 @@ androidComponents {
     onVariants { variant ->
         variant.outputs.forEach { output ->
             val signatureLabel = if (unsignedApkOnly) "unsigned" else "signed"
+            val versionName = android.defaultConfig.versionName.orEmpty().sanitizeForApkFileName()
             output.outputFileName.set(
-                "FieldMind-${android.defaultConfig.versionName}-${variant.name}-$signatureLabel-universal.apk"
+                "FieldMind-$versionName-${variant.name}-$signatureLabel-universal.apk"
             )
         }
     }
@@ -307,15 +308,9 @@ object Version {
 
     fun getVersionName(project: Project): String {
         if (cachedName != null) return cachedName!!
-        val tag = runCatching {
-            val process = ProcessBuilder("git", "describe", "--tags", "--abbrev=0")
-                .directory(project.rootDir)
-                .redirectErrorStream(true)
-                .start()
-            process.inputStream.bufferedReader().readText().trim()
-        }.getOrNull().orEmpty()
+        val tag = gitOutput(project, "describe", "--tags", "--abbrev=0")
 
-        val clean = tag.removePrefix("v").removePrefix("V").trim()
+        val clean = tag?.removePrefix("v")?.removePrefix("V")?.trim().orEmpty()
         if (clean.isNotBlank()) {
             cachedName = clean
             return clean
@@ -326,13 +321,7 @@ object Version {
 
     fun getVersionCode(project: Project): Int {
         if (cachedCode != null) return cachedCode!!
-        val count = runCatching {
-            val process = ProcessBuilder("git", "rev-list", "--count", "HEAD")
-                .directory(project.rootDir)
-                .redirectErrorStream(true)
-                .start()
-            process.inputStream.bufferedReader().readText().trim().toIntOrNull()
-        }.getOrNull()
+        val count = gitOutput(project, "rev-list", "--count", "HEAD")?.toIntOrNull()
 
         if (count != null && count > 0) {
             cachedCode = count
@@ -341,7 +330,21 @@ object Version {
         cachedCode = 1
         return 1
     }
+
+    private fun gitOutput(project: Project, vararg args: String): String? = runCatching {
+        val process = ProcessBuilder(listOf("git", *args))
+            .directory(project.rootDir)
+            .redirectError(ProcessBuilder.Redirect.DISCARD)
+            .start()
+        val output = process.inputStream.bufferedReader().readText().trim()
+        if (process.waitFor() == 0) output.takeIf { it.isNotBlank() } else null
+    }.getOrNull()
 }
+
+fun String.sanitizeForApkFileName(): String =
+    replace(Regex("[\"*:<>?|\r\n]+"), "-")
+        .trim('-', ' ', '.')
+        .ifBlank { "1.0.0" }
 
 fun Properties.hasValidSigningMaterial(rootDir: File): Boolean {
     val alias = getProperty("key_alias")?.takeIf { it.isNotBlank() } ?: return false
