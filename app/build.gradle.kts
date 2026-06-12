@@ -17,7 +17,7 @@ val unsignedApkOnly = providers.gradleProperty("unsignedApkOnly")
     .getOrElse(false)
 
 android {
-    namespace = "chromahub.rhythm.app"
+    namespace = "fieldmind.research.app"
     compileSdk = 37
 
     defaultConfig {
@@ -65,18 +65,22 @@ android {
         }
     }
 
-    val rawSigningProperties = getProperties(".config/keystore.properties")
-    val signingProperties = rawSigningProperties?.takeIf { it.hasValidSigningMaterial(rootProject.projectDir) }
-    if (rawSigningProperties != null && signingProperties == null) {
-        logger.warn("Release signing properties were present but invalid; using debug signing fallback for release builds.")
-    }
-    val releaseSigning = signingProperties?.let {
+    val keystorePath = System.getenv("KEYSTORE_PATH")
+    val keystorePassword = System.getenv("KEYSTORE_PASSWORD")
+    val keyAlias = System.getenv("KEY_ALIAS")
+    val keyPassword = System.getenv("KEY_PASSWORD")
+    val hasSigningConfig = keystorePath != null && keystorePassword != null && keyAlias != null && keyPassword != null
+
+    val releaseSigning = if (hasSigningConfig) {
         signingConfigs.create("release") {
-            keyAlias = it.property("key_alias")
-            keyPassword = it.property("key_password")
-            storePassword = it.property("store_password")
-            storeFile = rootProject.file(it.property("store_file"))
+            storeFile = file(keystorePath!!)
+            storePassword = keystorePassword
+            this.keyAlias = keyAlias
+            this.keyPassword = keyPassword
         }
+    } else {
+        logger.warn("Signing env vars not set; using debug signing fallback for release builds.")
+        null
     }
     defaultConfig {
     }

@@ -1,8 +1,8 @@
-package chromahub.rhythm.app.shared.presentation.components.bottomsheets
+package fieldmind.research.app.shared.presentation.components.bottomsheets
 
-import chromahub.rhythm.app.shared.presentation.components.icons.RhythmIcons
-import chromahub.rhythm.app.shared.presentation.components.icons.MaterialSymbolIcon
-import chromahub.rhythm.app.shared.presentation.components.icons.Icon
+import fieldmind.research.app.shared.presentation.components.icons.RhythmIcons
+import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon
+import fieldmind.research.app.shared.presentation.components.icons.Icon
 
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
@@ -30,14 +30,14 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
-import chromahub.rhythm.app.shared.data.model.Playlist
-import chromahub.rhythm.app.shared.data.model.Song
-import chromahub.rhythm.app.shared.presentation.components.common.M3PlaceholderType
-import chromahub.rhythm.app.util.HapticUtils
-import chromahub.rhythm.app.util.HapticType
-import chromahub.rhythm.app.util.ImageUtils
-import chromahub.rhythm.app.shared.presentation.screens.settings.SettingsSearchBar
-import chromahub.rhythm.app.R
+import fieldmind.research.app.shared.data.model.Playlist
+import fieldmind.research.app.shared.data.model.Song
+import fieldmind.research.app.shared.presentation.components.common.M3PlaceholderType
+import fieldmind.research.app.util.HapticUtils
+import fieldmind.research.app.util.HapticType
+import fieldmind.research.app.util.ImageUtils
+import fieldmind.research.app.shared.presentation.screens.settings.SettingsSearchBar
+import fieldmind.research.app.R
 import kotlinx.coroutines.delay
 import androidx.compose.ui.res.stringResource
 

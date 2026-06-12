@@ -1,9 +1,9 @@
-package chromahub.rhythm.app.util
+package fieldmind.research.app.util
 
 import android.content.Context
 import android.net.Uri
 import android.util.Log
-import chromahub.rhythm.app.shared.data.model.LyricsData
+import fieldmind.research.app.shared.data.model.LyricsData
 import java.io.File
 import java.io.ByteArrayOutputStream
 import java.io.RandomAccessFile

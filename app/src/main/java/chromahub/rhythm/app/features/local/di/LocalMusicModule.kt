@@ -1,8 +1,8 @@
-package chromahub.rhythm.app.features.local.di
+package fieldmind.research.app.features.local.di
 
 import android.content.Context
-import chromahub.rhythm.app.core.domain.repository.MusicRepository as MusicRepositoryInterface
-import chromahub.rhythm.app.features.local.data.repository.MusicRepository
+import fieldmind.research.app.core.domain.repository.MusicRepository as MusicRepositoryInterface
+import fieldmind.research.app.features.local.data.repository.MusicRepository
 
 /**
  * Dependency injection module for local music feature.

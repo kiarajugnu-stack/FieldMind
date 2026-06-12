@@ -1,7 +1,7 @@
-package chromahub.rhythm.app.shared.presentation.components.common
+package fieldmind.research.app.shared.presentation.components.common
 import androidx.compose.ui.platform.LocalContext
-import chromahub.rhythm.app.util.HapticUtils
-import chromahub.rhythm.app.util.HapticType
+import fieldmind.research.app.util.HapticUtils
+import fieldmind.research.app.util.HapticType
 
 
 import androidx.compose.animation.animateColorAsState

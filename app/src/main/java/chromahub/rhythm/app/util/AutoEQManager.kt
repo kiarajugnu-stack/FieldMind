@@ -1,8 +1,8 @@
-package chromahub.rhythm.app.util
+package fieldmind.research.app.util
 
 import android.content.Context
-import chromahub.rhythm.app.shared.data.model.AutoEQDatabase
-import chromahub.rhythm.app.shared.data.model.AutoEQProfile
+import fieldmind.research.app.shared.data.model.AutoEQDatabase
+import fieldmind.research.app.shared.data.model.AutoEQProfile
 import com.google.gson.Gson
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext

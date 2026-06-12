@@ -1,9 +1,9 @@
-package chromahub.rhythm.app.utils
+package fieldmind.research.app.utils
 
 import android.content.Context
 import android.content.Intent
 import android.util.Log
-import chromahub.rhythm.app.shared.data.model.Song
+import fieldmind.research.app.shared.data.model.Song
 
 /**
  * StatusBroadcaster handles broadcasting playback status to third-party apps

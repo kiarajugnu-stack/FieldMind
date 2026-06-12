@@ -1,8 +1,8 @@
-package chromahub.rhythm.app.features.streaming.presentation.screens
+package fieldmind.research.app.features.streaming.presentation.screens
 
-import chromahub.rhythm.app.shared.presentation.components.icons.RhythmIcons
-import chromahub.rhythm.app.shared.presentation.components.icons.MaterialSymbolIcon
-import chromahub.rhythm.app.shared.presentation.components.icons.Icon
+import fieldmind.research.app.shared.presentation.components.icons.RhythmIcons
+import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon
+import fieldmind.research.app.shared.presentation.components.icons.Icon
 
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.core.animateFloatAsState
@@ -21,15 +21,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import chromahub.rhythm.app.core.domain.model.StreamingQuality
-import chromahub.rhythm.app.shared.data.model.AppSettings
-import chromahub.rhythm.app.features.streaming.presentation.viewmodel.StreamingMusicViewModel
-import chromahub.rhythm.app.shared.presentation.components.common.CollapsibleHeaderScreen
-import chromahub.rhythm.app.shared.presentation.components.Material3SettingsGroup
-import chromahub.rhythm.app.shared.presentation.components.Material3SettingsItem
-import chromahub.rhythm.app.shared.presentation.screens.settings.TunerAnimatedSwitch
-import chromahub.rhythm.app.util.HapticUtils
-import chromahub.rhythm.app.util.HapticType
+import fieldmind.research.app.core.domain.model.StreamingQuality
+import fieldmind.research.app.shared.data.model.AppSettings
+import fieldmind.research.app.features.streaming.presentation.viewmodel.StreamingMusicViewModel
+import fieldmind.research.app.shared.presentation.components.common.CollapsibleHeaderScreen
+import fieldmind.research.app.shared.presentation.components.Material3SettingsGroup
+import fieldmind.research.app.shared.presentation.components.Material3SettingsItem
+import fieldmind.research.app.shared.presentation.screens.settings.TunerAnimatedSwitch
+import fieldmind.research.app.util.HapticUtils
+import fieldmind.research.app.util.HapticType
 import android.content.Context
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.material3.BottomSheetDefaults
@@ -40,13 +40,13 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.ui.unit.dp
-import chromahub.rhythm.app.features.streaming.presentation.model.StreamingServiceOptions
-import chromahub.rhythm.app.util.AppRestarter
-import chromahub.rhythm.app.shared.presentation.components.dialogs.AppRestartDialog
-import chromahub.rhythm.app.core.utils.NetworkUtils
-import chromahub.rhythm.app.shared.presentation.components.bottomsheets.StandardBottomSheetHeader
+import fieldmind.research.app.features.streaming.presentation.model.StreamingServiceOptions
+import fieldmind.research.app.util.AppRestarter
+import fieldmind.research.app.shared.presentation.components.dialogs.AppRestartDialog
+import fieldmind.research.app.core.utils.NetworkUtils
+import fieldmind.research.app.shared.presentation.components.bottomsheets.StandardBottomSheetHeader
 import androidx.compose.ui.text.style.TextOverflow
-import chromahub.rhythm.app.features.streaming.presentation.model.StreamingServiceOption
+import fieldmind.research.app.features.streaming.presentation.model.StreamingServiceOption
 import androidx.annotation.StringRes
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
@@ -54,7 +54,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.stringResource
-import chromahub.rhythm.app.R
+import fieldmind.research.app.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -276,7 +276,7 @@ fun GoSettingsScreen(
             },
             title = {
                 Text(
-                    text = stringResource(id = chromahub.rhythm.app.R.string.streaming_settings_switch_provider_confirm_title),
+                    text = stringResource(id = fieldmind.research.app.R.string.streaming_settings_switch_provider_confirm_title),
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold
                 )
@@ -285,7 +285,7 @@ fun GoSettingsScreen(
                 val currentLabel = selectedServiceLabel(selectedService, context)
                 val pendingLabel = selectedServiceLabel(pendingId, context)
                 Text(
-                    text = stringResource(id = chromahub.rhythm.app.R.string.streaming_settings_switch_provider_confirm_desc, currentLabel, pendingLabel),
+                    text = stringResource(id = fieldmind.research.app.R.string.streaming_settings_switch_provider_confirm_desc, currentLabel, pendingLabel),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -299,12 +299,12 @@ fun GoSettingsScreen(
                     pendingServiceSelection = null
                     showServiceSheet = false
                 }) {
-                    Text(text = stringResource(id = chromahub.rhythm.app.R.string.action_switch))
+                    Text(text = stringResource(id = fieldmind.research.app.R.string.action_switch))
                 }
             },
             dismissButton = {
                 OutlinedButton(onClick = { pendingServiceSelection = null }) {
-                    Text(text = stringResource(id = chromahub.rhythm.app.R.string.action_cancel))
+                    Text(text = stringResource(id = fieldmind.research.app.R.string.action_cancel))
                 }
             }
         )
@@ -344,9 +344,9 @@ private fun StreamingStatusCard(
     serverUrl: String
 ) {
     val badgeText = when {
-        isLoading -> stringResource(id = chromahub.rhythm.app.R.string.streaming_status_badge_refreshing)
-        isConnected -> stringResource(id = chromahub.rhythm.app.R.string.streaming_status_badge_connected)
-        else -> stringResource(id = chromahub.rhythm.app.R.string.streaming_status_badge_pending)
+        isLoading -> stringResource(id = fieldmind.research.app.R.string.streaming_status_badge_refreshing)
+        isConnected -> stringResource(id = fieldmind.research.app.R.string.streaming_status_badge_connected)
+        else -> stringResource(id = fieldmind.research.app.R.string.streaming_status_badge_pending)
     }
 
     val badgeContainerColor = when {
@@ -437,7 +437,7 @@ private fun StreamingStatusCard(
                 )
             } else {
                 Text(
-                    text = stringResource(id = chromahub.rhythm.app.R.string.streaming_status_connect_hint),
+                    text = stringResource(id = fieldmind.research.app.R.string.streaming_status_connect_hint),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.9f)
                 )
@@ -449,7 +449,7 @@ private fun StreamingStatusCard(
 @Composable
 private fun ServiceSelectionBottomSheet(
     selectedService: String,
-    sessions: Map<String, chromahub.rhythm.app.features.streaming.data.repository.StreamingServiceSession>,
+    sessions: Map<String, fieldmind.research.app.features.streaming.data.repository.StreamingServiceSession>,
     onDismiss: () -> Unit,
     onSelect: (String) -> Unit
 ) {
@@ -464,8 +464,8 @@ private fun ServiceSelectionBottomSheet(
         modifier = Modifier.fillMaxWidth()
     ) {
         StandardBottomSheetHeader(
-            title = stringResource(id = chromahub.rhythm.app.R.string.streaming_settings_preferred_service),
-            subtitle = stringResource(id = chromahub.rhythm.app.R.string.streaming_settings_service_sheet_desc),
+            title = stringResource(id = fieldmind.research.app.R.string.streaming_settings_preferred_service),
+            subtitle = stringResource(id = fieldmind.research.app.R.string.streaming_settings_service_sheet_desc),
             visible = true
         )
         Column(
@@ -528,9 +528,9 @@ private fun ServiceSelectionBottomSheet(
                             )
                             Text(
                                 text = if (isConnected) {
-                                    stringResource(id = chromahub.rhythm.app.R.string.streaming_status_connected)
+                                    stringResource(id = fieldmind.research.app.R.string.streaming_status_connected)
                                 } else {
-                                    stringResource(id = chromahub.rhythm.app.R.string.streaming_status_not_connected)
+                                    stringResource(id = fieldmind.research.app.R.string.streaming_status_not_connected)
                                 },
                                 style = MaterialTheme.typography.bodySmall,
                                 color = if (isSelected) {
@@ -575,8 +575,8 @@ private fun QualitySelectionBottomSheet(
         modifier = Modifier.fillMaxWidth()
     ) {
         StandardBottomSheetHeader(
-            title = stringResource(id = chromahub.rhythm.app.R.string.streaming_settings_quality),
-            subtitle = stringResource(id = chromahub.rhythm.app.R.string.streaming_settings_quality_sheet_desc),
+            title = stringResource(id = fieldmind.research.app.R.string.streaming_settings_quality),
+            subtitle = stringResource(id = fieldmind.research.app.R.string.streaming_settings_quality_sheet_desc),
             visible = true
         )
         Column(
@@ -589,10 +589,10 @@ private fun QualitySelectionBottomSheet(
             Spacer(modifier = Modifier.height(8.dp))
 
             val streamingQualityOptions = listOf(
-                Pair("LOW", chromahub.rhythm.app.R.string.streaming_quality_low),
-                Pair("NORMAL", chromahub.rhythm.app.R.string.streaming_quality_normal),
-                Pair("HIGH", chromahub.rhythm.app.R.string.streaming_quality_high),
-                Pair("LOSSLESS", chromahub.rhythm.app.R.string.streaming_quality_lossless)
+                Pair("LOW", fieldmind.research.app.R.string.streaming_quality_low),
+                Pair("NORMAL", fieldmind.research.app.R.string.streaming_quality_normal),
+                Pair("HIGH", fieldmind.research.app.R.string.streaming_quality_high),
+                Pair("LOSSLESS", fieldmind.research.app.R.string.streaming_quality_lossless)
             )
 
             streamingQualityOptions.forEach { option ->
@@ -664,5 +664,5 @@ private fun QualitySelectionBottomSheet(
 
 private fun selectedServiceLabel(selectedService: String, context: Context): String {
     val matching = StreamingServiceOptions.defaults.firstOrNull { it.id == selectedService }
-    return matching?.let { context.getString(it.nameRes) } ?: context.getString(chromahub.rhythm.app.R.string.streaming_not_selected)
+    return matching?.let { context.getString(it.nameRes) } ?: context.getString(fieldmind.research.app.R.string.streaming_not_selected)
 }

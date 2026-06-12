@@ -1,4 +1,4 @@
-package chromahub.rhythm.app.shared.presentation.components
+package fieldmind.research.app.shared.presentation.components
 
 /**
  * Enum representing the media scanning mode for filtering music library

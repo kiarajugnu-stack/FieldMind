@@ -1,8 +1,8 @@
-package chromahub.rhythm.app.util
+package fieldmind.research.app.util
 
 import android.content.Context
 import android.net.Uri
-import chromahub.rhythm.app.shared.data.model.AutoEQProfile
+import fieldmind.research.app.shared.data.model.AutoEQProfile
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.BufferedReader

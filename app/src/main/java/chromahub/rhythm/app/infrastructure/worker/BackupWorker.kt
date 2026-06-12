@@ -1,11 +1,11 @@
-package chromahub.rhythm.app.worker
+package fieldmind.research.app.worker
 
 import android.content.Context
 import android.os.Environment
 import android.util.Log
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
-import chromahub.rhythm.app.shared.data.model.AppSettings
+import fieldmind.research.app.shared.data.model.AppSettings
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File

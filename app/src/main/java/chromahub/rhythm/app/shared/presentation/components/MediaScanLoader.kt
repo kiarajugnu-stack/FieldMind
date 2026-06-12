@@ -1,4 +1,4 @@
-package chromahub.rhythm.app.shared.presentation.components
+package fieldmind.research.app.shared.presentation.components
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.LinearEasing
@@ -31,8 +31,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import chromahub.rhythm.app.shared.presentation.components.icons.Icon
-import chromahub.rhythm.app.shared.presentation.components.icons.MaterialSymbolIcon
+import fieldmind.research.app.shared.presentation.components.icons.Icon
+import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -62,10 +62,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.material3.LinearWavyProgressIndicator
-import chromahub.rhythm.app.R
-import chromahub.rhythm.app.shared.presentation.components.common.MediaScanningLoader
-import chromahub.rhythm.app.shared.presentation.components.icons.RhythmIcons
-import chromahub.rhythm.app.features.local.presentation.viewmodel.MusicViewModel
+import fieldmind.research.app.R
+import fieldmind.research.app.shared.presentation.components.common.MediaScanningLoader
+import fieldmind.research.app.shared.presentation.components.icons.RhythmIcons
+import fieldmind.research.app.features.local.presentation.viewmodel.MusicViewModel
 import kotlinx.coroutines.delay
 import android.util.Log
 import kotlin.math.PI
@@ -399,7 +399,7 @@ private fun MediaScanStats(
 
 @Composable
 private fun StatItem(
-    icon: chromahub.rhythm.app.shared.presentation.components.icons.MaterialSymbolIcon,
+    icon: fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon,
     count: Int,
     label: String,
     color: Color

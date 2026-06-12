@@ -1,13 +1,13 @@
-package chromahub.rhythm.app.features.field.presentation.viewmodel
+package fieldmind.research.app.features.field.presentation.viewmodel
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import chromahub.rhythm.app.features.field.data.database.FieldMindDatabase
-import chromahub.rhythm.app.features.field.data.database.entity.*
-import chromahub.rhythm.app.features.field.data.repository.FieldMindRepository
-import chromahub.rhythm.app.features.field.data.export.FieldMindExport
-import chromahub.rhythm.app.features.field.data.settings.FieldMindSettings
+import fieldmind.research.app.features.field.data.database.FieldMindDatabase
+import fieldmind.research.app.features.field.data.database.entity.*
+import fieldmind.research.app.features.field.data.repository.FieldMindRepository
+import fieldmind.research.app.features.field.data.export.FieldMindExport
+import fieldmind.research.app.features.field.data.settings.FieldMindSettings
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn

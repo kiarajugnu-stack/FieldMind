@@ -1,8 +1,8 @@
-package chromahub.rhythm.app.shared.presentation.components.bottomsheets
+package fieldmind.research.app.shared.presentation.components.bottomsheets
 
-import chromahub.rhythm.app.shared.presentation.components.icons.RhythmIcons
-import chromahub.rhythm.app.shared.presentation.components.icons.MaterialSymbolIcon
-import chromahub.rhythm.app.shared.presentation.components.icons.Icon
+import fieldmind.research.app.shared.presentation.components.icons.RhythmIcons
+import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon
+import fieldmind.research.app.shared.presentation.components.icons.Icon
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
@@ -49,12 +49,12 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import chromahub.rhythm.app.shared.data.model.LyricsData
-import chromahub.rhythm.app.util.HapticUtils
-import chromahub.rhythm.app.util.HapticType
+import fieldmind.research.app.shared.data.model.LyricsData
+import fieldmind.research.app.util.HapticUtils
+import fieldmind.research.app.util.HapticType
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import chromahub.rhythm.app.R
+import fieldmind.research.app.R
 import androidx.compose.ui.res.stringResource
 
 private data class ControlAction(

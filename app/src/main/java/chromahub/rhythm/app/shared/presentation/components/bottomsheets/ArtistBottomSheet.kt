@@ -1,7 +1,7 @@
-package chromahub.rhythm.app.shared.presentation.components.bottomsheets
+package fieldmind.research.app.shared.presentation.components.bottomsheets
 
-import chromahub.rhythm.app.shared.presentation.components.icons.RhythmIcons
-import chromahub.rhythm.app.shared.presentation.components.icons.Icon
+import fieldmind.research.app.shared.presentation.components.icons.RhythmIcons
+import fieldmind.research.app.shared.presentation.components.icons.Icon
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -23,8 +23,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.ContentScale
-import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveShapeTarget
-import chromahub.rhythm.app.shared.presentation.components.common.rememberExpressiveShapeFor
+import fieldmind.research.app.shared.presentation.components.common.ExpressiveShapeTarget
+import fieldmind.research.app.shared.presentation.components.common.rememberExpressiveShapeFor
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.font.FontWeight
@@ -35,20 +35,20 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.launch
-import chromahub.rhythm.app.shared.data.model.AppSettings
-import chromahub.rhythm.app.shared.data.model.Album
-import chromahub.rhythm.app.shared.data.model.Artist
-import chromahub.rhythm.app.shared.data.model.Song
-import chromahub.rhythm.app.shared.presentation.components.player.PlayingEqIcon
-import chromahub.rhythm.app.shared.presentation.components.common.M3PlaceholderType
-import chromahub.rhythm.app.shared.presentation.components.player.formatDuration
-import chromahub.rhythm.app.util.ImageUtils
-import chromahub.rhythm.app.util.HapticUtils
-import chromahub.rhythm.app.util.HapticType
-import chromahub.rhythm.app.features.local.presentation.viewmodel.MusicViewModel
-import chromahub.rhythm.app.R
-import chromahub.rhythm.app.shared.presentation.components.Material3SettingsGroup
-import chromahub.rhythm.app.shared.presentation.components.Material3SettingsItem
+import fieldmind.research.app.shared.data.model.AppSettings
+import fieldmind.research.app.shared.data.model.Album
+import fieldmind.research.app.shared.data.model.Artist
+import fieldmind.research.app.shared.data.model.Song
+import fieldmind.research.app.shared.presentation.components.player.PlayingEqIcon
+import fieldmind.research.app.shared.presentation.components.common.M3PlaceholderType
+import fieldmind.research.app.shared.presentation.components.player.formatDuration
+import fieldmind.research.app.util.ImageUtils
+import fieldmind.research.app.util.HapticUtils
+import fieldmind.research.app.util.HapticType
+import fieldmind.research.app.features.local.presentation.viewmodel.MusicViewModel
+import fieldmind.research.app.R
+import fieldmind.research.app.shared.presentation.components.Material3SettingsGroup
+import fieldmind.research.app.shared.presentation.components.Material3SettingsItem
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 
@@ -104,7 +104,7 @@ fun ArtistBottomSheet(
 
     val splitArtistNames: (String) -> List<String> = remember {
         { artistName ->
-            chromahub.rhythm.app.util.ArtistSeparator.splitArtistNames(
+            fieldmind.research.app.util.ArtistSeparator.splitArtistNames(
                 artistName = artistName,
                 delimiters = appSettings.artistSeparatorDelimiters.value,
                 enabled = appSettings.artistSeparatorEnabled.value

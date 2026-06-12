@@ -1,4 +1,4 @@
-package chromahub.rhythm.app.infrastructure.service
+package fieldmind.research.app.infrastructure.service
 
 import android.app.PendingIntent
 import android.content.Intent
@@ -20,8 +20,8 @@ import androidx.media3.common.MediaMetadata
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.common.ForwardingPlayer
-import chromahub.rhythm.app.shared.data.model.TransitionSettings
-import chromahub.rhythm.app.shared.data.model.TransitionMode
+import fieldmind.research.app.shared.data.model.TransitionSettings
+import fieldmind.research.app.shared.data.model.TransitionMode
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.DefaultRenderersFactory
@@ -33,13 +33,13 @@ import androidx.media3.session.MediaSession
 import androidx.media3.session.SessionCommand
 import androidx.media3.session.SessionError
 import androidx.media3.session.SessionResult
-import chromahub.rhythm.app.activities.MainActivity
-import chromahub.rhythm.app.shared.data.model.AppSettings
-import chromahub.rhythm.app.shared.data.model.Song
-import chromahub.rhythm.app.infrastructure.service.player.RhythmPlayerEngine
-import chromahub.rhythm.app.infrastructure.service.player.TransitionController
-import chromahub.rhythm.app.infrastructure.service.player.PreloadController
-import chromahub.rhythm.app.infrastructure.widget.WidgetUpdater
+import fieldmind.research.app.activities.MainActivity
+import fieldmind.research.app.shared.data.model.AppSettings
+import fieldmind.research.app.shared.data.model.Song
+import fieldmind.research.app.infrastructure.service.player.RhythmPlayerEngine
+import fieldmind.research.app.infrastructure.service.player.TransitionController
+import fieldmind.research.app.infrastructure.service.player.PreloadController
+import fieldmind.research.app.infrastructure.widget.WidgetUpdater
 import com.google.common.collect.ImmutableList
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
@@ -52,14 +52,14 @@ import androidx.core.app.NotificationCompat
 import androidx.media3.common.AudioAttributes as ExoAudioAttributes
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
-import chromahub.rhythm.app.util.GsonUtils
-import chromahub.rhythm.app.shared.data.model.Playlist
+import fieldmind.research.app.util.GsonUtils
+import fieldmind.research.app.shared.data.model.Playlist
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import chromahub.rhythm.app.shared.data.repository.PlaybackStatsRepository
-import chromahub.rhythm.app.shared.data.repository.StatsTimeRange
-import chromahub.rhythm.app.shared.presentation.screens.settings.rhythmGuardFormatDurationFromMinutes
-import chromahub.rhythm.app.activities.RhythmGuardTimeoutActivity
+import fieldmind.research.app.shared.data.repository.PlaybackStatsRepository
+import fieldmind.research.app.shared.data.repository.StatsTimeRange
+import fieldmind.research.app.shared.presentation.screens.settings.rhythmGuardFormatDurationFromMinutes
+import fieldmind.research.app.activities.RhythmGuardTimeoutActivity
 
 @OptIn(UnstableApi::class)
 class MediaPlaybackService : MediaLibraryService(), Player.Listener {
@@ -99,8 +99,8 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
     private var equalizer: android.media.audiofx.Equalizer? = null
     
     // Rhythm audio processors (replaced Android BassBoost and Spatializer for better quality)
-    private var rhythmBassBoostProcessor: chromahub.rhythm.app.infrastructure.audio.RhythmBassBoostProcessor? = null
-    private var rhythmSpatializationProcessor: chromahub.rhythm.app.infrastructure.audio.RhythmSpatializationProcessor? = null
+    private var rhythmBassBoostProcessor: fieldmind.research.app.infrastructure.audio.RhythmBassBoostProcessor? = null
+    private var rhythmSpatializationProcessor: fieldmind.research.app.infrastructure.audio.RhythmSpatializationProcessor? = null
     
     private var virtualizerStrength: Short = 0 // Store strength for virtualizer
     private var isInitializingAudioEffects: Boolean = false // Prevent concurrent initialization
@@ -120,7 +120,7 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
     private val favoriteChangeReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
             when (intent?.action) {
-                "chromahub.rhythm.app.action.FAVORITE_CHANGED" -> {
+                "fieldmind.research.app.action.FAVORITE_CHANGED" -> {
                     Log.d(TAG, "Received favorite change notification from ViewModel")
                     // Update notification custom layout
                     scheduleCustomLayoutUpdate(250) // Longer delay for external changes
@@ -145,8 +145,8 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
         }
     }
 
-    private var btInfo: chromahub.rhythm.app.util.BtCodecInfo? = null
-    private var btProxy: chromahub.rhythm.app.util.BtCodecInfo.Companion.Proxy? = null
+    private var btInfo: fieldmind.research.app.util.BtCodecInfo? = null
+    private var btProxy: fieldmind.research.app.util.BtCodecInfo.Companion.Proxy? = null
 
     var currentLyricTexts: List<String> = emptyList()
     var currentLyricTimestamps: LongArray = longArrayOf()
@@ -158,7 +158,7 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
         currentLyricTimestamps = longArrayOf()
         currentPlainLyricsLines = emptyList()
         currentLyricIndex = -1
-        chromahub.rhythm.app.infrastructure.widget.glance.GlanceWidgetUpdater.updateLyrics(this, emptyList(), -1)
+        fieldmind.research.app.infrastructure.widget.glance.GlanceWidgetUpdater.updateLyrics(this, emptyList(), -1)
     }
 
     private val btReceiver = object : BroadcastReceiver() {
@@ -172,7 +172,7 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
                     @Suppress("DEPRECATION")
                     intent.getParcelableExtra("android.bluetooth.extra.CODEC_STATUS") as? android.bluetooth.BluetoothCodecStatus
                 }
-                val newBtInfo = chromahub.rhythm.app.util.BtCodecInfo.fromCodecConfig(codecStatus?.codecConfig)
+                val newBtInfo = fieldmind.research.app.util.BtCodecInfo.fromCodecConfig(codecStatus?.codecConfig)
                 if (newBtInfo != null && newBtInfo != btInfo) {
                     btInfo = newBtInfo
                     Log.d(TAG, "New Bluetooth codec config: $btInfo")
@@ -184,7 +184,7 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
         }
     }
 
-    private fun showCodecNotification(info: chromahub.rhythm.app.util.BtCodecInfo) {
+    private fun showCodecNotification(info: fieldmind.research.app.util.BtCodecInfo) {
         val codecName = info.codec ?: "Unknown"
         val sampleRate = info.sampleRateHz?.let { "$it Hz" } ?: "Unknown Rate"
         val bits = info.bitsPerSample?.let { "$it bits" } ?: ""
@@ -294,7 +294,7 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
         }
 
         val notification = NotificationCompat.Builder(this, "rhythm_guard_alerts")
-            .setSmallIcon(chromahub.rhythm.app.R.drawable.ic_notification)
+            .setSmallIcon(fieldmind.research.app.R.drawable.ic_notification)
             .setContentTitle(title)
             .setContentText(text)
             .setStyle(NotificationCompat.BigTextStyle().bigText(text))
@@ -329,12 +329,12 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
         )
 
         val notification = NotificationCompat.Builder(this, "rhythm_guard_timers")
-            .setSmallIcon(chromahub.rhythm.app.R.drawable.ic_notification)
+            .setSmallIcon(fieldmind.research.app.R.drawable.ic_notification)
             .setContentTitle(title)
             .setContentText(text)
             .setStyle(
                 NotificationCompat.BigTextStyle().bigText(
-                    "$text\n${getString(chromahub.rhythm.app.R.string.settings_rhythm_guard_notification_tap_open)}"
+                    "$text\n${getString(fieldmind.research.app.R.string.settings_rhythm_guard_notification_tap_open)}"
                 )
             )
             .setProgress(safeTotal, completed, false)
@@ -354,19 +354,19 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
 
         val alertChannel = NotificationChannel(
             "rhythm_guard_alerts",
-            getString(chromahub.rhythm.app.R.string.service_rhythm_guard_alerts),
+            getString(fieldmind.research.app.R.string.service_rhythm_guard_alerts),
             NotificationManager.IMPORTANCE_HIGH
         ).apply {
-            description = getString(chromahub.rhythm.app.R.string.service_rhythm_guard_alerts_desc)
+            description = getString(fieldmind.research.app.R.string.service_rhythm_guard_alerts_desc)
             enableVibration(true)
         }
 
         val timerChannel = NotificationChannel(
             "rhythm_guard_timers",
-            getString(chromahub.rhythm.app.R.string.service_rhythm_guard_timers),
+            getString(fieldmind.research.app.R.string.service_rhythm_guard_timers),
             NotificationManager.IMPORTANCE_DEFAULT
         ).apply {
-            description = getString(chromahub.rhythm.app.R.string.service_rhythm_guard_timers_desc)
+            description = getString(fieldmind.research.app.R.string.service_rhythm_guard_timers_desc)
             enableVibration(false)
             setShowBadge(false)
         }
@@ -416,7 +416,7 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
     private lateinit var appSettings: AppSettings
     
     // Status broadcaster for Tasker, KWGT, and other automation apps
-    private lateinit var statusBroadcaster: chromahub.rhythm.app.utils.StatusBroadcaster
+    private lateinit var statusBroadcaster: fieldmind.research.app.utils.StatusBroadcaster
     
     // SharedPreferences keys
     companion object {
@@ -439,53 +439,53 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
         private const val PREF_REPLAY_GAIN = "replay_gain"
         
         // Intent action for updating settings
-        const val ACTION_UPDATE_SETTINGS = "chromahub.rhythm.app.action.UPDATE_SETTINGS"
+        const val ACTION_UPDATE_SETTINGS = "fieldmind.research.app.action.UPDATE_SETTINGS"
         
         // Intent action for playing external files
-        const val ACTION_PLAY_EXTERNAL_FILE = "chromahub.rhythm.app.action.PLAY_EXTERNAL_FILE"
+        const val ACTION_PLAY_EXTERNAL_FILE = "fieldmind.research.app.action.PLAY_EXTERNAL_FILE"
         
         // Intent action for initializing the service
-        const val ACTION_INIT_SERVICE = "chromahub.rhythm.app.action.INIT_SERVICE"
+        const val ACTION_INIT_SERVICE = "fieldmind.research.app.action.INIT_SERVICE"
         
         // Intent actions for sleep timer
-        const val ACTION_START_SLEEP_TIMER = "chromahub.rhythm.app.action.START_SLEEP_TIMER"
-        const val ACTION_STOP_SLEEP_TIMER = "chromahub.rhythm.app.action.STOP_SLEEP_TIMER"
+        const val ACTION_START_SLEEP_TIMER = "fieldmind.research.app.action.START_SLEEP_TIMER"
+        const val ACTION_STOP_SLEEP_TIMER = "fieldmind.research.app.action.STOP_SLEEP_TIMER"
         
         // Intent actions for equalizer
-        const val ACTION_SET_EQUALIZER_ENABLED = "chromahub.rhythm.app.action.SET_EQUALIZER_ENABLED"
-        const val ACTION_SET_EQUALIZER_BAND = "chromahub.rhythm.app.action.SET_EQUALIZER_BAND"
-        const val ACTION_SET_BASS_BOOST = "chromahub.rhythm.app.action.SET_BASS_BOOST"
-        const val ACTION_SET_VIRTUALIZER = "chromahub.rhythm.app.action.SET_VIRTUALIZER"
-        const val ACTION_APPLY_EQUALIZER_PRESET = "chromahub.rhythm.app.action.APPLY_EQUALIZER_PRESET"
-        const val ACTION_GET_EQUALIZER_DIAGNOSTICS = "chromahub.rhythm.app.action.GET_EQUALIZER_DIAGNOSTICS"
+        const val ACTION_SET_EQUALIZER_ENABLED = "fieldmind.research.app.action.SET_EQUALIZER_ENABLED"
+        const val ACTION_SET_EQUALIZER_BAND = "fieldmind.research.app.action.SET_EQUALIZER_BAND"
+        const val ACTION_SET_BASS_BOOST = "fieldmind.research.app.action.SET_BASS_BOOST"
+        const val ACTION_SET_VIRTUALIZER = "fieldmind.research.app.action.SET_VIRTUALIZER"
+        const val ACTION_APPLY_EQUALIZER_PRESET = "fieldmind.research.app.action.APPLY_EQUALIZER_PRESET"
+        const val ACTION_GET_EQUALIZER_DIAGNOSTICS = "fieldmind.research.app.action.GET_EQUALIZER_DIAGNOSTICS"
         
         // Widget control actions
-        const val ACTION_PLAY_PAUSE = "chromahub.rhythm.app.action.PLAY_PAUSE"
-        const val ACTION_SKIP_NEXT = "chromahub.rhythm.app.action.SKIP_NEXT"
-        const val ACTION_SKIP_PREVIOUS = "chromahub.rhythm.app.action.SKIP_PREVIOUS"
-        const val ACTION_TOGGLE_FAVORITE = "chromahub.rhythm.app.action.TOGGLE_FAVORITE"
+        const val ACTION_PLAY_PAUSE = "fieldmind.research.app.action.PLAY_PAUSE"
+        const val ACTION_SKIP_NEXT = "fieldmind.research.app.action.SKIP_NEXT"
+        const val ACTION_SKIP_PREVIOUS = "fieldmind.research.app.action.SKIP_PREVIOUS"
+        const val ACTION_TOGGLE_FAVORITE = "fieldmind.research.app.action.TOGGLE_FAVORITE"
         
         // Broadcast actions for status updates
-        const val BROADCAST_SLEEP_TIMER_STATUS = "chromahub.rhythm.app.broadcast.SLEEP_TIMER_STATUS"
+        const val BROADCAST_SLEEP_TIMER_STATUS = "fieldmind.research.app.broadcast.SLEEP_TIMER_STATUS"
         const val EXTRA_TIMER_ACTIVE = "timer_active"
         const val EXTRA_REMAINING_TIME = "remaining_time"
 
         // Broadcast actions for shuffle updates
-        const val ACTION_SHUFFLE_STATE_CHANGED = "chromahub.rhythm.app.action.SHUFFLE_STATE_CHANGED"
+        const val ACTION_SHUFFLE_STATE_CHANGED = "fieldmind.research.app.action.SHUFFLE_STATE_CHANGED"
         const val EXTRA_SHUFFLE_ENABLED = "shuffle_enabled"
         
         // Audio session ID
-        const val ACTION_GET_AUDIO_SESSION_ID = "chromahub.rhythm.app.action.GET_AUDIO_SESSION_ID"
-        const val BROADCAST_AUDIO_SESSION_ID = "chromahub.rhythm.app.broadcast.AUDIO_SESSION_ID"
+        const val ACTION_GET_AUDIO_SESSION_ID = "fieldmind.research.app.action.GET_AUDIO_SESSION_ID"
+        const val BROADCAST_AUDIO_SESSION_ID = "fieldmind.research.app.broadcast.AUDIO_SESSION_ID"
         const val EXTRA_AUDIO_SESSION_ID = "audio_session_id"
         
         // Mute/Unmute actions (Media3 1.9.0 feature)
-        const val ACTION_MUTE = "chromahub.rhythm.app.action.MUTE"
-        const val ACTION_UNMUTE = "chromahub.rhythm.app.action.UNMUTE"
-        const val ACTION_TOGGLE_MUTE = "chromahub.rhythm.app.action.TOGGLE_MUTE"
+        const val ACTION_MUTE = "fieldmind.research.app.action.MUTE"
+        const val ACTION_UNMUTE = "fieldmind.research.app.action.UNMUTE"
+        const val ACTION_TOGGLE_MUTE = "fieldmind.research.app.action.TOGGLE_MUTE"
 
         // Zero-volume pause broadcast — sent by service, received by UI to show dialog
-        const val ACTION_ZERO_VOLUME_PAUSE = "chromahub.rhythm.app.action.ZERO_VOLUME_PAUSE"
+        const val ACTION_ZERO_VOLUME_PAUSE = "fieldmind.research.app.action.ZERO_VOLUME_PAUSE"
 
         // Playback custom commands
         const val REPEAT_MODE_ALL = "repeat_all"
@@ -496,9 +496,9 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
         const val FAVORITE_ON = "favorite_on"
         const val FAVORITE_OFF = "favorite_off"
 
-        private const val METADATA_EXTRA_ORIGINAL_TITLE = "chromahub.rhythm.app.extra.original_title"
-        private const val METADATA_EXTRA_ORIGINAL_ARTIST = "chromahub.rhythm.app.extra.original_artist"
-        private const val METADATA_EXTRA_ORIGINAL_ALBUM = "chromahub.rhythm.app.extra.original_album"
+        private const val METADATA_EXTRA_ORIGINAL_TITLE = "fieldmind.research.app.extra.original_title"
+        private const val METADATA_EXTRA_ORIGINAL_ARTIST = "fieldmind.research.app.extra.original_artist"
+        private const val METADATA_EXTRA_ORIGINAL_ALBUM = "fieldmind.research.app.extra.original_album"
     }
 
     override fun onCreate() {
@@ -508,7 +508,7 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
 
         setMediaNotificationProvider(
             androidx.media3.session.DefaultMediaNotificationProvider(this).apply {
-                setSmallIcon(chromahub.rhythm.app.R.drawable.ic_notification)
+                setSmallIcon(fieldmind.research.app.R.drawable.ic_notification)
             }
         )
 
@@ -518,14 +518,14 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
         // Try foreground promotion early; on newer Android versions this can be blocked
         // when the service is started from background contexts.
         startForegroundWithNotification(
-            getString(chromahub.rhythm.app.R.string.service_rhythm_music),
-            getString(chromahub.rhythm.app.R.string.service_starting)
+            getString(fieldmind.research.app.R.string.service_rhythm_music),
+            getString(fieldmind.research.app.R.string.service_starting)
         )
 
         // Initialize settings manager (fast operation)
         updateForegroundNotification(
-            getString(chromahub.rhythm.app.R.string.service_rhythm_music),
-            getString(chromahub.rhythm.app.R.string.service_loading_settings)
+            getString(fieldmind.research.app.R.string.service_rhythm_music),
+            getString(fieldmind.research.app.R.string.service_loading_settings)
         )
         appSettings = AppSettings.getInstance(applicationContext)
         
@@ -534,8 +534,8 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
         
         // Initialize Rhythm audio processors early (before player creation)
         try {
-            rhythmBassBoostProcessor = chromahub.rhythm.app.infrastructure.audio.RhythmBassBoostProcessor()
-            rhythmSpatializationProcessor = chromahub.rhythm.app.infrastructure.audio.RhythmSpatializationProcessor()
+            rhythmBassBoostProcessor = fieldmind.research.app.infrastructure.audio.RhythmBassBoostProcessor()
+            rhythmSpatializationProcessor = fieldmind.research.app.infrastructure.audio.RhythmSpatializationProcessor()
             isBassBoostAvailable = true
             appSettings.setBassBoostAvailable(true)
             Log.d(TAG, "Rhythm audio processors initialized early")
@@ -548,14 +548,14 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
         }
         
         // Initialize status broadcaster for Tasker/KWGT
-        statusBroadcaster = chromahub.rhythm.app.utils.StatusBroadcaster(applicationContext)
+        statusBroadcaster = fieldmind.research.app.utils.StatusBroadcaster(applicationContext)
 
         // Register BroadcastReceiver for favorite changes
         updateForegroundNotification(
-            getString(chromahub.rhythm.app.R.string.service_rhythm_music),
-            getString(chromahub.rhythm.app.R.string.service_setup_components)
+            getString(fieldmind.research.app.R.string.service_rhythm_music),
+            getString(fieldmind.research.app.R.string.service_setup_components)
         )
-        val filter = IntentFilter("chromahub.rhythm.app.action.FAVORITE_CHANGED")
+        val filter = IntentFilter("fieldmind.research.app.action.FAVORITE_CHANGED")
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
             registerReceiver(favoriteChangeReceiver, filter, Context.RECEIVER_NOT_EXPORTED)
         } else {
@@ -578,7 +578,7 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
             }
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                btProxy = chromahub.rhythm.app.util.BtCodecInfo.getCodec(this) { info ->
+                btProxy = fieldmind.research.app.util.BtCodecInfo.getCodec(this) { info ->
                     if (info != null) {
                         btInfo = info
                         Log.d(TAG, "First Bluetooth codec config: $btInfo")
@@ -592,28 +592,28 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
         try {
             // Initialize core components on main thread (required for media service)
             updateForegroundNotification(
-                getString(chromahub.rhythm.app.R.string.service_rhythm_music),
-                getString(chromahub.rhythm.app.R.string.service_initializing_player)
+                getString(fieldmind.research.app.R.string.service_rhythm_music),
+                getString(fieldmind.research.app.R.string.service_initializing_player)
             )
             initializePlayer()
 
             updateForegroundNotification(
-                getString(chromahub.rhythm.app.R.string.service_rhythm_music),
-                getString(chromahub.rhythm.app.R.string.service_creating_controls)
+                getString(fieldmind.research.app.R.string.service_rhythm_music),
+                getString(fieldmind.research.app.R.string.service_creating_controls)
             )
             createCustomCommands()
 
             // Create the media session (required synchronously)
             updateForegroundNotification(
-                getString(chromahub.rhythm.app.R.string.service_rhythm_music),
-                getString(chromahub.rhythm.app.R.string.service_setup_media_session)
+                getString(fieldmind.research.app.R.string.service_rhythm_music),
+                getString(fieldmind.research.app.R.string.service_setup_media_session)
             )
             mediaSession = createMediaSession()
 
             // Initialize controller asynchronously to avoid blocking
             updateForegroundNotification(
-                getString(chromahub.rhythm.app.R.string.service_rhythm_music),
-                getString(chromahub.rhythm.app.R.string.service_initializing_controller)
+                getString(fieldmind.research.app.R.string.service_rhythm_music),
+                getString(fieldmind.research.app.R.string.service_initializing_controller)
             )
             createController()
 
@@ -703,7 +703,7 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
                                         val formattedToday = rhythmGuardFormatDurationFromMinutes(currentMinutes)
                                         val formattedLimit = rhythmGuardFormatDurationFromMinutes(effectiveLimitMinutes)
                                         val timeoutReason = getString(
-                                            chromahub.rhythm.app.R.string.settings_rhythm_guard_timeout_reason_auto,
+                                            fieldmind.research.app.R.string.settings_rhythm_guard_timeout_reason_auto,
                                             formattedToday,
                                             formattedLimit
                                         )
@@ -716,7 +716,7 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
 
                                         if (appSettings.rhythmGuardAlertNotificationsEnabled.value) {
                                             showRhythmGuardAlertNotification(
-                                                title = getString(chromahub.rhythm.app.R.string.settings_rhythm_guard_notification_alert_title),
+                                                title = getString(fieldmind.research.app.R.string.settings_rhythm_guard_notification_alert_title),
                                                 text = timeoutReason,
                                                 riskLevel = "HIGH"
                                             )
@@ -724,9 +724,9 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
 
                                         if (appSettings.rhythmGuardTimerNotificationsEnabled.value) {
                                             showRhythmGuardTimerNotification(
-                                                title = getString(chromahub.rhythm.app.R.string.settings_rhythm_guard_notification_timer_active_title),
+                                                title = getString(fieldmind.research.app.R.string.settings_rhythm_guard_notification_timer_active_title),
                                                 text = getString(
-                                                    chromahub.rhythm.app.R.string.settings_rhythm_guard_notification_timer_active_text,
+                                                    fieldmind.research.app.R.string.settings_rhythm_guard_notification_timer_active_text,
                                                     rhythmGuardFormatDurationFromMinutes(breakResumeMinutes)
                                                 ),
                                                 remainingSeconds = breakResumeMinutes.toLong() * 60L,
@@ -763,16 +763,16 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
             }
 
             updateForegroundNotification(
-                getString(chromahub.rhythm.app.R.string.service_rhythm_music),
-                getString(chromahub.rhythm.app.R.string.service_ready)
+                getString(fieldmind.research.app.R.string.service_rhythm_music),
+                getString(fieldmind.research.app.R.string.service_ready)
             )
 
             Log.d(TAG, "Service initialized successfully")
         } catch (e: Exception) {
             Log.e(TAG, "Error initializing service", e)
             updateForegroundNotification(
-                getString(chromahub.rhythm.app.R.string.service_rhythm_music),
-                getString(chromahub.rhythm.app.R.string.service_init_failed)
+                getString(fieldmind.research.app.R.string.service_rhythm_music),
+                getString(fieldmind.research.app.R.string.service_init_failed)
             )
         }
     }
@@ -781,19 +781,19 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
                 CHANNEL_ID,
-                getString(chromahub.rhythm.app.R.string.media3_notification_channel_name),
+                getString(fieldmind.research.app.R.string.media3_notification_channel_name),
                 NotificationManager.IMPORTANCE_LOW
             ).apply {
-                description = getString(chromahub.rhythm.app.R.string.media3_notification_channel_description)
+                description = getString(fieldmind.research.app.R.string.media3_notification_channel_description)
                 setShowBadge(false)
             }
 
             val sleepTimerChannel = NotificationChannel(
                 SLEEP_TIMER_CHANNEL_ID,
-                getString(chromahub.rhythm.app.R.string.notification_sleep_timer_channel_name),
+                getString(fieldmind.research.app.R.string.notification_sleep_timer_channel_name),
                 NotificationManager.IMPORTANCE_DEFAULT
             ).apply {
-                description = getString(chromahub.rhythm.app.R.string.notification_sleep_timer_channel_desc)
+                description = getString(fieldmind.research.app.R.string.notification_sleep_timer_channel_desc)
                 setShowBadge(false)
                 enableVibration(false)
             }
@@ -808,7 +808,7 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
         val notification = NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle(title)
             .setContentText(content)
-            .setSmallIcon(chromahub.rhythm.app.R.drawable.ic_notification)
+            .setSmallIcon(fieldmind.research.app.R.drawable.ic_notification)
             .setOngoing(true)
             .setCategory(NotificationCompat.CATEGORY_SERVICE)
             .build()
@@ -863,7 +863,7 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
         val notification = NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle(title)
             .setContentText(content)
-            .setSmallIcon(chromahub.rhythm.app.R.drawable.ic_notification)
+            .setSmallIcon(fieldmind.research.app.R.drawable.ic_notification)
             .setOngoing(true)
             .setCategory(NotificationCompat.CATEGORY_SERVICE)
             .build()
@@ -1278,12 +1278,12 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
             createCustomIconButton(
                 "Add to favorites",
                 FAVORITE_ON,
-                chromahub.rhythm.app.R.drawable.ic_favorite_border
+                fieldmind.research.app.R.drawable.ic_favorite_border
             ),
             createCustomIconButton(
                 "Remove from favorites",
                 FAVORITE_OFF,
-                chromahub.rhythm.app.R.drawable.ic_favorite_filled
+                fieldmind.research.app.R.drawable.ic_favorite_filled
             )
         )
     }
@@ -1400,7 +1400,7 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
                 }
                 updateFavoritesPlaylist(songId = songId, song = song, isAdding = isAdding)
 
-                val notifyIntent = Intent("chromahub.rhythm.app.action.FAVORITE_CHANGED")
+                val notifyIntent = Intent("fieldmind.research.app.action.FAVORITE_CHANGED")
                 sendBroadcast(notifyIntent)
                 Log.d(TAG, "Sent FAVORITE_CHANGED broadcast to notify ViewModel")
 
@@ -1994,7 +1994,7 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
                 // Extract metadata from the audio file in a background thread
                 val mediaItem = withContext(Dispatchers.IO) {
                     try {
-                        val song = chromahub.rhythm.app.util.MediaUtils.extractMetadataFromUri(this@MediaPlaybackService, uri)
+                        val song = fieldmind.research.app.util.MediaUtils.extractMetadataFromUri(this@MediaPlaybackService, uri)
                         Log.d(TAG, "Extracted metadata for external file: ${song.title} by ${song.artist}")
                         
                         // Create a media item with the extracted metadata
@@ -2190,7 +2190,7 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
                         }
                         
                         currentLyricIndex = -1
-                        chromahub.rhythm.app.infrastructure.widget.glance.GlanceWidgetUpdater.updateLyrics(this@MediaPlaybackService, currentLyricTexts, -1)
+                        fieldmind.research.app.infrastructure.widget.glance.GlanceWidgetUpdater.updateLyrics(this@MediaPlaybackService, currentLyricTexts, -1)
                         SessionResult(SessionResult.RESULT_SUCCESS)
                     }
 
@@ -2200,7 +2200,7 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
                         currentLyricIndex = lyricIndex
                         
                         // Update widgets
-                        chromahub.rhythm.app.infrastructure.widget.glance.GlanceWidgetUpdater.updateLyrics(this@MediaPlaybackService, currentLyricTexts, lyricIndex)
+                        fieldmind.research.app.infrastructure.widget.glance.GlanceWidgetUpdater.updateLyrics(this@MediaPlaybackService, currentLyricTexts, lyricIndex)
                         
                         // Update Bluetooth metadata lyrics
                         if (appSettings.bluetoothLyricsEnabled.value) {
@@ -2690,16 +2690,16 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        val title = getString(chromahub.rhythm.app.R.string.notification_sleep_timer_title)
+        val title = getString(fieldmind.research.app.R.string.notification_sleep_timer_title)
         val timeText = formatSleepTimerDuration(remainingMs)
         val content = if (pauseOnly) {
-            getString(chromahub.rhythm.app.R.string.notification_sleep_timer_pause_in, timeText)
+            getString(fieldmind.research.app.R.string.notification_sleep_timer_pause_in, timeText)
         } else {
-            getString(chromahub.rhythm.app.R.string.notification_sleep_timer_stop_in, timeText)
+            getString(fieldmind.research.app.R.string.notification_sleep_timer_stop_in, timeText)
         }
 
         val notification = NotificationCompat.Builder(this, SLEEP_TIMER_CHANNEL_ID)
-            .setSmallIcon(chromahub.rhythm.app.R.drawable.ic_notification)
+            .setSmallIcon(fieldmind.research.app.R.drawable.ic_notification)
             .setContentTitle(title)
             .setContentText(content)
             .setStyle(NotificationCompat.BigTextStyle().bigText(content))
@@ -2753,7 +2753,7 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
         if (rhythmBassBoostProcessor == null) {
             Log.w(TAG, "Rhythm bass boost processor is null, creating new instance")
             try {
-                rhythmBassBoostProcessor = chromahub.rhythm.app.infrastructure.audio.RhythmBassBoostProcessor()
+                rhythmBassBoostProcessor = fieldmind.research.app.infrastructure.audio.RhythmBassBoostProcessor()
                 isBassBoostAvailable = true
                 appSettings.setBassBoostAvailable(true)
             } catch (e: Exception) {
@@ -2766,7 +2766,7 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
         if (rhythmSpatializationProcessor == null) {
             Log.w(TAG, "Rhythm spatialization processor is null, creating new instance")
             try {
-                rhythmSpatializationProcessor = chromahub.rhythm.app.infrastructure.audio.RhythmSpatializationProcessor()
+                rhythmSpatializationProcessor = fieldmind.research.app.infrastructure.audio.RhythmSpatializationProcessor()
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to create spatialization processor", e)
             }

@@ -1,4 +1,4 @@
-package chromahub.rhythm.app.features.field.presentation.components
+package fieldmind.research.app.features.field.presentation.components
 
 import android.Manifest
 import android.content.ContentValues
@@ -31,7 +31,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
-import chromahub.rhythm.app.shared.presentation.components.icons.Icon
+import fieldmind.research.app.shared.presentation.components.icons.Icon
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date

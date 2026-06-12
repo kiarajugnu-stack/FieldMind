@@ -1,10 +1,10 @@
 @file:OptIn(ExperimentalMaterial3Api::class)
 
-package chromahub.rhythm.app.shared.presentation.components.bottomsheets
+package fieldmind.research.app.shared.presentation.components.bottomsheets
 
-import chromahub.rhythm.app.shared.presentation.components.icons.RhythmIcons
-import chromahub.rhythm.app.shared.presentation.components.icons.MaterialSymbolIcon
-import chromahub.rhythm.app.shared.presentation.components.icons.Icon
+import fieldmind.research.app.shared.presentation.components.icons.RhythmIcons
+import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon
+import fieldmind.research.app.shared.presentation.components.icons.Icon
 
 import android.content.ClipData
 import android.content.ClipboardManager
@@ -24,7 +24,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import chromahub.rhythm.app.shared.presentation.components.common.rhythmMarquee
+import fieldmind.research.app.shared.presentation.components.common.rhythmMarquee
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -87,15 +87,15 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import chromahub.rhythm.app.shared.data.model.AutoEQProfile
-import chromahub.rhythm.app.shared.data.model.UserAudioDevice
-import chromahub.rhythm.app.util.AutoEQImportExport
-import chromahub.rhythm.app.util.HapticUtils
-import chromahub.rhythm.app.util.HapticType
-import chromahub.rhythm.app.features.local.presentation.viewmodel.MusicViewModel
+import fieldmind.research.app.shared.data.model.AutoEQProfile
+import fieldmind.research.app.shared.data.model.UserAudioDevice
+import fieldmind.research.app.util.AutoEQImportExport
+import fieldmind.research.app.util.HapticUtils
+import fieldmind.research.app.util.HapticType
+import fieldmind.research.app.features.local.presentation.viewmodel.MusicViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import chromahub.rhythm.app.R
+import fieldmind.research.app.R
 import androidx.compose.ui.res.stringResource
 
 @Composable

@@ -1,8 +1,8 @@
-package chromahub.rhythm.app.features.streaming.di
+package fieldmind.research.app.features.streaming.di
 
 import android.content.Context
-import chromahub.rhythm.app.features.streaming.data.repository.StreamingMusicRepositoryImpl
-import chromahub.rhythm.app.features.streaming.domain.repository.StreamingMusicRepository
+import fieldmind.research.app.features.streaming.data.repository.StreamingMusicRepositoryImpl
+import fieldmind.research.app.features.streaming.domain.repository.StreamingMusicRepository
 
 /**
  * Dependency injection module for streaming music feature.

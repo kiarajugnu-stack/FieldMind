@@ -1,4 +1,4 @@
-package chromahub.rhythm.app.infrastructure.audio
+package fieldmind.research.app.infrastructure.audio
 
 import android.util.Log
 import androidx.annotation.OptIn

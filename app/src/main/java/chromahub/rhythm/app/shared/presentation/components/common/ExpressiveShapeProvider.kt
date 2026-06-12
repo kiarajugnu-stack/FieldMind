@@ -1,6 +1,6 @@
 @file:OptIn(ExperimentalMaterial3ExpressiveApi::class)
 
-package chromahub.rhythm.app.shared.presentation.components.common
+package fieldmind.research.app.shared.presentation.components.common
 
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -22,7 +22,7 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.graphics.shapes.RoundedPolygon
 import androidx.graphics.shapes.toPath
-import chromahub.rhythm.app.shared.data.model.AppSettings
+import fieldmind.research.app.shared.data.model.AppSettings
 
 /**
  * Enum for shape targets that can be customized with expressive shapes
@@ -208,7 +208,7 @@ object ExpressiveShapeProvider {
      * Get a Compose Shape from a shape ID
      */
     fun getShapeById(shapeId: String, fallback: Shape = CircleShape): Shape {
-        val roundedPolygon = chromahub.rhythm.app.shared.presentation.components.common.getShapeById(shapeId)
+        val roundedPolygon = fieldmind.research.app.shared.presentation.components.common.getShapeById(shapeId)
         return roundedPolygon?.toComposeShape() ?: fallback
     }
     
@@ -216,7 +216,7 @@ object ExpressiveShapeProvider {
      * Check if a given shape ID is valid
      */
     fun isValidShapeId(shapeId: String): Boolean {
-        return chromahub.rhythm.app.shared.presentation.components.common.getShapeById(shapeId) != null
+        return fieldmind.research.app.shared.presentation.components.common.getShapeById(shapeId) != null
     }
     
     /**

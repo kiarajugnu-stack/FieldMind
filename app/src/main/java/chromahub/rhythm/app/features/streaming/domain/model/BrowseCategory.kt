@@ -1,4 +1,4 @@
-package chromahub.rhythm.app.features.streaming.domain.model
+package fieldmind.research.app.features.streaming.domain.model
 
 /**
  * Represents a browse category/genre from a streaming service.

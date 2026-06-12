@@ -1,4 +1,4 @@
-package chromahub.rhythm.app.shared.presentation.screens.player
+package fieldmind.research.app.shared.presentation.screens.player
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.Spring
@@ -41,52 +41,52 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import chromahub.rhythm.app.R
-import chromahub.rhythm.app.shared.presentation.components.bottomsheets.ExtraControlBottomSheet
-import chromahub.rhythm.app.shared.presentation.components.bottomsheets.AddToPlaylistBottomSheet
-import chromahub.rhythm.app.shared.presentation.components.bottomsheets.AlbumBottomSheet
-import chromahub.rhythm.app.shared.presentation.components.bottomsheets.ArtistBottomSheet
-import chromahub.rhythm.app.shared.presentation.components.bottomsheets.PlaybackBottomSheet
-import chromahub.rhythm.app.shared.presentation.components.bottomsheets.QueueBottomSheet
-import chromahub.rhythm.app.shared.presentation.components.bottomsheets.SongInfoBottomSheet
-import chromahub.rhythm.app.shared.presentation.components.dialogs.PlaybackPitchDialog
-import chromahub.rhythm.app.shared.presentation.components.dialogs.PlaybackSpeedDialog
-import chromahub.rhythm.app.shared.presentation.components.player.SleepTimerBottomSheetNew
-import chromahub.rhythm.app.shared.presentation.components.lyrics.LyricsEditorBottomSheet
-import chromahub.rhythm.app.shared.presentation.components.lyrics.SyncedLyricsView
-import chromahub.rhythm.app.shared.presentation.components.lyrics.WordByWordLyricsView
-import chromahub.rhythm.app.shared.presentation.components.player.formatDuration
-import chromahub.rhythm.app.features.local.presentation.navigation.Screen
-import chromahub.rhythm.app.features.local.presentation.viewmodel.MusicViewModel
-import chromahub.rhythm.app.shared.data.model.Album
-import chromahub.rhythm.app.shared.data.model.AppSettings
-import chromahub.rhythm.app.shared.data.model.Artist
-import chromahub.rhythm.app.shared.data.model.LyricsData
-import chromahub.rhythm.app.shared.data.model.PlaybackLocation
-import chromahub.rhythm.app.shared.data.model.Playlist
-import chromahub.rhythm.app.shared.data.model.Song
-import chromahub.rhythm.app.shared.presentation.components.common.AutoScrollingTextOnDemand
-import chromahub.rhythm.app.shared.presentation.components.common.ButtonGroupStyle
-import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveButtonGroup
-import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveGroupButton
-import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveShapeTarget
-import chromahub.rhythm.app.shared.presentation.components.common.FixedHeaderScreen
-import chromahub.rhythm.app.shared.presentation.components.common.M3LinearLoader
-import chromahub.rhythm.app.shared.presentation.components.common.M3PlaceholderType
-import chromahub.rhythm.app.shared.presentation.components.common.PlaybackBufferingLoader
-import chromahub.rhythm.app.shared.presentation.components.common.ProgressStyle
-import chromahub.rhythm.app.shared.presentation.components.common.StyledProgressBar
-import chromahub.rhythm.app.shared.presentation.components.common.ThumbStyle
-import chromahub.rhythm.app.shared.presentation.components.common.WaveSlider
-import chromahub.rhythm.app.shared.presentation.components.common.rememberExpressiveShapeFor
-import chromahub.rhythm.app.shared.presentation.components.icons.MaterialSymbolIcon
-import chromahub.rhythm.app.shared.presentation.components.common.M3CircularLoader
+import fieldmind.research.app.R
+import fieldmind.research.app.shared.presentation.components.bottomsheets.ExtraControlBottomSheet
+import fieldmind.research.app.shared.presentation.components.bottomsheets.AddToPlaylistBottomSheet
+import fieldmind.research.app.shared.presentation.components.bottomsheets.AlbumBottomSheet
+import fieldmind.research.app.shared.presentation.components.bottomsheets.ArtistBottomSheet
+import fieldmind.research.app.shared.presentation.components.bottomsheets.PlaybackBottomSheet
+import fieldmind.research.app.shared.presentation.components.bottomsheets.QueueBottomSheet
+import fieldmind.research.app.shared.presentation.components.bottomsheets.SongInfoBottomSheet
+import fieldmind.research.app.shared.presentation.components.dialogs.PlaybackPitchDialog
+import fieldmind.research.app.shared.presentation.components.dialogs.PlaybackSpeedDialog
+import fieldmind.research.app.shared.presentation.components.player.SleepTimerBottomSheetNew
+import fieldmind.research.app.shared.presentation.components.lyrics.LyricsEditorBottomSheet
+import fieldmind.research.app.shared.presentation.components.lyrics.SyncedLyricsView
+import fieldmind.research.app.shared.presentation.components.lyrics.WordByWordLyricsView
+import fieldmind.research.app.shared.presentation.components.player.formatDuration
+import fieldmind.research.app.features.local.presentation.navigation.Screen
+import fieldmind.research.app.features.local.presentation.viewmodel.MusicViewModel
+import fieldmind.research.app.shared.data.model.Album
+import fieldmind.research.app.shared.data.model.AppSettings
+import fieldmind.research.app.shared.data.model.Artist
+import fieldmind.research.app.shared.data.model.LyricsData
+import fieldmind.research.app.shared.data.model.PlaybackLocation
+import fieldmind.research.app.shared.data.model.Playlist
+import fieldmind.research.app.shared.data.model.Song
+import fieldmind.research.app.shared.presentation.components.common.AutoScrollingTextOnDemand
+import fieldmind.research.app.shared.presentation.components.common.ButtonGroupStyle
+import fieldmind.research.app.shared.presentation.components.common.ExpressiveButtonGroup
+import fieldmind.research.app.shared.presentation.components.common.ExpressiveGroupButton
+import fieldmind.research.app.shared.presentation.components.common.ExpressiveShapeTarget
+import fieldmind.research.app.shared.presentation.components.common.FixedHeaderScreen
+import fieldmind.research.app.shared.presentation.components.common.M3LinearLoader
+import fieldmind.research.app.shared.presentation.components.common.M3PlaceholderType
+import fieldmind.research.app.shared.presentation.components.common.PlaybackBufferingLoader
+import fieldmind.research.app.shared.presentation.components.common.ProgressStyle
+import fieldmind.research.app.shared.presentation.components.common.StyledProgressBar
+import fieldmind.research.app.shared.presentation.components.common.ThumbStyle
+import fieldmind.research.app.shared.presentation.components.common.WaveSlider
+import fieldmind.research.app.shared.presentation.components.common.rememberExpressiveShapeFor
+import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon
+import fieldmind.research.app.shared.presentation.components.common.M3CircularLoader
 import androidx.compose.material3.ContainedLoadingIndicator
-import chromahub.rhythm.app.shared.presentation.components.icons.Icon
-import chromahub.rhythm.app.shared.presentation.components.icons.RhythmIcons
-import chromahub.rhythm.app.util.HapticUtils
-import chromahub.rhythm.app.util.HapticType
-import chromahub.rhythm.app.util.M3ImageUtils
+import fieldmind.research.app.shared.presentation.components.icons.Icon
+import fieldmind.research.app.shared.presentation.components.icons.RhythmIcons
+import fieldmind.research.app.util.HapticUtils
+import fieldmind.research.app.util.HapticType
+import fieldmind.research.app.util.M3ImageUtils
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import android.widget.Toast
@@ -1164,7 +1164,7 @@ private fun RhythmPlayerLyricsPanel(
                             .containsMatchIn(lyricsText)
                     }
 
-                    val parsedLyrics by produceState<List<chromahub.rhythm.app.util.LyricLine>?>(
+                    val parsedLyrics by produceState<List<fieldmind.research.app.util.LyricLine>?>(
                         initialValue = if (likelySyncedLyrics) null else emptyList(),
                         key1 = lyricsText,
                         key2 = likelySyncedLyrics
@@ -1173,7 +1173,7 @@ private fun RhythmPlayerLyricsPanel(
                             emptyList()
                         } else {
                             withContext(kotlinx.coroutines.Dispatchers.Default) {
-                                chromahub.rhythm.app.util.LyricsParser.parseLyrics(
+                                fieldmind.research.app.util.LyricsParser.parseLyrics(
                                     lyricsText
                                 )
                             }

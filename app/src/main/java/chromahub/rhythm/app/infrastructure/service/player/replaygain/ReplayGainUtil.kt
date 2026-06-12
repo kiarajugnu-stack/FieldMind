@@ -1,4 +1,4 @@
-package chromahub.rhythm.app.infrastructure.service.player.replaygain
+package fieldmind.research.app.infrastructure.service.player.replaygain
 
 import android.os.Bundle
 import androidx.media3.common.Format

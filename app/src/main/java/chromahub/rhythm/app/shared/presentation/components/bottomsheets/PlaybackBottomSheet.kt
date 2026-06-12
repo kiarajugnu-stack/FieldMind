@@ -1,8 +1,8 @@
-package chromahub.rhythm.app.shared.presentation.components.bottomsheets
+package fieldmind.research.app.shared.presentation.components.bottomsheets
 
-import chromahub.rhythm.app.shared.presentation.components.icons.RhythmIcons
-import chromahub.rhythm.app.shared.presentation.components.icons.MaterialSymbolIcon
-import chromahub.rhythm.app.shared.presentation.components.icons.Icon
+import fieldmind.research.app.shared.presentation.components.icons.RhythmIcons
+import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon
+import fieldmind.research.app.shared.presentation.components.icons.Icon
 
 import android.content.Context
 import android.media.AudioManager
@@ -87,19 +87,19 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import kotlinx.coroutines.delay
-import chromahub.rhythm.app.R
-import chromahub.rhythm.app.shared.data.model.PlaybackLocation
-import chromahub.rhythm.app.shared.data.model.AppSettings
-import chromahub.rhythm.app.util.HapticUtils
-import chromahub.rhythm.app.util.HapticType
-import chromahub.rhythm.app.features.local.presentation.viewmodel.MusicViewModel
+import fieldmind.research.app.R
+import fieldmind.research.app.shared.data.model.PlaybackLocation
+import fieldmind.research.app.shared.data.model.AppSettings
+import fieldmind.research.app.util.HapticUtils
+import fieldmind.research.app.util.HapticType
+import fieldmind.research.app.features.local.presentation.viewmodel.MusicViewModel
 import androidx.compose.ui.res.stringResource
-import chromahub.rhythm.app.shared.presentation.components.Material3SettingsGroup
-import chromahub.rhythm.app.shared.presentation.components.Material3SettingsItem
-import chromahub.rhythm.app.shared.presentation.components.common.rememberExpressiveShape
-import chromahub.rhythm.app.shared.presentation.components.dialogs.AppRestartDialog
-import chromahub.rhythm.app.util.AppRestarter
-import chromahub.rhythm.app.core.domain.model.StreamingQuality
+import fieldmind.research.app.shared.presentation.components.Material3SettingsGroup
+import fieldmind.research.app.shared.presentation.components.Material3SettingsItem
+import fieldmind.research.app.shared.presentation.components.common.rememberExpressiveShape
+import fieldmind.research.app.shared.presentation.components.dialogs.AppRestartDialog
+import fieldmind.research.app.util.AppRestarter
+import fieldmind.research.app.core.domain.model.StreamingQuality
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -1141,7 +1141,7 @@ private fun PlaybackSpeedCard(
                                 else MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
-                chromahub.rhythm.app.shared.presentation.screens.settings.TunerAnimatedSwitch(
+                fieldmind.research.app.shared.presentation.screens.settings.TunerAnimatedSwitch(
                     checked = syncEnabled,
                     onCheckedChange = {
                         HapticUtils.performHapticFeedback(context, haptics, HapticType.LIGHT)
@@ -1289,7 +1289,7 @@ private fun PlaybackQuickSettingsCard(
                         }
                     )
                 },
-                scope = chromahub.rhythm.app.shared.presentation.components.SettingScope.BOTH,
+                scope = fieldmind.research.app.shared.presentation.components.SettingScope.BOTH,
                 onClick = {
                     HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                     onStopPlaybackOnZeroVolumeChange(!stopPlaybackOnZeroVolume)
@@ -1310,7 +1310,7 @@ private fun PlaybackQuickSettingsCard(
                         }
                     )
                 },
-                scope = chromahub.rhythm.app.shared.presentation.components.SettingScope.BOTH,
+                scope = fieldmind.research.app.shared.presentation.components.SettingScope.BOTH,
                 onClick = {
                     HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                     onResumeOnDeviceReconnectChange(!resumeOnDeviceReconnect)
@@ -1331,7 +1331,7 @@ private fun PlaybackQuickSettingsCard(
                         }
                     )
                 },
-                scope = chromahub.rhythm.app.shared.presentation.components.SettingScope.BOTH,
+                scope = fieldmind.research.app.shared.presentation.components.SettingScope.BOTH,
                 onClick = {
                     HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                     onGaplessPlaybackChange(!gaplessPlayback)
@@ -1352,7 +1352,7 @@ private fun PlaybackQuickSettingsCard(
                         }
                     )
                 },
-                scope = chromahub.rhythm.app.shared.presentation.components.SettingScope.BOTH,
+                scope = fieldmind.research.app.shared.presentation.components.SettingScope.BOTH,
                 onClick = {
                     HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                     onShowPlayedQueueSongsChange(!showPlayedQueueSongs)
@@ -1373,7 +1373,7 @@ private fun PlaybackQuickSettingsCard(
                         }
                     )
                 },
-                scope = chromahub.rhythm.app.shared.presentation.components.SettingScope.BOTH,
+                scope = fieldmind.research.app.shared.presentation.components.SettingScope.BOTH,
                 onClick = {
                     HapticUtils.performHapticFeedback(context, haptics, HapticType.HEAVY)
                     onCrossfadeEnabledChange(!crossfadeEnabled)
@@ -1454,7 +1454,7 @@ private fun PlaybackQuickSettingsCard(
                             navigateToSettings.invoke()
                         }
                     }
-                    ,scope = chromahub.rhythm.app.shared.presentation.components.SettingScope.BOTH
+                    ,scope = fieldmind.research.app.shared.presentation.components.SettingScope.BOTH
                 )
             )
         }
@@ -1611,7 +1611,7 @@ private fun PlaybackPitchCard(
                                 else MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
-                chromahub.rhythm.app.shared.presentation.screens.settings.TunerAnimatedSwitch(
+                fieldmind.research.app.shared.presentation.screens.settings.TunerAnimatedSwitch(
                     checked = syncEnabled,
                     onCheckedChange = {
                         HapticUtils.performHapticFeedback(context, haptics, HapticType.LIGHT)
@@ -1707,7 +1707,7 @@ private fun AnimatedAudioSwitch(
     onCheckedChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    chromahub.rhythm.app.shared.presentation.screens.settings.TunerAnimatedSwitch(
+    fieldmind.research.app.shared.presentation.screens.settings.TunerAnimatedSwitch(
         checked = checked,
         onCheckedChange = onCheckedChange,
         modifier = modifier
@@ -1955,8 +1955,8 @@ private fun QualitySelectionBottomSheet(
         modifier = Modifier.fillMaxWidth()
     ) {
         StandardBottomSheetHeader(
-            title = stringResource(id = chromahub.rhythm.app.R.string.streaming_settings_quality),
-            subtitle = stringResource(id = chromahub.rhythm.app.R.string.streaming_settings_quality_sheet_desc),
+            title = stringResource(id = fieldmind.research.app.R.string.streaming_settings_quality),
+            subtitle = stringResource(id = fieldmind.research.app.R.string.streaming_settings_quality_sheet_desc),
             visible = true
         )
         Column(
@@ -1969,10 +1969,10 @@ private fun QualitySelectionBottomSheet(
             Spacer(modifier = Modifier.height(8.dp))
 
             val streamingQualityOptions = listOf(
-                Pair("LOW", chromahub.rhythm.app.R.string.streaming_quality_low),
-                Pair("NORMAL", chromahub.rhythm.app.R.string.streaming_quality_normal),
-                Pair("HIGH", chromahub.rhythm.app.R.string.streaming_quality_high),
-                Pair("LOSSLESS", chromahub.rhythm.app.R.string.streaming_quality_lossless)
+                Pair("LOW", fieldmind.research.app.R.string.streaming_quality_low),
+                Pair("NORMAL", fieldmind.research.app.R.string.streaming_quality_normal),
+                Pair("HIGH", fieldmind.research.app.R.string.streaming_quality_high),
+                Pair("LOSSLESS", fieldmind.research.app.R.string.streaming_quality_lossless)
             )
 
             streamingQualityOptions.forEach { option ->

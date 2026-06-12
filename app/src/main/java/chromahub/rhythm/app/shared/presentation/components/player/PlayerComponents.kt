@@ -1,4 +1,4 @@
-package chromahub.rhythm.app.shared.presentation.components.player
+package fieldmind.research.app.shared.presentation.components.player
 
 import java.util.concurrent.TimeUnit
 

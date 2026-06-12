@@ -1,4 +1,4 @@
-package chromahub.rhythm.app.core.domain.model
+package fieldmind.research.app.core.domain.model
 
 /**
  * Represents the current application mode.

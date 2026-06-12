@@ -1,8 +1,8 @@
-package chromahub.rhythm.app.features.streaming.presentation.screens
+package fieldmind.research.app.features.streaming.presentation.screens
 
-import chromahub.rhythm.app.shared.presentation.components.icons.RhythmIcons
-import chromahub.rhythm.app.shared.presentation.components.icons.MaterialSymbolIcon
-import chromahub.rhythm.app.shared.presentation.components.icons.Icon
+import fieldmind.research.app.shared.presentation.components.icons.RhythmIcons
+import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon
+import fieldmind.research.app.shared.presentation.components.icons.Icon
 
 import android.content.Context
 import androidx.annotation.StringRes
@@ -41,18 +41,18 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import chromahub.rhythm.app.R
-import chromahub.rhythm.app.core.domain.model.StreamingQuality
-import chromahub.rhythm.app.core.utils.NetworkUtils
-import chromahub.rhythm.app.shared.presentation.screens.settings.TunerAnimatedSwitch
-import chromahub.rhythm.app.features.streaming.presentation.model.StreamingServiceOptions
-import chromahub.rhythm.app.features.streaming.presentation.viewmodel.StreamingMusicViewModel
-import chromahub.rhythm.app.shared.data.model.AppSettings
-import chromahub.rhythm.app.shared.presentation.components.Material3SettingsGroup
-import chromahub.rhythm.app.shared.presentation.components.Material3SettingsItem
-import chromahub.rhythm.app.shared.presentation.components.common.CollapsibleHeaderScreen
-import chromahub.rhythm.app.util.HapticUtils
-import chromahub.rhythm.app.util.HapticType
+import fieldmind.research.app.R
+import fieldmind.research.app.core.domain.model.StreamingQuality
+import fieldmind.research.app.core.utils.NetworkUtils
+import fieldmind.research.app.shared.presentation.screens.settings.TunerAnimatedSwitch
+import fieldmind.research.app.features.streaming.presentation.model.StreamingServiceOptions
+import fieldmind.research.app.features.streaming.presentation.viewmodel.StreamingMusicViewModel
+import fieldmind.research.app.shared.data.model.AppSettings
+import fieldmind.research.app.shared.presentation.components.Material3SettingsGroup
+import fieldmind.research.app.shared.presentation.components.Material3SettingsItem
+import fieldmind.research.app.shared.presentation.components.common.CollapsibleHeaderScreen
+import fieldmind.research.app.util.HapticUtils
+import fieldmind.research.app.util.HapticType
 
 @Composable
 fun StreamingSettingsScreen(
@@ -205,7 +205,7 @@ fun StreamingSettingsScreen(
                             description = { Text(text = stringResource(id = R.string.exp_go_mode_desc)) },
                             onClick = {
                                 // Set settings host to open the Go Settings pane, then open settings
-                                appSettings.setInitialSettingsSubroute(chromahub.rhythm.app.shared.presentation.screens.settings.SettingsRoutes.GO_SETTINGS)
+                                appSettings.setInitialSettingsSubroute(fieldmind.research.app.shared.presentation.screens.settings.SettingsRoutes.GO_SETTINGS)
                                 onOpenGlobalSettings()
                             }
                         )
@@ -420,7 +420,7 @@ private fun StreamingStatusCard(
 @Composable
 private fun ServiceSelectionBottomSheet(
     selectedService: String,
-    sessions: Map<String, chromahub.rhythm.app.features.streaming.data.repository.StreamingServiceSession>,
+    sessions: Map<String, fieldmind.research.app.features.streaming.data.repository.StreamingServiceSession>,
     onDismiss: () -> Unit,
     onSelect: (String) -> Unit
 ) {

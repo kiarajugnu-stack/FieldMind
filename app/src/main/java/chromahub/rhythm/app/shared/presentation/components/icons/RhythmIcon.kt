@@ -1,4 +1,4 @@
-package chromahub.rhythm.app.shared.presentation.components.icons
+package fieldmind.research.app.shared.presentation.components.icons
 
 import android.content.Context
 import android.graphics.Typeface
@@ -30,7 +30,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.res.ResourcesCompat
-import chromahub.rhythm.app.R
+import fieldmind.research.app.R
 import java.util.concurrent.ConcurrentHashMap
 
 private const val MaterialSymbolGlyphScale = 0.875f

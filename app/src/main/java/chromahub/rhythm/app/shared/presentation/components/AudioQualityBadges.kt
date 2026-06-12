@@ -1,7 +1,7 @@
-package chromahub.rhythm.app.shared.presentation.components
+package fieldmind.research.app.shared.presentation.components
 
-import chromahub.rhythm.app.shared.presentation.components.icons.MaterialSymbolIcon
-import chromahub.rhythm.app.shared.presentation.components.icons.Icon
+import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon
+import fieldmind.research.app.shared.presentation.components.icons.Icon
 
 import android.util.Log
 import androidx.compose.animation.*
@@ -20,12 +20,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.graphics.vector.ImageVector
-import chromahub.rhythm.app.shared.data.model.Song
-import chromahub.rhythm.app.util.AudioQualityDetector
-import chromahub.rhythm.app.util.AudioFormatDetector
+import fieldmind.research.app.shared.data.model.Song
+import fieldmind.research.app.util.AudioQualityDetector
+import fieldmind.research.app.util.AudioFormatDetector
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import chromahub.rhythm.app.R
+import fieldmind.research.app.R
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.painterResource
 
@@ -381,7 +381,7 @@ private fun QualityBadge(
 @Composable
 private fun LegacyQualityBadge(
     text: String,
-    icon: chromahub.rhythm.app.shared.presentation.components.icons.MaterialSymbolIcon,
+    icon: fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon,
     qualityLevel: QualityLevel,
     modifier: Modifier = Modifier
 ) {

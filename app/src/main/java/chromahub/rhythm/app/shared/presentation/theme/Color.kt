@@ -1,4 +1,4 @@
-package chromahub.rhythm.app.ui.theme
+package fieldmind.research.app.ui.theme
 
 import androidx.compose.ui.graphics.Color
 

@@ -1,4 +1,4 @@
-package chromahub.rhythm.app.features.field.presentation.theme
+package fieldmind.research.app.features.field.presentation.theme
 
 import android.os.Build
 import androidx.compose.material3.ColorScheme

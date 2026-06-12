@@ -1,4 +1,4 @@
-package chromahub.rhythm.app.features.field.presentation.screens
+package fieldmind.research.app.features.field.presentation.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -11,8 +11,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import chromahub.rhythm.app.features.field.presentation.components.FieldMindIcons
-import chromahub.rhythm.app.shared.presentation.components.icons.Icon
+import fieldmind.research.app.features.field.presentation.components.FieldMindIcons
+import fieldmind.research.app.shared.presentation.components.icons.Icon
 
 /**
  * Simplified 3-step onboarding. Users can skip directly to the app from

@@ -1,4 +1,4 @@
-package chromahub.rhythm.app.features.field.data.timer
+package fieldmind.research.app.features.field.data.timer
 
 /**
  * A simple behavioral observation timer with lap recording.

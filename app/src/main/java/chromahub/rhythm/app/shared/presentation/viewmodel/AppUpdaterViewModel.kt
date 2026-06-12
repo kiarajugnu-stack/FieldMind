@@ -1,4 +1,4 @@
-package chromahub.rhythm.app.shared.presentation.viewmodel
+package fieldmind.research.app.shared.presentation.viewmodel
 
 import android.app.Application
 import android.app.NotificationChannel
@@ -10,11 +10,11 @@ import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.core.app.NotificationCompat
-import chromahub.rhythm.app.R
-import chromahub.rhythm.app.activities.MainActivity
-import chromahub.rhythm.app.network.GitHubRelease
-import chromahub.rhythm.app.network.GitHubAsset
-import chromahub.rhythm.app.network.NetworkManager
+import fieldmind.research.app.R
+import fieldmind.research.app.activities.MainActivity
+import fieldmind.research.app.network.GitHubRelease
+import fieldmind.research.app.network.GitHubAsset
+import fieldmind.research.app.network.NetworkManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -41,14 +41,14 @@ import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Build
 import androidx.core.content.ContextCompat
-import chromahub.rhythm.app.shared.data.model.AppSettings
+import fieldmind.research.app.shared.data.model.AppSettings
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
 import android.content.Context
 import android.content.SharedPreferences
 import com.google.gson.Gson
-import chromahub.rhythm.app.BuildConfig
+import fieldmind.research.app.BuildConfig
 import java.security.MessageDigest
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock

@@ -1,6 +1,6 @@
-package chromahub.rhythm.app.features.field.data.bulk
+package fieldmind.research.app.features.field.data.bulk
 
-import chromahub.rhythm.app.features.field.presentation.viewmodel.FieldMindViewModel
+import fieldmind.research.app.features.field.presentation.viewmodel.FieldMindViewModel
 
 /**
  * Bulk operations for multi-selection on entity list screens.

@@ -1,6 +1,6 @@
-package chromahub.rhythm.app.util
+package fieldmind.research.app.util
 
-import chromahub.rhythm.app.shared.data.model.Song
+import fieldmind.research.app.shared.data.model.Song
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlin.random.Random

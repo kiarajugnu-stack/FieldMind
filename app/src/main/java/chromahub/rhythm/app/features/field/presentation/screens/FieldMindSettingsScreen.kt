@@ -1,4 +1,4 @@
-package chromahub.rhythm.app.features.field.presentation.screens
+package fieldmind.research.app.features.field.presentation.screens
 
 import android.content.Intent
 import android.net.Uri
@@ -22,13 +22,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import chromahub.rhythm.app.features.field.data.database.entity.*
-import chromahub.rhythm.app.features.field.data.settings.FieldMindSettings
-import chromahub.rhythm.app.features.field.presentation.components.*
-import chromahub.rhythm.app.features.field.presentation.theme.FieldMindTheme
-import chromahub.rhythm.app.features.field.presentation.viewmodel.FieldMindViewModel
-import chromahub.rhythm.app.shared.presentation.components.icons.Icon
-import chromahub.rhythm.app.shared.presentation.components.icons.MaterialSymbolIcon
+import fieldmind.research.app.features.field.data.database.entity.*
+import fieldmind.research.app.features.field.data.settings.FieldMindSettings
+import fieldmind.research.app.features.field.presentation.components.*
+import fieldmind.research.app.features.field.presentation.theme.FieldMindTheme
+import fieldmind.research.app.features.field.presentation.viewmodel.FieldMindViewModel
+import fieldmind.research.app.shared.presentation.components.icons.Icon
+import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.BorderStroke

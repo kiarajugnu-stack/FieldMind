@@ -1,4 +1,4 @@
-package chromahub.rhythm.app.features.field.presentation.screens
+package fieldmind.research.app.features.field.presentation.screens
 
 import android.app.KeyguardManager
 import android.net.Uri
@@ -28,20 +28,20 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import coil.compose.AsyncImage
-import chromahub.rhythm.app.features.field.data.database.entity.*
-import chromahub.rhythm.app.features.field.presentation.components.*
-import chromahub.rhythm.app.features.field.presentation.theme.FieldMindTheme
-import chromahub.rhythm.app.features.field.presentation.viewmodel.DraftEvidenceAttachment
-import chromahub.rhythm.app.features.field.presentation.viewmodel.FieldMindViewModel
-import chromahub.rhythm.app.shared.presentation.components.icons.Icon
-import chromahub.rhythm.app.shared.presentation.components.icons.MaterialSymbolIcon
+import fieldmind.research.app.features.field.data.database.entity.*
+import fieldmind.research.app.features.field.presentation.components.*
+import fieldmind.research.app.features.field.presentation.theme.FieldMindTheme
+import fieldmind.research.app.features.field.presentation.viewmodel.DraftEvidenceAttachment
+import fieldmind.research.app.features.field.presentation.viewmodel.FieldMindViewModel
+import fieldmind.research.app.shared.presentation.components.icons.Icon
+import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon
 import androidx.compose.animation.animateContentSize
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import android.content.Intent
 import android.Manifest
 import androidx.compose.ui.platform.LocalUriHandler
-import chromahub.rhythm.app.features.field.data.location.FieldLocationProvider
+import fieldmind.research.app.features.field.data.location.FieldLocationProvider
 // ══════════════════════════════════════════════════════════════════════
 //  Settings rows + dialogs + helpers
 // ══════════════════════════════════════════════════════════════════════

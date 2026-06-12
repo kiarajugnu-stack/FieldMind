@@ -1,8 +1,8 @@
-package chromahub.rhythm.app.shared.presentation.screens.player
+package fieldmind.research.app.shared.presentation.screens.player
 
-import chromahub.rhythm.app.shared.presentation.components.icons.RhythmIcons
-import chromahub.rhythm.app.shared.presentation.components.icons.MaterialSymbolIcon
-import chromahub.rhythm.app.shared.presentation.components.icons.Icon
+import fieldmind.research.app.shared.presentation.components.icons.RhythmIcons
+import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon
+import fieldmind.research.app.shared.presentation.components.icons.Icon
 
 import android.content.Context
 import android.net.Uri
@@ -145,31 +145,31 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.res.painterResource
-import chromahub.rhythm.app.R
-import chromahub.rhythm.app.shared.data.model.PlaybackLocation
-import chromahub.rhythm.app.shared.data.model.Playlist
-import chromahub.rhythm.app.shared.data.model.Song
-import chromahub.rhythm.app.shared.presentation.components.common.WaveSlider
-import chromahub.rhythm.app.shared.presentation.components.common.StyledProgressBar
-import chromahub.rhythm.app.shared.presentation.components.common.ProgressStyle
-import chromahub.rhythm.app.shared.presentation.components.common.ThumbStyle
-import chromahub.rhythm.app.shared.presentation.components.common.M3CircularLoader
-import chromahub.rhythm.app.shared.presentation.components.common.M3LinearLoader
-import chromahub.rhythm.app.shared.presentation.components.common.FixedHeaderScreen
-import chromahub.rhythm.app.shared.presentation.components.common.AutoScrollingTextOnDemand
-import chromahub.rhythm.app.shared.presentation.components.player.PlayingEqIcon
-import chromahub.rhythm.app.shared.presentation.components.common.ShimmerBox
-import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveButtonGroup
-import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveGroupButton
-import chromahub.rhythm.app.shared.presentation.components.common.ButtonGroupStyle
-import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveShapeTarget
-import chromahub.rhythm.app.shared.presentation.components.common.rememberExpressiveShapeFor
-import chromahub.rhythm.app.ui.theme.PlayerButtonColor
-// import chromahub.rhythm.app.shared.presentation.components.common.M3PlaceholderType
-import chromahub.rhythm.app.util.ImageUtils
-import chromahub.rhythm.app.util.HapticUtils
-import chromahub.rhythm.app.util.HapticType
-import chromahub.rhythm.app.util.LyricsFileUtils
+import fieldmind.research.app.R
+import fieldmind.research.app.shared.data.model.PlaybackLocation
+import fieldmind.research.app.shared.data.model.Playlist
+import fieldmind.research.app.shared.data.model.Song
+import fieldmind.research.app.shared.presentation.components.common.WaveSlider
+import fieldmind.research.app.shared.presentation.components.common.StyledProgressBar
+import fieldmind.research.app.shared.presentation.components.common.ProgressStyle
+import fieldmind.research.app.shared.presentation.components.common.ThumbStyle
+import fieldmind.research.app.shared.presentation.components.common.M3CircularLoader
+import fieldmind.research.app.shared.presentation.components.common.M3LinearLoader
+import fieldmind.research.app.shared.presentation.components.common.FixedHeaderScreen
+import fieldmind.research.app.shared.presentation.components.common.AutoScrollingTextOnDemand
+import fieldmind.research.app.shared.presentation.components.player.PlayingEqIcon
+import fieldmind.research.app.shared.presentation.components.common.ShimmerBox
+import fieldmind.research.app.shared.presentation.components.common.ExpressiveButtonGroup
+import fieldmind.research.app.shared.presentation.components.common.ExpressiveGroupButton
+import fieldmind.research.app.shared.presentation.components.common.ButtonGroupStyle
+import fieldmind.research.app.shared.presentation.components.common.ExpressiveShapeTarget
+import fieldmind.research.app.shared.presentation.components.common.rememberExpressiveShapeFor
+import fieldmind.research.app.ui.theme.PlayerButtonColor
+// import fieldmind.research.app.shared.presentation.components.common.M3PlaceholderType
+import fieldmind.research.app.util.ImageUtils
+import fieldmind.research.app.util.HapticUtils
+import fieldmind.research.app.util.HapticType
+import fieldmind.research.app.util.LyricsFileUtils
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import kotlinx.coroutines.Dispatchers
@@ -178,36 +178,36 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.Locale
 import kotlin.math.abs
-import chromahub.rhythm.app.shared.presentation.components.common.NetworkOperationLoader
+import fieldmind.research.app.shared.presentation.components.common.NetworkOperationLoader
 import android.view.animation.OvershootInterpolator
-import chromahub.rhythm.app.shared.presentation.components.player.SleepTimerBottomSheetNew
-import chromahub.rhythm.app.shared.presentation.components.lyrics.SyncedLyricsView
+import fieldmind.research.app.shared.presentation.components.player.SleepTimerBottomSheetNew
+import fieldmind.research.app.shared.presentation.components.lyrics.SyncedLyricsView
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.asPaddingValues
-import chromahub.rhythm.app.shared.presentation.components.player.formatDuration
+import fieldmind.research.app.shared.presentation.components.player.formatDuration
 import java.util.concurrent.TimeUnit // Import TimeUnit for duration formatting
-import chromahub.rhythm.app.shared.presentation.components.common.PlaybackBufferingLoader
-import chromahub.rhythm.app.shared.presentation.components.bottomsheets.QueueBottomSheet
-import chromahub.rhythm.app.features.local.presentation.screens.LibraryTab
-import chromahub.rhythm.app.shared.presentation.components.bottomsheets.AddToPlaylistBottomSheet
-import chromahub.rhythm.app.shared.presentation.components.bottomsheets.PlaybackBottomSheet
-import chromahub.rhythm.app.shared.presentation.components.bottomsheets.SongInfoBottomSheet
-import chromahub.rhythm.app.shared.presentation.components.bottomsheets.ArtistBottomSheet
-import chromahub.rhythm.app.shared.presentation.components.bottomsheets.AlbumBottomSheet
-import chromahub.rhythm.app.shared.presentation.components.player.PlayerChipOrderBottomSheet
-import chromahub.rhythm.app.shared.presentation.components.lyrics.LyricsEditorBottomSheet
-import chromahub.rhythm.app.shared.presentation.components.AudioQualityBadges
-import chromahub.rhythm.app.util.MediaUtils
-import chromahub.rhythm.app.shared.data.model.Album
-import chromahub.rhythm.app.shared.data.model.Artist
-import chromahub.rhythm.app.features.local.presentation.navigation.Screen
-import chromahub.rhythm.app.features.local.presentation.viewmodel.MusicViewModel
-import chromahub.rhythm.app.shared.presentation.components.player.formatDuration
-import chromahub.rhythm.app.shared.presentation.components.lyrics.WordByWordLyricsView
-import chromahub.rhythm.app.shared.presentation.components.bottomsheets.ExtraControlBottomSheet
-import chromahub.rhythm.app.shared.presentation.components.dialogs.PlaybackSpeedDialog
-import chromahub.rhythm.app.shared.presentation.components.dialogs.PlaybackPitchDialog
+import fieldmind.research.app.shared.presentation.components.common.PlaybackBufferingLoader
+import fieldmind.research.app.shared.presentation.components.bottomsheets.QueueBottomSheet
+import fieldmind.research.app.features.local.presentation.screens.LibraryTab
+import fieldmind.research.app.shared.presentation.components.bottomsheets.AddToPlaylistBottomSheet
+import fieldmind.research.app.shared.presentation.components.bottomsheets.PlaybackBottomSheet
+import fieldmind.research.app.shared.presentation.components.bottomsheets.SongInfoBottomSheet
+import fieldmind.research.app.shared.presentation.components.bottomsheets.ArtistBottomSheet
+import fieldmind.research.app.shared.presentation.components.bottomsheets.AlbumBottomSheet
+import fieldmind.research.app.shared.presentation.components.player.PlayerChipOrderBottomSheet
+import fieldmind.research.app.shared.presentation.components.lyrics.LyricsEditorBottomSheet
+import fieldmind.research.app.shared.presentation.components.AudioQualityBadges
+import fieldmind.research.app.util.MediaUtils
+import fieldmind.research.app.shared.data.model.Album
+import fieldmind.research.app.shared.data.model.Artist
+import fieldmind.research.app.features.local.presentation.navigation.Screen
+import fieldmind.research.app.features.local.presentation.viewmodel.MusicViewModel
+import fieldmind.research.app.shared.presentation.components.player.formatDuration
+import fieldmind.research.app.shared.presentation.components.lyrics.WordByWordLyricsView
+import fieldmind.research.app.shared.presentation.components.bottomsheets.ExtraControlBottomSheet
+import fieldmind.research.app.shared.presentation.components.dialogs.PlaybackSpeedDialog
+import fieldmind.research.app.shared.presentation.components.dialogs.PlaybackPitchDialog
 import androidx.navigation.NavController
 import androidx.compose.ui.res.stringResource
 
@@ -248,7 +248,7 @@ fun MaterialPlayerScreen(
     isFavorite: Boolean = false,
     showLyrics: Boolean = true,
     onlineOnlyLyrics: Boolean = false,
-    lyrics: chromahub.rhythm.app.shared.data.model.LyricsData? = null,
+    lyrics: fieldmind.research.app.shared.data.model.LyricsData? = null,
     isLoadingLyrics: Boolean = false,
     onRetryLyrics: () -> Unit = {},
     onEditLyrics: (String) -> Unit = {},
@@ -281,8 +281,8 @@ fun MaterialPlayerScreen(
     onShuffleAlbumSongs: (List<Song>) -> Unit = {},
     onPlayArtistSongs: (List<Song>) -> Unit = {},
     onShuffleArtistSongs: (List<Song>) -> Unit = {},
-    appSettings: chromahub.rhythm.app.shared.data.model.AppSettings,
-    musicViewModel: chromahub.rhythm.app.viewmodel.MusicViewModel,
+    appSettings: fieldmind.research.app.shared.data.model.AppSettings,
+    musicViewModel: fieldmind.research.app.viewmodel.MusicViewModel,
     navController: NavController,
     isStreamingMode: Boolean = false,
     onOpenFullScreenLyrics: () -> Unit = {},
@@ -353,7 +353,7 @@ fun MaterialPlayerScreen(
     // Helper function to split artist names
     val splitArtistNames: (String) -> List<String> = remember {
         { artistName ->
-            chromahub.rhythm.app.util.ArtistSeparator.splitArtistNames(
+            fieldmind.research.app.util.ArtistSeparator.splitArtistNames(
                 artistName = artistName,
                 delimiters = artistSeparatorDelimiters,
                 enabled = artistSeparatorEnabled
@@ -693,7 +693,7 @@ fun MaterialPlayerScreen(
 
     // AutoEQ Suggestion Dialog state
     var showAutoEQSuggestion by remember { mutableStateOf(false) }
-    var detectedDevice by remember { mutableStateOf<chromahub.rhythm.app.shared.data.model.UserAudioDevice?>(null) }
+    var detectedDevice by remember { mutableStateOf<fieldmind.research.app.shared.data.model.UserAudioDevice?>(null) }
     var showDeviceConfig by remember { mutableStateOf(false) }
 
     // State for showing loader in play/pause button
@@ -1648,8 +1648,8 @@ fun MaterialPlayerScreen(
                                             AsyncImage(
                                                 model = ImageRequest.Builder(context)
                                                     .data(song.artworkUri)
-                                                    .placeholder(chromahub.rhythm.app.R.drawable.rhythm_logo)
-                                                    .error(chromahub.rhythm.app.R.drawable.rhythm_logo)
+                                                    .placeholder(fieldmind.research.app.R.drawable.rhythm_logo)
+                                                    .error(fieldmind.research.app.R.drawable.rhythm_logo)
                                                     .build(),
                                                 contentDescription = stringResource(R.string.album_artwork_description, song.title),
                                                 contentScale = ContentScale.Crop,
@@ -1699,7 +1699,7 @@ fun MaterialPlayerScreen(
                                             contentAlignment = Alignment.Center
                                         ) {
                                             Icon(
-                                                painter = painterResource(id = chromahub.rhythm.app.R.drawable.rhythm_logo),
+                                                painter = painterResource(id = fieldmind.research.app.R.drawable.rhythm_logo),
                                                 contentDescription = stringResource(R.string.album_artwork_description, song.title),
                                                 tint = MaterialTheme.colorScheme.primary.copy(
                                                     alpha = 0.7f
@@ -1742,7 +1742,7 @@ fun MaterialPlayerScreen(
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Icon(
-                                        painter = painterResource(id = chromahub.rhythm.app.R.drawable.rhythm_logo),
+                                        painter = painterResource(id = fieldmind.research.app.R.drawable.rhythm_logo),
                                         contentDescription = stringResource(R.string.cd_no_song_playing),
                                         tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f),
                                         modifier = Modifier.size(120.dp)
@@ -1865,7 +1865,7 @@ fun MaterialPlayerScreen(
                                             
                                             // Rating stars display
                                             // Rating stars display - only show if rating system is enabled
-                                            val currentRating = chromahub.rhythm.app.shared.data.model.AppSettings.getInstance(context).getSongRating(song.id)
+                                            val currentRating = fieldmind.research.app.shared.data.model.AppSettings.getInstance(context).getSongRating(song.id)
                                             if (enableRatingSystem && currentRating > 0) {
                                                 Spacer(modifier = Modifier.height(if (isExtraSmallWidth) 2.dp else if (isCompactHeight) 4.dp else 6.dp))
                                                 Box(
@@ -1876,7 +1876,7 @@ fun MaterialPlayerScreen(
                                                         else -> Alignment.Center
                                                     }
                                                 ) {
-                                                    chromahub.rhythm.app.shared.presentation.components.RatingStarsDisplay(
+                                                    fieldmind.research.app.shared.presentation.components.RatingStarsDisplay(
                                                         rating = currentRating,
                                                         size = if (isExtraSmallWidth) 10.dp else if (isCompactHeight) 14.dp else 16.dp
                                                     )
@@ -2164,7 +2164,7 @@ fun MaterialPlayerScreen(
                                                                 .containsMatchIn(lyricsText)
                                                         }
 
-                                                        val parsedLyrics by produceState<List<chromahub.rhythm.app.util.LyricLine>?>(
+                                                        val parsedLyrics by produceState<List<fieldmind.research.app.util.LyricLine>?>(
                                                             initialValue = if (likelySyncedLyrics) null else emptyList(),
                                                             key1 = lyricsText,
                                                             key2 = likelySyncedLyrics
@@ -2173,7 +2173,7 @@ fun MaterialPlayerScreen(
                                                                 emptyList()
                                                             } else {
                                                                 withContext(Dispatchers.Default) {
-                                                                    chromahub.rhythm.app.util.LyricsParser.parseLyrics(
+                                                                    fieldmind.research.app.util.LyricsParser.parseLyrics(
                                                                         lyricsText
                                                                     )
                                                                 }
@@ -2305,7 +2305,7 @@ fun MaterialPlayerScreen(
                             
                             // Rating stars display
                             // Rating stars display - only show if rating system is enabled
-                            val currentRating = chromahub.rhythm.app.shared.data.model.AppSettings.getInstance(context).getSongRating(song.id)
+                            val currentRating = fieldmind.research.app.shared.data.model.AppSettings.getInstance(context).getSongRating(song.id)
                             if (enableRatingSystem && currentRating > 0) {
                                 Spacer(modifier = Modifier.height(6.dp))
                                 Box(
@@ -2316,7 +2316,7 @@ fun MaterialPlayerScreen(
                                         else -> Alignment.Center
                                     }
                                 ) {
-                                    chromahub.rhythm.app.shared.presentation.components.RatingStarsDisplay(
+                                    fieldmind.research.app.shared.presentation.components.RatingStarsDisplay(
                                         rating = currentRating,
                                         size = 14.dp
                                     )
@@ -2559,7 +2559,7 @@ fun MaterialPlayerScreen(
 
                         // Main player controls with Expressive Material 3 button group
                         // Full width container with same padding as toggle buttons
-                        chromahub.rhythm.app.shared.presentation.components.common.ExpressivePlayerControlGroup(
+                        fieldmind.research.app.shared.presentation.components.common.ExpressivePlayerControlGroup(
                             isPlaying = isPlaying && !showLoaderInPlayPauseButton,
                             showSeekButtons = playerShowSeekButtons && canSeek,
                             onPrevious = {
@@ -2629,7 +2629,7 @@ fun MaterialPlayerScreen(
                         Spacer(modifier = Modifier.height(if (isTablet) 28.dp else if (isCompactHeight) 12.dp else if (isExtraSmallWidth) 20.dp else 28.dp))
 
                         // Secondary action buttons with Expressive Toggle Button Group
-                        chromahub.rhythm.app.shared.presentation.components.common.ExpressiveToggleButtonGroup(
+                        fieldmind.research.app.shared.presentation.components.common.ExpressiveToggleButtonGroup(
                             shuffleEnabled = isShuffleEnabled,
                             lyricsVisible = showLyricsView,
                             repeatMode = repeatMode,
@@ -3966,7 +3966,7 @@ fun MaterialPlayerScreen(
         val equalizerEnabled by appSettings.equalizerEnabled.collectAsState()
         val autoEQProfiles by musicViewModel.autoEQProfiles.collectAsState()
         
-        chromahub.rhythm.app.shared.presentation.components.dialogs.AutoEQSuggestionDialog(
+        fieldmind.research.app.shared.presentation.components.dialogs.AutoEQSuggestionDialog(
             deviceName = location?.name ?: detectedDevice!!.name,
             savedDevice = detectedDevice!!,
             equalizerEnabled = equalizerEnabled,
@@ -4002,7 +4002,7 @@ fun MaterialPlayerScreen(
     
     // Device Configuration Dialog
     if (showDeviceConfig) {
-        chromahub.rhythm.app.shared.presentation.components.bottomsheets.DeviceConfigurationBottomSheet(
+        fieldmind.research.app.shared.presentation.components.bottomsheets.DeviceConfigurationBottomSheet(
             musicViewModel = musicViewModel,
             onDismiss = { showDeviceConfig = false }
         )

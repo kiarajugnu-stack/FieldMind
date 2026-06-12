@@ -1,7 +1,7 @@
-package chromahub.rhythm.app.network
+package fieldmind.research.app.network
 
 import android.util.Log
-import chromahub.rhythm.app.BuildConfig
+import fieldmind.research.app.BuildConfig
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
@@ -14,10 +14,10 @@ import java.io.IOException
 import java.net.SocketTimeoutException
 import java.net.UnknownHostException
 import kotlin.math.pow
-import chromahub.rhythm.app.network.LRCLibApiService
-import chromahub.rhythm.app.network.DeezerApiService
-import chromahub.rhythm.app.network.SpotifySearchApiService
-import chromahub.rhythm.app.network.YTMusicApiService
+import fieldmind.research.app.network.LRCLibApiService
+import fieldmind.research.app.network.DeezerApiService
+import fieldmind.research.app.network.SpotifySearchApiService
+import fieldmind.research.app.network.YTMusicApiService
 
 object NetworkClient {
     private const val TAG = "NetworkClient"
@@ -38,9 +38,9 @@ object NetworkClient {
     private val connectionPool = ConnectionPool(5, 30, TimeUnit.SECONDS)
     
     // Store reference to AppSettings for dynamic API key
-    private var appSettings: chromahub.rhythm.app.shared.data.model.AppSettings? = null
+    private var appSettings: fieldmind.research.app.shared.data.model.AppSettings? = null
     
-    fun initialize(appSettings: chromahub.rhythm.app.shared.data.model.AppSettings) {
+    fun initialize(appSettings: fieldmind.research.app.shared.data.model.AppSettings) {
         this.appSettings = appSettings
     }
     

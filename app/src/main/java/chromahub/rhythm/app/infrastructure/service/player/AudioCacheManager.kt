@@ -1,4 +1,4 @@
-package chromahub.rhythm.app.infrastructure.service.player
+package fieldmind.research.app.infrastructure.service.player
 
 import android.content.Context
 import androidx.annotation.OptIn

@@ -1,8 +1,8 @@
-package chromahub.rhythm.app.util
+package fieldmind.research.app.util
 
 import android.content.Context
 import android.content.Intent
-import chromahub.rhythm.app.activities.MainActivity
+import fieldmind.research.app.activities.MainActivity
 
 object AppRestarter {
     fun restartApp(context: Context) {

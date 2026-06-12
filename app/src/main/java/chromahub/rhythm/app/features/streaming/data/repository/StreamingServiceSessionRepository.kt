@@ -1,7 +1,7 @@
-package chromahub.rhythm.app.features.streaming.data.repository
+package fieldmind.research.app.features.streaming.data.repository
 
 import android.content.Context
-import chromahub.rhythm.app.features.streaming.domain.model.StreamingServiceId
+import fieldmind.research.app.features.streaming.domain.model.StreamingServiceId
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow

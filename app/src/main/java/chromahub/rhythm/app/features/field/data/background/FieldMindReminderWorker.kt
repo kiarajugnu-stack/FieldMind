@@ -1,4 +1,4 @@
-package chromahub.rhythm.app.features.field.data.background
+package fieldmind.research.app.features.field.data.background
 
 import android.Manifest
 import android.annotation.SuppressLint
@@ -14,12 +14,12 @@ import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
-import chromahub.rhythm.app.activities.MainActivity
-import chromahub.rhythm.app.features.field.data.database.FieldMindDatabase
-import chromahub.rhythm.app.features.field.data.repository.FieldMindRepository
-import chromahub.rhythm.app.features.field.data.settings.FieldMindSettings
-import chromahub.rhythm.app.features.field.data.stats.FieldMindStreaks
-import chromahub.rhythm.app.R
+import fieldmind.research.app.activities.MainActivity
+import fieldmind.research.app.features.field.data.database.FieldMindDatabase
+import fieldmind.research.app.features.field.data.repository.FieldMindRepository
+import fieldmind.research.app.features.field.data.settings.FieldMindSettings
+import fieldmind.research.app.features.field.data.stats.FieldMindStreaks
+import fieldmind.research.app.R
 import kotlinx.coroutines.flow.first
 import java.text.SimpleDateFormat
 import java.util.Date

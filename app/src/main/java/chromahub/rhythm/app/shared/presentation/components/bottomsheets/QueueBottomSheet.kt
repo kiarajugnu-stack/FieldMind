@@ -1,8 +1,8 @@
-package chromahub.rhythm.app.shared.presentation.components.bottomsheets
+package fieldmind.research.app.shared.presentation.components.bottomsheets
 
-import chromahub.rhythm.app.shared.presentation.components.icons.RhythmIcons
-import chromahub.rhythm.app.shared.presentation.components.icons.MaterialSymbolIcon
-import chromahub.rhythm.app.shared.presentation.components.icons.Icon
+import fieldmind.research.app.shared.presentation.components.icons.RhythmIcons
+import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon
+import fieldmind.research.app.shared.presentation.components.icons.Icon
 
 import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
@@ -83,16 +83,16 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import kotlinx.coroutines.delay
 import androidx.compose.foundation.lazy.rememberLazyListState
-import chromahub.rhythm.app.R
-import chromahub.rhythm.app.shared.data.model.AppSettings
-import chromahub.rhythm.app.shared.data.model.Song
-import chromahub.rhythm.app.shared.presentation.components.common.M3PlaceholderType
-import chromahub.rhythm.app.shared.presentation.components.common.DragDropLazyColumn
-import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveClickableSurface
-import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveFilledTonalIconButton
-import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveShapeTarget
-import chromahub.rhythm.app.shared.presentation.components.common.rememberExpressiveShapeFor
-import chromahub.rhythm.app.util.ImageUtils
+import fieldmind.research.app.R
+import fieldmind.research.app.shared.data.model.AppSettings
+import fieldmind.research.app.shared.data.model.Song
+import fieldmind.research.app.shared.presentation.components.common.M3PlaceholderType
+import fieldmind.research.app.shared.presentation.components.common.DragDropLazyColumn
+import fieldmind.research.app.shared.presentation.components.common.ExpressiveClickableSurface
+import fieldmind.research.app.shared.presentation.components.common.ExpressiveFilledTonalIconButton
+import fieldmind.research.app.shared.presentation.components.common.ExpressiveShapeTarget
+import fieldmind.research.app.shared.presentation.components.common.rememberExpressiveShapeFor
+import fieldmind.research.app.util.ImageUtils
 import androidx.compose.ui.res.stringResource
 
 private fun groupedQueueItemShape(index: Int, totalCount: Int): RoundedCornerShape {

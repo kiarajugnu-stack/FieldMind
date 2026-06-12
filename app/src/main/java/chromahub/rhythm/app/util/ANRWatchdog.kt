@@ -1,4 +1,4 @@
-package chromahub.rhythm.app.util
+package fieldmind.research.app.util
 
 import android.os.Handler
 import android.os.Looper

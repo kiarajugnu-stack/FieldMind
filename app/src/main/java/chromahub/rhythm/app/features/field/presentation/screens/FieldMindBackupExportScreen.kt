@@ -1,4 +1,4 @@
-package chromahub.rhythm.app.features.field.presentation.screens
+package fieldmind.research.app.features.field.presentation.screens
 
 import android.content.Context
 import android.os.Environment
@@ -22,13 +22,13 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import chromahub.rhythm.app.features.field.data.database.entity.*
-import chromahub.rhythm.app.features.field.data.export.FieldMindExport
-import chromahub.rhythm.app.features.field.presentation.components.*
-import chromahub.rhythm.app.features.field.presentation.theme.FieldMindTheme
-import chromahub.rhythm.app.features.field.presentation.viewmodel.FieldMindViewModel
-import chromahub.rhythm.app.shared.presentation.components.icons.Icon
-import chromahub.rhythm.app.shared.presentation.components.icons.MaterialSymbolIcon
+import fieldmind.research.app.features.field.data.database.entity.*
+import fieldmind.research.app.features.field.data.export.FieldMindExport
+import fieldmind.research.app.features.field.presentation.components.*
+import fieldmind.research.app.features.field.presentation.theme.FieldMindTheme
+import fieldmind.research.app.features.field.presentation.viewmodel.FieldMindViewModel
+import fieldmind.research.app.shared.presentation.components.icons.Icon
+import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon
 import kotlinx.coroutines.launch
 import java.io.File
 import java.text.SimpleDateFormat

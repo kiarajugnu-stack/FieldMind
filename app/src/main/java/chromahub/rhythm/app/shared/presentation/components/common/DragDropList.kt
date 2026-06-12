@@ -1,4 +1,4 @@
-package chromahub.rhythm.app.shared.presentation.components.common
+package fieldmind.research.app.shared.presentation.components.common
 
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.VectorConverter
@@ -30,8 +30,8 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.zIndex
-import chromahub.rhythm.app.util.HapticUtils
-import chromahub.rhythm.app.util.HapticType
+import fieldmind.research.app.util.HapticUtils
+import fieldmind.research.app.util.HapticType
 import kotlinx.coroutines.launch
 
 @Composable

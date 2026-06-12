@@ -1,4 +1,4 @@
-package chromahub.rhythm.app.shared.presentation.components.common
+package fieldmind.research.app.shared.presentation.components.common
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
@@ -32,7 +32,7 @@ import kotlinx.coroutines.delay
 import androidx.compose.ui.composed
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.runtime.collectAsState
-import chromahub.rhythm.app.shared.data.model.AppSettings
+import fieldmind.research.app.shared.data.model.AppSettings
 
 @Composable
 fun AutoScrollingTextOnDemand(

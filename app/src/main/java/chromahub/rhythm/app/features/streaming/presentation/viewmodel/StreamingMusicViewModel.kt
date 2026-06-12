@@ -1,27 +1,27 @@
-package chromahub.rhythm.app.features.streaming.presentation.viewmodel
+package fieldmind.research.app.features.streaming.presentation.viewmodel
 
 import android.app.Application
 import android.content.Context
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import chromahub.rhythm.app.core.domain.model.SourceType
-import chromahub.rhythm.app.core.domain.model.StreamingConfig
-import chromahub.rhythm.app.core.domain.model.StreamingQuality
-import chromahub.rhythm.app.core.utils.NetworkUtils
-import chromahub.rhythm.app.features.streaming.data.repository.StreamingMusicRepositoryImpl
-import chromahub.rhythm.app.features.streaming.data.repository.StreamingServiceSession
-import chromahub.rhythm.app.features.streaming.data.repository.StreamingServiceSessionRepository
-import chromahub.rhythm.app.features.streaming.di.StreamingMusicModule
-import chromahub.rhythm.app.features.streaming.domain.model.BrowseCategory
-import chromahub.rhythm.app.features.streaming.domain.model.StreamingAlbum
-import chromahub.rhythm.app.features.streaming.domain.model.StreamingArtist
-import chromahub.rhythm.app.features.streaming.domain.model.StreamingPlaylist
-import chromahub.rhythm.app.features.streaming.domain.model.StreamingServiceId
-import chromahub.rhythm.app.features.streaming.domain.model.StreamingServiceRules
-import chromahub.rhythm.app.features.streaming.domain.model.StreamingSong
-import chromahub.rhythm.app.features.streaming.infrastructure.notification.StreamingNotificationManager
-import chromahub.rhythm.app.shared.data.model.AppSettings
-import chromahub.rhythm.app.util.ArtistSeparator
+import fieldmind.research.app.core.domain.model.SourceType
+import fieldmind.research.app.core.domain.model.StreamingConfig
+import fieldmind.research.app.core.domain.model.StreamingQuality
+import fieldmind.research.app.core.utils.NetworkUtils
+import fieldmind.research.app.features.streaming.data.repository.StreamingMusicRepositoryImpl
+import fieldmind.research.app.features.streaming.data.repository.StreamingServiceSession
+import fieldmind.research.app.features.streaming.data.repository.StreamingServiceSessionRepository
+import fieldmind.research.app.features.streaming.di.StreamingMusicModule
+import fieldmind.research.app.features.streaming.domain.model.BrowseCategory
+import fieldmind.research.app.features.streaming.domain.model.StreamingAlbum
+import fieldmind.research.app.features.streaming.domain.model.StreamingArtist
+import fieldmind.research.app.features.streaming.domain.model.StreamingPlaylist
+import fieldmind.research.app.features.streaming.domain.model.StreamingServiceId
+import fieldmind.research.app.features.streaming.domain.model.StreamingServiceRules
+import fieldmind.research.app.features.streaming.domain.model.StreamingSong
+import fieldmind.research.app.features.streaming.infrastructure.notification.StreamingNotificationManager
+import fieldmind.research.app.shared.data.model.AppSettings
+import fieldmind.research.app.util.ArtistSeparator
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -29,9 +29,9 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
 import android.net.Uri
-import chromahub.rhythm.app.shared.data.model.Song
-import chromahub.rhythm.app.features.local.presentation.viewmodel.MusicViewModel
-import chromahub.rhythm.app.R
+import fieldmind.research.app.shared.data.model.Song
+import fieldmind.research.app.features.local.presentation.viewmodel.MusicViewModel
+import fieldmind.research.app.R
 
 /**
  * ViewModel for managing streaming music playback and library.

@@ -1,6 +1,6 @@
-package chromahub.rhythm.app.util
+package fieldmind.research.app.util
 
-import chromahub.rhythm.app.shared.data.model.Curve
+import fieldmind.research.app.shared.data.model.Curve
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sqrt

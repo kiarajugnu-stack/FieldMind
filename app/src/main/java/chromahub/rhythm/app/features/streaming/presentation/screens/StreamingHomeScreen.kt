@@ -1,7 +1,7 @@
-package chromahub.rhythm.app.features.streaming.presentation.screens
+package fieldmind.research.app.features.streaming.presentation.screens
 
-import chromahub.rhythm.app.shared.presentation.components.icons.RhythmIcons
-import chromahub.rhythm.app.shared.presentation.components.icons.Icon
+import fieldmind.research.app.shared.presentation.components.icons.RhythmIcons
+import fieldmind.research.app.shared.presentation.components.icons.Icon
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
@@ -38,15 +38,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import chromahub.rhythm.app.R
-import chromahub.rhythm.app.features.streaming.presentation.model.StreamingServiceOption
-import chromahub.rhythm.app.features.streaming.presentation.model.StreamingServiceOptions
-import chromahub.rhythm.app.features.streaming.presentation.viewmodel.StreamingMusicViewModel
-import chromahub.rhythm.app.shared.data.model.AppSettings
-import chromahub.rhythm.app.shared.presentation.components.common.CollapsibleHeaderScreen
-import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveFilledIconButton
-import chromahub.rhythm.app.util.HapticUtils
-import chromahub.rhythm.app.util.HapticType
+import fieldmind.research.app.R
+import fieldmind.research.app.features.streaming.presentation.model.StreamingServiceOption
+import fieldmind.research.app.features.streaming.presentation.model.StreamingServiceOptions
+import fieldmind.research.app.features.streaming.presentation.viewmodel.StreamingMusicViewModel
+import fieldmind.research.app.shared.data.model.AppSettings
+import fieldmind.research.app.shared.presentation.components.common.CollapsibleHeaderScreen
+import fieldmind.research.app.shared.presentation.components.common.ExpressiveFilledIconButton
+import fieldmind.research.app.util.HapticUtils
+import fieldmind.research.app.util.HapticType
 
 @Composable
 fun StreamingHomeScreen(

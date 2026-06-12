@@ -1,7 +1,7 @@
-package chromahub.rhythm.app.network
+package fieldmind.research.app.network
 
 import android.content.Context
-import chromahub.rhythm.app.BuildConfig
+import fieldmind.research.app.BuildConfig
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import okhttp3.Request

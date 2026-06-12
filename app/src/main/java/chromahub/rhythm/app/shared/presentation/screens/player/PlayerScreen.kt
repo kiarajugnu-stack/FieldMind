@@ -1,4 +1,4 @@
-package chromahub.rhythm.app.shared.presentation.screens.player
+package fieldmind.research.app.shared.presentation.screens.player
 
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
@@ -12,7 +12,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.fillMaxSize
-import chromahub.rhythm.app.shared.presentation.components.lyrics.FullScreenLyricsView
+import fieldmind.research.app.shared.presentation.components.lyrics.FullScreenLyricsView
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -49,38 +49,38 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.Surface
-import chromahub.rhythm.app.shared.presentation.components.icons.Icon
+import fieldmind.research.app.shared.presentation.components.icons.Icon
 import androidx.compose.foundation.layout.fillMaxSize
-import chromahub.rhythm.app.shared.presentation.components.icons.RhythmIcons
-import chromahub.rhythm.app.util.HapticUtils
-import chromahub.rhythm.app.util.HapticType
-import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveShapeTarget
-import chromahub.rhythm.app.shared.presentation.components.common.rememberExpressiveShapeFor
-import chromahub.rhythm.app.shared.presentation.components.Material3SettingsGroup
-import chromahub.rhythm.app.shared.presentation.components.Material3SettingsItem
-import chromahub.rhythm.app.shared.presentation.components.bottomsheets.ExtraControlBottomSheet
-import chromahub.rhythm.app.shared.presentation.components.bottomsheets.AddToPlaylistBottomSheet
-import chromahub.rhythm.app.shared.presentation.components.bottomsheets.AlbumBottomSheet
-import chromahub.rhythm.app.shared.presentation.components.bottomsheets.ArtistBottomSheet
-import chromahub.rhythm.app.shared.presentation.components.bottomsheets.PlaybackBottomSheet
-import chromahub.rhythm.app.shared.presentation.components.bottomsheets.QueueBottomSheet
-import chromahub.rhythm.app.shared.presentation.components.bottomsheets.SongInfoBottomSheet
-import chromahub.rhythm.app.shared.presentation.components.dialogs.PlaybackPitchDialog
-import chromahub.rhythm.app.shared.presentation.components.dialogs.PlaybackSpeedDialog
-import chromahub.rhythm.app.shared.presentation.components.player.SleepTimerBottomSheetNew
-import chromahub.rhythm.app.shared.presentation.components.lyrics.LyricsEditorBottomSheet
-import chromahub.rhythm.app.shared.presentation.components.player.formatDuration
-import chromahub.rhythm.app.features.local.presentation.navigation.Screen
-import chromahub.rhythm.app.features.local.presentation.screens.LibraryTab
-import chromahub.rhythm.app.features.local.presentation.viewmodel.MusicViewModel
-import chromahub.rhythm.app.shared.data.model.Album
-import chromahub.rhythm.app.shared.data.model.AppSettings
-import chromahub.rhythm.app.shared.data.model.Artist
-import chromahub.rhythm.app.shared.data.model.LyricsData
-import chromahub.rhythm.app.shared.data.model.PlaybackLocation
-import chromahub.rhythm.app.shared.data.model.Playlist
-import chromahub.rhythm.app.shared.data.model.Song
-import chromahub.rhythm.app.R
+import fieldmind.research.app.shared.presentation.components.icons.RhythmIcons
+import fieldmind.research.app.util.HapticUtils
+import fieldmind.research.app.util.HapticType
+import fieldmind.research.app.shared.presentation.components.common.ExpressiveShapeTarget
+import fieldmind.research.app.shared.presentation.components.common.rememberExpressiveShapeFor
+import fieldmind.research.app.shared.presentation.components.Material3SettingsGroup
+import fieldmind.research.app.shared.presentation.components.Material3SettingsItem
+import fieldmind.research.app.shared.presentation.components.bottomsheets.ExtraControlBottomSheet
+import fieldmind.research.app.shared.presentation.components.bottomsheets.AddToPlaylistBottomSheet
+import fieldmind.research.app.shared.presentation.components.bottomsheets.AlbumBottomSheet
+import fieldmind.research.app.shared.presentation.components.bottomsheets.ArtistBottomSheet
+import fieldmind.research.app.shared.presentation.components.bottomsheets.PlaybackBottomSheet
+import fieldmind.research.app.shared.presentation.components.bottomsheets.QueueBottomSheet
+import fieldmind.research.app.shared.presentation.components.bottomsheets.SongInfoBottomSheet
+import fieldmind.research.app.shared.presentation.components.dialogs.PlaybackPitchDialog
+import fieldmind.research.app.shared.presentation.components.dialogs.PlaybackSpeedDialog
+import fieldmind.research.app.shared.presentation.components.player.SleepTimerBottomSheetNew
+import fieldmind.research.app.shared.presentation.components.lyrics.LyricsEditorBottomSheet
+import fieldmind.research.app.shared.presentation.components.player.formatDuration
+import fieldmind.research.app.features.local.presentation.navigation.Screen
+import fieldmind.research.app.features.local.presentation.screens.LibraryTab
+import fieldmind.research.app.features.local.presentation.viewmodel.MusicViewModel
+import fieldmind.research.app.shared.data.model.Album
+import fieldmind.research.app.shared.data.model.AppSettings
+import fieldmind.research.app.shared.data.model.Artist
+import fieldmind.research.app.shared.data.model.LyricsData
+import fieldmind.research.app.shared.data.model.PlaybackLocation
+import fieldmind.research.app.shared.data.model.Playlist
+import fieldmind.research.app.shared.data.model.Song
+import fieldmind.research.app.R
 import androidx.compose.ui.res.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -219,7 +219,7 @@ fun PlayerScreen(
 
         val splitArtistNames: (String) -> List<String> = remember {
             { artistName ->
-                chromahub.rhythm.app.util.ArtistSeparator.splitArtistNames(
+                fieldmind.research.app.util.ArtistSeparator.splitArtistNames(
                     artistName = artistName,
                     delimiters = artistSeparatorDelimiters,
                     enabled = artistSeparatorEnabled
@@ -719,7 +719,7 @@ fun PlayerScreen(
                                         color = MaterialTheme.colorScheme.secondaryContainer,
                                         modifier = Modifier.size(56.dp)
                                     ) {
-                                        chromahub.rhythm.app.util.M3ImageUtils.ArtistImage(
+                                        fieldmind.research.app.util.M3ImageUtils.ArtistImage(
                                             imageUrl = artist.artworkUri,
                                             artistName = artist.name,
                                             modifier = Modifier.fillMaxSize(),

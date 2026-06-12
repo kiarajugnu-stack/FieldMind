@@ -1,11 +1,11 @@
-package chromahub.rhythm.app.shared.data.repository
+package fieldmind.research.app.shared.data.repository
 
 import android.content.Context
 import com.google.gson.Gson
 import com.google.gson.JsonElement
 import com.google.gson.reflect.TypeToken
-import chromahub.rhythm.app.shared.data.model.Song
-import chromahub.rhythm.app.util.GenreUtils
+import fieldmind.research.app.shared.data.model.Song
+import fieldmind.research.app.util.GenreUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

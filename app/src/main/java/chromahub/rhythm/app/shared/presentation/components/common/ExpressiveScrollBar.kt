@@ -1,9 +1,9 @@
 @file:OptIn(ExperimentalMaterial3ExpressiveApi::class)
 
-package chromahub.rhythm.app.shared.presentation.components.common
+package fieldmind.research.app.shared.presentation.components.common
 
-import chromahub.rhythm.app.shared.presentation.components.icons.MaterialSymbolIcon
-import chromahub.rhythm.app.shared.presentation.components.icons.Icon
+import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon
+import fieldmind.research.app.shared.presentation.components.icons.Icon
 
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
@@ -33,7 +33,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
-import chromahub.rhythm.app.R
+import fieldmind.research.app.R
 import androidx.compose.ui.res.stringResource
 
 /**

@@ -1,4 +1,4 @@
-package chromahub.rhythm.app.shared.presentation.navigation
+package fieldmind.research.app.shared.presentation.navigation
 
 /**
  * Main navigation screens for mode selection and top-level routing.

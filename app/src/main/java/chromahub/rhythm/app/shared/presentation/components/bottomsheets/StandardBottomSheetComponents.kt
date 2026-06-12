@@ -1,4 +1,4 @@
-package chromahub.rhythm.app.shared.presentation.components.bottomsheets
+package fieldmind.research.app.shared.presentation.components.bottomsheets
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn

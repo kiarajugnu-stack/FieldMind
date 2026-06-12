@@ -15,11 +15,11 @@
  *     along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package chromahub.rhythm.app.infrastructure.widget
+package fieldmind.research.app.infrastructure.widget
 
 import android.content.Context
-import chromahub.rhythm.app.shared.data.model.Song
-import chromahub.rhythm.app.infrastructure.widget.glance.GlanceWidgetUpdater
+import fieldmind.research.app.shared.data.model.Song
+import fieldmind.research.app.infrastructure.widget.glance.GlanceWidgetUpdater
 
 /**
  * Thin shim that forwards widget update calls to the Glance-based updater.

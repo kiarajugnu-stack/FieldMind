@@ -1,4 +1,4 @@
-package chromahub.rhythm.app.features.local.data.repository
+package fieldmind.research.app.features.local.data.repository
 
 import android.content.ContentUris
 import android.content.Context
@@ -10,26 +10,26 @@ import android.os.Looper
 import android.provider.MediaStore
 import android.util.Log
 import android.util.LruCache
-import chromahub.rhythm.app.network.NetworkClient
-import chromahub.rhythm.app.network.ITunesSearchApiService
-import chromahub.rhythm.app.network.RhythmLyricsApiService
-import chromahub.rhythm.app.network.RhythmLyricsResponse
-import chromahub.rhythm.app.network.RhythmLyricsLine
-import chromahub.rhythm.app.network.RhythmLyricsWord
-import chromahub.rhythm.app.network.DeezerApiService
-import chromahub.rhythm.app.network.DeezerArtist
-import chromahub.rhythm.app.network.DeezerAlbum
-import chromahub.rhythm.app.network.YTMusicApiService
-import chromahub.rhythm.app.network.YTMusicSearchRequest
-import chromahub.rhythm.app.network.YTMusicContext
-import chromahub.rhythm.app.network.YTMusicClient
-import chromahub.rhythm.app.network.YTMusicBrowseRequest
-import chromahub.rhythm.app.network.extractArtistImageUrl
-import chromahub.rhythm.app.network.extractAlbumImageUrl
-import chromahub.rhythm.app.network.extractArtistBrowseId
-import chromahub.rhythm.app.network.extractAlbumBrowseId
-import chromahub.rhythm.app.network.extractArtistThumbnail
-import chromahub.rhythm.app.network.extractAlbumCover
+import fieldmind.research.app.network.NetworkClient
+import fieldmind.research.app.network.ITunesSearchApiService
+import fieldmind.research.app.network.RhythmLyricsApiService
+import fieldmind.research.app.network.RhythmLyricsResponse
+import fieldmind.research.app.network.RhythmLyricsLine
+import fieldmind.research.app.network.RhythmLyricsWord
+import fieldmind.research.app.network.DeezerApiService
+import fieldmind.research.app.network.DeezerArtist
+import fieldmind.research.app.network.DeezerAlbum
+import fieldmind.research.app.network.YTMusicApiService
+import fieldmind.research.app.network.YTMusicSearchRequest
+import fieldmind.research.app.network.YTMusicContext
+import fieldmind.research.app.network.YTMusicClient
+import fieldmind.research.app.network.YTMusicBrowseRequest
+import fieldmind.research.app.network.extractArtistImageUrl
+import fieldmind.research.app.network.extractAlbumImageUrl
+import fieldmind.research.app.network.extractArtistBrowseId
+import fieldmind.research.app.network.extractAlbumBrowseId
+import fieldmind.research.app.network.extractArtistThumbnail
+import fieldmind.research.app.network.extractAlbumCover
 import okhttp3.Request
 import com.google.gson.JsonParser
 import com.google.gson.Gson
@@ -50,30 +50,30 @@ import kotlinx.coroutines.flow.asStateFlow
 import java.io.File
 import java.io.ByteArrayOutputStream
 import java.net.URL
-import chromahub.rhythm.app.shared.data.model.LyricsData
-import chromahub.rhythm.app.shared.data.model.Song
-import chromahub.rhythm.app.shared.data.model.Album
-import chromahub.rhythm.app.shared.data.model.Artist
-import chromahub.rhythm.app.shared.data.model.Playlist
-import chromahub.rhythm.app.shared.data.model.AppSettings
-import chromahub.rhythm.app.shared.data.model.LyricsSourcePreference
-import chromahub.rhythm.app.shared.data.model.UserAudioDevice
-import chromahub.rhythm.app.shared.data.model.PlaybackLocation
-import chromahub.rhythm.app.shared.data.model.LyricsApiPriority
-import chromahub.rhythm.app.core.domain.model.PlayableItem
-import chromahub.rhythm.app.core.domain.model.SourceType
+import fieldmind.research.app.shared.data.model.LyricsData
+import fieldmind.research.app.shared.data.model.Song
+import fieldmind.research.app.shared.data.model.Album
+import fieldmind.research.app.shared.data.model.Artist
+import fieldmind.research.app.shared.data.model.Playlist
+import fieldmind.research.app.shared.data.model.AppSettings
+import fieldmind.research.app.shared.data.model.LyricsSourcePreference
+import fieldmind.research.app.shared.data.model.UserAudioDevice
+import fieldmind.research.app.shared.data.model.PlaybackLocation
+import fieldmind.research.app.shared.data.model.LyricsApiPriority
+import fieldmind.research.app.core.domain.model.PlayableItem
+import fieldmind.research.app.core.domain.model.SourceType
 import java.lang.ref.WeakReference
-import chromahub.rhythm.app.util.AudioFormatDetector
-import chromahub.rhythm.app.util.LyricsParser
-import chromahub.rhythm.app.util.EnhancedLyricLine
-import chromahub.rhythm.app.util.EnhancedWord
-import chromahub.rhythm.app.util.RhythmLyricsParser
+import fieldmind.research.app.util.AudioFormatDetector
+import fieldmind.research.app.util.LyricsParser
+import fieldmind.research.app.util.EnhancedLyricLine
+import fieldmind.research.app.util.EnhancedWord
+import fieldmind.research.app.util.RhythmLyricsParser
 import android.content.SharedPreferences
 import androidx.room.withTransaction
-import chromahub.rhythm.app.features.local.data.database.RhythmDatabase
-import chromahub.rhythm.app.features.local.data.database.entity.ArtistEntity
-import chromahub.rhythm.app.features.local.data.database.entity.SongEntity
-import chromahub.rhythm.app.features.local.data.database.entity.SongArtistEntity
+import fieldmind.research.app.features.local.data.database.RhythmDatabase
+import fieldmind.research.app.features.local.data.database.entity.ArtistEntity
+import fieldmind.research.app.features.local.data.database.entity.SongEntity
+import fieldmind.research.app.features.local.data.database.entity.SongArtistEntity
 
 /**
  * Scan progress data class for real-time updates
@@ -401,7 +401,7 @@ class MusicRepository(context: Context) {
                         if (savedArtworkIsEmbeddedCache && savedArtworkUsable) {
                             savedArtworkUri
                         } else {
-                            chromahub.rhythm.app.util.MediaUtils.getCachedEmbeddedAlbumArtUri(
+                            fieldmind.research.app.util.MediaUtils.getCachedEmbeddedAlbumArtUri(
                                 cacheDir = context.cacheDir,
                                 songUri = songUri,
                                 lossless = losslessArtwork
@@ -1600,7 +1600,7 @@ class MusicRepository(context: Context) {
             val useEmbeddedArt = appSettings.preferSongArtwork.value
             val effectiveArtUri = if (useEmbeddedArt) {
                 val lossless = appSettings.isLosslessArtworkActive.value
-                chromahub.rhythm.app.util.MediaUtils.getCachedEmbeddedAlbumArtUri(
+                fieldmind.research.app.util.MediaUtils.getCachedEmbeddedAlbumArtUri(
                     cacheDir = context.cacheDir,
                     songUri = contentUri,
                     lossless = lossless
@@ -2267,7 +2267,7 @@ class MusicRepository(context: Context) {
         val appSettings = AppSettings.getInstance(context)
         val artistSeparatorEnabled = appSettings.artistSeparatorEnabled.value
         val delimiters = if (artistSeparatorEnabled) appSettings.artistSeparatorDelimiters.value else ""
-        return chromahub.rhythm.app.util.ArtistSeparator.splitArtistNames(artistName, delimiters, artistSeparatorEnabled)
+        return fieldmind.research.app.util.ArtistSeparator.splitArtistNames(artistName, delimiters, artistSeparatorEnabled)
     }
 
     /**
@@ -2276,7 +2276,7 @@ class MusicRepository(context: Context) {
      */
     fun splitArtistNames(artistName: String, preloadedCharDelimiters: List<String>): List<String> {
         val delimiters = preloadedCharDelimiters.joinToString("")
-        return chromahub.rhythm.app.util.ArtistSeparator.splitArtistNames(artistName, delimiters, preloadedCharDelimiters.isNotEmpty())
+        return fieldmind.research.app.util.ArtistSeparator.splitArtistNames(artistName, delimiters, preloadedCharDelimiters.isNotEmpty())
     }
     
     /**
@@ -2549,7 +2549,7 @@ class MusicRepository(context: Context) {
                     ) {
                         Log.d(TAG, "Skipping unknown/blank artist name")
                         val placeholderUri =
-                            chromahub.rhythm.app.util.ImageUtils.generatePlaceholderImage(
+                            fieldmind.research.app.util.ImageUtils.generatePlaceholderImage(
                                 name = "Unknown Artist",
                                 size = 500,
                                 cacheDir = context.cacheDir
@@ -2690,7 +2690,7 @@ class MusicRepository(context: Context) {
                     // If we get here, generate a placeholder image
                     Log.d(TAG, "Generating placeholder for artist: ${artist.name}")
                     val placeholderUri =
-                        chromahub.rhythm.app.util.ImageUtils.generatePlaceholderImage(
+                        fieldmind.research.app.util.ImageUtils.generatePlaceholderImage(
                             name = artist.name,
                             size = 500,
                             cacheDir = context.cacheDir
@@ -2702,7 +2702,7 @@ class MusicRepository(context: Context) {
                     Log.e(TAG, "Error fetching artist image for ${artist.name}", e)
                     try {
                         val placeholderUri =
-                            chromahub.rhythm.app.util.ImageUtils.generatePlaceholderImage(
+                            fieldmind.research.app.util.ImageUtils.generatePlaceholderImage(
                                 name = artist.name,
                                 size = 500,
                                 cacheDir = context.cacheDir
@@ -4833,7 +4833,7 @@ class MusicRepository(context: Context) {
                 }
 
                 // Generate a custom placeholder image based on album name
-                val placeholderUri = chromahub.rhythm.app.util.ImageUtils.generatePlaceholderImage(
+                val placeholderUri = fieldmind.research.app.util.ImageUtils.generatePlaceholderImage(
                     name = album.title,
                     size = 500,
                     cacheDir = context.cacheDir
@@ -4960,7 +4960,7 @@ class MusicRepository(context: Context) {
                 // Try to use a generated placeholder
                 try {
                     val placeholderUri =
-                        chromahub.rhythm.app.util.ImageUtils.generatePlaceholderImage(
+                        fieldmind.research.app.util.ImageUtils.generatePlaceholderImage(
                             name = album.title,
                             size = 500,
                             cacheDir = context.cacheDir
@@ -5004,7 +5004,7 @@ class MusicRepository(context: Context) {
             }
 
             try {
-                val embeddedUri = chromahub.rhythm.app.util.MediaUtils.extractEmbeddedAlbumArt(
+                val embeddedUri = fieldmind.research.app.util.MediaUtils.extractEmbeddedAlbumArt(
                     context, song.uri, context.cacheDir, lossless
                 )
                 if (embeddedUri != null && embeddedUri != song.artworkUri) {
@@ -5473,7 +5473,7 @@ class MusicRepository(context: Context) {
             
             // Check if cache cleanup is needed based on app settings
             val maxCacheSize = try {
-                val settings = chromahub.rhythm.app.shared.data.model.AppSettings.getInstance(context)
+                val settings = fieldmind.research.app.shared.data.model.AppSettings.getInstance(context)
                 settings.maxCacheSize.value
             } catch (e: Exception) {
                 Log.w(TAG, "Error getting cache size setting, using default", e)
@@ -5481,7 +5481,7 @@ class MusicRepository(context: Context) {
             }
             
             // Clean up file system cache if needed
-            val cacheManager = chromahub.rhythm.app.util.CacheManager
+            val cacheManager = fieldmind.research.app.util.CacheManager
             val cacheCleanedUp = cacheManager.cleanCacheIfNeeded(context, maxCacheSize)
             
             if (cacheCleanedUp) {

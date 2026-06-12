@@ -1,4 +1,4 @@
-package chromahub.rhythm.app.features.streaming.presentation.screens
+package fieldmind.research.app.features.streaming.presentation.screens
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -22,8 +22,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import chromahub.rhythm.app.R
-import chromahub.rhythm.app.features.streaming.presentation.model.StreamingServiceOptions
+import fieldmind.research.app.R
+import fieldmind.research.app.features.streaming.presentation.model.StreamingServiceOptions
 
 /**
  * Default first-use screen for streaming mode.

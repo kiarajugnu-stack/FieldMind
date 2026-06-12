@@ -1,4 +1,4 @@
-package chromahub.rhythm.app.features.streaming.data.provider
+package fieldmind.research.app.features.streaming.data.provider
 
 import android.content.Context
 import android.util.Log

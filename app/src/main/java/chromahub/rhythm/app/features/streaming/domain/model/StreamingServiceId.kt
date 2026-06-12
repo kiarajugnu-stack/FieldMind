@@ -1,4 +1,4 @@
-package chromahub.rhythm.app.features.streaming.domain.model
+package fieldmind.research.app.features.streaming.domain.model
 
 object StreamingServiceId {
     const val SUBSONIC = "SUBSONIC"

@@ -1,4 +1,4 @@
-package chromahub.rhythm.app.infrastructure.widget.glance
+package fieldmind.research.app.infrastructure.widget.glance
 
 import android.content.Context
 import android.content.Intent
@@ -8,10 +8,10 @@ import androidx.glance.GlanceId
 import androidx.glance.action.ActionParameters
 import androidx.glance.appwidget.action.ActionCallback
 import androidx.glance.appwidget.updateAll
-import chromahub.rhythm.app.activities.MainActivity
-import chromahub.rhythm.app.infrastructure.service.MediaPlaybackService
-import chromahub.rhythm.app.infrastructure.widget.glance.RhythmMusicWidget
-import chromahub.rhythm.app.infrastructure.widget.glance.RhythmLyricsWidget
+import fieldmind.research.app.activities.MainActivity
+import fieldmind.research.app.infrastructure.service.MediaPlaybackService
+import fieldmind.research.app.infrastructure.widget.glance.RhythmMusicWidget
+import fieldmind.research.app.infrastructure.widget.glance.RhythmLyricsWidget
 import kotlinx.coroutines.delay
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.glance.appwidget.state.updateAppWidgetState

@@ -1,4 +1,4 @@
-package chromahub.rhythm.app.shared.data.model
+package fieldmind.research.app.shared.data.model
 
 /**
  * Represents an AutoEQ profile for a specific headphone/earphone model

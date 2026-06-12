@@ -1,4 +1,4 @@
-package chromahub.rhythm.app.infrastructure.widget.glance
+package fieldmind.research.app.infrastructure.widget.glance
 
 import android.content.Context
 import android.graphics.Bitmap
@@ -59,8 +59,8 @@ import kotlinx.coroutines.withContext
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.core.booleanPreferencesKey
-import chromahub.rhythm.app.activities.MainActivity
-import chromahub.rhythm.app.R
+import fieldmind.research.app.activities.MainActivity
+import fieldmind.research.app.R
 import androidx.glance.appwidget.state.getAppWidgetState
 
 /**
@@ -130,7 +130,7 @@ class RhythmMusicWidget : GlanceAppWidget() {
     
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         val appSettings = try {
-            chromahub.rhythm.app.shared.data.model.AppSettings.getInstance(context)
+            fieldmind.research.app.shared.data.model.AppSettings.getInstance(context)
         } catch (e: Exception) {
             null
         }
@@ -1414,7 +1414,7 @@ class RhythmMusicWidget : GlanceAppWidget() {
         }
     }
     
-    private fun getWidgetData(prefs: Preferences, appSettings: chromahub.rhythm.app.shared.data.model.AppSettings?): WidgetData {
+    private fun getWidgetData(prefs: Preferences, appSettings: fieldmind.research.app.shared.data.model.AppSettings?): WidgetData {
         return try {
             WidgetData(
                 songTitle = prefs[stringPreferencesKey(KEY_SONG_TITLE)] ?: "Rhythm",

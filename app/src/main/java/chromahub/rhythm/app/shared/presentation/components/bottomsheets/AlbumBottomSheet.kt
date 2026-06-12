@@ -1,7 +1,7 @@
-package chromahub.rhythm.app.shared.presentation.components.bottomsheets
+package fieldmind.research.app.shared.presentation.components.bottomsheets
 
-import chromahub.rhythm.app.shared.presentation.components.icons.RhythmIcons
-import chromahub.rhythm.app.shared.presentation.components.icons.Icon
+import fieldmind.research.app.shared.presentation.components.icons.RhythmIcons
+import fieldmind.research.app.shared.presentation.components.icons.Icon
 
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
@@ -46,20 +46,20 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
-import chromahub.rhythm.app.R
-import chromahub.rhythm.app.shared.data.model.Album
-import chromahub.rhythm.app.shared.data.model.Song
-import chromahub.rhythm.app.shared.data.model.AppSettings
-import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveShapeTarget
-import chromahub.rhythm.app.shared.presentation.components.player.PlayingEqIcon
-import chromahub.rhythm.app.shared.presentation.components.common.M3PlaceholderType
-import chromahub.rhythm.app.shared.presentation.components.common.rememberExpressiveShapeFor
-import chromahub.rhythm.app.shared.presentation.components.player.formatDuration
-import chromahub.rhythm.app.shared.presentation.components.common.AutoScrollingTextOnDemand
-import chromahub.rhythm.app.shared.presentation.components.AudioQualityBadges
-import chromahub.rhythm.app.util.ImageUtils
-import chromahub.rhythm.app.util.HapticUtils
-import chromahub.rhythm.app.util.HapticType
+import fieldmind.research.app.R
+import fieldmind.research.app.shared.data.model.Album
+import fieldmind.research.app.shared.data.model.Song
+import fieldmind.research.app.shared.data.model.AppSettings
+import fieldmind.research.app.shared.presentation.components.common.ExpressiveShapeTarget
+import fieldmind.research.app.shared.presentation.components.player.PlayingEqIcon
+import fieldmind.research.app.shared.presentation.components.common.M3PlaceholderType
+import fieldmind.research.app.shared.presentation.components.common.rememberExpressiveShapeFor
+import fieldmind.research.app.shared.presentation.components.player.formatDuration
+import fieldmind.research.app.shared.presentation.components.common.AutoScrollingTextOnDemand
+import fieldmind.research.app.shared.presentation.components.AudioQualityBadges
+import fieldmind.research.app.util.ImageUtils
+import fieldmind.research.app.util.HapticUtils
+import fieldmind.research.app.util.HapticType
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch

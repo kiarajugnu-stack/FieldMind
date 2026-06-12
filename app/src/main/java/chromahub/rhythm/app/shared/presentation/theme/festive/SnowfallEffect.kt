@@ -1,4 +1,4 @@
-package chromahub.rhythm.app.ui.theme.festive
+package fieldmind.research.app.ui.theme.festive
 
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.animateFloat

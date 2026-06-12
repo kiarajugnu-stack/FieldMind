@@ -1,8 +1,8 @@
-package chromahub.rhythm.app.features.streaming.presentation.model
+package fieldmind.research.app.features.streaming.presentation.model
 
 import androidx.annotation.StringRes
-import chromahub.rhythm.app.R
-import chromahub.rhythm.app.features.streaming.domain.model.StreamingServiceId
+import fieldmind.research.app.R
+import fieldmind.research.app.features.streaming.domain.model.StreamingServiceId
 
 data class StreamingServiceOption(
     val id: String,

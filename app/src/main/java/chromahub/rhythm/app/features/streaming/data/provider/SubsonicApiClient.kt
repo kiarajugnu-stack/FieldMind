@@ -1,4 +1,4 @@
-package chromahub.rhythm.app.features.streaming.data.provider
+package fieldmind.research.app.features.streaming.data.provider
 
 import android.content.Context
 import android.util.Log
@@ -524,7 +524,7 @@ class SubsonicApiClient(context: Context) {
                 val request = Request.Builder()
                     .url(url)
                     .header("Accept", "application/json")
-                    .header("User-Agent", "Rhythm/${chromahub.rhythm.app.BuildConfig.VERSION_NAME} (Android)")
+                    .header("User-Agent", "Rhythm/${fieldmind.research.app.BuildConfig.VERSION_NAME} (Android)")
                     .get()
                     .build()
 

@@ -1,10 +1,10 @@
-package chromahub.rhythm.app.features.field.presentation.components
+package fieldmind.research.app.features.field.presentation.components
 
-import chromahub.rhythm.app.shared.presentation.components.icons.MaterialSymbolIcon
+import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon
 
 /**
  * Material Symbols icon set for FieldMind, rendered through the shared variable-font
- * [chromahub.rhythm.app.shared.presentation.components.icons.Icon] composable. Using real
+ * [fieldmind.research.app.shared.presentation.components.icons.Icon] composable. Using real
  * symbols (instead of unicode glyph text) is the single biggest visual upgrade for the app.
  */
 object FieldMindIcons {

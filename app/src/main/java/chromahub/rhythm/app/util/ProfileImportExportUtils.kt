@@ -1,11 +1,11 @@
-package chromahub.rhythm.app.utils
+package fieldmind.research.app.utils
 
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.widget.Toast
 import androidx.activity.result.ActivityResultLauncher
-import chromahub.rhythm.app.shared.data.model.UserAudioDevice
+import fieldmind.research.app.shared.data.model.UserAudioDevice
 import com.google.gson.Gson
 import com.google.gson.JsonSyntaxException
 import kotlinx.coroutines.Dispatchers

@@ -1,33 +1,33 @@
-package chromahub.rhythm.app.features.streaming.data.repository
+package fieldmind.research.app.features.streaming.data.repository
 
 import android.content.Context
 import android.util.Log
-import chromahub.rhythm.app.core.domain.model.AlbumItem
-import chromahub.rhythm.app.core.domain.model.ArtistItem
-import chromahub.rhythm.app.core.domain.model.PlayableItem
-import chromahub.rhythm.app.core.domain.model.PlaylistItem
-import chromahub.rhythm.app.core.domain.model.SourceType
-import chromahub.rhythm.app.core.utils.NetworkUtils
-import chromahub.rhythm.app.features.streaming.data.provider.JellyfinApiClient
-import chromahub.rhythm.app.features.streaming.data.provider.ProviderConnectionResult
-import chromahub.rhythm.app.features.streaming.data.provider.ProviderAlbum
-import chromahub.rhythm.app.features.streaming.data.provider.ProviderArtist
-import chromahub.rhythm.app.features.streaming.data.provider.ProviderPlaylist
-import chromahub.rhythm.app.features.streaming.data.provider.ProviderSong
-import chromahub.rhythm.app.features.streaming.data.provider.SubsonicApiClient
-import chromahub.rhythm.app.features.streaming.domain.model.BrowseCategory
-import chromahub.rhythm.app.features.streaming.domain.model.StreamingAlbum
-import chromahub.rhythm.app.features.streaming.domain.model.StreamingArtist
-import chromahub.rhythm.app.features.streaming.domain.model.StreamingPlaylist
-import chromahub.rhythm.app.features.streaming.domain.model.StreamingServiceId
-import chromahub.rhythm.app.features.streaming.domain.model.StreamingSong
-import chromahub.rhythm.app.features.streaming.domain.repository.StreamingMusicRepository
-import chromahub.rhythm.app.shared.data.model.AppSettings
-import chromahub.rhythm.app.network.NetworkClient
-import chromahub.rhythm.app.network.DeezerApiService
+import fieldmind.research.app.core.domain.model.AlbumItem
+import fieldmind.research.app.core.domain.model.ArtistItem
+import fieldmind.research.app.core.domain.model.PlayableItem
+import fieldmind.research.app.core.domain.model.PlaylistItem
+import fieldmind.research.app.core.domain.model.SourceType
+import fieldmind.research.app.core.utils.NetworkUtils
+import fieldmind.research.app.features.streaming.data.provider.JellyfinApiClient
+import fieldmind.research.app.features.streaming.data.provider.ProviderConnectionResult
+import fieldmind.research.app.features.streaming.data.provider.ProviderAlbum
+import fieldmind.research.app.features.streaming.data.provider.ProviderArtist
+import fieldmind.research.app.features.streaming.data.provider.ProviderPlaylist
+import fieldmind.research.app.features.streaming.data.provider.ProviderSong
+import fieldmind.research.app.features.streaming.data.provider.SubsonicApiClient
+import fieldmind.research.app.features.streaming.domain.model.BrowseCategory
+import fieldmind.research.app.features.streaming.domain.model.StreamingAlbum
+import fieldmind.research.app.features.streaming.domain.model.StreamingArtist
+import fieldmind.research.app.features.streaming.domain.model.StreamingPlaylist
+import fieldmind.research.app.features.streaming.domain.model.StreamingServiceId
+import fieldmind.research.app.features.streaming.domain.model.StreamingSong
+import fieldmind.research.app.features.streaming.domain.repository.StreamingMusicRepository
+import fieldmind.research.app.shared.data.model.AppSettings
+import fieldmind.research.app.network.NetworkClient
+import fieldmind.research.app.network.DeezerApiService
 import android.net.Uri
 import kotlinx.coroutines.flow.Flow
-import chromahub.rhythm.app.util.ArtistSeparator
+import fieldmind.research.app.util.ArtistSeparator
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.flowOf
@@ -1147,7 +1147,7 @@ class StreamingMusicRepositoryImpl(
             sourceType = serviceToSourceType(serviceId),
             externalId = providerPlaylist.providerId,
             owner = if (providerPlaylist.owner != null) {
-                chromahub.rhythm.app.features.streaming.domain.model.PlaylistOwner(
+                fieldmind.research.app.features.streaming.domain.model.PlaylistOwner(
                     id = normalizeKey(providerPlaylist.owner),
                     displayName = providerPlaylist.owner,
                     imageUrl = null,
@@ -1192,7 +1192,7 @@ class StreamingMusicRepositoryImpl(
             sourceType = serviceToSourceType(serviceId),
             externalId = providerAlbum.providerId,
             releaseDate = null,
-            albumType = chromahub.rhythm.app.features.streaming.domain.model.AlbumType.ALBUM,
+            albumType = fieldmind.research.app.features.streaming.domain.model.AlbumType.ALBUM,
             genres = emptyList(),
             label = null,
             copyright = null,

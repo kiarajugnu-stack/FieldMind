@@ -1,12 +1,12 @@
-package chromahub.rhythm.app.features.field.data.background
+package fieldmind.research.app.features.field.data.background
 
 import android.content.Context
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
-import chromahub.rhythm.app.features.field.data.database.FieldMindDatabase
-import chromahub.rhythm.app.features.field.data.export.FieldMindExport
-import chromahub.rhythm.app.features.field.data.repository.FieldMindRepository
-import chromahub.rhythm.app.features.field.data.settings.FieldMindSettings
+import fieldmind.research.app.features.field.data.database.FieldMindDatabase
+import fieldmind.research.app.features.field.data.export.FieldMindExport
+import fieldmind.research.app.features.field.data.repository.FieldMindRepository
+import fieldmind.research.app.features.field.data.settings.FieldMindSettings
 import kotlinx.coroutines.flow.first
 import java.io.File
 import java.text.SimpleDateFormat

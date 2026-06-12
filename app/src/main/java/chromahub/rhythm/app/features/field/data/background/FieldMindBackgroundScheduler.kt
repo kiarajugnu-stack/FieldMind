@@ -1,4 +1,4 @@
-package chromahub.rhythm.app.features.field.data.background
+package fieldmind.research.app.features.field.data.background
 
 import android.content.Context
 import androidx.work.ExistingPeriodicWorkPolicy

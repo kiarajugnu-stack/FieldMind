@@ -1,4 +1,4 @@
-package chromahub.rhythm.app.network
+package fieldmind.research.app.network
 
 import com.google.gson.annotations.SerializedName
 import retrofit2.http.GET
