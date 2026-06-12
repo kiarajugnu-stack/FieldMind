@@ -1,5 +1,11 @@
 package chromahub.rhythm.app.features.field.data.export
 
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.Paint
+import android.graphics.pdf.PdfDocument
+import java.io.ByteArrayOutputStream
 import chromahub.rhythm.app.features.field.data.database.entity.*
 
 object FieldMindExport {
@@ -77,6 +83,69 @@ ${report.nextSteps}
         appendLine("<h2>Reports</h2>")
         reports.forEach { report -> appendLine("<div class=\"card\"><pre>${html(buildMarkdownReport(report))}</pre></div>") }
         appendLine("</body></html>")
+    }
+
+    fun simplePdfBytes(title: String, body: String): ByteArray {
+        val document = PdfDocument()
+        val paint = Paint().apply { textSize = 12f; isAntiAlias = true }
+        val titlePaint = Paint(paint).apply { textSize = 20f; isFakeBoldText = true }
+        val lines = body.lines().flatMap { line -> line.chunked(92).ifEmpty { listOf("") } }
+        var pageNumber = 1
+        var index = 0
+        do {
+            val page = document.startPage(PdfDocument.PageInfo.Builder(595, 842, pageNumber).create())
+            val canvas = page.canvas
+            var y = 48f
+            if (pageNumber == 1) { canvas.drawText(title, 40f, y, titlePaint); y += 34f }
+            while (index < lines.size && y < 800f) {
+                canvas.drawText(lines[index], 40f, y, paint)
+                y += 17f
+                index++
+            }
+            document.finishPage(page)
+            pageNumber++
+        } while (index < lines.size)
+        return ByteArrayOutputStream().use { out -> document.writeTo(out); document.close(); out.toByteArray() }
+    }
+
+    fun dashboardPngBytes(observations: List<ObservationEntity>, sources: List<SourceEntity>, projects: List<ProjectEntity>, notes: List<NoteEntity>): ByteArray {
+        val bitmap = Bitmap.createBitmap(1200, 675, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(bitmap)
+        val paint = Paint(Paint.ANTI_ALIAS_FLAG)
+        canvas.drawColor(Color.rgb(237, 246, 236))
+        paint.color = Color.rgb(38, 87, 63)
+        paint.textSize = 54f
+        paint.isFakeBoldText = true
+        canvas.drawText("FieldMind dashboard", 56f, 96f, paint)
+        paint.isFakeBoldText = false
+        paint.textSize = 24f
+        paint.color = Color.rgb(79, 99, 80)
+        canvas.drawText("Offline research summary export", 58f, 136f, paint)
+        val stats = listOf(
+            Triple("Observations", observations.size, Color.rgb(47, 125, 91)),
+            Triple("Sources", sources.size, Color.rgb(68, 102, 205)),
+            Triple("Projects", projects.size, Color.rgb(150, 95, 38)),
+            Triple("Notes", notes.size, Color.rgb(130, 87, 172))
+        )
+        stats.forEachIndexed { index, stat ->
+            val x = 70f + index * 275f
+            val y = 245f
+            paint.color = Color.WHITE
+            canvas.drawRoundRect(x, y, x + 230f, y + 190f, 32f, 32f, paint)
+            paint.color = stat.third
+            canvas.drawCircle(x + 58f, y + 58f, 24f, paint)
+            paint.textSize = 58f
+            paint.isFakeBoldText = true
+            canvas.drawText(stat.second.toString(), x + 34f, y + 125f, paint)
+            paint.textSize = 24f
+            paint.isFakeBoldText = false
+            paint.color = Color.rgb(79, 99, 80)
+            canvas.drawText(stat.first, x + 34f, y + 162f, paint)
+        }
+        paint.textSize = 26f
+        paint.color = Color.rgb(47, 125, 91)
+        canvas.drawText(if (observations.isNotEmpty()) "Keep collecting: your evidence base is growing." else "Start by capturing one observation.", 70f, 560f, paint)
+        return ByteArrayOutputStream().use { out -> bitmap.compress(Bitmap.CompressFormat.PNG, 100, out); bitmap.recycle(); out.toByteArray() }
     }
 
     fun dashboardSvg(observations: List<ObservationEntity>, sources: List<SourceEntity>, projects: List<ProjectEntity>, notes: List<NoteEntity>): String = """

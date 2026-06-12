@@ -96,6 +96,18 @@ class FieldMindViewModel(application: Application) : AndroidViewModel(applicatio
         repository.setObservationTags(entity.id, tags)
     }
 
+    fun addAttachmentToObservation(observationId: Long, attachment: DraftEvidenceAttachment) = viewModelScope.launch {
+        repository.addAttachment(
+            EvidenceAttachmentEntity(
+                observationId = observationId,
+                type = attachment.type,
+                uri = attachment.uri,
+                localPath = attachment.localPath,
+                caption = attachment.caption
+            )
+        )
+    }
+
     fun addNote(title: String, body: String, category: String, tags: String, projectId: Long? = null, sourceId: Long? = null, attachments: List<DraftEvidenceAttachment> = emptyList(), onSaved: ((Long) -> Unit)? = null) = viewModelScope.launch {
         val id = repository.addNote(
             NoteEntity(
@@ -161,8 +173,34 @@ class FieldMindViewModel(application: Application) : AndroidViewModel(applicatio
         sourceId?.let { repository.linkQuestionSource(id, it) }
     }
 
-    fun addProject(title: String, topicType: String, objective: String, researchQuestion: String, methods: String = "", futureQuestions: String = "") = viewModelScope.launch {
-        repository.addProject(ProjectEntity(title = title.trim(), topicType = topicType.trim().ifBlank { "General" }, objective = objective.trim(), researchQuestion = researchQuestion.trim(), methods = methods.trim(), futureQuestions = futureQuestions.trim()))
+    fun addProject(
+        title: String,
+        topicType: String,
+        objective: String,
+        researchQuestion: String,
+        methods: String = "",
+        futureQuestions: String = "",
+        backgroundNotes: String = "",
+        hypothesisSummary: String = "",
+        dataSummary: String = "",
+        analysis: String = "",
+        conclusion: String = ""
+    ) = viewModelScope.launch {
+        repository.addProject(
+            ProjectEntity(
+                title = title.trim(),
+                topicType = topicType.trim().ifBlank { "General" },
+                objective = objective.trim(),
+                researchQuestion = researchQuestion.trim(),
+                backgroundNotes = backgroundNotes.trim(),
+                methods = methods.trim(),
+                hypothesisSummary = hypothesisSummary.trim(),
+                dataSummary = dataSummary.trim(),
+                analysis = analysis.trim(),
+                conclusion = conclusion.trim(),
+                futureQuestions = futureQuestions.trim()
+            )
+        )
     }
 
     fun addSource(

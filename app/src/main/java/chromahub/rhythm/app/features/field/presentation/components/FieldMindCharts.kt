@@ -32,6 +32,7 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 
@@ -198,9 +199,18 @@ fun BarChart(
                 }
             }
         }
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             data.forEachIndexed { i, (label, _) ->
-                Text(label, style = MaterialTheme.typography.labelSmall, color = if (i == selected) shades[i] else labelColor, fontWeight = if (i == selected) FontWeight.SemiBold else FontWeight.Normal, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(
+                    label,
+                    modifier = Modifier.weight(1f),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = if (i == selected) shades[i] else labelColor,
+                    fontWeight = if (i == selected) FontWeight.SemiBold else FontWeight.Normal,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                    textAlign = TextAlign.Center
+                )
             }
         }
     }
@@ -234,6 +244,54 @@ fun LineChart(
         area.close()
         drawPath(area, fillColor)
         drawPath(line, lineColor, style = Stroke(width = 4f, cap = StrokeCap.Round))
+    }
+}
+
+/** Donut chart with a compact legend for category/status breakdowns. */
+@Composable
+fun DonutChart(
+    parts: List<Triple<String, Float, Color>>,
+    modifier: Modifier = Modifier,
+    size: androidx.compose.ui.unit.Dp = 140.dp
+) {
+    val visible = parts.filter { it.second > 0f }
+    if (visible.isEmpty()) return
+    val total = visible.sumOf { it.second.toDouble() }.toFloat().coerceAtLeast(1f)
+    Row(modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp), verticalAlignment = Alignment.CenterVertically) {
+        Box(Modifier.size(size), contentAlignment = Alignment.Center) {
+            Canvas(Modifier.fillMaxWidth().aspectRatio(1f)) {
+                val stroke = this.size.minDimension * 0.20f
+                val inset = stroke / 2f
+                val arcSize = Size(this.size.width - stroke, this.size.height - stroke)
+                var start = -90f
+                visible.forEach { (_, value, color) ->
+                    val sweep = 360f * (value / total)
+                    drawArc(
+                        color = color,
+                        startAngle = start,
+                        sweepAngle = (sweep - 2f).coerceAtLeast(1f),
+                        useCenter = false,
+                        topLeft = Offset(inset, inset),
+                        size = arcSize,
+                        style = Stroke(width = stroke, cap = StrokeCap.Round)
+                    )
+                    start += sweep
+                }
+            }
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(total.toInt().toString(), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.ExtraBold)
+                Text("total", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+        }
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(7.dp)) {
+            visible.take(6).forEach { (label, value, color) ->
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Box(Modifier.size(10.dp)) { Canvas(Modifier.fillMaxWidth()) { drawRoundRect(color = color, cornerRadius = androidx.compose.ui.geometry.CornerRadius(5f, 5f)) } }
+                    Text(label, modifier = Modifier.weight(1f), maxLines = 1, overflow = TextOverflow.Ellipsis, style = MaterialTheme.typography.bodySmall)
+                    Text(value.toInt().toString(), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold)
+                }
+            }
+        }
     }
 }
 

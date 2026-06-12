@@ -1,7 +1,9 @@
 package chromahub.rhythm.app.features.field.presentation.screens
 
+import android.widget.Toast
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -13,10 +15,14 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
@@ -44,6 +50,12 @@ fun InsightsScreen(
     val dataRecords by viewModel.dataRecords.collectAsState()
     val flashcards by viewModel.flashcards.collectAsState()
     val tags by viewModel.commonTags.collectAsState()
+    val profileName by viewModel.fieldSettings.profileName.collectAsState()
+    val profileRole by viewModel.fieldSettings.profileRole.collectAsState()
+    val profileFocus by viewModel.fieldSettings.profileFocus.collectAsState()
+    val localModel by viewModel.fieldSettings.localModelOption.collectAsState()
+    val localReady by viewModel.fieldSettings.localModelDownloaded.collectAsState()
+    val backupInterval by viewModel.fieldSettings.autoBackupInterval.collectAsState()
     val colors = FieldMindTheme.colors
 
     val categoryCounts = observations.groupingBy { it.category }.eachCount().entries.sortedByDescending { it.value }.take(6).map { it.key to it.value.toFloat() }
@@ -90,9 +102,21 @@ fun InsightsScreen(
             Achievement("Review Builder", "Create five flashcards from sources or findings.", FieldMindIcons.Flashcard, colors.flashcard, flashcards.size, 5)
         )
     }
+    val context = LocalContext.current
+    val unlockedTitles = achievements.filter { it.unlocked }.joinToString("|") { it.title }
+    LaunchedEffect(unlockedTitles) {
+        if (unlockedTitles.isNotBlank()) {
+            val prefs = context.getSharedPreferences("fieldmind_achievements", 0)
+            achievements.filter { it.unlocked && !prefs.getBoolean(it.title, false) }.forEach { achievement ->
+                Toast.makeText(context, "🎉 Achievement unlocked: ${achievement.title}", Toast.LENGTH_LONG).show()
+                prefs.edit().putBoolean(achievement.title, true).apply()
+            }
+        }
+    }
 
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(20.dp, 20.dp, 20.dp, 96.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
         item { FieldScreenHeader("Insights", "Offline analysis of your own archive.", icon = FieldMindIcons.Insights, actionIcon = FieldMindIcons.Search, onAction = { onNavigate(FieldMindScreen.Search) }) }
+        item { ResearchProfileInsightCard(profileName, profileRole, profileFocus, localModel, localReady, backupInterval) }
         item {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 MetricTile("Observations", observations.size.toString(), FieldMindIcons.Observation, Modifier.weight(1f), colors.observation)
@@ -100,8 +124,6 @@ fun InsightsScreen(
                 MetricTile("Reports", reports.size.toString(), FieldMindIcons.Report, Modifier.weight(1f), colors.report)
             }
         }
-        item { SectionHeader("Achievements", "${achievements.count { it.unlocked }} unlocked • keep building your research practice") }
-        item { AchievementGrid(achievements) }
         if (observations.isEmpty()) {
             item { EmptyState("No data yet", "Insights, charts, and your offline map appear as you log observations.", icon = FieldMindIcons.Insights, actionLabel = "Capture one") { onNavigate(FieldMindScreen.Observe) } }
         }
@@ -152,6 +174,24 @@ fun InsightsScreen(
         items(projects.take(4)) { p ->
             EntityCard(p.title, "project", body = p.objective.ifBlank { p.researchQuestion }, meta = listOf(p.status)) { onOpenDetail("project", p.id) }
         }
+        item { CollapsibleAchievements(achievements) }
+    }
+}
+
+
+@Composable
+private fun ResearchProfileInsightCard(name: String, role: String, focus: String, localModel: String, localReady: Boolean, backupInterval: String) {
+    Card(shape = RoundedCornerShape(26.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)) {
+        Row(Modifier.fillMaxWidth().padding(18.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+            Box(Modifier.size(56.dp).clip(CircleShape).background(MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.12f)), contentAlignment = Alignment.Center) {
+                Icon(FieldMindIcons.Insights, null, tint = MaterialTheme.colorScheme.onPrimaryContainer, size = 28.dp)
+            }
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(5.dp)) {
+                Text(if (name.isBlank()) "Your research profile" else name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onPrimaryContainer)
+                Text("$role • $focus", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.78f))
+                Text("Offline setup: ${if (localReady) localModel else "local model not downloaded"} • Backup: $backupInterval", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.72f))
+            }
+        }
     }
 }
 
@@ -168,9 +208,24 @@ private data class Achievement(
 }
 
 @Composable
-private fun AchievementGrid(items: List<Achievement>) {
-    FlowRow(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalArrangement = Arrangement.spacedBy(12.dp), maxItemsInEachRow = 2) {
-        items.forEach { achievement -> AchievementCard(achievement, Modifier.weight(1f)) }
+private fun CollapsibleAchievements(items: List<Achievement>) {
+    var expanded by remember { mutableStateOf(false) }
+    Card(shape = RoundedCornerShape(24.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp), modifier = Modifier.clickable { expanded = !expanded }.animateContentSize()) {
+        Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                Icon(FieldMindIcons.Streak, null, tint = MaterialTheme.colorScheme.primary, size = 22.dp)
+                Column(Modifier.weight(1f)) {
+                    Text("Achievements", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    Text("${items.count { it.unlocked }} unlocked • tap to ${if (expanded) "collapse" else "expand"}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                Icon(if (expanded) FieldMindIcons.Up else FieldMindIcons.Down, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, size = 22.dp)
+            }
+            if (expanded) {
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalArrangement = Arrangement.spacedBy(12.dp), maxItemsInEachRow = 2) {
+                    items.forEach { achievement -> AchievementCard(achievement, Modifier.weight(1f)) }
+                }
+            }
+        }
     }
 }
 

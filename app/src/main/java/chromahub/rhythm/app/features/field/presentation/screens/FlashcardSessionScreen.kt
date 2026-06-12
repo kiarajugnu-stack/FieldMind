@@ -4,6 +4,8 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -24,6 +26,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -107,13 +110,14 @@ fun FlashcardSessionScreen(viewModel: FieldMindViewModel, onBack: () -> Unit) {
 @Composable
 private fun ColumnScope.ReviewCard(card: FlashcardEntity, flipped: Boolean, onFlip: () -> Unit) {
     val accent = FieldMindTheme.colors.flashcard
+    val rotation by animateFloatAsState(targetValue = if (flipped) 180f else 0f, animationSpec = tween(420), label = "cardTurn")
     Card(
-        modifier = Modifier.fillMaxWidth().weight(1f, fill = false).heightIn(min = 220.dp).clickable(onClick = onFlip),
+        modifier = Modifier.fillMaxWidth().weight(1f, fill = false).heightIn(min = 220.dp).graphicsLayer { rotationY = rotation; cameraDistance = 32f }.clickable(onClick = onFlip),
         shape = RoundedCornerShape(28.dp),
         colors = CardDefaults.cardColors(containerColor = if (flipped) MaterialTheme.colorScheme.surfaceContainerHigh else MaterialTheme.colorScheme.surfaceContainerLow),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
-        Column(Modifier.fillMaxWidth().padding(28.dp), verticalArrangement = Arrangement.spacedBy(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+        Column(Modifier.fillMaxWidth().graphicsLayer { if (rotation > 90f) rotationY = 180f }.padding(28.dp), verticalArrangement = Arrangement.spacedBy(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
             Box(
                 Modifier.size(48.dp).background(accent.copy(alpha = if (FieldMindTheme.colors.isDark) 0.22f else 0.14f), RoundedCornerShape(15.dp)),
                 contentAlignment = Alignment.Center
