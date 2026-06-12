@@ -6,32 +6,16 @@
     android:viewportWidth="108"
     android:viewportHeight="108">
 
-    <!-- Base layer: dark forest green -->
-    <path android:pathData="M0,0 h108 v108 h-108 z" android:fillColor="#0F3D2A" />
-
-    <!-- Gradient overlay from top-left -->
     <path android:pathData="M0,0 h108 v108 h-108 z">
         <aapt:attr name="android:fillColor">
             <gradient
-                android:type="radial"
-                android:centerX="30"
-                android:centerY="30"
-                android:gradientRadius="120"
-                android:startColor="#1F6B4C"
+                android:type="linear"
+                android:startX="0"
+                android:startY="0"
+                android:endX="108"
+                android:endY="108"
+                android:startColor="@color/launcher_bg"
                 android:endColor="#0F3D2A" />
-        </aapt:attr>
-    </path>
-
-    <!-- Subtle warm glow from bottom-right (alpha encoded in hex) -->
-    <path android:pathData="M0,0 h108 v108 h-108 z">
-        <aapt:attr name="android:fillColor">
-            <gradient
-                android:type="radial"
-                android:centerX="80"
-                android:centerY="80"
-                android:gradientRadius="100"
-                android:startColor="#14C77800"
-                android:endColor="#00C77800" />
         </aapt:attr>
     </path>
 </vector>
