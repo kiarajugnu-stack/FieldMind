@@ -559,4 +559,66 @@ The highest-impact immediate actions: consolidate the duplicates, fix the settin
 
 ---
 
-*This analysis was generated on June 12, 2026 by re-analyzing the full FieldMind codebase on `main` (commit `e3fc8cd8`).*
+## 11. June 2026 — Second Implementation Pass (PR #18)
+
+This section documents changes made in the second follow-up pass addressing the user's feedback.
+
+### Changes Made (PR #18: `codex/fix-sm2-map-navigation-export`)
+
+| Issue | Change | Files |
+|-------|--------|-------|
+| **SM-2 flashcard not visible** | Added SM-2 toggle to NewFlashcardDialog and EditFlashcardDialog; added `deckMode` parameter to ViewModel.addFlashcard so users can create cards in SM-2 mode | `FieldMindScreens.kt`, `FieldMindViewModel.kt` |
+| **Insights hidden** | Added Insights as 5th bottom navigation tab | `FieldMindNavigation.kt` |
+| **Search hidden** | Search is now accessible via Insights header icon and Home QuickActionGrid | `FieldMindScreens.kt`, `InsightsScreen.kt` |
+| **No proper GPS map** | Integrated osmdroid (OpenStreetMap) v6.1.20; created `OsmMap` composable with zoom, pan, markers, and GPS location overlay; replaced Canvas MiniMap in Insights and observation detail; added full-screen MapScreen route | `build.gradle.kts`, `libs.versions.toml`, `MainActivity.kt`, `FieldMindCharts.kt`, `FieldMindScreens.kt`, `InsightsScreen.kt`, `FieldMindNavigation.kt` |
+| **No accessible achievements** | Insights (which has collapsible achievements with Toast notifications) is now in the bottom nav tab bar | `FieldMindNavigation.kt` |
+| **Backup/Export not accessible** | Added ExportStudio route and Home QuickActionGrid tile for direct access to backup/export/import | `FieldMindNavigation.kt`, `FieldMindScreens.kt` |
+| **No way to reach Map/Export/Search quickly** | Added QuickActionGrid on Home screen with Map, Export, Search, and Review (Flashcards) tiles | `FieldMindScreens.kt` |
+
+### Updated Priority Matrix
+
+| Priority | Task | Effort | Impact | Previous Status | New Status |
+|----------|------|--------|--------|----------------|------------|
+| 🟡 P1 | Add map view (OSM) | Medium | 🟡 Medium | ⚠️ Mini-map only | ✅ OSM integrated |
+| 🟡 P1 | Make Insights/Search accessible | Low | 🟡 Medium | ❌ Hidden | ✅ Bottom tab + quick actions |
+| 🟡 P1 | SM-2 flashcard toggle | Low | 🟡 Medium | ⚠️ Code existed, UI missing | ✅ Toggle added |
+
+### Remaining High-Impact Items
+
+| Item | Priority |
+|------|----------|
+| Consolidate duplicate workers | 🔴 P0 |
+| Fix FieldMindSettings init side-effects | 🔴 P0 |
+| Split FieldMindScreens.kt | 🔴 P0 |
+| Add dependency injection | 🔴 P0 |
+| Migrate to DataStore | 🟡 P1 |
+| Add FTS search | 🟡 P1 |
+| Fix OpenAI `v1/responses` endpoint | 🟡 P1 |
+| Privacy lock | 🟡 P1 |
+| Offline attachment copy | 🟡 P1 |
+| Timeline view | 🟢 P2 |
+
+---
+
+*This analysis was generated on June 12, 2026 by re-analyzing the full FieldMind codebase on `main` (commit `e3fc8cd8`), with updates for PR #18.*
+
+## 12. Phase 2 Architecture Splits
+
+The monolithic FieldMindScreens.kt (4041 lines) has been split into 12 focused files:
+
+| File | Lines | Contents |
+|------|-------|----------|
+| FieldMindScreenUtils.kt | 92 | Shared internal constants + utility functions |
+| FieldMindOnboardingScreen.kt | 141 | Onboarding flow |
+| FieldMindHomeScreen.kt | 380 | Today/Home dashboard |
+| FieldMindObserveScreen.kt | 690 | Capture and field mode |
+| FieldMindProjectsScreen.kt | 333 | Project workspace |
+| FieldMindLibraryScreen.kt | 620 | Knowledge library and learn |
+| FieldMindArchiveScreen.kt | 58 | Search archive |
+| FieldMindBackupExportScreen.kt | 327 | Export studio and backups |
+| FieldMindSettingsScreen.kt | 230 | Settings |
+| FieldMindDetailScreen.kt | 526 | Entity detail and backlinks |
+| FieldMindDialogs.kt | 967 | All create/edit dialogs + form helpers |
+| FieldMindMapScreen.kt | 40 | Full-screen OSM map |
+
+All files remain in the same package and are automatically discovered by the navigation wildcard import.

@@ -451,7 +451,8 @@ fun OsmMap(
     val avgLon = points.map { it.second }.average()
     val latSpread = (points.maxOf { it.first } - points.minOf { it.first }).coerceAtLeast(0.01)
     val lonSpread = (points.maxOf { it.second } - points.minOf { it.second }).coerceAtLeast(0.01)
-    val zoomLevel = (16.0 - kotlin.math.log2((latSpread + lonSpread).coerceAtLeast(0.01))).coerceIn(4.0, 18.0)
+    // Use max spread so the map fits all points without zooming in too close
+    val zoomLevel = (16.0 - kotlin.math.log2(maxOf(latSpread, lonSpread).coerceAtLeast(0.01))).coerceIn(4.0, 18.0)
 
     Box(modifier.fillMaxWidth().height(300.dp).background(MaterialTheme.colorScheme.surfaceContainerHighest, RoundedCornerShape(16.dp))) {
         AndroidView(

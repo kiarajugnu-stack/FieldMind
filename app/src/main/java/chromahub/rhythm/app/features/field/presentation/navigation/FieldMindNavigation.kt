@@ -25,6 +25,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -73,6 +74,13 @@ sealed class FieldMindScreen(val route: String, val label: String, val icon: Mat
     data object Flashcards : FieldMindScreen("field_flashcards_session", "Review", FieldMindIcons.Flashcard)
     data object Reader : FieldMindScreen("field_reader", "Reader", FieldMindIcons.Book)
     data object Settings : FieldMindScreen("field_settings", "Settings", FieldMindIcons.Settings)
+    data object SettingsProfile : FieldMindScreen("field_settings_profile", "Profile", FieldMindIcons.Nature)
+    data object SettingsAppearance : FieldMindScreen("field_settings_appearance", "Appearance", FieldMindIcons.Palette)
+    data object SettingsCapture : FieldMindScreen("field_settings_capture", "Capture", FieldMindIcons.Capture)
+    data object SettingsAi : FieldMindScreen("field_settings_ai", "AI Assistant", FieldMindIcons.Sparkle)
+    data object SettingsLocalModel : FieldMindScreen("field_settings_local_model", "Local Model", FieldMindIcons.Download)
+    data object SettingsBackup : FieldMindScreen("field_settings_backup", "Backup & Import", FieldMindIcons.Archive)
+    data object SettingsAbout : FieldMindScreen("field_settings_about", "About", FieldMindIcons.Info)
 }
 
 private const val NavTransitionDurationMillis = 180
@@ -88,7 +96,20 @@ private val bottomTabs = listOf(
 @Composable
 fun FieldMindApp(appSettings: AppSettings, viewModel: FieldMindViewModel) {
     val onboardingCompleted by appSettings.onboardingCompleted.collectAsState()
-    if (!onboardingCompleted) FieldMindOnboardingScreen(onFinish = { appSettings.setOnboardingCompleted(true) }) else FieldMindNavigation(viewModel = viewModel, onResetOnboarding = { appSettings.setOnboardingCompleted(false) })
+    var appUnlocked by remember { mutableStateOf(!viewModel.fieldSettings.privacyLockEnabled.value) }
+    val privacyEnabled by viewModel.fieldSettings.privacyLockEnabled.collectAsState()
+    LaunchedEffect(privacyEnabled) { if (!privacyEnabled) appUnlocked = true }
+    if (!onboardingCompleted) {
+        FieldMindOnboardingScreen(onFinish = { appSettings.setOnboardingCompleted(true) })
+    } else {
+        FieldMindAppLock(
+            settings = viewModel.fieldSettings,
+            isUnlocked = appUnlocked,
+            onUnlock = { appUnlocked = true }
+        ) {
+            FieldMindNavigation(viewModel = viewModel, onResetOnboarding = { appSettings.setOnboardingCompleted(false); appUnlocked = false })
+        }
+    }
 }
 
 /**
@@ -275,7 +296,28 @@ private fun FieldMindNavHost(
         composable(FieldMindScreen.ExportStudio.route) { BackupExportScreen(viewModel = viewModel) }
         composable(FieldMindScreen.Progress.route) { InsightsScreen(viewModel = viewModel, onNavigate = { navController.navigateToDestination(it.route) }, onOpenDetail = openDetail) }
         composable(FieldMindScreen.Flashcards.route) { FlashcardSessionScreen(viewModel = viewModel, onBack = { navController.popBackStack() }) }
-        composable(FieldMindScreen.Settings.route) { FieldMindSettingsScreen(viewModel = viewModel, onBack = { navController.popBackStack() }, onResetOnboarding = onResetOnboarding) }
+        composable(FieldMindScreen.Settings.route) {
+            FieldMindSettingsScreen(
+                viewModel = viewModel,
+                onBack = { navController.popBackStack() },
+                onResetOnboarding = onResetOnboarding,
+                onOpenExport = { navController.navigateToDestination(FieldMindScreen.ExportStudio.route) },
+                onOpenAbout = { navController.navigateToDestination(FieldMindScreen.SettingsAbout.route) },
+                onOpenProfile = { navController.navigateToDestination(FieldMindScreen.SettingsProfile.route) },
+                onOpenAppearance = { navController.navigateToDestination(FieldMindScreen.SettingsAppearance.route) },
+                onOpenCapture = { navController.navigateToDestination(FieldMindScreen.SettingsCapture.route) },
+                onOpenAi = { navController.navigateToDestination(FieldMindScreen.SettingsAi.route) },
+                onOpenLocalModel = { navController.navigateToDestination(FieldMindScreen.SettingsLocalModel.route) },
+                onOpenBackup = { navController.navigateToDestination(FieldMindScreen.SettingsBackup.route) }
+            )
+        }
+        composable(FieldMindScreen.SettingsProfile.route) { ProfileSettingsPage(viewModel = viewModel, onBack = { navController.popBackStack() }) }
+        composable(FieldMindScreen.SettingsAppearance.route) { AppearanceSettingsPage(viewModel = viewModel, onBack = { navController.popBackStack() }) }
+        composable(FieldMindScreen.SettingsCapture.route) { CaptureDefaultsSettingsPage(viewModel = viewModel, onBack = { navController.popBackStack() }) }
+        composable(FieldMindScreen.SettingsAi.route) { AiAssistantSettingsPage(viewModel = viewModel, onBack = { navController.popBackStack() }) }
+        composable(FieldMindScreen.SettingsLocalModel.route) { LocalModelSettingsPage(viewModel = viewModel, onBack = { navController.popBackStack() }) }
+        composable(FieldMindScreen.SettingsBackup.route) { BackupImportSettingsPage(viewModel = viewModel, onBack = { navController.popBackStack() }, onOpenExport = { navController.navigateToDestination(FieldMindScreen.ExportStudio.route) }) }
+        composable(FieldMindScreen.SettingsAbout.route) { AboutPage(onBack = { navController.popBackStack() }) }
         composable("field_detail/{kind}/{id}") { entry ->
             val kind = entry.arguments?.getString("kind") ?: "observation"
             val id = entry.arguments?.getString("id")?.toLongOrNull() ?: 0L
