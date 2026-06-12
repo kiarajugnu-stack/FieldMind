@@ -87,7 +87,7 @@ internal fun createFieldMindFileUri(context: android.content.Context, prefix: St
     return androidx.core.content.FileProvider.getUriForFile(context, "${context.packageName}.fieldmind.fileprovider", file)
 }
 
-/** An inline form card that replaces dialog-based adding. Shows title, scrollable content, and save/cancel. */
+/** An inline form card that replaces dialog-based adding. Parent LazyColumns own vertical scrolling. */
 @Composable
 internal fun InlineFormCard(
     title: String,
@@ -109,7 +109,7 @@ internal fun InlineFormCard(
                 TextButton(onClick = onDismiss) { Text("Cancel") }
             }
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
-            Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(16.dp), content = content)
+            Column(verticalArrangement = Arrangement.spacedBy(16.dp), content = content)
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                 Button(onClick = onSave, shape = RoundedCornerShape(16.dp), enabled = saveEnabled) { Text(saveLabel) }
