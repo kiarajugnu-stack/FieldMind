@@ -21,6 +21,7 @@ internal val learningModules = listOf(
     "Beginner" to listOf("Scientific thinking", "Observation", "Note-taking", "Identifying bias", "Basic biology", "Basic geology", "Reading graphs", "Asking testable questions", "Variables", "Simple data collection"),
     "Intermediate" to listOf("Research design", "Sampling", "Comparison", "Classification", "Literature review", "Writing summaries", "Data interpretation"),
     "Advanced" to listOf("Proposal writing", "Structured projects", "Analysis", "Citations", "Presentation", "Field methods", "Ethics")
+)
 
 
 internal fun today(): String = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())

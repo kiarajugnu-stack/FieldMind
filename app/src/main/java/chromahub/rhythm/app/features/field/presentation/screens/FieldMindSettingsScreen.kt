@@ -19,6 +19,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import chromahub.rhythm.app.features.field.data.database.entity.*
@@ -293,9 +294,5 @@ private fun ChoiceItem(title: String, options: List<String>, selected: String, i
         }
         ChoiceChips(options, selected, onSelected = onSelected)
     }
-}
-
-@Composable
-
 }
 

@@ -282,7 +282,7 @@ private fun writeManualBackup(context: Context, archiveJson: String): File {
 
 
 @Composable
-private fun FieldMindPrivacyGate(enabled: Boolean, title: String, body: String): Boolean {
+fun FieldMindPrivacyGate(enabled: Boolean, title: String, body: String): Boolean {
     if (!enabled) return true
     val context = LocalContext.current
     var unlocked by rememberSaveable(enabled) { mutableStateOf(false) }
