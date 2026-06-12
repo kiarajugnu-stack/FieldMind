@@ -34,6 +34,12 @@ data class LearnCategory(
  * Free, public APIs that could power live in-app fetching of papers/books (no key or free tier).
  * Surfaced to the user as a proposal; not called automatically.
  */
+data class OnlineApiProposal(
+    val name: String,
+    val baseUrl: String,
+    val notes: String
+)
+
 data class BookSuggestion(
     val title: String,
     val category: String,

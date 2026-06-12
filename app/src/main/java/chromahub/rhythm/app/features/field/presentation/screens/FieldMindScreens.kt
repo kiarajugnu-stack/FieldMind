@@ -1341,7 +1341,7 @@ private fun ResearchFlowGuide(activeStep: Int) {
             steps.forEachIndexed { index, step ->
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
                     val active = index == activeStep
-                    Box(Modifier.size(38.dp).clip(CircleShape).background(if (active) FieldMindTheme.colors.primary else MaterialTheme.colorScheme.surfaceContainerHighest), contentAlignment = Alignment.Center) {
+                    Box(Modifier.size(38.dp).clip(CircleShape).background(if (active) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceContainerHighest), contentAlignment = Alignment.Center) {
                         Icon(icon = step.third, contentDescription = null, tint = if (active) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant, size = 20.dp)
                     }
                     Column(Modifier.weight(1f)) {
