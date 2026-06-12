@@ -1,5 +1,6 @@
 package chromahub.rhythm.app.features.field.presentation.navigation
 
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -25,6 +26,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
@@ -138,8 +140,8 @@ fun FieldMindNavigation(viewModel: FieldMindViewModel, onResetOnboarding: () -> 
                             NavigationRailItem(
                                 selected = selected,
                                 onClick = { haptics.light(); navController.navigateToTab(screen.route) },
-                                icon = { Icon(icon = if (selected) screen.icon.filled() else screen.icon, contentDescription = screen.label, size = 24.dp) },
-                                label = { Text(screen.label) }
+                                icon = { AnimatedNavIcon(screen, selected) },
+                                label = { AnimatedNavLabel(screen.label, selected) }
                             )
                         }
                     }
@@ -168,8 +170,8 @@ fun FieldMindNavigation(viewModel: FieldMindViewModel, onResetOnboarding: () -> 
                                 NavigationBarItem(
                                     selected = selected,
                                     onClick = { haptics.light(); navController.navigateToTab(screen.route) },
-                                    icon = { Icon(icon = if (selected) screen.icon.filled() else screen.icon, contentDescription = screen.label, size = 24.dp) },
-                                    label = { Text(screen.label) }
+                                    icon = { AnimatedNavIcon(screen, selected) },
+                                    label = { AnimatedNavLabel(screen.label, selected) }
                                 )
                             }
                         }
@@ -180,6 +182,26 @@ fun FieldMindNavigation(viewModel: FieldMindViewModel, onResetOnboarding: () -> 
             }
         }
     }
+}
+
+
+@Composable
+private fun AnimatedNavIcon(screen: FieldMindScreen, selected: Boolean) {
+    val scale by animateFloatAsState(if (selected) 1.18f else 1f, tween(220), label = "navIconScale")
+    val lift by animateFloatAsState(if (selected) -2f else 0f, tween(220), label = "navIconLift")
+    Icon(
+        icon = if (selected) screen.icon.filled() else screen.icon,
+        contentDescription = screen.label,
+        modifier = Modifier.graphicsLayer { scaleX = scale; scaleY = scale; translationY = lift },
+        size = 24.dp,
+        weight = if (selected) 650 else screen.icon.defaultWeight
+    )
+}
+
+@Composable
+private fun AnimatedNavLabel(label: String, selected: Boolean) {
+    val scale by animateFloatAsState(if (selected) 1.04f else 1f, tween(220), label = "navLabelScale")
+    Text(label, modifier = Modifier.graphicsLayer { scaleX = scale; scaleY = scale })
 }
 
 @Composable

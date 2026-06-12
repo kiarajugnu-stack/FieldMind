@@ -96,6 +96,18 @@ class FieldMindViewModel(application: Application) : AndroidViewModel(applicatio
         repository.setObservationTags(entity.id, tags)
     }
 
+    fun addAttachmentToObservation(observationId: Long, attachment: DraftEvidenceAttachment) = viewModelScope.launch {
+        repository.addAttachment(
+            EvidenceAttachmentEntity(
+                observationId = observationId,
+                type = attachment.type,
+                uri = attachment.uri,
+                localPath = attachment.localPath,
+                caption = attachment.caption
+            )
+        )
+    }
+
     fun addNote(title: String, body: String, category: String, tags: String, projectId: Long? = null, sourceId: Long? = null, attachments: List<DraftEvidenceAttachment> = emptyList(), onSaved: ((Long) -> Unit)? = null) = viewModelScope.launch {
         val id = repository.addNote(
             NoteEntity(

@@ -87,6 +87,7 @@ import java.util.Locale
 
 internal val observationCategories = listOf("Bird", "Animal", "Insect", "Plant", "Rock", "Weather", "Water", "Human Behavior", "Reading Insight", "Other")
 internal val confidenceOptions = listOf("Sure", "Guess", "Needs Verification")
+private val contextPresets = listOf("Calm", "Windy", "After rain", "Dawn", "Dusk", "Crowded", "Disturbed", "Healthy", "Stressed", "Needs follow-up")
 private val sourceTypes = listOf("Observation", "Reading", "Video", "Thought", "Discussion")
 private val questionStatuses = listOf("New", "Researching", "Tested", "Answered", "Abandoned")
 private val sourceLibraryTypes = listOf("Article", "Paper", "Book", "Video", "Website", "PDF", "Image", "Local document", "Note")
@@ -1016,7 +1017,11 @@ private fun ObservationCaptureCard(viewModel: FieldMindViewModel, compact: Boole
                 CaptureStep(if (snapFirst) "Facts after evidence" else "Facts", "Record only what you observed — keep guesses out.", FieldMindIcons.Edit) {
                     FactsInterpretationBanner()
                     FieldTextField(facts, { facts = it }, "Facts-only notes", minLines = if (compact) 3 else 5, supportingText = "Write only what you saw/heard/measured. Put guesses in a question or hypothesis.")
-                    if (!compact) FieldTextField(fieldContext, { fieldContext = it }, "Mood / field context", supportingText = "Weather, light, surrounding activity, or constraints.")
+                    if (!compact) {
+                        Text("Context presets", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        ChoiceChips(contextPresets, fieldContext) { fieldContext = if (fieldContext.isBlank()) it else "$fieldContext, $it" }
+                        FieldTextField(fieldContext, { fieldContext = it }, "Mood / field context", supportingText = "Weather, light, surrounding activity, or constraints.")
+                    }
                 }
 
                 CaptureStep("Location", "GPS is optional; manual place names work offline.", FieldMindIcons.Location) {
@@ -1428,10 +1433,12 @@ private fun ProjectWorkspaceCard(
 private fun DataSummaryCard(items: List<DataRecordEntity>) {
     val colors = FieldMindTheme.colors
     val byTool = items.groupingBy { it.toolType.ifBlank { "Other" } }.eachCount().map { it.key to it.value.toFloat() }.sortedByDescending { it.second }
+    val byUnit = items.groupingBy { it.unit.ifBlank { "unitless" } }.eachCount().map { it.key to it.value.toFloat() }.sortedByDescending { it.second }
     Card(shape = RoundedCornerShape(24.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)) {
-        Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-            SectionHeader("Data overview", "${items.size} entries across ${byTool.size} tools")
-            BarChart(byTool.take(6), barColors = byTool.take(6).map { colors.categoryColor(it.first) })
+        Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+            SectionHeader("Data overview", "${items.size} entries • ${byTool.size} tools • ${byUnit.size} unit groups")
+            DonutChart(byTool.take(6).map { Triple(it.first, it.second, colors.categoryColor(it.first)) })
+            BarChart(byUnit.take(6), barColors = byUnit.take(6).map { colors.categoryColor(it.first) }, height = 112.dp)
         }
     }
 }
@@ -1440,10 +1447,12 @@ private fun DataSummaryCard(items: List<DataRecordEntity>) {
 private fun ReportSummaryCard(items: List<ReportEntity>) {
     val colors = FieldMindTheme.colors
     val statusParts = items.groupingBy { it.status.ifBlank { "Draft" } }.eachCount().map { Triple(it.key, it.value.toFloat(), colors.categoryColor(it.key)) }
+    val typeParts = items.groupingBy { it.type.ifBlank { "Report" } }.eachCount().map { it.key to it.value.toFloat() }.sortedByDescending { it.second }
     Card(shape = RoundedCornerShape(24.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)) {
-        Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-            SectionHeader("Report pipeline", "Drafts, final reports, and writing progress")
-            BreakdownBar(statusParts)
+        Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+            SectionHeader("Report pipeline", "Drafts, final reports, writing progress, and output types")
+            DonutChart(statusParts)
+            BarChart(typeParts.take(6), barColors = typeParts.take(6).map { colors.categoryColor(it.first) }, height = 112.dp)
         }
     }
 }
@@ -1603,13 +1612,14 @@ private fun autoFlashcardsFromLibrary(sources: List<SourceEntity>, notes: List<N
 private fun LibraryFlashcard(card: FlashcardEntity, onOpenDetail: () -> Unit) {
     var revealed by remember(card.id) { mutableStateOf(false) }
     val accent = FieldMindTheme.colors.flashcard
+    val rotation by androidx.compose.animation.core.animateFloatAsState(if (revealed) 180f else 0f, animationSpec = tween(360), label = "libraryCardFlip")
     Card(
-        modifier = Modifier.fillMaxWidth().animateContentSize().clickable { revealed = !revealed },
+        modifier = Modifier.fillMaxWidth().animateContentSize().graphicsLayer { rotationY = rotation; cameraDistance = 28f }.clickable { revealed = !revealed },
         shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
-        Column(Modifier.fillMaxWidth().padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Column(Modifier.fillMaxWidth().graphicsLayer { if (rotation > 90f) rotationY = 180f }.padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 Box(
                     Modifier.size(34.dp).clip(RoundedCornerShape(11.dp)).background(accent.copy(alpha = if (FieldMindTheme.colors.isDark) 0.22f else 0.14f)),
@@ -2311,6 +2321,8 @@ private fun SettingsExportSection(viewModel: FieldMindViewModel) {
     val reports by viewModel.reports.collectAsState()
     val flashcards by viewModel.flashcards.collectAsState()
     var pendingBytes by remember { mutableStateOf(ByteArray(0)) }
+    var exportScope by rememberSaveable { mutableStateOf("All") }
+    val attachmentMode by viewModel.fieldSettings.attachmentExportMode.collectAsState()
     val createDoc = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("*/*")) { uri ->
         if (uri != null) runCatching { context.contentResolver.openOutputStream(uri)?.use { it.write(pendingBytes) } }
             .onSuccess { android.widget.Toast.makeText(context, "Export written.", android.widget.Toast.LENGTH_SHORT).show() }
@@ -2322,8 +2334,9 @@ private fun SettingsExportSection(viewModel: FieldMindViewModel) {
             .onFailure { android.widget.Toast.makeText(context, "Import failed: ${it.localizedMessage}", android.widget.Toast.LENGTH_LONG).show() }
     }
     fun queueText(text: String) { pendingBytes = text.toByteArray() }
-    SettingsGroup("Export data", "Your research notes stay portable and owned by you.") {
-        Column(Modifier.padding(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    SettingsGroup("Export studio", "Preview scope, choose a portable format, export, or import a backup preview.") {
+        Column(Modifier.padding(8.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            ExportPreviewStudio(exportScope, { exportScope = it }, projects.size, observations.size, sources.size, reports.size, attachmentMode)
             ExportRow("Observations CSV", FieldMindIcons.Observation) { queueText(FieldMindExport.observationsCsv(observations)); createDoc.launch("fieldmind-observations.csv") }
             ExportRow("Data CSV", FieldMindIcons.Data) { queueText(FieldMindExport.dataCsv(data)); createDoc.launch("fieldmind-data.csv") }
             ExportRow("Sources CSV", FieldMindIcons.Source) { queueText(FieldMindExport.sourcesCsv(sources)); createDoc.launch("fieldmind-sources.csv") }
@@ -2903,13 +2916,19 @@ private fun ChoiceItem(title: String, options: List<String>, selected: String, i
 private fun NewQuestionDialog(viewModel: FieldMindViewModel, onDismiss: () -> Unit) {
     var question by remember { mutableStateOf("") }; var category by remember { mutableStateOf("Other") }; var source by remember { mutableStateOf("Observation") }; var status by remember { mutableStateOf("New") }; var priority by remember { mutableStateOf("Medium") }
     FormDialog("New Question", onDismiss, { if (question.isNotBlank()) { viewModel.addQuestion(question, category, source, status, priority); onDismiss() } }) {
-        FieldTextField(question, { question = it }, "Question", minLines = 2)
-        FormSectionLabel("Classification")
-        FormChoice("Category", observationCategories, category) { category = it }
-        FormChoice("Source type", sourceTypes, source) { source = it }
-        FormChoice("Status", questionStatuses, status) { status = it }
-        FormChoice("Priority", listOf("Low", "Medium", "High"), priority) { priority = it }
-        Text("Testable questions name something you can observe, measure, compare, or verify.", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
+        SourceFormHero("New research question", "Turn curiosity into something observable, measurable, comparable, or verifiable.")
+        CaptureStep("Question", "Use one clear sentence and avoid assuming the answer.", FieldMindIcons.Question) {
+            FieldTextField(question, { question = it }, "What do you want to find out?", minLines = 3, supportingText = "Example: Do bird visits increase after rain at this site?")
+        }
+        CaptureStep("Classify", "Presets keep searching, charts, and reports cleaner.", FieldMindIcons.Category) {
+            ChoiceChips(observationCategories, category) { category = it }
+            Text("Source", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            ChoiceChips(sourceTypes, source) { source = it }
+            Text("Priority", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            ChoiceChips(listOf("Low", "Medium", "High"), priority) { priority = it }
+            Text("Status", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            ChoiceChips(questionStatuses, status) { status = it }
+        }
     }
 }
 
@@ -3118,9 +3137,22 @@ private fun NewSourceDialog(viewModel: FieldMindViewModel, onDismiss: () -> Unit
 
 @Composable
 private fun NewHypothesisDialog(viewModel: FieldMindViewModel, questions: List<QuestionEntity>, onDismiss: () -> Unit) {
-    var prediction by remember { mutableStateOf("") }; var reasoning by remember { mutableStateOf("") }; var evidence by remember { mutableStateOf("") }; var support by remember { mutableStateOf("") }; var weaken by remember { mutableStateOf("") }; var test by remember { mutableStateOf("") }; var confidence by remember { mutableStateOf(50f) }; val linked = questions.firstOrNull()
-    FormDialog("New Hypothesis", onDismiss, { if (prediction.isNotBlank()) { viewModel.addHypothesis(linked?.id, prediction, evidence, confidence.toInt(), reasoning, support, weaken, test); onDismiss() } }) {
-        linked?.let { Text("Linked question: ${it.questionText}", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall) }; FieldTextField(prediction, { prediction = it }, "Prediction", minLines = 2); FieldTextField(reasoning, { reasoning = it }, "Reasoning", minLines = 2); FieldTextField(evidence, { evidence = it }, "Evidence needed", minLines = 2); FieldTextField(support, { support = it }, "Support criteria"); FieldTextField(weaken, { weaken = it }, "Weakening criteria"); FieldTextField(test, { test = it }, "Test method"); Text("Confidence: ${confidence.toInt()}%"); Slider(confidence, { confidence = it }, valueRange = 0f..100f)
+    var prediction by remember { mutableStateOf("") }; var reasoning by remember { mutableStateOf("") }; var evidence by remember { mutableStateOf("") }; var support by remember { mutableStateOf("") }; var weaken by remember { mutableStateOf("") }; var test by remember { mutableStateOf("") }; var confidence by remember { mutableStateOf(50f) }; var linkedId by remember { mutableStateOf(questions.firstOrNull()?.id) }
+    FormDialog("New Hypothesis", onDismiss, { if (prediction.isNotBlank()) { viewModel.addHypothesis(linkedId, prediction, evidence, confidence.toInt(), reasoning, support, weaken, test); onDismiss() } }) {
+        SourceFormHero("Build a testable hypothesis", "State the prediction, what would support it, and what would weaken it before collecting results.")
+        CaptureStep("Link & prediction", "Connect it to a question if one exists.", FieldMindIcons.Hypothesis) {
+            if (questions.isNotEmpty()) ChoiceChips(listOf("No question") + questions.take(8).map { it.questionText.take(28) }, questions.firstOrNull { it.id == linkedId }?.questionText?.take(28) ?: "No question") { picked -> linkedId = questions.firstOrNull { it.questionText.startsWith(picked) }?.id }
+            FieldTextField(prediction, { prediction = it }, "Prediction", minLines = 3)
+            FieldTextField(reasoning, { reasoning = it }, "Why this might happen", minLines = 2)
+        }
+        CaptureStep("Evidence rules", "Decide success/failure before you bias yourself.", FieldMindIcons.Check) {
+            FieldTextField(evidence, { evidence = it }, "Evidence needed", minLines = 2)
+            FieldTextField(support, { support = it }, "Support criteria")
+            FieldTextField(weaken, { weaken = it }, "Weakening criteria")
+            FieldTextField(test, { test = it }, "Test method")
+            Text("Confidence: ${confidence.toInt()}%")
+            Slider(confidence, { confidence = it }, valueRange = 0f..100f)
+        }
     }
 }
 
@@ -3167,13 +3199,21 @@ private fun notesLabelForTool(tool: String): String = when (tool) {
 private fun NewDataRecordDialog(viewModel: FieldMindViewModel, onDismiss: () -> Unit) {
     var tool by remember { mutableStateOf("Counter") }; var label by remember { mutableStateOf("") }; var value by remember { mutableStateOf("0") }; var unit by remember { mutableStateOf(defaultUnitForTool("Counter")) }; var location by remember { mutableStateOf("") }; var notes by remember { mutableStateOf("") }
     FormDialog("Data Collection Tool", onDismiss, { if (label.isNotBlank()) { viewModel.addDataRecord(tool, label, value, unit, notes, location); onDismiss() } }) {
-        FormChoice("Tool", dataTools, tool) { tool = it; unit = defaultUnitForTool(it); label = defaultLabelForTool(it) }
-        FieldTextField(label, { label = it }, "Label")
-        if (tool == "Counter" || tool == "Species Tracker") Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) { OutlinedButton({ value = ((value.toIntOrNull() ?: 0) - 1).toString() }) { Text("−1") }; Text(value, style = MaterialTheme.typography.headlineSmall); Button({ value = ((value.toIntOrNull() ?: 0) + 1).toString() }) { Text("+1") }; TextButton({ value = "0" }) { Text("Reset") } }
-        FieldTextField(value, { value = it }, valueLabelForTool(tool))
-        FieldTextField(unit, { unit = it }, "Unit", supportingText = "Suggested for $tool: ${defaultUnitForTool(tool)}")
-        FieldTextField(location, { location = it }, "Location / site")
-        FieldTextField(notes, { notes = it }, notesLabelForTool(tool), minLines = 3)
+        SourceFormHero("Data entry", "Choose a preset so units and labels match the kind of thing you measured.")
+        CaptureStep("Preset", "Each tool adapts labels and units for the category.", FieldMindIcons.Data) {
+            ChoiceChips(dataTools, tool) { tool = it; unit = defaultUnitForTool(it); label = defaultLabelForTool(it) }
+            FieldTextField(label, { label = it }, "Label")
+            if (tool == "Counter" || tool == "Species Tracker") Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) { OutlinedButton({ value = ((value.toIntOrNull() ?: 0) - 1).toString() }) { Text("−1") }; Text(value, style = MaterialTheme.typography.headlineSmall); Button({ value = ((value.toIntOrNull() ?: 0) + 1).toString() }) { Text("+1") }; TextButton({ value = "0" }) { Text("Reset") } }
+        }
+        CaptureStep("Measurement", "Use the suggested unit or type a better one.", FieldMindIcons.Graph) {
+            FieldTextField(value, { value = it }, valueLabelForTool(tool))
+            FieldTextField(unit, { unit = it }, "Unit", supportingText = "Suggested for $tool: ${defaultUnitForTool(tool)}")
+            FieldTextField(location, { location = it }, "Location / site")
+        }
+        CaptureStep("Context", "Add conditions, instrument notes, mood, or quality flags.", FieldMindIcons.Note) {
+            ChoiceChips(contextPresets, notes) { notes = if (notes.isBlank()) it else "$notes, $it" }
+            FieldTextField(notes, { notes = it }, notesLabelForTool(tool), minLines = 3)
+        }
     }
 }
 
@@ -3181,8 +3221,27 @@ private fun NewDataRecordDialog(viewModel: FieldMindViewModel, onDismiss: () -> 
 private fun NewReportDialog(viewModel: FieldMindViewModel, onDismiss: () -> Unit) {
     var type by remember { mutableStateOf("Field Report") }; var title by remember { mutableStateOf("") }; var background by remember { mutableStateOf("") }; var question by remember { mutableStateOf("") }; var methods by remember { mutableStateOf("") }; var observations by remember { mutableStateOf("") }; var results by remember { mutableStateOf("") }; var interpretation by remember { mutableStateOf("") }; var conclusion by remember { mutableStateOf("") }; var limitations by remember { mutableStateOf("") }; var next by remember { mutableStateOf("") }
     FormDialog("Report Builder", onDismiss, { if (title.isNotBlank()) { viewModel.addReport(type, title, background, question, methods, observations, results, interpretation, conclusion, limitations, next); onDismiss() } }) {
-        FormChoice("Report type", reportTypes, type) { type = it }
-        FieldTextField(title, { title = it }, "Title"); FieldTextField(background, { background = it }, "Background", minLines = 2); FieldTextField(question, { question = it }, "Question", minLines = 2); FieldTextField(methods, { methods = it }, "Methods", minLines = 2); FieldTextField(observations, { observations = it }, "Observations", minLines = 2); FieldTextField(results, { results = it }, "Data / results", minLines = 2); FieldTextField(interpretation, { interpretation = it }, "Interpretation", minLines = 2); FieldTextField(conclusion, { conclusion = it }, "Conclusion", minLines = 2); FieldTextField(limitations, { limitations = it }, "Limitations", minLines = 2); FieldTextField(next, { next = it }, "Next steps", minLines = 2); Text("Save generates a local Markdown draft for export.", style = MaterialTheme.typography.bodySmall)
+        SourceFormHero("Report builder", "Create a clean local draft: claim, evidence, reasoning, limitations, and next steps.")
+        CaptureStep("Type & title", "Pick a report preset for export organization.", FieldMindIcons.Report) {
+            ChoiceChips(reportTypes, type) { type = it }
+            FieldTextField(title, { title = it }, "Title")
+        }
+        CaptureStep("Setup", "Frame the research before results.", FieldMindIcons.Question) {
+            FieldTextField(background, { background = it }, "Background", minLines = 2)
+            FieldTextField(question, { question = it }, "Question", minLines = 2)
+            FieldTextField(methods, { methods = it }, "Methods", minLines = 2)
+        }
+        CaptureStep("Evidence", "Summarize observations and data clearly.", FieldMindIcons.Data) {
+            FieldTextField(observations, { observations = it }, "Observations", minLines = 2)
+            FieldTextField(results, { results = it }, "Data / results", minLines = 2)
+            FieldTextField(interpretation, { interpretation = it }, "Interpretation", minLines = 2)
+        }
+        CaptureStep("Conclusion", "Be honest about uncertainty and what comes next.", FieldMindIcons.Check) {
+            FieldTextField(conclusion, { conclusion = it }, "Conclusion", minLines = 2)
+            FieldTextField(limitations, { limitations = it }, "Limitations", minLines = 2)
+            FieldTextField(next, { next = it }, "Next steps", minLines = 2)
+            Text("Save generates a local Markdown draft for export.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
     }
 }
 
@@ -3190,8 +3249,16 @@ private fun NewReportDialog(viewModel: FieldMindViewModel, onDismiss: () -> Unit
 private fun NewFlashcardDialog(viewModel: FieldMindViewModel, onDismiss: () -> Unit) {
     var type by remember { mutableStateOf("concept") }; var front by remember { mutableStateOf("") }; var back by remember { mutableStateOf("") }
     FormDialog("Create Flashcard", onDismiss, { if (front.isNotBlank() && back.isNotBlank()) { viewModel.addFlashcard(front, back, type); onDismiss() } }) {
-        FormChoice("Card type", listOf("term", "definition", "concept", "question-answer", "mistake card"), type) { type = it }
-        FieldTextField(front, { front = it }, "Front"); FieldTextField(back, { back = it }, "Back", minLines = 3)
+        SourceFormHero("Create review card", "Design one card that flips cleanly during review — one prompt, one answer.")
+        CaptureStep("Card preset", "Choose how this should be practiced.", FieldMindIcons.Flashcard) {
+            ChoiceChips(listOf("term", "definition", "concept", "question-answer", "mistake card", "field ID", "method step"), type) { type = it }
+        }
+        CaptureStep("Front", "Make the prompt short enough to answer from memory.", FieldMindIcons.Question) {
+            FieldTextField(front, { front = it }, "Prompt / front", minLines = 2)
+        }
+        CaptureStep("Back", "Add the answer, evidence, or correction.", FieldMindIcons.Answer) {
+            FieldTextField(back, { back = it }, "Answer / back", minLines = 4)
+        }
     }
 }
 
@@ -3227,20 +3294,108 @@ private fun EditNoteDialog(entity: NoteEntity, viewModel: FieldMindViewModel, on
 
 @Composable
 private fun EditObservationDialog(entity: ObservationEntity, viewModel: FieldMindViewModel, onDismiss: () -> Unit) {
-    var subject by remember { mutableStateOf(entity.subject) }; var category by remember { mutableStateOf(entity.category) }; var facts by remember { mutableStateOf(entity.factsOnlyNotes) }; var confidence by remember { mutableStateOf(entity.confidenceLevel) }; var location by remember { mutableStateOf(entity.manualLocation) }; var latitude by remember { mutableStateOf(entity.latitude?.toString().orEmpty()) }; var longitude by remember { mutableStateOf(entity.longitude?.toString().orEmpty()) }; var tags by remember { mutableStateOf(entity.tags) }; var evidence by remember { mutableStateOf(entity.evidenceSummary) }; var context by remember { mutableStateOf(entity.moodOrContext) }
-    FormDialog("Edit Observation", onDismiss, {
-        if (subject.isNotBlank()) { viewModel.updateObservation(entity.copy(subject = subject.trim(), category = category, factsOnlyNotes = facts.trim(), confidenceLevel = confidence, manualLocation = location.trim(), latitude = latitude.toDoubleOrNull(), longitude = longitude.toDoubleOrNull(), evidenceSummary = evidence.trim(), moodOrContext = context.trim()), tags); onDismiss() }
-    }) {
-        FieldTextField(subject, { subject = it }, "Subject")
-        FormChoice("Category", observationCategories, category) { category = it }
-        FieldTextField(facts, { facts = it }, "Facts only", minLines = 3)
-        FormChoice("Confidence", confidenceOptions, confidence) { confidence = it }
-        FieldTextField(location, { location = it }, "Location")
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            FieldTextField(latitude, { latitude = it }, "Latitude", modifier = Modifier.weight(1f))
-            FieldTextField(longitude, { longitude = it }, "Longitude", modifier = Modifier.weight(1f))
+    val appContext = LocalContext.current
+    var subject by remember { mutableStateOf(entity.subject) }
+    var category by remember { mutableStateOf(entity.category) }
+    var facts by remember { mutableStateOf(entity.factsOnlyNotes) }
+    var confidence by remember { mutableStateOf(entity.confidenceLevel) }
+    var location by remember { mutableStateOf(entity.manualLocation) }
+    var latitude by remember { mutableStateOf(entity.latitude?.toString().orEmpty()) }
+    var longitude by remember { mutableStateOf(entity.longitude?.toString().orEmpty()) }
+    var tags by remember { mutableStateOf(entity.tags) }
+    var evidence by remember { mutableStateOf(entity.evidenceSummary) }
+    var fieldContext by remember { mutableStateOf(entity.moodOrContext) }
+    var attachments by remember { mutableStateOf<List<DraftEvidenceAttachment>>(emptyList()) }
+    var pendingPhotoUri by remember { mutableStateOf<Uri?>(null) }
+    var locating by remember { mutableStateOf(false) }
+    val locationProvider = remember { FieldLocationProvider(appContext) }
+
+    fun startLocating() {
+        locating = true
+        locationProvider.requestCurrentLocation { captured ->
+            locating = false
+            if (captured != null) {
+                latitude = captured.latitude.toString()
+                longitude = captured.longitude.toString()
+                location = captured.asDisplayText()
+                locationProvider.resolvePlaceName(captured.latitude, captured.longitude) { place ->
+                    if (!place.isNullOrBlank()) location = captured.copy(placeName = place).asDisplayText()
+                }
+            }
+            android.widget.Toast.makeText(appContext, if (captured != null) "GPS updated" else "Could not get GPS fix", android.widget.Toast.LENGTH_SHORT).show()
         }
-        FieldTextField(tags, { tags = it }, "Tags (comma separated)"); FieldTextField(evidence, { evidence = it }, "Evidence summary", minLines = 2); FieldTextField(context, { context = it }, "Context / mood", minLines = 2)
+    }
+
+    val locationPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { result ->
+        if (result.values.any { it }) startLocating() else android.widget.Toast.makeText(appContext, "Location permission denied", android.widget.Toast.LENGTH_SHORT).show()
+    }
+    val cameraPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        if (granted) pendingPhotoUri = createFieldMindFileUri(appContext, "edit-photo", ".jpg") else android.widget.Toast.makeText(appContext, "Camera permission denied", android.widget.Toast.LENGTH_SHORT).show()
+    }
+    val takePicture = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { saved ->
+        val uri = pendingPhotoUri
+        if (saved && uri != null) attachments = attachments + DraftEvidenceAttachment("Photo", uri.toString(), "Edited observation photo")
+        android.widget.Toast.makeText(appContext, if (saved) "Photo queued for save" else "Camera cancelled", android.widget.Toast.LENGTH_SHORT).show()
+        pendingPhotoUri = null
+    }
+    LaunchedEffect(pendingPhotoUri) { pendingPhotoUri?.let { takePicture.launch(it) } }
+    val mediaPicker = rememberLauncherForActivityResult(ActivityResultContracts.PickMultipleVisualMedia(10)) { uris ->
+        attachments = attachments + uris.map { DraftEvidenceAttachment("Gallery", it.toString(), "Edited media") }
+    }
+    val filePicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        uri?.let {
+            runCatching { appContext.contentResolver.takePersistableUriPermission(it, Intent.FLAG_GRANT_READ_URI_PERMISSION) }
+            attachments = attachments + DraftEvidenceAttachment("File", it.toString(), "Edited file / PDF")
+        }
+    }
+
+    FormDialog("Edit Observation", onDismiss, {
+        if (subject.isNotBlank()) {
+            viewModel.updateObservation(entity.copy(subject = subject.trim(), category = category, factsOnlyNotes = facts.trim(), confidenceLevel = confidence, manualLocation = location.trim(), latitude = latitude.toDoubleOrNull(), longitude = longitude.toDoubleOrNull(), evidenceSummary = evidence.trim(), moodOrContext = fieldContext.trim()), tags)
+            attachments.forEach { viewModel.addAttachmentToObservation(entity.id, it) }
+            onDismiss()
+        }
+    }) {
+        SourceFormHero("Edit observation", "Fix facts, add GPS, and attach missing photos/files without recreating the record.")
+        CaptureStep("Identity", "Keep the subject and category easy to scan later.", FieldMindIcons.Observation) {
+            FieldTextField(subject, { subject = it }, "Subject")
+            ChoiceChips(observationCategories, category) { category = it }
+            ChoiceChips(confidenceOptions, confidence) { confidence = it }
+        }
+        CaptureStep("Facts & context", "Separate facts from mood, context, or field conditions.", FieldMindIcons.Edit) {
+            FieldTextField(facts, { facts = it }, "Facts only", minLines = 3)
+            Text("Context presets", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            ChoiceChips(contextPresets, fieldContext) { fieldContext = if (fieldContext.isBlank()) it else "$fieldContext, $it" }
+            FieldTextField(fieldContext, { fieldContext = it }, "Context / mood", minLines = 2)
+        }
+        CaptureStep("GPS", "Use automatic GPS or repair coordinates manually.", FieldMindIcons.Location) {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                FilledTonalButton(
+                    onClick = { if (locationProvider.hasAnyLocationPermission()) startLocating() else locationPermission.launch(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION)) },
+                    modifier = Modifier.weight(1f),
+                    enabled = !locating
+                ) {
+                    if (locating) CircularProgressIndicator(Modifier.size(16.dp), strokeWidth = 2.dp) else Icon(FieldMindIcons.Location, null, size = 18.dp)
+                    Spacer(Modifier.size(6.dp)); Text(if (locating) "Locating…" else "Use GPS")
+                }
+                OutlinedButton(onClick = { latitude = ""; longitude = ""; location = "" }, modifier = Modifier.weight(1f)) { Text("Clear") }
+            }
+            FieldTextField(location, { location = it }, "Location")
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                FieldTextField(latitude, { latitude = it }, "Latitude", modifier = Modifier.weight(1f))
+                FieldTextField(longitude, { longitude = it }, "Longitude", modifier = Modifier.weight(1f))
+            }
+        }
+        CaptureStep("Evidence attachments", "Add photos, gallery images, PDFs, or documents to the existing observation.", FieldMindIcons.Camera) {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedButton(onClick = { if (ContextCompat.checkSelfPermission(appContext, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) pendingPhotoUri = createFieldMindFileUri(appContext, "edit-photo", ".jpg") else cameraPermission.launch(Manifest.permission.CAMERA) }, Modifier.weight(1f)) { Icon(FieldMindIcons.Camera, null, size = 18.dp); Spacer(Modifier.size(6.dp)); Text("Photo") }
+                OutlinedButton(onClick = { mediaPicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageAndVideo)) }, Modifier.weight(1f)) { Icon(FieldMindIcons.Gallery, null, size = 18.dp); Spacer(Modifier.size(6.dp)); Text("Gallery") }
+                OutlinedButton(onClick = { filePicker.launch(arrayOf("application/pdf", "text/*", "image/*", "video/*", "audio/*")) }, Modifier.weight(1f)) { Icon(FieldMindIcons.File, null, size = 18.dp); Spacer(Modifier.size(6.dp)); Text("File") }
+            }
+            AttachmentPreviewList(attachments, onCaptionChange = { index, caption -> attachments = attachments.mapIndexed { i, item -> if (i == index) item.copy(caption = caption) else item } }, onRemove = { remove -> attachments = attachments.filterIndexed { index, _ -> index != remove } })
+        }
+        FieldTextField(tags, { tags = it }, "Tags (comma separated)")
+        FieldTextField(evidence, { evidence = it }, "Evidence summary", minLines = 2)
     }
 }
 
