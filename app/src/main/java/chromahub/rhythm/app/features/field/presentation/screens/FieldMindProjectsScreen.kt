@@ -99,14 +99,14 @@ fun ProjectsScreen(viewModel: FieldMindViewModel, onOpenDetail: (String, Long) -
 }
 
 @Composable
-private fun AddButton(label: String, onClick: () -> Unit) {
+internal fun AddButton(label: String, onClick: () -> Unit) {
     val haptics = rememberFieldMindHaptics()
     Button(onClick = { haptics.light(); onClick() }, Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp)) {
         Icon(icon = FieldMindIcons.Add, contentDescription = null, size = 20.dp); Spacer(Modifier.size(8.dp)); Text(label)
     }
 }
 
-private fun panelPadding() = PaddingValues(20.dp, 4.dp, 20.dp, 96.dp)
+internal fun panelPadding() = PaddingValues(20.dp, 4.dp, 20.dp, 96.dp)
 
 @Composable
 private fun ProjectPanel(

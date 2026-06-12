@@ -29,6 +29,7 @@ import chromahub.rhythm.app.features.field.presentation.theme.FieldMindTheme
 import chromahub.rhythm.app.features.field.presentation.viewmodel.FieldMindViewModel
 import chromahub.rhythm.app.shared.presentation.components.icons.Icon
 import chromahub.rhythm.app.shared.presentation.components.icons.MaterialSymbolIcon
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 // ══════════════════════════════════════════════════════════════════════
 //  Settings
 // ══════════════════════════════════════════════════════════════════════
@@ -228,7 +229,9 @@ private fun CreditRow(title: String, subtitle: String, url: String, uriHandler: 
             Text(subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
+}
 
+@Composable
 private fun SettingsGroup(title: String, subtitle: String? = null, content: @Composable ColumnScope.() -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Column(Modifier.padding(start = 4.dp)) {

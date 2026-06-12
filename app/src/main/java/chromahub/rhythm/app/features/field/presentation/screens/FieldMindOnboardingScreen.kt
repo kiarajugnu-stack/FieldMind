@@ -2,7 +2,9 @@ package chromahub.rhythm.app.features.field.presentation.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -20,12 +22,8 @@ import chromahub.rhythm.app.shared.presentation.components.icons.Icon
 fun FieldMindOnboardingScreen(onFinish: () -> Unit) {
     var step by remember { mutableIntStateOf(0) }
     val pages = listOf(
-        Triple(FieldMindIcons.Nature, "Welcome to FieldMind", "A local-first research notebook for Observe, Question, Research, Hypothesize, Collect Data, Analyze, Conclude, and Archive.
-
-Everything stays on your device unless you export or back it up."),
-        Triple(FieldMindIcons.Observation, "Capture, learn, and grow", "Log observations with facts, evidence, location, and confidence.
-
-Build projects around questions, collect data, draft reports, and turn findings into review cards with spaced repetition."),
+        Triple(FieldMindIcons.Nature, "Welcome to FieldMind", "A local-first research notebook for Observe, Question, Research, Hypothesize, Collect Data, Analyze, Conclude, and Archive.\n\nEverything stays on your device unless you export or back it up."),
+        Triple(FieldMindIcons.Observation, "Capture, learn, and grow", "Log observations with facts, evidence, location, and confidence.\n\nBuild projects around questions, collect data, draft reports, and turn findings into review cards with spaced repetition."),
         Triple(FieldMindIcons.Bolt, "Start in two taps", "Tap Capture anywhere to log an observation. Use Field Mode for one-tap quick capture. Start with one observation and build from there.")
     )
     val totalSteps = pages.size

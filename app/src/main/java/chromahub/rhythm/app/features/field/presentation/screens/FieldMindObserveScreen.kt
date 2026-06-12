@@ -149,7 +149,7 @@ private fun CategoryFirstCard(category: String, onCategory: (String) -> Unit, on
 }
 
 @Composable
-private fun NoteCaptureCard(viewModel: FieldMindViewModel, initialCategory: String, onSaved: () -> Unit) {
+internal fun NoteCaptureCard(viewModel: FieldMindViewModel, initialCategory: String, onSaved: () -> Unit) {
     val context = LocalContext.current
     val snackbar = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
@@ -363,7 +363,7 @@ private fun FieldModeButton(category: String, modifier: Modifier = Modifier, onC
 }
 
 @Composable
-private fun ObservationCaptureCard(viewModel: FieldMindViewModel, compact: Boolean, initialCategory: String? = null, snapFirst: Boolean = false, onSaved: () -> Unit) {
+internal fun ObservationCaptureCard(viewModel: FieldMindViewModel, compact: Boolean, initialCategory: String? = null, snapFirst: Boolean = false, onSaved: () -> Unit) {
     val context = LocalContext.current
     val snackbar = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
@@ -603,23 +603,6 @@ private fun ObservationCaptureCard(viewModel: FieldMindViewModel, compact: Boole
     }
 }
 
-/** A labeled capture step: an icon + title/subtitle header above its grouped inputs. */
-@Composable
-private fun CaptureStep(title: String, subtitle: String, icon: MaterialSymbolIcon, content: @Composable ColumnScope.() -> Unit) {
-    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            Box(Modifier.size(30.dp).clip(RoundedCornerShape(9.dp)).background(MaterialTheme.colorScheme.secondaryContainer), contentAlignment = Alignment.Center) {
-                Icon(icon = icon, contentDescription = null, tint = MaterialTheme.colorScheme.onSecondaryContainer, size = 18.dp)
-            }
-            Column(Modifier.weight(1f)) {
-                Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                Text(subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
-        }
-        Column(Modifier.padding(start = 40.dp), verticalArrangement = Arrangement.spacedBy(10.dp), content = content)
-    }
-}
-
 /** Reminds the researcher to separate observed facts from interpretation. */
 @Composable
 private fun FactsInterpretationBanner() {
@@ -657,7 +640,7 @@ private fun DraftEvidenceAttachment.isImage(): Boolean =
         Regex("\\.(jpg|jpeg|png|webp|gif|heic|bmp)(\\?.*)?$", RegexOption.IGNORE_CASE).containsMatchIn(uri)
 
 @Composable
-private fun AttachmentPreviewList(items: List<DraftEvidenceAttachment>, onCaptionChange: (Int, String) -> Unit, onRemove: (Int) -> Unit) {
+internal fun AttachmentPreviewList(items: List<DraftEvidenceAttachment>, onCaptionChange: (Int, String) -> Unit, onRemove: (Int) -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         items.forEachIndexed { index, item ->
             Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh), shape = RoundedCornerShape(20.dp)) {

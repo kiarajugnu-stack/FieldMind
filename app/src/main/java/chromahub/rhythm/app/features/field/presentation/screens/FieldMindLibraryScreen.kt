@@ -46,6 +46,11 @@ import chromahub.rhythm.app.features.field.presentation.theme.FieldMindTheme
 import chromahub.rhythm.app.features.field.presentation.viewmodel.FieldMindViewModel
 import chromahub.rhythm.app.shared.presentation.components.icons.Icon
 import chromahub.rhythm.app.shared.presentation.components.icons.MaterialSymbolIcon
+import coil.compose.AsyncImage
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalUriHandler
+import androidx.activity.compose.BackHandler
+import android.net.Uri
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -437,15 +442,6 @@ private fun OnlineApiProposalCard() {
     }
 }
 
-private fun learnKindIcon(kind: String): MaterialSymbolIcon = when (kind.trim().lowercase()) {
-    "article", "paper" -> FieldMindIcons.Article
-    "book" -> FieldMindIcons.Book
-    "course", "lesson" -> FieldMindIcons.School
-    "tool" -> FieldMindIcons.Bolt
-    "video" -> FieldMindIcons.Play
-    "dataset", "data" -> FieldMindIcons.Data
-    else -> FieldMindIcons.Source
-}
 
 @Composable
 private fun ResearchJourneyHero(next: ResearchMilestone, signals: String, onOpenReader: (String, String) -> Unit) {

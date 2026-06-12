@@ -236,17 +236,6 @@ private fun RecommendedLearningCard(items: List<LearnRecommendation>, onOpenRead
     }
 }
 
-private fun recentRelativeTime(time: Long): String {
-    val diff = System.currentTimeMillis() - time
-    val mins = diff / 60_000
-    return when {
-        mins < 1 -> "just now"
-        mins < 60 -> "${mins}m ago"
-        mins < 1440 -> "${mins / 60}h ago"
-        mins < 1440 * 7 -> "${mins / 1440}d ago"
-        else -> SimpleDateFormat("MMM d", Locale.getDefault()).format(Date(time))
-    }
-}
 
 @Composable
 private fun DailyGoalCard(todayCount: Int, goal: Int, streakDays: Int, onClick: () -> Unit) {

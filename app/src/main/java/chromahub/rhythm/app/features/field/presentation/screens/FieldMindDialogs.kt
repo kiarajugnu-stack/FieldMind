@@ -43,7 +43,6 @@ import android.Manifest
 import android.content.pm.PackageManager
 import androidx.core.content.ContextCompat
 import androidx.compose.ui.platform.LocalUriHandler
-import androidx.activity.result.contract.PickVisualMediaRequest
 import chromahub.rhythm.app.features.field.data.location.FieldLocationProvider
 // ══════════════════════════════════════════════════════════════════════
 //  Settings rows + dialogs + helpers
@@ -51,7 +50,7 @@ import chromahub.rhythm.app.features.field.data.location.FieldLocationProvider
 
 /** A grouped settings section: a header above a single rounded card holding related rows. */
 @Composable
-private fun NewQuestionDialog(viewModel: FieldMindViewModel, onDismiss: () -> Unit) {
+internal fun NewQuestionDialog(viewModel: FieldMindViewModel, onDismiss: () -> Unit) {
     var question by remember { mutableStateOf("") }; var category by remember { mutableStateOf("Other") }; var source by remember { mutableStateOf("Observation") }; var status by remember { mutableStateOf("New") }; var priority by remember { mutableStateOf("Medium") }
     FormDialog("New Question", onDismiss, { if (question.isNotBlank()) { viewModel.addQuestion(question, category, source, status, priority); onDismiss() } }) {
         SourceFormHero("New research question", "Turn curiosity into something observable, measurable, comparable, or verifiable.")
@@ -71,7 +70,7 @@ private fun NewQuestionDialog(viewModel: FieldMindViewModel, onDismiss: () -> Un
 }
 
 @Composable
-private fun NewProjectDialog(viewModel: FieldMindViewModel, onDismiss: () -> Unit) {
+internal fun NewProjectDialog(viewModel: FieldMindViewModel, onDismiss: () -> Unit) {
     var title by remember { mutableStateOf("") }; var topic by remember { mutableStateOf("Biology") }; var objective by remember { mutableStateOf("") }; var question by remember { mutableStateOf("") }
     var background by remember { mutableStateOf("") }; var methods by remember { mutableStateOf("") }; var hypothesis by remember { mutableStateOf("") }; var dataPlan by remember { mutableStateOf("") }; var analysis by remember { mutableStateOf("") }; var conclusion by remember { mutableStateOf("") }; var nextAction by remember { mutableStateOf("") }
     FormDialog("New Project", onDismiss, {
@@ -119,7 +118,7 @@ private fun SourceFormHero(title: String, body: String) {
 }
 
 @Composable
-private fun SourcePreviewCard(link: String, fileUri: String, modifier: Modifier = Modifier) {
+internal fun SourcePreviewCard(link: String, fileUri: String, modifier: Modifier = Modifier) {
     val trimmedLink = link.trim()
     val videoId = remember(trimmedLink) { youtubeVideoId(trimmedLink) }
     if (trimmedLink.isBlank() && fileUri.isBlank()) return
@@ -148,18 +147,9 @@ private fun SourcePreviewCard(link: String, fileUri: String, modifier: Modifier 
     }
 }
 
-private fun youtubeVideoId(url: String): String? {
-    val value = url.trim()
-    return when {
-        "youtu.be/" in value -> value.substringAfter("youtu.be/").substringBefore('?').substringBefore('&').takeIf { it.isNotBlank() }
-        "youtube.com/embed/" in value -> value.substringAfter("youtube.com/embed/").substringBefore('?').substringBefore('&').takeIf { it.isNotBlank() }
-        "youtube.com/watch" in value && "v=" in value -> value.substringAfter("v=").substringBefore('&').takeIf { it.isNotBlank() }
-        else -> null
-    }
-}
 
 @Composable
-private fun NewSourceDialog(viewModel: FieldMindViewModel, onDismiss: () -> Unit) {
+internal fun NewSourceDialog(viewModel: FieldMindViewModel, onDismiss: () -> Unit) {
     val context = LocalContext.current
     val projects by viewModel.projects.collectAsState()
     val haptics = rememberFieldMindHaptics()
@@ -190,7 +180,7 @@ private fun NewSourceDialog(viewModel: FieldMindViewModel, onDismiss: () -> Unit
             haptics.light()
         }
     }
-    val imagePicker = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
+    val imagePicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         if (uri != null) {
             fileUri = uri.toString()
             type = "Image"
@@ -243,7 +233,7 @@ private fun NewSourceDialog(viewModel: FieldMindViewModel, onDismiss: () -> Unit
                 OutlinedButton(onClick = { haptics.light(); docPicker.launch(arrayOf("application/pdf", "text/*", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "image/*")) }, modifier = Modifier.weight(1f)) {
                     Icon(FieldMindIcons.File, null, size = 18.dp); Spacer(Modifier.size(6.dp)); Text("Document")
                 }
-                OutlinedButton(onClick = { haptics.light(); imagePicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) }, modifier = Modifier.weight(1f)) {
+                OutlinedButton(onClick = { haptics.light(); imagePicker.launch("image/*") }, modifier = Modifier.weight(1f)) {
                     Icon(FieldMindIcons.Gallery, null, size = 18.dp); Spacer(Modifier.size(6.dp)); Text("Image")
                 }
             }
@@ -274,7 +264,7 @@ private fun NewSourceDialog(viewModel: FieldMindViewModel, onDismiss: () -> Unit
 }
 
 @Composable
-private fun NewHypothesisDialog(viewModel: FieldMindViewModel, questions: List<QuestionEntity>, onDismiss: () -> Unit) {
+internal fun NewHypothesisDialog(viewModel: FieldMindViewModel, questions: List<QuestionEntity>, onDismiss: () -> Unit) {
     var prediction by remember { mutableStateOf("") }; var reasoning by remember { mutableStateOf("") }; var evidence by remember { mutableStateOf("") }; var support by remember { mutableStateOf("") }; var weaken by remember { mutableStateOf("") }; var test by remember { mutableStateOf("") }; var confidence by remember { mutableStateOf(50f) }; var linkedId by remember { mutableStateOf(questions.firstOrNull()?.id) }
     FormDialog("New Hypothesis", onDismiss, { if (prediction.isNotBlank()) { viewModel.addHypothesis(linkedId, prediction, evidence, confidence.toInt(), reasoning, support, weaken, test); onDismiss() } }) {
         SourceFormHero("Build a testable hypothesis", "State the prediction, what would support it, and what would weaken it before collecting results.")
@@ -334,7 +324,7 @@ private fun notesLabelForTool(tool: String): String = when (tool) {
 }
 
 @Composable
-private fun NewDataRecordDialog(viewModel: FieldMindViewModel, onDismiss: () -> Unit) {
+internal fun NewDataRecordDialog(viewModel: FieldMindViewModel, onDismiss: () -> Unit) {
     var tool by remember { mutableStateOf("Counter") }; var label by remember { mutableStateOf("") }; var value by remember { mutableStateOf("0") }; var unit by remember { mutableStateOf(defaultUnitForTool("Counter")) }; var location by remember { mutableStateOf("") }; var notes by remember { mutableStateOf("") }
     FormDialog("Data Collection Tool", onDismiss, { if (label.isNotBlank()) { viewModel.addDataRecord(tool, label, value, unit, notes, location); onDismiss() } }) {
         SourceFormHero("Data entry", "Choose a preset so units and labels match the kind of thing you measured.")
@@ -356,7 +346,7 @@ private fun NewDataRecordDialog(viewModel: FieldMindViewModel, onDismiss: () -> 
 }
 
 @Composable
-private fun NewReportDialog(viewModel: FieldMindViewModel, onDismiss: () -> Unit) {
+internal fun NewReportDialog(viewModel: FieldMindViewModel, onDismiss: () -> Unit) {
     var type by remember { mutableStateOf("Field Report") }; var title by remember { mutableStateOf("") }; var background by remember { mutableStateOf("") }; var question by remember { mutableStateOf("") }; var methods by remember { mutableStateOf("") }; var observations by remember { mutableStateOf("") }; var results by remember { mutableStateOf("") }; var interpretation by remember { mutableStateOf("") }; var conclusion by remember { mutableStateOf("") }; var limitations by remember { mutableStateOf("") }; var next by remember { mutableStateOf("") }
     FormDialog("Report Builder", onDismiss, { if (title.isNotBlank()) { viewModel.addReport(type, title, background, question, methods, observations, results, interpretation, conclusion, limitations, next); onDismiss() } }) {
         SourceFormHero("Report builder", "Create a clean local draft: claim, evidence, reasoning, limitations, and next steps.")
@@ -384,7 +374,7 @@ private fun NewReportDialog(viewModel: FieldMindViewModel, onDismiss: () -> Unit
 }
 
 @Composable
-private fun NewFlashcardDialog(viewModel: FieldMindViewModel, onDismiss: () -> Unit) {
+internal fun NewFlashcardDialog(viewModel: FieldMindViewModel, onDismiss: () -> Unit) {
     var type by remember { mutableStateOf("concept") }; var front by remember { mutableStateOf("") }; var back by remember { mutableStateOf("") }; var useSm2 by remember { mutableStateOf(false) }
     FormDialog("Create Flashcard", onDismiss, { if (front.isNotBlank() && back.isNotBlank()) { viewModel.addFlashcard(front, back, type, deckMode = if (useSm2) "sm2" else "basic"); onDismiss() } }) {
         SourceFormHero("Create review card", "Design one card that flips cleanly during review — one prompt, one answer.")
@@ -408,7 +398,7 @@ private fun NewFlashcardDialog(viewModel: FieldMindViewModel, onDismiss: () -> U
 }
 
 @Composable
-private fun EditEntityDialog(kind: String, id: Long, viewModel: FieldMindViewModel, onDismiss: () -> Unit) {
+internal fun EditEntityDialog(kind: String, id: Long, viewModel: FieldMindViewModel, onDismiss: () -> Unit) {
     when (kind) {
         "observation" -> viewModel.observations.collectAsState().value.firstOrNull { it.id == id }?.let { EditObservationDialog(it, viewModel, onDismiss) }
         "note" -> viewModel.notes.collectAsState().value.firstOrNull { it.id == id }?.let { EditNoteDialog(it, viewModel, onDismiss) }
@@ -484,7 +474,7 @@ private fun EditObservationDialog(entity: ObservationEntity, viewModel: FieldMin
         pendingPhotoUri = null
     }
     LaunchedEffect(pendingPhotoUri) { pendingPhotoUri?.let { takePicture.launch(it) } }
-    val mediaPicker = rememberLauncherForActivityResult(ActivityResultContracts.PickMultipleVisualMedia(10)) { uris ->
+    val mediaPicker = rememberLauncherForActivityResult(ActivityResultContracts.GetMultipleContents()) { uris ->
         attachments = attachments + uris.map { DraftEvidenceAttachment("Gallery", it.toString(), "Edited media") }
     }
     val filePicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
@@ -534,7 +524,7 @@ private fun EditObservationDialog(entity: ObservationEntity, viewModel: FieldMin
         CaptureStep("Evidence attachments", "Add photos, gallery images, PDFs, or documents to the existing observation.", FieldMindIcons.Camera) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedButton(onClick = { if (ContextCompat.checkSelfPermission(appContext, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) pendingPhotoUri = createFieldMindFileUri(appContext, "edit-photo", ".jpg") else cameraPermission.launch(Manifest.permission.CAMERA) }, Modifier.weight(1f)) { Icon(FieldMindIcons.Camera, null, size = 18.dp); Spacer(Modifier.size(6.dp)); Text("Photo") }
-                OutlinedButton(onClick = { mediaPicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageAndVideo)) }, Modifier.weight(1f)) { Icon(FieldMindIcons.Gallery, null, size = 18.dp); Spacer(Modifier.size(6.dp)); Text("Gallery") }
+                OutlinedButton(onClick = { mediaPicker.launch("image/*") }, Modifier.weight(1f)) { Icon(FieldMindIcons.Gallery, null, size = 18.dp); Spacer(Modifier.size(6.dp)); Text("Gallery") }
                 OutlinedButton(onClick = { filePicker.launch(arrayOf("application/pdf", "text/*", "image/*", "video/*", "audio/*")) }, Modifier.weight(1f)) { Icon(FieldMindIcons.File, null, size = 18.dp); Spacer(Modifier.size(6.dp)); Text("File") }
             }
             AttachmentPreviewList(attachments, onCaptionChange = { index, caption -> attachments = attachments.mapIndexed { i, item -> if (i == index) item.copy(caption = caption) else item } }, onRemove = { remove -> attachments = attachments.filterIndexed { index, _ -> index != remove } })
@@ -724,7 +714,7 @@ private fun EditFlashcardDialog(entity: FlashcardEntity, viewModel: FieldMindVie
  * (when known), the exact coordinates, and a link out to the device map app.
  */
 @Composable
-private fun ObservationLocationCard(latitude: Double, longitude: Double, manualLocation: String) {
+internal fun ObservationLocationCard(latitude: Double, longitude: Double, manualLocation: String) {
     val colors = FieldMindTheme.colors
     val uriHandler = LocalUriHandler.current
     val coords = "%.5f, %.5f".format(latitude, longitude)

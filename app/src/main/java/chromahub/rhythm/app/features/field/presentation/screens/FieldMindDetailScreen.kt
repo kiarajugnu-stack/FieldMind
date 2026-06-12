@@ -365,9 +365,6 @@ private fun storedAttachmentRows(raw: String): List<DraftEvidenceAttachment> = r
     }
 }
 
-private fun uriLooksImage(uri: String): Boolean = uri.contains(Regex("\\.(jpg|jpeg|png|webp|gif|heic|bmp)(\\?.*)?$", RegexOption.IGNORE_CASE))
-private fun uriLooksPdf(uri: String): Boolean = uri.contains(Regex("\\.pdf(\\?.*)?$", RegexOption.IGNORE_CASE))
-
 @Composable
 private fun NoteAttachmentsPanel(raw: String, onOpenReader: (String, String) -> Unit) {
     val attachments = remember(raw) { storedAttachmentRows(raw) }
@@ -428,7 +425,7 @@ private fun BacklinksPanel(links: List<Triple<String, String, Long>>, onOpenDeta
 }
 
 @Composable
-private fun AssistantPanel(viewModel: FieldMindViewModel, seedText: String = "") {
+internal fun AssistantPanel(viewModel: FieldMindViewModel, seedText: String = "") {
     val enabled by viewModel.fieldSettings.geminiEnabled.collectAsState()
     if (!enabled) return
     val providerName by viewModel.fieldSettings.aiProvider.collectAsState()
