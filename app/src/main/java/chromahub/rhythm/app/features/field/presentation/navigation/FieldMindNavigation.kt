@@ -1,9 +1,12 @@
 package chromahub.rhythm.app.features.field.presentation.navigation
 
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -44,14 +47,14 @@ import chromahub.rhythm.app.shared.presentation.components.icons.Icon
 import chromahub.rhythm.app.shared.presentation.components.icons.MaterialSymbolIcon
 
 /**
- * FieldMind destinations. Five primary lifecycle tabs (Today → Capture → Projects → Library →
- * Insights) are surfaced in the navigation bar/rail; the remaining destinations are reached from
- * within those tabs, the capture FAB, or the overflow.
+ * FieldMind destinations. Four primary lifecycle tabs (Today → Capture → Workspace → Library)
+ * are surfaced in the navigation bar/rail; the remaining destinations are reached from within
+ * those tabs, the capture FAB, or the overflow.
  */
 sealed class FieldMindScreen(val route: String, val label: String, val icon: MaterialSymbolIcon) {
     data object Home : FieldMindScreen("field_today", "Today", FieldMindIcons.Today)
     data object Observe : FieldMindScreen("field_capture", "Capture", FieldMindIcons.Capture)
-    data object Projects : FieldMindScreen("field_projects", "Projects", FieldMindIcons.Projects)
+    data object Projects : FieldMindScreen("field_projects", "Workspace", FieldMindIcons.Projects)
     data object Library : FieldMindScreen("field_library", "Library", FieldMindIcons.Library)
     data object Insights : FieldMindScreen("field_insights", "Insights", FieldMindIcons.Insights)
 
@@ -70,14 +73,13 @@ sealed class FieldMindScreen(val route: String, val label: String, val icon: Mat
     data object Settings : FieldMindScreen("field_settings", "Settings", FieldMindIcons.Settings)
 }
 
-private const val NavTransitionDurationMillis = 160
+private const val NavTransitionDurationMillis = 180
 
 private val bottomTabs = listOf(
     FieldMindScreen.Home,
     FieldMindScreen.Observe,
     FieldMindScreen.Projects,
-    FieldMindScreen.Library,
-    FieldMindScreen.Insights
+    FieldMindScreen.Library
 )
 
 @Composable
@@ -187,12 +189,19 @@ fun FieldMindNavigation(viewModel: FieldMindViewModel, onResetOnboarding: () -> 
 
 @Composable
 private fun AnimatedNavIcon(screen: FieldMindScreen, selected: Boolean) {
-    val scale by animateFloatAsState(if (selected) 1.18f else 1f, tween(220), label = "navIconScale")
-    val lift by animateFloatAsState(if (selected) -2f else 0f, tween(220), label = "navIconLift")
+    val scale by animateFloatAsState(if (selected) 1.18f else 0.96f, tween(220), label = "navIconScale")
+    val lift by animateFloatAsState(if (selected) -2.5f else 0f, tween(220), label = "navIconLift")
+    val alpha by animateFloatAsState(if (selected) 1f else 0.72f, tween(180), label = "navIconAlpha")
+    val tint by animateColorAsState(
+        if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+        tween(180),
+        label = "navIconTint"
+    )
     Icon(
         icon = if (selected) screen.icon.filled() else screen.icon,
         contentDescription = screen.label,
-        modifier = Modifier.graphicsLayer { scaleX = scale; scaleY = scale; translationY = lift },
+        tint = tint,
+        modifier = Modifier.graphicsLayer { scaleX = scale; scaleY = scale; translationY = lift; this.alpha = alpha },
         size = 24.dp,
         weight = if (selected) 650 else screen.icon.defaultWeight
     )
@@ -200,8 +209,16 @@ private fun AnimatedNavIcon(screen: FieldMindScreen, selected: Boolean) {
 
 @Composable
 private fun AnimatedNavLabel(label: String, selected: Boolean) {
-    val scale by animateFloatAsState(if (selected) 1.04f else 1f, tween(220), label = "navLabelScale")
-    Text(label, modifier = Modifier.graphicsLayer { scaleX = scale; scaleY = scale })
+    val scale by animateFloatAsState(if (selected) 1.04f else 0.98f, tween(220), label = "navLabelScale")
+    val alpha by animateFloatAsState(if (selected) 1f else 0.76f, tween(180), label = "navLabelAlpha")
+    Text(label, modifier = Modifier.graphicsLayer { scaleX = scale; scaleY = scale; this.alpha = alpha })
+}
+
+private fun primaryTabDirection(fromRoute: String?, toRoute: String?): Int {
+    val fromIndex = bottomTabs.indexOfFirst { it.route == fromRoute }
+    val toIndex = bottomTabs.indexOfFirst { it.route == toRoute }
+    if (fromIndex == -1 || toIndex == -1 || fromIndex == toIndex) return 0
+    return if (toIndex > fromIndex) 1 else -1
 }
 
 @Composable
@@ -222,10 +239,18 @@ private fun FieldMindNavHost(
         navController = navController,
         startDestination = FieldMindScreen.Home.route,
         modifier = modifier,
-        enterTransition = { fadeIn(tween(NavTransitionDurationMillis)) + scaleIn(initialScale = 0.98f, animationSpec = tween(NavTransitionDurationMillis)) },
-        exitTransition = { fadeOut(tween(NavTransitionDurationMillis)) },
-        popEnterTransition = { fadeIn(tween(NavTransitionDurationMillis)) + scaleIn(initialScale = 0.98f, animationSpec = tween(NavTransitionDurationMillis)) },
-        popExitTransition = { fadeOut(tween(NavTransitionDurationMillis)) + scaleOut(targetScale = 0.98f, animationSpec = tween(NavTransitionDurationMillis)) }
+        enterTransition = {
+            val direction = primaryTabDirection(initialState.destination.route, targetState.destination.route)
+            if (direction == 0) fadeIn(tween(NavTransitionDurationMillis)) + scaleIn(initialScale = 0.985f, animationSpec = tween(NavTransitionDurationMillis))
+            else slideInHorizontally(tween(NavTransitionDurationMillis)) { direction * it / 4 } + fadeIn(tween(NavTransitionDurationMillis))
+        },
+        exitTransition = {
+            val direction = primaryTabDirection(initialState.destination.route, targetState.destination.route)
+            if (direction == 0) fadeOut(tween(NavTransitionDurationMillis))
+            else slideOutHorizontally(tween(NavTransitionDurationMillis)) { -direction * it / 5 } + fadeOut(tween(NavTransitionDurationMillis))
+        },
+        popEnterTransition = { fadeIn(tween(NavTransitionDurationMillis)) + scaleIn(initialScale = 0.985f, animationSpec = tween(NavTransitionDurationMillis)) },
+        popExitTransition = { fadeOut(tween(NavTransitionDurationMillis)) + scaleOut(targetScale = 0.985f, animationSpec = tween(NavTransitionDurationMillis)) }
     ) {
         composable(FieldMindScreen.Home.route) { HomeScreen(viewModel = viewModel, onOpenSettings = { navController.navigateToDestination(FieldMindScreen.Settings.route) }, onNavigate = { navController.navigateToDestination(it.route) }, onOpenDetail = openDetail, onOpenReader = openReader) }
         composable(FieldMindScreen.Observe.route) { ObserveScreen(viewModel = viewModel, onOpenDetail = openDetail) }
