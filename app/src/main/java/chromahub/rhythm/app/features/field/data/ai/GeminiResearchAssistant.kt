@@ -82,16 +82,38 @@ class GeminiResearchAssistant(
         return AssistantSuggestion(task.title, outputText.ifBlank { "OpenAI returned an empty draft." }, true, true)
     }
 
-    private fun postJson(endpoint: URL, request: JSONObject, configure: (HttpURLConnection) -> Unit): Pair<Int, String> {
-        val connection = endpoint.openConnection() as HttpURLConnection
-        connection.requestMethod = "POST"
-        configure(connection)
-        connection.doOutput = true
-        connection.outputStream.use { it.write(request.toString().toByteArray()) }
-        val code = connection.responseCode
-        val stream = if (code in 200..299) connection.inputStream else connection.errorStream
-        val body = stream?.bufferedReader()?.use { it.readText() }.orEmpty()
-        return code to body
+    private fun postJson(endpoint: URL, request: JSONObject, configure: (HttpURLConnection) -> Unit, maxRetries: Int = 2): Pair<Int, String> {
+        var lastException: Exception? = null
+        var lastServerError: String? = null
+        repeat(maxRetries + 1) { attempt ->
+            try {
+                val connection = endpoint.openConnection() as HttpURLConnection
+                connection.requestMethod = "POST"
+                connection.connectTimeout = 30_000
+                connection.readTimeout = 60_000
+                configure(connection)
+                connection.doOutput = true
+                connection.outputStream.use { it.write(request.toString().toByteArray()) }
+                val code = connection.responseCode
+                val stream = if (code in 200..299) connection.inputStream else connection.errorStream
+                val body = stream?.bufferedReader()?.use { it.readText() }.orEmpty()
+                // Retry on server errors (5xx) but not client errors (4xx)
+                if (code in 500..599 && attempt < maxRetries) {
+                    lastServerError = "HTTP $code: ${body.take(200)}"
+                    Thread.sleep(1000L * (attempt + 1))
+                    return@repeat
+                }
+                return code to body
+            } catch (e: java.net.SocketTimeoutException) {
+                lastException = e
+                if (attempt < maxRetries) Thread.sleep(1000L * (attempt + 1))
+            } catch (e: java.io.IOException) {
+                lastException = e
+                if (attempt < maxRetries) Thread.sleep(1000L * (attempt + 1))
+            }
+        }
+        val errorMsg = lastServerError ?: lastException?.let { "${it.javaClass.simpleName}: ${it.message}" } ?: "Unknown error"
+        return 0 to "Request failed after ${maxRetries + 1} attempts. $errorMsg"
     }
 
     fun observationFactualityReview(notes: String): AssistantSuggestion = promptPreview(AssistantTask.FACTUALITY, notes)
