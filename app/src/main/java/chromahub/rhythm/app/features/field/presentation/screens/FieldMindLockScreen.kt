@@ -1,4 +1,4 @@
-package chromahub.rhythm.app.features.field.presentation.screens
+package fieldmind.research.app.features.field.presentation.screens
 
 import android.app.KeyguardManager
 import android.content.Context
@@ -30,9 +30,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentActivity
-import chromahub.rhythm.app.features.field.data.settings.FieldMindSettings
-import chromahub.rhythm.app.features.field.presentation.components.FieldMindIcons
-import chromahub.rhythm.app.shared.presentation.components.icons.Icon
+import fieldmind.research.app.features.field.data.settings.FieldMindSettings
+import fieldmind.research.app.features.field.presentation.components.FieldMindIcons
+import fieldmind.research.app.shared.presentation.components.icons.Icon
 // ══════════════════════════════════════════════════════════════════════
 //  App Lock / Privacy Gate
 // ══════════════════════════════════════════════════════════════════════

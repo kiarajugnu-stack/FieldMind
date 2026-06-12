@@ -1,9 +1,9 @@
-package chromahub.rhythm.app.shared.presentation.components.bottomsheets
+package fieldmind.research.app.shared.presentation.components.bottomsheets
 
 
-import chromahub.rhythm.app.shared.presentation.components.icons.RhythmIcons
-import chromahub.rhythm.app.shared.presentation.components.icons.MaterialSymbolIcon
-import chromahub.rhythm.app.shared.presentation.components.icons.Icon
+import fieldmind.research.app.shared.presentation.components.icons.RhythmIcons
+import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon
+import fieldmind.research.app.shared.presentation.components.icons.Icon
 
 import android.Manifest
 import android.content.Intent
@@ -58,36 +58,36 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import chromahub.rhythm.app.R
-import chromahub.rhythm.app.shared.data.model.Song
-import chromahub.rhythm.app.shared.data.model.AppSettings
-import chromahub.rhythm.app.shared.presentation.components.common.M3PlaceholderType
-import chromahub.rhythm.app.shared.presentation.components.common.ActionProgressLoader
-import chromahub.rhythm.app.shared.presentation.components.common.ContentLoadingIndicator
-import chromahub.rhythm.app.shared.presentation.components.player.formatDuration
-import chromahub.rhythm.app.shared.presentation.components.common.MarqueeText
-import chromahub.rhythm.app.shared.presentation.components.common.rhythmMarquee
-import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveButtonGroup
-import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveFilledTonalButton
-import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveGroupButton
-import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveShapes
-import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveShapeTarget
-import chromahub.rhythm.app.shared.presentation.components.common.rememberExpressiveShapeFor
-import chromahub.rhythm.app.shared.presentation.components.common.ButtonGroupStyle
-import chromahub.rhythm.app.shared.presentation.components.RatingStarsDisplay
-import chromahub.rhythm.app.util.ImageUtils
-import chromahub.rhythm.app.util.MediaUtils
-import chromahub.rhythm.app.util.HapticUtils
-import chromahub.rhythm.app.util.HapticType
+import fieldmind.research.app.R
+import fieldmind.research.app.shared.data.model.Song
+import fieldmind.research.app.shared.data.model.AppSettings
+import fieldmind.research.app.shared.presentation.components.common.M3PlaceholderType
+import fieldmind.research.app.shared.presentation.components.common.ActionProgressLoader
+import fieldmind.research.app.shared.presentation.components.common.ContentLoadingIndicator
+import fieldmind.research.app.shared.presentation.components.player.formatDuration
+import fieldmind.research.app.shared.presentation.components.common.MarqueeText
+import fieldmind.research.app.shared.presentation.components.common.rhythmMarquee
+import fieldmind.research.app.shared.presentation.components.common.ExpressiveButtonGroup
+import fieldmind.research.app.shared.presentation.components.common.ExpressiveFilledTonalButton
+import fieldmind.research.app.shared.presentation.components.common.ExpressiveGroupButton
+import fieldmind.research.app.shared.presentation.components.common.ExpressiveShapes
+import fieldmind.research.app.shared.presentation.components.common.ExpressiveShapeTarget
+import fieldmind.research.app.shared.presentation.components.common.rememberExpressiveShapeFor
+import fieldmind.research.app.shared.presentation.components.common.ButtonGroupStyle
+import fieldmind.research.app.shared.presentation.components.RatingStarsDisplay
+import fieldmind.research.app.util.ImageUtils
+import fieldmind.research.app.util.MediaUtils
+import fieldmind.research.app.util.HapticUtils
+import fieldmind.research.app.util.HapticType
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.launch
 import java.io.File
-import chromahub.rhythm.app.network.NetworkClient
-import chromahub.rhythm.app.network.YTMusicSearchRequest
-import chromahub.rhythm.app.network.YTMusicContext
-import chromahub.rhythm.app.network.YTMusicClient
-import chromahub.rhythm.app.network.extractAlbumImageUrl
+import fieldmind.research.app.network.NetworkClient
+import fieldmind.research.app.network.YTMusicSearchRequest
+import fieldmind.research.app.network.YTMusicContext
+import fieldmind.research.app.network.YTMusicClient
+import fieldmind.research.app.network.extractAlbumImageUrl
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.painterResource
 
@@ -236,7 +236,7 @@ fun SongInfoBottomSheet(
     var isLoadingWhitelist by remember { mutableStateOf(false) }
     
     // Rhythm stats and rating states
-    var songPlaybackStats by remember { mutableStateOf<chromahub.rhythm.app.shared.data.repository.PlaybackStatsRepository.SongPlaybackSummary?>(null) }
+    var songPlaybackStats by remember { mutableStateOf<fieldmind.research.app.shared.data.repository.PlaybackStatsRepository.SongPlaybackSummary?>(null) }
     var songRating by remember(song?.id) { mutableStateOf(0) }
     
     // Expressive shape for artwork
@@ -311,9 +311,9 @@ fun SongInfoBottomSheet(
         song.let { currentSong ->
             // Load playback stats
             songPlaybackStats = withContext(Dispatchers.IO) {
-                chromahub.rhythm.app.shared.data.repository.PlaybackStatsRepository.getInstance(context).getSongPlaybackStats(
+                fieldmind.research.app.shared.data.repository.PlaybackStatsRepository.getInstance(context).getSongPlaybackStats(
                     currentSong.id,
-                    chromahub.rhythm.app.shared.data.repository.StatsTimeRange.ALL_TIME
+                    fieldmind.research.app.shared.data.repository.StatsTimeRange.ALL_TIME
                 )
             }
             
@@ -1310,7 +1310,7 @@ private fun SongInfoCard(
 
 @Composable
 private fun RhythmStatsCard(
-    songPlaybackStats: chromahub.rhythm.app.shared.data.repository.PlaybackStatsRepository.SongPlaybackSummary?,
+    songPlaybackStats: fieldmind.research.app.shared.data.repository.PlaybackStatsRepository.SongPlaybackSummary?,
     songRating: Int,
     useHoursFormat: Boolean = false
 ) {

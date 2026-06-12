@@ -1,4 +1,4 @@
-package chromahub.rhythm.app.features.field.data.learn
+package fieldmind.research.app.features.field.data.learn
 
 /**
  * Offline-first learning library for FieldMind.

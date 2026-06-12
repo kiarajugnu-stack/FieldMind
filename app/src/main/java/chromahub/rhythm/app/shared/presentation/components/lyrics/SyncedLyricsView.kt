@@ -1,4 +1,4 @@
-package chromahub.rhythm.app.shared.presentation.components.lyrics
+package fieldmind.research.app.shared.presentation.components.lyrics
 
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.clickable
@@ -20,13 +20,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import chromahub.rhythm.app.R
-import chromahub.rhythm.app.util.LyricLine
-import chromahub.rhythm.app.util.LyricsParser
+import fieldmind.research.app.R
+import fieldmind.research.app.util.LyricLine
+import fieldmind.research.app.util.LyricsParser
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import chromahub.rhythm.app.shared.data.model.AppSettings
-import chromahub.rhythm.app.RhythmApplication
+import fieldmind.research.app.shared.data.model.AppSettings
+import fieldmind.research.app.RhythmApplication
 import kotlin.math.abs
 
 private sealed class SyncedLyricsItem {
@@ -331,11 +331,11 @@ private fun SyncedVocalGapItem(
  */
 @Composable
 private fun SyncedLyricItem(
-    line: chromahub.rhythm.app.util.LyricLine,
+    line: fieldmind.research.app.util.LyricLine,
     index: Int,
     currentLineIndex: Int,
     currentPlaybackTime: Long,
-    parsedLyrics: List<chromahub.rhythm.app.util.LyricLine>,
+    parsedLyrics: List<fieldmind.research.app.util.LyricLine>,
     onSeek: ((Long) -> Unit)?,
     showTranslation: Boolean,
     showRomanization: Boolean,

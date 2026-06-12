@@ -1,4 +1,4 @@
-package chromahub.rhythm.app.shared.presentation.components
+package fieldmind.research.app.shared.presentation.components
 
 import android.Manifest
 import android.content.Intent
@@ -30,21 +30,21 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LocalLifecycleOwner
-import chromahub.rhythm.app.shared.data.model.AppSettings
-import chromahub.rhythm.app.shared.presentation.components.common.InitializationLoader
-import chromahub.rhythm.app.features.local.presentation.screens.onboarding.OnboardingStep
-import chromahub.rhythm.app.features.local.presentation.screens.onboarding.PermissionScreenState
-import chromahub.rhythm.app.features.local.presentation.screens.OnboardingScreen
-import chromahub.rhythm.app.shared.presentation.viewmodel.ThemeViewModel
+import fieldmind.research.app.shared.data.model.AppSettings
+import fieldmind.research.app.shared.presentation.components.common.InitializationLoader
+import fieldmind.research.app.features.local.presentation.screens.onboarding.OnboardingStep
+import fieldmind.research.app.features.local.presentation.screens.onboarding.PermissionScreenState
+import fieldmind.research.app.features.local.presentation.screens.OnboardingScreen
+import fieldmind.research.app.shared.presentation.viewmodel.ThemeViewModel
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import com.google.accompanist.permissions.shouldShowRationale
 import kotlinx.coroutines.delay
 import androidx.lifecycle.viewmodel.compose.viewModel
-import chromahub.rhythm.app.features.local.presentation.viewmodel.MusicViewModel
-import chromahub.rhythm.app.shared.presentation.viewmodel.AppUpdaterViewModel
-import chromahub.rhythm.app.features.streaming.presentation.viewmodel.StreamingMusicViewModel
+import fieldmind.research.app.features.local.presentation.viewmodel.MusicViewModel
+import fieldmind.research.app.shared.presentation.viewmodel.AppUpdaterViewModel
+import fieldmind.research.app.features.streaming.presentation.viewmodel.StreamingMusicViewModel
 import kotlinx.coroutines.launch
 import androidx.compose.runtime.rememberCoroutineScope
 
@@ -197,8 +197,8 @@ fun PermissionHandler(
                 currentOnboardingStep = OnboardingStep.COMPLETE
                 onSetIsInitializingApp(true) // Start app initialization
                 try {
-                    val intent = Intent(context, chromahub.rhythm.app.infrastructure.service.MediaPlaybackService::class.java)
-                    intent.action = chromahub.rhythm.app.infrastructure.service.MediaPlaybackService.ACTION_INIT_SERVICE
+                    val intent = Intent(context, fieldmind.research.app.infrastructure.service.MediaPlaybackService::class.java)
+                    intent.action = fieldmind.research.app.infrastructure.service.MediaPlaybackService.ACTION_INIT_SERVICE
                     // Must use startForegroundService to avoid BackgroundServiceStartNotAllowedException on Android 12+
                     ContextCompat.startForegroundService(context, intent)
                     delay(1000) // Give service time to initialize

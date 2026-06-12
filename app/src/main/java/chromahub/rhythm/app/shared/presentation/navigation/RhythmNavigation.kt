@@ -1,8 +1,8 @@
-package chromahub.rhythm.app.shared.presentation.navigation
+package fieldmind.research.app.shared.presentation.navigation
 
-import chromahub.rhythm.app.shared.presentation.components.icons.RhythmIcons
-import chromahub.rhythm.app.shared.presentation.components.icons.MaterialSymbolIcon
-import chromahub.rhythm.app.shared.presentation.components.icons.Icon
+import fieldmind.research.app.shared.presentation.components.icons.RhythmIcons
+import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon
+import fieldmind.research.app.shared.presentation.components.icons.Icon
 
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -85,21 +85,21 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.lifecycle.viewmodel.compose.viewModel
-import chromahub.rhythm.app.activities.MainActivity
-import chromahub.rhythm.app.activities.RhythmGuardTimeoutActivity
-import chromahub.rhythm.app.R
-import chromahub.rhythm.app.core.domain.model.AppMode
-import chromahub.rhythm.app.features.local.presentation.navigation.LocalNavigation
-import chromahub.rhythm.app.features.streaming.presentation.navigation.StreamingNavigation
-import chromahub.rhythm.app.shared.data.repository.UserPreferencesRepository
-import chromahub.rhythm.app.shared.data.repository.PlaybackStatsRepository
-import chromahub.rhythm.app.shared.data.repository.StatsTimeRange
-import chromahub.rhythm.app.shared.presentation.components.common.RhythmWavyProgressLoader
-import chromahub.rhythm.app.shared.presentation.viewmodel.AppModeViewModel
-import chromahub.rhythm.app.features.local.presentation.viewmodel.MusicViewModel
-import chromahub.rhythm.app.shared.presentation.viewmodel.ThemeViewModel
-import chromahub.rhythm.app.shared.data.model.AppSettings
-import chromahub.rhythm.app.util.AudioDeviceManager
+import fieldmind.research.app.activities.MainActivity
+import fieldmind.research.app.activities.RhythmGuardTimeoutActivity
+import fieldmind.research.app.R
+import fieldmind.research.app.core.domain.model.AppMode
+import fieldmind.research.app.features.local.presentation.navigation.LocalNavigation
+import fieldmind.research.app.features.streaming.presentation.navigation.StreamingNavigation
+import fieldmind.research.app.shared.data.repository.UserPreferencesRepository
+import fieldmind.research.app.shared.data.repository.PlaybackStatsRepository
+import fieldmind.research.app.shared.data.repository.StatsTimeRange
+import fieldmind.research.app.shared.presentation.components.common.RhythmWavyProgressLoader
+import fieldmind.research.app.shared.presentation.viewmodel.AppModeViewModel
+import fieldmind.research.app.features.local.presentation.viewmodel.MusicViewModel
+import fieldmind.research.app.shared.presentation.viewmodel.ThemeViewModel
+import fieldmind.research.app.shared.data.model.AppSettings
+import fieldmind.research.app.util.AudioDeviceManager
 import androidx.core.app.NotificationCompat
 import androidx.compose.ui.platform.LocalContext
 import kotlinx.coroutines.delay
@@ -216,7 +216,7 @@ fun RhythmNavigation(
                         )
                 }
             ) {
-                chromahub.rhythm.app.shared.presentation.screens.settings.SettingsScreenWrapper(
+                fieldmind.research.app.shared.presentation.screens.settings.SettingsScreenWrapper(
                     onBack = {
                         val popped = rootNavController.popBackStack()
                         if (!popped) {
@@ -315,12 +315,12 @@ private fun RhythmGuardWarningHost(
     DisposableEffect(Unit) {
         val zeroVolumeReceiver = object : BroadcastReceiver() {
             override fun onReceive(ctx: Context?, intent: Intent?) {
-                if (intent?.action == chromahub.rhythm.app.infrastructure.service.MediaPlaybackService.ACTION_ZERO_VOLUME_PAUSE) {
+                if (intent?.action == fieldmind.research.app.infrastructure.service.MediaPlaybackService.ACTION_ZERO_VOLUME_PAUSE) {
                     musicViewModel.triggerZeroVolumePauseDialog()
                 }
             }
         }
-        val zeroVolumeFilter = IntentFilter(chromahub.rhythm.app.infrastructure.service.MediaPlaybackService.ACTION_ZERO_VOLUME_PAUSE)
+        val zeroVolumeFilter = IntentFilter(fieldmind.research.app.infrastructure.service.MediaPlaybackService.ACTION_ZERO_VOLUME_PAUSE)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             context.registerReceiver(zeroVolumeReceiver, zeroVolumeFilter, Context.RECEIVER_NOT_EXPORTED)
         } else {
@@ -1734,7 +1734,7 @@ fun ModeSelectorScreen(
 private fun ModeCard(
     title: String,
     description: String,
-    icon: chromahub.rhythm.app.shared.presentation.components.icons.MaterialSymbolIcon,
+    icon: fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon,
     isSelected: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier

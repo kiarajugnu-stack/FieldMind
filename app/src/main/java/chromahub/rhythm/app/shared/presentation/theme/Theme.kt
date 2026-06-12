@@ -1,4 +1,4 @@
-package chromahub.rhythm.app.ui.theme
+package fieldmind.research.app.ui.theme
 
 import android.app.Activity
 import android.os.Build
@@ -18,9 +18,9 @@ import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
-import chromahub.rhythm.app.utils.FontLoader
-import chromahub.rhythm.app.util.ColorExtractor
-import chromahub.rhythm.app.util.ExtractedColors
+import fieldmind.research.app.utils.FontLoader
+import fieldmind.research.app.util.ColorExtractor
+import fieldmind.research.app.util.ExtractedColors
 import com.google.android.material.color.utilities.Hct
 import com.google.android.material.color.utilities.SchemeTonalSpot
 import com.google.android.material.color.utilities.SchemeVibrant
@@ -1150,7 +1150,7 @@ fun parseCustomColorScheme(schemeName: String, darkTheme: Boolean): androidx.com
  * Create a color scheme from extracted album art colors
  */
 fun getAlbumArtColorScheme(colorsJson: String, darkTheme: Boolean): androidx.compose.material3.ColorScheme {
-    val extractedColors = chromahub.rhythm.app.util.ColorExtractor.jsonToColors(colorsJson)
+    val extractedColors = fieldmind.research.app.util.ColorExtractor.jsonToColors(colorsJson)
     
     // Fallback to default if parsing fails
     if (extractedColors == null) {

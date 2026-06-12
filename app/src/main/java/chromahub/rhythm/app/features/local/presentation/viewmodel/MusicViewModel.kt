@@ -1,4 +1,4 @@
-package chromahub.rhythm.app.features.local.presentation.viewmodel
+package fieldmind.research.app.features.local.presentation.viewmodel
 
 import android.app.Activity
 import android.app.Application
@@ -15,9 +15,9 @@ import android.media.audiofx.AudioEffect
 import android.net.Uri
 import android.provider.MediaStore
 import android.util.Log
-import chromahub.rhythm.app.shared.data.model.AutoEQDatabase
-import chromahub.rhythm.app.shared.data.model.AutoEQProfile
-import chromahub.rhythm.app.util.AutoEQManager
+import fieldmind.research.app.shared.data.model.AutoEQDatabase
+import fieldmind.research.app.shared.data.model.AutoEQProfile
+import fieldmind.research.app.util.AutoEQManager
 import android.util.LruCache
 import androidx.core.net.toUri
 import androidx.lifecycle.AndroidViewModel
@@ -29,27 +29,27 @@ import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
-import chromahub.rhythm.app.R
-import chromahub.rhythm.app.activities.MainActivity
-import chromahub.rhythm.app.activities.RhythmGuardTimeoutActivity
-import chromahub.rhythm.app.shared.data.model.Album
-import chromahub.rhythm.app.shared.data.model.AppSettings
-import chromahub.rhythm.app.shared.data.model.Artist
-import chromahub.rhythm.app.shared.data.model.LyricsSourcePreference
-import chromahub.rhythm.app.features.local.data.repository.MusicRepository
-import chromahub.rhythm.app.shared.data.model.PlaybackLocation
-import chromahub.rhythm.app.shared.data.model.Playlist
-import chromahub.rhythm.app.shared.data.model.Queue
-import chromahub.rhythm.app.shared.data.model.Song
-import chromahub.rhythm.app.infrastructure.service.MediaPlaybackService
-import chromahub.rhythm.app.infrastructure.widget.WidgetUpdater
-import chromahub.rhythm.app.util.AudioDeviceManager
-import chromahub.rhythm.app.util.EqualizerUtils
-import chromahub.rhythm.app.util.GsonUtils
-import chromahub.rhythm.app.util.MediaUtils
-import chromahub.rhythm.app.util.PlaylistImportExportUtils
-import chromahub.rhythm.app.util.PlaybackCommandSerializer
-import chromahub.rhythm.app.util.RhythmLyricsParser
+import fieldmind.research.app.R
+import fieldmind.research.app.activities.MainActivity
+import fieldmind.research.app.activities.RhythmGuardTimeoutActivity
+import fieldmind.research.app.shared.data.model.Album
+import fieldmind.research.app.shared.data.model.AppSettings
+import fieldmind.research.app.shared.data.model.Artist
+import fieldmind.research.app.shared.data.model.LyricsSourcePreference
+import fieldmind.research.app.features.local.data.repository.MusicRepository
+import fieldmind.research.app.shared.data.model.PlaybackLocation
+import fieldmind.research.app.shared.data.model.Playlist
+import fieldmind.research.app.shared.data.model.Queue
+import fieldmind.research.app.shared.data.model.Song
+import fieldmind.research.app.infrastructure.service.MediaPlaybackService
+import fieldmind.research.app.infrastructure.widget.WidgetUpdater
+import fieldmind.research.app.util.AudioDeviceManager
+import fieldmind.research.app.util.EqualizerUtils
+import fieldmind.research.app.util.GsonUtils
+import fieldmind.research.app.util.MediaUtils
+import fieldmind.research.app.util.PlaylistImportExportUtils
+import fieldmind.research.app.util.PlaybackCommandSerializer
+import fieldmind.research.app.util.RhythmLyricsParser
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.MoreExecutors
 import kotlinx.coroutines.Job
@@ -76,16 +76,16 @@ import com.google.gson.reflect.TypeToken
 import java.util.Calendar
 import java.io.File
 import java.util.concurrent.atomic.AtomicBoolean
-import chromahub.rhythm.app.shared.data.model.LyricsData // Import LyricsData
-import chromahub.rhythm.app.util.PendingWriteRequest // Import for metadata write requests
-import chromahub.rhythm.app.util.PendingLyricsWriteRequest
-import chromahub.rhythm.app.util.QueueUtils
-import chromahub.rhythm.app.util.GenreUtils
-import chromahub.rhythm.app.util.LyricLine
-import chromahub.rhythm.app.util.LyricsParser
-import chromahub.rhythm.app.util.ServiceStartUtils
-import chromahub.rhythm.app.utils.StatusBroadcaster
-import chromahub.rhythm.app.shared.data.repository.PlaybackStatsRepository // Import for enhanced stats tracking
+import fieldmind.research.app.shared.data.model.LyricsData // Import LyricsData
+import fieldmind.research.app.util.PendingWriteRequest // Import for metadata write requests
+import fieldmind.research.app.util.PendingLyricsWriteRequest
+import fieldmind.research.app.util.QueueUtils
+import fieldmind.research.app.util.GenreUtils
+import fieldmind.research.app.util.LyricLine
+import fieldmind.research.app.util.LyricsParser
+import fieldmind.research.app.util.ServiceStartUtils
+import fieldmind.research.app.utils.StatusBroadcaster
+import fieldmind.research.app.shared.data.repository.PlaybackStatsRepository // Import for enhanced stats tracking
 
 class MusicViewModel(application: Application) : AndroidViewModel(application) {
 
@@ -123,9 +123,9 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
         private const val OPERATION_NOTIFICATION_AUTO_DISMISS_MS = 6000L
 
         private const val DEFAULT_BLUETOOTH_LYRIC_LINE = "No lyrics"
-        private const val METADATA_EXTRA_ORIGINAL_TITLE = "chromahub.rhythm.app.extra.original_title"
-        private const val METADATA_EXTRA_ORIGINAL_ARTIST = "chromahub.rhythm.app.extra.original_artist"
-        private const val METADATA_EXTRA_ORIGINAL_ALBUM = "chromahub.rhythm.app.extra.original_album"
+        private const val METADATA_EXTRA_ORIGINAL_TITLE = "fieldmind.research.app.extra.original_title"
+        private const val METADATA_EXTRA_ORIGINAL_ARTIST = "fieldmind.research.app.extra.original_artist"
+        private const val METADATA_EXTRA_ORIGINAL_ALBUM = "fieldmind.research.app.extra.original_album"
     }
 
     private val repository = MusicRepository(application)
@@ -280,12 +280,12 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
     private val favoriteChangeReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
             when (intent?.action) {
-                "chromahub.rhythm.app.action.FAVORITE_CHANGED" -> {
+                "fieldmind.research.app.action.FAVORITE_CHANGED" -> {
                     Log.d(TAG, "Received favorite change notification from service")
                     // Refresh favorite songs from settings
                     refreshFavoriteSongs()
                 }
-                "chromahub.rhythm.app.action.WIDGET_TOGGLE_FAVORITE" -> {
+                "fieldmind.research.app.action.WIDGET_TOGGLE_FAVORITE" -> {
                     Log.d(TAG, "Received favorite toggle from widget")
                     // Toggle favorite for current song
                     _currentSong.value?.let { song ->
@@ -1047,8 +1047,8 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
         
         // Register broadcast receiver for favorite changes from service and widget
         val filter = IntentFilter().apply {
-            addAction("chromahub.rhythm.app.action.FAVORITE_CHANGED")
-            addAction("chromahub.rhythm.app.action.WIDGET_TOGGLE_FAVORITE")
+            addAction("fieldmind.research.app.action.FAVORITE_CHANGED")
+            addAction("fieldmind.research.app.action.WIDGET_TOGGLE_FAVORITE")
             addAction(MediaPlaybackService.ACTION_SHUFFLE_STATE_CHANGED)
             addAction(MediaPlaybackService.BROADCAST_SLEEP_TIMER_STATUS)
         }
@@ -3978,7 +3978,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
         if (songId.startsWith("streaming://") || songId.contains("::")) {
             viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
                 try {
-                    val repository = chromahub.rhythm.app.features.streaming.di.StreamingMusicModule.provideStreamingMusicRepository(getApplication())
+                    val repository = fieldmind.research.app.features.streaming.di.StreamingMusicModule.provideStreamingMusicRepository(getApplication())
                     repository.reportPlaybackStart(songId)
                 } catch (e: Exception) {
                     Log.e(TAG, "Failed to scrobble playback start for song: $songId", e)
@@ -4049,7 +4049,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
                 if (songId.startsWith("streaming://") || songId.contains("::")) {
                     viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
                         try {
-                            val repository = chromahub.rhythm.app.features.streaming.di.StreamingMusicModule.provideStreamingMusicRepository(getApplication())
+                            val repository = fieldmind.research.app.features.streaming.di.StreamingMusicModule.provideStreamingMusicRepository(getApplication())
                             repository.reportPlaybackStop(songId, actualDuration)
                         } catch (e: Exception) {
                             Log.e(TAG, "Failed to scrobble playback stop for song: $songId", e)
@@ -4130,11 +4130,11 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
                 }
                 
                 // Extract colors using ColorExtractor utility
-                val extractedColors = chromahub.rhythm.app.util.ColorExtractor.extractColorsFromBitmap(bitmap)
+                val extractedColors = fieldmind.research.app.util.ColorExtractor.extractColorsFromBitmap(bitmap)
                 
                 if (extractedColors != null) {
                     // Convert to JSON and save to settings
-                    val colorsJson = chromahub.rhythm.app.util.ColorExtractor.colorsToJson(extractedColors)
+                    val colorsJson = fieldmind.research.app.util.ColorExtractor.colorsToJson(extractedColors)
                     appSettings.setExtractedAlbumColors(colorsJson)
                     Log.d(TAG, "Successfully extracted and saved colors from: ${song.title}")
                 } else {
@@ -5324,7 +5324,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
     
     private fun notifyMediaServiceFavoriteChange() {
         // Send broadcast to notify MediaPlaybackService about favorite state change
-        val intent = Intent("chromahub.rhythm.app.action.FAVORITE_CHANGED")
+        val intent = Intent("fieldmind.research.app.action.FAVORITE_CHANGED")
         getApplication<Application>().sendBroadcast(intent)
     }
 
@@ -6517,7 +6517,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
             if (matchResult != null) {
                 val timestamp = matchResult.groupValues[0].substring(0, matchResult.groupValues[0].indexOf(']') + 1)
                 val text = matchResult.groupValues[3]
-                val normalizedText = chromahub.rhythm.app.util.LyricsParser.normalizeWordFlowText(text)
+                val normalizedText = fieldmind.research.app.util.LyricsParser.normalizeWordFlowText(text)
                 "$timestamp$normalizedText"
             } else {
                 line
@@ -7639,8 +7639,8 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
      * Load detailed playback stats for a given time range
      */
     suspend fun loadPlaybackStats(
-        range: chromahub.rhythm.app.shared.data.repository.StatsTimeRange = chromahub.rhythm.app.shared.data.repository.StatsTimeRange.ALL_TIME
-    ): chromahub.rhythm.app.shared.data.repository.PlaybackStatsRepository.PlaybackStatsSummary {
+        range: fieldmind.research.app.shared.data.repository.StatsTimeRange = fieldmind.research.app.shared.data.repository.StatsTimeRange.ALL_TIME
+    ): fieldmind.research.app.shared.data.repository.PlaybackStatsRepository.PlaybackStatsSummary {
         return playbackStatsRepository.loadSummary(
             range = range,
             songs = _songs.value
@@ -7657,8 +7657,8 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
      */
     suspend fun getSongPlaybackStats(
         songId: String,
-        range: chromahub.rhythm.app.shared.data.repository.StatsTimeRange = chromahub.rhythm.app.shared.data.repository.StatsTimeRange.ALL_TIME
-    ): chromahub.rhythm.app.shared.data.repository.PlaybackStatsRepository.SongPlaybackSummary? {
+        range: fieldmind.research.app.shared.data.repository.StatsTimeRange = fieldmind.research.app.shared.data.repository.StatsTimeRange.ALL_TIME
+    ): fieldmind.research.app.shared.data.repository.PlaybackStatsRepository.SongPlaybackSummary? {
         return playbackStatsRepository.getSongPlaybackStats(songId, range)
     }
 
@@ -8208,8 +8208,8 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
     }
     
     // AutoEQ functions
-    private val _autoEQProfiles = MutableStateFlow<List<chromahub.rhythm.app.shared.data.model.AutoEQProfile>>(emptyList())
-    val autoEQProfiles: StateFlow<List<chromahub.rhythm.app.shared.data.model.AutoEQProfile>> = _autoEQProfiles.asStateFlow()
+    private val _autoEQProfiles = MutableStateFlow<List<fieldmind.research.app.shared.data.model.AutoEQProfile>>(emptyList())
+    val autoEQProfiles: StateFlow<List<fieldmind.research.app.shared.data.model.AutoEQProfile>> = _autoEQProfiles.asStateFlow()
     
     private val _autoEQLoading = MutableStateFlow(false)
     val autoEQLoading: StateFlow<Boolean> = _autoEQLoading.asStateFlow()
@@ -8232,11 +8232,11 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
     
-    fun searchAutoEQProfiles(query: String): List<chromahub.rhythm.app.shared.data.model.AutoEQProfile> {
+    fun searchAutoEQProfiles(query: String): List<fieldmind.research.app.shared.data.model.AutoEQProfile> {
         return autoEQManager.searchProfiles(query)
     }
     
-    fun applyAutoEQProfile(profile: chromahub.rhythm.app.shared.data.model.AutoEQProfile) {
+    fun applyAutoEQProfile(profile: fieldmind.research.app.shared.data.model.AutoEQProfile) {
         if (profile.name.isBlank() || profile.name.equals("None", ignoreCase = true)) {
             Log.d(TAG, "Disabling AutoEQ profile")
             appSettings.setAutoEQProfile("")
@@ -8282,14 +8282,14 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
     
-    fun getAutoEQRecommendedProfiles(): List<chromahub.rhythm.app.shared.data.model.AutoEQProfile> {
+    fun getAutoEQRecommendedProfiles(): List<fieldmind.research.app.shared.data.model.AutoEQProfile> {
         return autoEQManager.getRecommendedProfiles()
     }
     
     // User Audio Device Management
-    fun saveUserAudioDevice(device: chromahub.rhythm.app.shared.data.model.UserAudioDevice) {
+    fun saveUserAudioDevice(device: fieldmind.research.app.shared.data.model.UserAudioDevice) {
         val currentDevicesJson = appSettings.userAudioDevices.value
-        val currentDevices = chromahub.rhythm.app.shared.data.model.UserAudioDevice.fromJson(currentDevicesJson).toMutableList()
+        val currentDevices = fieldmind.research.app.shared.data.model.UserAudioDevice.fromJson(currentDevicesJson).toMutableList()
         
         // Check if device already exists (update) or is new (add)
         val existingIndex = currentDevices.indexOfFirst { it.id == device.id }
@@ -8301,15 +8301,15 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
             Log.d(TAG, "Added new audio device: ${device.name}")
         }
         
-        appSettings.setUserAudioDevices(chromahub.rhythm.app.shared.data.model.UserAudioDevice.toJson(currentDevices))
+        appSettings.setUserAudioDevices(fieldmind.research.app.shared.data.model.UserAudioDevice.toJson(currentDevices))
     }
     
     fun deleteUserAudioDevice(deviceId: String) {
         val currentDevicesJson = appSettings.userAudioDevices.value
-        val currentDevices = chromahub.rhythm.app.shared.data.model.UserAudioDevice.fromJson(currentDevicesJson).toMutableList()
+        val currentDevices = fieldmind.research.app.shared.data.model.UserAudioDevice.fromJson(currentDevicesJson).toMutableList()
         
         currentDevices.removeAll { it.id == deviceId }
-        appSettings.setUserAudioDevices(chromahub.rhythm.app.shared.data.model.UserAudioDevice.toJson(currentDevices))
+        appSettings.setUserAudioDevices(fieldmind.research.app.shared.data.model.UserAudioDevice.toJson(currentDevices))
         
         // If deleted device was active, clear active device
         if (appSettings.activeAudioDeviceId.value == deviceId) {
@@ -8319,7 +8319,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
         Log.d(TAG, "Deleted audio device: $deviceId")
     }
     
-    fun setActiveAudioDevice(device: chromahub.rhythm.app.shared.data.model.UserAudioDevice) {
+    fun setActiveAudioDevice(device: fieldmind.research.app.shared.data.model.UserAudioDevice) {
         appSettings.setActiveAudioDeviceId(device.id)
         Log.d(TAG, "Set active audio device: ${device.name}")
         
@@ -8333,9 +8333,9 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
     
-    fun getActiveAudioDevice(): chromahub.rhythm.app.shared.data.model.UserAudioDevice? {
+    fun getActiveAudioDevice(): fieldmind.research.app.shared.data.model.UserAudioDevice? {
         val activeId = appSettings.activeAudioDeviceId.value ?: return null
-        val devices = chromahub.rhythm.app.shared.data.model.UserAudioDevice.fromJson(appSettings.userAudioDevices.value)
+        val devices = fieldmind.research.app.shared.data.model.UserAudioDevice.fromJson(appSettings.userAudioDevices.value)
         return devices.find { it.id == activeId }
     }
     
@@ -8343,8 +8343,8 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
      * Try to match a connected audio device (from PlaybackLocation) with saved UserAudioDevice
      * Uses fuzzy matching to account for slight name variations
      */
-    fun findMatchingUserDevice(deviceName: String): chromahub.rhythm.app.shared.data.model.UserAudioDevice? {
-        val devices = chromahub.rhythm.app.shared.data.model.UserAudioDevice.fromJson(appSettings.userAudioDevices.value)
+    fun findMatchingUserDevice(deviceName: String): fieldmind.research.app.shared.data.model.UserAudioDevice? {
+        val devices = fieldmind.research.app.shared.data.model.UserAudioDevice.fromJson(appSettings.userAudioDevices.value)
         if (devices.isEmpty()) return null
         
         val normalizedSearchName = deviceName.lowercase().trim()

@@ -1,4 +1,4 @@
-package chromahub.rhythm.app.features.field.data.attachment
+package fieldmind.research.app.features.field.data.attachment
 
 import android.content.Context
 import android.net.Uri

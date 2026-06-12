@@ -1,12 +1,12 @@
-package chromahub.rhythm.app.features.streaming.domain.repository
+package fieldmind.research.app.features.streaming.domain.repository
 
-import chromahub.rhythm.app.core.domain.model.SourceType
-import chromahub.rhythm.app.core.domain.repository.MusicRepository
-import chromahub.rhythm.app.features.streaming.domain.model.BrowseCategory
-import chromahub.rhythm.app.features.streaming.domain.model.StreamingAlbum
-import chromahub.rhythm.app.features.streaming.domain.model.StreamingArtist
-import chromahub.rhythm.app.features.streaming.domain.model.StreamingPlaylist
-import chromahub.rhythm.app.features.streaming.domain.model.StreamingSong
+import fieldmind.research.app.core.domain.model.SourceType
+import fieldmind.research.app.core.domain.repository.MusicRepository
+import fieldmind.research.app.features.streaming.domain.model.BrowseCategory
+import fieldmind.research.app.features.streaming.domain.model.StreamingAlbum
+import fieldmind.research.app.features.streaming.domain.model.StreamingArtist
+import fieldmind.research.app.features.streaming.domain.model.StreamingPlaylist
+import fieldmind.research.app.features.streaming.domain.model.StreamingSong
 import kotlinx.coroutines.flow.Flow
 
 /**

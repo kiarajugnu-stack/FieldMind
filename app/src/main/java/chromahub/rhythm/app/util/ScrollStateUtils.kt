@@ -1,4 +1,4 @@
-package chromahub.rhythm.app.ui.utils
+package fieldmind.research.app.ui.utils
 
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.runtime.saveable.Saver

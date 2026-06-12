@@ -1,6 +1,6 @@
-package chromahub.rhythm.app.features.field.data.export
+package fieldmind.research.app.features.field.data.export
 
-import chromahub.rhythm.app.features.field.data.database.entity.*
+import fieldmind.research.app.features.field.data.database.entity.*
 
 /**
  * Observation template for quick pre-filled observations.

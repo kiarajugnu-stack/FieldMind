@@ -1,4 +1,4 @@
-package chromahub.rhythm.app.activities
+package fieldmind.research.app.activities
 
 import android.os.Build
 import android.content.Intent
@@ -18,12 +18,12 @@ import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.fragment.app.FragmentActivity
 import org.osmdroid.config.Configuration
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
-import chromahub.rhythm.app.features.field.presentation.navigation.FieldMindApp
-import chromahub.rhythm.app.features.field.presentation.theme.FieldMindTheme
-import chromahub.rhythm.app.features.field.presentation.viewmodel.FieldMindViewModel
-import chromahub.rhythm.app.shared.data.model.AppSettings
-import chromahub.rhythm.app.shared.presentation.viewmodel.ThemeViewModel
-import chromahub.rhythm.app.ui.theme.RhythmTheme
+import fieldmind.research.app.features.field.presentation.navigation.FieldMindApp
+import fieldmind.research.app.features.field.presentation.theme.FieldMindTheme
+import fieldmind.research.app.features.field.presentation.viewmodel.FieldMindViewModel
+import fieldmind.research.app.shared.data.model.AppSettings
+import fieldmind.research.app.shared.presentation.viewmodel.ThemeViewModel
+import fieldmind.research.app.ui.theme.RhythmTheme
 
 class MainActivity : FragmentActivity() {
     companion object {

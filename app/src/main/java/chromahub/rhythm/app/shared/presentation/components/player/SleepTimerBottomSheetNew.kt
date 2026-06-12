@@ -1,13 +1,13 @@
 @file:OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 
-package chromahub.rhythm.app.shared.presentation.components.player
-import chromahub.rhythm.app.util.HapticUtils
-import chromahub.rhythm.app.util.HapticType
+package fieldmind.research.app.shared.presentation.components.player
+import fieldmind.research.app.util.HapticUtils
+import fieldmind.research.app.util.HapticType
 
 
-import chromahub.rhythm.app.shared.presentation.components.icons.RhythmIcons
-import chromahub.rhythm.app.shared.presentation.components.icons.MaterialSymbolIcon
-import chromahub.rhythm.app.shared.presentation.components.icons.Icon
+import fieldmind.research.app.shared.presentation.components.icons.RhythmIcons
+import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon
+import fieldmind.research.app.shared.presentation.components.icons.Icon
 
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
@@ -39,11 +39,11 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import chromahub.rhythm.app.R
-import chromahub.rhythm.app.shared.data.model.Song
-import chromahub.rhythm.app.features.local.presentation.viewmodel.MusicViewModel
-import chromahub.rhythm.app.features.local.presentation.viewmodel.MusicViewModel.SleepAction
-import chromahub.rhythm.app.shared.presentation.components.common.RhythmWavyProgressLoader
+import fieldmind.research.app.R
+import fieldmind.research.app.shared.data.model.Song
+import fieldmind.research.app.features.local.presentation.viewmodel.MusicViewModel
+import fieldmind.research.app.features.local.presentation.viewmodel.MusicViewModel.SleepAction
+import fieldmind.research.app.shared.presentation.components.common.RhythmWavyProgressLoader
 import kotlinx.coroutines.delay
 import kotlin.math.cos
 import kotlin.math.sin

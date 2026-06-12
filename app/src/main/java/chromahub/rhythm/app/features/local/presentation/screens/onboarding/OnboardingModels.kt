@@ -1,4 +1,4 @@
-package chromahub.rhythm.app.features.local.presentation.screens.onboarding
+package fieldmind.research.app.features.local.presentation.screens.onboarding
 
 enum class OnboardingStep {
     WELCOME,

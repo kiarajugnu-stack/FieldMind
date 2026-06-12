@@ -1,8 +1,8 @@
-package chromahub.rhythm.app.util
+package fieldmind.research.app.util
 
 import android.util.Log
 import java.util.regex.Pattern
-import chromahub.rhythm.app.shared.data.model.AppSettings
+import fieldmind.research.app.shared.data.model.AppSettings
 
 object LyricsParser {
 
@@ -349,7 +349,7 @@ object LyricsParser {
      */
     fun parseLyrics(lrcContent: String): List<LyricLine> {
         if (lrcContent.isBlank()) return emptyList()
-        val trim = runCatching { AppSettings.getInstance(chromahub.rhythm.app.RhythmApplication.instance).trimLyrics.value }.getOrDefault(true)
+        val trim = runCatching { AppSettings.getInstance(fieldmind.research.app.RhythmApplication.instance).trimLyrics.value }.getOrDefault(true)
         val options = LrcUtils.LrcParserOptions(trim = trim, multiLine = true, errorText = null)
         val parsed = LrcUtils.parseLyrics(lrcContent, audioMimeType = null, parserOptions = options, format = LrcUtils.LyricFormat.LRC)
         
@@ -436,7 +436,7 @@ object LyricsParser {
      */
     fun parseEnhancedLRC(lrcContent: String): List<EnhancedLyricLine> {
         if (lrcContent.isBlank()) return emptyList()
-        val trim = runCatching { AppSettings.getInstance(chromahub.rhythm.app.RhythmApplication.instance).trimLyrics.value }.getOrDefault(true)
+        val trim = runCatching { AppSettings.getInstance(fieldmind.research.app.RhythmApplication.instance).trimLyrics.value }.getOrDefault(true)
         val options = LrcUtils.LrcParserOptions(trim = trim, multiLine = true, errorText = null)
         val parsed = LrcUtils.parseLyrics(lrcContent, audioMimeType = null, parserOptions = options, format = LrcUtils.LyricFormat.LRC)
         

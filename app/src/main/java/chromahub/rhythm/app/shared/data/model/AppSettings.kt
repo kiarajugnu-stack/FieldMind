@@ -1,4 +1,4 @@
-package chromahub.rhythm.app.shared.data.model
+package fieldmind.research.app.shared.data.model
 
 import android.content.Context
 import android.content.SharedPreferences
@@ -13,10 +13,10 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
-import chromahub.rhythm.app.worker.BackupWorker
-import chromahub.rhythm.app.worker.RhythmPulseNotificationWorker
-import chromahub.rhythm.app.worker.UpdateNotificationWorker
-import chromahub.rhythm.app.BuildConfig
+import fieldmind.research.app.worker.BackupWorker
+import fieldmind.research.app.worker.RhythmPulseNotificationWorker
+import fieldmind.research.app.worker.UpdateNotificationWorker
+import fieldmind.research.app.BuildConfig
 import java.io.File
 import java.util.Date // Import Date for timestamp
 import java.util.concurrent.TimeUnit
@@ -3832,13 +3832,13 @@ private val _autoCheckForUpdates = MutableStateFlow(prefs.getBoolean(KEY_AUTO_CH
             // Get the check interval from settings (default 6 hours)
             val intervalHours = _updateCheckIntervalHours.value.toLong()
             
-            val workRequest = PeriodicWorkRequestBuilder<chromahub.rhythm.app.worker.UpdateNotificationWorker>(
+            val workRequest = PeriodicWorkRequestBuilder<fieldmind.research.app.worker.UpdateNotificationWorker>(
                 intervalHours, TimeUnit.HOURS,
                 30, TimeUnit.MINUTES // Flex interval
             ).build()
             
             WorkManager.getInstance(context).enqueueUniquePeriodicWork(
-                chromahub.rhythm.app.worker.UpdateNotificationWorker.WORK_NAME,
+                fieldmind.research.app.worker.UpdateNotificationWorker.WORK_NAME,
                 ExistingPeriodicWorkPolicy.UPDATE, // Update if interval changes
                 workRequest
             )
@@ -3885,7 +3885,7 @@ private val _autoCheckForUpdates = MutableStateFlow(prefs.getBoolean(KEY_AUTO_CH
     private fun cancelUpdateNotificationWorker() {
         try {
             WorkManager.getInstance(context).cancelUniqueWork(
-                chromahub.rhythm.app.worker.UpdateNotificationWorker.WORK_NAME
+                fieldmind.research.app.worker.UpdateNotificationWorker.WORK_NAME
             )
             Log.d("AppSettings", "Update notification worker cancelled")
         } catch (e: Exception) {
@@ -3898,7 +3898,7 @@ private val _autoCheckForUpdates = MutableStateFlow(prefs.getBoolean(KEY_AUTO_CH
      */
     fun triggerImmediateUpdateCheck() {
         try {
-            val workRequest = OneTimeWorkRequestBuilder<chromahub.rhythm.app.worker.UpdateNotificationWorker>()
+            val workRequest = OneTimeWorkRequestBuilder<fieldmind.research.app.worker.UpdateNotificationWorker>()
                 .build()
             
             WorkManager.getInstance(context).enqueue(workRequest)
@@ -4447,7 +4447,7 @@ private val _autoCheckForUpdates = MutableStateFlow(prefs.getBoolean(KEY_AUTO_CH
                 Log.d("AppSettings", "Performing cache cleanup on app exit...")
                 
                 // Clear file system caches
-                chromahub.rhythm.app.util.CacheManager.clearAllCache(context)
+                fieldmind.research.app.util.CacheManager.clearAllCache(context)
                 
                 // Clear in-memory caches from MusicRepository
                 if (musicRepository != null && musicRepository::class.simpleName == "MusicRepository") {

@@ -1,4 +1,4 @@
-package chromahub.rhythm.app.util
+package fieldmind.research.app.util
 
 import android.graphics.Bitmap
 import android.graphics.Canvas
@@ -14,8 +14,8 @@ import coil.compose.AsyncImagePainter
 import coil.request.ErrorResult
 import coil.request.ImageRequest
 import coil.request.SuccessResult
-import chromahub.rhythm.app.R
-import chromahub.rhythm.app.shared.presentation.components.common.M3PlaceholderType
+import fieldmind.research.app.R
+import fieldmind.research.app.shared.presentation.components.common.M3PlaceholderType
 import java.io.File
 import java.io.FileOutputStream
 import kotlin.random.Random

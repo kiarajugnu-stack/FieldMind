@@ -1,4 +1,4 @@
-package chromahub.rhythm.app.network
+package fieldmind.research.app.network
 
 import retrofit2.http.GET
 import retrofit2.http.Query

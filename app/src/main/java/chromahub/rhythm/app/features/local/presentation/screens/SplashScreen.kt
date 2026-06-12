@@ -1,4 +1,4 @@
-package chromahub.rhythm.app.features.local.presentation.screens
+package fieldmind.research.app.features.local.presentation.screens
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Animatable
@@ -52,15 +52,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import chromahub.rhythm.app.R
-import chromahub.rhythm.app.core.domain.model.AppMode
-import chromahub.rhythm.app.shared.data.model.AppSettings
-import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveShapes
-import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveShapeProvider
-import chromahub.rhythm.app.ui.theme.festive.FestiveConfig
-import chromahub.rhythm.app.ui.theme.festive.FestiveThemeEngine
-import chromahub.rhythm.app.ui.theme.festive.FestiveThemeType
-import chromahub.rhythm.app.features.local.presentation.viewmodel.MusicViewModel
+import fieldmind.research.app.R
+import fieldmind.research.app.core.domain.model.AppMode
+import fieldmind.research.app.shared.data.model.AppSettings
+import fieldmind.research.app.shared.presentation.components.common.ExpressiveShapes
+import fieldmind.research.app.shared.presentation.components.common.ExpressiveShapeProvider
+import fieldmind.research.app.ui.theme.festive.FestiveConfig
+import fieldmind.research.app.ui.theme.festive.FestiveThemeEngine
+import fieldmind.research.app.ui.theme.festive.FestiveThemeType
+import fieldmind.research.app.features.local.presentation.viewmodel.MusicViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.random.Random

@@ -1,4 +1,4 @@
-package chromahub.rhythm.app.features.field.presentation.screens
+package fieldmind.research.app.features.field.presentation.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -14,10 +14,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import chromahub.rhythm.app.features.field.presentation.components.ChoiceChips
-import chromahub.rhythm.app.features.field.presentation.components.FieldMindIcons
-import chromahub.rhythm.app.shared.presentation.components.icons.Icon
-import chromahub.rhythm.app.shared.presentation.components.icons.MaterialSymbolIcon
+import fieldmind.research.app.features.field.presentation.components.ChoiceChips
+import fieldmind.research.app.features.field.presentation.components.FieldMindIcons
+import fieldmind.research.app.shared.presentation.components.icons.Icon
+import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon
 import java.io.File
 import kotlin.text.RegexOption
 import java.text.SimpleDateFormat
@@ -184,7 +184,7 @@ internal fun CaptureStep(title: String, subtitle: String, icon: MaterialSymbolIc
 internal fun uriLooksImage(uri: String): Boolean = uri.contains(Regex("\\.(jpg|jpeg|png|webp|gif|heic|bmp)(\\?.*)?$", RegexOption.IGNORE_CASE))
 internal fun uriLooksPdf(uri: String): Boolean = uri.contains(Regex("\\.pdf(\\?.*)?$", RegexOption.IGNORE_CASE))
 
-internal fun durableEvidenceAttachment(context: android.content.Context, type: String, uri: android.net.Uri, caption: String): chromahub.rhythm.app.features.field.presentation.viewmodel.DraftEvidenceAttachment {
+internal fun durableEvidenceAttachment(context: android.content.Context, type: String, uri: android.net.Uri, caption: String): fieldmind.research.app.features.field.presentation.viewmodel.DraftEvidenceAttachment {
     val input = context.contentResolver.openInputStream(uri)
     if (input != null) {
         val mime = context.contentResolver.getType(uri) ?: "application/octet-stream"
@@ -197,7 +197,7 @@ internal fun durableEvidenceAttachment(context: android.content.Context, type: S
         }
         val local = createFieldMindFile(context, type.lowercase().replace(" ", "-"), ext)
         input.use { i -> java.io.FileOutputStream(local).use { o -> i.copyTo(o) } }
-        return chromahub.rhythm.app.features.field.presentation.viewmodel.DraftEvidenceAttachment(type, android.net.Uri.fromFile(local).toString(), caption, localPath = local.absolutePath, mimeType = mime)
+        return fieldmind.research.app.features.field.presentation.viewmodel.DraftEvidenceAttachment(type, android.net.Uri.fromFile(local).toString(), caption, localPath = local.absolutePath, mimeType = mime)
     }
-    return chromahub.rhythm.app.features.field.presentation.viewmodel.DraftEvidenceAttachment(type, uri.toString(), caption, mimeType = context.contentResolver.getType(uri))
+    return fieldmind.research.app.features.field.presentation.viewmodel.DraftEvidenceAttachment(type, uri.toString(), caption, mimeType = context.contentResolver.getType(uri))
 }

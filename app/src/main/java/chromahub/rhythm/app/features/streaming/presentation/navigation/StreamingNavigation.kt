@@ -1,8 +1,8 @@
-package chromahub.rhythm.app.features.streaming.presentation.navigation
+package fieldmind.research.app.features.streaming.presentation.navigation
 
-import chromahub.rhythm.app.shared.presentation.components.icons.RhythmIcons
-import chromahub.rhythm.app.shared.presentation.components.icons.MaterialSymbolIcon
-import chromahub.rhythm.app.shared.presentation.components.icons.Icon
+import fieldmind.research.app.shared.presentation.components.icons.RhythmIcons
+import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon
+import fieldmind.research.app.shared.presentation.components.icons.Icon
 
 import android.app.Activity
 import android.net.Uri
@@ -86,53 +86,53 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import chromahub.rhythm.app.R
-import chromahub.rhythm.app.shared.presentation.components.bottomsheets.AddToPlaylistBottomSheet
-import chromahub.rhythm.app.shared.presentation.components.bottomsheets.AlbumBottomSheet
-import chromahub.rhythm.app.shared.presentation.components.bottomsheets.SongInfoBottomSheet
-import chromahub.rhythm.app.shared.presentation.components.dialogs.CreatePlaylistDialog
-import chromahub.rhythm.app.shared.presentation.components.player.MiniPlayer
-import chromahub.rhythm.app.features.local.presentation.navigation.Screen
-import chromahub.rhythm.app.features.local.presentation.screens.AddToPlaylistScreen
-import chromahub.rhythm.app.features.local.presentation.screens.ArtistDetailScreen
-import chromahub.rhythm.app.features.local.presentation.screens.EqualizerScreen
-import chromahub.rhythm.app.shared.presentation.screens.RhythmStatsScreen
-import chromahub.rhythm.app.features.local.presentation.screens.PlaylistDetailScreen
-import chromahub.rhythm.app.shared.presentation.screens.player.PlayerScreen
-import chromahub.rhythm.app.shared.presentation.screens.settings.RhythmGuardSettingsScreen
-import chromahub.rhythm.app.shared.presentation.screens.settings.QueueSettingsScreen
-import chromahub.rhythm.app.shared.presentation.screens.settings.PlaybackSettingsScreen
-import chromahub.rhythm.app.features.local.presentation.viewmodel.MusicViewModel as LocalMusicViewModel
-import chromahub.rhythm.app.features.streaming.domain.model.StreamingArtist
-import chromahub.rhythm.app.features.streaming.domain.model.StreamingAlbum
-import chromahub.rhythm.app.features.streaming.domain.model.StreamingPlaylist
-import chromahub.rhythm.app.features.streaming.domain.model.StreamingSong
-import chromahub.rhythm.app.features.streaming.presentation.screens.StreamingContentHomeScreen
-import chromahub.rhythm.app.features.streaming.presentation.screens.StreamingHomeScreen
-import chromahub.rhythm.app.features.streaming.presentation.screens.StreamingLibraryScreen
-import chromahub.rhythm.app.features.streaming.presentation.screens.StreamingServiceSetupScreen
-import chromahub.rhythm.app.features.streaming.presentation.screens.GoSettingsScreen
-import chromahub.rhythm.app.features.streaming.presentation.screens.toLibraryAlbum
-import chromahub.rhythm.app.features.streaming.presentation.screens.toLibraryPlaylist
-import chromahub.rhythm.app.features.streaming.presentation.viewmodel.StreamingMusicViewModel
-import chromahub.rhythm.app.shared.data.model.Album
-import chromahub.rhythm.app.shared.data.model.AppSettings
-import chromahub.rhythm.app.shared.data.model.Artist
-import chromahub.rhythm.app.shared.data.model.Playlist
-import chromahub.rhythm.app.shared.data.model.Song
+import fieldmind.research.app.R
+import fieldmind.research.app.shared.presentation.components.bottomsheets.AddToPlaylistBottomSheet
+import fieldmind.research.app.shared.presentation.components.bottomsheets.AlbumBottomSheet
+import fieldmind.research.app.shared.presentation.components.bottomsheets.SongInfoBottomSheet
+import fieldmind.research.app.shared.presentation.components.dialogs.CreatePlaylistDialog
+import fieldmind.research.app.shared.presentation.components.player.MiniPlayer
+import fieldmind.research.app.features.local.presentation.navigation.Screen
+import fieldmind.research.app.features.local.presentation.screens.AddToPlaylistScreen
+import fieldmind.research.app.features.local.presentation.screens.ArtistDetailScreen
+import fieldmind.research.app.features.local.presentation.screens.EqualizerScreen
+import fieldmind.research.app.shared.presentation.screens.RhythmStatsScreen
+import fieldmind.research.app.features.local.presentation.screens.PlaylistDetailScreen
+import fieldmind.research.app.shared.presentation.screens.player.PlayerScreen
+import fieldmind.research.app.shared.presentation.screens.settings.RhythmGuardSettingsScreen
+import fieldmind.research.app.shared.presentation.screens.settings.QueueSettingsScreen
+import fieldmind.research.app.shared.presentation.screens.settings.PlaybackSettingsScreen
+import fieldmind.research.app.features.local.presentation.viewmodel.MusicViewModel as LocalMusicViewModel
+import fieldmind.research.app.features.streaming.domain.model.StreamingArtist
+import fieldmind.research.app.features.streaming.domain.model.StreamingAlbum
+import fieldmind.research.app.features.streaming.domain.model.StreamingPlaylist
+import fieldmind.research.app.features.streaming.domain.model.StreamingSong
+import fieldmind.research.app.features.streaming.presentation.screens.StreamingContentHomeScreen
+import fieldmind.research.app.features.streaming.presentation.screens.StreamingHomeScreen
+import fieldmind.research.app.features.streaming.presentation.screens.StreamingLibraryScreen
+import fieldmind.research.app.features.streaming.presentation.screens.StreamingServiceSetupScreen
+import fieldmind.research.app.features.streaming.presentation.screens.GoSettingsScreen
+import fieldmind.research.app.features.streaming.presentation.screens.toLibraryAlbum
+import fieldmind.research.app.features.streaming.presentation.screens.toLibraryPlaylist
+import fieldmind.research.app.features.streaming.presentation.viewmodel.StreamingMusicViewModel
+import fieldmind.research.app.shared.data.model.Album
+import fieldmind.research.app.shared.data.model.AppSettings
+import fieldmind.research.app.shared.data.model.Artist
+import fieldmind.research.app.shared.data.model.Playlist
+import fieldmind.research.app.shared.data.model.Song
 import kotlinx.coroutines.launch
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.material3.rememberModalBottomSheetState
-import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveShapes
-import chromahub.rhythm.app.shared.presentation.components.bottomsheets.SongPickerBottomSheet
-import chromahub.rhythm.app.ui.LocalMiniPlayerPadding
-import chromahub.rhythm.app.ui.UiConstants
-import chromahub.rhythm.app.ui.theme.MusicDimensions
-import chromahub.rhythm.app.util.HapticUtils
-import chromahub.rhythm.app.util.HapticType
-import chromahub.rhythm.app.shared.presentation.screens.settings.SettingsScreenWrapper
+import fieldmind.research.app.shared.presentation.components.common.ExpressiveShapes
+import fieldmind.research.app.shared.presentation.components.bottomsheets.SongPickerBottomSheet
+import fieldmind.research.app.ui.LocalMiniPlayerPadding
+import fieldmind.research.app.ui.UiConstants
+import fieldmind.research.app.ui.theme.MusicDimensions
+import fieldmind.research.app.util.HapticUtils
+import fieldmind.research.app.util.HapticType
+import fieldmind.research.app.shared.presentation.screens.settings.SettingsScreenWrapper
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalDensity
@@ -811,11 +811,11 @@ fun StreamingNavigation(
                 }
             ) {
                 var showAlbumBottomSheet by remember { mutableStateOf(false) }
-                var selectedAlbumForSheet by remember { mutableStateOf<chromahub.rhythm.app.features.streaming.domain.model.StreamingAlbum?>(null) }
+                var selectedAlbumForSheet by remember { mutableStateOf<fieldmind.research.app.features.streaming.domain.model.StreamingAlbum?>(null) }
                 val albumSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false)
                 val scope = rememberCoroutineScope()
 
-                chromahub.rhythm.app.shared.presentation.screens.UniversalSearchScreen(
+                fieldmind.research.app.shared.presentation.screens.UniversalSearchScreen(
                     localViewModel = localMusicViewModel,
                     streamingViewModel = streamingMusicViewModel,
                     onLocalSongClick = { song ->
@@ -1821,7 +1821,7 @@ fun StreamingNavigation(
                 )
                 
                 if (showCreatePlaylistDialog) {
-                    chromahub.rhythm.app.shared.presentation.components.dialogs.CreatePlaylistDialog(
+                    fieldmind.research.app.shared.presentation.components.dialogs.CreatePlaylistDialog(
                         onDismiss = { showCreatePlaylistDialog = false },
                         onConfirm = { name ->
                             streamingMusicViewModel.createPlaylist(name)

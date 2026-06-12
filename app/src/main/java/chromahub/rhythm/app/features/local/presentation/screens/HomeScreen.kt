@@ -5,11 +5,11 @@
 // These will become stable in future Material3 releases
 @file:OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3WindowSizeClassApi::class)
 
-package chromahub.rhythm.app.features.local.presentation.screens
+package fieldmind.research.app.features.local.presentation.screens
 
-import chromahub.rhythm.app.shared.presentation.components.icons.RhythmIcons
-import chromahub.rhythm.app.shared.presentation.components.icons.MaterialSymbolIcon
-import chromahub.rhythm.app.shared.presentation.components.icons.Icon
+import fieldmind.research.app.shared.presentation.components.icons.RhythmIcons
+import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon
+import fieldmind.research.app.shared.presentation.components.icons.Icon
 
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -118,14 +118,14 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.windowsizeclass.WindowSizeClass
 import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.material3.windowsizeclass.WindowHeightSizeClass
-import chromahub.rhythm.app.shared.presentation.components.common.RhythmGuardCard
+import fieldmind.research.app.shared.presentation.components.common.RhythmGuardCard
 import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
 import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi
-import chromahub.rhythm.app.shared.presentation.components.common.CollapsibleHeaderScreen
-import chromahub.rhythm.app.ui.theme.festive.FestiveConfig
-import chromahub.rhythm.app.ui.theme.festive.FestiveThemeEngine
-import chromahub.rhythm.app.ui.theme.festive.FestiveThemeType
-import chromahub.rhythm.app.shared.data.model.AppSettings
+import fieldmind.research.app.shared.presentation.components.common.CollapsibleHeaderScreen
+import fieldmind.research.app.ui.theme.festive.FestiveConfig
+import fieldmind.research.app.ui.theme.festive.FestiveThemeEngine
+import fieldmind.research.app.ui.theme.festive.FestiveThemeType
+import fieldmind.research.app.shared.data.model.AppSettings
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -162,43 +162,43 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import chromahub.rhythm.app.util.performIfEnabled
-import chromahub.rhythm.app.util.HapticUtils
-import chromahub.rhythm.app.util.HapticType
-import chromahub.rhythm.app.R
-import chromahub.rhythm.app.shared.data.model.Album
-import chromahub.rhythm.app.shared.data.model.Artist
-import chromahub.rhythm.app.shared.data.model.Song
-import chromahub.rhythm.app.shared.presentation.components.player.MiniPlayer
-import chromahub.rhythm.app.features.local.presentation.components.settings.HomeSectionOrderBottomSheet
-import chromahub.rhythm.app.shared.presentation.components.common.M3PlaceholderType
-import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveFilledButton
-import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveFilledTonalButton
-import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveOutlinedButton
-import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveFilledIconButton
-import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveFilledTonalIconButton
-import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveLargeIconButton
-import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveCard
-import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveElevatedCard
-import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveShapes
-import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveShapeTarget
-import chromahub.rhythm.app.shared.presentation.components.common.rememberExpressiveShapeFor
-import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveButtonGroup
-import chromahub.rhythm.app.shared.presentation.components.common.ButtonGroupStyle
-import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveGroupButton
-import chromahub.rhythm.app.shared.presentation.components.common.ActionProgressLoader
-import chromahub.rhythm.app.shared.presentation.components.common.NetworkOperationLoader
-import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveAnimatedCounter
-import chromahub.rhythm.app.shared.presentation.components.bottomsheets.AlbumBottomSheet
-import chromahub.rhythm.app.shared.presentation.components.bottomsheets.AddToPlaylistBottomSheet
-import chromahub.rhythm.app.shared.presentation.components.bottomsheets.SongInfoBottomSheet
-import chromahub.rhythm.app.shared.presentation.components.AudioQualityBadges
-import chromahub.rhythm.app.shared.presentation.components.AudioQualityIcon
-import chromahub.rhythm.app.util.ImageUtils
-import chromahub.rhythm.app.util.M3ImageUtils
-import chromahub.rhythm.app.shared.presentation.viewmodel.AppVersion
-import chromahub.rhythm.app.features.local.presentation.viewmodel.MusicViewModel
-import chromahub.rhythm.app.shared.presentation.components.dialogs.CreatePlaylistDialog
+import fieldmind.research.app.util.performIfEnabled
+import fieldmind.research.app.util.HapticUtils
+import fieldmind.research.app.util.HapticType
+import fieldmind.research.app.R
+import fieldmind.research.app.shared.data.model.Album
+import fieldmind.research.app.shared.data.model.Artist
+import fieldmind.research.app.shared.data.model.Song
+import fieldmind.research.app.shared.presentation.components.player.MiniPlayer
+import fieldmind.research.app.features.local.presentation.components.settings.HomeSectionOrderBottomSheet
+import fieldmind.research.app.shared.presentation.components.common.M3PlaceholderType
+import fieldmind.research.app.shared.presentation.components.common.ExpressiveFilledButton
+import fieldmind.research.app.shared.presentation.components.common.ExpressiveFilledTonalButton
+import fieldmind.research.app.shared.presentation.components.common.ExpressiveOutlinedButton
+import fieldmind.research.app.shared.presentation.components.common.ExpressiveFilledIconButton
+import fieldmind.research.app.shared.presentation.components.common.ExpressiveFilledTonalIconButton
+import fieldmind.research.app.shared.presentation.components.common.ExpressiveLargeIconButton
+import fieldmind.research.app.shared.presentation.components.common.ExpressiveCard
+import fieldmind.research.app.shared.presentation.components.common.ExpressiveElevatedCard
+import fieldmind.research.app.shared.presentation.components.common.ExpressiveShapes
+import fieldmind.research.app.shared.presentation.components.common.ExpressiveShapeTarget
+import fieldmind.research.app.shared.presentation.components.common.rememberExpressiveShapeFor
+import fieldmind.research.app.shared.presentation.components.common.ExpressiveButtonGroup
+import fieldmind.research.app.shared.presentation.components.common.ButtonGroupStyle
+import fieldmind.research.app.shared.presentation.components.common.ExpressiveGroupButton
+import fieldmind.research.app.shared.presentation.components.common.ActionProgressLoader
+import fieldmind.research.app.shared.presentation.components.common.NetworkOperationLoader
+import fieldmind.research.app.shared.presentation.components.common.ExpressiveAnimatedCounter
+import fieldmind.research.app.shared.presentation.components.bottomsheets.AlbumBottomSheet
+import fieldmind.research.app.shared.presentation.components.bottomsheets.AddToPlaylistBottomSheet
+import fieldmind.research.app.shared.presentation.components.bottomsheets.SongInfoBottomSheet
+import fieldmind.research.app.shared.presentation.components.AudioQualityBadges
+import fieldmind.research.app.shared.presentation.components.AudioQualityIcon
+import fieldmind.research.app.util.ImageUtils
+import fieldmind.research.app.util.M3ImageUtils
+import fieldmind.research.app.shared.presentation.viewmodel.AppVersion
+import fieldmind.research.app.features.local.presentation.viewmodel.MusicViewModel
+import fieldmind.research.app.shared.presentation.components.dialogs.CreatePlaylistDialog
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
@@ -213,7 +213,7 @@ import androidx.compose.ui.res.stringResource
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun HomeScreen(
-    musicViewModel: chromahub.rhythm.app.viewmodel.MusicViewModel,
+    musicViewModel: fieldmind.research.app.viewmodel.MusicViewModel,
     songs: List<Song>,
     albums: List<Album>,
     artists: List<Artist>,
@@ -593,7 +593,7 @@ private fun ModernScrollableContent(
     onNavigateToLibrary: () -> Unit = {},
     onNavigateToPlaylist: (String) -> Unit = {},
     onNavigateToStats: () -> Unit = {},
-    musicViewModel: chromahub.rhythm.app.viewmodel.MusicViewModel,
+    musicViewModel: fieldmind.research.app.viewmodel.MusicViewModel,
     coroutineScope: CoroutineScope
 ) {
     val context = LocalContext.current
@@ -1098,7 +1098,7 @@ private fun ModernWelcomeSection(
     onSearchClick: () -> Unit
 ) {
     val context = LocalContext.current
-    val viewModel = viewModel<chromahub.rhythm.app.viewmodel.MusicViewModel>()
+    val viewModel = viewModel<fieldmind.research.app.viewmodel.MusicViewModel>()
     val recentlyPlayed by viewModel.recentlyPlayed.collectAsState()
     val haptic = LocalHapticFeedback.current
 
@@ -1261,7 +1261,7 @@ private fun ModernWelcomeSection(
 private fun ModernRecentlyPlayedSection(
     recentlyPlayed: List<Song>,
     onSongClick: (Song) -> Unit,
-    musicViewModel: chromahub.rhythm.app.viewmodel.MusicViewModel,
+    musicViewModel: fieldmind.research.app.viewmodel.MusicViewModel,
     coroutineScope: CoroutineScope,
     widthSizeClass: WindowWidthSizeClass = WindowWidthSizeClass.Compact,
     heightSizeClass: WindowHeightSizeClass = WindowHeightSizeClass.Medium
@@ -1568,7 +1568,7 @@ private fun ModernFeaturedSection(
 ) {
     val context = LocalContext.current
     val haptic = LocalHapticFeedback.current
-    val viewModel = viewModel<chromahub.rhythm.app.viewmodel.MusicViewModel>()
+    val viewModel = viewModel<fieldmind.research.app.viewmodel.MusicViewModel>()
 
     val configuration = LocalConfiguration.current
     val screenWidth = configuration.screenWidthDp.dp
@@ -1826,7 +1826,7 @@ private fun ModernArtistCard(
     heightSizeClass: WindowHeightSizeClass = WindowHeightSizeClass.Medium
 ) {
     val context = LocalContext.current
-    val viewModel = viewModel<chromahub.rhythm.app.viewmodel.MusicViewModel>()
+    val viewModel = viewModel<fieldmind.research.app.viewmodel.MusicViewModel>()
     val haptic = LocalHapticFeedback.current
 
     val cardSize = when (widthSizeClass) {
@@ -1920,7 +1920,7 @@ private fun ModernAlbumCard(
     heightSizeClass: WindowHeightSizeClass = WindowHeightSizeClass.Medium
 ) {
     val context = LocalContext.current
-    val viewModel = viewModel<chromahub.rhythm.app.viewmodel.MusicViewModel>()
+    val viewModel = viewModel<fieldmind.research.app.viewmodel.MusicViewModel>()
     val haptic = LocalHapticFeedback.current
 
     val (cardWidth, cardHeight) = when (widthSizeClass) {
@@ -2149,13 +2149,13 @@ private fun ModernListeningStatsSection(
     onClick: () -> Unit = {}
 ) {
     val context = LocalContext.current
-    val viewModel = viewModel<chromahub.rhythm.app.viewmodel.MusicViewModel>()
+    val viewModel = viewModel<fieldmind.research.app.viewmodel.MusicViewModel>()
     val songs by viewModel.songs.collectAsState()
 
-    var statsSummary by remember { mutableStateOf<chromahub.rhythm.app.shared.data.repository.PlaybackStatsRepository.PlaybackStatsSummary?>(null) }
+    var statsSummary by remember { mutableStateOf<fieldmind.research.app.shared.data.repository.PlaybackStatsRepository.PlaybackStatsSummary?>(null) }
 
     LaunchedEffect(songs) {
-        statsSummary = viewModel.loadPlaybackStats(chromahub.rhythm.app.shared.data.repository.StatsTimeRange.ALL_TIME)
+        statsSummary = viewModel.loadPlaybackStats(fieldmind.research.app.shared.data.repository.StatsTimeRange.ALL_TIME)
     }
 
     val listeningTimeHours = remember(statsSummary) {

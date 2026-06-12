@@ -1,8 +1,8 @@
-package chromahub.rhythm.app.util
+package fieldmind.research.app.util
 
 import android.util.Log
-import chromahub.rhythm.app.network.RhythmLyricsLine
-import chromahub.rhythm.app.network.RhythmLyricsWord
+import fieldmind.research.app.network.RhythmLyricsLine
+import fieldmind.research.app.network.RhythmLyricsWord
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import org.xmlpull.v1.XmlPullParser

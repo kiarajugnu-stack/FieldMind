@@ -1,11 +1,11 @@
-package chromahub.rhythm.app.activities
+package fieldmind.research.app.activities
 
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
-import chromahub.rhythm.app.R
+import fieldmind.research.app.R
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
@@ -40,13 +40,13 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.graphics.Color
-import chromahub.rhythm.app.shared.presentation.components.common.AutoScrollingTextOnDemand
-import chromahub.rhythm.app.shared.presentation.components.common.WaveSlider
-import chromahub.rhythm.app.ui.theme.RhythmTheme
-import chromahub.rhythm.app.util.MediaUtils
-import chromahub.rhythm.app.features.local.presentation.viewmodel.MusicViewModel
-import chromahub.rhythm.app.shared.presentation.viewmodel.ThemeViewModel
-import chromahub.rhythm.app.activities.MainActivity
+import fieldmind.research.app.shared.presentation.components.common.AutoScrollingTextOnDemand
+import fieldmind.research.app.shared.presentation.components.common.WaveSlider
+import fieldmind.research.app.ui.theme.RhythmTheme
+import fieldmind.research.app.util.MediaUtils
+import fieldmind.research.app.features.local.presentation.viewmodel.MusicViewModel
+import fieldmind.research.app.shared.presentation.viewmodel.ThemeViewModel
+import fieldmind.research.app.activities.MainActivity
 import coil.compose.AsyncImage
 import coil.compose.rememberAsyncImagePainter
 import kotlinx.coroutines.Dispatchers

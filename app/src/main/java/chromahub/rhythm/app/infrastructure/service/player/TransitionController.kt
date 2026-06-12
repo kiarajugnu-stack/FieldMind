@@ -1,4 +1,4 @@
-package chromahub.rhythm.app.infrastructure.service.player
+package fieldmind.research.app.infrastructure.service.player
 
 import android.util.Log
 import androidx.annotation.OptIn
@@ -7,9 +7,9 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.common.Timeline
 import androidx.media3.common.util.UnstableApi
-import chromahub.rhythm.app.shared.data.model.AppSettings
-import chromahub.rhythm.app.shared.data.model.TransitionMode
-import chromahub.rhythm.app.shared.data.model.TransitionSettings
+import fieldmind.research.app.shared.data.model.AppSettings
+import fieldmind.research.app.shared.data.model.TransitionMode
+import fieldmind.research.app.shared.data.model.TransitionSettings
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job

@@ -1,7 +1,7 @@
-package chromahub.rhythm.app.shared.presentation.components.common
+package fieldmind.research.app.shared.presentation.components.common
 
-import chromahub.rhythm.app.shared.presentation.components.icons.RhythmIcons
-import chromahub.rhythm.app.shared.presentation.components.icons.Icon
+import fieldmind.research.app.shared.presentation.components.icons.RhythmIcons
+import fieldmind.research.app.shared.presentation.components.icons.Icon
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -48,20 +48,20 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.foundation.layout.size
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import chromahub.rhythm.app.ui.theme.RhythmTheme
+import fieldmind.research.app.ui.theme.RhythmTheme
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import coil.compose.SubcomposeAsyncImage
 import coil.request.ImageRequest
-import chromahub.rhythm.app.shared.data.model.Artist
+import fieldmind.research.app.shared.data.model.Artist
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.ui.graphics.graphicsLayer
 import kotlinx.coroutines.delay
-import chromahub.rhythm.app.R
+import fieldmind.research.app.R
 import androidx.compose.ui.res.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -83,7 +83,7 @@ fun CollapsibleHeaderScreen(
     content: @Composable (Modifier) -> Unit
 ) {
     val context = androidx.compose.ui.platform.LocalContext.current
-    val appSettings = remember { chromahub.rhythm.app.shared.data.model.AppSettings.getInstance(context) }
+    val appSettings = remember { fieldmind.research.app.shared.data.model.AppSettings.getInstance(context) }
     val globalCollapseBehavior by appSettings.headerCollapseBehavior.collectAsState()
     
     val topAppBarState = rememberTopAppBarState()
@@ -197,7 +197,7 @@ fun CollapsibleHeaderScreen(
                             
                             if (shouldShowIcon) {
                                 androidx.compose.foundation.Image(
-                                    painter = androidx.compose.ui.res.painterResource(id = chromahub.rhythm.app.R.drawable.rhythm_splash_logo),
+                                    painter = androidx.compose.ui.res.painterResource(id = fieldmind.research.app.R.drawable.rhythm_splash_logo),
                                     contentDescription = stringResource(R.string.collapsibleheader_app_icon),
                                     modifier = Modifier.size((48 + (36 - 28) * (1 - collapsedFraction)).dp)
                                 )
@@ -311,7 +311,7 @@ fun ArtistCollapsibleHeaderScreen(
     content: @Composable (Modifier) -> Unit
 ) {
     val context = androidx.compose.ui.platform.LocalContext.current
-    val appSettings = remember { chromahub.rhythm.app.shared.data.model.AppSettings.getInstance(context) }
+    val appSettings = remember { fieldmind.research.app.shared.data.model.AppSettings.getInstance(context) }
     val globalCollapseBehavior by appSettings.headerCollapseBehavior.collectAsState()
 
     val topAppBarState = rememberTopAppBarState()
@@ -364,11 +364,11 @@ fun ArtistCollapsibleHeaderScreen(
                 SubcomposeAsyncImage(
                     model = ImageRequest.Builder(context)
                         .apply(
-                            chromahub.rhythm.app.util.ImageUtils.buildImageRequest(
+                            fieldmind.research.app.util.ImageUtils.buildImageRequest(
                                 artworkUri,
                                 artistName,
                                 context.cacheDir,
-                                chromahub.rhythm.app.shared.presentation.components.common.M3PlaceholderType.ARTIST
+                                fieldmind.research.app.shared.presentation.components.common.M3PlaceholderType.ARTIST
                             )
                         )
                         .build(),
@@ -437,7 +437,7 @@ fun ArtistCollapsibleHeaderScreen(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Icon(
-                                    imageVector = chromahub.rhythm.app.shared.presentation.components.icons.RhythmIcons.Album,
+                                    imageVector = fieldmind.research.app.shared.presentation.components.icons.RhythmIcons.Album,
                                     contentDescription = null,
                                     modifier = Modifier.size(16.dp),
                                     tint = MaterialTheme.colorScheme.onPrimaryContainer
@@ -461,7 +461,7 @@ fun ArtistCollapsibleHeaderScreen(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Icon(
-                                    imageVector = chromahub.rhythm.app.shared.presentation.components.icons.RhythmIcons.Music.Song,
+                                    imageVector = fieldmind.research.app.shared.presentation.components.icons.RhythmIcons.Music.Song,
                                     contentDescription = null,
                                     modifier = Modifier.size(16.dp),
                                     tint = MaterialTheme.colorScheme.onSecondaryContainer

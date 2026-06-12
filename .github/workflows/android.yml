@@ -55,43 +55,15 @@ jobs:
       run: chmod +x gradlew
 
     - name: Setup keystore
-      id: keystore
-      continue-on-error: true
       run: |
-        mkdir -p .config
-        echo "${{ secrets.KEYSTORE_FILE_BASE64 }}" | base64 -d > release.keystore
-        echo "${{ secrets.KEYSTORE_PROPERTIES_BASE64 }}" | base64 -d > .config/keystore.properties
-        if [ ! -s release.keystore ] || [ ! -s .config/keystore.properties ]; then
-          rm -f release.keystore .config/keystore.properties
-          echo "Keystore files are empty — secrets not configured"
-          exit 1
-        fi
-
-        key_alias=$(sed -n 's/^key_alias=//p' .config/keystore.properties | head -1)
-        store_password=$(sed -n 's/^store_password=//p' .config/keystore.properties | head -1)
-        key_password=$(sed -n 's/^key_password=//p' .config/keystore.properties | head -1)
-        if [ -z "$key_alias" ] || [ -z "$store_password" ] || [ -z "$key_password" ]; then
-          rm -f release.keystore .config/keystore.properties
-          echo "Keystore properties are incomplete — falling back to debug signing"
-          exit 1
-        fi
-
-        if ! keytool -list -keystore release.keystore -alias "$key_alias" -storepass "$store_password" -keypass "$key_password" >/dev/null 2>&1; then
-          rm -f release.keystore .config/keystore.properties
-          echo "Keystore validation failed — falling back to debug signing"
-          exit 1
-        fi
-
-        echo "Keystore setup and validation succeeded" >> $GITHUB_STEP_SUMMARY
-
-    - name: Keystore fallback notice
-      if: steps.keystore.outcome == 'failure'
-      run: |
-        echo "::warning::Keystore secrets not available — building debug-signed APKs instead of release-signed."
-        echo "## ⚠️ Keystore not configured" >> $GITHUB_STEP_SUMMARY
-        echo "APKs are debug-signed. Add KEYSTORE_FILE_BASE64 and KEYSTORE_PROPERTIES_BASE64 secrets for proper signing." >> $GITHUB_STEP_SUMMARY
+        echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > release.keystore
 
     - name: Build installable universal APKs for PR preview
+      env:
+        KEYSTORE_PATH: ${{ github.workspace }}/release.keystore
+        KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+        KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+        KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
       run: ./gradlew assembleGithubDebug assembleGithubRelease --stacktrace
 
     - name: Verify installable universal APK outputs
@@ -109,9 +81,6 @@ jobs:
         fi
         if [ -n "$debug_apk" ]; then echo "✅ Debug APK: $debug_apk"; fi
         if [ -n "$release_apk" ]; then echo "✅ Release APK: $release_apk"; fi
-        if [ -z "$signed_release" ]; then
-          echo "::warning::Release APK is not release-signed (debug-signed fallback)."
-        fi
 
     - name: Collect installable APK release bundle
       run: |

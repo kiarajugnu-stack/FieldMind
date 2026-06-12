@@ -1,4 +1,4 @@
-package chromahub.rhythm.app.infrastructure.service.player.replaygain
+package fieldmind.research.app.infrastructure.service.player.replaygain
 
 import java.nio.ByteBuffer
 import java.nio.ByteOrder

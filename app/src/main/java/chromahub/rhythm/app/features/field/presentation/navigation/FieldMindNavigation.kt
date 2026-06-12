@@ -1,4 +1,4 @@
-package chromahub.rhythm.app.features.field.presentation.navigation
+package fieldmind.research.app.features.field.presentation.navigation
 
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.animateColorAsState
@@ -39,13 +39,13 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import chromahub.rhythm.app.features.field.presentation.components.FieldMindIcons
-import chromahub.rhythm.app.features.field.presentation.components.rememberFieldMindHaptics
-import chromahub.rhythm.app.features.field.presentation.screens.*
-import chromahub.rhythm.app.features.field.presentation.viewmodel.FieldMindViewModel
-import chromahub.rhythm.app.shared.data.model.AppSettings
-import chromahub.rhythm.app.shared.presentation.components.icons.Icon
-import chromahub.rhythm.app.shared.presentation.components.icons.MaterialSymbolIcon
+import fieldmind.research.app.features.field.presentation.components.FieldMindIcons
+import fieldmind.research.app.features.field.presentation.components.rememberFieldMindHaptics
+import fieldmind.research.app.features.field.presentation.screens.*
+import fieldmind.research.app.features.field.presentation.viewmodel.FieldMindViewModel
+import fieldmind.research.app.shared.data.model.AppSettings
+import fieldmind.research.app.shared.presentation.components.icons.Icon
+import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon
 
 /**
  * FieldMind destinations. Four primary lifecycle tabs (Today → Capture → Workspace → Library)

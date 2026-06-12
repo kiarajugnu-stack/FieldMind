@@ -1,4 +1,4 @@
-package chromahub.rhythm.app.features.field.presentation.screens
+package fieldmind.research.app.features.field.presentation.screens
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
@@ -47,15 +47,15 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import chromahub.rhythm.app.features.field.data.database.entity.FlashcardEntity
-import chromahub.rhythm.app.features.field.data.flashcard.SM2Engine
-import chromahub.rhythm.app.features.field.presentation.components.EmptyState
-import chromahub.rhythm.app.features.field.presentation.components.FieldMindIcons
-import chromahub.rhythm.app.features.field.presentation.components.FieldScreenHeader
-import chromahub.rhythm.app.features.field.presentation.components.InfoChip
-import chromahub.rhythm.app.features.field.presentation.theme.FieldMindTheme
-import chromahub.rhythm.app.features.field.presentation.viewmodel.FieldMindViewModel
-import chromahub.rhythm.app.shared.presentation.components.icons.Icon
+import fieldmind.research.app.features.field.data.database.entity.FlashcardEntity
+import fieldmind.research.app.features.field.data.flashcard.SM2Engine
+import fieldmind.research.app.features.field.presentation.components.EmptyState
+import fieldmind.research.app.features.field.presentation.components.FieldMindIcons
+import fieldmind.research.app.features.field.presentation.components.FieldScreenHeader
+import fieldmind.research.app.features.field.presentation.components.InfoChip
+import fieldmind.research.app.features.field.presentation.theme.FieldMindTheme
+import fieldmind.research.app.features.field.presentation.viewmodel.FieldMindViewModel
+import fieldmind.research.app.shared.presentation.components.icons.Icon
 
 /**
  * Flashcard review session screen supporting both basic flip and SM-2 spaced repetition modes.

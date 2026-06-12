@@ -1,4 +1,4 @@
-package chromahub.rhythm.app.ui.theme.festive
+package fieldmind.research.app.ui.theme.festive
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -7,7 +7,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import chromahub.rhythm.app.shared.data.model.AppSettings
+import fieldmind.research.app.shared.data.model.AppSettings
 
 /**
  * Festive Overlay - Wraps content with festive decorations

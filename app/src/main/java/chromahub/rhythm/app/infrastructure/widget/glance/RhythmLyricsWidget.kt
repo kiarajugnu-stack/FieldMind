@@ -15,7 +15,7 @@
  *     along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package chromahub.rhythm.app.infrastructure.widget.glance
+package fieldmind.research.app.infrastructure.widget.glance
 
 import android.content.Context
 import android.graphics.Bitmap
@@ -67,8 +67,8 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
-import chromahub.rhythm.app.R
-import chromahub.rhythm.app.activities.MainActivity
+import fieldmind.research.app.R
+import fieldmind.research.app.activities.MainActivity
 import coil.ImageLoader
 import coil.request.ImageRequest
 import coil.size.Size

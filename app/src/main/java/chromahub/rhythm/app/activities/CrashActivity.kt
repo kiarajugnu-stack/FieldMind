@@ -1,7 +1,7 @@
-package chromahub.rhythm.app.activities
+package fieldmind.research.app.activities
 
-import chromahub.rhythm.app.shared.presentation.components.icons.RhythmIcons
-import chromahub.rhythm.app.shared.presentation.components.icons.Icon
+import fieldmind.research.app.shared.presentation.components.icons.RhythmIcons
+import fieldmind.research.app.shared.presentation.components.icons.Icon
 
 import android.content.ClipData
 import android.content.ClipboardManager
@@ -24,14 +24,14 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.tooling.preview.Preview
-import chromahub.rhythm.app.ui.theme.RhythmTheme
+import fieldmind.research.app.ui.theme.RhythmTheme
 import kotlin.system.exitProcess
 import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.background
 import androidx.compose.foundation.Image
 import androidx.compose.ui.res.painterResource
-import chromahub.rhythm.app.R
+import fieldmind.research.app.R
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.animation.AnimatedVisibility

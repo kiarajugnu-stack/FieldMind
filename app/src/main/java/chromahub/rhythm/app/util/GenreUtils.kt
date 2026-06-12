@@ -1,4 +1,4 @@
-package chromahub.rhythm.app.util
+package fieldmind.research.app.util
 
 /**
  * Utility methods for parsing and matching multi-genre metadata.

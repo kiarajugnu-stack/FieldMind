@@ -1,4 +1,4 @@
-package chromahub.rhythm.app.features.field.data.flashcard
+package fieldmind.research.app.features.field.data.flashcard
 
 /**
  * SM-2 Spaced Repetition Algorithm

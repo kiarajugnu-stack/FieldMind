@@ -1,12 +1,12 @@
-package chromahub.rhythm.app
+package fieldmind.research.app
 
 import android.app.Application
 import android.content.ComponentCallbacks2
 import android.os.Build
 import android.util.Log
-import chromahub.rhythm.app.shared.data.model.AppSettings
-import chromahub.rhythm.app.util.ANRWatchdog
-import chromahub.rhythm.app.util.CrashReporter
+import fieldmind.research.app.shared.data.model.AppSettings
+import fieldmind.research.app.util.ANRWatchdog
+import fieldmind.research.app.util.CrashReporter
 
 /**
  * Custom Application class for Rhythm Music Player.
@@ -55,7 +55,7 @@ class RhythmApplication : Application() {
         Log.d(TAG, "✓ CrashReporter initialized")
         
         // Initialize NetworkClient with AppSettings
-        chromahub.rhythm.app.network.NetworkClient.initialize(
+        fieldmind.research.app.network.NetworkClient.initialize(
             AppSettings.getInstance(applicationContext)
         )
         Log.d(TAG, "✓ NetworkClient initialized")
@@ -76,7 +76,7 @@ class RhythmApplication : Application() {
         try {
             // LeakCanary 2.x auto-configures itself, but we can still apply debug-only tuning.
             // Reflection keeps main source free from debugImplementation class references.
-            val debugConfigClass = Class.forName("chromahub.rhythm.app.debug.LeakCanaryDebugConfig")
+            val debugConfigClass = Class.forName("fieldmind.research.app.debug.LeakCanaryDebugConfig")
             val applyMethod = debugConfigClass.getDeclaredMethod("applyKnownReferenceMatchers")
             applyMethod.invoke(null)
 

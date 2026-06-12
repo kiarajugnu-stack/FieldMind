@@ -1,9 +1,9 @@
 @file:OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
-package chromahub.rhythm.app.features.local.presentation.screens
+package fieldmind.research.app.features.local.presentation.screens
 
-import chromahub.rhythm.app.shared.presentation.components.icons.RhythmIcons
-import chromahub.rhythm.app.shared.presentation.components.icons.MaterialSymbolIcon
-import chromahub.rhythm.app.shared.presentation.components.icons.Icon
+import fieldmind.research.app.shared.presentation.components.icons.RhythmIcons
+import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon
+import fieldmind.research.app.shared.presentation.components.icons.Icon
 
 import android.Manifest
 import android.app.Activity
@@ -43,16 +43,16 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import chromahub.rhythm.app.R
-import chromahub.rhythm.app.features.local.presentation.viewmodel.MusicViewModel
-import chromahub.rhythm.app.shared.data.model.AppSettings
-import chromahub.rhythm.app.shared.data.model.Song
-import chromahub.rhythm.app.shared.presentation.components.common.ContentLoadingIndicator
-import chromahub.rhythm.app.shared.presentation.components.common.DataProcessingLoader
-import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveShapeTarget
-import chromahub.rhythm.app.shared.presentation.components.common.rememberExpressiveShapeFor
-import chromahub.rhythm.app.util.HapticUtils
-import chromahub.rhythm.app.util.HapticType
+import fieldmind.research.app.R
+import fieldmind.research.app.features.local.presentation.viewmodel.MusicViewModel
+import fieldmind.research.app.shared.data.model.AppSettings
+import fieldmind.research.app.shared.data.model.Song
+import fieldmind.research.app.shared.presentation.components.common.ContentLoadingIndicator
+import fieldmind.research.app.shared.presentation.components.common.DataProcessingLoader
+import fieldmind.research.app.shared.presentation.components.common.ExpressiveShapeTarget
+import fieldmind.research.app.shared.presentation.components.common.rememberExpressiveShapeFor
+import fieldmind.research.app.util.HapticUtils
+import fieldmind.research.app.util.HapticType
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -1061,7 +1061,7 @@ fun SingleCardExplorerContent(
                                         onCreatePlaylist(playlistName)
                                         
                                         var attempts = 0
-                                        var newPlaylist: chromahub.rhythm.app.shared.data.model.Playlist? = null
+                                        var newPlaylist: fieldmind.research.app.shared.data.model.Playlist? = null
                                         while (attempts < 20 && newPlaylist == null) {
                                             kotlinx.coroutines.delay(100)
                                             newPlaylist = playlists.firstOrNull { it.name == playlistName }

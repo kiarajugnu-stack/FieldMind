@@ -1,4 +1,4 @@
-package chromahub.rhythm.app.features.field.data.stats
+package fieldmind.research.app.features.field.data.stats
 
 import java.time.LocalDate
 import java.time.ZoneId

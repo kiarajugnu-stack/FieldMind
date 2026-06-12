@@ -1,4 +1,4 @@
-package chromahub.rhythm.app.shared.presentation.components.player
+package fieldmind.research.app.shared.presentation.components.player
 
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing

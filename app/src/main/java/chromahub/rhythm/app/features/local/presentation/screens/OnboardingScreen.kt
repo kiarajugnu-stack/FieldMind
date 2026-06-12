@@ -1,8 +1,8 @@
-package chromahub.rhythm.app.features.local.presentation.screens
+package fieldmind.research.app.features.local.presentation.screens
 
-import chromahub.rhythm.app.shared.presentation.components.icons.RhythmIcons
-import chromahub.rhythm.app.shared.presentation.components.icons.MaterialSymbolIcon
-import chromahub.rhythm.app.shared.presentation.components.icons.Icon
+import fieldmind.research.app.shared.presentation.components.icons.RhythmIcons
+import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon
+import fieldmind.research.app.shared.presentation.components.icons.Icon
 
 import android.Manifest
 import android.os.Build
@@ -114,27 +114,27 @@ import android.provider.DocumentsContract
 import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import chromahub.rhythm.app.R
-import chromahub.rhythm.app.shared.data.model.AlbumViewType
-import chromahub.rhythm.app.shared.data.model.ArtistViewType
-import chromahub.rhythm.app.shared.data.model.AppSettings
-import chromahub.rhythm.app.shared.presentation.components.common.DataProcessingLoader
-import chromahub.rhythm.app.shared.presentation.components.common.InitializationLoader
-import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveButtonGroup
-import chromahub.rhythm.app.shared.presentation.components.common.M3LinearLoader
-import chromahub.rhythm.app.shared.presentation.components.Material3SettingsGroup
-import chromahub.rhythm.app.shared.presentation.components.Material3SettingsItem
-import chromahub.rhythm.app.features.local.presentation.components.settings.LanguageSwitcherDialog
-import chromahub.rhythm.app.features.local.presentation.components.settings.LibraryTabOrderBottomSheet
-import chromahub.rhythm.app.features.local.presentation.screens.onboarding.OnboardingStep
-import chromahub.rhythm.app.features.local.presentation.screens.onboarding.PermissionScreenState
-import chromahub.rhythm.app.shared.presentation.viewmodel.AppUpdaterViewModel
-import chromahub.rhythm.app.shared.presentation.viewmodel.AppVersion
-import chromahub.rhythm.app.features.local.presentation.viewmodel.MusicViewModel
-import chromahub.rhythm.app.features.streaming.presentation.viewmodel.StreamingMusicViewModel
-import chromahub.rhythm.app.shared.presentation.viewmodel.ThemeViewModel
-import chromahub.rhythm.app.util.HapticUtils
-import chromahub.rhythm.app.util.HapticType
+import fieldmind.research.app.R
+import fieldmind.research.app.shared.data.model.AlbumViewType
+import fieldmind.research.app.shared.data.model.ArtistViewType
+import fieldmind.research.app.shared.data.model.AppSettings
+import fieldmind.research.app.shared.presentation.components.common.DataProcessingLoader
+import fieldmind.research.app.shared.presentation.components.common.InitializationLoader
+import fieldmind.research.app.shared.presentation.components.common.ExpressiveButtonGroup
+import fieldmind.research.app.shared.presentation.components.common.M3LinearLoader
+import fieldmind.research.app.shared.presentation.components.Material3SettingsGroup
+import fieldmind.research.app.shared.presentation.components.Material3SettingsItem
+import fieldmind.research.app.features.local.presentation.components.settings.LanguageSwitcherDialog
+import fieldmind.research.app.features.local.presentation.components.settings.LibraryTabOrderBottomSheet
+import fieldmind.research.app.features.local.presentation.screens.onboarding.OnboardingStep
+import fieldmind.research.app.features.local.presentation.screens.onboarding.PermissionScreenState
+import fieldmind.research.app.shared.presentation.viewmodel.AppUpdaterViewModel
+import fieldmind.research.app.shared.presentation.viewmodel.AppVersion
+import fieldmind.research.app.features.local.presentation.viewmodel.MusicViewModel
+import fieldmind.research.app.features.streaming.presentation.viewmodel.StreamingMusicViewModel
+import fieldmind.research.app.shared.presentation.viewmodel.ThemeViewModel
+import fieldmind.research.app.util.HapticUtils
+import fieldmind.research.app.util.HapticType
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
@@ -153,12 +153,12 @@ import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
-import chromahub.rhythm.app.shared.presentation.components.common.rememberExpressiveShapeFor
-import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveShapeTarget
-import chromahub.rhythm.app.shared.presentation.components.common.rememberExpressiveShape
+import fieldmind.research.app.shared.presentation.components.common.rememberExpressiveShapeFor
+import fieldmind.research.app.shared.presentation.components.common.ExpressiveShapeTarget
+import fieldmind.research.app.shared.presentation.components.common.rememberExpressiveShape
 import androidx.compose.ui.draw.shadow
-import chromahub.rhythm.app.shared.presentation.components.common.StyledProgressBar
-import chromahub.rhythm.app.shared.presentation.components.common.ProgressStyle
+import fieldmind.research.app.shared.presentation.components.common.StyledProgressBar
+import fieldmind.research.app.shared.presentation.components.common.ProgressStyle
 
 @OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3WindowSizeClassApi::class)
 @Composable
@@ -3653,9 +3653,9 @@ fun EnhancedAudioPlaybackContent(
                             description = context.getString(R.string.onboarding_lyrics_source_desc),
                             selectedOption = lyricsSourcePreference.displayName,
                             icon = MaterialSymbolIcon("cloud", filled = true),
-                            options = chromahub.rhythm.app.shared.data.model.LyricsSourcePreference.values().map { it.displayName },
+                            options = fieldmind.research.app.shared.data.model.LyricsSourcePreference.values().map { it.displayName },
                             onOptionSelected = { displayName ->
-                                val preference = chromahub.rhythm.app.shared.data.model.LyricsSourcePreference.values()
+                                val preference = fieldmind.research.app.shared.data.model.LyricsSourcePreference.values()
                                     .find { it.displayName == displayName }
                                 if (preference != null) {
                                     appSettings.setLyricsSourcePreference(preference)
@@ -3762,9 +3762,9 @@ fun EnhancedAudioPlaybackContent(
                             description = context.getString(R.string.onboarding_lyrics_source_desc),
                             selectedOption = lyricsSourcePreference.displayName,
                             icon = MaterialSymbolIcon("cloud", filled = true),
-                            options = chromahub.rhythm.app.shared.data.model.LyricsSourcePreference.values().map { it.displayName },
+                            options = fieldmind.research.app.shared.data.model.LyricsSourcePreference.values().map { it.displayName },
                             onOptionSelected = { displayName ->
-                                val preference = chromahub.rhythm.app.shared.data.model.LyricsSourcePreference.values()
+                                val preference = fieldmind.research.app.shared.data.model.LyricsSourcePreference.values()
                                     .find { it.displayName == displayName }
                                 if (preference != null) {
                                     appSettings.setLyricsSourcePreference(preference)
@@ -9930,7 +9930,7 @@ private fun IntegrationsSettingsCards(
         }
 
     val apiItems = buildList {
-        if (chromahub.rhythm.app.BuildConfig.ENABLE_DEEZER) {
+        if (fieldmind.research.app.BuildConfig.ENABLE_DEEZER) {
             add(
                 onboardingToggleItem(
                     RhythmIcons.Public,
@@ -9941,7 +9941,7 @@ private fun IntegrationsSettingsCards(
                 )
             )
         }
-        if (chromahub.rhythm.app.BuildConfig.ENABLE_APPLE_MUSIC) {
+        if (fieldmind.research.app.BuildConfig.ENABLE_APPLE_MUSIC) {
             add(
                 onboardingToggleItem(
                     MaterialSymbolIcon("music_note"),
@@ -9952,7 +9952,7 @@ private fun IntegrationsSettingsCards(
                 )
             )
         }
-        if (chromahub.rhythm.app.BuildConfig.ENABLE_LRCLIB) {
+        if (fieldmind.research.app.BuildConfig.ENABLE_LRCLIB) {
             add(
                 onboardingToggleItem(
                     MaterialSymbolIcon("lyrics"),
@@ -9963,7 +9963,7 @@ private fun IntegrationsSettingsCards(
                 )
             )
         }
-        if (chromahub.rhythm.app.BuildConfig.ENABLE_YOUTUBE_MUSIC) {
+        if (fieldmind.research.app.BuildConfig.ENABLE_YOUTUBE_MUSIC) {
             add(
                 onboardingToggleItem(
                     MaterialSymbolIcon("music_video"),
@@ -10332,7 +10332,7 @@ fun OnboardingAnimatedSwitch(
     enabled: Boolean = true,
     modifier: Modifier = Modifier
 ) {
-    chromahub.rhythm.app.shared.presentation.screens.settings.TunerAnimatedSwitch(
+    fieldmind.research.app.shared.presentation.screens.settings.TunerAnimatedSwitch(
         checked = checked,
         onCheckedChange = onCheckedChange,
         enabled = enabled,

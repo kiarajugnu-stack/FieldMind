@@ -1,4 +1,4 @@
-package chromahub.rhythm.app.ui.theme.festive
+package fieldmind.research.app.ui.theme.festive
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember

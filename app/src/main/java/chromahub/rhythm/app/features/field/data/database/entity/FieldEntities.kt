@@ -1,4 +1,4 @@
-package chromahub.rhythm.app.features.field.data.database.entity
+package fieldmind.research.app.features.field.data.database.entity
 
 import androidx.room.Entity
 import androidx.room.Index

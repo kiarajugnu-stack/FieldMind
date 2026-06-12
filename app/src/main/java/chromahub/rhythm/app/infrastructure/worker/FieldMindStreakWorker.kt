@@ -1,4 +1,4 @@
-package chromahub.rhythm.app.worker
+package fieldmind.research.app.worker
 
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -10,9 +10,9 @@ import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
-import chromahub.rhythm.app.R
-import chromahub.rhythm.app.activities.MainActivity
-import chromahub.rhythm.app.features.field.data.database.FieldMindDatabase
+import fieldmind.research.app.R
+import fieldmind.research.app.activities.MainActivity
+import fieldmind.research.app.features.field.data.database.FieldMindDatabase
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -50,7 +50,7 @@ class FieldMindStreakWorker(
             // Check if user made observations today
             val dao = FieldMindDatabase.getInstance(applicationContext).fieldMindDao()
             val observations = dao.observeObservations().let { flow ->
-                var result = emptyList<chromahub.rhythm.app.features.field.data.database.entity.ObservationEntity>()
+                var result = emptyList<fieldmind.research.app.features.field.data.database.entity.ObservationEntity>()
                 flow.first()
             }
             val todayCount = observations.count { it.date == today }

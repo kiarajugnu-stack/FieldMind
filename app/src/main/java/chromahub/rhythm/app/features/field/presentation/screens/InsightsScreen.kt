@@ -1,4 +1,4 @@
-package chromahub.rhythm.app.features.field.presentation.screens
+package fieldmind.research.app.features.field.presentation.screens
 
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
@@ -36,11 +36,11 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.OutlinedButton
-import chromahub.rhythm.app.features.field.presentation.components.*
-import chromahub.rhythm.app.features.field.presentation.navigation.FieldMindScreen
-import chromahub.rhythm.app.features.field.presentation.theme.FieldMindTheme
-import chromahub.rhythm.app.features.field.presentation.viewmodel.FieldMindViewModel
-import chromahub.rhythm.app.shared.presentation.components.icons.Icon
+import fieldmind.research.app.features.field.presentation.components.*
+import fieldmind.research.app.features.field.presentation.navigation.FieldMindScreen
+import fieldmind.research.app.features.field.presentation.theme.FieldMindTheme
+import fieldmind.research.app.features.field.presentation.viewmodel.FieldMindViewModel
+import fieldmind.research.app.shared.presentation.components.icons.Icon
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -222,7 +222,7 @@ private fun ResearchProfileInsightCard(name: String, role: String, focus: String
 private data class Achievement(
     val title: String,
     val description: String,
-    val icon: chromahub.rhythm.app.shared.presentation.components.icons.MaterialSymbolIcon,
+    val icon: fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon,
     val accent: androidx.compose.ui.graphics.Color,
     val progress: Int,
     val target: Int
@@ -281,7 +281,7 @@ private fun GraphLegend(label: String, color: androidx.compose.ui.graphics.Color
 }
 
 @Composable
-private fun InsightCard(title: String, icon: chromahub.rhythm.app.shared.presentation.components.icons.MaterialSymbolIcon, content: @Composable () -> Unit) {
+private fun InsightCard(title: String, icon: fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon, content: @Composable () -> Unit) {
     Card(shape = RoundedCornerShape(24.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)) {
         Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {

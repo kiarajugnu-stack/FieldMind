@@ -1,4 +1,4 @@
-package chromahub.rhythm.app.util
+package fieldmind.research.app.util
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
@@ -19,15 +19,15 @@ import coil.compose.AsyncImage
 import coil.compose.AsyncImagePainter
 import coil.request.CachePolicy
 import coil.request.ImageRequest
-import chromahub.rhythm.app.shared.presentation.components.common.AlbumPlaceholder
-import chromahub.rhythm.app.shared.presentation.components.common.ArtistPlaceholder
-import chromahub.rhythm.app.shared.presentation.components.common.M3PlaceholderType
-import chromahub.rhythm.app.shared.presentation.components.common.PlaylistPlaceholder
-import chromahub.rhythm.app.shared.presentation.components.common.TrackPlaceholder
-import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveShapeTarget
-import chromahub.rhythm.app.shared.presentation.components.common.rememberExpressiveShapeFor
+import fieldmind.research.app.shared.presentation.components.common.AlbumPlaceholder
+import fieldmind.research.app.shared.presentation.components.common.ArtistPlaceholder
+import fieldmind.research.app.shared.presentation.components.common.M3PlaceholderType
+import fieldmind.research.app.shared.presentation.components.common.PlaylistPlaceholder
+import fieldmind.research.app.shared.presentation.components.common.TrackPlaceholder
+import fieldmind.research.app.shared.presentation.components.common.ExpressiveShapeTarget
+import fieldmind.research.app.shared.presentation.components.common.rememberExpressiveShapeFor
 import androidx.compose.ui.res.stringResource
-import chromahub.rhythm.app.R
+import fieldmind.research.app.R
 
 /**
  * Modern Material 3 style utilities for image handling using Compose and Coil

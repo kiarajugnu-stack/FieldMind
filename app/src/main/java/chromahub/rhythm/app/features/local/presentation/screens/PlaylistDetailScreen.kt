@@ -1,15 +1,15 @@
-package chromahub.rhythm.app.features.local.presentation.screens
+package fieldmind.research.app.features.local.presentation.screens
 
-import chromahub.rhythm.app.shared.presentation.components.icons.RhythmIcons
-import chromahub.rhythm.app.shared.presentation.components.icons.MaterialSymbolIcon
-import chromahub.rhythm.app.shared.presentation.components.icons.Icon
+import fieldmind.research.app.shared.presentation.components.icons.RhythmIcons
+import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon
+import fieldmind.research.app.shared.presentation.components.icons.Icon
 
 import android.content.Context
 import androidx.compose.ui.focus.FocusRequester
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import android.widget.Toast
-import chromahub.rhythm.app.shared.presentation.screens.settings.SettingsSearchBar
+import fieldmind.research.app.shared.presentation.screens.settings.SettingsSearchBar
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
@@ -83,8 +83,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
-import chromahub.rhythm.app.features.local.presentation.viewmodel.MusicViewModel
-import chromahub.rhythm.app.shared.presentation.components.bottomsheets.SongPickerBottomSheet
+import fieldmind.research.app.features.local.presentation.viewmodel.MusicViewModel
+import fieldmind.research.app.shared.presentation.components.bottomsheets.SongPickerBottomSheet
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.ui.platform.LocalConfiguration
@@ -100,33 +100,33 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.util.lerp
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.sp
-import chromahub.rhythm.app.R
-import chromahub.rhythm.app.shared.data.model.Playlist
-import chromahub.rhythm.app.shared.data.model.Song
-import chromahub.rhythm.app.shared.presentation.components.player.MiniPlayer
-import chromahub.rhythm.app.shared.presentation.components.icons.RhythmIcons.Search
-import chromahub.rhythm.app.ui.LocalMiniPlayerPadding
-import chromahub.rhythm.app.ui.UiConstants
-import chromahub.rhythm.app.shared.presentation.components.common.CollapsibleHeaderScreen
-import chromahub.rhythm.app.shared.presentation.components.dialogs.PlaylistExportDialog
-import chromahub.rhythm.app.shared.presentation.components.dialogs.PlaylistImportDialog
-import chromahub.rhythm.app.shared.presentation.components.dialogs.PlaylistOperationProgressDialog
-import chromahub.rhythm.app.shared.presentation.components.dialogs.PlaylistOperationResultDialog
-import chromahub.rhythm.app.util.PlaylistImportExportUtils
+import fieldmind.research.app.R
+import fieldmind.research.app.shared.data.model.Playlist
+import fieldmind.research.app.shared.data.model.Song
+import fieldmind.research.app.shared.presentation.components.player.MiniPlayer
+import fieldmind.research.app.shared.presentation.components.icons.RhythmIcons.Search
+import fieldmind.research.app.ui.LocalMiniPlayerPadding
+import fieldmind.research.app.ui.UiConstants
+import fieldmind.research.app.shared.presentation.components.common.CollapsibleHeaderScreen
+import fieldmind.research.app.shared.presentation.components.dialogs.PlaylistExportDialog
+import fieldmind.research.app.shared.presentation.components.dialogs.PlaylistImportDialog
+import fieldmind.research.app.shared.presentation.components.dialogs.PlaylistOperationProgressDialog
+import fieldmind.research.app.shared.presentation.components.dialogs.PlaylistOperationResultDialog
+import fieldmind.research.app.util.PlaylistImportExportUtils
 import android.net.Uri
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
-import chromahub.rhythm.app.shared.presentation.components.common.M3PlaceholderType
-import chromahub.rhythm.app.util.ImageUtils
-import chromahub.rhythm.app.util.HapticUtils
-import chromahub.rhythm.app.util.HapticType
-import chromahub.rhythm.app.util.M3ImageUtils
-import chromahub.rhythm.app.shared.presentation.components.common.rememberExpressiveShapeFor
-import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveShapeTarget
-import chromahub.rhythm.app.shared.presentation.components.common.DragDropLazyColumn
-import chromahub.rhythm.app.shared.presentation.components.player.formatDuration
-import chromahub.rhythm.app.shared.presentation.components.bottomsheets.PlaylistSongOptionsBottomSheet
-import chromahub.rhythm.app.shared.presentation.components.bottomsheets.SongInfoBottomSheet
+import fieldmind.research.app.shared.presentation.components.common.M3PlaceholderType
+import fieldmind.research.app.util.ImageUtils
+import fieldmind.research.app.util.HapticUtils
+import fieldmind.research.app.util.HapticType
+import fieldmind.research.app.util.M3ImageUtils
+import fieldmind.research.app.shared.presentation.components.common.rememberExpressiveShapeFor
+import fieldmind.research.app.shared.presentation.components.common.ExpressiveShapeTarget
+import fieldmind.research.app.shared.presentation.components.common.DragDropLazyColumn
+import fieldmind.research.app.shared.presentation.components.player.formatDuration
+import fieldmind.research.app.shared.presentation.components.bottomsheets.PlaylistSongOptionsBottomSheet
+import fieldmind.research.app.shared.presentation.components.bottomsheets.SongInfoBottomSheet
 import kotlinx.coroutines.delay // Import delay
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
@@ -140,7 +140,7 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.runtime.collectAsState
-import chromahub.rhythm.app.shared.presentation.components.player.PlayingEqIcon
+import fieldmind.research.app.shared.presentation.components.player.PlayingEqIcon
 import androidx.compose.ui.graphics.Color
 import androidx.room.util.copy
 import androidx.compose.material3.BottomSheetDefaults
@@ -242,7 +242,7 @@ fun PlaylistDetailScreen(
 
     val haptics = LocalHapticFeedback.current
     val context = LocalContext.current
-    val appSettings = remember { chromahub.rhythm.app.shared.data.model.AppSettings.getInstance(context) }
+    val appSettings = remember { fieldmind.research.app.shared.data.model.AppSettings.getInstance(context) }
     val writePermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartIntentSenderForResult()
     ) { result ->

@@ -1,4 +1,4 @@
-package chromahub.rhythm.app.shared.presentation.components.lyrics
+package fieldmind.research.app.shared.presentation.components.lyrics
 
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.clickable
@@ -24,11 +24,11 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import chromahub.rhythm.app.R
-import chromahub.rhythm.app.util.RhythmLyricsParser
-import chromahub.rhythm.app.util.WordByWordLyricLine
-import chromahub.rhythm.app.shared.data.model.AppSettings
-import chromahub.rhythm.app.RhythmApplication
+import fieldmind.research.app.R
+import fieldmind.research.app.util.RhythmLyricsParser
+import fieldmind.research.app.util.WordByWordLyricLine
+import fieldmind.research.app.shared.data.model.AppSettings
+import fieldmind.research.app.RhythmApplication
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import kotlin.math.abs

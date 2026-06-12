@@ -1,7 +1,7 @@
-package chromahub.rhythm.app.features.field.data.settings
+package fieldmind.research.app.features.field.data.settings
 
 import android.content.Context
-import chromahub.rhythm.app.features.field.data.background.FieldMindBackgroundScheduler
+import fieldmind.research.app.features.field.data.background.FieldMindBackgroundScheduler
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow

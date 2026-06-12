@@ -1,7 +1,7 @@
-package chromahub.rhythm.app.shared.presentation.components
+package fieldmind.research.app.shared.presentation.components
 
-import chromahub.rhythm.app.shared.presentation.components.icons.MaterialSymbolIcon
-import chromahub.rhythm.app.shared.presentation.components.icons.Icon
+import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon
+import fieldmind.research.app.shared.presentation.components.icons.Icon
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Spring
@@ -19,7 +19,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.res.stringResource
-import chromahub.rhythm.app.R
+import fieldmind.research.app.R
 import android.content.Context
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp

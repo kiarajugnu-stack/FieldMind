@@ -1,8 +1,8 @@
-package chromahub.rhythm.app.util
+package fieldmind.research.app.util
 
-import chromahub.rhythm.app.shared.data.model.Artist
-import chromahub.rhythm.app.shared.data.model.Song
-import chromahub.rhythm.app.shared.data.model.Album
+import fieldmind.research.app.shared.data.model.Artist
+import fieldmind.research.app.shared.data.model.Song
+import fieldmind.research.app.shared.data.model.Album
 
 /**
  * Utility object for handling artist collaborations and separating individual artists

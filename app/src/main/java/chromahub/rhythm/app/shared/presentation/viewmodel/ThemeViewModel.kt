@@ -1,4 +1,4 @@
-package chromahub.rhythm.app.shared.presentation.viewmodel
+package fieldmind.research.app.shared.presentation.viewmodel
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
@@ -7,7 +7,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import chromahub.rhythm.app.shared.data.model.AppSettings
+import fieldmind.research.app.shared.data.model.AppSettings
 
 class ThemeViewModel(application: Application) : AndroidViewModel(application) {
     private val appSettings = AppSettings.getInstance(application)

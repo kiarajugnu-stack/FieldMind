@@ -1,4 +1,4 @@
-package chromahub.rhythm.app.features.local.data.database.entity
+package fieldmind.research.app.features.local.data.database.entity
 
 import androidx.room.Entity
 import androidx.room.ForeignKey

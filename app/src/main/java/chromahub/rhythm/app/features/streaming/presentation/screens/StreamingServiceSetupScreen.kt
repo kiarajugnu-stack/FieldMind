@@ -1,7 +1,7 @@
-package chromahub.rhythm.app.features.streaming.presentation.screens
+package fieldmind.research.app.features.streaming.presentation.screens
 
-import chromahub.rhythm.app.shared.presentation.components.icons.MaterialSymbolIcon
-import chromahub.rhythm.app.shared.presentation.components.icons.Icon
+import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon
+import fieldmind.research.app.shared.presentation.components.icons.Icon
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -41,13 +41,13 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.platform.LocalContext
-import chromahub.rhythm.app.R
-import chromahub.rhythm.app.shared.data.model.AppSettings
-import chromahub.rhythm.app.features.streaming.domain.model.StreamingServiceRules
-import chromahub.rhythm.app.features.streaming.presentation.model.StreamingServiceOptions
-import chromahub.rhythm.app.features.streaming.presentation.viewmodel.StreamingMusicViewModel
-import chromahub.rhythm.app.shared.presentation.screens.settings.TunerAnimatedSwitch
-import chromahub.rhythm.app.shared.presentation.components.common.CollapsibleHeaderScreen
+import fieldmind.research.app.R
+import fieldmind.research.app.shared.data.model.AppSettings
+import fieldmind.research.app.features.streaming.domain.model.StreamingServiceRules
+import fieldmind.research.app.features.streaming.presentation.model.StreamingServiceOptions
+import fieldmind.research.app.features.streaming.presentation.viewmodel.StreamingMusicViewModel
+import fieldmind.research.app.shared.presentation.screens.settings.TunerAnimatedSwitch
+import fieldmind.research.app.shared.presentation.components.common.CollapsibleHeaderScreen
 
 @Composable
 fun StreamingServiceSetupScreen(

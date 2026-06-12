@@ -1,4 +1,4 @@
-package chromahub.rhythm.app.features.streaming.data.provider
+package fieldmind.research.app.features.streaming.data.provider
 
 /**
  * Lightweight song model used by provider API clients before mapping to UI/domain models.

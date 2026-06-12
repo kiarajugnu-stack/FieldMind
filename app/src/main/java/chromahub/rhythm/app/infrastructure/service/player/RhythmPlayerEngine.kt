@@ -1,4 +1,4 @@
-package chromahub.rhythm.app.infrastructure.service.player
+package fieldmind.research.app.infrastructure.service.player
 
 import android.content.Context
 import android.media.AudioFocusRequest
@@ -20,17 +20,17 @@ import androidx.media3.datasource.DefaultHttpDataSource
 import androidx.media3.datasource.DataSpec
 import android.os.Build
 import androidx.media3.common.TrackSelectionParameters
-import chromahub.rhythm.app.shared.data.model.AppSettings
+import fieldmind.research.app.shared.data.model.AppSettings
 import android.net.Uri
-import chromahub.rhythm.app.features.streaming.di.StreamingMusicModule
+import fieldmind.research.app.features.streaming.di.StreamingMusicModule
 import kotlinx.coroutines.runBlocking
 import androidx.media3.datasource.cache.CacheDataSource
-import chromahub.rhythm.app.infrastructure.audio.RhythmBassBoostProcessor
-import chromahub.rhythm.app.infrastructure.audio.RhythmSpatializationProcessor
-import chromahub.rhythm.app.shared.data.model.TransitionSettings
-import chromahub.rhythm.app.infrastructure.service.player.replaygain.ReplayGainAudioProcessor
-import chromahub.rhythm.app.infrastructure.service.player.replaygain.ReplayGainUtil
-import chromahub.rhythm.app.util.envelope
+import fieldmind.research.app.infrastructure.audio.RhythmBassBoostProcessor
+import fieldmind.research.app.infrastructure.audio.RhythmSpatializationProcessor
+import fieldmind.research.app.shared.data.model.TransitionSettings
+import fieldmind.research.app.infrastructure.service.player.replaygain.ReplayGainAudioProcessor
+import fieldmind.research.app.infrastructure.service.player.replaygain.ReplayGainUtil
+import fieldmind.research.app.util.envelope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers

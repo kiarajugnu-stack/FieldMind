@@ -1,11 +1,11 @@
-package chromahub.rhythm.app.features.field.data.database.dao
+package fieldmind.research.app.features.field.data.database.dao
 
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
-import chromahub.rhythm.app.features.field.data.database.entity.*
+import fieldmind.research.app.features.field.data.database.entity.*
 import kotlinx.coroutines.flow.Flow
 
 @Dao

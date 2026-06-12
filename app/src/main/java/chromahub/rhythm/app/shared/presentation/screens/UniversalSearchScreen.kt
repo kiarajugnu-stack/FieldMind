@@ -1,8 +1,8 @@
-package chromahub.rhythm.app.shared.presentation.screens
+package fieldmind.research.app.shared.presentation.screens
 
-import chromahub.rhythm.app.shared.presentation.components.icons.RhythmIcons
-import chromahub.rhythm.app.shared.presentation.components.icons.MaterialSymbolIcon
-import chromahub.rhythm.app.shared.presentation.components.icons.Icon
+import fieldmind.research.app.shared.presentation.components.icons.RhythmIcons
+import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon
+import fieldmind.research.app.shared.presentation.components.icons.Icon
 
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
@@ -50,33 +50,33 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import android.net.Uri
-import chromahub.rhythm.app.R
-import chromahub.rhythm.app.shared.presentation.components.bottomsheets.AddToPlaylistBottomSheet
-import chromahub.rhythm.app.shared.presentation.components.bottomsheets.SongInfoBottomSheet
-import chromahub.rhythm.app.shared.presentation.components.dialogs.CreatePlaylistDialog
-import chromahub.rhythm.app.features.local.presentation.viewmodel.MusicViewModel
-import chromahub.rhythm.app.shared.presentation.components.common.CollapsibleHeaderScreen
-import chromahub.rhythm.app.features.streaming.domain.model.StreamingAlbum
-import chromahub.rhythm.app.features.streaming.domain.model.StreamingArtist
-import chromahub.rhythm.app.features.streaming.domain.model.StreamingPlaylist
-import chromahub.rhythm.app.features.streaming.domain.model.StreamingSong
-import chromahub.rhythm.app.features.streaming.presentation.viewmodel.StreamingMusicViewModel
-import chromahub.rhythm.app.shared.data.model.Album
-import chromahub.rhythm.app.shared.data.model.AppSettings
-import chromahub.rhythm.app.shared.data.model.Artist
-import chromahub.rhythm.app.shared.data.model.Playlist
-import chromahub.rhythm.app.shared.data.model.Song
-import chromahub.rhythm.app.shared.presentation.components.Material3SettingsGroup
-import chromahub.rhythm.app.shared.presentation.components.Material3SettingsItem
-import chromahub.rhythm.app.shared.presentation.components.SettingScope
-import chromahub.rhythm.app.shared.presentation.components.common.M3PlaceholderType
-import chromahub.rhythm.app.shared.presentation.components.dialogs.SwitchModeDialog
-import chromahub.rhythm.app.ui.LocalMiniPlayerPadding
-import chromahub.rhythm.app.util.GenreUtils
-import chromahub.rhythm.app.util.HapticUtils
-import chromahub.rhythm.app.util.HapticType
-import chromahub.rhythm.app.util.ImageUtils
-import chromahub.rhythm.app.util.M3ImageUtils
+import fieldmind.research.app.R
+import fieldmind.research.app.shared.presentation.components.bottomsheets.AddToPlaylistBottomSheet
+import fieldmind.research.app.shared.presentation.components.bottomsheets.SongInfoBottomSheet
+import fieldmind.research.app.shared.presentation.components.dialogs.CreatePlaylistDialog
+import fieldmind.research.app.features.local.presentation.viewmodel.MusicViewModel
+import fieldmind.research.app.shared.presentation.components.common.CollapsibleHeaderScreen
+import fieldmind.research.app.features.streaming.domain.model.StreamingAlbum
+import fieldmind.research.app.features.streaming.domain.model.StreamingArtist
+import fieldmind.research.app.features.streaming.domain.model.StreamingPlaylist
+import fieldmind.research.app.features.streaming.domain.model.StreamingSong
+import fieldmind.research.app.features.streaming.presentation.viewmodel.StreamingMusicViewModel
+import fieldmind.research.app.shared.data.model.Album
+import fieldmind.research.app.shared.data.model.AppSettings
+import fieldmind.research.app.shared.data.model.Artist
+import fieldmind.research.app.shared.data.model.Playlist
+import fieldmind.research.app.shared.data.model.Song
+import fieldmind.research.app.shared.presentation.components.Material3SettingsGroup
+import fieldmind.research.app.shared.presentation.components.Material3SettingsItem
+import fieldmind.research.app.shared.presentation.components.SettingScope
+import fieldmind.research.app.shared.presentation.components.common.M3PlaceholderType
+import fieldmind.research.app.shared.presentation.components.dialogs.SwitchModeDialog
+import fieldmind.research.app.ui.LocalMiniPlayerPadding
+import fieldmind.research.app.util.GenreUtils
+import fieldmind.research.app.util.HapticUtils
+import fieldmind.research.app.util.HapticType
+import fieldmind.research.app.util.ImageUtils
+import fieldmind.research.app.util.M3ImageUtils
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import kotlinx.coroutines.delay
@@ -972,7 +972,7 @@ fun UniversalSearchScreen(
                     if (isLocal) {
                         val separatorEnabled = appSettings.artistSeparatorEnabled.value
                         val delimiters = appSettings.artistSeparatorDelimiters.value.ifBlank { "/;,+&" }
-                        val songArtistNames = chromahub.rhythm.app.util.ArtistSeparator.splitArtistNames(
+                        val songArtistNames = fieldmind.research.app.util.ArtistSeparator.splitArtistNames(
                             artistName = (songObj as Song).artist,
                             delimiters = delimiters,
                             enabled = separatorEnabled
@@ -1799,7 +1799,7 @@ private fun UniversalSongOptionsHeader(
 
 @Composable
 private fun UniversalSongOptionGridItem(
-    icon: chromahub.rhythm.app.shared.presentation.components.icons.MaterialSymbolIcon,
+    icon: fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon,
     text: String,
     containerColor: Color,
     iconColor: Color,
@@ -2003,7 +2003,7 @@ private fun UniversalGenreBrowseItemCard(
     }
 }
 
-private fun universalGenreIconFor(genre: String): chromahub.rhythm.app.shared.presentation.components.icons.MaterialSymbolIcon {
+private fun universalGenreIconFor(genre: String): fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon {
     val normalized = genre.lowercase()
     return when {
         normalized.contains("hip hop") || normalized.contains("hip-hop") || normalized.contains("rap") || normalized.contains("trap") -> MaterialSymbolIcon("mic")

@@ -1,8 +1,8 @@
-package chromahub.rhythm.app.shared.presentation.screens
+package fieldmind.research.app.shared.presentation.screens
 
-import chromahub.rhythm.app.shared.presentation.components.icons.RhythmIcons
-import chromahub.rhythm.app.shared.presentation.components.icons.MaterialSymbolIcon
-import chromahub.rhythm.app.shared.presentation.components.icons.Icon
+import fieldmind.research.app.shared.presentation.components.icons.RhythmIcons
+import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon
+import fieldmind.research.app.shared.presentation.components.icons.Icon
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.animateContentSize
@@ -46,21 +46,21 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
-import chromahub.rhythm.app.R
-import chromahub.rhythm.app.features.local.presentation.viewmodel.MusicViewModel
-import chromahub.rhythm.app.shared.data.model.Artist
-import chromahub.rhythm.app.shared.data.repository.PlaybackStatsRepository
-import chromahub.rhythm.app.shared.data.repository.StatsTimeRange
-import chromahub.rhythm.app.shared.presentation.components.Material3SettingsGroup
-import chromahub.rhythm.app.shared.presentation.components.Material3SettingsItem
-import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveShapeTarget
-import chromahub.rhythm.app.shared.presentation.components.common.CollapsibleHeaderScreen
-import chromahub.rhythm.app.shared.presentation.components.common.TabAnimation
-import chromahub.rhythm.app.shared.presentation.components.common.SmallTabAnimation
-import chromahub.rhythm.app.shared.presentation.components.common.rememberExpressiveShapeFor
-import chromahub.rhythm.app.util.M3ImageUtils
-import chromahub.rhythm.app.util.HapticUtils
-import chromahub.rhythm.app.util.HapticType
+import fieldmind.research.app.R
+import fieldmind.research.app.features.local.presentation.viewmodel.MusicViewModel
+import fieldmind.research.app.shared.data.model.Artist
+import fieldmind.research.app.shared.data.repository.PlaybackStatsRepository
+import fieldmind.research.app.shared.data.repository.StatsTimeRange
+import fieldmind.research.app.shared.presentation.components.Material3SettingsGroup
+import fieldmind.research.app.shared.presentation.components.Material3SettingsItem
+import fieldmind.research.app.shared.presentation.components.common.ExpressiveShapeTarget
+import fieldmind.research.app.shared.presentation.components.common.CollapsibleHeaderScreen
+import fieldmind.research.app.shared.presentation.components.common.TabAnimation
+import fieldmind.research.app.shared.presentation.components.common.SmallTabAnimation
+import fieldmind.research.app.shared.presentation.components.common.rememberExpressiveShapeFor
+import fieldmind.research.app.util.M3ImageUtils
+import fieldmind.research.app.util.HapticUtils
+import fieldmind.research.app.util.HapticType
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import androidx.compose.ui.res.stringResource
@@ -84,7 +84,7 @@ fun RhythmStatsScreen(
     val tabRowState = rememberLazyListState()
     val coroutineScope = rememberCoroutineScope()
 
-    val appSettings = remember { chromahub.rhythm.app.shared.data.model.AppSettings.getInstance(context) }
+    val appSettings = remember { fieldmind.research.app.shared.data.model.AppSettings.getInstance(context) }
     val useHoursFormat by appSettings.useHoursInTimeFormat.collectAsState()
 
     LaunchedEffect(pagerState.currentPage) {
@@ -142,7 +142,7 @@ fun RhythmStatsScreen(
 @Composable
 private fun StatsPageContent(
     range: StatsTimeRange,
-    songs: List<chromahub.rhythm.app.shared.data.model.Song>,
+    songs: List<fieldmind.research.app.shared.data.model.Song>,
     artists: List<Artist>,
     viewModel: MusicViewModel,
     useHoursFormat: Boolean
@@ -1034,7 +1034,7 @@ private fun BeatTimelineCard(timeline: List<PlaybackStatsRepository.TimelineEntr
 @Composable
 private fun RatingStatsCard(viewModel: MusicViewModel) {
     val context = LocalContext.current
-    val appSettings = chromahub.rhythm.app.shared.data.model.AppSettings.getInstance(context)
+    val appSettings = fieldmind.research.app.shared.data.model.AppSettings.getInstance(context)
     val ratingDistribution = appSettings.getRatingDistribution()
     val totalRated = ratingDistribution.values.sum()
 

@@ -1,4 +1,4 @@
-package chromahub.rhythm.app.core.utils
+package fieldmind.research.app.core.utils
 
 import android.content.Context
 import android.net.ConnectivityManager

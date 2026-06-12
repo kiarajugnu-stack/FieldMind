@@ -1,4 +1,4 @@
-package chromahub.rhythm.app.infrastructure.service.player
+package fieldmind.research.app.infrastructure.service.player
 
 import android.content.Context
 import android.net.Uri
@@ -14,8 +14,8 @@ import androidx.media3.datasource.DefaultDataSource
 import androidx.media3.datasource.DefaultHttpDataSource
 import androidx.media3.datasource.ResolvingDataSource
 import androidx.media3.datasource.DataSpec
-import chromahub.rhythm.app.features.streaming.di.StreamingMusicModule
-import chromahub.rhythm.app.shared.data.model.AppSettings
+import fieldmind.research.app.features.streaming.di.StreamingMusicModule
+import fieldmind.research.app.shared.data.model.AppSettings
 import kotlinx.coroutines.runBlocking
 import java.util.concurrent.ConcurrentHashMap
 

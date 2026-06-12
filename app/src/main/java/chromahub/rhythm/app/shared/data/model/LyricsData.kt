@@ -1,4 +1,4 @@
-package chromahub.rhythm.app.shared.data.model
+package fieldmind.research.app.shared.data.model
 
 import android.os.Parcelable
 import androidx.compose.runtime.Immutable

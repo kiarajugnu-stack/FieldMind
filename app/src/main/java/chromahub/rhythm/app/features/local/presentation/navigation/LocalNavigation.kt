@@ -1,8 +1,8 @@
-package chromahub.rhythm.app.features.local.presentation.navigation
+package fieldmind.research.app.features.local.presentation.navigation
 
-import chromahub.rhythm.app.shared.presentation.components.icons.RhythmIcons
-import chromahub.rhythm.app.shared.presentation.components.icons.MaterialSymbolIcon
-import chromahub.rhythm.app.shared.presentation.components.icons.Icon
+import fieldmind.research.app.shared.presentation.components.icons.RhythmIcons
+import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon
+import fieldmind.research.app.shared.presentation.components.icons.Icon
 
 import android.content.Context
 import android.net.Uri
@@ -51,7 +51,7 @@ import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import chromahub.rhythm.app.ui.theme.MusicDimensions
+import fieldmind.research.app.ui.theme.MusicDimensions
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -67,10 +67,10 @@ import androidx.compose.material3.Snackbar
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.rememberModalBottomSheetState
-import chromahub.rhythm.app.shared.presentation.components.bottomsheets.SongPickerBottomSheet
-import chromahub.rhythm.app.shared.presentation.components.common.CollapsibleHeaderScreen
-import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveFilledIconButton
-import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveShapes
+import fieldmind.research.app.shared.presentation.components.bottomsheets.SongPickerBottomSheet
+import fieldmind.research.app.shared.presentation.components.common.CollapsibleHeaderScreen
+import fieldmind.research.app.shared.presentation.components.common.ExpressiveFilledIconButton
+import fieldmind.research.app.shared.presentation.components.common.ExpressiveShapes
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.ActivityResult
 import androidx.compose.runtime.Composable
@@ -87,8 +87,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import chromahub.rhythm.app.ui.LocalMiniPlayerPadding
-import chromahub.rhythm.app.ui.UiConstants
+import fieldmind.research.app.ui.LocalMiniPlayerPadding
+import fieldmind.research.app.ui.UiConstants
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.layout
@@ -96,43 +96,43 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.lifecycle.viewmodel.compose.viewModel
-import chromahub.rhythm.app.R
+import fieldmind.research.app.R
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import chromahub.rhythm.app.shared.presentation.components.bottomsheets.AddToPlaylistBottomSheet
-import chromahub.rhythm.app.shared.presentation.components.bottomsheets.AlbumBottomSheet
-import chromahub.rhythm.app.shared.presentation.components.bottomsheets.ArtistBottomSheet
-import chromahub.rhythm.app.shared.presentation.components.bottomsheets.SongInfoBottomSheet
-import chromahub.rhythm.app.shared.presentation.components.bottomsheets.UpdateBottomSheet
-import chromahub.rhythm.app.features.local.presentation.screens.AddToPlaylistScreen
-import chromahub.rhythm.app.shared.presentation.components.dialogs.CreatePlaylistDialog
-import chromahub.rhythm.app.shared.presentation.components.dialogs.QueueActionDialog
-import chromahub.rhythm.app.shared.presentation.components.dialogs.QueueListActionDialog
-import chromahub.rhythm.app.shared.presentation.components.player.MiniPlayer
-import chromahub.rhythm.app.shared.presentation.components.player.SleepTimerBottomSheetNew
-import chromahub.rhythm.app.features.local.presentation.screens.LibraryScreen
-import chromahub.rhythm.app.features.local.presentation.screens.HomeScreen
-import chromahub.rhythm.app.shared.presentation.screens.RhythmStatsScreen
-import chromahub.rhythm.app.features.local.presentation.screens.EqualizerScreen
-import chromahub.rhythm.app.shared.presentation.screens.player.PlayerScreen
+import fieldmind.research.app.shared.presentation.components.bottomsheets.AddToPlaylistBottomSheet
+import fieldmind.research.app.shared.presentation.components.bottomsheets.AlbumBottomSheet
+import fieldmind.research.app.shared.presentation.components.bottomsheets.ArtistBottomSheet
+import fieldmind.research.app.shared.presentation.components.bottomsheets.SongInfoBottomSheet
+import fieldmind.research.app.shared.presentation.components.bottomsheets.UpdateBottomSheet
+import fieldmind.research.app.features.local.presentation.screens.AddToPlaylistScreen
+import fieldmind.research.app.shared.presentation.components.dialogs.CreatePlaylistDialog
+import fieldmind.research.app.shared.presentation.components.dialogs.QueueActionDialog
+import fieldmind.research.app.shared.presentation.components.dialogs.QueueListActionDialog
+import fieldmind.research.app.shared.presentation.components.player.MiniPlayer
+import fieldmind.research.app.shared.presentation.components.player.SleepTimerBottomSheetNew
+import fieldmind.research.app.features.local.presentation.screens.LibraryScreen
+import fieldmind.research.app.features.local.presentation.screens.HomeScreen
+import fieldmind.research.app.shared.presentation.screens.RhythmStatsScreen
+import fieldmind.research.app.features.local.presentation.screens.EqualizerScreen
+import fieldmind.research.app.shared.presentation.screens.player.PlayerScreen
 
-import chromahub.rhythm.app.features.local.presentation.screens.PlaylistDetailScreen
-import chromahub.rhythm.app.features.local.presentation.screens.ArtistDetailScreen
-import chromahub.rhythm.app.shared.presentation.screens.settings.SettingsScreenWrapper
-import chromahub.rhythm.app.shared.presentation.screens.settings.*
-import chromahub.rhythm.app.shared.data.model.PlaybackLocation
-import chromahub.rhythm.app.shared.presentation.components.MediaScanLoader // Add MediaScanLoader import
-import chromahub.rhythm.app.util.ArtistSeparator
-import chromahub.rhythm.app.util.HapticUtils
-import chromahub.rhythm.app.util.HapticType
-import chromahub.rhythm.app.features.local.presentation.viewmodel.MusicViewModel
-import chromahub.rhythm.app.features.local.presentation.viewmodel.MusicViewModel.SortOrder
-import chromahub.rhythm.app.shared.presentation.viewmodel.ThemeViewModel
-import chromahub.rhythm.app.shared.presentation.viewmodel.AppUpdaterViewModel
+import fieldmind.research.app.features.local.presentation.screens.PlaylistDetailScreen
+import fieldmind.research.app.features.local.presentation.screens.ArtistDetailScreen
+import fieldmind.research.app.shared.presentation.screens.settings.SettingsScreenWrapper
+import fieldmind.research.app.shared.presentation.screens.settings.*
+import fieldmind.research.app.shared.data.model.PlaybackLocation
+import fieldmind.research.app.shared.presentation.components.MediaScanLoader // Add MediaScanLoader import
+import fieldmind.research.app.util.ArtistSeparator
+import fieldmind.research.app.util.HapticUtils
+import fieldmind.research.app.util.HapticType
+import fieldmind.research.app.features.local.presentation.viewmodel.MusicViewModel
+import fieldmind.research.app.features.local.presentation.viewmodel.MusicViewModel.SortOrder
+import fieldmind.research.app.shared.presentation.viewmodel.ThemeViewModel
+import fieldmind.research.app.shared.presentation.viewmodel.AppUpdaterViewModel
 import coil.compose.AsyncImage
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
@@ -172,7 +172,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.lerp
 import androidx.compose.ui.unit.sp
-import chromahub.rhythm.app.features.local.presentation.screens.LibraryTab
+import fieldmind.research.app.features.local.presentation.screens.LibraryTab
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.runtime.remember
@@ -284,7 +284,7 @@ fun LocalNavigation(
     navController: NavHostController = rememberNavController(),
     viewModel: MusicViewModel = viewModel(),
     themeViewModel: ThemeViewModel = viewModel(),
-    appSettings: chromahub.rhythm.app.shared.data.model.AppSettings // Add appSettings parameter
+    appSettings: fieldmind.research.app.shared.data.model.AppSettings // Add appSettings parameter
 ) {
     val miniPlayerThemeId by appSettings.miniPlayerThemeId.collectAsState()
     // Update monitoring
@@ -377,13 +377,13 @@ fun LocalNavigation(
         Log.d("RhythmNavigation", "Lyrics seek: timestampMs=$timestampMs")
         viewModel.seekTo(timestampMs)
     }
-    val onPlaySong = { song: chromahub.rhythm.app.shared.data.model.Song -> viewModel.playSong(song) }
-    val onPlayAlbum = { album: chromahub.rhythm.app.shared.data.model.Album -> viewModel.playAlbum(album) }
-    val onPlayAlbumShuffled = { album: chromahub.rhythm.app.shared.data.model.Album -> viewModel.playAlbumShuffled(album) }
-    val onPlayArtist = { artist: chromahub.rhythm.app.shared.data.model.Artist -> viewModel.playArtist(artist) }
+    val onPlaySong = { song: fieldmind.research.app.shared.data.model.Song -> viewModel.playSong(song) }
+    val onPlayAlbum = { album: fieldmind.research.app.shared.data.model.Album -> viewModel.playAlbum(album) }
+    val onPlayAlbumShuffled = { album: fieldmind.research.app.shared.data.model.Album -> viewModel.playAlbumShuffled(album) }
+    val onPlayArtist = { artist: fieldmind.research.app.shared.data.model.Artist -> viewModel.playArtist(artist) }
     val onPlayPlaylist =
-        { playlist: chromahub.rhythm.app.shared.data.model.Playlist -> viewModel.playPlaylist(playlist) }
-    val onPlayPlaylistShuffled = { playlist: chromahub.rhythm.app.shared.data.model.Playlist -> viewModel.playPlaylistShuffled(playlist) }
+        { playlist: fieldmind.research.app.shared.data.model.Playlist -> viewModel.playPlaylist(playlist) }
+    val onPlayPlaylistShuffled = { playlist: fieldmind.research.app.shared.data.model.Playlist -> viewModel.playPlaylistShuffled(playlist) }
     val onToggleShuffle = { viewModel.toggleShuffle() }
     val onToggleRepeat = { viewModel.toggleRepeatMode() }
     val onToggleFavorite = { viewModel.toggleFavorite() }
@@ -671,10 +671,10 @@ private fun LocalNavigationContent(
     navController: NavHostController,
     viewModel: MusicViewModel,
     themeViewModel: ThemeViewModel,
-    appSettings: chromahub.rhythm.app.shared.data.model.AppSettings,
+    appSettings: fieldmind.research.app.shared.data.model.AppSettings,
     snackbarHostState: SnackbarHostState,
     coroutineScope: kotlinx.coroutines.CoroutineScope,
-    currentSong: chromahub.rhythm.app.shared.data.model.Song?,
+    currentSong: fieldmind.research.app.shared.data.model.Song?,
     currentRoute: String,
     isPlaying: Boolean,
     progress: () -> Float,
@@ -687,20 +687,20 @@ private fun LocalNavigationContent(
     showBottomNav: Boolean,
     isTablet: Boolean,
     startDestination: String,
-    songs: List<chromahub.rhythm.app.shared.data.model.Song>,
-    allSongs: List<chromahub.rhythm.app.shared.data.model.Song>,
-    albums: List<chromahub.rhythm.app.shared.data.model.Album>,
-    artists: List<chromahub.rhythm.app.shared.data.model.Artist>,
-    playlists: List<chromahub.rhythm.app.shared.data.model.Playlist>,
+    songs: List<fieldmind.research.app.shared.data.model.Song>,
+    allSongs: List<fieldmind.research.app.shared.data.model.Song>,
+    albums: List<fieldmind.research.app.shared.data.model.Album>,
+    artists: List<fieldmind.research.app.shared.data.model.Artist>,
+    playlists: List<fieldmind.research.app.shared.data.model.Playlist>,
     isShuffleEnabled: Boolean,
     repeatMode: Int,
     isFavorite: Boolean,
     sortOrder: MusicViewModel.SortOrder,
     showLyrics: Boolean,
     showOnlineOnlyLyrics: Boolean,
-    lyrics: chromahub.rhythm.app.shared.data.model.LyricsData?,
+    lyrics: fieldmind.research.app.shared.data.model.LyricsData?,
     isLoadingLyrics: Boolean,
-    recentlyPlayed: List<chromahub.rhythm.app.shared.data.model.Song>,
+    recentlyPlayed: List<fieldmind.research.app.shared.data.model.Song>,
     currentDevice: PlaybackLocation?,
     isMediaScanning: Boolean,
     useSystemTheme: Boolean,
@@ -709,12 +709,12 @@ private fun LocalNavigationContent(
     libraryTabOrder: List<String>,
     hiddenLibraryTabs: Set<String>,
     firstVisibleLibraryTab: LibraryTab,
-    onPlaySong: (chromahub.rhythm.app.shared.data.model.Song) -> Unit,
-    onPlayAlbum: (chromahub.rhythm.app.shared.data.model.Album) -> Unit,
-    onPlayAlbumShuffled: (chromahub.rhythm.app.shared.data.model.Album) -> Unit,
-    onPlayArtist: (chromahub.rhythm.app.shared.data.model.Artist) -> Unit,
-    onPlayPlaylist: (chromahub.rhythm.app.shared.data.model.Playlist) -> Unit,
-    onPlayPlaylistShuffled: (chromahub.rhythm.app.shared.data.model.Playlist) -> Unit,
+    onPlaySong: (fieldmind.research.app.shared.data.model.Song) -> Unit,
+    onPlayAlbum: (fieldmind.research.app.shared.data.model.Album) -> Unit,
+    onPlayAlbumShuffled: (fieldmind.research.app.shared.data.model.Album) -> Unit,
+    onPlayArtist: (fieldmind.research.app.shared.data.model.Artist) -> Unit,
+    onPlayPlaylist: (fieldmind.research.app.shared.data.model.Playlist) -> Unit,
+    onPlayPlaylistShuffled: (fieldmind.research.app.shared.data.model.Playlist) -> Unit,
     onToggleShuffle: () -> Unit,
     onToggleRepeat: () -> Unit,
     onToggleFavorite: () -> Unit,
@@ -1364,18 +1364,18 @@ private fun LocalNavigationContent(
                                 )
                     }
                 ) {
-                    val streamingViewModel: chromahub.rhythm.app.features.streaming.presentation.viewmodel.StreamingMusicViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
+                    val streamingViewModel: fieldmind.research.app.features.streaming.presentation.viewmodel.StreamingMusicViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
 
                     var showAlbumBottomSheet by remember { mutableStateOf(false) }
-                    var selectedAlbumForSheet by remember { mutableStateOf<chromahub.rhythm.app.shared.data.model.Album?>(null) }
+                    var selectedAlbumForSheet by remember { mutableStateOf<fieldmind.research.app.shared.data.model.Album?>(null) }
                     val albumBottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false)
                     val favoriteSongs by viewModel.favoriteSongs.collectAsState()
                     val context = LocalContext.current
 
                     var showAddToPlaylistSheet by remember { mutableStateOf(false) }
-                    var selectedSongForPlaylist by remember { mutableStateOf<chromahub.rhythm.app.shared.data.model.Song?>(null) }
+                    var selectedSongForPlaylist by remember { mutableStateOf<fieldmind.research.app.shared.data.model.Song?>(null) }
                     var showSongInfoSheet by remember { mutableStateOf(false) }
-                    var selectedSongForInfo by remember { mutableStateOf<chromahub.rhythm.app.shared.data.model.Song?>(null) }
+                    var selectedSongForInfo by remember { mutableStateOf<fieldmind.research.app.shared.data.model.Song?>(null) }
 
                     val writePermissionLauncher = rememberLauncherForActivityResult(
                         contract = androidx.activity.result.contract.ActivityResultContracts.StartIntentSenderForResult()
@@ -1395,7 +1395,7 @@ private fun LocalNavigationContent(
                         }
                     }
 
-                    chromahub.rhythm.app.shared.presentation.screens.UniversalSearchScreen(
+                    fieldmind.research.app.shared.presentation.screens.UniversalSearchScreen(
                         localViewModel = viewModel,
                         streamingViewModel = streamingViewModel,
                         onLocalSongClick = { song ->
@@ -1566,7 +1566,7 @@ private fun LocalNavigationContent(
                 }
 
                 composable(Screen.TunerAbout.route) {
-                    chromahub.rhythm.app.shared.presentation.screens.settings.AboutScreen(
+                    fieldmind.research.app.shared.presentation.screens.settings.AboutScreen(
                         onBackClick = navigateBackOrToSettings,
                         onNavigateToUpdates = { navController.navigate(Screen.TunerUpdates.route) }
                     )
@@ -1709,7 +1709,7 @@ private fun LocalNavigationContent(
                 }
 
                 composable(Screen.TunerGoSettings.route) {
-                    chromahub.rhythm.app.features.streaming.presentation.screens.GoSettingsScreen(
+                    fieldmind.research.app.features.streaming.presentation.screens.GoSettingsScreen(
                         onBackClick = navigateBackOrToSettings,
                         onConfigureCurrentProvider = { serviceId ->
                             appSettings.setInitialStreamingRoute("streaming_service_setup/$serviceId")
@@ -2283,7 +2283,7 @@ private fun LocalNavigationContent(
 
                     // Album/Artist data for bottom sheets
                     val allAlbums by viewModel.albums.collectAsState()
-                    var selectedAlbumForSheet by remember { mutableStateOf<chromahub.rhythm.app.shared.data.model.Album?>(null) }
+                    var selectedAlbumForSheet by remember { mutableStateOf<fieldmind.research.app.shared.data.model.Album?>(null) }
                     var showAlbumSheet by remember { mutableStateOf(false) }
                     val playlistHaptics = LocalHapticFeedback.current
 
@@ -2444,11 +2444,11 @@ private fun LocalNavigationContent(
                     
                     // State for bottom sheets
                     var showAddToPlaylistSheet by remember { mutableStateOf(false) }
-                    var selectedSongForPlaylist by remember { mutableStateOf<chromahub.rhythm.app.shared.data.model.Song?>(null) }
+                    var selectedSongForPlaylist by remember { mutableStateOf<fieldmind.research.app.shared.data.model.Song?>(null) }
                     var showSongInfoSheet by remember { mutableStateOf(false) }
-                    var selectedSongForInfo by remember { mutableStateOf<chromahub.rhythm.app.shared.data.model.Song?>(null) }
+                    var selectedSongForInfo by remember { mutableStateOf<fieldmind.research.app.shared.data.model.Song?>(null) }
                     var showAlbumBottomSheet by remember { mutableStateOf(false) }
-                    var selectedAlbum by remember { mutableStateOf<chromahub.rhythm.app.shared.data.model.Album?>(null) }
+                    var selectedAlbum by remember { mutableStateOf<fieldmind.research.app.shared.data.model.Album?>(null) }
                     val albumBottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false)
                     
                     ArtistDetailScreen(

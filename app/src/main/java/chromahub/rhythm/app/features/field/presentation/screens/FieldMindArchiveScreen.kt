@@ -1,4 +1,4 @@
-package chromahub.rhythm.app.features.field.presentation.screens
+package fieldmind.research.app.features.field.presentation.screens
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -9,13 +9,13 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import chromahub.rhythm.app.features.field.data.database.entity.*
-import chromahub.rhythm.app.features.field.data.learn.LearnLibrary
-import chromahub.rhythm.app.features.field.presentation.components.*
-import chromahub.rhythm.app.features.field.presentation.navigation.FieldMindScreen
-import chromahub.rhythm.app.features.field.presentation.theme.FieldMindTheme
-import chromahub.rhythm.app.features.field.presentation.viewmodel.FieldMindViewModel
-import chromahub.rhythm.app.shared.presentation.components.icons.Icon
+import fieldmind.research.app.features.field.data.database.entity.*
+import fieldmind.research.app.features.field.data.learn.LearnLibrary
+import fieldmind.research.app.features.field.presentation.components.*
+import fieldmind.research.app.features.field.presentation.navigation.FieldMindScreen
+import fieldmind.research.app.features.field.presentation.theme.FieldMindTheme
+import fieldmind.research.app.features.field.presentation.viewmodel.FieldMindViewModel
+import fieldmind.research.app.shared.presentation.components.icons.Icon
 // ══════════════════════════════════════════════════════════════════════
 //  Search archive
 // ══════════════════════════════════════════════════════════════════════

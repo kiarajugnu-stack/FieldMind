@@ -1,4 +1,4 @@
-package chromahub.rhythm.app.features.streaming.infrastructure.notification
+package fieldmind.research.app.features.streaming.infrastructure.notification
 
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -7,8 +7,8 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import androidx.core.app.NotificationCompat
-import chromahub.rhythm.app.R
-import chromahub.rhythm.app.activities.MainActivity
+import fieldmind.research.app.R
+import fieldmind.research.app.activities.MainActivity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job

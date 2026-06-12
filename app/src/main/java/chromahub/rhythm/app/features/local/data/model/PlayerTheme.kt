@@ -1,4 +1,4 @@
-package chromahub.rhythm.app.features.local.data.model
+package fieldmind.research.app.features.local.data.model
 
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp

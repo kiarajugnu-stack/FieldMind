@@ -1,11 +1,11 @@
-package chromahub.rhythm.app.features.field.data.database
+package fieldmind.research.app.features.field.data.database
 
 import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
-import chromahub.rhythm.app.features.field.data.database.dao.FieldMindDao
-import chromahub.rhythm.app.features.field.data.database.entity.*
+import fieldmind.research.app.features.field.data.database.dao.FieldMindDao
+import fieldmind.research.app.features.field.data.database.entity.*
 
 @Database(
     entities = [

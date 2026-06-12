@@ -1,10 +1,10 @@
 @file:OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
 
-package chromahub.rhythm.app.features.streaming.presentation.screens
+package fieldmind.research.app.features.streaming.presentation.screens
 
-import chromahub.rhythm.app.shared.presentation.components.icons.RhythmIcons
-import chromahub.rhythm.app.shared.presentation.components.icons.MaterialSymbolIcon
-import chromahub.rhythm.app.shared.presentation.components.icons.Icon
+import fieldmind.research.app.shared.presentation.components.icons.RhythmIcons
+import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon
+import fieldmind.research.app.shared.presentation.components.icons.Icon
 
 import android.net.Uri
 import androidx.annotation.StringRes
@@ -74,38 +74,38 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import chromahub.rhythm.app.R
-import chromahub.rhythm.app.features.local.presentation.screens.SingleCardAlbumsContent
-import chromahub.rhythm.app.features.local.presentation.screens.SingleCardArtistsContent
-import chromahub.rhythm.app.features.local.presentation.screens.PlaylistFabMenu
-import chromahub.rhythm.app.features.local.presentation.screens.SingleCardPlaylistsContent
-import chromahub.rhythm.app.features.local.presentation.screens.SingleCardSongsContent
-import chromahub.rhythm.app.shared.presentation.components.bottomsheets.AlbumBottomSheet
-import chromahub.rhythm.app.shared.presentation.components.bottomsheets.SongInfoBottomSheet
-import chromahub.rhythm.app.features.streaming.domain.model.StreamingAlbum
-import chromahub.rhythm.app.features.streaming.domain.model.StreamingArtist
-import chromahub.rhythm.app.features.streaming.domain.model.StreamingPlaylist
-import chromahub.rhythm.app.features.streaming.domain.model.StreamingSong
-import chromahub.rhythm.app.features.streaming.presentation.model.StreamingServiceOptions
-import chromahub.rhythm.app.features.streaming.presentation.viewmodel.StreamingMusicViewModel
-import chromahub.rhythm.app.shared.data.model.Album
-import chromahub.rhythm.app.shared.data.model.AppSettings
-import chromahub.rhythm.app.shared.data.model.Artist
-import chromahub.rhythm.app.shared.data.model.Playlist
-import chromahub.rhythm.app.shared.data.model.Song
-import chromahub.rhythm.app.shared.presentation.components.common.CollapsibleHeaderScreen
-import chromahub.rhythm.app.shared.presentation.components.common.TabAnimation
-import chromahub.rhythm.app.util.ArtistSeparator
-import chromahub.rhythm.app.util.HapticUtils
-import chromahub.rhythm.app.util.HapticType
-import chromahub.rhythm.app.util.M3ImageUtils
+import fieldmind.research.app.R
+import fieldmind.research.app.features.local.presentation.screens.SingleCardAlbumsContent
+import fieldmind.research.app.features.local.presentation.screens.SingleCardArtistsContent
+import fieldmind.research.app.features.local.presentation.screens.PlaylistFabMenu
+import fieldmind.research.app.features.local.presentation.screens.SingleCardPlaylistsContent
+import fieldmind.research.app.features.local.presentation.screens.SingleCardSongsContent
+import fieldmind.research.app.shared.presentation.components.bottomsheets.AlbumBottomSheet
+import fieldmind.research.app.shared.presentation.components.bottomsheets.SongInfoBottomSheet
+import fieldmind.research.app.features.streaming.domain.model.StreamingAlbum
+import fieldmind.research.app.features.streaming.domain.model.StreamingArtist
+import fieldmind.research.app.features.streaming.domain.model.StreamingPlaylist
+import fieldmind.research.app.features.streaming.domain.model.StreamingSong
+import fieldmind.research.app.features.streaming.presentation.model.StreamingServiceOptions
+import fieldmind.research.app.features.streaming.presentation.viewmodel.StreamingMusicViewModel
+import fieldmind.research.app.shared.data.model.Album
+import fieldmind.research.app.shared.data.model.AppSettings
+import fieldmind.research.app.shared.data.model.Artist
+import fieldmind.research.app.shared.data.model.Playlist
+import fieldmind.research.app.shared.data.model.Song
+import fieldmind.research.app.shared.presentation.components.common.CollapsibleHeaderScreen
+import fieldmind.research.app.shared.presentation.components.common.TabAnimation
+import fieldmind.research.app.util.ArtistSeparator
+import fieldmind.research.app.util.HapticUtils
+import fieldmind.research.app.util.HapticType
+import fieldmind.research.app.util.M3ImageUtils
 import kotlinx.coroutines.launch
-import chromahub.rhythm.app.ui.LocalMiniPlayerPadding
+import fieldmind.research.app.ui.LocalMiniPlayerPadding
 import androidx.compose.ui.platform.LocalConfiguration
-import chromahub.rhythm.app.ui.theme.MusicDimensions
+import fieldmind.research.app.ui.theme.MusicDimensions
 import kotlin.random.Random
 
-private enum class StreamingLibraryTab(@param:StringRes val titleRes: Int, val icon: chromahub.rhythm.app.shared.presentation.components.icons.MaterialSymbolIcon) {
+private enum class StreamingLibraryTab(@param:StringRes val titleRes: Int, val icon: fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon) {
     SONGS(R.string.library_tab_songs, MaterialSymbolIcon("history", filled = true)),
     ALBUMS(R.string.library_tab_albums, RhythmIcons.AlbumFilled),
     ARTISTS(R.string.library_tab_artists, RhythmIcons.ArtistFilled),
@@ -115,7 +115,7 @@ private enum class StreamingLibraryTab(@param:StringRes val titleRes: Int, val i
 private enum class StreamingSongSortOrder(
     @param:StringRes val labelRes: Int,
     val ascending: Boolean,
-    val icon: chromahub.rhythm.app.shared.presentation.components.icons.MaterialSymbolIcon
+    val icon: fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon
 ) {
     TITLE_ASC(R.string.sort_title, true, RhythmIcons.Sort),
     TITLE_DESC(R.string.sort_title, false, RhythmIcons.Sort),
@@ -130,7 +130,7 @@ private enum class StreamingSongSortOrder(
 private enum class StreamingAlbumSortOrder(
     @param:StringRes val labelRes: Int,
     val ascending: Boolean,
-    val icon: chromahub.rhythm.app.shared.presentation.components.icons.MaterialSymbolIcon
+    val icon: fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon
 ) {
     TITLE_ASC(R.string.sort_title, true, RhythmIcons.Sort),
     TITLE_DESC(R.string.sort_title, false, RhythmIcons.Sort),
@@ -144,7 +144,7 @@ private enum class StreamingAlbumSortOrder(
 
 private enum class StreamingArtistSortOrder(
     @param:StringRes val labelRes: Int,
-    val icon: chromahub.rhythm.app.shared.presentation.components.icons.MaterialSymbolIcon,
+    val icon: fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon,
     val ascending: Boolean
 ) {
     NAME_ASC(R.string.sort_name, RhythmIcons.ArtistFilled, true),
@@ -160,7 +160,7 @@ private enum class StreamingArtistSortOrder(
 private enum class StreamingPlaylistSortOrder(
     @param:StringRes val labelRes: Int,
     val ascending: Boolean,
-    val icon: chromahub.rhythm.app.shared.presentation.components.icons.MaterialSymbolIcon
+    val icon: fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon
 ) {
     NAME_ASC(R.string.sort_name, true, RhythmIcons.Queue),
     NAME_DESC(R.string.sort_name, false, RhythmIcons.Queue),
@@ -1063,7 +1063,7 @@ fun StreamingLibraryScreen(
                                                         modifier = Modifier.size(32.dp)
                                                     ) {
                                                         Icon(
-                                                            imageVector = chromahub.rhythm.app.shared.presentation.components.icons.RhythmIcons.AddToPlaylist,
+                                                            imageVector = fieldmind.research.app.shared.presentation.components.icons.RhythmIcons.AddToPlaylist,
                                                             contentDescription = null,
                                                             tint = MaterialTheme.colorScheme.onTertiaryContainer,
                                                             modifier = Modifier.fillMaxSize().padding(6.dp)
@@ -1368,7 +1368,7 @@ fun StreamingLibraryScreen(
 
     // Create Playlist Dialog for streaming
     if (showCreatePlaylistDialog) {
-        chromahub.rhythm.app.shared.presentation.components.dialogs.CreatePlaylistDialog(
+        fieldmind.research.app.shared.presentation.components.dialogs.CreatePlaylistDialog(
             onDismiss = { showCreatePlaylistDialog = false },
             onConfirm = { name ->
                 viewModel.createPlaylist(name)
@@ -2189,7 +2189,7 @@ fun StreamingPlaylist.toLibraryPlaylist(): Playlist {
     )
 }
 
-fun StreamingAlbum.toLibraryAlbum(librarySongs: List<chromahub.rhythm.app.shared.data.model.Song>): Album {
+fun StreamingAlbum.toLibraryAlbum(librarySongs: List<fieldmind.research.app.shared.data.model.Song>): Album {
     val streamingTracks = tracks
     val matchingSongs = if (streamingTracks.isNotEmpty()) {
         streamingTracks.map { it.toLibrarySong() }

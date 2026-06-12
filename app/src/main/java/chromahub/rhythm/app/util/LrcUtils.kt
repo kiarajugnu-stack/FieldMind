@@ -14,7 +14,7 @@
  *     You should have received a copy of the GNU General Public License
  *     along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package chromahub.rhythm.app.util
+package fieldmind.research.app.util
 
 import androidx.annotation.VisibleForTesting
 import androidx.media3.common.Metadata
@@ -23,7 +23,7 @@ import androidx.media3.common.util.ParsableByteArray
 import androidx.media3.extractor.metadata.id3.BinaryFrame
 import androidx.media3.extractor.metadata.id3.TextInformationFrame
 import androidx.media3.extractor.metadata.vorbis.VorbisComment
-import chromahub.rhythm.app.util.SemanticLyrics.SyncedLyrics
+import fieldmind.research.app.util.SemanticLyrics.SyncedLyrics
 import java.io.File
 import java.nio.charset.Charset
 

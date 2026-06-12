@@ -1,4 +1,4 @@
-package chromahub.rhythm.app.features.field.data.location
+package fieldmind.research.app.features.field.data.location
 
 import android.Manifest
 import android.annotation.SuppressLint

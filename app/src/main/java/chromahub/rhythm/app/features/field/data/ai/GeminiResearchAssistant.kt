@@ -1,4 +1,4 @@
-package chromahub.rhythm.app.features.field.data.ai
+package fieldmind.research.app.features.field.data.ai
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext

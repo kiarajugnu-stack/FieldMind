@@ -1,12 +1,12 @@
 @file:OptIn(ExperimentalMaterial3ExpressiveApi::class)
 
-package chromahub.rhythm.app.shared.presentation.components.common
+package fieldmind.research.app.shared.presentation.components.common
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonColors
 import androidx.compose.material3.IconButtonDefaults
 
-import chromahub.rhythm.app.shared.presentation.components.icons.RhythmIcons
-import chromahub.rhythm.app.shared.presentation.components.icons.Icon
+import fieldmind.research.app.shared.presentation.components.icons.RhythmIcons
+import fieldmind.research.app.shared.presentation.components.icons.Icon
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
@@ -106,7 +106,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
-import chromahub.rhythm.app.R
+import fieldmind.research.app.R
 import androidx.compose.ui.res.stringResource
 
 // ============================================================================
@@ -996,7 +996,7 @@ fun ExpressiveClickableSurface(
 fun ExpressiveButtonWithIcon(
     onClick: () -> Unit,
     text: String,
-    icon: chromahub.rhythm.app.shared.presentation.components.icons.MaterialSymbolIcon,
+    icon: fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     iconOnStart: Boolean = true
@@ -1033,7 +1033,7 @@ fun ExpressiveButtonWithIcon(
 fun ExpressiveTonalButtonWithIcon(
     onClick: () -> Unit,
     text: String,
-    icon: chromahub.rhythm.app.shared.presentation.components.icons.MaterialSymbolIcon,
+    icon: fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     iconOnStart: Boolean = true
@@ -1827,7 +1827,7 @@ fun ExpressiveToggleButtonGroup(
 private fun ExpressiveMorphingToggleButton(
     isActive: Boolean,
     onClick: () -> Unit,
-    icon: chromahub.rhythm.app.shared.presentation.components.icons.MaterialSymbolIcon,
+    icon: fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon,
     label: String,
     isDarkTheme: Boolean,
     isCompactHeight: Boolean = false,
@@ -2643,7 +2643,7 @@ fun ExpressiveGradientText(
 @Composable
 fun ExpressiveEmptyStateCard(
     modifier: Modifier = Modifier,
-    icon: chromahub.rhythm.app.shared.presentation.components.icons.MaterialSymbolIcon,
+    icon: fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon,
     title: String,
     description: String? = null,
     actionLabel: String? = null,

@@ -1,8 +1,8 @@
-package chromahub.rhythm.app.shared.presentation.screens.settings
+package fieldmind.research.app.shared.presentation.screens.settings
 
-import chromahub.rhythm.app.shared.presentation.components.icons.RhythmIcons
-import chromahub.rhythm.app.shared.presentation.components.icons.MaterialSymbolIcon
-import chromahub.rhythm.app.shared.presentation.components.icons.Icon
+import fieldmind.research.app.shared.presentation.components.icons.RhythmIcons
+import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon
+import fieldmind.research.app.shared.presentation.components.icons.Icon
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
@@ -46,9 +46,9 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.LaunchedEffect
-import chromahub.rhythm.app.shared.data.repository.PlaybackStatsRepository
-import chromahub.rhythm.app.shared.presentation.navigation.RhythmGuardRiskLevel
-import chromahub.rhythm.app.shared.presentation.navigation.rhythmGuardResolveRiskLevel
+import fieldmind.research.app.shared.data.repository.PlaybackStatsRepository
+import fieldmind.research.app.shared.presentation.navigation.RhythmGuardRiskLevel
+import fieldmind.research.app.shared.presentation.navigation.rhythmGuardResolveRiskLevel
 import androidx.compose.ui.draw.clip
 import androidx.compose.material3.SuggestionChip
 import androidx.compose.material3.SuggestionChipDefaults
@@ -90,11 +90,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import chromahub.rhythm.app.R
-import chromahub.rhythm.app.shared.presentation.components.common.CollapsibleHeaderScreen
-import chromahub.rhythm.app.ui.utils.LazyListStateSaver
-import chromahub.rhythm.app.shared.data.model.AppSettings
-import chromahub.rhythm.app.features.local.presentation.components.settings.LanguageSwitcherDialog
+import fieldmind.research.app.R
+import fieldmind.research.app.shared.presentation.components.common.CollapsibleHeaderScreen
+import fieldmind.research.app.ui.utils.LazyListStateSaver
+import fieldmind.research.app.shared.data.model.AppSettings
+import fieldmind.research.app.features.local.presentation.components.settings.LanguageSwitcherDialog
 import android.content.Context
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.spring
@@ -102,15 +102,15 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalConfiguration
-import chromahub.rhythm.app.ui.theme.RhythmTheme
-import chromahub.rhythm.app.util.HapticUtils
-import chromahub.rhythm.app.util.HapticType
+import fieldmind.research.app.ui.theme.RhythmTheme
+import fieldmind.research.app.util.HapticUtils
+import fieldmind.research.app.util.HapticType
 import androidx.lifecycle.viewmodel.compose.viewModel
-import chromahub.rhythm.app.shared.presentation.components.player.SleepTimerBottomSheetNew
-import chromahub.rhythm.app.features.local.presentation.navigation.Screen
-import chromahub.rhythm.app.features.local.presentation.viewmodel.MusicViewModel
-import chromahub.rhythm.app.shared.presentation.components.Material3SettingsGroup
-import chromahub.rhythm.app.shared.presentation.components.Material3SettingsItem
+import fieldmind.research.app.shared.presentation.components.player.SleepTimerBottomSheetNew
+import fieldmind.research.app.features.local.presentation.navigation.Screen
+import fieldmind.research.app.features.local.presentation.viewmodel.MusicViewModel
+import fieldmind.research.app.shared.presentation.components.Material3SettingsGroup
+import fieldmind.research.app.shared.presentation.components.Material3SettingsItem
 import androidx.compose.ui.res.stringResource
 
 // Define routes for navigation
@@ -913,7 +913,7 @@ fun SettingsScreenPreview() {
 @Composable
 fun SettingsScreenWrapper(
     onBack: () -> Unit,
-    appSettings: chromahub.rhythm.app.shared.data.model.AppSettings,
+    appSettings: fieldmind.research.app.shared.data.model.AppSettings,
     navController: androidx.navigation.NavController,
     musicViewModel: MusicViewModel
 ) {
@@ -1070,7 +1070,7 @@ fun SettingsScreenWrapper(
                         SettingsRoutes.PLAYLISTS -> PlaylistsSettingsScreen(onBackClick = { currentRoute = null })
                         SettingsRoutes.MEDIA_SCAN -> MediaScanSettingsScreen(onBackClick = { currentRoute = null })
                         SettingsRoutes.ARTIST_SEPARATORS -> ArtistSeparatorsSettingsScreen(onBackClick = { currentRoute = null })
-                        SettingsRoutes.ABOUT -> chromahub.rhythm.app.shared.presentation.screens.settings.AboutScreen(
+                        SettingsRoutes.ABOUT -> fieldmind.research.app.shared.presentation.screens.settings.AboutScreen(
                             onBackClick = { currentRoute = null },
                             onNavigateToUpdates = { currentRoute = SettingsRoutes.UPDATES }
                         )
@@ -1080,7 +1080,7 @@ fun SettingsScreenWrapper(
                             onNavigateTo = { currentRoute = it },
                             onNavigateToGoSettings = { currentRoute = SettingsRoutes.GO_SETTINGS }
                         )
-                        SettingsRoutes.GO_SETTINGS -> chromahub.rhythm.app.features.streaming.presentation.screens.GoSettingsScreen(
+                        SettingsRoutes.GO_SETTINGS -> fieldmind.research.app.features.streaming.presentation.screens.GoSettingsScreen(
                             onBackClick = { currentRoute = null },
                             onConfigureCurrentProvider = { serviceId ->
                                 appSettings.setInitialStreamingRoute("streaming_service_setup/$serviceId")
@@ -1205,7 +1205,7 @@ fun SettingsScreenWrapper(
                 SettingsRoutes.PLAYLISTS -> PlaylistsSettingsScreen(onBackClick = { currentRoute = null })
                 SettingsRoutes.MEDIA_SCAN -> MediaScanSettingsScreen(onBackClick = { currentRoute = null })
                 SettingsRoutes.ARTIST_SEPARATORS -> ArtistSeparatorsSettingsScreen(onBackClick = { currentRoute = null })
-                SettingsRoutes.ABOUT -> chromahub.rhythm.app.shared.presentation.screens.settings.AboutScreen(
+                SettingsRoutes.ABOUT -> fieldmind.research.app.shared.presentation.screens.settings.AboutScreen(
                     onBackClick = { currentRoute = null },
                     onNavigateToUpdates = { currentRoute = SettingsRoutes.UPDATES }
                 )
@@ -1215,7 +1215,7 @@ fun SettingsScreenWrapper(
                     onNavigateTo = { currentRoute = it },
                     onNavigateToGoSettings = { currentRoute = SettingsRoutes.GO_SETTINGS }
                 )
-                SettingsRoutes.GO_SETTINGS -> chromahub.rhythm.app.features.streaming.presentation.screens.GoSettingsScreen(
+                SettingsRoutes.GO_SETTINGS -> fieldmind.research.app.features.streaming.presentation.screens.GoSettingsScreen(
                     onBackClick = { currentRoute = null },
                     onConfigureCurrentProvider = { serviceId ->
                         appSettings.setInitialStreamingRoute("streaming_service_setup/$serviceId")
@@ -1321,7 +1321,7 @@ fun SettingsTipsRow(
     var todayExposureMinutes by remember { mutableStateOf(0) }
     var currentRiskLevel by remember { mutableStateOf(RhythmGuardRiskLevel.LOW) }
     
-    val appSettings = remember { chromahub.rhythm.app.shared.data.model.AppSettings.getInstance(context) }
+    val appSettings = remember { fieldmind.research.app.shared.data.model.AppSettings.getInstance(context) }
     val limitMinutes by appSettings.rhythmGuardAlertThresholdMinutes.collectAsState()
     val manualVolumeFloat by appSettings.rhythmGuardManualVolumeThreshold.collectAsState()
     val autoBackupEnabled by appSettings.autoBackupEnabled.collectAsState()
@@ -1332,11 +1332,11 @@ fun SettingsTipsRow(
     val enableRatingSystem by appSettings.enableRatingSystem.collectAsState()
 
     LaunchedEffect(limitMinutes, manualVolumeFloat) {
-        val statsRepo = chromahub.rhythm.app.shared.data.repository.PlaybackStatsRepository.getInstance(context)
+        val statsRepo = fieldmind.research.app.shared.data.repository.PlaybackStatsRepository.getInstance(context)
         val audioManager = context.getSystemService(android.content.Context.AUDIO_SERVICE) as android.media.AudioManager
         
         while (true) {
-            val stats = statsRepo.loadSummary(chromahub.rhythm.app.shared.data.repository.StatsTimeRange.TODAY)
+            val stats = statsRepo.loadSummary(fieldmind.research.app.shared.data.repository.StatsTimeRange.TODAY)
             todayExposureMinutes = (stats.totalDurationMs / 60000).toInt()
             
             val maxVol = audioManager.getStreamMaxVolume(android.media.AudioManager.STREAM_MUSIC)
@@ -1346,7 +1346,7 @@ fun SettingsTipsRow(
             val safeLimit = if (limitMinutes > 0) limitMinutes else 90
             val safeThreshold = (manualVolumeFloat * 100).toInt().coerceAtLeast(1)
             
-            currentRiskLevel = chromahub.rhythm.app.shared.presentation.navigation.rhythmGuardResolveRiskLevel(
+            currentRiskLevel = fieldmind.research.app.shared.presentation.navigation.rhythmGuardResolveRiskLevel(
                 currentVolumePercent = currentVolumePercent, 
                 safeThresholdPercent = safeThreshold,
                 exposureMinutes = todayExposureMinutes,
