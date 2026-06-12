@@ -1,0 +1,58 @@
+package chromahub.rhythm.app.features.field.presentation.screens
+
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import chromahub.rhythm.app.features.field.data.database.entity.*
+import chromahub.rhythm.app.features.field.data.learn.LearnLibrary
+import chromahub.rhythm.app.features.field.presentation.components.*
+import chromahub.rhythm.app.features.field.presentation.navigation.FieldMindScreen
+import chromahub.rhythm.app.features.field.presentation.theme.FieldMindTheme
+import chromahub.rhythm.app.features.field.presentation.viewmodel.FieldMindViewModel
+import chromahub.rhythm.app.shared.presentation.components.icons.Icon
+// ══════════════════════════════════════════════════════════════════════
+//  Search archive
+// ══════════════════════════════════════════════════════════════════════
+
+@Composable
+fun ArchiveScreen(viewModel: FieldMindViewModel, onOpenDetail: (String, Long) -> Unit = { _, _ -> }, onOpenReader: (String, String) -> Unit = { _, _ -> }) {
+    val observations by viewModel.observations.collectAsState()
+    val notes by viewModel.notes.collectAsState()
+    val questions by viewModel.questions.collectAsState()
+    val projects by viewModel.projects.collectAsState()
+    val sources by viewModel.sources.collectAsState()
+    val reports by viewModel.reports.collectAsState()
+    val flashcards by viewModel.flashcards.collectAsState()
+    var query by remember { mutableStateOf("") }
+    LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(20.dp, 20.dp, 20.dp, 96.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+        item { FieldScreenHeader("Search archive", "Search forever by topic, date, place, source, project, and keyword.", icon = FieldMindIcons.Search) }
+        item {
+            OutlinedTextField(query, { query = it }, label = { Text("Search") }, leadingIcon = { Icon(icon = FieldMindIcons.Search, contentDescription = null, size = 20.dp) }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(18.dp), singleLine = true)
+        }
+        val q = query.trim().lowercase()
+        if (q.length < 2) {
+            item { EmptyState("Search smarter", "Type at least 2 characters. FieldMind limits in-memory search results so large archives stay responsive; full FTS indexing is the next database step.", icon = FieldMindIcons.Search) }
+        } else {
+            fun matches(vararg parts: String) = parts.any { it.lowercase().contains(q) }
+            items(observations.filter { matches(it.subject, it.category, it.factsOnlyNotes, it.manualLocation, it.tags) }.take(30)) { EntityCard(it.subject, "observation", body = it.factsOnlyNotes.take(120), confidence = it.confidenceLevel, meta = listOf(it.category)) { onOpenDetail("observation", it.id) } }
+            items(notes.filter { matches(it.title, it.body, it.category, it.tags) }.take(30)) { EntityCard(it.title, "note", body = it.body.take(120), meta = listOf(it.category, recentRelativeTime(it.updatedAt))) { onOpenDetail("note", it.id) } }
+            items(questions.filter { matches(it.questionText, it.category, it.status) }.take(30)) { EntityCard(it.questionText, "question", meta = listOf(it.status)) { onOpenDetail("question", it.id) } }
+            items(projects.filter { matches(it.title, it.topicType, it.objective, it.researchQuestion) }.take(30)) { EntityCard(it.title, "project", body = it.objective, meta = listOf(it.topicType)) { onOpenDetail("project", it.id) } }
+            items(sources.filter { matches(it.title, it.author, it.type, it.dateOrYear, it.link, it.doiOrIsbn, it.publisherOrJournal, it.accessDate, it.fileUri, it.citationStyleNote, it.importance, it.readingStatus, it.personalSummary, it.keyFindings, it.questionsGenerated, it.paperNotes) }.take(30)) { EntityCard(it.title, "source", body = it.whatThisSourceTaughtMe, meta = listOf(it.type)) { onOpenDetail("source", it.id) } }
+            items(reports.filter { matches(it.title, it.type, it.question, it.conclusion) }.take(30)) { EntityCard(it.title, "report", body = it.conclusion, meta = listOf(it.type)) { onOpenDetail("report", it.id) } }
+            val learnMatches = LearnLibrary.flatMap { category -> category.topics.flatMap { topic -> topic.resources.map { Triple(category, topic, it) } } }
+                .filter { (category, topic, resource) -> matches(category.name, category.description, topic.name, topic.summary, resource.title, resource.kind, resource.why, resource.author, resource.url) }
+                .take(20)
+            if (learnMatches.isNotEmpty()) item { SectionHeader("Learn resources", "${learnMatches.size} free articles, guides, books, or tools") }
+            items(learnMatches) { (_, topic, resource) -> EntityCard(resource.title, "learn", body = resource.why, meta = listOf(resource.kind, topic.name, resource.author.ifBlank { "Free access" })) { onOpenReader(resource.url, resource.title) } }
+            items(flashcards.filter { matches(it.front, it.back, it.type) }.take(30)) { EntityCard(it.front, "flashcard", body = it.back, meta = listOf(it.type)) { onOpenDetail("flashcard", it.id) } }
+        }
+    }
+}
+
