@@ -55,17 +55,18 @@ val LearnLibrary: List<LearnCategory> = listOf(
                 "The scientific method",
                 "Turn curiosity into testable questions and separate observation from interpretation.",
                 listOf(
-                    LearnResource("The scientific method", "Article", "https://en.wikipedia.org/wiki/Scientific_method", "Clear overview of hypotheses, prediction, and testing."),
-                    LearnResource("Khan Academy: Biology — the science of biology", "Course", "https://www.khanacademy.org/science/biology/intro-to-biology", "Free lessons on how scientists reason and experiment."),
-                    LearnResource("Understanding Science (UC Berkeley)", "Article", "https://undsci.berkeley.edu/", "How science really works, beyond the textbook flowchart.")
+                    LearnResource("The scientific method", "Article", "https://en.wikipedia.org/wiki/Scientific_method", "Clear overview of hypotheses, prediction, and testing.", "Wikipedia"),
+                    LearnResource("OpenStax Biology 2e: The Study of Life", "Book", "https://openstax.org/books/biology-2e/pages/1-introduction", "Free peer-reviewed textbook chapter on scientific reasoning in biology.", "OpenStax"),
+                    LearnResource("Understanding Science (UC Berkeley)", "Article", "https://undsci.berkeley.edu/", "University-built guide to how science really works beyond a simple flowchart.", "UC Berkeley")
                 )
             ),
             LearnTopic(
                 "Recognizing bias",
                 "Spot confirmation bias, observer bias, and sampling bias in your own notes.",
                 listOf(
-                    LearnResource("List of cognitive biases", "Article", "https://en.wikipedia.org/wiki/List_of_cognitive_biases", "Reference catalog of common reasoning errors."),
-                    LearnResource("Calling Bullshit (UW course)", "Course", "https://www.callingbullshit.org/", "Free course on spotting misleading data and claims.")
+                    LearnResource("List of cognitive biases", "Article", "https://en.wikipedia.org/wiki/List_of_cognitive_biases", "Reference catalog of common reasoning errors.", "Wikipedia"),
+                    LearnResource("NIST: Bias in AI and measurement context", "Guide", "https://www.nist.gov/artificial-intelligence/bias", "Government resource for thinking about bias, measurement, and model limits.", "NIST"),
+                    LearnResource("Calling Bullshit (UW course)", "Course", "https://www.callingbullshit.org/", "Free university course on spotting misleading data and claims.", "University of Washington")
                 )
             )
         )
@@ -177,8 +178,9 @@ val LearnLibrary: List<LearnCategory> = listOf(
                 "Freshwater & ecosystems",
                 "Basics of water quality and ecological relationships.",
                 listOf(
-                    LearnResource("USGS Water Science School", "Article", "https://www.usgs.gov/special-topics/water-science-school", "Free lessons on the water cycle and water quality."),
-                    LearnResource("Ecology (overview)", "Article", "https://en.wikipedia.org/wiki/Ecology", "Populations, communities, and ecosystems.")
+                    LearnResource("USGS Water Science School", "Article", "https://www.usgs.gov/special-topics/water-science-school", "Free lessons on the water cycle and water quality.", "USGS"),
+                    LearnResource("EPA: Indicators of water quality", "Guide", "https://www.epa.gov/national-aquatic-resource-surveys/indicators-water-quality", "Practical official indicators for field water observations.", "EPA"),
+                    LearnResource("Ecology (overview)", "Article", "https://en.wikipedia.org/wiki/Ecology", "Populations, communities, and ecosystems.", "Wikipedia")
                 )
             )
         )
@@ -191,9 +193,9 @@ val LearnLibrary: List<LearnCategory> = listOf(
                 "Statistics foundations",
                 "Means, variation, sampling, and reading charts honestly.",
                 listOf(
-                    LearnResource("Khan Academy: Statistics & probability", "Course", "https://www.khanacademy.org/math/statistics-probability", "Free, thorough intro to data and statistics."),
-                    LearnResource("OpenIntro Statistics", "Book", "https://www.openintro.org/book/os/", "Free, widely used statistics textbook with exercises."),
-                    LearnResource("Our World in Data", "Dataset", "https://ourworldindata.org/", "Free data and charts on science, environment, and society.")
+                    LearnResource("OpenStax Introductory Statistics", "Book", "https://openstax.org/details/books/introductory-statistics", "Free peer-reviewed textbook for descriptive statistics, sampling, and inference.", "OpenStax"),
+                    LearnResource("OpenIntro Statistics", "Book", "https://www.openintro.org/book/os/", "Free, widely used statistics textbook with exercises.", "OpenIntro"),
+                    LearnResource("Our World in Data", "Dataset", "https://ourworldindata.org/", "Free data and charts on science, environment, and society.", "Our World in Data")
                 )
             )
         )
@@ -206,8 +208,9 @@ val LearnLibrary: List<LearnCategory> = listOf(
                 "Writing & citing",
                 "Structure findings and cite sources properly.",
                 listOf(
-                    LearnResource("Purdue OWL", "Article", "https://owl.purdue.edu/owl/research_and_citation/resources.html", "Free, authoritative writing and citation guides."),
-                    LearnResource("On the Origin of Species (Darwin)", "Book", "https://www.gutenberg.org/ebooks/1228", "Free classic showing careful observation turned into argument.")
+                    LearnResource("Purdue OWL", "Article", "https://owl.purdue.edu/owl/research_and_citation/resources.html", "Free, authoritative writing and citation guides.", "Purdue University"),
+                    LearnResource("NCBI Bookshelf: How to read a scientific paper", "Book", "https://www.ncbi.nlm.nih.gov/books/", "Free biomedical books and reports; useful for primary-source reading practice.", "NCBI"),
+                    LearnResource("On the Origin of Species (Darwin)", "Book", "https://www.gutenberg.org/ebooks/1228", "Free classic showing careful observation turned into argument.", "Project Gutenberg")
                 )
             )
         )

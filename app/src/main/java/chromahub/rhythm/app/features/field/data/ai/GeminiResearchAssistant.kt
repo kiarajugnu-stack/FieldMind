@@ -7,8 +7,11 @@ import org.json.JSONObject
 import java.net.HttpURLConnection
 import java.net.URL
 
+/** Supported remote AI providers for FieldMind's optional research assistant. */
+enum class AiProvider(val label: String) { GEMINI("Gemini"), OPENAI("OpenAI") }
+
 /**
- * Optional Gemini research assistant for FieldMind.
+ * Optional research assistant for FieldMind.
  *
  * Persistent instruction: help the user think clearly; do not replace the user's thinking;
  * do not invent observations, citations, evidence, locations, or conclusions; if evidence is
@@ -16,13 +19,22 @@ import java.net.URL
  */
 class GeminiResearchAssistant(
     private val enabled: Boolean,
+    private val provider: AiProvider = AiProvider.GEMINI,
     private val apiKeyProvider: () -> String?,
     private val modelProvider: () -> String = { "gemini-1.5-flash" }
 ) {
     fun isAvailable(): Boolean = enabled && !apiKeyProvider().isNullOrBlank()
+    fun providerLabel(): String = provider.label
 
     suspend fun generateContent(task: AssistantTask, userText: String): AssistantSuggestion = withContext(Dispatchers.IO) {
         if (!isAvailable()) return@withContext disabledSuggestion(task)
+        when (provider) {
+            AiProvider.GEMINI -> generateGemini(task, userText)
+            AiProvider.OPENAI -> generateOpenAi(task, userText)
+        }
+    }
+
+    private fun generateGemini(task: AssistantTask, userText: String): AssistantSuggestion {
         val apiKey = apiKeyProvider().orEmpty()
         val model = modelProvider().ifBlank { "gemini-1.5-flash" }
         val endpoint = URL("https://generativelanguage.googleapis.com/v1beta/models/$model:generateContent?key=$apiKey")
@@ -30,26 +42,56 @@ class GeminiResearchAssistant(
         val request = JSONObject()
             .put("contents", JSONArray().put(JSONObject().put("parts", JSONArray().put(JSONObject().put("text", prompt)))))
             .put("generationConfig", JSONObject().put("temperature", 0.3).put("topP", 0.8))
-        val connection = endpoint.openConnection() as HttpURLConnection
-        connection.requestMethod = "POST"
-        connection.setRequestProperty("Content-Type", "application/json")
-        connection.doOutput = true
-        connection.outputStream.use { it.write(request.toString().toByteArray()) }
-        val stream = if (connection.responseCode in 200..299) connection.inputStream else connection.errorStream
-        val body = stream.bufferedReader().use { it.readText() }
-        if (connection.responseCode !in 200..299) {
-            AssistantSuggestion(task.title, "Gemini request failed (${connection.responseCode}). $body", true, true)
-        } else {
-            val text = JSONObject(body)
-                .optJSONArray("candidates")
+        val body = postJson(endpoint, request) { connection ->
+            connection.setRequestProperty("Content-Type", "application/json")
+        }
+        if (body.first !in 200..299) return AssistantSuggestion(task.title, "Gemini request failed (${body.first}). ${body.second}", true, true)
+        val text = JSONObject(body.second)
+            .optJSONArray("candidates")
+            ?.optJSONObject(0)
+            ?.optJSONObject("content")
+            ?.optJSONArray("parts")
+            ?.optJSONObject(0)
+            ?.optString("text")
+            .orEmpty()
+        return AssistantSuggestion(task.title, text.ifBlank { "Gemini returned an empty draft." }, true, true)
+    }
+
+    private fun generateOpenAi(task: AssistantTask, userText: String): AssistantSuggestion {
+        val apiKey = apiKeyProvider().orEmpty()
+        val model = modelProvider().ifBlank { "gpt-4.1-mini" }
+        val endpoint = URL("https://api.openai.com/v1/responses")
+        val request = JSONObject()
+            .put("model", model)
+            .put("temperature", 0.3)
+            .put("input", buildPrompt(task, userText))
+        val body = postJson(endpoint, request) { connection ->
+            connection.setRequestProperty("Content-Type", "application/json")
+            connection.setRequestProperty("Authorization", "Bearer $apiKey")
+        }
+        if (body.first !in 200..299) return AssistantSuggestion(task.title, "OpenAI request failed (${body.first}). ${body.second}", true, true)
+        val json = JSONObject(body.second)
+        val outputText = json.optString("output_text").ifBlank {
+            json.optJSONArray("output")
                 ?.optJSONObject(0)
-                ?.optJSONObject("content")
-                ?.optJSONArray("parts")
+                ?.optJSONArray("content")
                 ?.optJSONObject(0)
                 ?.optString("text")
                 .orEmpty()
-            AssistantSuggestion(task.title, text.ifBlank { "Gemini returned an empty draft." }, true, true)
         }
+        return AssistantSuggestion(task.title, outputText.ifBlank { "OpenAI returned an empty draft." }, true, true)
+    }
+
+    private fun postJson(endpoint: URL, request: JSONObject, configure: (HttpURLConnection) -> Unit): Pair<Int, String> {
+        val connection = endpoint.openConnection() as HttpURLConnection
+        connection.requestMethod = "POST"
+        configure(connection)
+        connection.doOutput = true
+        connection.outputStream.use { it.write(request.toString().toByteArray()) }
+        val code = connection.responseCode
+        val stream = if (code in 200..299) connection.inputStream else connection.errorStream
+        val body = stream?.bufferedReader()?.use { it.readText() }.orEmpty()
+        return code to body
     }
 
     fun observationFactualityReview(notes: String): AssistantSuggestion = promptPreview(AssistantTask.FACTUALITY, notes)
@@ -63,14 +105,14 @@ class GeminiResearchAssistant(
 
     private fun promptPreview(task: AssistantTask, userText: String) = AssistantSuggestion(
         title = task.title,
-        body = "Ready to ask Gemini: ${task.instructions}\n\nUser text stays local until you press an explicit AI action.${if (userText.isBlank()) "" else "\nPreview input: ${userText.take(240)}"}",
+        body = "Ready to ask ${provider.label}: ${task.instructions}\n\nUser text stays local until you press an explicit AI action.${if (userText.isBlank()) "" else "\nPreview input: ${userText.take(240)}"}",
         requiresConfirmation = true,
         maySendDataOnlyAfterUserAction = true
     )
 
     private fun disabledSuggestion(task: AssistantTask) = AssistantSuggestion(
         title = task.title,
-        body = "Gemini is disabled or missing an API key. Enable it in FieldMind Settings before sending research text.",
+        body = "${provider.label} is disabled or missing an API key. Enable it in FieldMind Settings before sending research text.",
         requiresConfirmation = true,
         maySendDataOnlyAfterUserAction = true
     )
@@ -80,6 +122,7 @@ class GeminiResearchAssistant(
         Never invent observations, evidence, citations, locations, measurements, species names, or conclusions.
         If information is missing, say exactly what evidence is needed.
         Preserve uncertainty and separate facts from interpretation.
+        Prefer primary, free-access, verifiable sources such as Wikipedia overview pages, government science agencies, universities, OpenStax, NCBI Bookshelf, USGS, NOAA, NASA, EPA, Cornell Lab, Crossref/OpenAlex metadata, or open-access papers.
 
         Task: ${task.instructions}
 
@@ -99,10 +142,7 @@ enum class AssistantTask(val title: String, val instructions: String) {
     WRITING("Writing improvement", "Improve clarity while preserving uncertainty and separating observations, analysis, and conclusions."),
     PAPER_BOOK_SUGGESTIONS(
         "Papers & books",
-        "Suggest 4-6 real, well-known research papers and books relevant to the topic. For each, give title, author(s), year, " +
-            "a one-line reason it is relevant, and where to find it (journal/DOI or publisher) if you are confident. " +
-            "Only list works you are confident actually exist; never fabricate titles, authors, DOIs, or links. " +
-            "If unsure about a detail, say so and suggest a search query instead. Group into 'Papers' and 'Books'."
+        "Suggest 4-6 real, free-access or easy-to-verify primary resources relevant to the topic. Prefer Wikipedia overview pages, government/university pages, OpenStax/NCBI/USGS/NOAA/NASA/EPA/Cornell resources, open metadata, and open-access papers. Never fabricate titles, authors, DOIs, or links. If unsure, suggest a search query instead."
     )
 }
 

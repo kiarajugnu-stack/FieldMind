@@ -218,7 +218,7 @@ private fun FieldMindNavHost(
         composable(FieldMindScreen.DataTools.route) { ProjectsScreen(viewModel = viewModel, startTab = 3, onOpenDetail = openDetail) }
         composable(FieldMindScreen.Analysis.route) { InsightsScreen(viewModel = viewModel, onNavigate = { navController.navigateToDestination(it.route) }, onOpenDetail = openDetail) }
         composable(FieldMindScreen.Reports.route) { ProjectsScreen(viewModel = viewModel, startTab = 4, onOpenDetail = openDetail) }
-        composable(FieldMindScreen.Search.route) { ArchiveScreen(viewModel = viewModel, onOpenDetail = openDetail) }
+        composable(FieldMindScreen.Search.route) { ArchiveScreen(viewModel = viewModel, onOpenDetail = openDetail, onOpenReader = openReader) }
         composable(FieldMindScreen.BackupExport.route) { BackupExportScreen(viewModel = viewModel) }
         composable(FieldMindScreen.Progress.route) { InsightsScreen(viewModel = viewModel, onNavigate = { navController.navigateToDestination(it.route) }, onOpenDetail = openDetail) }
         composable(FieldMindScreen.Flashcards.route) { FlashcardSessionScreen(viewModel = viewModel, onBack = { navController.popBackStack() }) }

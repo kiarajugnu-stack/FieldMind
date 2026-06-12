@@ -32,11 +32,20 @@ class FieldMindSettings private constructor(context: Context) {
     private val _geminiEnabled = MutableStateFlow(prefs.getBoolean(KEY_GEMINI_ENABLED, false))
     val geminiEnabled: StateFlow<Boolean> = _geminiEnabled.asStateFlow()
 
+    private val _aiProvider = MutableStateFlow(prefs.getString(KEY_AI_PROVIDER, "Gemini") ?: "Gemini")
+    val aiProvider: StateFlow<String> = _aiProvider.asStateFlow()
+
     private val _geminiApiKey = MutableStateFlow(prefs.getString(KEY_GEMINI_API_KEY, "") ?: "")
     val geminiApiKey: StateFlow<String> = _geminiApiKey.asStateFlow()
 
     private val _geminiModel = MutableStateFlow(prefs.getString(KEY_GEMINI_MODEL, "gemini-1.5-flash") ?: "gemini-1.5-flash")
     val geminiModel: StateFlow<String> = _geminiModel.asStateFlow()
+
+    private val _openAiApiKey = MutableStateFlow(prefs.getString(KEY_OPENAI_API_KEY, "") ?: "")
+    val openAiApiKey: StateFlow<String> = _openAiApiKey.asStateFlow()
+
+    private val _openAiModel = MutableStateFlow(prefs.getString(KEY_OPENAI_MODEL, "gpt-4.1-mini") ?: "gpt-4.1-mini")
+    val openAiModel: StateFlow<String> = _openAiModel.asStateFlow()
 
     private val _aiRequireConfirmBeforeSave = MutableStateFlow(prefs.getBoolean(KEY_AI_CONFIRM, true))
     val aiRequireConfirmBeforeSave: StateFlow<Boolean> = _aiRequireConfirmBeforeSave.asStateFlow()
@@ -72,8 +81,11 @@ class FieldMindSettings private constructor(context: Context) {
     fun setAudioRecordingEnabled(value: Boolean) = edit(KEY_AUDIO_RECORDING, value) { _audioRecordingEnabled.value = value }
     fun setAttachmentExportMode(value: String) = edit(KEY_ATTACHMENT_EXPORT_MODE, value) { _attachmentExportMode.value = value }
     fun setGeminiEnabled(value: Boolean) = edit(KEY_GEMINI_ENABLED, value) { _geminiEnabled.value = value }
+    fun setAiProvider(value: String) = edit(KEY_AI_PROVIDER, value) { _aiProvider.value = value }
     fun setGeminiApiKey(value: String) = edit(KEY_GEMINI_API_KEY, value.trim()) { _geminiApiKey.value = value.trim() }
     fun setGeminiModel(value: String) = edit(KEY_GEMINI_MODEL, value) { _geminiModel.value = value }
+    fun setOpenAiApiKey(value: String) = edit(KEY_OPENAI_API_KEY, value.trim()) { _openAiApiKey.value = value.trim() }
+    fun setOpenAiModel(value: String) = edit(KEY_OPENAI_MODEL, value) { _openAiModel.value = value }
     fun setAiRequireConfirmBeforeSave(value: Boolean) = edit(KEY_AI_CONFIRM, value) { _aiRequireConfirmBeforeSave.value = value }
     fun setAiSendAttachments(value: Boolean) = edit(KEY_AI_SEND_ATTACHMENTS, value) { _aiSendAttachments.value = value }
     fun setRemindersEnabled(value: Boolean) = edit(KEY_REMINDERS, value) { _remindersEnabled.value = value }
@@ -101,8 +113,11 @@ class FieldMindSettings private constructor(context: Context) {
         private const val KEY_AUDIO_RECORDING = "audio_recording"
         private const val KEY_ATTACHMENT_EXPORT_MODE = "attachment_export_mode"
         private const val KEY_GEMINI_ENABLED = "gemini_enabled"
+        private const val KEY_AI_PROVIDER = "ai_provider"
         private const val KEY_GEMINI_API_KEY = "gemini_api_key"
         private const val KEY_GEMINI_MODEL = "gemini_model"
+        private const val KEY_OPENAI_API_KEY = "openai_api_key"
+        private const val KEY_OPENAI_MODEL = "openai_model"
         private const val KEY_AI_CONFIRM = "ai_confirm"
         private const val KEY_AI_SEND_ATTACHMENTS = "ai_send_attachments"
         private const val KEY_REMINDERS = "reminders"
