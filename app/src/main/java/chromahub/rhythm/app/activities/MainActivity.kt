@@ -16,6 +16,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.fragment.app.FragmentActivity
+import org.osmdroid.config.Configuration
+import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import chromahub.rhythm.app.features.field.presentation.navigation.FieldMindApp
 import chromahub.rhythm.app.features.field.presentation.theme.FieldMindTheme
 import chromahub.rhythm.app.features.field.presentation.viewmodel.FieldMindViewModel
@@ -49,6 +51,10 @@ class MainActivity : FragmentActivity() {
         enableEdgeToEdge()
         appSettings = AppSettings.getInstance(applicationContext)
         handleSharedSource(intent)
+
+        // Configure osmdroid for offline OSM maps
+        Configuration.getInstance().load(applicationContext, android.preference.PreferenceManager.getDefaultSharedPreferences(applicationContext))
+        Configuration.getInstance().userAgentValue = "FieldMind/5.0 (Android; offline-map)"
 
         setContent {
             val useSystemTheme by themeViewModel.useSystemTheme.collectAsState()

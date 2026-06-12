@@ -269,6 +269,15 @@ fun HomeScreen(
         item { HomeWidgetGrid(observations, notes, questions, sources, projects, reports, data) { onNavigate(it) } }
         item { RecommendedLearningCard(recommendations, onOpenReader, onSeeAll = { onNavigate(FieldMindScreen.Learn) }) }
         item { ReadingReviewCard(sources, flashcards, onNavigate) }
+        item {
+            SectionHeader("Quick actions", "Go to Map, Export, Search, or Flashcards")
+            QuickActionGrid(listOf(
+                QuickAction("Map", FieldMindIcons.Map, FieldMindTheme.colors.info, FieldMindScreen.MapScreen),
+                QuickAction("Export", FieldMindIcons.Export, FieldMindTheme.colors.report, FieldMindScreen.ExportStudio),
+                QuickAction("Search", FieldMindIcons.Search, FieldMindTheme.colors.question, FieldMindScreen.Search),
+                QuickAction("Review", FieldMindIcons.Flashcard, FieldMindTheme.colors.flashcard, FieldMindScreen.Flashcards)
+            )) { onNavigate(it) }
+        }
         if (activeProject != null) {
             item { SectionHeader("Current project") }
             item {
@@ -3486,8 +3495,8 @@ private fun NewReportDialog(viewModel: FieldMindViewModel, onDismiss: () -> Unit
 
 @Composable
 private fun NewFlashcardDialog(viewModel: FieldMindViewModel, onDismiss: () -> Unit) {
-    var type by remember { mutableStateOf("concept") }; var front by remember { mutableStateOf("") }; var back by remember { mutableStateOf("") }
-    FormDialog("Create Flashcard", onDismiss, { if (front.isNotBlank() && back.isNotBlank()) { viewModel.addFlashcard(front, back, type); onDismiss() } }) {
+    var type by remember { mutableStateOf("concept") }; var front by remember { mutableStateOf("") }; var back by remember { mutableStateOf("") }; var useSm2 by remember { mutableStateOf(false) }
+    FormDialog("Create Flashcard", onDismiss, { if (front.isNotBlank() && back.isNotBlank()) { viewModel.addFlashcard(front, back, type, deckMode = if (useSm2) "sm2" else "basic"); onDismiss() } }) {
         SourceFormHero("Create review card", "Design one card that flips cleanly during review — one prompt, one answer.")
         CaptureStep("Card preset", "Choose how this should be practiced.", FieldMindIcons.Flashcard) {
             ChoiceChips(listOf("term", "definition", "concept", "question-answer", "mistake card", "field ID", "method step"), type) { type = it }
@@ -3497,6 +3506,13 @@ private fun NewFlashcardDialog(viewModel: FieldMindViewModel, onDismiss: () -> U
         }
         CaptureStep("Back", "Add the answer, evidence, or correction.", FieldMindIcons.Answer) {
             FieldTextField(back, { back = it }, "Answer / back", minLines = 4)
+        }
+        Row(Modifier.fillMaxWidth().padding(horizontal = 40.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f)) {
+                Text("Spaced repetition (SM-2)", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
+                Text("Review at optimal intervals", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            Switch(checked = useSm2, onCheckedChange = { useSm2 = it })
         }
     }
 }
@@ -3797,12 +3813,19 @@ private fun EditReportDialog(entity: ReportEntity, viewModel: FieldMindViewModel
 
 @Composable
 private fun EditFlashcardDialog(entity: FlashcardEntity, viewModel: FieldMindViewModel, onDismiss: () -> Unit) {
-    var type by remember { mutableStateOf(entity.type) }; var front by remember { mutableStateOf(entity.front) }; var back by remember { mutableStateOf(entity.back) }
+    var type by remember { mutableStateOf(entity.type) }; var front by remember { mutableStateOf(entity.front) }; var back by remember { mutableStateOf(entity.back) }; var useSm2 by remember { mutableStateOf(entity.deckMode == "sm2") }
     FormDialog("Edit Flashcard", onDismiss, {
-        if (front.isNotBlank() && back.isNotBlank()) { viewModel.updateFlashcardEntity(entity.copy(type = type, front = front.trim(), back = back.trim())); onDismiss() }
+        if (front.isNotBlank() && back.isNotBlank()) { viewModel.updateFlashcardEntity(entity.copy(type = type, front = front.trim(), back = back.trim(), deckMode = if (useSm2) "sm2" else "basic")); onDismiss() }
     }) {
         FormChoice("Card type", listOf("term", "definition", "concept", "question-answer", "mistake card"), type) { type = it }
         FieldTextField(front, { front = it }, "Front"); FieldTextField(back, { back = it }, "Back", minLines = 3)
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f)) {
+                Text("Spaced repetition (SM-2)", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
+                Text(if (useSm2) "SM-2 scheduling active" else "Basic flip mode", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            Switch(checked = useSm2, onCheckedChange = { useSm2 = it })
+        }
     }
 }
 
@@ -3829,7 +3852,7 @@ private fun ObservationLocationCard(latitude: Double, longitude: Double, manualL
             }
             if (placeName != null) Text(placeName, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold)
             Box(Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp))) {
-                MiniMap(listOf(latitude to longitude), pointColor = colors.observation, height = 160.dp)
+                OsmMap(listOf(latitude to longitude), markerColor = colors.observation)
             }
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(coords, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1f))
@@ -3849,6 +3872,68 @@ private fun ObservationLocationCard(latitude: Double, longitude: Double, manualL
  * AlertDialog so add/edit flows read as real pages: a top bar with close + Save, then a
  * scrolling body of clearly separated, ordered sections.
  */
+// ═════════════════════════════════════════════════
+//  Map Screen (full-screen OSM map)
+// ═════════════════════════════════════════════════
+
+@Composable
+fun MapFieldScreen(
+    viewModel: FieldMindViewModel,
+    onNavigate: (FieldMindScreen) -> Unit = {},
+    onOpenDetail: (String, Long) -> Unit = { _, _ -> }
+) {
+    val observations by viewModel.observations.collectAsState()
+    val points = observations.mapNotNull { o -> o.latitude?.let { lat -> o.longitude?.let { lon -> lat to lon } } }
+    val _unused = observations.firstOrNull { it.latitude != null }
+    val colors = FieldMindTheme.colors
+
+    LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(20.dp, 20.dp, 20.dp, 96.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
+        item { FieldScreenHeader("Field Map", "Interactive GPS map of your observation locations.", icon = FieldMindIcons.MapFull, actionIcon = FieldMindIcons.Close, onAction = { onNavigate(FieldMindScreen.Home) }) }
+        if (points.isEmpty()) {
+            item {
+                Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(24.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)) {
+                    Column(Modifier.padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                        Icon(icon = FieldMindIcons.Location, contentDescription = null, tint = colors.observation, size = 48.dp)
+                        Text("No GPS-tagged observations", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                        Text("Enable GPS when capturing observations to plot them on the map. You can also use the mini-map in Insight.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Button(onClick = { onNavigate(FieldMindScreen.Observe) }, shape = RoundedCornerShape(16.dp)) { Text("Go to Capture") }
+                    }
+                }
+            }
+        } else {
+            item { OsmMap(points = points) }
+            item {
+                Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(24.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)) {
+                    Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Text("${points.size} observation${if (points.size == 1) "" else "s"} with GPS", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                        Text("Pinch to zoom and pan the map. Tap a marker to see coordinates. Go to Insights for charts, achievements, and knowledge graph.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        OutlinedButton(onClick = { onNavigate(FieldMindScreen.Insights) }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp)) {
+                            Icon(icon = FieldMindIcons.Insights, contentDescription = null, size = 18.dp)
+                            Spacer(Modifier.size(8.dp))
+                            Text("Open Insights")
+                        }
+                    }
+                }
+            }
+            // Show recent GPS observations
+            val geoObs = observations.filter { it.latitude != null }.sortedByDescending { it.timestamp }.take(5)
+            if (geoObs.isNotEmpty()) {
+                item { SectionHeader("Recent tagged observations") }
+                items(geoObs) { obs ->
+                    EntityCard(
+                        title = obs.subject,
+                        kind = "observation",
+                        body = obs.manualLocation.ifBlank { "%.5f, %.5f".format(obs.latitude!!, obs.longitude!!) },
+                        meta = listOf(obs.category, obs.date),
+                        onClick = { onOpenDetail("observation", obs.id) }
+                    )
+                }
+            }
+        }
+    }
+}
+
+
 @Composable
 private fun FormDialog(title: String, onDismiss: () -> Unit, onSave: () -> Unit, content: @Composable ColumnScope.() -> Unit) {
     val haptics = rememberFieldMindHaptics()
