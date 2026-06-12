@@ -30,14 +30,159 @@ import chromahub.rhythm.app.features.field.presentation.viewmodel.FieldMindViewM
 import chromahub.rhythm.app.shared.presentation.components.icons.Icon
 import chromahub.rhythm.app.shared.presentation.components.icons.MaterialSymbolIcon
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.foundation.BorderStroke
+
 // ══════════════════════════════════════════════════════════════════════
-//  Settings
+//  Settings Hub
 // ══════════════════════════════════════════════════════════════════════
 
 @Composable
-fun FieldMindSettingsScreen(viewModel: FieldMindViewModel? = null, onBack: () -> Unit, onResetOnboarding: () -> Unit) {
-    val context = LocalContext.current
-    val settings = viewModel?.fieldSettings ?: chromahub.rhythm.app.features.field.data.settings.FieldMindSettings.getInstance(context)
+fun FieldMindSettingsScreen(
+    viewModel: FieldMindViewModel? = null,
+    onBack: () -> Unit,
+    onResetOnboarding: () -> Unit,
+    onOpenExport: (() -> Unit)? = null,
+    onOpenAbout: (() -> Unit)? = null,
+    onOpenProfile: (() -> Unit)? = null,
+    onOpenAppearance: (() -> Unit)? = null,
+    onOpenCapture: (() -> Unit)? = null,
+    onOpenAi: (() -> Unit)? = null,
+    onOpenLocalModel: (() -> Unit)? = null,
+    onOpenBackup: (() -> Unit)? = null
+) {
+    val privacy by (viewModel?.fieldSettings ?: FieldMindSettings.getInstance(LocalContext.current)).privacyLockEnabled.collectAsState()
+    if (!FieldMindPrivacyGate(privacy, "Settings are locked", "Confirm your device lock to edit FieldMind settings.")) return
+
+    LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(20.dp, 20.dp, 20.dp, 40.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        item { FieldScreenHeader("Settings", "Offline-first setup, profile, capture, local AI, export, and privacy.", icon = FieldMindIcons.Settings, actionIcon = FieldMindIcons.Back, onAction = onBack) }
+
+        item {
+            SettingsTileGroup("Quick settings") {
+                if (viewModel != null) {
+                    val themeMode by viewModel.fieldSettings.themeMode.collectAsState()
+                    val dynamicColor by viewModel.fieldSettings.dynamicColorEnabled.collectAsState()
+                    ToggleItem("Material You colors", "Use system wallpaper colors that auto-adapt.", dynamicColor, viewModel.fieldSettings::setDynamicColorEnabled, FieldMindIcons.Palette)
+                    ThemeToggle(themeMode, viewModel.fieldSettings::setThemeMode)
+                }
+            }
+        }
+
+        item { SectionHeader("Configuration", "Manage every aspect of your FieldMind experience") }
+
+        item { SettingsNavCard("Research profile", "Name, role, and research focus", FieldMindIcons.Nature, FieldMindTheme.colors.observation) { onOpenProfile?.invoke() } }
+        item { SettingsNavCard("Appearance", "Theme, dynamic color, and layout", FieldMindIcons.Palette, FieldMindTheme.colors.info) { onOpenAppearance?.invoke() } }
+        item { SettingsNavCard("Capture defaults", "Categories, confidence, goal, location", FieldMindIcons.Capture, FieldMindTheme.colors.observation) { onOpenCapture?.invoke() } }
+        item { SettingsNavCard("AI assistant", "Gemini, OpenAI, provider settings", FieldMindIcons.Sparkle, FieldMindTheme.colors.flashcard) { onOpenAi?.invoke() } }
+        item { SettingsNavCard("Local model", "Download offline model for flashcards", FieldMindIcons.Download, FieldMindTheme.colors.hypothesis) { onOpenLocalModel?.invoke() } }
+        item { SettingsNavCard("Backup & import", "Auto-backup, interval, and restore", FieldMindIcons.Archive, FieldMindTheme.colors.data) { onOpenBackup?.invoke() } }
+        item { SettingsNavCard("Export Studio", "Export as PDF, CSV, JSON, HTML, SVG", FieldMindIcons.Export, FieldMindTheme.colors.report) { onOpenExport?.invoke() } }
+        item { SettingsNavCard("About", "Credits, acknowledgements, and version", FieldMindIcons.Info, FieldMindTheme.colors.source) { onOpenAbout?.invoke() } }
+
+        item {
+            OutlinedButton(onClick = onResetOnboarding, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp)) {
+                Text("Reset onboarding")
+            }
+            Spacer(Modifier.height(40.dp))
+        }
+    }
+}
+
+@Composable
+private fun SettingsNavCard(title: String, subtitle: String, icon: MaterialSymbolIcon, color: androidx.compose.ui.graphics.Color, onClick: () -> Unit) {
+    Card(
+        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),
+        shape = RoundedCornerShape(22.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Row(Modifier.padding(16.dp), horizontalArrangement = Arrangement.spacedBy(14.dp), verticalAlignment = Alignment.CenterVertically) {
+            Box(Modifier.size(44.dp).clip(RoundedCornerShape(14.dp)).background(color.copy(alpha = 0.14f)), contentAlignment = Alignment.Center) {
+                Icon(icon = icon, contentDescription = null, tint = color, size = 24.dp)
+            }
+            Column(Modifier.weight(1f)) {
+                Text(title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+                Text(subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            Icon(icon = FieldMindIcons.Forward, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, size = 20.dp)
+        }
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════════
+//  Profile Settings Page
+// ══════════════════════════════════════════════════════════════════════
+
+@Composable
+fun ProfileSettingsPage(viewModel: FieldMindViewModel, onBack: () -> Unit) {
+    val settings = viewModel.fieldSettings
+    val profileName by settings.profileName.collectAsState()
+    val profileRole by settings.profileRole.collectAsState()
+    val profileFocus by settings.profileFocus.collectAsState()
+
+    SettingsSubPage("Research profile", icon = FieldMindIcons.Nature, onBack = onBack) {
+        item {
+            SettingsGroupCard {
+                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text("FieldMind has no app server: profile, observations, sources, and local model settings are stored on this device unless you export or share them.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    OutlinedTextField(value = profileName, onValueChange = settings::setProfileName, label = { Text("Display name") }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(18.dp), singleLine = true)
+                    Text("Role", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    ChoiceChips(listOf("Field learner", "Student", "Naturalist", "Researcher"), profileRole) { settings.setProfileRole(it) }
+                    Text("Focus", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    ChoiceChips(listOf("Wildlife & ecology", "Plants & botany", "Weather", "Water", "Geology", "General science"), profileFocus) { settings.setProfileFocus(it) }
+                }
+            }
+        }
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════════
+//  Appearance Settings Page
+// ══════════════════════════════════════════════════════════════════════
+
+@Composable
+fun AppearanceSettingsPage(viewModel: FieldMindViewModel, onBack: () -> Unit) {
+    val settings = viewModel.fieldSettings
+    val themeMode by settings.themeMode.collectAsState()
+    val dynamicColor by settings.dynamicColorEnabled.collectAsState()
+
+    SettingsSubPage("Appearance", icon = FieldMindIcons.Palette, onBack = onBack) {
+        item {
+            SettingsGroupCard {
+                ThemeToggle(themeMode, settings::setThemeMode)
+                HorizontalDivider(Modifier.padding(start = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+                ToggleItem("Material You dynamic color", "Use system wallpaper colors that auto-adapt to light/dark. Off keeps the FieldMind brand palette.", dynamicColor, settings::setDynamicColorEnabled, FieldMindIcons.Palette)
+            }
+        }
+        item {
+            SettingsGroupCard {
+                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("Theme preview", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.primary)
+                    Text("Changes apply immediately. The FieldMind brand palette uses forest green and warm ochre tones. When dynamic color is enabled, system wallpaper colors override the brand palette.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ThemeToggle(current: String, onSet: (String) -> Unit) {
+    Row(Modifier.fillMaxWidth().padding(16.dp), horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
+        Icon(icon = FieldMindIcons.Palette, contentDescription = null, tint = MaterialTheme.colorScheme.primary, size = 22.dp)
+        Column(Modifier.weight(1f)) {
+            Text("Theme", fontWeight = FontWeight.SemiBold)
+            ChoiceChips(listOf("System", "Light", "Dark"), current) { onSet(it) }
+        }
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════════
+//  Capture Defaults Settings Page
+// ══════════════════════════════════════════════════════════════════════
+
+@Composable
+fun CaptureDefaultsSettingsPage(viewModel: FieldMindViewModel, onBack: () -> Unit) {
+    val settings = viewModel.fieldSettings
     val goal by settings.dailyObservationGoal.collectAsState()
     val category by settings.defaultCategory.collectAsState()
     val confidence by settings.defaultConfidence.collectAsState()
@@ -45,6 +190,50 @@ fun FieldMindSettingsScreen(viewModel: FieldMindViewModel? = null, onBack: () ->
     val media by settings.mediaAttachmentsEnabled.collectAsState()
     val audio by settings.audioRecordingEnabled.collectAsState()
     val exportMode by settings.attachmentExportMode.collectAsState()
+    val reminders by settings.remindersEnabled.collectAsState()
+    val streaks by settings.streaksEnabled.collectAsState()
+
+    SettingsSubPage("Capture defaults", icon = FieldMindIcons.Capture, onBack = onBack) {
+        item {
+            SettingsGroupCard {
+                StepperItem("Daily observation goal", "Drives the Today dashboard and progress ring.", goal, FieldMindIcons.Today) { settings.setDailyObservationGoal(it) }
+            }
+        }
+        item {
+            SettingsGroupCard {
+                ChoiceItemForm("Default category", observationCategories, category, FieldMindIcons.Observation, settings::setDefaultCategory)
+                HorizontalDivider(Modifier.padding(start = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+                ChoiceItemForm("Default confidence", confidenceOptions, confidence, FieldMindIcons.Check, settings::setDefaultConfidence)
+                HorizontalDivider(Modifier.padding(start = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+                ChoiceItemForm("Location mode", listOf("Manual only", "Approximate", "Precise"), locationMode, FieldMindIcons.Location, settings::setLocationMode)
+            }
+        }
+        item {
+            SettingsGroupCard {
+                ToggleItem("Media attachments", "Enable camera, gallery, and file evidence tools.", media, settings::setMediaAttachmentsEnabled, FieldMindIcons.Camera)
+                HorizontalDivider(Modifier.padding(start = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+                ToggleItem("Audio recording", "Enable voice-note evidence capture.", audio, settings::setAudioRecordingEnabled, FieldMindIcons.Mic)
+                HorizontalDivider(Modifier.padding(start = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+                ChoiceItemForm("Attachment export", listOf("Reference URIs", "Copy media later", "Skip media"), exportMode, FieldMindIcons.Export, settings::setAttachmentExportMode)
+            }
+        }
+        item {
+            SettingsGroupCard {
+                ToggleItem("Daily reminders", "Schedules a daily prompt and skips after logging today's observation.", reminders, settings::setRemindersEnabled, FieldMindIcons.Notifications)
+                HorizontalDivider(Modifier.padding(start = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+                ToggleItem("Streaks", "Shows consecutive observation days on the Today dashboard.", streaks, settings::setStreaksEnabled, FieldMindIcons.Streak)
+            }
+        }
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════════
+//  AI Assistant Settings Page
+// ══════════════════════════════════════════════════════════════════════
+
+@Composable
+fun AiAssistantSettingsPage(viewModel: FieldMindViewModel, onBack: () -> Unit) {
+    val settings = viewModel.fieldSettings
     val ai by settings.geminiEnabled.collectAsState()
     val provider by settings.aiProvider.collectAsState()
     val key by settings.geminiApiKey.collectAsState()
@@ -53,209 +242,406 @@ fun FieldMindSettingsScreen(viewModel: FieldMindViewModel? = null, onBack: () ->
     val openAiModel by settings.openAiModel.collectAsState()
     val confirm by settings.aiRequireConfirmBeforeSave.collectAsState()
     val sendAttachments by settings.aiSendAttachments.collectAsState()
-    val reminders by settings.remindersEnabled.collectAsState()
-    val streaks by settings.streaksEnabled.collectAsState()
-    val exportFormat by settings.defaultExportFormat.collectAsState()
-    val privacy by settings.privacyLockEnabled.collectAsState()
-    val dynamicColor by settings.dynamicColorEnabled.collectAsState()
-    val themeMode by settings.themeMode.collectAsState()
-    val profileName by settings.profileName.collectAsState()
-    val profileRole by settings.profileRole.collectAsState()
-    val profileFocus by settings.profileFocus.collectAsState()
-    val localModelEnabled by settings.localModelEnabled.collectAsState()
-    val localModelOption by settings.localModelOption.collectAsState()
-    val localModelDownloaded by settings.localModelDownloaded.collectAsState()
-    val localModelUseForStudy by settings.localModelUseForStudy.collectAsState()
-    val autoBackupEnabled by settings.autoBackupEnabled.collectAsState()
-    val autoBackupInterval by settings.autoBackupInterval.collectAsState()
-    if (!FieldMindPrivacyGate(privacy, "Settings are locked", "Confirm your device lock to edit FieldMind privacy, export, and AI settings.")) return
-    LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(20.dp, 20.dp, 20.dp, 40.dp), verticalArrangement = Arrangement.spacedBy(20.dp)) {
-        item { FieldScreenHeader("Settings", "Offline-first setup, profile, capture, local AI, export, and privacy.", icon = FieldMindIcons.Settings, actionIcon = FieldMindIcons.Back, onAction = onBack) }
 
+    SettingsSubPage("AI assistant", icon = FieldMindIcons.Sparkle, onBack = onBack) {
         item {
-            SettingsGroup("Research profile", "Personalizes insights and setup while staying on this device.") {
-                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Text("FieldMind has no app server: profile, observations, sources, and local model settings are stored on this device unless you export or share them.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    OutlinedTextField(value = profileName, onValueChange = settings::setProfileName, label = { Text("Display name") }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(18.dp), singleLine = true)
-                    ChoiceChips(listOf("Field learner", "Student", "Naturalist", "Researcher"), profileRole) { settings.setProfileRole(it) }
-                    ChoiceItem("Focus", listOf("Wildlife & ecology", "Plants & botany", "Weather", "Water", "Geology", "General science"), profileFocus, FieldMindIcons.Nature, settings::setProfileFocus)
-                }
-            }
-        }
-
-        item {
-            SettingsGroup("Appearance") {
-                ChoiceItem("Theme", listOf("System", "Light", "Dark"), themeMode, FieldMindIcons.Palette, settings::setThemeMode)
-                SettingDivider()
-                ToggleItem("Material You dynamic color", "Use system wallpaper colors that auto-adapt to light/dark. Off keeps the FieldMind brand palette.", dynamicColor, settings::setDynamicColorEnabled, FieldMindIcons.Palette)
-            }
-        }
-
-        item {
-            SettingsGroup("Capture defaults") {
-                StepperItem("Daily observation goal", "Drives the Today dashboard and progress ring.", goal, FieldMindIcons.Today) { settings.setDailyObservationGoal(it) }
-                SettingDivider()
-                ChoiceItem("Default category", observationCategories, category, FieldMindIcons.Observation, settings::setDefaultCategory)
-                SettingDivider()
-                ChoiceItem("Default confidence", confidenceOptions, confidence, FieldMindIcons.Check, settings::setDefaultConfidence)
-                SettingDivider()
-                ChoiceItem("Location mode", listOf("Manual only", "Approximate", "Precise"), locationMode, FieldMindIcons.Location, settings::setLocationMode)
-            }
-        }
-
-        item {
-            SettingsGroup("Evidence & media") {
-                ToggleItem("Media attachments", "Enable camera, gallery, and file evidence tools.", media, settings::setMediaAttachmentsEnabled, FieldMindIcons.Camera)
-                SettingDivider()
-                ToggleItem("Audio recording", "Enable voice-note evidence capture with an in-app recording indicator.", audio, settings::setAudioRecordingEnabled, FieldMindIcons.Mic)
-                SettingDivider()
-                ChoiceItem("Attachment export", listOf("Reference URIs", "Copy media later", "Skip media"), exportMode, FieldMindIcons.Export, settings::setAttachmentExportMode)
-            }
-        }
-
-        item {
-            SettingsGroup("AI assistant", "Optional. Choose Gemini or OpenAI; nothing is sent without an explicit action.") {
+            SettingsGroupCard {
                 ToggleItem("Enable AI assistant", "Review factuality, suggest papers, and answer questions.", ai, settings::setGeminiEnabled, FieldMindIcons.Sparkle)
-                if (ai) {
-                    SettingDivider()
-                    ChoiceItem("Provider", listOf("Gemini", "OpenAI"), provider, FieldMindIcons.Sparkle, settings::setAiProvider)
-                    SettingDivider()
+            }
+        }
+        if (ai) {
+            item {
+                SettingsGroupCard {
                     Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        ChoiceItemForm("Provider", listOf("Gemini", "OpenAI"), provider, FieldMindIcons.Sparkle, settings::setAiProvider)
+
                         if (provider == "OpenAI") {
-                            OutlinedTextField(value = openAiKey, onValueChange = settings::setOpenAiApiKey, label = { Text("OpenAI API key") }, visualTransformation = PasswordVisualTransformation(), modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(18.dp), singleLine = true, supportingText = { Text(if (openAiKey.isBlank()) "No OpenAI key saved. You can ship a managed key here for private builds." else "OpenAI key saved locally on this device.") })
+                            OutlinedTextField(value = openAiKey, onValueChange = settings::setOpenAiApiKey, label = { Text("OpenAI API key") }, visualTransformation = PasswordVisualTransformation(), modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(18.dp), singleLine = true, supportingText = { Text(if (openAiKey.isBlank()) "No OpenAI key saved." else "OpenAI key saved locally.") })
+                            Text("Model", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             ChoiceChips(listOf("gpt-4.1-mini", "gpt-4.1", "gpt-4o-mini"), openAiModel) { settings.setOpenAiModel(it) }
                         } else {
-                            OutlinedTextField(value = key, onValueChange = settings::setGeminiApiKey, label = { Text("Gemini API key") }, visualTransformation = PasswordVisualTransformation(), modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(18.dp), singleLine = true, supportingText = { Text(if (key.isBlank()) "No key saved — get one at aistudio.google.com/apikey." else "Key saved locally on this device only.") })
+                            OutlinedTextField(value = key, onValueChange = settings::setGeminiApiKey, label = { Text("Gemini API key") }, visualTransformation = PasswordVisualTransformation(), modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(18.dp), singleLine = true, supportingText = { Text(if (key.isBlank()) "No key saved — get one at aistudio.google.com." else "Key saved locally.") })
+                            Text("Model", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             ChoiceChips(listOf("gemini-1.5-flash", "gemini-1.5-pro", "gemini-2.0-flash"), model) { settings.setGeminiModel(it) }
                         }
                     }
-                    SettingDivider()
+                }
+            }
+            item {
+                SettingsGroupCard {
                     ToggleItem("Confirm before saving AI output", "AI suggestions stay as previews unless you apply them.", confirm, settings::setAiRequireConfirmBeforeSave, FieldMindIcons.Check)
-                    SettingDivider()
+                    HorizontalDivider(Modifier.padding(start = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
                     ToggleItem("Allow attachment context", "Off by default to protect field evidence privacy.", sendAttachments, settings::setAiSendAttachments, FieldMindIcons.File)
                 }
             }
         }
-
         item {
-            SettingsGroup("Local model", "Download an app-private offline model for automated flashcards and review prompts.") {
-                ToggleItem("Use local model", "Runs study generation on-device after the model is downloaded.", localModelEnabled, settings::setLocalModelEnabled, FieldMindIcons.Sparkle)
-                SettingDivider()
-                ChoiceItem("Model size", listOf("FieldLite 500 MB", "FieldCore 1 GB", "FieldPro 2 GB"), localModelOption, FieldMindIcons.Download, settings::setLocalModelOption)
-                SettingDivider()
-                ToggleItem("Use for flashcards/reviews", "Prefer the downloaded local model for automatic cards and review suggestions.", localModelUseForStudy, settings::setLocalModelUseForStudy, FieldMindIcons.Flashcard)
+            Card(shape = RoundedCornerShape(22.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)) {
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(if (localModelDownloaded) "$localModelOption is marked downloaded inside FieldMind." else "Choose a size from 500 MB to 2 GB, then download it into app storage before offline generation.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Button(onClick = { settings.setLocalModelDownloaded(true); android.widget.Toast.makeText(context, "$localModelOption ready for offline study", android.widget.Toast.LENGTH_SHORT).show() }, enabled = localModelEnabled, shape = RoundedCornerShape(16.dp), modifier = Modifier.fillMaxWidth()) { Text(if (localModelDownloaded) "Re-download / verify model" else "Download inside app") }
+                    Text("Privacy note", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.primary)
+                    Text("Nothing is sent to any AI provider without an explicit action. Your API key is stored only on this device.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
         }
-
-        item {
-            SettingsGroup("Backup & import", "Portable files only. Auto-backup scheduling is stored locally.") {
-                ToggleItem("Auto backup", "Writes private archive JSON files on the selected schedule; manual export still chooses shared locations.", autoBackupEnabled, settings::setAutoBackupEnabled, FieldMindIcons.Archive)
-                SettingDivider()
-                ChoiceItem("Backup interval", listOf("Daily", "Weekly", "Monthly"), autoBackupInterval, FieldMindIcons.Today, settings::setAutoBackupInterval)
-                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("Auto-backups stay in app-private storage at files/fieldmind/backups and keep the latest 8 archives. Nothing is uploaded automatically.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-            }
-        }
-
-        item {
-            SettingsGroup("Discipline & ownership") {
-                ToggleItem("Reminders", "Schedules a daily WorkManager prompt and skips it after you log today’s observation.", reminders, settings::setRemindersEnabled, FieldMindIcons.Notifications)
-                SettingDivider()
-                ToggleItem("Streaks", "Shows consecutive observation days on the Today dashboard without replacing real work.", streaks, settings::setStreaksEnabled, FieldMindIcons.Streak)
-            }
-        }
-
-        item {
-            SettingsGroup("Export & privacy") {
-                ChoiceItem("Default export format", listOf("Markdown", "CSV", "JSON", "PNG", "SVG", "Plain text"), exportFormat, FieldMindIcons.Export, settings::setDefaultExportFormat)
-                SettingDivider()
-                ToggleItem("Privacy lock", "Persisted toggle; wires to the app lock flow when available.", privacy, settings::setPrivacyLockEnabled, FieldMindIcons.Lock)
-            }
-        }
-
-        if (viewModel != null) item { SettingsExportSection(viewModel) }
-
-        item { AboutSection() }
-
-        item { OutlinedButton(onClick = onResetOnboarding, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp)) { Text("Reset onboarding") } }
     }
 }
 
+// ══════════════════════════════════════════════════════════════════════
+//  Local Model Settings Page
+// ══════════════════════════════════════════════════════════════════════
+
 @Composable
-private fun SettingsExportSection(viewModel: FieldMindViewModel) {
+fun LocalModelSettingsPage(viewModel: FieldMindViewModel, onBack: () -> Unit) {
     val context = LocalContext.current
-    SettingsGroup("Export Studio", "Preview scope, schedule auto backups, import a backup, or save portable research files.") {
-        ExportStudioContent(
-            viewModel = viewModel,
-            modifier = Modifier.heightIn(max = 760.dp),
-            contentPadding = PaddingValues(8.dp, 8.dp, 8.dp, 16.dp),
-            showHeader = false,
-            onMessage = { message -> android.widget.Toast.makeText(context, message, android.widget.Toast.LENGTH_LONG).show() }
-        )
+    val settings = viewModel.fieldSettings
+    val localModelEnabled by settings.localModelEnabled.collectAsState()
+    val localModelOption by settings.localModelOption.collectAsState()
+    val localModelDownloaded by settings.localModelDownloaded.collectAsState()
+    val localModelUseForStudy by settings.localModelUseForStudy.collectAsState()
+
+    SettingsSubPage("Local model", icon = FieldMindIcons.Download, onBack = onBack) {
+        item {
+            SettingsGroupCard {
+                ToggleItem("Use local model", "Runs study generation on-device after the model is downloaded.", localModelEnabled, settings::setLocalModelEnabled, FieldMindIcons.Sparkle)
+                HorizontalDivider(Modifier.padding(start = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+                val sizes = listOf("FieldLite 500 MB", "FieldCore 1 GB", "FieldPro 2 GB")
+                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("Model size", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    sizes.forEach { size ->
+                        val selected = localModelOption == size
+                        Surface(
+                            onClick = { if (localModelEnabled) settings.setLocalModelOption(size) },
+                            shape = RoundedCornerShape(14.dp),
+                            color = if (selected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainerHigh,
+                            contentColor = if (selected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface
+                        ) {
+                            Row(Modifier.fillMaxWidth().padding(14.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                                Column(Modifier.weight(1f)) {
+                                    Text(size, fontWeight = FontWeight.SemiBold)
+                                    val spec = when (size) {
+                                        "FieldLite 500 MB" -> "Fast, basic study generation"
+                                        "FieldCore 1 GB" -> "Balanced speed and quality"
+                                        else -> "Best quality, slower generation"
+                                    }
+                                    Text(spec, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                }
+                                if (selected) Icon(FieldMindIcons.Check, null, tint = MaterialTheme.colorScheme.primary, size = 20.dp)
+                            }
+                        }
+                        Spacer(Modifier.height(4.dp))
+                    }
+                }
+                HorizontalDivider(Modifier.padding(start = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+                ToggleItem("Use for flashcards/reviews", "Prefer the downloaded local model for automatic cards.", localModelUseForStudy, settings::setLocalModelUseForStudy, FieldMindIcons.Flashcard)
+            }
+        }
+        item {
+            Card(shape = RoundedCornerShape(22.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)) {
+                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text(if (localModelDownloaded) "$localModelOption is ready" else "Choose a size and download into app storage.", style = MaterialTheme.typography.bodyMedium)
+                    Button(
+                        onClick = { settings.setLocalModelDownloaded(true); android.widget.Toast.makeText(context, "$localModelOption ready for offline study", android.widget.Toast.LENGTH_SHORT).show() },
+                        enabled = localModelEnabled,
+                        shape = RoundedCornerShape(16.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) { Text(if (localModelDownloaded) "Re-download / verify model" else "Download inside app") }
+                }
+            }
+        }
     }
 }
 
+// ══════════════════════════════════════════════════════════════════════
+//  Backup & Import Settings Page
+// ══════════════════════════════════════════════════════════════════════
+
 @Composable
-private fun AboutSection() {
+fun BackupImportSettingsPage(viewModel: FieldMindViewModel, onBack: () -> Unit, onOpenExport: () -> Unit) {
+    val settings = viewModel.fieldSettings
+    val autoBackupEnabled by settings.autoBackupEnabled.collectAsState()
+    val autoBackupInterval by settings.autoBackupInterval.collectAsState()
+    val exportFormat by settings.defaultExportFormat.collectAsState()
+    val privacy by settings.privacyLockEnabled.collectAsState()
+
+    SettingsSubPage("Backup & import", icon = FieldMindIcons.Archive, onBack = onBack) {
+        item {
+            SettingsGroupCard {
+                ToggleItem("Auto backup", "Writes private archive JSON files on the selected schedule.", autoBackupEnabled, settings::setAutoBackupEnabled, FieldMindIcons.Archive)
+                if (autoBackupEnabled) {
+                    HorizontalDivider(Modifier.padding(start = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+                    ChoiceItemForm("Backup interval", listOf("Daily", "Weekly", "Monthly"), autoBackupInterval, FieldMindIcons.Today, settings::setAutoBackupInterval)
+                }
+            }
+        }
+        item {
+            SettingsGroupCard {
+                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text("Export formats", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.primary)
+                    Text("Choose your preferred format for quick exports.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Spacer(Modifier.height(4.dp))
+                    ExportFormatSelector(exportFormat) { settings.setDefaultExportFormat(it) }
+                }
+                HorizontalDivider(Modifier.padding(start = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+                ToggleItem("Privacy lock", "Requires authentication to access settings and export.", privacy, settings::setPrivacyLockEnabled, FieldMindIcons.Lock)
+            }
+        }
+        item {
+            FilledTonalButton(onClick = onOpenExport, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp)) {
+                Icon(FieldMindIcons.Export, null, size = 18.dp)
+                Spacer(Modifier.size(8.dp))
+                Text("Open Export Studio")
+            }
+        }
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════════
+//  About Page
+// ══════════════════════════════════════════════════════════════════════
+
+@Composable
+fun AboutPage(onBack: () -> Unit) {
     val uriHandler = LocalUriHandler.current
-    SettingsGroup("About", "FieldMind — observe, question, research clearly.") {
-        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-            Text("FieldMind is a free, offline-first research notebook for curious naturalists, students, and citizen scientists.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            Text("Credits & acknowledgements", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
-            CreditRow("Open-source Android foundation", "FieldMind is built on a modern Compose app foundation.", "https://developer.android.com/jetpack/compose", uriHandler)
-            CreditRow("Material Symbols & Material 3", "Google's icon set and design system.", "https://fonts.google.com/icons", uriHandler)
-            CreditRow("Jetpack Compose", "Android's modern declarative UI toolkit.", "https://developer.android.com/jetpack/compose", uriHandler)
-            CreditRow("Crossref", "Free scholarly metadata API.", "https://www.crossref.org", uriHandler)
-            CreditRow("OpenAlex", "Open catalog of papers, authors, and venues.", "https://openalex.org", uriHandler)
-            CreditRow("arXiv", "Open-access research preprints.", "https://arxiv.org", uriHandler)
-            CreditRow("Open Library", "Open, editable library catalog.", "https://openlibrary.org", uriHandler)
-            CreditRow("Semantic Scholar", "AI-powered research paper search.", "https://www.semanticscholar.org", uriHandler)
-            Text("Made with care for people who learn by looking closely.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+
+    SettingsSubPage("About", icon = FieldMindIcons.Info, onBack = onBack) {
+        item {
+            Card(
+                shape = RoundedCornerShape(26.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+            ) {
+                Column(Modifier.padding(22.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Box(Modifier.size(64.dp).clip(RoundedCornerShape(20.dp)).background(MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.12f)), contentAlignment = Alignment.Center) {
+                        Icon(FieldMindIcons.Nature, null, tint = MaterialTheme.colorScheme.onPrimaryContainer, size = 36.dp)
+                    }
+                    Text("FieldMind", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onPrimaryContainer)
+                    Text("Observe. Question. Research clearly.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.78f), textAlign = TextAlign.Center)
+                    Text("A free, offline-first research notebook for curious naturalists, students, and citizen scientists.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.68f), textAlign = TextAlign.Center)
+                }
+            }
+        }
+        item {
+            Card(shape = RoundedCornerShape(22.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)) {
+                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text("Built with", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                    listOf(
+                        "Jetpack Compose" to "Android's modern declarative UI toolkit",
+                        "Material Symbols & Material 3" to "Google's icon set and design system",
+                        "Room Database" to "Local-first structured data storage"
+                    ).forEach { (name, desc) ->
+                        Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.Top) {
+                            Icon(FieldMindIcons.Check, null, tint = MaterialTheme.colorScheme.primary, size = 16.dp, modifier = Modifier.padding(top = 2.dp))
+                            Column {
+                                Text(name, fontWeight = FontWeight.SemiBold)
+                                Text(desc, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        item {
+            Card(shape = RoundedCornerShape(22.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)) {
+                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text("Research data sources", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                    listOf(
+                        "Crossref" to "Free scholarly metadata API",
+                        "OpenAlex" to "Open catalog of papers, authors, and venues",
+                        "arXiv" to "Open-access research preprints",
+                        "Open Library" to "Open, editable library catalog",
+                        "Semantic Scholar" to "AI-powered research paper search"
+                    ).forEach { (name, desc) ->
+                        Row(Modifier.fillMaxWidth().clickable { runCatching { uriHandler.openUri("https://www.${name.lowercase().replace(" ", "")}.org") } }, horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
+                            Icon(FieldMindIcons.OpenLink, null, tint = MaterialTheme.colorScheme.primary, size = 16.dp)
+                            Column(Modifier.weight(1f)) {
+                                Text(name, fontWeight = FontWeight.SemiBold)
+                                Text(desc, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        item {
+            Text("Made with care for people who learn by looking closely.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(horizontal = 4.dp))
+            Spacer(Modifier.height(40.dp))
         }
     }
 }
 
-@Composable
-private fun CreditRow(title: String, subtitle: String, url: String, uriHandler: androidx.compose.ui.platform.UriHandler) {
-    Row(Modifier.fillMaxWidth().clickable { runCatching { uriHandler.openUri(url) } }, verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-        Icon(icon = FieldMindIcons.OpenLink, contentDescription = null, tint = MaterialTheme.colorScheme.primary, size = 20.dp)
-        Column(Modifier.weight(1f)) {
-            Text(title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
-            Text(subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        }
-    }
-}
+// ══════════════════════════════════════════════════════════════════════
+//  Redesigned Export Format Selector
+// ══════════════════════════════════════════════════════════════════════
 
 @Composable
-private fun SettingsGroup(title: String, subtitle: String? = null, content: @Composable ColumnScope.() -> Unit) {
+fun ExportFormatSelector(selected: String, onSelect: (String) -> Unit) {
+    val formats = listOf(
+        FormatOption("Markdown", "Readable text for docs and notes", FieldMindIcons.Article, FieldMindTheme.colors.source),
+        FormatOption("CSV", "Tabular data for spreadsheets", FieldMindIcons.Data, FieldMindTheme.colors.data),
+        FormatOption("JSON", "Structured data for migration", FieldMindIcons.Archive, FieldMindTheme.colors.hypothesis),
+        FormatOption("HTML", "Print-ready web layout", FieldMindIcons.Article, FieldMindTheme.colors.question),
+        FormatOption("PNG", "Dashboard snapshot image", FieldMindIcons.Graph, FieldMindTheme.colors.observation),
+        FormatOption("SVG", "Scalable vector graphic", FieldMindIcons.Graph, FieldMindTheme.colors.flashcard),
+        FormatOption("PDF", "Portable document format", FieldMindIcons.Report, FieldMindTheme.colors.report),
+        FormatOption("Plain text", "Raw text without formatting", FieldMindIcons.Note, FieldMindTheme.colors.info)
+    )
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Column(Modifier.padding(start = 4.dp)) {
-            Text(title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.primary)
-            if (subtitle != null) Text(subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        }
-        Card(shape = RoundedCornerShape(22.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)) {
-            Column(content = content)
+        formats.chunked(2).forEach { row ->
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                row.forEach { format ->
+                    val isSelected = selected == format.name
+                    Card(
+                        modifier = Modifier.weight(1f).clickable { onSelect(format.name) },
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = if (isSelected) format.color.copy(alpha = 0.14f) else MaterialTheme.colorScheme.surfaceContainerHigh
+                        ),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+                        border = if (isSelected) androidx.compose.foundation.BorderStroke(1.5.dp, format.color) else null
+                    ) {
+                        Column(Modifier.padding(12.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                            Icon(format.icon, null, tint = format.color, size = 24.dp)
+                            Text(format.name, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold)
+                            Text(format.desc, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                            if (isSelected) {
+                                Icon(FieldMindIcons.Check, null, tint = format.color, size = 16.dp)
+                            }
+                        }
+                    }
+                }
+                if (row.size == 1) Spacer(Modifier.weight(1f))
+            }
         }
     }
 }
 
-@Composable
-private fun SettingDivider() = HorizontalDivider(Modifier.padding(start = 56.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+private data class FormatOption(val name: String, val desc: String, val icon: MaterialSymbolIcon, val color: androidx.compose.ui.graphics.Color)
 
+// ══════════════════════════════════════════════════════════════════════
+//  Observation Reading UI (Redesigned)
+// ══════════════════════════════════════════════════════════════════════
+
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun SettingLeading(icon: MaterialSymbolIcon?) {
-    if (icon == null) { Spacer(Modifier.size(40.dp)); return }
-    Box(Modifier.size(40.dp).clip(RoundedCornerShape(12.dp)).background(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)), contentAlignment = Alignment.Center) {
-        Icon(icon = icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary, size = 22.dp)
+fun ObservationReaderContent(observation: ObservationEntity, onAttachments: @Composable () -> Unit, onMap: @Composable () -> Unit) {
+    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        // Header card
+        Card(
+            shape = RoundedCornerShape(26.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+        ) {
+            Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                // Subject line
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    ConfidenceChip(observation.confidenceLevel)
+                    InfoChip(observation.category, icon = FieldMindIcons.iconForCategory(observation.category))
+                    InfoChip("${observation.date} ${observation.time}", icon = FieldMindIcons.Today)
+                }
+
+                Text(observation.subject.ifBlank { "Untitled observation" },
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Bold)
+
+                if (observation.tags.isNotBlank()) {
+                    FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        observation.tags.split(",").filter { it.isNotBlank() }.forEach { tag ->
+                            TagChip(tag.trim())
+                        }
+                    }
+                }
+            }
+        }
+
+        // Facts section
+        Card(
+            shape = RoundedCornerShape(24.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+        ) {
+            Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Box(Modifier.size(32.dp).clip(RoundedCornerShape(10.dp)).background(FieldMindTheme.colors.observation.copy(alpha = 0.14f)), contentAlignment = Alignment.Center) {
+                        Icon(FieldMindIcons.Edit, null, tint = FieldMindTheme.colors.observation, size = 18.dp)
+                    }
+                    Text("Facts-only notes", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                }
+                Text(
+                    observation.factsOnlyNotes.ifBlank { "No factual notes recorded." },
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            }
+        }
+
+        // Context section
+        if (observation.moodOrContext.isNotBlank()) {
+            Card(
+                shape = RoundedCornerShape(24.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+            ) {
+                Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Box(Modifier.size(32.dp).clip(RoundedCornerShape(10.dp)).background(FieldMindTheme.colors.hypothesis.copy(alpha = 0.14f)), contentAlignment = Alignment.Center) {
+                            Icon(FieldMindIcons.Lightbulb, null, tint = FieldMindTheme.colors.hypothesis, size = 18.dp)
+                        }
+                        Text("Context", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                    }
+                    Text(observation.moodOrContext, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+        }
+
+        // Evidence summary
+        if (observation.evidenceSummary.isNotBlank()) {
+            Card(
+                shape = RoundedCornerShape(24.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+            ) {
+                Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Box(Modifier.size(32.dp).clip(RoundedCornerShape(10.dp)).background(FieldMindTheme.colors.data.copy(alpha = 0.14f)), contentAlignment = Alignment.Center) {
+                            Icon(FieldMindIcons.Camera, null, tint = FieldMindTheme.colors.data, size = 18.dp)
+                        }
+                        Text("Evidence summary", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                    }
+                    Text(observation.evidenceSummary, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+        }
+
+        // Attachments
+        onAttachments()
+
+        // Location map
+        onMap()
     }
 }
 
-/** A whole-row clickable toggle inside a [SettingsGroup]. */
+// ══════════════════════════════════════════════════════════════════════
+//  Shared helpers
+// ══════════════════════════════════════════════════════════════════════
+
+/** Wraps a sub-page with consistent header and scrollable content. */
+@Composable
+private fun SettingsSubPage(title: String, icon: MaterialSymbolIcon, onBack: () -> Unit, content: LazyListScope.() -> Unit) {
+    LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(20.dp, 20.dp, 20.dp, 40.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+        item { FieldScreenHeader(title, icon = icon, actionIcon = FieldMindIcons.Back, onAction = onBack) }
+        content()
+    }
+}
+
+@Composable
+private fun SettingsGroupCard(content: @Composable ColumnScope.() -> Unit) {
+    Card(
+        shape = RoundedCornerShape(22.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) { Column(content = content) }
+}
+
 @Composable
 private fun ToggleItem(title: String, body: String, checked: Boolean, onCheckedChange: (Boolean) -> Unit, icon: MaterialSymbolIcon? = null) {
     Row(
@@ -263,7 +649,11 @@ private fun ToggleItem(title: String, body: String, checked: Boolean, onCheckedC
         horizontalArrangement = Arrangement.spacedBy(14.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        SettingLeading(icon)
+        if (icon != null) {
+            Box(Modifier.size(40.dp).clip(RoundedCornerShape(12.dp)).background(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)), contentAlignment = Alignment.Center) {
+                Icon(icon = icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary, size = 22.dp)
+            }
+        }
         Column(Modifier.weight(1f)) {
             Text(title, fontWeight = FontWeight.SemiBold)
             Text(body, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -275,7 +665,11 @@ private fun ToggleItem(title: String, body: String, checked: Boolean, onCheckedC
 @Composable
 private fun StepperItem(title: String, body: String, value: Int, icon: MaterialSymbolIcon? = null, onValueChange: (Int) -> Unit) {
     Row(Modifier.fillMaxWidth().padding(16.dp), horizontalArrangement = Arrangement.spacedBy(14.dp), verticalAlignment = Alignment.CenterVertically) {
-        SettingLeading(icon)
+        if (icon != null) {
+            Box(Modifier.size(40.dp).clip(RoundedCornerShape(12.dp)).background(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)), contentAlignment = Alignment.Center) {
+                Icon(icon = icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary, size = 22.dp)
+            }
+        }
         Column(Modifier.weight(1f)) {
             Text(title, fontWeight = FontWeight.SemiBold)
             Text(body, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -289,13 +683,28 @@ private fun StepperItem(title: String, body: String, value: Int, icon: MaterialS
 }
 
 @Composable
-private fun ChoiceItem(title: String, options: List<String>, selected: String, icon: MaterialSymbolIcon? = null, onSelected: (String) -> Unit) {
+private fun ChoiceItemForm(title: String, options: List<String>, selected: String, icon: MaterialSymbolIcon? = null, onSelected: (String) -> Unit) {
     Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Row(horizontalArrangement = Arrangement.spacedBy(14.dp), verticalAlignment = Alignment.CenterVertically) {
-            SettingLeading(icon)
+            if (icon != null) {
+                Box(Modifier.size(40.dp).clip(RoundedCornerShape(12.dp)).background(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)), contentAlignment = Alignment.Center) {
+                    Icon(icon = icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary, size = 22.dp)
+                }
+            }
             Text(title, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
         }
         ChoiceChips(options, selected, onSelected = onSelected)
     }
 }
 
+@Composable
+private fun SettingsTileGroup(title: String, content: @Composable ColumnScope.() -> Unit) {
+    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Text(title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.primary, modifier = Modifier.padding(start = 4.dp))
+        Card(
+            shape = RoundedCornerShape(22.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+        ) { Column(content = content) }
+    }
+}

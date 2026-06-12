@@ -56,6 +56,7 @@ import java.util.Date
 import java.util.Locale
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.foundation.lazy.LazyRow
 // ══════════════════════════════════════════════════════════════════════
 //  Library (Sources / Reading / Flashcards / Learn)
 // ══════════════════════════════════════════════════════════════════════
@@ -93,12 +94,66 @@ fun KnowledgeLibraryScreen(
 @Composable
 private fun SourcePanel(viewModel: FieldMindViewModel, items: List<SourceEntity>, onOpenDetail: (String, Long) -> Unit) {
     var show by remember { mutableStateOf(false) }
+    val projects by viewModel.projects.collectAsState()
+    val haptics = rememberFieldMindHaptics()
+    var type by remember { mutableStateOf("Article") }; var title by remember { mutableStateOf("") }; var author by remember { mutableStateOf("") }
+    var dateOrYear by remember { mutableStateOf("") }; var doiOrIsbn by remember { mutableStateOf("") }; var publisherOrJournal by remember { mutableStateOf("") }
+    var accessDate by remember { mutableStateOf(today()) }; var link by remember { mutableStateOf("") }; var fileUri by remember { mutableStateOf("") }
+    var citationStyleNote by remember { mutableStateOf("") }; var importance by remember { mutableStateOf("Normal") }; var readingStatus by remember { mutableStateOf("In progress") }
+    var summary by remember { mutableStateOf("") }; var taught by remember { mutableStateOf("") }; var findings by remember { mutableStateOf("") }
+    var questions by remember { mutableStateOf("") }; var notes by remember { mutableStateOf("") }; var reliability by remember { mutableStateOf(3f) }; var projectId by remember { mutableStateOf<Long?>(null) }
     LazyColumn(contentPadding = panelPadding(), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-        item { AddButton("Add source") { show = true } }
+        item { AddButton(if (show) "Cancel source form" else "Add source") { show = !show; if (!show) { title = ""; author = ""; link = "" } } }
+        if (show) item {
+            InlineFormCard("Add Source", onDismiss = { show = false; title = "" }, onSave = {
+                if (title.isNotBlank()) {
+                    viewModel.addSource(type, title, author, link, summary, taught, reliability.toInt(), findings, questions, notes, projectId, dateOrYear, doiOrIsbn, publisherOrJournal, accessDate, fileUri, citationStyleNote, importance, readingStatus)
+                    show = false; title = ""
+                }
+            }, saveEnabled = title.isNotBlank()) {
+                CaptureStep("Source type", "Choose what kind of material this is.", FieldMindIcons.Source) {
+                    ChoiceChips(sourceLibraryTypes, type) { type = it }
+                }
+                CaptureStep("Identity", "Capture citation identifiers now so export stays useful later.", FieldMindIcons.Article) {
+                    FieldTextField(title, { title = it }, "Title")
+                    FieldTextField(author, { author = it }, "Author / creator")
+                    FieldTextField(doiOrIsbn, { doiOrIsbn = it }, "DOI / ISBN")
+                    FieldTextField(publisherOrJournal, { publisherOrJournal = it }, "Publisher / journal")
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        FieldTextField(dateOrYear, { dateOrYear = it }, "Date / year", modifier = Modifier.weight(1f))
+                        FieldTextField(accessDate, { accessDate = it }, "Accessed", modifier = Modifier.weight(1f))
+                    }
+                }
+                CaptureStep("Link or file", "Attach PDFs, images, local documents, or a web link.", FieldMindIcons.Link) {
+                    FieldTextField(link, { link = it }, "Web link")
+                    FieldTextField(fileUri, { fileUri = it }, "File URI")
+                    SourcePreviewCard(link = link, fileUri = fileUri)
+                }
+                CaptureStep("Reading notes", "Use Cornell-style cues: main idea, evidence, questions, and takeaways.", FieldMindIcons.Edit) {
+                    FieldTextField(summary, { summary = it }, "Main idea", minLines = 2)
+                    FieldTextField(findings, { findings = it }, "Key findings / definitions", minLines = 2)
+                    FieldTextField(taught, { taught = it }, "What this source taught me", minLines = 2)
+                    FieldTextField(questions, { questions = it }, "New questions / cue column", minLines = 2)
+                    FieldTextField(notes, { notes = it }, "Paper / Cornell notes", minLines = 4)
+                    FieldTextField(citationStyleNote, { citationStyleNote = it }, "Citation style note")
+                }
+                CaptureStep("Review & project", "Mark priority, reading state, credibility, and where it belongs.", FieldMindIcons.Check) {
+                    Text("Reading status", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    ChoiceChips(readingStatuses, readingStatus) { readingStatus = it }
+                    Text("Importance", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    ChoiceChips(sourceImportanceLevels, importance) { importance = it }
+                    Text("Credibility: ${reliability.toInt()}/5")
+                    Slider(reliability, { reliability = it }, valueRange = 1f..5f, steps = 3)
+                    if (projects.isNotEmpty()) {
+                        Text("Link to project", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        ChoiceChips(listOf("No project") + projects.map { it.title }, projects.firstOrNull { it.id == projectId }?.title ?: "No project") { selected -> projectId = projects.firstOrNull { it.title == selected }?.id }
+                    }
+                }
+            }
+        }
         if (items.isEmpty()) item { EmptyState("No sources yet", "Save articles, videos, PDFs, books, summaries, citations, and what each source taught you.", icon = FieldMindIcons.Source) }
         items(items) { EntityCard(it.title, "source", body = it.whatThisSourceTaughtMe.ifBlank { it.personalSummary }, meta = listOf(it.type, it.author.ifBlank { "Unknown author" }, it.readingStatus, it.importance, "reliability ${it.reliabilityScore}/5")) { onOpenDetail("source", it.id) } }
     }
-    if (show) NewSourceDialog(viewModel) { show = false }
 }
 
 @Composable
@@ -153,14 +208,37 @@ private fun FlashcardPanel(
     val localEnabled by viewModel.fieldSettings.localModelEnabled.collectAsState()
     val localDownloaded by viewModel.fieldSettings.localModelDownloaded.collectAsState()
     val localModel by viewModel.fieldSettings.localModelOption.collectAsState()
+    var type by remember { mutableStateOf("concept") }; var front by remember { mutableStateOf("") }; var back by remember { mutableStateOf("") }; var useSm2 by remember { mutableStateOf(false) }
     LazyColumn(contentPadding = panelPadding(), verticalArrangement = Arrangement.spacedBy(14.dp)) {
         item {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 Button(onClick = onStartReview, Modifier.weight(1f), shape = RoundedCornerShape(16.dp), enabled = items.isNotEmpty()) {
                     Icon(icon = FieldMindIcons.Flip, contentDescription = null, size = 18.dp); Spacer(Modifier.size(8.dp)); Text("Review (${items.size})")
                 }
-                OutlinedButton(onClick = { show = true }, Modifier.weight(1f), shape = RoundedCornerShape(16.dp)) {
-                    Icon(icon = FieldMindIcons.Add, contentDescription = null, size = 18.dp); Spacer(Modifier.size(8.dp)); Text("New card")
+                OutlinedButton(onClick = { show = !show; if (!show) { front = ""; back = "" } }, Modifier.weight(1f), shape = RoundedCornerShape(16.dp)) {
+                    Icon(icon = if (show) FieldMindIcons.Close else FieldMindIcons.Add, contentDescription = null, size = 18.dp); Spacer(Modifier.size(8.dp)); Text(if (show) "Cancel" else "New card")
+                }
+            }
+        }
+        if (show) item {
+            InlineFormCard("Create Flashcard", onDismiss = { show = false; front = ""; back = "" }, onSave = {
+                if (front.isNotBlank() && back.isNotBlank()) { viewModel.addFlashcard(front, back, type, deckMode = if (useSm2) "sm2" else "basic"); show = false; front = ""; back = "" }
+            }, saveEnabled = front.isNotBlank() && back.isNotBlank()) {
+                CaptureStep("Card preset", "Choose how this should be practiced.", FieldMindIcons.Flashcard) {
+                    ChoiceChips(listOf("term", "definition", "concept", "question-answer", "mistake card", "field ID", "method step"), type) { type = it }
+                }
+                CaptureStep("Front", "Make the prompt short enough to answer from memory.", FieldMindIcons.Question) {
+                    FieldTextField(front, { front = it }, "Prompt / front", minLines = 2)
+                }
+                CaptureStep("Back", "Add the answer, evidence, or correction.", FieldMindIcons.Answer) {
+                    FieldTextField(back, { back = it }, "Answer / back", minLines = 4)
+                }
+                Row(Modifier.fillMaxWidth().padding(horizontal = 40.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                    Column(Modifier.weight(1f)) {
+                        Text("Spaced repetition (SM-2)", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
+                        Text("Review at optimal intervals", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                    Switch(checked = useSm2, onCheckedChange = { useSm2 = it })
                 }
             }
         }
@@ -172,9 +250,21 @@ private fun FlashcardPanel(
             }
         }
         if (items.isEmpty()) item { EmptyState("No flashcards yet", "Turn terms, definitions, mistakes, source concepts, and questions into review cards.", icon = FieldMindIcons.Flashcard) }
-        items(items) { LibraryFlashcard(it) { onOpenDetail("flashcard", it.id) } }
+        item {
+            if (items.isNotEmpty()) {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    items.chunked(2).forEach { row ->
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                            row.forEach { card ->
+                                LibraryFlashcard(card, Modifier.weight(1f)) { onOpenDetail("flashcard", card.id) }
+                            }
+                            if (row.size == 1) Spacer(Modifier.weight(1f))
+                        }
+                    }
+                }
+            }
+        }
     }
-    if (show) NewFlashcardDialog(viewModel) { show = false }
 }
 
 
@@ -208,12 +298,12 @@ private fun autoFlashcardsFromLibrary(sources: List<SourceEntity>, notes: List<N
 
 /** A single library flashcard: shows the prompt; the answer stays hidden until tapped. */
 @Composable
-private fun LibraryFlashcard(card: FlashcardEntity, onOpenDetail: () -> Unit) {
+private fun LibraryFlashcard(card: FlashcardEntity, modifier: Modifier = Modifier, onOpenDetail: () -> Unit) {
     var revealed by remember(card.id) { mutableStateOf(false) }
     val accent = FieldMindTheme.colors.flashcard
     val rotation by androidx.compose.animation.core.animateFloatAsState(if (revealed) 180f else 0f, animationSpec = tween(360), label = "libraryCardFlip")
     Card(
-        modifier = Modifier.fillMaxWidth().animateContentSize().graphicsLayer { rotationY = rotation; cameraDistance = 28f }.clickable { revealed = !revealed },
+        modifier = modifier.fillMaxWidth().animateContentSize().graphicsLayer { rotationY = rotation; cameraDistance = 28f }.clickable { revealed = !revealed },
         shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)

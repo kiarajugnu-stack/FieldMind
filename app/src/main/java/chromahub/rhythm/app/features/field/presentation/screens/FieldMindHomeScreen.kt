@@ -82,7 +82,7 @@ fun HomeScreen(
                 QuickAction("Map", FieldMindIcons.Map, FieldMindTheme.colors.info, FieldMindScreen.MapScreen),
                 QuickAction("Export", FieldMindIcons.Export, FieldMindTheme.colors.report, FieldMindScreen.ExportStudio),
                 QuickAction("Search", FieldMindIcons.Search, FieldMindTheme.colors.question, FieldMindScreen.Search),
-                QuickAction("Review", FieldMindIcons.Flashcard, FieldMindTheme.colors.flashcard, FieldMindScreen.Flashcards)
+                QuickAction("Review", FieldMindIcons.Flashcard, FieldMindTheme.colors.flashcard, FieldMindScreen.Learn)
             )) { onNavigate(it) }
         }
         if (activeProject != null) {
@@ -132,7 +132,7 @@ private fun ReadingReviewCard(sources: List<SourceEntity>, flashcards: List<Flas
             }
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 MiniActionTile("Reading", current?.title ?: "Add a source", current?.readingStatus ?: "No source yet", FieldMindIcons.Source, Modifier.weight(1f)) { onNavigate(FieldMindScreen.Library) }
-                MiniActionTile("Review", "${flashcards.size} cards", if (flashcards.isEmpty()) "Create cards" else "Start session", FieldMindIcons.Flashcard, Modifier.weight(1f)) { onNavigate(if (flashcards.isEmpty()) FieldMindScreen.Library else FieldMindScreen.Flashcards) }
+                MiniActionTile("Review", "${flashcards.size} cards", if (flashcards.isEmpty()) "Create cards" else "Start session", FieldMindIcons.Flashcard, Modifier.weight(1f)) { onNavigate(FieldMindScreen.Learn) }
             }
         }
     }
@@ -331,9 +331,7 @@ private fun HomeWidgetCard(widget: HomeWidget, modifier: Modifier = Modifier, on
     val haptics = rememberFieldMindHaptics()
     Card(modifier = modifier.height(112.dp).clickable { haptics.light(); onClick() }, shape = RoundedCornerShape(24.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)) {
         Column(Modifier.fillMaxSize().padding(14.dp), verticalArrangement = Arrangement.SpaceBetween) {
-            Box(Modifier.size(38.dp).clip(RoundedCornerShape(12.dp)).background(widget.color.copy(alpha = if (FieldMindTheme.colors.isDark) 0.22f else 0.14f)), contentAlignment = Alignment.Center) {
-                Icon(widget.icon, null, tint = widget.color, size = 21.dp)
-            }
+            Icon(widget.icon, null, tint = widget.color, size = 32.dp)
             Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Text(widget.title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
                 Text(widget.value, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)

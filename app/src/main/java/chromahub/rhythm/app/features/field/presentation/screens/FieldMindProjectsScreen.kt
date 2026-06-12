@@ -25,6 +25,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import chromahub.rhythm.app.features.field.data.database.entity.*
+import chromahub.rhythm.app.features.field.data.location.FieldLocationProvider
 import chromahub.rhythm.app.features.field.presentation.components.*
 import chromahub.rhythm.app.features.field.presentation.theme.FieldMindTheme
 import chromahub.rhythm.app.features.field.presentation.viewmodel.FieldMindViewModel
@@ -122,8 +123,35 @@ private fun ProjectPanel(
     onNext: () -> Unit
 ) {
     var show by remember { mutableStateOf(false) }
+    var title by remember { mutableStateOf("") }; var topic by remember { mutableStateOf("Biology") }; var objective by remember { mutableStateOf("") }; var question by remember { mutableStateOf("") }
+    var background by remember { mutableStateOf("") }; var methods by remember { mutableStateOf("") }; var hypothesis by remember { mutableStateOf("") }; var dataPlan by remember { mutableStateOf("") }; var analysis by remember { mutableStateOf("") }; var conclusion by remember { mutableStateOf("") }; var nextAction by remember { mutableStateOf("") }
     LazyColumn(contentPadding = panelPadding(), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-        item { AddButton("Create project") { show = true } }
+        item { AddButton(if (show) "Cancel project form" else "Create project") { show = !show; if (!show) { title = ""; objective = ""; question = "" } } }
+        if (show) item {
+            InlineFormCard("New Project", onDismiss = { show = false; title = ""; objective = ""; question = "" }, onSave = {
+                if (title.isNotBlank()) { viewModel.addProject(title, topic, objective, question, methods, nextAction, background, hypothesis, dataPlan, analysis, conclusion); show = false; title = "" }
+            }, saveEnabled = title.isNotBlank()) {
+                CaptureStep("Topic & title", "Name the project and choose the broad research area.", FieldMindIcons.Project) {
+                    FieldTextField(title, { title = it }, "Project title")
+                    ChoiceChips(listOf("Biology", "Geology", "Wildlife", "Ecology", "Plant Study", "Weather", "Human Pattern", "Other"), topic) { topic = it }
+                }
+                CaptureStep("Research purpose", "Write a concrete objective and a question that can guide observations.", FieldMindIcons.Question) {
+                    FieldTextField(objective, { objective = it }, "Objective", minLines = 2)
+                    FieldTextField(question, { question = it }, "Research question", minLines = 2)
+                    FieldTextField(background, { background = it }, "Background / context", minLines = 2)
+                }
+                CaptureStep("Evidence plan", "Add the planned method, hypothesis, and category-specific data fields.", FieldMindIcons.Data) {
+                    FieldTextField(methods, { methods = it }, "Method / data plan", minLines = 3)
+                    FieldTextField(hypothesis, { hypothesis = it }, "Hypothesis summary", minLines = 2)
+                    FieldTextField(dataPlan, { dataPlan = it }, "Data fields / units", supportingText = "Example: temperature °C, height cm, water clarity, count")
+                }
+                CaptureStep("Report direction", "Keep analysis, conclusion, and next action visible without cluttering the card.", FieldMindIcons.Report) {
+                    FieldTextField(analysis, { analysis = it }, "Analysis plan", minLines = 2)
+                    FieldTextField(conclusion, { conclusion = it }, "Early conclusion / expected output", minLines = 2)
+                    FieldTextField(nextAction, { nextAction = it }, "Next action", supportingText = "Example: observe the same site at sunset for 3 days")
+                }
+            }
+        }
         if (items.isEmpty()) {
             item { ResearchFlowGuide(activeStep = 0, nextLabel = "Next: Questions", onNext = onNext) }
             item { EmptyState("No projects yet", "Create a focused workspace, then link questions, hypotheses, observations, sources, data, and reports without clutter.", icon = FieldMindIcons.Project) }
@@ -134,43 +162,100 @@ private fun ProjectPanel(
             }
         }
     }
-    if (show) NewProjectDialog(viewModel) { show = false }
 }
 
 @Composable
 private fun QuestionPanel(viewModel: FieldMindViewModel, items: List<QuestionEntity>, onOpenDetail: (String, Long) -> Unit, onNext: () -> Unit) {
     var show by remember { mutableStateOf(false) }
+    var question by remember { mutableStateOf("") }; var category by remember { mutableStateOf("Other") }; var source by remember { mutableStateOf("Observation") }; var status by remember { mutableStateOf("New") }; var priority by remember { mutableStateOf("Medium") }
     LazyColumn(contentPadding = panelPadding(), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-        item { AddButton("Create question") { show = true } }
+        item { AddButton(if (show) "Cancel question" else "Create question") { show = !show; if (!show) question = "" } }
+        if (show) item {
+            InlineFormCard("New Question", onDismiss = { show = false; question = "" }, onSave = { if (question.isNotBlank()) { viewModel.addQuestion(question, category, source, status, priority); show = false; question = "" } }, saveEnabled = question.isNotBlank()) {
+                CaptureStep("Question", "Use one clear sentence and avoid assuming the answer.", FieldMindIcons.Question) {
+                    FieldTextField(question, { question = it }, "What do you want to find out?", minLines = 3, supportingText = "Example: Do bird visits increase after rain at this site?")
+                }
+                CaptureStep("Classify", "Presets keep searching, charts, and reports cleaner.", FieldMindIcons.Category) {
+                    ChoiceChips(observationCategories, category) { category = it }
+                    Text("Source", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    ChoiceChips(sourceTypes, source) { source = it }
+                    Text("Priority", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    ChoiceChips(listOf("Low", "Medium", "High"), priority) { priority = it }
+                    Text("Status", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    ChoiceChips(questionStatuses, status) { status = it }
+                }
+            }
+        }
         if (items.isEmpty()) {
             item { ResearchFlowGuide(activeStep = 0, nextLabel = "Next: Hypotheses", onNext = onNext) }
             item { EmptyState("No questions yet", "Start with one question you can observe, compare, measure, or verify.", icon = FieldMindIcons.Question) }
         }
         items(items) { EntityCard(it.questionText, "question", meta = listOf(it.status, it.priority, it.sourceType)) { onOpenDetail("question", it.id) } }
     }
-    if (show) NewQuestionDialog(viewModel) { show = false }
 }
 
 @Composable
 private fun HypothesisPanel(viewModel: FieldMindViewModel, items: List<HypothesisEntity>, questions: List<QuestionEntity>, onOpenDetail: (String, Long) -> Unit, onNext: () -> Unit) {
     var show by remember { mutableStateOf(false) }
+    var prediction by remember { mutableStateOf("") }; var reasoning by remember { mutableStateOf("") }; var evidence by remember { mutableStateOf("") }; var support by remember { mutableStateOf("") }; var weaken by remember { mutableStateOf("") }; var test by remember { mutableStateOf("") }; var confidence by remember { mutableStateOf(50f) }; var linkedId by remember { mutableStateOf(questions.firstOrNull()?.id) }
     LazyColumn(contentPadding = panelPadding(), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-        item { AddButton("Create hypothesis") { show = true } }
+        item { AddButton(if (show) "Cancel hypothesis" else "Create hypothesis") { show = !show; if (!show) { prediction = ""; reasoning = ""; evidence = "" } } }
+        if (show) item {
+            InlineFormCard("New Hypothesis", onDismiss = { show = false; prediction = "" }, onSave = { if (prediction.isNotBlank()) { viewModel.addHypothesis(linkedId, prediction, evidence, confidence.toInt(), reasoning, support, weaken, test); show = false; prediction = "" } }, saveEnabled = prediction.isNotBlank()) {
+                CaptureStep("Link & prediction", "Connect it to a question if one exists.", FieldMindIcons.Hypothesis) {
+                    if (questions.isNotEmpty()) ChoiceChips(listOf("No question") + questions.take(8).map { it.questionText.take(28) }, questions.firstOrNull { it.id == linkedId }?.questionText?.take(28) ?: "No question") { picked -> linkedId = questions.firstOrNull { it.questionText.startsWith(picked) }?.id }
+                    FieldTextField(prediction, { prediction = it }, "Prediction", minLines = 3)
+                    FieldTextField(reasoning, { reasoning = it }, "Why this might happen", minLines = 2)
+                }
+                CaptureStep("Evidence rules", "Decide success/failure before you bias yourself.", FieldMindIcons.Check) {
+                    FieldTextField(evidence, { evidence = it }, "Evidence needed", minLines = 2)
+                    FieldTextField(support, { support = it }, "Support criteria")
+                    FieldTextField(weaken, { weaken = it }, "Weakening criteria")
+                    FieldTextField(test, { test = it }, "Test method")
+                    Text("Confidence: ${confidence.toInt()}%")
+                    Slider(confidence, { confidence = it }, valueRange = 0f..100f)
+                }
+            }
+        }
         if (items.isEmpty()) {
             item { ResearchFlowGuide(activeStep = 1, nextLabel = "Next: Data", onNext = onNext) }
             item { EmptyState("No hypotheses yet", "Pick a question, predict what you expect, then define what evidence would support or weaken it.", icon = FieldMindIcons.Hypothesis) }
         }
         items(items) { EntityCard(it.prediction, "hypothesis", body = "Evidence: ${it.evidenceNeeded}", meta = listOf(it.resultStatus, "confidence ${it.confidencePercent}%")) { onOpenDetail("hypothesis", it.id) } }
     }
-    if (show) NewHypothesisDialog(viewModel, questions) { show = false }
 }
 
 @Composable
 private fun DataToolPanel(viewModel: FieldMindViewModel, items: List<DataRecordEntity>, onOpenDetail: (String, Long) -> Unit, onNext: () -> Unit) {
     var show by remember { mutableStateOf(false) }
+    var tool by remember { mutableStateOf("Counter") }; var label by remember { mutableStateOf("") }; var value by remember { mutableStateOf("0") }; var unit by remember { mutableStateOf("count") }; var location by remember { mutableStateOf("") }; var notes by remember { mutableStateOf("") }
     val grouped = items.groupBy { it.toolType.ifBlank { "Other" } }
+    fun defaultUnitForTool(t: String): String = when (t) {
+        "Weather Log" -> "°C"; "Measurement Log" -> "cm"; "Counter", "Species Tracker" -> "count"; "Event Log" -> "event"; "Site Log" -> "site"; "Checklist" -> "done/total"; "Comparison Table" -> "score"; else -> ""
+    }
+    fun defaultLabelForTool(t: String): String = when (t) {
+        "Weather Log" -> "Air temperature"; "Measurement Log" -> "Measured length"; "Species Tracker" -> "Species count"; "Checklist" -> "Checklist item"; "Event Log" -> "Observed event"; "Site Log" -> "Site condition"; "Comparison Table" -> "Comparison variable"; else -> ""
+    }
     LazyColumn(contentPadding = panelPadding(), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-        item { AddButton("Open data collection tools") { show = true } }
+        item { AddButton(if (show) "Cancel form" else "Open data collection tools") { show = !show; if (!show) { label = ""; value = "0" } } }
+        if (show) item {
+            InlineFormCard("Data Collection Tool", onDismiss = { show = false; label = "" }, onSave = { if (label.isNotBlank()) { viewModel.addDataRecord(tool, label, value, unit, notes, location); show = false; label = "" } }, saveEnabled = label.isNotBlank()) {
+                CaptureStep("Preset", "Each tool adapts labels and units for the category.", FieldMindIcons.Data) {
+                    ChoiceChips(dataTools, tool) { tool = it; unit = defaultUnitForTool(it); label = defaultLabelForTool(it) }
+                    FieldTextField(label, { label = it }, "Label")
+                    if (tool == "Counter" || tool == "Species Tracker") Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) { OutlinedButton({ value = ((value.toIntOrNull() ?: 0) - 1).toString() }) { Text("−1") }; Text(value, style = MaterialTheme.typography.headlineSmall); Button({ value = ((value.toIntOrNull() ?: 0) + 1).toString() }) { Text("+1") }; TextButton({ value = "0" }) { Text("Reset") } }
+                }
+                CaptureStep("Measurement", "Use the suggested unit or type a better one.", FieldMindIcons.Graph) {
+                    FieldTextField(value, { value = it }, "Value")
+                    FieldTextField(unit, { unit = it }, "Unit")
+                    FieldTextField(location, { location = it }, "Location / site")
+                }
+                CaptureStep("Context", "Add conditions, instrument notes, mood, or quality flags.", FieldMindIcons.Note) {
+                    ChoiceChips(contextPresets, notes) { notes = if (notes.isBlank()) it else "$notes, $it" }
+                    FieldTextField(notes, { notes = it }, "Notes", minLines = 3)
+                }
+            }
+        }
         if (items.isNotEmpty()) item { DataSummaryCard(items) }
         if (items.isEmpty()) {
             item { ResearchFlowGuide(activeStep = 2, nextLabel = "Next: Reports", onNext = onNext) }
@@ -182,14 +267,37 @@ private fun DataToolPanel(viewModel: FieldMindViewModel, items: List<DataRecordE
             }
         }
     }
-    if (show) NewDataRecordDialog(viewModel) { show = false }
 }
 
 @Composable
 private fun ReportPanel(viewModel: FieldMindViewModel, items: List<ReportEntity>, onOpenDetail: (String, Long) -> Unit) {
     var show by remember { mutableStateOf(false) }
+    var type by remember { mutableStateOf("Field Report") }; var title by remember { mutableStateOf("") }; var background by remember { mutableStateOf("") }; var question by remember { mutableStateOf("") }; var methods by remember { mutableStateOf("") }; var observations by remember { mutableStateOf("") }; var results by remember { mutableStateOf("") }; var interpretation by remember { mutableStateOf("") }; var conclusion by remember { mutableStateOf("") }; var limitations by remember { mutableStateOf("") }; var next by remember { mutableStateOf("") }
     LazyColumn(contentPadding = panelPadding(), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-        item { AddButton("Build report") { show = true } }
+        item { AddButton(if (show) "Cancel report" else "Build report") { show = !show; if (!show) { title = ""; conclusion = "" } } }
+        if (show) item {
+            InlineFormCard("Report Builder", onDismiss = { show = false; title = "" }, onSave = { if (title.isNotBlank()) { viewModel.addReport(type, title, background, question, methods, observations, results, interpretation, conclusion, limitations, next); show = false; title = "" } }, saveEnabled = title.isNotBlank()) {
+                CaptureStep("Type & title", "Pick a report preset for export organization.", FieldMindIcons.Report) {
+                    ChoiceChips(reportTypes, type) { type = it }
+                    FieldTextField(title, { title = it }, "Title")
+                }
+                CaptureStep("Setup", "Frame the research before results.", FieldMindIcons.Question) {
+                    FieldTextField(background, { background = it }, "Background", minLines = 2)
+                    FieldTextField(question, { question = it }, "Question", minLines = 2)
+                    FieldTextField(methods, { methods = it }, "Methods", minLines = 2)
+                }
+                CaptureStep("Evidence", "Summarize observations and data clearly.", FieldMindIcons.Data) {
+                    FieldTextField(observations, { observations = it }, "Observations", minLines = 2)
+                    FieldTextField(results, { results = it }, "Data / results", minLines = 2)
+                    FieldTextField(interpretation, { interpretation = it }, "Interpretation", minLines = 2)
+                }
+                CaptureStep("Conclusion", "Be honest about uncertainty and what comes next.", FieldMindIcons.Check) {
+                    FieldTextField(conclusion, { conclusion = it }, "Conclusion", minLines = 2)
+                    FieldTextField(limitations, { limitations = it }, "Limitations", minLines = 2)
+                    FieldTextField(next, { next = it }, "Next steps", minLines = 2)
+                }
+            }
+        }
         if (items.isNotEmpty()) item { ReportSummaryCard(items) }
         if (items.isEmpty()) {
             item { ResearchFlowGuide(activeStep = 3, nextLabel = "Research flow ready", onNext = null) }
@@ -197,7 +305,6 @@ private fun ReportPanel(viewModel: FieldMindViewModel, items: List<ReportEntity>
         }
         items(items) { EntityCard(it.title, "report", body = it.conclusion.ifBlank { it.question }, meta = listOf(it.type, it.status)) { onOpenDetail("report", it.id) } }
     }
-    if (show) NewReportDialog(viewModel) { show = false }
 }
 
 

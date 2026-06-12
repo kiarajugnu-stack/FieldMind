@@ -87,6 +87,37 @@ internal fun createFieldMindFileUri(context: android.content.Context, prefix: St
     return androidx.core.content.FileProvider.getUriForFile(context, "${context.packageName}.fieldmind.fileprovider", file)
 }
 
+/** An inline form card that replaces dialog-based adding. Shows title, scrollable content, and save/cancel. */
+@Composable
+internal fun InlineFormCard(
+    title: String,
+    onDismiss: () -> Unit,
+    onSave: () -> Unit,
+    saveLabel: String = "Save",
+    saveEnabled: Boolean = true,
+    content: @Composable ColumnScope.() -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(28.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text(title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
+                TextButton(onClick = onDismiss) { Text("Cancel") }
+            }
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+            Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(16.dp), content = content)
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                Button(onClick = onSave, shape = RoundedCornerShape(16.dp), enabled = saveEnabled) { Text(saveLabel) }
+            }
+        }
+    }
+}
+
 /** A dialog wrapper with a title, scrollable content, save/cancel action bar. */
 @Composable
 internal fun FormDialog(title: String, onDismiss: () -> Unit, onSave: () -> Unit, content: @Composable ColumnScope.() -> Unit) {

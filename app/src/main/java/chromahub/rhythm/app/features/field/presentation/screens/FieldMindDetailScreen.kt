@@ -54,6 +54,7 @@ import chromahub.rhythm.app.shared.presentation.components.icons.Icon
 import chromahub.rhythm.app.shared.presentation.components.icons.MaterialSymbolIcon
 import kotlinx.coroutines.launch
 import chromahub.rhythm.app.features.field.data.export.FieldMindExport
+import chromahub.rhythm.app.features.field.data.location.FieldLocationProvider
 import java.util.Locale
 import androidx.compose.foundation.lazy.LazyRow
 // ══════════════════════════════════════════════════════════════════════
@@ -77,80 +78,99 @@ fun DetailScreen(kind: String, id: Long, viewModel: FieldMindViewModel, onBack: 
     val editable = kind in setOf("observation", "note", "question", "hypothesis", "project", "source", "data", "report", "flashcard")
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(20.dp, 20.dp, 20.dp, 40.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
         item { FieldScreenHeader(title, "Record detail workspace", icon = FieldMindIcons.iconFor(kind), actionIcon = FieldMindIcons.Back, onAction = onBack) }
-        if (editable) item { DetailActions(onEdit = { showEdit = true }, onDelete = { showDelete = true }) }
-        when (kind) {
-            "note" -> notes.firstOrNull { it.id == id }?.let { n ->
-                item { DetailBody(n.title, "note", listOf("Category" to n.category, "Tags" to n.tags, "Body" to n.body, "Updated" to recentRelativeTime(n.updatedAt))) }
-                item { NoteAttachmentsPanel(n.attachmentUris, onOpenReader) }
-                item { BacklinksPanel(buildList {
-                    projects.firstOrNull { it.id == n.projectId }?.let { add(Triple("project", it.title, it.id)) }
-                    sources.firstOrNull { it.id == n.sourceId }?.let { add(Triple("source", it.title, it.id)) }
-                }, onOpenDetail) }
+        if (editable && !showEdit) item { DetailActions(onEdit = { showEdit = true }, onDelete = { showDelete = true }) }
+        if (showEdit) {
+            when (kind) {
+                "note" -> notes.firstOrNull { it.id == id }?.let { n ->
+                    item { InlineEditNote(n, viewModel, { showEdit = false; onBack() }) }
+                }
+                "observation" -> observations.firstOrNull { it.id == id }?.let { o ->
+                    item { InlineEditObservation(o, viewModel, { showEdit = false; onBack() }) }
+                }
             }
-            "observation" -> observations.firstOrNull { it.id == id }?.let { o ->
-                item { DetailBody(o.subject, "observation", listOf("Date" to "${o.date} ${o.time}", "Category" to o.category, "Confidence" to o.confidenceLevel, "Location" to o.manualLocation.ifBlank { "None" }, "GPS" to (o.latitude?.let { "${o.latitude}, ${o.longitude}" } ?: "Not captured"), "Tags" to o.tags, "Facts" to o.factsOnlyNotes, "Evidence" to o.evidenceSummary, "Context" to o.moodOrContext)) }
-                if (o.latitude != null && o.longitude != null) item { ObservationLocationCard(o.latitude, o.longitude, o.manualLocation) }
-                item { ObservationAttachmentsPanel(viewModel, o.id, onOpenReader) }
-                item { BacklinksPanel(buildList {
-                    projects.firstOrNull { it.id == o.projectId }?.let { add(Triple("project", it.title, it.id)) }
-                    data.filter { it.observationId == o.id }.forEach { add(Triple("data", it.label, it.id)) }
-                }, onOpenDetail) }
-            }
-            "question" -> questions.firstOrNull { it.id == id }?.let { qn ->
-                item { DetailBody(qn.questionText, "question", listOf("Category" to qn.category, "Source" to qn.sourceType, "Status" to qn.status, "Priority" to qn.priority)) }
-                item { QuestionAnswerCard(qn) { ans -> viewModel.setQuestionAnswer(qn, ans) } }
-                item { BacklinksPanel(buildList {
-                    projects.firstOrNull { it.id == qn.relatedProjectId }?.let { add(Triple("project", it.title, it.id)) }
-                    hypotheses.filter { it.linkedQuestionId == qn.id }.forEach { add(Triple("hypothesis", it.prediction, it.id)) }
-                }, onOpenDetail) }
-            }
-            "hypothesis" -> hypotheses.firstOrNull { it.id == id }?.let { h ->
-                item { DetailBody(h.prediction, "hypothesis", listOf("Reasoning" to h.reasoning, "Support" to h.supportCriteria, "Weaken" to h.weakeningCriteria, "Test" to h.testMethod, "Result" to h.resultStatus, "Confidence" to "${h.confidencePercent}%")) }
-                item { BacklinksPanel(buildList {
-                    questions.firstOrNull { it.id == h.linkedQuestionId }?.let { add(Triple("question", it.questionText, it.id)) }
-                }, onOpenDetail) }
-            }
-            "project" -> projects.firstOrNull { it.id == id }?.let { p ->
-                item { DetailBody(p.title, "project", listOf("Objective" to p.objective, "Question" to p.researchQuestion, "Background" to p.backgroundNotes, "Methods" to p.methods, "Data" to p.dataSummary, "Analysis" to p.analysis, "Conclusion" to p.conclusion, "Future" to p.futureQuestions)) }
-                item { BacklinksPanel(buildList {
-                    observations.filter { it.projectId == p.id }.forEach { add(Triple("observation", it.subject, it.id)) }
-                    questions.filter { it.relatedProjectId == p.id }.forEach { add(Triple("question", it.questionText, it.id)) }
-                    sources.filter { it.relatedProjectId == p.id }.forEach { add(Triple("source", it.title, it.id)) }
-                    data.filter { it.projectId == p.id }.forEach { add(Triple("data", it.label, it.id)) }
-                    reports.filter { it.projectId == p.id }.forEach { add(Triple("report", it.title, it.id)) }
-                }, onOpenDetail) }
-            }
-            "source" -> sources.firstOrNull { it.id == id }?.let { s ->
-                item { DetailBody(s.title, "source", listOf("Type" to s.type, "Author" to s.author, "Year" to s.dateOrYear, "DOI / ISBN" to s.doiOrIsbn, "Publisher / journal" to s.publisherOrJournal, "Link" to s.link, "Access date" to s.accessDate, "Citation note" to s.citationStyleNote, "Importance" to s.importance, "Reading status" to s.readingStatus, "Project" to (projects.firstOrNull { it.id == s.relatedProjectId }?.title ?: "None"), "Main idea" to s.personalSummary, "Key findings" to s.keyFindings, "Taught me" to s.whatThisSourceTaughtMe, "Paper prompts" to s.paperNotes, "Questions" to s.questionsGenerated)) }
-                item { SourcePreviewPanel(s, onOpenReader) }
-                item { SourceActionPanel(s, projects, viewModel, onOpenDetail) }
-                item { BacklinksPanel(buildList {
-                    projects.firstOrNull { it.id == s.relatedProjectId }?.let { add(Triple("project", it.title, it.id)) }
-                    flashcards.filter { it.sourceId == s.id }.forEach { add(Triple("flashcard", it.front, it.id)) }
-                }, onOpenDetail) }
-            }
-            "data" -> data.firstOrNull { it.id == id }?.let { d ->
-                item { DetailBody(d.label, "data", listOf("Tool" to d.toolType, "Value" to "${d.value} ${d.unit}".trim(), "Location" to d.location, "Notes" to d.notes)) }
-                item { BacklinksPanel(buildList {
-                    projects.firstOrNull { it.id == d.projectId }?.let { add(Triple("project", it.title, it.id)) }
-                    observations.firstOrNull { it.id == d.observationId }?.let { add(Triple("observation", it.subject, it.id)) }
-                }, onOpenDetail) }
-            }
-            "report" -> reports.firstOrNull { it.id == id }?.let { r ->
-                item { DetailBody(r.title, "report", listOf("Type" to r.type, "Status" to r.status, "Question" to r.question, "Conclusion" to r.conclusion)) }
-                item { Card(shape = RoundedCornerShape(20.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)) { Text(FieldMindExport.buildMarkdownReport(r), Modifier.padding(16.dp), style = MaterialTheme.typography.bodySmall) } }
-                item { BacklinksPanel(buildList { projects.firstOrNull { it.id == r.projectId }?.let { add(Triple("project", it.title, it.id)) } }, onOpenDetail) }
-            }
-            "flashcard" -> flashcards.firstOrNull { it.id == id }?.let { f ->
-                item { DetailBody(f.front, "flashcard", listOf("Type" to f.type, "Back" to f.back)) }
-                item { BacklinksPanel(buildList {
-                    sources.firstOrNull { it.id == f.sourceId }?.let { add(Triple("source", it.title, it.id)) }
-                    projects.firstOrNull { it.id == f.projectId }?.let { add(Triple("project", it.title, it.id)) }
-                }, onOpenDetail) }
+        } else {
+            when (kind) {
+                "note" -> notes.firstOrNull { it.id == id }?.let { n ->
+                    item { DetailBody(n.title, "note", listOf("Category" to n.category, "Tags" to n.tags, "Body" to n.body, "Updated" to recentRelativeTime(n.updatedAt))) }
+                    item { NoteAttachmentsPanel(n.attachmentUris, onOpenReader) }
+                    item { BacklinksPanel(buildList {
+                        projects.firstOrNull { it.id == n.projectId }?.let { add(Triple("project", it.title, it.id)) }
+                        sources.firstOrNull { it.id == n.sourceId }?.let { add(Triple("source", it.title, it.id)) }
+                    }, onOpenDetail) }
+                }
+                "observation" -> observations.firstOrNull { it.id == id }?.let { o ->
+                    item {
+                        ObservationReaderContent(
+                            observation = o,
+                            onAttachments = { ObservationAttachmentsPanel(viewModel, o.id, onOpenReader) },
+                            onMap = {
+                                if (o.latitude != null && o.longitude != null) {
+                                    ObservationLocationCard(o.latitude, o.longitude, o.manualLocation)
+                                }
+                            }
+                        )
+                    }
+                    item { BacklinksPanel(buildList {
+                        projects.firstOrNull { it.id == o.projectId }?.let { add(Triple("project", it.title, it.id)) }
+                        data.filter { it.observationId == o.id }.forEach { add(Triple("data", it.label, it.id)) }
+                    }, onOpenDetail) }
+                }
+                "question" -> questions.firstOrNull { it.id == id }?.let { qn ->
+                    item { DetailBody(qn.questionText, "question", listOf("Category" to qn.category, "Source" to qn.sourceType, "Status" to qn.status, "Priority" to qn.priority)) }
+                    item { QuestionAnswerCard(qn) { ans -> viewModel.setQuestionAnswer(qn, ans) } }
+                    item { BacklinksPanel(buildList {
+                        projects.firstOrNull { it.id == qn.relatedProjectId }?.let { add(Triple("project", it.title, it.id)) }
+                        hypotheses.filter { it.linkedQuestionId == qn.id }.forEach { add(Triple("hypothesis", it.prediction, it.id)) }
+                    }, onOpenDetail) }
+                }
+                "hypothesis" -> hypotheses.firstOrNull { it.id == id }?.let { h ->
+                    item { DetailBody(h.prediction, "hypothesis", listOf("Reasoning" to h.reasoning, "Support" to h.supportCriteria, "Weaken" to h.weakeningCriteria, "Test" to h.testMethod, "Result" to h.resultStatus, "Confidence" to "${h.confidencePercent}%")) }
+                    item { BacklinksPanel(buildList {
+                        questions.firstOrNull { it.id == h.linkedQuestionId }?.let { add(Triple("question", it.questionText, it.id)) }
+                    }, onOpenDetail) }
+                }
+                "project" -> projects.firstOrNull { it.id == id }?.let { p ->
+                    item { DetailBody(p.title, "project", listOf("Objective" to p.objective, "Question" to p.researchQuestion, "Background" to p.backgroundNotes, "Methods" to p.methods, "Data" to p.dataSummary, "Analysis" to p.analysis, "Conclusion" to p.conclusion, "Future" to p.futureQuestions)) }
+                    item { BacklinksPanel(buildList {
+                        observations.filter { it.projectId == p.id }.forEach { add(Triple("observation", it.subject, it.id)) }
+                        questions.filter { it.relatedProjectId == p.id }.forEach { add(Triple("question", it.questionText, it.id)) }
+                        sources.filter { it.relatedProjectId == p.id }.forEach { add(Triple("source", it.title, it.id)) }
+                        data.filter { it.projectId == p.id }.forEach { add(Triple("data", it.label, it.id)) }
+                        reports.filter { it.projectId == p.id }.forEach { add(Triple("report", it.title, it.id)) }
+                    }, onOpenDetail) }
+                }
+                "source" -> sources.firstOrNull { it.id == id }?.let { s ->
+                    item { DetailBody(s.title, "source", listOf("Type" to s.type, "Author" to s.author, "Year" to s.dateOrYear, "DOI / ISBN" to s.doiOrIsbn, "Publisher / journal" to s.publisherOrJournal, "Link" to s.link, "Access date" to s.accessDate, "Citation note" to s.citationStyleNote, "Importance" to s.importance, "Reading status" to s.readingStatus, "Project" to (projects.firstOrNull { it.id == s.relatedProjectId }?.title ?: "None"), "Main idea" to s.personalSummary, "Key findings" to s.keyFindings, "Taught me" to s.whatThisSourceTaughtMe, "Paper prompts" to s.paperNotes, "Questions" to s.questionsGenerated)) }
+                    item { SourcePreviewPanel(s, onOpenReader) }
+                    item { SourceActionPanel(s, projects, viewModel, onOpenDetail) }
+                    item { BacklinksPanel(buildList {
+                        projects.firstOrNull { it.id == s.relatedProjectId }?.let { add(Triple("project", it.title, it.id)) }
+                        flashcards.filter { it.sourceId == s.id }.forEach { add(Triple("flashcard", it.front, it.id)) }
+                    }, onOpenDetail) }
+                }
+                "data" -> data.firstOrNull { it.id == id }?.let { d ->
+                    item { DetailBody(d.label, "data", listOf("Tool" to d.toolType, "Value" to "${d.value} ${d.unit}".trim(), "Location" to d.location, "Notes" to d.notes)) }
+                    item { BacklinksPanel(buildList {
+                        projects.firstOrNull { it.id == d.projectId }?.let { add(Triple("project", it.title, it.id)) }
+                        observations.firstOrNull { it.id == d.observationId }?.let { add(Triple("observation", it.subject, it.id)) }
+                    }, onOpenDetail) }
+                }
+                "report" -> reports.firstOrNull { it.id == id }?.let { r ->
+                    item { DetailBody(r.title, "report", listOf("Type" to r.type, "Status" to r.status, "Question" to r.question, "Conclusion" to r.conclusion)) }
+                    item { Card(shape = RoundedCornerShape(20.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)) { Text(FieldMindExport.buildMarkdownReport(r), Modifier.padding(16.dp), style = MaterialTheme.typography.bodySmall) } }
+                    item { BacklinksPanel(buildList { projects.firstOrNull { it.id == r.projectId }?.let { add(Triple("project", it.title, it.id)) } }, onOpenDetail) }
+                }
+                "flashcard" -> flashcards.firstOrNull { it.id == id }?.let { f ->
+                    item { DetailBody(f.front, "flashcard", listOf("Type" to f.type, "Back" to f.back)) }
+                    item { BacklinksPanel(buildList {
+                        sources.firstOrNull { it.id == f.sourceId }?.let { add(Triple("source", it.title, it.id)) }
+                        projects.firstOrNull { it.id == f.projectId }?.let { add(Triple("project", it.title, it.id)) }
+                    }, onOpenDetail) }
+                }
             }
         }
     }
-    if (showEdit) EditEntityDialog(kind, id, viewModel) { showEdit = false }
+    if (showEdit && kind !in setOf("note", "observation")) EditEntityDialog(kind, id, viewModel) { showEdit = false }
     if (showDelete) ConfirmDeleteDialog(kind, onDismiss = { showDelete = false }) {
         deleteEntityByKind(kind, id, viewModel); showDelete = false; onBack()
     }
@@ -308,6 +328,87 @@ private fun DetailBody(title: String, kind: String, fields: List<Pair<String, St
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun InlineEditNote(entity: NoteEntity, viewModel: FieldMindViewModel, onDone: () -> Unit) {
+    var title by remember { mutableStateOf(entity.title) }; var body by remember { mutableStateOf(entity.body) }
+    var category by remember { mutableStateOf(entity.category) }; var tags by remember { mutableStateOf(entity.tags) }
+    var attachments by remember { mutableStateOf(entity.attachmentUris) }
+    InlineFormCard("Edit Note", onDismiss = onDone, onSave = {
+        if (title.isNotBlank() || body.isNotBlank()) { viewModel.updateNoteEntity(entity.copy(title = title.trim().ifBlank { body.take(36) }, body = body.trim(), category = category, tags = tags.trim(), attachmentUris = attachments.trim())); onDone() }
+    }, saveEnabled = title.isNotBlank() || body.isNotBlank()) {
+        FormChoice("Category", observationCategories, category) { category = it }
+        FieldTextField(title, { title = it }, "Title")
+        FieldTextField(body, { body = it }, "Body", minLines = 5)
+        FieldTextField(tags, { tags = it }, "Tags")
+        FieldTextField(attachments, { attachments = it }, "Attachments", minLines = 2, supportingText = "One stored attachment per line: type|caption|uri")
+    }
+}
+
+@Composable
+private fun InlineEditObservation(entity: ObservationEntity, viewModel: FieldMindViewModel, onDone: () -> Unit) {
+    val appContext = LocalContext.current
+    var subject by remember { mutableStateOf(entity.subject) }
+    var category by remember { mutableStateOf(entity.category) }
+    var facts by remember { mutableStateOf(entity.factsOnlyNotes) }
+    var confidence by remember { mutableStateOf(entity.confidenceLevel) }
+    var location by remember { mutableStateOf(entity.manualLocation) }
+    var latitude by remember { mutableStateOf(entity.latitude?.toString().orEmpty()) }
+    var longitude by remember { mutableStateOf(entity.longitude?.toString().orEmpty()) }
+    var tags by remember { mutableStateOf(entity.tags) }
+    var evidence by remember { mutableStateOf(entity.evidenceSummary) }
+    var fieldContext by remember { mutableStateOf(entity.moodOrContext) }
+    var locating by remember { mutableStateOf(false) }
+    val locationProvider = remember { FieldLocationProvider(appContext) }
+    fun startLocating() {
+        locating = true
+        locationProvider.requestCurrentLocation { captured ->
+            locating = false
+            if (captured != null) {
+                latitude = captured.latitude.toString(); longitude = captured.longitude.toString()
+                location = captured.asDisplayText()
+                locationProvider.resolvePlaceName(captured.latitude, captured.longitude) { place -> if (!place.isNullOrBlank()) location = captured.copy(placeName = place).asDisplayText() }
+            }
+        }
+    }
+    InlineFormCard("Edit Observation", onDismiss = onDone, onSave = {
+        if (subject.isNotBlank()) {
+            viewModel.updateObservation(entity.copy(subject = subject.trim(), category = category, factsOnlyNotes = facts.trim(), confidenceLevel = confidence, manualLocation = location.trim(), latitude = latitude.toDoubleOrNull(), longitude = longitude.toDoubleOrNull(), evidenceSummary = evidence.trim(), moodOrContext = fieldContext.trim()), tags)
+            onDone()
+        }
+    }, saveEnabled = subject.isNotBlank()) {
+        CaptureStep("Identity", "Keep the subject and category easy to scan later.", FieldMindIcons.Observation) {
+            FieldTextField(subject, { subject = it }, "Subject")
+            ChoiceChips(observationCategories, category) { category = it }
+            ChoiceChips(confidenceOptions, confidence) { confidence = it }
+        }
+        CaptureStep("Facts & context", "Separate facts from mood, context, or field conditions.", FieldMindIcons.Edit) {
+            FieldTextField(facts, { facts = it }, "Facts only", minLines = 3)
+            ChoiceChips(contextPresets, fieldContext) { fieldContext = if (fieldContext.isBlank()) it else "$fieldContext, $it" }
+            FieldTextField(fieldContext, { fieldContext = it }, "Context / mood", minLines = 2)
+        }
+        CaptureStep("GPS", "Use automatic GPS or repair coordinates manually.", FieldMindIcons.Location) {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                FilledTonalButton(
+                    onClick = { if (locationProvider.hasAnyLocationPermission()) startLocating()
+                        else appContext.startActivity(android.content.Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS)) },
+                    modifier = Modifier.weight(1f), enabled = !locating
+                ) {
+                    if (locating) CircularProgressIndicator(Modifier.size(16.dp), strokeWidth = 2.dp) else Icon(FieldMindIcons.Location, null, size = 18.dp)
+                    Spacer(Modifier.size(6.dp)); Text(if (locating) "Locating…" else "Use GPS")
+                }
+                OutlinedButton(onClick = { latitude = ""; longitude = ""; location = "" }, modifier = Modifier.weight(1f)) { Text("Clear") }
+            }
+            FieldTextField(location, { location = it }, "Location")
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                FieldTextField(latitude, { latitude = it }, "Latitude", modifier = Modifier.weight(1f))
+                FieldTextField(longitude, { longitude = it }, "Longitude", modifier = Modifier.weight(1f))
+            }
+        }
+        FieldTextField(tags, { tags = it }, "Tags (comma separated)")
+        FieldTextField(evidence, { evidence = it }, "Evidence summary", minLines = 2)
     }
 }
 
