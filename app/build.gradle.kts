@@ -248,6 +248,9 @@ dependencies {
     // OpenStreetMap for offline GPS maps
     implementation(libs.osmdroid.android)
 
+    // Biometric authentication for privacy lock
+    implementation("androidx.biometric:biometric:1.2.0-alpha05")
+
     // Coroutines for async operations
     implementation(libs.org.jetbrains.kotlinx.coroutines.core)
     implementation(libs.org.jetbrains.kotlinx.coroutines.android)
