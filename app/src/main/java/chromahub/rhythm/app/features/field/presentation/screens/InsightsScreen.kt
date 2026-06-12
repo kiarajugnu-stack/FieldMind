@@ -50,6 +50,12 @@ fun InsightsScreen(
     val dataRecords by viewModel.dataRecords.collectAsState()
     val flashcards by viewModel.flashcards.collectAsState()
     val tags by viewModel.commonTags.collectAsState()
+    val profileName by viewModel.fieldSettings.profileName.collectAsState()
+    val profileRole by viewModel.fieldSettings.profileRole.collectAsState()
+    val profileFocus by viewModel.fieldSettings.profileFocus.collectAsState()
+    val localModel by viewModel.fieldSettings.localModelOption.collectAsState()
+    val localReady by viewModel.fieldSettings.localModelDownloaded.collectAsState()
+    val backupInterval by viewModel.fieldSettings.autoBackupInterval.collectAsState()
     val colors = FieldMindTheme.colors
 
     val categoryCounts = observations.groupingBy { it.category }.eachCount().entries.sortedByDescending { it.value }.take(6).map { it.key to it.value.toFloat() }
@@ -110,6 +116,7 @@ fun InsightsScreen(
 
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(20.dp, 20.dp, 20.dp, 96.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
         item { FieldScreenHeader("Insights", "Offline analysis of your own archive.", icon = FieldMindIcons.Insights, actionIcon = FieldMindIcons.Search, onAction = { onNavigate(FieldMindScreen.Search) }) }
+        item { ResearchProfileInsightCard(profileName, profileRole, profileFocus, localModel, localReady, backupInterval) }
         item {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 MetricTile("Observations", observations.size.toString(), FieldMindIcons.Observation, Modifier.weight(1f), colors.observation)
@@ -168,6 +175,23 @@ fun InsightsScreen(
             EntityCard(p.title, "project", body = p.objective.ifBlank { p.researchQuestion }, meta = listOf(p.status)) { onOpenDetail("project", p.id) }
         }
         item { CollapsibleAchievements(achievements) }
+    }
+}
+
+
+@Composable
+private fun ResearchProfileInsightCard(name: String, role: String, focus: String, localModel: String, localReady: Boolean, backupInterval: String) {
+    Card(shape = RoundedCornerShape(26.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)) {
+        Row(Modifier.fillMaxWidth().padding(18.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+            Box(Modifier.size(56.dp).clip(CircleShape).background(MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.12f)), contentAlignment = Alignment.Center) {
+                Icon(FieldMindIcons.Insights, null, tint = MaterialTheme.colorScheme.onPrimaryContainer, size = 28.dp)
+            }
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(5.dp)) {
+                Text(if (name.isBlank()) "Your research profile" else name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onPrimaryContainer)
+                Text("$role • $focus", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.78f))
+                Text("Offline setup: ${if (localReady) localModel else "local model not downloaded"} • Backup: $backupInterval", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.72f))
+            }
+        }
     }
 }
 

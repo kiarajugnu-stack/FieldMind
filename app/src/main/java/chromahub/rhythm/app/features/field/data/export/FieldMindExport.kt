@@ -1,5 +1,8 @@
 package chromahub.rhythm.app.features.field.data.export
 
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.pdf.PdfDocument
 import java.io.ByteArrayOutputStream
@@ -103,6 +106,46 @@ ${report.nextSteps}
             pageNumber++
         } while (index < lines.size)
         return ByteArrayOutputStream().use { out -> document.writeTo(out); document.close(); out.toByteArray() }
+    }
+
+    fun dashboardPngBytes(observations: List<ObservationEntity>, sources: List<SourceEntity>, projects: List<ProjectEntity>, notes: List<NoteEntity>): ByteArray {
+        val bitmap = Bitmap.createBitmap(1200, 675, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(bitmap)
+        val paint = Paint(Paint.ANTI_ALIAS_FLAG)
+        canvas.drawColor(Color.rgb(237, 246, 236))
+        paint.color = Color.rgb(38, 87, 63)
+        paint.textSize = 54f
+        paint.isFakeBoldText = true
+        canvas.drawText("FieldMind dashboard", 56f, 96f, paint)
+        paint.isFakeBoldText = false
+        paint.textSize = 24f
+        paint.color = Color.rgb(79, 99, 80)
+        canvas.drawText("Offline research summary export", 58f, 136f, paint)
+        val stats = listOf(
+            Triple("Observations", observations.size, Color.rgb(47, 125, 91)),
+            Triple("Sources", sources.size, Color.rgb(68, 102, 205)),
+            Triple("Projects", projects.size, Color.rgb(150, 95, 38)),
+            Triple("Notes", notes.size, Color.rgb(130, 87, 172))
+        )
+        stats.forEachIndexed { index, stat ->
+            val x = 70f + index * 275f
+            val y = 245f
+            paint.color = Color.WHITE
+            canvas.drawRoundRect(x, y, x + 230f, y + 190f, 32f, 32f, paint)
+            paint.color = stat.third
+            canvas.drawCircle(x + 58f, y + 58f, 24f, paint)
+            paint.textSize = 58f
+            paint.isFakeBoldText = true
+            canvas.drawText(stat.second.toString(), x + 34f, y + 125f, paint)
+            paint.textSize = 24f
+            paint.isFakeBoldText = false
+            paint.color = Color.rgb(79, 99, 80)
+            canvas.drawText(stat.first, x + 34f, y + 162f, paint)
+        }
+        paint.textSize = 26f
+        paint.color = Color.rgb(47, 125, 91)
+        canvas.drawText(if (observations.isNotEmpty()) "Keep collecting: your evidence base is growing." else "Start by capturing one observation.", 70f, 560f, paint)
+        return ByteArrayOutputStream().use { out -> bitmap.compress(Bitmap.CompressFormat.PNG, 100, out); bitmap.recycle(); out.toByteArray() }
     }
 
     fun dashboardSvg(observations: List<ObservationEntity>, sources: List<SourceEntity>, projects: List<ProjectEntity>, notes: List<NoteEntity>): String = """

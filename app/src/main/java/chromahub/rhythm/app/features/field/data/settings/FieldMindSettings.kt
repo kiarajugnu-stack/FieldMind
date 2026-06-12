@@ -73,6 +73,33 @@ class FieldMindSettings private constructor(context: Context) {
     /** System, Light, or Dark. MainActivity observes this so Settings has an immediate theme toggle. */
     val themeMode: StateFlow<String> = _themeMode.asStateFlow()
 
+    private val _profileName = MutableStateFlow(prefs.getString(KEY_PROFILE_NAME, "") ?: "")
+    val profileName: StateFlow<String> = _profileName.asStateFlow()
+
+    private val _profileRole = MutableStateFlow(prefs.getString(KEY_PROFILE_ROLE, "Field learner") ?: "Field learner")
+    val profileRole: StateFlow<String> = _profileRole.asStateFlow()
+
+    private val _profileFocus = MutableStateFlow(prefs.getString(KEY_PROFILE_FOCUS, "Wildlife & ecology") ?: "Wildlife & ecology")
+    val profileFocus: StateFlow<String> = _profileFocus.asStateFlow()
+
+    private val _localModelEnabled = MutableStateFlow(prefs.getBoolean(KEY_LOCAL_MODEL_ENABLED, false))
+    val localModelEnabled: StateFlow<Boolean> = _localModelEnabled.asStateFlow()
+
+    private val _localModelOption = MutableStateFlow(prefs.getString(KEY_LOCAL_MODEL_OPTION, "FieldLite 500 MB") ?: "FieldLite 500 MB")
+    val localModelOption: StateFlow<String> = _localModelOption.asStateFlow()
+
+    private val _localModelDownloaded = MutableStateFlow(prefs.getBoolean(KEY_LOCAL_MODEL_DOWNLOADED, false))
+    val localModelDownloaded: StateFlow<Boolean> = _localModelDownloaded.asStateFlow()
+
+    private val _localModelUseForStudy = MutableStateFlow(prefs.getBoolean(KEY_LOCAL_MODEL_USE_STUDY, true))
+    val localModelUseForStudy: StateFlow<Boolean> = _localModelUseForStudy.asStateFlow()
+
+    private val _autoBackupEnabled = MutableStateFlow(prefs.getBoolean(KEY_AUTO_BACKUP_ENABLED, false))
+    val autoBackupEnabled: StateFlow<Boolean> = _autoBackupEnabled.asStateFlow()
+
+    private val _autoBackupInterval = MutableStateFlow(prefs.getString(KEY_AUTO_BACKUP_INTERVAL, "Weekly") ?: "Weekly")
+    val autoBackupInterval: StateFlow<String> = _autoBackupInterval.asStateFlow()
+
     fun setDailyObservationGoal(value: Int) = edit(KEY_DAILY_GOAL, value.coerceAtLeast(0)) { _dailyObservationGoal.value = value.coerceAtLeast(0) }
     fun setDefaultCategory(value: String) = edit(KEY_DEFAULT_CATEGORY, value) { _defaultCategory.value = value }
     fun setDefaultConfidence(value: String) = edit(KEY_DEFAULT_CONFIDENCE, value) { _defaultConfidence.value = value }
@@ -94,6 +121,15 @@ class FieldMindSettings private constructor(context: Context) {
     fun setPrivacyLockEnabled(value: Boolean) = edit(KEY_PRIVACY_LOCK, value) { _privacyLockEnabled.value = value }
     fun setDynamicColorEnabled(value: Boolean) = edit(KEY_DYNAMIC_COLOR, value) { _dynamicColorEnabled.value = value }
     fun setThemeMode(value: String) = edit(KEY_THEME_MODE, value) { _themeMode.value = value }
+    fun setProfileName(value: String) = edit(KEY_PROFILE_NAME, value.trim()) { _profileName.value = value.trim() }
+    fun setProfileRole(value: String) = edit(KEY_PROFILE_ROLE, value) { _profileRole.value = value }
+    fun setProfileFocus(value: String) = edit(KEY_PROFILE_FOCUS, value) { _profileFocus.value = value }
+    fun setLocalModelEnabled(value: Boolean) = edit(KEY_LOCAL_MODEL_ENABLED, value) { _localModelEnabled.value = value }
+    fun setLocalModelOption(value: String) = edit(KEY_LOCAL_MODEL_OPTION, value) { _localModelOption.value = value }
+    fun setLocalModelDownloaded(value: Boolean) = edit(KEY_LOCAL_MODEL_DOWNLOADED, value) { _localModelDownloaded.value = value }
+    fun setLocalModelUseForStudy(value: Boolean) = edit(KEY_LOCAL_MODEL_USE_STUDY, value) { _localModelUseForStudy.value = value }
+    fun setAutoBackupEnabled(value: Boolean) = edit(KEY_AUTO_BACKUP_ENABLED, value) { _autoBackupEnabled.value = value }
+    fun setAutoBackupInterval(value: String) = edit(KEY_AUTO_BACKUP_INTERVAL, value) { _autoBackupInterval.value = value }
 
     private inline fun edit(key: String, value: String, after: () -> Unit) { prefs.edit().putString(key, value).apply(); after() }
     private inline fun edit(key: String, value: Boolean, after: () -> Unit) { prefs.edit().putBoolean(key, value).apply(); after() }
@@ -126,5 +162,14 @@ class FieldMindSettings private constructor(context: Context) {
         private const val KEY_PRIVACY_LOCK = "privacy_lock"
         private const val KEY_DYNAMIC_COLOR = "dynamic_color"
         private const val KEY_THEME_MODE = "theme_mode"
+        private const val KEY_PROFILE_NAME = "profile_name"
+        private const val KEY_PROFILE_ROLE = "profile_role"
+        private const val KEY_PROFILE_FOCUS = "profile_focus"
+        private const val KEY_LOCAL_MODEL_ENABLED = "local_model_enabled"
+        private const val KEY_LOCAL_MODEL_OPTION = "local_model_option"
+        private const val KEY_LOCAL_MODEL_DOWNLOADED = "local_model_downloaded"
+        private const val KEY_LOCAL_MODEL_USE_STUDY = "local_model_use_study"
+        private const val KEY_AUTO_BACKUP_ENABLED = "auto_backup_enabled"
+        private const val KEY_AUTO_BACKUP_INTERVAL = "auto_backup_interval"
     }
 }

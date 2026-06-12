@@ -34,7 +34,28 @@ data class LearnCategory(
  * Free, public APIs that could power live in-app fetching of papers/books (no key or free tier).
  * Surfaced to the user as a proposal; not called automatically.
  */
-data class OnlineApiProposal(val name: String, val baseUrl: String, val notes: String)
+data class BookSuggestion(
+    val title: String,
+    val category: String,
+    val genre: String,
+    val author: String,
+    val freeUrl: String,
+    val buyUrl: String,
+    val why: String
+)
+
+val BookSuggestions = listOf(
+    BookSuggestion("Biology 2e", "Biology", "Textbook", "OpenStax", "https://openstax.org/details/books/biology-2e", "https://openstax.org/details/books/biology-2e", "Free web/PDF textbook for cells, evolution, ecology, plants, and animals."),
+    BookSuggestion("Introductory Statistics", "Data", "Textbook", "OpenStax", "https://openstax.org/details/books/introductory-statistics", "https://openstax.org/details/books/introductory-statistics", "Use when turning field measurements into graphs, summaries, and reports."),
+    BookSuggestion("On the Origin of Species", "Animals", "Classic science", "Charles Darwin", "https://www.gutenberg.org/ebooks/1228", "https://bookshop.org/search?keywords=On%20the%20Origin%20of%20Species", "A free primary historical text about observation, variation, and evidence."),
+    BookSuggestion("The Variation of Animals and Plants Under Domestication", "Animals", "Classic science", "Charles Darwin", "https://www.gutenberg.org/ebooks/24923", "https://bookshop.org/search?keywords=The%20Variation%20of%20Animals%20and%20Plants%20Under%20Domestication", "Useful for animal, plant, breeding, and trait-focused projects."),
+    BookSuggestion("Biodiversity Heritage Library", "Wildlife", "Digital library", "BHL consortium", "https://www.biodiversitylibrary.org/", "https://www.biodiversitylibrary.org/", "Open-access biodiversity books, field guides, scans, and illustrations."),
+    BookSuggestion("NCBI Bookshelf", "Health & biology", "Digital library", "NCBI", "https://www.ncbi.nlm.nih.gov/books/", "https://www.ncbi.nlm.nih.gov/books/", "Free biomedical and life-science books for deeper source reading."),
+    BookSuggestion("Open Library animal subject", "Animals", "Library catalog", "Internet Archive", "https://openlibrary.org/subjects/animals?ebooks=true", "https://openlibrary.org/subjects/animals", "Borrowable/readable animal books discovered through Open Library subject pages."),
+    BookSuggestion("Open Library ecology subject", "Ecology", "Library catalog", "Internet Archive", "https://openlibrary.org/subjects/ecology?ebooks=true", "https://openlibrary.org/subjects/ecology", "A practical starting shelf for ecology and habitat research."),
+    BookSuggestion("NOAA JetStream", "Weather", "Course", "NOAA", "https://www.noaa.gov/jetstream", "https://www.noaa.gov/jetstream", "Free weather-school material for clouds, fronts, and field weather logs."),
+    BookSuggestion("USGS Water Science School", "Water", "Reference", "USGS", "https://www.usgs.gov/special-topics/water-science-school", "https://www.usgs.gov/special-topics/water-science-school", "Free official water-cycle, water-quality, and hydrology reading.")
+)
 
 val SuggestedOnlineApis = listOf(
     OnlineApiProposal("Crossref", "https://api.crossref.org/works?query=", "Free, no key. Search 150M+ scholarly works by topic; returns title, authors, DOI, year."),
