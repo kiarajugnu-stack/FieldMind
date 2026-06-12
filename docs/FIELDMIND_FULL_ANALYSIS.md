@@ -601,3 +601,24 @@ This section documents changes made in the second follow-up pass addressing the 
 ---
 
 *This analysis was generated on June 12, 2026 by re-analyzing the full FieldMind codebase on `main` (commit `e3fc8cd8`), with updates for PR #18.*
+
+## 12. Phase 2 Architecture Splits
+
+The monolithic FieldMindScreens.kt (4041 lines) has been split into 12 focused files:
+
+| File | Lines | Contents |
+|------|-------|----------|
+| FieldMindScreenUtils.kt | 92 | Shared internal constants + utility functions |
+| FieldMindOnboardingScreen.kt | 141 | Onboarding flow |
+| FieldMindHomeScreen.kt | 380 | Today/Home dashboard |
+| FieldMindObserveScreen.kt | 690 | Capture and field mode |
+| FieldMindProjectsScreen.kt | 333 | Project workspace |
+| FieldMindLibraryScreen.kt | 620 | Knowledge library and learn |
+| FieldMindArchiveScreen.kt | 58 | Search archive |
+| FieldMindBackupExportScreen.kt | 327 | Export studio and backups |
+| FieldMindSettingsScreen.kt | 230 | Settings |
+| FieldMindDetailScreen.kt | 526 | Entity detail and backlinks |
+| FieldMindDialogs.kt | 967 | All create/edit dialogs + form helpers |
+| FieldMindMapScreen.kt | 40 | Full-screen OSM map |
+
+All files remain in the same package and are automatically discovered by the navigation wildcard import.
