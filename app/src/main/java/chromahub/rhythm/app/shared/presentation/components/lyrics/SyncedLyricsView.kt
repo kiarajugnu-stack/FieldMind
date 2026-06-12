@@ -26,7 +26,7 @@ import fieldmind.research.app.util.LyricsParser
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import fieldmind.research.app.shared.data.model.AppSettings
-import fieldmind.research.app.RhythmApplication
+import fieldmind.research.app.FieldMindApplication
 import kotlin.math.abs
 
 private sealed class SyncedLyricsItem {
