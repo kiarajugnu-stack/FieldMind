@@ -28,7 +28,7 @@ import fieldmind.research.app.R
 import fieldmind.research.app.util.RhythmLyricsParser
 import fieldmind.research.app.util.WordByWordLyricLine
 import fieldmind.research.app.shared.data.model.AppSettings
-import fieldmind.research.app.RhythmApplication
+import fieldmind.research.app.FieldMindApplication
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import kotlin.math.abs
