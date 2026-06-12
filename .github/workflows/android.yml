@@ -62,7 +62,23 @@ jobs:
           echo "Keystore files are empty — secrets not configured"
           exit 1
         fi
-        echo "Keystore setup succeeded" >> $GITHUB_STEP_SUMMARY
+
+        key_alias=$(sed -n 's/^key_alias=//p' .config/keystore.properties | head -1)
+        store_password=$(sed -n 's/^store_password=//p' .config/keystore.properties | head -1)
+        key_password=$(sed -n 's/^key_password=//p' .config/keystore.properties | head -1)
+        if [ -z "$key_alias" ] || [ -z "$store_password" ] || [ -z "$key_password" ]; then
+          rm -f release.keystore .config/keystore.properties
+          echo "Keystore properties are incomplete — falling back to debug signing"
+          exit 1
+        fi
+
+        if ! keytool -list -keystore release.keystore -alias "$key_alias" -storepass "$store_password" -keypass "$key_password" >/dev/null 2>&1; then
+          rm -f release.keystore .config/keystore.properties
+          echo "Keystore validation failed — falling back to debug signing"
+          exit 1
+        fi
+
+        echo "Keystore setup and validation succeeded" >> $GITHUB_STEP_SUMMARY
 
     - name: Keystore fallback notice
       if: steps.keystore.outcome == 'failure'
