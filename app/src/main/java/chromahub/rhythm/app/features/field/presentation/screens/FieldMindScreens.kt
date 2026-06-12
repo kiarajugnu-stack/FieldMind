@@ -1950,18 +1950,20 @@ private fun SettingsExportSection(viewModel: FieldMindViewModel) {
     val data by viewModel.dataRecords.collectAsState()
     val reports by viewModel.reports.collectAsState()
     val flashcards by viewModel.flashcards.collectAsState()
-    var pendingText by remember { mutableStateOf("") }
+    var pendingBytes by remember { mutableStateOf(ByteArray(0)) }
     val createDoc = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("text/plain")) { uri ->
-        if (uri != null) runCatching { context.contentResolver.openOutputStream(uri)?.use { it.write(pendingText.toByteArray()) } }
+        if (uri != null) runCatching { context.contentResolver.openOutputStream(uri)?.use { it.write(pendingBytes) } }
             .onSuccess { android.widget.Toast.makeText(context, "Export written.", android.widget.Toast.LENGTH_SHORT).show() }
             .onFailure { android.widget.Toast.makeText(context, "Export failed: ${it.localizedMessage}", android.widget.Toast.LENGTH_LONG).show() }
     }
+    fun queueText(text: String) { pendingBytes = text.toByteArray() }
     SettingsGroup("Export data", "Your research notes stay portable and owned by you.") {
         Column(Modifier.padding(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             ExportRow("Observations CSV", FieldMindIcons.Observation) { queueText(FieldMindExport.observationsCsv(observations)); createDoc.launch("fieldmind-observations.csv") }
             ExportRow("Data CSV", FieldMindIcons.Data) { queueText(FieldMindExport.dataCsv(data)); createDoc.launch("fieldmind-data.csv") }
             ExportRow("Sources CSV", FieldMindIcons.Source) { queueText(FieldMindExport.sourcesCsv(sources)); createDoc.launch("fieldmind-sources.csv") }
             ExportRow("PDF-ready HTML", FieldMindIcons.Article) { queueText(FieldMindExport.pdfReadyHtml(projects, observations, sources, reports)); createDoc.launch("fieldmind-print-export.html") }
+            ExportRow("Research PDF", FieldMindIcons.Report) { pendingBytes = FieldMindExport.simplePdfBytes("FieldMind Research Export", FieldMindExport.pdfReadyHtml(projects, observations, sources, reports).replace(Regex("<[^>]+>"), " ")); createDoc.launch("fieldmind-research-export.pdf") }
             ExportRow("Dashboard SVG", FieldMindIcons.Graph) { queueText(FieldMindExport.dashboardSvg(observations, sources, projects, notes)); createDoc.launch("fieldmind-dashboard.svg") }
             ExportRow("Archive JSON", FieldMindIcons.Archive) { queueText(FieldMindExport.archiveJson(observations, notes, questions, hypotheses, projects, sources, data, reports, flashcards)); createDoc.launch("fieldmind-archive.json") }
             ExportRow("Reports Markdown", FieldMindIcons.Report) { queueText(reports.joinToString("\n\n---\n\n") { FieldMindExport.buildMarkdownReport(it) }); createDoc.launch("fieldmind-reports.md") }
