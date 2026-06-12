@@ -6,6 +6,7 @@ import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import chromahub.rhythm.app.features.field.data.database.FieldMindDatabase
 import chromahub.rhythm.app.features.field.data.export.FieldMindExport
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -38,39 +39,39 @@ class FieldMindBackupWorker(
             // Gather all data
             val observations = dao.observeObservations().let { flow ->
                 var result: List<chromahub.rhythm.app.features.field.data.database.entity.ObservationEntity> = emptyList()
-                flow.collect { result = it }; result
+                flow.first()
             }
             val notes = dao.observeNotes().let { flow ->
                 var result: List<chromahub.rhythm.app.features.field.data.database.entity.NoteEntity> = emptyList()
-                flow.collect { result = it }; result
+                flow.first()
             }
             val questions = dao.observeQuestions().let { flow ->
                 var result: List<chromahub.rhythm.app.features.field.data.database.entity.QuestionEntity> = emptyList()
-                flow.collect { result = it }; result
+                flow.first()
             }
             val hypotheses = dao.observeHypotheses().let { flow ->
                 var result: List<chromahub.rhythm.app.features.field.data.database.entity.HypothesisEntity> = emptyList()
-                flow.collect { result = it }; result
+                flow.first()
             }
             val projects = dao.observeProjects().let { flow ->
                 var result: List<chromahub.rhythm.app.features.field.data.database.entity.ProjectEntity> = emptyList()
-                flow.collect { result = it }; result
+                flow.first()
             }
             val sources = dao.observeSources().let { flow ->
                 var result: List<chromahub.rhythm.app.features.field.data.database.entity.SourceEntity> = emptyList()
-                flow.collect { result = it }; result
+                flow.first()
             }
             val dataRecords = dao.observeDataRecords().let { flow ->
                 var result: List<chromahub.rhythm.app.features.field.data.database.entity.DataRecordEntity> = emptyList()
-                flow.collect { result = it }; result
+                flow.first()
             }
             val reports = dao.observeReports().let { flow ->
                 var result: List<chromahub.rhythm.app.features.field.data.database.entity.ReportEntity> = emptyList()
-                flow.collect { result = it }; result
+                flow.first()
             }
             val flashcards = dao.observeFlashcards().let { flow ->
                 var result: List<chromahub.rhythm.app.features.field.data.database.entity.FlashcardEntity> = emptyList()
-                flow.collect { result = it }; result
+                flow.first()
             }
 
             // Build JSON archive

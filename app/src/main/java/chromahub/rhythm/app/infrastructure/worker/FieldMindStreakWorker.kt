@@ -13,6 +13,7 @@ import androidx.work.WorkerParameters
 import chromahub.rhythm.app.R
 import chromahub.rhythm.app.activities.MainActivity
 import chromahub.rhythm.app.features.field.data.database.FieldMindDatabase
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
@@ -50,7 +51,7 @@ class FieldMindStreakWorker(
             val dao = FieldMindDatabase.getInstance(applicationContext).fieldMindDao()
             val observations = dao.observeObservations().let { flow ->
                 var result = emptyList<chromahub.rhythm.app.features.field.data.database.entity.ObservationEntity>()
-                flow.collect { result = it }; result
+                flow.first()
             }
             val todayCount = observations.count { it.date == today }
 
