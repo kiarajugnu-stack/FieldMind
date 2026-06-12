@@ -40,7 +40,7 @@ import java.util.Locale
 
 
 @Composable
-private fun ExportStudioContent(
+fun ExportStudioContent(
     viewModel: FieldMindViewModel,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(20.dp, 20.dp, 20.dp, 96.dp),
@@ -184,7 +184,7 @@ private fun androidx.compose.foundation.lazy.LazyListScope.exportSection(title: 
 }
 
 @Composable
-private fun ExportStudioHero(scope: String, onScope: (String) -> Unit, projects: Int, observations: Int, sources: Int, reports: Int, attachmentMode: String, lastBackup: String) {
+fun ExportStudioHero(scope: String, onScope: (String) -> Unit, projects: Int, observations: Int, sources: Int, reports: Int, attachmentMode: String, lastBackup: String) {
     Card(shape = RoundedCornerShape(30.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)) {
         Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
@@ -209,7 +209,7 @@ private fun ExportStudioHero(scope: String, onScope: (String) -> Unit, projects:
 }
 
 @Composable
-private fun ExportCount(label: String, count: Int, modifier: Modifier = Modifier) {
+fun ExportCount(label: String, count: Int, modifier: Modifier = Modifier) {
     Column(modifier.clip(RoundedCornerShape(16.dp)).background(MaterialTheme.colorScheme.surface.copy(alpha = 0.58f)).padding(12.dp), horizontalAlignment = Alignment.CenterHorizontally) {
         Text(count.toString(), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.ExtraBold)
         Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -217,7 +217,7 @@ private fun ExportCount(label: String, count: Int, modifier: Modifier = Modifier
 }
 
 @Composable
-private fun AutoBackupOptionsCard(enabled: Boolean, interval: String, lastBackup: String, onEnabled: (Boolean) -> Unit, onInterval: (String) -> Unit, onBackupNow: () -> Unit) {
+fun AutoBackupOptionsCard(enabled: Boolean, interval: String, lastBackup: String, onEnabled: (Boolean) -> Unit, onInterval: (String) -> Unit, onBackupNow: () -> Unit) {
     Card(shape = RoundedCornerShape(24.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)) {
         Column(Modifier.padding(16.dp).animateContentSize(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -237,7 +237,7 @@ private fun AutoBackupOptionsCard(enabled: Boolean, interval: String, lastBackup
 }
 
 @Composable
-private fun ExportActionCard(title: String, subtitle: String, format: String, bestFor: String, icon: MaterialSymbolIcon, enabled: Boolean = true, onClick: () -> Unit) {
+fun ExportActionCard(title: String, subtitle: String, format: String, bestFor: String, icon: MaterialSymbolIcon, enabled: Boolean = true, onClick: () -> Unit) {
     val haptics = rememberFieldMindHaptics()
     Card(
         Modifier.fillMaxWidth().clickable(enabled = enabled) { haptics.light(); onClick() }.animateContentSize(),
