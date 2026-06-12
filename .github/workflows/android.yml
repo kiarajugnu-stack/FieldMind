@@ -31,7 +31,11 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: lint-results
-          path: app/build/reports/lint-results*.html
+          path: |
+            app/build/reports/lint-results*.*
+            app/build/reports/lint/**/*.html
+            app/build/reports/lint/**/*.xml
+          if-no-files-found: warn
           retention-days: 7
 
   build:
@@ -109,21 +113,33 @@ jobs:
           echo "::warning::Release APK is not release-signed (debug-signed fallback)."
         fi
 
-    - name: Generate build info
-      if: github.event_name == 'pull_request'
+    - name: Collect installable APK release bundle
       run: |
-        echo "Build completed at: $(date)" > build_info.txt
-        echo "Commit: ${{ github.sha }}" >> build_info.txt
-        echo "Branch: ${{ github.head_ref }}" >> build_info.txt
+        set -euo pipefail
+        artifact_dir="artifact-installable-apks"
+        rm -rf "$artifact_dir"
+        mkdir -p "$artifact_dir"
 
-    - name: Upload PR installable APK release bundle
-      if: github.event_name == 'pull_request'
+        echo "Build completed at: $(date -u +'%Y-%m-%dT%H:%M:%SZ')" > "$artifact_dir/build_info.txt"
+        echo "Event: ${{ github.event_name }}" >> "$artifact_dir/build_info.txt"
+        echo "Commit: ${{ github.sha }}" >> "$artifact_dir/build_info.txt"
+        echo "Branch: ${GITHUB_HEAD_REF:-${GITHUB_REF_NAME}}" >> "$artifact_dir/build_info.txt"
+
+        mapfile -t apks < <(find app/build/outputs/apk/github -type f -name '*.apk' | sort)
+        if [ "${#apks[@]}" -eq 0 ]; then
+          echo "::error::No APKs found to upload. Expected outputs under app/build/outputs/apk/github."
+          exit 1
+        fi
+        printf 'APK files:\n' >> "$artifact_dir/build_info.txt"
+        for apk in "${apks[@]}"; do
+          cp "$apk" "$artifact_dir/"
+          printf -- '- %s\n' "$apk" >> "$artifact_dir/build_info.txt"
+        done
+
+    - name: Upload installable APK release bundle
       uses: actions/upload-artifact@v4
       with:
-        name: fieldmind-pr-${{ github.event.pull_request.number }}-installable-apks
-        path: |
-          app/build/outputs/apk/github/debug/*.apk
-          app/build/outputs/apk/github/release/*.apk
-          build_info.txt
+        name: fieldmind-${{ github.event_name }}-${{ github.run_number }}-installable-apks
+        path: artifact-installable-apks/*
         if-no-files-found: error
         retention-days: 14
