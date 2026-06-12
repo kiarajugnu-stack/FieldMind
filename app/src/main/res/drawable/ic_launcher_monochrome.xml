@@ -9,26 +9,73 @@
     <group
         android:pivotX="54"
         android:pivotY="54"
-        android:scaleX="0.92"
-        android:scaleY="0.92">
+        android:scaleX="0.88"
+        android:scaleY="0.88"
+        android:translationX="6"
+        android:translationY="6">
 
+        <!-- Outer lens ring -->
         <path
-            android:pathData="M70.5,70.5 L82,82"
-            android:strokeColor="#000000"
-            android:strokeWidth="9"
-            android:strokeLineCap="round" />
-        <path
-            android:pathData="M48,20 m-30,0 a30,30 0 1,0 60,0 a30,30 0 1,0 -60,0"
+            android:pathData="M48,20 m-33,0 a33,33 0 1,0 66,0 a33,33 0 1,0 -66,0"
             android:fillColor="#00000000"
             android:strokeColor="#000000"
-            android:strokeWidth="9" />
+            android:strokeWidth="7.5" />
+
+        <!-- Lens glass -->
+        <path
+            android:pathData="M48,20 m-27,0 a27,27 0 1,0 54,0 a27,27 0 1,0 -54,0"
+            android:fillColor="#000000"
+            android:strokeAlpha="0.15" />
+
+        <!-- Leaf body -->
         <path
             android:pathData="M48,4 C64,12 66,32 48,40 C30,32 32,12 48,4 Z"
             android:fillColor="#000000" />
+
+        <!-- Leaf central vein -->
         <path
-            android:pathData="M48,8 L48,38"
+            android:pathData="M48,8 Q46,22 48,38"
             android:strokeColor="#FFFFFF"
-            android:strokeWidth="2.4"
+            android:strokeWidth="2.2"
             android:strokeLineCap="round" />
+
+        <!-- Leaf secondary veins -->
+        <path android:pathData="M47.5,13 Q42,11 38,14" android:strokeColor="#FFFFFF" android:strokeWidth="1.5" android:strokeLineCap="round" android:strokeAlpha="0.7" />
+        <path android:pathData="M47.5,18 Q39,16 34,20" android:strokeColor="#FFFFFF" android:strokeWidth="1.5" android:strokeLineCap="round" android:strokeAlpha="0.7" />
+        <path android:pathData="M47.5,23 Q41,21 36,25" android:strokeColor="#FFFFFF" android:strokeWidth="1.5" android:strokeLineCap="round" android:strokeAlpha="0.7" />
+        <path android:pathData="M48.5,13 Q54,11 58,14" android:strokeColor="#FFFFFF" android:strokeWidth="1.5" android:strokeLineCap="round" android:strokeAlpha="0.7" />
+        <path android:pathData="M48.5,18 Q57,16 62,20" android:strokeColor="#FFFFFF" android:strokeWidth="1.5" android:strokeLineCap="round" android:strokeAlpha="0.7" />
+        <path android:pathData="M48.5,23 Q55,21 60,25" android:strokeColor="#FFFFFF" android:strokeWidth="1.5" android:strokeLineCap="round" android:strokeAlpha="0.7" />
+
+        <!-- Magnifier handle -->
+        <path
+            android:pathData="M71.5,71.5 L83,83"
+            android:strokeColor="#000000"
+            android:strokeWidth="8"
+            android:strokeLineCap="round" />
+
+        <!-- Data dots -->
+        <path android:pathData="M20,8 m-2.2,0 a2.2,2.2 0 1,0 4.4,0 a2.2,2.2 0 1,0 -4.4,0" android:fillColor="#000000" />
+        <path android:pathData="M74,6 m-1.8,0 a1.8,1.8 0 1,0 3.6,0 a1.8,1.8 0 1,0 -3.6,0" android:fillColor="#000000" />
+        <path android:pathData="M28,38 m-1.6,0 a1.6,1.6 0 1,0 3.2,0 a1.6,1.6 0 1,0 -3.2,0" android:fillColor="#000000" />
+        <path android:pathData="M15,14 m-1.5,0 a1.5,1.5 0 1,0 3,0 a1.5,1.5 0 1,0 -3,0" android:fillColor="#000000" />
+
+        <!-- Cross marks -->
+        <path android:pathData="M78,7 L81,10 M81,7 L78,10" android:strokeColor="#000000" android:strokeWidth="1.2" android:strokeLineCap="round" />
+        <path android:pathData="M18,38 L21,41 M21,38 L18,41" android:strokeColor="#000000" android:strokeWidth="1.2" android:strokeLineCap="round" />
+
+        <!-- Lens rim marks -->
+        <path android:pathData="M48,4 L48,7" android:strokeColor="#000000" android:strokeWidth="2" android:strokeLineCap="round" />
+        <path android:pathData="M78,20 L75,20" android:strokeColor="#000000" android:strokeWidth="2" android:strokeLineCap="round" />
+        <path android:pathData="M48,40 L48,37" android:strokeColor="#000000" android:strokeWidth="2" android:strokeLineCap="round" />
+        <path android:pathData="M18,20 L21,20" android:strokeColor="#000000" android:strokeWidth="2" android:strokeLineCap="round" />
+
+        <!-- Glass highlight arc -->
+        <path
+            android:pathData="M32,6 Q42,1 55,3"
+            android:strokeColor="#FFFFFF"
+            android:strokeWidth="2.5"
+            android:strokeLineCap="round"
+            android:strokeAlpha="0.5" />
     </group>
 </vector>
