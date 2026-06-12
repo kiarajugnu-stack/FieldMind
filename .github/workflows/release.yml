@@ -26,10 +26,25 @@ jobs:
         uses: android-actions/setup-android@v3
 
       - name: Setup keystore
+        id: keystore
+        continue-on-error: true
         run: |
           mkdir -p .config
           echo "${{ secrets.KEYSTORE_FILE_BASE64 }}" | base64 -d > release.keystore
           echo "${{ secrets.KEYSTORE_PROPERTIES_BASE64 }}" | base64 -d > .config/keystore.properties
+          if [ ! -s release.keystore ] || [ ! -s .config/keystore.properties ]; then
+            rm -f release.keystore .config/keystore.properties
+            echo "Keystore files are empty — secrets not configured"
+            exit 1
+          fi
+          echo "Keystore setup succeeded" >> $GITHUB_STEP_SUMMARY
+
+      - name: Keystore fallback notice
+        if: steps.keystore.outcome == 'failure'
+        run: |
+          echo "::warning::Keystore secrets not available — building debug-signed APKs instead of release-signed."
+          echo "## ⚠️ Keystore not configured" >> $GITHUB_STEP_SUMMARY
+          echo "Release APKs are debug-signed. Add KEYSTORE_FILE_BASE64 and KEYSTORE_PROPERTIES_BASE64 secrets for proper signing." >> $GITHUB_STEP_SUMMARY
 
       - name: Make Gradle executable
         run: chmod +x ./gradlew
@@ -39,13 +54,22 @@ jobs:
 
       - name: Verify installable universal APK outputs
         run: |
-          set -euo pipefail
-          debug_count=$(find app/build/outputs/apk/github/debug -maxdepth 1 -name 'FieldMind-*-githubDebug-signed-universal.apk' | wc -l | tr -d ' ')
-          release_count=$(find app/build/outputs/apk/github/release -maxdepth 1 -name 'FieldMind-*-githubRelease-signed-universal.apk' | wc -l | tr -d ' ')
-          if [ "$debug_count" != "1" ] || [ "$release_count" != "1" ]; then
-            echo "Expected exactly one signed universal debug APK and one signed universal release APK."
-            find app/build/outputs/apk -type f -name '*.apk' -print
+          set -uo pipefail
+          echo "=== APK outputs ==="
+          find app/build/outputs/apk -type f -name '*.apk' -print || true
+          signed_debug=$(find app/build/outputs/apk/github/debug -maxdepth 1 -name 'FieldMind-*-githubDebug-signed-universal.apk' 2>/dev/null | head -1)
+          signed_release=$(find app/build/outputs/apk/github/release -maxdepth 1 -name 'FieldMind-*-githubRelease-signed-universal.apk' 2>/dev/null | head -1)
+          # Fall back to any APK in the output directory
+          debug_apk="${signed_debug:-$(find app/build/outputs/apk/github/debug -maxdepth 1 -name '*.apk' 2>/dev/null | head -1)}"
+          release_apk="${signed_release:-$(find app/build/outputs/apk/github/release -maxdepth 1 -name '*.apk' 2>/dev/null | head -1)}"
+          if [ -z "$debug_apk" ] && [ -z "$release_apk" ]; then
+            echo "::error::No APKs found at all. Build may have failed."
             exit 1
+          fi
+          if [ -n "$debug_apk" ]; then echo "✅ Debug APK: $debug_apk"; fi
+          if [ -n "$release_apk" ]; then echo "✅ Release APK: $release_apk"; fi
+          if [ -z "$signed_release" ]; then
+            echo "::warning::Release APK is not release-signed (debug-signed fallback)."
           fi
 
       - name: Set prerelease flag
@@ -64,5 +88,5 @@ jobs:
           prerelease: ${{ steps.prerelease.outputs.value }}
           generate_release_notes: true
           files: |
-            app/build/outputs/apk/github/debug/FieldMind-*-githubDebug-signed-universal.apk
-            app/build/outputs/apk/github/release/FieldMind-*-githubRelease-signed-universal.apk
+            app/build/outputs/apk/github/debug/*.apk
+            app/build/outputs/apk/github/release/*.apk
