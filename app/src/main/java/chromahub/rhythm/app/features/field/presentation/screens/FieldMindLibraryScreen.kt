@@ -1,7 +1,9 @@
 package chromahub.rhythm.app.features.field.presentation.screens
 
 import android.annotation.SuppressLint
+import android.content.Intent
 import android.content.res.Configuration
+import android.net.Uri
 import android.graphics.Bitmap
 import android.view.ViewGroup
 import android.webkit.WebResourceError
@@ -50,7 +52,6 @@ import coil.compose.AsyncImage
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.activity.compose.BackHandler
-import android.net.Uri
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -655,7 +656,28 @@ fun LearnReaderScreen(url: String, title: String, onBack: () -> Unit) {
         Box(Modifier.fillMaxSize()) {
             when {
                 uriLooksImage(url) -> AsyncImage(model = url, contentDescription = title, contentScale = ContentScale.Fit, modifier = Modifier.fillMaxSize().padding(16.dp).clip(RoundedCornerShape(24.dp)).background(MaterialTheme.colorScheme.surfaceContainerLow))
-                url.startsWith("content://") && uriLooksPdf(url) && showReaderFallback -> ReaderFallbackCard("Local PDF selected. Android WebView cannot render every provider PDF directly, but it is stored in FieldMind and can be opened from the system document viewer.", url, { runCatching { uriHandler.openUri(url) } }, Modifier.align(Alignment.TopCenter), onDismiss = { showReaderFallback = false })
+                uriLooksPdf(url) -> {
+                    val context = LocalContext.current
+                    ReaderFallbackCard(
+                        if (url.startsWith("content://")) "Local PDF file. WebView cannot render content:// PDFs directly." else "PDF documents open best in the system viewer.",
+                        url,
+                        {
+                            runCatching {
+                                val intent = Intent(Intent.ACTION_VIEW).apply {
+                                    setDataAndType(Uri.parse(url), "application/pdf")
+                                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NEW_TASK)
+                                }
+                                if (intent.resolveActivity(context.packageManager) != null) {
+                                    context.startActivity(intent)
+                                } else {
+                                    uriHandler.openUri(url)
+                                }
+                            }
+                        },
+                        Modifier.align(Alignment.TopCenter),
+                        onDismiss = { showReaderFallback = false }
+                    )
+                }
                 else -> {
                     AndroidView(
                         modifier = Modifier.fillMaxSize(),

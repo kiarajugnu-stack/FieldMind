@@ -238,30 +238,7 @@ private fun FieldModeScreen(viewModel: FieldMindViewModel, onBack: () -> Unit) {
     var quickSnapCategory by remember { mutableStateOf(observationCategories.first()) }
     var quickSnapUri by remember { mutableStateOf<Uri?>(null) }
     var showQuickSnapCategory by remember { mutableStateOf(false) }
-    val quickSnapCamera = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { saved ->
-        val uri = quickSnapUri
-        if (saved && uri != null) {
-            viewModel.addObservation(
-                subject = quickSnapCategory,
-                category = quickSnapCategory,
-                facts = "Quick snap — add details later.",
-                confidence = defaultConfidence,
-                manualLocation = "",
-                tags = "quick-snap",
-                evidence = "Camera quick snap",
-                context = "",
-                attachments = listOf(DraftEvidenceAttachment("Photo", uri.toString(), "Quick snap"))
-            ) { scope.launch { snackbar.showSnackbar("Quick snap saved as $quickSnapCategory.") } }
-        } else scope.launch { snackbar.showSnackbar("Quick snap cancelled.") }
-        quickSnapUri = null
-    }
-    val quickSnapPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
-        if (granted) {
-            val uri = createFieldMindFileUri(context, "quick-snap", ".jpg")
-            quickSnapUri = uri
-            quickSnapCamera.launch(uri)
-        } else scope.launch { snackbar.showSnackbar("Camera permission denied.") }
-    }
+    var showQuickSnapCamera by remember { mutableStateOf(false) }
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
         snackbarHost = { SnackbarHost(snackbar) }
@@ -329,15 +306,33 @@ private fun FieldModeScreen(viewModel: FieldMindViewModel, onBack: () -> Unit) {
             confirmButton = {
                 Button(onClick = {
                     showQuickSnapCategory = false
-                    if (ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
-                        val uri = createFieldMindFileUri(context, "quick-snap", ".jpg")
-                        quickSnapUri = uri
-                        quickSnapCamera.launch(uri)
-                    } else quickSnapPermission.launch(Manifest.permission.CAMERA)
-                }) { Text("Open camera") }
+                    showQuickSnapCamera = true
+                }) { Text("Open in-app camera") }
             },
             dismissButton = { TextButton(onClick = { showQuickSnapCategory = false }) { Text("Cancel") } }
         )
+    }
+    // In-app camera overlay for quick snap
+    if (showQuickSnapCamera) {
+        Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
+            FieldMindCameraCapture(
+                onPhotoCaptured = { uri, mimeType ->
+                    viewModel.addObservation(
+                        subject = quickSnapCategory,
+                        category = quickSnapCategory,
+                        facts = "Quick snap — add details later.",
+                        confidence = defaultConfidence,
+                        manualLocation = "",
+                        tags = "quick-snap",
+                        evidence = "Camera quick snap",
+                        context = "",
+                        attachments = listOf(DraftEvidenceAttachment("Photo", uri, "Quick snap", mimeType = mimeType))
+                    ) { scope.launch { snackbar.showSnackbar("Quick snap saved as $quickSnapCategory.") } }
+                    showQuickSnapCamera = false
+                },
+                onDismiss = { showQuickSnapCamera = false }
+            )
+        }
     }
 }
 
@@ -383,7 +378,7 @@ internal fun ObservationCaptureCard(viewModel: FieldMindViewModel, compact: Bool
     var fieldContext by remember { mutableStateOf("") }
     var projectId by remember { mutableStateOf<Long?>(null) }
     var attachments by remember { mutableStateOf<List<DraftEvidenceAttachment>>(emptyList()) }
-    var pendingPhotoUri by remember { mutableStateOf<Uri?>(null) }
+    var showInAppCamera by remember { mutableStateOf(false) }
     var recorder by remember { mutableStateOf<MediaRecorder?>(null) }
     var audioFile by remember { mutableStateOf<File?>(null) }
     var recording by remember { mutableStateOf(false) }
@@ -417,20 +412,6 @@ internal fun ObservationCaptureCard(viewModel: FieldMindViewModel, compact: Bool
             while (recording) { kotlinx.coroutines.delay(1000); recordSeconds++ }
         }
     }
-
-    val cameraPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
-        if (granted) {
-            val uri = createFieldMindFileUri(context, "photo", ".jpg")
-            pendingPhotoUri = uri
-        } else scope.launch { snackbar.showSnackbar("Camera permission denied. Text notes and gallery/file attachments still work.") }
-    }
-    val takePicture = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { saved ->
-        val uri = pendingPhotoUri
-        if (saved && uri != null) attachments = attachments + DraftEvidenceAttachment("Photo", uri.toString(), "Camera photo")
-        scope.launch { snackbar.showSnackbar(if (saved) "Photo attached." else "Camera capture cancelled.") }
-        pendingPhotoUri = null
-    }
-    LaunchedEffect(pendingPhotoUri) { pendingPhotoUri?.let { takePicture.launch(it) } }
 
     val mediaPicker = rememberLauncherForActivityResult(ActivityResultContracts.PickMultipleVisualMedia(10)) { uris ->
         if (uris.isEmpty()) scope.launch { snackbar.showSnackbar("Gallery selection cancelled.") }
@@ -468,6 +449,20 @@ internal fun ObservationCaptureCard(viewModel: FieldMindViewModel, compact: Bool
         } else scope.launch { snackbar.showSnackbar("Audio permission denied.") }
     }
 
+    // In-app camera overlay
+    if (showInAppCamera) {
+        Box(Modifier.fillMaxWidth()) {
+            FieldMindCameraCapture(
+                onPhotoCaptured = { uri, mimeType ->
+                    attachments = attachments + DraftEvidenceAttachment("Photo", uri, "Camera photo", mimeType = mimeType)
+                    showInAppCamera = false
+                    scope.launch { snackbar.showSnackbar("Photo captured.") }
+                },
+                onDismiss = { showInAppCamera = false }
+            )
+        }
+    }
+
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         SnackbarHost(snackbar)
         Card(shape = RoundedCornerShape(28.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow), modifier = Modifier.fillMaxWidth()) {
@@ -485,7 +480,7 @@ internal fun ObservationCaptureCard(viewModel: FieldMindViewModel, compact: Bool
                 if (snapFirst && mediaEnabled) {
                     CaptureStep("Evidence first", "Start with camera, gallery, or files before writing facts.", FieldMindIcons.Camera) {
                         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            OutlinedButton(onClick = { if (ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) { val uri = createFieldMindFileUri(context, "photo", ".jpg"); pendingPhotoUri = uri } else cameraPermission.launch(Manifest.permission.CAMERA) }, Modifier.weight(1f)) {
+                            OutlinedButton(onClick = { showInAppCamera = true }, Modifier.weight(1f)) {
                                 Icon(icon = FieldMindIcons.Camera, contentDescription = "Camera", size = 18.dp)
                             }
                             OutlinedButton(onClick = { mediaPicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageAndVideo)) }, Modifier.weight(1f)) {
@@ -551,7 +546,7 @@ internal fun ObservationCaptureCard(viewModel: FieldMindViewModel, compact: Bool
                 if (mediaEnabled && !snapFirst) {
                     CaptureStep("Evidence", "Back your observation with photos, files, or a voice note.", FieldMindIcons.Camera) {
                         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            OutlinedButton(onClick = { if (ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) { val uri = createFieldMindFileUri(context, "photo", ".jpg"); pendingPhotoUri = uri } else cameraPermission.launch(Manifest.permission.CAMERA) }, Modifier.weight(1f)) {
+                            OutlinedButton(onClick = { showInAppCamera = true }, Modifier.weight(1f)) {
                                 Icon(icon = FieldMindIcons.Camera, contentDescription = "Camera", size = 18.dp)
                             }
                             OutlinedButton(onClick = { mediaPicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageAndVideo)) }, Modifier.weight(1f)) {

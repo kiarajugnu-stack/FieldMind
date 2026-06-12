@@ -77,6 +77,10 @@ object FieldMindIcons {
     val Answer = MaterialSymbolIcon("question_answer")
     val MapFull = MaterialSymbolIcon("map", filled = true)
     val Favorite = MaterialSymbolIcon("favorite", filled = true)
+    val FlashOn = MaterialSymbolIcon("flash_on", filled = true)
+    val FlashAuto = MaterialSymbolIcon("flash_auto")
+    val FlashOff = MaterialSymbolIcon("flash_off")
+    val FlipCamera = MaterialSymbolIcon("flip_camera_android")
 
     // Observation category icons
     val Bird = MaterialSymbolIcon("raven")

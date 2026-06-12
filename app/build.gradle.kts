@@ -24,8 +24,8 @@ android {
         applicationId = "fieldmind.research.app"
         minSdk = 26
         targetSdk = 37
-        versionCode = 504031054
-        versionName = "5.0.403.1054"
+        versionCode = Version.getVersionCode(project)
+        versionName = Version.getVersionName(project)
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -251,6 +251,12 @@ dependencies {
     // Biometric authentication for privacy lock
     implementation("androidx.biometric:biometric:1.2.0-alpha05")
 
+    // CameraX for in-app camera capture (replaces system camera intent)
+    implementation("androidx.camera:camera-core:1.4.1")
+    implementation("androidx.camera:camera-camera2:1.4.1")
+    implementation("androidx.camera:camera-lifecycle:1.4.1")
+    implementation("androidx.camera:camera-view:1.4.1")
+
     // Coroutines for async operations
     implementation(libs.org.jetbrains.kotlinx.coroutines.core)
     implementation(libs.org.jetbrains.kotlinx.coroutines.android)
@@ -288,6 +294,54 @@ fun getProperties(fileName: String): Properties? {
 
 fun Properties.property(key: String) =
     this.getProperty(key) ?: "$key missing"
+
+/**
+ * Reads version from Git tags for reproducible releases.
+ * - versionName comes from the most recent Git tag (e.g. "v1.0.0" → "1.0.0")
+ * - versionCode is the total count of commits on the default branch
+ * Falls back to development defaults when Git is not available (e.g. fresh clone without tags).
+ */
+object Version {
+    private var cachedName: String? = null
+    private var cachedCode: Int? = null
+
+    fun getVersionName(project: Project): String {
+        if (cachedName != null) return cachedName!!
+        val tag = runCatching {
+            val process = ProcessBuilder("git", "describe", "--tags", "--abbrev=0")
+                .directory(project.rootDir)
+                .redirectErrorStream(true)
+                .start()
+            process.inputStream.bufferedReader().readText().trim()
+        }.getOrNull().orEmpty()
+
+        val clean = tag.removePrefix("v").removePrefix("V").trim()
+        if (clean.isNotBlank()) {
+            cachedName = clean
+            return clean
+        }
+        cachedName = "1.0.0"
+        return "1.0.0"
+    }
+
+    fun getVersionCode(project: Project): Int {
+        if (cachedCode != null) return cachedCode!!
+        val count = runCatching {
+            val process = ProcessBuilder("git", "rev-list", "--count", "HEAD")
+                .directory(project.rootDir)
+                .redirectErrorStream(true)
+                .start()
+            process.inputStream.bufferedReader().readText().trim().toIntOrNull()
+        }.getOrNull()
+
+        if (count != null && count > 0) {
+            cachedCode = count
+            return count
+        }
+        cachedCode = 1
+        return 1
+    }
+}
 
 fun Properties.hasValidSigningMaterial(rootDir: File): Boolean {
     val alias = getProperty("key_alias")?.takeIf { it.isNotBlank() } ?: return false

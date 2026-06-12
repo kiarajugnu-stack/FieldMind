@@ -40,8 +40,6 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import android.content.Intent
 import android.Manifest
-import android.content.pm.PackageManager
-import androidx.core.content.ContextCompat
 import androidx.compose.ui.platform.LocalUriHandler
 import chromahub.rhythm.app.features.field.data.location.FieldLocationProvider
 // ══════════════════════════════════════════════════════════════════════
@@ -441,7 +439,7 @@ private fun EditObservationDialog(entity: ObservationEntity, viewModel: FieldMin
     var evidence by remember { mutableStateOf(entity.evidenceSummary) }
     var fieldContext by remember { mutableStateOf(entity.moodOrContext) }
     var attachments by remember { mutableStateOf<List<DraftEvidenceAttachment>>(emptyList()) }
-    var pendingPhotoUri by remember { mutableStateOf<Uri?>(null) }
+    var showEditCamera by remember { mutableStateOf(false) }
     var locating by remember { mutableStateOf(false) }
     val locationProvider = remember { FieldLocationProvider(appContext) }
 
@@ -464,16 +462,6 @@ private fun EditObservationDialog(entity: ObservationEntity, viewModel: FieldMin
     val locationPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { result ->
         if (result.values.any { it }) startLocating() else android.widget.Toast.makeText(appContext, "Location permission denied", android.widget.Toast.LENGTH_SHORT).show()
     }
-    val cameraPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
-        if (granted) pendingPhotoUri = createFieldMindFileUri(appContext, "edit-photo", ".jpg") else android.widget.Toast.makeText(appContext, "Camera permission denied", android.widget.Toast.LENGTH_SHORT).show()
-    }
-    val takePicture = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { saved ->
-        val uri = pendingPhotoUri
-        if (saved && uri != null) attachments = attachments + DraftEvidenceAttachment("Photo", uri.toString(), "Edited observation photo")
-        android.widget.Toast.makeText(appContext, if (saved) "Photo queued for save" else "Camera cancelled", android.widget.Toast.LENGTH_SHORT).show()
-        pendingPhotoUri = null
-    }
-    LaunchedEffect(pendingPhotoUri) { pendingPhotoUri?.let { takePicture.launch(it) } }
     val mediaPicker = rememberLauncherForActivityResult(ActivityResultContracts.GetMultipleContents()) { uris ->
         attachments = attachments + uris.map { DraftEvidenceAttachment("Gallery", it.toString(), "Edited media") }
     }
@@ -523,7 +511,7 @@ private fun EditObservationDialog(entity: ObservationEntity, viewModel: FieldMin
         }
         CaptureStep("Evidence attachments", "Add photos, gallery images, PDFs, or documents to the existing observation.", FieldMindIcons.Camera) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedButton(onClick = { if (ContextCompat.checkSelfPermission(appContext, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) pendingPhotoUri = createFieldMindFileUri(appContext, "edit-photo", ".jpg") else cameraPermission.launch(Manifest.permission.CAMERA) }, Modifier.weight(1f)) { Icon(FieldMindIcons.Camera, null, size = 18.dp); Spacer(Modifier.size(6.dp)); Text("Photo") }
+                OutlinedButton(onClick = { showEditCamera = true }, Modifier.weight(1f)) { Icon(FieldMindIcons.Camera, null, size = 18.dp); Spacer(Modifier.size(6.dp)); Text("Photo") }
                 OutlinedButton(onClick = { mediaPicker.launch("image/*") }, Modifier.weight(1f)) { Icon(FieldMindIcons.Gallery, null, size = 18.dp); Spacer(Modifier.size(6.dp)); Text("Gallery") }
                 OutlinedButton(onClick = { filePicker.launch(arrayOf("application/pdf", "text/*", "image/*", "video/*", "audio/*")) }, Modifier.weight(1f)) { Icon(FieldMindIcons.File, null, size = 18.dp); Spacer(Modifier.size(6.dp)); Text("File") }
             }
@@ -531,6 +519,19 @@ private fun EditObservationDialog(entity: ObservationEntity, viewModel: FieldMin
         }
         FieldTextField(tags, { tags = it }, "Tags (comma separated)")
         FieldTextField(evidence, { evidence = it }, "Evidence summary", minLines = 2)
+    }
+    // In-app camera overlay for edit dialog (separate window to overlay FormDialog)
+    if (showEditCamera) {
+        Dialog(onDismissRequest = { showEditCamera = false }) {
+            FieldMindCameraCapture(
+                onPhotoCaptured = { uri, mimeType ->
+                    attachments = attachments + DraftEvidenceAttachment("Photo", uri, "Edited observation photo", mimeType = mimeType)
+                    showEditCamera = false
+                    android.widget.Toast.makeText(appContext, "Photo captured.", android.widget.Toast.LENGTH_SHORT).show()
+                },
+                onDismiss = { showEditCamera = false }
+            )
+        }
     }
 }
 

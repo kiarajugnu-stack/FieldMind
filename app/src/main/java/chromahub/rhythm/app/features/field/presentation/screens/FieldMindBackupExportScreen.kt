@@ -317,8 +317,6 @@ fun FieldMindPrivacyGate(enabled: Boolean, title: String, body: String): Boolean
 
 @Composable
 fun BackupExportScreen(viewModel: FieldMindViewModel) {
-    val privacyEnabled by viewModel.fieldSettings.privacyLockEnabled.collectAsState()
-    if (!FieldMindPrivacyGate(privacyEnabled, "Export is locked", "Backups and exports can contain sensitive field notes, sources, and locations.")) return
     val scope = rememberCoroutineScope()
     val snackbar = remember { SnackbarHostState() }
     Scaffold(snackbarHost = { SnackbarHost(snackbar) }, containerColor = MaterialTheme.colorScheme.background) { padding ->

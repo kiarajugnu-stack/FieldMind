@@ -25,6 +25,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -95,7 +96,20 @@ private val bottomTabs = listOf(
 @Composable
 fun FieldMindApp(appSettings: AppSettings, viewModel: FieldMindViewModel) {
     val onboardingCompleted by appSettings.onboardingCompleted.collectAsState()
-    if (!onboardingCompleted) FieldMindOnboardingScreen(onFinish = { appSettings.setOnboardingCompleted(true) }) else FieldMindNavigation(viewModel = viewModel, onResetOnboarding = { appSettings.setOnboardingCompleted(false) })
+    var appUnlocked by remember { mutableStateOf(!viewModel.fieldSettings.privacyLockEnabled.value) }
+    val privacyEnabled by viewModel.fieldSettings.privacyLockEnabled.collectAsState()
+    LaunchedEffect(privacyEnabled) { if (!privacyEnabled) appUnlocked = true }
+    if (!onboardingCompleted) {
+        FieldMindOnboardingScreen(onFinish = { appSettings.setOnboardingCompleted(true) })
+    } else {
+        FieldMindAppLock(
+            settings = viewModel.fieldSettings,
+            isUnlocked = appUnlocked,
+            onUnlock = { appUnlocked = true }
+        ) {
+            FieldMindNavigation(viewModel = viewModel, onResetOnboarding = { appSettings.setOnboardingCompleted(false); appUnlocked = false })
+        }
+    }
 }
 
 /**

@@ -1,8 +1,9 @@
 package chromahub.rhythm.app.features.field.presentation.screens
 
-import android.widget.Toast
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.CoroutineScope
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -13,6 +14,9 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -20,6 +24,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.platform.LocalContext
@@ -107,18 +112,21 @@ fun InsightsScreen(
         )
     }
     val context = LocalContext.current
+    val snackbarState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
     val unlockedTitles = achievements.filter { it.unlocked }.joinToString("|") { it.title }
     LaunchedEffect(unlockedTitles) {
         if (unlockedTitles.isNotBlank()) {
             val prefs = context.getSharedPreferences("fieldmind_achievements", 0)
             achievements.filter { it.unlocked && !prefs.getBoolean(it.title, false) }.forEach { achievement ->
-                Toast.makeText(context, "🎉 Achievement unlocked: ${achievement.title}", Toast.LENGTH_LONG).show()
+                scope.launch { snackbarState.showSnackbar("🎉 ${achievement.title} unlocked!") }
                 prefs.edit().putBoolean(achievement.title, true).apply()
             }
         }
     }
 
-    LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(20.dp, 20.dp, 20.dp, 96.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
+    Scaffold(snackbarHost = { SnackbarHost(snackbarState) }, containerColor = MaterialTheme.colorScheme.background) { padding ->
+    LazyColumn(Modifier.fillMaxSize().padding(padding), contentPadding = PaddingValues(20.dp, 20.dp, 20.dp, 96.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
         item { FieldScreenHeader("Insights", "Offline analysis of your own archive.", icon = FieldMindIcons.Insights, actionIcon = FieldMindIcons.Search, onAction = { onNavigate(FieldMindScreen.Search) }) }
         item { ResearchProfileInsightCard(profileName, profileRole, profileFocus, localModel, localReady, backupInterval) }
         item {
@@ -190,6 +198,7 @@ fun InsightsScreen(
             EntityCard(p.title, "project", body = p.objective.ifBlank { p.researchQuestion }, meta = listOf(p.status)) { onOpenDetail("project", p.id) }
         }
         item { CollapsibleAchievements(achievements) }
+    }
     }
 }
 

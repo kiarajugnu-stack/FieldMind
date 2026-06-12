@@ -51,9 +51,6 @@ fun FieldMindSettingsScreen(
     onOpenLocalModel: (() -> Unit)? = null,
     onOpenBackup: (() -> Unit)? = null
 ) {
-    val privacy by (viewModel?.fieldSettings ?: FieldMindSettings.getInstance(LocalContext.current)).privacyLockEnabled.collectAsState()
-    if (!FieldMindPrivacyGate(privacy, "Settings are locked", "Confirm your device lock to edit FieldMind settings.")) return
-
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(20.dp, 20.dp, 20.dp, 40.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
         item { FieldScreenHeader("Settings", "Offline-first setup, profile, capture, local AI, export, and privacy.", icon = FieldMindIcons.Settings, actionIcon = FieldMindIcons.Back, onAction = onBack) }
 
