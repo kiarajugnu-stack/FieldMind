@@ -22,3 +22,4 @@ private.properties.base64
 /.config
 release.keystore
 keystore_base64.txt
+.config/keystore.properties
