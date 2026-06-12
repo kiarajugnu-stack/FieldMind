@@ -31,7 +31,10 @@ class FieldBulkOperationManager(private val viewModel: FieldMindViewModel) {
     }
 
     fun bulkArchive(kind: String) {
-        _selectedIds.forEach { id -> archiveEntity(kind, id) }
+        _selectedIds.forEach { id ->
+            if (kind == "observation") viewModel.archiveObservation(id)
+            else deleteEntity(kind, id)
+        }
         _selectedIds.clear()
     }
 
@@ -53,23 +56,13 @@ class FieldBulkOperationManager(private val viewModel: FieldMindViewModel) {
         }
     }
 
-    private fun archiveEntity(kind: String, id: Long) {
-        when (kind) {
-            "observation" -> viewModel.archiveObservation(id)
-            "note" -> viewModel.archiveNote(id)
-            "question" -> viewModel.archiveQuestion(id)
-            "project" -> viewModel.archiveProject(id)
-        }
-    }
-
     private fun tagEntity(kind: String, id: Long, tag: String) {
-        // Simplified tag addition - real implementation would need to merge tags
         when (kind) {
             "observation" -> {
                 val obs = viewModel.observations.value.find { it.id == id }
                 if (obs != null) {
                     val merged = if (obs.tags.isBlank()) tag else "${obs.tags}, $tag"
-                    viewModel.updateObservationEntity(obs.copy(tags = merged))
+                    viewModel.updateObservation(obs.copy(tags = merged))
                 }
             }
             "note" -> {
