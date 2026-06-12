@@ -82,7 +82,7 @@ class GeminiResearchAssistant(
         return AssistantSuggestion(task.title, outputText.ifBlank { "OpenAI returned an empty draft." }, true, true)
     }
 
-    private fun postJson(endpoint: URL, request: JSONObject, configure: (HttpURLConnection) -> Unit, maxRetries: Int = 2): Pair<Int, String> {
+    private fun postJson(endpoint: URL, request: JSONObject, maxRetries: Int = 2, configure: (HttpURLConnection) -> Unit): Pair<Int, String> {
         var lastException: Exception? = null
         var lastServerError: String? = null
         repeat(maxRetries + 1) { attempt ->
