@@ -5,10 +5,156 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.pdf.PdfDocument
+import org.json.JSONObject
 import java.io.ByteArrayOutputStream
 import chromahub.rhythm.app.features.field.data.database.entity.*
 
 object FieldMindExport {
+
+    data class ArchivePreview(
+        val observations: Int = 0,
+        val notes: Int = 0,
+        val questions: Int = 0,
+        val hypotheses: Int = 0,
+        val projects: Int = 0,
+        val sources: Int = 0,
+        val dataRecords: Int = 0,
+        val reports: Int = 0,
+        val flashcards: Int = 0
+    ) {
+        val total: Int get() = observations + notes + questions + hypotheses + projects + sources + dataRecords + reports + flashcards
+        fun summary(): String = listOf(
+            "$observations observations",
+            "$notes notes",
+            "$questions questions",
+            "$hypotheses hypotheses",
+            "$projects projects",
+            "$sources sources",
+            "$dataRecords data records",
+            "$reports reports",
+            "$flashcards flashcards"
+        ).joinToString(" • ")
+    }
+
+    data class ArchiveImportBundle(
+        val preview: ArchivePreview,
+        val observations: List<ObservationEntity>,
+        val notes: List<NoteEntity>,
+        val questions: List<QuestionEntity>,
+        val hypotheses: List<HypothesisEntity>,
+        val projects: List<ProjectEntity>,
+        val sources: List<SourceEntity>,
+        val dataRecords: List<DataRecordEntity>,
+        val reports: List<ReportEntity>,
+        val flashcards: List<FlashcardEntity>
+    )
+
+    fun previewArchiveJson(raw: String): ArchivePreview = parseArchiveJson(raw).preview
+
+    fun parseArchiveJson(raw: String): ArchiveImportBundle {
+        val root = JSONObject(raw)
+        require(root.optString("format").startsWith("fieldmind-archive")) { "This is not a FieldMind archive." }
+        val observations = root.optJSONArray("observations").toObjects { o ->
+            ObservationEntity(
+                subject = o.optString("subject", "Imported observation"),
+                category = o.optString("category", "Other"),
+                factsOnlyNotes = o.optString("factsOnlyNotes"),
+                timestamp = System.currentTimeMillis(),
+                date = o.optString("date"),
+                time = o.optString("time"),
+                confidenceLevel = o.optString("confidenceLevel", "Needs Verification"),
+                evidenceSummary = o.optString("evidenceSummary"),
+                tags = o.optString("tags"),
+                projectId = o.optNullableLong("projectId")
+            )
+        }
+        val notes = root.optJSONArray("notes").toObjects { o ->
+            NoteEntity(
+                title = o.optString("title", "Imported note"),
+                body = o.optString("body"),
+                category = o.optString("category", "Field Note"),
+                tags = o.optString("tags"),
+                projectId = o.optNullableLong("projectId"),
+                sourceId = o.optNullableLong("sourceId"),
+                attachmentUris = o.optString("attachmentUris")
+            )
+        }
+        val questions = root.optJSONArray("questions").toObjects { o ->
+            QuestionEntity(
+                questionText = o.optString("questionText", "Imported question"),
+                category = o.optString("category", "General"),
+                sourceType = o.optString("sourceType", "Imported"),
+                status = o.optString("status", "New"),
+                priority = o.optString("priority", "Medium")
+            )
+        }
+        val hypotheses = root.optJSONArray("hypotheses").toObjects { o ->
+            HypothesisEntity(
+                prediction = o.optString("prediction", "Imported hypothesis"),
+                resultStatus = o.optString("resultStatus", "Unknown"),
+                confidencePercent = o.optInt("confidencePercent", 50)
+            )
+        }
+        val projects = root.optJSONArray("projects").toObjects { o ->
+            ProjectEntity(
+                title = o.optString("title", "Imported project"),
+                topicType = o.optString("topicType", "General"),
+                objective = o.optString("objective"),
+                researchQuestion = o.optString("researchQuestion"),
+                status = o.optString("status", "Active")
+            )
+        }
+        val sources = root.optJSONArray("sources").toObjects { o ->
+            SourceEntity(
+                type = o.optString("type", "Website"),
+                title = o.optString("title", "Imported source"),
+                author = o.optString("author"),
+                dateOrYear = o.optString("dateOrYear"),
+                link = o.optString("link"),
+                doiOrIsbn = o.optString("doiOrIsbn"),
+                publisherOrJournal = o.optString("publisherOrJournal"),
+                accessDate = o.optString("accessDate"),
+                fileUri = o.optString("fileUri"),
+                citationStyleNote = o.optString("citationStyleNote"),
+                importance = o.optString("importance", "Normal"),
+                personalSummary = o.optString("personalSummary"),
+                keyFindings = o.optString("keyFindings"),
+                whatThisSourceTaughtMe = o.optString("whatThisSourceTaughtMe"),
+                questionsGenerated = o.optString("questionsGenerated"),
+                reliabilityScore = o.optInt("reliabilityScore", 3),
+                readingStatus = o.optString("readingStatus", "In progress"),
+                paperNotes = o.optString("paperNotes"),
+                relatedProjectId = o.optNullableLong("relatedProjectId")
+            )
+        }
+        val dataRecords = root.optJSONArray("dataRecords").toObjects { o ->
+            DataRecordEntity(
+                toolType = o.optString("toolType", "Imported"),
+                label = o.optString("label", "Imported data"),
+                value = o.optString("value"),
+                unit = o.optString("unit")
+            )
+        }
+        val reports = root.optJSONArray("reports").toObjects { o ->
+            ReportEntity(
+                type = o.optString("type", "Imported"),
+                title = o.optString("title", "Imported report"),
+                status = o.optString("status", "Draft"),
+                markdownDraft = o.optString("markdownDraft")
+            )
+        }
+        val flashcards = root.optJSONArray("flashcards").toObjects { o ->
+            FlashcardEntity(
+                front = o.optString("front", "Imported card"),
+                back = o.optString("back"),
+                type = o.optString("type", "imported")
+            )
+        }
+        val preview = ArchivePreview(observations.size, notes.size, questions.size, hypotheses.size, projects.size, sources.size, dataRecords.size, reports.size, flashcards.size)
+        require(preview.total > 0) { "The archive did not contain importable FieldMind records." }
+        return ArchiveImportBundle(preview, observations, notes, questions, hypotheses, projects, sources, dataRecords, reports, flashcards)
+    }
+
     fun buildMarkdownReport(report: ReportEntity): String = report.markdownDraft.ifBlank {
         """# ${report.title}
 
@@ -221,6 +367,16 @@ ${report.nextSteps}
         }
         append("  ]")
     }
+
+
+    private inline fun <T> org.json.JSONArray?.toObjects(block: (JSONObject) -> T): List<T> {
+        if (this == null) return emptyList()
+        return buildList {
+            for (i in 0 until length()) optJSONObject(i)?.let { add(block(it)) }
+        }
+    }
+
+    private fun JSONObject.optNullableLong(name: String): Long? = if (isNull(name) || !has(name)) null else optLong(name).takeIf { it > 0L }
 
     private fun html(value: String): String = value.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\n", "<br>")
     private fun xml(value: String): String = value.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\"", "&quot;")

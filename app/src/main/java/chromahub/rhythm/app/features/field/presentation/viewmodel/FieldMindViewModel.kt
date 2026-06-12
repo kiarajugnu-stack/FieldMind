@@ -117,7 +117,7 @@ class FieldMindViewModel(application: Application) : AndroidViewModel(applicatio
                 tags = tags.trim(),
                 projectId = projectId,
                 sourceId = sourceId,
-                attachmentUris = attachments.joinToString("\n") { listOf(it.type, it.caption, it.uri).joinToString("|") }
+                attachmentUris = attachments.joinToString("\n") { listOf(it.type, it.caption, it.localPath ?: it.uri).joinToString("|") }
             )
         )
         onSaved?.invoke(id)
@@ -266,6 +266,23 @@ class FieldMindViewModel(application: Application) : AndroidViewModel(applicatio
     }
 
     fun buildSourceCitation(source: SourceEntity): String = FieldMindExport.sourceCitation(source)
+
+
+    fun restoreArchiveJson(raw: String, onResult: (Result<FieldMindExport.ArchivePreview>) -> Unit) = viewModelScope.launch {
+        runCatching {
+            val bundle = FieldMindExport.parseArchiveJson(raw)
+            bundle.projects.forEach { repository.addProject(it) }
+            bundle.sources.forEach { repository.addSource(it) }
+            bundle.observations.forEach { repository.addObservation(it) }
+            bundle.notes.forEach { repository.addNote(it) }
+            bundle.questions.forEach { repository.addQuestion(it) }
+            bundle.hypotheses.forEach { repository.addHypothesis(it) }
+            bundle.dataRecords.forEach { repository.addDataRecord(it) }
+            bundle.reports.forEach { repository.addReport(it) }
+            bundle.flashcards.forEach { repository.addFlashcard(it) }
+            bundle.preview
+        }.also(onResult)
+    }
 
     fun addHypothesis(questionId: Long?, prediction: String, evidenceNeeded: String, confidence: Int, reasoning: String = "", supportCriteria: String = "", weakeningCriteria: String = "", testMethod: String = "") = viewModelScope.launch {
         repository.addHypothesis(HypothesisEntity(linkedQuestionId = questionId, prediction = prediction.trim(), reasoning = reasoning.trim(), evidenceNeeded = evidenceNeeded.trim(), supportCriteria = supportCriteria.trim(), weakeningCriteria = weakeningCriteria.trim(), testMethod = testMethod.trim(), confidencePercent = confidence))

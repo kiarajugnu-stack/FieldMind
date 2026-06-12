@@ -117,6 +117,7 @@ fun FieldMindNavigation(viewModel: FieldMindViewModel, onResetOnboarding: () -> 
     val haptics = rememberFieldMindHaptics()
     val hideChrome = currentRoute == FieldMindScreen.Settings.route ||
         currentRoute == FieldMindScreen.FieldMode.route ||
+        currentRoute == FieldMindScreen.Reader.route ||
         currentRoute == FieldMindScreen.Flashcards.route ||
         currentRoute?.startsWith("field_detail/") == true
 

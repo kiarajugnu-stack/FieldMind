@@ -2,6 +2,7 @@ package chromahub.rhythm.app.features.field.presentation.screens
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.app.KeyguardManager
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -681,14 +682,14 @@ private fun NoteCaptureCard(viewModel: FieldMindViewModel, initialCategory: Stri
     var attachments by remember { mutableStateOf<List<DraftEvidenceAttachment>>(emptyList()) }
     val haptics = rememberFieldMindHaptics()
     val mediaPicker = rememberLauncherForActivityResult(ActivityResultContracts.PickMultipleVisualMedia(10)) { uris ->
-        attachments = attachments + uris.map { DraftEvidenceAttachment("Gallery", it.toString(), "Note media") }
-        scope.launch { snackbar.showSnackbar(if (uris.isEmpty()) "Gallery selection cancelled." else "Media attached.") }
+        attachments = attachments + uris.map { durableEvidenceAttachment(context, "Gallery", it, "Note media") }
+        scope.launch { snackbar.showSnackbar(if (uris.isEmpty()) "Gallery selection cancelled." else "Media copied into FieldMind evidence storage.") }
     }
     val filePicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         if (uri == null) scope.launch { snackbar.showSnackbar("File selection cancelled.") } else {
             runCatching { context.contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION) }
-            attachments = attachments + DraftEvidenceAttachment("File", uri.toString(), "Note attachment")
-            scope.launch { snackbar.showSnackbar("File attached.") }
+            attachments = attachments + durableEvidenceAttachment(context, "File", uri, "Note attachment")
+            scope.launch { snackbar.showSnackbar("File copied into FieldMind evidence storage.") }
         }
     }
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -951,12 +952,12 @@ private fun ObservationCaptureCard(viewModel: FieldMindViewModel, compact: Boole
 
     val mediaPicker = rememberLauncherForActivityResult(ActivityResultContracts.PickMultipleVisualMedia(10)) { uris ->
         if (uris.isEmpty()) scope.launch { snackbar.showSnackbar("Gallery selection cancelled.") }
-        attachments = attachments + uris.map { DraftEvidenceAttachment("Gallery", it.toString(), "Selected media") }
+        attachments = attachments + uris.map { durableEvidenceAttachment(context, "Gallery", it, "Selected media") }
     }
     val filePicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         if (uri == null) scope.launch { snackbar.showSnackbar("File selection cancelled.") } else {
             runCatching { context.contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION) }
-            attachments = attachments + DraftEvidenceAttachment("File", uri.toString(), "Reference file / PDF")
+            attachments = attachments + durableEvidenceAttachment(context, "File", uri, "Reference file / PDF")
         }
     }
     val locationPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { result ->
@@ -1994,6 +1995,7 @@ fun LearnReaderScreen(url: String, title: String, onBack: () -> Unit) {
     var loading by remember(readerUrl) { mutableStateOf(!uriLooksImage(url)) }
     var errorMessage by remember(readerUrl) { mutableStateOf<String?>(null) }
     var retryKey by remember(readerUrl) { mutableIntStateOf(0) }
+    var showReaderFallback by remember(readerUrl) { mutableStateOf(true) }
     var webView by remember { mutableStateOf<WebView?>(null) }
     val background = MaterialTheme.colorScheme.background
     LaunchedEffect(readerUrl, retryKey) {
@@ -2001,12 +2003,16 @@ fun LearnReaderScreen(url: String, title: String, onBack: () -> Unit) {
             loading = true
             errorMessage = null
             kotlinx.coroutines.delay(10_000)
-            if (loading) errorMessage = "Still loading. This file may block embedded readers."
+            if (loading) { errorMessage = "Still loading. This file may block embedded readers."; showReaderFallback = true }
         }
     }
     BackHandler(enabled = true) {
         val wv = webView
-        if (wv != null && wv.canGoBack()) wv.goBack() else onBack()
+        when {
+            showReaderFallback && errorMessage != null -> showReaderFallback = false
+            wv != null && wv.canGoBack() -> wv.goBack()
+            else -> onBack()
+        }
     }
     Column(Modifier.fillMaxSize().background(background)) {
         Row(Modifier.fillMaxWidth().padding(start = 8.dp, end = 8.dp, top = 8.dp, bottom = 8.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -2018,7 +2024,7 @@ fun LearnReaderScreen(url: String, title: String, onBack: () -> Unit) {
         Box(Modifier.fillMaxSize()) {
             when {
                 uriLooksImage(url) -> AsyncImage(model = url, contentDescription = title, contentScale = ContentScale.Fit, modifier = Modifier.fillMaxSize().padding(16.dp).clip(RoundedCornerShape(24.dp)).background(MaterialTheme.colorScheme.surfaceContainerLow))
-                url.startsWith("content://") && uriLooksPdf(url) -> ReaderFallbackCard("Local PDF selected. Android WebView cannot render every provider PDF directly, but it is stored in FieldMind and can be opened from the system document viewer.", url, { runCatching { uriHandler.openUri(url) } }, Modifier.align(Alignment.TopCenter))
+                url.startsWith("content://") && uriLooksPdf(url) && showReaderFallback -> ReaderFallbackCard("Local PDF selected. Android WebView cannot render every provider PDF directly, but it is stored in FieldMind and can be opened from the system document viewer.", url, { runCatching { uriHandler.openUri(url) } }, Modifier.align(Alignment.TopCenter), onDismiss = { showReaderFallback = false })
                 else -> {
                     AndroidView(
                         modifier = Modifier.fillMaxSize(),
@@ -2026,7 +2032,7 @@ fun LearnReaderScreen(url: String, title: String, onBack: () -> Unit) {
                             WebView(ctx).apply {
                                 setBackgroundColor(android.graphics.Color.TRANSPARENT)
                                 webViewClient = object : WebViewClient() {
-                                    override fun onPageStarted(view: WebView?, startedUrl: String?, favicon: android.graphics.Bitmap?) { loading = true; errorMessage = null }
+                                    override fun onPageStarted(view: WebView?, startedUrl: String?, favicon: android.graphics.Bitmap?) { loading = true; errorMessage = null; showReaderFallback = true }
                                     override fun onPageFinished(view: WebView?, finishedUrl: String?) { loading = false }
                                     override fun onReceivedError(view: WebView?, request: WebResourceRequest?, error: WebResourceError?) {
                                         if (request?.isForMainFrame != false) { loading = false; errorMessage = error?.description?.toString() ?: "Could not load this file inside FieldMind." }
@@ -2042,7 +2048,7 @@ fun LearnReaderScreen(url: String, title: String, onBack: () -> Unit) {
                         },
                         update = { if (it.url != readerUrl) it.loadUrl(readerUrl) }
                     )
-                    errorMessage?.let { message -> ReaderFallbackCard(message, url, { retryKey++; webView?.reload() }, Modifier.align(Alignment.TopCenter)) }
+                    if (showReaderFallback) errorMessage?.let { message -> ReaderFallbackCard(message, url, { retryKey++; webView?.reload() }, Modifier.align(Alignment.TopCenter), onDismiss = { showReaderFallback = false }) }
                 }
             }
         }
@@ -2050,13 +2056,14 @@ fun LearnReaderScreen(url: String, title: String, onBack: () -> Unit) {
 }
 
 @Composable
-private fun ReaderFallbackCard(message: String, url: String, onPrimary: () -> Unit, modifier: Modifier = Modifier) {
+private fun ReaderFallbackCard(message: String, url: String, onPrimary: () -> Unit, modifier: Modifier = Modifier, onDismiss: () -> Unit = {}) {
     val uriHandler = LocalUriHandler.current
     Card(modifier.padding(20.dp), shape = RoundedCornerShape(24.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh)) {
         Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
                 Icon(FieldMindIcons.Info, null, tint = MaterialTheme.colorScheme.primary, size = 22.dp)
-                Text("Reader fallback", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                Text("Reader fallback", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
+                IconButton(onClick = onDismiss, modifier = Modifier.size(32.dp)) { Icon(FieldMindIcons.Close, contentDescription = "Close reader fallback", size = 18.dp) }
             }
             Text(message, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Text(url, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2, overflow = TextOverflow.Ellipsis)
@@ -2088,18 +2095,23 @@ fun ArchiveScreen(viewModel: FieldMindViewModel, onOpenDetail: (String, Long) ->
             OutlinedTextField(query, { query = it }, label = { Text("Search") }, leadingIcon = { Icon(icon = FieldMindIcons.Search, contentDescription = null, size = 20.dp) }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(18.dp), singleLine = true)
         }
         val q = query.trim().lowercase()
-        fun matches(vararg parts: String) = q.isBlank() || parts.any { it.lowercase().contains(q) }
-        items(observations.filter { matches(it.subject, it.category, it.factsOnlyNotes, it.manualLocation, it.tags) }) { EntityCard(it.subject, "observation", body = it.factsOnlyNotes.take(120), confidence = it.confidenceLevel, meta = listOf(it.category)) { onOpenDetail("observation", it.id) } }
-        items(notes.filter { matches(it.title, it.body, it.category, it.tags) }) { EntityCard(it.title, "note", body = it.body.take(120), meta = listOf(it.category, recentRelativeTime(it.updatedAt))) { onOpenDetail("note", it.id) } }
-        items(questions.filter { matches(it.questionText, it.category, it.status) }) { EntityCard(it.questionText, "question", meta = listOf(it.status)) { onOpenDetail("question", it.id) } }
-        items(projects.filter { matches(it.title, it.topicType, it.objective, it.researchQuestion) }) { EntityCard(it.title, "project", body = it.objective, meta = listOf(it.topicType)) { onOpenDetail("project", it.id) } }
-        items(sources.filter { matches(it.title, it.author, it.type, it.dateOrYear, it.link, it.doiOrIsbn, it.publisherOrJournal, it.accessDate, it.fileUri, it.citationStyleNote, it.importance, it.readingStatus, it.personalSummary, it.keyFindings, it.questionsGenerated, it.paperNotes) }) { EntityCard(it.title, "source", body = it.whatThisSourceTaughtMe, meta = listOf(it.type)) { onOpenDetail("source", it.id) } }
-        items(reports.filter { matches(it.title, it.type, it.question, it.conclusion) }) { EntityCard(it.title, "report", body = it.conclusion, meta = listOf(it.type)) { onOpenDetail("report", it.id) } }
-        val learnMatches = if (q.isBlank()) emptyList() else LearnLibrary.flatMap { category -> category.topics.flatMap { topic -> topic.resources.map { Triple(category, topic, it) } } }
-            .filter { (category, topic, resource) -> matches(category.name, category.description, topic.name, topic.summary, resource.title, resource.kind, resource.why, resource.author, resource.url) }
-        if (learnMatches.isNotEmpty()) item { SectionHeader("Learn resources", "${learnMatches.size} free articles, guides, books, or tools") }
-        items(learnMatches) { (_, topic, resource) -> EntityCard(resource.title, "learn", body = resource.why, meta = listOf(resource.kind, topic.name, resource.author.ifBlank { "Free access" })) { onOpenReader(resource.url, resource.title) } }
-        items(flashcards.filter { matches(it.front, it.back, it.type) }) { EntityCard(it.front, "flashcard", body = it.back, meta = listOf(it.type)) { onOpenDetail("flashcard", it.id) } }
+        if (q.length < 2) {
+            item { EmptyState("Search smarter", "Type at least 2 characters. FieldMind limits in-memory search results so large archives stay responsive; full FTS indexing is the next database step.", icon = FieldMindIcons.Search) }
+        } else {
+            fun matches(vararg parts: String) = parts.any { it.lowercase().contains(q) }
+            items(observations.filter { matches(it.subject, it.category, it.factsOnlyNotes, it.manualLocation, it.tags) }.take(30)) { EntityCard(it.subject, "observation", body = it.factsOnlyNotes.take(120), confidence = it.confidenceLevel, meta = listOf(it.category)) { onOpenDetail("observation", it.id) } }
+            items(notes.filter { matches(it.title, it.body, it.category, it.tags) }.take(30)) { EntityCard(it.title, "note", body = it.body.take(120), meta = listOf(it.category, recentRelativeTime(it.updatedAt))) { onOpenDetail("note", it.id) } }
+            items(questions.filter { matches(it.questionText, it.category, it.status) }.take(30)) { EntityCard(it.questionText, "question", meta = listOf(it.status)) { onOpenDetail("question", it.id) } }
+            items(projects.filter { matches(it.title, it.topicType, it.objective, it.researchQuestion) }.take(30)) { EntityCard(it.title, "project", body = it.objective, meta = listOf(it.topicType)) { onOpenDetail("project", it.id) } }
+            items(sources.filter { matches(it.title, it.author, it.type, it.dateOrYear, it.link, it.doiOrIsbn, it.publisherOrJournal, it.accessDate, it.fileUri, it.citationStyleNote, it.importance, it.readingStatus, it.personalSummary, it.keyFindings, it.questionsGenerated, it.paperNotes) }.take(30)) { EntityCard(it.title, "source", body = it.whatThisSourceTaughtMe, meta = listOf(it.type)) { onOpenDetail("source", it.id) } }
+            items(reports.filter { matches(it.title, it.type, it.question, it.conclusion) }.take(30)) { EntityCard(it.title, "report", body = it.conclusion, meta = listOf(it.type)) { onOpenDetail("report", it.id) } }
+            val learnMatches = LearnLibrary.flatMap { category -> category.topics.flatMap { topic -> topic.resources.map { Triple(category, topic, it) } } }
+                .filter { (category, topic, resource) -> matches(category.name, category.description, topic.name, topic.summary, resource.title, resource.kind, resource.why, resource.author, resource.url) }
+                .take(20)
+            if (learnMatches.isNotEmpty()) item { SectionHeader("Learn resources", "${learnMatches.size} free articles, guides, books, or tools") }
+            items(learnMatches) { (_, topic, resource) -> EntityCard(resource.title, "learn", body = resource.why, meta = listOf(resource.kind, topic.name, resource.author.ifBlank { "Free access" })) { onOpenReader(resource.url, resource.title) } }
+            items(flashcards.filter { matches(it.front, it.back, it.type) }.take(30)) { EntityCard(it.front, "flashcard", body = it.back, meta = listOf(it.type)) { onOpenDetail("flashcard", it.id) } }
+        }
     }
 }
 
@@ -2132,6 +2144,9 @@ private fun ExportStudioContent(
     val autoBackupInterval by settings.autoBackupInterval.collectAsState()
     var exportScope by rememberSaveable { mutableStateOf("All") }
     var pendingBytes by remember { mutableStateOf(ByteArray(0)) }
+    var pendingRestoreJson by remember { mutableStateOf<String?>(null) }
+    var pendingRestorePreview by remember { mutableStateOf<FieldMindExport.ArchivePreview?>(null) }
+    var restoring by remember { mutableStateOf(false) }
     var lastBackupRefresh by remember { mutableIntStateOf(0) }
     val lastBackupLabel = remember(lastBackupRefresh) { lastBackupSummary(context) }
 
@@ -2155,9 +2170,12 @@ private fun ExportStudioContent(
     }
     val importDoc = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         if (uri == null) onMessage("Import cancelled.") else runCatching {
-            context.contentResolver.openInputStream(uri)?.bufferedReader()?.use { it.readText().take(600) }.orEmpty()
-        }.onSuccess { preview ->
-            onMessage("Backup import preview loaded (${preview.length} chars). Review completed; safe restore can be added on top of this parser.")
+            val raw = context.contentResolver.openInputStream(uri)?.bufferedReader()?.use { it.readText() }.orEmpty()
+            FieldMindExport.previewArchiveJson(raw) to raw
+        }.onSuccess { (preview, raw) ->
+            pendingRestorePreview = preview
+            pendingRestoreJson = raw
+            onMessage("Backup ready to restore: ${preview.total} records found.")
         }.onFailure { onMessage("Import failed: ${it.localizedMessage}") }
     }
 
@@ -2207,6 +2225,34 @@ private fun ExportStudioContent(
             ExportActionCard("Reports Markdown", "Markdown bundle of scoped reports.", "MD", "Best for editing in writing apps", FieldMindIcons.Report, enabled = exportScope in listOf("All", "Reports")) { queueText(scopedReports().joinToString("\n\n---\n\n") { FieldMindExport.buildMarkdownReport(it) }); createDoc.launch("fieldmind-${scopeSlug()}-reports.md") }
             ExportActionCard("Import backup", "Pick a JSON backup and preview it before restore.", "JSON", "Best for checking backup integrity", FieldMindIcons.Archive) { importDoc.launch(arrayOf("application/json", "text/*", "*/*")) }
         }
+    }
+
+    pendingRestorePreview?.let { preview ->
+        AlertDialog(
+            onDismissRequest = { if (!restoring) { pendingRestorePreview = null; pendingRestoreJson = null } },
+            icon = { Icon(FieldMindIcons.Archive, contentDescription = null) },
+            title = { Text("Restore backup?") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("FieldMind will merge this archive as new records so existing research is not deleted.")
+                    Text(preview.summary(), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            },
+            confirmButton = {
+                Button(enabled = !restoring, onClick = {
+                    val raw = pendingRestoreJson ?: return@Button
+                    restoring = true
+                    viewModel.restoreArchiveJson(raw) { result ->
+                        restoring = false
+                        pendingRestorePreview = null
+                        pendingRestoreJson = null
+                        result.onSuccess { onMessage("Restored ${it.total} records from backup.") }
+                            .onFailure { onMessage("Restore failed: ${it.localizedMessage}") }
+                    }
+                }) { Text(if (restoring) "Restoring…" else "Merge restore") }
+            },
+            dismissButton = { TextButton(enabled = !restoring, onClick = { pendingRestorePreview = null; pendingRestoreJson = null }) { Text("Cancel") } }
+        )
     }
 }
 
@@ -2309,8 +2355,45 @@ private fun writeManualBackup(context: Context, archiveJson: String): File {
     return File(backupDirectory(context), "fieldmind-manual-$stamp.json").apply { writeText(archiveJson) }
 }
 
+
+@Composable
+private fun FieldMindPrivacyGate(enabled: Boolean, title: String, body: String): Boolean {
+    if (!enabled) return true
+    val context = LocalContext.current
+    var unlocked by rememberSaveable(enabled) { mutableStateOf(false) }
+    val keyguard = remember(context) { context.getSystemService(KeyguardManager::class.java) }
+    val unlockLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        unlocked = result.resultCode == android.app.Activity.RESULT_OK
+    }
+    if (unlocked) return true
+
+    Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).padding(24.dp), contentAlignment = Alignment.Center) {
+        Card(shape = RoundedCornerShape(28.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)) {
+            Column(Modifier.padding(22.dp), verticalArrangement = Arrangement.spacedBy(14.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                Box(Modifier.size(54.dp).clip(RoundedCornerShape(18.dp)).background(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)), contentAlignment = Alignment.Center) {
+                    Icon(FieldMindIcons.Lock, contentDescription = null, tint = MaterialTheme.colorScheme.primary, size = 28.dp)
+                }
+                Text(title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
+                Text(body, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
+                Button(
+                    onClick = {
+                        val intent = keyguard?.createConfirmDeviceCredentialIntent("Unlock FieldMind", "Confirm your device lock to view sensitive research data.")
+                        if (intent != null) unlockLauncher.launch(intent) else unlocked = true
+                    },
+                    shape = RoundedCornerShape(16.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) { Text(if (keyguard?.isDeviceSecure == true) "Unlock" else "Continue") }
+                if (keyguard?.isDeviceSecure != true) Text("Set a device PIN/password for stronger protection. FieldMind will use it automatically.", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
+            }
+        }
+    }
+    return false
+}
+
 @Composable
 fun BackupExportScreen(viewModel: FieldMindViewModel) {
+    val privacyEnabled by viewModel.fieldSettings.privacyLockEnabled.collectAsState()
+    if (!FieldMindPrivacyGate(privacyEnabled, "Export is locked", "Backups and exports can contain sensitive field notes, sources, and locations.")) return
     val scope = rememberCoroutineScope()
     val snackbar = remember { SnackbarHostState() }
     Scaffold(snackbarHost = { SnackbarHost(snackbar) }, containerColor = MaterialTheme.colorScheme.background) { padding ->
@@ -2361,6 +2444,7 @@ fun FieldMindSettingsScreen(viewModel: FieldMindViewModel? = null, onBack: () ->
     val localModelUseForStudy by settings.localModelUseForStudy.collectAsState()
     val autoBackupEnabled by settings.autoBackupEnabled.collectAsState()
     val autoBackupInterval by settings.autoBackupInterval.collectAsState()
+    if (!FieldMindPrivacyGate(privacy, "Settings are locked", "Confirm your device lock to edit FieldMind privacy, export, and AI settings.")) return
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(20.dp, 20.dp, 20.dp, 40.dp), verticalArrangement = Arrangement.spacedBy(20.dp)) {
         item { FieldScreenHeader("Settings", "Offline-first setup, profile, capture, local AI, export, and privacy.", icon = FieldMindIcons.Settings, actionIcon = FieldMindIcons.Back, onAction = onBack) }
 
@@ -2685,7 +2769,7 @@ private fun SourceActionPanel(source: SourceEntity, projects: List<ProjectEntity
                     if (source.keyFindings.isNotBlank()) viewModel.addFlashcard("Key finding from ${source.title}", source.keyFindings, "source-finding", source.id, source.relatedProjectId)
                     if (source.questionsGenerated.isNotBlank()) viewModel.addFlashcard("Question from ${source.title}", source.questionsGenerated, "source-question", source.id, source.relatedProjectId)
                 }, modifier = Modifier.weight(1f), shape = RoundedCornerShape(14.dp)) {
-                    Icon(FieldMindIcons.Flashcard, null, size = 18.dp); Spacer(Modifier.size(6.dp)); Text("Cards")
+                    Icon(FieldMindIcons.Flashcard, null, size = 18.dp); Spacer(Modifier.size(6.dp)); Text("Smart cards")
                 }
             }
             TextButton(onClick = { haptics.light(); showProjects = !showProjects }) {
@@ -2794,12 +2878,13 @@ private fun ObservationAttachmentsPanel(viewModel: FieldMindViewModel, observati
             if (images.isNotEmpty()) {
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     items(images) { img ->
+                        val displayUri = img.localPath ?: img.uri
                         Column(Modifier.width(140.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                             AsyncImage(
-                                model = img.uri,
+                                model = displayUri,
                                 contentDescription = img.caption.ifBlank { "Observation photo" },
                                 contentScale = ContentScale.Crop,
-                                modifier = Modifier.fillMaxWidth().height(140.dp).clip(RoundedCornerShape(16.dp)).background(MaterialTheme.colorScheme.surfaceContainerHighest).clickable { onOpenReader(img.uri, img.caption.ifBlank { "Observation image" }) }
+                                modifier = Modifier.fillMaxWidth().height(140.dp).clip(RoundedCornerShape(16.dp)).background(MaterialTheme.colorScheme.surfaceContainerHighest).clickable { onOpenReader(displayUri, img.caption.ifBlank { "Observation image" }) }
                             )
                             if (img.caption.isNotBlank()) Text(img.caption, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2, overflow = TextOverflow.Ellipsis)
                         }
@@ -2807,13 +2892,14 @@ private fun ObservationAttachmentsPanel(viewModel: FieldMindViewModel, observati
                 }
             }
             others.forEach { att ->
-                Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).clickable { onOpenReader(att.uri, att.caption.ifBlank { att.type }) }.padding(4.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                val displayUri = att.localPath ?: att.uri
+                Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).clickable { onOpenReader(displayUri, att.caption.ifBlank { att.type }) }.padding(4.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     Box(Modifier.size(38.dp).clip(RoundedCornerShape(12.dp)).background(MaterialTheme.colorScheme.surfaceContainerHighest), contentAlignment = Alignment.Center) {
                         Icon(icon = if (att.type.equals("Audio", true)) FieldMindIcons.Mic else FieldMindIcons.File, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, size = 20.dp)
                     }
                     Column(Modifier.weight(1f)) {
                         Text(att.caption.ifBlank { att.type }, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                        Text(att.uri, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        Text(displayUri, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     }
                 }
             }
@@ -2913,6 +2999,7 @@ private fun AssistantPanel(viewModel: FieldMindViewModel, seedText: String = "")
     var selectedTask by remember { mutableStateOf(AssistantTask.PAPER_BOOK_SUGGESTIONS) }
     var loading by remember { mutableStateOf(false) }
     var result by remember { mutableStateOf<String?>(null) }
+    var assistantError by remember { mutableStateOf<String?>(null) }
 
     val tasks = listOf(
         AssistantTask.PAPER_BOOK_SUGGESTIONS to FieldMindIcons.Book,
@@ -2947,10 +3034,13 @@ private fun AssistantPanel(viewModel: FieldMindViewModel, seedText: String = "")
             Button(
                 onClick = {
                     if (!available) return@Button
-                    loading = true; result = null
+                    loading = true; result = null; assistantError = null
                     scope.launch {
-                        val suggestion = assistant.generateContent(selectedTask, input.trim())
-                        result = suggestion.body
+                        runCatching { assistant.generateContent(selectedTask, input.trim()) }
+                            .onSuccess { suggestion ->
+                                if (suggestion.body.startsWith("AI request failed", ignoreCase = true)) assistantError = suggestion.body else result = suggestion.body
+                            }
+                            .onFailure { assistantError = it.localizedMessage ?: "The optional assistant could not complete this draft." }
                         loading = false
                     }
                 },
@@ -2967,6 +3057,14 @@ private fun AssistantPanel(viewModel: FieldMindViewModel, seedText: String = "")
 
             if (!available) {
                 Text("Add an API key in Settings → AI assistant to enable live suggestions.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+
+            assistantError?.let { text ->
+                Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(MaterialTheme.colorScheme.errorContainer).padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Text("Optional assistant unavailable", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onErrorContainer, fontWeight = FontWeight.SemiBold)
+                    Text(text, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onErrorContainer)
+                    Text("Your FieldMind data remains local. You can keep working offline or retry later.", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.78f))
+                }
             }
 
             result?.let { text ->
@@ -3827,6 +3925,27 @@ internal fun learningModuleBody(module: String): String = when (module) {
     "Literature review" -> "Use sources, paper prompts, and what-this-taught-me summaries."
     "Analysis" -> "Use tags, dates, projects, subjects, and data tools to find patterns."
     else -> "Track this skill by applying it in notes, sources, projects, reports, and revision cards."
+}
+
+
+private fun durableEvidenceAttachment(context: Context, type: String, uri: Uri, caption: String): DraftEvidenceAttachment {
+    val mimeType = context.contentResolver.getType(uri)
+    val copied = runCatching {
+        val dir = File(context.filesDir, "fieldmind/evidence").apply { mkdirs() }
+        val extension = when {
+            mimeType?.contains("png", ignoreCase = true) == true -> ".png"
+            mimeType?.contains("jpeg", ignoreCase = true) == true || mimeType?.contains("jpg", ignoreCase = true) == true -> ".jpg"
+            mimeType?.contains("pdf", ignoreCase = true) == true -> ".pdf"
+            mimeType?.contains("video", ignoreCase = true) == true -> ".video"
+            mimeType?.contains("audio", ignoreCase = true) == true -> ".audio"
+            else -> ".bin"
+        }
+        val target = File(dir, "evidence-${System.currentTimeMillis()}-${kotlin.random.Random.nextInt(1000, 9999)}$extension")
+        context.contentResolver.openInputStream(uri)?.use { input -> target.outputStream().use { output -> input.copyTo(output) } }
+            ?: error("Could not open selected evidence")
+        target.absolutePath
+    }.getOrNull()
+    return DraftEvidenceAttachment(type = type, uri = uri.toString(), caption = caption, localPath = copied, mimeType = mimeType)
 }
 
 private fun createFieldMindFile(context: Context, prefix: String, suffix: String): File {
