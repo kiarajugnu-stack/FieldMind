@@ -20,3 +20,5 @@ private.properties.base64
 
 /app/release
 /.config
+release.keystore
+keystore_base64.txt
