@@ -434,7 +434,7 @@ private fun ProjectSummaryCard(
     }
 }
 
-@Composable    private fun ProjectWorkspaceCard(
+@Composableprivate fun ProjectWorkspaceCard(
     project: ProjectEntity, questions: List<QuestionEntity>, hypotheses: List<HypothesisEntity>,
     observations: List<ObservationEntity>, sources: List<SourceEntity>, data: List<DataRecordEntity>,
     reports: List<ReportEntity>, onClick: () -> Unit
