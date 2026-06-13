@@ -187,6 +187,48 @@ private fun NotePanel(viewModel: FieldMindViewModel, items: List<NoteEntity>, on
 }
 
 @Composable
+private fun NoteCaptureCard(
+    viewModel: FieldMindViewModel,
+    initialCategory: String,
+    onSaved: () -> Unit
+) {
+    val haptics = rememberFieldMindHaptics()
+    var title by remember { mutableStateOf("") }
+    var body by remember { mutableStateOf("") }
+    var category by remember(initialCategory) { mutableStateOf(initialCategory) }
+    var tags by remember { mutableStateOf("") }
+
+    InlineFormCard(
+        title = "Capture Note",
+        onDismiss = onSaved,
+        onSave = {
+            if (body.isNotBlank() || title.isNotBlank()) {
+                haptics.confirm()
+                val fallbackTitle = body
+                    .lineSequence()
+                    .firstOrNull { it.isNotBlank() }
+                    ?.take(48)
+                    ?: "Untitled note"
+                viewModel.addNote(
+                    title = title.ifBlank { fallbackTitle },
+                    body = body,
+                    category = category,
+                    tags = tags,
+                    onSaved = { onSaved() }
+                )
+            }
+        },
+        saveEnabled = body.isNotBlank() || title.isNotBlank()
+    ) {
+        FieldTextField(title, { title = it }, "Title", supportingText = "Optional — generated from the note if blank")
+        FieldTextField(body, { body = it }, "Note body", minLines = 5, required = true)
+        Text("Category", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        ChoiceChips(observationCategories, category) { category = it }
+        FieldTextField(tags, { tags = it }, "Tags", supportingText = "Comma-separated, optional")
+    }
+}
+
+@Composable
 private fun PaperReadingPanel(items: List<SourceEntity>, onOpenDetail: (String, Long) -> Unit) {
     val readCount = items.count { it.readingStatus == "Read" }
     val inProgressCount = items.count { it.readingStatus == "In progress" }
@@ -861,4 +903,3 @@ private fun ReaderFallbackCard(message: String, url: String, onPrimary: () -> Un
         }
     }
 }
-
