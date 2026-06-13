@@ -3,7 +3,7 @@ package fieldmind.research.app.features.field.presentation.screens
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
-import fieldmind.research.app.features.field.presentation.components.LocalFieldMindSnackbar
+
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedContent
@@ -72,8 +72,6 @@ fun DetailScreen(kind: String, id: Long, viewModel: FieldMindViewModel, onBack: 
     val data by viewModel.dataRecords.collectAsState()
     val reports by viewModel.reports.collectAsState()
     val flashcards by viewModel.flashcards.collectAsState()
-    val snackbarHost = LocalFieldMindSnackbar.current
-    val scope = rememberCoroutineScope()
     val title = kind.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
     var showEdit by remember(kind, id) { mutableStateOf(false) }
     var showDelete by remember(kind, id) { mutableStateOf(false) }

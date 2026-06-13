@@ -109,7 +109,7 @@ fun FieldMindApp(appSettings: AppSettings, viewModel: FieldMindViewModel) {
                 isUnlocked = appUnlocked,
                 onUnlock = { appUnlocked = true }
             ) {
-                FieldMindSnackbarProvider {
+                FieldMindSnackbarProvider { _ ->
                     FieldMindNavigation(viewModel = viewModel, onResetOnboarding = { appSettings.setOnboardingCompleted(false); appUnlocked = false })
                 }
             }

@@ -24,10 +24,12 @@ val LocalFieldMindSnackbar = compositionLocalOf<SnackbarHostState> {
 }
 
 @Composable
-fun FieldMindSnackbarProvider(content: @Composable () -> Unit) {
+fun FieldMindSnackbarProvider(content: @Composable (PaddingValues) -> Unit) {
     val snackbarHostState = remember { SnackbarHostState() }
     CompositionLocalProvider(LocalFieldMindSnackbar provides snackbarHostState) {
-        content()
+        Scaffold(snackbarHost = { SnackbarHost(snackbarHostState) }) { padding ->
+            content(padding)
+        }
     }
 }
 
