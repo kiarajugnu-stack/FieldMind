@@ -75,6 +75,7 @@ object FieldMindIcons {
     val Done = MaterialSymbolIcon("done")
     val Info = MaterialSymbolIcon("info")
     val Answer = MaterialSymbolIcon("question_answer")
+    val Ask = MaterialSymbolIcon("forum")
     val MapFull = MaterialSymbolIcon("map", filled = true)
     val Favorite = MaterialSymbolIcon("favorite", filled = true)
     val FlashOn = MaterialSymbolIcon("flash_on", filled = true)

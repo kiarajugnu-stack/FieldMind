@@ -110,13 +110,17 @@ fun FieldDataTable(
         if (sortColumn < 0 || sortColumn >= columns.size) return@remember filteredRows
         val col = columns[sortColumn]
         val sorted = if (col.isNumeric) {
-            filteredRows.sortedWith(compareBy<DataRow, Double> { row ->
-                row.cells[col.key]?.toDoubleOrNull() ?: Double.MAX_VALUE
-            })
+            filteredRows.sortedWith { left: DataRow, right: DataRow ->
+                val leftValue = left.cells[col.key]?.toDoubleOrNull() ?: Double.MAX_VALUE
+                val rightValue = right.cells[col.key]?.toDoubleOrNull() ?: Double.MAX_VALUE
+                leftValue.compareTo(rightValue)
+            }
         } else {
-            filteredRows.sortedWith(compareBy<DataRow, String> { row ->
-                (row.cells[col.key] ?: "").lowercase()
-            })
+            filteredRows.sortedWith { left: DataRow, right: DataRow ->
+                val leftValue = (left.cells[col.key] ?: "").lowercase()
+                val rightValue = (right.cells[col.key] ?: "").lowercase()
+                leftValue.compareTo(rightValue)
+            }
         }
         if (sortAscending) sorted else sorted.reversed()
     }
