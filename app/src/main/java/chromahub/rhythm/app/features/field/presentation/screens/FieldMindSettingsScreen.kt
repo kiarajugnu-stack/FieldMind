@@ -339,7 +339,7 @@ fun LocalModelSettingsPage(viewModel: FieldMindViewModel, onBack: () -> Unit) {
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Text(if (localModelDownloaded) "$localModelOption is ready" else "Choose a size and download into app storage.", style = MaterialTheme.typography.bodyMedium)
                     Button(
-                        onClick = { settings.setLocalModelDownloaded(true); android.widget.Toast.makeText(context, "$localModelOption ready for offline study", android.widget.Toast.LENGTH_SHORT).show() },
+                        onClick = { settings.setLocalModelDownloaded(true) },
                         enabled = localModelEnabled,
                         shape = RoundedCornerShape(16.dp),
                         modifier = Modifier.fillMaxWidth()

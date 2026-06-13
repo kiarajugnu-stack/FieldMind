@@ -39,6 +39,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import fieldmind.research.app.features.field.presentation.components.FieldMindSnackbarProvider
 import fieldmind.research.app.features.field.presentation.components.FieldMindIcons
 import fieldmind.research.app.features.field.presentation.components.rememberFieldMindHaptics
 import fieldmind.research.app.features.field.presentation.screens.*
@@ -102,16 +103,17 @@ fun FieldMindApp(appSettings: AppSettings, viewModel: FieldMindViewModel) {
     val privacyEnabled by viewModel.fieldSettings.privacyLockEnabled.collectAsState()
     LaunchedEffect(privacyEnabled) { if (!privacyEnabled) appUnlocked = true }
     if (!onboardingCompleted) {
-        FieldMindOnboardingScreen(onFinish = { appSettings.setOnboardingCompleted(true) })
-    } else {
-        FieldMindAppLock(
-            settings = viewModel.fieldSettings,
-            isUnlocked = appUnlocked,
-            onUnlock = { appUnlocked = true }
-        ) {
-            FieldMindNavigation(viewModel = viewModel, onResetOnboarding = { appSettings.setOnboardingCompleted(false); appUnlocked = false })
+        FieldMindOnboardingScreen(onFinish = { appSettings.setOnboardingCompleted(true) })        } else {
+            FieldMindAppLock(
+                settings = viewModel.fieldSettings,
+                isUnlocked = appUnlocked,
+                onUnlock = { appUnlocked = true }
+            ) {
+                FieldMindSnackbarProvider {
+                    FieldMindNavigation(viewModel = viewModel, onResetOnboarding = { appSettings.setOnboardingCompleted(false); appUnlocked = false })
+                }
+            }
         }
-    }
 }
 
 /**

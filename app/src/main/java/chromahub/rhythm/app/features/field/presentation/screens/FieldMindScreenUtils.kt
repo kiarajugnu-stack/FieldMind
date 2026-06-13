@@ -95,8 +95,11 @@ internal fun InlineFormCard(
     onSave: () -> Unit,
     saveLabel: String = "Save",
     saveEnabled: Boolean = true,
+    requiredFields: List<fieldmind.research.app.features.field.presentation.components.RequiredFieldState> = emptyList(),
     content: @Composable ColumnScope.() -> Unit
 ) {
+    val allValid = requiredFields.isEmpty() || requiredFields.all { it.isValid }
+    val effectiveEnabled = saveEnabled && allValid
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(28.dp),
@@ -112,7 +115,7 @@ internal fun InlineFormCard(
             Column(verticalArrangement = Arrangement.spacedBy(16.dp), content = content)
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                Button(onClick = onSave, shape = RoundedCornerShape(16.dp), enabled = saveEnabled) { Text(saveLabel) }
+                Button(onClick = onSave, shape = RoundedCornerShape(16.dp), enabled = effectiveEnabled) { Text(saveLabel) }
             }
         }
     }
