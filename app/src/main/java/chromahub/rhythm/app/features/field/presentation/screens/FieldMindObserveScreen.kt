@@ -362,7 +362,6 @@ private fun FieldModeScreen(viewModel: FieldMindViewModel, onBack: () -> Unit) {
             )
         }
     }
-}
 
     quickSnapStatus?.let { status ->
         AlertDialog(
@@ -373,6 +372,7 @@ private fun FieldModeScreen(viewModel: FieldMindViewModel, onBack: () -> Unit) {
             confirmButton = { TextButton(onClick = { quickSnapStatus = null }) { Text("Done") } }
         )
     }
+}
 
 private suspend fun awaitCurrentLocation(provider: FieldLocationProvider): CapturedLocation? = suspendCancellableCoroutine { cont ->
     provider.requestCurrentLocation { captured -> if (cont.isActive) cont.resume(captured) }
