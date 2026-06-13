@@ -105,13 +105,19 @@ fun FieldDataTable(
         result
     }
 
-    // Sort rows
+    // Sort rows — use Pair for consistent Comparable type
     val sortedRows = remember(filteredRows, sortColumn, sortAscending) {
         if (sortColumn < 0 || sortColumn >= columns.size) return@remember filteredRows
         val col = columns[sortColumn]
         val sorted = filteredRows.sortedBy { row ->
             val value = row.cells[col.key] ?: ""
-            if (col.isNumeric) value.toDoubleOrNull() ?: 0.0 else value.lowercase()
+            if (col.isNumeric) {
+                val num = value.toDoubleOrNull()
+                if (num != null) Pair(0, num.toString().padStart(20, '0'))
+                else Pair(1, value.lowercase())
+            } else {
+                Pair(1, value.lowercase())
+            }
         }
         if (sortAscending) sorted else sorted.reversed()
     }

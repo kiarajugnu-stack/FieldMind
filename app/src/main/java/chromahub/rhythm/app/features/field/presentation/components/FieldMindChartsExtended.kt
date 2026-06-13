@@ -304,17 +304,7 @@ fun RadarChart(
                     drawCircle(accentColor, radius = if (isSel) 4f else 2.5f, center = Offset(x, y))
                 }
 
-                // Draw labels at vertices
-                if (showLabels) {
-                    categories.forEachIndexed { i, (label, _) ->
-                        val angle = i * angleStep - Math.PI.toFloat() / 2f
-                        val labelRadius = radius + 24f
-                        val x = cx + labelRadius * kotlin.math.cos(angle)
-                        val y = cy + labelRadius * kotlin.math.sin(angle)
-                        // Draw label using drawContext.canvas.nativeCanvas with Paint
-                        // For simplicity, we use a composable-based approach instead
-                    }
-                }
+                // Labels are rendered below the chart via FlowRow for accessibility
             }
         }
 
@@ -572,7 +562,7 @@ fun ActivityByHourChart(
             }
 
             // Draw midnight/noon markers
-            drawLine(gridColor, start = Offset(0f, this.size.height / 2f), end = Offset(this.size.width, this.size.height / 2f), strokeWidth = 0.5f)
+            drawLine(Color.Gray.copy(alpha = 0.3f), start = Offset(0f, this.size.height / 2f), end = Offset(this.size.width, this.size.height / 2f), strokeWidth = 0.5f)
         }
 
         // Hour labels (every 3 hours)
@@ -1105,8 +1095,3 @@ fun DataQualityMeter(
     }
 }
 
-// ══════════════════════════════════════════════════════════════════════
-//  Shared grid color for chart axes
-// ══════════════════════════════════════════════════════════════════════
-
-private val gridColor: Color get() = Color.Gray.copy(alpha = 0.3f)
