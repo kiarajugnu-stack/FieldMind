@@ -244,6 +244,74 @@ private fun EvidenceTab(
 private data class EvidenceItem(val kind: String, val id: Long, val timestamp: Long, val title: String, val subtitle: String, val group: String)
 
 // ──────────────────────────────────────────────────────────────────────
+//  Extracted form composables (to avoid @Composable-in-scope issues)
+// ──────────────────────────────────────────────────────────────────────
+
+@Composable
+private fun HypothesisForm(
+    questions: List<QuestionEntity>,
+    viewModel: FieldMindViewModel,
+    onDismiss: () -> Unit
+) {
+    var prediction by remember { mutableStateOf("") }
+    var reasoning by remember { mutableStateOf("") }
+    var evidence by remember { mutableStateOf("") }
+    var linkedId by remember { mutableStateOf(questions.firstOrNull()?.id) }
+    InlineFormCard("New Hypothesis", onDismiss = { onDismiss(); prediction = "" }, onSave = {
+        if (prediction.isNotBlank()) { viewModel.addHypothesis(linkedId, prediction, evidence, 50, reasoning); onDismiss(); prediction = "" }
+    }, saveEnabled = prediction.isNotBlank()) {
+        if (questions.isNotEmpty()) {
+            ChoiceChips(listOf("No question") + questions.take(6).map { it.questionText.take(28) }, questions.firstOrNull { it.id == linkedId }?.questionText?.take(28) ?: "No question") { picked ->
+                linkedId = questions.firstOrNull { it.questionText.startsWith(picked) }?.id
+            }
+        }
+        FieldTextField(prediction, { prediction = it }, "If...", minLines = 2, supportingText = "What do you predict will happen?")
+        FieldTextField(reasoning, { reasoning = it }, "Because...", minLines = 2)
+        FieldTextField(evidence, { evidence = it }, "Evidence needed to support or weaken", minLines = 2)
+    }
+}
+
+@Composable
+private fun DataRecordForm(
+    viewModel: FieldMindViewModel,
+    onDismiss: () -> Unit
+) {
+    var tool by remember { mutableStateOf("Counter") }
+    var label by remember { mutableStateOf("") }
+    var value by remember { mutableStateOf("0") }
+    var unit by remember { mutableStateOf("count") }
+    var notes by remember { mutableStateOf("") }
+    InlineFormCard("Data Record", onDismiss = { onDismiss(); label = "" }, onSave = {
+        if (label.isNotBlank()) { viewModel.addDataRecord(tool, label, value, unit, notes); onDismiss(); label = "" }
+    }, saveEnabled = label.isNotBlank()) {
+        ChoiceChips(dataTools, tool) { tool = it }
+        FieldTextField(label, { label = it }, "Label")
+        FieldTextField(value, { value = it }, "Value")
+        FieldTextField(unit, { unit = it }, "Unit")
+        FieldTextField(notes, { notes = it }, "Notes", minLines = 2)
+    }
+}
+
+@Composable
+private fun ReportForm(
+    viewModel: FieldMindViewModel,
+    onDismiss: () -> Unit
+) {
+    var type by remember { mutableStateOf("Field Report") }
+    var title by remember { mutableStateOf("") }
+    var conclusion by remember { mutableStateOf("") }
+    var question by remember { mutableStateOf("") }
+    InlineFormCard("Report", onDismiss = { onDismiss(); title = "" }, onSave = {
+        if (title.isNotBlank()) { viewModel.addReport(type, title, "", question, "", "", "", "", conclusion, "", ""); onDismiss(); title = "" }
+    }, saveEnabled = title.isNotBlank()) {
+        ChoiceChips(reportTypes, type) { type = it }
+        FieldTextField(title, { title = it }, "Title")
+        FieldTextField(question, { question = it }, "Question", minLines = 2)
+        FieldTextField(conclusion, { conclusion = it }, "Conclusion / findings", minLines = 3)
+    }
+}
+
+// ──────────────────────────────────────────────────────────────────────
 //  Tab 3: Analysis — Hypotheses, data tools, reports
 // ──────────────────────────────────────────────────────────────────────
 
@@ -266,23 +334,8 @@ private fun AnalysisTab(
         item { SectionHeader("Hypotheses", "${hypotheses.size} predictions to test") }
         item { AddButton(if (showHypothesis) "Cancel" else "New hypothesis") { showHypothesis = !showHypothesis } }
         if (showHypothesis) {
-            var prediction by remember { mutableStateOf("") }
-            var reasoning by remember { mutableStateOf("") }
-            var evidence by remember { mutableStateOf("") }
-            var linkedId by remember { mutableStateOf(questions.firstOrNull()?.id) }
             item {
-                InlineFormCard("New Hypothesis", onDismiss = { showHypothesis = false; prediction = "" }, onSave = {
-                    if (prediction.isNotBlank()) { viewModel.addHypothesis(linkedId, prediction, evidence, 50, reasoning); showHypothesis = false; prediction = "" }
-                }, saveEnabled = prediction.isNotBlank()) {
-                    if (questions.isNotEmpty()) {
-                        ChoiceChips(listOf("No question") + questions.take(6).map { it.questionText.take(28) }, questions.firstOrNull { it.id == linkedId }?.questionText?.take(28) ?: "No question") { picked ->
-                            linkedId = questions.firstOrNull { it.questionText.startsWith(picked) }?.id
-                        }
-                    }
-                    FieldTextField(prediction, { prediction = it }, "If...", minLines = 2, supportingText = "What do you predict will happen?")
-                    FieldTextField(reasoning, { reasoning = it }, "Because...", minLines = 2)
-                    FieldTextField(evidence, { evidence = it }, "Evidence needed to support or weaken", minLines = 2)
-                }
+                HypothesisForm(questions, viewModel, onDismiss = { showHypothesis = false })
             }
         }
         if (hypotheses.isEmpty()) item { EmptyState("No hypotheses yet", "Predict what evidence would show, then test it.", icon = FieldMindIcons.Hypothesis) }
@@ -293,21 +346,8 @@ private fun AnalysisTab(
         item { SectionHeader("Data tools", "${data.size} records") }
         item { AddButton(if (showData) "Cancel" else "Add data record") { showData = !showData } }
         if (showData) {
-            var tool by remember { mutableStateOf("Counter") }
-            var label by remember { mutableStateOf("") }
-            var value by remember { mutableStateOf("0") }
-            var unit by remember { mutableStateOf("count") }
-            var notes by remember { mutableStateOf("") }
             item {
-                InlineFormCard("Data Record", onDismiss = { showData = false; label = "" }, onSave = {
-                    if (label.isNotBlank()) { viewModel.addDataRecord(tool, label, value, unit, notes); showData = false; label = "" }
-                }, saveEnabled = label.isNotBlank()) {
-                    ChoiceChips(dataTools, tool) { tool = it }
-                    FieldTextField(label, { label = it }, "Label")
-                    FieldTextField(value, { value = it }, "Value")
-                    FieldTextField(unit, { unit = it }, "Unit")
-                    FieldTextField(notes, { notes = it }, "Notes", minLines = 2)
-                }
+                DataRecordForm(viewModel, onDismiss = { showData = false })
             }
         }
         if (data.isEmpty()) item { EmptyState("No data records yet", "Measure, count, compare, or log with offline tools.", icon = FieldMindIcons.Data) }
@@ -318,19 +358,8 @@ private fun AnalysisTab(
         item { SectionHeader("Reports", "${reports.size} reports") }
         item { AddButton(if (showReport) "Cancel" else "Build report") { showReport = !showReport } }
         if (showReport) {
-            var type by remember { mutableStateOf("Field Report") }
-            var title by remember { mutableStateOf("") }
-            var conclusion by remember { mutableStateOf("") }
-            var question by remember { mutableStateOf("") }
             item {
-                InlineFormCard("Report", onDismiss = { showReport = false; title = "" }, onSave = {
-                    if (title.isNotBlank()) { viewModel.addReport(type, title, question = question, conclusion = conclusion); showReport = false; title = "" }
-                }, saveEnabled = title.isNotBlank()) {
-                    ChoiceChips(reportTypes, type) { type = it }
-                    FieldTextField(title, { title = it }, "Title")
-                    FieldTextField(question, { question = it }, "Question", minLines = 2)
-                    FieldTextField(conclusion, { conclusion = it }, "Conclusion / findings", minLines = 3)
-                }
+                ReportForm(viewModel, onDismiss = { showReport = false })
             }
         }
         if (reports.isEmpty()) item { EmptyState("No reports yet", "Write up your findings with background, methods, results, and conclusions.", icon = FieldMindIcons.Report) }

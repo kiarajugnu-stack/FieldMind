@@ -10,7 +10,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.core.Camera
 import androidx.camera.core.CameraSelector
-import androidx.camera.core.FocusMeteringPoint
+import androidx.camera.core.FocusMeteringAction
 import androidx.camera.core.ImageCapture
 import androidx.camera.core.ImageCaptureException
 import androidx.camera.core.MeteringPointFactory
@@ -31,6 +31,7 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -52,6 +53,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
+import fieldmind.research.app.features.field.presentation.theme.FieldMindTheme
 import fieldmind.research.app.shared.presentation.components.icons.Icon
 import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon
 import kotlinx.coroutines.delay
@@ -156,18 +158,6 @@ fun FieldMindCameraV2(
 
     DisposableEffect(Unit) { onDispose { cameraExecutor.shutdown() } }
 
-    // Countdown timer
-    LaunchedEffect(isCountingDown, countdown) {
-        if (isCountingDown && countdown > 0) {
-            delay(1000)
-            countdown--
-            if (countdown == 0) {
-                isCountingDown = false
-                capturePhoto()
-            }
-        }
-    }
-
     // Bind camera
     LaunchedEffect(previewViewRef, lensFacing) {
         val previewView = previewViewRef ?: return@LaunchedEffect
@@ -204,38 +194,53 @@ fun FieldMindCameraV2(
 
     LaunchedEffect(flashMode) { imageCapture?.flashMode = flashMode }
 
-    fun capturePhoto() {
-        val capture = imageCapture ?: return
-        isCapturing = true
-        val photoFile = File(
-            context.getExternalFilesDir(Environment.DIRECTORY_PICTURES),
-            "FieldMind_${SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())}.jpg"
-        )
-        val outputOptions = ImageCapture.OutputFileOptions.Builder(photoFile).build()
-        capture.takePicture(outputOptions, cameraExecutor, object : ImageCapture.OnImageSavedCallback {
-            override fun onImageSaved(output: ImageCapture.OutputFileResults) {
-                runCatching {
-                    val values = ContentValues().apply {
-                        put(MediaStore.Images.Media.DISPLAY_NAME, photoFile.name)
-                        put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg")
-                        put(MediaStore.Images.Media.RELATIVE_PATH, Environment.DIRECTORY_PICTURES + "/FieldMind")
+    // Local capture function
+    val doCapture = remember(imageCapture) {
+        {
+            val capture = imageCapture ?: return@remember
+            isCapturing = true
+            val photoFile = File(
+                context.getExternalFilesDir(Environment.DIRECTORY_PICTURES),
+                "FieldMind_${SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())}.jpg"
+            )
+            val outputOptions = ImageCapture.OutputFileOptions.Builder(photoFile).build()
+            capture.takePicture(outputOptions, cameraExecutor, object : ImageCapture.OnImageSavedCallback {
+                override fun onImageSaved(output: ImageCapture.OutputFileResults) {
+                    runCatching {
+                        val values = ContentValues().apply {
+                            put(MediaStore.Images.Media.DISPLAY_NAME, photoFile.name)
+                            put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg")
+                            put(MediaStore.Images.Media.RELATIVE_PATH, Environment.DIRECTORY_PICTURES + "/FieldMind")
+                        }
+                        context.contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values)?.let { uri ->
+                            context.contentResolver.openOutputStream(uri)?.use { os -> photoFile.inputStream().use { it.copyTo(os) } }
+                        }
                     }
-                    context.contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values)?.let { uri ->
-                        context.contentResolver.openOutputStream(uri)?.use { os -> photoFile.inputStream().use { it.copyTo(os) } }
-                    }
+                    isCapturing = false
+                    capturedUri = photoFile.toURI().toString()
+                    capturedMime = "image/jpeg"
+                    showPostCapture = true
                 }
-                isCapturing = false
-                capturedUri = photoFile.toURI().toString()
-                capturedMime = "image/jpeg"
-                showPostCapture = true
+                override fun onError(exception: ImageCaptureException) {
+                    isCapturing = false
+                    capturedUri = photoFile.toURI().toString()
+                    capturedMime = "image/jpeg"
+                    showPostCapture = true
+                }
+            })
+        }
+    }
+
+    // Countdown timer
+    LaunchedEffect(isCountingDown, countdown) {
+        if (isCountingDown && countdown > 0) {
+            delay(1000)
+            countdown--
+            if (countdown == 0) {
+                isCountingDown = false
+                doCapture()
             }
-            override fun onError(exception: ImageCaptureException) {
-                isCapturing = false
-                capturedUri = photoFile.toURI().toString()
-                capturedMime = "image/jpeg"
-                showPostCapture = true
-            }
-        })
+        }
     }
 
     if (!hasCameraPermission) {
@@ -270,7 +275,7 @@ fun FieldMindCameraV2(
                         val previewView = previewViewRef ?: return@detectTapGestures
                         val factory = SurfaceOrientedMeteringPointFactory(previewView.width.toFloat(), previewView.height.toFloat())
                         val point = factory.createPoint(offset.x, offset.y)
-                        val action = FocusMeteringPoint.Builder(point).build()
+                        val action = FocusMeteringAction.Builder(point).build()
                         camera?.cameraControl?.startFocusAndMetering(action)
                         focusPoint = offset
                         focusRingVisible = true
@@ -407,7 +412,7 @@ fun FieldMindCameraV2(
                                 countdown = timerSeconds
                                 isCountingDown = true
                             } else {
-                                capturePhoto()
+                                doCapture()
                             }
                         }
                         .padding(6.dp),
