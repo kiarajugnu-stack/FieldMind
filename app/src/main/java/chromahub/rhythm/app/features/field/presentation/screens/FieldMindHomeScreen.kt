@@ -81,6 +81,8 @@ fun HomeScreen(
     }
 
 
+    val weatherObs = remember(observations) { observations.firstOrNull { it.weatherTemperature != null } }
+
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(20.dp, 0.dp, 20.dp, 96.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
         // ── Hero Section ──
         item { HomeHeroSection(todayCount, goal, currentStreak, observations.size, questions.size, onOpenSettings, onNavigate) }
@@ -96,7 +98,6 @@ fun HomeScreen(
         }
 
         // ── Weather Card (when observations have weather data) ──
-        val weatherObs = remember(observations) { observations.firstOrNull { it.weatherTemperature != null } }
         if (weatherObs != null) {
             item { WeatherStatusCard(observations, viewModel, onNavigate) }
         }

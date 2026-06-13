@@ -125,6 +125,13 @@ fun ObserveScreen(
     // Camera dialog state
     var showInAppCamera by remember { mutableStateOf(false) }
 
+
+    // ── Action: add attachment ──
+    fun addAttachment(attachment: DraftEvidenceAttachment) {
+        session = session.copy(attachments = session.attachments + attachment)
+        scope.launch { snackbar.showSnackbar("${attachment.type} attached") }
+    }
+
     // ── Media picker and file picker launchers (MUST be at composable scope) ──
     val mediaPicker = rememberLauncherForActivityResult(
         ActivityResultContracts.PickMultipleVisualMedia(10)
@@ -161,13 +168,6 @@ fun ObserveScreen(
             session = session.copy(timerStartedAt = System.currentTimeMillis(), timerRunning = true)
         }
     }
-
-    // ── Action: add attachment ──
-    fun addAttachment(attachment: DraftEvidenceAttachment) {
-        session = session.copy(attachments = session.attachments + attachment)
-        scope.launch { snackbar.showSnackbar("${attachment.type} attached") }
-    }
-
     // ── Action: save observation ──
     fun saveObservation() {
         val s = session
@@ -236,9 +236,10 @@ fun ObserveScreen(
                             }
                         },
                         onPause = {
-                            if (session.timerRunning && session.timerStartedAt != null) {
+                            val startedAt = session.timerStartedAt
+                            if (session.timerRunning && startedAt != null) {
                                 val elapsed = session.timerAccumulatedMs +
-                                    (System.currentTimeMillis() - session.timerStartedAt)
+                                    (System.currentTimeMillis() - startedAt)
                                 session = session.copy(
                                     timerAccumulatedMs = elapsed,
                                     timerRunning = false,
