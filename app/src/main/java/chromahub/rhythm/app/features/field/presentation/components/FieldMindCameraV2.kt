@@ -45,6 +45,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
@@ -490,14 +491,12 @@ fun FieldMindCameraV2(
                                 value = evValue,
                                 onValueChange = { evValue = it.roundToInt().toFloat()
                                     // Apply via Camera2Interop (requires CameraX 1.4+)
-                                    runCatching {
-                                        imageCapture?.let { cap ->
-                                            val extender = androidx.camera.camera2.interop.Camera2Interop.Extender(cap)
-                                            extender.setCaptureRequestOption(
-                                                android.hardware.camera2.CaptureRequest.CONTROL_AE_EXPOSURE_COMPENSATION,
-                                                it.toInt()
-                                            )
-                                        }
+                                    camera?.cameraInfo?.exposureState?.let { exposureState ->
+                                        val index = evValue.toInt().coerceIn(
+                                            exposureState.exposureCompensationRange.lower,
+                                            exposureState.exposureCompensationRange.upper
+                                        )
+                                        camera?.cameraControl?.setExposureCompensationIndex(index)
                                     }
                                 },
                                 valueRange = -2f..2f,
@@ -516,26 +515,7 @@ fun FieldMindCameraV2(
                                             label,
                                             modifier = Modifier.clickable {
                                                 isoMode = i
-                                                runCatching {
-                                                    imageCapture?.let { cap ->
-                                                        val extender = androidx.camera.camera2.interop.Camera2Interop.Extender(cap)
-                                                        if (i > 0) {
-                                                            extender.setCaptureRequestOption(
-                                                                android.hardware.camera2.CaptureRequest.CONTROL_AE_MODE,
-                                                                android.hardware.camera2.CaptureRequest.CONTROL_AE_MODE_OFF
-                                                            )
-                                                            extender.setCaptureRequestOption(
-                                                                android.hardware.camera2.CaptureRequest.SENSOR_SENSITIVITY,
-                                                                isoLabels[i].toInt()
-                                                            )
-                                                        } else {
-                                                            extender.setCaptureRequestOption(
-                                                                android.hardware.camera2.CaptureRequest.CONTROL_AE_MODE,
-                                                                android.hardware.camera2.CaptureRequest.CONTROL_AE_MODE_ON
-                                                            )
-                                                        }
-                                                    }
-                                                }
+                                                // ISO is tracked for UI feedback; CameraX keeps auto exposure active here.
                                             },
                                             style = MaterialTheme.typography.labelSmall,
                                             fontWeight = if (isoMode == i) FontWeight.Bold else FontWeight.Normal,
@@ -555,22 +535,7 @@ fun FieldMindCameraV2(
                                             label,
                                             modifier = Modifier.clickable {
                                                 wbMode = i
-                                                runCatching {
-                                                    imageCapture?.let { cap ->
-                                                        val extender = androidx.camera.camera2.interop.Camera2Interop.Extender(cap)
-                                                        val wbValues = listOf(
-                                                            android.hardware.camera2.CaptureRequest.CONTROL_AWB_MODE_AUTO,
-                                                            android.hardware.camera2.CaptureRequest.CONTROL_AWB_MODE_DAYLIGHT,
-                                                            android.hardware.camera2.CaptureRequest.CONTROL_AWB_MODE_CLOUDY_DAYLIGHT,
-                                                            android.hardware.camera2.CaptureRequest.CONTROL_AWB_MODE_INCANDESCENT,
-                                                            android.hardware.camera2.CaptureRequest.CONTROL_AWB_MODE_FLUORESCENT
-                                                        )
-                                                        extender.setCaptureRequestOption(
-                                                            android.hardware.camera2.CaptureRequest.CONTROL_AWB_MODE,
-                                                            wbValues[i]
-                                                        )
-                                                    }
-                                                }
+                                                // White-balance selection is UI-only until a supported Camera2 pipeline is configured.
                                             },
                                             style = MaterialTheme.typography.labelSmall,
                                             fontWeight = if (wbMode == i) FontWeight.Bold else FontWeight.Normal,
