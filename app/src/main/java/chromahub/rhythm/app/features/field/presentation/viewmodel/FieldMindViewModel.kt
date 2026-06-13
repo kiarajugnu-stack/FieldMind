@@ -8,6 +8,7 @@ import fieldmind.research.app.features.field.data.database.entity.*
 import fieldmind.research.app.features.field.data.repository.FieldMindRepository
 import fieldmind.research.app.features.field.data.export.FieldMindExport
 import fieldmind.research.app.features.field.data.settings.FieldMindSettings
+import fieldmind.research.app.features.field.data.weather.WeatherSnapshot
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
@@ -55,6 +56,14 @@ class FieldMindViewModel(application: Application) : AndroidViewModel(applicatio
         latitude: Double? = null,
         longitude: Double? = null,
         attachments: List<DraftEvidenceAttachment> = emptyList(),
+        weather: WeatherSnapshot? = null,
+        structuredDetailsJson: String = "",
+        startedAt: Long? = null,
+        endedAt: Long? = null,
+        durationMs: Long? = null,
+        changeObservedAt: Long? = null,
+        changeDurationMs: Long? = null,
+        timeNote: String = "",
         onSaved: ((Long) -> Unit)? = null
     ) = viewModelScope.launch {
         val now = System.currentTimeMillis()
@@ -73,7 +82,20 @@ class FieldMindViewModel(application: Application) : AndroidViewModel(applicatio
                 moodOrContext = context.trim(),
                 projectId = projectId,
                 latitude = latitude,
-                longitude = longitude
+                longitude = longitude,
+                weatherTemperature = weather?.temperature,
+                weatherCondition = weather?.weatherDescription.orEmpty(),
+                weatherHumidity = weather?.humidity,
+                weatherWindSpeed = weather?.windSpeed,
+                weatherCloudCover = weather?.cloudCover,
+                weatherSnapshotAt = weather?.fetchedAt,
+                structuredDetailsJson = structuredDetailsJson.trim(),
+                startedAt = startedAt,
+                endedAt = endedAt,
+                durationMs = durationMs,
+                changeObservedAt = changeObservedAt,
+                changeDurationMs = changeDurationMs,
+                timeNote = timeNote.trim()
             )
         )
         repository.setObservationTags(id, tags)
@@ -289,8 +311,8 @@ class FieldMindViewModel(application: Application) : AndroidViewModel(applicatio
         repository.addHypothesis(HypothesisEntity(linkedQuestionId = questionId, prediction = prediction.trim(), reasoning = reasoning.trim(), evidenceNeeded = evidenceNeeded.trim(), supportCriteria = supportCriteria.trim(), weakeningCriteria = weakeningCriteria.trim(), testMethod = testMethod.trim(), confidencePercent = confidence))
     }
 
-    fun addDataRecord(toolType: String, label: String, value: String, unit: String = "", notes: String = "", location: String = "", projectId: Long? = null, observationId: Long? = null) = viewModelScope.launch {
-        repository.addDataRecord(DataRecordEntity(toolType = toolType, label = label.trim(), value = value.trim(), unit = unit.trim(), notes = notes.trim(), location = location.trim(), projectId = projectId, observationId = observationId))
+    fun addDataRecord(toolType: String, label: String, value: String, unit: String = "", notes: String = "", location: String = "", projectId: Long? = null, observationId: Long? = null, datasetKind: String = "Manual", chartPreference: String = "Line") = viewModelScope.launch {
+        repository.addDataRecord(DataRecordEntity(toolType = toolType, label = label.trim(), value = value.trim(), unit = unit.trim(), notes = notes.trim(), location = location.trim(), projectId = projectId, observationId = observationId, datasetKind = datasetKind, chartPreference = chartPreference))
     }
 
     fun addCounter(label: String, count: Int, notes: String) = addDataRecord("Counter", label, count.toString(), "count", notes)
@@ -321,6 +343,10 @@ class FieldMindViewModel(application: Application) : AndroidViewModel(applicatio
         private set
     fun fetchWeatherForLocation(latitude: Double, longitude: Double) = viewModelScope.launch {
         lastWeatherSnapshot = weatherService.fetchWeather(latitude, longitude)
+    }
+
+    suspend fun fetchWeatherSnapshot(latitude: Double, longitude: Double): WeatherSnapshot? {
+        return weatherService.fetchWeather(latitude, longitude).also { lastWeatherSnapshot = it }
     }
 
     fun addFlashcard(front: String, back: String, type: String, sourceId: Long? = null, projectId: Long? = null, deckMode: String = "basic") = viewModelScope.launch {

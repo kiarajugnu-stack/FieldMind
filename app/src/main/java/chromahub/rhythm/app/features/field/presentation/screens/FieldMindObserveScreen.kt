@@ -34,11 +34,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.core.content.ContextCompat
 import coil.compose.AsyncImage
 import fieldmind.research.app.features.field.data.database.entity.*
 import fieldmind.research.app.features.field.data.location.CapturedLocation
 import fieldmind.research.app.features.field.data.location.FieldLocationProvider
+import fieldmind.research.app.features.field.data.weather.WeatherSnapshot
 import fieldmind.research.app.features.field.presentation.components.*
 import fieldmind.research.app.features.field.presentation.theme.FieldMindTheme
 import fieldmind.research.app.features.field.presentation.viewmodel.DraftEvidenceAttachment
@@ -46,7 +49,9 @@ import fieldmind.research.app.features.field.presentation.viewmodel.FieldMindVie
 import fieldmind.research.app.shared.presentation.components.icons.Icon
 import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.suspendCancellableCoroutine
 import java.io.File
+import kotlin.coroutines.resume
 // ══════════════════════════════════════════════════════════════════════
 //  Capture / Field mode
 // ══════════════════════════════════════════════════════════════════════
@@ -232,6 +237,9 @@ private fun FieldModeScreen(viewModel: FieldMindViewModel, onBack: () -> Unit) {
     val snackbar = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     val defaultConfidence by viewModel.fieldSettings.defaultConfidence.collectAsState()
+    val gpsMode by viewModel.fieldSettings.gpsMode.collectAsState()
+    val autoWeatherEnabled by viewModel.fieldSettings.autoWeatherEnabled.collectAsState()
+    val locationMode by viewModel.fieldSettings.locationMode.collectAsState()
     val context = LocalContext.current
     val haptics = rememberFieldMindHaptics()
     var showFull by remember { mutableStateOf(false) }
@@ -239,6 +247,9 @@ private fun FieldModeScreen(viewModel: FieldMindViewModel, onBack: () -> Unit) {
     var quickSnapUri by remember { mutableStateOf<Uri?>(null) }
     var showQuickSnapCategory by remember { mutableStateOf(false) }
     var showQuickSnapCamera by remember { mutableStateOf(false) }
+    var quickSnapStatus by remember { mutableStateOf<String?>(null) }
+    val locationProvider = remember { FieldLocationProvider(context) }
+    val canAutoLocate = gpsMode != "Off" && locationMode != "Manual only"
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
         snackbarHost = { SnackbarHost(snackbar) }
@@ -314,26 +325,57 @@ private fun FieldModeScreen(viewModel: FieldMindViewModel, onBack: () -> Unit) {
     }
     // In-app camera overlay for quick snap (V2 — full-screen, zoom, focus, grid, timer)
     if (showQuickSnapCamera) {
-        Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
+        Dialog(onDismissRequest = { showQuickSnapCamera = false }, properties = DialogProperties(usePlatformDefaultWidth = false)) {
             FieldMindCameraV2(
                 onPhotoCaptured = { uri, mimeType ->
-                    viewModel.addObservation(
-                        subject = quickSnapCategory,
-                        category = quickSnapCategory,
-                        facts = "Quick snap — add details later.",
-                        confidence = defaultConfidence,
-                        manualLocation = "",
-                        tags = "quick-snap",
-                        evidence = "Camera quick snap",
-                        context = "",
-                        attachments = listOf(DraftEvidenceAttachment("Photo", uri, "Quick snap", mimeType = mimeType))
-                    ) { scope.launch { snackbar.showSnackbar("Quick snap saved as $quickSnapCategory.") } }
-                    showQuickSnapCamera = false
+                    scope.launch {
+                        showQuickSnapCamera = false
+                        quickSnapStatus = if (canAutoLocate) "Locating…" else "Saved without location"
+                        val captured = if (canAutoLocate && locationProvider.hasAnyLocationPermission()) awaitCurrentLocation(locationProvider) else null
+                        val weather = if (captured != null && autoWeatherEnabled) {
+                            quickSnapStatus = "Fetching weather…"
+                            viewModel.fetchWeatherSnapshot(captured.latitude, captured.longitude)
+                        } else null
+                        quickSnapStatus = when {
+                            captured == null -> "Saved without location"
+                            autoWeatherEnabled && weather == null -> "Weather unavailable"
+                            else -> "Metadata attached"
+                        }
+                        viewModel.addObservation(
+                            subject = quickSnapCategory,
+                            category = quickSnapCategory,
+                            facts = "Quick snap — add details later.",
+                            confidence = defaultConfidence,
+                            manualLocation = captured?.asDisplayText().orEmpty(),
+                            tags = "quick-snap",
+                            evidence = "Camera quick snap",
+                            context = quickSnapStatus.orEmpty(),
+                            latitude = captured?.latitude,
+                            longitude = captured?.longitude,
+                            weather = weather,
+                            attachments = listOf(DraftEvidenceAttachment("Photo", uri, "Quick snap", mimeType = mimeType))
+                        ) { scope.launch { snackbar.showSnackbar("Quick snap saved as $quickSnapCategory • ${quickSnapStatus.orEmpty()}") } }
+                    }
                 },
-                onDismiss = { showQuickSnapCamera = false }
+                onDismiss = { showQuickSnapCamera = false },
+                modifier = Modifier.fillMaxSize()
             )
         }
     }
+}
+
+    quickSnapStatus?.let { status ->
+        AlertDialog(
+            onDismissRequest = { quickSnapStatus = null },
+            icon = { Icon(icon = FieldMindIcons.Check, contentDescription = null) },
+            title = { Text("Quick snap metadata") },
+            text = { Text("$quickSnapCategory • $status") },
+            confirmButton = { TextButton(onClick = { quickSnapStatus = null }) { Text("Done") } }
+        )
+    }
+
+private suspend fun awaitCurrentLocation(provider: FieldLocationProvider): CapturedLocation? = suspendCancellableCoroutine { cont ->
+    provider.requestCurrentLocation { captured -> if (cont.isActive) cont.resume(captured) }
 }
 
 @Composable
@@ -367,12 +409,24 @@ internal fun ObservationCaptureCard(viewModel: FieldMindViewModel, compact: Bool
     val defaultConfidence by viewModel.fieldSettings.defaultConfidence.collectAsState()
     val mediaEnabled by viewModel.fieldSettings.mediaAttachmentsEnabled.collectAsState()
     val audioEnabled by viewModel.fieldSettings.audioRecordingEnabled.collectAsState()
+    val autoWeatherEnabled by viewModel.fieldSettings.autoWeatherEnabled.collectAsState()
     var subject by remember { mutableStateOf("") }
     var category by remember(defaultCategory, initialCategory) { mutableStateOf(initialCategory ?: defaultCategory) }
     var facts by remember { mutableStateOf("") }
     var confidence by remember(defaultConfidence) { mutableStateOf(defaultConfidence) }
     var manualLocation by remember { mutableStateOf("") }
     var capturedLocation by remember { mutableStateOf<CapturedLocation?>(null) }
+    var weatherSnapshot by remember { mutableStateOf<WeatherSnapshot?>(null) }
+    var weatherStatus by remember { mutableStateOf("Weather not fetched") }
+    var fetchingWeather by remember { mutableStateOf(false) }
+    var stopwatchStartedAt by remember { mutableStateOf<Long?>(null) }
+    var stopwatchAccumulatedMs by remember { mutableLongStateOf(0L) }
+    var stopwatchRunning by remember { mutableStateOf(false) }
+    var manualDurationMinutes by remember { mutableStateOf("") }
+    var changeAtMinutes by remember { mutableStateOf("") }
+    var timeNote by remember { mutableStateOf("") }
+    var showStructured by remember { mutableStateOf(false) }
+    var structuredDetails by remember { mutableStateOf<Map<String, String>>(emptyMap()) }
     var tags by remember { mutableStateOf("") }
     var evidence by remember { mutableStateOf("") }
     var fieldContext by remember { mutableStateOf("") }
@@ -394,6 +448,15 @@ internal fun ObservationCaptureCard(viewModel: FieldMindViewModel, compact: Bool
             if (captured != null) {
                 capturedLocation = captured
                 manualLocation = captured.asDisplayText()
+                if (autoWeatherEnabled) {
+                    fetchingWeather = true
+                    weatherStatus = "Fetching weather…"
+                    scope.launch {
+                        weatherSnapshot = viewModel.fetchWeatherSnapshot(captured.latitude, captured.longitude)
+                        weatherStatus = weatherSnapshot?.asDisplayText() ?: "Weather unavailable"
+                        fetchingWeather = false
+                    }
+                }
                 locationProvider.resolvePlaceName(captured.latitude, captured.longitude) { place ->
                     if (!place.isNullOrBlank()) {
                         val withPlace = captured.copy(placeName = place)
@@ -451,14 +514,15 @@ internal fun ObservationCaptureCard(viewModel: FieldMindViewModel, compact: Bool
 
     // In-app camera overlay (V2 — full-screen, zoom, focus, grid, timer, post-capture flow)
     if (showInAppCamera) {
-        Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
+        Dialog(onDismissRequest = { showInAppCamera = false }, properties = DialogProperties(usePlatformDefaultWidth = false)) {
             FieldMindCameraV2(
                 onPhotoCaptured = { uri, mimeType ->
                     attachments = attachments + DraftEvidenceAttachment("Photo", uri, "Camera photo", mimeType = mimeType)
                     showInAppCamera = false
                     scope.launch { snackbar.showSnackbar("Photo captured.") }
                 },
-                onDismiss = { showInAppCamera = false }
+                onDismiss = { showInAppCamera = false },
+                modifier = Modifier.fillMaxSize()
             )
         }
     }
@@ -541,6 +605,49 @@ internal fun ObservationCaptureCard(viewModel: FieldMindViewModel, compact: Bool
                         }
                     }
                     FieldTextField(manualLocation, { manualLocation = it }, "Place / GPS note")
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        FilledTonalButton(
+                            onClick = {
+                                val loc = capturedLocation
+                                if (loc != null) {
+                                    fetchingWeather = true
+                                    weatherStatus = "Fetching weather…"
+                                    scope.launch {
+                                        weatherSnapshot = viewModel.fetchWeatherSnapshot(loc.latitude, loc.longitude)
+                                        weatherStatus = weatherSnapshot?.asDisplayText() ?: "Weather unavailable"
+                                        fetchingWeather = false
+                                    }
+                                } else scope.launch { snackbar.showSnackbar("Capture GPS before fetching weather.") }
+                            },
+                            enabled = !fetchingWeather,
+                            modifier = Modifier.weight(1f)
+                        ) { Text(if (fetchingWeather) "Weather…" else "Fetch weather") }
+                        Text(weatherStatus, modifier = Modifier.weight(1f), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                }
+
+                CaptureStep("Timing", "Use the stopwatch or enter field timing manually.", FieldMindIcons.Timer) {
+                    val liveElapsed = stopwatchAccumulatedMs + if (stopwatchRunning) (System.currentTimeMillis() - (stopwatchStartedAt ?: System.currentTimeMillis())) else 0L
+                    Text(formatDuration(liveElapsed), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        OutlinedButton(onClick = { if (!stopwatchRunning) { stopwatchStartedAt = System.currentTimeMillis(); stopwatchRunning = true } }, Modifier.weight(1f)) { Text(if (stopwatchAccumulatedMs == 0L) "Start" else "Resume") }
+                        OutlinedButton(onClick = { if (stopwatchRunning) { stopwatchAccumulatedMs += System.currentTimeMillis() - (stopwatchStartedAt ?: System.currentTimeMillis()); stopwatchRunning = false } }, Modifier.weight(1f)) { Text("Pause") }
+                        OutlinedButton(onClick = { stopwatchStartedAt = null; stopwatchAccumulatedMs = 0L; stopwatchRunning = false }, Modifier.weight(1f)) { Text("Reset") }
+                    }
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        FieldTextField(manualDurationMinutes, { manualDurationMinutes = it }, "Manual min", modifier = Modifier.weight(1f))
+                        FieldTextField(changeAtMinutes, { changeAtMinutes = it }, "Change at +min", modifier = Modifier.weight(1f))
+                    }
+                    FieldTextField(timeNote, { timeNote = it }, "Timing note", minLines = 2)
+                }
+
+                CaptureStep("Structured details", observationCategoryDefinitions.firstOrNull { it.label == category }?.prompt ?: "Add category-specific fields.", FieldMindIcons.Data) {
+                    TextButton(onClick = { showStructured = !showStructured }) { Text(if (showStructured) "Hide structured fields" else "Add structured details") }
+                    if (showStructured) {
+                        observationCategoryDefinitions.firstOrNull { it.label == category }?.fields.orEmpty().forEach { field ->
+                            FieldTextField(structuredDetails[field.key].orEmpty(), { value -> structuredDetails = structuredDetails + (field.key to value) }, field.label, supportingText = field.hint)
+                        }
+                    }
                 }
 
                 if (mediaEnabled && !snapFirst) {
@@ -584,8 +691,14 @@ internal fun ObservationCaptureCard(viewModel: FieldMindViewModel, compact: Bool
                 }
 
                 Button(onClick = {
-                    if (subject.isBlank() || facts.isBlank()) scope.launch { snackbar.showSnackbar("Subject and factual notes are required.") } else { haptics.confirm(); viewModel.addObservation(subject, category, facts, confidence, manualLocation, tags, evidence, fieldContext, projectId, capturedLocation?.latitude, capturedLocation?.longitude, attachments) {
-                        subject = ""; facts = ""; manualLocation = ""; tags = ""; evidence = ""; fieldContext = ""; attachments = emptyList(); capturedLocation = null
+                    if (subject.isBlank() || facts.isBlank()) scope.launch { snackbar.showSnackbar("Subject and factual notes are required.") } else { haptics.confirm();
+                        val now = System.currentTimeMillis()
+                        val liveElapsed = stopwatchAccumulatedMs + if (stopwatchRunning) (now - (stopwatchStartedAt ?: now)) else 0L
+                        val manualDurationMs = manualDurationMinutes.toDoubleOrNull()?.let { (it * 60_000).toLong() }
+                        val durationMs = manualDurationMs ?: liveElapsed.takeIf { it > 0L }
+                        val changeDurationMs = changeAtMinutes.toDoubleOrNull()?.let { (it * 60_000).toLong() }
+                        viewModel.addObservation(subject, category, facts, confidence, manualLocation, tags, evidence, fieldContext, projectId, capturedLocation?.latitude, capturedLocation?.longitude, attachments, weatherSnapshot, structuredDetails.toJsonObject(), startedAt = stopwatchStartedAt, endedAt = if (durationMs != null) now else null, durationMs = durationMs, changeObservedAt = changeDurationMs?.let { (stopwatchStartedAt ?: now) + it }, changeDurationMs = changeDurationMs, timeNote = timeNote) {
+                        subject = ""; facts = ""; manualLocation = ""; tags = ""; evidence = ""; fieldContext = ""; attachments = emptyList(); capturedLocation = null; weatherSnapshot = null; structuredDetails = emptyMap(); stopwatchStartedAt = null; stopwatchAccumulatedMs = 0L; stopwatchRunning = false
                         scope.launch { snackbar.showSnackbar("Observation saved to your archive.") }
                         onSaved()
                     }
@@ -598,6 +711,19 @@ internal fun ObservationCaptureCard(viewModel: FieldMindViewModel, compact: Bool
     }
 }
 
+
+private fun formatDuration(ms: Long): String {
+    val totalSeconds = ms / 1000
+    val minutes = totalSeconds / 60
+    val seconds = totalSeconds % 60
+    return "%02d:%02d".format(minutes, seconds)
+}
+
+private fun Map<String, String>.toJsonObject(): String = entries
+    .filter { it.value.isNotBlank() }
+    .joinToString(prefix = "{", postfix = "}") { (key, value) ->
+        "\"${key.replace("\"", "")}\":\"${value.replace("\\", "\\\\").replace("\"", "\\\"")}\""
+    }
 /** Reminds the researcher to separate observed facts from interpretation. */
 @Composable
 private fun FactsInterpretationBanner() {

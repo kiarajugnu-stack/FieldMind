@@ -50,7 +50,8 @@ fun FieldMindSettingsScreen(
     onOpenAi: (() -> Unit)? = null,
     onOpenLocalModel: (() -> Unit)? = null,
     onOpenBackup: (() -> Unit)? = null,
-    onOpenSecurity: (() -> Unit)? = null
+    onOpenSecurity: (() -> Unit)? = null,
+    onOpenChangelog: (() -> Unit)? = null
 ) {
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(20.dp, 20.dp, 20.dp, 40.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
         item { FieldScreenHeader("Settings", "Offline-first setup, profile, capture, local AI, export, and privacy.", icon = FieldMindIcons.Settings, actionIcon = FieldMindIcons.Back, onAction = onBack) }
@@ -76,6 +77,7 @@ fun FieldMindSettingsScreen(
         item { SettingsNavCard("Backup & import", "Auto-backup, interval, and restore", FieldMindIcons.Archive, FieldMindTheme.colors.data) { onOpenBackup?.invoke() } }
         item { SettingsNavCard("Security", "Privacy lock, lock timeout, auto-lock", FieldMindIcons.Lock, FieldMindTheme.colors.confidenceVerify) { onOpenSecurity?.invoke() } }
         item { SettingsNavCard("Export Studio", "Export as PDF, CSV, JSON, HTML, SVG", FieldMindIcons.Export, FieldMindTheme.colors.report) { onOpenExport?.invoke() } }
+        item { SettingsNavCard("What’s new", "FieldMind-specific redesign notes and migration changes", FieldMindIcons.Info, FieldMindTheme.colors.info) { onOpenChangelog?.invoke() } }
         item { SettingsNavCard("About", "Credits, acknowledgements, and version", FieldMindIcons.Info, FieldMindTheme.colors.source) { onOpenAbout?.invoke() } }
 
         item {
@@ -434,7 +436,7 @@ fun BackupImportSettingsPage(viewModel: FieldMindViewModel, onBack: () -> Unit, 
 // ══════════════════════════════════════════════════════════════════════
 
 @Composable
-fun AboutPage(onBack: () -> Unit) {
+fun AboutPage(onBack: () -> Unit, onOpenChangelog: (() -> Unit)? = null) {
     val uriHandler = LocalUriHandler.current
 
     SettingsSubPage("About", icon = FieldMindIcons.Info, onBack = onBack) {
@@ -454,6 +456,7 @@ fun AboutPage(onBack: () -> Unit) {
                 }
             }
         }
+        item { SettingsNavCard("What’s new", "See the FieldMind redesign changelog", FieldMindIcons.Info, FieldMindTheme.colors.info) { onOpenChangelog?.invoke() } }
         item {
             Card(shape = RoundedCornerShape(22.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)) {
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -571,6 +574,14 @@ fun ObservationReaderContent(observation: ObservationEntity, onAttachments: @Com
                     ConfidenceChip(observation.confidenceLevel)
                     InfoChip(observation.category, icon = FieldMindIcons.iconForCategory(observation.category))
                     InfoChip("${observation.date} ${observation.time}", icon = FieldMindIcons.Today)
+                    observation.durationMs?.let { InfoChip("${it / 1000}s", icon = FieldMindIcons.Timer) }
+                }
+                if (observation.manualLocation.isNotBlank() || observation.weatherCondition.isNotBlank() || observation.weatherTemperature != null) {
+                    FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        if (observation.manualLocation.isNotBlank()) InfoChip(observation.manualLocation, icon = FieldMindIcons.Location)
+                        if (observation.weatherCondition.isNotBlank() || observation.weatherTemperature != null) InfoChip(listOfNotNull(observation.weatherTemperature?.let { "%.1f°C".format(it) }, observation.weatherCondition.ifBlank { null }, observation.weatherHumidity?.let { "$it% humidity" }).joinToString(" • "), icon = FieldMindIcons.Weather)
+                        observation.changeDurationMs?.let { InfoChip("Change at +${it / 1000}s", icon = FieldMindIcons.Timer) }
+                    }
                 }
 
                 Text(observation.subject.ifBlank { "Untitled observation" },
@@ -623,6 +634,20 @@ fun ObservationReaderContent(observation: ObservationEntity, onAttachments: @Com
                         Text("Context", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
                     }
                     Text(observation.moodOrContext, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+        }
+
+        if (observation.structuredDetailsJson.isNotBlank() || observation.timeNote.isNotBlank()) {
+            Card(
+                shape = RoundedCornerShape(24.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+            ) {
+                Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("Structured research details", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                    if (observation.structuredDetailsJson.isNotBlank()) Text(observation.structuredDetailsJson, style = MaterialTheme.typography.bodyMedium)
+                    if (observation.timeNote.isNotBlank()) Text("Timing note: ${observation.timeNote}", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
         }
