@@ -1,7 +1,7 @@
 # Add project specific ProGuard rules here.
 
 # Preserve line numbers for crash reports
--keepattributes SourceFile,LineNumberTable
+-keepattributes SourceFile,LineNumberTable,Signature,InnerClasses,EnclosingMethod,*Annotation*
 -renamesourcefileattribute SourceFile
 
 # ──────────────────────────────
@@ -42,12 +42,19 @@
 -dontwarn okhttp3.**
 -keep class okio.** { *; }
 -dontwarn okio.**
--keepattributes Signature
--keepattributes *Annotation*
+# Retrofit inspects generic suspend return types and parameter annotations at
+# runtime. Release minification must preserve these attributes or Retrofit can
+# throw ClassCastException while creating API services during app startup.
+-keepclassmembers,allowshrinking,allowobfuscation interface * {
+    @retrofit2.http.* <methods>;
+}
+-if interface * { @retrofit2.http.* <methods>; }
+-keep,allowobfuscation interface <1>
 -keep class com.google.gson.** { *; }
 -dontwarn com.google.gson.**
-# Keep data-model classes used by Gson reflection
--keep class chromahub.rhythm.app.** { *; }
+# Keep app DTOs used by Gson reflection. The package was renamed to
+# fieldmind.research.app, so keep that package instead of the old source path.
+-keep class fieldmind.research.app.** { *; }
 
 # ──────────────────────────────
 # Coil

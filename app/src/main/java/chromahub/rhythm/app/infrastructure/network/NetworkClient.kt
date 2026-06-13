@@ -43,6 +43,14 @@ object NetworkClient {
     fun initialize(appSettings: fieldmind.research.app.shared.data.model.AppSettings) {
         this.appSettings = appSettings
     }
+
+    private inline fun <reified T> createApiService(retrofit: Retrofit, serviceName: String): T? {
+        return runCatching {
+            retrofit.create(T::class.java)
+        }.onFailure { throwable ->
+            Log.e(TAG, "Failed to create $serviceName. The API will be disabled for this session.", throwable)
+        }.getOrNull()
+    }
     
     private val loggingInterceptor = HttpLoggingInterceptor { message ->
         try {
@@ -138,7 +146,8 @@ object NetworkClient {
         }
     }
     
-    private val deezerHttpClient = OkHttpClient.Builder()
+    private val deezerHttpClient: OkHttpClient by lazy {
+        OkHttpClient.Builder()
         .addInterceptor(deezerHeadersInterceptor())
         .addInterceptor(loggingInterceptor)
         .addInterceptor(retryInterceptor)
@@ -147,28 +156,36 @@ object NetworkClient {
         .writeTimeout(WRITE_TIMEOUT, TimeUnit.SECONDS)
         .connectionPool(connectionPool)
         .build()
+    }
     
-    private val deezerRetrofit = Retrofit.Builder()
+    private val deezerRetrofit: Retrofit by lazy {
+        Retrofit.Builder()
         .baseUrl(DEEZER_BASE_URL)
         .client(deezerHttpClient)
         .addConverterFactory(GsonConverterFactory.create())
         .build()
+    }
     
-    private val lrclibHttpClient = OkHttpClient.Builder()
+    private val lrclibHttpClient: OkHttpClient by lazy {
+        OkHttpClient.Builder()
         .addInterceptor(loggingInterceptor)
         .connectTimeout(CONNECT_TIMEOUT, TimeUnit.SECONDS)
         .readTimeout(READ_TIMEOUT, TimeUnit.SECONDS)
         .writeTimeout(WRITE_TIMEOUT, TimeUnit.SECONDS)
         .connectionPool(connectionPool)
         .build()
+    }
     
-    private val lrclibRetrofit = Retrofit.Builder()
+    private val lrclibRetrofit: Retrofit by lazy {
+        Retrofit.Builder()
         .baseUrl(LRCLIB_BASE_URL)
         .client(lrclibHttpClient)
         .addConverterFactory(GsonConverterFactory.create())
         .build()
+    }
     
-    private val ytmusicHttpClient = OkHttpClient.Builder()
+    private val ytmusicHttpClient: OkHttpClient by lazy {
+        OkHttpClient.Builder()
         .addInterceptor(deezerHeadersInterceptor()) // same UA rules as Deezer
         .addInterceptor(loggingInterceptor)
         .addInterceptor(retryInterceptor)
@@ -177,14 +194,18 @@ object NetworkClient {
         .writeTimeout(WRITE_TIMEOUT, TimeUnit.SECONDS)
         .connectionPool(connectionPool)
         .build()
+    }
     
-    private val ytmusicRetrofit = Retrofit.Builder()
+    private val ytmusicRetrofit: Retrofit by lazy {
+        Retrofit.Builder()
         .baseUrl(YTMUSIC_BASE_URL)
         .client(ytmusicHttpClient)
         .addConverterFactory(GsonConverterFactory.create())
         .build()
+    }
     
-    private val spotifyHttpClient = OkHttpClient.Builder()
+    private val spotifyHttpClient: OkHttpClient by lazy {
+        OkHttpClient.Builder()
         .addInterceptor(loggingInterceptor)
         .addInterceptor(retryInterceptor)
         .connectTimeout(CONNECT_TIMEOUT, TimeUnit.SECONDS)
@@ -192,14 +213,18 @@ object NetworkClient {
         .writeTimeout(WRITE_TIMEOUT, TimeUnit.SECONDS)
         .connectionPool(connectionPool)
         .build()
+    }
     
-    private val spotifyRetrofit = Retrofit.Builder()
+    private val spotifyRetrofit: Retrofit by lazy {
+        Retrofit.Builder()
         .baseUrl(SPOTIFY_API_BASE_URL)
         .client(spotifyHttpClient)
         .addConverterFactory(GsonConverterFactory.create())
         .build()
+    }
         
-    private val appleMusicHttpClient = OkHttpClient.Builder()
+    private val appleMusicHttpClient: OkHttpClient by lazy {
+        OkHttpClient.Builder()
         .addInterceptor(deezerHeadersInterceptor())
         .addInterceptor(loggingInterceptor)
         .addInterceptor(retryInterceptor)
@@ -208,14 +233,18 @@ object NetworkClient {
         .writeTimeout(WRITE_TIMEOUT, TimeUnit.SECONDS)
         .connectionPool(connectionPool)
         .build()
+    }
     
-    private val appleMusicRetrofit = Retrofit.Builder()
+    private val appleMusicRetrofit: Retrofit by lazy {
+        Retrofit.Builder()
         .baseUrl(APPLEMUSIC_BASE_URL)
         .client(appleMusicHttpClient)
         .addConverterFactory(GsonConverterFactory.create())
         .build()
+    }
 
-    private val itunesHttpClient = OkHttpClient.Builder()
+    private val itunesHttpClient: OkHttpClient by lazy {
+        OkHttpClient.Builder()
         .addInterceptor(loggingInterceptor)
         .addInterceptor(retryInterceptor)
         .connectTimeout(CONNECT_TIMEOUT, TimeUnit.SECONDS)
@@ -223,42 +252,47 @@ object NetworkClient {
         .writeTimeout(WRITE_TIMEOUT, TimeUnit.SECONDS)
         .connectionPool(connectionPool)
         .build()
+    }
 
-    private val itunesRetrofit = Retrofit.Builder()
+    private val itunesRetrofit: Retrofit by lazy {
+        Retrofit.Builder()
         .baseUrl(ITUNES_BASE_URL)
         .client(itunesHttpClient)
         .addConverterFactory(GsonConverterFactory.create())
         .build()
+    }
     
-    val deezerApiService: DeezerApiService? = if (BuildConfig.ENABLE_DEEZER) {
-        deezerRetrofit.create(DeezerApiService::class.java)
-    } else null
+    val deezerApiService: DeezerApiService? by lazy {
+        if (BuildConfig.ENABLE_DEEZER) createApiService(deezerRetrofit, "DeezerApiService") else null
+    }
     
-    val lrclibApiService: LRCLibApiService? = if (BuildConfig.ENABLE_LRCLIB) {
-        lrclibRetrofit.create(LRCLibApiService::class.java)
-    } else null
+    val lrclibApiService: LRCLibApiService? by lazy {
+        if (BuildConfig.ENABLE_LRCLIB) createApiService(lrclibRetrofit, "LRCLibApiService") else null
+    }
     
-    val ytmusicApiService: YTMusicApiService? = if (BuildConfig.ENABLE_YOUTUBE_MUSIC) {
-        ytmusicRetrofit.create(YTMusicApiService::class.java)
-    } else null
+    val ytmusicApiService: YTMusicApiService? by lazy {
+        if (BuildConfig.ENABLE_YOUTUBE_MUSIC) createApiService(ytmusicRetrofit, "YTMusicApiService") else null
+    }
     
-    val spotifySearchApiService: SpotifySearchApiService? = if (BuildConfig.ENABLE_SPOTIFY_SEARCH) {
-        spotifyRetrofit.create(SpotifySearchApiService::class.java)
-    } else null
+    val spotifySearchApiService: SpotifySearchApiService? by lazy {
+        if (BuildConfig.ENABLE_SPOTIFY_SEARCH) createApiService(spotifyRetrofit, "SpotifySearchApiService") else null
+    }
 
-    val rhythmLyricsApiService: RhythmLyricsApiService? = if (BuildConfig.ENABLE_APPLE_MUSIC) {
-        appleMusicRetrofit.create(RhythmLyricsApiService::class.java)
-    } else null
+    val rhythmLyricsApiService: RhythmLyricsApiService? by lazy {
+        if (BuildConfig.ENABLE_APPLE_MUSIC) createApiService(appleMusicRetrofit, "RhythmLyricsApiService") else null
+    }
 
-    val itunesSearchApiService: ITunesSearchApiService? = if (BuildConfig.ENABLE_APPLE_MUSIC) {
-        itunesRetrofit.create(ITunesSearchApiService::class.java)
-    } else null
+    val itunesSearchApiService: ITunesSearchApiService? by lazy {
+        if (BuildConfig.ENABLE_APPLE_MUSIC) createApiService(itunesRetrofit, "ITunesSearchApiService") else null
+    }
     
     // Generic OkHttp client for one-off requests (e.g., Wikidata JSON). Reuses header interceptor.
-    val genericHttpClient: OkHttpClient = OkHttpClient.Builder()
+    val genericHttpClient: OkHttpClient by lazy {
+        OkHttpClient.Builder()
         .addInterceptor(deezerHeadersInterceptor())
         .addInterceptor(loggingInterceptor)
         .build()
+    }
     
     // Helper methods to check if APIs are enabled (respects both BuildConfig AND runtime settings)
     fun isDeezerApiEnabled(): Boolean = BuildConfig.ENABLE_DEEZER && (appSettings?.deezerApiEnabled?.value ?: false)
