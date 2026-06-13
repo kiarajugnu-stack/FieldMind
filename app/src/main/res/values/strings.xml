@@ -23,6 +23,18 @@
     <string name="skip_next">Next</string>
     <string name="skip_previous">Previous</string>
 
+    <!-- FieldMind Glance Widget strings -->
+    <string name="widget_fieldmind_quick_capture">Quick Capture</string>
+    <string name="widget_fieldmind_quick_capture_desc">One-tap observation capture from your home screen</string>
+    <string name="widget_fieldmind_dashboard">FieldMind Dashboard</string>
+    <string name="widget_fieldmind_dashboard_desc">View your latest observations and stats at a glance</string>
+    <string name="widget_fieldmind_today_observations">Today</string>
+    <string name="widget_fieldmind_active_projects">Active</string>
+    <string name="widget_fieldmind_notes">Notes</string>
+    <string name="widget_fieldmind_no_data">No observations yet</string>
+    <string name="widget_fieldmind_start_observing">Start your first observation</string>
+    <string name="widget_fieldmind_tap_to_observe">Tap to Observe</string>
+
     <!-- Widget Settings -->
     <string name="settings_widget">Widget</string>
     <string name="settings_widget_desc">Home screen widgets</string>
