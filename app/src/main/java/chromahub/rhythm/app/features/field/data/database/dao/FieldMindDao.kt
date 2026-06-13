@@ -100,4 +100,20 @@ interface FieldMindDao {
     @Query("SELECT * FROM field_projects WHERE deletedAt IS NULL AND (title LIKE '%' || :query || '%' OR topicType LIKE '%' || :query || '%' OR objective LIKE '%' || :query || '%' OR researchQuestion LIKE '%' || :query || '%') ORDER BY updatedAt DESC") fun searchProjects(query: String): Flow<List<ProjectEntity>>
     @Query("SELECT * FROM field_notes WHERE deletedAt IS NULL AND (title LIKE '%' || :query || '%' OR body LIKE '%' || :query || '%' OR category LIKE '%' || :query || '%' OR tags LIKE '%' || :query || '%') ORDER BY updatedAt DESC") fun searchNotes(query: String): Flow<List<NoteEntity>>
     @Query("SELECT * FROM field_sources WHERE deletedAt IS NULL AND (title LIKE '%' || :query || '%' OR author LIKE '%' || :query || '%' OR type LIKE '%' || :query || '%' OR dateOrYear LIKE '%' || :query || '%' OR link LIKE '%' || :query || '%' OR doiOrIsbn LIKE '%' || :query || '%' OR publisherOrJournal LIKE '%' || :query || '%' OR accessDate LIKE '%' || :query || '%' OR fileUri LIKE '%' || :query || '%' OR citationStyleNote LIKE '%' || :query || '%' OR importance LIKE '%' || :query || '%' OR readingStatus LIKE '%' || :query || '%' OR personalSummary LIKE '%' || :query || '%' OR keyFindings LIKE '%' || :query || '%' OR questionsGenerated LIKE '%' || :query || '%' OR paperNotes LIKE '%' || :query || '%') ORDER BY updatedAt DESC") fun searchSources(query: String): Flow<List<SourceEntity>>
+
+    // ── Research Sessions ──
+    @Query("SELECT * FROM field_research_sessions WHERE deletedAt IS NULL ORDER BY startedAt DESC")
+    fun observeResearchSessions(): Flow<List<ResearchSessionEntity>>
+    @Query("SELECT * FROM field_research_sessions WHERE id = :id LIMIT 1")
+    fun observeResearchSession(id: Long): Flow<ResearchSessionEntity?>
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertResearchSession(entity: ResearchSessionEntity): Long
+    @Query("UPDATE field_research_sessions SET endedAt = :endedAt, totalDurationMs = :durationMs, observationCount = :obsCount, status = 'Completed', updatedAt = :endedAt WHERE id = :id")
+    suspend fun endResearchSession(id: Long, endedAt: Long, durationMs: Long, obsCount: Int)
+    @Query("UPDATE field_research_sessions SET deletedAt = :time, updatedAt = :time WHERE id = :id")
+    suspend fun softDeleteResearchSession(id: Long, time: Long)
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun linkSessionObservation(ref: SessionObservationCrossRef)
+    @Query("SELECT o.* FROM field_observations o INNER JOIN field_session_observations x ON x.observationId = o.id WHERE x.sessionId = :sessionId AND o.deletedAt IS NULL ORDER BY o.timestamp DESC")
+    fun observeObservationsForSession(sessionId: Long): Flow<List<ObservationEntity>>
 }

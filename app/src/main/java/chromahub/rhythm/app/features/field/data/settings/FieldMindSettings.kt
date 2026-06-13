@@ -116,7 +116,8 @@ class FieldMindSettings private constructor(context: Context) {
     private val _autoLockOnBackground = MutableStateFlow(prefs.getBoolean(KEY_AUTO_LOCK_BACKGROUND, true))
     val autoLockOnBackground: StateFlow<Boolean> = _autoLockOnBackground.asStateFlow()
 
-    init {
+    /** Call explicitly after initialization — avoids scheduling jobs on every getInstance(). */
+    fun initializeBackgroundWork() {
         FieldMindBackgroundScheduler.syncAll(
             appContext,
             _autoBackupEnabled.value,
