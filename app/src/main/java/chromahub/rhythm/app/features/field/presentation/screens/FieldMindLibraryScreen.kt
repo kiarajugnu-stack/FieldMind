@@ -389,7 +389,7 @@ private fun LearnPanel(viewModel: FieldMindViewModel, onOpenReader: (String, Str
         item { SectionHeader("Curated reference library", "Expand when you want deeper subject-specific learning.") }
         items(LearnLibrary) { category -> LearnCategoryCard(category) { res -> onOpenReader(res.url, res.title) } }
         item { SectionHeader("Optional online discovery", "Use verified metadata sources; never trust generated citations without checking.") }
-        item { AssistantPanel(viewModel) }
+        item { ResearchAssistantCard() }
         item { OnlineApiProposalCard() }
     }
 }
@@ -533,6 +533,42 @@ private fun OnlineApiProposalCard() {
     }
 }
 
+
+@Composable
+private fun ResearchAssistantCard() {
+    Card(
+        modifier = Modifier.fillMaxWidth().animateContentSize(),
+        shape = RoundedCornerShape(26.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Row(
+                Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Box(
+                    Modifier.size(44.dp).clip(RoundedCornerShape(14.dp))
+                        .background(MaterialTheme.colorScheme.primaryContainer),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(icon = FieldMindIcons.Sparkle, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimaryContainer, size = 24.dp)
+                }
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    Text("Research assistant", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                    Text("Turn observations into structured reports. Use templates to build consistent field notes.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                Icon(icon = FieldMindIcons.Ask, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, size = 22.dp)
+            }
+            Text(
+                "Available tools: citation lookup via DOI/ISBN, field report templates, PDF annotation, and structured data export.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
 
 @Composable
 private fun ResearchJourneyHero(next: ResearchMilestone, signals: String, onOpenReader: (String, String) -> Unit) {

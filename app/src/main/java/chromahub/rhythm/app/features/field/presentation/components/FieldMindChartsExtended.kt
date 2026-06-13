@@ -861,8 +861,8 @@ fun WeatherCorrelationChart(
             val plotH = this.size.height - 2 * padY
 
             // Draw grid lines
-            (0..4).forEach { i ->
-                val y = padY + (i / 4f) * plotH                        drawLine(
+            (0..4).forEach { i ->                    val y = padY + (i / 4f) * plotH
+                        drawLine(
                     outlineVariantColor,
                     start = Offset(padX, y),
                     end = Offset(padX + plotW, y),

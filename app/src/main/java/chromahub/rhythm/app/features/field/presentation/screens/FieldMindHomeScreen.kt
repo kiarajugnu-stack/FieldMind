@@ -79,9 +79,7 @@ fun HomeScreen(
     val lastSession = remember(researchSessions) {
         researchSessions.filter { it.status == "Completed" }.maxByOrNull { it.endedAt ?: it.createdAt }
     }
-    val sessionObsCount = remember(lastSession, observations) {
-        if (lastSession != null) observations.count { it.sessionId == lastSession.id } else 0
-    }
+
 
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(20.dp, 0.dp, 20.dp, 96.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
         // ── Hero Section ──
@@ -102,8 +100,7 @@ fun HomeScreen(
 
         // ── Research Session CTA ──
         item {
-            ResearchSessionCtaCard(
-                lastSessionLabel = if (lastSession != null) "Last: $sessionObsCount obs" else null,
+            ResearchSessionCtaCard(                    lastSessionLabel = if (lastSession != null) "Resume your last session" else null,
                 onStartSession = { onNavigate(FieldMindScreen.ResearchSession) }
             )
         }
