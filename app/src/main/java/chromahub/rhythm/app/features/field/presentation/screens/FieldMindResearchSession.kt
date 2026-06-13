@@ -1,0 +1,238 @@
+package fieldmind.research.app.features.field.presentation.screens
+
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import fieldmind.research.app.features.field.data.database.entity.*
+import fieldmind.research.app.features.field.presentation.components.*
+import fieldmind.research.app.features.field.presentation.theme.FieldMindTheme
+import fieldmind.research.app.features.field.presentation.viewmodel.FieldMindViewModel
+import fieldmind.research.app.shared.presentation.components.icons.Icon
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+
+// ══════════════════════════════════════════════════════════════════════
+//  Research Session — Timer-based multi-observation mode
+// ══════════════════════════════════════════════════════════════════════
+
+/**
+ * A research session lets the user capture multiple observations in rapid succession
+ * with a running timer. Each observation is auto-timestamped and linked to the session.
+ *
+ * Flow:
+ * 1. Start session → optional name, linked project
+ * 2. Timer runs → add observations rapidly (subject + facts only)
+ * 3. Session summary at end: all observations, time spent, photos taken
+ */
+@Composable
+fun ResearchSessionScreen(
+    viewModel: FieldMindViewModel,
+    onBack: () -> Unit,
+    onOpenDetail: (String, Long) -> Unit = { _, _ -> }
+) {
+    val haptics = rememberFieldMindHaptics()
+    val snackbar = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
+    val projects by viewModel.projects.collectAsState()
+    val defaultConfidence by viewModel.fieldSettings.defaultConfidence.collectAsState()
+
+    // Session state
+    var sessionActive by remember { mutableStateOf(false) }
+    var sessionName by remember { mutableStateOf("") }
+    var selectedProjectId by remember { mutableStateOf<Long?>(null) }
+    var sessionElapsedMs by remember { mutableLongStateOf(0L) }
+    var observationCount by remember { mutableIntStateOf(0) }
+    var sessionStartedAt by remember { mutableLongStateOf(0L) }
+    var showSummary by remember { mutableStateOf(false) }
+
+    // Quick observation input
+    var quickSubject by remember { mutableStateOf("") }
+    var quickFacts by remember { mutableStateOf("") }
+    var quickCategory by remember { mutableStateOf("Other") }
+
+    // Timer
+    LaunchedEffect(sessionActive) {
+        if (sessionActive) {
+            sessionStartedAt = System.currentTimeMillis()
+            while (sessionActive) {
+                delay(1000)
+                sessionElapsedMs = System.currentTimeMillis() - sessionStartedAt
+            }
+        }
+    }
+
+    fun formatTime(ms: Long): String {
+        val totalSec = ms / 1000
+        val hours = totalSec / 3600
+        val minutes = (totalSec % 3600) / 60
+        val seconds = totalSec % 60
+        return if (hours > 0) "%d:%02d:%02d".format(hours, minutes, seconds)
+        else "%d:%02d".format(minutes, seconds)
+    }
+
+    fun startSession() {
+        sessionActive = true
+        sessionElapsedMs = 0
+        observationCount = 0
+        sessionName = sessionName.ifBlank { "Session ${java.text.SimpleDateFormat("HH:mm", java.util.Locale.getDefault()).format(java.util.Date())}" }
+        haptics.confirm()
+    }
+
+    fun endSession() {
+        sessionActive = false
+        showSummary = true
+        haptics.confirm()
+    }
+
+    fun saveQuickObservation() {
+        if (quickSubject.isBlank() && quickFacts.isBlank()) return
+        viewModel.addObservation(
+            subject = quickSubject.ifBlank { quickCategory },
+            category = quickCategory,
+            facts = quickFacts.ifBlank { "Quick session observation" },
+            confidence = defaultConfidence,
+            manualLocation = "",
+            tags = "research-session",
+            evidence = "",
+            context = "Research session: $sessionName",
+            projectId = selectedProjectId
+        ) {
+            observationCount++
+            quickSubject = ""
+            quickFacts = ""
+            scope.launch { snackbar.showSnackbar("Observation #$observationCount saved") }
+        }
+    }
+
+    Scaffold(
+        containerColor = MaterialTheme.colorScheme.background,
+        snackbarHost = { SnackbarHost(snackbar) }
+    ) { padding ->
+        LazyColumn(
+            Modifier.fillMaxSize().padding(padding),
+            contentPadding = PaddingValues(20.dp, 20.dp, 20.dp, 96.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            item {
+                FieldScreenHeader(
+                    "Research Session",
+                    "Capture multiple observations with a running timer.",
+                    icon = FieldMindIcons.Bolt,
+                    actionIcon = FieldMindIcons.Back,
+                    onAction = onBack
+                )
+            }
+
+            if (showSummary) {
+                // Session summary
+                item {
+                    Card(
+                        shape = RoundedCornerShape(28.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                    ) {
+                        Column(Modifier.padding(22.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                            Text("Session Complete", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onPrimaryContainer)
+                            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                                MetricTile("Duration", formatTime(sessionElapsedMs), FieldMindIcons.Calendar, Modifier.weight(1f))
+                                MetricTile("Observations", "$observationCount", FieldMindIcons.Observation, Modifier.weight(1f))
+                            }
+                            if (sessionName.isNotBlank()) {
+                                Text("Session: $sessionName", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onPrimaryContainer)
+                            }
+                            Button(onClick = { showSummary = false; sessionElapsedMs = 0; observationCount = 0 }, shape = RoundedCornerShape(16.dp), modifier = Modifier.fillMaxWidth()) {
+                                Text("Start new session")
+                            }
+                        }
+                    }
+                }
+            } else if (!sessionActive) {
+                // Session setup
+                item {
+                    Card(shape = RoundedCornerShape(28.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)) {
+                        Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                            Text("Start a research session", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                            Text("Capture observations rapidly while the timer tracks your field time.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            FieldTextField(sessionName, { sessionName = it }, "Session name (optional)", supportingText = "Auto-named if left blank")
+                            if (projects.isNotEmpty()) {
+                                Text("Link to project", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                ChoiceChips(
+                                    listOf("No project") + projects.map { it.title },
+                                    projects.firstOrNull { it.id == selectedProjectId }?.title ?: "No project"
+                                ) { selected ->
+                                    selectedProjectId = projects.firstOrNull { it.title == selected }?.id
+                                }
+                            }
+                            Button(onClick = ::startSession, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp)) {
+                                Icon(FieldMindIcons.Bolt, null, size = 18.dp); Spacer(Modifier.size(8.dp)); Text("Start session")
+                            }
+                        }
+                    }
+                }
+            } else {
+                // Active session — timer + quick input
+                item {
+                    Card(
+                        shape = RoundedCornerShape(28.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                    ) {
+                        Row(Modifier.padding(20.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                            // Pulsing timer dot
+                            val infiniteTransition = rememberInfiniteTransition(label = "timerPulse")
+                            val pulseAlpha by infiniteTransition.animateFloat(1f, 0.3f, infiniteRepeatable(tween(800), RepeatMode.Reverse), label = "pulse")
+                            Box(Modifier.size(16.dp).clip(CircleShape).background(MaterialTheme.colorScheme.error.copy(alpha = pulseAlpha)))
+                            Column(Modifier.weight(1f)) {
+                                Text(sessionName, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onPrimaryContainer)
+                                Text(formatTime(sessionElapsedMs), style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onPrimaryContainer)
+                                Text("$observationCount observation${if (observationCount != 1) "s" else ""} captured", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.78f))
+                            }
+                            Button(onClick = ::endSession, colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error), shape = RoundedCornerShape(16.dp)) {
+                                Text("End")
+                            }
+                        }
+                    }
+                }
+
+                // Quick observation form
+                item {
+                    Card(shape = RoundedCornerShape(28.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)) {
+                        Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                            Text("Quick observation", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                            Text("Type what you see. Tap save. Repeat.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            ChoiceChips(observationCategories, quickCategory) { quickCategory = it }
+                            FieldTextField(quickSubject, { quickSubject = it }, "Subject", supportingText = "e.g. Crow on wire")
+                            FieldTextField(quickFacts, { quickFacts = it }, "Facts", minLines = 2, supportingText = "What did you observe?")
+                            Button(
+                                onClick = ::saveQuickObservation,
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(16.dp),
+                                enabled = quickSubject.isNotBlank() || quickFacts.isNotBlank()
+                            ) {
+                                Icon(FieldMindIcons.Add, null, size = 18.dp); Spacer(Modifier.size(8.dp)); Text("Save observation")
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

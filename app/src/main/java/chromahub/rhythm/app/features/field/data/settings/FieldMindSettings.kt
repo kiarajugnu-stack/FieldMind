@@ -102,6 +102,20 @@ class FieldMindSettings private constructor(context: Context) {
     private val _autoBackupInterval = MutableStateFlow(prefs.getString(KEY_AUTO_BACKUP_INTERVAL, "Weekly") ?: "Weekly")
     val autoBackupInterval: StateFlow<String> = _autoBackupInterval.asStateFlow()
 
+    // ── Weather & GPS settings ──
+    private val _autoWeatherEnabled = MutableStateFlow(prefs.getBoolean(KEY_AUTO_WEATHER, false))
+    val autoWeatherEnabled: StateFlow<Boolean> = _autoWeatherEnabled.asStateFlow()
+
+    private val _gpsMode = MutableStateFlow(prefs.getString(KEY_GPS_MODE, "On capture only") ?: "On capture only")
+    val gpsMode: StateFlow<String> = _gpsMode.asStateFlow()
+
+    // ── Security settings ──
+    private val _lockTimeout = MutableStateFlow(prefs.getString(KEY_LOCK_TIMEOUT, "Immediate") ?: "Immediate")
+    val lockTimeout: StateFlow<String> = _lockTimeout.asStateFlow()
+
+    private val _autoLockOnBackground = MutableStateFlow(prefs.getBoolean(KEY_AUTO_LOCK_BACKGROUND, true))
+    val autoLockOnBackground: StateFlow<Boolean> = _autoLockOnBackground.asStateFlow()
+
     init {
         FieldMindBackgroundScheduler.syncAll(
             appContext,
@@ -150,6 +164,10 @@ class FieldMindSettings private constructor(context: Context) {
         _autoBackupInterval.value = value
         FieldMindBackgroundScheduler.scheduleAutoBackup(appContext, _autoBackupEnabled.value, value)
     }
+    fun setAutoWeatherEnabled(value: Boolean) = edit(KEY_AUTO_WEATHER, value) { _autoWeatherEnabled.value = value }
+    fun setGpsMode(value: String) = edit(KEY_GPS_MODE, value) { _gpsMode.value = value }
+    fun setLockTimeout(value: String) = edit(KEY_LOCK_TIMEOUT, value) { _lockTimeout.value = value }
+    fun setAutoLockOnBackground(value: Boolean) = edit(KEY_AUTO_LOCK_BACKGROUND, value) { _autoLockOnBackground.value = value }
 
     private inline fun edit(key: String, value: String, after: () -> Unit) { prefs.edit().putString(key, value).apply(); after() }
     private inline fun edit(key: String, value: Boolean, after: () -> Unit) { prefs.edit().putBoolean(key, value).apply(); after() }
@@ -191,5 +209,9 @@ class FieldMindSettings private constructor(context: Context) {
         private const val KEY_LOCAL_MODEL_USE_STUDY = "local_model_use_study"
         private const val KEY_AUTO_BACKUP_ENABLED = "auto_backup_enabled"
         private const val KEY_AUTO_BACKUP_INTERVAL = "auto_backup_interval"
+        private const val KEY_AUTO_WEATHER = "auto_weather"
+        private const val KEY_GPS_MODE = "gps_mode"
+        private const val KEY_LOCK_TIMEOUT = "lock_timeout"
+        private const val KEY_AUTO_LOCK_BACKGROUND = "auto_lock_background"
     }
 }

@@ -49,7 +49,8 @@ fun FieldMindSettingsScreen(
     onOpenCapture: (() -> Unit)? = null,
     onOpenAi: (() -> Unit)? = null,
     onOpenLocalModel: (() -> Unit)? = null,
-    onOpenBackup: (() -> Unit)? = null
+    onOpenBackup: (() -> Unit)? = null,
+    onOpenSecurity: (() -> Unit)? = null
 ) {
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(20.dp, 20.dp, 20.dp, 40.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
         item { FieldScreenHeader("Settings", "Offline-first setup, profile, capture, local AI, export, and privacy.", icon = FieldMindIcons.Settings, actionIcon = FieldMindIcons.Back, onAction = onBack) }
@@ -73,6 +74,7 @@ fun FieldMindSettingsScreen(
         item { SettingsNavCard("AI assistant", "Gemini, OpenAI, provider settings", FieldMindIcons.Sparkle, FieldMindTheme.colors.flashcard) { onOpenAi?.invoke() } }
         item { SettingsNavCard("Local model", "Download offline model for flashcards", FieldMindIcons.Download, FieldMindTheme.colors.hypothesis) { onOpenLocalModel?.invoke() } }
         item { SettingsNavCard("Backup & import", "Auto-backup, interval, and restore", FieldMindIcons.Archive, FieldMindTheme.colors.data) { onOpenBackup?.invoke() } }
+        item { SettingsNavCard("Security", "Privacy lock, lock timeout, auto-lock", FieldMindIcons.Lock, FieldMindTheme.colors.confidenceVerify) { onOpenSecurity?.invoke() } }
         item { SettingsNavCard("Export Studio", "Export as PDF, CSV, JSON, HTML, SVG", FieldMindIcons.Export, FieldMindTheme.colors.report) { onOpenExport?.invoke() } }
         item { SettingsNavCard("About", "Credits, acknowledgements, and version", FieldMindIcons.Info, FieldMindTheme.colors.source) { onOpenAbout?.invoke() } }
 
@@ -349,6 +351,44 @@ fun LocalModelSettingsPage(viewModel: FieldMindViewModel, onBack: () -> Unit) {
 }
 
 // ══════════════════════════════════════════════════════════════════════
+//  Security Settings Page (NEW — moved from Backup & Import)
+// ══════════════════════════════════════════════════════════════════════
+
+@Composable
+fun SecuritySettingsPage(viewModel: FieldMindViewModel, onBack: () -> Unit) {
+    val settings = viewModel.fieldSettings
+    val privacy by settings.privacyLockEnabled.collectAsState()
+    val lockTimeout by settings.lockTimeout.collectAsState()
+    val autoLockBg by settings.autoLockOnBackground.collectAsState()
+
+    SettingsSubPage("Security", icon = FieldMindIcons.Lock, onBack = onBack) {
+        item {
+            SettingsGroupCard {
+                ToggleItem("App lock", "Require biometric or device credential to open FieldMind.", privacy, settings::setPrivacyLockEnabled, FieldMindIcons.Lock)
+            }
+        }
+        if (privacy) {
+            item {
+                SettingsGroupCard {
+                    ChoiceItemForm("Lock timeout", listOf("Immediate", "1 minute", "5 minutes", "15 minutes", "When screen off"), lockTimeout, FieldMindIcons.Timer, settings::setLockTimeout)
+                    HorizontalDivider(Modifier.padding(start = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+                    ToggleItem("Auto-lock on background", "Lock when app goes to background.", autoLockBg, settings::setAutoLockOnBackground, FieldMindIcons.Lock)
+                }
+            }
+        }
+        item {
+            Card(shape = RoundedCornerShape(22.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)) {
+                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("About app lock", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.primary)
+                    Text("When enabled, FieldMind requires biometric authentication (fingerprint, face) or your device PIN/pattern/password each time you open the app.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("Your research data is stored entirely on this device. No data is sent to any server.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+        }
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════════
 //  Backup & Import Settings Page
 // ══════════════════════════════════════════════════════════════════════
 
@@ -358,7 +398,6 @@ fun BackupImportSettingsPage(viewModel: FieldMindViewModel, onBack: () -> Unit, 
     val autoBackupEnabled by settings.autoBackupEnabled.collectAsState()
     val autoBackupInterval by settings.autoBackupInterval.collectAsState()
     val exportFormat by settings.defaultExportFormat.collectAsState()
-    val privacy by settings.privacyLockEnabled.collectAsState()
 
     SettingsSubPage("Backup & import", icon = FieldMindIcons.Archive, onBack = onBack) {
         item {
@@ -378,8 +417,6 @@ fun BackupImportSettingsPage(viewModel: FieldMindViewModel, onBack: () -> Unit, 
                     Spacer(Modifier.height(4.dp))
                     ExportFormatSelector(exportFormat) { settings.setDefaultExportFormat(it) }
                 }
-                HorizontalDivider(Modifier.padding(start = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
-                ToggleItem("Privacy lock", "Requires authentication to access settings and export.", privacy, settings::setPrivacyLockEnabled, FieldMindIcons.Lock)
             }
         }
         item {
