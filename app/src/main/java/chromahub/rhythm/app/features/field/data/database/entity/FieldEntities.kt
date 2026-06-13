@@ -39,6 +39,12 @@ data class ObservationEntity(
     val confidenceLevel: String,
     val evidenceSummary: String = "",
     val moodOrContext: String = "",
+    val weatherTemperature: Double? = null,
+    val weatherCondition: String = "",
+    val weatherHumidity: Int? = null,
+    val weatherWindSpeed: Double? = null,
+    val weatherCloudCover: Int? = null,
+    val weatherSnapshotAt: Long? = null,
     val tags: String = "",
     val projectId: Long? = null,
     val status: String = "Active",
@@ -285,3 +291,26 @@ data class ReportWithSources(
     val report: ReportEntity,
     val sources: List<SourceEntity>
 )
+
+@Entity(tableName = "field_research_sessions")
+data class ResearchSessionEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val name: String = "",
+    val projectId: Long? = null,
+    val startedAt: Long = System.currentTimeMillis(),
+    val endedAt: Long? = null,
+    val totalDurationMs: Long = 0,
+    val observationCount: Int = 0,
+    val location: String = "",
+    val latitude: Double? = null,
+    val longitude: Double? = null,
+    val status: String = "Active",
+    val notes: String = "",
+    val archivedAt: Long? = null,
+    val deletedAt: Long? = null,
+    val createdAt: Long = System.currentTimeMillis(),
+    val updatedAt: Long = System.currentTimeMillis()
+)
+
+@Entity(tableName = "field_session_observations", primaryKeys = ["sessionId", "observationId"])
+data class SessionObservationCrossRef(val sessionId: Long, val observationId: Long)

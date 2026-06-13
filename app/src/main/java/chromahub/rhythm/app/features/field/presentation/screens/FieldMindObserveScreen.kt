@@ -312,10 +312,10 @@ private fun FieldModeScreen(viewModel: FieldMindViewModel, onBack: () -> Unit) {
             dismissButton = { TextButton(onClick = { showQuickSnapCategory = false }) { Text("Cancel") } }
         )
     }
-    // In-app camera overlay for quick snap
+    // In-app camera overlay for quick snap (V2 — full-screen, zoom, focus, grid, timer)
     if (showQuickSnapCamera) {
         Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
-            FieldMindCameraCapture(
+            FieldMindCameraV2(
                 onPhotoCaptured = { uri, mimeType ->
                     viewModel.addObservation(
                         subject = quickSnapCategory,
@@ -449,10 +449,10 @@ internal fun ObservationCaptureCard(viewModel: FieldMindViewModel, compact: Bool
         } else scope.launch { snackbar.showSnackbar("Audio permission denied.") }
     }
 
-    // In-app camera overlay
+    // In-app camera overlay (V2 — full-screen, zoom, focus, grid, timer, post-capture flow)
     if (showInAppCamera) {
-        Box(Modifier.fillMaxWidth()) {
-            FieldMindCameraCapture(
+        Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
+            FieldMindCameraV2(
                 onPhotoCaptured = { uri, mimeType ->
                     attachments = attachments + DraftEvidenceAttachment("Photo", uri, "Camera photo", mimeType = mimeType)
                     showInAppCamera = false

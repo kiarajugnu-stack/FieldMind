@@ -103,4 +103,13 @@ class FieldMindRepository(private val dao: FieldMindDao) {
     fun searchProjects(query: String) = dao.searchProjects(query)
     fun searchSources(query: String) = dao.searchSources(query)
     fun searchAttachments(query: String) = dao.searchAttachmentCaptions(query)
+
+    // ── Research Sessions ──
+    val researchSessions: Flow<List<ResearchSessionEntity>> = dao.observeResearchSessions()
+    fun observeResearchSession(id: Long) = dao.observeResearchSession(id)
+    suspend fun addResearchSession(entity: ResearchSessionEntity): Long = dao.insertResearchSession(entity)
+    suspend fun endResearchSession(id: Long, observationCount: Int, durationMs: Long) = dao.endResearchSession(id, System.currentTimeMillis(), durationMs, observationCount)
+    suspend fun deleteResearchSession(id: Long) = dao.softDeleteResearchSession(id, System.currentTimeMillis())
+    suspend fun linkSessionObservation(sessionId: Long, observationId: Long) = dao.linkSessionObservation(SessionObservationCrossRef(sessionId, observationId))
+    fun observeObservationsForSession(sessionId: Long) = dao.observeObservationsForSession(sessionId)
 }

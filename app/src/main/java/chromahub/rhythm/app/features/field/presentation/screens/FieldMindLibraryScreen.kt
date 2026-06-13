@@ -247,7 +247,7 @@ private fun FlashcardPanel(
             LocalStudyModelCard(localEnabled, localDownloaded, localModel) {
                 val generated = autoFlashcardsFromLibrary(sources, notes).take(6)
                 generated.forEach { (front, back) -> viewModel.addFlashcard(front, back, "Local model") }
-                android.widget.Toast.makeText(context, if (generated.isEmpty()) "Add sources or notes first" else "Generated ${generated.size} offline cards", android.widget.Toast.LENGTH_SHORT).show()
+                // Auto-flashcard generation completed — UI updates automatically
             }
         }
         if (items.isEmpty()) item { EmptyState("No flashcards yet", "Turn terms, definitions, mistakes, source concepts, and questions into review cards.", icon = FieldMindIcons.Flashcard) }

@@ -48,11 +48,10 @@ private const val FLASH_ON = ImageCapture.FLASH_MODE_ON
 private const val FLASH_AUTO = ImageCapture.FLASH_MODE_AUTO
 
 /**
- * Full in-app camera capture UI using CameraX.
- *
- * Features a live preview, capture button, flash toggle, and front/back camera switch.
- * Captured photos are saved to app-specific storage and returned via [onPhotoCaptured].
+ * @deprecated Use [FieldMindCameraV2] instead. This legacy camera component is kept only for
+ * backward compatibility and will be removed in a future release.
  */
+@Deprecated("Use FieldMindCameraV2 instead", ReplaceWith("FieldMindCameraV2", "fieldmind.research.app.features.field.presentation.components.FieldMindCameraV2"))
 @Composable
 fun FieldMindCameraCapture(
     onPhotoCaptured: (uri: String, mimeType: String) -> Unit,

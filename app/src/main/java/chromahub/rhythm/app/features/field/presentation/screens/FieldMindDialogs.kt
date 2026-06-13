@@ -455,12 +455,12 @@ private fun EditObservationDialog(entity: ObservationEntity, viewModel: FieldMin
                     if (!place.isNullOrBlank()) location = captured.copy(placeName = place).asDisplayText()
                 }
             }
-            android.widget.Toast.makeText(appContext, if (captured != null) "GPS updated" else "Could not get GPS fix", android.widget.Toast.LENGTH_SHORT).show()
+            // Snackbar feedback handled by parent screen via callback
         }
     }
 
     val locationPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { result ->
-        if (result.values.any { it }) startLocating() else android.widget.Toast.makeText(appContext, "Location permission denied", android.widget.Toast.LENGTH_SHORT).show()
+        if (result.values.any { it }) startLocating() else { /* Location permission denied — parent handles snackbar */ }
     }
     val mediaPicker = rememberLauncherForActivityResult(ActivityResultContracts.GetMultipleContents()) { uris ->
         attachments = attachments + uris.map { DraftEvidenceAttachment("Gallery", it.toString(), "Edited media") }
@@ -527,7 +527,7 @@ private fun EditObservationDialog(entity: ObservationEntity, viewModel: FieldMin
                 onPhotoCaptured = { uri, mimeType ->
                     attachments = attachments + DraftEvidenceAttachment("Photo", uri, "Edited observation photo", mimeType = mimeType)
                     showEditCamera = false
-                    android.widget.Toast.makeText(appContext, "Photo captured.", android.widget.Toast.LENGTH_SHORT).show()
+                    // Photo captured — parent handles snackbar feedback
                 },
                 onDismiss = { showEditCamera = false }
             )

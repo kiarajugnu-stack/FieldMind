@@ -81,6 +81,8 @@ object FieldMindIcons {
     val FlashAuto = MaterialSymbolIcon("flash_auto")
     val FlashOff = MaterialSymbolIcon("flash_off")
     val FlipCamera = MaterialSymbolIcon("flip_camera_android")
+    val Timer = MaterialSymbolIcon("timer")
+    val Session = MaterialSymbolIcon("stop_circle")
 
     // Observation category icons
     val Bird = MaterialSymbolIcon("raven")

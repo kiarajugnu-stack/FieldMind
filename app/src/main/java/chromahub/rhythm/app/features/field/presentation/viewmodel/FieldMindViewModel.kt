@@ -28,6 +28,7 @@ data class DraftEvidenceAttachment(
 class FieldMindViewModel(application: Application) : AndroidViewModel(application) {
     private val repository = FieldMindRepository(FieldMindDatabase.getInstance(application).fieldMindDao())
     val fieldSettings: FieldMindSettings = FieldMindSettings.getInstance(application)
+    init { fieldSettings.initializeBackgroundWork() }
 
     val observations: StateFlow<List<ObservationEntity>> = repository.observations.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
     val notes: StateFlow<List<NoteEntity>> = repository.notes.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
@@ -300,6 +301,27 @@ class FieldMindViewModel(application: Application) : AndroidViewModel(applicatio
     }
 
     fun addReport(title: String, question: String, methods: String, conclusion: String) = addReport("Field Report", title, "", question, methods, "", "", "", conclusion, "", "")
+
+    // ── Research Session methods ──
+    fun addResearchSession(name: String, projectId: Long? = null, onSaved: ((Long) -> Unit)? = null) = viewModelScope.launch {
+        val id = repository.addResearchSession(ResearchSessionEntity(name = name, projectId = projectId))
+        onSaved?.invoke(id)
+    }
+    fun endResearchSession(sessionId: Long, observationCount: Int, durationMs: Long) = viewModelScope.launch {
+        repository.endResearchSession(sessionId, observationCount, durationMs)
+    }
+    fun linkObservationToSession(sessionId: Long, observationId: Long) = viewModelScope.launch {
+        repository.linkSessionObservation(sessionId, observationId)
+    }
+    val researchSessions: StateFlow<List<ResearchSessionEntity>> = repository.researchSessions.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    // ── Weather (Open-Meteo) ──
+    private val weatherService = fieldmind.research.app.features.field.data.weather.WeatherApiService()
+    var lastWeatherSnapshot: fieldmind.research.app.features.field.data.weather.WeatherSnapshot? = null
+        private set
+    fun fetchWeatherForLocation(latitude: Double, longitude: Double) = viewModelScope.launch {
+        lastWeatherSnapshot = weatherService.fetchWeather(latitude, longitude)
+    }
 
     fun addFlashcard(front: String, back: String, type: String, sourceId: Long? = null, projectId: Long? = null, deckMode: String = "basic") = viewModelScope.launch {
         repository.addFlashcard(FlashcardEntity(front = front.trim(), back = back.trim(), type = type, sourceId = sourceId, projectId = projectId, deckMode = deckMode))

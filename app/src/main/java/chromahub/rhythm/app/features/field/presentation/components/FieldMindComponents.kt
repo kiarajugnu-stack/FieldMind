@@ -337,16 +337,50 @@ fun FieldTextField(
     label: String,
     modifier: Modifier = Modifier,
     minLines: Int = 1,
-    supportingText: String? = null
+    supportingText: String? = null,
+    required: Boolean = false,
+    error: String? = null,
+    enabled: Boolean = true
 ) {
+    val displayLabel = if (required) "$label *" else label
     OutlinedTextField(
         value = value,
         onValueChange = onValueChange,
-        label = { Text(label) },
+        label = { Text(displayLabel) },
         minLines = minLines,
-        supportingText = supportingText?.let { { Text(it) } },
+        isError = error != null,
+        supportingText = {
+            when {
+                error != null -> Text(error, color = MaterialTheme.colorScheme.error)
+                supportingText != null -> Text(supportingText)
+            }
+        },
         modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(18.dp)
+        shape = RoundedCornerShape(18.dp),
+        enabled = enabled
+    )
+}
+
+/** Overload accepting a RequiredFieldState for automatic validation. */
+@Composable
+fun FieldTextField(
+    fieldState: RequiredFieldState,
+    label: String,
+    modifier: Modifier = Modifier,
+    minLines: Int = 1,
+    supportingText: String? = null,
+    enabled: Boolean = true
+) {
+    FieldTextField(
+        value = fieldState.value,
+        onValueChange = { fieldState.onValueChange(it) },
+        label = label,
+        modifier = modifier,
+        minLines = minLines,
+        supportingText = supportingText,
+        required = fieldState.isRequired,
+        error = if (fieldState.isTouched) fieldState.error else null,
+        enabled = enabled
     )
 }
 

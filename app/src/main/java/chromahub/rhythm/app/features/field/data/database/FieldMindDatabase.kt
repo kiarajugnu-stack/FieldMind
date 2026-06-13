@@ -27,9 +27,11 @@ import fieldmind.research.app.features.field.data.database.entity.*
         ProjectSourceCrossRef::class,
         ReportSourceCrossRef::class,
         ProjectDataRecordCrossRef::class,
-        HypothesisEvidenceCrossRef::class
+        HypothesisEvidenceCrossRef::class,
+        ResearchSessionEntity::class,
+        SessionObservationCrossRef::class
     ],
-    version = 6,
+    version = 7,
     exportSchema = false
 )
 abstract class FieldMindDatabase : RoomDatabase() {
