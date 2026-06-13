@@ -71,6 +71,7 @@ import java.util.Locale
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import kotlin.math.abs
+import kotlin.math.roundToInt
 import kotlin.math.sqrt
 
 // ══════════════════════════════════════════════════════════════════════
@@ -356,7 +357,10 @@ fun FieldMindCameraV2(
             }
         }
 
-        // Zoom slider
+        // Pro controls toggle
+        var showProControls by remember { mutableStateOf(false) }
+
+        // Zoom slider (moved ABOVE capture button — between controls and preview)
         if (maxZoom > 1f) {
             Slider(
                 value = zoomRatio,
@@ -364,8 +368,9 @@ fun FieldMindCameraV2(
                 valueRange = 1f..maxZoom,
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
-                    .padding(horizontal = 60.dp, vertical = 8.dp)
-                    .height(32.dp),
+                    .padding(horizontal = 60.dp, vertical = 4.dp)
+                    .height(32.dp)
+                    .padding(bottom = 80.dp), // Push above capture button
                 colors = SliderDefaults.colors(
                     thumbColor = Color.White,
                     activeTrackColor = Color.White,
@@ -432,8 +437,10 @@ fun FieldMindCameraV2(
 
             // Bottom controls
             Row(Modifier.fillMaxWidth().align(Alignment.BottomCenter), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                // Flash label
-                Text(when (flashMode) { FLASH_ON -> "Flash on"; FLASH_AUTO -> "Auto"; else -> "" }, style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.7f), modifier = Modifier.padding(start = 8.dp))
+                // Pro toggle
+                IconButton(onClick = { showProControls = !showProControls }, modifier = Modifier.size(44.dp).background(Color.Black.copy(alpha = 0.35f), CircleShape)) {
+                    Text("P", color = if (showProControls) Color(0xFFFFCC80) else Color.White, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
+                }
 
                 // Capture button
                 Box(
@@ -455,6 +462,132 @@ fun FieldMindCameraV2(
                 // Switch camera
                 IconButton(onClick = { lensFacing = if (lensFacing == CameraSelector.LENS_FACING_BACK) CameraSelector.LENS_FACING_FRONT else CameraSelector.LENS_FACING_BACK }, modifier = Modifier.size(44.dp).background(Color.Black.copy(alpha = 0.35f), CircleShape)) {
                     Icon(icon = FieldMindIcons.FlipCamera, contentDescription = "Switch", tint = Color.White, size = 22.dp)
+                }
+            }
+
+            // Pro controls panel (slides up from bottom)
+            if (showProControls) {
+                Card(
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(bottom = 80.dp)
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp),
+                    shape = RoundedCornerShape(20.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color.Black.copy(alpha = 0.85f))
+                ) {
+                    Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        var evValue by remember { mutableFloatStateOf(0f) }
+                        var isoMode by remember { mutableIntStateOf(0) } // 0=Auto, 1=100, 2=200, 3=400, 4=800
+                        var wbMode by remember { mutableIntStateOf(0) } // 0=Auto, 1=Sunny, 2=Cloudy, 3=Tungsten, 4=Fluorescent
+                        val isoLabels = listOf("Auto", "100", "200", "400", "800")
+                        val wbLabels = listOf("Auto", "☀️", "☁️", "💡", "🏠")
+
+                        // Exposure compensation
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Text("EV", style = MaterialTheme.typography.labelMedium, color = Color.White, fontWeight = FontWeight.Bold, modifier = Modifier.width(24.dp))
+                            Slider(
+                                value = evValue,
+                                onValueChange = { evValue = it.roundToInt().toFloat()
+                                    // Apply via Camera2Interop (requires CameraX 1.4+)
+                                    runCatching {
+                                        imageCapture?.let { cap ->
+                                            val extender = androidx.camera.camera2.interop.Camera2Interop.Extender(cap)
+                                            extender.setCaptureRequestOption(
+                                                android.hardware.camera2.CaptureRequest.CONTROL_AE_EXPOSURE_COMPENSATION,
+                                                it.toInt()
+                                            )
+                                        }
+                                    }
+                                },
+                                valueRange = -2f..2f,
+                                modifier = Modifier.weight(1f),
+                                colors = SliderDefaults.colors(thumbColor = Color.White, activeTrackColor = Color(0xFFFFCC80), inactiveTrackColor = Color.White.copy(alpha = 0.3f))
+                            )
+                            Text("${evValue.toInt()}${if (evValue > 0) "+" else ""}", style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.7f))
+                        }
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            // ISO selector
+                            Column(Modifier.weight(1f)) {
+                                Text("ISO", style = MaterialTheme.typography.labelMedium, color = Color.White.copy(alpha = 0.7f), fontSize = 9.sp)
+                                Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                                    isoLabels.forEachIndexed { i, label ->
+                                        Text(
+                                            label,
+                                            modifier = Modifier.clickable {
+                                                isoMode = i
+                                                runCatching {
+                                                    imageCapture?.let { cap ->
+                                                        val extender = androidx.camera.camera2.interop.Camera2Interop.Extender(cap)
+                                                        if (i > 0) {
+                                                            extender.setCaptureRequestOption(
+                                                                android.hardware.camera2.CaptureRequest.CONTROL_AE_MODE,
+                                                                android.hardware.camera2.CaptureRequest.CONTROL_AE_MODE_OFF
+                                                            )
+                                                            extender.setCaptureRequestOption(
+                                                                android.hardware.camera2.CaptureRequest.SENSOR_SENSITIVITY,
+                                                                isoLabels[i].toInt()
+                                                            )
+                                                        } else {
+                                                            extender.setCaptureRequestOption(
+                                                                android.hardware.camera2.CaptureRequest.CONTROL_AE_MODE,
+                                                                android.hardware.camera2.CaptureRequest.CONTROL_AE_MODE_ON
+                                                            )
+                                                        }
+                                                    }
+                                                }
+                                            },
+                                            style = MaterialTheme.typography.labelSmall,
+                                            fontWeight = if (isoMode == i) FontWeight.Bold else FontWeight.Normal,
+                                            color = if (isoMode == i) Color(0xFFFFCC80) else Color.White,
+                                            fontSize = 9.sp
+                                        )
+                                        if (i < isoLabels.lastIndex) Spacer(Modifier.width(2.dp))
+                                    }
+                                }
+                            }
+                            // WB selector
+                            Column(Modifier.weight(1f)) {
+                                Text("WB", style = MaterialTheme.typography.labelMedium, color = Color.White.copy(alpha = 0.7f), fontSize = 9.sp)
+                                Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                                    wbLabels.forEachIndexed { i, label ->
+                                        Text(
+                                            label,
+                                            modifier = Modifier.clickable {
+                                                wbMode = i
+                                                runCatching {
+                                                    imageCapture?.let { cap ->
+                                                        val extender = androidx.camera.camera2.interop.Camera2Interop.Extender(cap)
+                                                        val wbValues = listOf(
+                                                            android.hardware.camera2.CaptureRequest.CONTROL_AWB_MODE_AUTO,
+                                                            android.hardware.camera2.CaptureRequest.CONTROL_AWB_MODE_DAYLIGHT,
+                                                            android.hardware.camera2.CaptureRequest.CONTROL_AWB_MODE_CLOUDY_DAYLIGHT,
+                                                            android.hardware.camera2.CaptureRequest.CONTROL_AWB_MODE_INCANDESCENT,
+                                                            android.hardware.camera2.CaptureRequest.CONTROL_AWB_MODE_FLUORESCENT
+                                                        )
+                                                        extender.setCaptureRequestOption(
+                                                            android.hardware.camera2.CaptureRequest.CONTROL_AWB_MODE,
+                                                            wbValues[i]
+                                                        )
+                                                    }
+                                                }
+                                            },
+                                            style = MaterialTheme.typography.labelSmall,
+                                            fontWeight = if (wbMode == i) FontWeight.Bold else FontWeight.Normal,
+                                            color = if (wbMode == i) Color(0xFFFFCC80) else Color.White,
+                                            fontSize = 9.sp
+                                        )
+                                        if (i < wbLabels.lastIndex) Spacer(Modifier.width(2.dp))
+                                    }
+                                }
+                            }
+                            // Focus mode
+                            Column(Modifier.weight(1f)) {
+                                Text("Focus", style = MaterialTheme.typography.labelMedium, color = Color.White.copy(alpha = 0.7f), fontSize = 9.sp)
+                                Text("AF", style = MaterialTheme.typography.labelMedium, color = Color.White, fontWeight = FontWeight.Bold)
+                            }
+                        }
+                    }
                 }
             }
 

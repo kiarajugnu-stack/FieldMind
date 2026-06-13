@@ -95,6 +95,12 @@ fun HomeScreen(
             item { ResearchPulseCard(observations, questions, projects, onNavigate) }
         }
 
+        // ── Weather Card (when observations have weather data) ──
+        val weatherObs = remember(observations) { observations.firstOrNull { it.weatherTemperature != null } }
+        if (weatherObs != null) {
+            item { WeatherStatusCard(observations, viewModel, onNavigate) }
+        }
+
         // ── Daily Goal ──
         item { DailyGoalCard(todayCount, goal, currentStreak) { onNavigate(FieldMindScreen.Observe) } }
 
@@ -345,6 +351,97 @@ private fun HeroActionChip(
         ) {
             Icon(icon, null, tint = accent, size = 20.dp)
             Text(label, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold)
+        }
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════════
+//  Weather Status Card — Current conditions + weather correlation
+// ══════════════════════════════════════════════════════════════════════
+
+@Composable
+private fun WeatherStatusCard(
+    observations: List<ObservationEntity>,
+    viewModel: FieldMindViewModel,
+    onNavigate: (FieldMindScreen) -> Unit
+) {
+    val colors = FieldMindTheme.colors
+    val weatherObs = remember(observations) {
+        observations.filter { it.weatherTemperature != null }.sortedByDescending { it.timestamp }
+    }
+    val lastWeather = weatherObs.firstOrNull()
+    val tempRange = remember(weatherObs) {
+        val temps = weatherObs.mapNotNull { it.weatherTemperature }
+        if (temps.isEmpty()) null else (temps.minOrNull() to temps.maxOrNull())
+    }
+    val weatherSummary = remember(weatherObs) {
+        val conditions = weatherObs.map { it.weatherCondition }.filter { it.isNotBlank() }.distinct()
+        conditions.take(3).joinToString(" • ")
+    }
+
+    Card(
+        modifier = Modifier.fillMaxWidth().animateContentSize(),
+        shape = RoundedCornerShape(28.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                Box(
+                    Modifier.size(42.dp).clip(RoundedCornerShape(13.dp))
+                        .background(colors.info.copy(alpha = 0.14f)),
+                    contentAlignment = Alignment.Center
+                ) { Icon(FieldMindIcons.Weather, null, tint = colors.info, size = 24.dp) }
+                Column(Modifier.weight(1f)) {
+                    Text("Weather observations", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    Text("${weatherObs.size} observations with weather data", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                TextButton(onClick = { onNavigate(FieldMindScreen.Insights) }) { Text("Charts") }
+            }
+
+            if (lastWeather != null) {
+                Row(
+                    Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceEvenly,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    // Temperature
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(
+                            "${lastWeather.weatherTemperature?.let { "%.0f°".format(it) } ?: "--"}",
+                            style = MaterialTheme.typography.headlineMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = colors.info
+                        )
+                        Text("Latest temp", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                    if (tempRange != null) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text(
+                                "${tempRange.first?.let { "%.0f".format(it) } ?: "--"}° — ${tempRange.second?.let { "%.0f".format(it) } ?: "--"}°",
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.SemiBold,
+                                color = colors.warning
+                            )
+                            Text("Range", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                    }
+                    // Humidity
+                    lastWeather.weatherHumidity?.let { hum ->
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text("$hum%", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = colors.data)
+                            Text("Humidity", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                    }
+                }
+            }
+
+            if (weatherSummary.isNotBlank()) {
+                InfoChip(weatherSummary, icon = FieldMindIcons.Weather, color = colors.info)
+            }
+
+            Text("Weather data from Open-Meteo (free API) — attached to each observation when GPS is enabled.",
+                style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }
