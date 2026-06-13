@@ -105,19 +105,18 @@ fun FieldDataTable(
         result
     }
 
-    // Sort rows — use Pair for consistent Comparable type
+    // Sort rows
     val sortedRows = remember(filteredRows, sortColumn, sortAscending) {
         if (sortColumn < 0 || sortColumn >= columns.size) return@remember filteredRows
         val col = columns[sortColumn]
-        val sorted = filteredRows.sortedBy { row ->
-            val value = row.cells[col.key] ?: ""
-            if (col.isNumeric) {
-                val num = value.toDoubleOrNull()
-                if (num != null) Pair(0, num.toString().padStart(20, '0'))
-                else Pair(1, value.lowercase())
-            } else {
-                Pair(1, value.lowercase())
-            }
+        val sorted = if (col.isNumeric) {
+            filteredRows.sortedWith(compareBy<DataRow, Double> { row ->
+                row.cells[col.key]?.toDoubleOrNull() ?: Double.MAX_VALUE
+            })
+        } else {
+            filteredRows.sortedWith(compareBy<DataRow, String> { row ->
+                (row.cells[col.key] ?: "").lowercase()
+            })
         }
         if (sortAscending) sorted else sorted.reversed()
     }
@@ -491,7 +490,7 @@ private fun TableDataRow(
                 }
                 if (onDelete != null) {
                     IconButton(onClick = onDelete, modifier = Modifier.size(28.dp)) {
-                        Icon(icon = MaterialSymbolIcon("delete"), contentDescription = "Delete", size = 14.dp, tint = FieldMindTheme.colors.error)
+                        Icon(icon = MaterialSymbolIcon("delete"), contentDescription = "Delete", size = 14.dp, tint = MaterialTheme.colorScheme.error)
                     }
                 }
             }

@@ -27,6 +27,7 @@ import fieldmind.research.app.features.field.presentation.theme.FieldMindTheme
 import fieldmind.research.app.features.field.presentation.viewmodel.FieldMindViewModel
 import fieldmind.research.app.shared.presentation.components.icons.Icon
 import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon
+import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -177,11 +178,12 @@ fun InsightsScreen(
     // ── Data quality score ──
     val dataQualityScore = remember(observations, questions, hypotheses, sources, tags) {
         if (observations.isEmpty()) return@remember Triple(0, emptyList<Pair<String, Float>>(), "No data yet")
-        val withEvidence = observations.count { it.evidenceSummary.isNotBlank() }.toFloat() / observations.size.coerceAtLeast(1)
-        val withQuestions = if (observations.isEmpty()) 0f else questions.size.toFloat() / observations.size.coerceAtLeast(1).coerceAtMost(questions.size.toFloat().coerceAtLeast(1f))
-        val withHypotheses = if (questions.isEmpty()) 1f else hypotheses.size.toFloat() / questions.size.coerceAtLeast(1).coerceAtMost(hypotheses.size.toFloat().coerceAtLeast(1f))
-        val withTags = if (observations.isEmpty()) 0f else tags.size.toFloat() / observations.size.coerceAtLeast(1).coerceAtMost(10f)
-        val withGps = if (observations.isEmpty()) 0f else observations.count { it.latitude != null }.toFloat() / observations.size.coerceAtLeast(1)
+        val obsSize = observations.size.coerceAtLeast(1)
+        val withEvidence = observations.count { it.evidenceSummary.isNotBlank() }.toFloat() / obsSize
+        val withQuestions = if (observations.isEmpty()) 0f else questions.size.toFloat() / obsSize
+        val withHypotheses = if (questions.isEmpty()) 1f else hypotheses.size.toFloat() / questions.size.coerceAtLeast(1)
+        val withTags = if (observations.isEmpty()) 0f else tags.size.toFloat() / obsSize.coerceAtMost(10)
+        val withGps = if (observations.isEmpty()) 0f else observations.count { it.latitude != null }.toFloat() / obsSize
         val metrics = listOf(
             "Evidence" to withEvidence.coerceIn(0f, 1f),
             "Questions/Obs" to withQuestions.coerceIn(0f, 1f),
@@ -488,7 +490,7 @@ fun InsightsScreen(
                         DataQualityMeter(
                             score = dataQualityScore.first,
                             metrics = dataQualityScore.second,
-                            accentColor = if (dataQualityScore.first >= 80) colors.positive else if (dataQualityScore.first >= 50) colors.warning else colors.error
+                            accentColor = if (dataQualityScore.first >= 80) colors.positive else if (dataQualityScore.first >= 50) colors.warning else MaterialTheme.colorScheme.error
                         )
                         // Gap analysis
                         val unanswered = questions.count { it.status != "Answered" }

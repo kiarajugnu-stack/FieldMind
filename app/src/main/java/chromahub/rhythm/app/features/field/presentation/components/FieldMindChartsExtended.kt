@@ -810,6 +810,7 @@ fun WeatherCorrelationChart(
     val yRange = (yMax - yMin).coerceAtLeast(1f)
 
     // Linear regression for trend line
+    val outlineVariantColor = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)
     val trendLine = remember(dataPoints) {
         val n = dataPoints.size
         val sumX = xValues.sum()
@@ -861,9 +862,8 @@ fun WeatherCorrelationChart(
 
             // Draw grid lines
             (0..4).forEach { i ->
-                val y = padY + (i / 4f) * plotH
-                drawLine(
-                    MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f),
+                val y = padY + (i / 4f) * plotH                        drawLine(
+                    outlineVariantColor,
                     start = Offset(padX, y),
                     end = Offset(padX + plotW, y),
                     strokeWidth = 0.5f
@@ -1046,7 +1046,7 @@ fun DataQualityMeter(
     val scoreColor = when {
         score >= 80 -> FieldMindTheme.colors.positive
         score >= 50 -> FieldMindTheme.colors.warning
-        else -> FieldMindTheme.colors.error
+        else -> MaterialTheme.colorScheme.error
     }
 
     Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
