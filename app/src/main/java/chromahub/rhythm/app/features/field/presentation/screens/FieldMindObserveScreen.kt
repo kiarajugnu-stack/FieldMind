@@ -933,11 +933,24 @@ private fun FieldModeScreen(viewModel: FieldMindViewModel, onBack: () -> Unit) {
             )
         }
     }
-}
 
 // ══════════════════════════════════════════════════════════════════════
 //  Shared helpers (preserved from original)
 // ══════════════════════════════════════════════════════════════════════
+    quickSnapStatus?.let { status ->
+        AlertDialog(
+            onDismissRequest = { quickSnapStatus = null },
+            icon = { Icon(icon = FieldMindIcons.Check, contentDescription = null) },
+            title = { Text("Quick snap metadata") },
+            text = { Text("$quickSnapCategory • $status") },
+            confirmButton = { TextButton(onClick = { quickSnapStatus = null }) { Text("Done") } }
+        )
+    }
+}
+
+private suspend fun awaitCurrentLocation(provider: FieldLocationProvider): CapturedLocation? = suspendCancellableCoroutine { cont ->
+    provider.requestCurrentLocation { captured -> if (cont.isActive) cont.resume(captured) }
+}
 
 @Composable
 private fun FieldModeButton(category: String, modifier: Modifier = Modifier, onClick: () -> Unit) {
