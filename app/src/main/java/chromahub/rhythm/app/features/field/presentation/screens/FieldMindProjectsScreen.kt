@@ -141,7 +141,18 @@ private fun ProjectsTab(
     var show by remember { mutableStateOf(false) }
     var title by remember { mutableStateOf("") }
     var question by remember { mutableStateOf("") }
+    var selectedTemplate by remember { mutableStateOf<Int?>(-1) }
+    var showTemplates by remember { mutableStateOf(false) }
     val haptics = rememberFieldMindHaptics()
+
+    // Project templates
+    val projectTemplates = listOf(
+        "Species Survey" to Pair("Conduct a systematic species survey across selected sites", "What species are present at this location?"),
+        "Weather Study" to Pair("Record daily weather conditions and patterns", "How does weather vary at this location?"),
+        "Phenology Study" to Pair("Track seasonal changes in plants and animals", "What seasonal patterns are observable?"),
+        "Site Comparison" to Pair("Compare observations across multiple locations", "How do different sites compare?"),
+        "Behavior Study" to Pair("Document and analyze specific behaviors", "What behaviors are observed and when?")
+    )
 
     LazyColumn(contentPadding = panelPadding(), verticalArrangement = Arrangement.spacedBy(14.dp)) {
         // Start Research Session button
@@ -166,6 +177,67 @@ private fun ProjectsTab(
         }
 
         item { AddButton(if (show) "Cancel" else "New project") { show = !show; if (!show) { title = ""; question = "" } } }
+
+        // Template selector toggle
+        item {
+            OutlinedButton(
+                onClick = { showTemplates = !showTemplates; selectedTemplate = -1 },
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp)
+            ) {
+                Icon(FieldMindIcons.Project, null, size = 18.dp)
+                Spacer(Modifier.size(8.dp))
+                Text(if (showTemplates) "Hide templates" else "Start from template")
+            }
+        }
+
+        if (showTemplates) {
+            item {
+                Card(
+                    shape = RoundedCornerShape(20.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)
+                ) {
+                    Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text("Project templates", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                        Text("Choose a template to pre-fill your project setup.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        projectTemplates.forEachIndexed { i, (name, details) ->
+                            val isSelected = selectedTemplate == i
+                            Card(
+                                modifier = Modifier.fillMaxWidth().clickable {
+                                    selectedTemplate = i
+                                    title = name
+                                    question = details.second
+                                    show = true
+                                    showTemplates = false
+                                },
+                                shape = RoundedCornerShape(16.dp),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = if (isSelected) MaterialTheme.colorScheme.primaryContainer
+                                    else MaterialTheme.colorScheme.surfaceContainerHigh
+                                )
+                            ) {
+                                Row(
+                                    Modifier.padding(14.dp),
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Box(
+                                        Modifier.size(36.dp).clip(RoundedCornerShape(10.dp))
+                                            .background(FieldMindTheme.colors.project.copy(alpha = 0.16f)),
+                                        contentAlignment = Alignment.Center
+                                    ) { Icon(FieldMindIcons.Project, null, tint = FieldMindTheme.colors.project, size = 20.dp) }
+                                    Column(Modifier.weight(1f)) {
+                                        Text(name, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
+                                        Text(details.first, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                                    }
+                                    Icon(FieldMindIcons.Add, null, tint = FieldMindTheme.colors.project, size = 18.dp)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
 
         if (show) item {
             InlineFormCard("New Project", onDismiss = { show = false; title = ""; question = "" }, onSave = {
@@ -443,11 +515,20 @@ private fun ProjectWorkspaceCard(
     val relatedQuestions = questions.count { it.relatedProjectId == project.id }
     val relatedObservations = observations.count { it.projectId == project.id }
     val relatedData = data.count { it.projectId == project.id }
+    val relatedReports = reports.count { it.projectId == project.id }
     val bars = listOf(
         "Q" to relatedQuestions.toFloat(),
         "Obs" to relatedObservations.toFloat(),
         "Data" to relatedData.toFloat()
     )
+    val progressMetrics = listOf(
+        "Questions" to relatedQuestions.toFloat(),
+        "Observations" to relatedObservations.toFloat(),
+        "Data" to relatedData.toFloat(),
+        "Reports" to relatedReports.toFloat()
+    )
+    val maxMetric = progressMetrics.maxOfOrNull { it.second }?.coerceAtLeast(1f) ?: 1f
+
     Card(
         modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),
         shape = RoundedCornerShape(24.dp),
@@ -461,12 +542,38 @@ private fun ProjectWorkspaceCard(
                 }
                 Column(Modifier.weight(1f)) {
                     Text(project.title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-                    Text(project.topicType, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Text(project.topicType, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text("•", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text("${relatedObservations} obs", style = MaterialTheme.typography.labelMedium, color = FieldMindTheme.colors.observation)
+                    }
                 }
                 InfoChip(project.status)
             }
-            Text(project.objective.ifBlank { project.researchQuestion.ifBlank { "Open project workspace" } }, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 3, overflow = TextOverflow.Ellipsis)
-            BarChart(bars, barColors = listOf(FieldMindTheme.colors.question, FieldMindTheme.colors.observation, FieldMindTheme.colors.data))
+            Text(project.objective.ifBlank { project.researchQuestion.ifBlank { "Open project workspace" } }, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2, overflow = TextOverflow.Ellipsis)
+            
+            // Mini progress bars for each metric
+            progressMetrics.forEach { (label, count) ->
+                val fraction = (count / maxMetric).coerceIn(0f, 1f)
+                Row(
+                    Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(label, style = MaterialTheme.typography.labelSmall, modifier = Modifier.width(72.dp))
+                    Row(
+                        Modifier.weight(1f).height(6.dp).clip(RoundedCornerShape(3.dp))
+                            .background(MaterialTheme.colorScheme.surfaceContainerHighest),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(
+                            Modifier.fillMaxWidth(fraction).fillMaxHeight()
+                                .background(FieldMindTheme.colors.project.copy(alpha = 0.4f + fraction * 0.6f), RoundedCornerShape(3.dp))
+                        )
+                    }
+                    Text("${count.toInt()}", style = MaterialTheme.typography.labelSmall, modifier = Modifier.width(24.dp), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
         }
     }
 }

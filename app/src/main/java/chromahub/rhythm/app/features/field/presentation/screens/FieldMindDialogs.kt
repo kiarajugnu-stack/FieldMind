@@ -3,6 +3,8 @@ package fieldmind.research.app.features.field.presentation.screens
 import android.app.KeyguardManager
 import android.net.Uri
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -146,6 +148,56 @@ internal fun SourcePreviewCard(link: String, fileUri: String, modifier: Modifier
 }
 
 
+/**
+ * Progressive disclosure section for forms.
+ * Collapsible card section with expand/collapse toggle and filled-field counter.
+ */
+@Composable
+private fun ProgressiveSection(
+    title: String,
+    description: String,
+    icon: MaterialSymbolIcon,
+    expanded: Boolean,
+    onToggle: () -> Unit,
+    filledCount: Int = 0,
+    totalCount: Int = 0,
+    content: @Composable ColumnScope.() -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth().animateContentSize(),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = if (expanded) MaterialTheme.colorScheme.surfaceContainerLow
+            else MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.6f)
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Column(Modifier.padding(4.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth().clickable(onClick = onToggle).padding(horizontal = 14.dp, vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                Box(Modifier.size(36.dp).clip(RoundedCornerShape(11.dp)).background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)),
+                    contentAlignment = Alignment.Center
+                ) { Icon(icon, null, tint = MaterialTheme.colorScheme.primary, size = 20.dp) }
+                Column(Modifier.weight(1f)) {
+                    Text(title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Text(description, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        if (filledCount > 0 && !expanded)
+                            Text("($filledCount/$totalCount)", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
+                    }
+                }
+                Icon(if (expanded) FieldMindIcons.Up else FieldMindIcons.Down, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, size = 20.dp)
+            }
+            AnimatedVisibility(visible = expanded, enter = expandVertically(), exit = shrinkVertically()) {
+                Column(Modifier.padding(start = 14.dp, end = 14.dp, bottom = 14.dp)) { content() }
+            }
+        }
+    }
+}
+
 @Composable
 internal fun NewSourceDialog(viewModel: FieldMindViewModel, onDismiss: () -> Unit) {
     val context = LocalContext.current
@@ -170,6 +222,10 @@ internal fun NewSourceDialog(viewModel: FieldMindViewModel, onDismiss: () -> Uni
     var notes by remember { mutableStateOf("") }
     var reliability by remember { mutableStateOf(3f) }
     var projectId by remember { mutableStateOf<Long?>(null) }
+    var showIdentity by remember { mutableStateOf(true) }
+    var showLinkFile by remember { mutableStateOf(false) }
+    var showReading by remember { mutableStateOf(false) }
+    var showReview by remember { mutableStateOf(false) }
     val docPicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         if (uri != null) {
             runCatching { context.contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION) }
@@ -211,23 +267,30 @@ internal fun NewSourceDialog(viewModel: FieldMindViewModel, onDismiss: () -> Uni
             onDismiss()
         }
     }) {
-        SourceFormHero("Add a research source", "Save citation details, files, links, reading notes, and project context in one place.")
+        SourceFormHero("Add a research source", "Start with title + type. Expand sections as needed.")
+        // Step 1: Source type — always visible
         CaptureStep("Source type", "Choose what kind of material this is.", FieldMindIcons.Source) {
             ChoiceChips(sourceLibraryTypes, type) { type = it }
         }
-        CaptureStep("Identity", "Capture citation identifiers now so export stays useful later.", FieldMindIcons.Article) {
+        // Step 2: Identity — always visible (title, author)
+        ProgressiveSection("Identity", "Citation details", FieldMindIcons.Article, showIdentity, { showIdentity = !showIdentity },
+            filledCount = listOfNotNull(title.takeIf { it.isNotBlank() }, author.takeIf { it.isNotBlank() }).size, totalCount = 2
+        ) {
             FieldTextField(title, { title = it }, "Title")
             FieldTextField(author, { author = it }, "Author / creator")
-            FieldTextField(doiOrIsbn, { doiOrIsbn = it }, "DOI / ISBN", supportingText = "Crossref DOI or Open Library ISBN metadata can be checked later.")
+            FieldTextField(doiOrIsbn, { doiOrIsbn = it }, "DOI / ISBN")
             FieldTextField(publisherOrJournal, { publisherOrJournal = it }, "Publisher / journal")
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 FieldTextField(dateOrYear, { dateOrYear = it }, "Date / year", modifier = Modifier.weight(1f))
                 FieldTextField(accessDate, { accessDate = it }, "Accessed", modifier = Modifier.weight(1f))
             }
         }
-        CaptureStep("Link or file", "Attach PDFs, images, local documents, or a web link.", FieldMindIcons.Link) {
-            FieldTextField(link, { link = it }, "Web link", supportingText = "Supports normal links and YouTube preview cards.")
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        // Step 3: Link/file — collapsible
+        ProgressiveSection("Link or file", "PDF, image, or web link", FieldMindIcons.Link, showLinkFile, { showLinkFile = !showLinkFile },
+            filledCount = listOfNotNull(link.takeIf { it.isNotBlank() }, fileUri.takeIf { it.isNotBlank() }).size, totalCount = 2
+        ) {
+            FieldTextField(link, { link = it }, "Web link")
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedButton(onClick = { haptics.light(); docPicker.launch(arrayOf("application/pdf", "text/*", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "image/*")) }, modifier = Modifier.weight(1f)) {
                     Icon(FieldMindIcons.File, null, size = 18.dp); Spacer(Modifier.size(6.dp)); Text("Document")
                 }
@@ -238,15 +301,21 @@ internal fun NewSourceDialog(viewModel: FieldMindViewModel, onDismiss: () -> Uni
             if (fileUri.isNotBlank()) FieldTextField(fileUri, { fileUri = it }, "Attached file URI")
             SourcePreviewCard(link = link, fileUri = fileUri)
         }
-        CaptureStep("Reading notes", "Use Cornell-style cues: main idea, evidence, questions, and takeaways.", FieldMindIcons.Edit) {
+        // Step 4: Reading notes — collapsible
+        ProgressiveSection("Reading notes", "Main idea, findings, takeaways", FieldMindIcons.Edit, showReading, { showReading = !showReading },
+            filledCount = listOfNotNull(summary.takeIf { it.isNotBlank() }, findings.takeIf { it.isNotBlank() }).size, totalCount = 2
+        ) {
             FieldTextField(summary, { summary = it }, "Main idea", minLines = 2)
-            FieldTextField(findings, { findings = it }, "Key findings / definitions", minLines = 2)
-            FieldTextField(taught, { taught = it }, "What this source taught me", minLines = 2)
-            FieldTextField(questions, { questions = it }, "New questions / cue column", minLines = 2)
+            FieldTextField(findings, { findings = it }, "Key findings", minLines = 2)
+            FieldTextField(taught, { taught = it }, "What this taught me", minLines = 2)
+            FieldTextField(questions, { questions = it }, "New questions", minLines = 2)
             FieldTextField(notes, { notes = it }, "Paper / Cornell notes", minLines = 4)
-            FieldTextField(citationStyleNote, { citationStyleNote = it }, "Citation style note", supportingText = "APA/MLA/manual citation reminder.")
+            FieldTextField(citationStyleNote, { citationStyleNote = it }, "Citation style note")
         }
-        CaptureStep("Review & project", "Mark priority, reading state, credibility, and where it belongs.", FieldMindIcons.Check) {
+        // Step 5: Review & project — collapsible
+        ProgressiveSection("Review & project", "Status, credibility, and project link", FieldMindIcons.Check, showReview, { showReview = !showReview },
+            filledCount = if (projectId != null) 1 else 0, totalCount = 1
+        ) {
             Text("Reading status", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
             ChoiceChips(readingStatuses, readingStatus) { readingStatus = it }
             Text("Importance", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)

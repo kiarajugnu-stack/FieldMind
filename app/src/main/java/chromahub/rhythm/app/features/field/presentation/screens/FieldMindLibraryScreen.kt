@@ -77,7 +77,7 @@ fun KnowledgeLibraryScreen(
     val tabs = listOf("Sources", "Notes", "Reading", "Flashcards", "Learn")
     Column(Modifier.fillMaxSize()) {
         Column(Modifier.padding(20.dp, 20.dp, 20.dp, 8.dp)) {
-            FieldScreenHeader("Library", "Sources, active reading, review cards, and skills.", icon = FieldMindIcons.Library)
+            FieldScreenHeader("Knowledge Hub", "Sources, notes, reading, flashcards, and learning.", icon = FieldMindIcons.Library)
         }
         ScrollableTabRow(selectedTabIndex = tab, edgePadding = 20.dp, containerColor = MaterialTheme.colorScheme.background) {
             tabs.forEachIndexed { i, label -> Tab(tab == i, { tab = i }, text = { Text(label) }) }
@@ -187,11 +187,151 @@ private fun NotePanel(viewModel: FieldMindViewModel, items: List<NoteEntity>, on
 }
 
 @Composable
+private fun NoteCaptureCard(
+    viewModel: FieldMindViewModel,
+    initialCategory: String,
+    onSaved: () -> Unit
+) {
+    val haptics = rememberFieldMindHaptics()
+    var title by remember { mutableStateOf("") }
+    var body by remember { mutableStateOf("") }
+    var category by remember(initialCategory) { mutableStateOf(initialCategory) }
+    var tags by remember { mutableStateOf("") }
+
+    InlineFormCard(
+        title = "Capture Note",
+        onDismiss = onSaved,
+        onSave = {
+            if (body.isNotBlank() || title.isNotBlank()) {
+                haptics.confirm()
+                val fallbackTitle = body
+                    .lineSequence()
+                    .firstOrNull { it.isNotBlank() }
+                    ?.take(48)
+                    ?: "Untitled note"
+                viewModel.addNote(
+                    title = title.ifBlank { fallbackTitle },
+                    body = body,
+                    category = category,
+                    tags = tags,
+                    onSaved = { onSaved() }
+                )
+            }
+        },
+        saveEnabled = body.isNotBlank() || title.isNotBlank()
+    ) {
+        FieldTextField(title, { title = it }, "Title", supportingText = "Optional — generated from the note if blank")
+        FieldTextField(body, { body = it }, "Note body", minLines = 5, required = true)
+        Text("Category", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        ChoiceChips(observationCategories, category) { category = it }
+        FieldTextField(tags, { tags = it }, "Tags", supportingText = "Comma-separated, optional")
+    }
+}
+
+@Composable
 private fun PaperReadingPanel(items: List<SourceEntity>, onOpenDetail: (String, Long) -> Unit) {
+    val readCount = items.count { it.readingStatus == "Read" }
+    val inProgressCount = items.count { it.readingStatus == "In progress" }
+    val total = items.size.coerceAtLeast(1)
+    val progressFraction = readCount.toFloat() / total
+
     LazyColumn(contentPadding = panelPadding(), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-        item { SectionHeader("Paper reading mode", "Prompts: topic, problem, method, result, unclear points, new question, next verification.") }
-        if (items.isEmpty()) item { EmptyState("Add a source first", "Paper prompts are saved inside each source note.", icon = FieldMindIcons.Source) }
-        items(items) { EntityCard(it.title, "read", body = it.paperNotes.ifBlank { "Open source detail and answer active-reading prompts." }, meta = listOf(it.readingStatus.ifBlank { "Not started" })) { onOpenDetail("source", it.id) } }
+        item {
+            SectionHeader("Paper reading mode", "Prompts: topic, problem, method, result, unclear points, new question, next verification.")
+        }
+        if (items.isNotEmpty()) {
+            item {
+                Card(
+                    shape = RoundedCornerShape(20.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                ) {
+                    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                            Icon(FieldMindIcons.Book, null, tint = FieldMindTheme.colors.source, size = 22.dp)
+                            Column(Modifier.weight(1f)) {
+                                Text("Reading progress", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+                                Text("$readCount read, $inProgressCount in progress, ${total - readCount - inProgressCount} not started", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
+                            Text("${(progressFraction * 100).toInt()}%", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.ExtraBold, color = FieldMindTheme.colors.source)
+                        }
+                        LinearProgressIndicator(
+                            progress = progressFraction,
+                            modifier = Modifier.fillMaxWidth().height(6.dp)
+                                .clip(RoundedCornerShape(999.dp)),
+                            color = FieldMindTheme.colors.source,
+                            trackColor = MaterialTheme.colorScheme.surfaceContainerHighest
+                        )
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
+                            StatPill("${items.size}", "Total", FieldMindIcons.Library)
+                            StatPill("$readCount", "Read", FieldMindIcons.Done)
+                            StatPill("$inProgressCount", "In progress", FieldMindIcons.Timer)
+                        }
+                    }
+                }
+            }
+        }
+        if (items.isEmpty()) {
+            item { EmptyState("Add a source first", "Paper prompts are saved inside each source note.", icon = FieldMindIcons.Source) }
+        }
+        // Structured reading prompts card
+        item {
+            Card(
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+            ) {
+                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Icon(FieldMindIcons.Question, null, tint = MaterialTheme.colorScheme.primary, size = 20.dp)
+                        Text("Active reading prompts", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+                    }
+                    Text("For each paper, answer these prompts in the source detail:", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    val prompts = listOf(
+                        "📌 What is the main topic and thesis?",
+                        "🔍 What problem does this address?",
+                        "⚙️ What method or approach is used?",
+                        "📊 What are the key results or findings?",
+                        "❓ What points are unclear or missing?",
+                        "💡 What new question does this raise?",
+                        "✅ What would you verify or replicate?"
+                    )
+                    prompts.forEach { prompt ->
+                        Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.Top) {
+                            Text("•", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
+                            Text(prompt, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurface)
+                        }
+                    }
+                }
+            }
+        }
+        items(items) { source ->
+            val readingColor = when (source.readingStatus) {
+                "Read" -> FieldMindTheme.colors.positive
+                "In progress" -> FieldMindTheme.colors.flashcard
+                else -> MaterialTheme.colorScheme.onSurfaceVariant
+            }
+            EntityCard(
+                source.title,
+                "read",
+                body = source.paperNotes.ifBlank {
+                    if (source.readingStatus == "Read") "Completed reading" else "Open source detail and answer active-reading prompts."
+                },
+                meta = listOf(
+                    source.readingStatus.ifBlank { "Not started" },
+                    "${source.personalSummary.length.coerceAtMost(2000)} chars"
+                )
+            ) { onOpenDetail("source", source.id) }
+        }
+    }
+}
+
+@Composable
+private fun StatPill(value: String, label: String, icon: MaterialSymbolIcon) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(2.dp)) {
+        Icon(icon, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, size = 14.dp)
+        Text(value, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+        Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 
@@ -389,7 +529,7 @@ private fun LearnPanel(viewModel: FieldMindViewModel, onOpenReader: (String, Str
         item { SectionHeader("Curated reference library", "Expand when you want deeper subject-specific learning.") }
         items(LearnLibrary) { category -> LearnCategoryCard(category) { res -> onOpenReader(res.url, res.title) } }
         item { SectionHeader("Optional online discovery", "Use verified metadata sources; never trust generated citations without checking.") }
-        item { AssistantPanel(viewModel) }
+        item { ResearchAssistantCard() }
         item { OnlineApiProposalCard() }
     }
 }
@@ -533,6 +673,42 @@ private fun OnlineApiProposalCard() {
     }
 }
 
+
+@Composable
+private fun ResearchAssistantCard() {
+    Card(
+        modifier = Modifier.fillMaxWidth().animateContentSize(),
+        shape = RoundedCornerShape(26.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Row(
+                Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Box(
+                    Modifier.size(44.dp).clip(RoundedCornerShape(14.dp))
+                        .background(MaterialTheme.colorScheme.primaryContainer),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(icon = FieldMindIcons.Sparkle, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimaryContainer, size = 24.dp)
+                }
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    Text("Research assistant", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                    Text("Turn observations into structured reports. Use templates to build consistent field notes.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                Icon(icon = FieldMindIcons.Ask, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, size = 22.dp)
+            }
+            Text(
+                "Available tools: citation lookup via DOI/ISBN, field report templates, PDF annotation, and structured data export.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
 
 @Composable
 private fun ResearchJourneyHero(next: ResearchMilestone, signals: String, onOpenReader: (String, String) -> Unit) {
@@ -727,4 +903,3 @@ private fun ReaderFallbackCard(message: String, url: String, onPrimary: () -> Un
         }
     }
 }
-

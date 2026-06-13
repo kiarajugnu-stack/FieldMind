@@ -1,46 +1,43 @@
 package fieldmind.research.app.features.field.presentation.screens
 
 import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.CoroutineScope
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.LinearProgressIndicator
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.OutlinedButton
+import fieldmind.research.app.features.field.data.database.entity.*
 import fieldmind.research.app.features.field.presentation.components.*
 import fieldmind.research.app.features.field.presentation.navigation.FieldMindScreen
 import fieldmind.research.app.features.field.presentation.theme.FieldMindTheme
 import fieldmind.research.app.features.field.presentation.viewmodel.FieldMindViewModel
 import fieldmind.research.app.shared.presentation.components.icons.Icon
+import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon
+import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+import java.time.LocalDate
+import java.time.ZoneId
+
+// ══════════════════════════════════════════════════════════════════════
+//  Research Dashboard — Insights Redesign
+//  Sections: Profile, Metrics, Timeseries, Category, KG, Health, Weather, Achievements, Export
+// ══════════════════════════════════════════════════════════════════════
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -59,171 +56,568 @@ fun InsightsScreen(
     val dataRecords by viewModel.dataRecords.collectAsState()
     val flashcards by viewModel.flashcards.collectAsState()
     val tags by viewModel.commonTags.collectAsState()
+    val researchSessions by viewModel.researchSessions.collectAsState()
     val profileName by viewModel.fieldSettings.profileName.collectAsState()
     val profileRole by viewModel.fieldSettings.profileRole.collectAsState()
     val profileFocus by viewModel.fieldSettings.profileFocus.collectAsState()
-    val localModel by viewModel.fieldSettings.localModelOption.collectAsState()
-    val localReady by viewModel.fieldSettings.localModelDownloaded.collectAsState()
-    val backupInterval by viewModel.fieldSettings.autoBackupInterval.collectAsState()
+    val goal by viewModel.fieldSettings.dailyObservationGoal.collectAsState()
     val colors = FieldMindTheme.colors
 
-    val categoryCounts = observations.groupingBy { it.category }.eachCount().entries.sortedByDescending { it.value }.take(6).map { it.key to it.value.toFloat() }
-    val trend = observations.groupingBy { it.date }.eachCount().toSortedMap().values.toList().takeLast(10).map { it.toFloat() }
+    // ── Computed analytics ──
+    val todayKey = remember { SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date()) }
+    val todayCount = observations.count { it.date == todayKey }
+    val weekCount = observations.count { it.date >= LocalDate.now().minusDays(7).toString() }
+
+    val categoryCounts = observations.groupingBy { it.category }.eachCount().entries
+        .sortedByDescending { it.value }.take(8).map { it.key to it.value.toFloat() }
+    val totalCats = categoryCounts.sumOf { it.second.toDouble() }.toFloat().coerceAtLeast(1f)
+
+    val trend = observations.groupingBy { it.date }.eachCount().toSortedMap()
+    val trendValues = trend.values.toList().takeLast(14).map { it.toFloat() }
+
     val confidenceParts = listOf(
         Triple("Sure", observations.count { it.confidenceLevel == "Sure" }.toFloat(), colors.confidenceSure),
         Triple("Guess", observations.count { it.confidenceLevel == "Guess" }.toFloat(), colors.confidenceGuess),
         Triple("Verify", observations.count { it.confidenceLevel == "Needs Verification" }.toFloat(), colors.confidenceVerify)
     ).filter { it.second > 0f }
-    val mapPoints = observations.mapNotNull { o -> o.latitude?.let { lat -> o.longitude?.let { lon -> lat to lon } } }
 
-    val graphNodes = remember(observations, questions, hypotheses, projects, sources) {
-        val nodes = mutableListOf<GraphNode>()
-        val index = HashMap<String, Int>()
-        val edges = mutableListOf<Pair<Int, Int>>()
-        fun add(key: String, label: String, color: androidx.compose.ui.graphics.Color, emphasis: Boolean): Int =
-            index.getOrPut(key) { nodes.add(GraphNode(label, color, emphasis)); nodes.size - 1 }
-        projects.take(8).forEach { p -> add("project:${p.id}", p.title, colors.project, true) }
-        questions.filter { it.relatedProjectId != null }.take(12).forEach { q ->
-            index["project:${q.relatedProjectId}"]?.let { p -> edges.add(add("question:${q.id}", q.questionText, colors.question, false) to p) }
-        }
-        observations.filter { it.projectId != null }.take(16).forEach { o ->
-            index["project:${o.projectId}"]?.let { p -> edges.add(add("obs:${o.id}", o.subject, colors.observation, false) to p) }
-        }
-        sources.filter { it.relatedProjectId != null }.take(12).forEach { s ->
-            index["project:${s.relatedProjectId}"]?.let { p -> edges.add(add("source:${s.id}", s.title, colors.source, false) to p) }
-        }
-        hypotheses.filter { it.linkedQuestionId != null }.take(12).forEach { h ->
-            index["question:${h.linkedQuestionId}"]?.let { q -> edges.add(add("hyp:${h.id}", h.prediction, colors.hypothesis, false) to q) }
-        }
-        nodes.toList() to edges.toList()
+    val mapPoints = observations.mapNotNull { o ->
+        o.latitude?.let { lat -> o.longitude?.let { lon -> lat to lon } }
     }
-    val achievements = remember(observations, questions, projects, sources, reports, notes, dataRecords, flashcards) {
+
+    // ── Tags co-occurrence ──
+    val tagPairs = remember(observations) {
+        observations.flatMap { obs ->
+            val t = obs.tags.split(",").map { it.trim() }.filter { it.isNotBlank() }
+            t.flatMap { a -> t.mapNotNull { b -> if (a < b) Pair(a, b) else null } }
+        }
+    }
+
+    // ── Hourly activity ──
+    val hourlyActivity = remember(observations) {
+        val hours = mutableMapOf<Int, Int>()
+        observations.forEach { obs ->
+            try {
+                val h = obs.time.split(":").firstOrNull()?.toIntOrNull()
+                if (h != null) hours[h] = (hours[h] ?: 0) + 1
+            } catch (_: Exception) {}
+        }
+        hours.toMap()
+    }
+
+    // ── Day-of-week counts ──
+    val dayOfWeekCounts = remember(observations) {
+        val days = mutableMapOf<Int, Int>()
+        observations.forEach { obs ->
+            try {
+                val dateParts = obs.date.split("-")
+                if (dateParts.size == 3) {
+                    val ld = LocalDate.of(dateParts[0].toInt(), dateParts[1].toInt(), dateParts[2].toInt())
+                    val dow = ld.dayOfWeek.value // 1=Mon...7=Sun
+                    days[dow] = (days[dow] ?: 0) + 1
+                }
+            } catch (_: Exception) {}
+        }
+        days.toMap()
+    }
+
+    // ── Daily values for moving average ──
+    val dailyValues = remember(observations) {
+        val dates = observations.groupingBy { it.date }.eachCount()
+        // Fill in last 14 days with 0s for gaps
+        val result = mutableMapOf<String, Int>()
+        val today = LocalDate.now()
+        (0 until 14).forEach { i ->
+            val date = today.minusDays(i.toLong()).toString()
+            result[date] = dates[date] ?: 0
+        }
+        result.toMap()
+    }
+
+    // ── Weather correlation data ──
+    val weatherData = remember(observations) {
+        observations.mapNotNull { o ->
+            o.weatherTemperature?.let { temp -> (temp.toFloat() to 1f) }
+        }.take(50)
+    }
+    // If we have weather temps aggregated with counts, make correlation plot
+    val weatherCorrelation = remember(weatherData) {
+        weatherData.groupBy({ it.first.toInt() }, { it.second }).map { (temp, counts) ->
+            temp.toFloat() to counts.size.toFloat()
+        }.sortedBy { it.first }
+    }
+
+    // ── Knowledge graph ──
+    val graphData = remember(observations, questions, hypotheses, projects, sources) {
+        val nodes = mutableListOf<GraphNode>()
+        val edges = mutableListOf<Pair<Int, Int>>()
+        val nodeTimestamps = mutableListOf<Long>()
+        val index = HashMap<String, Int>()
+        fun add(key: String, label: String, color: Color, emphasis: Boolean, time: Long = System.currentTimeMillis()): Int =
+            index.getOrPut(key) { nodes.add(GraphNode(label, color, emphasis)); nodeTimestamps.add(time); nodes.size - 1 }
+        projects.forEach { p -> add("p:${p.id}", p.title, colors.project, true, p.createdAt) }
+        questions.filter { it.relatedProjectId != null }.forEach { q ->
+            val pIdx = index["p:${q.relatedProjectId}"]
+            if (pIdx != null) edges.add(add("q:${q.id}", q.questionText, colors.question, false, q.createdAt) to pIdx)
+        }
+        observations.filter { it.projectId != null }.forEach { o ->
+            val pIdx = index["p:${o.projectId}"]
+            if (pIdx != null) edges.add(add("o:${o.id}", o.subject, colors.observation, false, o.timestamp) to pIdx)
+        }
+        sources.filter { it.relatedProjectId != null }.forEach { s ->
+            val pIdx = index["p:${s.relatedProjectId}"]
+            if (pIdx != null) edges.add(add("s:${s.id}", s.title, colors.source, false, s.createdAt) to pIdx)
+        }
+        hypotheses.filter { it.linkedQuestionId != null }.forEach { h ->
+            val qIdx = index["q:${h.linkedQuestionId}"]
+            if (qIdx != null) edges.add(add("h:${h.id}", h.prediction, colors.hypothesis, false, h.createdAt) to qIdx)
+        }
+        Triple(nodes.toList(), edges.toList(), nodeTimestamps.toList())
+    }
+
+    // ── Data quality score ──
+    val dataQualityScore = remember(observations, questions, hypotheses, sources, tags) {
+        if (observations.isEmpty()) return@remember Triple(0, emptyList<Pair<String, Float>>(), "No data yet")
+        val obsSize = observations.size.coerceAtLeast(1)
+        val withEvidence = observations.count { it.evidenceSummary.isNotBlank() }.toFloat() / obsSize
+        val withQuestions = if (observations.isEmpty()) 0f else questions.size.toFloat() / obsSize
+        val withHypotheses = if (questions.isEmpty()) 1f else hypotheses.size.toFloat() / questions.size.coerceAtLeast(1)
+        val withTags = if (observations.isEmpty()) 0f else tags.size.toFloat() / obsSize.coerceAtMost(10)
+        val withGps = if (observations.isEmpty()) 0f else observations.count { it.latitude != null }.toFloat() / obsSize
+        val metrics = listOf(
+            "Evidence" to withEvidence.coerceIn(0f, 1f),
+            "Questions/Obs" to withQuestions.coerceIn(0f, 1f),
+            "Hypotheses/Qs" to withHypotheses.coerceIn(0f, 1f),
+            "Tags" to withTags.coerceIn(0f, 1f),
+            "GPS" to withGps.coerceIn(0f, 1f)
+        )
+        val score = (metrics.sumOf { it.second.toDouble() } / metrics.size * 100).toInt()
+        Triple(score, metrics, "Based on ${observations.size} observations")
+    }
+
+    // ── Achievements ──
+    val achievements = remember(observations, questions, projects, sources, reports, notes, dataRecords, flashcards, researchSessions) {
         listOf(
-            Achievement("First Observation", "Save one facts-only field observation.", FieldMindIcons.Observation, colors.observation, observations.size, 1),
-            Achievement("7-Day Observer", "Log observations across seven different dates.", FieldMindIcons.Streak, colors.warning, observations.map { it.date }.distinct().size, 7),
-            Achievement("Evidence Collector", "Attach or summarize evidence in 10 observations.", FieldMindIcons.Camera, colors.observation, observations.count { it.evidenceSummary.isNotBlank() }, 10),
-            Achievement("Source Curator", "Save five sources with citation metadata.", FieldMindIcons.Source, colors.source, sources.size, 5),
-            Achievement("Question Builder", "Write five researchable questions.", FieldMindIcons.Question, colors.question, questions.size, 5),
-            Achievement("Project Starter", "Create your first research project.", FieldMindIcons.Project, colors.project, projects.size, 1),
-            Achievement("Data Logger", "Record ten data entries.", FieldMindIcons.Data, colors.data, dataRecords.size, 10),
-            Achievement("Report Writer", "Draft a research report.", FieldMindIcons.Report, colors.report, reports.size, 1),
-            Achievement("Note Maker", "Save ten free-form notes.", FieldMindIcons.Note, colors.source, notes.size, 10),
-            Achievement("Review Builder", "Create five flashcards from sources or findings.", FieldMindIcons.Flashcard, colors.flashcard, flashcards.size, 5)
+            ResearchAchievement("First Observation", "Save your first field observation", FieldMindIcons.Observation, colors.observation, observations.size, 1),
+            ResearchAchievement("7-Day Observer", "Log observations across 7 different days", FieldMindIcons.Streak, colors.warning, observations.map { it.date }.distinct().size, 7),
+            ResearchAchievement("Evidence Collector", "Attach evidence to 10 observations", FieldMindIcons.Camera, colors.observation, observations.count { it.evidenceSummary.isNotBlank() }, 10),
+            ResearchAchievement("Source Curator", "Save 5 sources with metadata", FieldMindIcons.Source, colors.source, sources.size, 5),
+            ResearchAchievement("Question Builder", "Write 5 research questions", FieldMindIcons.Question, colors.question, questions.size, 5),
+            ResearchAchievement("Project Starter", "Create a research project", FieldMindIcons.Project, colors.project, projects.size, 1),
+            ResearchAchievement("Data Logger", "Record 10 data entries", FieldMindIcons.Data, colors.data, dataRecords.size, 10),
+            ResearchAchievement("Report Writer", "Draft a research report", FieldMindIcons.Report, colors.report, reports.size, 1),
+            ResearchAchievement("Note Maker", "Save 10 free-form notes", FieldMindIcons.Note, colors.source, notes.size, 10),
+            ResearchAchievement("Flashcard Master", "Create 20 flashcards", FieldMindIcons.Flashcard, colors.flashcard, flashcards.size, 20),
+            ResearchAchievement("Session Runner", "Complete 3 research sessions", FieldMindIcons.Session, colors.positive, researchSessions.count { it.status == "Completed" }, 3),
+            ResearchAchievement("Map Explorer", "Tag 15 observations with GPS", FieldMindIcons.Map, colors.info, observations.count { it.latitude != null }, 15),
+            ResearchAchievement("Streak Master", "Maintain a 30-day streak", FieldMindIcons.Streak, colors.confidenceSure, observations.map { it.date }.distinct().size, 30),
+            ResearchAchievement("Hypothesis Tester", "Create 5 hypotheses", FieldMindIcons.Hypothesis, colors.hypothesis, hypotheses.size, 5),
+            ResearchAchievement("Century Observer", "Log 100 observations", FieldMindIcons.Observation, colors.observation, observations.size, 100)
         )
     }
-    val context = LocalContext.current
-    val snackbarState = remember { SnackbarHostState() }
+
     val scope = rememberCoroutineScope()
-    val unlockedTitles = achievements.filter { it.unlocked }.joinToString("|") { it.title }
-    LaunchedEffect(unlockedTitles) {
-        if (unlockedTitles.isNotBlank()) {
-            val prefs = context.getSharedPreferences("fieldmind_achievements", 0)
-            achievements.filter { it.unlocked && !prefs.getBoolean(it.title, false) }.forEach { achievement ->
-                scope.launch { snackbarState.showSnackbar("🎉 ${achievement.title} unlocked!") }
-                prefs.edit().putBoolean(achievement.title, true).apply()
-            }
+    val snackbarState = remember { SnackbarHostState() }
+
+    // ── Calculate today's daily calendar map ──
+    val calendarData = remember(observations) {
+        observations.groupingBy { it.date }.eachCount().mapKeys { (dateStr, _) ->
+            try {
+                val parts = dateStr.split("-")
+                LocalDate.of(parts[0].toInt(), parts[1].toInt(), parts[2].toInt())
+            } catch (_: Exception) { LocalDate.now() }
         }
     }
 
-    Scaffold(snackbarHost = { SnackbarHost(snackbarState) }, containerColor = MaterialTheme.colorScheme.background) { padding ->
-    LazyColumn(Modifier.fillMaxSize().padding(padding), contentPadding = PaddingValues(20.dp, 20.dp, 20.dp, 96.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
-        item { FieldScreenHeader("Insights", "Offline analysis of your own archive.", icon = FieldMindIcons.Insights, actionIcon = FieldMindIcons.Search, onAction = { onNavigate(FieldMindScreen.Search) }) }
-        item { ResearchProfileInsightCard(profileName, profileRole, profileFocus, localModel, localReady, backupInterval) }
-        item {
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                MetricTile("Observations", observations.size.toString(), FieldMindIcons.Observation, Modifier.weight(1f), colors.observation)
-                MetricTile("Hypotheses", hypotheses.size.toString(), FieldMindIcons.Hypothesis, Modifier.weight(1f), colors.hypothesis)
-                MetricTile("Reports", reports.size.toString(), FieldMindIcons.Report, Modifier.weight(1f), colors.report)
+    Scaffold(
+        snackbarHost = { SnackbarHost(snackbarState) },
+        containerColor = MaterialTheme.colorScheme.background
+    ) { padding ->
+        LazyColumn(
+            Modifier.fillMaxSize().padding(padding),
+            contentPadding = PaddingValues(16.dp, 16.dp, 16.dp, 96.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            // ═══════════ SECTION 1: Header & Profile ═══════════
+            item {
+                FieldScreenHeader(
+                    "Research Dashboard",
+                    "Your research at a glance — ${if (observations.isEmpty()) "start capturing to see analytics" else "${observations.size} observations analyzed"}",
+                    icon = FieldMindIcons.Insights,
+                    actionIcon = FieldMindIcons.Search,
+                    onAction = { onNavigate(FieldMindScreen.Search) }
+                )
             }
-        }
-        if (observations.isEmpty()) {
-            item { EmptyState("No data yet", "Insights, charts, and your offline map appear as you log observations.", icon = FieldMindIcons.Insights, actionLabel = "Capture one") { onNavigate(FieldMindScreen.Observe) } }
-        }
-        if (categoryCounts.isNotEmpty()) {
-            item { InsightCard("Observations by category", FieldMindIcons.Data) { BarChart(categoryCounts, barColors = categoryCounts.map { colors.categoryColor(it.first) }) } }
-        }
-        if (trend.size >= 2) {
-            item { InsightCard("Daily capture trend", FieldMindIcons.Trend) { LineChart(trend, lineColor = colors.positive) } }
-        }
-        if (confidenceParts.isNotEmpty()) {
-            item { InsightCard("Confidence balance", FieldMindIcons.Check) { BreakdownBar(confidenceParts) } }
-        }
-        item {
-            InsightCard("Field map", FieldMindIcons.Location) {
-                OsmMap(points = mapPoints, markerColor = colors.observation)
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                    TextButton(onClick = { onNavigate(FieldMindScreen.MapScreen) }) {
-                        Text("Open full map")
-                        Spacer(Modifier.size(4.dp))
-                        Icon(icon = FieldMindIcons.Forward, contentDescription = null, size = 18.dp)
+
+            item { ResearchProfileCard(profileName, profileRole, profileFocus, todayCount, weekCount, goal) }
+
+            if (observations.isEmpty()) {
+                item {
+                    EmptyState(
+                        "No data yet",
+                        "Insights, charts, and your offline map appear as you log observations. Start capturing to build your research dashboard.",
+                        icon = FieldMindIcons.Insights,
+                        actionLabel = "Capture first observation"
+                    ) { onNavigate(FieldMindScreen.Observe) }
+                }
+                return@LazyColumn
+            }
+
+            // ═══════════ SECTION 2: Key Performance Metrics ═══════════
+            item {
+                SectionHeader("Performance", "Your research at a glance")
+            }
+            item {
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    MetricTile(
+                        "Observations", observations.size.toString(),
+                        FieldMindIcons.Observation, Modifier.weight(1f), colors.observation,
+                        trend = if (weekCount > 0) "+$weekCount this week" else null
+                    )
+                    MetricTile(
+                        "Questions", "${questions.count { it.status != "Answered" }}/${questions.size}",
+                        FieldMindIcons.Question, Modifier.weight(1f), colors.question
+                    )
+                    MetricTile(
+                        "Sources", "${sources.count { it.readingStatus == "Read" }}/${sources.size}",
+                        FieldMindIcons.Source, Modifier.weight(1f), colors.source
+                    )
+                }
+            }
+            item {
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    MetricTile(
+                        "Hypotheses", hypotheses.size.toString(),
+                        FieldMindIcons.Hypothesis, Modifier.weight(1f), colors.hypothesis
+                    )
+                    MetricTile(
+                        "Reports", reports.size.toString(),
+                        FieldMindIcons.Report, Modifier.weight(1f), colors.report
+                    )
+                    MetricTile(
+                        "Flashcards", "${flashcards.count { it.repetitionCount >= 3 }} mature",
+                        FieldMindIcons.Flashcard, Modifier.weight(1f), colors.flashcard
+                    )
+                }
+            }
+
+            // ═══════════ SECTION 3: Time-Series Analytics ═══════════
+            item { SectionHeader("Time-series analytics", "When and how often you capture") }
+
+            // Calendar heatmap
+            if (calendarData.isNotEmpty()) {
+                item {
+                    InsightCard("Activity calendar", FieldMindIcons.Calendar) {
+                        CalendarHeatmap(
+                            dailyCounts = calendarData,
+                            accentColor = colors.observation
+                        )
                     }
                 }
             }
-        }
-        item {
-            InsightCard("Knowledge graph", FieldMindIcons.Graph) {
-                ConnectionGraph(graphNodes.first, graphNodes.second)
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    GraphLegend("Projects", colors.project)
-                    GraphLegend("Questions", colors.question)
-                    GraphLegend("Observations", colors.observation)
-                    GraphLegend("Sources", colors.source)
-                    GraphLegend("Hypotheses", colors.hypothesis)
+
+            // Activity by hour + Day of week in a row
+            item {
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Card(
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(22.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)
+                    ) {
+                        Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                Icon(icon = FieldMindIcons.Timer, contentDescription = null, tint = colors.warning, size = 16.dp)
+                                Text("By hour", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold)
+                            }
+                            ActivityByHourChart(hourlyActivity, accentColor = colors.warning)
+                        }
+                    }
+                    Card(
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(22.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)
+                    ) {
+                        Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                Icon(icon = FieldMindIcons.Calendar, contentDescription = null, tint = colors.info, size = 16.dp)
+                                Text("By day", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold)
+                            }
+                            DayOfWeekChart(dayOfWeekCounts, accentColor = colors.info)
+                        }
+                    }
                 }
             }
-        }
-        item { SectionHeader("Top tags", if (tags.isEmpty()) "Tags appear as you capture" else null) }
-        if (tags.isEmpty()) {
-            item { EmptyState("No tags yet", "Add comma-separated tags when capturing to surface repeated subjects.", icon = FieldMindIcons.Tag) }
-        } else {
-            item {
-                Card(shape = RoundedCornerShape(22.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)) {
-                    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                        tags.take(8).forEach { tag ->
-                            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                                TagChip(tag.name)
-                                Text("${tag.observationCount}", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+
+            // Moving average trend
+            if (trendValues.size >= 2) {
+                item {
+                    InsightCard("Daily trend (14-day)", FieldMindIcons.Trend) {
+                        MovingAverageChart(dailyValues, barColor = colors.observation.copy(alpha = 0.3f), lineColor = colors.positive)
+                    }
+                }
+            }
+
+            // ═══════════ SECTION 4: Category & Tag Analytics ═══════════
+            item { SectionHeader("Categories & tags", "What you research most") }
+
+            if (categoryCounts.isNotEmpty()) {
+                item {
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        // Category bar chart
+                        Card(
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(22.dp),
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)
+                        ) {
+                            Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                    Icon(icon = FieldMindIcons.Data, contentDescription = null, tint = colors.observation, size = 16.dp)
+                                    Text("Categories", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold)
+                                }
+                                BarChart(categoryCounts, barColors = categoryCounts.map { colors.categoryColor(it.first) }, height = 100.dp)
+                            }
+                        }
+                        // Radar chart (if enough categories)
+                        if (categoryCounts.size >= 3) {
+                            Card(
+                                modifier = Modifier.weight(1f),
+                                shape = RoundedCornerShape(22.dp),
+                                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)
+                            ) {
+                                Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                        Icon(icon = FieldMindIcons.Graph, contentDescription = null, tint = colors.hypothesis, size = 16.dp)
+                                        Text("Radar", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold)
+                                    }
+                                    val radarData = categoryCounts.map { (label, count) -> label to (count / totalCats) }
+                                    RadarChart(radarData, accentColor = colors.observation, height = 150.dp)
+                                }
                             }
                         }
                     }
                 }
             }
+
+            // Confidence breakdown
+            if (confidenceParts.isNotEmpty()) {
+                item {
+                    InsightCard("Confidence balance", FieldMindIcons.Check) {
+                        BreakdownBar(confidenceParts)
+                    }
+                }
+            }
+
+            // Tag co-occurrence matrix
+            if (tagPairs.isNotEmpty()) {
+                item {
+                    InsightCard("Tag co-occurrence", FieldMindIcons.Tag) {
+                        TagCoOccurrenceMatrix(tagPairs, accentColor = colors.info)
+                    }
+                }
+            }
+
+            // Tags list
+            if (tags.isNotEmpty()) {
+                item { SectionHeader("Top tags", "${tags.size} total") }
+                item {
+                    Card(
+                        shape = RoundedCornerShape(22.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)
+                    ) {
+                        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            tags.take(10).forEach { tag ->
+                                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                                    TagChip(tag.name)
+                                    Text(tag.observationCount.toString(), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                }
+                                if (tag != tags.last()) HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
+                            }
+                        }
+                    }
+                }
+            }
+
+            // ═══════════ SECTION 5: Knowledge Graph ═══════════
+            item { SectionHeader("Knowledge graph", "${graphData.first.size} connected entities") }
+            item {
+                Card(
+                    shape = RoundedCornerShape(24.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)
+                ) {
+                    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        NetworkGraphTimeline(
+                            allNodes = graphData.first,
+                            allEdges = graphData.second,
+                            nodeTimestamps = graphData.third,
+                            edgeColor = colors.project.copy(alpha = 0.4f)
+                        )
+                        // Filter chips
+                        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            GraphLegend("Projects", colors.project)
+                            GraphLegend("Questions", colors.question)
+                            GraphLegend("Observations", colors.observation)
+                            GraphLegend("Sources", colors.source)
+                            GraphLegend("Hypotheses", colors.hypothesis)
+                        }
+                    }
+                }
+            }
+
+            // OSM Map
+            if (mapPoints.isNotEmpty()) {
+                item {
+                    InsightCard("Field map (${mapPoints.size} points)", FieldMindIcons.Map) {
+                        OsmMap(points = mapPoints, markerColor = colors.observation)
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                            TextButton(onClick = { onNavigate(FieldMindScreen.MapScreen) }) {
+                                Text("Open full map")
+                                Spacer(Modifier.size(4.dp))
+                                Icon(icon = FieldMindIcons.Forward, contentDescription = null, size = 18.dp)
+                            }
+                        }
+                    }
+                }
+            }
+
+            // ═══════════ SECTION 6: Research Health ═══════════
+            item { SectionHeader("Research health", dataQualityScore.third) }
+            item {
+                Card(
+                    shape = RoundedCornerShape(24.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)
+                ) {
+                    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        DataQualityMeter(
+                            score = dataQualityScore.first,
+                            metrics = dataQualityScore.second,
+                            accentColor = if (dataQualityScore.first >= 80) colors.positive else if (dataQualityScore.first >= 50) colors.warning else MaterialTheme.colorScheme.error
+                        )
+                        // Gap analysis
+                        val unanswered = questions.count { it.status != "Answered" }
+                        val noHypotheses = questions.count { q -> hypotheses.none { h -> h.linkedQuestionId == q.id } }
+                        if (unanswered > 0 || noHypotheses > 0) {
+                            HorizontalDivider(Modifier.padding(vertical = 4.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+                            Text("Gap analysis", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold, color = colors.warning)
+                            if (unanswered > 0) Text("$unanswered unanswered questions — consider a research session", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            if (noHypotheses > 0) Text("$noHypotheses questions without hypotheses — link evidence to predictions", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                    }
+                }
+            }
+
+            // ═══════════ SECTION 7: Weather Integration ═══════════
+            if (weatherCorrelation.size >= 3) {
+                item { SectionHeader("Weather correlation", "Temperature vs observations") }
+                item {
+                    InsightCard("Temperature correlation", FieldMindIcons.Weather) {
+                        WeatherCorrelationChart(
+                            dataPoints = weatherCorrelation,
+                            pointColor = colors.observation,
+                            trendColor = colors.positive
+                        )
+                    }
+                }
+            } else {
+                item {
+                    Card(
+                        shape = RoundedCornerShape(22.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)
+                    ) {
+                        Row(Modifier.padding(16.dp), horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
+                            Icon(icon = FieldMindIcons.Weather, contentDescription = null, tint = colors.info, size = 22.dp)
+                            Column(Modifier.weight(1f)) {
+                                Text("Weather correlation", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                                Text("Enable weather + GPS on capture to see temperature trends", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
+                        }
+                    }
+                }
+            }
+
+            // ═══════════ SECTION 8: Achievements ═══════════
+            item { SectionHeader("Achievements", "${achievements.count { it.unlocked }}/${achievements.size} unlocked") }
+            item { CollapsibleAchievements(achievements, snackbarState, scope) }
+
+            // ═══════════ SECTION 9: Open Questions & Active Projects ═══════════
+            if (questions.isNotEmpty()) {
+                item { SectionHeader("Open questions", "${questions.count { it.status != "Answered" }} unanswered") }
+                items(questions.filter { it.status != "Answered" }.take(5)) { q ->
+                    EntityCard(q.questionText, "question", meta = listOf(q.status, q.priority)) { onOpenDetail("question", q.id) }
+                }
+            }
+            if (projects.isNotEmpty()) {
+                item { SectionHeader("Active projects", "${projects.count { it.status == "Active" }} active") }
+                items(projects.filter { it.status == "Active" }.take(4)) { p ->
+                    EntityCard(p.title, "project", body = p.objective.ifBlank { p.researchQuestion }, meta = listOf(p.status, p.topicType)) { onOpenDetail("project", p.id) }
+                }
+            }
+
+            // ═══════════ Data Records Table ═══════════
+            if (dataRecords.isNotEmpty()) {
+                item { SectionHeader("Data records", "${dataRecords.size} entries") }
+                item {
+                    val (cols, rows, _) = dataRecordsToTable(dataRecords)
+                    FieldDataTable(
+                        columns = cols,
+                        rows = rows,
+                        title = "Measurements & counts",
+                        onEditRow = { id -> onOpenDetail("data", id) },
+                        accentColor = colors.data
+                    )
+                }
+            }
+
+            item { Spacer(Modifier.height(24.dp)) }
         }
-        item { SectionHeader("Open questions", "${questions.count { it.status != "Answered" }} unanswered") }
-        items(questions.filter { it.status != "Answered" }.take(5)) { q ->
-            EntityCard(q.questionText, "question", meta = listOf(q.status, q.priority)) { onOpenDetail("question", q.id) }
-        }
-        item { SectionHeader("Active projects", "${projects.count { it.status == "Active" }} active • ${sources.size} sources") }
-        items(projects.take(4)) { p ->
-            EntityCard(p.title, "project", body = p.objective.ifBlank { p.researchQuestion }, meta = listOf(p.status)) { onOpenDetail("project", p.id) }
-        }
-        item { CollapsibleAchievements(achievements) }
-    }
     }
 }
 
+// ══════════════════════════════════════════════════════════════════════
+//  Research Profile Card
+// ══════════════════════════════════════════════════════════════════════
 
 @Composable
-private fun ResearchProfileInsightCard(name: String, role: String, focus: String, localModel: String, localReady: Boolean, backupInterval: String) {
-    Card(shape = RoundedCornerShape(26.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)) {
+private fun ResearchProfileCard(name: String, role: String, focus: String, todayCount: Int, weekCount: Int, goal: Int) {
+    Card(
+        shape = RoundedCornerShape(26.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
         Row(Modifier.fillMaxWidth().padding(18.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
             Box(Modifier.size(56.dp).clip(CircleShape).background(MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.12f)), contentAlignment = Alignment.Center) {
                 Icon(FieldMindIcons.Insights, null, tint = MaterialTheme.colorScheme.onPrimaryContainer, size = 28.dp)
             }
-            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(5.dp)) {
-                Text(if (name.isBlank()) "Your research profile" else name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onPrimaryContainer)
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                Text(if (name.isBlank()) "Researcher" else name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onPrimaryContainer)
                 Text("$role • $focus", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.78f))
-                Text("Offline setup: ${if (localReady) localModel else "local model not downloaded"} • Backup: $backupInterval", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.72f))
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    WeeklyStat("Today", todayCount.toString(), FieldMindIcons.Today)
+                    WeeklyStat("This week", weekCount.toString(), FieldMindIcons.Trend)
+                    if (goal > 0) WeeklyStat("Daily goal", "$todayCount/$goal", FieldMindIcons.Streak)
+                }
             }
         }
     }
 }
 
-private data class Achievement(
+@Composable
+private fun WeeklyStat(label: String, value: String, icon: MaterialSymbolIcon) {
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(3.dp)) {
+        Icon(icon = icon, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f), size = 12.dp)
+        Text("$label: ", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f))
+        Text(value, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onPrimaryContainer)
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════════
+//  Achievement System
+// ══════════════════════════════════════════════════════════════════════
+
+data class ResearchAchievement(
     val title: String,
     val description: String,
-    val icon: fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon,
-    val accent: androidx.compose.ui.graphics.Color,
+    val icon: MaterialSymbolIcon,
+    val accent: Color,
     val progress: Int,
     val target: Int
 ) {
@@ -232,21 +626,44 @@ private data class Achievement(
 }
 
 @Composable
-private fun CollapsibleAchievements(items: List<Achievement>) {
+private fun CollapsibleAchievements(
+    items: List<ResearchAchievement>,
+    snackbarState: SnackbarHostState,
+    scope: kotlinx.coroutines.CoroutineScope
+) {
     var expanded by remember { mutableStateOf(false) }
-    Card(shape = RoundedCornerShape(24.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp), modifier = Modifier.clickable { expanded = !expanded }.animateContentSize()) {
+    val unlockedCount = items.count { it.unlocked }
+    val context = LocalContext.current
+
+    // Track first-time unlocks
+    LaunchedEffect(unlockedCount) {
+        if (unlockedCount > 0) {
+            val prefs = context.getSharedPreferences("fieldmind_achievements_v2", 0)
+            items.filter { it.unlocked && !prefs.getBoolean(it.title, false) }.forEach { a ->
+                scope.launch { snackbarState.showSnackbar("🏆 ${a.title} unlocked!") }
+                prefs.edit().putBoolean(a.title, true).apply()
+            }
+        }
+    }
+
+    Card(
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+        modifier = Modifier.clickable { expanded = !expanded }.animateContentSize()
+    ) {
         Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 Icon(FieldMindIcons.Streak, null, tint = MaterialTheme.colorScheme.primary, size = 22.dp)
                 Column(Modifier.weight(1f)) {
                     Text("Achievements", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                    Text("${items.count { it.unlocked }} unlocked • tap to ${if (expanded) "collapse" else "expand"}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("$unlockedCount/${items.size} unlocked • tap to ${if (expanded) "collapse" else "explore"}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
                 Icon(if (expanded) FieldMindIcons.Up else FieldMindIcons.Down, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, size = 22.dp)
             }
             if (expanded) {
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalArrangement = Arrangement.spacedBy(12.dp), maxItemsInEachRow = 2) {
-                    items.forEach { achievement -> AchievementCard(achievement, Modifier.weight(1f)) }
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp), maxItemsInEachRow = 2) {
+                    items.forEach { achievement -> AchievementCardV2(achievement, Modifier.weight(1f)) }
                 }
             }
         }
@@ -254,39 +671,74 @@ private fun CollapsibleAchievements(items: List<Achievement>) {
 }
 
 @Composable
-private fun AchievementCard(item: Achievement, modifier: Modifier = Modifier) {
-    Card(modifier = modifier.animateContentSize(), shape = RoundedCornerShape(22.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)) {
-        Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                Box(Modifier.size(38.dp).clip(RoundedCornerShape(12.dp)).background(item.accent.copy(alpha = if (FieldMindTheme.colors.isDark) 0.22f else 0.14f)), contentAlignment = Alignment.Center) {
-                    Icon(item.icon, null, tint = item.accent, size = 21.dp)
+private fun AchievementCardV2(item: ResearchAchievement, modifier: Modifier = Modifier) {
+    val animatedProgress by animateFloatAsState(targetValue = item.fraction, animationSpec = tween(600), label = "achieve")
+    Card(
+        modifier = modifier.animateContentSize(),
+        shape = RoundedCornerShape(22.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = if (item.unlocked) item.accent.copy(alpha = 0.08f) else MaterialTheme.colorScheme.surfaceContainerHigh
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Box(
+                    Modifier.size(36.dp).clip(RoundedCornerShape(12.dp))
+                        .background(item.accent.copy(alpha = if (FieldMindTheme.colors.isDark) 0.3f else 0.14f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(item.icon, null, tint = if (item.unlocked) item.accent else item.accent.copy(alpha = 0.6f), size = 20.dp)
                 }
                 Column(Modifier.weight(1f)) {
-                    Text(item.title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
-                    Text(if (item.unlocked) "Unlocked" else "${item.progress}/${item.target}", style = MaterialTheme.typography.labelMedium, color = item.accent, fontWeight = FontWeight.SemiBold)
+                    Text(
+                        item.title,
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = if (item.unlocked) item.accent else MaterialTheme.colorScheme.onSurface,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    Text(
+                        if (item.unlocked) "Unlocked 🎉" else "${item.progress}/${item.target}",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = if (item.unlocked) item.accent else MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 }
             }
-            Text(item.description, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            LinearProgressIndicator(progress = item.fraction, modifier = Modifier.fillMaxWidth().height(6.dp).clip(RoundedCornerShape(999.dp)), color = item.accent, trackColor = MaterialTheme.colorScheme.surfaceContainerHighest)
+            LinearProgressIndicator(
+                progress = animatedProgress,
+                modifier = Modifier.fillMaxWidth().height(5.dp).clip(RoundedCornerShape(999.dp)),
+                color = item.accent,
+                trackColor = MaterialTheme.colorScheme.surfaceContainerHighest
+            )
         }
     }
 }
 
+// ══════════════════════════════════════════════════════════════════════
+//  Shared helpers
+// ══════════════════════════════════════════════════════════════════════
+
 @Composable
-private fun GraphLegend(label: String, color: androidx.compose.ui.graphics.Color) {
+private fun GraphLegend(label: String, color: Color) {
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
         Box(Modifier.size(10.dp).clip(CircleShape).background(color))
-        Text(label, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 
 @Composable
-private fun InsightCard(title: String, icon: fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon, content: @Composable () -> Unit) {
-    Card(shape = RoundedCornerShape(24.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)) {
-        Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                Icon(icon = icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary, size = 20.dp)
-                Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+private fun InsightCard(title: String, icon: MaterialSymbolIcon, content: @Composable () -> Unit) {
+    Card(
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Icon(icon = icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary, size = 18.dp)
+                Text(title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
             }
             content()
         }

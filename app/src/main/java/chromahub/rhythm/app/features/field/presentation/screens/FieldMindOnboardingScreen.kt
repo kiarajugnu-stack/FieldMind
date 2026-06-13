@@ -69,9 +69,6 @@ fun FieldMindOnboardingScreen(onFinish: () -> Unit) {
                         Modifier.weight(1f)
                     ) { Text(if (step < totalSteps - 1) "Next" else "Start") }
                 }
-                TextButton(onClick = onFinish, Modifier.align(Alignment.CenterHorizontally)) {
-                    Text("Skip onboarding")
-                }
             }
         }
     }

@@ -7,6 +7,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
@@ -15,24 +16,37 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import fieldmind.research.app.features.field.presentation.theme.FieldMindTheme
 import fieldmind.research.app.shared.presentation.components.icons.Icon
 import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon
@@ -384,6 +398,143 @@ fun FieldTextField(
     )
 }
 
+// ── Number-Only Input Field (Phase 1) ──
+
+/**
+ * Number-only input field with numeric keyboard, optional stepper +/- buttons,
+ * configurable decimal places, min/max validation, and unit suffix.
+ */
+@Composable
+fun NumberField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    label: String,
+    modifier: Modifier = Modifier,
+    decimalPlaces: Int = 0,
+    suffix: String = "",
+    supportingText: String? = null,
+    min: Double? = null,
+    max: Double? = null,
+    stepper: Boolean = false,
+    enabled: Boolean = true
+) {
+    val isDecimal = decimalPlaces > 0
+    val keyboardType = if (isDecimal) KeyboardType.Decimal else KeyboardType.Number
+
+    // Filter non-numeric characters on input
+    val filterValue: (String) -> String = { input ->
+        val cleaned = if (isDecimal) {
+            input.filter { c -> c.isDigit() || c == '.' || c == '-' }
+                .let { s ->
+                    // Allow only one decimal point
+                    val parts = s.split(".")
+                    if (parts.size > 2) parts.take(2).joinToString(".")
+                    else s
+                }
+                .let { s ->
+                    // Limit decimal places
+                    val dotIndex = s.indexOf('.')
+                    if (dotIndex >= 0) s.substring(0, (dotIndex + 1 + decimalPlaces).coerceAtMost(s.length))
+                    else s
+                }
+        } else {
+            input.filter { c -> c.isDigit() || c == '-' }
+                .let { s -> if (s.count { it == '-' } > 1) s.replaceFirst("-", "") else s }
+        }
+        cleaned.take(20)
+    }
+
+    // Compute error
+    val numValue = value.toDoubleOrNull()
+    val error = when {
+        value.isNotBlank() && numValue == null -> "Not a valid number"
+        numValue != null && min != null && numValue < min -> "Minimum: $min"
+        numValue != null && max != null && numValue > max -> "Maximum: $max"
+        else -> null
+    }
+
+    Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        if (stepper) {
+            // Stepper mode: field with +/- buttons
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                OutlinedButton(
+                    onClick = {
+                        val current = value.toDoubleOrNull() ?: 0.0
+                        val step = if (isDecimal) 0.1 else 1.0
+                        val next = current - step
+                        if (min == null || next >= min) {
+                            onValueChange(
+                                if (isDecimal) "%.${decimalPlaces}f".format(next)
+                                else next.toInt().toString()
+                            )
+                        }
+                    },
+                    modifier = Modifier.size(44.dp),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Text("−", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                }
+
+                OutlinedTextField(
+                    value = value,
+                    onValueChange = { onValueChange(filterValue(it)) },
+                    label = { Text(label) },
+                    isError = error != null,
+                    keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
+                    singleLine = true,
+                    suffix = if (suffix.isNotBlank()) { { Text(suffix, color = MaterialTheme.colorScheme.onSurfaceVariant) } } else null,                supportingText = {
+                    if (error != null) Text(error, color = MaterialTheme.colorScheme.error)
+                    else if (supportingText != null) Text(supportingText)
+                },
+                modifier = Modifier.weight(1f),
+                shape = RoundedCornerShape(18.dp),
+                enabled = enabled
+            )
+
+                OutlinedButton(
+                    onClick = {
+                        val current = value.toDoubleOrNull() ?: 0.0
+                        val step = if (isDecimal) 0.1 else 1.0
+                        val next = current + step
+                        if (max == null || next <= max) {
+                            onValueChange(
+                                if (isDecimal) "%.${decimalPlaces}f".format(next)
+                                else next.toInt().toString()
+                            )
+                        }
+                    },
+                    modifier = Modifier.size(44.dp),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Text("+", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                }
+            }
+        } else {
+            // Simple numeric input field
+            OutlinedTextField(
+                value = value,
+                onValueChange = { onValueChange(filterValue(it)) },
+                label = { Text(label) },
+                isError = error != null,
+                keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
+                singleLine = true,
+                suffix = if (suffix.isNotBlank()) { { Text(suffix, color = MaterialTheme.colorScheme.onSurfaceVariant) } } else null,
+                supportingText = {
+                    if (error != null) Text(error, color = MaterialTheme.colorScheme.error)
+                    else if (supportingText != null) Text(supportingText)
+                },
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(18.dp),
+                enabled = enabled
+            )
+        }
+    }
+}
+
 // ──────────────────────────────────────────────────────────────────────
 //  Misc
 // ──────────────────────────────────────────────────────────────────────
@@ -401,3 +552,133 @@ fun OutlinedSection(modifier: Modifier = Modifier, content: @Composable () -> Un
 
 @Composable
 fun Divider12() { Spacer(Modifier.height(12.dp)) }
+
+// ──────────────────────────────────────────────────────────────────────
+//  Note Templates & Composer (Redesign)
+// ──────────────────────────────────────────────────────────────────────
+
+/** Pre-built note template definitions for quick-start composition. */
+data class NoteTemplate(val title: String, val prompts: List<String>, val icon: MaterialSymbolIcon)
+
+val noteTemplates = listOf(
+    NoteTemplate("Blank", emptyList(), FieldMindIcons.Note),
+    NoteTemplate("Observation log", listOf("Subject:", "Location:", "Weather:", "What I observed:", "Notes:"), FieldMindIcons.Observation),
+    NoteTemplate("Literature notes", listOf("Source:", "Key arguments:", "Evidence:", "My analysis:", "Questions:"), FieldMindIcons.Source),
+    NoteTemplate("Meeting notes", listOf("Date:", "Attendees:", "Agenda:", "Decisions:", "Action items:"), FieldMindIcons.Session),
+    NoteTemplate("Field journal", listOf("Date:", "Time:", "Location:", "Conditions:", "Findings:", "Follow-up:"), FieldMindIcons.Nature),
+    NoteTemplate("Reflection", listOf("What happened:", "What I learned:", "What's next:"), FieldMindIcons.Question)
+)
+
+/**
+ * Write-first note composer card with template presets.
+ * Opens directly to body input, with template prompts as optional hints.
+ */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+fun NoteComposerCard(
+    title: String,
+    onTitleChange: (String) -> Unit,
+    body: String,
+    onBodyChange: (String) -> Unit,
+    category: String,
+    onCategoryChange: (String) -> Unit,
+    onSave: () -> Unit,
+    onDismiss: () -> Unit,
+    categories: List<String> = listOf("Other", "Behavior", "Environment", "Ecology", "Social", "Phenology"),
+    saveEnabled: Boolean = true,
+    modifier: Modifier = Modifier
+) {
+    var showTemplates by remember { mutableStateOf(false) }
+    var selectedTemplate by remember { mutableStateOf(noteTemplates.first()) }
+    val haptics = rememberFieldMindHaptics()
+
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(28.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+            // Header
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                Box(
+                    Modifier.size(40.dp).clip(RoundedCornerShape(12.dp))
+                        .background(FieldMindTheme.colors.source.copy(alpha = 0.14f)),
+                    contentAlignment = Alignment.Center
+                ) { Icon(FieldMindIcons.Note, null, tint = FieldMindTheme.colors.source, size = 22.dp) }
+                Column(Modifier.weight(1f)) {
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text("New note", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                        Surface(
+                            onClick = { haptics.light(); showTemplates = !showTemplates },
+                            shape = RoundedCornerShape(10.dp),
+                            color = if (showTemplates) FieldMindTheme.colors.source.copy(alpha = 0.14f) else MaterialTheme.colorScheme.surfaceContainerHigh
+                        ) {
+                            Row(Modifier.padding(horizontal = 10.dp, vertical = 4.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                                Icon(FieldMindIcons.Article, null, tint = FieldMindTheme.colors.source, size = 14.dp)
+                                Text("Templates", style = MaterialTheme.typography.labelSmall, color = FieldMindTheme.colors.source, fontWeight = FontWeight.SemiBold)
+                            }
+                        }
+                    }
+                    Text("Write first, organize later.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                if (onDismiss != null) {
+                    IconButton(onClick = onDismiss, modifier = Modifier.size(32.dp)) {
+                        Icon(FieldMindIcons.Close, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, size = 20.dp)
+                    }
+                }
+            }
+
+            // Template selector (collapsible)
+            if (showTemplates) {
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    noteTemplates.forEach { template ->
+                        FilterChip(
+                            selected = selectedTemplate.title == template.title,
+                            onClick = {
+                                haptics.light()
+                                selectedTemplate = template
+                                if (template.prompts.isNotEmpty() && body.isBlank()) {
+                                    onBodyChange(template.prompts.joinToString("\n"))
+                                }
+                            },
+                            label = { Text(template.title, fontSize = 11.sp) },
+                            leadingIcon = { Icon(template.icon, null, size = 14.dp) }
+                        )
+                    }
+                }
+            }
+
+            // Title field
+            FieldTextField(title, onTitleChange, "Title (optional)", supportingText = "Auto-generated from body if left blank")
+
+            // Body field — write first, large
+            OutlinedTextField(
+                value = body,
+                onValueChange = onBodyChange,
+                modifier = Modifier.fillMaxWidth(),
+                minLines = 6,
+                placeholder = { Text("Start writing your note...", color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)) },
+                shape = RoundedCornerShape(18.dp)
+            )
+
+            // Category & save row
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                ChoiceChips(categories, category, modifier = Modifier.weight(1f), onSelected = onCategoryChange)
+                Button(
+                    onClick = { haptics.confirm(); onSave() },
+                    shape = RoundedCornerShape(14.dp),
+                    enabled = saveEnabled && (title.isNotBlank() || body.isNotBlank())
+                ) {
+                    Icon(FieldMindIcons.Check, null, size = 18.dp)
+                    Spacer(Modifier.size(6.dp))
+                    Text("Save")
+                }
+            }
+        }
+    }
+}

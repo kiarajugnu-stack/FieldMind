@@ -2,12 +2,12 @@ package fieldmind.research.app.features.field.presentation.screens
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -18,6 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import fieldmind.research.app.features.field.data.database.entity.*
@@ -34,8 +35,12 @@ import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbo
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import java.time.LocalDate
+import java.time.LocalTime
+import kotlin.math.roundToInt
+
 // ══════════════════════════════════════════════════════════════════════
-//  Today (Home)
+//  Today (Home) — Redesigned with Hero Section & Research Pulse
 // ══════════════════════════════════════════════════════════════════════
 
 @Composable
@@ -68,25 +73,56 @@ fun HomeScreen(
             projects.take(6).forEach { add(it.topicType); add(it.title) }
         }
     }
+    val researchSessions by viewModel.researchSessions.collectAsState()
     val recommendations = remember(learnSignals) { recommendedResources(learnSignals) }
 
-    LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(20.dp, 20.dp, 20.dp, 96.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
-        item { FieldScreenHeader("FieldMind", "Observe. Question. Research clearly.", icon = FieldMindIcons.Nature, actionIcon = FieldMindIcons.Settings, onAction = onOpenSettings) }
+    val lastSession = remember(researchSessions) {
+        researchSessions.filter { it.status == "Completed" }.maxByOrNull { it.endedAt ?: it.createdAt }
+    }
+
+
+    val weatherObs = remember(observations) { observations.firstOrNull { it.weatherTemperature != null } }
+
+    LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(20.dp, 0.dp, 20.dp, 96.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
+        // ── Hero Section ──
+        item { HomeHeroSection(todayCount, goal, currentStreak, observations.size, questions.size, onOpenSettings, onNavigate) }
+
+        // ── Quick Actions Row ──
+        item {
+            QuickActionsRow(onNavigate)
+        }
+
+        // ── Research Pulse Card (when there's data) ──
+        if (observations.isNotEmpty()) {
+            item { ResearchPulseCard(observations, questions, projects, onNavigate) }
+        }
+
+        // ── Weather Card (when observations have weather data) ──
+        if (weatherObs != null) {
+            item { WeatherStatusCard(observations, viewModel, onNavigate) }
+        }
+
+        // ── Daily Goal ──
         item { DailyGoalCard(todayCount, goal, currentStreak) { onNavigate(FieldMindScreen.Observe) } }
+
+        // ── Research Session CTA ──
+        item {
+            ResearchSessionCtaCard(                    lastSessionLabel = if (lastSession != null) "Resume your last session" else null,
+                onStartSession = { onNavigate(FieldMindScreen.ResearchSession) }
+            )
+        }
+
+        // ── Widget Grid ──
+        item { SectionHeader("Research areas", "Quick overview of your work") }
         item { HomeWidgetGrid(observations, notes, questions, sources, projects, reports, data) { onNavigate(it) } }
+
+        // ── Learning & Reading ──
         item { RecommendedLearningCard(recommendations, onOpenReader, onSeeAll = { onNavigate(FieldMindScreen.Learn) }) }
         item { ReadingReviewCard(sources, flashcards, onNavigate) }
-        item {
-            SectionHeader("Quick actions", "Go to Map, Export, Search, or Flashcards")
-            QuickActionGrid(listOf(
-                QuickAction("Map", FieldMindIcons.Map, FieldMindTheme.colors.info, FieldMindScreen.MapScreen),
-                QuickAction("Export", FieldMindIcons.Export, FieldMindTheme.colors.report, FieldMindScreen.ExportStudio),
-                QuickAction("Search", FieldMindIcons.Search, FieldMindTheme.colors.question, FieldMindScreen.Search),
-                QuickAction("Review", FieldMindIcons.Flashcard, FieldMindTheme.colors.flashcard, FieldMindScreen.Learn)
-            )) { onNavigate(it) }
-        }
+
+        // ── Current Project ──
         if (activeProject != null) {
-            item { SectionHeader("Current project") }
+            item { SectionHeader("Current project", "Your active research focus") }
             item {
                 EntityCard(
                     title = activeProject.title,
@@ -97,26 +133,469 @@ fun HomeScreen(
                 )
             }
         }
-        item { SectionHeader("Recent activity", if (tags.isNotEmpty()) "Top tag: ${tags.first().name}" else "Collapsed by type and category") }
+
+        // ── Recent Activity ──
         val activity = buildList {
             observations.forEach { add(RecentEntry("observation", it.id, it.timestamp, it.subject.ifBlank { "Observation" }, "${it.category} • ${it.date} ${it.time}", it.category)) }
             notes.forEach { add(RecentEntry("note", it.id, it.updatedAt, it.title.ifBlank { "Untitled note" }, it.body.ifBlank { it.category }, it.category)) }
             questions.forEach { add(RecentEntry("question", it.id, it.updatedAt, it.questionText, "${it.status} • ${it.priority}", it.status)) }
             sources.forEach { add(RecentEntry("source", it.id, it.updatedAt, it.title, "${it.type} • ${it.readingStatus}", it.type)) }
-            data.forEach { add(RecentEntry("data", it.id, it.timestamp, it.label, "${it.toolType} • ${it.value} ${it.unit}".trim(), it.toolType)) }
-            reports.forEach { add(RecentEntry("report", it.id, it.updatedAt, it.title, "${it.type} • ${it.status}", it.type)) }
         }.sortedByDescending { it.time }
-        val groups = activity.groupBy { "${it.kind}:${it.group}" }.values.map { it.sortedByDescending { entry -> entry.time } }.sortedByDescending { it.first().time }.take(10)
-        if (activity.isEmpty()) {
-            item { EmptyState("No activity yet", "Start with one factual observation or a free-form note. Both stay clearly separated.", icon = FieldMindIcons.Observation, actionLabel = "Open capture") { onNavigate(FieldMindScreen.Observe) } }
-        } else {
+
+        if (activity.isNotEmpty()) {
+            item { SectionHeader("Recent activity", if (tags.isNotEmpty()) "Top tag: ${tags.first().name}" else "Latest actions across all tools") }
+            val groups = activity.groupBy { "${it.kind}:${it.group}" }.values.map { it.sortedByDescending { entry -> entry.time } }.sortedByDescending { it.first().time }.take(7)
             items(groups, key = { "${it.first().kind}-${it.first().group}" }) { group ->
                 RecentActivityGroupCard(group, onOpenDetail)
+            }
+        } else {
+            item { EmptyState("No activity yet", "Start with one factual observation or a free-form note. Both stay clearly separated.", icon = FieldMindIcons.Observation, actionLabel = "Open capture") { onNavigate(FieldMindScreen.Observe) } }
+        }
+
+        item { Spacer(Modifier.height(24.dp)) }
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════════
+//  Hero Section — Welcome + Animated Stats + Settings
+// ══════════════════════════════════════════════════════════════════════
+
+@Composable
+private fun HomeHeroSection(
+    todayCount: Int,
+    goal: Int,
+    streakDays: Int,
+    totalObs: Int,
+    totalQuestions: Int,
+    onOpenSettings: () -> Unit,
+    onNavigate: (FieldMindScreen) -> Unit
+) {
+    val colors = FieldMindTheme.colors
+    val isNewUser = totalObs == 0
+
+    Box(
+        Modifier
+            .fillMaxWidth()
+            .background(
+                Brush.verticalGradient(
+                    listOf(
+                        MaterialTheme.colorScheme.primary.copy(alpha = 0.08f),
+                        MaterialTheme.colorScheme.background
+                    )
+                )
+            )
+            .padding(top = 20.dp, start = 20.dp, end = 20.dp, bottom = 8.dp)
+    ) {
+        Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+            // Top row: Greeting + Settings
+            Row(
+                Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.Top,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text(
+                        if (isNewUser) "Welcome to FieldMind" else "Good ${timeOfDay()}",
+                        style = MaterialTheme.typography.headlineLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Text(
+                        if (isNewUser) "Start your first observation to begin."
+                        else "You have ${totalObs} observation${if (totalObs != 1) "s" else ""} across your research.",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                Surface(
+                    onClick = onOpenSettings,
+                    shape = RoundedCornerShape(16.dp),
+                    color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                    modifier = Modifier.size(48.dp)
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(FieldMindIcons.Settings, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, size = 24.dp)
+                    }
+                }
+            }
+
+            // Animated stats row
+            if (!isNewUser) {
+                Row(
+                    Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    HeroStatBubble(
+                        value = todayCount.toString(),
+                        label = "Today",
+                        accent = colors.observation,
+                        modifier = Modifier.weight(1f)
+                    )
+                    HeroStatBubble(
+                        value = "$streakDays",
+                        label = "Day streak",
+                        accent = colors.warning,
+                        modifier = Modifier.weight(1f)
+                    )
+                    HeroStatBubble(
+                        value = "$goal",
+                        label = "Daily goal",
+                        accent = colors.positive,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+            }
+
+            // Quick action chips
+            LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                item {
+                    HeroActionChip(
+                        icon = FieldMindIcons.Camera,
+                        label = "Capture",
+                        accent = colors.observation
+                    ) { onNavigate(FieldMindScreen.Observe) }
+                }
+                item {
+                    HeroActionChip(
+                        icon = FieldMindIcons.Note,
+                        label = "Note",
+                        accent = colors.source
+                    ) { onNavigate(FieldMindScreen.Library) }
+                }
+                item {
+                    HeroActionChip(
+                        icon = FieldMindIcons.Question,
+                        label = "Question",
+                        accent = colors.question
+                    ) { onNavigate(FieldMindScreen.Questions) }
+                }
+                item {
+                    HeroActionChip(
+                        icon = FieldMindIcons.Project,
+                        label = "Project",
+                        accent = colors.project
+                    ) { onNavigate(FieldMindScreen.Projects) }
+                }
+                item {
+                    HeroActionChip(
+                        icon = FieldMindIcons.Session,
+                        label = "Session",
+                        accent = colors.positive
+                    ) { onNavigate(FieldMindScreen.ResearchSession) }
+                }
             }
         }
     }
 }
 
+@Composable
+private fun HeroStatBubble(
+    value: String,
+    label: String,
+    accent: androidx.compose.ui.graphics.Color,
+    modifier: Modifier = Modifier
+) {
+    // Simple count-up animation
+    val animatedValue = remember { Animatable(0f) }
+    val targetFloat = value.toFloatOrNull() ?: 0f
+    LaunchedEffect(targetFloat) {
+        animatedValue.animateTo(
+            targetValue = targetFloat,
+            animationSpec = tween(durationMillis = 600, easing = FastOutSlowInEasing)
+        )
+    }
+
+    Surface(
+        modifier = modifier,
+        shape = RoundedCornerShape(20.dp),
+        color = accent.copy(alpha = 0.1f),
+        tonalElevation = 0.dp
+    ) {
+        Column(
+            Modifier.padding(16.dp, 12.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(2.dp)
+        ) {
+            Text(
+                if (value.toIntOrNull() != null) animatedValue.value.roundToInt().toString() else value,
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.ExtraBold,
+                color = accent
+            )
+            Text(
+                label,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
+
+@Composable
+private fun HeroActionChip(
+    icon: MaterialSymbolIcon,
+    label: String,
+    accent: androidx.compose.ui.graphics.Color,
+    onClick: () -> Unit
+) {
+    val haptics = rememberFieldMindHaptics()
+    Surface(
+        onClick = { haptics.light(); onClick() },
+        shape = RoundedCornerShape(16.dp),
+        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+        tonalElevation = 0.dp
+    ) {
+        Row(
+            Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Icon(icon, null, tint = accent, size = 20.dp)
+            Text(label, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold)
+        }
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════════
+//  Weather Status Card — Current conditions + weather correlation
+// ══════════════════════════════════════════════════════════════════════
+
+@Composable
+private fun WeatherStatusCard(
+    observations: List<ObservationEntity>,
+    viewModel: FieldMindViewModel,
+    onNavigate: (FieldMindScreen) -> Unit
+) {
+    val colors = FieldMindTheme.colors
+    val weatherObs = remember(observations) {
+        observations.filter { it.weatherTemperature != null }.sortedByDescending { it.timestamp }
+    }
+    val lastWeather = weatherObs.firstOrNull()
+    val tempRange = remember(weatherObs) {
+        val temps = weatherObs.mapNotNull { it.weatherTemperature }
+        if (temps.isEmpty()) null else (temps.minOrNull() to temps.maxOrNull())
+    }
+    val weatherSummary = remember(weatherObs) {
+        val conditions = weatherObs.map { it.weatherCondition }.filter { it.isNotBlank() }.distinct()
+        conditions.take(3).joinToString(" • ")
+    }
+
+    Card(
+        modifier = Modifier.fillMaxWidth().animateContentSize(),
+        shape = RoundedCornerShape(28.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                Box(
+                    Modifier.size(42.dp).clip(RoundedCornerShape(13.dp))
+                        .background(colors.info.copy(alpha = 0.14f)),
+                    contentAlignment = Alignment.Center
+                ) { Icon(FieldMindIcons.Weather, null, tint = colors.info, size = 24.dp) }
+                Column(Modifier.weight(1f)) {
+                    Text("Weather observations", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    Text("${weatherObs.size} observations with weather data", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                TextButton(onClick = { onNavigate(FieldMindScreen.Insights) }) { Text("Charts") }
+            }
+
+            if (lastWeather != null) {
+                Row(
+                    Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceEvenly,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    // Temperature
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(
+                            "${lastWeather.weatherTemperature?.let { "%.0f°".format(it) } ?: "--"}",
+                            style = MaterialTheme.typography.headlineMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = colors.info
+                        )
+                        Text("Latest temp", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                    if (tempRange != null) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text(
+                                "${tempRange.first?.let { "%.0f".format(it) } ?: "--"}° — ${tempRange.second?.let { "%.0f".format(it) } ?: "--"}°",
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.SemiBold,
+                                color = colors.warning
+                            )
+                            Text("Range", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                    }
+                    // Humidity
+                    lastWeather.weatherHumidity?.let { hum ->
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text("$hum%", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = colors.data)
+                            Text("Humidity", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                    }
+                }
+            }
+
+            if (weatherSummary.isNotBlank()) {
+                InfoChip(weatherSummary, icon = FieldMindIcons.Weather, color = colors.info)
+            }
+
+            Text("Weather data from Open-Meteo (free API) — attached to each observation when GPS is enabled.",
+                style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+    }
+}
+
+private fun timeOfDay(): String {
+    val hour = LocalTime.now().hour
+    return when (hour) {
+        in 5..11 -> "morning"
+        in 12..16 -> "afternoon"
+        else -> "evening"
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════════
+//  Research Pulse Card — Animated snapshot of recent activity
+// ══════════════════════════════════════════════════════════════════════
+
+@Composable
+private fun ResearchPulseCard(
+    observations: List<ObservationEntity>,
+    questions: List<QuestionEntity>,
+    projects: List<ProjectEntity>,
+    onNavigate: (FieldMindScreen) -> Unit
+) {
+    val colors = FieldMindTheme.colors
+    val weekObs = observations.count { it.date >= LocalDate.now().minusDays(7).toString() }
+    val openQs = questions.count { it.status != "Answered" }
+    val activeProjects = projects.count { it.status == "Active" }
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .animateContentSize(),
+        shape = RoundedCornerShape(28.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                Box(
+                    Modifier.size(44.dp)
+                        .clip(RoundedCornerShape(14.dp))
+                        .background(colors.observation.copy(alpha = 0.14f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(FieldMindIcons.Streak, null, tint = colors.observation, size = 24.dp)
+                }
+                Column(Modifier.weight(1f)) {
+                    Text("Research pulse", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    Text("Your 7-day research activity", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                TextButton(onClick = { onNavigate(FieldMindScreen.Insights) }) { Text("Details") }
+            }
+
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly
+            ) {
+                PulseMetric(
+                    value = "$weekObs",
+                    label = "Obs / week",
+                    accent = colors.observation,
+                    icon = FieldMindIcons.Observation
+                )
+                PulseMetric(
+                    value = "$openQs",
+                    label = "Open Qs",
+                    accent = colors.question,
+                    icon = FieldMindIcons.Question
+                )
+                PulseMetric(
+                    value = "$activeProjects",
+                    label = "Projects",
+                    accent = colors.project,
+                    icon = FieldMindIcons.Project
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun PulseMetric(
+    value: String,
+    label: String,
+    accent: androidx.compose.ui.graphics.Color,
+    icon: MaterialSymbolIcon
+) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Box(
+            Modifier.size(40.dp)
+                .clip(CircleShape)
+                .background(accent.copy(alpha = if (FieldMindTheme.colors.isDark) 0.2f else 0.12f)),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(icon, null, tint = accent, size = 22.dp)
+        }
+        Text(value, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.ExtraBold, color = accent)
+        Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════════
+//  Quick Actions Row
+// ══════════════════════════════════════════════════════════════════════
+
+@Composable
+private fun QuickActionsRow(onNavigate: (FieldMindScreen) -> Unit) {            SectionHeader("Quick actions", "Map, Export, Search, Flashcards")
+    LazyRow(
+        contentPadding = PaddingValues(horizontal = 20.dp),
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        item { QuickActionChip("Map", FieldMindIcons.Map, FieldMindTheme.colors.info, FieldMindScreen.MapScreen, onNavigate) }
+        item { QuickActionChip("Export", FieldMindIcons.Export, FieldMindTheme.colors.report, FieldMindScreen.ExportStudio, onNavigate) }
+        item { QuickActionChip("Search", FieldMindIcons.Search, FieldMindTheme.colors.question, FieldMindScreen.Search, onNavigate) }
+        item { QuickActionChip("Review", FieldMindIcons.Flashcard, FieldMindTheme.colors.flashcard, FieldMindScreen.Learn, onNavigate) }
+        item { QuickActionChip("Insights", FieldMindIcons.Insights, FieldMindTheme.colors.data, FieldMindScreen.Insights, onNavigate) }
+    }
+}
+
+@Composable
+private fun QuickActionChip(
+    label: String,
+    icon: MaterialSymbolIcon,
+    accent: androidx.compose.ui.graphics.Color,
+    screen: FieldMindScreen,
+    onNavigate: (FieldMindScreen) -> Unit
+) {
+    val haptics = rememberFieldMindHaptics()
+    Surface(
+        onClick = { haptics.light(); onNavigate(screen) },
+        shape = RoundedCornerShape(20.dp),
+        color = MaterialTheme.colorScheme.surfaceContainerLow,
+        tonalElevation = 0.dp
+    ) {
+        Row(
+            Modifier.padding(horizontal = 18.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            Box(
+                Modifier.size(36.dp)
+                    .background(accent.copy(alpha = if (FieldMindTheme.colors.isDark) 0.22f else 0.14f), RoundedCornerShape(12.dp)),
+                contentAlignment = Alignment.Center
+            ) { Icon(icon, null, tint = accent, size = 20.dp) }
+            Text(label, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold)
+        }
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════════
+//  Reading Review Card
+// ══════════════════════════════════════════════════════════════════════
 
 @Composable
 private fun ReadingReviewCard(sources: List<SourceEntity>, flashcards: List<FlashcardEntity>, onNavigate: (FieldMindScreen) -> Unit) {
@@ -182,15 +661,8 @@ private fun RecentActivityGroupCard(group: List<RecentEntry>, onOpenDetail: (Str
     }
 }
 
-/** A learn resource paired with the category/topic path it came from. */
 internal data class LearnRecommendation(val resource: LearnResource, val path: String)
 
-/**
- * Picks up to three Learn resources relevant to the user's recent activity by scoring every
- * resource against keyword overlap with [signals] (recent categories, subjects, tags, topics).
- * With no signals it falls back to foundational "scientific thinking" resources so the Today
- * screen always has a useful suggestion.
- */
 internal fun recommendedResources(signals: List<String>): List<LearnRecommendation> {
     val all = LearnLibrary.flatMap { c -> c.topics.flatMap { t -> t.resources.map { Triple(c, t, it) } } }
     val words = signals.joinToString(" ").lowercase().split(Regex("[^a-z0-9]+")).filter { it.length > 3 }.toSet()
@@ -236,7 +708,6 @@ private fun RecommendedLearningCard(items: List<LearnRecommendation>, onOpenRead
     }
 }
 
-
 @Composable
 private fun DailyGoalCard(todayCount: Int, goal: Int, streakDays: Int, onClick: () -> Unit) {
     val colors = FieldMindTheme.colors
@@ -279,6 +750,50 @@ private fun DailyGoalCard(todayCount: Int, goal: Int, streakDays: Int, onClick: 
                     GoalStatChip(FieldMindIcons.Streak, "$streakDays day${if (streakDays == 1) "" else "s"} streak", colors.warning)
                     GoalStatChip(if (complete) FieldMindIcons.Check else FieldMindIcons.Observation, if (complete) "Done" else "$todayCount logged", if (complete) colors.positive else colors.observation)
                 }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ResearchSessionCtaCard(
+    lastSessionLabel: String?,
+    onStartSession: () -> Unit
+) {
+    val haptics = rememberFieldMindHaptics()
+    Card(
+        modifier = Modifier.fillMaxWidth().animateContentSize(),
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Row(
+            Modifier.fillMaxWidth().padding(18.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(14.dp)
+        ) {
+            Box(
+                Modifier.size(48.dp).clip(RoundedCornerShape(16.dp))
+                    .background(MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.12f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(FieldMindIcons.Timer, null, tint = MaterialTheme.colorScheme.onPrimaryContainer, size = 26.dp)
+            }
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text("Research Session", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onPrimaryContainer)
+                Text(
+                    lastSessionLabel ?: "Structured capture with timer, live feed, and summary",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.78f)
+                )
+            }
+            Button(
+                onClick = { haptics.confirm(); onStartSession() },
+                shape = RoundedCornerShape(14.dp)
+            ) {
+                Icon(FieldMindIcons.Add, null, size = 18.dp)
+                Spacer(Modifier.size(4.dp))
+                Text("Start")
             }
         }
     }
@@ -330,41 +845,12 @@ private data class HomeWidget(val title: String, val value: String, val icon: Ma
 private fun HomeWidgetCard(widget: HomeWidget, modifier: Modifier = Modifier, onClick: () -> Unit) {
     val haptics = rememberFieldMindHaptics()
     Card(modifier = modifier.height(112.dp).clickable { haptics.light(); onClick() }, shape = RoundedCornerShape(24.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)) {
-        Column(Modifier.fillMaxSize().padding(14.dp), verticalArrangement = Arrangement.SpaceBetween) {
-            Icon(widget.icon, null, tint = widget.color, size = 32.dp)
-            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+        Column(Modifier.fillMaxSize().padding(16.dp, 14.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Icon(widget.icon, null, tint = widget.color, size = 40.dp)
+            Column(verticalArrangement = Arrangement.spacedBy(1.dp)) {
                 Text(widget.title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
                 Text(widget.value, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
         }
     }
 }
-
-private data class QuickAction(val label: String, val icon: MaterialSymbolIcon, val color: androidx.compose.ui.graphics.Color, val screen: FieldMindScreen)
-
-@OptIn(ExperimentalLayoutApi::class)
-@Composable
-private fun QuickActionGrid(actions: List<QuickAction>, onNavigate: (FieldMindScreen) -> Unit) {
-    val haptics = rememberFieldMindHaptics()
-    FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalArrangement = Arrangement.spacedBy(12.dp), maxItemsInEachRow = 3) {
-        actions.forEach { action ->
-            Card(
-                modifier = Modifier
-                    .weight(1f)
-                    .clickable { haptics.light(); onNavigate(action.screen) },
-                shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
-                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-            ) {
-                Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Box(
-                        Modifier.size(38.dp).background(action.color.copy(alpha = if (FieldMindTheme.colors.isDark) 0.22f else 0.14f), RoundedCornerShape(12.dp)),
-                        contentAlignment = Alignment.Center
-                    ) { Icon(icon = action.icon, contentDescription = null, tint = action.color, size = 20.dp) }
-                    Text(action.label, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Medium, maxLines = 2, overflow = TextOverflow.Ellipsis)
-                }
-            }
-        }
-    }
-}
-
