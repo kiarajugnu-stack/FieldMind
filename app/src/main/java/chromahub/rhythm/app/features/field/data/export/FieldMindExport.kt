@@ -155,6 +155,46 @@ object FieldMindExport {
         return ArchiveImportBundle(preview, observations, notes, questions, hypotheses, projects, sources, dataRecords, reports, flashcards)
     }
 
+
+    fun singleObservationMarkdown(observation: ObservationEntity): String = buildString {
+        appendLine("# ${observation.subject}")
+        appendLine()
+        appendLine("Category: ${observation.category}")
+        appendLine("Captured: ${observation.date} ${observation.time}")
+        if (observation.durationMs != null) appendLine("Duration: ${observation.durationMs / 1000}s")
+        if (observation.manualLocation.isNotBlank()) appendLine("Location: ${observation.manualLocation}")
+        if (observation.weatherCondition.isNotBlank() || observation.weatherTemperature != null) appendLine("Weather: ${observation.weatherTemperature ?: ""} ${observation.weatherCondition}")
+        appendLine("\n## Facts\n${observation.factsOnlyNotes}")
+        if (observation.structuredDetailsJson.isNotBlank()) appendLine("\n## Structured details\n`${observation.structuredDetailsJson}`")
+        if (observation.evidenceSummary.isNotBlank()) appendLine("\n## Evidence\n${observation.evidenceSummary}")
+    }
+
+    fun singleProjectMarkdown(project: ProjectEntity): String = buildString {
+        appendLine("# ${project.title}")
+        appendLine("Status: ${project.status}")
+        appendLine("\n## Research question\n${project.researchQuestion}")
+        appendLine("\n## Objective\n${project.objective}")
+        appendLine("\n## Methods\n${project.methods}")
+        appendLine("\n## Evidence connections\n${project.connectionMap}")
+        appendLine("\n## Findings\n${project.conclusion}")
+    }
+
+    fun singleReportMarkdown(report: ReportEntity): String = buildMarkdownReport(report)
+
+    fun singleDataRecordMarkdown(record: DataRecordEntity): String = """# ${record.label}
+
+Tool: ${record.toolType}
+Dataset: ${record.datasetKind}
+Value: ${record.value} ${record.unit}
+Location: ${record.location}
+Notes: ${record.notes}
+""".trimIndent()
+
+    fun singleDataRecordCsv(record: DataRecordEntity): String = "id,toolType,label,value,unit,timestamp,location,notes\n${record.id},${csv(record.toolType)},${csv(record.label)},${csv(record.value)},${csv(record.unit)},${record.timestamp},${csv(record.location)},${csv(record.notes)}"
+
+    fun pdfReadyHtmlForMarkdown(title: String, markdown: String): String = """<!doctype html><html><head><meta charset="utf-8"><title>${html(title)}</title><style>body{font-family:sans-serif;line-height:1.55;padding:32px;max-width:820px;margin:auto}pre{white-space:pre-wrap;background:#f6f8f4;padding:16px;border-radius:16px}</style></head><body><pre>${html(markdown)}</pre></body></html>"""
+
+    private fun csv(value: String): String = "\"${value.replace("\"", "\"\"")}\""
     fun buildMarkdownReport(report: ReportEntity): String = report.markdownDraft.ifBlank {
         """# ${report.title}
 

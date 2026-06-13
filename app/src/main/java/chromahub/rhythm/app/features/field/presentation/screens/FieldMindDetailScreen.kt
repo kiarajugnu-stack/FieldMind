@@ -76,9 +76,20 @@ fun DetailScreen(kind: String, id: Long, viewModel: FieldMindViewModel, onBack: 
     var showEdit by remember(kind, id) { mutableStateOf(false) }
     var showDelete by remember(kind, id) { mutableStateOf(false) }
     val editable = kind in setOf("observation", "note", "question", "hypothesis", "project", "source", "data", "report", "flashcard")
+    val context = LocalContext.current
+    val clipboard = LocalClipboardManager.current
+    val exportText = remember(kind, id, observations, projects, data, reports) {
+        when (kind) {
+            "observation" -> observations.firstOrNull { it.id == id }?.let(FieldMindExport::singleObservationMarkdown)
+            "project" -> projects.firstOrNull { it.id == id }?.let(FieldMindExport::singleProjectMarkdown)
+            "data" -> data.firstOrNull { it.id == id }?.let(FieldMindExport::singleDataRecordMarkdown)
+            "report" -> reports.firstOrNull { it.id == id }?.let(FieldMindExport::singleReportMarkdown)
+            else -> null
+        }.orEmpty()
+    }
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(20.dp, 20.dp, 20.dp, 40.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
         item { FieldScreenHeader(title, "Record detail workspace", icon = FieldMindIcons.iconFor(kind), actionIcon = FieldMindIcons.Back, onAction = onBack) }
-        if (editable && !showEdit) item { DetailActions(onEdit = { showEdit = true }, onDelete = { showDelete = true }) }
+        if (editable && !showEdit) item { DetailActions(onEdit = { showEdit = true }, onDelete = { showDelete = true }, onShare = { sharePlainText(context, exportText.ifBlank { title }) }, onCopy = { clipboard.setText(AnnotatedString(exportText.ifBlank { title })) }) }
         if (showEdit) {
             when (kind) {
                 "note" -> notes.firstOrNull { it.id == id }?.let { n ->
@@ -177,12 +188,18 @@ fun DetailScreen(kind: String, id: Long, viewModel: FieldMindViewModel, onBack: 
 }
 
 @Composable
-private fun DetailActions(onEdit: () -> Unit, onDelete: () -> Unit) {
+private fun DetailActions(onEdit: () -> Unit, onDelete: () -> Unit, onShare: () -> Unit, onCopy: () -> Unit) {
     val haptics = rememberFieldMindHaptics()
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
         FilledTonalButton(onClick = { haptics.light(); onEdit() }, modifier = Modifier.weight(1f), shape = RoundedCornerShape(16.dp)) {
             Icon(icon = FieldMindIcons.Edit, contentDescription = null, size = 18.dp); Spacer(Modifier.size(8.dp)); Text("Edit")
         }
+        FilledTonalButton(onClick = { haptics.light(); onShare() }, modifier = Modifier.weight(1f), shape = RoundedCornerShape(16.dp)) {
+            Icon(icon = FieldMindIcons.Export, contentDescription = null, size = 18.dp); Spacer(Modifier.size(8.dp)); Text("Share")
+        }
+        OutlinedButton(onClick = { haptics.light(); onCopy() }, modifier = Modifier.weight(1f), shape = RoundedCornerShape(16.dp)) { Text("Copy") }
+    }
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
         OutlinedButton(
             onClick = { haptics.light(); onDelete() },
             modifier = Modifier.weight(1f),
@@ -286,6 +303,14 @@ private fun QuestionAnswerCard(question: QuestionEntity, onSave: (String) -> Uni
     }
 }
 
+
+private fun sharePlainText(context: Context, text: String) {
+    val intent = Intent(Intent.ACTION_SEND).apply {
+        type = "text/markdown"
+        putExtra(Intent.EXTRA_TEXT, text)
+    }
+    context.startActivity(Intent.createChooser(intent, "Share FieldMind record"))
+}
 @Composable
 private fun ConfirmDeleteDialog(kind: String, onDismiss: () -> Unit, onConfirm: () -> Unit) {
     val haptics = rememberFieldMindHaptics()

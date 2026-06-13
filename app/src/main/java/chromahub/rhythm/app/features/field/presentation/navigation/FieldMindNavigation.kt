@@ -3,6 +3,8 @@ package fieldmind.research.app.features.field.presentation.navigation
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.Spring
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
@@ -70,7 +72,7 @@ sealed class FieldMindScreen(val route: String, val label: String, val icon: Mat
     data object Analysis : FieldMindScreen("field_analysis", "Analysis", FieldMindIcons.Trend)
     data object Reports : FieldMindScreen("field_reports", "Reports", FieldMindIcons.Report)
     data object Search : FieldMindScreen("field_search", "Search", FieldMindIcons.Search)
-    data object BackupExport : FieldMindScreen("field_backup_export", "Export", FieldMindIcons.Export)
+    data object Changelog : FieldMindScreen("field_changelog", "What's new", FieldMindIcons.Info)
     data object Progress : FieldMindScreen("field_progress", "Progress", FieldMindIcons.Check)
     data object Flashcards : FieldMindScreen("field_flashcards_session", "Review", FieldMindIcons.Flashcard)
     data object ResearchSession : FieldMindScreen("field_research_session", "Session", FieldMindIcons.Bolt)
@@ -146,6 +148,7 @@ fun FieldMindNavigation(viewModel: FieldMindViewModel, onResetOnboarding: () -> 
     val hideChrome = currentRoute == FieldMindScreen.Settings.route ||
         currentRoute == FieldMindScreen.FieldMode.route ||
         currentRoute == FieldMindScreen.Reader.route ||
+        currentRoute == FieldMindScreen.Changelog.route ||
         currentRoute == FieldMindScreen.Flashcards.route ||
         currentRoute?.startsWith("field_detail/") == true
 
@@ -218,8 +221,8 @@ fun FieldMindNavigation(viewModel: FieldMindViewModel, onResetOnboarding: () -> 
 
 @Composable
 private fun AnimatedNavIcon(screen: FieldMindScreen, selected: Boolean) {
-    val scale by animateFloatAsState(if (selected) 1.18f else 0.96f, tween(220), label = "navIconScale")
-    val lift by animateFloatAsState(if (selected) -2.5f else 0f, tween(220), label = "navIconLift")
+    val scale by animateFloatAsState(if (selected) 1.22f else 0.98f, spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMediumLow), label = "navIconScale")
+    val lift by animateFloatAsState(if (selected) -3.5f else 0f, spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMediumLow), label = "navIconLift")
     val alpha by animateFloatAsState(if (selected) 1f else 0.72f, tween(180), label = "navIconAlpha")
     val tint by animateColorAsState(
         if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
@@ -231,7 +234,7 @@ private fun AnimatedNavIcon(screen: FieldMindScreen, selected: Boolean) {
         contentDescription = screen.label,
         tint = tint,
         modifier = Modifier.graphicsLayer { scaleX = scale; scaleY = scale; translationY = lift; this.alpha = alpha },
-        size = 24.dp,
+        size = if (selected) 32.dp else 28.dp,
         weight = if (selected) 650 else screen.icon.defaultWeight
     )
 }
@@ -296,8 +299,8 @@ private fun FieldMindNavHost(
         composable(FieldMindScreen.Reports.route) { ProjectsScreen(viewModel = viewModel, startTab = 2, onOpenDetail = openDetail) }
         composable(FieldMindScreen.Search.route) { ArchiveScreen(viewModel = viewModel, onOpenDetail = openDetail, onOpenReader = openReader) }
         composable(FieldMindScreen.MapScreen.route) { MapFieldScreen(viewModel = viewModel, onNavigate = { navController.navigateToDestination(it.route) }, onOpenDetail = openDetail) }
-        composable(FieldMindScreen.BackupExport.route) { BackupExportScreen(viewModel = viewModel) }
         composable(FieldMindScreen.ExportStudio.route) { BackupExportScreen(viewModel = viewModel) }
+        composable(FieldMindScreen.Changelog.route) { FieldMindChangelogScreen(onBack = { navController.popBackStack() }) }
         composable(FieldMindScreen.Progress.route) { InsightsScreen(viewModel = viewModel, onNavigate = { navController.navigateToDestination(it.route) }, onOpenDetail = openDetail) }
         composable(FieldMindScreen.Flashcards.route) { FlashcardSessionScreen(viewModel = viewModel, onBack = { navController.popBackStack() }) }
         composable(FieldMindScreen.ResearchSession.route) { ResearchSessionScreen(viewModel = viewModel, onBack = { navController.popBackStack() }, onOpenDetail = openDetail) }
@@ -314,7 +317,8 @@ private fun FieldMindNavHost(
                 onOpenAi = { navController.navigateToDestination(FieldMindScreen.SettingsAi.route) },
                 onOpenLocalModel = { navController.navigateToDestination(FieldMindScreen.SettingsLocalModel.route) },
                 onOpenBackup = { navController.navigateToDestination(FieldMindScreen.SettingsBackup.route) },
-                onOpenSecurity = { navController.navigateToDestination(FieldMindScreen.SettingsSecurity.route) }
+                onOpenSecurity = { navController.navigateToDestination(FieldMindScreen.SettingsSecurity.route) },
+                onOpenChangelog = { navController.navigateToDestination(FieldMindScreen.Changelog.route) }
             )
         }
         composable(FieldMindScreen.SettingsProfile.route) { ProfileSettingsPage(viewModel = viewModel, onBack = { navController.popBackStack() }) }
@@ -324,7 +328,7 @@ private fun FieldMindNavHost(
         composable(FieldMindScreen.SettingsLocalModel.route) { LocalModelSettingsPage(viewModel = viewModel, onBack = { navController.popBackStack() }) }
         composable(FieldMindScreen.SettingsBackup.route) { BackupImportSettingsPage(viewModel = viewModel, onBack = { navController.popBackStack() }, onOpenExport = { navController.navigateToDestination(FieldMindScreen.ExportStudio.route) }) }
         composable(FieldMindScreen.SettingsSecurity.route) { SecuritySettingsPage(viewModel = viewModel, onBack = { navController.popBackStack() }) }
-        composable(FieldMindScreen.SettingsAbout.route) { AboutPage(onBack = { navController.popBackStack() }) }
+        composable(FieldMindScreen.SettingsAbout.route) { AboutPage(onBack = { navController.popBackStack() }, onOpenChangelog = { navController.navigateToDestination(FieldMindScreen.Changelog.route) }) }
         composable("field_detail/{kind}/{id}") { entry ->
             val kind = entry.arguments?.getString("kind") ?: "observation"
             val id = entry.arguments?.getString("id")?.toLongOrNull() ?: 0L

@@ -15,6 +15,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -29,6 +30,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import fieldmind.research.app.features.field.data.database.entity.*
+import fieldmind.research.app.features.field.data.export.FieldReportTemplates
 import fieldmind.research.app.features.field.presentation.components.*
 import fieldmind.research.app.features.field.presentation.theme.FieldMindTheme
 import fieldmind.research.app.features.field.presentation.viewmodel.DraftEvidenceAttachment
@@ -281,11 +283,15 @@ private fun DataRecordForm(
     var value by remember { mutableStateOf("0") }
     var unit by remember { mutableStateOf("count") }
     var notes by remember { mutableStateOf("") }
-    InlineFormCard("Data Record", onDismiss = { onDismiss(); label = "" }, onSave = {
-        if (label.isNotBlank()) { viewModel.addDataRecord(tool, label, value, unit, notes); onDismiss(); label = "" }
+    var datasetKind by remember { mutableStateOf("Measurements") }
+    var chartMode by remember { mutableStateOf("Line") }
+    InlineFormCard("Data Workspace Entry", onDismiss = { onDismiss(); label = "" }, onSave = {
+        if (label.isNotBlank()) { viewModel.addDataRecord(tool, label, value, unit, notes, datasetKind = datasetKind, chartPreference = chartMode); onDismiss(); label = "" }
     }, saveEnabled = label.isNotBlank()) {
+        ChoiceChips(listOf("Counters", "Measurements", "Event logs", "Weather logs", "Species tracking", "Comparison table", "Time series"), datasetKind) { datasetKind = it }
+        ChoiceChips(listOf("Bar", "Line", "Donut/Pie", "Breakdown", "Timeline"), chartMode) { chartMode = it }
         ChoiceChips(dataTools, tool) { tool = it }
-        FieldTextField(label, { label = it }, "Label")
+        FieldTextField(label, { label = it }, "Dataset / row label")
         FieldTextField(value, { value = it }, "Value")
         FieldTextField(unit, { unit = it }, "Unit")
         FieldTextField(notes, { notes = it }, "Notes", minLines = 2)
@@ -297,17 +303,35 @@ private fun ReportForm(
     viewModel: FieldMindViewModel,
     onDismiss: () -> Unit
 ) {
-    var type by remember { mutableStateOf("Field Report") }
+    val templates = FieldReportTemplates.defaults
+    var selectedTemplate by remember { mutableStateOf(templates.first()) }
+    var preset by remember { mutableStateOf(selectedTemplate.presets.first()) }
     var title by remember { mutableStateOf("") }
-    var conclusion by remember { mutableStateOf("") }
+    var background by remember { mutableStateOf("") }
     var question by remember { mutableStateOf("") }
-    InlineFormCard("Report", onDismiss = { onDismiss(); title = "" }, onSave = {
-        if (title.isNotBlank()) { viewModel.addReport(type, title, "", question, "", "", "", "", conclusion, "", ""); onDismiss(); title = "" }
+    var methods by remember { mutableStateOf("") }
+    var observations by remember { mutableStateOf("") }
+    var results by remember { mutableStateOf("") }
+    var interpretation by remember { mutableStateOf("") }
+    var conclusion by remember { mutableStateOf("") }
+    var limitations by remember { mutableStateOf("") }
+    var nextSteps by remember { mutableStateOf("") }
+    InlineFormCard("Report builder", onDismiss = { onDismiss(); title = "" }, onSave = {
+        if (title.isNotBlank()) { viewModel.addReport(selectedTemplate.label, title, background, question, methods, observations, results, interpretation, conclusion, limitations, nextSteps); onDismiss(); title = "" }
     }, saveEnabled = title.isNotBlank()) {
-        ChoiceChips(reportTypes, type) { type = it }
+        ChoiceChips(templates.map { it.label }, selectedTemplate.label) { label -> selectedTemplate = templates.first { it.label == label } }
+        ChoiceChips(selectedTemplate.presets, preset) { preset = it }
+        Text(selectedTemplate.helperPrompt, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         FieldTextField(title, { title = it }, "Title")
-        FieldTextField(question, { question = it }, "Question", minLines = 2)
-        FieldTextField(conclusion, { conclusion = it }, "Conclusion / findings", minLines = 3)
+        FieldTextField(background, { background = it }, "Background", minLines = 2)
+        FieldTextField(question, { question = it }, "Research question", minLines = 2)
+        FieldTextField(methods, { methods = it }, "Methods", minLines = 3)
+        FieldTextField(observations, { observations = it }, "Observations / evidence", minLines = 3)
+        FieldTextField(results, { results = it }, "Results", minLines = 2)
+        FieldTextField(interpretation, { interpretation = it }, "Interpretation", minLines = 2)
+        FieldTextField(conclusion, { conclusion = it }, "Conclusion", minLines = 2)
+        FieldTextField(limitations, { limitations = it }, "Limitations", minLines = 2)
+        FieldTextField(nextSteps, { nextSteps = it }, "Next steps", minLines = 2)
     }
 }
 
@@ -343,7 +367,8 @@ private fun AnalysisTab(
 
         // Data tools
         item { Divider12() }
-        item { SectionHeader("Data tools", "${data.size} records") }
+        item { SectionHeader("Live Data Workspace", "${data.size} records • Bar, Line, Donut, Timeline") }
+        item { DatasetModeCards() }
         item { AddButton(if (showData) "Cancel" else "Add data record") { showData = !showData } }
         if (showData) {
             item {
@@ -364,6 +389,23 @@ private fun AnalysisTab(
         }
         if (reports.isEmpty()) item { EmptyState("No reports yet", "Write up your findings with background, methods, results, and conclusions.", icon = FieldMindIcons.Report) }
         items(reports) { r -> EntityCard(r.title, "report", body = r.conclusion.ifBlank { r.question }, meta = listOf(r.type, r.status), onClick = { onOpenDetail("report", r.id) }) }
+    }
+}
+
+
+@Composable
+private fun DatasetModeCards() {
+    val modes = listOf("Counters", "Measurements", "Event logs", "Weather logs", "Species tracking", "Comparison tables", "Time series")
+    LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+        items(modes) { mode ->
+            Card(shape = RoundedCornerShape(18.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)) {
+                Column(Modifier.width(148.dp).padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Icon(FieldMindIcons.Data, null, tint = MaterialTheme.colorScheme.primary, size = 22.dp)
+                    Text(mode, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+                    Text("Filter, chart, and link to projects or sessions.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+        }
     }
 }
 

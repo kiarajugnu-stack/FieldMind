@@ -1,11 +1,13 @@
 package fieldmind.research.app.features.field.presentation.components
 
 import android.Manifest
+import android.app.Activity
 import android.content.ContentValues
 import android.content.pm.PackageManager
 import android.os.Environment
 import android.provider.MediaStore
 import android.view.ViewGroup
+import android.view.WindowManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.core.Camera
@@ -48,11 +50,15 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import fieldmind.research.app.features.field.presentation.theme.FieldMindTheme
 import fieldmind.research.app.shared.presentation.components.icons.Icon
 import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon
@@ -100,6 +106,31 @@ fun FieldMindCameraV2(
     val lifecycleOwner = LocalLifecycleOwner.current
     val cameraExecutor: ExecutorService = remember { Executors.newSingleThreadExecutor() }
     val scope = rememberCoroutineScope()
+    val view = LocalView.current
+
+    DisposableEffect(view) {
+        val window = (context as? Activity)?.window
+        val previousDecorFits = window?.let { WindowCompat.getInsetsController(it, view).systemBarsBehavior }
+        val previousFlags = window?.attributes?.flags ?: 0
+        if (window != null) {
+            WindowCompat.setDecorFitsSystemWindows(window, false)
+            WindowInsetsControllerCompat(window, view).apply {
+                systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+                hide(WindowInsetsCompat.Type.systemBars())
+            }
+            window.addFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS)
+        }
+        onDispose {
+            if (window != null) {
+                WindowInsetsControllerCompat(window, view).apply {
+                    previousDecorFits?.let { systemBarsBehavior = it }
+                    show(WindowInsetsCompat.Type.systemBars())
+                }
+                WindowCompat.setDecorFitsSystemWindows(window, true)
+                window.attributes = window.attributes.apply { flags = previousFlags }
+            }
+        }
+    }
 
     var lensFacing by remember { mutableIntStateOf(CameraSelector.LENS_FACING_BACK) }
     var flashMode by remember { mutableIntStateOf(FLASH_OFF) }
@@ -255,13 +286,11 @@ fun FieldMindCameraV2(
         return
     }
 
-    Box(modifier.fillMaxWidth()) {
+    Box(modifier.fillMaxSize().background(Color.Black)) {
         // Camera preview
         AndroidView(
             modifier = Modifier
-                .fillMaxWidth()
-                .aspectRatio(aspectRatio)
-                .clip(RoundedCornerShape(28.dp))
+                .fillMaxSize()
                 .pointerInput(Unit) {
                     detectTransformGestures { _, _, zoom, _ ->
                         val newZoom = (zoomRatio * zoom).coerceIn(1f, maxZoom)
@@ -297,9 +326,7 @@ fun FieldMindCameraV2(
         if (showGrid) {
             Canvas(
                 Modifier
-                    .fillMaxWidth()
-                    .aspectRatio(aspectRatio)
-                    .clip(RoundedCornerShape(28.dp))
+                    .fillMaxSize()
             ) {
                 val w = size.width
                 val h = size.height
@@ -310,6 +337,10 @@ fun FieldMindCameraV2(
                 drawLine(lineColor, Offset(0f, h / 3), Offset(w, h / 3), strokeWidth = 1.5f)
                 drawLine(lineColor, Offset(0f, 2 * h / 3), Offset(w, 2 * h / 3), strokeWidth = 1.5f)
             }
+        }
+
+        if (aspectLabel != "Full") {
+            CropGuideOverlay(aspectRatio)
         }
 
         // Focus ring
@@ -345,7 +376,7 @@ fun FieldMindCameraV2(
 
         // Countdown overlay
         if (isCountingDown && countdown > 0) {
-            Box(Modifier.fillMaxWidth().aspectRatio(aspectRatio).clip(RoundedCornerShape(28.dp)), contentAlignment = Alignment.Center) {
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Text(
                     "$countdown",
                     style = MaterialTheme.typography.displayLarge.copy(fontSize = 96.sp),
@@ -359,9 +390,9 @@ fun FieldMindCameraV2(
         // Controls overlay
         Box(
             Modifier
-                .fillMaxWidth()
-                .aspectRatio(aspectRatio)
-                .padding(20.dp),
+                .fillMaxSize()
+                .safeDrawingPadding()
+                .padding(16.dp),
             contentAlignment = Alignment.BottomCenter
         ) {
             // Top controls
@@ -382,7 +413,7 @@ fun FieldMindCameraV2(
                     IconButton(onClick = { timerSeconds = when (timerSeconds) { 0 -> 3; 3 -> 5; 5 -> 10; else -> 0 } }, modifier = Modifier.size(44.dp).background(Color.Black.copy(alpha = 0.35f), CircleShape)) {
                         Text(if (timerSeconds == 0) "⏱" else "${timerSeconds}s", color = if (timerSeconds > 0) Color(0xFFFFCC80) else Color.White, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
                     }
-                    // Aspect ratio
+                    // Crop guide only: the preview remains immersive and full-screen.
                     IconButton(onClick = {
                         val idx = aspectRatios.indexOfFirst { it.first == aspectLabel }
                         val next = (idx + 1) % aspectRatios.size
@@ -468,5 +499,17 @@ fun FieldMindCameraV2(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun CropGuideOverlay(aspectRatio: Float) {
+    Canvas(Modifier.fillMaxSize().safeDrawingPadding().padding(20.dp)) {
+        val guideWidth = size.width
+        val guideHeight = (guideWidth / aspectRatio).coerceAtMost(size.height)
+        val top = (size.height - guideHeight) / 2f
+        val lineColor = Color.White.copy(alpha = 0.42f)
+        drawLine(lineColor, Offset(0f, top), Offset(guideWidth, top), strokeWidth = 2f)
+        drawLine(lineColor, Offset(0f, top + guideHeight), Offset(guideWidth, top + guideHeight), strokeWidth = 2f)
     }
 }
