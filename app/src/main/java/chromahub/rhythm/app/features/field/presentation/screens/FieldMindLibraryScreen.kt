@@ -77,7 +77,7 @@ fun KnowledgeLibraryScreen(
     val tabs = listOf("Sources", "Notes", "Reading", "Flashcards", "Learn")
     Column(Modifier.fillMaxSize()) {
         Column(Modifier.padding(20.dp, 20.dp, 20.dp, 8.dp)) {
-            FieldScreenHeader("Library", "Sources, active reading, review cards, and skills.", icon = FieldMindIcons.Library)
+            FieldScreenHeader("Knowledge Hub", "Sources, notes, reading, flashcards, and learning.", icon = FieldMindIcons.Library)
         }
         ScrollableTabRow(selectedTabIndex = tab, edgePadding = 20.dp, containerColor = MaterialTheme.colorScheme.background) {
             tabs.forEachIndexed { i, label -> Tab(tab == i, { tab = i }, text = { Text(label) }) }
