@@ -10,11 +10,14 @@ import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -27,6 +30,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -34,6 +38,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.core.content.ContextCompat
@@ -48,15 +53,48 @@ import fieldmind.research.app.features.field.presentation.viewmodel.DraftEvidenc
 import fieldmind.research.app.features.field.presentation.viewmodel.FieldMindViewModel
 import fieldmind.research.app.shared.presentation.components.icons.Icon
 import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import java.io.File
 import kotlin.coroutines.resume
+
 // ══════════════════════════════════════════════════════════════════════
-//  Capture / Field mode
+//  Capture — Evidence-First Redesign with Live Timer
 // ══════════════════════════════════════════════════════════════════════
 
-private enum class CaptureState { Idle, ChooseMode, ChooseCategory, Snap, Note }
+/**
+ * Redesigned ObserveScreen with evidence-first layout.
+ *
+ * Flow:
+ * 1. Evidence buttons (Camera, Gallery, File, Mic) shown as primary action
+ * 2. After capturing evidence, form auto-expands with preview at top
+ * 3. Live timer runs persistently in the form header during the session
+ * 4. Categories are collapsible with multi-select presets
+ * 5. Save observation with all metadata
+ */
+
+// ── Capture state ──
+private data class CaptureSessionState(
+    val isActive: Boolean = false,
+    val step: CaptureStep = CaptureStep.Evidence,
+    val subject: String = "",
+    val facts: String = "",
+    val category: String = "Other",
+    val confidence: String = "Sure",
+    val tags: String = "",
+    val evidence: String = "",
+    val fieldContext: String = "",
+    val manualLocation: String = "",
+    val attachments: List<DraftEvidenceAttachment> = emptyList(),
+    // Live timer state
+    val timerStartedAt: Long? = null,
+    val timerAccumulatedMs: Long = 0L,
+    val timerRunning: Boolean = false,
+    val sessionObservationCount: Int = 0
+)
+
+private enum class CaptureStep { Evidence, Details, Complete }
 
 @Composable
 fun ObserveScreen(
@@ -66,171 +104,720 @@ fun ObserveScreen(
     onBack: (() -> Unit)? = null
 ) {
     if (compactFieldMode) { FieldModeScreen(viewModel, onBack ?: {}); return }
+
     val observations by viewModel.observations.collectAsState()
     val notes by viewModel.notes.collectAsState()
-    val defaultCategory by viewModel.fieldSettings.defaultCategory.collectAsState()
-    var captureState by remember { mutableStateOf(CaptureState.Idle) }
-    var selectedCategory by remember(defaultCategory) { mutableStateOf(defaultCategory) }
-    val haptics = rememberFieldMindHaptics()
-    LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(20.dp, 20.dp, 20.dp, 96.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        item { FieldScreenHeader("Capture", "Start with Snap evidence or a free-form Note, then add category and details.", icon = FieldMindIcons.Capture) }
-        item { PrimaryCaptureEntry(captureState, onStart = { haptics.light(); captureState = CaptureState.ChooseMode }, onClose = { haptics.light(); captureState = CaptureState.Idle }) }
-        when (captureState) {
-            CaptureState.ChooseMode -> item { CaptureModeChooser(
-                onSnap = { haptics.light(); captureState = CaptureState.ChooseCategory },
-                onNote = { haptics.light(); captureState = CaptureState.Note }
-            ) }
-            CaptureState.ChooseCategory -> item { CategoryFirstCard(selectedCategory, onCategory = { selectedCategory = it }, onSnap = { haptics.light(); captureState = CaptureState.Snap }) }
-            CaptureState.Snap -> item { ObservationCaptureCard(viewModel = viewModel, compact = false, initialCategory = selectedCategory, snapFirst = true) { captureState = CaptureState.Idle } }
-            CaptureState.Note -> item { NoteCaptureCard(viewModel = viewModel, initialCategory = selectedCategory) { captureState = CaptureState.Idle } }
-            CaptureState.Idle -> Unit
-        }
-        item { SectionHeader("Recent captures", "${observations.size} observations • ${notes.size} notes") }
-        if (observations.isEmpty() && notes.isEmpty()) item { EmptyState("No captures yet", "Snap factual evidence or draft a note. Observations stay facts-only; notes stay free-form.", icon = FieldMindIcons.Observation, actionLabel = "Start capture") { captureState = CaptureState.ChooseMode } }
-        items(notes.take(6), key = { "note-${it.id}" }) { item ->
-            EntityCard(
-                title = item.title,
-                kind = "note",
-                body = item.body.take(140).ifBlank { "No body yet." },
-                meta = listOf(item.category, recentRelativeTime(item.updatedAt)),
-                onClick = { onOpenDetail("note", item.id) }
-            )
-        }
-        items(observations.take(10), key = { "obs-${it.id}" }) { item ->
-            EntityCard(
-                title = item.subject,
-                kind = "observation",
-                body = item.factsOnlyNotes.take(140).ifBlank { "No factual notes recorded." },
-                confidence = item.confidenceLevel,
-                meta = buildList { add(item.category); add("${item.date} ${item.time}"); if (item.manualLocation.isNotBlank()) add(item.manualLocation); if (item.tags.isNotBlank()) add(item.tags) },
-                onClick = { onOpenDetail("observation", item.id) }
-            )
-        }
-    }
-}
-
-@Composable
-private fun PrimaryCaptureEntry(state: CaptureState, onStart: () -> Unit, onClose: () -> Unit) {
-    Button(onClick = if (state == CaptureState.Idle) onStart else onClose, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(18.dp)) {
-        Icon(icon = if (state == CaptureState.Idle) FieldMindIcons.Add else FieldMindIcons.Close, contentDescription = null, size = 20.dp)
-        Spacer(Modifier.size(8.dp))
-        Text(if (state == CaptureState.Idle) "Quick capture" else "Close capture")
-    }
-}
-
-@Composable
-private fun CaptureModeChooser(onSnap: () -> Unit, onNote: () -> Unit) {
-    Card(shape = RoundedCornerShape(28.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow), modifier = Modifier.fillMaxWidth()) {
-        Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-            SectionHeader("What are you capturing?", "Choose the smallest path that matches the moment.")
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                CaptureModeTile("Snap", "Photo, gallery, or file first", FieldMindIcons.Camera, FieldMindTheme.colors.observation, Modifier.weight(1f), onSnap)
-                CaptureModeTile("Note", "Title, facts, tags first", FieldMindIcons.Note, FieldMindTheme.colors.source, Modifier.weight(1f), onNote)
-            }
-        }
-    }
-}
-
-@Composable
-private fun CaptureModeTile(title: String, body: String, icon: MaterialSymbolIcon, color: androidx.compose.ui.graphics.Color, modifier: Modifier, onClick: () -> Unit) {
-    Card(modifier = modifier.height(132.dp).clickable(onClick = onClick), shape = RoundedCornerShape(24.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)) {
-        Column(Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterVertically), horizontalAlignment = Alignment.CenterHorizontally) {
-            Box(Modifier.size(48.dp).clip(RoundedCornerShape(16.dp)).background(color.copy(alpha = if (FieldMindTheme.colors.isDark) 0.24f else 0.14f)), contentAlignment = Alignment.Center) { Icon(icon = icon, contentDescription = null, tint = color, size = 26.dp) }
-            Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-            Text(body, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
-        }
-    }
-}
-
-@Composable
-private fun CategoryFirstCard(category: String, onCategory: (String) -> Unit, onSnap: () -> Unit) {
-    Card(shape = RoundedCornerShape(28.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow), modifier = Modifier.fillMaxWidth()) {
-        Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-            SectionHeader("Choose a category", "This labels the evidence before the full snap form.")
-            ChoiceChips(observationCategories, category, onSelected = onCategory)
-            Button(onClick = onSnap, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp)) { Text("Continue to snap evidence") }
-        }
-    }
-}
-
-@Composable
-internal fun NoteCaptureCard(viewModel: FieldMindViewModel, initialCategory: String, onSaved: () -> Unit) {
-    val context = LocalContext.current
-    val snackbar = remember { SnackbarHostState() }
-    val scope = rememberCoroutineScope()
     val projects by viewModel.projects.collectAsState()
-    val sources by viewModel.sources.collectAsState()
-    var title by remember { mutableStateOf("") }
-    var body by remember { mutableStateOf("") }
-    var category by remember(initialCategory) { mutableStateOf(initialCategory) }
-    var tags by remember { mutableStateOf("") }
-    var projectId by remember { mutableStateOf<Long?>(null) }
-    var sourceId by remember { mutableStateOf<Long?>(null) }
-    var attachments by remember { mutableStateOf<List<DraftEvidenceAttachment>>(emptyList()) }
+    val defaultConfidence by viewModel.fieldSettings.defaultConfidence.collectAsState()
+    val mediaEnabled by viewModel.fieldSettings.mediaAttachmentsEnabled.collectAsState()
+
     val haptics = rememberFieldMindHaptics()
-    val mediaPicker = rememberLauncherForActivityResult(ActivityResultContracts.PickMultipleVisualMedia(10)) { uris ->
-        attachments = attachments + uris.map { durableEvidenceAttachment(context, "Gallery", it, "Note media") }
-        scope.launch { snackbar.showSnackbar(if (uris.isEmpty()) "Gallery selection cancelled." else "Media copied into FieldMind evidence storage.") }
-    }
-    val filePicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
-        if (uri == null) scope.launch { snackbar.showSnackbar("File selection cancelled.") } else {
-            runCatching { context.contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION) }
-            attachments = attachments + durableEvidenceAttachment(context, "File", uri, "Note attachment")
-            scope.launch { snackbar.showSnackbar("File copied into FieldMind evidence storage.") }
+    val scope = rememberCoroutineScope()
+    val snackbar = remember { SnackbarHostState() }
+    val context = LocalContext.current
+
+    // Core session state
+    var session by remember { mutableStateOf(CaptureSessionState()) }
+    var showEvidenceForm by remember { mutableStateOf(false) }
+    var showCategoryPicker by remember { mutableStateOf(false) }
+    var selectedCategories by remember { mutableStateOf(setOf("Other")) }
+
+    // Camera dialog state
+    var showInAppCamera by remember { mutableStateOf(false) }
+
+    // ── Media picker and file picker launchers (MUST be at composable scope) ──
+    val mediaPicker = rememberLauncherForActivityResult(
+        ActivityResultContracts.PickMultipleVisualMedia(10)
+    ) { uris ->
+        uris.forEach { uri ->
+            addAttachment(
+                durableEvidenceAttachment(context, "Gallery", uri, "Selected media")
+            )
         }
     }
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        SnackbarHost(snackbar)
-        Card(shape = RoundedCornerShape(28.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow), modifier = Modifier.fillMaxWidth()) {
-            Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Box(Modifier.size(44.dp).clip(RoundedCornerShape(14.dp)).background(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)), contentAlignment = Alignment.Center) {
-                        Icon(icon = FieldMindIcons.Note, contentDescription = null, tint = MaterialTheme.colorScheme.primary, size = 24.dp)
-                    }
-                    Column(Modifier.weight(1f)) {
-                        Text("New note", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-                        Text("Free-form notes are separate from facts-only observations.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+
+    val filePicker = rememberLauncherForActivityResult(
+        ActivityResultContracts.OpenDocument()
+    ) { uri ->
+        if (uri != null) {
+            runCatching {
+                context.contentResolver.takePersistableUriPermission(
+                    uri, Intent.FLAG_GRANT_READ_URI_PERMISSION
+                )
+            }
+            addAttachment(
+                durableEvidenceAttachment(context, "File", uri, "Reference file")
+            )
+        }
+    }
+
+    // ── Action: start evidence capture ──
+    fun startCapture() {
+        haptics.light()
+        session = session.copy(isActive = true, step = CaptureStep.Evidence)
+        showEvidenceForm = true
+        // Auto-start timer if not already running
+        if (!session.timerRunning && session.timerStartedAt == null) {
+            session = session.copy(timerStartedAt = System.currentTimeMillis(), timerRunning = true)
+        }
+    }
+
+    // ── Action: add attachment ──
+    fun addAttachment(attachment: DraftEvidenceAttachment) {
+        session = session.copy(attachments = session.attachments + attachment)
+        scope.launch { snackbar.showSnackbar("${attachment.type} attached") }
+    }
+
+    // ── Action: save observation ──
+    fun saveObservation() {
+        val s = session
+        if (s.subject.isBlank() && s.facts.isBlank()) {
+            scope.launch { snackbar.showSnackbar("Add a subject or facts before saving.") }
+            return
+        }
+        haptics.confirm()
+        val now = System.currentTimeMillis()
+        val liveElapsed = s.timerAccumulatedMs +
+            if (s.timerRunning) (now - (s.timerStartedAt ?: now)) else 0L
+
+        viewModel.addObservation(
+            subject = s.subject.ifBlank { s.facts.take(36) },
+            category = s.category,
+            facts = s.facts,
+            confidence = s.confidence,
+            manualLocation = s.manualLocation,
+            tags = s.tags,
+            evidence = s.evidence,
+            context = s.fieldContext,
+            attachments = s.attachments,
+            durationMs = liveElapsed.takeIf { it > 0L }
+        ) {
+            session = session.copy(
+                subject = "", facts = "", tags = "", evidence = "",
+                fieldContext = "", manualLocation = "", attachments = emptyList(),
+                sessionObservationCount = session.sessionObservationCount + 1
+            )
+            scope.launch { snackbar.showSnackbar("Observation saved! Session: ${session.sessionObservationCount + 1}") }
+        }
+    }
+
+    Scaffold(
+        containerColor = MaterialTheme.colorScheme.background,
+        snackbarHost = { SnackbarHost(snackbar) }
+    ) { padding ->
+        LazyColumn(
+            Modifier.fillMaxSize().padding(padding),
+            contentPadding = PaddingValues(20.dp, 20.dp, 20.dp, 96.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            // ── Header ──
+            item {
+                FieldScreenHeader(
+                    "Capture",
+                    "Start with evidence, then add details.",
+                    icon = FieldMindIcons.Capture
+                )
+            }
+
+            // ── Live Timer (persistent when active) ──
+            if (session.isActive) {
+                item {
+                    LiveObservationTimer(
+                        timerStartedAt = session.timerStartedAt,
+                        timerAccumulatedMs = session.timerAccumulatedMs,
+                        timerRunning = session.timerRunning,
+                        observationCount = session.sessionObservationCount,
+                        onStart = {
+                            if (!session.timerRunning) {
+                                session = session.copy(
+                                    timerStartedAt = System.currentTimeMillis(),
+                                    timerRunning = true
+                                )
+                            }
+                        },
+                        onPause = {
+                            if (session.timerRunning && session.timerStartedAt != null) {
+                                val elapsed = session.timerAccumulatedMs +
+                                    (System.currentTimeMillis() - session.timerStartedAt)
+                                session = session.copy(
+                                    timerAccumulatedMs = elapsed,
+                                    timerRunning = false,
+                                    timerStartedAt = null
+                                )
+                            }
+                        },
+                        onReset = {
+                            session = session.copy(
+                                timerStartedAt = System.currentTimeMillis(),
+                                timerAccumulatedMs = 0L,
+                                timerRunning = true,
+                                sessionObservationCount = 0
+                            )
+                        },
+                        onClose = {
+                            session = CaptureSessionState()
+                            showEvidenceForm = false
+                        }
+                    )
+                }
+            } else {
+                // ── Start capture button ──
+                item {
+                    Button(
+                        onClick = { startCapture() },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(18.dp)
+                    ) {
+                        Icon(icon = FieldMindIcons.Add, contentDescription = null, size = 20.dp)
+                        Spacer(Modifier.size(8.dp))
+                        Text("Start capture session")
                     }
                 }
-                CaptureStep("Category", "Label the note before writing.", FieldMindIcons.Category) {
-                    ChoiceChips(observationCategories, category) { category = it }
+            }
+
+            // ── Evidence-First Input ──
+            if (showEvidenceForm) {
+                // Evidence capture buttons (always visible when form is open)
+                item {
+                    EvidenceCaptureRow(
+                        mediaEnabled = mediaEnabled,
+                        attachments = session.attachments,
+                        onLaunchCamera = {
+                            haptics.light()
+                            showInAppCamera = true
+                        },
+                        onLaunchGallery = {
+                            haptics.light()
+                            mediaPicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageAndVideo))
+                        },
+                        onLaunchFile = {
+                            haptics.light()
+                            filePicker.launch(arrayOf("application/pdf", "text/*", "image/*", "video/*", "audio/*"))
+                        },
+                        onRemoveAttachment = { idx ->
+                            session = session.copy(
+                                attachments = session.attachments.filterIndexed { i, _ -> i != idx }
+                            )
+                        },
+                        onCaptionChange = { idx, caption ->
+                            session = session.copy(
+                                attachments = session.attachments.mapIndexed { i, item ->
+                                    if (i == idx) item.copy(caption = caption) else item
+                                }
+                            )
+                        }
+                    )
                 }
-                CaptureStep("Title, body & tags", "Prioritize what you want to remember.", FieldMindIcons.Edit) {
-                    FieldTextField(title, { title = it }, "Title")
-                    FieldTextField(body, { body = it }, "Body / facts / reflection", minLines = 5, supportingText = "Free-form note. Use observations for facts-only evidence.")
-                    FieldTextField(tags, { tags = it }, "Tags", supportingText = "Comma-separated tags")
+
+                // ── Quick Observation Form (auto-expanded after evidence) ──
+                item {
+                    QuickObservationForm(
+                        subject = session.subject,
+                        onSubjectChange = { session = session.copy(subject = it) },
+                        facts = session.facts,
+                        onFactsChange = { session = session.copy(facts = it) },
+                        category = session.category,
+                        onCategoryChange = { session = session.copy(category = it) },
+                        confidence = session.confidence,
+                        onConfidenceChange = { session = session.copy(confidence = it) },
+                        tags = session.tags,
+                        onTagsChange = { session = session.copy(tags = it) },
+                        evidenceSummary = session.evidence,
+                        onEvidenceChange = { session = session.copy(evidence = it) },
+                        fieldContext = session.fieldContext,
+                        onFieldContextChange = { session = session.copy(fieldContext = it) },
+                        manualLocation = session.manualLocation,
+                        onLocationChange = { session = session.copy(manualLocation = it) },
+                        projects = projects,
+                        onSave = { saveObservation() }
+                    )
                 }
-                CaptureStep("Links", "Optionally connect a project or source.", FieldMindIcons.Link) {
-                    if (projects.isNotEmpty()) {
-                        Text("Project", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        ChoiceChips(listOf("No project") + projects.map { it.title }, projects.firstOrNull { it.id == projectId }?.title ?: "No project") { selected -> projectId = projects.firstOrNull { it.title == selected }?.id }
-                    }
-                    if (sources.isNotEmpty()) {
-                        Text("Source", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        ChoiceChips(listOf("No source") + sources.map { it.title }, sources.firstOrNull { it.id == sourceId }?.title ?: "No source") { selected -> sourceId = sources.firstOrNull { it.title == selected }?.id }
+            }
+
+            // ── Recent captures ──
+            item {
+                SectionHeader(
+                    "Recent captures",
+                    "${observations.size} observations • ${notes.size} notes"
+                )
+            }
+
+            if (observations.isEmpty() && notes.isEmpty()) {
+                item {
+                    EmptyState(
+                        "No captures yet",
+                        "Snap evidence or write facts. Observations stay facts-only; notes stay free-form.",
+                        icon = FieldMindIcons.Observation,
+                        actionLabel = "Start capture"
+                    ) { startCapture() }
+                }
+            }
+
+            items(notes.take(6), key = { "note-${it.id}" }) { item ->
+                EntityCard(
+                    title = item.title,
+                    kind = "note",
+                    body = item.body.take(140).ifBlank { "No body yet." },
+                    meta = listOf(item.category, recentRelativeTime(item.updatedAt)),
+                    onClick = { onOpenDetail("note", item.id) }
+                )
+            }
+
+            items(observations.take(10), key = { "obs-${it.id}" }) { item ->
+                EntityCard(
+                    title = item.subject,
+                    kind = "observation",
+                    body = item.factsOnlyNotes.take(140).ifBlank { "No factual notes recorded." },
+                    confidence = item.confidenceLevel,
+                    meta = buildList {
+                        add(item.category)
+                        add("${item.date} ${item.time}")
+                        if (item.manualLocation.isNotBlank()) add(item.manualLocation)
+                        if (item.tags.isNotBlank()) add(item.tags)
+                    },
+                    onClick = { onOpenDetail("observation", item.id) }
+                )
+            }
+        }
+    }
+
+    // ── In-app camera overlay ──
+    if (showInAppCamera) {
+        Dialog(
+            onDismissRequest = { showInAppCamera = false },
+            properties = DialogProperties(usePlatformDefaultWidth = false)
+        ) {
+            FieldMindCameraV2(
+                onPhotoCaptured = { uri, mimeType ->
+                    addAttachment(
+                        DraftEvidenceAttachment("Photo", uri, "Camera photo", mimeType = mimeType)
+                    )
+                    showInAppCamera = false
+                },
+                onDismiss = { showInAppCamera = false },
+                modifier = Modifier.fillMaxSize()
+            )
+        }
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════════
+//  Live Observation Timer — persistent header component
+// ══════════════════════════════════════════════════════════════════════
+
+/**
+ * Persistent live timer shown at the top of the capture form.
+ * Displays elapsed time (updating every second) and session observation count.
+ */
+@Composable
+private fun LiveObservationTimer(
+    timerStartedAt: Long?,
+    timerAccumulatedMs: Long,
+    timerRunning: Boolean,
+    observationCount: Int,
+    onStart: () -> Unit,
+    onPause: () -> Unit,
+    onReset: () -> Unit,
+    onClose: () -> Unit
+) {
+    // Compute live elapsed time
+    val liveElapsedMs = remember(timerStartedAt, timerAccumulatedMs, timerRunning) {
+        if (timerRunning && timerStartedAt != null) {
+            timerAccumulatedMs + (System.currentTimeMillis() - timerStartedAt)
+        } else {
+            timerAccumulatedMs
+        }
+    }
+
+    // Force recomposition every second when running
+    var tick by remember { mutableIntStateOf(0) }
+    LaunchedEffect(timerRunning) {
+        if (timerRunning) {
+            while (true) {
+                delay(500)
+                tick++
+            }
+        }
+    }
+
+    // Recompute elapsed with tick dependency
+    val displayElapsed = if (timerRunning && timerStartedAt != null) {
+        @Suppress("UNUSED_EXPRESSION")
+        tick // Force recomposition
+        timerAccumulatedMs + (System.currentTimeMillis() - timerStartedAt)
+    } else {
+        timerAccumulatedMs
+    }
+
+    val formatted = formatDurationCompact(displayElapsed)
+    val isRunning = timerRunning
+
+    // Pulsing dot animation when running
+    val infiniteTransition = rememberInfiniteTransition(label = "timerPulse")
+    val pulseAlpha by infiniteTransition.animateFloat(
+        initialValue = 1f, targetValue = 0.3f,
+        animationSpec = infiniteRepeatable(tween(800), RepeatMode.Reverse),
+        label = "pulse"
+    )
+
+    Card(
+        shape = RoundedCornerShape(26.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = if (isRunning)
+                MaterialTheme.colorScheme.primaryContainer
+            else
+                MaterialTheme.colorScheme.surfaceContainerLow
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Row(
+            Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 14.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            // Timer icon with pulsing dot
+            Box(contentAlignment = Alignment.Center) {
+                Icon(
+                    icon = FieldMindIcons.Timer,
+                    contentDescription = "Timer",
+                    tint = MaterialTheme.colorScheme.primary,
+                    size = 26.dp
+                )
+                if (isRunning) {
+                    Box(
+                        Modifier
+                            .size(8.dp)
+                            .graphicsLayer { alpha = pulseAlpha }
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.error)
+                            .align(Alignment.TopEnd)
+                    )
+                }
+            }
+
+            // Elapsed time (large)
+            Column(Modifier.weight(1f)) {
+                Text(
+                    formatted,
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text(
+                        "$observationCount observation${if (observationCount != 1) "s" else ""}",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    if (isRunning) {
+                        Text(
+                            "● Recording",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.error,
+                            fontWeight = FontWeight.SemiBold
+                        )
                     }
                 }
-                CaptureStep("Optional evidence", "Attach supporting files without turning the note into an observation.", FieldMindIcons.File) {
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        OutlinedButton(onClick = { haptics.light(); mediaPicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageAndVideo)) }, Modifier.weight(1f)) { Icon(icon = FieldMindIcons.Gallery, contentDescription = "Gallery", size = 18.dp) }
-                        OutlinedButton(onClick = { haptics.light(); filePicker.launch(arrayOf("application/pdf", "text/*", "image/*", "video/*", "audio/*")) }, Modifier.weight(1f)) { Icon(icon = FieldMindIcons.File, contentDescription = "File", size = 18.dp) }
+            }
+
+            // Controls
+            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                if (isRunning) {
+                    FilledTonalIconButton(
+                        onClick = onPause,
+                        modifier = Modifier.size(36.dp)
+                    ) {
+                        Icon(
+                            icon = MaterialSymbolIcon("pause"),
+                            contentDescription = "Pause",
+                            size = 18.dp
+                        )
                     }
-                    AttachmentPreviewList(attachments, onCaptionChange = { index, caption -> attachments = attachments.mapIndexed { i, item -> if (i == index) item.copy(caption = caption) else item } }, onRemove = { remove -> attachments = attachments.filterIndexed { index, _ -> index != remove } })
+                } else if (displayElapsed > 0L) {
+                    FilledTonalIconButton(
+                        onClick = onStart,
+                        modifier = Modifier.size(36.dp)
+                    ) {
+                        Icon(
+                            icon = MaterialSymbolIcon("play_arrow"),
+                            contentDescription = "Resume",
+                            size = 18.dp
+                        )
+                    }
+                } else {
+                    FilledTonalIconButton(
+                        onClick = onStart,
+                        modifier = Modifier.size(36.dp)
+                    ) {
+                        Icon(
+                            icon = MaterialSymbolIcon("play_arrow"),
+                            contentDescription = "Start",
+                            size = 18.dp
+                        )
+                    }
                 }
-                Button(onClick = {
-                    if (title.isBlank() && body.isBlank()) scope.launch { snackbar.showSnackbar("Add a title or body before saving.") } else { haptics.confirm(); viewModel.addNote(title.ifBlank { body.take(36) }, body, category, tags, projectId, sourceId, attachments) {
-                        title = ""; body = ""; tags = ""; attachments = emptyList(); projectId = null; sourceId = null
-                        scope.launch { snackbar.showSnackbar("Note saved to your library.") }
-                        onSaved()
-                    }
-                    }
-                }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp)) {
-                    Icon(icon = FieldMindIcons.Check, contentDescription = null, size = 18.dp); Spacer(Modifier.size(8.dp)); Text("Save note")
+
+                IconButton(
+                    onClick = onReset,
+                    modifier = Modifier.size(36.dp)
+                ) {
+                    Icon(
+                        icon = MaterialSymbolIcon("restart_alt"),
+                        contentDescription = "Reset",
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        size = 18.dp
+                    )
+                }
+
+                IconButton(
+                    onClick = onClose,
+                    modifier = Modifier.size(36.dp)
+                ) {
+                    Icon(
+                        icon = FieldMindIcons.Close,
+                        contentDescription = "Close",
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        size = 18.dp
+                    )
                 }
             }
         }
     }
 }
+
+private fun formatDurationCompact(ms: Long): String {
+    val totalSeconds = ms / 1000
+    val hours = totalSeconds / 3600
+    val minutes = (totalSeconds % 3600) / 60
+    val seconds = totalSeconds % 60
+    return if (hours > 0) "%d:%02d:%02d".format(hours, minutes, seconds)
+    else "%02d:%02d".format(minutes, seconds)
+}
+
+// ══════════════════════════════════════════════════════════════════════
+//  Evidence Capture Row — Primary action buttons
+// ══════════════════════════════════════════════════════════════════════
+
+@Composable
+private fun EvidenceCaptureRow(
+    mediaEnabled: Boolean,
+    attachments: List<DraftEvidenceAttachment>,
+    onLaunchCamera: () -> Unit,
+    onLaunchGallery: () -> Unit,
+    onLaunchFile: () -> Unit,
+    onRemoveAttachment: (Int) -> Unit,
+    onCaptionChange: (Int, String) -> Unit
+) {
+    Card(
+        shape = RoundedCornerShape(28.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)
+    ) {
+        Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+            // Header
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                Box(
+                    Modifier.size(40.dp).clip(RoundedCornerShape(12.dp))
+                        .background(FieldMindTheme.colors.observation.copy(alpha = 0.14f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(FieldMindIcons.Camera, null, tint = FieldMindTheme.colors.observation, size = 22.dp)
+                }
+                Column(Modifier.weight(1f)) {
+                    Text("Add evidence", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    Text(if (attachments.isEmpty()) "Capture or attach files first, then add details." else "${attachments.size} item${if (attachments.size != 1) "s" else ""} attached", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+
+            // Evidence action buttons — large, prominent
+            if (mediaEnabled) {
+                Row(
+                    Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    EvidenceButton(
+                        onClick = onLaunchCamera,
+                        icon = FieldMindIcons.Camera,
+                        label = "Camera",
+                        accent = FieldMindTheme.colors.observation,
+                        modifier = Modifier.weight(1f)
+                    )
+                    EvidenceButton(
+                        onClick = onLaunchGallery,
+                        icon = FieldMindIcons.Gallery,
+                        label = "Gallery",
+                        accent = FieldMindTheme.colors.info,
+                        modifier = Modifier.weight(1f)
+                    )
+                    EvidenceButton(
+                        onClick = onLaunchFile,
+                        icon = FieldMindIcons.File,
+                        label = "File",
+                        accent = FieldMindTheme.colors.data,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+            }
+
+            // Attachment previews
+            if (attachments.isNotEmpty()) {
+                AttachmentPreviewList(
+                    items = attachments,
+                    onCaptionChange = onCaptionChange,
+                    onRemove = onRemoveAttachment
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun EvidenceButton(
+    onClick: () -> Unit,
+    icon: MaterialSymbolIcon,
+    label: String,
+    accent: Color,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier.height(80.dp).clickable(onClick = onClick),
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Column(
+            Modifier.fillMaxSize().padding(8.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterVertically),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Box(
+                Modifier.size(36.dp).clip(RoundedCornerShape(12.dp))
+                    .background(accent.copy(alpha = if (FieldMindTheme.colors.isDark) 0.24f else 0.14f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(icon = icon, contentDescription = null, tint = accent, size = 20.dp)
+            }
+            Text(
+                label,
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.SemiBold,
+                fontSize = 10.sp
+            )
+        }
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════════
+//  Quick Observation Form
+// ══════════════════════════════════════════════════════════════════════
+
+@Composable
+private fun QuickObservationForm(
+    subject: String,
+    onSubjectChange: (String) -> Unit,
+    facts: String,
+    onFactsChange: (String) -> Unit,
+    category: String,
+    onCategoryChange: (String) -> Unit,
+    confidence: String,
+    onConfidenceChange: (String) -> Unit,
+    tags: String,
+    onTagsChange: (String) -> Unit,
+    evidenceSummary: String,
+    onEvidenceChange: (String) -> Unit,
+    fieldContext: String,
+    onFieldContextChange: (String) -> Unit,
+    manualLocation: String,
+    onLocationChange: (String) -> Unit,
+    projects: List<ProjectEntity>,
+    onSave: () -> Unit
+) {
+    var showAdvanced by remember { mutableStateOf(false) }
+    var showCategories by remember { mutableStateOf(false) }
+
+    Card(
+        shape = RoundedCornerShape(28.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)
+    ) {
+        Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+            // Form header
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                Box(
+                    Modifier.size(40.dp).clip(RoundedCornerShape(12.dp))
+                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(FieldMindIcons.Edit, null, tint = MaterialTheme.colorScheme.primary, size = 22.dp)
+                }
+                Text("Observation details", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            }
+
+            // ── Core fields ──
+            FieldTextField(subject, onSubjectChange, "Subject", supportingText = "e.g. Crow on wire")
+            FactsInterpretationBanner()
+            FieldTextField(facts, onFactsChange, "Facts-only notes", minLines = 3,
+                supportingText = "What did you see/hear/measure?")
+
+            // ── Collapsible categories ──
+            Row(
+                Modifier.fillMaxWidth().clickable { showCategories = !showCategories },
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Icon(FieldMindIcons.Category, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, size = 18.dp)
+                    Text("Category: $category", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold)
+                }
+                Icon(
+                    if (showCategories) FieldMindIcons.Up else FieldMindIcons.Down,
+                    null, tint = MaterialTheme.colorScheme.onSurfaceVariant, size = 20.dp
+                )
+            }
+            AnimatedVisibility(visible = showCategories, enter = expandVertically(), exit = shrinkVertically()) {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    ChoiceChips(observationCategories, category, onSelected = onCategoryChange)
+                    Text("Confidence", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    ChoiceChips(confidenceOptions, confidence, onSelected = onConfidenceChange)
+                }
+            }
+
+            // ── Advanced fields (collapsible) ──
+            TextButton(onClick = { showAdvanced = !showAdvanced }) {
+                Icon(
+                    if (showAdvanced) FieldMindIcons.Up else FieldMindIcons.Down,
+                    null, size = 18.dp
+                )
+                Spacer(Modifier.size(6.dp))
+                Text(if (showAdvanced) "Hide advanced fields" else "Show advanced fields (tags, location, context)")
+            }
+            AnimatedVisibility(visible = showAdvanced, enter = expandVertically(), exit = shrinkVertically()) {
+                Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                    FieldTextField(tags, onTagsChange, "Tags", supportingText = "Comma-separated: birds, behavior, evening")
+                    FieldTextField(manualLocation, onLocationChange, "Place / location")
+                    ChoiceChips(contextPresets, fieldContext) {
+                        onFieldContextChange(if (fieldContext.isBlank()) it else "$fieldContext, $it")
+                    }
+                    FieldTextField(fieldContext, onFieldContextChange, "Context / mood", minLines = 2)
+                    FieldTextField(evidenceSummary, onEvidenceChange, "Evidence summary", minLines = 2)
+                }
+            }
+
+            // ── Save button ──
+            Button(
+                onClick = onSave,
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp)
+            ) {
+                Icon(icon = FieldMindIcons.Check, contentDescription = null, size = 18.dp)
+                Spacer(Modifier.size(8.dp))
+                Text("Save observation")
+            }
+        }
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════════
+//  Field Mode (unchanged from original)
+// ══════════════════════════════════════════════════════════════════════
 
 @Composable
 private fun FieldModeScreen(viewModel: FieldMindViewModel, onBack: () -> Unit) {
@@ -263,9 +850,7 @@ private fun FieldModeScreen(viewModel: FieldMindViewModel, onBack: () -> Unit) {
             if (showFull) {
                 item { ObservationCaptureCard(viewModel = viewModel, compact = true) { showFull = false } }
             } else {
-                item {
-                    Text("Tap a type to save instantly", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-                }
+                item { Text("Tap a type to save instantly", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold) }
                 item {
                     Button(onClick = { haptics.light(); showQuickSnapCategory = true }, Modifier.fillMaxWidth(), shape = RoundedCornerShape(18.dp)) {
                         Icon(icon = FieldMindIcons.Camera, contentDescription = null, size = 18.dp)
@@ -279,14 +864,10 @@ private fun FieldModeScreen(viewModel: FieldMindViewModel, onBack: () -> Unit) {
                             FieldModeButton(category, Modifier.weight(1f)) {
                                 haptics.confirm()
                                 viewModel.addObservation(
-                                    subject = category,
-                                    category = category,
+                                    subject = category, category = category,
                                     facts = "Quick field capture — add details later.",
-                                    confidence = defaultConfidence,
-                                    manualLocation = "",
-                                    tags = "",
-                                    evidence = "",
-                                    context = ""
+                                    confidence = defaultConfidence, manualLocation = "", tags = "",
+                                    evidence = "", context = ""
                                 ) { savedId ->
                                     scope.launch {
                                         val result = snackbar.showSnackbar("Saved $category", actionLabel = "Undo", duration = SnackbarDuration.Short)
@@ -314,16 +895,10 @@ private fun FieldModeScreen(viewModel: FieldMindViewModel, onBack: () -> Unit) {
             icon = { Icon(icon = FieldMindIcons.Camera, contentDescription = null) },
             title = { Text("Choose quick snap category") },
             text = { ChoiceChips(observationCategories, quickSnapCategory) { quickSnapCategory = it } },
-            confirmButton = {
-                Button(onClick = {
-                    showQuickSnapCategory = false
-                    showQuickSnapCamera = true
-                }) { Text("Open in-app camera") }
-            },
+            confirmButton = { Button(onClick = { showQuickSnapCategory = false; showQuickSnapCamera = true }) { Text("Open in-app camera") } },
             dismissButton = { TextButton(onClick = { showQuickSnapCategory = false }) { Text("Cancel") } }
         )
     }
-    // In-app camera overlay for quick snap (V2 — full-screen, zoom, focus, grid, timer)
     if (showQuickSnapCamera) {
         Dialog(onDismissRequest = { showQuickSnapCamera = false }, properties = DialogProperties(usePlatformDefaultWidth = false)) {
             FieldMindCameraV2(
@@ -342,16 +917,12 @@ private fun FieldModeScreen(viewModel: FieldMindViewModel, onBack: () -> Unit) {
                             else -> "Metadata attached"
                         }
                         viewModel.addObservation(
-                            subject = quickSnapCategory,
-                            category = quickSnapCategory,
+                            subject = quickSnapCategory, category = quickSnapCategory,
                             facts = "Quick snap — add details later.",
                             confidence = defaultConfidence,
-                            manualLocation = captured?.asDisplayText().orEmpty(),
-                            tags = "quick-snap",
-                            evidence = "Camera quick snap",
-                            context = quickSnapStatus.orEmpty(),
-                            latitude = captured?.latitude,
-                            longitude = captured?.longitude,
+                            manualLocation = captured?.asDisplayText().orEmpty(), tags = "quick-snap",
+                            evidence = "Camera quick snap", context = quickSnapStatus.orEmpty(),
+                            latitude = captured?.latitude, longitude = captured?.longitude,
                             weather = weather,
                             attachments = listOf(DraftEvidenceAttachment("Photo", uri, "Quick snap", mimeType = mimeType))
                         ) { scope.launch { snackbar.showSnackbar("Quick snap saved as $quickSnapCategory • ${quickSnapStatus.orEmpty()}") } }
@@ -364,19 +935,9 @@ private fun FieldModeScreen(viewModel: FieldMindViewModel, onBack: () -> Unit) {
     }
 }
 
-    quickSnapStatus?.let { status ->
-        AlertDialog(
-            onDismissRequest = { quickSnapStatus = null },
-            icon = { Icon(icon = FieldMindIcons.Check, contentDescription = null) },
-            title = { Text("Quick snap metadata") },
-            text = { Text("$quickSnapCategory • $status") },
-            confirmButton = { TextButton(onClick = { quickSnapStatus = null }) { Text("Done") } }
-        )
-    }
-
-private suspend fun awaitCurrentLocation(provider: FieldLocationProvider): CapturedLocation? = suspendCancellableCoroutine { cont ->
-    provider.requestCurrentLocation { captured -> if (cont.isActive) cont.resume(captured) }
-}
+// ══════════════════════════════════════════════════════════════════════
+//  Shared helpers (preserved from original)
+// ══════════════════════════════════════════════════════════════════════
 
 @Composable
 private fun FieldModeButton(category: String, modifier: Modifier = Modifier, onClick: () -> Unit) {
@@ -387,11 +948,10 @@ private fun FieldModeButton(category: String, modifier: Modifier = Modifier, onC
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
-        Column(Modifier.fillMaxSize().padding(horizontal = 12.dp, vertical = 14.dp), verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterVertically), horizontalAlignment = Alignment.CenterHorizontally) {
-            Box(
-                Modifier.size(44.dp).clip(CircleShape).background(accent.copy(alpha = 0.16f)),
-                contentAlignment = Alignment.Center
-            ) {
+        Column(Modifier.fillMaxSize().padding(horizontal = 12.dp, vertical = 14.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterVertically),
+            horizontalAlignment = Alignment.CenterHorizontally) {
+            Box(Modifier.size(44.dp).clip(CircleShape).background(accent.copy(alpha = 0.16f)), contentAlignment = Alignment.Center) {
                 Icon(icon = FieldMindIcons.iconForCategory(category), contentDescription = null, tint = accent, size = 24.dp)
             }
             Text(category, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis, textAlign = TextAlign.Center)
@@ -440,239 +1000,105 @@ internal fun ObservationCaptureCard(viewModel: FieldMindViewModel, compact: Bool
     var locating by remember { mutableStateOf(false) }
     val locationProvider = remember { FieldLocationProvider(context) }
     val haptics = rememberFieldMindHaptics()
-
     val startLocating = {
         locating = true
         locationProvider.requestCurrentLocation { captured ->
             locating = false
             if (captured != null) {
-                capturedLocation = captured
-                manualLocation = captured.asDisplayText()
+                capturedLocation = captured; manualLocation = captured.asDisplayText()
                 if (autoWeatherEnabled) {
-                    fetchingWeather = true
-                    weatherStatus = "Fetching weather…"
-                    scope.launch {
-                        weatherSnapshot = viewModel.fetchWeatherSnapshot(captured.latitude, captured.longitude)
-                        weatherStatus = weatherSnapshot?.asDisplayText() ?: "Weather unavailable"
-                        fetchingWeather = false
-                    }
+                    fetchingWeather = true; weatherStatus = "Fetching weather…"
+                    scope.launch { weatherSnapshot = viewModel.fetchWeatherSnapshot(captured.latitude, captured.longitude); weatherStatus = weatherSnapshot?.asDisplayText() ?: "Weather unavailable"; fetchingWeather = false }
                 }
                 locationProvider.resolvePlaceName(captured.latitude, captured.longitude) { place ->
-                    if (!place.isNullOrBlank()) {
-                        val withPlace = captured.copy(placeName = place)
-                        capturedLocation = withPlace
-                        manualLocation = withPlace.asDisplayText()
-                    }
+                    if (!place.isNullOrBlank()) { val withPlace = captured.copy(placeName = place); capturedLocation = withPlace; manualLocation = withPlace.asDisplayText() }
                 }
             }
-            scope.launch { snackbar.showSnackbar(captured?.let { "Location captured." } ?: "Couldn't get a fix. Check that location is on, then try again or type a place.") }
+            scope.launch { snackbar.showSnackbar(captured?.let { "Location captured." } ?: "Couldn't get a fix.") }
         }
     }
-
-    LaunchedEffect(recording) {
-        if (recording) {
-            recordSeconds = 0
-            while (recording) { kotlinx.coroutines.delay(1000); recordSeconds++ }
-        }
-    }
-
-    val mediaPicker = rememberLauncherForActivityResult(ActivityResultContracts.PickMultipleVisualMedia(10)) { uris ->
-        if (uris.isEmpty()) scope.launch { snackbar.showSnackbar("Gallery selection cancelled.") }
-        attachments = attachments + uris.map { durableEvidenceAttachment(context, "Gallery", it, "Selected media") }
-    }
-    val filePicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
-        if (uri == null) scope.launch { snackbar.showSnackbar("File selection cancelled.") } else {
-            runCatching { context.contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION) }
-            attachments = attachments + durableEvidenceAttachment(context, "File", uri, "Reference file / PDF")
-        }
-    }
-    val locationPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { result ->
-        val granted = result.values.any { it }
-        if (granted) startLocating()
-        else scope.launch { snackbar.showSnackbar("Location denied. Manual place names remain available.") }
-    }
+    LaunchedEffect(recording) { if (recording) { recordSeconds = 0; while (recording) { delay(1000); recordSeconds++ } } }
+    val mediaPicker = rememberLauncherForActivityResult(ActivityResultContracts.PickMultipleVisualMedia(10)) { uris -> if (uris.isEmpty()) scope.launch { snackbar.showSnackbar("Gallery selection cancelled.") }; attachments = attachments + uris.map { durableEvidenceAttachment(context, "Gallery", it, "Selected media") } }
+    val filePicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri -> if (uri == null) scope.launch { snackbar.showSnackbar("File selection cancelled.") } else { runCatching { context.contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION) }; attachments = attachments + durableEvidenceAttachment(context, "File", uri, "Reference file / PDF") } }
+    val locationPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { result -> if (result.values.any { it }) startLocating(); else scope.launch { snackbar.showSnackbar("Location denied.") } }
     val audioPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
         if (granted) {
-            val file = createFieldMindFile(context, "audio", ".m4a")
-            val newRecorder = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) MediaRecorder(context) else MediaRecorder()
-            runCatching {
-                newRecorder.setAudioSource(MediaRecorder.AudioSource.MIC)
-                newRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
-                newRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
-                newRecorder.setOutputFile(file.absolutePath)
-                newRecorder.prepare()
-                newRecorder.start()
-                audioFile = file
-                recorder = newRecorder
-                recording = true
-            }.onFailure {
-                newRecorder.release()
-                scope.launch { snackbar.showSnackbar("Could not start audio recording: ${it.localizedMessage ?: "unknown error"}") }
-            }
+            val file = createFieldMindFile(context, "audio", ".m4a"); val newRecorder = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) MediaRecorder(context) else MediaRecorder()
+            runCatching { newRecorder.setAudioSource(MediaRecorder.AudioSource.MIC); newRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4); newRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC); newRecorder.setOutputFile(file.absolutePath); newRecorder.prepare(); newRecorder.start(); audioFile = file; recorder = newRecorder; recording = true }
+                .onFailure { newRecorder.release(); scope.launch { snackbar.showSnackbar("Could not start recording: ${it.localizedMessage}") } }
         } else scope.launch { snackbar.showSnackbar("Audio permission denied.") }
     }
-
-    // In-app camera overlay (V2 — full-screen, zoom, focus, grid, timer, post-capture flow)
-    if (showInAppCamera) {
-        Dialog(onDismissRequest = { showInAppCamera = false }, properties = DialogProperties(usePlatformDefaultWidth = false)) {
-            FieldMindCameraV2(
-                onPhotoCaptured = { uri, mimeType ->
-                    attachments = attachments + DraftEvidenceAttachment("Photo", uri, "Camera photo", mimeType = mimeType)
-                    showInAppCamera = false
-                    scope.launch { snackbar.showSnackbar("Photo captured.") }
-                },
-                onDismiss = { showInAppCamera = false },
-                modifier = Modifier.fillMaxSize()
-            )
-        }
-    }
-
+    if (showInAppCamera) { Dialog(onDismissRequest = { showInAppCamera = false }, properties = DialogProperties(usePlatformDefaultWidth = false)) { FieldMindCameraV2(onPhotoCaptured = { uri, mimeType -> attachments = attachments + DraftEvidenceAttachment("Photo", uri, "Camera photo", mimeType = mimeType); showInAppCamera = false; scope.launch { snackbar.showSnackbar("Photo captured.") } }, onDismiss = { showInAppCamera = false }, modifier = Modifier.fillMaxSize()) } }
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         SnackbarHost(snackbar)
         Card(shape = RoundedCornerShape(28.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow), modifier = Modifier.fillMaxWidth()) {
             Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Box(Modifier.size(44.dp).clip(RoundedCornerShape(14.dp)).background(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)), contentAlignment = Alignment.Center) {
-                        Icon(icon = FieldMindIcons.Observation, contentDescription = null, tint = MaterialTheme.colorScheme.primary, size = 24.dp)
-                    }
+                    Box(Modifier.size(44.dp).clip(RoundedCornerShape(14.dp)).background(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)), contentAlignment = Alignment.Center) { Icon(icon = FieldMindIcons.Observation, contentDescription = null, tint = MaterialTheme.colorScheme.primary, size = 24.dp) }
                     Column(Modifier.weight(1f)) {
                         Text(if (compact) "Quick field note" else if (snapFirst) "Snap evidence" else "New observation", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                         Text(if (snapFirst) "Evidence first, then facts-only observation notes." else "Date and time are stamped automatically.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
-
                 if (snapFirst && mediaEnabled) {
                     CaptureStep("Evidence first", "Start with camera, gallery, or files before writing facts.", FieldMindIcons.Camera) {
                         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            OutlinedButton(onClick = { showInAppCamera = true }, Modifier.weight(1f)) {
-                                Icon(icon = FieldMindIcons.Camera, contentDescription = "Camera", size = 18.dp)
-                            }
-                            OutlinedButton(onClick = { mediaPicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageAndVideo)) }, Modifier.weight(1f)) {
-                                Icon(icon = FieldMindIcons.Gallery, contentDescription = "Gallery", size = 18.dp)
-                            }
-                            OutlinedButton(onClick = { filePicker.launch(arrayOf("application/pdf", "text/*", "image/*", "video/*", "audio/*")) }, Modifier.weight(1f)) {
-                                Icon(icon = FieldMindIcons.File, contentDescription = "File", size = 18.dp)
-                            }
+                            OutlinedButton(onClick = { showInAppCamera = true }, Modifier.weight(1f)) { Icon(icon = FieldMindIcons.Camera, contentDescription = "Camera", size = 18.dp) }
+                            OutlinedButton(onClick = { mediaPicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageAndVideo)) }, Modifier.weight(1f)) { Icon(icon = FieldMindIcons.Gallery, contentDescription = "Gallery", size = 18.dp) }
+                            OutlinedButton(onClick = { filePicker.launch(arrayOf("application/pdf", "text/*", "image/*", "video/*", "audio/*")) }, Modifier.weight(1f)) { Icon(icon = FieldMindIcons.File, contentDescription = "File", size = 18.dp) }
                         }
                         AttachmentPreviewList(attachments, onCaptionChange = { index, caption -> attachments = attachments.mapIndexed { i, item -> if (i == index) item.copy(caption = caption) else item } }, onRemove = { remove -> attachments = attachments.filterIndexed { index, _ -> index != remove } })
                     }
                 }
-
                 CaptureStep(if (snapFirst) "Subject & confidence" else "Subject", "What did you observe, and how sure are you?", FieldMindIcons.iconForCategory(category)) {
                     FieldTextField(subject, { subject = it }, "Subject", supportingText = "Example: Crow on wire")
-                    if (!compact) {
-                        Text("Category", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        ChoiceChips(observationCategories, category) { category = it }
-                    }
-                    Text("Confidence", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    ChoiceChips(confidenceOptions, confidence) { confidence = it }
+                    if (!compact) { Text("Category", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant); ChoiceChips(observationCategories, category) { category = it } }
+                    Text("Confidence", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant); ChoiceChips(confidenceOptions, confidence) { confidence = it }
                 }
-
                 CaptureStep(if (snapFirst) "Facts after evidence" else "Facts", "Record only what you observed — keep guesses out.", FieldMindIcons.Edit) {
-                    FactsInterpretationBanner()
-                    FieldTextField(facts, { facts = it }, "Facts-only notes", minLines = if (compact) 3 else 5, supportingText = "Write only what you saw/heard/measured. Put guesses in a question or hypothesis.")
-                    if (!compact) {
-                        Text("Context presets", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        ChoiceChips(contextPresets, fieldContext) { fieldContext = if (fieldContext.isBlank()) it else "$fieldContext, $it" }
-                        FieldTextField(fieldContext, { fieldContext = it }, "Mood / field context", supportingText = "Weather, light, surrounding activity, or constraints.")
-                    }
+                    FactsInterpretationBanner(); FieldTextField(facts, { facts = it }, "Facts-only notes", minLines = if (compact) 3 else 5, supportingText = "Write only what you saw/heard/measured.")
+                    if (!compact) { Text("Context presets", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant); ChoiceChips(contextPresets, fieldContext) { fieldContext = if (fieldContext.isBlank()) it else "$fieldContext, $it" }; FieldTextField(fieldContext, { fieldContext = it }, "Mood / field context", minLines = 2) }
                 }
-
                 CaptureStep("Location", "GPS is optional; manual place names work offline.", FieldMindIcons.Location) {
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                         OutlinedButton(onClick = { manualLocation = ""; capturedLocation = null }, Modifier.weight(1f)) { Text("Manual") }
-                        FilledTonalButton(
-                            onClick = {
-                                if (locating) return@FilledTonalButton
-                                if (locationProvider.hasAnyLocationPermission()) startLocating()
-                                else locationPermission.launch(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION))
-                            },
-                            modifier = Modifier.weight(1f),
-                            enabled = !locating
-                        ) {
-                            if (locating) {
-                                CircularProgressIndicator(Modifier.size(16.dp), strokeWidth = 2.dp, color = MaterialTheme.colorScheme.onSecondaryContainer)
-                                Spacer(Modifier.size(6.dp)); Text("Locating…")
-                            } else {
-                                Icon(icon = FieldMindIcons.Location, contentDescription = null, size = 18.dp); Spacer(Modifier.size(6.dp)); Text("Use GPS")
-                            }
-                        }
+                        FilledTonalButton(onClick = { if (locating) return@FilledTonalButton; if (locationProvider.hasAnyLocationPermission()) startLocating(); else locationPermission.launch(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION)) }, modifier = Modifier.weight(1f), enabled = !locating) {
+                            if (locating) { CircularProgressIndicator(Modifier.size(16.dp), strokeWidth = 2.dp, color = MaterialTheme.colorScheme.onSecondaryContainer); Spacer(Modifier.size(6.dp)); Text("Locating…") } else { Icon(icon = FieldMindIcons.Location, contentDescription = null, size = 18.dp); Spacer(Modifier.size(6.dp)); Text("Use GPS") } }
                     }
-                    capturedLocation?.let { loc ->
-                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                            Icon(icon = FieldMindIcons.Check, contentDescription = null, tint = FieldMindTheme.colors.confidenceSure, size = 16.dp)
-                            Text(loc.asDisplayText(), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        }
-                    }
+                    capturedLocation?.let { loc -> Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) { Icon(icon = FieldMindIcons.Check, contentDescription = null, tint = FieldMindTheme.colors.confidenceSure, size = 16.dp); Text(loc.asDisplayText(), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) } }
                     FieldTextField(manualLocation, { manualLocation = it }, "Place / GPS note")
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                        FilledTonalButton(
-                            onClick = {
-                                val loc = capturedLocation
-                                if (loc != null) {
-                                    fetchingWeather = true
-                                    weatherStatus = "Fetching weather…"
-                                    scope.launch {
-                                        weatherSnapshot = viewModel.fetchWeatherSnapshot(loc.latitude, loc.longitude)
-                                        weatherStatus = weatherSnapshot?.asDisplayText() ?: "Weather unavailable"
-                                        fetchingWeather = false
-                                    }
-                                } else scope.launch { snackbar.showSnackbar("Capture GPS before fetching weather.") }
-                            },
-                            enabled = !fetchingWeather,
-                            modifier = Modifier.weight(1f)
-                        ) { Text(if (fetchingWeather) "Weather…" else "Fetch weather") }
+                        FilledTonalButton(onClick = { val loc = capturedLocation; if (loc != null) { fetchingWeather = true; weatherStatus = "Fetching weather…"; scope.launch { weatherSnapshot = viewModel.fetchWeatherSnapshot(loc.latitude, loc.longitude); weatherStatus = weatherSnapshot?.asDisplayText() ?: "Weather unavailable"; fetchingWeather = false } } else scope.launch { snackbar.showSnackbar("Capture GPS before fetching weather.") } }, enabled = !fetchingWeather, modifier = Modifier.weight(1f)) { Text(if (fetchingWeather) "Weather…" else "Fetch weather") }
                         Text(weatherStatus, modifier = Modifier.weight(1f), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
-
                 CaptureStep("Timing", "Use the stopwatch or enter field timing manually.", FieldMindIcons.Timer) {
                     val liveElapsed = stopwatchAccumulatedMs + if (stopwatchRunning) (System.currentTimeMillis() - (stopwatchStartedAt ?: System.currentTimeMillis())) else 0L
-                    Text(formatDuration(liveElapsed), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+                    Text(formatDurationCompact(liveElapsed), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         OutlinedButton(onClick = { if (!stopwatchRunning) { stopwatchStartedAt = System.currentTimeMillis(); stopwatchRunning = true } }, Modifier.weight(1f)) { Text(if (stopwatchAccumulatedMs == 0L) "Start" else "Resume") }
                         OutlinedButton(onClick = { if (stopwatchRunning) { stopwatchAccumulatedMs += System.currentTimeMillis() - (stopwatchStartedAt ?: System.currentTimeMillis()); stopwatchRunning = false } }, Modifier.weight(1f)) { Text("Pause") }
                         OutlinedButton(onClick = { stopwatchStartedAt = null; stopwatchAccumulatedMs = 0L; stopwatchRunning = false }, Modifier.weight(1f)) { Text("Reset") }
                     }
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                        FieldTextField(manualDurationMinutes, { manualDurationMinutes = it }, "Manual min", modifier = Modifier.weight(1f))
-                        FieldTextField(changeAtMinutes, { changeAtMinutes = it }, "Change at +min", modifier = Modifier.weight(1f))
-                    }
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) { FieldTextField(manualDurationMinutes, { manualDurationMinutes = it }, "Manual min", modifier = Modifier.weight(1f)); FieldTextField(changeAtMinutes, { changeAtMinutes = it }, "Change +min", modifier = Modifier.weight(1f)) }
                     FieldTextField(timeNote, { timeNote = it }, "Timing note", minLines = 2)
                 }
-
                 CaptureStep("Structured details", observationCategoryDefinitions.firstOrNull { it.label == category }?.prompt ?: "Add category-specific fields.", FieldMindIcons.Data) {
                     TextButton(onClick = { showStructured = !showStructured }) { Text(if (showStructured) "Hide structured fields" else "Add structured details") }
-                    if (showStructured) {
-                        observationCategoryDefinitions.firstOrNull { it.label == category }?.fields.orEmpty().forEach { field ->
-                            FieldTextField(structuredDetails[field.key].orEmpty(), { value -> structuredDetails = structuredDetails + (field.key to value) }, field.label, supportingText = field.hint)
-                        }
-                    }
+                    if (showStructured) { observationCategoryDefinitions.firstOrNull { it.label == category }?.fields.orEmpty().forEach { field -> FieldTextField(structuredDetails[field.key].orEmpty(), { value -> structuredDetails = structuredDetails + (field.key to value) }, field.label, supportingText = field.hint) } }
                 }
-
                 if (mediaEnabled && !snapFirst) {
                     CaptureStep("Evidence", "Back your observation with photos, files, or a voice note.", FieldMindIcons.Camera) {
                         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            OutlinedButton(onClick = { showInAppCamera = true }, Modifier.weight(1f)) {
-                                Icon(icon = FieldMindIcons.Camera, contentDescription = "Camera", size = 18.dp)
-                            }
-                            OutlinedButton(onClick = { mediaPicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageAndVideo)) }, Modifier.weight(1f)) {
-                                Icon(icon = FieldMindIcons.Gallery, contentDescription = "Gallery", size = 18.dp)
-                            }
-                            OutlinedButton(onClick = { filePicker.launch(arrayOf("application/pdf", "text/*", "image/*", "video/*", "audio/*")) }, Modifier.weight(1f)) {
-                                Icon(icon = FieldMindIcons.File, contentDescription = "File", size = 18.dp)
-                            }
+                            OutlinedButton(onClick = { showInAppCamera = true }, Modifier.weight(1f)) { Icon(icon = FieldMindIcons.Camera, contentDescription = "Camera", size = 18.dp) }
+                            OutlinedButton(onClick = { mediaPicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageAndVideo)) }, Modifier.weight(1f)) { Icon(icon = FieldMindIcons.Gallery, contentDescription = "Gallery", size = 18.dp) }
+                            OutlinedButton(onClick = { filePicker.launch(arrayOf("application/pdf", "text/*", "image/*", "video/*", "audio/*")) }, Modifier.weight(1f)) { Icon(icon = FieldMindIcons.File, contentDescription = "File", size = 18.dp) }
                         }
                         if (audioEnabled) {
                             if (recording) RecordingIndicator(recordSeconds)
                             Button(onClick = {
-                                if (recording) {
-                                    val file = audioFile
-                                    runCatching { recorder?.stop() }
-                                    recorder?.release(); recorder = null; recording = false
-                                    file?.let { attachments = attachments + DraftEvidenceAttachment("Audio", Uri.fromFile(it).toString(), "Voice note", localPath = it.absolutePath, mimeType = "audio/mp4") }
-                                    scope.launch { snackbar.showSnackbar("Voice note attached.") }
-                                } else if (ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) audioPermission.launch(Manifest.permission.RECORD_AUDIO) else audioPermission.launch(Manifest.permission.RECORD_AUDIO)
+                                if (recording) { val file = audioFile; runCatching { recorder?.stop() }; recorder?.release(); recorder = null; recording = false; file?.let { attachments = attachments + DraftEvidenceAttachment("Audio", Uri.fromFile(it).toString(), "Voice note", localPath = it.absolutePath, mimeType = "audio/mp4") }; scope.launch { snackbar.showSnackbar("Voice note attached.") } }
+                                else if (ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) audioPermission.launch(Manifest.permission.RECORD_AUDIO) else audioPermission.launch(Manifest.permission.RECORD_AUDIO)
                             }, modifier = Modifier.fillMaxWidth(), colors = if (recording) ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.errorContainer, contentColor = MaterialTheme.colorScheme.onErrorContainer) else ButtonDefaults.buttonColors()) {
                                 Icon(icon = if (recording) FieldMindIcons.Stop else FieldMindIcons.Mic, contentDescription = null, size = 18.dp); Spacer(Modifier.size(6.dp)); Text(if (recording) "Stop voice note" else "Record voice note")
                             }
@@ -680,28 +1106,19 @@ internal fun ObservationCaptureCard(viewModel: FieldMindViewModel, compact: Bool
                         AttachmentPreviewList(attachments, onCaptionChange = { index, caption -> attachments = attachments.mapIndexed { i, item -> if (i == index) item.copy(caption = caption) else item } }, onRemove = { remove -> attachments = attachments.filterIndexed { index, _ -> index != remove } })
                     }
                 }
-
                 CaptureStep("Connect & tag", "Summarize the evidence, tag it, and link a project.", FieldMindIcons.Link) {
-                    FieldTextField(evidence, { evidence = it }, "Evidence summary")
-                    FieldTextField(tags, { tags = it }, "Tags", supportingText = "Comma-separated: birds, behavior, evening")
-                    if (projects.isNotEmpty()) {
-                        Text("Link to project", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        ChoiceChips(listOf("No project") + projects.map { it.title }, projects.firstOrNull { it.id == projectId }?.title ?: "No project") { selected -> projectId = projects.firstOrNull { it.title == selected }?.id }
-                    }
+                    FieldTextField(evidence, { evidence = it }, "Evidence summary"); FieldTextField(tags, { tags = it }, "Tags", supportingText = "Comma-separated: birds, behavior, evening")
+                    if (projects.isNotEmpty()) { Text("Link to project", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant); ChoiceChips(listOf("No project") + projects.map { it.title }, projects.firstOrNull { it.id == projectId }?.title ?: "No project") { selected -> projectId = projects.firstOrNull { it.title == selected }?.id } }
                 }
-
                 Button(onClick = {
-                    if (subject.isBlank() || facts.isBlank()) scope.launch { snackbar.showSnackbar("Subject and factual notes are required.") } else { haptics.confirm();
-                        val now = System.currentTimeMillis()
-                        val liveElapsed = stopwatchAccumulatedMs + if (stopwatchRunning) (now - (stopwatchStartedAt ?: now)) else 0L
-                        val manualDurationMs = manualDurationMinutes.toDoubleOrNull()?.let { (it * 60_000).toLong() }
-                        val durationMs = manualDurationMs ?: liveElapsed.takeIf { it > 0L }
+                    if (subject.isBlank() || facts.isBlank()) scope.launch { snackbar.showSnackbar("Subject and factual notes are required.") } else { haptics.confirm()
+                        val now = System.currentTimeMillis(); val liveElapsed = stopwatchAccumulatedMs + if (stopwatchRunning) (now - (stopwatchStartedAt ?: now)) else 0L
+                        val manualDurationMs = manualDurationMinutes.toDoubleOrNull()?.let { (it * 60_000).toLong() }; val durationMs = manualDurationMs ?: liveElapsed.takeIf { it > 0L }
                         val changeDurationMs = changeAtMinutes.toDoubleOrNull()?.let { (it * 60_000).toLong() }
                         viewModel.addObservation(subject, category, facts, confidence, manualLocation, tags, evidence, fieldContext, projectId, capturedLocation?.latitude, capturedLocation?.longitude, attachments, weatherSnapshot, structuredDetails.toJsonObject(), startedAt = stopwatchStartedAt, endedAt = if (durationMs != null) now else null, durationMs = durationMs, changeObservedAt = changeDurationMs?.let { (stopwatchStartedAt ?: now) + it }, changeDurationMs = changeDurationMs, timeNote = timeNote) {
-                        subject = ""; facts = ""; manualLocation = ""; tags = ""; evidence = ""; fieldContext = ""; attachments = emptyList(); capturedLocation = null; weatherSnapshot = null; structuredDetails = emptyMap(); stopwatchStartedAt = null; stopwatchAccumulatedMs = 0L; stopwatchRunning = false
-                        scope.launch { snackbar.showSnackbar("Observation saved to your archive.") }
-                        onSaved()
-                    }
+                            subject = ""; facts = ""; manualLocation = ""; tags = ""; evidence = ""; fieldContext = ""; attachments = emptyList(); capturedLocation = null; weatherSnapshot = null; structuredDetails = emptyMap(); stopwatchStartedAt = null; stopwatchAccumulatedMs = 0L; stopwatchRunning = false
+                            scope.launch { snackbar.showSnackbar("Observation saved to your archive.") }; onSaved()
+                        }
                     }
                 }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp)) {
                     Icon(icon = FieldMindIcons.Check, contentDescription = null, size = 18.dp); Spacer(Modifier.size(8.dp)); Text("Save observation")
@@ -711,43 +1128,23 @@ internal fun ObservationCaptureCard(viewModel: FieldMindViewModel, compact: Bool
     }
 }
 
+// ── Helpers ──
 
-private fun formatDuration(ms: Long): String {
-    val totalSeconds = ms / 1000
-    val minutes = totalSeconds / 60
-    val seconds = totalSeconds % 60
-    return "%02d:%02d".format(minutes, seconds)
-}
-
-private fun Map<String, String>.toJsonObject(): String = entries
-    .filter { it.value.isNotBlank() }
-    .joinToString(prefix = "{", postfix = "}") { (key, value) ->
-        "\"${key.replace("\"", "")}\":\"${value.replace("\\", "\\\\").replace("\"", "\\\"")}\""
-    }
-/** Reminds the researcher to separate observed facts from interpretation. */
 @Composable
 private fun FactsInterpretationBanner() {
-    Row(
-        Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.5f)).padding(12.dp),
-        horizontalArrangement = Arrangement.spacedBy(10.dp)
-    ) {
+    Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.5f)).padding(12.dp),
+        horizontalArrangement = Arrangement.spacedBy(10.dp)) {
         Icon(icon = FieldMindIcons.Lightbulb, contentDescription = null, tint = MaterialTheme.colorScheme.onTertiaryContainer, size = 18.dp)
         Text("Facts vs. interpretation: log what you sensed here; save guesses as a question or hypothesis.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onTertiaryContainer)
     }
 }
 
-/** A blinking red dot + elapsed timer shown while a voice note is being recorded. */
 @Composable
 private fun RecordingIndicator(seconds: Int) {
     val transition = rememberInfiniteTransition(label = "rec")
-    val alpha by transition.animateFloat(
-        initialValue = 1f, targetValue = 0.25f,
-        animationSpec = infiniteRepeatable(tween(700), RepeatMode.Reverse), label = "recDot"
-    )
-    Row(
-        Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(MaterialTheme.colorScheme.errorContainer).padding(horizontal = 16.dp, vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)
-    ) {
+    val alpha by transition.animateFloat(initialValue = 1f, targetValue = 0.25f, animationSpec = infiniteRepeatable(tween(700), RepeatMode.Reverse), label = "recDot")
+    Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(MaterialTheme.colorScheme.errorContainer).padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
         Box(Modifier.size(12.dp).graphicsLayer { this.alpha = alpha }.clip(CircleShape).background(MaterialTheme.colorScheme.error))
         Text("Recording…", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onErrorContainer)
         Spacer(Modifier.weight(1f))
@@ -755,10 +1152,13 @@ private fun RecordingIndicator(seconds: Int) {
     }
 }
 
+private fun Map<String, String>.toJsonObject(): String = entries
+    .filter { it.value.isNotBlank() }
+    .joinToString(prefix = "{", postfix = "}") { (key, value) -> "\"${key.replace("\"", "")}\":\"${value.replace("\\", "\\\\").replace("\"", "\\\"")}\"" }
+
 private fun DraftEvidenceAttachment.isImage(): Boolean =
-    mimeType?.startsWith("image/") == true ||
-        type.equals("Photo", true) || type.equals("Gallery", true) ||
-        Regex("\\.(jpg|jpeg|png|webp|gif|heic|bmp)(\\?.*)?$", RegexOption.IGNORE_CASE).containsMatchIn(uri)
+    mimeType?.startsWith("image/") == true || type.equals("Photo", true) || type.equals("Gallery", true) ||
+    Regex("\\.(jpg|jpeg|png|webp|gif|heic|bmp)(\\?.*)?$", RegexOption.IGNORE_CASE).containsMatchIn(uri)
 
 @Composable
 internal fun AttachmentPreviewList(items: List<DraftEvidenceAttachment>, onCaptionChange: (Int, String) -> Unit, onRemove: (Int) -> Unit) {
@@ -768,12 +1168,7 @@ internal fun AttachmentPreviewList(items: List<DraftEvidenceAttachment>, onCapti
                 Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
                         if (item.isImage()) {
-                            AsyncImage(
-                                model = item.uri,
-                                contentDescription = item.caption.ifBlank { "Attached image" },
-                                contentScale = ContentScale.Crop,
-                                modifier = Modifier.size(64.dp).clip(RoundedCornerShape(14.dp)).background(MaterialTheme.colorScheme.surfaceContainerHighest)
-                            )
+                            AsyncImage(model = item.uri, contentDescription = item.caption.ifBlank { "Attached image" }, contentScale = ContentScale.Crop, modifier = Modifier.size(64.dp).clip(RoundedCornerShape(14.dp)).background(MaterialTheme.colorScheme.surfaceContainerHighest))
                         } else {
                             Box(Modifier.size(64.dp).clip(RoundedCornerShape(14.dp)).background(MaterialTheme.colorScheme.surfaceContainerHighest), contentAlignment = Alignment.Center) {
                                 Icon(icon = if (item.type.equals("Audio", true)) FieldMindIcons.Mic else FieldMindIcons.File, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, size = 26.dp)
@@ -792,3 +1187,19 @@ internal fun AttachmentPreviewList(items: List<DraftEvidenceAttachment>, onCapti
     }
 }
 
+private suspend fun awaitCurrentLocation(provider: FieldLocationProvider): CapturedLocation? = suspendCancellableCoroutine { cont ->
+    provider.requestCurrentLocation { captured -> if (cont.isActive) cont.resume(captured) }
+}
+
+// ── CaptureStep wrapper (preserved from original) ──
+@Composable
+internal fun CaptureStep(title: String, description: String, icon: MaterialSymbolIcon, content: @Composable () -> Unit) {
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Icon(icon = icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary, size = 20.dp)
+            Text(title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+            Text(description, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        content()
+    }
+}

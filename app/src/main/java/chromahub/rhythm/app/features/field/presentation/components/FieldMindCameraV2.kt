@@ -635,14 +635,40 @@ fun FieldMindCameraV2(
     }
 }
 
+/**
+ * Overlays a centered crop guide rectangle matching the selected aspect ratio.
+ * Draws white semi-transparent corners (L-shapes) at each corner of the guide,
+ * and dims the surrounding area so the framed region is visually prominent.
+ */
 @Composable
 private fun CropGuideOverlay(aspectRatio: Float) {
-    Canvas(Modifier.fillMaxSize().safeDrawingPadding().padding(20.dp)) {
-        val guideWidth = size.width
-        val guideHeight = (guideWidth / aspectRatio).coerceAtMost(size.height)
+    Canvas(Modifier.fillMaxSize()) {
+        val guideWidth = size.width * 0.85f
+        val guideHeight = (guideWidth / aspectRatio).coerceAtMost(size.height * 0.85f)
+        val left = (size.width - guideWidth) / 2f
         val top = (size.height - guideHeight) / 2f
-        val lineColor = Color.White.copy(alpha = 0.42f)
-        drawLine(lineColor, Offset(0f, top), Offset(guideWidth, top), strokeWidth = 2f)
-        drawLine(lineColor, Offset(0f, top + guideHeight), Offset(guideWidth, top + guideHeight), strokeWidth = 2f)
+        val cornerLen = 24f
+        val lineColor = Color.White.copy(alpha = 0.72f)
+        val dimColor = Color.Black.copy(alpha = 0.32f)
+
+        // Dim the surrounding area
+        drawRect(dimColor, topLeft = Offset(0f, 0f), size = Size(size.width, top))
+        drawRect(dimColor, topLeft = Offset(0f, top + guideHeight), size = Size(size.width, size.height - top - guideHeight))
+        drawRect(dimColor, topLeft = Offset(0f, top), size = Size(left, guideHeight))
+        drawRect(dimColor, topLeft = Offset(left + guideWidth, top), size = Size(size.width - left - guideWidth, guideHeight))
+
+        // ── Corner marks (L-shapes) ──
+        // Top-left:
+        drawLine(lineColor, Offset(left, top), Offset(left + cornerLen, top), strokeWidth = 3f)
+        drawLine(lineColor, Offset(left, top), Offset(left, top + cornerLen), strokeWidth = 3f)
+        // Top-right:
+        drawLine(lineColor, Offset(left + guideWidth, top), Offset(left + guideWidth - cornerLen, top), strokeWidth = 3f)
+        drawLine(lineColor, Offset(left + guideWidth, top), Offset(left + guideWidth, top + cornerLen), strokeWidth = 3f)
+        // Bottom-left:
+        drawLine(lineColor, Offset(left, top + guideHeight), Offset(left + cornerLen, top + guideHeight), strokeWidth = 3f)
+        drawLine(lineColor, Offset(left, top + guideHeight), Offset(left, top + guideHeight - cornerLen), strokeWidth = 3f)
+        // Bottom-right:
+        drawLine(lineColor, Offset(left + guideWidth, top + guideHeight), Offset(left + guideWidth - cornerLen, top + guideHeight), strokeWidth = 3f)
+        drawLine(lineColor, Offset(left + guideWidth, top + guideHeight), Offset(left + guideWidth, top + guideHeight - cornerLen), strokeWidth = 3f)
     }
 }
