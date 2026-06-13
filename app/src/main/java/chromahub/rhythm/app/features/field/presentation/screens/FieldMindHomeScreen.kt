@@ -844,9 +844,9 @@ private data class HomeWidget(val title: String, val value: String, val icon: Ma
 private fun HomeWidgetCard(widget: HomeWidget, modifier: Modifier = Modifier, onClick: () -> Unit) {
     val haptics = rememberFieldMindHaptics()
     Card(modifier = modifier.height(112.dp).clickable { haptics.light(); onClick() }, shape = RoundedCornerShape(24.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)) {
-        Column(Modifier.fillMaxSize().padding(14.dp), verticalArrangement = Arrangement.SpaceBetween) {
-            Icon(widget.icon, null, tint = widget.color, size = 32.dp)
-            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+        Column(Modifier.fillMaxSize().padding(16.dp, 14.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Icon(widget.icon, null, tint = widget.color, size = 40.dp)
+            Column(verticalArrangement = Arrangement.spacedBy(1.dp)) {
                 Text(widget.title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
                 Text(widget.value, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
