@@ -34,6 +34,8 @@ import fieldmind.research.app.features.field.data.ai.AiProvider
 import fieldmind.research.app.features.field.data.ai.AssistantTask
 import fieldmind.research.app.features.field.data.ai.GeminiResearchAssistant
 import fieldmind.research.app.features.field.data.database.entity.*
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import fieldmind.research.app.features.field.data.export.FieldMindExport
 import fieldmind.research.app.features.field.data.location.FieldLocationProvider
 import fieldmind.research.app.features.field.presentation.components.*
@@ -217,6 +219,7 @@ fun DetailScreen(
 // ══════════════════════════════════════════════════════════════════════
 
 @Composable
+@OptIn(ExperimentalLayoutApi::class)
 private fun ObservationDetailContent(
     o: ObservationEntity,
     viewModel: FieldMindViewModel,
@@ -309,6 +312,7 @@ private fun ObsStatItem(value: String, label: String, icon: MaterialSymbolIcon) 
 }
 
 @Composable
+@OptIn(ExperimentalLayoutApi::class)
 private fun NoteDetailContent(
     n: NoteEntity,
     onOpenDetail: (String, Long) -> Unit
