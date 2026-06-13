@@ -41,6 +41,36 @@ internal data class FieldMindChangelogEntry(
 
 private val fieldMindChangelog = listOf(
     FieldMindChangelogEntry(
+        version = "0.9.0-field-research-dashboard",
+        date = "2026-06-13",
+        title = "Research Dashboard & Interactive Data Tools",
+        importance = "Major",
+        tags = listOf("Dashboard", "Charts", "Data Table", "Analytics", "Insights"),
+        sections = listOf(
+            "Research Dashboard" to listOf(
+                "Insights screen completely redesigned into a 9-section Research Dashboard with profile card, performance metrics, time-series analytics, category/tag analysis, knowledge graph timeline, research health score, weather correlation, achievements, and data records table.",
+                "New calendar heatmap shows daily observation activity across 12 months (GitHub-style contribution grid).",
+                "New radar/spider chart compares observation categories across multiple dimensions.",
+                "New tag co-occurrence matrix reveals which tags appear together most often.",
+                "New activity-by-hour and day-of-week charts show when you observe most.",
+                "New moving average chart with 7-day rolling overlay on daily counts.",
+                "New weather correlation scatter plot with trend line (requires GPS + weather on capture).",
+                "New data quality meter scores research health across 5 dimensions (evidence, questions, hypotheses, tags, GPS).",
+                "New network graph timeline visualizes how your knowledge graph evolved over time with an interactive slider.",
+                "15 achievements with progress tracking, tiered unlocks, and snackbar celebration."
+            ),
+            "Interactive Data Table" to listOf(
+                "New FieldDataTable composable with sortable columns, search across all fields, column-specific filters, numerical aggregates (count/sum/avg), pivot table view, CSV export, and row selection.",
+                "Data records now display in a spreadsheet-style table within the Research Dashboard."
+            ),
+            "Extended Chart Library" to listOf(
+                "8 new Canvas-based chart composables: CalendarHeatmap, RadarChart, TagCoOccurrenceMatrix, ActivityByHourChart, DayOfWeekChart, MovingAverageChart, WeatherCorrelationChart, DataQualityMeter.",
+                "All charts are fully offline, zero external dependencies, and built entirely with Compose Canvas."
+            ),
+            "Observation Improvements" to listOf("Observations now support structured category-specific fields (JSON), live stopwatch tracking, manual duration override, change timing markers, and context presets.", "Field mode buttons allow one-tap observation per category with undo support.")
+        )
+    ),
+    FieldMindChangelogEntry(
         version = "0.8.0-field-redesign",
         date = "2026-06-13",
         title = "Immersive research workspace foundation",
