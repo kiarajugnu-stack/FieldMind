@@ -441,10 +441,11 @@ private fun LiveObservationTimer(
     }
 
     // Recompute elapsed with tick dependency
-    val displayElapsed = if (timerRunning && timerStartedAt != null) {
+    val startedAt = timerStartedAt
+    val displayElapsed = if (timerRunning && startedAt != null) {
         @Suppress("UNUSED_EXPRESSION")
         tick // Force recomposition
-        timerAccumulatedMs + (System.currentTimeMillis() - timerStartedAt)
+        timerAccumulatedMs + (System.currentTimeMillis() - startedAt)
     } else {
         timerAccumulatedMs
     }
@@ -1197,22 +1198,5 @@ internal fun AttachmentPreviewList(items: List<DraftEvidenceAttachment>, onCapti
                 }
             }
         }
-    }
-}
-
-private suspend fun awaitCurrentLocation(provider: FieldLocationProvider): CapturedLocation? = suspendCancellableCoroutine { cont ->
-    provider.requestCurrentLocation { captured -> if (cont.isActive) cont.resume(captured) }
-}
-
-// ── CaptureStep wrapper (preserved from original) ──
-@Composable
-internal fun CaptureStep(title: String, description: String, icon: MaterialSymbolIcon, content: @Composable () -> Unit) {
-    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Icon(icon = icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary, size = 20.dp)
-            Text(title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
-            Text(description, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        }
-        content()
     }
 }

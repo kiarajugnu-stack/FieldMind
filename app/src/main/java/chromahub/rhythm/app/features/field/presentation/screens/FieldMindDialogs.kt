@@ -222,6 +222,10 @@ internal fun NewSourceDialog(viewModel: FieldMindViewModel, onDismiss: () -> Uni
     var notes by remember { mutableStateOf("") }
     var reliability by remember { mutableStateOf(3f) }
     var projectId by remember { mutableStateOf<Long?>(null) }
+    var showIdentity by remember { mutableStateOf(true) }
+    var showLinkFile by remember { mutableStateOf(false) }
+    var showReading by remember { mutableStateOf(false) }
+    var showReview by remember { mutableStateOf(false) }
     val docPicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         if (uri != null) {
             runCatching { context.contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION) }

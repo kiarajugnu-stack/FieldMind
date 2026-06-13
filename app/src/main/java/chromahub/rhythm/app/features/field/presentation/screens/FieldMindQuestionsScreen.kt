@@ -16,12 +16,14 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import fieldmind.research.app.features.field.data.database.entity.QuestionEntity
 import fieldmind.research.app.features.field.presentation.components.*
 import fieldmind.research.app.features.field.presentation.navigation.FieldMindScreen
 import fieldmind.research.app.features.field.presentation.theme.FieldMindTheme
 import fieldmind.research.app.features.field.presentation.viewmodel.FieldMindViewModel
 import fieldmind.research.app.shared.presentation.components.icons.Icon
+import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -384,7 +386,8 @@ private fun StatCard(value: String, label: String, icon: MaterialSymbolIcon, col
     }
 }
 
-private val FlowChips = @Composable { items: List<String>, onSelect: (String) -> Unit ->
+@Composable
+private fun SuggestionChips(items: List<String>, onSelect: (String) -> Unit) {
     androidx.compose.foundation.lazy.LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
         items(items) { item ->
             FilterChip(
@@ -392,6 +395,15 @@ private val FlowChips = @Composable { items: List<String>, onSelect: (String) ->
                 onClick = { onSelect(item) },
                 label = { Text(item, fontSize = 10.sp) }
             )
+        }
+    }
+}
+
+@Composable
+private fun FilterChipsRow(items: List<String>, selected: String, onSelect: (String) -> Unit) {
+    androidx.compose.foundation.lazy.LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+        items(items) { item ->
+            FilterChip(selected = selected == item, onClick = { onSelect(item) }, label = { Text(item, fontSize = 10.sp) })
         }
     }
 }
