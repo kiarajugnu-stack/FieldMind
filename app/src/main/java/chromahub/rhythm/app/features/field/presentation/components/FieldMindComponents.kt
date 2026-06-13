@@ -577,6 +577,7 @@ fun NoteComposerCard(
     onCategoryChange: (String) -> Unit,
     onSave: () -> Unit,
     onDismiss: () -> Unit,
+    categories: List<String> = listOf("Other", "Behavior", "Environment", "Ecology", "Social", "Phenology"),
     saveEnabled: Boolean = true,
     modifier: Modifier = Modifier
 ) {
@@ -660,7 +661,7 @@ fun NoteComposerCard(
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                ChoiceChips(observationCategories.toList(), category, modifier = Modifier.weight(1f), onSelected = onCategoryChange)
+                ChoiceChips(categories, category, modifier = Modifier.weight(1f), onSelected = onCategoryChange)
                 Button(
                     onClick = { haptics.confirm(); onSave() },
                     shape = RoundedCornerShape(14.dp),
