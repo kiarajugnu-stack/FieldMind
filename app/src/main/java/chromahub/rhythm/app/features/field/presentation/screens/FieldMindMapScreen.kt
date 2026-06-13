@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -29,6 +30,26 @@ fun MapFieldScreen(
     val observations by viewModel.observations.collectAsState()
     val points = observations.mapNotNull { o -> o.latitude?.let { lat -> o.longitude?.let { lon -> lat to lon } } }
     val colors = FieldMindTheme.colors
+    var fullScreen by remember { mutableStateOf(false) }
+
+    if (fullScreen && points.isNotEmpty()) {
+        // Full-screen map mode
+        Box(Modifier.fillMaxSize()) {
+            OsmMap(points = points, modifier = Modifier.fillMaxSize())
+            Row(
+                Modifier.fillMaxWidth().padding(12.dp).align(Alignment.TopCenter),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                FilledTonalIconButton(onClick = { fullScreen = false }) {
+                    Icon(FieldMindIcons.Close, null, size = 20.dp)
+                }
+                Text("Field Map • ${points.size} locations", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.align(Alignment.CenterVertically))
+                Spacer(Modifier.size(40.dp))
+            }
+            Text("© OpenStreetMap contributors", modifier = Modifier.align(Alignment.BottomEnd).padding(8.dp), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f))
+        }
+        return
+    }
 
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(20.dp, 20.dp, 20.dp, 96.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
         item { FieldScreenHeader("Field Map", "Interactive GPS map of your observation locations.", icon = FieldMindIcons.MapFull, actionIcon = FieldMindIcons.Close, onAction = { onNavigate(FieldMindScreen.Home) }) }
@@ -44,7 +65,17 @@ fun MapFieldScreen(
                 }
             }
         } else {
-            item { OsmMap(points = points) }
+            item {
+                Box {
+                    OsmMap(points = points)
+                    IconButton(
+                        onClick = { fullScreen = true },
+                        modifier = Modifier.align(Alignment.TopEnd).padding(8.dp)
+                    ) {
+                        Icon(FieldMindIcons.MapFull, null, tint = MaterialTheme.colorScheme.onSurface, size = 24.dp)
+                    }
+                }
+            }
             item {
                 Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(24.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)) {
                     Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
