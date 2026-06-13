@@ -46,6 +46,29 @@
             android:theme="@style/Theme.Rhythm"
             android:process=":crash_process" />
 
+        <!-- FieldMind Glance Widgets -->
+        <receiver
+            android:name="fieldmind.research.app.infrastructure.widget.glance.FieldMindQuickCaptureWidgetReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_info_fieldmind_quick_capture" />
+        </receiver>
+
+        <receiver
+            android:name="fieldmind.research.app.infrastructure.widget.glance.FieldMindDashboardWidgetReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_info_fieldmind_dashboard" />
+        </receiver>
+
         <activity
             android:name="fieldmind.research.app.activities.MainActivity"
             android:exported="true"
