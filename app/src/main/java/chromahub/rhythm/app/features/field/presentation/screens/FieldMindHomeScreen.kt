@@ -87,16 +87,6 @@ fun HomeScreen(
         // ── Hero Section ──
         item { HomeHeroSection(todayCount, goal, currentStreak, observations.size, questions.size, onOpenSettings, onNavigate) }
 
-        // ── Quick Actions Row ──
-        item {
-            QuickActionsRow(onNavigate)
-        }
-
-        // ── Research Pulse Card (when there's data) ──
-        if (observations.isNotEmpty()) {
-            item { ResearchPulseCard(observations, questions, projects, onNavigate) }
-        }
-
         // ── Weather Card (when observations have weather data) ──
         if (weatherObs != null) {
             item { WeatherStatusCard(observations, viewModel, onNavigate) }
@@ -171,118 +161,79 @@ private fun HomeHeroSection(
     onNavigate: (FieldMindScreen) -> Unit
 ) {
     val colors = FieldMindTheme.colors
-    val isNewUser = totalObs == 0
-
-    Box(
-        Modifier
+    Surface(
+        modifier = Modifier
             .fillMaxWidth()
-            .background(
-                Brush.verticalGradient(
-                    listOf(
-                        MaterialTheme.colorScheme.primary.copy(alpha = 0.08f),
-                        MaterialTheme.colorScheme.background
-                    )
-                )
-            )
-            .padding(top = 20.dp, start = 20.dp, end = 20.dp, bottom = 8.dp)
+            .padding(top = 18.dp),
+        shape = RoundedCornerShape(30.dp),
+        color = MaterialTheme.colorScheme.surfaceContainerLow,
+        tonalElevation = 0.dp,
+        shadowElevation = 0.dp
     ) {
-        Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-            // Top row: Greeting + Settings
+        Column(
+            Modifier.padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(18.dp)
+        ) {
             Row(
                 Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.Top,
-                horizontalArrangement = Arrangement.SpaceBetween
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Box(
+                    Modifier
+                        .size(64.dp)
+                        .clip(RoundedCornerShape(22.dp))
+                        .background(colors.positive.copy(alpha = if (colors.isDark) 0.34f else 0.16f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(FieldMindIcons.Nature, null, tint = colors.positive, size = 34.dp)
+                }
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
                     Text(
-                        if (isNewUser) "Welcome to FieldMind" else "Good ${timeOfDay()}",
+                        "FieldMind",
                         style = MaterialTheme.typography.headlineLarge,
-                        fontWeight = FontWeight.Bold,
+                        fontWeight = FontWeight.ExtraBold,
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
-                        if (isNewUser) "Start your first observation to begin."
-                        else "You have ${totalObs} observation${if (totalObs != 1) "s" else ""} across your research.",
-                        style = MaterialTheme.typography.bodyLarge,
+                        "Observe. Question. Research clearly.",
+                        style = MaterialTheme.typography.titleMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
                 Surface(
                     onClick = onOpenSettings,
-                    shape = RoundedCornerShape(16.dp),
+                    shape = RoundedCornerShape(20.dp),
                     color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                    modifier = Modifier.size(48.dp)
+                    tonalElevation = 0.dp,
+                    modifier = Modifier.size(56.dp)
                 ) {
                     Box(contentAlignment = Alignment.Center) {
-                        Icon(FieldMindIcons.Settings, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, size = 24.dp)
+                        Icon(FieldMindIcons.Settings, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, size = 28.dp)
                     }
                 }
             }
 
-            // Animated stats row
-            if (!isNewUser) {
-                Row(
-                    Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    HeroStatBubble(
-                        value = todayCount.toString(),
-                        label = "Today",
-                        accent = colors.observation,
-                        modifier = Modifier.weight(1f)
-                    )
-                    HeroStatBubble(
-                        value = "$streakDays",
-                        label = "Day streak",
-                        accent = colors.warning,
-                        modifier = Modifier.weight(1f)
-                    )
-                    HeroStatBubble(
-                        value = "$goal",
-                        label = "Daily goal",
-                        accent = colors.positive,
-                        modifier = Modifier.weight(1f)
-                    )
-                }
-            }
+            Text(
+                if (totalObs == 0) "Start your first observation to begin your research story."
+                else "You have $totalObs observation${if (totalObs != 1) "s" else ""} across your research.",
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
 
-            // Quick action chips
-            LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                item {
-                    HeroActionChip(
-                        icon = FieldMindIcons.Camera,
-                        label = "Capture",
-                        accent = colors.observation
-                    ) { onNavigate(FieldMindScreen.Observe) }
-                }
-                item {
-                    HeroActionChip(
-                        icon = FieldMindIcons.Note,
-                        label = "Note",
-                        accent = colors.source
-                    ) { onNavigate(FieldMindScreen.Library) }
-                }
-                item {
-                    HeroActionChip(
-                        icon = FieldMindIcons.Question,
-                        label = "Question",
-                        accent = colors.question
-                    ) { onNavigate(FieldMindScreen.Questions) }
-                }
-                item {
-                    HeroActionChip(
-                        icon = FieldMindIcons.Project,
-                        label = "Project",
-                        accent = colors.project
-                    ) { onNavigate(FieldMindScreen.Projects) }
-                }
-                item {
-                    HeroActionChip(
-                        icon = FieldMindIcons.Session,
-                        label = "Session",
-                        accent = colors.positive
-                    ) { onNavigate(FieldMindScreen.ResearchSession) }
-                }
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                HeroActionChip(
+                    icon = FieldMindIcons.Camera,
+                    label = "Capture",
+                    accent = colors.observation,
+                    modifier = Modifier.weight(1f)
+                ) { onNavigate(FieldMindScreen.Observe) }
+                HeroActionChip(
+                    icon = FieldMindIcons.Note,
+                    label = "Note",
+                    accent = colors.source,
+                    modifier = Modifier.weight(1f)
+                ) { onNavigate(FieldMindScreen.Library) }
             }
         }
     }
@@ -336,10 +287,12 @@ private fun HeroActionChip(
     icon: MaterialSymbolIcon,
     label: String,
     accent: androidx.compose.ui.graphics.Color,
+    modifier: Modifier = Modifier,
     onClick: () -> Unit
 ) {
     val haptics = rememberFieldMindHaptics()
     Surface(
+        modifier = modifier,
         onClick = { haptics.light(); onClick() },
         shape = RoundedCornerShape(16.dp),
         color = MaterialTheme.colorScheme.surfaceContainerHigh,
