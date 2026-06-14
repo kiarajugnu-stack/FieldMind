@@ -91,6 +91,8 @@ fun ResearchSessionScreen(
     var sessionName by remember { mutableStateOf("") }
     var selectedProjectId by remember { mutableStateOf<Long?>(null) }
     var sessionElapsedMs by remember { mutableLongStateOf(0L) }
+    var sessionPaused by remember { mutableStateOf(false) }
+    var pausedAccumulatedMs by remember { mutableLongStateOf(0L) }
     var observationCount by remember { mutableIntStateOf(0) }
     var sessionStartedAt by remember { mutableLongStateOf(activeStoredSession?.startedAt ?: 0L) }
     var activeSessionId by remember { mutableStateOf<Long?>(activeStoredSession?.id) }
@@ -205,14 +207,18 @@ fun ResearchSessionScreen(
         else "%d:%02d".format(minutes, seconds)
     }
 
-    // Timer
-    LaunchedEffect(sessionActive) {
-        if (sessionActive) {
-            if (sessionStartedAt == 0L) sessionStartedAt = System.currentTimeMillis()
-            while (sessionActive) {
+    // Timer with pause/resume support
+    LaunchedEffect(sessionActive, sessionPaused) {
+        if (sessionActive && !sessionPaused) {
+            if (sessionStartedAt == 0L) {
+                sessionStartedAt = System.currentTimeMillis()
+            }
+            val baseStart = sessionStartedAt
+            while (sessionActive && !sessionPaused) {
                 delay(1000)
-                sessionElapsedMs = System.currentTimeMillis() - sessionStartedAt
-                showResearchSessionNotification(context, sessionName.ifBlank { "Research Session" }, "Running • ${formatTime(sessionElapsedMs)} • $observationCount obs")
+                sessionElapsedMs = pausedAccumulatedMs + (System.currentTimeMillis() - baseStart)
+                val label = if (sessionPaused) "Paused" else "Running"
+                showResearchSessionNotification(context, sessionName.ifBlank { "Research Session" }, "$label • ${formatTime(sessionElapsedMs)} • $observationCount obs")
             }
         }
     }
@@ -398,15 +404,29 @@ fun ResearchSessionScreen(
                             // Pause / End controls
                             Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                                 FilledTonalIconButton(
-                                    onClick = { /* pause toggles timer - timer keeps running via LaunchedEffect; we track pause via a separate flag */
-                                        // For now, this is a visual pause. The session timer continues but the pause indicates a break.
+                                    onClick = {
+                                        if (sessionPaused) {
+                                            // Resume: restart from accumulated time
+                                            pausedAccumulatedMs = sessionElapsedMs
+                                            sessionStartedAt = System.currentTimeMillis()
+                                            sessionPaused = false
+                                        } else {
+                                            // Pause: capture accumulated time
+                                            pausedAccumulatedMs = sessionElapsedMs
+                                            sessionPaused = true
+                                        }
                                     },
                                     modifier = Modifier.size(40.dp),
                                     colors = IconButtonDefaults.filledTonalIconButtonColors(
                                         containerColor = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.12f)
                                     )
                                 ) {
-                                    Icon(FieldMindIcons.Pause, null, tint = MaterialTheme.colorScheme.onPrimaryContainer, size = 20.dp)
+                                    Icon(
+                                        if (sessionPaused) MaterialSymbolIcon("play_arrow", filled = true) else FieldMindIcons.Pause,
+                                        null,
+                                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                                        size = 20.dp
+                                    )
                                 }
                                 FilledTonalIconButton(
                                     onClick = ::endSession,

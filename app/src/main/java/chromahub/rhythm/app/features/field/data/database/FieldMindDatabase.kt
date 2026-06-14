@@ -33,7 +33,7 @@ import fieldmind.research.app.features.field.data.database.entity.*
         ResearchSessionEntity::class,
         SessionObservationCrossRef::class
     ],
-    version = 9,
+    version = 10,
     exportSchema = false
 )
 abstract class FieldMindDatabase : RoomDatabase() {
@@ -58,6 +58,12 @@ abstract class FieldMindDatabase : RoomDatabase() {
                 db.addColumnIfMissing("field_data_records", "linkedSessionId", "INTEGER")
                 db.addColumnIfMissing("field_reports", "templateId", "TEXT NOT NULL DEFAULT 'field_report'")
                 db.addColumnIfMissing("field_reports", "preset", "TEXT NOT NULL DEFAULT 'Personal log'")
+            }
+        }
+
+        private val MIGRATION_9_10 = object : Migration(9, 10) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.addColumnIfMissing("field_observations", "weatherPressure", "REAL")
             }
         }
 
@@ -118,7 +124,7 @@ abstract class FieldMindDatabase : RoomDatabase() {
                 FieldMindDatabase::class.java,
                 "fieldmind_database"
             )
-                .addMigrations(MIGRATION_7_8, MIGRATION_8_9)
+                .addMigrations(MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10)
                 .build()
                 .also { INSTANCE = it }
         }

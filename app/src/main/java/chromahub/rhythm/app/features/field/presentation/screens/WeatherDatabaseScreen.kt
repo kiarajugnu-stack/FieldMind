@@ -16,12 +16,14 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import fieldmind.research.app.features.field.data.database.entity.ObservationEntity
+import fieldmind.research.app.features.field.data.location.FieldLocationProvider
 import fieldmind.research.app.features.field.data.weather.WeatherSnapshot
 import fieldmind.research.app.features.field.presentation.components.FieldMindIcons
 import fieldmind.research.app.features.field.presentation.components.FieldScreenHeader
 import fieldmind.research.app.features.field.presentation.theme.FieldMindTheme
 import fieldmind.research.app.features.field.presentation.viewmodel.FieldMindViewModel
 import fieldmind.research.app.shared.presentation.components.icons.Icon
+import androidx.compose.ui.platform.LocalContext
 import kotlinx.coroutines.delay
 import java.text.SimpleDateFormat
 import java.util.*
@@ -49,6 +51,8 @@ fun WeatherDatabaseScreen(
     var currentWeather by remember { mutableStateOf<WeatherSnapshot?>(null) }
     var weatherError by remember { mutableStateOf(false) }
     var isRefreshing by remember { mutableStateOf(false) }
+    var dashboardPlaceName by remember { mutableStateOf<String?>(null) }
+    val ctx = LocalContext.current
 
     // Refresh on screen open and every 30 minutes
     LaunchedEffect(Unit) {
@@ -58,16 +62,79 @@ fun WeatherDatabaseScreen(
             currentWeather = snapshot
             weatherError = snapshot == null
             isRefreshing = false
+            
+            // Resolve place name for display
+            if (snapshot != null) {
+                val locProvider = runCatching { FieldLocationProvider(ctx) }.getOrNull()
+                if (locProvider != null && locProvider.hasAnyLocationPermission()) {
+                    locProvider.lastKnownLocation()?.let { loc ->
+                        locProvider.resolvePlaceName(loc.latitude, loc.longitude) { place ->
+                            dashboardPlaceName = place
+                        }
+                    }
+                }
+            }
             delay(30 * 60 * 1000L) // 30 minutes
         }
     }
 
+    // ── Daily analysis ──
     val weatherObs = remember(observations) {
         observations.filter { it.weatherTemperature != null }
             .sortedByDescending { it.timestamp }
     }
+    
+    // Group by date for day switching
+    val dailyGroups = remember(weatherObs) {
+        weatherObs.groupBy { it.date }.entries.sortedByDescending { it.key }
+    }
+    var selectedDayIndex by remember { mutableIntStateOf(0) }
+    
+    // Get the stats for the currently selected day
+    val dayStats = remember(weatherObs, selectedDayIndex, dailyGroups) {
+        val dayObs = if (dailyGroups.isNotEmpty() && selectedDayIndex < dailyGroups.size) {
+            dailyGroups[selectedDayIndex].value
+        } else {
+            weatherObs
+        }
+        val temps = dayObs.mapNotNull<ObservationEntity, Double> { it.weatherTemperature }
+        val humidities = dayObs.mapNotNull<ObservationEntity, Double> { it.weatherHumidity?.toDouble() }
+        val windSpeeds = dayObs.mapNotNull<ObservationEntity, Double> { it.weatherWindSpeed }
+        DayStats(
+            dayObs.size,
+            temps.takeIf { it.isNotEmpty() }?.average(),
+            temps.minOrNull(),
+            temps.maxOrNull(),
+            humidities.takeIf { it.isNotEmpty() }?.average(),
+            windSpeeds.takeIf { it.isNotEmpty() }?.average()
+        )
+    }
+    
+    // Filter observations for selected day
+    val filteredObs = remember(weatherObs, selectedDayIndex, dailyGroups) {
+        if (dailyGroups.isNotEmpty() && selectedDayIndex < dailyGroups.size) {
+            dailyGroups[selectedDayIndex].value
+        } else weatherObs
+    }
 
-    val stats = remember(weatherObs) {
+    // ── Day selector header ──
+    val selectedDate = remember(selectedDayIndex, dailyGroups) {
+        if (dailyGroups.isNotEmpty() && selectedDayIndex < dailyGroups.size) {
+            dailyGroups[selectedDayIndex].key
+        } else null
+    }
+    val formattedDate = remember(selectedDate) {
+        selectedDate?.let {
+            try {
+                SimpleDateFormat("MMM d, yyyy", Locale.getDefault()).format(
+                    SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).parse(it) ?: Date()
+                )
+            } catch (_: Exception) { it }
+        } ?: "All time"
+    }
+
+    // Overall stats (all days)
+    val allStats = remember(weatherObs) {
         val temps = weatherObs.mapNotNull<ObservationEntity, Double> { it.weatherTemperature }
         val humidities = weatherObs.mapNotNull<ObservationEntity, Double> { it.weatherHumidity?.toDouble() }
         mapOf<String, Any?>(
@@ -106,6 +173,7 @@ fun WeatherDatabaseScreen(
                     weather = currentWeather,
                     hasError = weatherError,
                     isRefreshing = isRefreshing,
+                    placeName = dashboardPlaceName,
                     showTemp = showTemp,
                     showCondition = showCondition,
                     showHumidity = showHumidity,
@@ -116,7 +184,56 @@ fun WeatherDatabaseScreen(
                 )
             }
 
-            // Stats summary
+            // ── Day selector row ──
+            if (dailyGroups.isNotEmpty()) {
+                item {
+                    Row(
+                        Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            FieldMindIcons.Calendar,
+                            null,
+                            tint = colors.info,
+                            size = 18.dp
+                        )
+                        Text(
+                            formattedDate,
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.weight(1f)
+                        )
+                        // Previous / Next day arrows
+                        IconButton(
+                            onClick = { if (selectedDayIndex < dailyGroups.size - 1) selectedDayIndex++ },
+                            enabled = selectedDayIndex < dailyGroups.size - 1,
+                            modifier = Modifier.size(32.dp)
+                        ) {
+                            Icon(
+                                FieldMindIcons.Forward,
+                                null,
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                size = 18.dp
+                            )
+                        }
+                        IconButton(
+                            onClick = { if (selectedDayIndex > 0) selectedDayIndex-- },
+                            enabled = selectedDayIndex > 0,
+                            modifier = Modifier.size(32.dp)
+                        ) {
+                            Icon(
+                                FieldMindIcons.Back,
+                                null,
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                size = 18.dp
+                            )
+                        }
+                    }
+                }
+            }
+
+            // Day stats summary
             item {
                 Row(
                     Modifier.fillMaxWidth(),
@@ -124,13 +241,13 @@ fun WeatherDatabaseScreen(
                 ) {
                     StatCard(
                         "Avg Temp",
-                        "${stats["avg_temp"]?.let { "%.1f°".format(it) } ?: "--"}",
+                        "${dayStats.avgTemp?.let { "%.1f°".format(it) } ?: "--"}",
                         colors.info,
                         Modifier.weight(1f)
                     )
                     StatCard(
                         "Range",
-                        "${stats["min_temp"]?.let { "%.0f".format(it) } ?: "--"}° - ${stats["max_temp"]?.let { "%.0f".format(it) } ?: "--"}°",
+                        "${dayStats.minTemp?.let { "%.0f".format(it) } ?: "--"}° - ${dayStats.maxTemp?.let { "%.0f".format(it) } ?: "--"}°",
                         colors.observation,
                         Modifier.weight(1f)
                     )
@@ -144,13 +261,19 @@ fun WeatherDatabaseScreen(
                 ) {
                     StatCard(
                         "Avg Humidity",
-                        "${stats["avg_humidity"]?.let { "%.0f".format(it) } ?: "--"}%",
+                        "${dayStats.avgHumidity?.let { "%.0f".format(it) } ?: "--"}%",
                         colors.data,
                         Modifier.weight(1f)
                     )
                     StatCard(
-                        "Total Records",
-                        stats["total_records"].toString(),
+                        "Avg Wind",
+                        "${dayStats.avgWind?.let { "%.1f km/h".format(it) } ?: "--"}",
+                        colors.warning,
+                        Modifier.weight(1f)
+                    )
+                    StatCard(
+                        "Records",
+                        "${dayStats.recordCount}",
                         colors.project,
                         Modifier.weight(1f)
                     )
@@ -161,7 +284,7 @@ fun WeatherDatabaseScreen(
             if (weatherObs.isNotEmpty()) {
                 item {
                     Text(
-                        "Weather history",
+                        "Observations with weather data ($formattedDate)",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )
@@ -189,7 +312,7 @@ fun WeatherDatabaseScreen(
                     }
                 }
             } else {
-                items(weatherObs) { weather ->
+                items(filteredObs) { weather ->
                     WeatherRecordCard(
                         observation = weather,
                         colors = colors,
@@ -207,6 +330,7 @@ private fun LiveCurrentWeatherCard(
     weather: WeatherSnapshot?,
     hasError: Boolean,
     isRefreshing: Boolean,
+    placeName: String? = null,
     showTemp: Boolean = true,
     showCondition: Boolean = true,
     showHumidity: Boolean = true,
@@ -246,9 +370,11 @@ private fun LiveCurrentWeatherCard(
                 }
                 Column(Modifier.weight(1f)) {
                     Text(
-                        "Current conditions",
+                        placeName ?: "Current conditions",
                         style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
                     Text(
                         if (isRefreshing) "Refreshing..."
@@ -391,6 +517,15 @@ private fun LiveCurrentWeatherCard(
         }
     }
 }
+
+private data class DayStats(
+    val recordCount: Int = 0,
+    val avgTemp: Double? = null,
+    val minTemp: Double? = null,
+    val maxTemp: Double? = null,
+    val avgHumidity: Double? = null,
+    val avgWind: Double? = null
+)
 
 private fun weatherIconForCode(code: Int): fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon {
     return when (code) {

@@ -560,9 +560,11 @@ private fun LiveWeatherDashboardWidget(
                                 val desc = currentWeather?.weatherDescription ?: ""
                                 val temp = currentWeather?.temperature?.let { "%.0f°".format(it) } ?: ""
                                 buildString {
-                                    append("Tap to open dashboard")
-                                    if (showCondition && desc.isNotBlank()) append(" • $desc")
-                                    if (showTemp && temp.isNotBlank()) append(" • $temp")
+                                    if (showCondition && desc.isNotBlank()) append(desc)
+                                    if (showTemp && temp.isNotBlank()) {
+                                        if (isNotEmpty()) append(" • ")
+                                        append(temp)
+                                    }
                                 }
                             }
                             weatherError -> "Enable location for live weather"
