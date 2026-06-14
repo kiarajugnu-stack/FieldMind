@@ -282,11 +282,6 @@ fun InsightsScreen(
                         FieldMindIcons.Question, Modifier.weight(1f), colors.question,
                         onClick = { onNavigate(FieldMindScreen.Questions) }
                     )
-                    MetricTile(
-                        "Sources", "${sources.count { it.readingStatus == "Read" }}/${sources.size}",
-                        FieldMindIcons.Source, Modifier.weight(1f), colors.source,
-                        onClick = { onNavigate(FieldMindScreen.Library) }
-                    )
                 }
             }
             item {
@@ -301,11 +296,6 @@ fun InsightsScreen(
                         FieldMindIcons.Report, Modifier.weight(1f), colors.report,
                         onClick = { onNavigate(FieldMindScreen.Reports) }
                     )
-                    MetricTile(
-                        "Data", dataRecords.size.toString(),
-                        FieldMindIcons.Data, Modifier.weight(1f), colors.data,
-                        onClick = { onNavigate(FieldMindScreen.DataTools) }
-                    )
                 }
             }
 
@@ -316,17 +306,11 @@ fun InsightsScreen(
             if (calendarData.isNotEmpty()) {
                 item {
                     InsightCard("Activity calendar", FieldMindIcons.Calendar) {
-                        var selectedCalendarDay by remember { mutableStateOf<String?>(null) }
                         CalendarHeatmap(
                             dailyCounts = calendarData,
                             accentColor = colors.observation,
-                            onTapDay = { date, count ->
-                                selectedCalendarDay = "${date.format(DateTimeFormatter.ofPattern("MMM d, yyyy"))}: $count observation${if (count != 1) "s" else ""}"
-                            }
+                            onTapDay = { _, _ -> }
                         )
-                        selectedCalendarDay?.let {
-                            Text(it, style = MaterialTheme.typography.labelMedium, color = colors.observation)
-                        }
                     }
                 }
             }

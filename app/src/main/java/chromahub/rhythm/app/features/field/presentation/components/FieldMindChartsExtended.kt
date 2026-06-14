@@ -99,11 +99,6 @@ fun CalendarHeatmap(
                 fontWeight = FontWeight.Bold
             )
             Text(
-                "Swipe or use arrows",
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            Text(
                 "‹",
                 modifier = Modifier
                     .clip(CircleShape)
@@ -1012,7 +1007,7 @@ fun NetworkGraphTimeline(
 
 // ══════════════════════════════════════════════════════════════════════
 //  9. DATA QUALITY METER — Research health score gauge
-// ══════════════════════════════════════════════════════════════════════
+// ═════════════���════════════════════════════════════════════════════════
 
 /**
  * Data quality score gauge showing research health across multiple dimensions.

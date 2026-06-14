@@ -106,6 +106,11 @@ fun HomeScreen(
         item { SectionHeader("Research areas", "Quick overview of your work") }
         item { HomeWidgetGrid(observations, notes, questions, sources, projects, reports, data) { onNavigate(it) } }
         item { HomeDataOptionsCard(data) { onNavigate(FieldMindScreen.DataTools) } }
+        
+        // ── Recent Captures ──
+        if (observations.isNotEmpty()) {
+            item { RecentCapturesCard(observations, onOpenDetail) }
+        }
 
         // ── Learning & Reading ──
         item { RecommendedLearningCard(recommendations, onOpenReader, onSeeAll = { onNavigate(FieldMindScreen.Learn) }) }
@@ -933,6 +938,66 @@ private fun HomeWidgetCard(widget: HomeWidget, modifier: Modifier = Modifier, on
             Column(verticalArrangement = Arrangement.spacedBy(1.dp)) {
                 Text(widget.title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
                 Text(widget.value, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            }
+        }
+    }
+}
+
+@Composable
+private fun RecentCapturesCard(observations: List<ObservationEntity>, onOpenDetail: (String, Long) -> Unit) {
+    if (observations.isEmpty()) return
+    val recentObs = observations.sortedByDescending { it.timestamp }.take(3)
+    Card(
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Text("Recent captures", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                recentObs.forEach { obs ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(14.dp))
+                            .clickable { onOpenDetail("observation", obs.id) }
+                            .padding(10.dp),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            FieldMindIcons.Observation,
+                            null,
+                            tint = FieldMindTheme.colors.observation,
+                            modifier = Modifier.size(32.dp)
+                        )
+                        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                            Text(
+                                obs.subject.takeIf { it.isNotBlank() } ?: obs.category,
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.SemiBold,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Text(
+                                    obs.category,
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                                if (obs.latitude != null && obs.longitude != null) {
+                                    Text("📍", style = MaterialTheme.typography.labelSmall)
+                                }
+                                Text(
+                                    obs.time.takeIf { it.isNotBlank() } ?: "–",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                    }
+                }
             }
         }
     }
