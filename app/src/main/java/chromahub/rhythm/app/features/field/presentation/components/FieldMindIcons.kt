@@ -88,6 +88,10 @@ object FieldMindIcons {
     val Timer = MaterialSymbolIcon("timer")
     val Session = MaterialSymbolIcon("stop_circle")
     val List = MaterialSymbolIcon("list")
+    val Line = MaterialSymbolIcon("show_chart")
+    val Shape = MaterialSymbolIcon("hexagon")
+    val Track = MaterialSymbolIcon("route")
+    val Record = MaterialSymbolIcon("radio_button_checked")
 
     // Observation category icons
     val Bird = MaterialSymbolIcon("raven")
