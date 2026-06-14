@@ -641,7 +641,7 @@ fun EnhancedOsmMap(
                 // Re-render overlays
                 MapOverlayRenderer.applyOverlays(map, savedOverlays)
                 // Refresh track line
-                map.overlays.removeAll { it.title == "Current track" }
+                map.overlays.removeAll { (it as? org.osmdroid.views.overlay.OverlayWithIW)?.title == "Current track" }
                 if (currentTrackPoints.size >= 2) {
                     val trackLine = Polyline().apply {
                         setPoints(currentTrackPoints.map { GeoPoint(it.first, it.second) })

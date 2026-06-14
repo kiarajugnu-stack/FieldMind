@@ -50,6 +50,19 @@ import fieldmind.research.app.features.field.data.vision.SpeciesClassifier
 import fieldmind.research.app.features.field.data.vision.SpeciesDatabase
 import fieldmind.research.app.features.field.data.vision.SpeciesMatch
 import fieldmind.research.app.features.field.presentation.screens.species.SpeciesIdentificationSheet
+import fieldmind.research.app.features.field.presentation.viewmodel.FieldMindViewModel
+import fieldmind.research.app.features.field.presentation.viewmodel.DraftEvidenceAttachment
+import fieldmind.research.app.features.field.presentation.components.FieldMindIcons
+import fieldmind.research.app.features.field.presentation.components.FieldMindCameraV2
+import fieldmind.research.app.features.field.presentation.components.FieldMindSnackbarOverlay
+import fieldmind.research.app.features.field.presentation.components.rememberFieldMindHaptics
+import fieldmind.research.app.features.field.presentation.components.showFastSnackbar
+import fieldmind.research.app.features.field.presentation.components.calculateObservationQuality
+import fieldmind.research.app.features.field.presentation.theme.FieldMindTheme
+import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.isActive
 import java.io.File
 import kotlin.coroutines.resume
 
