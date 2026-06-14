@@ -97,7 +97,7 @@ fun FieldMindSnackbarOverlay(
         visible = hasData,
         enter = slideInVertically(
             initialOffsetY = { -it },
-            animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow)
+            animationSpec = spring<Float>(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow)
         ) + fadeIn(),
         exit = slideOutVertically(targetOffsetY = { -it / 2 }) + fadeOut(),
         modifier = modifier
