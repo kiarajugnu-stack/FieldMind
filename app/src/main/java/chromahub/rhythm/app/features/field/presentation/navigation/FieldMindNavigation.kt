@@ -98,6 +98,10 @@ sealed class FieldMindScreen(val route: String, val label: String, val icon: Mat
     data object SettingsBackup : FieldMindScreen("field_settings_backup", "Backup & Import", FieldMindIcons.Archive)
     data object SettingsSecurity : FieldMindScreen("field_settings_security", "Security", FieldMindIcons.Lock)
     data object SettingsAbout : FieldMindScreen("field_settings_about", "About", FieldMindIcons.Info)
+    data object SettingsUnits : FieldMindScreen("field_settings_units", "Units", FieldMindIcons.Settings)
+    data object SettingsMap : FieldMindScreen("field_settings_map", "Map", FieldMindIcons.Map)
+    data object SettingsDataIntegrity : FieldMindScreen("field_settings_data_integrity", "Data Integrity", FieldMindIcons.Archive)
+    data object SettingsDeveloper : FieldMindScreen("field_settings_developer", "Developer", FieldMindIcons.Sparkle)
 }
 
 private const val NavTransitionDurationMillis = 180
@@ -333,7 +337,11 @@ composable(FieldMindScreen.Reports.route) { ProjectsScreen(viewModel = viewModel
                 onOpenLocalModel = { navController.navigateToDestination(FieldMindScreen.SettingsLocalModel.route) },
                 onOpenBackup = { navController.navigateToDestination(FieldMindScreen.SettingsBackup.route) },
                 onOpenSecurity = { navController.navigateToDestination(FieldMindScreen.SettingsSecurity.route) },
-                onOpenChangelog = { navController.navigateToDestination(FieldMindScreen.Changelog.route) }
+                onOpenChangelog = { navController.navigateToDestination(FieldMindScreen.Changelog.route) },
+                onOpenUnits = { navController.navigateToDestination(FieldMindScreen.SettingsUnits.route) },
+                onOpenMap = { navController.navigateToDestination(FieldMindScreen.SettingsMap.route) },
+                onOpenDataIntegrity = { navController.navigateToDestination(FieldMindScreen.SettingsDataIntegrity.route) },
+                onOpenDeveloper = { navController.navigateToDestination(FieldMindScreen.SettingsDeveloper.route) }
             )
         }
         composable(FieldMindScreen.SettingsProfile.route) { ProfileSettingsPage(viewModel = viewModel, onBack = { navController.popBackStack() }) }
@@ -344,6 +352,10 @@ composable(FieldMindScreen.Reports.route) { ProjectsScreen(viewModel = viewModel
         composable(FieldMindScreen.SettingsBackup.route) { BackupImportSettingsPage(viewModel = viewModel, onBack = { navController.popBackStack() }, onOpenExport = { navController.navigateToDestination(FieldMindScreen.ExportStudio.route) }) }
         composable(FieldMindScreen.SettingsSecurity.route) { SecuritySettingsPage(viewModel = viewModel, onBack = { navController.popBackStack() }) }
         composable(FieldMindScreen.SettingsAbout.route) { AboutPage(onBack = { navController.popBackStack() }, onOpenChangelog = { navController.navigateToDestination(FieldMindScreen.Changelog.route) }) }
+        composable(FieldMindScreen.SettingsUnits.route) { UnitsFormatSettingsPage(viewModel = viewModel, onBack = { navController.popBackStack() }) }
+        composable(FieldMindScreen.SettingsMap.route) { MapSettingsPage(viewModel = viewModel, onBack = { navController.popBackStack() }) }
+        composable(FieldMindScreen.SettingsDataIntegrity.route) { DataIntegritySettingsPage(viewModel = viewModel, onBack = { navController.popBackStack() }) }
+        composable(FieldMindScreen.SettingsDeveloper.route) { DeveloperSettingsPage(viewModel = viewModel, onBack = { navController.popBackStack() }) }
         composable("field_detail/{kind}/{id}") { entry ->
             val kind = entry.arguments?.getString("kind") ?: "observation"
             val id = entry.arguments?.getString("id")?.toLongOrNull() ?: 0L
