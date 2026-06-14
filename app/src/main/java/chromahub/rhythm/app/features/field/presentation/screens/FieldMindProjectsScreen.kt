@@ -618,7 +618,6 @@ private fun HypothesesTab(
                 h.prediction, "hypothesis",
                 body = "${h.reasoning.take(120)}",
                 meta = listOf("${h.confidencePercent}%", h.resultStatus),
-                accentColor = supportColor,
                 onClick = { onOpenDetail("hypothesis", h.id) }
             )
         }
@@ -696,9 +695,5 @@ private fun TrackingFlowCards() {
     }
 }
 
-
-// ──────────────────────────────────────────────────────────────────────
-//  Summary cards
-// ──────────────────────────────────────────────────────────────────────
 
 
