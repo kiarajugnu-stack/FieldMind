@@ -97,7 +97,22 @@ fun HomeScreen(
 
         // ── Research Session CTA ──
         item {
-            ResearchSessionCtaCard(                    lastSessionLabel = if (lastSession != null) "Resume your last session" else null,
+            val activeSession = remember(researchSessions) { researchSessions.firstOrNull { it.status == "Active" } }
+            var timerMs by remember { mutableStateOf(0L) }
+            
+            LaunchedEffect(activeSession) {
+                if (activeSession != null) {
+                    while (true) {
+                        timerMs = System.currentTimeMillis() - (activeSession.createdAt)
+                        delay(100)
+                    }
+                }
+            }
+            
+            ResearchSessionCtaCard(
+                lastSessionLabel = if (lastSession != null) "Resume your last session" else null,
+                activeSessionName = activeSession?.name,
+                timerMs = timerMs,
                 onStartSession = { onNavigate(FieldMindScreen.ResearchSession) }
             )
         }
@@ -348,7 +363,7 @@ private fun WeatherStatusCard(
                     Text("Weather observations", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                     Text("${weatherObs.size} observations with weather data", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
-                TextButton(onClick = { onNavigate(FieldMindScreen.Insights) }) { Text("Charts") }
+                TextButton(onClick = { onNavigate(FieldMindScreen.WeatherDatabase) }) { Text("View all") }
             }
 
             if (lastWeather != null) {
@@ -392,8 +407,13 @@ private fun WeatherStatusCard(
                 InfoChip(weatherSummary, icon = FieldMindIcons.Weather, color = colors.info)
             }
 
-            Text("Weather data from Open-Meteo (free API) — attached to each observation when GPS is enabled.",
-                style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            if (lastWeather?.manualLocation.isNullOrBlank()) {
+                Text("Weather captured across multiple locations",
+                    style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            } else {
+                Text("Weather at ${lastWeather?.manualLocation ?: "current location"}",
+                    style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
         }
     }
 }
@@ -546,7 +566,7 @@ private fun QuickActionChip(
 
 // ══════════════════════════════════════════════════════════════════════
 //  Reading Review Card
-// ══════════════════════════════════════════════════════════════════════
+// ═════════════════════════════════��════════════════════════════════════
 
 @Composable
 private fun ReadingReviewCard(sources: List<SourceEntity>, flashcards: List<FlashcardEntity>, onNavigate: (FieldMindScreen) -> Unit) {
@@ -812,13 +832,28 @@ private fun DailyGoalCard(todayCount: Int, goal: Int, streakDays: Int, onClick: 
 @Composable
 private fun ResearchSessionCtaCard(
     lastSessionLabel: String?,
+    activeSessionName: String?,
+    timerMs: Long,
     onStartSession: () -> Unit
 ) {
     val haptics = rememberFieldMindHaptics()
+    val isActive = activeSessionName != null
+    
+    fun formatTimer(ms: Long): String {
+        val seconds = (ms / 1000) % 60
+        val minutes = (ms / 60000) % 60
+        val hours = ms / 3600000
+        return if (hours > 0) {
+            String.format("%d:%02d:%02d", hours, minutes, seconds)
+        } else {
+            String.format("%d:%02d", minutes, seconds)
+        }
+    }
+    
     Card(
         modifier = Modifier.fillMaxWidth().animateContentSize(),
         shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
+        colors = CardDefaults.cardColors(containerColor = if (isActive) MaterialTheme.colorScheme.tertiaryContainer else MaterialTheme.colorScheme.primaryContainer),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Row(
@@ -834,9 +869,18 @@ private fun ResearchSessionCtaCard(
                 Icon(FieldMindIcons.Timer, null, tint = MaterialTheme.colorScheme.onPrimaryContainer, size = 26.dp)
             }
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text("Research Session", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onPrimaryContainer)
                 Text(
-                    lastSessionLabel ?: "Structured capture with timer, live feed, and summary",
+                    if (isActive) "Live Session Active" else "Research Session",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                )
+                Text(
+                    when {
+                        isActive -> "${activeSessionName ?: "Untitled"} • ${formatTimer(timerMs)}"
+                        lastSessionLabel != null -> lastSessionLabel
+                        else -> "Structured capture with timer, live feed, and summary"
+                    },
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.78f)
                 )
@@ -845,13 +889,12 @@ private fun ResearchSessionCtaCard(
                 onClick = { haptics.confirm(); onStartSession() },
                 shape = RoundedCornerShape(14.dp)
             ) {
-                Icon(FieldMindIcons.Add, null, size = 18.dp)
+                Icon(if (isActive) FieldMindIcons.Capture else FieldMindIcons.Add, null, size = 18.dp)
                 Spacer(Modifier.size(4.dp))
-                Text("Start")
+                Text(if (isActive) "Continue" else "Start")
             }
         }
     }
-}
 
 @Composable
 private fun GoalStatChip(icon: MaterialSymbolIcon, label: String, tint: androidx.compose.ui.graphics.Color) {

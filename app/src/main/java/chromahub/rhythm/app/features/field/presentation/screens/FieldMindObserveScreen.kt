@@ -1139,18 +1139,30 @@ internal fun ObservationCaptureCard(viewModel: FieldMindViewModel, compact: Bool
                             OutlinedButton(onClick = { showInAppCamera = true }, Modifier.weight(1f)) { Icon(icon = FieldMindIcons.Camera, contentDescription = "Camera", size = 18.dp) }
                             OutlinedButton(onClick = { mediaPicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageAndVideo)) }, Modifier.weight(1f)) { Icon(icon = FieldMindIcons.Gallery, contentDescription = "Gallery", size = 18.dp) }
                             OutlinedButton(onClick = { filePicker.launch(arrayOf("application/pdf", "text/*", "image/*", "video/*", "audio/*")) }, Modifier.weight(1f)) { Icon(icon = FieldMindIcons.File, contentDescription = "File", size = 18.dp) }
-                            OutlinedButton(onClick = { audioImportPicker.launch(arrayOf("audio/*")) }, Modifier.weight(1f)) { Icon(icon = FieldMindIcons.Mic, contentDescription = "Import audio", size = 18.dp) }
-                        }
-                        if (audioEnabled) {
-                            if (recording) RecordingIndicator(recordSeconds)
-                            Button(onClick = {
-                                if (recording) { val file = audioFile; runCatching { recorder?.stop() }; recorder?.release(); recorder = null; recording = false; file?.let { attachments = attachments + DraftEvidenceAttachment("Audio", Uri.fromFile(it).toString(), "Voice note", localPath = it.absolutePath, mimeType = "audio/mp4") }; scope.launch { snackbar.showSnackbar("Voice note attached.") } }
-                                else if (ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) audioPermission.launch(Manifest.permission.RECORD_AUDIO) else audioPermission.launch(Manifest.permission.RECORD_AUDIO)
-                            }, modifier = Modifier.fillMaxWidth(), colors = if (recording) ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.errorContainer, contentColor = MaterialTheme.colorScheme.onErrorContainer) else ButtonDefaults.buttonColors()) {
-                                Icon(icon = if (recording) FieldMindIcons.Stop else FieldMindIcons.Mic, contentDescription = null, size = 18.dp); Spacer(Modifier.size(6.dp)); Text(if (recording) "Stop voice note" else "Record voice note")
-                            }
                         }
                         AttachmentPreviewList(attachments, onCaptionChange = { index, caption -> attachments = attachments.mapIndexed { i, item -> if (i == index) item.copy(caption = caption) else item } }, onRemove = { remove -> attachments = attachments.filterIndexed { index, _ -> index != remove } })
+                        
+                        // Audio recording section
+                        if (audioEnabled) {
+                            Card(shape = RoundedCornerShape(16.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp), modifier = Modifier.fillMaxWidth()) {
+                                Column(Modifier.fillMaxWidth().padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                                        Icon(FieldMindIcons.Mic, null, tint = FieldMindTheme.colors.observation, size = 20.dp)
+                                        Text("Voice note", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold)
+                                        if (recording) {
+                                            RecordingIndicator(recordSeconds)
+                                        }
+                                    }
+                                    Button(onClick = {
+                                        if (recording) { val file = audioFile; runCatching { recorder?.stop() }; recorder?.release(); recorder = null; recording = false; file?.let { attachments = attachments + DraftEvidenceAttachment("Audio", Uri.fromFile(it).toString(), "Voice note", localPath = it.absolutePath, mimeType = "audio/mp4") }; scope.launch { snackbar.showSnackbar("Voice note attached.") } }
+                                        else if (ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) audioPermission.launch(Manifest.permission.RECORD_AUDIO) else audioPermission.launch(Manifest.permission.RECORD_AUDIO)
+                                    }, modifier = Modifier.fillMaxWidth(), colors = if (recording) ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.errorContainer, contentColor = MaterialTheme.colorScheme.onErrorContainer) else ButtonDefaults.buttonColors()) {
+                                        Icon(icon = if (recording) FieldMindIcons.Stop else FieldMindIcons.Mic, contentDescription = null, size = 18.dp); Spacer(Modifier.size(6.dp)); Text(if (recording) "Stop recording" else "Start recording voice note")
+                                    }
+                                    OutlinedButton(onClick = { audioImportPicker.launch(arrayOf("audio/*")) }, Modifier.fillMaxWidth()) { Icon(icon = FieldMindIcons.Mic, contentDescription = "Import audio", size = 18.dp); Spacer(Modifier.size(6.dp)); Text("Or import audio file") }
+                                }
+                            }
+                        }
                     }
                 }
                 CaptureStep("Connect & tag", "Summarize the evidence, tag it, and link a project.", FieldMindIcons.Link) {

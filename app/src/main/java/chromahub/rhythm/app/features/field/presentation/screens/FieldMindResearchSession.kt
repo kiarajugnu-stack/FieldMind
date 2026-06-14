@@ -155,6 +155,7 @@ fun ResearchSessionScreen(
             while (sessionActive) {
                 delay(1000)
                 sessionElapsedMs = System.currentTimeMillis() - sessionStartedAt
+                showResearchSessionNotification(context, sessionName.ifBlank { "Research Session" }, "Running • ${formatTime(sessionElapsedMs)} • $observationCount obs")
             }
         }
     }
