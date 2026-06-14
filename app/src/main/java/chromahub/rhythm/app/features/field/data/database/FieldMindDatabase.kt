@@ -61,6 +61,47 @@ abstract class FieldMindDatabase : RoomDatabase() {
             }
         }
 
+        private val MIGRATION_8_9 = object : Migration(8, 9) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                // ObservationEntity additions
+                db.addColumnIfMissing("field_observations", "qualityScore", "INTEGER NOT NULL DEFAULT 0")
+                db.addColumnIfMissing("field_observations", "parentObservationId", "INTEGER")
+                db.addColumnIfMissing("field_observations", "followUpScheduledAt", "INTEGER")
+                // ProjectEntity additions
+                db.addColumnIfMissing("field_projects", "projectType", "TEXT NOT NULL DEFAULT 'Observation'")
+                db.addColumnIfMissing("field_projects", "selectedMethods", "TEXT NOT NULL DEFAULT ''")
+                // ResearchSessionEntity may be new — create table if it doesn't exist
+                db.execSQL("""
+                    CREATE TABLE IF NOT EXISTS `field_research_sessions` (
+                        `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        `name` TEXT NOT NULL DEFAULT '',
+                        `projectId` INTEGER,
+                        `startedAt` INTEGER NOT NULL,
+                        `endedAt` INTEGER,
+                        `totalDurationMs` INTEGER NOT NULL DEFAULT 0,
+                        `observationCount` INTEGER NOT NULL DEFAULT 0,
+                        `location` TEXT NOT NULL DEFAULT '',
+                        `latitude` REAL,
+                        `longitude` REAL,
+                        `status` TEXT NOT NULL DEFAULT 'Active',
+                        `notes` TEXT NOT NULL DEFAULT '',
+                        `archivedAt` INTEGER,
+                        `deletedAt` INTEGER,
+                        `createdAt` INTEGER NOT NULL,
+                        `updatedAt` INTEGER NOT NULL
+                    )
+                """.trimIndent())
+                // SessionObservationCrossRef may be new
+                db.execSQL("""
+                    CREATE TABLE IF NOT EXISTS `field_session_observations` (
+                        `sessionId` INTEGER NOT NULL,
+                        `observationId` INTEGER NOT NULL,
+                        PRIMARY KEY(`sessionId`, `observationId`)
+                    )
+                """.trimIndent())
+            }
+        }
+
         private fun SupportSQLiteDatabase.addColumnIfMissing(table: String, column: String, definition: String) {
             val cursor = query("PRAGMA table_info(`$table`)")
             cursor.use {
@@ -77,8 +118,7 @@ abstract class FieldMindDatabase : RoomDatabase() {
                 FieldMindDatabase::class.java,
                 "fieldmind_database"
             )
-                .addMigrations(MIGRATION_7_8)
-                .fallbackToDestructiveMigration()
+                .addMigrations(MIGRATION_7_8, MIGRATION_8_9)
                 .build()
                 .also { INSTANCE = it }
         }

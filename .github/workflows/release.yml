@@ -32,29 +32,27 @@ jobs:
         run: |
           echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > release.keystore
 
-      - name: Build installable universal APKs
+      - name: Build release universal APKs (all flavors)
         env:
           KEYSTORE_PATH: ${{ github.workspace }}/release.keystore
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
-        run: ./gradlew assembleGithubDebug assembleGithubRelease --stacktrace
+        run: ./gradlew assembleGithubRelease assembleFdroidRelease --stacktrace
 
-      - name: Verify installable universal APK outputs
+      - name: Verify APK outputs
         run: |
           set -uo pipefail
           echo "=== APK outputs ==="
           find app/build/outputs/apk -type f -name '*.apk' -print || true
-          signed_debug=$(find app/build/outputs/apk/github/debug -maxdepth 1 -name 'FieldMind-*-githubDebug-signed-universal.apk' 2>/dev/null | head -1)
-          signed_release=$(find app/build/outputs/apk/github/release -maxdepth 1 -name 'FieldMind-*-githubRelease-signed-universal.apk' 2>/dev/null | head -1)
-          debug_apk="${signed_debug:-$(find app/build/outputs/apk/github/debug -maxdepth 1 -name '*.apk' 2>/dev/null | head -1)}"
-          release_apk="${signed_release:-$(find app/build/outputs/apk/github/release -maxdepth 1 -name '*.apk' 2>/dev/null | head -1)}"
-          if [ -z "$debug_apk" ] && [ -z "$release_apk" ]; then
+          github_release=$(find app/build/outputs/apk/github/release -maxdepth 1 -name '*.apk' 2>/dev/null | head -1)
+          fdroid_release=$(find app/build/outputs/apk/fdroid/release -maxdepth 1 -name '*.apk' 2>/dev/null | head -1)
+          if [ -z "$github_release" ] && [ -z "$fdroid_release" ]; then
             echo "::error::No APKs found at all. Build may have failed."
             exit 1
           fi
-          if [ -n "$debug_apk" ]; then echo "✅ Debug APK: $debug_apk"; fi
-          if [ -n "$release_apk" ]; then echo "✅ Release APK: $release_apk"; fi
+          if [ -n "$github_release" ]; then echo "✅ GitHub release APK: $github_release"; fi
+          if [ -n "$fdroid_release" ]; then echo "✅ F-Droid release APK: $fdroid_release"; fi
 
       - name: Set prerelease flag
         id: prerelease
@@ -72,5 +70,5 @@ jobs:
           prerelease: ${{ steps.prerelease.outputs.value }}
           generate_release_notes: true
           files: |
-            app/build/outputs/apk/github/debug/*.apk
             app/build/outputs/apk/github/release/*.apk
+            app/build/outputs/apk/fdroid/release/*.apk
