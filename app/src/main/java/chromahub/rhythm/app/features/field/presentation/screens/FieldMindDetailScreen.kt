@@ -149,7 +149,7 @@ fun DetailScreen(
                         }, onOpenDetail) }
                     }
                     "observation" -> observations.firstOrNull { it.id == id }?.let { o ->
-                        item { ObservationDetailContent(o, viewModel, onOpenReader) }
+                        item { ObservationDetailContent(o, viewModel, onOpenReader, onOpenDetail) }
                         item { BacklinksPanel(buildList {
                             projects.firstOrNull { it.id == o.projectId }?.let { add(Triple("project", it.title, it.id)) }
                             data.filter { it.observationId == o.id }.forEach { add(Triple("data", it.label, it.id)) }
@@ -224,7 +224,8 @@ fun DetailScreen(
 private fun ObservationDetailContent(
     o: ObservationEntity,
     viewModel: FieldMindViewModel,
-    onOpenReader: (String, String) -> Unit
+    onOpenReader: (String, String) -> Unit,
+    onOpenDetail: (String, Long) -> Unit = { _, _ -> }
 ) {
     val colors = FieldMindTheme.colors
     Card(

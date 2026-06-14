@@ -41,6 +41,58 @@ internal data class FieldMindChangelogEntry(
 
 private val fieldMindChangelog = listOf(
     FieldMindChangelogEntry(
+        version = "1.4.1-build-fixes",
+        date = "2026-06-14",
+        title = "Build Fixes & Stability Improvements",
+        importance = "Patch",
+        tags = listOf("Fixes", "Stability", "Build"),
+        sections = listOf(
+            "Geo-fence Reminders" to listOf(
+                "Fixed Long-to-Int type mismatch in loitering delay that caused a compile error.",
+                "Fixed nullable GeofencingClient calls that could crash on devices without Google Play Services — all calls now use safe-call operators (?.) so geo-fencing degrades gracefully."
+            ),
+            "Map Drawing Tools" to listOf(
+                "Removed unresolved 'geodesic' property references on Polyline overlays (not present in the bundled osmdroid version).",
+                "Fixed DrawingInputHandler tempMarkerDrawer being declared as val while needing reassignment — changed to var."
+            ),
+            "Offline Tile Manager" to listOf(
+                "Resolved 'Cannot infer type parameter R' errors on CacheManager.downloadAreaAsync — now called via reflection for version-safe compatibility.",
+                "Fixed unresolved 'cleanArea' method reference (renamed in some osmdroid builds) — now called via reflection with graceful fallback."
+            ),
+            "Data Tools Screens" to listOf(
+                "Fixed widespread escaped-quote syntax errors throughout FieldMindDataTools.kt (backslash-escaped \\\" sequences inside Kotlin string literals caused every string in the file to be invalid).",
+                "Counter, Measurement, Weather Log, and Species Tool screens now compile and function correctly."
+            ),
+            "Navigation" to listOf(
+                "MeasurementToolScreen, WeatherLogToolScreen, and SpeciesToolScreen are now correctly resolved in the navigation graph (unblocked by the DataTools syntax fix)."
+            ),
+            "Observation Detail Screen" to listOf(
+                "Added missing onOpenDetail callback parameter to ObservationDetailContent so re-observation parent/child links correctly open detail views."
+            ),
+            "Home Screen" to listOf(
+                "Fixed Triple(...) called with 4 arguments — replaced with Pair<Triple, Screen> so each tool entry correctly carries title, body, icon, and navigation target.",
+                "Fixed destructuring to use (info, screen) → val (title, body, icon) = info pattern."
+            ),
+            "Map Screen" to listOf(
+                "Added missing import for android.content.Context used in the Tracks tab.",
+                "Added missing import for MaterialSymbolIcon used in DrawToolButton."
+            ),
+            "Capture Screen" to listOf(
+                "Removed duplicate import for SpeciesMatch that caused an ambiguous reference error.",
+                "Removed duplicate val context = LocalContext.current declaration in the same composable scope."
+            ),
+            "Settings Screen" to listOf(
+                "Fixed nullable Long? comparison operator (obs.projectId > 0) in Data Integrity page — now safely unwraps with ?: 0L before comparing."
+            ),
+            "Charts" to listOf(
+                "Removed unresolved geodesic property from Polyline in EnhancedOsmMap composable (both the factory block and the update block)."
+            ),
+            "UI Components" to listOf(
+                "Added missing imports for Dialog, DialogProperties, wrapContentHeight, verticalScroll, rememberScrollState, and TextButton that were required by the ProtocolPicker dialog composable."
+            )
+        )
+    ),
+    FieldMindChangelogEntry(
         version = "1.4.0-species-id-map-tools",
         date = "2026-06-14",
         title = "Phase 4: Species ID, Offline Maps & Enhanced Observation",

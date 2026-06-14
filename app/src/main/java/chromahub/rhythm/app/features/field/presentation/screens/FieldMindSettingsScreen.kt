@@ -437,7 +437,7 @@ fun SecuritySettingsPage(viewModel: FieldMindViewModel, onBack: () -> Unit) {
     }
 }
 
-// ══════════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════��══════════════════════════════
 //  Backup & Import Settings Page
 // ══════════════════════════════════════════════════════════════════════
 
@@ -816,7 +816,7 @@ fun DataIntegritySettingsPage(viewModel: FieldMindViewModel, onBack: () -> Unit)
     val projects by viewModel.projects.collectAsState()
 
     val orphanedObs = remember(observations, projects) {
-        observations.count { obs -> obs.projectId > 0 && projects.none { it.id == obs.projectId } }
+        observations.count { obs -> (obs.projectId ?: 0L) > 0 && projects.none { it.id == obs.projectId } }
     }
     val totalRecords = observations.size + questions.size + sources.size
 

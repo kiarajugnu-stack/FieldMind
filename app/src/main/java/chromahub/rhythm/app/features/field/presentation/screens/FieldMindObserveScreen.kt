@@ -49,18 +49,7 @@ import fieldmind.research.app.features.field.data.location.FieldLocationProvider
 import fieldmind.research.app.features.field.data.vision.SpeciesClassifier
 import fieldmind.research.app.features.field.data.vision.SpeciesDatabase
 import fieldmind.research.app.features.field.data.vision.SpeciesMatch
-import fieldmind.research.app.features.field.data.weather.WeatherSnapshot
-import fieldmind.research.app.features.field.presentation.components.*
 import fieldmind.research.app.features.field.presentation.screens.species.SpeciesIdentificationSheet
-import fieldmind.research.app.features.field.presentation.theme.FieldMindTheme
-import fieldmind.research.app.features.field.presentation.viewmodel.DraftEvidenceAttachment
-import fieldmind.research.app.features.field.presentation.viewmodel.FieldMindViewModel
-import fieldmind.research.app.shared.presentation.components.icons.Icon
-import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.suspendCancellableCoroutine
-import fieldmind.research.app.features.field.data.vision.SpeciesMatch
 import java.io.File
 import kotlin.coroutines.resume
 
@@ -142,7 +131,6 @@ fun ObserveScreen(
     var showInAppCamera by remember { mutableStateOf(false) }
 
     // ── Species identification state ──
-    val context = LocalContext.current
     val speciesClassifier = remember { SpeciesClassifier(context) }
     val speciesDatabase = remember { SpeciesDatabase(context) }
     var showSpeciesId by remember { mutableStateOf(false) }

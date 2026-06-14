@@ -55,18 +55,18 @@ fun CounterToolScreen(
     val haptics = rememberFieldMindHaptics()
 
     var count by remember { mutableIntStateOf(0) }
-    var label by remember { mutableStateOf(\"\") }
+    var label by remember { mutableStateOf("") }
     var showHistory by remember { mutableStateOf(false) }
     val counterRecords = remember(dataRecords) {
-        dataRecords.filter { it.toolType == \"Counter\" }.sortedByDescending { it.timestamp }
+        dataRecords.filter { it.toolType == "Counter" }.sortedByDescending { it.timestamp }
     }
 
     // Pulse animation on the count
-    val transition = rememberInfiniteTransition(label = \"counterPulse\" )
+    val transition = rememberInfiniteTransition(label = "counterPulse" )
     val pulseScale by transition.animateFloat(
         initialValue = 1f, targetValue = 1.04f,
         animationSpec = infiniteRepeatable(tween(600), RepeatMode.Reverse),
-        label = \"counterScale\"
+        label = "counterScale"
     )
 
     Box(Modifier.fillMaxSize()) {
@@ -82,7 +82,7 @@ fun CounterToolScreen(
                 item {
                     FieldScreenHeader(
                         "Counter",
-                        \"Quick tally — each increment auto-saves a data record.\",
+                        "Quick tally — each increment auto-saves a data record.",
                         icon = FieldMindIcons.Add,
                         actionIcon = FieldMindIcons.Back,
                         onAction = onBack
@@ -139,22 +139,22 @@ fun CounterToolScreen(
                                         .height(72.dp),
                                     shape = RoundedCornerShape(24.dp)
                                 ) {
-                                    Text(\"−\", style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Bold)
+                                    Text("−", style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Bold)
                                 }
                                 Button(
                                     onClick = {
                                         haptics.confirm()
                                         count++
                                         // Auto-save each increment
-                                        val labelToUse = label.ifBlank { \"Counter tally\" }
-                                        viewModel.addCounter(labelToUse, count, \"Auto-saved at $count\")
+                                        val labelToUse = label.ifBlank { "Counter tally" }
+                                        viewModel.addCounter(labelToUse, count, "Auto-saved at $count")
                                     },
                                     modifier = Modifier
                                         .weight(1f)
                                         .height(72.dp),
                                     shape = RoundedCornerShape(24.dp)
                                 ) {
-                                    Text(\"+\", style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Bold)
+                                    Text("+", style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Bold)
                                 }
                             }
 
@@ -233,7 +233,7 @@ fun CounterToolScreen(
                                             fontWeight = FontWeight.Bold
                                         )
                                         Text(
-                                            \"${counterRecords.size} saves\",
+                                            "${counterRecords.size} saves",
                                             style = MaterialTheme.typography.bodySmall,
                                             color = MaterialTheme.colorScheme.onSurfaceVariant
                                         )
@@ -297,11 +297,11 @@ fun MeasurementToolScreen(
     val scope = rememberCoroutineScope()
     val haptics = rememberFieldMindHaptics()
 
-    var label by remember { mutableStateOf(\"\") }
-    var value by remember { mutableStateOf(\"\") }
-    var unit by remember { mutableStateOf(\"cm\") }
-    var notes by remember { mutableStateOf(\"\") }
-    var location by remember { mutableStateOf(\"\") }
+    var label by remember { mutableStateOf("") }
+    var value by remember { mutableStateOf("") }
+    var unit by remember { mutableStateOf("cm") }
+    var notes by remember { mutableStateOf("") }
+    var location by remember { mutableStateOf("") }
 
     val commonUnits = listOf("cm", "m", "mm", "km", "g", "kg", "°C", "°F", "%", "mL", "L", "ppm", "mg/L", "lux", "dB")
     var showUnitPicker by remember { mutableStateOf(false) }
@@ -372,7 +372,7 @@ fun MeasurementToolScreen(
 
                             // Large value display
                             Text(
-                                if (value.isNotBlank()) \"$value $unit\" else \"—\",
+                                if (value.isNotBlank()) "$value $unit" else "—",
                                 style = MaterialTheme.typography.displaySmall.copy(
                                     fontWeight = FontWeight.Bold,
                                     fontSize = 36.sp
@@ -490,12 +490,12 @@ fun WeatherLogToolScreen(
     val context = androidx.compose.ui.platform.LocalContext.current
     val locationProvider = remember { fieldmind.research.app.features.field.data.location.FieldLocationProvider(context) }
 
-    var temperature by remember { mutableStateOf(\"\") }
-    var condition by remember { mutableStateOf(\"Clear\") }
-    var humidity by remember { mutableStateOf(\"\") }
-    var windSpeed by remember { mutableStateOf(\"\") }
-    var notes by remember { mutableStateOf(\"\") }
-    var location by remember { mutableStateOf(\"\") }
+    var temperature by remember { mutableStateOf("") }
+    var condition by remember { mutableStateOf("Clear") }
+    var humidity by remember { mutableStateOf("") }
+    var windSpeed by remember { mutableStateOf("") }
+    var notes by remember { mutableStateOf("") }
+    var location by remember { mutableStateOf("") }
     var locating by remember { mutableStateOf(false) }
 
     val conditions = listOf("Clear", "Partly cloudy", "Overcast", "Foggy", "Drizzle", "Rain", "Snow", "Thunderstorm")
@@ -503,10 +503,10 @@ fun WeatherLogToolScreen(
     fun saveWeatherLog() {
         haptics.confirm()
         val value = buildString {
-            temperature.takeIf { it.isNotBlank() }?.let { append(\"${it}°C \") }
+            temperature.takeIf { it.isNotBlank() }?.let { append("${it}°C ") }
             append(condition)
-            humidity.takeIf { it.isNotBlank() }?.let { append(\" | ${it}% humidity\") }
-            windSpeed.takeIf { it.isNotBlank() }?.let { append(\" | ${it} km/h wind\") }
+            humidity.takeIf { it.isNotBlank() }?.let { append(" | ${it}% humidity") }
+            windSpeed.takeIf { it.isNotBlank() }?.let { append(" | ${it} km/h wind") }
         }
         viewModel.addDataRecord(
             toolType = "Weather Log",
@@ -667,12 +667,12 @@ fun SpeciesToolScreen(
     val scope = rememberCoroutineScope()
     val haptics = rememberFieldMindHaptics()
 
-    var speciesName by remember { mutableStateOf(\"\") }
-    var count by remember { mutableStateOf(\"1\") }
-    var behavior by remember { mutableStateOf(\"\") }
-    var confidence by remember { mutableStateOf(\"Likely\") }
-    var habitat by remember { mutableStateOf(\"\") }
-    var notes by remember { mutableStateOf(\"\") }
+    var speciesName by remember { mutableStateOf("") }
+    var count by remember { mutableStateOf("1") }
+    var behavior by remember { mutableStateOf("") }
+    var confidence by remember { mutableStateOf("Likely") }
+    var habitat by remember { mutableStateOf("") }
+    var notes by remember { mutableStateOf("") }
 
     val behaviors = listOf("Feeding", "Flying", "Calling", "Resting", "Moving", "Nesting", "Interacting", "Hiding")
     val confidenceOptions = listOf("Certain", "Likely", "Unsure")
@@ -693,10 +693,10 @@ fun SpeciesToolScreen(
             },
             facts = buildString {
                 append("Species: $speciesName")
-                count.takeIf { it.isNotBlank() && it != \"1\" }?.let { append(\", Count: $it\") }
-                behavior.takeIf { it.isNotBlank() }?.let { append(\", Behavior: $it\") }
-                habitat.takeIf { it.isNotBlank() }?.let { append(\", Habitat: $it\") }
-                notes.takeIf { it.isNotBlank() }?.let { append(\", Notes: $it\") }
+                count.takeIf { it.isNotBlank() && it != "1" }?.let { append(", Count: $it") }
+                behavior.takeIf { it.isNotBlank() }?.let { append(", Behavior: $it") }
+                habitat.takeIf { it.isNotBlank() }?.let { append(", Habitat: $it") }
+                notes.takeIf { it.isNotBlank() }?.let { append(", Notes: $it") }
             },
             confidence = confidence,
             manualLocation = "",
@@ -774,7 +774,7 @@ fun SpeciesToolScreen(
                                         },
                                         modifier = Modifier.size(44.dp)
                                     ) {
-                                        Text(\"−\", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                                        Text("−", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                                     }
                                     FilledTonalIconButton(
                                         onClick = {
@@ -783,7 +783,7 @@ fun SpeciesToolScreen(
                                         },
                                         modifier = Modifier.size(44.dp)
                                     ) {
-                                        Text(\"+\", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                                        Text("+", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                                     }
                                 }
                             }

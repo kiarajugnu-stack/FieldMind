@@ -1392,10 +1392,10 @@ fun HomeWidgetGrid(
 @Composable
 private fun HomeDataOptionsCard(data: List<DataRecordEntity>, onNavigate: (FieldMindScreen) -> Unit) {
     val toolScreens = listOf(
-        Triple("Count", "Track totals", FieldMindIcons.Add, FieldMindScreen.CounterTool),
-        Triple("Measure", "Log values", FieldMindIcons.Graph, FieldMindScreen.MeasurementTool),
-        Triple("Weather", "Conditions", FieldMindIcons.Weather, FieldMindScreen.WeatherLogTool),
-        Triple("Species", "Survey data", FieldMindIcons.Nature, FieldMindScreen.SpeciesTool)
+        Pair(Triple("Count", "Track totals", FieldMindIcons.Add), FieldMindScreen.CounterTool),
+        Pair(Triple("Measure", "Log values", FieldMindIcons.Graph), FieldMindScreen.MeasurementTool),
+        Pair(Triple("Weather", "Conditions", FieldMindIcons.Weather), FieldMindScreen.WeatherLogTool),
+        Pair(Triple("Species", "Survey data", FieldMindIcons.Nature), FieldMindScreen.SpeciesTool)
     )
     Card(shape = RoundedCornerShape(24.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp), modifier = Modifier.fillMaxWidth()) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -1408,7 +1408,8 @@ private fun HomeDataOptionsCard(data: List<DataRecordEntity>, onNavigate: (Field
                 TextButton(onClick = { onNavigate(FieldMindScreen.DataTools) }) { Text("Open all") }
             }
             FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp), maxItemsInEachRow = 2) {
-                toolScreens.forEach { (title, body, icon, screen) ->
+                toolScreens.forEach { (info, screen) ->
+                    val (title, body, icon) = info
                     Surface(onClick = { onNavigate(screen) }, modifier = Modifier.weight(1f), shape = RoundedCornerShape(18.dp), color = MaterialTheme.colorScheme.surfaceContainerHigh) {
                         Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                             Icon(icon, null, tint = FieldMindTheme.colors.data, size = 20.dp)

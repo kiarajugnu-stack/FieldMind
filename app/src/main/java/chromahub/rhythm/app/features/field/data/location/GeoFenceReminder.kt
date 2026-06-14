@@ -126,7 +126,7 @@ class GeoFenceReminder(private val context: Context) {
                     (if (region.triggerOnExit) Geofence.GEOFENCE_TRANSITION_EXIT else 0)
             )
             .setExpirationDuration(Geofence.NEVER_EXPIRE)
-            .setLoiteringDelay(LOITERING_DELAY_MS)
+            .setLoiteringDelay(LOITERING_DELAY_MS.toInt())
             .build()
 
         val request = GeofencingRequest.Builder()
@@ -138,12 +138,12 @@ class GeoFenceReminder(private val context: Context) {
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             runCatching {
-                geofencingClient.addGeofences(request, pendingIntent)
+                geofencingClient?.addGeofences(request, pendingIntent)
             }
         } else {
             runCatching {
                 @Suppress("DEPRECATION")
-                geofencingClient.addGeofences(request, pendingIntent)
+                geofencingClient?.addGeofences(request, pendingIntent)
             }
         }
 
@@ -156,7 +156,7 @@ class GeoFenceReminder(private val context: Context) {
      */
     fun removeRegion(regionId: String) {
         runCatching {
-            geofencingClient.removeGeofences(listOf(regionId))
+            geofencingClient?.removeGeofences(listOf(regionId))
         }
         _activeRegions.value = _activeRegions.value.filter { it.id != regionId }
         saveRegions()

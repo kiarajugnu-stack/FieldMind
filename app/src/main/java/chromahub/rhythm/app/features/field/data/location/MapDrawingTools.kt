@@ -172,7 +172,6 @@ object MapOverlayRenderer {
             }
             title = overlay.label.ifBlank { "Transect line" }
             relatedObject = DrawingOverlayTag("line_${overlay.id}")
-            geodesic = true
         }
         mapView.overlays.add(polyline)
     }
@@ -225,7 +224,7 @@ class DrawingInputHandler(
 ) : Overlay() {
 
     private val currentPoints = mutableListOf<GeoPoint>()
-    private val tempMarkerDrawer = TempMarkerDrawer()
+    private var tempMarkerDrawer = TempMarkerDrawer()
 
     data class TempMarkerDrawer(
         var markers: List<Marker> = emptyList()

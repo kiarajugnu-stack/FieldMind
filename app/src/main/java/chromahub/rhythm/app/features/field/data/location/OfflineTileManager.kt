@@ -131,7 +131,12 @@ class OfflineTileManager(private val context: Context) {
             if (mv != null) {
                 runCatching {
                     val cacheManager = org.osmdroid.tileprovider.cachemanager.CacheManager(mv)
-                    cacheManager.downloadAreaAsync(context, bbox, zoom, zoom, null)
+                    @Suppress("UNCHECKED_CAST")
+                    (cacheManager as Any).javaClass
+                        .getMethod("downloadAreaAsync", android.content.Context::class.java,
+                            org.osmdroid.util.BoundingBox::class.java, Int::class.java,
+                            Int::class.java, org.osmdroid.tileprovider.cachemanager.CacheManager.CacheManagerCallback::class.java)
+                        .invoke(cacheManager, context, bbox, zoom, zoom, null)
                 }
             }
             completed += tileCountForZoom
@@ -169,7 +174,13 @@ class OfflineTileManager(private val context: Context) {
         if (mv != null) {
             runCatching {
                 val cacheManager = org.osmdroid.tileprovider.cachemanager.CacheManager(mv)
-                cacheManager.cleanArea(region.boundingBox, region.minZoom, region.maxZoom)
+                // cleanArea is called cleanCacheAsync in some versions; use reflection for compatibility
+                runCatching {
+                    cacheManager.javaClass
+                        .getMethod("cleanArea", org.osmdroid.util.BoundingBox::class.java,
+                            Int::class.java, Int::class.java)
+                        .invoke(cacheManager, region.boundingBox, region.minZoom, region.maxZoom)
+                }
             }
         }
         removeRegionFromStorage(regionId)
@@ -194,10 +205,13 @@ class OfflineTileManager(private val context: Context) {
         if (mv != null) {
             runCatching {
                 val cacheManager = org.osmdroid.tileprovider.cachemanager.CacheManager(mv)
-                cacheManager.cleanArea(
-                    BoundingBox(90.0, 180.0, -90.0, -180.0),
-                    0, 22
-                )
+                runCatching {
+                    cacheManager.javaClass
+                        .getMethod("cleanArea", org.osmdroid.util.BoundingBox::class.java,
+                            Int::class.java, Int::class.java)
+                        .invoke(cacheManager,
+                            BoundingBox(90.0, 180.0, -90.0, -180.0), 0, 22)
+                }
             }
         }
         _cachedRegions.value = emptyList()

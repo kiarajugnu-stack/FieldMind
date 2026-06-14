@@ -615,7 +615,6 @@ fun EnhancedOsmMap(
                                 strokeWidth = 8f
                                 isAntiAlias = true
                             }
-                            geodesic = true
                             title = "Current track"
                         }
                         overlays.add(trackLine)
@@ -651,7 +650,6 @@ fun EnhancedOsmMap(
                             strokeWidth = 8f
                             isAntiAlias = true
                         }
-                        geodesic = true
                         title = "Current track"
                     }
                     map.overlays.add(trackLine)
