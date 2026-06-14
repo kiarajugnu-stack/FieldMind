@@ -81,11 +81,15 @@ fun WeatherDatabaseScreen(
             )
         }
     ) { padding ->
-        LazyColumn(
+        Box(
             Modifier.fillMaxSize().padding(padding),
-            contentPadding = PaddingValues(20.dp, 20.dp, 20.dp, 96.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            contentAlignment = Alignment.TopCenter
         ) {
+            LazyColumn(
+                Modifier.fillMaxWidth().widthIn(max = 600.dp),
+                contentPadding = PaddingValues(20.dp, 20.dp, 20.dp, 96.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
             // ── Live Current Weather Card ──
             item { LiveCurrentWeatherCard(currentWeather, weatherError, isRefreshing) }
 

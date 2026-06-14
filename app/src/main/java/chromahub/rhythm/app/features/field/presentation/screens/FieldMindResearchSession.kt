@@ -76,6 +76,7 @@ fun ResearchSessionScreen(
 
     // Session state
     var sessionActive by remember { mutableStateOf(activeStoredSession != null) }
+    var sessionCreating by remember { mutableStateOf(false) }
     var sessionName by remember { mutableStateOf("") }
     var selectedProjectId by remember { mutableStateOf<Long?>(null) }
     var sessionElapsedMs by remember { mutableLongStateOf(0L) }
@@ -178,19 +179,26 @@ fun ResearchSessionScreen(
 
     fun startSession() {
         val name = sessionName.ifBlank { smartSessionName() }
-        sessionActive = true
+        sessionCreating = true
         sessionStartedAt = System.currentTimeMillis()
         sessionElapsedMs = 0
         observationCount = 0
         sessionName = name
-        viewModel.addResearchSession(name, selectedProjectId) { id -> activeSessionId = id }
+        viewModel.addResearchSession(name, selectedProjectId) { id ->
+            activeSessionId = id
+            sessionActive = true
+            sessionCreating = false
+        }
         showResearchSessionNotification(context, name, "Research session is running")
         haptics.confirm()
     }
 
     fun endSession() {
         sessionActive = false
-        activeSessionId?.let { viewModel.endResearchSession(it, observationCount, sessionElapsedMs) }
+        val sessionId = activeSessionId
+        if (sessionId != null) {
+            viewModel.endResearchSession(sessionId, observationCount, sessionElapsedMs)
+        }
         cancelResearchSessionNotification(context)
         showSummary = true
         haptics.confirm()
@@ -265,6 +273,37 @@ fun ResearchSessionScreen(
                             Button(onClick = { showSummary = false; sessionElapsedMs = 0; observationCount = 0; activeSessionId = null; sessionStartedAt = 0L }, shape = RoundedCornerShape(16.dp), modifier = Modifier.fillMaxWidth()) {
                                 Text("Start new session")
                             }
+                        }
+                    }
+                }
+            } else if (sessionCreating) {
+                // Loading while session is being created
+                item {
+                    Card(
+                        shape = RoundedCornerShape(28.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(
+                            Modifier.fillMaxWidth().padding(32.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(16.dp)
+                        ) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(40.dp),
+                                strokeWidth = 3.dp
+                            )
+                            Text(
+                                "Starting session…",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Text(
+                                "Initializing research session",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
                         }
                     }
                 }
