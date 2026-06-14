@@ -61,8 +61,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.isActive
 import fieldmind.research.app.features.field.data.weather.WeatherSnapshot
-import fieldmind.research.app.features.field.data.location.asDisplayText
-import fieldmind.research.app.features.field.data.weather.asDisplayText
 import java.io.File
 import kotlin.coroutines.resume
 
