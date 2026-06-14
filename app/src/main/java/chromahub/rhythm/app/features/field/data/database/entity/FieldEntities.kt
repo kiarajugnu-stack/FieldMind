@@ -51,6 +51,7 @@ data class ObservationEntity(
     val weatherHumidity: Int? = null,
     val weatherWindSpeed: Double? = null,
     val weatherCloudCover: Int? = null,
+    val weatherPressure: Double? = null,
     val weatherSnapshotAt: Long? = null,
     val tags: String = "",
     val projectId: Long? = null,

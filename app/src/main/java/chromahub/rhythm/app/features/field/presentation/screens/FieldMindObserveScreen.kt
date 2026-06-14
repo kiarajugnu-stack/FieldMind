@@ -46,16 +46,21 @@ import coil.compose.AsyncImage
 import fieldmind.research.app.features.field.data.database.entity.*
 import fieldmind.research.app.features.field.data.location.CapturedLocation
 import fieldmind.research.app.features.field.data.location.FieldLocationProvider
-import fieldmind.research.app.features.field.data.weather.WeatherSnapshot
-import fieldmind.research.app.features.field.presentation.components.*
-import fieldmind.research.app.features.field.presentation.theme.FieldMindTheme
-import fieldmind.research.app.features.field.presentation.viewmodel.DraftEvidenceAttachment
+import fieldmind.research.app.features.field.data.vision.SpeciesClassifier
+import fieldmind.research.app.features.field.data.vision.SpeciesDatabase
+import fieldmind.research.app.features.field.data.vision.SpeciesMatch
+import fieldmind.research.app.features.field.presentation.screens.species.SpeciesIdentificationSheet
 import fieldmind.research.app.features.field.presentation.viewmodel.FieldMindViewModel
+import fieldmind.research.app.features.field.presentation.viewmodel.DraftEvidenceAttachment
+import fieldmind.research.app.features.field.presentation.components.*
 import fieldmind.research.app.shared.presentation.components.icons.Icon
 import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon
+import fieldmind.research.app.features.field.presentation.theme.FieldMindTheme
+import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.isActive
+import fieldmind.research.app.features.field.data.weather.WeatherSnapshot
 import java.io.File
 import kotlin.coroutines.resume
 
@@ -123,6 +128,10 @@ fun ObserveScreen(
     val snackbar = remember { SnackbarHostState() }
     val context = LocalContext.current
 
+    // GPS location & accuracy
+    val locationProvider = remember { FieldLocationProvider(context) }
+    var capturedLocation by remember { mutableStateOf<CapturedLocation?>(null) }
+
     // Core session state
     var session by remember { mutableStateOf(CaptureSessionState()) }
     var showEvidenceForm by remember { mutableStateOf(false) }
@@ -132,11 +141,17 @@ fun ObserveScreen(
     // Camera dialog state
     var showInAppCamera by remember { mutableStateOf(false) }
 
+    // ── Species identification state ──
+    val speciesClassifier = remember { SpeciesClassifier(context) }
+    val speciesDatabase = remember { SpeciesDatabase(context) }
+    var showSpeciesId by remember { mutableStateOf(false) }
+    var speciesIdImageUri by remember { mutableStateOf<String?>(null) }
+    var identifiedSpecies by remember { mutableStateOf<SpeciesMatch?>(null) }
 
     // ── Action: add attachment ──
     fun addAttachment(attachment: DraftEvidenceAttachment) {
         session = session.copy(attachments = session.attachments + attachment)
-        scope.launch { snackbar.showSnackbar("${attachment.type} attached") }
+        showFastSnackbar(snackbar, scope, "${attachment.type} attached")
     }
 
     // ── Media picker and file picker launchers (MUST be at composable scope) ──
@@ -179,7 +194,7 @@ fun ObserveScreen(
     fun saveObservation() {
         val s = session
         if (s.subject.isBlank() && s.facts.isBlank()) {
-            scope.launch { snackbar.showSnackbar("Add a subject or facts before saving.") }
+            showFastSnackbar(snackbar, scope, "Add a subject or facts before saving.")
             return
         }
         haptics.confirm()
@@ -204,13 +219,13 @@ fun ObserveScreen(
                 fieldContext = "", manualLocation = "", attachments = emptyList(),
                 sessionObservationCount = session.sessionObservationCount + 1
             )
-            scope.launch { snackbar.showSnackbar("Observation saved! Session: ${session.sessionObservationCount + 1}") }
+            showFastSnackbar(snackbar, scope, "Observation saved! Session: ${session.sessionObservationCount + 1}")
         }
     }
 
+    Box(Modifier.fillMaxSize()) {
     Scaffold(
-        containerColor = MaterialTheme.colorScheme.background,
-        snackbarHost = { SnackbarHost(snackbar) }
+        containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
         LazyColumn(
             Modifier.fillMaxSize().padding(padding),
@@ -415,6 +430,41 @@ fun ObserveScreen(
                 )
             }
         }
+    }
+
+    // ── Top snackbar overlay ──
+        FieldMindSnackbarOverlay(
+            hostState = snackbar,
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .padding(top = 8.dp, start = 16.dp, end = 16.dp)
+        )
+    }
+
+    // ── Species identification sheet ──
+    if (showSpeciesId && speciesIdImageUri != null) {
+        SpeciesIdentificationSheet(
+            imageUri = speciesIdImageUri,
+            classifier = speciesClassifier,
+            database = speciesDatabase,
+            onSelectSpecies = { match ->
+                identifiedSpecies = match
+                session = session.copy(
+                    subject = match.commonName,
+                    category = match.category,
+                    speciesConfidence = when {
+                        match.confidence >= 0.8f -> "Certain"
+                        match.confidence >= 0.5f -> "Likely"
+                        else -> "Unsure"
+                    }
+                )
+                showFastSnackbar(snackbar, scope, "Identified as ${match.commonName}")
+            },
+            onDismiss = {
+                showSpeciesId = false
+                speciesIdImageUri = null
+            }
+        )
     }
 
     // ── In-app camera overlay ──
@@ -694,6 +744,16 @@ private fun EvidenceCaptureRow(
                     )
                 }
             }
+            // Species identification button (always visible when form is active)
+            Spacer(Modifier.height(8.dp))
+            SpeciesIdButton(
+                attachments = attachments,
+                identifiedSpecies = null,
+                onIdentifyFromPhoto = { uri ->
+                    // This will be called from the ObserveScreen
+                },
+                onOpenSearch = { }
+            )
 
             // Attachment previews
             if (attachments.isNotEmpty()) {
@@ -783,6 +843,9 @@ private fun QuickObservationForm(
     var showAdvanced by remember { mutableStateOf(false) }
     var showCategories by remember { mutableStateOf(false) }
     var showStructured by remember { mutableStateOf(false) }
+    var showProtocols by remember { mutableStateOf(false) }
+    var selectedProtocol by remember { mutableStateOf<FieldProtocol?>(null) }
+    var protocolData by remember { mutableStateOf<Map<String, String>>(emptyMap()) }
 
     val hasEvidence = facts.isNotBlank()
     val hasLocation = manualLocation.isNotBlank()
@@ -890,6 +953,65 @@ private fun QuickObservationForm(
                 }
             }
 
+            // ── Protocol picker button ──
+            Row(
+                Modifier.fillMaxWidth().clickable { showProtocols = !showProtocols },
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Icon(FieldMindIcons.Data, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, size = 18.dp)
+                    Text(
+                        if (selectedProtocol != null) "Protocol: ${selectedProtocol!!.name}" else "Start from protocol",
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+                Icon(
+                    if (showProtocols) FieldMindIcons.Up else FieldMindIcons.Down,
+                    null, tint = MaterialTheme.colorScheme.onSurfaceVariant, size = 20.dp
+                )
+            }
+
+            // Protocol steps (when selected)
+            if (selectedProtocol != null) {
+                val protocol = selectedProtocol!!
+                Card(
+                    shape = RoundedCornerShape(20.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                ) {
+                    Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Text(protocol.name, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                        protocol.steps.forEach { step ->
+                            ProtocolStepField(
+                                step = step,
+                                value = protocolData[step.id].orEmpty(),
+                                onValueChange = { onMeasurementChange("protocol_${step.id}", it) }, // Reuse measurement pathway
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
+                    }
+                }
+            }
+
+            // Protocol picker dialog
+            if (showProtocols) {
+                ProtocolPicker(
+                    selectedId = selectedProtocol?.id,
+                    onSelect = { protocol ->
+                        selectedProtocol = protocol
+                        if (protocol != null) {
+                            onCategoryChange(protocol.suggestedCategory)
+                            onTagsChange(protocol.defaultTags)
+                            protocolData = protocol.steps.associate { it.id to "" }
+                        }
+                        showProtocols = false
+                    },
+                    onDismiss = { showProtocols = false }
+                )
+            }
+
             // ── Save button ──
             Button(
                 onClick = onSave,
@@ -916,6 +1038,11 @@ private fun FieldModeScreen(viewModel: FieldMindViewModel, onBack: () -> Unit) {
     val gpsMode by viewModel.fieldSettings.gpsMode.collectAsState()
     val autoWeatherEnabled by viewModel.fieldSettings.autoWeatherEnabled.collectAsState()
     val locationMode by viewModel.fieldSettings.locationMode.collectAsState()
+    // Field mode defaults from Settings
+    val fieldModeDefaultSession by viewModel.fieldSettings.fieldModeDefaultSession.collectAsState()
+    val fieldModeAutoStartTimer by viewModel.fieldSettings.fieldModeAutoStartTimer.collectAsState()
+    val fieldModeObservationSpacing by viewModel.fieldSettings.fieldModeObservationSpacing.collectAsState()
+
     val context = LocalContext.current
     val haptics = rememberFieldMindHaptics()
     var showFull by remember { mutableStateOf(false) }
@@ -926,16 +1053,94 @@ private fun FieldModeScreen(viewModel: FieldMindViewModel, onBack: () -> Unit) {
     var quickSnapStatus by remember { mutableStateOf<String?>(null) }
     val locationProvider = remember { FieldLocationProvider(context) }
     val canAutoLocate = gpsMode != "Off" && locationMode != "Manual only"
+
+    // ── Observation spacing cooldown (prevents rapid duplicate saves) ──
+    var lastSaveTime by remember { mutableLongStateOf(0L) }
+    val spacingMs = remember(fieldModeObservationSpacing) {
+        when (fieldModeObservationSpacing) {
+            "30s" -> 30_000L
+            "1m" -> 60_000L
+            "5m" -> 300_000L
+            else -> 0L
+        }
+    }
+
+    // ── Auto-start timer when field mode opens ──
+    var sessionTimerStarted by remember { mutableStateOf(false) }
+    var timerStartTime by remember { mutableLongStateOf(0L) }
+    LaunchedEffect(fieldModeAutoStartTimer) {
+        if (fieldModeAutoStartTimer && !sessionTimerStarted) {
+            timerStartTime = System.currentTimeMillis()
+            sessionTimerStarted = true
+        }
+    }
+    // Tick every second when timer is running
+    var tick by remember { mutableIntStateOf(0) }
+    LaunchedEffect(sessionTimerStarted) {
+        if (sessionTimerStarted && fieldModeAutoStartTimer) {
+            while (true) {
+                delay(1000)
+                tick++
+            }
+        }
+    }
+    val elapsedFormatted = remember(tick, timerStartTime, sessionTimerStarted) {
+        if (sessionTimerStarted && fieldModeAutoStartTimer && timerStartTime > 0L) {
+            val elapsed = System.currentTimeMillis() - timerStartTime
+            val seconds = (elapsed / 1000) % 60
+            val minutes = (elapsed / 60000) % 60
+            val hours = elapsed / 3600000
+            if (hours > 0) "%d:%02d:%02d".format(hours, minutes, seconds)
+            else "%02d:%02d".format(minutes, seconds)
+        } else "00:00"
+    }
+
+    Box(Modifier.fillMaxSize()) {
     Scaffold(
-        containerColor = MaterialTheme.colorScheme.background,
-        snackbarHost = { SnackbarHost(snackbar) }
+        containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
         LazyColumn(
             Modifier.fillMaxSize().padding(padding),
             contentPadding = PaddingValues(20.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            item { FieldScreenHeader("Field mode", "One tap logs an observation. Add details later.", icon = FieldMindIcons.Bolt, actionIcon = FieldMindIcons.Close, onAction = onBack) }
+            item {
+                FieldScreenHeader(
+                    "Field mode",
+                    when {
+                        fieldModeAutoStartTimer && sessionTimerStarted ->
+                            "$fieldModeDefaultSession mode · $elapsedFormatted elapsed"
+                        fieldModeDefaultSession != "Quick capture" ->
+                            "$fieldModeDefaultSession mode — one tap logs an observation"
+                        else -> "One tap logs an observation. Add details later."
+                    },
+                    icon = FieldMindIcons.Bolt,
+                    actionIcon = FieldMindIcons.Close,
+                    onAction = onBack
+                )
+            }
+            // Auto-start timer indicator
+            if (fieldModeAutoStartTimer && sessionTimerStarted && timerStartTime > 0L) {
+                item {
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp),
+                        color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
+                    ) {
+                        Row(
+                            Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            Icon(FieldMindIcons.Timer, null, tint = MaterialTheme.colorScheme.onPrimaryContainer, size = 18.dp)
+                            Text("Session timer active — $elapsedFormatted", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onPrimaryContainer)
+                            if (fieldModeObservationSpacing != "None") {
+                                Text("${fieldModeObservationSpacing} spacing", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f))
+                            }
+                        }
+                    }
+                }
+            }
             if (showFull) {
                 item { ObservationCaptureCard(viewModel = viewModel, compact = true) { showFull = false } }
             } else {
@@ -951,6 +1156,15 @@ private fun FieldModeScreen(viewModel: FieldMindViewModel, onBack: () -> Unit) {
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                         row.forEach { category ->
                             FieldModeButton(category, Modifier.weight(1f)) {
+                                // Apply spacing cooldown
+                                val now = System.currentTimeMillis()
+                                if (spacingMs > 0L && (now - lastSaveTime) < spacingMs) {
+                                    scope.launch {
+                                        snackbar.showSnackbar("Spacing: wait ${fieldModeObservationSpacing} between saves")
+                                    }
+                                    return@FieldModeButton
+                                }
+                                lastSaveTime = now
                                 haptics.confirm()
                                 viewModel.addObservation(
                                     subject = category, category = category,
@@ -978,6 +1192,14 @@ private fun FieldModeScreen(viewModel: FieldMindViewModel, onBack: () -> Unit) {
             }
         }
     }
+    // ── Top snackbar overlay ──
+    FieldMindSnackbarOverlay(
+        hostState = snackbar,
+        modifier = Modifier
+            .align(Alignment.TopCenter)
+            .padding(top = 8.dp, start = 16.dp, end = 16.dp)
+    )
+    }
     if (showQuickSnapCategory) {
         AlertDialog(
             onDismissRequest = { showQuickSnapCategory = false },
@@ -989,13 +1211,17 @@ private fun FieldModeScreen(viewModel: FieldMindViewModel, onBack: () -> Unit) {
         )
     }
     if (showQuickSnapCamera) {
-        Dialog(onDismissRequest = { showQuickSnapCamera = false }, properties = DialogProperties(usePlatformDefaultWidth = false)) {
+        Dialog(
+            onDismissRequest = { showQuickSnapCamera = false },
+            properties = DialogProperties(usePlatformDefaultWidth = false)
+        ) {
             FieldMindCameraV2(
                 onPhotoCaptured = { uri, mimeType ->
                     scope.launch {
                         showQuickSnapCamera = false
                         quickSnapStatus = if (canAutoLocate) "Locating…" else "Saved without location"
-                        val captured = if (canAutoLocate && locationProvider.hasAnyLocationPermission()) awaitCurrentLocation(locationProvider) else null
+                        val captured = if (canAutoLocate && locationProvider.hasAnyLocationPermission())
+                            awaitCurrentLocation(locationProvider) else null
                         val weather = if (captured != null && autoWeatherEnabled) {
                             quickSnapStatus = "Fetching weather…"
                             viewModel.fetchWeatherSnapshot(captured.latitude, captured.longitude)
@@ -1006,15 +1232,26 @@ private fun FieldModeScreen(viewModel: FieldMindViewModel, onBack: () -> Unit) {
                             else -> "Metadata attached"
                         }
                         viewModel.addObservation(
-                            subject = quickSnapCategory, category = quickSnapCategory,
+                            subject = quickSnapCategory,
+                            category = quickSnapCategory,
                             facts = "Quick snap — add details later.",
                             confidence = defaultConfidence,
-                            manualLocation = captured?.asDisplayText().orEmpty(), tags = "quick-snap",
-                            evidence = "Camera quick snap", context = quickSnapStatus.orEmpty(),
-                            latitude = captured?.latitude, longitude = captured?.longitude,
+                            manualLocation = captured?.asDisplayText().orEmpty(),
+                            tags = "quick-snap",
+                            evidence = "Camera quick snap",
+                            context = quickSnapStatus.orEmpty(),
+                            latitude = captured?.latitude,
+                            longitude = captured?.longitude,
                             weather = weather,
-                            attachments = listOf(DraftEvidenceAttachment("Photo", uri, "Quick snap", mimeType = mimeType))
-                        ) { scope.launch { snackbar.showSnackbar("Quick snap saved as $quickSnapCategory • ${quickSnapStatus.orEmpty()}") } }
+                            attachments = listOf(
+                                DraftEvidenceAttachment("Photo", uri, "Quick snap", mimeType = mimeType)
+                            )
+                        ) {
+                            showFastSnackbar(
+                                snackbar, scope,
+                                "Quick snap saved as $quickSnapCategory • ${quickSnapStatus.orEmpty()}"
+                            )
+                        }
                     }
                 },
                 onDismiss = { showQuickSnapCamera = false },
@@ -1023,9 +1260,6 @@ private fun FieldModeScreen(viewModel: FieldMindViewModel, onBack: () -> Unit) {
         }
     }
 
-// ══════════════════════════════════════════════════════════════════════
-//  Shared helpers (preserved from original)
-// ══════════════════════════════════════════════════════════════════════
     quickSnapStatus?.let { status ->
         AlertDialog(
             onDismissRequest = { quickSnapStatus = null },
@@ -1128,7 +1362,9 @@ internal fun ObservationCaptureCard(viewModel: FieldMindViewModel, compact: Bool
                     if (!place.isNullOrBlank()) { val withPlace = captured.copy(placeName = place); capturedLocation = withPlace; manualLocation = withPlace.asDisplayText() }
                 }
             }
-            scope.launch { snackbar.showSnackbar(captured?.let { "Location captured." } ?: "Couldn't get a fix.") }
+            showFastSnackbar(snackbar, scope, captured?.let { loc -> 
+                if (loc.accuracyMeters != null) "Location acquired ±${loc.accuracyMeters.toInt()}m" else "Location captured."
+            } ?: "Couldn't get a fix.")
         }
     }
     LaunchedEffect(recording) { if (recording) { recordSeconds = 0; while (recording) { delay(1000); recordSeconds++ } } }
@@ -1178,7 +1414,10 @@ internal fun ObservationCaptureCard(viewModel: FieldMindViewModel, compact: Bool
                     Text("Capture mode", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant); ChoiceChips(listOf("Single observation", "Each photo = observation"), observationMode) { observationMode = it }
                     if (!compact) { Text("Category", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant); ChoiceChips(observationCategories, category) { category = it; tags = autoObservationTags(subject, facts, it, tags) } }
                     Text("Confidence", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant); ChoiceChips(confidenceOptions, confidence) { confidence = it }
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) { FieldTextField(count, { count = it }, "Count", modifier = Modifier.weight(1f)); FieldTextField(observerDistance, { observerDistance = it }, "Distance", supportingText = "2m, 10m, 50m, 100m+", modifier = Modifier.weight(1f)) }
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        NumberField(count, { count = it }, "Count", modifier = Modifier.weight(1f), decimalPlaces = 0, supportingText = "Number seen")
+                        NumberField(observerDistance, { observerDistance = it }, "Distance (m)", modifier = Modifier.weight(1f), decimalPlaces = 0, suffix = "m", supportingText = "2, 10, 50, 100")
+                    }
                     Text("Species confidence", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant); ChoiceChips(confidenceOptions, speciesConfidence) { speciesConfidence = it }
                 }
                 CaptureStep(if (snapFirst) "Facts after evidence" else "Facts", "Record only what you observed — keep guesses out.", FieldMindIcons.Edit) {
@@ -1215,9 +1454,18 @@ internal fun ObservationCaptureCard(viewModel: FieldMindViewModel, compact: Bool
                     if (showStructured) { observationCategoryDefinitions.firstOrNull { it.label == category }?.fields.orEmpty().forEach { field -> FieldTextField(structuredDetails[field.key].orEmpty(), { value -> structuredDetails = structuredDetails + (field.key to value) }, field.label, supportingText = field.hint) } }
                 }
                 CaptureStep("Measurements", "Structured measurements keep field evidence comparable.", FieldMindIcons.Graph) {
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) { FieldTextField(height, { height = it }, "Height", modifier = Modifier.weight(1f)); FieldTextField(width, { width = it }, "Width", modifier = Modifier.weight(1f)) }
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) { FieldTextField(length, { length = it }, "Length", modifier = Modifier.weight(1f)); FieldTextField(diameter, { diameter = it }, "Diameter", modifier = Modifier.weight(1f)) }
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) { FieldTextField(weight, { weight = it }, "Weight", modifier = Modifier.weight(1f)); FieldTextField(colorDetail, { colorDetail = it }, "Color", modifier = Modifier.weight(1f)) }
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        NumberField(height, { height = it }, "Height (cm)", modifier = Modifier.weight(1f), decimalPlaces = 1, suffix = "cm")
+                        NumberField(width, { width = it }, "Width (cm)", modifier = Modifier.weight(1f), decimalPlaces = 1, suffix = "cm")
+                    }
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        NumberField(length, { length = it }, "Length (cm)", modifier = Modifier.weight(1f), decimalPlaces = 1, suffix = "cm")
+                        NumberField(diameter, { diameter = it }, "Diameter (cm)", modifier = Modifier.weight(1f), decimalPlaces = 1, suffix = "cm")
+                    }
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        NumberField(weight, { weight = it }, "Weight (g)", modifier = Modifier.weight(1f), decimalPlaces = 1, suffix = "g")
+                        FieldTextField(colorDetail, { colorDetail = it }, "Color", modifier = Modifier.weight(1f))
+                    }
                 }
                 CaptureStep("Follow-up", "Turn needs follow-up into an actionable reminder note.", FieldMindIcons.Notifications) { ChoiceChips(listOf("None", "Tomorrow", "3 days", "1 week", "Custom"), followUp) { followUp = it } }
                 if (mediaEnabled && !snapFirst) {
@@ -1395,6 +1643,94 @@ private fun Map<String, String>.toJsonObject(): String = entries
 private fun DraftEvidenceAttachment.isImage(): Boolean =
     mimeType?.startsWith("image/") == true || type.equals("Photo", true) || type.equals("Gallery", true) ||
     Regex("\\.(jpg|jpeg|png|webp|gif|heic|bmp)(\\?.*)?$", RegexOption.IGNORE_CASE).containsMatchIn(uri)
+
+// ══════════════════════════════════════════════════════════════════════
+//  Species Identification Button
+// ══════════════════════════════════════════════════════════════════════
+
+@Composable
+internal fun SpeciesIdButton(
+    attachments: List<DraftEvidenceAttachment>,
+    identifiedSpecies: SpeciesMatch?,
+    onIdentifyFromPhoto: (String?) -> Unit,
+    onOpenSearch: () -> Unit
+) {
+    val colors = FieldMindTheme.colors
+    val hasPhoto = attachments.any { it.isImage() }
+
+    Card(
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = if (identifiedSpecies != null)
+                colors.observation.copy(alpha = 0.1f)
+            else MaterialTheme.colorScheme.surfaceContainerHigh
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Row(
+                Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                Icon(
+                    FieldMindIcons.Nature,
+                    null,
+                    tint = if (identifiedSpecies != null) colors.observation else MaterialTheme.colorScheme.onSurfaceVariant,
+                    size = 22.dp
+                )
+                Column(Modifier.weight(1f)) {
+                    Text(
+                        if (identifiedSpecies != null) "Identified: ${identifiedSpecies.commonName}"
+                        else "Identify species",
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    Text(
+                        if (identifiedSpecies != null) "Confidence: ${(identifiedSpecies.confidence * 100).toInt()}% • ${identifiedSpecies.scientificName}"
+                        else if (hasPhoto) "Tap to identify from attached photo"
+                        else "Add a photo first, then identify",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                OutlinedButton(
+                    onClick = { onIdentifyFromPhoto(attachments.firstOrNull { it.isImage() }?.uri) },
+                    enabled = hasPhoto && identifiedSpecies == null,
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Icon(FieldMindIcons.Camera, null, size = 16.dp)
+                    Spacer(Modifier.size(6.dp))
+                    Text("From photo", style = MaterialTheme.typography.labelSmall)
+                }
+                OutlinedButton(
+                    onClick = onOpenSearch,
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Icon(FieldMindIcons.Search, null, size = 16.dp)
+                    Spacer(Modifier.size(6.dp))
+                    Text("Search by name", style = MaterialTheme.typography.labelSmall)
+                }
+                if (identifiedSpecies != null) {
+                    FilledTonalIconButton(
+                        onClick = { /* Clear identification */ },
+                        modifier = Modifier.size(36.dp)
+                    ) {
+                        Icon(FieldMindIcons.Close, null, size = 16.dp)
+                    }
+                }
+            }
+        }
+    }
+}
 
 @Composable
 internal fun AttachmentPreviewList(items: List<DraftEvidenceAttachment>, onCaptionChange: (Int, String) -> Unit, onRemove: (Int) -> Unit) {

@@ -1,0 +1,9 @@
+{
+  "name": "fieldminds",
+  "version": "1.4.1",
+  "description": "FieldMinds - Research observation and data collection platform",
+  "private": true,
+  "workspaces": [
+    "web"
+  ]
+}

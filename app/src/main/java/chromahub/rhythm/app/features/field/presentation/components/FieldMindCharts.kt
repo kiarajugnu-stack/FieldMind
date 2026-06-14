@@ -47,8 +47,11 @@ import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.Marker
 import org.osmdroid.views.overlay.MapEventsOverlay
+import org.osmdroid.views.overlay.Polygon
+import org.osmdroid.views.overlay.Polyline
 import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider
 import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay
+import fieldmind.research.app.features.field.data.location.*
 
 /**
  * Dependency-free charting primitives drawn with Compose [Canvas]. These compute everything
@@ -507,5 +510,162 @@ private fun setMarkerOnClickListener(marker: Marker, lat: Double, lon: Double, o
         onTapPoint?.invoke(lat, lon)
         marker.showInfoWindow()
         true
+    }
+}
+
+/**
+ * Enhanced OSM map that supports drawing tools (points, lines, polygons), saved overlay
+ * rendering, and live track recording display. Built on top of [OsmMap]'s osmdroid setup.
+ *
+ * @param points Observation GPS points to plot as markers.
+ * @param savedOverlays Previously drawn overlays to render.
+ * @param drawingMode Current drawing mode (View/PlacePoint/DrawLine/DrawPolygon/Select).
+ * @param currentTrackPoints Live track recording points shown as a polyline.
+ */
+@Composable
+fun EnhancedOsmMap(
+    points: List<Pair<Double, Double>>,
+    savedOverlays: List<MapOverlay> = emptyList(),
+    drawingMode: DrawingMode = DrawingMode.View,
+    currentTrackPoints: List<Pair<Double, Double>> = emptyList(),
+    tileManager: OfflineTileManager? = null,
+    modifier: Modifier = Modifier,
+    onPointCreated: (MapOverlay.PointOverlay) -> Unit = {},
+    onLineCreated: (MapOverlay.LineOverlay) -> Unit = {},
+    onPolygonCreated: (MapOverlay.PolygonOverlay) -> Unit = {},
+    onOverlaysChanged: (List<MapOverlay>) -> Unit = {}
+) {
+    if (points.isEmpty() && savedOverlays.isEmpty()) {
+        Box(modifier.fillMaxWidth().height(240.dp), contentAlignment = Alignment.Center) {
+            Text("No GPS-tagged observations yet", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        return
+    }
+    val context = LocalContext.current
+    var mapView by remember { mutableStateOf<MapView?>(null) }
+
+    // Compute center and zoom from all visible points (observations + saved overlays)
+    val allPoints = points + savedOverlays.flatMap { overlay ->
+        when (overlay) {
+            is MapOverlay.PointOverlay -> listOf(overlay.latitude to overlay.longitude)
+            is MapOverlay.LineOverlay -> overlay.points
+            is MapOverlay.PolygonOverlay -> overlay.points
+        }
+    }
+    val avgLat = allPoints.map { it.first }.average()
+    val avgLon = allPoints.map { it.second }.average()
+    val latSpread = (allPoints.maxOf { it.first } - allPoints.minOf { it.first }).coerceAtLeast(0.01)
+    val lonSpread = (allPoints.maxOf { it.second } - allPoints.minOf { it.second }).coerceAtLeast(0.01)
+    val zoomLevel = (16.0 - kotlin.math.log2(maxOf(latSpread, lonSpread).coerceAtLeast(0.01))).coerceIn(4.0, 18.0)
+
+    Box(modifier.fillMaxWidth().height(300.dp).background(MaterialTheme.colorScheme.surfaceContainerHighest, RoundedCornerShape(16.dp))) {
+        AndroidView(
+            modifier = Modifier.fillMaxSize(),
+            factory = { ctx ->
+                MapView(ctx).apply {
+                    setTileSource(TileSourceFactory.MAPNIK)
+                    setMultiTouchControls(true)
+                    setBuiltInZoomControls(false)
+                    setTilesScaledToDpi(true)
+                    controller.setZoom(zoomLevel)
+                    controller.setCenter(GeoPoint(avgLat, avgLon))
+
+                    // Bind tile manager to MapView for offline caching operations
+                    tileManager?.bindMapView(this)
+
+                    // GPS my-location overlay
+                    val gpsOverlay = MyLocationNewOverlay(GpsMyLocationProvider(ctx), this)
+                    gpsOverlay.enableMyLocation()
+                    overlays.add(gpsOverlay)
+
+                    // Drawing input handler (processes taps for drawing mode)
+                    if (drawingMode != DrawingMode.View && drawingMode != DrawingMode.Select) {
+                        val inputHandler = DrawingInputHandler(
+                            mapView = this,
+                            mode = { drawingMode },
+                            onPointCreated = onPointCreated,
+                            onLineCreated = onLineCreated,
+                            onPolygonCreated = onPolygonCreated,
+                            onDrawingComplete = { }
+                        )
+                        overlays.add(inputHandler)
+                    }
+
+                    // Observation markers
+                    points.forEach { (lat, lon) ->
+                        val marker = Marker(this).apply {
+                            position = GeoPoint(lat, lon)
+                            setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_CENTER)
+                            icon = ctx.getDrawable(android.R.drawable.ic_menu_mylocation)
+                            title = "%.5f, %.5f".format(lat, lon)
+                            subDescription = "Observation"
+                        }
+                        overlays.add(marker)
+                    }
+
+                    // Saved overlays (points, lines, polygons)
+                    MapOverlayRenderer.applyOverlays(this, savedOverlays)
+
+                    // Live track recording as a polyline
+                    if (currentTrackPoints.size >= 2) {
+                        val trackLine = Polyline().apply {
+                            setPoints(currentTrackPoints.map { GeoPoint(it.first, it.second) })
+                            outlinePaint.apply {
+                                color = android.graphics.Color.parseColor("#FF5252")
+                                strokeWidth = 8f
+                                isAntiAlias = true
+                            }
+                            title = "Current track"
+                        }
+                        overlays.add(trackLine)
+                    }
+
+                    mapView = this
+                }
+            },
+            update = { map ->
+                // Update overlays when savedOverlays or drawingMode changes
+                if (drawingMode != DrawingMode.View && drawingMode != DrawingMode.Select) {
+                    // Remove existing drawing input handlers and re-add
+                    map.overlays.removeAll { it is DrawingInputHandler }
+                    val inputHandler = DrawingInputHandler(
+                        mapView = map,
+                        mode = { drawingMode },
+                        onPointCreated = onPointCreated,
+                        onLineCreated = onLineCreated,
+                        onPolygonCreated = onPolygonCreated,
+                        onDrawingComplete = { }
+                    )
+                    map.overlays.add(inputHandler)
+                }
+                // Re-render overlays
+                MapOverlayRenderer.applyOverlays(map, savedOverlays)
+                // Refresh track line
+                map.overlays.removeAll { (it as? org.osmdroid.views.overlay.OverlayWithIW)?.title == "Current track" }
+                if (currentTrackPoints.size >= 2) {
+                    val trackLine = Polyline().apply {
+                        setPoints(currentTrackPoints.map { GeoPoint(it.first, it.second) })
+                        outlinePaint.apply {
+                            color = android.graphics.Color.parseColor("#FF5252")
+                            strokeWidth = 8f
+                            isAntiAlias = true
+                        }
+                        title = "Current track"
+                    }
+                    map.overlays.add(trackLine)
+                }
+                map.invalidate()
+            }
+        )
+        // Attribution label
+        Text(
+            "© OpenStreetMap contributors",
+            modifier = Modifier.align(Alignment.BottomEnd).padding(4.dp),
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+        )
+    }
+    DisposableEffect(Unit) {
+        onDispose { mapView?.onDetach() }
     }
 }

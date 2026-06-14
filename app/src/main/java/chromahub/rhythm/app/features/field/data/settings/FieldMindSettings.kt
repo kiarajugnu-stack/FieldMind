@@ -112,8 +112,54 @@ class FieldMindSettings private constructor(context: Context) {
     private val _weatherRefreshInterval = MutableStateFlow(prefs.getString(KEY_WEATHER_REFRESH, "30 min") ?: "30 min")
     val weatherRefreshInterval: StateFlow<String> = _weatherRefreshInterval.asStateFlow()
 
+    // ── Weather display preferences ──
+    private val _weatherShowTemperature = MutableStateFlow(prefs.getBoolean(KEY_WEATHER_SHOW_TEMP, true))
+    val weatherShowTemperature: StateFlow<Boolean> = _weatherShowTemperature.asStateFlow()
+    private val _weatherShowCondition = MutableStateFlow(prefs.getBoolean(KEY_WEATHER_SHOW_CONDITION, true))
+    val weatherShowCondition: StateFlow<Boolean> = _weatherShowCondition.asStateFlow()
+    private val _weatherShowHumidity = MutableStateFlow(prefs.getBoolean(KEY_WEATHER_SHOW_HUMIDITY, true))
+    val weatherShowHumidity: StateFlow<Boolean> = _weatherShowHumidity.asStateFlow()
+    private val _weatherShowWind = MutableStateFlow(prefs.getBoolean(KEY_WEATHER_SHOW_WIND, true))
+    val weatherShowWind: StateFlow<Boolean> = _weatherShowWind.asStateFlow()
+    private val _weatherShowCloudCover = MutableStateFlow(prefs.getBoolean(KEY_WEATHER_SHOW_CLOUD, true))
+    val weatherShowCloudCover: StateFlow<Boolean> = _weatherShowCloudCover.asStateFlow()
+    private val _weatherShowPressure = MutableStateFlow(prefs.getBoolean(KEY_WEATHER_SHOW_PRESSURE, false))
+    val weatherShowPressure: StateFlow<Boolean> = _weatherShowPressure.asStateFlow()
+
     private val _gpsMode = MutableStateFlow(prefs.getString(KEY_GPS_MODE, "On capture only") ?: "On capture only")
     val gpsMode: StateFlow<String> = _gpsMode.asStateFlow()
+
+    // ── Units & format settings ──
+    private val _distanceUnit = MutableStateFlow(prefs.getString(KEY_DISTANCE_UNIT, "km") ?: "km")
+    val distanceUnit: StateFlow<String> = _distanceUnit.asStateFlow()
+    private val _windSpeedUnit = MutableStateFlow(prefs.getString(KEY_WIND_SPEED_UNIT, "km/h") ?: "km/h")
+    val windSpeedUnit: StateFlow<String> = _windSpeedUnit.asStateFlow()
+    private val _timeFormat = MutableStateFlow(prefs.getString(KEY_TIME_FORMAT, "24h") ?: "24h")
+    val timeFormat: StateFlow<String> = _timeFormat.asStateFlow()
+    private val _dateFormat = MutableStateFlow(prefs.getString(KEY_DATE_FORMAT, "ISO") ?: "ISO")
+    val dateFormat: StateFlow<String> = _dateFormat.asStateFlow()
+
+    // ── Map settings ──
+    private val _mapType = MutableStateFlow(prefs.getString(KEY_MAP_TYPE, "Standard") ?: "Standard")
+    val mapType: StateFlow<String> = _mapType.asStateFlow()
+    private val _mapShowLocation = MutableStateFlow(prefs.getBoolean(KEY_MAP_SHOW_LOCATION, true))
+    val mapShowLocation: StateFlow<Boolean> = _mapShowLocation.asStateFlow()
+
+    // ── Field-mode defaults ──
+    private val _fieldModeDefaultSession = MutableStateFlow(prefs.getString(KEY_FIELD_MODE_DEFAULT_SESSION, "Quick capture") ?: "Quick capture")
+    val fieldModeDefaultSession: StateFlow<String> = _fieldModeDefaultSession.asStateFlow()
+    private val _fieldModeAutoStartTimer = MutableStateFlow(prefs.getBoolean(KEY_FIELD_MODE_AUTO_START_TIMER, false))
+    val fieldModeAutoStartTimer: StateFlow<Boolean> = _fieldModeAutoStartTimer.asStateFlow()
+    private val _fieldModeObservationSpacing = MutableStateFlow(prefs.getString(KEY_FIELD_MODE_OBSERVATION_SPACING, "None") ?: "None")
+    val fieldModeObservationSpacing: StateFlow<String> = _fieldModeObservationSpacing.asStateFlow()
+
+    // ── Developer settings ──
+    private val _developerMode = MutableStateFlow(prefs.getBoolean(KEY_DEVELOPER_MODE, false))
+    val developerMode: StateFlow<Boolean> = _developerMode.asStateFlow()
+    private val _debugLogging = MutableStateFlow(prefs.getBoolean(KEY_DEBUG_LOGGING, false))
+    val debugLogging: StateFlow<Boolean> = _debugLogging.asStateFlow()
+    private val _dataIntegrityCheckOnLaunch = MutableStateFlow(prefs.getBoolean(KEY_DATA_INTEGRITY_CHECK, false))
+    val dataIntegrityCheckOnLaunch: StateFlow<Boolean> = _dataIntegrityCheckOnLaunch.asStateFlow()
 
     // ── Security settings ──
     private val _lockTimeout = MutableStateFlow(prefs.getString(KEY_LOCK_TIMEOUT, "Immediate") ?: "Immediate")
@@ -174,7 +220,25 @@ class FieldMindSettings private constructor(context: Context) {
     fun setAutoWeatherEnabled(value: Boolean) = edit(KEY_AUTO_WEATHER, value) { _autoWeatherEnabled.value = value }
     fun setTempUnit(value: String) = edit(KEY_TEMP_UNIT, value) { _tempUnit.value = value }
     fun setWeatherRefreshInterval(value: String) = edit(KEY_WEATHER_REFRESH, value) { _weatherRefreshInterval.value = value }
+    fun setWeatherShowTemperature(value: Boolean) = edit(KEY_WEATHER_SHOW_TEMP, value) { _weatherShowTemperature.value = value }
+    fun setWeatherShowCondition(value: Boolean) = edit(KEY_WEATHER_SHOW_CONDITION, value) { _weatherShowCondition.value = value }
+    fun setWeatherShowHumidity(value: Boolean) = edit(KEY_WEATHER_SHOW_HUMIDITY, value) { _weatherShowHumidity.value = value }
+    fun setWeatherShowWind(value: Boolean) = edit(KEY_WEATHER_SHOW_WIND, value) { _weatherShowWind.value = value }
+    fun setWeatherShowCloudCover(value: Boolean) = edit(KEY_WEATHER_SHOW_CLOUD, value) { _weatherShowCloudCover.value = value }
+    fun setWeatherShowPressure(value: Boolean) = edit(KEY_WEATHER_SHOW_PRESSURE, value) { _weatherShowPressure.value = value }
     fun setGpsMode(value: String) = edit(KEY_GPS_MODE, value) { _gpsMode.value = value }
+    fun setDistanceUnit(value: String) = edit(KEY_DISTANCE_UNIT, value) { _distanceUnit.value = value }
+    fun setWindSpeedUnit(value: String) = edit(KEY_WIND_SPEED_UNIT, value) { _windSpeedUnit.value = value }
+    fun setTimeFormat(value: String) = edit(KEY_TIME_FORMAT, value) { _timeFormat.value = value }
+    fun setDateFormat(value: String) = edit(KEY_DATE_FORMAT, value) { _dateFormat.value = value }
+    fun setMapType(value: String) = edit(KEY_MAP_TYPE, value) { _mapType.value = value }
+    fun setMapShowLocation(value: Boolean) = edit(KEY_MAP_SHOW_LOCATION, value) { _mapShowLocation.value = value }
+    fun setFieldModeDefaultSession(value: String) = edit(KEY_FIELD_MODE_DEFAULT_SESSION, value) { _fieldModeDefaultSession.value = value }
+    fun setFieldModeAutoStartTimer(value: Boolean) = edit(KEY_FIELD_MODE_AUTO_START_TIMER, value) { _fieldModeAutoStartTimer.value = value }
+    fun setFieldModeObservationSpacing(value: String) = edit(KEY_FIELD_MODE_OBSERVATION_SPACING, value) { _fieldModeObservationSpacing.value = value }
+    fun setDeveloperMode(value: Boolean) = edit(KEY_DEVELOPER_MODE, value) { _developerMode.value = value }
+    fun setDebugLogging(value: Boolean) = edit(KEY_DEBUG_LOGGING, value) { _debugLogging.value = value }
+    fun setDataIntegrityCheckOnLaunch(value: Boolean) = edit(KEY_DATA_INTEGRITY_CHECK, value) { _dataIntegrityCheckOnLaunch.value = value }
     fun setLockTimeout(value: String) = edit(KEY_LOCK_TIMEOUT, value) { _lockTimeout.value = value }
     fun setAutoLockOnBackground(value: Boolean) = edit(KEY_AUTO_LOCK_BACKGROUND, value) { _autoLockOnBackground.value = value }
 
@@ -221,7 +285,25 @@ class FieldMindSettings private constructor(context: Context) {
         private const val KEY_AUTO_WEATHER = "auto_weather"
         private const val KEY_TEMP_UNIT = "temp_unit"
         private const val KEY_WEATHER_REFRESH = "weather_refresh"
+        private const val KEY_WEATHER_SHOW_TEMP = "weather_show_temp"
+        private const val KEY_WEATHER_SHOW_CONDITION = "weather_show_condition"
+        private const val KEY_WEATHER_SHOW_HUMIDITY = "weather_show_humidity"
+        private const val KEY_WEATHER_SHOW_WIND = "weather_show_wind"
+        private const val KEY_WEATHER_SHOW_CLOUD = "weather_show_cloud"
+        private const val KEY_WEATHER_SHOW_PRESSURE = "weather_show_pressure"
         private const val KEY_GPS_MODE = "gps_mode"
+        private const val KEY_DISTANCE_UNIT = "distance_unit"
+        private const val KEY_WIND_SPEED_UNIT = "wind_speed_unit"
+        private const val KEY_TIME_FORMAT = "time_format"
+        private const val KEY_DATE_FORMAT = "date_format"
+        private const val KEY_MAP_TYPE = "map_type"
+        private const val KEY_MAP_SHOW_LOCATION = "map_show_location"
+        private const val KEY_FIELD_MODE_DEFAULT_SESSION = "field_mode_default_session"
+        private const val KEY_FIELD_MODE_AUTO_START_TIMER = "field_mode_auto_start_timer"
+        private const val KEY_FIELD_MODE_OBSERVATION_SPACING = "field_mode_observation_spacing"
+        private const val KEY_DEVELOPER_MODE = "developer_mode"
+        private const val KEY_DEBUG_LOGGING = "debug_logging"
+        private const val KEY_DATA_INTEGRITY_CHECK = "data_integrity_check"
         private const val KEY_LOCK_TIMEOUT = "lock_timeout"
         private const val KEY_AUTO_LOCK_BACKGROUND = "auto_lock_background"
     }

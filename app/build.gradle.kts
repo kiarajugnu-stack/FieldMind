@@ -256,6 +256,9 @@ dependencies {
     // Biometric authentication for privacy lock
     implementation("androidx.biometric:biometric:1.2.0-alpha05")
 
+    // Google Play Services location for geo-fencing
+    implementation("com.google.android.gms:play-services-location:21.3.0")
+
     // CameraX for in-app camera capture (replaces system camera intent)
     implementation("androidx.camera:camera-core:1.4.1")
     implementation("androidx.camera:camera-camera2:1.4.1")

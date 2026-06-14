@@ -51,7 +51,11 @@ fun FieldMindSettingsScreen(
     onOpenLocalModel: (() -> Unit)? = null,
     onOpenBackup: (() -> Unit)? = null,
     onOpenSecurity: (() -> Unit)? = null,
-    onOpenChangelog: (() -> Unit)? = null
+    onOpenChangelog: (() -> Unit)? = null,
+    onOpenUnits: (() -> Unit)? = null,
+    onOpenMap: (() -> Unit)? = null,
+    onOpenDataIntegrity: (() -> Unit)? = null,
+    onOpenDeveloper: (() -> Unit)? = null
 ) {
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(20.dp, 20.dp, 20.dp, 40.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
         item { FieldScreenHeader("Settings", "Offline-first setup, profile, capture, local AI, export, and privacy.", icon = FieldMindIcons.Settings, actionIcon = FieldMindIcons.Back, onAction = onBack) }
@@ -72,10 +76,14 @@ fun FieldMindSettingsScreen(
         item { SettingsNavCard("Research profile", "Name, role, and research focus", FieldMindIcons.Nature, FieldMindTheme.colors.observation) { onOpenProfile?.invoke() } }
         item { SettingsNavCard("Appearance", "Theme, dynamic color, and layout", FieldMindIcons.Palette, FieldMindTheme.colors.info) { onOpenAppearance?.invoke() } }
         item { SettingsNavCard("Capture defaults", "Categories, confidence, goal, location", FieldMindIcons.Capture, FieldMindTheme.colors.observation) { onOpenCapture?.invoke() } }
+        item { SettingsNavCard("Units & format", "Temperature, distance, date/time display", FieldMindIcons.Settings, FieldMindTheme.colors.info) { onOpenUnits?.invoke() } }
+        item { SettingsNavCard("Map settings", "Map type, default zoom, location marker", FieldMindIcons.Map, FieldMindTheme.colors.data) { onOpenMap?.invoke() } }
         item { SettingsNavCard("AI assistant", "Gemini, OpenAI, provider settings", FieldMindIcons.Sparkle, FieldMindTheme.colors.flashcard) { onOpenAi?.invoke() } }
         item { SettingsNavCard("Local model", "Download offline model for flashcards", FieldMindIcons.Download, FieldMindTheme.colors.hypothesis) { onOpenLocalModel?.invoke() } }
         item { SettingsNavCard("Backup & import", "Auto-backup, interval, and restore", FieldMindIcons.Archive, FieldMindTheme.colors.data) { onOpenBackup?.invoke() } }
         item { SettingsNavCard("Security", "Privacy lock, lock timeout, auto-lock", FieldMindIcons.Lock, FieldMindTheme.colors.confidenceVerify) { onOpenSecurity?.invoke() } }
+        item { SettingsNavCard("Data integrity", "Orphaned records, database health", FieldMindIcons.Archive, FieldMindTheme.colors.hypothesis) { onOpenDataIntegrity?.invoke() } }
+        item { SettingsNavCard("Developer", "Debug logging, dev tools, version info", FieldMindIcons.Sparkle, FieldMindTheme.colors.flashcard) { onOpenDeveloper?.invoke() } }
         item { SettingsNavCard("Export Studio", "Export as PDF, CSV, JSON, HTML, SVG", FieldMindIcons.Export, FieldMindTheme.colors.report) { onOpenExport?.invoke() } }
         item { SettingsNavCard("What’s new", "FieldMind-specific redesign notes and migration changes", FieldMindIcons.Info, FieldMindTheme.colors.info) { onOpenChangelog?.invoke() } }
         item { SettingsNavCard("About", "Credits, acknowledgements, and version", FieldMindIcons.Info, FieldMindTheme.colors.source) { onOpenAbout?.invoke() } }
@@ -194,6 +202,12 @@ fun CaptureDefaultsSettingsPage(viewModel: FieldMindViewModel, onBack: () -> Uni
     val autoWeather by settings.autoWeatherEnabled.collectAsState()
     val tempUnit by settings.tempUnit.collectAsState()
     val weatherRefresh by settings.weatherRefreshInterval.collectAsState()
+    val showTemp by settings.weatherShowTemperature.collectAsState()
+    val showCondition by settings.weatherShowCondition.collectAsState()
+    val showHumidity by settings.weatherShowHumidity.collectAsState()
+    val showWind by settings.weatherShowWind.collectAsState()
+    val showCloud by settings.weatherShowCloudCover.collectAsState()
+    val showPressure by settings.weatherShowPressure.collectAsState()
     val reminders by settings.remindersEnabled.collectAsState()
     val streaks by settings.streaksEnabled.collectAsState()
 
@@ -238,6 +252,24 @@ fun CaptureDefaultsSettingsPage(viewModel: FieldMindViewModel, onBack: () -> Uni
                 ChoiceItemForm("Temperature unit", listOf("Celsius", "Fahrenheit"), tempUnit, FieldMindIcons.Weather, settings::setTempUnit)
                 HorizontalDivider(Modifier.padding(start = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
                 ChoiceItemForm("Dashboard refresh", listOf("15 min", "30 min", "60 min"), weatherRefresh, FieldMindIcons.Timer, settings::setWeatherRefreshInterval)
+            }
+        }
+        item {
+            SectionHeader("Dashboard metrics", "Choose which weather fields to show on the home card and dashboard.")
+        }
+        item {
+            SettingsGroupCard {
+                ToggleItem("Temperature", "Current temperature display on weather widget.", showTemp, settings::setWeatherShowTemperature, FieldMindIcons.Weather)
+                HorizontalDivider(Modifier.padding(start = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+                ToggleItem("Condition icon", "Weather condition icon and description.", showCondition, settings::setWeatherShowCondition, FieldMindIcons.Cloud)
+                HorizontalDivider(Modifier.padding(start = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+                ToggleItem("Humidity", "Humidity percentage.", showHumidity, settings::setWeatherShowHumidity, FieldMindIcons.Water)
+                HorizontalDivider(Modifier.padding(start = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+                ToggleItem("Wind speed", "Wind speed in km/h.", showWind, settings::setWeatherShowWind, FieldMindIcons.Flag)
+                HorizontalDivider(Modifier.padding(start = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+                ToggleItem("Cloud cover", "Cloud cover percentage.", showCloud, settings::setWeatherShowCloudCover, FieldMindIcons.Cloud)
+                HorizontalDivider(Modifier.padding(start = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+                ToggleItem("Pressure", "Atmospheric pressure in hPa.", showPressure, settings::setWeatherShowPressure, FieldMindIcons.Compress)
             }
         }
     }
@@ -405,7 +437,7 @@ fun SecuritySettingsPage(viewModel: FieldMindViewModel, onBack: () -> Unit) {
     }
 }
 
-// ══════════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════��══════════════════════════════
 //  Backup & Import Settings Page
 // ══════════════════════════════════════════════════════════════════════
 
@@ -691,6 +723,233 @@ fun ObservationReaderContent(observation: ObservationEntity, onAttachments: @Com
 
         // Location map
         onMap()
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════════
+//  Units & Format Settings Page
+// ══════════════════════════════════════════════════════════════════════
+
+@Composable
+fun UnitsFormatSettingsPage(viewModel: FieldMindViewModel, onBack: () -> Unit) {
+    val settings = viewModel.fieldSettings
+    val tempUnit by settings.tempUnit.collectAsState()
+    val distanceUnit by settings.distanceUnit.collectAsState()
+    val windSpeedUnit by settings.windSpeedUnit.collectAsState()
+    val timeFormat by settings.timeFormat.collectAsState()
+    val dateFormat by settings.dateFormat.collectAsState()
+
+    SettingsSubPage("Units & format", icon = FieldMindIcons.Settings, onBack = onBack) {
+        item {
+            SectionHeader("Measurement units", "Choose how values are displayed in the app.")
+        }
+        item {
+            SettingsGroupCard {
+                ChoiceItemForm("Temperature", listOf("Celsius", "Fahrenheit"), tempUnit, FieldMindIcons.Weather, settings::setTempUnit)
+                HorizontalDivider(Modifier.padding(start = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+                ChoiceItemForm("Distance", listOf("km", "miles"), distanceUnit, FieldMindIcons.Map, settings::setDistanceUnit)
+                HorizontalDivider(Modifier.padding(start = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+                ChoiceItemForm("Wind speed", listOf("km/h", "mph", "knots"), windSpeedUnit, FieldMindIcons.Flag, settings::setWindSpeedUnit)
+            }
+        }
+        item {
+            SectionHeader("Date & time format", "Control how timestamps appear.")
+        }
+        item {
+            SettingsGroupCard {
+                ChoiceItemForm("Time format", listOf("24h", "12h"), timeFormat, FieldMindIcons.Timer, settings::setTimeFormat)
+                HorizontalDivider(Modifier.padding(start = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+                ChoiceItemForm("Date format", listOf("ISO", "Local"), dateFormat, FieldMindIcons.Today, settings::setDateFormat)
+            }
+        }
+        item {
+            Card(shape = RoundedCornerShape(22.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)) {
+                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("Display only", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.primary)
+                    Text("Unit and format changes only affect how data is displayed in the UI. Your stored data is always saved in base metric/ISO formats.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+        }
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════════
+//  Map Settings Page
+// ══════════════════════════════════════════════════════════════════════
+
+@Composable
+fun MapSettingsPage(viewModel: FieldMindViewModel, onBack: () -> Unit) {
+    val settings = viewModel.fieldSettings
+    val mapType by settings.mapType.collectAsState()
+    val mapShowLocation by settings.mapShowLocation.collectAsState()
+
+    SettingsSubPage("Map settings", icon = FieldMindIcons.Map, onBack = onBack) {
+        item {
+            SettingsGroupCard {
+                ChoiceItemForm("Default map type", listOf("Standard", "Satellite", "Terrain"), mapType, FieldMindIcons.Map, settings::setMapType)
+                HorizontalDivider(Modifier.padding(start = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+                ToggleItem("Show my location", "Display your current position as a marker on the map.", mapShowLocation, settings::setMapShowLocation, FieldMindIcons.Location)
+            }
+        }
+        item {
+            Card(shape = RoundedCornerShape(22.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)) {
+                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("Map data", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.primary)
+                    Text("FieldMind uses OpenStreetMap tiles for map rendering. No map data is sent to any server beyond the tile request.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+        }
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════════
+//  Data Integrity Settings Page
+// ══════════════════════════════════════════════════════════════════════
+
+@Composable
+fun DataIntegritySettingsPage(viewModel: FieldMindViewModel, onBack: () -> Unit) {
+    val settings = viewModel.fieldSettings
+    val checkOnLaunch by settings.dataIntegrityCheckOnLaunch.collectAsState()
+    val observations by viewModel.observations.collectAsState()
+    val questions by viewModel.questions.collectAsState()
+    val sources by viewModel.sources.collectAsState()
+    val projects by viewModel.projects.collectAsState()
+
+    val orphanedObs = remember(observations, projects) {
+        observations.count { obs -> (obs.projectId ?: 0L) > 0 && projects.none { it.id == obs.projectId } }
+    }
+    val totalRecords = observations.size + questions.size + sources.size
+
+    SettingsSubPage("Data integrity", icon = FieldMindIcons.Archive, onBack = onBack) {
+        item {
+            SettingsGroupCard {
+                ToggleItem("Check on launch", "Validate database integrity and report issues when the app starts.", checkOnLaunch, settings::setDataIntegrityCheckOnLaunch, FieldMindIcons.Check)
+            }
+        }
+        item {
+            SettingsGroupCard {
+                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text("Database summary", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.primary)
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
+                        IntegrityStat("$totalRecords", "Total records")
+                        IntegrityStat("${observations.size}", "Observations")
+                        IntegrityStat("${questions.size}", "Questions")
+                        IntegrityStat("${sources.size}", "Sources")
+                    }
+                    if (orphanedObs > 0) {
+                        Spacer(Modifier.height(8.dp))
+                        Surface(shape = RoundedCornerShape(12.dp), color = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.5f)) {
+                            Row(Modifier.padding(12.dp), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                                Icon(FieldMindIcons.Info, null, tint = MaterialTheme.colorScheme.error, size = 18.dp)
+                                Text("$orphanedObs observation${if (orphanedObs != 1) "s" else ""} reference missing or deleted projects", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onErrorContainer)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        item {
+            FilledTonalButton(
+                onClick = { /* Placeholder: would trigger integrity repair */ },
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp)
+            ) {
+                Icon(FieldMindIcons.Check, null, size = 18.dp)
+                Spacer(Modifier.size(8.dp))
+                Text("Run integrity check")
+            }
+        }
+        item {
+            Card(shape = RoundedCornerShape(22.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)) {
+                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("What this checks", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.primary)
+                    listOf(
+                        "Orphaned records referencing deleted projects",
+                        "Missing or corrupted attachment URIs",
+                        "Inconsistent date/time values",
+                        "Duplicate record detection"
+                    ).forEach { item ->
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.Top) {
+                            Icon(FieldMindIcons.Check, null, tint = MaterialTheme.colorScheme.primary, size = 14.dp, modifier = Modifier.padding(top = 2.dp))
+                            Text(item, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun IntegrityStat(value: String, label: String) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(value, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.primary)
+        Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════════
+//  Developer Settings Page
+// ══════════════════════════════════════════════════════════════════════
+
+@Composable
+fun DeveloperSettingsPage(viewModel: FieldMindViewModel, onBack: () -> Unit) {
+    val settings = viewModel.fieldSettings
+    val developerMode by settings.developerMode.collectAsState()
+    val debugLogging by settings.debugLogging.collectAsState()
+
+    SettingsSubPage("Developer", icon = FieldMindIcons.Sparkle, onBack = onBack) {
+        item {
+            SettingsGroupCard {
+                ToggleItem("Developer mode", "Enable developer options and debug UI elements.", developerMode, settings::setDeveloperMode, FieldMindIcons.Sparkle)
+                HorizontalDivider(Modifier.padding(start = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+                ToggleItem("Debug logging", "Write verbose logs for troubleshooting.", debugLogging, settings::setDebugLogging, FieldMindIcons.Article)
+            }
+        }
+        if (developerMode) {
+            item {
+                SettingsGroupCard {
+                    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Text("Developer tools", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.primary)
+                        listOf(
+                            "View database schema",
+                            "Export raw JSON dump",
+                            "Test notifications",
+                            "Clear all preferences (restart required)"
+                        ).forEach { tool ->
+                            Surface(
+                                onClick = { /* Placeholder */ },
+                                shape = RoundedCornerShape(14.dp),
+                                color = MaterialTheme.colorScheme.surfaceContainerHigh
+                            ) {
+                                Row(Modifier.fillMaxWidth().padding(14.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                                    Text(tool, style = MaterialTheme.typography.bodyMedium)
+                                    Icon(FieldMindIcons.Forward, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, size = 18.dp)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            item {
+                Card(shape = RoundedCornerShape(22.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)) {
+                    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Text("Version info", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.primary)
+                        Text("FieldMind 4.3.0", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text("Database schema version: 9", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text("Room: SQLite-backed local storage", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                }
+            }
+        }
+        item {
+            Card(shape = RoundedCornerShape(22.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)) {
+                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("Caution", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.error)
+                    Text("Developer options are intended for troubleshooting and testing. Incorrect changes to stored data could cause data loss.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+        }
     }
 }
 

@@ -88,6 +88,7 @@ class FieldMindViewModel(application: Application) : AndroidViewModel(applicatio
                 weatherHumidity = weather?.humidity,
                 weatherWindSpeed = weather?.windSpeed,
                 weatherCloudCover = weather?.cloudCover,
+                weatherPressure = weather?.pressure,
                 weatherSnapshotAt = weather?.fetchedAt,
                 structuredDetailsJson = structuredDetailsJson.trim(),
                 startedAt = startedAt,

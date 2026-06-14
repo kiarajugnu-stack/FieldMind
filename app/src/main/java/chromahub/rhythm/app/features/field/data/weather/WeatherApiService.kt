@@ -21,6 +21,8 @@ data class WeatherSnapshot(
     val windDirection: Int? = null,
     val cloudCover: Int? = null,
     val pressure: Double? = null,
+    val sunrise: String? = null,
+    val sunset: String? = null,
     val fetchedAt: Long = System.currentTimeMillis()
 ) {
     fun asDisplayText(): String = buildString {
@@ -72,6 +74,16 @@ private data class Current(
     @SerializedName("wind_direction_10m") val windDirection: Int? = null
 )
 
+private data class DailyData(
+    @SerializedName("sunrise") val sunrise: List<String>? = null,
+    @SerializedName("sunset") val sunset: List<String>? = null
+)
+
+private data class OpenMeteoResponseFull(
+    @SerializedName("current") val current: Current? = null,
+    @SerializedName("daily") val daily: DailyData? = null
+)
+
 /**
  * Fetches weather from Open-Meteo using latitude/longitude.
  * Free, no API key needed. Rate limit: 10,000 requests/day.
@@ -94,6 +106,7 @@ class WeatherApiService {
                 "?latitude=$latitude" +
                 "&longitude=$longitude" +
                 "&current=temperature_2m,relative_humidity_2m,weather_code,cloud_cover,surface_pressure,wind_speed_10m,wind_direction_10m" +
+                "&daily=sunrise,sunset" +
                 "&timezone=auto"
 
             val request = Request.Builder().url(url).get().build()
@@ -103,10 +116,12 @@ class WeatherApiService {
 
             val body = response.body?.string() ?: return@withContext null
             val parsed = gson.fromJson(body, OpenMeteoResponse::class.java)
+            val parsedFull = try { gson.fromJson(body, OpenMeteoResponseFull::class.java) } catch (_: Exception) { null }
 
             // Try new API format first, fall back to legacy
-            val current = parsed.current
+            val current = parsed.current ?: parsedFull?.current
             val legacy = parsed.currentWeather
+            val daily = parsedFull?.daily
 
             val temp = current?.temperature ?: legacy?.temperature
             val code = current?.weatherCode ?: legacy?.weatherCode ?: 0
@@ -115,6 +130,8 @@ class WeatherApiService {
             val windDir = current?.windDirection ?: legacy?.windDirection
             val cloudCover = current?.cloudCover
             val pressure = current?.pressure
+            val sunrise = daily?.sunrise?.firstOrNull { it.isNotBlank() }
+            val sunset = daily?.sunset?.firstOrNull { it.isNotBlank() }
 
             WeatherSnapshot(
                 temperature = temp,
@@ -124,7 +141,9 @@ class WeatherApiService {
                 windSpeed = windSpeed,
                 windDirection = windDir,
                 cloudCover = cloudCover,
-                pressure = pressure
+                pressure = pressure,
+                sunrise = sunrise,
+                sunset = sunset
             )
         } catch (e: Exception) {
             null // Silent failure — weather is optional

@@ -87,6 +87,11 @@ object FieldMindIcons {
     val FlipCamera = MaterialSymbolIcon("flip_camera_android")
     val Timer = MaterialSymbolIcon("timer")
     val Session = MaterialSymbolIcon("stop_circle")
+    val List = MaterialSymbolIcon("list")
+    val Line = MaterialSymbolIcon("show_chart")
+    val Shape = MaterialSymbolIcon("hexagon")
+    val Track = MaterialSymbolIcon("route")
+    val Record = MaterialSymbolIcon("radio_button_checked")
 
     // Observation category icons
     val Bird = MaterialSymbolIcon("raven")
@@ -97,6 +102,9 @@ object FieldMindIcons {
     val Weather = MaterialSymbolIcon("partly_cloudy_day")
     val Cloud = MaterialSymbolIcon("cloud")
     val Rainy = MaterialSymbolIcon("rainy")
+    val Thunderstorm = MaterialSymbolIcon("thunderstorm")
+    val Snowy = MaterialSymbolIcon("weather_snowy")
+    val Foggy = MaterialSymbolIcon("foggy")
     val Flag = MaterialSymbolIcon("flag")
     val Compress = MaterialSymbolIcon("speed")
     val Water = MaterialSymbolIcon("water_drop")
