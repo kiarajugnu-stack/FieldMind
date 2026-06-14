@@ -12,6 +12,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import fieldmind.research.app.features.field.presentation.theme.FieldMindTheme
 import fieldmind.research.app.ui.theme.RhythmColors
 
 /**
@@ -125,8 +126,8 @@ fun ConfidenceSummaryCard(
     }
     val confidenceColor = when {
         confidencePercent >= 80 -> MaterialTheme.colorScheme.primary
-        confidencePercent >= 60 -> MaterialTheme.colorScheme.info ?: MaterialTheme.colorScheme.primary
-        confidencePercent >= 40 -> MaterialTheme.colorScheme.warning ?: MaterialTheme.colorScheme.primary
+        confidencePercent >= 60 -> FieldMindTheme.colors.info
+        confidencePercent >= 40 -> FieldMindTheme.colors.warning
         else -> MaterialTheme.colorScheme.error
     }
 

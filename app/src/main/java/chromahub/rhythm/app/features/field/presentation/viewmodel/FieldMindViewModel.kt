@@ -349,6 +349,24 @@ class FieldMindViewModel(application: Application) : AndroidViewModel(applicatio
         return weatherService.fetchWeather(latitude, longitude).also { lastWeatherSnapshot = it }
     }
 
+    /**
+     * Fetches current weather using the device's last known location.
+     * Returns null if location permission is not granted or location is unavailable.
+     */
+    suspend fun refreshWeatherFromLocation(): WeatherSnapshot? {
+        val provider = runCatching {
+            fieldmind.research.app.features.field.data.location.FieldLocationProvider(getApplication())
+        }.getOrNull() ?: return null
+
+        if (!provider.hasAnyLocationPermission()) return null
+
+        provider.lastKnownLocation()?.let { loc ->
+            return weatherService.fetchWeather(loc.latitude, loc.longitude).also { lastWeatherSnapshot = it }
+        }
+
+        return null
+    }
+
     fun addFlashcard(front: String, back: String, type: String, sourceId: Long? = null, projectId: Long? = null, deckMode: String = "basic") = viewModelScope.launch {
         repository.addFlashcard(FlashcardEntity(front = front.trim(), back = back.trim(), type = type, sourceId = sourceId, projectId = projectId, deckMode = deckMode))
     }

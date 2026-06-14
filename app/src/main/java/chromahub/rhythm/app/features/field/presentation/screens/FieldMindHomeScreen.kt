@@ -896,6 +896,7 @@ private fun ResearchSessionCtaCard(
             }
         }
     }
+}
 
 @Composable
 fun GoalStatChip(icon: MaterialSymbolIcon, label: String, tint: androidx.compose.ui.graphics.Color) {
@@ -935,7 +936,6 @@ fun HomeWidgetGrid(
     FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalArrangement = Arrangement.spacedBy(12.dp), maxItemsInEachRow = 2) {
         widgets.forEach { widget -> HomeWidgetCard(widget, Modifier.weight(1f)) { onNavigate(widget.screen) } }
     }
-}
 }
 
 
