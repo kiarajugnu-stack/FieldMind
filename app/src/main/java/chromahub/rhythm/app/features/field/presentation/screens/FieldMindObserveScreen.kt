@@ -123,6 +123,10 @@ fun ObserveScreen(
     val snackbar = remember { SnackbarHostState() }
     val context = LocalContext.current
 
+    // GPS location & accuracy
+    val locationProvider = remember { FieldLocationProvider(context) }
+    var capturedLocation by remember { mutableStateOf<CapturedLocation?>(null) }
+
     // Core session state
     var session by remember { mutableStateOf(CaptureSessionState()) }
     var showEvidenceForm by remember { mutableStateOf(false) }
@@ -136,7 +140,7 @@ fun ObserveScreen(
     // ── Action: add attachment ──
     fun addAttachment(attachment: DraftEvidenceAttachment) {
         session = session.copy(attachments = session.attachments + attachment)
-        scope.launch { snackbar.showSnackbar("${attachment.type} attached") }
+        showFastSnackbar(snackbar, scope, "${attachment.type} attached")
     }
 
     // ── Media picker and file picker launchers (MUST be at composable scope) ──
@@ -179,7 +183,7 @@ fun ObserveScreen(
     fun saveObservation() {
         val s = session
         if (s.subject.isBlank() && s.facts.isBlank()) {
-            scope.launch { snackbar.showSnackbar("Add a subject or facts before saving.") }
+            showFastSnackbar(snackbar, scope, "Add a subject or facts before saving.")
             return
         }
         haptics.confirm()
@@ -204,13 +208,13 @@ fun ObserveScreen(
                 fieldContext = "", manualLocation = "", attachments = emptyList(),
                 sessionObservationCount = session.sessionObservationCount + 1
             )
-            scope.launch { snackbar.showSnackbar("Observation saved! Session: ${session.sessionObservationCount + 1}") }
+            showFastSnackbar(snackbar, scope, "Observation saved! Session: ${session.sessionObservationCount + 1}")
         }
     }
 
+    Box(Modifier.fillMaxSize()) {
     Scaffold(
-        containerColor = MaterialTheme.colorScheme.background,
-        snackbarHost = { SnackbarHost(snackbar) }
+        containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
         LazyColumn(
             Modifier.fillMaxSize().padding(padding),
@@ -415,6 +419,15 @@ fun ObserveScreen(
                 )
             }
         }
+    }
+
+    // ── Top snackbar overlay ──
+        FieldMindSnackbarOverlay(
+            hostState = snackbar,
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .padding(top = 8.dp, start = 16.dp, end = 16.dp)
+        )
     }
 
     // ── In-app camera overlay ──
@@ -926,9 +939,9 @@ private fun FieldModeScreen(viewModel: FieldMindViewModel, onBack: () -> Unit) {
     var quickSnapStatus by remember { mutableStateOf<String?>(null) }
     val locationProvider = remember { FieldLocationProvider(context) }
     val canAutoLocate = gpsMode != "Off" && locationMode != "Manual only"
+    Box(Modifier.fillMaxSize()) {
     Scaffold(
-        containerColor = MaterialTheme.colorScheme.background,
-        snackbarHost = { SnackbarHost(snackbar) }
+        containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
         LazyColumn(
             Modifier.fillMaxSize().padding(padding),
@@ -978,6 +991,14 @@ private fun FieldModeScreen(viewModel: FieldMindViewModel, onBack: () -> Unit) {
             }
         }
     }
+    // ── Top snackbar overlay ──
+    FieldMindSnackbarOverlay(
+        hostState = snackbar,
+        modifier = Modifier
+            .align(Alignment.TopCenter)
+            .padding(top = 8.dp, start = 16.dp, end = 16.dp)
+    )
+    }
     if (showQuickSnapCategory) {
         AlertDialog(
             onDismissRequest = { showQuickSnapCategory = false },
@@ -1014,7 +1035,7 @@ private fun FieldModeScreen(viewModel: FieldMindViewModel, onBack: () -> Unit) {
                             latitude = captured?.latitude, longitude = captured?.longitude,
                             weather = weather,
                             attachments = listOf(DraftEvidenceAttachment("Photo", uri, "Quick snap", mimeType = mimeType))
-                        ) { scope.launch { snackbar.showSnackbar("Quick snap saved as $quickSnapCategory • ${quickSnapStatus.orEmpty()}") } }
+                        ) { showFastSnackbar(snackbar, scope, "Quick snap saved as $quickSnapCategory • ${quickSnapStatus.orEmpty()}") } }
                     }
                 },
                 onDismiss = { showQuickSnapCamera = false },
@@ -1128,7 +1149,9 @@ internal fun ObservationCaptureCard(viewModel: FieldMindViewModel, compact: Bool
                     if (!place.isNullOrBlank()) { val withPlace = captured.copy(placeName = place); capturedLocation = withPlace; manualLocation = withPlace.asDisplayText() }
                 }
             }
-            scope.launch { snackbar.showSnackbar(captured?.let { "Location captured." } ?: "Couldn't get a fix.") }
+            showFastSnackbar(snackbar, scope, captured?.let { loc -> 
+                if (loc.accuracyMeters != null) "Location acquired ±${loc.accuracyMeters.toInt()}m" else "Location captured."
+            } ?: "Couldn't get a fix.")
         }
     }
     LaunchedEffect(recording) { if (recording) { recordSeconds = 0; while (recording) { delay(1000); recordSeconds++ } } }

@@ -30,7 +30,9 @@ import kotlin.math.roundToInt
 @Composable
 fun WeatherDatabaseScreen(
     viewModel: FieldMindViewModel,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    onOpenSettings: () -> Unit = {},
+    onOpenDetail: (String, Long) -> Unit = { _, _ -> }
 ) {
     val observations by viewModel.observations.collectAsState()
     val colors = FieldMindTheme.colors
@@ -109,7 +111,8 @@ fun WeatherDatabaseScreen(
                     showHumidity = showHumidity,
                     showWind = showWind,
                     showCloudCover = showCloudPref,
-                    showPressure = showPressure
+                    showPressure = showPressure,
+                    onOpenSettings = onOpenSettings
                 )
             }
 
@@ -187,7 +190,11 @@ fun WeatherDatabaseScreen(
                 }
             } else {
                 items(weatherObs) { weather ->
-                    WeatherRecordCard(weather, colors)
+                    WeatherRecordCard(
+                        observation = weather,
+                        colors = colors,
+                        onOpenDetail = onOpenDetail
+                    )
                 }
             }
         }
@@ -205,7 +212,8 @@ private fun LiveCurrentWeatherCard(
     showHumidity: Boolean = true,
     showWind: Boolean = true,
     showCloudCover: Boolean = true,
-    showPressure: Boolean = true
+    showPressure: Boolean = true,
+    onOpenSettings: () -> Unit = {}
 ) {
     val colors = FieldMindTheme.colors
 
@@ -251,9 +259,21 @@ private fun LiveCurrentWeatherCard(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
+                // Settings gear icon — opens Capture defaults where weather dashboard metrics are configured
+                IconButton(
+                    onClick = onOpenSettings,
+                    modifier = Modifier.size(36.dp)
+                ) {
+                    Icon(
+                        FieldMindIcons.Settings,
+                        null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        size = 20.dp
+                    )
+                }
                 if (isRefreshing) {
                     CircularProgressIndicator(
-                        modifier = Modifier.size(20.dp),
+                        modifier = Modifier.size(18.dp),
                         strokeWidth = 2.dp,
                         color = colors.info
                     )
@@ -374,15 +394,15 @@ private fun LiveCurrentWeatherCard(
 
 private fun weatherIconForCode(code: Int): fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon {
     return when (code) {
-        0, 1 -> FieldMindIcons.Weather // Clear / mainly clear
-        2, 3 -> FieldMindIcons.Cloud // Partly cloudy / overcast
-        45, 48 -> FieldMindIcons.Weather // Fog
-        51, 53, 55, 56, 57 -> FieldMindIcons.Rainy // Drizzle
-        61, 63, 65, 66, 67 -> FieldMindIcons.Rainy // Rain
-        71, 73, 75, 77 -> FieldMindIcons.Weather // Snow
-        80, 81, 82 -> FieldMindIcons.Rainy // Rain showers
-        85, 86 -> FieldMindIcons.Weather // Snow showers
-        95, 96, 99 -> FieldMindIcons.Alert // Thunderstorm
+        0, 1 -> FieldMindIcons.Weather         // Clear / mainly clear
+        2, 3 -> FieldMindIcons.Cloud            // Partly cloudy / overcast
+        45, 48 -> FieldMindIcons.Foggy          // Fog
+        51, 53, 55, 56, 57 -> FieldMindIcons.Rainy  // Drizzle
+        61, 63, 65, 66, 67 -> FieldMindIcons.Rainy  // Rain
+        71, 73, 75, 77 -> FieldMindIcons.Snowy      // Snow
+        80, 81, 82 -> FieldMindIcons.Rainy          // Rain showers
+        85, 86 -> FieldMindIcons.Snowy              // Snow showers
+        95, 96, 99 -> FieldMindIcons.Thunderstorm   // Thunderstorm
         else -> FieldMindIcons.Weather
     }
 }
@@ -414,13 +434,16 @@ private fun StatCard(
 @Composable
 private fun WeatherRecordCard(
     observation: ObservationEntity,
-    colors: fieldmind.research.app.features.field.presentation.theme.FieldMindColors
+    colors: fieldmind.research.app.features.field.presentation.theme.FieldMindColors,
+    onOpenDetail: (String, Long) -> Unit = { _, _ -> }
 ) {
     Card(
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onOpenDetail("observation", observation.id) }
     ) {
         Row(
             Modifier.fillMaxWidth().padding(16.dp),
@@ -428,17 +451,32 @@ private fun WeatherRecordCard(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Box(
-                Modifier.size(48.dp).fillMaxWidth(0.15f)
-                    .let { it.align(Alignment.Top) },
+                Modifier.size(48.dp),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(FieldMindIcons.Weather, null, tint = colors.info, size = 28.dp)
+                Icon(
+                    iconForWeatherCondition(observation.weatherCondition),
+                    null,
+                    tint = colors.info,
+                    size = 28.dp
+                )
             }
 
             Column(
                 Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
+                // Observation subject (linked)
+                Text(
+                    observation.subject.ifBlank { "Observation" },
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = colors.info,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                
+                // Temperature and condition
                 Row(
                     Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -454,29 +492,75 @@ private fun WeatherRecordCard(
                         Text(it, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
+                
+                // All weather data in a compact row
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    if (observation.weatherHumidity != null) {
-                        Text("${observation.weatherHumidity}% humidity", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    observation.weatherHumidity?.let {
+                        Text("Humidity: $it%", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
-                    if (observation.weatherWindSpeed != null) {
-                        Text("${observation.weatherWindSpeed} m/s wind", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    observation.weatherWindSpeed?.let {
+                        Text("Wind: %.1f km/h".format(it), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                    observation.weatherCloudCover?.let {
+                        Text("Cloud: $it%", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
-                Text(
-                    SimpleDateFormat("MMM d, yyyy h:mm a", Locale.getDefault()).format(Date(observation.timestamp)),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                if (observation.manualLocation.isNotBlank()) {
+                
+                // Location + time
+                Row(
+                    Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    if (observation.manualLocation.isNotBlank()) {
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(4.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Icon(
+                                FieldMindIcons.Location,
+                                null,
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                size = 12.dp
+                            )
+                            Text(
+                                observation.manualLocation,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+                    }
                     Text(
-                        observation.manualLocation,
+                        SimpleDateFormat("MMM d, h:mm a", Locale.getDefault()).format(Date(observation.timestamp)),
                         style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
                     )
                 }
             }
+            
+            // Forward arrow indicating tap target
+            Icon(
+                FieldMindIcons.Forward,
+                null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
+                size = 18.dp
+            )
         }
+    }
+}
+
+private fun iconForWeatherCondition(condition: String): fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon {
+    val c = condition.lowercase()
+    return when {
+        c.contains("clear") || c.contains("mainly") || c.isBlank() -> FieldMindIcons.Weather
+        c.contains("cloudy") || c.contains("overcast") || c.contains("partly") -> FieldMindIcons.Cloud
+        c.contains("fog") || c.contains("rime") -> FieldMindIcons.Foggy
+        c.contains("drizzle") || c.contains("rain") || c.contains("shower") -> FieldMindIcons.Rainy
+        c.contains("snow") || c.contains("snow grains") -> FieldMindIcons.Snowy
+        c.contains("thunder") || c.contains("hail") -> FieldMindIcons.Thunderstorm
+        else -> FieldMindIcons.Weather
     }
 }

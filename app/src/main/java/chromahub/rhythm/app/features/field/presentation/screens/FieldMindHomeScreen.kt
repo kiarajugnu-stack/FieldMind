@@ -26,6 +26,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import fieldmind.research.app.features.field.data.database.entity.*
+import fieldmind.research.app.features.field.data.location.FieldLocationProvider
 import fieldmind.research.app.features.field.data.weather.WeatherSnapshot
 import fieldmind.research.app.features.field.data.learn.LearnResource
 import fieldmind.research.app.features.field.data.learn.LearnLibrary
@@ -36,6 +37,7 @@ import fieldmind.research.app.features.field.presentation.theme.FieldMindTheme
 import fieldmind.research.app.features.field.presentation.viewmodel.FieldMindViewModel
 import fieldmind.research.app.shared.presentation.components.icons.Icon
 import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon
+import androidx.compose.ui.platform.LocalContext
 
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -87,6 +89,41 @@ fun HomeScreen(
     val weatherShowCloud by viewModel.fieldSettings.weatherShowCloudCover.collectAsState()
     val weatherShowPressure by viewModel.fieldSettings.weatherShowPressure.collectAsState()
 
+    // ── Weather state (hoisted outside LazyColumn so it persists across scroll) ──
+    var homeCurrentWeather by remember { mutableStateOf<WeatherSnapshot?>(null) }
+    var homeWeatherLoading by remember { mutableStateOf(false) }
+    var homeWeatherError by remember { mutableStateOf(false) }
+    var homePlaceName by remember { mutableStateOf<String?>(null) }
+    val context = LocalContext.current
+
+    // Initial fetch + auto-refresh every 30 minutes (persists because this is outside the LazyColumn)
+    LaunchedEffect(Unit) {
+        homeWeatherLoading = true
+        homeCurrentWeather = viewModel.refreshWeatherFromLocation()
+        homeWeatherError = homeCurrentWeather == null
+        homeWeatherLoading = false
+        
+        // Resolve place name for display
+        val locProvider = runCatching { FieldLocationProvider(context) }.getOrNull()
+        if (locProvider != null && locProvider.hasAnyLocationPermission()) {
+            locProvider.lastKnownLocation()?.let { loc ->
+                locProvider.resolvePlaceName(loc.latitude, loc.longitude) { place ->
+                    homePlaceName = place
+                }
+            }
+        }
+
+        while (true) {
+            delay(30 * 60 * 1000L)
+            val snapshot = viewModel.refreshWeatherFromLocation()
+            if (snapshot != null) {
+                homeCurrentWeather = snapshot
+                homeWeatherError = false
+            }
+            // Don't set weatherLoading = true during auto-refresh — keeps old data visible
+        }
+    }
+
     val lastSession = remember(researchSessions) {
         researchSessions.filter { it.status == "Completed" }.maxByOrNull { it.endedAt ?: it.createdAt }
     }
@@ -102,6 +139,14 @@ fun HomeScreen(
                 viewModel = viewModel,
                 observations = observations,
                 onNavigate = onNavigate,
+                currentWeather = homeCurrentWeather,
+                weatherLoading = homeWeatherLoading,
+                weatherError = homeWeatherError,
+                placeName = homePlaceName,
+                onRefresh = { snapshot ->
+                    homeCurrentWeather = snapshot
+                    homeWeatherError = snapshot == null
+                },
                 showTemp = weatherShowTemp,
                 showCondition = weatherShowCondition,
                 showHumidity = weatherShowHumidity,
@@ -380,6 +425,11 @@ private fun LiveWeatherDashboardWidget(
     viewModel: FieldMindViewModel,
     observations: List<ObservationEntity>,
     onNavigate: (FieldMindScreen) -> Unit = {},
+    currentWeather: WeatherSnapshot? = null,
+    weatherLoading: Boolean = false,
+    weatherError: Boolean = false,
+    placeName: String? = null,
+    onRefresh: (WeatherSnapshot?) -> Unit = {},
     showTemp: Boolean = true,
     showCondition: Boolean = true,
     showHumidity: Boolean = true,
@@ -388,37 +438,13 @@ private fun LiveWeatherDashboardWidget(
     showPressure: Boolean = true
 ) {
     val colors = FieldMindTheme.colors
-    var currentWeather by remember { mutableStateOf<WeatherSnapshot?>(null) }
-    var weatherLoading by remember { mutableStateOf(false) }
-    var weatherError by remember { mutableStateOf(false) }
     var isRotating by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
     val refreshRotation = remember { Animatable(0f) }
 
-    // Load weather on first composition only (prevents re-fetching on scroll)
-    var weatherInitialized by remember { mutableStateOf(false) }
-    LaunchedEffect(Unit) {
-        if (!weatherInitialized) {
-            weatherLoading = true
-            val snapshot = viewModel.refreshWeatherFromLocation()
-            currentWeather = snapshot
-            weatherError = snapshot == null
-            weatherLoading = false
-            weatherInitialized = true
-        }
-    }
-
-    // Auto-refresh every 30 minutes
-    LaunchedEffect(Unit) {
-        while (true) {
-            delay(30 * 60 * 1000L)
-            weatherLoading = true
-            val snapshot = viewModel.refreshWeatherFromLocation()
-            currentWeather = snapshot
-            weatherError = snapshot == null
-            weatherLoading = false
-        }
-    }
+    // Show the weather condition icon in the header — show weather icon if we have data, 
+    // loading spinner ONLY if there's no data yet (first load)
+    val showLoadingSpinner = weatherLoading && currentWeather == null
 
     // Weather-based gradient
     val weatherGradient = remember(currentWeather) {
@@ -490,7 +516,7 @@ private fun LiveWeatherDashboardWidget(
                         ),
                     contentAlignment = Alignment.Center
                 ) {
-                    if (weatherLoading) {
+                    if (showLoadingSpinner) {
                         CircularProgressIndicator(
                             modifier = Modifier.size(22.dp),
                             strokeWidth = 2.5.dp,
@@ -511,9 +537,11 @@ private fun LiveWeatherDashboardWidget(
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         Text(
-                            "Live weather",
+                            placeName ?: "Live weather",
                             style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
+                            fontWeight = FontWeight.Bold,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
                         )
                         // Live pulse dot
                         if (currentWeather != null) {
@@ -526,8 +554,17 @@ private fun LiveWeatherDashboardWidget(
                     }
                     Text(
                         when {
-                            weatherLoading -> "Updating…"
-                            currentWeather != null -> "Tap to open dashboard${if (showCondition) " • ${currentWeather?.weatherDescription ?: ""}" else ""}"
+                            weatherLoading && currentWeather != null -> "Refreshing…"
+                            weatherLoading -> "Loading…"
+                            currentWeather != null -> {
+                                val desc = currentWeather?.weatherDescription ?: ""
+                                val temp = currentWeather?.temperature?.let { "%.0f°".format(it) } ?: ""
+                                buildString {
+                                    append("Tap to open dashboard")
+                                    if (showCondition && desc.isNotBlank()) append(" • $desc")
+                                    if (showTemp && temp.isNotBlank()) append(" • $temp")
+                                }
+                            }
                             weatherError -> "Enable location for live weather"
                             else -> "Weather unavailable"
                         },
@@ -554,11 +591,8 @@ private fun LiveWeatherDashboardWidget(
                                 refreshRotation.animateTo(360f, tween(400))
                                 refreshRotation.snapTo(0f)
                                 isRotating = false
-                                weatherLoading = true
                                 val snapshot = viewModel.refreshWeatherFromLocation()
-                                currentWeather = snapshot
-                                weatherError = snapshot == null
-                                weatherLoading = false
+                                onRefresh(snapshot)
                             }
                         },
                     size = 20.dp
@@ -718,11 +752,6 @@ private fun LiveWeatherDashboardWidget(
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
                         )
-                        Text(
-                            "Auto-refresh 30m",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
-                        )
                     }
                 }
             } else if (weatherError) {
@@ -761,16 +790,16 @@ private fun LiveWeatherDashboardWidget(
 
 private fun weatherConditionIcon(code: Int): MaterialSymbolIcon {
     return when (code) {
-        0, 1 -> FieldMindIcons.Weather    // Clear / mainly clear
-        2 -> FieldMindIcons.Cloud          // Partly cloudy
-        3 -> FieldMindIcons.Cloud          // Overcast
-        45, 48 -> FieldMindIcons.Weather    // Fog
+        0, 1 -> FieldMindIcons.Weather         // Clear / mainly clear
+        2 -> FieldMindIcons.Cloud               // Partly cloudy
+        3 -> FieldMindIcons.Cloud               // Overcast
+        45, 48 -> FieldMindIcons.Foggy          // Fog
         51, 53, 55, 56, 57 -> FieldMindIcons.Rainy  // Drizzle
         61, 63, 65, 66, 67 -> FieldMindIcons.Rainy  // Rain
-        71, 73, 75, 77 -> FieldMindIcons.Weather    // Snow
+        71, 73, 75, 77 -> FieldMindIcons.Snowy      // Snow
         80, 81, 82 -> FieldMindIcons.Rainy          // Rain showers
-        85, 86 -> FieldMindIcons.Weather            // Snow showers
-        95, 96, 99 -> FieldMindIcons.Alert          // Thunderstorm
+        85, 86 -> FieldMindIcons.Snowy              // Snow showers
+        95, 96, 99 -> FieldMindIcons.Thunderstorm   // Thunderstorm
         else -> FieldMindIcons.Weather
     }
 }
