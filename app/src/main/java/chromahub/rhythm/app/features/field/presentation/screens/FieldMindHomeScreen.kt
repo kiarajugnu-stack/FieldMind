@@ -105,6 +105,7 @@ fun HomeScreen(
         // ── Widget Grid ──
         item { SectionHeader("Research areas", "Quick overview of your work") }
         item { HomeWidgetGrid(observations, notes, questions, sources, projects, reports, data) { onNavigate(it) } }
+        item { HomeDataOptionsCard(data) { onNavigate(FieldMindScreen.DataTools) } }
 
         // ── Learning & Reading ──
         item { RecommendedLearningCard(recommendations, onOpenReader, onSeeAll = { onNavigate(FieldMindScreen.Learn) }) }
@@ -780,15 +781,48 @@ private fun HomeWidgetGrid(
     onNavigate: (FieldMindScreen) -> Unit
 ) {
     val widgets = listOf(
-        HomeWidget("Capture", "${observations.size} observations", FieldMindIcons.Camera, FieldMindTheme.colors.observation, FieldMindScreen.Observe),
-        HomeWidget("Notes", "${notes.size} free-form", FieldMindIcons.Note, FieldMindTheme.colors.source, FieldMindScreen.Library),
+        HomeWidget("Observations", "${observations.size} captured", FieldMindIcons.Observation, FieldMindTheme.colors.observation, FieldMindScreen.Insights),
         HomeWidget("Questions", "${questions.count { it.status != "Answered" }} open", FieldMindIcons.Question, FieldMindTheme.colors.question, FieldMindScreen.Questions),
         HomeWidget("Sources", "${sources.count { it.readingStatus == "Read" }}/${sources.size} read", FieldMindIcons.Source, FieldMindTheme.colors.source, FieldMindScreen.Library),
         HomeWidget("Projects", "${projects.count { it.status == "Active" }} active", FieldMindIcons.Project, FieldMindTheme.colors.project, FieldMindScreen.Projects),
-        HomeWidget("Outputs", "${data.size} data • ${reports.size} reports", FieldMindIcons.Report, FieldMindTheme.colors.report, FieldMindScreen.Insights)
+        HomeWidget("Data", "${data.size} records", FieldMindIcons.Data, FieldMindTheme.colors.data, FieldMindScreen.DataTools),
+        HomeWidget("Reports", "${reports.size} drafts", FieldMindIcons.Report, FieldMindTheme.colors.report, FieldMindScreen.Reports)
     )
     FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalArrangement = Arrangement.spacedBy(12.dp), maxItemsInEachRow = 2) {
         widgets.forEach { widget -> HomeWidgetCard(widget, Modifier.weight(1f)) { onNavigate(widget.screen) } }
+    }
+}
+
+
+@Composable
+private fun HomeDataOptionsCard(data: List<DataRecordEntity>, onOpenData: () -> Unit) {
+    val tools = listOf(
+        Triple("Count", "Track totals", FieldMindIcons.Add),
+        Triple("Measure", "Log values", FieldMindIcons.Graph),
+        Triple("Weather", "Conditions", FieldMindIcons.Weather),
+        Triple("Species", "Survey data", FieldMindIcons.Nature)
+    )
+    Card(shape = RoundedCornerShape(24.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp), modifier = Modifier.fillMaxWidth()) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                Icon(FieldMindIcons.Data, null, tint = FieldMindTheme.colors.data, size = 22.dp)
+                Column(Modifier.weight(1f)) {
+                    Text("Data tools", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    Text("${data.size} records • choose what you are tracking", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                TextButton(onClick = onOpenData) { Text("Open") }
+            }
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp), maxItemsInEachRow = 2) {
+                tools.forEach { (title, body, icon) ->
+                    Surface(onClick = onOpenData, modifier = Modifier.weight(1f), shape = RoundedCornerShape(18.dp), color = MaterialTheme.colorScheme.surfaceContainerHigh) {
+                        Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                            Icon(icon, null, tint = FieldMindTheme.colors.data, size = 20.dp)
+                            Column { Text(title, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold); Text(body, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 
