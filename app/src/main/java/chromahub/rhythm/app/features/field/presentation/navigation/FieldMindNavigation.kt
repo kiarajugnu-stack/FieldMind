@@ -76,6 +76,7 @@ sealed class FieldMindScreen(val route: String, val label: String, val icon: Mat
     data object Progress : FieldMindScreen("field_progress", "Progress", FieldMindIcons.Check)
     data object Flashcards : FieldMindScreen("field_flashcards_session", "Review", FieldMindIcons.Flashcard)
     data object ResearchSession : FieldMindScreen("field_research_session", "Session", FieldMindIcons.Bolt)
+    data object WeatherDatabase : FieldMindScreen("field_weather_database", "Weather", FieldMindIcons.Weather)
     data object Reader : FieldMindScreen("field_reader", "Reader", FieldMindIcons.Book)
     data object Settings : FieldMindScreen("field_settings", "Settings", FieldMindIcons.Settings)
     data object SettingsProfile : FieldMindScreen("field_settings_profile", "Profile", FieldMindIcons.Nature)
@@ -306,6 +307,7 @@ private fun FieldMindNavHost(
         composable(FieldMindScreen.Progress.route) { InsightsScreen(viewModel = viewModel, onNavigate = { navController.navigateToDestination(it.route) }, onOpenDetail = openDetail) }
         composable(FieldMindScreen.Flashcards.route) { FlashcardSessionScreen(viewModel = viewModel, onBack = { navController.popBackStack() }) }
         composable(FieldMindScreen.ResearchSession.route) { ResearchSessionScreen(viewModel = viewModel, onBack = { navController.popBackStack() }, onOpenDetail = openDetail) }
+        composable(FieldMindScreen.WeatherDatabase.route) { WeatherDatabaseScreen(viewModel = viewModel, onBack = { navController.popBackStack() }) }
         composable(FieldMindScreen.Settings.route) {
             FieldMindSettingsScreen(
                 viewModel = viewModel,
