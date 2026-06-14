@@ -33,7 +33,7 @@ import fieldmind.research.app.features.field.data.database.entity.*
         ResearchSessionEntity::class,
         SessionObservationCrossRef::class
     ],
-    version = 8,
+    version = 9,
     exportSchema = false
 )
 abstract class FieldMindDatabase : RoomDatabase() {
@@ -78,6 +78,7 @@ abstract class FieldMindDatabase : RoomDatabase() {
                 "fieldmind_database"
             )
                 .addMigrations(MIGRATION_7_8)
+                .fallbackToDestructiveMigration()
                 .build()
                 .also { INSTANCE = it }
         }
