@@ -202,8 +202,8 @@ private fun WeatherRecordCard(
                     if (observation.weatherHumidity != null) {
                         Text("${observation.weatherHumidity}% humidity", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
-                    if (observation.weatherWind != null) {
-                        Text("${observation.weatherWind} wind", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    if (observation.weatherWindSpeed != null) {
+                        Text("${observation.weatherWindSpeed} m/s wind", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
                 Text(

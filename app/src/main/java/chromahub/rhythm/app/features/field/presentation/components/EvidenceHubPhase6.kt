@@ -142,7 +142,7 @@ fun BulkSelectionToolbar(
                             modifier = Modifier.weight(1f),
                             shape = RoundedCornerShape(12.dp)
                         ) {
-                            Icon(icon, null, modifier = Modifier.size(16.dp))
+                            Icon(icon, null, size = 16.dp)
                             Spacer(Modifier.width(4.dp))
                             Text(label, style = MaterialTheme.typography.labelSmall)
                         }
