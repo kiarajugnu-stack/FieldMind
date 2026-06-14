@@ -1,14 +1,8 @@
 package fieldmind.research.app.features.field.presentation.screens
 
-import android.net.Uri
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
@@ -20,7 +14,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -28,7 +21,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -36,18 +28,16 @@ import fieldmind.research.app.features.field.data.database.entity.*
 import fieldmind.research.app.features.field.data.export.FieldReportTemplates
 import fieldmind.research.app.features.field.presentation.components.*
 import fieldmind.research.app.features.field.presentation.theme.FieldMindTheme
-import fieldmind.research.app.features.field.presentation.viewmodel.DraftEvidenceAttachment
 import fieldmind.research.app.features.field.presentation.viewmodel.FieldMindViewModel
 import fieldmind.research.app.shared.presentation.components.icons.Icon
 import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon
-import kotlinx.coroutines.launch
 import kotlin.math.abs
+import kotlin.math.ceil
 
 // ══════════════════════════════════════════════════════════════════════
-//  Workspace — Redesigned: 3 tabs (Projects, Evidence, Analysis)
-//  - No guided research flow
-//  - Simplified project creation (Name + Question → Create)
-//  - Project attachments support
+//  Workspace — Redesigned: 5 in-screen tabs (Overview, Observations, Hypotheses, Data, Reports)
+//  - Project dashboard with metrics, sampling-effort tracking
+//  - Consolidated from 4 duplicate routes into proper tabs
 // ══════════════════════════════════════════════════════════════════════
 
 @Composable
@@ -65,9 +55,10 @@ fun ProjectsScreen(
     val data by viewModel.dataRecords.collectAsState()
     val reports by viewModel.reports.collectAsState()
     val notes by viewModel.notes.collectAsState()
-    var tab by remember(startTab) { mutableIntStateOf(startTab.coerceIn(0, 2)) }
+    val researchSessions by viewModel.researchSessions.collectAsState()
+    var tab by remember(startTab) { mutableIntStateOf(startTab.coerceIn(0, 4)) }
     val haptics = rememberFieldMindHaptics()
-    val tabs = listOf("Projects", "Evidence", "Analysis")
+    val tabs = listOf("Overview", "Observations", "Hypotheses", "Data", "Reports")
 
     fun selectTab(next: Int) {
         val bounded = next.coerceIn(0, tabs.lastIndex)
@@ -78,7 +69,7 @@ fun ProjectsScreen(
         Column(Modifier.padding(20.dp, 20.dp, 20.dp, 8.dp)) {
             FieldScreenHeader(
                 "Workspace",
-                "Projects, evidence, and analysis — all connected.",
+                "Research overview, evidence, and analysis — all connected.",
                 icon = FieldMindIcons.Projects
             )
         }
@@ -105,9 +96,11 @@ fun ProjectsScreen(
                 }
             ) {
                 when (selectedTab) {
-                    0 -> ProjectsTab(viewModel, projects, questions, hypotheses, observations, sources, data, reports, onOpenDetail, onStartSession)
-                    1 -> EvidenceTab(viewModel, observations, notes, questions, sources, onOpenDetail)
-                    2 -> AnalysisTab(viewModel, hypotheses, questions, data, reports, observations, onOpenDetail)
+                    0 -> OverviewTab(viewModel, projects, observations, questions, hypotheses, sources, data, reports, researchSessions, onOpenDetail, onStartSession)
+                    1 -> ObservationsTab(viewModel, observations, projects, onOpenDetail)
+                    2 -> HypothesesTab(viewModel, hypotheses, questions, observations, onOpenDetail)
+                    3 -> DataTab(viewModel, data, reports, observations, projects, onOpenDetail)
+                    4 -> ReportsTab(viewModel, reports, projects, onOpenDetail)
                 }
             }
         }
@@ -125,23 +118,24 @@ internal fun AddButton(label: String, onClick: () -> Unit) {
 internal fun panelPadding() = PaddingValues(20.dp, 4.dp, 20.dp, 96.dp)
 
 // ──────────────────────────────────────────────────────────────────────
-//  Tab 1: Projects — Simplified creation (Name + Question → Create)
+//  Tab 0: Overview — Project dashboard with metrics, sampling-effort, recent activity
 // ──────────────────────────────────────────────────────────────────────
 
 @Composable
-private fun ProjectsTab(
+private fun OverviewTab(
     viewModel: FieldMindViewModel,
-    items: List<ProjectEntity>,
+    projects: List<ProjectEntity>,
+    observations: List<ObservationEntity>,
     questions: List<QuestionEntity>,
     hypotheses: List<HypothesisEntity>,
-    observations: List<ObservationEntity>,
     sources: List<SourceEntity>,
     data: List<DataRecordEntity>,
     reports: List<ReportEntity>,
+    researchSessions: List<ResearchSessionEntity>,
     onOpenDetail: (String, Long) -> Unit,
     onStartSession: (() -> Unit)? = null
 ) {
-    var show by remember { mutableStateOf(false) }
+    var showNewProject by remember { mutableStateOf(false) }
     var title by remember { mutableStateOf("") }
     var question by remember { mutableStateOf("") }
     var projectType by remember { mutableStateOf("Observation") }
@@ -152,15 +146,31 @@ private fun ProjectsTab(
 
     // Project templates
     val projectTemplates = listOf(
-        ProjectTemplate("Species Survey", "Observation", "What species occur here?", "Recommended data: Species Tracker. Evidence: photos, audio, location. Charts: bar + timeline. Duration: 1 day to 1 month.", setOf("Species counting", "Photo documentation", "Audio recording")),
+        ProjectTemplate("Species Survey", "Observation", "What species occur here?", "Recommended data: Species Tracker. Evidence: photos, audio, location. Charts: bar + timeline.", setOf("Species counting", "Photo documentation", "Audio recording")),
         ProjectTemplate("Behavior Study", "Investigation", "What behavior is happening, when, and under what conditions?", "Recommended data: Event Log. Evidence: video, time notes, repeated observations. Charts: timeline + by-hour.", setOf("Video documentation", "Daily observations", "Behavior logging")),
-        ProjectTemplate("Site Survey", "Survey", "What are the main conditions and evidence at this site?", "Recommended data: Site Log. Evidence: photos, GPS, weather, measurements. Duration: one visit to seasonal monitoring.", setOf("Photo documentation", "Measurement logging", "Weather logging")),
+        ProjectTemplate("Site Survey", "Survey", "What are the main conditions and evidence at this site?", "Recommended data: Site Log. Evidence: photos, GPS, weather, measurements.", setOf("Photo documentation", "Measurement logging", "Weather logging")),
         ProjectTemplate("Experiment", "Experiment", "What changes when one condition varies?", "Recommended data: Comparison Table. Evidence: measurements, controls, notes. Charts: comparison + line.", setOf("Measurement logging", "Comparison table", "Weekly observations")),
-        ProjectTemplate("Monitoring", "Monitoring", "How does this place or subject change over time?", "Recommended data: Time Series. Evidence: repeated photos, weather, count. Charts: trend + timeline.", setOf("Daily observations", "Photo documentation", "Weather logging"))
+        ProjectTemplate("Monitoring", "Monitoring", "How does this place or subject change over time?", "Recommended data: Time Series. Evidence: repeated photos, weather, count.", setOf("Daily observations", "Photo documentation", "Weather logging"))
     )
 
+    // ── Dashboard metrics ──
+    val totalProjects = projects.size
+    val totalObs = observations.size
+    val obsThisWeek = observations.count { it.timestamp > System.currentTimeMillis() - 7 * 24 * 3600_000L }
+    val obsThisMonth = observations.count { it.timestamp > System.currentTimeMillis() - 30 * 24 * 3600_000L }
+    val uniqueSites = observations.mapNotNull { it.manualLocation.ifBlank { if (it.latitude != null && it.longitude != null) "${it.latitude},${it.longitude}" else null } }.distinct().size
+    val openQuestions = questions.count { it.answer.isBlank() }
+    val supportedHypotheses = hypotheses.count { it.resultStatus.equals("Supported", true) }
+    val refutedHypotheses = hypotheses.count { it.resultStatus.equals("Refuted", true) }
+    val untestedHypotheses = hypotheses.size - supportedHypotheses - refutedHypotheses
+
+    // ── Sampling-effort tracking ──
+    val totalFieldHours = researchSessions.sumOf { it.totalDurationMs } / 3600_000.0
+    val totalSessions = researchSessions.size
+    val totalObsInSessions = researchSessions.sumOf { it.observationCount }
+
     LazyColumn(contentPadding = panelPadding(), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-        // Start Research Session button
+        // Research Session quick-start
         item {
             Card(
                 modifier = Modifier.fillMaxWidth().clickable { haptics.light(); onStartSession?.invoke() },
@@ -181,9 +191,13 @@ private fun ProjectsTab(
             }
         }
 
-        item { AddButton(if (show) "Cancel" else "New project") { show = !show; if (!show) { title = ""; question = "" } } }
+        // ── Dashboard hero card ──
+        item { ProjectDashboardCard(totalObs, obsThisWeek, obsThisMonth, uniqueSites, openQuestions, supportedHypotheses, refutedHypotheses, untestedHypotheses, totalFieldHours, totalSessions, totalObsInSessions) }
 
-        // Template selector toggle
+        // New project button
+        item { AddButton(if (showNewProject) "Cancel" else "New project") { showNewProject = !showNewProject; if (!showNewProject) { title = ""; question = "" } } }
+
+        // Template selector
         item {
             OutlinedButton(
                 onClick = { showTemplates = !showTemplates; selectedTemplate = -1 },
@@ -197,61 +211,16 @@ private fun ProjectsTab(
         }
 
         if (showTemplates) {
-            item {
-                Card(
-                    shape = RoundedCornerShape(20.dp),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)
-                ) {
-                    Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text("Project templates", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
-                        Text("Choose a template to pre-fill your project setup.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        projectTemplates.forEachIndexed { i, template ->
-                            val isSelected = selectedTemplate == i
-                            Card(
-                                modifier = Modifier.fillMaxWidth().clickable {
-                                    selectedTemplate = i
-                                    title = template.name
-                                    question = template.question
-                                    projectType = template.type
-                                    investigationPlan = template.methods
-                                    show = true
-                                    showTemplates = false
-                                },
-                                shape = RoundedCornerShape(16.dp),
-                                colors = CardDefaults.cardColors(
-                                    containerColor = if (isSelected) MaterialTheme.colorScheme.primaryContainer
-                                    else MaterialTheme.colorScheme.surfaceContainerHigh
-                                )
-                            ) {
-                                Row(
-                                    Modifier.padding(14.dp),
-                                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Box(
-                                        Modifier.size(36.dp).clip(RoundedCornerShape(10.dp))
-                                            .background(FieldMindTheme.colors.project.copy(alpha = 0.16f)),
-                                        contentAlignment = Alignment.Center
-                                    ) { Icon(FieldMindIcons.Project, null, tint = FieldMindTheme.colors.project, size = 20.dp) }
-                                    Column(Modifier.weight(1f)) {
-                                        Text(template.name, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
-                                        Text(template.summary, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 3, overflow = TextOverflow.Ellipsis)
-                                    }
-                                    Icon(FieldMindIcons.Add, null, tint = FieldMindTheme.colors.project, size = 18.dp)
-                                }
-                            }
-                        }
-                    }
-                }
-            }
+            item { TemplateSelectionCard(projectTemplates, selectedTemplate) { i, name, q, type, methods ->
+                selectedTemplate = i; title = name; question = q; projectType = type; investigationPlan = methods; showNewProject = true; showTemplates = false
+            } }
         }
 
-        if (show) item {
-            InlineFormCard("New Project", onDismiss = { show = false; title = ""; question = "" }, onSave = {
+        if (showNewProject) item {
+            InlineFormCard("New Project", onDismiss = { showNewProject = false; title = ""; question = "" }, onSave = {
                 if (title.isNotBlank()) {
-                    val methods = investigationPlan.joinToString(" • ")
-                    viewModel.addProject(title, projectType, "Project type: $projectType", question, methods)
-                    show = false; title = ""; question = ""; projectType = "Observation"; investigationPlan = setOf("Photo documentation", "Daily observations")
+                    viewModel.addProject(title, projectType, "Project type: $projectType", question, investigationPlan.joinToString(" • "))
+                    showNewProject = false; title = ""; question = ""; projectType = "Observation"; investigationPlan = setOf("Photo documentation", "Daily observations")
                 }
             }, saveEnabled = title.isNotBlank()) {
                 FieldTextField(title, { title = it }, "Project title", supportingText = "Give your investigation a name")
@@ -263,98 +232,224 @@ private fun ProjectsTab(
             }
         }
 
-        if (items.isEmpty()) {
+        if (totalProjects == 0) {
             item {
-                EmptyState(
-                    "No projects yet",
-                    "Start with a name and a question. Add methods, data, and reports as your research grows.",
-                    icon = FieldMindIcons.Project,
-                    actionLabel = "Create project"
-                ) { show = true }
+                EmptyState("No projects yet", "Start with a name and a question. Add methods, data, and reports as your research grows.", icon = FieldMindIcons.Project, actionLabel = "Create project") { showNewProject = true }
             }
         } else {
-            item { ProjectSummaryCard(items, questions, hypotheses, observations, sources, data, reports) }
-            items(items) { project ->
-                ProjectWorkspaceCard(project, questions, hypotheses, observations, sources, data, reports) { onOpenDetail("project", project.id) }
+            item { SectionHeader("Projects ($totalProjects)", "Tap any project to open workspace") }
+            items(projects) { project -> ProjectDashboardCardCompact(project, observations, questions, hypotheses, sources, data, reports, researchSessions) { onOpenDetail("project", project.id) } }
+        }
+    }
+}
+
+@Composable
+@OptIn(ExperimentalLayoutApi::class)
+private fun ProjectDashboardCard(
+    totalObs: Int, obsThisWeek: Int, obsThisMonth: Int, uniqueSites: Int,
+    openQuestions: Int, supportedHyp: Int, refutedHyp: Int, untestedHyp: Int,
+    totalFieldHours: Double, totalSessions: Int, totalObsInSessions: Int
+) {
+    Card(
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.25f)),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Icon(FieldMindIcons.Insights, null, tint = MaterialTheme.colorScheme.primary, size = 22.dp)
+                Text("Research Dashboard", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            }
+
+            // Row 1: Observation metrics
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
+                DashboardMetric("Total obs", totalObs.toString(), FieldMindTheme.colors.observation)
+                DashboardMetric("This week", obsThisWeek.toString(), MaterialTheme.colorScheme.primary)
+                DashboardMetric("This month", obsThisMonth.toString(), MaterialTheme.colorScheme.secondary)
+                DashboardMetric("Sites", uniqueSites.toString(), FieldMindTheme.colors.info)
+            }
+
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
+
+            // Row 2: Knowledge state
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
+                DashboardMetric("Open Qs", openQuestions.toString(), FieldMindTheme.colors.question)
+                DashboardMetric("Supported ✓", supportedHyp.toString(), FieldMindTheme.colors.positive)
+                DashboardMetric("Refuted ✗", refutedHyp.toString(), MaterialTheme.colorScheme.error)
+                DashboardMetric("Untested", untestedHyp.toString(), MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
+
+            // Row 3: Sampling effort
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
+                DashboardMetric("Field hours", "%.1f".format(totalFieldHours), FieldMindTheme.colors.warning)
+                DashboardMetric("Sessions", totalSessions.toString(), FieldMindTheme.colors.data)
+                DashboardMetric("Session obs", totalObsInSessions.toString(), FieldMindTheme.colors.observation)
             }
         }
     }
 }
 
-// ──────────────────────────────────────────────────────────────────────
-//  Tab 2: Evidence — Unified view of observations, notes, questions, sources
-// ──────────────────────────────────────────────────────────────────────
+@Composable
+private fun DashboardMetric(label: String, value: String, color: androidx.compose.ui.graphics.Color) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(2.dp)) {
+        Text(value, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = color)
+        Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    }
+}
 
 @Composable
-private fun EvidenceTab(
-    viewModel: FieldMindViewModel,
-    observations: List<ObservationEntity>,
-    notes: List<NoteEntity>,
-    questions: List<QuestionEntity>,
-    sources: List<SourceEntity>,
-    onOpenDetail: (String, Long) -> Unit
+private fun TemplateSelectionCard(
+    templates: List<ProjectTemplate>,
+    selectedTemplate: Int?,
+    onSelect: (Int, String, String, String, Set<String>) -> Unit
 ) {
-    var filterKind by remember { mutableStateOf("All") }
-    var filterGroup by remember { mutableStateOf("All") }
-    var bulkMode by remember { mutableStateOf(false) }
-    var selectedEvidence by remember { mutableStateOf(setOf<String>()) }
-    fun evidenceKey(item: EvidenceItem) = "${item.kind}:${item.id}"
-    fun deleteEvidence(item: EvidenceItem) {
-        when (item.kind) {
-            "observation" -> viewModel.deleteObservation(item.id)
-            "note" -> viewModel.deleteNote(item.id)
-            "question" -> viewModel.deleteQuestion(item.id)
-            "source" -> viewModel.deleteSource(item.id)
-        }
-    }
-    // Merge all evidence into chronological list
-    val evidence = remember(observations, notes, questions, sources) {
-        buildList {
-            observations.forEach { add(EvidenceItem("observation", it.id, it.timestamp, it.subject.ifBlank { "Observation" }, "${it.category} • ${it.date}", it.category)) }
-            notes.forEach { add(EvidenceItem("note", it.id, it.updatedAt, it.title.ifBlank { "Untitled note" }, it.body.take(80), it.category)) }
-            questions.forEach { add(EvidenceItem("question", it.id, it.updatedAt, it.questionText, "${it.status} • ${it.priority}", it.status)) }
-            sources.forEach { add(EvidenceItem("source", it.id, it.updatedAt, it.title, "${it.type} • ${it.readingStatus}", it.type)) }
-        }.sortedByDescending { it.timestamp }
-    }
-    val groups = remember(evidence) { listOf("All") + evidence.map { it.group }.distinct().sorted().take(16) }
-    val filteredEvidence = remember(evidence, filterKind, filterGroup) { evidence.filter { (filterKind == "All" || it.kind == filterKind.lowercase()) && (filterGroup == "All" || it.group == filterGroup) } }
-
-    LazyColumn(contentPadding = panelPadding(), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-        item { SectionHeader("Evidence hub", "${filteredEvidence.size} of ${evidence.size} items • filter, review, bulk-manage") }
-        item { EvidenceFilterBar(filterKind, { filterKind = it }, filterGroup, { filterGroup = it }, groups, bulkMode, { bulkMode = !bulkMode; selectedEvidence = emptySet() }) }
-        if (bulkMode) {
-            item {
-                Card(shape = RoundedCornerShape(20.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)) {
-                    Row(Modifier.fillMaxWidth().padding(14.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                        Text("${selectedEvidence.size} selected", modifier = Modifier.weight(1f), style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onPrimaryContainer)
-                        TextButton(onClick = { selectedEvidence = filteredEvidence.map { evidenceKey(it) }.toSet() }) { Text("All") }
-                        TextButton(onClick = { selectedEvidence = emptySet() }) { Text("Clear") }
-                        Button(onClick = { filteredEvidence.filter { evidenceKey(it) in selectedEvidence }.forEach(::deleteEvidence); selectedEvidence = emptySet() }, enabled = selectedEvidence.isNotEmpty(), shape = RoundedCornerShape(14.dp)) { Text("Delete") }
+    Card(
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)
+    ) {
+        Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text("Project templates", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+            Text("Choose a template to pre-fill your project setup.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            templates.forEachIndexed { i, template ->
+                val isSelected = selectedTemplate == i
+                Card(
+                    modifier = Modifier.fillMaxWidth().clickable { onSelect(i, template.name, template.question, template.type, template.methods) },
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainerHigh)
+                ) {
+                    Row(Modifier.padding(14.dp), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Box(Modifier.size(36.dp).clip(RoundedCornerShape(10.dp)).background(FieldMindTheme.colors.project.copy(alpha = 0.16f)), contentAlignment = Alignment.Center) {
+                            Icon(FieldMindIcons.Project, null, tint = FieldMindTheme.colors.project, size = 20.dp)
+                        }
+                        Column(Modifier.weight(1f)) {
+                            Text(template.name, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
+                            Text(template.summary, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 3, overflow = TextOverflow.Ellipsis)
+                        }
+                        Icon(FieldMindIcons.Add, null, tint = FieldMindTheme.colors.project, size = 18.dp)
                     }
                 }
             }
         }
-        if (filteredEvidence.isEmpty()) {
-            item {
-                EmptyState(
-                    "No evidence yet",
-                    "Your observations, notes, questions, and sources will appear here — all linked together.",
-                    icon = FieldMindIcons.Observation,
-                    actionLabel = "Start observing"
-                ) { onOpenDetail("observe", 0) }
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun ProjectDashboardCardCompact(
+    project: ProjectEntity,
+    observations: List<ObservationEntity>,
+    questions: List<QuestionEntity>,
+    hypotheses: List<HypothesisEntity>,
+    sources: List<SourceEntity>,
+    data: List<DataRecordEntity>,
+    reports: List<ReportEntity>,
+    researchSessions: List<ResearchSessionEntity>,
+    onClick: () -> Unit
+) {
+    val relatedObs = observations.count { it.projectId == project.id }
+    val relatedQs = questions.count { it.relatedProjectId == project.id }
+    val relatedSources = sources.count { it.relatedProjectId == project.id }
+    val relatedData = data.count { it.projectId == project.id }
+    val relatedReports = reports.count { it.projectId == project.id }
+    val relatedHypotheses = hypotheses.count { h -> questions.any { it.id == h.linkedQuestionId && it.relatedProjectId == project.id } }
+    val projectSessions = researchSessions.count { it.projectId == project.id }
+    val projectFieldHours = researchSessions.filter { it.projectId == project.id }.sumOf { it.totalDurationMs } / 3600_000.0
+    val relatedObsRecent = observations.count { it.projectId == project.id && it.timestamp > System.currentTimeMillis() - 7 * 24 * 3600_000L }
+
+    Card(
+        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                Box(Modifier.size(44.dp).clip(RoundedCornerShape(14.dp)).background(FieldMindTheme.colors.project.copy(alpha = 0.16f)), contentAlignment = Alignment.Center) {
+                    Icon(FieldMindIcons.Project, null, tint = FieldMindTheme.colors.project, size = 24.dp)
+                }
+                Column(Modifier.weight(1f)) {
+                    Text(project.title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Text(project.topicType, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text("•", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text("$relatedObs obs", style = MaterialTheme.typography.labelMedium, color = FieldMindTheme.colors.observation)
+                        if (relatedObsRecent > 0) {
+                            Text("•", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text("$relatedObsRecent new", style = MaterialTheme.typography.labelMedium, color = FieldMindTheme.colors.positive)
+                        }
+                    }
+                }
+                InfoChip(project.status)
+            }
+            Text(project.objective.ifBlank { project.researchQuestion.ifBlank { "Open project workspace" } }, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2, overflow = TextOverflow.Ellipsis)
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                ProjectMetricChip(relatedObs, "obs", FieldMindTheme.colors.observation)
+                ProjectMetricChip(relatedQs, "Qs", FieldMindTheme.colors.question)
+                ProjectMetricChip(relatedSources, "src", FieldMindTheme.colors.source)
+                ProjectMetricChip(relatedData, "data", FieldMindTheme.colors.data)
+                ProjectMetricChip(relatedReports, "reports", FieldMindTheme.colors.report)
+                ProjectMetricChip(projectSessions, "sessions", FieldMindTheme.colors.warning)
+                    if (projectFieldHours >= 0.5) ProjectMetricChip(kotlin.math.ceil(projectFieldHours).toInt(), "hrs", FieldMindTheme.colors.project)
             }
         }
-        items(filteredEvidence) { item ->
-            val key = evidenceKey(item)
-            EntityCard(
-                item.title, if (bulkMode && key in selectedEvidence) "selected" else item.kind,
-                body = item.subtitle,
-                meta = if (bulkMode) listOf(item.group, if (key in selectedEvidence) "Selected" else "Tap to select") else listOf(item.group),
-                onClick = {
-                    if (bulkMode) selectedEvidence = if (key in selectedEvidence) selectedEvidence - key else selectedEvidence + key
-                    else onOpenDetail(item.kind, item.id)
+    }
+}
+
+@Composable
+private fun ProjectMetricChip(value: Int, label: String, color: androidx.compose.ui.graphics.Color) {
+    Row(
+        Modifier.clip(RoundedCornerShape(99.dp)).background(color.copy(alpha = 0.12f)).padding(horizontal = 8.dp, vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        Text("$value $label", style = MaterialTheme.typography.labelSmall, color = color, fontWeight = FontWeight.SemiBold)
+    }
+}
+
+// ──────────────────────────────────────────────────────────────────────
+//  Tab 1: Observations — All observations with project filter
+// ──────────────────────────────────────────────────────────────────────
+
+@Composable
+private fun ObservationsTab(
+    viewModel: FieldMindViewModel,
+    observations: List<ObservationEntity>,
+    projects: List<ProjectEntity>,
+    onOpenDetail: (String, Long) -> Unit
+) {
+    var selectedProjectId by remember { mutableStateOf<Long?>(null) }
+    val projectOptions = remember(projects) { listOf(null to "All projects") + projects.map { it.id to it.title } }
+    val filtered = remember(observations, selectedProjectId) {
+        if (selectedProjectId == null) observations else observations.filter { it.projectId == selectedProjectId }
+    }
+
+    LazyColumn(contentPadding = panelPadding(), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+        item { SectionHeader("Observations", "${filtered.size} of ${observations.size} total") }
+        item {
+            Card(shape = RoundedCornerShape(20.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)) {
+                Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("Filter by project", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        items(projectOptions.take(12)) { (id, label) ->
+                            FilterChip(selected = selectedProjectId == id, onClick = { selectedProjectId = id }, label = { Text(label, maxLines = 1) })
+                        }
+                    }
                 }
+            }
+        }
+        items(filtered.sortedByDescending { it.timestamp }) { obs ->
+            EntityCard(
+                obs.subject.ifBlank { "Observation" },
+                "observation",
+                body = "${obs.category} • ${obs.date}",
+                meta = listOfNotNull(obs.weatherCondition.takeIf { it.isNotBlank() }, obs.confidenceLevel),
+                onClick = { onOpenDetail("observation", obs.id) }
             )
+        }
+        if (filtered.isEmpty()) {
+            item { EmptyState("No observations", "Observations will appear here, filtered by project.", icon = FieldMindIcons.Observation, actionLabel = "Start observing") { onOpenDetail("observe", 0) } }
         }
     }
 }
@@ -403,87 +498,8 @@ private fun recommendedEvidenceFor(methods: Set<String>): String = listOfNotNull
     "GPS + weather".takeIf { methods.any { "Weather" in it || "Daily" in it } }
 ).ifEmpty { listOf("notes", "observations") }.joinToString(", ")
 
-@Composable
-private fun EvidenceFilterBar(kind: String, onKind: (String) -> Unit, group: String, onGroup: (String) -> Unit, groups: List<String>, bulkMode: Boolean, onBulk: () -> Unit) {
-    var expanded by remember { mutableStateOf(false) }
-    
-    Card(
-        shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-    ) {
-        Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            // Filter header row
-            Row(
-                Modifier.fillMaxWidth().clickable { expanded = !expanded },
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(FieldMindIcons.Filter, null, size = 18.dp, tint = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Text("Filter & sort", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold)
-                }
-                Icon(
-                    if (expanded) FieldMindIcons.Up else FieldMindIcons.Down,
-                    null,
-                    size = 20.dp,
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-            
-            // Expandable filter content
-            AnimatedVisibility(visible = expanded, enter = expandVertically(), exit = shrinkVertically()) {
-                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    // Type filter
-                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text("Type", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        ChoiceChips(listOf("All", "Observation", "Note", "Question", "Source"), kind) { onKind(it) }
-                    }
-                    
-                    // Group/category filter
-                    if (groups.size > 1) {
-                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Text("Category", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                            LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                items(groups.take(8)) { g ->
-                                    FilterChip(
-                                        selected = g == group,
-                                        onClick = { onGroup(g) },
-                                        label = { Text(g, maxLines = 1) },
-                                        shape = RoundedCornerShape(12.dp)
-                                    )
-                                }
-                            }
-                        }
-                    }
-                    
-                    // Bulk management button
-                    OutlinedButton(
-                        onClick = onBulk,
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(16.dp)
-                    ) {
-                        Icon(
-                            if (bulkMode) FieldMindIcons.Check else FieldMindIcons.Select,
-                            null,
-                            size = 18.dp,
-                            modifier = Modifier.padding(end = 8.dp)
-                        )
-                        Text(if (bulkMode) "Done bulk selection" else "Bulk select / manage")
-                    }
-                }
-            }
-        }
-    }
-}
-
-private data class EvidenceItem(val kind: String, val id: Long, val timestamp: Long, val title: String, val subtitle: String, val group: String)
-
 // ──────────────────────────────────────────────────────────────────────
-//  Extracted form composables (to avoid @Composable-in-scope issues)
+//  Extracted form composables
 // ──────────────────────────────────────────────────────────────────────
 
 @Composable
@@ -573,59 +589,86 @@ private fun ReportForm(
 }
 
 // ──────────────────────────────────────────────────────────────────────
-//  Tab 3: Analysis — Hypotheses, data tools, reports
+//  Tab 2: Hypotheses — All hypotheses with project filter
 // ──────────────────────────────────────────────────────────────────────
 
 @Composable
-private fun AnalysisTab(
+private fun HypothesesTab(
     viewModel: FieldMindViewModel,
     hypotheses: List<HypothesisEntity>,
     questions: List<QuestionEntity>,
-    data: List<DataRecordEntity>,
-    reports: List<ReportEntity>,
     observations: List<ObservationEntity>,
     onOpenDetail: (String, Long) -> Unit
 ) {
-    var showHypothesis by remember { mutableStateOf(false) }
-    var showData by remember { mutableStateOf(false) }
-    var showReport by remember { mutableStateOf(false) }
+    var showForm by remember { mutableStateOf(false) }
+    val projectQuestions = remember(questions) { questions.filter { it.relatedProjectId != null } }
 
     LazyColumn(contentPadding = panelPadding(), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-        // Hypotheses
-        item { SectionHeader("Hypotheses", "${hypotheses.size} predictions to test") }
-        item { AddButton(if (showHypothesis) "Cancel" else "New hypothesis") { showHypothesis = !showHypothesis } }
-        if (showHypothesis) {
-            item {
-                HypothesisForm(questions, viewModel, onDismiss = { showHypothesis = false })
-            }
-        }
+        item { SectionHeader("Hypotheses", "${hypotheses.size} predictions • ${hypotheses.count { it.resultStatus == "Supported" }} supported, ${hypotheses.count { it.resultStatus == "Refuted" }} refuted") }
+        item { AddButton(if (showForm) "Cancel" else "New hypothesis") { showForm = !showForm } }
+        if (showForm) item { HypothesisForm(questions, viewModel, onDismiss = { showForm = false }) }
         if (hypotheses.isEmpty()) item { EmptyState("No hypotheses yet", "Predict what evidence would show, then test it.", icon = FieldMindIcons.Hypothesis) }
-        items(hypotheses) { h -> EntityCard(h.prediction, "hypothesis", body = "Confidence: ${h.confidencePercent}% • ${h.resultStatus}", onClick = { onOpenDetail("hypothesis", h.id) }) }
+        items(hypotheses.sortedByDescending { it.createdAt }) { h ->
+            val supportColor = when (h.resultStatus.lowercase()) {
+                "supported" -> FieldMindTheme.colors.positive
+                "refuted" -> MaterialTheme.colorScheme.error
+                else -> MaterialTheme.colorScheme.onSurfaceVariant
+            }
+            EntityCard(
+                h.prediction, "hypothesis",
+                body = "${h.reasoning.take(120)}",
+                meta = listOf("${h.confidencePercent}%", h.resultStatus),
+                accentColor = supportColor,
+                onClick = { onOpenDetail("hypothesis", h.id) }
+            )
+        }
+    }
+}
 
-        // Data tools
-        item { Divider12() }
-        item { SectionHeader("Live Data Workspace", "${data.size} records • choose what you are tracking") }
+// ──────────────────────────────────────────────────────────────────────
+//  Tab 3: Data — All data records with project filter
+// ──────────────────────────────────────────────────────────────────────
+
+@Composable
+private fun DataTab(
+    viewModel: FieldMindViewModel,
+    data: List<DataRecordEntity>,
+    reports: List<ReportEntity>,
+    observations: List<ObservationEntity>,
+    projects: List<ProjectEntity>,
+    onOpenDetail: (String, Long) -> Unit
+) {
+    var showForm by remember { mutableStateOf(false) }
+
+    LazyColumn(contentPadding = panelPadding(), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+        item { SectionHeader("Data Records", "${data.size} records across ${data.map { it.datasetKind }.distinct().size} datasets") }
         item { TrackingFlowCards() }
-        item { AddButton(if (showData) "Cancel" else "Add data record") { showData = !showData } }
-        if (showData) {
-            item {
-                DataRecordForm(viewModel, onDismiss = { showData = false })
-            }
-        }
+        item { AddButton(if (showForm) "Cancel" else "Add data record") { showForm = !showForm } }
+        if (showForm) item { DataRecordForm(viewModel, onDismiss = { showForm = false }) }
         if (data.isEmpty()) item { EmptyState("No data records yet", "Measure, count, compare, or log with offline tools.", icon = FieldMindIcons.Data) }
-        items(data) { d -> EntityCard(d.label, "data", body = "${d.value} ${d.unit}", meta = listOf(d.toolType), onClick = { onOpenDetail("data", d.id) }) }
+        items(data.sortedByDescending { it.timestamp }) { d -> EntityCard(d.label, "data", body = "${d.value} ${d.unit}", meta = listOf(d.toolType, d.datasetKind), onClick = { onOpenDetail("data", d.id) }) }
+    }
+}
 
-        // Reports
-        item { Divider12() }
-        item { SectionHeader("Reports", "${reports.size} reports") }
-        item { AddButton(if (showReport) "Cancel" else "Build report") { showReport = !showReport } }
-        if (showReport) {
-            item {
-                ReportForm(viewModel, onDismiss = { showReport = false })
-            }
-        }
+// ──────────────────────────────────────────────────────────────────────
+//  Tab 4: Reports — All reports with project filter
+// ──────────────────────────────────────────────────────────────────────
+
+@Composable
+private fun ReportsTab(
+    viewModel: FieldMindViewModel,
+    reports: List<ReportEntity>,
+    projects: List<ProjectEntity>,
+    onOpenDetail: (String, Long) -> Unit
+) {
+    var showForm by remember { mutableStateOf(false) }
+
+    LazyColumn(contentPadding = panelPadding(), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+        item { SectionHeader("Reports", "${reports.size} reports • ${reports.count { it.status == "Published" }} published") }
+        item { AddButton(if (showForm) "Cancel" else "Build report") { showForm = !showForm } }
+        if (showForm) item { ReportForm(viewModel, onDismiss = { showForm = false }) }
         if (reports.isEmpty()) item { EmptyState("No reports yet", "Write up your findings with background, methods, results, and conclusions.", icon = FieldMindIcons.Report) }
-        items(reports) { r -> EntityCard(r.title, "report", body = r.conclusion.ifBlank { r.question }, meta = listOf(r.type, r.status), onClick = { onOpenDetail("report", r.id) }) }
+        items(reports.sortedByDescending { it.createdAt }) { r -> EntityCard(r.title, "report", body = r.conclusion.ifBlank { r.question }, meta = listOf(r.type, r.status), onClick = { onOpenDetail("report", r.id) }) }
     }
 }
 
@@ -653,103 +696,9 @@ private fun TrackingFlowCards() {
     }
 }
 
-@Composable
-private fun DatasetModeCards() {
-    val modes = listOf("Counters", "Measurements", "Event logs", "Weather logs", "Species tracking", "Comparison tables", "Time series")
-    LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-        items(modes) { mode ->
-            Card(shape = RoundedCornerShape(18.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)) {
-                Column(Modifier.width(148.dp).padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Icon(FieldMindIcons.Data, null, tint = MaterialTheme.colorScheme.primary, size = 22.dp)
-                    Text(mode, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
-                    Text("Filter, chart, and link to projects or sessions.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-            }
-        }
-    }
-}
 
 // ──────────────────────────────────────────────────────────────────────
 //  Summary cards
 // ──────────────────────────────────────────────────────────────────────
 
-@Composable
-private fun ProjectSummaryCard(
-    projects: List<ProjectEntity>, questions: List<QuestionEntity>, hypotheses: List<HypothesisEntity>,
-    observations: List<ObservationEntity>, sources: List<SourceEntity>, data: List<DataRecordEntity>, reports: List<ReportEntity>
-) {
-    val parts = listOf(
-        Triple("Questions", questions.size.toFloat(), FieldMindTheme.colors.question),
-        Triple("Hypotheses", hypotheses.size.toFloat(), FieldMindTheme.colors.hypothesis),
-        Triple("Observations", observations.size.toFloat(), FieldMindTheme.colors.observation),
-        Triple("Sources", sources.size.toFloat(), FieldMindTheme.colors.source),
-        Triple("Data", data.size.toFloat(), FieldMindTheme.colors.data),
-        Triple("Reports", reports.size.toFloat(), FieldMindTheme.colors.report)
-    )
-    Card(shape = RoundedCornerShape(24.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)) {
-        Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-            SectionHeader("Project portfolio", "${projects.size} active with evidence coverage")
-            BreakdownBar(parts)
-        }
-    }
-}
 
-@OptIn(ExperimentalLayoutApi::class)
-@Composable
-private fun ResearchRelationshipStrip(observations: Int, sources: Int, hypotheses: Int, data: Int, reports: Int) {
-    val metrics = listOf(
-        "Observations" to observations,
-        "Sources" to sources,
-        "Hypotheses" to hypotheses,
-        "Data" to data,
-        "Reports" to reports
-    )
-    Card(shape = RoundedCornerShape(18.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.72f)), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)) {
-        Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text("Connected research assets", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                metrics.forEach { (label, count) -> AssistChip(onClick = {}, label = { Text("$count $label") }) }
-            }
-        }
-    }
-}
-
-@OptIn(ExperimentalLayoutApi::class)
-@Composable
-private fun ProjectWorkspaceCard(
-    project: ProjectEntity, questions: List<QuestionEntity>, hypotheses: List<HypothesisEntity>,
-    observations: List<ObservationEntity>, sources: List<SourceEntity>, data: List<DataRecordEntity>,
-    reports: List<ReportEntity>, onClick: () -> Unit
-) {
-    val relatedQuestions = questions.count { it.relatedProjectId == project.id }
-    val relatedObservations = observations.count { it.projectId == project.id }
-    val relatedHypotheses = hypotheses.count { hypothesis -> questions.any { it.id == hypothesis.linkedQuestionId && it.relatedProjectId == project.id } }
-    val relatedSources = sources.count { it.relatedProjectId == project.id }
-    val relatedData = data.count { it.projectId == project.id }
-    val relatedReports = reports.count { it.projectId == project.id }
-    Card(
-        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),
-        shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-    ) {
-        Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                Box(Modifier.size(44.dp).clip(RoundedCornerShape(14.dp)).background(FieldMindTheme.colors.project.copy(alpha = 0.16f)), contentAlignment = Alignment.Center) {
-                    Icon(icon = FieldMindIcons.Project, contentDescription = null, tint = FieldMindTheme.colors.project, size = 24.dp)
-                }
-                Column(Modifier.weight(1f)) {
-                    Text(project.title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        Text(project.topicType, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        Text("•", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        Text("${relatedObservations} obs", style = MaterialTheme.typography.labelMedium, color = FieldMindTheme.colors.observation)
-                    }
-                }
-                InfoChip(project.status)
-            }
-            Text(project.objective.ifBlank { project.researchQuestion.ifBlank { "Open project workspace" } }, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2, overflow = TextOverflow.Ellipsis)
-            ResearchRelationshipStrip(relatedObservations, relatedSources, relatedHypotheses, relatedData, relatedReports)
-        }
-    }
-}
