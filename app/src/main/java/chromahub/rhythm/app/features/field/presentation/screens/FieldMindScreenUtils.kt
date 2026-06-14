@@ -51,7 +51,7 @@ internal val observationCategoryDefinitions = listOf(
     ObservationCategoryDefinition("Other", "category", "Use a facts-first template for anything that does not fit yet.", listOf("field-note"), listOf(ObservationCategoryField("detail", "Structured detail"), ObservationCategoryField("measurement", "Measurement"), ObservationCategoryField("next", "Next check")))
 )
 internal val observationCategories = observationCategoryDefinitions.map { it.label }
-internal val confidenceOptions = listOf("Sure", "Guess", "Needs Verification")
+internal val confidenceOptions = listOf("Certain", "Likely", "Unsure")
 internal val contextPresets = listOf("Calm", "Windy", "After rain", "Dawn", "Dusk", "Crowded", "Disturbed", "Healthy", "Stressed", "Needs follow-up")
 internal val sourceTypes = listOf("Observation", "Reading", "Video", "Thought", "Discussion")
 internal val questionStatuses = listOf("New", "Researching", "Tested", "Answered", "Abandoned")
