@@ -466,7 +466,12 @@ private fun LiveWeatherDashboardWidget(
                         .clip(RoundedCornerShape(13.dp))
                         .background(
                             if (currentWeather != null) weatherGradient
-                            else Brush.horizontalGradient(listOf(colors.info.copy(alpha = 0.14f)))
+                            else Brush.horizontalGradient(
+                                listOf(
+                                    colors.info.copy(alpha = 0.14f),
+                                    colors.info.copy(alpha = 0.06f)
+                                )
+                            )
                         ),
                     contentAlignment = Alignment.Center
                 ) {
