@@ -141,6 +141,21 @@ fun HomeScreen(
             )
         }
 
+        // ── Session Observations (grouped by research session) ──
+        val sessionObs = remember(observations, researchSessions) {
+            val map = mutableMapOf<String, MutableList<ObservationEntity>>()
+            observations.filter { it.tags.contains("research-session") }
+                .sortedByDescending { it.timestamp }
+                .forEach { obs ->
+                    val key = obs.context.ifBlank { "Unnamed session" }
+                    map.getOrPut(key) { mutableListOf() }.add(obs)
+                }
+            map.toMap()
+        }
+        if (sessionObs.isNotEmpty()) {
+            item { SessionObservationsCard(sessionObs, researchSessions, onOpenDetail, onNavigate) }
+        }
+
         // ── Current Project ──
         if (activeProject != null) {
             item {
@@ -1286,6 +1301,212 @@ private fun HomeWidgetCard(widget: HomeWidget, modifier: Modifier = Modifier, on
         }
     }
 }
+
+// ══════════════════════════════════════════════════════════════════════
+//  Session Observations — Grouped by research session
+// ══════════════════════════════════════════════════════════════════════
+
+@Composable
+private fun SessionObservationsCard(
+    sessionObs: Map<String, List<ObservationEntity>>,
+    researchSessions: List<ResearchSessionEntity>,
+    onOpenDetail: (String, Long) -> Unit,
+    onNavigate: (FieldMindScreen) -> Unit
+) {
+    val colors = FieldMindTheme.colors
+    var expandedSessions by remember { mutableStateOf<Set<String>>(emptySet()) }
+    val totalSessionObs = sessionObs.values.sumOf { it.size }
+
+    Card(
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            // Header
+            Row(
+                Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                Box(
+                    Modifier.size(40.dp).clip(RoundedCornerShape(12.dp))
+                        .background(colors.observation.copy(alpha = 0.14f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(FieldMindIcons.Session, null, tint = colors.observation, size = 22.dp)
+                }
+                Column(Modifier.weight(1f)) {
+                    Text(
+                        "Session observations",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        "$totalSessionObs observation${if (totalSessionObs != 1) "s" else ""} across ${sessionObs.size} session${if (sessionObs.size != 1) "s" else ""}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                TextButton(onClick = { onNavigate(FieldMindScreen.ResearchSession) }) {
+                    Text("New session")
+                }
+            }
+
+            // Session groups
+            sessionObs.entries.take(5).forEach { (sessionName, obs) ->
+                val session = researchSessions.firstOrNull {
+                    sessionName.contains(it.name, ignoreCase = true) ||
+                    it.name.contains(sessionName, ignoreCase = true)
+                }
+                val isExpanded = sessionName in expandedSessions
+                val dateLabel = obs.firstOrNull()?.let {
+                    try {
+                        SimpleDateFormat("MMM d, yyyy", Locale.getDefault())
+                            .format(SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).parse(it.date) ?: Date())
+                    } catch (_: Exception) { it.date }
+                } ?: ""
+
+                Card(
+                    modifier = Modifier.fillMaxWidth().animateContentSize().clickable {
+                        expandedSessions = if (isExpanded) expandedSessions - sessionName
+                        else expandedSessions + sessionName
+                    },
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+                    ),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                ) {
+                    Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        // Session header with stats
+                        Row(
+                            Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Icon(
+                                FieldMindIcons.Session,
+                                null,
+                                tint = colors.observation,
+                                size = 18.dp
+                            )
+                            Column(Modifier.weight(1f)) {
+                                Text(
+                                    sessionName.removePrefix("Research session: "),
+                                    style = MaterialTheme.typography.labelLarge,
+                                    fontWeight = FontWeight.SemiBold,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    Text(
+                                        "${obs.size} observation${if (obs.size != 1) "s" else ""}",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                    if (dateLabel.isNotBlank()) {
+                                        Text(
+                                            dateLabel,
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                }
+                            }
+                            Icon(
+                                if (isExpanded) FieldMindIcons.Up else FieldMindIcons.Down,
+                                null,
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                size = 18.dp
+                            )
+                        }
+
+                        // Session duration from the session entity
+                        session?.let { s ->
+                            if (s.totalDurationMs > 0) {
+                                val dur = s.totalDurationMs / 1000
+                                val hrs = dur / 3600
+                                val min = (dur % 3600) / 60
+                                Text(
+                                    "Duration: ${if (hrs > 0) "${hrs}h ${min}m" else "${min}m"}",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                                )
+                            }
+                        }
+
+                        // Observation list (expandable)
+                        AnimatedVisibility(visible = isExpanded) {
+                            Column(
+                                Modifier.padding(top = 4.dp),
+                                verticalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                obs.forEach { observation ->
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .clip(RoundedCornerShape(12.dp))
+                                            .clickable { onOpenDetail("observation", observation.id) }
+                                            .padding(vertical = 6.dp, horizontal = 4.dp),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                                    ) {
+                                        Box(
+                                            Modifier.size(6.dp).clip(CircleShape)
+                                                .background(colors.observation)
+                                        )
+                                        Column(Modifier.weight(1f)) {
+                                            Text(
+                                                observation.subject.ifBlank { observation.category },
+                                                style = MaterialTheme.typography.bodySmall,
+                                                fontWeight = FontWeight.SemiBold,
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis
+                                            )
+                                            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                                InfoChip(
+                                                    observation.category,
+                                                    icon = FieldMindIcons.iconForCategory(observation.category)
+                                                )
+                                                Text(
+                                                    observation.time.takeIf { it.isNotBlank() } ?: "",
+                                                    style = MaterialTheme.typography.labelSmall,
+                                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                                )
+                                            }
+                                        }
+                                        Icon(
+                                            FieldMindIcons.Forward,
+                                            null,
+                                            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+                                            size = 16.dp
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Show more indicator
+            if (sessionObs.size > 5) {
+                Text(
+                    "+${sessionObs.size - 5} more session${if (sessionObs.size - 5 != 1) "s" else ""}",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+                    modifier = Modifier.align(Alignment.CenterHorizontally)
+                )
+            }
+        }
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════════
+//  Recent Captures Card
+// ══════════════════════════════════════════════════════════════════════
 
 @Composable
 private fun RecentCapturesCard(observations: List<ObservationEntity>, onOpenDetail: (String, Long) -> Unit) {
