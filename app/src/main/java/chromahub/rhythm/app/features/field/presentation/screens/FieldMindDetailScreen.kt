@@ -8,12 +8,15 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -230,8 +233,10 @@ private fun ObservationDetailContent(
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-            ObservationHeroEvidence(viewModel, o.id, onOpenReader)
-            // Header with subject and badges
+            // ── 1. Hero carousel (swipeable media) ──
+            ObservationHeroCarousel(viewModel, o.id, onOpenReader)
+
+            // ── 2. Header with subject and badges ──
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 Box(
                     Modifier.size(48.dp).clip(RoundedCornerShape(16.dp))
@@ -247,7 +252,7 @@ private fun ObservationDetailContent(
                 }
             }
 
-            // Stats bar
+            // ── 3. Stats bar ──
             Row(
                 Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceEvenly
@@ -263,25 +268,25 @@ private fun ObservationDetailContent(
 
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
 
-            // Facts-only notes (prominent)
+            // ── 4. Facts-only notes (prominent) ──
             if (o.factsOnlyNotes.isNotBlank()) {
                 Text("Facts", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold, color = colors.observation)
                 Text(o.factsOnlyNotes, style = MaterialTheme.typography.bodyLarge)
             }
 
-            // Context
+            // ── 5. Context ──
             if (o.moodOrContext.isNotBlank()) {
                 Text("Context", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Text(o.moodOrContext, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
 
-            // Evidence summary
+            // ── 6. Evidence summary ──
             if (o.evidenceSummary.isNotBlank()) {
                 Text("Evidence", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold, color = colors.info)
                 Text(o.evidenceSummary, style = MaterialTheme.typography.bodyMedium)
             }
 
-            // Tags
+            // ── 7. Tags ──
             if (o.tags.isNotBlank()) {
                 FlowRow(verticalArrangement = Arrangement.spacedBy(4.dp), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                     o.tags.split(",").filter { it.isNotBlank() }.forEach { tag ->
@@ -290,74 +295,180 @@ private fun ObservationDetailContent(
                 }
             }
 
-            // Weather data
+            // ── 8. Weather chip row (compact) ──
             if (o.weatherTemperature != null) {
-                Card(
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = colors.info.copy(alpha = 0.08f)),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(colors.info.copy(alpha = 0.08f))
+                        .padding(14.dp),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Icon(FieldMindIcons.Weather, null, tint = colors.info, size = 20.dp)
-                            Text("Weather at capture", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold, color = colors.info)
+                    Icon(FieldMindIcons.Weather, null, tint = colors.info, size = 18.dp)
+                    WeatherChip("${o.weatherTemperature?.let { "%.1f°".format(it) } ?: "--"}", colors.info)
+                    if (o.weatherCondition.isNotBlank()) WeatherChip(o.weatherCondition.take(12), colors.info)
+                    if (o.weatherHumidity != null) WeatherChip("${o.weatherHumidity}% RH", colors.data)
+                    if (o.weatherWindSpeed != null) WeatherChip("%.1f km/h".format(o.weatherWindSpeed), colors.warning)
+                    if (o.weatherCloudCover != null) WeatherChip("☁ ${o.weatherCloudCover}%", MaterialTheme.colorScheme.onSurfaceVariant)
+                    if (o.weatherPressure != null) WeatherChip("${o.weatherPressure?.toInt()} hPa", MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+
+            // ── 9. Provenance collapsible section ──
+            var showProvenance by remember { mutableStateOf(false) }
+            Card(
+                modifier = Modifier.fillMaxWidth().clickable { showProvenance = !showProvenance },
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.4f)),
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+            ) {
+                Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Row(
+                        Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                            Icon(FieldMindIcons.Info, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, size = 18.dp)
+                            Text("Provenance & metadata", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold)
                         }
-                        Row(
-                            Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceEvenly
-                        ) {
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Text("${o.weatherTemperature?.let { "%.1f°".format(it) } ?: "--"}", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = colors.info)
-                                Text("Temperature", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Icon(if (showProvenance) FieldMindIcons.Up else FieldMindIcons.Down, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, size = 18.dp)
+                    }
+                    if (showProvenance) {
+                        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
+                        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                            ProvenanceRow("Date & time", "${o.date} ${o.time}")
+                            o.startedAt?.let { ProvenanceRow("Session start", formatTimestamp(it)) }
+                            o.endedAt?.let { ProvenanceRow("Session end", formatTimestamp(it)) }
+                            o.durationMs?.let { ProvenanceRow("Duration", formatDuration(it)) }
+                            o.latitude?.let { lat ->
+                                o.longitude?.let { lng -> ProvenanceRow("Coordinates", "%.6f, %.6f".format(lat, lng)) }
                             }
-                            if (o.weatherHumidity != null) {
-                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                    Text("${o.weatherHumidity}%", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = colors.data)
-                                    Text("Humidity", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                }
-                            }
-                            if (o.weatherWindSpeed != null) {
-                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                    Text("%.1f km/h".format(o.weatherWindSpeed), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = colors.warning)
-                                    Text("Wind", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                }
-                            }
-                        }
-                        if (o.weatherCondition.isNotBlank()) {
-                            Text(o.weatherCondition, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            if (o.manualLocation.isNotBlank()) ProvenanceRow("Place", o.manualLocation)
+                            o.weatherSnapshotAt?.let { ProvenanceRow("Weather snapshot", formatTimestamp(it)) }
+                            ProvenanceRow("Record ID", "#${o.id}")
+                            ProvenanceRow("Created", formatTimestamp(o.createdAt))
+                            ProvenanceRow("Updated", formatTimestamp(o.updatedAt))
                         }
                     }
                 }
             }
 
-            // Map card
+            // ── 10. Map card ──
             if (o.latitude != null && o.longitude != null) {
                 ObservationLocationCard(o.latitude, o.longitude, o.manualLocation)
             }
 
-            // Attachments gallery
+            // ── 11. Attachments gallery ──
             ObservationAttachmentsPanel(viewModel, o.id, onOpenReader)
         }
     }
 }
 
+@Composable
+private fun WeatherChip(text: String, color: androidx.compose.ui.graphics.Color) {
+    Box(
+        Modifier
+            .clip(RoundedCornerShape(8.dp))
+            .background(color.copy(alpha = 0.15f))
+            .padding(horizontal = 8.dp, vertical = 4.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(text, style = MaterialTheme.typography.labelSmall, color = color, fontWeight = FontWeight.SemiBold)
+    }
+}
 
 @Composable
-private fun ObservationHeroEvidence(viewModel: FieldMindViewModel, observationId: Long, onOpenReader: (String, String) -> Unit) {
+private fun ProvenanceRow(label: String, value: String) {
+    Row(
+        Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(value, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurface)
+    }
+}
+
+private fun formatTimestamp(millis: Long): String {
+    val sdf = java.text.SimpleDateFormat("yyyy-MM-dd HH:mm", java.util.Locale.getDefault())
+    return sdf.format(java.util.Date(millis))
+}
+
+private fun formatDuration(millis: Long): String {
+    val totalSec = millis / 1000
+    val hours = totalSec / 3600
+    val minutes = (totalSec % 3600) / 60
+    val seconds = totalSec % 60
+    return if (hours > 0) "%d:%02d:%02d".format(hours, minutes, seconds)
+    else "%d:%02d".format(minutes, seconds)
+}
+
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+private fun ObservationHeroCarousel(viewModel: FieldMindViewModel, observationId: Long, onOpenReader: (String, String) -> Unit) {
     val attachments by viewModel.attachmentsForObservation(observationId).collectAsState(initial = emptyList())
-    val hero = attachments.firstOrNull { it.type.equals("Photo", true) || it.type.equals("Gallery", true) || uriLooksImage(it.uri) || uriLooksImage(it.localPath.orEmpty()) } ?: return
-    val displayUri = hero.localPath ?: hero.uri
-    AsyncImage(
-        model = displayUri,
-        contentDescription = "Observation evidence",
-        contentScale = ContentScale.Crop,
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(240.dp)
-            .clip(RoundedCornerShape(28.dp))
-            .background(MaterialTheme.colorScheme.surfaceContainerHighest)
-            .clickable { onOpenReader(displayUri, "Observation evidence") }
-    )
+    val media = attachments.filter { it.type.equals("Photo", true) || it.type.equals("Gallery", true) || uriLooksImage(it.uri) || uriLooksImage(it.localPath.orEmpty()) }
+    if (media.isEmpty()) return
+    val pagerState = rememberPagerState(pageCount = { media.size })
+
+    Box(modifier = Modifier.fillMaxWidth().height(280.dp)) {
+        HorizontalPager(
+            state = pagerState,
+            modifier = Modifier.fillMaxSize()
+        ) { page ->
+            val item = media[page]
+            val displayUri = item.localPath ?: item.uri
+            AsyncImage(
+                model = displayUri,
+                contentDescription = item.caption.ifBlank { "Observation media" },
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .clip(RoundedCornerShape(28.dp))
+                    .background(MaterialTheme.colorScheme.surfaceContainerHighest)
+                    .clickable { onOpenReader(displayUri, item.caption.ifBlank { "Observation media" }) }
+            )
+        }
+
+        // Page indicator dots
+        if (media.size > 1) {
+            Row(
+                Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(bottom = 14.dp),
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                repeat(media.size) { index ->
+                    Box(
+                        Modifier
+                            .size(if (pagerState.currentPage == index) 10.dp else 7.dp, 7.dp)
+                            .clip(CircleShape)
+                            .run { if (pagerState.currentPage == index) background(MaterialTheme.colorScheme.primary) else background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.35f)) }
+                    )
+                }
+            }
+        }
+
+        // Media counter badge
+        if (media.size > 1) {
+            Surface(
+                modifier = Modifier.align(Alignment.TopEnd).padding(12.dp),
+                shape = RoundedCornerShape(12.dp),
+                color = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.85f)
+            ) {
+                Text(
+                    "${pagerState.currentPage + 1} / ${media.size}",
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                )
+            }
+        }
+    }
 }
 
 @Composable

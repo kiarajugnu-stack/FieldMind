@@ -36,7 +36,9 @@ data class EvidenceFilterState(
     val confidenceMin: Int = 0,
     val tags: Set<String> = emptySet(),
     val locationFilter: String = "",
-    val hasMetadata: Boolean? = null
+    val hasMetadata: Boolean? = null,
+    val missingEvidenceFilter: String = "None", // None, NoPhotos, NoGPS, NoWeather, NoFacts
+    val viewMode: String = "list" // list, grid
 )
 
 /**
@@ -151,6 +153,82 @@ fun BulkSelectionToolbar(
                 }
             }
         }
+    }
+}
+
+/**
+ * MissingEvidenceFilter - Filter chips for finding observations missing key data
+ */
+@Composable
+fun MissingEvidenceFilter(
+    current: String,
+    onChanged: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val options = listOf(
+        "None" to "All",
+        "NoPhotos" to "No photos",
+        "NoGPS" to "No GPS",
+        "NoWeather" to "No weather",
+        "NoFacts" to "No facts"
+    )
+    LazyRow(modifier = modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+        items(options) { (value, label) ->
+            FilterChip(
+                selected = current == value,
+                onClick = { onChanged(value) },
+                label = { Text(label, style = MaterialTheme.typography.labelSmall) },
+                leadingIcon = if (current == value) ({ Icon(FieldMindIcons.Filter, null, size = 14.dp) }) else null
+            )
+        }
+    }
+}
+
+/**
+ * ViewModeToggle - Switch between list and grid/gallery mode
+ */
+@Composable
+fun ViewModeToggle(
+    currentMode: String,
+    onToggle: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier,
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        IconButton(onClick = { onToggle("list") }, modifier = Modifier.size(36.dp)) {
+            Icon(
+                icon = if (currentMode == "list") FieldMindIcons.List.filled() else FieldMindIcons.List,
+                contentDescription = "List view",
+                tint = if (currentMode == "list") MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                size = 20.dp
+            )
+        }
+        IconButton(onClick = { onToggle("grid") }, modifier = Modifier.size(36.dp)) {
+            Icon(
+                icon = if (currentMode == "grid") FieldMindIcons.Gallery.filled() else FieldMindIcons.Gallery,
+                contentDescription = "Grid view",
+                tint = if (currentMode == "grid") MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                size = 20.dp
+            )
+        }
+    }
+}
+
+/**
+ * Applies the missing-evidence filter to a list of observations
+ */
+fun applyMissingEvidenceFilter(observations: List<ObservationEntity>, filter: String): List<ObservationEntity> {
+    return when (filter) {
+        "NoPhotos" -> observations.filter { obs ->
+            obs.evidenceSummary.isBlank() || (!obs.evidenceSummary.contains("photo", true) && !obs.evidenceSummary.contains("image", true) && !obs.evidenceSummary.contains("gallery", true))
+        }
+        "NoGPS" -> observations.filter { obs -> obs.latitude == null || obs.longitude == null }
+        "NoWeather" -> observations.filter { obs -> obs.weatherTemperature == null && obs.weatherCondition.isBlank() }
+        "NoFacts" -> observations.filter { obs -> obs.factsOnlyNotes.isBlank() }
+        else -> observations
     }
 }
 

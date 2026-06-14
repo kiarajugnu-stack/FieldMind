@@ -87,6 +87,7 @@ object FieldMindIcons {
     val FlipCamera = MaterialSymbolIcon("flip_camera_android")
     val Timer = MaterialSymbolIcon("timer")
     val Session = MaterialSymbolIcon("stop_circle")
+    val List = MaterialSymbolIcon("list")
 
     // Observation category icons
     val Bird = MaterialSymbolIcon("raven")
