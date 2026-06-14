@@ -95,6 +95,8 @@ object FieldMindIcons {
     val Plant = MaterialSymbolIcon("local_florist")
     val Rock = MaterialSymbolIcon("landscape")
     val Weather = MaterialSymbolIcon("partly_cloudy_day")
+    val Cloud = MaterialSymbolIcon("cloud")
+    val Rainy = MaterialSymbolIcon("rainy")
     val Water = MaterialSymbolIcon("water_drop")
     val HumanBehavior = MaterialSymbolIcon("groups")
     val ReadingInsight = MaterialSymbolIcon("menu_book")
