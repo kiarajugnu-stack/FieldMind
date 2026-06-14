@@ -232,6 +232,7 @@ private fun ObservationDetailContent(
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+            ObservationHeroEvidence(viewModel, o.id, onOpenReader)
             // Header with subject and badges
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 Box(
@@ -300,6 +301,25 @@ private fun ObservationDetailContent(
             ObservationAttachmentsPanel(viewModel, o.id, onOpenReader)
         }
     }
+}
+
+
+@Composable
+private fun ObservationHeroEvidence(viewModel: FieldMindViewModel, observationId: Long, onOpenReader: (String, String) -> Unit) {
+    val attachments by viewModel.attachmentsForObservation(observationId).collectAsState(initial = emptyList())
+    val hero = attachments.firstOrNull { it.type.equals("Photo", true) || it.type.equals("Gallery", true) || uriLooksImage(it.uri) || uriLooksImage(it.localPath.orEmpty()) } ?: return
+    val displayUri = hero.localPath ?: hero.uri
+    AsyncImage(
+        model = displayUri,
+        contentDescription = "Observation evidence",
+        contentScale = ContentScale.Crop,
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(240.dp)
+            .clip(RoundedCornerShape(28.dp))
+            .background(MaterialTheme.colorScheme.surfaceContainerHighest)
+            .clickable { onOpenReader(displayUri, "Observation evidence") }
+    )
 }
 
 @Composable
@@ -565,8 +585,8 @@ private fun ObservationAttachmentsPanel(viewModel: FieldMindViewModel, observati
                         Icon(icon = if (att.type.equals("Audio", true)) FieldMindIcons.Mic else FieldMindIcons.File, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, size = 20.dp)
                     }
                     Column(Modifier.weight(1f)) {
-                        Text(att.caption.ifBlank { att.type }, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                        Text(displayUri, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        Text(att.caption.ifBlank { if (att.type.equals("Audio", true)) "Audio evidence" else "Attached evidence" }, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        Text(att.type, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     }
                 }
             }

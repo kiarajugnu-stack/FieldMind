@@ -76,6 +76,7 @@ sealed class FieldMindScreen(val route: String, val label: String, val icon: Mat
     data object Progress : FieldMindScreen("field_progress", "Progress", FieldMindIcons.Check)
     data object Flashcards : FieldMindScreen("field_flashcards_session", "Review", FieldMindIcons.Flashcard)
     data object ResearchSession : FieldMindScreen("field_research_session", "Session", FieldMindIcons.Bolt)
+    data object WeatherDatabase : FieldMindScreen("field_weather_database", "Weather", FieldMindIcons.Weather)
     data object Reader : FieldMindScreen("field_reader", "Reader", FieldMindIcons.Book)
     data object Settings : FieldMindScreen("field_settings", "Settings", FieldMindIcons.Settings)
     data object SettingsProfile : FieldMindScreen("field_settings_profile", "Profile", FieldMindIcons.Nature)
@@ -145,6 +146,8 @@ fun FieldMindNavigation(viewModel: FieldMindViewModel, onResetOnboarding: () -> 
     val currentDestination = backStackEntry?.destination
     val currentRoute = currentDestination?.route
     val haptics = rememberFieldMindHaptics()
+    val researchSessions by viewModel.researchSessions.collectAsState()
+    val activeResearchSession = researchSessions.firstOrNull { it.status == "Active" }
     val hideChrome = currentRoute == FieldMindScreen.Settings.route ||
         currentRoute == FieldMindScreen.FieldMode.route ||
         currentRoute == FieldMindScreen.Reader.route ||
@@ -163,10 +166,10 @@ fun FieldMindNavigation(viewModel: FieldMindViewModel, onResetOnboarding: () -> 
                     NavigationRail(
                         header = {
                             FloatingActionButton(
-                                onClick = { haptics.light(); navController.navigateToDestination(FieldMindScreen.FieldMode.route) },
-                                containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                                contentColor = MaterialTheme.colorScheme.onTertiaryContainer
-                            ) { Icon(icon = FieldMindIcons.Bolt, contentDescription = "Field mode capture", size = 26.dp) }
+                                onClick = { haptics.light(); navController.navigateToDestination(if (activeResearchSession != null) FieldMindScreen.ResearchSession.route else FieldMindScreen.Observe.route) },
+                                containerColor = if (activeResearchSession != null) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.tertiaryContainer,
+                                contentColor = if (activeResearchSession != null) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onTertiaryContainer
+                            ) { Icon(icon = if (activeResearchSession != null) FieldMindIcons.Timer else FieldMindIcons.Bolt, contentDescription = "Capture", size = 26.dp) }
                         }
                     ) {
                         bottomTabs.forEach { screen ->
@@ -188,11 +191,11 @@ fun FieldMindNavigation(viewModel: FieldMindViewModel, onResetOnboarding: () -> 
                 floatingActionButton = {
                     if (!hideChrome) {
                         ExtendedFloatingActionButton(
-                            onClick = { haptics.light(); navController.navigateToDestination(FieldMindScreen.FieldMode.route) },
-                            containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                            contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
-                            icon = { Icon(icon = FieldMindIcons.Bolt, contentDescription = null, size = 22.dp) },
-                            text = { Text("Capture") }
+                            onClick = { haptics.light(); navController.navigateToDestination(if (activeResearchSession != null) FieldMindScreen.ResearchSession.route else FieldMindScreen.Observe.route) },
+                            containerColor = if (activeResearchSession != null) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.tertiaryContainer,
+                            contentColor = if (activeResearchSession != null) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onTertiaryContainer,
+                            icon = { Icon(icon = if (activeResearchSession != null) FieldMindIcons.Timer else FieldMindIcons.Bolt, contentDescription = null, size = 22.dp) },
+                            text = { Text(activeResearchSession?.let { "Live session • ${it.observationCount}" } ?: "Capture") }
                         )
                     }
                 },
@@ -304,6 +307,7 @@ private fun FieldMindNavHost(
         composable(FieldMindScreen.Progress.route) { InsightsScreen(viewModel = viewModel, onNavigate = { navController.navigateToDestination(it.route) }, onOpenDetail = openDetail) }
         composable(FieldMindScreen.Flashcards.route) { FlashcardSessionScreen(viewModel = viewModel, onBack = { navController.popBackStack() }) }
         composable(FieldMindScreen.ResearchSession.route) { ResearchSessionScreen(viewModel = viewModel, onBack = { navController.popBackStack() }, onOpenDetail = openDetail) }
+        composable(FieldMindScreen.WeatherDatabase.route) { WeatherDatabaseScreen(viewModel = viewModel, onBack = { navController.popBackStack() }) }
         composable(FieldMindScreen.Settings.route) {
             FieldMindSettingsScreen(
                 viewModel = viewModel,

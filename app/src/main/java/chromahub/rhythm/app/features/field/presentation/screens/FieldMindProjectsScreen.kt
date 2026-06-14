@@ -4,8 +4,11 @@ import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
@@ -294,6 +297,16 @@ private fun EvidenceTab(
     var filterKind by remember { mutableStateOf("All") }
     var filterGroup by remember { mutableStateOf("All") }
     var bulkMode by remember { mutableStateOf(false) }
+    var selectedEvidence by remember { mutableStateOf(setOf<String>()) }
+    fun evidenceKey(item: EvidenceItem) = "${item.kind}:${item.id}"
+    fun deleteEvidence(item: EvidenceItem) {
+        when (item.kind) {
+            "observation" -> viewModel.deleteObservation(item.id)
+            "note" -> viewModel.deleteNote(item.id)
+            "question" -> viewModel.deleteQuestion(item.id)
+            "source" -> viewModel.deleteSource(item.id)
+        }
+    }
     // Merge all evidence into chronological list
     val evidence = remember(observations, notes, questions, sources) {
         buildList {
@@ -308,7 +321,19 @@ private fun EvidenceTab(
 
     LazyColumn(contentPadding = panelPadding(), verticalArrangement = Arrangement.spacedBy(14.dp)) {
         item { SectionHeader("Evidence hub", "${filteredEvidence.size} of ${evidence.size} items • filter, review, bulk-manage") }
-        item { EvidenceFilterBar(filterKind, { filterKind = it }, filterGroup, { filterGroup = it }, groups, bulkMode, { bulkMode = !bulkMode }) }
+        item { EvidenceFilterBar(filterKind, { filterKind = it }, filterGroup, { filterGroup = it }, groups, bulkMode, { bulkMode = !bulkMode; selectedEvidence = emptySet() }) }
+        if (bulkMode) {
+            item {
+                Card(shape = RoundedCornerShape(20.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)) {
+                    Row(Modifier.fillMaxWidth().padding(14.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Text("${selectedEvidence.size} selected", modifier = Modifier.weight(1f), style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onPrimaryContainer)
+                        TextButton(onClick = { selectedEvidence = filteredEvidence.map { evidenceKey(it) }.toSet() }) { Text("All") }
+                        TextButton(onClick = { selectedEvidence = emptySet() }) { Text("Clear") }
+                        Button(onClick = { filteredEvidence.filter { evidenceKey(it) in selectedEvidence }.forEach(::deleteEvidence); selectedEvidence = emptySet() }, enabled = selectedEvidence.isNotEmpty(), shape = RoundedCornerShape(14.dp)) { Text("Delete") }
+                    }
+                }
+            }
+        }
         if (filteredEvidence.isEmpty()) {
             item {
                 EmptyState(
@@ -320,11 +345,15 @@ private fun EvidenceTab(
             }
         }
         items(filteredEvidence) { item ->
+            val key = evidenceKey(item)
             EntityCard(
-                item.title, item.kind,
+                item.title, if (bulkMode && key in selectedEvidence) "selected" else item.kind,
                 body = item.subtitle,
-                meta = listOf(item.group),
-                onClick = { onOpenDetail(item.kind, item.id) }
+                meta = if (bulkMode) listOf(item.group, if (key in selectedEvidence) "Selected" else "Tap to select") else listOf(item.group),
+                onClick = {
+                    if (bulkMode) selectedEvidence = if (key in selectedEvidence) selectedEvidence - key else selectedEvidence + key
+                    else onOpenDetail(item.kind, item.id)
+                }
             )
         }
     }
@@ -376,11 +405,77 @@ private fun recommendedEvidenceFor(methods: Set<String>): String = listOfNotNull
 
 @Composable
 private fun EvidenceFilterBar(kind: String, onKind: (String) -> Unit, group: String, onGroup: (String) -> Unit, groups: List<String>, bulkMode: Boolean, onBulk: () -> Unit) {
-    Card(shape = RoundedCornerShape(20.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)) {
-        Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            ChoiceChips(listOf("All", "Observation", "Note", "Question", "Source"), kind) { onKind(it) }
-            ChoiceChips(groups, group) { onGroup(it) }
-            OutlinedButton(onClick = onBulk, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp)) { Text(if (bulkMode) "Done bulk selection" else "Bulk select / manage") }
+    var expanded by remember { mutableStateOf(false) }
+    
+    Card(
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            // Filter header row
+            Row(
+                Modifier.fillMaxWidth().clickable { expanded = !expanded },
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(FieldMindIcons.Filter, null, size = 18.dp, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("Filter & sort", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold)
+                }
+                Icon(
+                    if (expanded) FieldMindIcons.Up else FieldMindIcons.Down,
+                    null,
+                    size = 20.dp,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            
+            // Expandable filter content
+            AnimatedVisibility(visible = expanded, enter = expandVertically(), exit = shrinkVertically()) {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    // Type filter
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text("Type", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        ChoiceChips(listOf("All", "Observation", "Note", "Question", "Source"), kind) { onKind(it) }
+                    }
+                    
+                    // Group/category filter
+                    if (groups.size > 1) {
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Text("Category", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                items(groups.take(8)) { g ->
+                                    FilterChip(
+                                        selected = g == group,
+                                        onClick = { onGroup(g) },
+                                        label = { Text(g, maxLines = 1) },
+                                        shape = RoundedCornerShape(12.dp)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                    
+                    // Bulk management button
+                    OutlinedButton(
+                        onClick = onBulk,
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp)
+                    ) {
+                        Icon(
+                            if (bulkMode) FieldMindIcons.Check else FieldMindIcons.Select,
+                            null,
+                            size = 18.dp,
+                            modifier = Modifier.padding(end = 8.dp)
+                        )
+                        Text(if (bulkMode) "Done bulk selection" else "Bulk select / manage")
+                    }
+                }
+            }
         }
     }
 }
@@ -619,6 +714,7 @@ private fun ResearchRelationshipStrip(observations: Int, sources: Int, hypothese
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun ProjectWorkspaceCard(
     project: ProjectEntity, questions: List<QuestionEntity>, hypotheses: List<HypothesisEntity>,
@@ -631,14 +727,6 @@ private fun ProjectWorkspaceCard(
     val relatedSources = sources.count { it.relatedProjectId == project.id }
     val relatedData = data.count { it.projectId == project.id }
     val relatedReports = reports.count { it.projectId == project.id }
-    val progressMetrics = listOf(
-        "Questions" to relatedQuestions.toFloat(),
-        "Observations" to relatedObservations.toFloat(),
-        "Data" to relatedData.toFloat(),
-        "Reports" to relatedReports.toFloat()
-    )
-    val maxMetric = progressMetrics.maxOfOrNull { it.second }?.coerceAtLeast(1f) ?: 1f
-
     Card(
         modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),
         shape = RoundedCornerShape(24.dp),
@@ -662,29 +750,6 @@ private fun ProjectWorkspaceCard(
             }
             Text(project.objective.ifBlank { project.researchQuestion.ifBlank { "Open project workspace" } }, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2, overflow = TextOverflow.Ellipsis)
             ResearchRelationshipStrip(relatedObservations, relatedSources, relatedHypotheses, relatedData, relatedReports)
-            
-            // Mini progress bars for each metric
-            progressMetrics.forEach { (label, count) ->
-                val fraction = (count / maxMetric).coerceIn(0f, 1f)
-                Row(
-                    Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(label, style = MaterialTheme.typography.labelSmall, modifier = Modifier.width(72.dp))
-                    Row(
-                        Modifier.weight(1f).height(6.dp).clip(RoundedCornerShape(3.dp))
-                            .background(MaterialTheme.colorScheme.surfaceContainerHighest),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Box(
-                            Modifier.fillMaxWidth(fraction).fillMaxHeight()
-                                .background(FieldMindTheme.colors.project.copy(alpha = 0.4f + fraction * 0.6f), RoundedCornerShape(3.dp))
-                        )
-                    }
-                    Text("${count.toInt()}", style = MaterialTheme.typography.labelSmall, modifier = Modifier.width(24.dp), color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-            }
         }
     }
 }

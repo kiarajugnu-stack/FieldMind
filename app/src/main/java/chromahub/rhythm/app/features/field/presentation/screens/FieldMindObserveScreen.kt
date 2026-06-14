@@ -87,6 +87,13 @@ private data class CaptureSessionState(
     val fieldContext: String = "",
     val manualLocation: String = "",
     val attachments: List<DraftEvidenceAttachment> = emptyList(),
+    // Phase 3: Structured observation fields
+    val speciesConfidence: String = "Likely",
+    val distanceFromObserver: String = "10m",
+    val observationChecklist: Set<String> = emptySet(),
+    val measurements: Map<String, String> = emptyMap(),
+    val followUpSchedule: String = "None",
+    val qualityScore: Int = 0,
     // Live timer state
     val timerStartedAt: Long? = null,
     val timerAccumulatedMs: Long = 0L,
@@ -213,8 +220,8 @@ fun ObserveScreen(
             // ── Header ──
             item {
                 FieldScreenHeader(
-                    "Capture",
-                    "Start with evidence, then add details.",
+                    "Observation",
+                    "Capture evidence, time, place, weather, then add facts.",
                     icon = FieldMindIcons.Capture
                 )
             }
@@ -271,7 +278,7 @@ fun ObserveScreen(
                     ) {
                         Icon(icon = FieldMindIcons.Add, contentDescription = null, size = 20.dp)
                         Spacer(Modifier.size(8.dp))
-                        Text("Start capture session")
+                        Text("Start observation session")
                     }
                 }
             }
@@ -312,6 +319,18 @@ fun ObserveScreen(
 
                 // ── Quick Observation Form (auto-expanded after evidence) ──
                 item {
+                    // Phase 3: Calculate quality score
+                    val qualityScore = calculateObservationQuality(
+                        hasSubject = session.subject.isNotBlank(),
+                        hasEvidence = session.attachments.size,
+                        hasLocation = session.manualLocation.isNotBlank(),
+                        hasWeather = false,  // Will be added via weather fetch
+                        hasMeasurements = session.measurements.values.any { it.isNotBlank() },
+                        hasNotes = session.facts.isNotBlank(),
+                        hasDuration = false,
+                        hasConfidence = session.confidence.isNotBlank()
+                    )
+                    
                     QuickObservationForm(
                         subject = session.subject,
                         onSubjectChange = { session = session.copy(subject = it) },
@@ -330,7 +349,23 @@ fun ObserveScreen(
                         manualLocation = session.manualLocation,
                         onLocationChange = { session = session.copy(manualLocation = it) },
                         projects = projects,
-                        onSave = { saveObservation() }
+                        onSave = { saveObservation() },
+                        // Phase 3 parameters
+                        speciesConfidence = session.speciesConfidence,
+                        onSpeciesConfidenceChange = { session = session.copy(speciesConfidence = it) },
+                        distanceFromObserver = session.distanceFromObserver,
+                        onDistanceChange = { session = session.copy(distanceFromObserver = it) },
+                        observationChecklist = session.observationChecklist,
+                        onChecklistChange = { session = session.copy(observationChecklist = it) },
+                        measurements = session.measurements,
+                        onMeasurementChange = { key, value -> 
+                            val updated = session.measurements.toMutableMap()
+                            updated[key] = value
+                            session = session.copy(measurements = updated)
+                        },
+                        followUpSchedule = session.followUpSchedule,
+                        onFollowUpChange = { session = session.copy(followUpSchedule = it) },
+                        qualityScore = qualityScore
                     )
                 }
             }
@@ -338,7 +373,7 @@ fun ObserveScreen(
             // ── Recent captures ──
             item {
                 SectionHeader(
-                    "Recent captures",
+                    "Recent observations",
                     "${observations.size} observations • ${notes.size} notes"
                 )
             }
@@ -346,10 +381,10 @@ fun ObserveScreen(
             if (observations.isEmpty() && notes.isEmpty()) {
                 item {
                     EmptyState(
-                        "No captures yet",
+                        "No observations yet",
                         "Snap evidence or write facts. Observations stay facts-only; notes stay free-form.",
                         icon = FieldMindIcons.Observation,
-                        actionLabel = "Start capture"
+                        actionLabel = "Start observation"
                     ) { startCapture() }
                 }
             }
@@ -731,10 +766,27 @@ private fun QuickObservationForm(
     manualLocation: String,
     onLocationChange: (String) -> Unit,
     projects: List<ProjectEntity>,
-    onSave: () -> Unit
+    onSave: () -> Unit,
+    // Phase 3 fields
+    speciesConfidence: String = "Likely",
+    onSpeciesConfidenceChange: (String) -> Unit = {},
+    distanceFromObserver: String = "10m",
+    onDistanceChange: (String) -> Unit = {},
+    observationChecklist: Set<String> = emptySet(),
+    onChecklistChange: (Set<String>) -> Unit = {},
+    measurements: Map<String, String> = emptyMap(),
+    onMeasurementChange: (String, String) -> Unit = { _, _ -> },
+    followUpSchedule: String = "None",
+    onFollowUpChange: (String) -> Unit = {},
+    qualityScore: Int = 0
 ) {
     var showAdvanced by remember { mutableStateOf(false) }
     var showCategories by remember { mutableStateOf(false) }
+    var showStructured by remember { mutableStateOf(false) }
+
+    val hasEvidence = facts.isNotBlank()
+    val hasLocation = manualLocation.isNotBlank()
+    val hasMeasurements = measurements.values.any { it.isNotBlank() }
 
     Card(
         shape = RoundedCornerShape(28.dp),
@@ -752,6 +804,19 @@ private fun QuickObservationForm(
                 }
                 Text("Observation details", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
             }
+
+            // Quality Score (Phase 3)
+            QualityScoreCard(qualityScore)
+            MissingFieldsChecklist(
+                hasSubject = subject.isNotBlank(),
+                hasEvidence = hasEvidence,
+                hasLocation = hasLocation,
+                hasWeather = false,
+                hasMeasurements = hasMeasurements,
+                hasNotes = facts.isNotBlank(),
+                hasDuration = false,
+                hasConfidence = confidence.isNotBlank()
+            )
 
             // ── Core fields ──
             FieldTextField(subject, onSubjectChange, "Subject", supportingText = "e.g. Crow on wire")
@@ -782,6 +847,28 @@ private fun QuickObservationForm(
                 }
             }
 
+            // ── Structured Fields (Phase 3) ──
+            Row(
+                Modifier.fillMaxWidth().clickable { showStructured = !showStructured },
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text("Structured details", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold)
+                Icon(
+                    if (showStructured) FieldMindIcons.Up else FieldMindIcons.Down,
+                    null, tint = MaterialTheme.colorScheme.onSurfaceVariant, size = 20.dp
+                )
+            }
+            AnimatedVisibility(visible = showStructured, enter = expandVertically(), exit = shrinkVertically()) {
+                Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                    SpeciesConfidenceSelector(speciesConfidence, onSpeciesConfidenceChange)
+                    DistanceSelector(distanceFromObserver, onDistanceChange)
+                    ObservationChecklistPicker(observationChecklist, onChecklistChange)
+                    MeasurementsInputSection(measurements, onMeasurementChange)
+                    FollowUpScheduler(followUpSchedule, onFollowUpChange)
+                }
+            }
+
             // ── Advanced fields (collapsible) ──
             TextButton(onClick = { showAdvanced = !showAdvanced }) {
                 Icon(
@@ -789,7 +876,7 @@ private fun QuickObservationForm(
                     null, size = 18.dp
                 )
                 Spacer(Modifier.size(6.dp))
-                Text(if (showAdvanced) "Hide advanced fields" else "Show advanced fields (tags, location, context)")
+                Text(if (showAdvanced) "Hide additional fields" else "Show additional fields (tags, location, context)")
             }
             AnimatedVisibility(visible = showAdvanced, enter = expandVertically(), exit = shrinkVertically()) {
                 Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
@@ -1139,18 +1226,30 @@ internal fun ObservationCaptureCard(viewModel: FieldMindViewModel, compact: Bool
                             OutlinedButton(onClick = { showInAppCamera = true }, Modifier.weight(1f)) { Icon(icon = FieldMindIcons.Camera, contentDescription = "Camera", size = 18.dp) }
                             OutlinedButton(onClick = { mediaPicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageAndVideo)) }, Modifier.weight(1f)) { Icon(icon = FieldMindIcons.Gallery, contentDescription = "Gallery", size = 18.dp) }
                             OutlinedButton(onClick = { filePicker.launch(arrayOf("application/pdf", "text/*", "image/*", "video/*", "audio/*")) }, Modifier.weight(1f)) { Icon(icon = FieldMindIcons.File, contentDescription = "File", size = 18.dp) }
-                            OutlinedButton(onClick = { audioImportPicker.launch(arrayOf("audio/*")) }, Modifier.weight(1f)) { Icon(icon = FieldMindIcons.Mic, contentDescription = "Import audio", size = 18.dp) }
-                        }
-                        if (audioEnabled) {
-                            if (recording) RecordingIndicator(recordSeconds)
-                            Button(onClick = {
-                                if (recording) { val file = audioFile; runCatching { recorder?.stop() }; recorder?.release(); recorder = null; recording = false; file?.let { attachments = attachments + DraftEvidenceAttachment("Audio", Uri.fromFile(it).toString(), "Voice note", localPath = it.absolutePath, mimeType = "audio/mp4") }; scope.launch { snackbar.showSnackbar("Voice note attached.") } }
-                                else if (ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) audioPermission.launch(Manifest.permission.RECORD_AUDIO) else audioPermission.launch(Manifest.permission.RECORD_AUDIO)
-                            }, modifier = Modifier.fillMaxWidth(), colors = if (recording) ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.errorContainer, contentColor = MaterialTheme.colorScheme.onErrorContainer) else ButtonDefaults.buttonColors()) {
-                                Icon(icon = if (recording) FieldMindIcons.Stop else FieldMindIcons.Mic, contentDescription = null, size = 18.dp); Spacer(Modifier.size(6.dp)); Text(if (recording) "Stop voice note" else "Record voice note")
-                            }
                         }
                         AttachmentPreviewList(attachments, onCaptionChange = { index, caption -> attachments = attachments.mapIndexed { i, item -> if (i == index) item.copy(caption = caption) else item } }, onRemove = { remove -> attachments = attachments.filterIndexed { index, _ -> index != remove } })
+                        
+                        // Audio recording section
+                        if (audioEnabled) {
+                            Card(shape = RoundedCornerShape(16.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp), modifier = Modifier.fillMaxWidth()) {
+                                Column(Modifier.fillMaxWidth().padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                                        Icon(FieldMindIcons.Mic, null, tint = FieldMindTheme.colors.observation, size = 20.dp)
+                                        Text("Voice note", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold)
+                                        if (recording) {
+                                            RecordingIndicator(recordSeconds)
+                                        }
+                                    }
+                                    Button(onClick = {
+                                        if (recording) { val file = audioFile; runCatching { recorder?.stop() }; recorder?.release(); recorder = null; recording = false; file?.let { attachments = attachments + DraftEvidenceAttachment("Audio", Uri.fromFile(it).toString(), "Voice note", localPath = it.absolutePath, mimeType = "audio/mp4") }; scope.launch { snackbar.showSnackbar("Voice note attached.") } }
+                                        else if (ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) audioPermission.launch(Manifest.permission.RECORD_AUDIO) else audioPermission.launch(Manifest.permission.RECORD_AUDIO)
+                                    }, modifier = Modifier.fillMaxWidth(), colors = if (recording) ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.errorContainer, contentColor = MaterialTheme.colorScheme.onErrorContainer) else ButtonDefaults.buttonColors()) {
+                                        Icon(icon = if (recording) FieldMindIcons.Stop else FieldMindIcons.Mic, contentDescription = null, size = 18.dp); Spacer(Modifier.size(6.dp)); Text(if (recording) "Stop recording" else "Start recording voice note")
+                                    }
+                                    OutlinedButton(onClick = { audioImportPicker.launch(arrayOf("audio/*")) }, Modifier.fillMaxWidth()) { Icon(icon = FieldMindIcons.Mic, contentDescription = "Import audio", size = 18.dp); Spacer(Modifier.size(6.dp)); Text("Or import audio file") }
+                                }
+                            }
+                        }
                     }
                 }
                 CaptureStep("Connect & tag", "Summarize the evidence, tag it, and link a project.", FieldMindIcons.Link) {
