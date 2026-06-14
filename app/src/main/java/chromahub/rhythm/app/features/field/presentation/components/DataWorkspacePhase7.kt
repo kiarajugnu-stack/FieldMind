@@ -38,7 +38,12 @@ fun DataCollectionQuestionSelector(
         Text("What are you tracking?", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
         Text("Choose a question to auto-generate the right data structure.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         
-        LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
             items(DataCollectionQuestion.values()) { question ->
                 QuestionCard(question, onClick = { onSelected(question) })
             }

@@ -66,7 +66,12 @@ fun ResearchHealthCard(
 
             if (expanded && issues.isNotEmpty()) {
                 Divider()
-                LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(max = 300.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
                     items(issues) { issue ->
                         HealthIssueBadge(issue)
                     }
