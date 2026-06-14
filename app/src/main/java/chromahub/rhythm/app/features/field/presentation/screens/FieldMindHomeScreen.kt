@@ -935,6 +935,7 @@ private fun HomeWidgetGrid(
         widgets.forEach { widget -> HomeWidgetCard(widget, Modifier.weight(1f)) { onNavigate(widget.screen) } }
     }
 }
+}
 
 
 @OptIn(ExperimentalLayoutApi::class)
