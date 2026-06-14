@@ -1,6 +1,7 @@
 package fieldmind.research.app.features.field.presentation.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -11,6 +12,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import fieldmind.research.app.features.field.data.database.entity.HypothesisEntity
+import fieldmind.research.app.ui.theme.RhythmColors
 
 /**
  * Phase 8: Hypotheses Redesign
@@ -37,14 +39,14 @@ fun HypothesisCard(
     val statusColor = when (statusEnum) {
         HypothesisStatus.SUPPORTED -> MaterialTheme.colorScheme.primary
         HypothesisStatus.CONTRADICTED -> MaterialTheme.colorScheme.error
-        HypothesisStatus.INCONCLUSIVE -> MaterialTheme.colorScheme.warning ?: MaterialTheme.colorScheme.primary
+        HypothesisStatus.INCONCLUSIVE -> RhythmColors.warning
         HypothesisStatus.UNTESTED -> MaterialTheme.colorScheme.surfaceVariant
     }
 
     Card(
         modifier = modifier
             .fillMaxWidth()
-            .then(if (onClick != {}) Modifier.clickable(onClick = onClick) else Modifier),
+            .clickable(enabled = onClick != {}) { onClick() },
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)

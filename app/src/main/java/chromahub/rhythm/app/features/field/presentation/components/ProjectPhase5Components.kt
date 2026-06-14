@@ -12,6 +12,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import fieldmind.research.app.ui.theme.RhythmColors
 
 /**
  * Project Types for Phase 5 classification
@@ -61,14 +62,14 @@ fun ProjectTypeBadge(
         ProjectType.INVESTIGATION -> MaterialTheme.colorScheme.secondary.copy(alpha = 0.15f)
         ProjectType.SURVEY -> MaterialTheme.colorScheme.tertiary.copy(alpha = 0.15f)
         ProjectType.EXPERIMENT -> MaterialTheme.colorScheme.error.copy(alpha = 0.15f)
-        ProjectType.MONITORING -> MaterialTheme.colorScheme.info?.copy(alpha = 0.15f) ?: MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
+        ProjectType.MONITORING -> RhythmColors.warning.copy(alpha = 0.15f)
     }
     val textColor = when (type) {
         ProjectType.OBSERVATION -> MaterialTheme.colorScheme.primary
         ProjectType.INVESTIGATION -> MaterialTheme.colorScheme.secondary
         ProjectType.SURVEY -> MaterialTheme.colorScheme.tertiary
         ProjectType.EXPERIMENT -> MaterialTheme.colorScheme.error
-        ProjectType.MONITORING -> MaterialTheme.colorScheme.info ?: MaterialTheme.colorScheme.primary
+        ProjectType.MONITORING -> RhythmColors.warning
     }
 
     Surface(
@@ -273,11 +274,9 @@ fun ProjectStatusBadge(
         status.equals("Active", ignoreCase = true) -> 
             MaterialTheme.colorScheme.primary.copy(alpha = 0.15f) to MaterialTheme.colorScheme.primary
         status.equals("Paused", ignoreCase = true) -> 
-            MaterialTheme.colorScheme.warning?.copy(alpha = 0.15f) ?: MaterialTheme.colorScheme.primary.copy(alpha = 0.15f) to 
-            (MaterialTheme.colorScheme.warning ?: MaterialTheme.colorScheme.primary)
+            RhythmColors.warning.copy(alpha = 0.15f) to RhythmColors.warning
         status.equals("Completed", ignoreCase = true) -> 
-            MaterialTheme.colorScheme.success?.copy(alpha = 0.15f) ?: MaterialTheme.colorScheme.primary.copy(alpha = 0.15f) to 
-            (MaterialTheme.colorScheme.success ?: MaterialTheme.colorScheme.primary)
+            RhythmColors.success.copy(alpha = 0.15f) to RhythmColors.success
         else -> MaterialTheme.colorScheme.surfaceVariant to MaterialTheme.colorScheme.onSurfaceVariant
     }
 
