@@ -99,7 +99,7 @@ fun FieldMindSnackbarOverlay(
             initialOffsetY = { -it },
             animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow)
         ) + fadeIn(),
-        exit = slideOutVertically(targetOffsetY = { -it / 2 }) + fadeIn(),
+        exit = slideOutVertically(targetOffsetY = { -it / 2 }) + fadeOut(),
         modifier = modifier
     ) {
         data?.let {
@@ -113,7 +113,7 @@ fun FieldMindSnackbarOverlay(
                 isSave -> MaterialTheme.colorScheme.onPrimaryContainer
                 isError -> MaterialTheme.colorScheme.onErrorContainer
                 isWarning -> MaterialTheme.colorScheme.onTertiaryContainer
-                else -> MaterialTheme.colorScheme.onInverseSurface
+                else -> MaterialTheme.colorScheme.inverseOnSurface
             }
             val icon = when {
                 isSave -> MaterialSymbolIcon("check_circle")

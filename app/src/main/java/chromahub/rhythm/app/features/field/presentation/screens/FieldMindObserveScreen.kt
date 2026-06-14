@@ -1010,13 +1010,17 @@ private fun FieldModeScreen(viewModel: FieldMindViewModel, onBack: () -> Unit) {
         )
     }
     if (showQuickSnapCamera) {
-        Dialog(onDismissRequest = { showQuickSnapCamera = false }, properties = DialogProperties(usePlatformDefaultWidth = false)) {
+        Dialog(
+            onDismissRequest = { showQuickSnapCamera = false },
+            properties = DialogProperties(usePlatformDefaultWidth = false)
+        ) {
             FieldMindCameraV2(
                 onPhotoCaptured = { uri, mimeType ->
                     scope.launch {
                         showQuickSnapCamera = false
                         quickSnapStatus = if (canAutoLocate) "Locating…" else "Saved without location"
-                        val captured = if (canAutoLocate && locationProvider.hasAnyLocationPermission()) awaitCurrentLocation(locationProvider) else null
+                        val captured = if (canAutoLocate && locationProvider.hasAnyLocationPermission())
+                            awaitCurrentLocation(locationProvider) else null
                         val weather = if (captured != null && autoWeatherEnabled) {
                             quickSnapStatus = "Fetching weather…"
                             viewModel.fetchWeatherSnapshot(captured.latitude, captured.longitude)
@@ -1027,15 +1031,26 @@ private fun FieldModeScreen(viewModel: FieldMindViewModel, onBack: () -> Unit) {
                             else -> "Metadata attached"
                         }
                         viewModel.addObservation(
-                            subject = quickSnapCategory, category = quickSnapCategory,
+                            subject = quickSnapCategory,
+                            category = quickSnapCategory,
                             facts = "Quick snap — add details later.",
                             confidence = defaultConfidence,
-                            manualLocation = captured?.asDisplayText().orEmpty(), tags = "quick-snap",
-                            evidence = "Camera quick snap", context = quickSnapStatus.orEmpty(),
-                            latitude = captured?.latitude, longitude = captured?.longitude,
+                            manualLocation = captured?.asDisplayText().orEmpty(),
+                            tags = "quick-snap",
+                            evidence = "Camera quick snap",
+                            context = quickSnapStatus.orEmpty(),
+                            latitude = captured?.latitude,
+                            longitude = captured?.longitude,
                             weather = weather,
-                            attachments = listOf(DraftEvidenceAttachment("Photo", uri, "Quick snap", mimeType = mimeType))
-                        ) { showFastSnackbar(snackbar, scope, "Quick snap saved as $quickSnapCategory • ${quickSnapStatus.orEmpty()}") } }
+                            attachments = listOf(
+                                DraftEvidenceAttachment("Photo", uri, "Quick snap", mimeType = mimeType)
+                            )
+                        ) {
+                            showFastSnackbar(
+                                snackbar, scope,
+                                "Quick snap saved as $quickSnapCategory • ${quickSnapStatus.orEmpty()}"
+                            )
+                        }
                     }
                 },
                 onDismiss = { showQuickSnapCamera = false },
@@ -1044,9 +1059,6 @@ private fun FieldModeScreen(viewModel: FieldMindViewModel, onBack: () -> Unit) {
         }
     }
 
-// ══════════════════════════════════════════════════════════════════════
-//  Shared helpers (preserved from original)
-// ══════════════════════════════════════════════════════════════════════
     quickSnapStatus?.let { status ->
         AlertDialog(
             onDismissRequest = { quickSnapStatus = null },
