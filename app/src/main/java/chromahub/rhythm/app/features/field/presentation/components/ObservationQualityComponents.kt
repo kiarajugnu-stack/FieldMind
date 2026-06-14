@@ -199,7 +199,7 @@ fun ObservationChecklistPicker(
     val options = listOf("Seen", "Heard", "Smelled", "Touched", "Measured")
     Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text("Observation Methods", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold)
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.wrapContentHeight()) {
+        Row(Modifier.fillMaxWidth().wrapContentHeight(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             options.forEach { option ->
                 FilterChip(
                     selected = option in selected,

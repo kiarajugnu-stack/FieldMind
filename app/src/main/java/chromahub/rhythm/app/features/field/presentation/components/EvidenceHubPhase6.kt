@@ -15,6 +15,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import fieldmind.research.app.features.field.data.database.entity.ObservationEntity
+import fieldmind.research.app.features.field.presentation.components.FieldMindIcons
 
 // ──────────────────────────────────────────────────────────────────────
 //  Evidence Hub Phase 6: Integrated into ProjectsScreen EvidenceTab
@@ -141,7 +142,7 @@ fun BulkSelectionToolbar(
                             modifier = Modifier.weight(1f),
                             shape = RoundedCornerShape(12.dp)
                         ) {
-                            Icon(icon, null, size = 16.dp)
+                            Icon(icon, null, modifier = Modifier.size(16.dp))
                             Spacer(Modifier.width(4.dp))
                             Text(label, style = MaterialTheme.typography.labelSmall)
                         }
