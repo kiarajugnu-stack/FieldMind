@@ -191,6 +191,9 @@ fun CaptureDefaultsSettingsPage(viewModel: FieldMindViewModel, onBack: () -> Uni
     val media by settings.mediaAttachmentsEnabled.collectAsState()
     val audio by settings.audioRecordingEnabled.collectAsState()
     val exportMode by settings.attachmentExportMode.collectAsState()
+    val autoWeather by settings.autoWeatherEnabled.collectAsState()
+    val tempUnit by settings.tempUnit.collectAsState()
+    val weatherRefresh by settings.weatherRefreshInterval.collectAsState()
     val reminders by settings.remindersEnabled.collectAsState()
     val streaks by settings.streaksEnabled.collectAsState()
 
@@ -223,6 +226,18 @@ fun CaptureDefaultsSettingsPage(viewModel: FieldMindViewModel, onBack: () -> Uni
                 ToggleItem("Daily reminders", "Schedules a daily prompt and skips after logging today's observation.", reminders, settings::setRemindersEnabled, FieldMindIcons.Notifications)
                 HorizontalDivider(Modifier.padding(start = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
                 ToggleItem("Streaks", "Shows consecutive observation days on the Today dashboard.", streaks, settings::setStreaksEnabled, FieldMindIcons.Streak)
+            }
+        }
+        item {
+            SectionHeader("Weather", "Live weather on the home dashboard and observation capture.")
+        }
+        item {
+            SettingsGroupCard {
+                ToggleItem("Auto weather", "Fetch live weather when adding observations.", autoWeather, settings::setAutoWeatherEnabled, FieldMindIcons.Weather)
+                HorizontalDivider(Modifier.padding(start = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+                ChoiceItemForm("Temperature unit", listOf("Celsius", "Fahrenheit"), tempUnit, FieldMindIcons.Weather, settings::setTempUnit)
+                HorizontalDivider(Modifier.padding(start = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+                ChoiceItemForm("Dashboard refresh", listOf("15 min", "30 min", "60 min"), weatherRefresh, FieldMindIcons.Timer, settings::setWeatherRefreshInterval)
             }
         }
     }

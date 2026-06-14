@@ -25,11 +25,7 @@ data class CapturedLocation(
     /** Decimal coordinates only, e.g. "12.97160, 77.59456". */
     fun coordinateText(): String = "%.5f, %.5f".format(latitude, longitude)
 
-    fun asDisplayText(): String = buildString {
-        placeName?.takeIf { it.isNotBlank() }?.let { append(it); append(" • ") }
-        append("GPS: ${coordinateText()}")
-        accuracyMeters?.let { append(" • ±${it.toInt()}m") }
-    }
+    fun asDisplayText(): String = placeName?.takeIf { it.isNotBlank() } ?: coordinateText()
 }
 
 class FieldLocationProvider(private val context: Context) {

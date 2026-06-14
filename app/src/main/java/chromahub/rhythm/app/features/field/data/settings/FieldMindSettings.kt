@@ -106,6 +106,12 @@ class FieldMindSettings private constructor(context: Context) {
     private val _autoWeatherEnabled = MutableStateFlow(prefs.getBoolean(KEY_AUTO_WEATHER, false))
     val autoWeatherEnabled: StateFlow<Boolean> = _autoWeatherEnabled.asStateFlow()
 
+    private val _tempUnit = MutableStateFlow(prefs.getString(KEY_TEMP_UNIT, "Celsius") ?: "Celsius")
+    val tempUnit: StateFlow<String> = _tempUnit.asStateFlow()
+
+    private val _weatherRefreshInterval = MutableStateFlow(prefs.getString(KEY_WEATHER_REFRESH, "30 min") ?: "30 min")
+    val weatherRefreshInterval: StateFlow<String> = _weatherRefreshInterval.asStateFlow()
+
     private val _gpsMode = MutableStateFlow(prefs.getString(KEY_GPS_MODE, "On capture only") ?: "On capture only")
     val gpsMode: StateFlow<String> = _gpsMode.asStateFlow()
 
@@ -166,6 +172,8 @@ class FieldMindSettings private constructor(context: Context) {
         FieldMindBackgroundScheduler.scheduleAutoBackup(appContext, _autoBackupEnabled.value, value)
     }
     fun setAutoWeatherEnabled(value: Boolean) = edit(KEY_AUTO_WEATHER, value) { _autoWeatherEnabled.value = value }
+    fun setTempUnit(value: String) = edit(KEY_TEMP_UNIT, value) { _tempUnit.value = value }
+    fun setWeatherRefreshInterval(value: String) = edit(KEY_WEATHER_REFRESH, value) { _weatherRefreshInterval.value = value }
     fun setGpsMode(value: String) = edit(KEY_GPS_MODE, value) { _gpsMode.value = value }
     fun setLockTimeout(value: String) = edit(KEY_LOCK_TIMEOUT, value) { _lockTimeout.value = value }
     fun setAutoLockOnBackground(value: Boolean) = edit(KEY_AUTO_LOCK_BACKGROUND, value) { _autoLockOnBackground.value = value }
@@ -211,6 +219,8 @@ class FieldMindSettings private constructor(context: Context) {
         private const val KEY_AUTO_BACKUP_ENABLED = "auto_backup_enabled"
         private const val KEY_AUTO_BACKUP_INTERVAL = "auto_backup_interval"
         private const val KEY_AUTO_WEATHER = "auto_weather"
+        private const val KEY_TEMP_UNIT = "temp_unit"
+        private const val KEY_WEATHER_REFRESH = "weather_refresh"
         private const val KEY_GPS_MODE = "gps_mode"
         private const val KEY_LOCK_TIMEOUT = "lock_timeout"
         private const val KEY_AUTO_LOCK_BACKGROUND = "auto_lock_background"
