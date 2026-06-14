@@ -2,8 +2,10 @@ package fieldmind.research.app.features.field.presentation.components
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.FiniteAnimationSpec
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
@@ -82,10 +84,10 @@ fun FieldMindSnackbarOverlay(
     val hasData = data != null
 
     // Bouncy spring for save confirmations, smooth for others
-    val animSpec = if (isSave)
-        spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow)
+    val animSpec: FiniteAnimationSpec<Float> = if (isSave)
+        spring<Float>(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow)
     else
-        spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = Spring.StiffnessMedium)
+        spring<Float>(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = Spring.StiffnessMedium)
 
     val scale by animateFloatAsState(
         targetValue = if (hasData) 1f else 0.85f,
@@ -97,7 +99,7 @@ fun FieldMindSnackbarOverlay(
         visible = hasData,
         enter = slideInVertically(
             initialOffsetY = { -it },
-            animationSpec = spring<Float>(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow)
+            animationSpec = spring<IntOffset>(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow)
         ) + fadeIn(),
         exit = slideOutVertically(targetOffsetY = { -it / 2 }) + fadeOut(),
         modifier = modifier
