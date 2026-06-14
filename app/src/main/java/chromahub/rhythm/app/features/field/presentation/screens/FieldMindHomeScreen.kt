@@ -192,7 +192,7 @@ fun HomeScreen(
         // ── Widget Grid ──
         item { SectionHeader("Research areas", "Quick overview of your work") }
         item { HomeWidgetGrid(observations, notes, questions, sources, projects, reports, data) { onNavigate(it) } }
-        item { HomeDataOptionsCard(data) { onNavigate(FieldMindScreen.DataTools) } }
+        item { HomeDataOptionsCard(data, onNavigate) }
         
         // ── Recent Captures ──
         if (observations.isNotEmpty()) {
@@ -1390,12 +1390,12 @@ fun HomeWidgetGrid(
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun HomeDataOptionsCard(data: List<DataRecordEntity>, onOpenData: () -> Unit) {
-    val tools = listOf(
-        Triple("Count", "Track totals", FieldMindIcons.Add),
-        Triple("Measure", "Log values", FieldMindIcons.Graph),
-        Triple("Weather", "Conditions", FieldMindIcons.Weather),
-        Triple("Species", "Survey data", FieldMindIcons.Nature)
+private fun HomeDataOptionsCard(data: List<DataRecordEntity>, onNavigate: (FieldMindScreen) -> Unit) {
+    val toolScreens = listOf(
+        Triple("Count", "Track totals", FieldMindIcons.Add, FieldMindScreen.CounterTool),
+        Triple("Measure", "Log values", FieldMindIcons.Graph, FieldMindScreen.MeasurementTool),
+        Triple("Weather", "Conditions", FieldMindIcons.Weather, FieldMindScreen.WeatherLogTool),
+        Triple("Species", "Survey data", FieldMindIcons.Nature, FieldMindScreen.SpeciesTool)
     )
     Card(shape = RoundedCornerShape(24.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp), modifier = Modifier.fillMaxWidth()) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -1405,11 +1405,11 @@ private fun HomeDataOptionsCard(data: List<DataRecordEntity>, onOpenData: () -> 
                     Text("Data tools", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                     Text("${data.size} records • choose what you are tracking", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
-                TextButton(onClick = onOpenData) { Text("Open") }
+                TextButton(onClick = { onNavigate(FieldMindScreen.DataTools) }) { Text("Open all") }
             }
             FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp), maxItemsInEachRow = 2) {
-                tools.forEach { (title, body, icon) ->
-                    Surface(onClick = onOpenData, modifier = Modifier.weight(1f), shape = RoundedCornerShape(18.dp), color = MaterialTheme.colorScheme.surfaceContainerHigh) {
+                toolScreens.forEach { (title, body, icon, screen) ->
+                    Surface(onClick = { onNavigate(screen) }, modifier = Modifier.weight(1f), shape = RoundedCornerShape(18.dp), color = MaterialTheme.colorScheme.surfaceContainerHigh) {
                         Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                             Icon(icon, null, tint = FieldMindTheme.colors.data, size = 20.dp)
                             Column { Text(title, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold); Text(body, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }

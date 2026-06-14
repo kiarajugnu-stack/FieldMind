@@ -41,6 +41,99 @@ internal data class FieldMindChangelogEntry(
 
 private val fieldMindChangelog = listOf(
     FieldMindChangelogEntry(
+        version = "1.4.0-species-id-map-tools",
+        date = "2026-06-14",
+        title = "Phase 4: Species ID, Offline Maps & Enhanced Observation",
+        importance = "Major",
+        tags = listOf("Species ID", "Offline Maps", "Observation", "PDF", "Attachments"),
+        sections = listOf(
+            "🔬 Species Identification Engine (NEW)" to listOf(
+                "On-device TensorFlow Lite species classifier with bundled 500-species model (expandable via download).",
+                "Post-capture 'Identify species' button in observation evidence row.",
+                "Top-5 species matches with confidence scores displayed in a bottom sheet.",
+                "Manual species search by common or scientific name for offline lookup.",
+                "iNaturalist API fallback integration when online (with user permission toggle).",
+                "Auto-populate species name, category (Bird/Mammal/Insect/Plant/etc.), and confidence.",
+                "Supports regional model packs: North America, Europe, Asia, Tropical."
+            ),
+            "🌍 Offline Maps with Drawing Tools (NEW)" to listOf(
+                "Offline tile manager downloads OSM tile regions for fully offline map use.",
+                "Drawing tools: Polygon (survey boundary), Line (transect), Point (site marker) overlays.",
+                "GPS track recording during research sessions with start/stop control.",
+                "Geo-fence reminders: 'When you arrive at Site A, remind you to log water quality.'",
+                "Multiple tile sources: OSM Standard, Satellite, Terrain.",
+                "LRU tile cache with pruning to manage storage."
+            ),
+            "🔗 Hypothesis-Driven Observation Graph (NEW)" to listOf(
+                "Live graph inference: semantic matching of observations to hypotheses as you add them.",
+                "Weak signal detection suggests potential connections: 'These 3 observations might support Hypothesis #2'.",
+                "Gap detection: 'You're testing H1 but missing observations for alternative H3.'",
+                "Question generation: 'Based on your observations, you might ask...'",
+                "Citation chains track evidence used to support each hypothesis.",
+                "Enhanced detail screen with 'Related' section showing graph connections."
+            ),
+            "📄 PDF Reader with Native Rendering (NEW)" to listOf(
+                "Native AndroidX PDF renderer replaces WebView fallback.",
+                "Inline annotations: highlight, underline, sticky notes.",
+                "Table of contents navigation for structured documents.",
+                "Full-text search within PDF with page and context snippets.",
+                "Continuous scroll and page thumbnail preview."
+            ),
+            "📁 Project Attachments (NEW)" to listOf(
+                "Attach photos, PDFs, and documents to projects with folder organization.",
+                "Quick preview in project detail with thumbnail gallery.",
+                "Organize attachments by folder/type with bulk operations.",
+                "Attachment count and type indicators in project cards."
+            ),
+            "🏠 Home Screen Data Tool Improvements (Enhanced)" to listOf(
+                "Counter Tool: session grouping, running totals, chart view, CSV export.",
+                "Measurement Tool: measurement history chart, batch entry, unit conversion.",
+                "Weather Log Tool: Open-Meteo auto-fetch, 7-day history chart, data export.",
+                "Species Tool: auto-categorization, species ID suggestions, photo upload.",
+                "All tools now open full dedicated screens with rich interactions."
+            )
+        )
+    ),
+    FieldMindChangelogEntry(
+        version = "1.3.0-interactive-data-tools",
+        date = "2026-06-14",
+        title = "Interactive Data Tools — Dedicated Mini-Tools",
+        importance = "Major",
+        tags = listOf("Data Tools", "Counter", "Measurement", "Weather", "Species"),
+        sections = listOf(
+            "Interactive Counter Tool" to listOf(
+                "Dedicated full-screen counter UI with large +/− stepper buttons and auto-save on each increment.",
+                "Real-time count display with pulse animation on increment.",
+                "Auto-saves a data record to the database with every tap, building a time-stamped tally history.",
+                "Label input to describe what you are counting (birds, trees, samples).",
+                "Expandable recent tally history showing all saved counter records."
+            ),
+            "Measurement Tool" to listOf(
+                "Structured measurement form with large value display, decimal place support, and inline unit selector.",
+                "Quick unit preset chips (cm, m, mm, g, kg, °C) plus dropdown with 15+ common units.",
+                "Details section for label, notes, and location input.",
+                "Saves directly to the Data Records database as a Measurement Log entry."
+            ),
+            "Weather Log Tool" to listOf(
+                "Quick weather conditions form with condition picker (Clear, Rain, Snow, Thunderstorm, etc.).",
+                "Temperature (°C), humidity (%), and wind speed fields with number pads.",
+                "One-tap GPS location fetch with place name resolution.",
+                "Saves as a Weather Log data record with structured condition string."
+            ),
+            "Species Log Tool" to listOf(
+                "Quick-capture species observation form with name, count stepper, and confidence selector.",
+                "Behavior picker (Feeding, Flying, Calling, Resting, etc.) and habitat input.",
+                "Auto-categorizes into Bird/Mammal/Insect/Plant based on species name keywords.",
+                "Saves directly as a full observation with facts and species-tracking tag."
+            ),
+            "Wired from Home Screen" to listOf(
+                "Home screen Data Tools card now opens each tool directly — Count, Measure, Weather, Species.",
+                "Tap any tile to open its dedicated mini-tool instead of the generic listing screen.",
+                "'Open all' button still available to see all data records in the Workspace Data tab."
+            )
+        )
+    ),
+    FieldMindChangelogEntry(
         version = "1.2.0-field-research-complete",
         date = "2026-06-14",
         title = "Complete Field Research Redesign (Phases 1-12)",

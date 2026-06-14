@@ -46,8 +46,12 @@ import coil.compose.AsyncImage
 import fieldmind.research.app.features.field.data.database.entity.*
 import fieldmind.research.app.features.field.data.location.CapturedLocation
 import fieldmind.research.app.features.field.data.location.FieldLocationProvider
+import fieldmind.research.app.features.field.data.vision.SpeciesClassifier
+import fieldmind.research.app.features.field.data.vision.SpeciesDatabase
+import fieldmind.research.app.features.field.data.vision.SpeciesMatch
 import fieldmind.research.app.features.field.data.weather.WeatherSnapshot
 import fieldmind.research.app.features.field.presentation.components.*
+import fieldmind.research.app.features.field.presentation.screens.species.SpeciesIdentificationSheet
 import fieldmind.research.app.features.field.presentation.theme.FieldMindTheme
 import fieldmind.research.app.features.field.presentation.viewmodel.DraftEvidenceAttachment
 import fieldmind.research.app.features.field.presentation.viewmodel.FieldMindViewModel
@@ -56,6 +60,7 @@ import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbo
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
+import fieldmind.research.app.features.field.data.vision.SpeciesMatch
 import java.io.File
 import kotlin.coroutines.resume
 
@@ -136,6 +141,13 @@ fun ObserveScreen(
     // Camera dialog state
     var showInAppCamera by remember { mutableStateOf(false) }
 
+    // ── Species identification state ──
+    val context = LocalContext.current
+    val speciesClassifier = remember { SpeciesClassifier(context) }
+    val speciesDatabase = remember { SpeciesDatabase(context) }
+    var showSpeciesId by remember { mutableStateOf(false) }
+    var speciesIdImageUri by remember { mutableStateOf<String?>(null) }
+    var identifiedSpecies by remember { mutableStateOf<SpeciesMatch?>(null) }
 
     // ── Action: add attachment ──
     fun addAttachment(attachment: DraftEvidenceAttachment) {
@@ -430,6 +442,32 @@ fun ObserveScreen(
         )
     }
 
+    // ── Species identification sheet ──
+    if (showSpeciesId && speciesIdImageUri != null) {
+        SpeciesIdentificationSheet(
+            imageUri = speciesIdImageUri,
+            classifier = speciesClassifier,
+            database = speciesDatabase,
+            onSelectSpecies = { match ->
+                identifiedSpecies = match
+                session = session.copy(
+                    subject = match.commonName,
+                    category = match.category,
+                    speciesConfidence = when {
+                        match.confidence >= 0.8f -> "Certain"
+                        match.confidence >= 0.5f -> "Likely"
+                        else -> "Unsure"
+                    }
+                )
+                showFastSnackbar(snackbar, scope, "Identified as ${match.commonName}")
+            },
+            onDismiss = {
+                showSpeciesId = false
+                speciesIdImageUri = null
+            }
+        )
+    }
+
     // ── In-app camera overlay ──
     if (showInAppCamera) {
         Dialog(
@@ -707,6 +745,16 @@ private fun EvidenceCaptureRow(
                     )
                 }
             }
+            // Species identification button (always visible when form is active)
+            Spacer(Modifier.height(8.dp))
+            SpeciesIdButton(
+                attachments = attachments,
+                identifiedSpecies = null,
+                onIdentifyFromPhoto = { uri ->
+                    // This will be called from the ObserveScreen
+                },
+                onOpenSearch = { }
+            )
 
             // Attachment previews
             if (attachments.isNotEmpty()) {
@@ -1596,6 +1644,94 @@ private fun Map<String, String>.toJsonObject(): String = entries
 private fun DraftEvidenceAttachment.isImage(): Boolean =
     mimeType?.startsWith("image/") == true || type.equals("Photo", true) || type.equals("Gallery", true) ||
     Regex("\\.(jpg|jpeg|png|webp|gif|heic|bmp)(\\?.*)?$", RegexOption.IGNORE_CASE).containsMatchIn(uri)
+
+// ══════════════════════════════════════════════════════════════════════
+//  Species Identification Button
+// ══════════════════════════════════════════════════════════════════════
+
+@Composable
+internal fun SpeciesIdButton(
+    attachments: List<DraftEvidenceAttachment>,
+    identifiedSpecies: SpeciesMatch?,
+    onIdentifyFromPhoto: (String?) -> Unit,
+    onOpenSearch: () -> Unit
+) {
+    val colors = FieldMindTheme.colors
+    val hasPhoto = attachments.any { it.isImage() }
+
+    Card(
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = if (identifiedSpecies != null)
+                colors.observation.copy(alpha = 0.1f)
+            else MaterialTheme.colorScheme.surfaceContainerHigh
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Row(
+                Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                Icon(
+                    FieldMindIcons.Nature,
+                    null,
+                    tint = if (identifiedSpecies != null) colors.observation else MaterialTheme.colorScheme.onSurfaceVariant,
+                    size = 22.dp
+                )
+                Column(Modifier.weight(1f)) {
+                    Text(
+                        if (identifiedSpecies != null) "Identified: ${identifiedSpecies.commonName}"
+                        else "Identify species",
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    Text(
+                        if (identifiedSpecies != null) "Confidence: ${(identifiedSpecies.confidence * 100).toInt()}% • ${identifiedSpecies.scientificName}"
+                        else if (hasPhoto) "Tap to identify from attached photo"
+                        else "Add a photo first, then identify",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                OutlinedButton(
+                    onClick = { onIdentifyFromPhoto(attachments.firstOrNull { it.isImage() }?.uri) },
+                    enabled = hasPhoto && identifiedSpecies == null,
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Icon(FieldMindIcons.Camera, null, size = 16.dp)
+                    Spacer(Modifier.size(6.dp))
+                    Text("From photo", style = MaterialTheme.typography.labelSmall)
+                }
+                OutlinedButton(
+                    onClick = onOpenSearch,
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Icon(FieldMindIcons.Search, null, size = 16.dp)
+                    Spacer(Modifier.size(6.dp))
+                    Text("Search by name", style = MaterialTheme.typography.labelSmall)
+                }
+                if (identifiedSpecies != null) {
+                    FilledTonalIconButton(
+                        onClick = { /* Clear identification */ },
+                        modifier = Modifier.size(36.dp)
+                    ) {
+                        Icon(FieldMindIcons.Close, null, size = 16.dp)
+                    }
+                }
+            }
+        }
+    }
+}
 
 @Composable
 internal fun AttachmentPreviewList(items: List<DraftEvidenceAttachment>, onCaptionChange: (Int, String) -> Unit, onRemove: (Int) -> Unit) {
