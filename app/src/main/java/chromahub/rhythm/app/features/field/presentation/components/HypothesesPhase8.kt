@@ -12,6 +12,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import fieldmind.research.app.features.field.data.database.entity.HypothesisEntity
+import fieldmind.research.app.features.field.presentation.theme.FieldMindTheme
 import fieldmind.research.app.ui.theme.RhythmColors
 
 /**
@@ -35,7 +36,7 @@ fun HypothesisCard(
     onClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
-    val statusEnum = HypothesisStatus.values().firstOrNull { it.displayName == hypothesis.status } ?: HypothesisStatus.UNTESTED
+    val statusEnum = HypothesisStatus.values().firstOrNull { it.displayName == hypothesis.resultStatus } ?: HypothesisStatus.UNTESTED
     val statusColor = when (statusEnum) {
         HypothesisStatus.SUPPORTED -> MaterialTheme.colorScheme.primary
         HypothesisStatus.CONTRADICTED -> MaterialTheme.colorScheme.error
@@ -64,14 +65,14 @@ fun HypothesisCard(
                 Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text("Confidence", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold)
                     LinearProgressIndicator(
-                        progress = { hypothesis.confidence / 100f },
+                        progress = { hypothesis.confidencePercent / 100f },
                         color = MaterialTheme.colorScheme.primary,
                         trackColor = MaterialTheme.colorScheme.surfaceVariant,
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(6.dp)
                     )
-                    Text("${hypothesis.confidence}%", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("${hypothesis.confidencePercent}%", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
                 
                 // Status badge
@@ -112,13 +113,13 @@ fun HypothesisStatusBadge(
     val backgroundColor = when (statusEnum) {
         HypothesisStatus.SUPPORTED -> MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
         HypothesisStatus.CONTRADICTED -> MaterialTheme.colorScheme.error.copy(alpha = 0.15f)
-        HypothesisStatus.INCONCLUSIVE -> (MaterialTheme.colorScheme.warning ?: MaterialTheme.colorScheme.primary).copy(alpha = 0.15f)
+        HypothesisStatus.INCONCLUSIVE -> FieldMindTheme.colors.warning.copy(alpha = 0.15f)
         HypothesisStatus.UNTESTED -> MaterialTheme.colorScheme.surfaceVariant
     }
     val textColor = when (statusEnum) {
         HypothesisStatus.SUPPORTED -> MaterialTheme.colorScheme.primary
         HypothesisStatus.CONTRADICTED -> MaterialTheme.colorScheme.error
-        HypothesisStatus.INCONCLUSIVE -> MaterialTheme.colorScheme.warning ?: MaterialTheme.colorScheme.primary
+        HypothesisStatus.INCONCLUSIVE -> FieldMindTheme.colors.warning
         HypothesisStatus.UNTESTED -> MaterialTheme.colorScheme.onSurfaceVariant
     }
 

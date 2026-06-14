@@ -19,6 +19,7 @@ import fieldmind.research.app.features.field.presentation.viewmodel.FieldMindVie
 import fieldmind.research.app.shared.presentation.components.icons.Icon
 import java.text.SimpleDateFormat
 import java.util.*
+import kotlin.math.roundToInt
 
 @Composable
 fun WeatherDatabaseScreen(
@@ -34,7 +35,7 @@ fun WeatherDatabaseScreen(
 
     val stats = remember(weatherObs) {
         val temps = weatherObs.mapNotNull { it.weatherTemperature }
-        val humidities = weatherObs.mapNotNull { it.weatherHumidity?.toDoubleOrNull() }
+        val humidities = weatherObs.mapNotNull { it.weatherHumidity?.toDouble() }
         mapOf(
             "avg_temp" to if (temps.isNotEmpty()) temps.average() else null,
             "min_temp" to temps.minOrNull(),

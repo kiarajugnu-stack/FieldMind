@@ -16,6 +16,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import fieldmind.research.app.features.field.data.database.entity.ObservationEntity
 import fieldmind.research.app.features.field.presentation.components.FieldMindIcons
+import fieldmind.research.app.shared.presentation.components.icons.Icon
 
 // ──────────────────────────────────────────────────────────────────────
 //  Evidence Hub Phase 6: Integrated into ProjectsScreen EvidenceTab

@@ -1,14 +1,14 @@
 package fieldmind.research.app.features.field.presentation.components
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.*
+import fieldmind.research.app.shared.presentation.components.icons.Icon
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -47,7 +47,7 @@ fun ReportTemplateCard(
         colors = CardDefaults.cardColors(
             containerColor = if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.15f) else MaterialTheme.colorScheme.surfaceContainerLow
         ),
-        border = if (isSelected) border(2.dp, MaterialTheme.colorScheme.primary, RoundedCornerShape(16.dp)) else null,
+        border = if (isSelected) BorderStroke(2.dp, MaterialTheme.colorScheme.primary) else null,
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -126,8 +126,7 @@ fun ReportPreviewCard(
             }
 
             Row(horizontalArrangement = Arrangement.spacedBy(4.dp), modifier = Modifier.fillMaxWidth()) {
-                sections.take(3).forEach { section ->
-                    val (name, _) = section
+                sections.entries.take(3).forEach { (name, _) ->
                     AssistChip(onClick = {}, label = { Text(name) })
                 }
                 if (sections.size > 3) {
@@ -192,7 +191,7 @@ fun AutoGenerateReportOption(
             .clickable(onClick = onGenerate),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.2f)),
-        border = border(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.3f), RoundedCornerShape(16.dp)),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Row(
@@ -207,7 +206,7 @@ fun AutoGenerateReportOption(
                 Text("Generate draft report", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.primary)
                 Text("Auto-create from your observations, data, and hypotheses", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
-            Icon(imageVector = Info, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+            Icon(imageVector = FieldMindIcons.Info, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
         }
     }
 }
