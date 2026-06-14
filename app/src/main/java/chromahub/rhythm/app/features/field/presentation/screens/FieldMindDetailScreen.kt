@@ -153,21 +153,20 @@ fun DetailScreen(
                         }, onOpenDetail) }
                     }
                     "question" -> questions.firstOrNull { it.id == id }?.let { qn ->
-                        item { DetailBody(qn.questionText, "question", listOf("Category" to qn.category, "Source" to qn.sourceType, "Status" to qn.status, "Priority" to qn.priority)) }
-                        item { QuestionAnswerCard(qn) { ans -> viewModel.setQuestionAnswer(qn, ans) } }
+                        item { QuestionDetailContent(qn, hypotheses) { ans -> viewModel.setQuestionAnswer(qn, ans) } }
                         item { BacklinksPanel(buildList {
                             projects.firstOrNull { it.id == qn.relatedProjectId }?.let { add(Triple("project", it.title, it.id)) }
                             hypotheses.filter { it.linkedQuestionId == qn.id }.forEach { add(Triple("hypothesis", it.prediction, it.id)) }
                         }, onOpenDetail) }
                     }
                     "hypothesis" -> hypotheses.firstOrNull { it.id == id }?.let { h ->
-                        item { DetailBody(h.prediction, "hypothesis", listOf("Reasoning" to h.reasoning, "Support" to h.supportCriteria, "Weaken" to h.weakeningCriteria, "Test" to h.testMethod, "Result" to h.resultStatus, "Confidence" to "${h.confidencePercent}%")) }
+                        item { HypothesisDetailContent(h) }
                         item { BacklinksPanel(buildList {
                             questions.firstOrNull { it.id == h.linkedQuestionId }?.let { add(Triple("question", it.questionText, it.id)) }
                         }, onOpenDetail) }
                     }
                     "project" -> projects.firstOrNull { it.id == id }?.let { p ->
-                        item { DetailBody(p.title, "project", listOf("Objective" to p.objective, "Question" to p.researchQuestion, "Background" to p.backgroundNotes, "Methods" to p.methods, "Data" to p.dataSummary, "Analysis" to p.analysis, "Conclusion" to p.conclusion, "Future" to p.futureQuestions)) }
+                        item { ProjectDetailContent(p, observations, questions, sources, data, reports) }
                         item { BacklinksPanel(buildList {
                             observations.filter { it.projectId == p.id }.forEach { add(Triple("observation", it.subject, it.id)) }
                             questions.filter { it.relatedProjectId == p.id }.forEach { add(Triple("question", it.questionText, it.id)) }
@@ -186,19 +185,18 @@ fun DetailScreen(
                         }, onOpenDetail) }
                     }
                     "data" -> data.firstOrNull { it.id == id }?.let { d ->
-                        item { DetailBody(d.label, "data", listOf("Tool" to d.toolType, "Value" to "${d.value} ${d.unit}".trim(), "Location" to d.location, "Notes" to d.notes)) }
+                        item { DataRecordDetailContent(d) }
                         item { BacklinksPanel(buildList {
                             projects.firstOrNull { it.id == d.projectId }?.let { add(Triple("project", it.title, it.id)) }
                             observations.firstOrNull { it.id == d.observationId }?.let { add(Triple("observation", it.subject, it.id)) }
                         }, onOpenDetail) }
                     }
                     "report" -> reports.firstOrNull { it.id == id }?.let { r ->
-                        item { DetailBody(r.title, "report", listOf("Type" to r.type, "Status" to r.status, "Question" to r.question, "Conclusion" to r.conclusion)) }
-                        item { Card(shape = RoundedCornerShape(20.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)) { Text(FieldMindExport.buildMarkdownReport(r), Modifier.padding(16.dp), style = MaterialTheme.typography.bodySmall) } }
+                        item { ReportDetailContent(r) }
                         item { BacklinksPanel(buildList { projects.firstOrNull { it.id == r.projectId }?.let { add(Triple("project", it.title, it.id)) } }, onOpenDetail) }
                     }
                     "flashcard" -> flashcards.firstOrNull { it.id == id }?.let { f ->
-                        item { DetailBody(f.front, "flashcard", listOf("Type" to f.type, "Back" to f.back)) }
+                        item { FlashcardDetailContent(f) }
                         item { BacklinksPanel(buildList {
                             sources.firstOrNull { it.id == f.sourceId }?.let { add(Triple("source", it.title, it.id)) }
                             projects.firstOrNull { it.id == f.projectId }?.let { add(Triple("project", it.title, it.id)) }
@@ -376,6 +374,471 @@ private fun NoteDetailContent(
                 }
             }
         }
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════════
+//  Entity-Specific Detail Composables
+// ══════════════════════════════════════════════════════════════════════
+
+@Composable
+@OptIn(ExperimentalLayoutApi::class)
+private fun QuestionDetailContent(
+    qn: QuestionEntity,
+    hypotheses: List<HypothesisEntity>,
+    onSaveAnswer: (String) -> Unit
+) {
+    val colors = FieldMindTheme.colors
+    Card(
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+            // Header with icon and badges
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                Box(
+                    Modifier.size(48.dp).clip(RoundedCornerShape(16.dp))
+                        .background(colors.question.copy(alpha = 0.14f)),
+                    contentAlignment = Alignment.Center
+                ) { Icon(FieldMindIcons.Question, null, tint = colors.question, size = 26.dp) }
+                Column(Modifier.weight(1f)) {
+                    Text(qn.questionText.ifBlank { "Question" }, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        InfoChip(qn.category, icon = FieldMindIcons.Category)
+                        StatusChip(qn.status, colors.question)
+                    }
+                }
+            }
+
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
+
+            // Details
+            DetailRow("Source type", qn.sourceType)
+            DetailRow("Priority", qn.priority)
+            if (qn.relatedProjectId != null) {
+                DetailRow("Project", "Linked to project")
+            }
+
+            // Answer section
+            QuestionAnswerCard(qn, onSaveAnswer)
+
+            // Linked hypotheses
+            val linked = hypotheses.filter { it.linkedQuestionId == qn.id }
+            if (linked.isNotEmpty()) {
+                Text("Hypotheses (${linked.size})", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = colors.hypothesis)
+                linked.forEach { h ->
+                    Row(
+                        Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp))
+                            .background(colors.hypothesis.copy(alpha = 0.08f)).padding(12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Icon(FieldMindIcons.Hypothesis, null, tint = colors.hypothesis, size = 18.dp)
+                        Column(Modifier.weight(1f)) {
+                            Text(h.prediction, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.SemiBold, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                            Text("Confidence: ${h.confidencePercent}%", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+@OptIn(ExperimentalLayoutApi::class)
+private fun HypothesisDetailContent(
+    h: HypothesisEntity
+) {
+    val colors = FieldMindTheme.colors
+    val resultColor = when ((h.resultStatus ?: "").lowercase()) {
+        "supported" -> colors.positive
+        "refuted" -> MaterialTheme.colorScheme.error
+        "inconclusive" -> colors.warning
+        else -> colors.hypothesis
+    }
+
+    Card(
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+            // Header
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                Box(
+                    Modifier.size(48.dp).clip(RoundedCornerShape(16.dp))
+                        .background(colors.hypothesis.copy(alpha = 0.14f)),
+                    contentAlignment = Alignment.Center
+                ) { Icon(FieldMindIcons.Hypothesis, null, tint = colors.hypothesis, size = 26.dp) }
+                Column(Modifier.weight(1f)) {
+                    Text(h.prediction.ifBlank { "Hypothesis" }, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+                    StatusChip(h.resultStatus.ifBlank { "Untested" }, resultColor)
+                }
+            }
+
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
+
+            // Reasoning
+            if (h.reasoning.isNotBlank()) {
+                Text("Reasoning", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold, color = colors.hypothesis)
+                Text(h.reasoning, style = MaterialTheme.typography.bodyMedium)
+            }
+
+            // Support criteria
+            if (h.supportCriteria.isNotBlank()) {
+                Text("Support criteria", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold, color = colors.positive)
+                Text(h.supportCriteria, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+
+            // Weakening criteria
+            if (h.weakeningCriteria.isNotBlank()) {
+                Text("Weakening criteria", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.error.copy(alpha = 0.8f))
+                Text(h.weakeningCriteria, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+
+            // Test method
+            if (h.testMethod.isNotBlank()) {
+                Text("Test method", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold, color = colors.info)
+                Text(h.testMethod, style = MaterialTheme.typography.bodyMedium)
+            }
+
+            // Confidence meter
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text("Confidence", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text("${h.confidencePercent}%", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = resultColor)
+            }
+            LinearProgressIndicator(
+                progress = { (h.confidencePercent).coerceIn(0, 100) / 100f },
+                modifier = Modifier.fillMaxWidth().height(6.dp).clip(RoundedCornerShape(3.dp)),
+                color = resultColor,
+                trackColor = resultColor.copy(alpha = 0.12f)
+            )
+        }
+    }
+}
+
+@Composable
+@OptIn(ExperimentalLayoutApi::class)
+private fun ProjectDetailContent(
+    p: ProjectEntity,
+    observations: List<ObservationEntity>,
+    questions: List<QuestionEntity>,
+    sources: List<SourceEntity>,
+    dataRecords: List<DataRecordEntity>,
+    reports: List<ReportEntity>
+) {
+    val colors = FieldMindTheme.colors
+    val obsCount = observations.count { it.projectId == p.id }
+    val qCount = questions.count { it.relatedProjectId == p.id }
+    val srcCount = sources.count { it.relatedProjectId == p.id }
+    val dataCount = dataRecords.count { it.projectId == p.id }
+    val repCount = reports.count { it.projectId == p.id }
+
+    Card(
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+            // Header
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                Box(
+                    Modifier.size(48.dp).clip(RoundedCornerShape(16.dp))
+                        .background(colors.project.copy(alpha = 0.14f)),
+                    contentAlignment = Alignment.Center
+                ) { Icon(FieldMindIcons.Project, null, tint = colors.project, size = 26.dp) }
+                Column(Modifier.weight(1f)) {
+                    Text(p.title.ifBlank { "Project" }, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+                    StatusChip(p.status.ifBlank { "Active" }, colors.project)
+                }
+            }
+
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
+
+            // Research question
+            if (p.researchQuestion.isNotBlank()) {
+                Text("Research question", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold, color = colors.project)
+                Text(p.researchQuestion, style = MaterialTheme.typography.bodyMedium)
+            }
+
+            // Objective
+            if (p.objective.isNotBlank()) {
+                Text("Objective", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(p.objective, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+
+            // Methods
+            if (p.methods.isNotBlank()) {
+                Text("Methods", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold, color = colors.info)
+                Text(p.methods, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+
+            // Data summary
+            if (p.dataSummary.isNotBlank()) {
+                Text("Data summary", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold, color = colors.data)
+                Text(p.dataSummary, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+
+            // Analysis
+            if (p.analysis.isNotBlank()) {
+                Text("Analysis", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold, color = colors.hypothesis)
+                Text(p.analysis, style = MaterialTheme.typography.bodySmall)
+            }
+
+            // Conclusion
+            if (p.conclusion.isNotBlank()) {
+                Text("Conclusion", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold, color = colors.positive)
+                Text(p.conclusion, style = MaterialTheme.typography.bodyMedium)
+            }
+
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
+
+            // Linked entity counts
+            Text("Connected records", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                AssetCountChip("Observations", obsCount, FieldMindIcons.Observation, colors.observation)
+                AssetCountChip("Questions", qCount, FieldMindIcons.Question, colors.question)
+                AssetCountChip("Sources", srcCount, FieldMindIcons.Source, colors.source)
+                AssetCountChip("Data", dataCount, FieldMindIcons.Data, colors.data)
+                AssetCountChip("Reports", repCount, FieldMindIcons.Report, colors.report)
+            }
+
+            // Future questions
+            if (p.futureQuestions.isNotBlank()) {
+                Text("Future questions", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold, color = colors.question)
+                Text(p.futureQuestions, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+        }
+    }
+}
+
+@Composable
+private fun DataRecordDetailContent(
+    d: DataRecordEntity
+) {
+    val colors = FieldMindTheme.colors
+    Card(
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+            // Header
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                Box(
+                    Modifier.size(48.dp).clip(RoundedCornerShape(16.dp))
+                        .background(colors.data.copy(alpha = 0.14f)),
+                    contentAlignment = Alignment.Center
+                ) { Icon(FieldMindIcons.Data, null, tint = colors.data, size = 26.dp) }
+                Column(Modifier.weight(1f)) {
+                    Text(d.label.ifBlank { "Data record" }, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+                    InfoChip(d.toolType, icon = FieldMindIcons.Data)
+                }
+            }
+
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
+
+            // Value display (prominent)
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text(
+                        "${d.value} ${d.unit}".trim(),
+                        style = MaterialTheme.typography.displaySmall,
+                        fontWeight = FontWeight.Bold,
+                        color = colors.data
+                    )
+                    Text(d.toolType, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+
+            // Location
+            if (d.location.isNotBlank()) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Icon(FieldMindIcons.Location, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, size = 16.dp)
+                    Text(d.location, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+
+            // Notes
+            if (d.notes.isNotBlank()) {
+                Text("Notes", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(d.notes, style = MaterialTheme.typography.bodyMedium)
+            }
+        }
+    }
+}
+
+@Composable
+private fun ReportDetailContent(
+    r: ReportEntity
+) {
+    val colors = FieldMindTheme.colors
+    val statusColor = when (r.status.lowercase()) {
+        "published" -> colors.positive
+        "draft" -> colors.warning
+        "archived" -> MaterialTheme.colorScheme.onSurfaceVariant
+        else -> colors.report
+    }
+
+    Card(
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+            // Header
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                Box(
+                    Modifier.size(48.dp).clip(RoundedCornerShape(16.dp))
+                        .background(colors.report.copy(alpha = 0.14f)),
+                    contentAlignment = Alignment.Center
+                ) { Icon(FieldMindIcons.Report, null, tint = colors.report, size = 26.dp) }
+                Column(Modifier.weight(1f)) {
+                    Text(r.title.ifBlank { "Report" }, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        InfoChip(r.type, icon = FieldMindIcons.Report)
+                        StatusChip(r.status, statusColor)
+                    }
+                }
+            }
+
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
+
+            // Research question
+            if (r.question.isNotBlank()) {
+                Text("Research question", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold, color = colors.question)
+                Text(r.question, style = MaterialTheme.typography.bodyMedium)
+            }
+
+            // Conclusion
+            if (r.conclusion.isNotBlank()) {
+                Text("Conclusion", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold, color = colors.positive)
+                Text(r.conclusion, style = MaterialTheme.typography.bodyMedium)
+            }
+
+            // Full report preview
+            Text("Full report", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Card(
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+            ) {
+                Text(
+                    FieldMindExport.buildMarkdownReport(r),
+                    Modifier.padding(14.dp),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun FlashcardDetailContent(
+    f: FlashcardEntity
+) {
+    val colors = FieldMindTheme.colors
+
+    Card(
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+            // Header
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                Box(
+                    Modifier.size(48.dp).clip(RoundedCornerShape(16.dp))
+                        .background(colors.flashcard.copy(alpha = 0.14f)),
+                    contentAlignment = Alignment.Center
+                ) { Icon(FieldMindIcons.Flashcard, null, tint = colors.flashcard, size = 26.dp) }
+                Column(Modifier.weight(1f)) {
+                    Text("Flashcard", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+                    InfoChip(f.type, icon = FieldMindIcons.Flashcard)
+                }
+            }
+
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
+
+            // Front (question)
+            Box(
+                Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(colors.flashcard.copy(alpha = 0.08f))
+                    .padding(16.dp)
+            ) {
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Text("Front", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, color = colors.flashcard)
+                    Text(f.front.ifBlank { "—" }, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Medium)
+                }
+            }
+
+            // Back (answer)
+            Box(
+                Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(colors.info.copy(alpha = 0.08f))
+                    .padding(16.dp)
+            ) {
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Text("Back", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, color = colors.info)
+                    Text(f.back.ifBlank { "—" }, style = MaterialTheme.typography.bodyMedium)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun DetailRow(label: String, value: String) {
+    if (value.isBlank()) return
+    Row(
+        Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(label, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(value, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Medium, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.widthIn(max = 200.dp))
+    }
+}
+
+@Composable
+private fun AssetCountChip(label: String, count: Int, icon: MaterialSymbolIcon, color: androidx.compose.ui.graphics.Color) {
+    Row(
+        Modifier.clip(RoundedCornerShape(99.dp)).background(color.copy(alpha = 0.12f)).padding(horizontal = 10.dp, vertical = 7.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(6.dp)
+    ) {
+        Icon(icon, null, tint = color, size = 14.dp)
+        Text("$count $label", style = MaterialTheme.typography.labelSmall, color = color, fontWeight = FontWeight.SemiBold)
+    }
+}
+
+@Composable
+private fun StatusChip(status: String, color: androidx.compose.ui.graphics.Color) {
+    Row(
+        Modifier
+            .clip(RoundedCornerShape(8.dp))
+            .background(color.copy(alpha = 0.12f))
+            .padding(horizontal = 8.dp, vertical = 3.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(Modifier.size(6.dp).clip(CircleShape).background(color))
+        Spacer(Modifier.size(4.dp))
+        Text(status, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, color = color)
     }
 }
 

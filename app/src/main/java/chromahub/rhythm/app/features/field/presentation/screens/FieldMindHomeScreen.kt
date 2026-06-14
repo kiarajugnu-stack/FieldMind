@@ -462,7 +462,7 @@ private fun LiveWeatherDashboardWidget(
                         .clip(RoundedCornerShape(13.dp))
                         .background(
                             if (currentWeather != null) weatherGradient
-                            else colors.info.copy(alpha = 0.14f)
+                            else Brush.horizontalGradient(listOf(colors.info.copy(alpha = 0.14f)))
                         ),
                     contentAlignment = Alignment.Center
                 ) {
@@ -474,7 +474,7 @@ private fun LiveWeatherDashboardWidget(
                         )
                     } else {
                         Icon(
-                            weatherConditionIcon(currentWeather?.weatherCode),
+                            weatherConditionIcon(currentWeather?.weatherCode ?: 0),
                             null,
                             tint = Color.White,
                             size = 24.dp
@@ -836,7 +836,8 @@ private fun PulseMetric(
 // ══════════════════════════════════════════════════════════════════════
 
 @Composable
-private fun QuickActionsRow(onNavigate: (FieldMindScreen) -> Unit) {            SectionHeader("Quick actions", "Map, Export, Search, Flashcards")
+private fun QuickActionsRow(onNavigate: (FieldMindScreen) -> Unit) {
+    SectionHeader("Quick actions", "Map, Export, Search, Flashcards")
     LazyRow(
         contentPadding = PaddingValues(horizontal = 20.dp),
         horizontalArrangement = Arrangement.spacedBy(12.dp)

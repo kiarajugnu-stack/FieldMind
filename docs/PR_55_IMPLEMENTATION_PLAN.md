@@ -99,8 +99,7 @@
 | 12 | **Home screen redesign** | No weather widget, no map section, no research session CTA. |
 | 13 | **Rich text notes** | No markdown, no inline images, no checklists in notes. |
 | 14 | **Progressive source form** | 15+ fields all visible at once. Needs progressive disclosure. |
-| 15 | **Entity-specific detail pages** | Single `DetailScreen` for all entity types. Each needs its own layout. |
-
+|  
 ### P2 — Medium Priority
 
 | # | Feature | Description |
