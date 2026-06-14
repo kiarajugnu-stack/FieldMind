@@ -1,15 +1,20 @@
 package fieldmind.research.app.features.field.presentation.screens
 
+import android.Manifest
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.media.MediaRecorder
+import android.net.Uri
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import androidx.core.content.ContextCompat
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.RepeatMode
@@ -29,9 +34,12 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import fieldmind.research.app.features.field.data.database.entity.*
 import fieldmind.research.app.features.field.data.location.CapturedLocation
 import fieldmind.research.app.features.field.data.location.FieldLocationProvider
@@ -40,9 +48,12 @@ import fieldmind.research.app.features.field.presentation.components.*
 import fieldmind.research.app.features.field.presentation.theme.FieldMindTheme
 import fieldmind.research.app.features.field.presentation.viewmodel.DraftEvidenceAttachment
 import fieldmind.research.app.features.field.presentation.viewmodel.FieldMindViewModel
+import fieldmind.research.app.features.field.presentation.components.FieldMindCameraV2
 import fieldmind.research.app.shared.presentation.components.icons.Icon
+import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import java.io.File
 
 // ══════════════════════════════════════════════════════════════════════
 //  Research Session — Timer-based multi-observation mode
@@ -76,6 +87,7 @@ fun ResearchSessionScreen(
 
     // Session state
     var sessionActive by remember { mutableStateOf(activeStoredSession != null) }
+    var sessionCreating by remember { mutableStateOf(false) }
     var sessionName by remember { mutableStateOf("") }
     var selectedProjectId by remember { mutableStateOf<Long?>(null) }
     var sessionElapsedMs by remember { mutableLongStateOf(0L) }
@@ -105,6 +117,13 @@ fun ResearchSessionScreen(
     var quickWeather by remember { mutableStateOf<WeatherSnapshot?>(null) }
     var captureStatus by remember { mutableStateOf("Ready") }
 
+    // ── In-app camera & audio recording state ──
+    var showInAppCamera by remember { mutableStateOf(false) }
+    var recorder by remember { mutableStateOf<MediaRecorder?>(null) }
+    var audioFile by remember { mutableStateOf<File?>(null) }
+    var recording by remember { mutableStateOf(false) }
+    var recordSeconds by remember { mutableIntStateOf(0) }
+
     fun addSessionAttachment(attachment: DraftEvidenceAttachment) {
         quickAttachments = quickAttachments + attachment
         scope.launch { snackbar.showSnackbar("${attachment.type} ready for next observation") }
@@ -119,10 +138,39 @@ fun ResearchSessionScreen(
             addSessionAttachment(DraftEvidenceAttachment("File", it.toString(), "Session attachment"))
         }
     }
-    val audioPicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
-        uri?.let {
-            runCatching { context.contentResolver.takePersistableUriPermission(it, Intent.FLAG_GRANT_READ_URI_PERMISSION) }
-            addSessionAttachment(DraftEvidenceAttachment("Audio", it.toString(), "Session audio"))
+
+    // Audio recording launcher (requests permission, starts recording)
+    val audioPermissionLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        if (granted) {
+            val file = createFieldMindFile(context, "session_audio", ".m4a")
+            val newRecorder = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) MediaRecorder(context) else MediaRecorder()
+            runCatching {
+                newRecorder.setAudioSource(MediaRecorder.AudioSource.MIC)
+                newRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
+                newRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
+                newRecorder.setOutputFile(file.absolutePath)
+                newRecorder.prepare()
+                newRecorder.start()
+                audioFile = file
+                recorder = newRecorder
+                recording = true
+            }.onFailure {
+                newRecorder.release()
+                scope.launch { snackbar.showSnackbar("Could not start recording: ${it.localizedMessage}") }
+            }
+        } else {
+            scope.launch { snackbar.showSnackbar("Audio permission denied.") }
+        }
+    }
+
+    // Recording timer
+    LaunchedEffect(recording) {
+        if (recording) {
+            recordSeconds = 0
+            while (recording) {
+                delay(1000)
+                recordSeconds++
+            }
         }
     }
 
@@ -178,19 +226,26 @@ fun ResearchSessionScreen(
 
     fun startSession() {
         val name = sessionName.ifBlank { smartSessionName() }
-        sessionActive = true
+        sessionCreating = true
         sessionStartedAt = System.currentTimeMillis()
         sessionElapsedMs = 0
         observationCount = 0
         sessionName = name
-        viewModel.addResearchSession(name, selectedProjectId) { id -> activeSessionId = id }
+        viewModel.addResearchSession(name, selectedProjectId) { id ->
+            activeSessionId = id
+            sessionActive = true
+            sessionCreating = false
+        }
         showResearchSessionNotification(context, name, "Research session is running")
         haptics.confirm()
     }
 
     fun endSession() {
         sessionActive = false
-        activeSessionId?.let { viewModel.endResearchSession(it, observationCount, sessionElapsedMs) }
+        val sessionId = activeSessionId
+        if (sessionId != null) {
+            viewModel.endResearchSession(sessionId, observationCount, sessionElapsedMs)
+        }
         cancelResearchSessionNotification(context)
         showSummary = true
         haptics.confirm()
@@ -268,6 +323,37 @@ fun ResearchSessionScreen(
                         }
                     }
                 }
+            } else if (sessionCreating) {
+                // Loading while session is being created
+                item {
+                    Card(
+                        shape = RoundedCornerShape(28.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(
+                            Modifier.fillMaxWidth().padding(32.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(16.dp)
+                        ) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(40.dp),
+                                strokeWidth = 3.dp
+                            )
+                            Text(
+                                "Starting session…",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Text(
+                                "Initializing research session",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                }
             } else if (!sessionActive) {
                 // Session setup
                 item {
@@ -310,16 +396,80 @@ fun ResearchSessionScreen(
                                 Text("$observationCount observation${if (observationCount != 1) "s" else ""} captured", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.78f))
                             }
                         }
-                        FlowRow(Modifier.padding(horizontal = 20.dp, vertical = 0.dp), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                            AssistChip(onClick = { mediaPicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) }, label = { Text("Camera/photo") }, leadingIcon = { Icon(FieldMindIcons.Camera, null, size = 18.dp) })
-                            AssistChip(onClick = { mediaPicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageAndVideo)) }, label = { Text("Gallery") }, leadingIcon = { Icon(FieldMindIcons.Gallery, null, size = 18.dp) })
-                            AssistChip(onClick = { filePicker.launch(arrayOf("application/pdf", "text/*", "image/*", "video/*", "audio/*")) }, label = { Text("Attach") }, leadingIcon = { Icon(FieldMindIcons.File, null, size = 18.dp) })
-                            AssistChip(onClick = { audioPicker.launch(arrayOf("audio/*")) }, label = { Text("Audio") }, leadingIcon = { Icon(FieldMindIcons.Mic, null, size = 18.dp) })
-                            AssistChip(onClick = { fetchSessionLocation(fetchWeather = false) }, label = { Text("GPS") }, leadingIcon = { Icon(FieldMindIcons.Location, null, size = 18.dp) })
-                            AssistChip(onClick = { fetchSessionLocation(fetchWeather = true) }, label = { Text("Weather") }, leadingIcon = { Icon(FieldMindIcons.Weather, null, size = 18.dp) })
+                        Text(captureStatus + if (quickAttachments.isNotEmpty()) " • ${quickAttachments.size} attachment${if (quickAttachments.size == 1) "" else "s"}" else "", modifier = Modifier.padding(horizontal = 20.dp, vertical = 4.dp), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.78f))
+                        
+                        // ── Evidence action buttons below the timer ──
+                        Row(
+                            Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 0.dp),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            SessionEvidenceButton(
+                                onClick = { showInAppCamera = true },
+                                icon = FieldMindIcons.Camera,
+                                label = "Camera",
+                                modifier = Modifier.weight(1f)
+                            )
+                            SessionEvidenceButton(
+                                onClick = { mediaPicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageAndVideo)) },
+                                icon = FieldMindIcons.Gallery,
+                                label = "Gallery",
+                                modifier = Modifier.weight(1f)
+                            )
+                            SessionEvidenceButton(
+                                onClick = { filePicker.launch(arrayOf("application/pdf", "text/*", "image/*", "video/*", "audio/*")) },
+                                icon = FieldMindIcons.File,
+                                label = "Attach",
+                                modifier = Modifier.weight(1f)
+                            )
                         }
-                        Text(captureStatus + if (quickAttachments.isNotEmpty()) " • ${quickAttachments.size} attachment${if (quickAttachments.size == 1) "" else "s"}" else "", modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.78f))
-                        Row(Modifier.padding(20.dp), horizontalArrangement = Arrangement.End) {
+                        Row(
+                            Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 0.dp),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            SessionEvidenceButton(
+                                onClick = {
+                                    if (recording) {
+                                        // Stop recording
+                                        val file = audioFile
+                                        runCatching { recorder?.stop() }
+                                        recorder?.release()
+                                        recorder = null
+                                        recording = false
+                                        file?.let {
+                                            addSessionAttachment(DraftEvidenceAttachment("Audio", Uri.fromFile(it).toString(), "Voice note", localPath = it.absolutePath, mimeType = "audio/mp4"))
+                                        }
+                                    } else {
+                                        // Start recording
+                                        if (ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
+                                            audioPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+                                        } else {
+                                            audioPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+                                        }
+                                    }
+                                },
+                                icon = if (recording) FieldMindIcons.Stop else FieldMindIcons.Mic,
+                                label = if (recording) "Stop" else "Audio",
+                                accent = if (recording) MaterialTheme.colorScheme.error else FieldMindTheme.colors.observation,
+                                modifier = Modifier.weight(1f)
+                            )
+                            SessionEvidenceButton(
+                                onClick = { fetchSessionLocation(fetchWeather = false) },
+                                icon = FieldMindIcons.Location,
+                                label = "GPS",
+                                modifier = Modifier.weight(1f)
+                            )
+                            SessionEvidenceButton(
+                                onClick = { fetchSessionLocation(fetchWeather = true) },
+                                icon = FieldMindIcons.Weather,
+                                label = "Weather",
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+                        // Recording indicator
+                        if (recording) {
+                            RecordingIndicator(recordSeconds)
+                        }
+                        Row(Modifier.padding(horizontal = 20.dp, vertical = 8.dp), horizontalArrangement = Arrangement.End) {
                             Button(onClick = ::endSession, colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error), shape = RoundedCornerShape(16.dp)) {
                                 Text("End")
                             }
@@ -350,6 +500,25 @@ fun ResearchSessionScreen(
             }
         }
     }
+
+    // ── In-app CameraX overlay ──
+    if (showInAppCamera) {
+        Dialog(
+            onDismissRequest = { showInAppCamera = false },
+            properties = DialogProperties(usePlatformDefaultWidth = false)
+        ) {
+            FieldMindCameraV2(
+                onPhotoCaptured = { uri, mimeType ->
+                    addSessionAttachment(
+                        DraftEvidenceAttachment("Photo", uri, "Camera photo", mimeType = mimeType)
+                    )
+                    showInAppCamera = false
+                },
+                onDismiss = { showInAppCamera = false },
+                modifier = Modifier.fillMaxSize()
+            )
+        }
+    }
 }
 
 
@@ -378,4 +547,58 @@ private fun showResearchSessionNotification(context: Context, title: String, tex
 
 private fun cancelResearchSessionNotification(context: Context) {
     runCatching { NotificationManagerCompat.from(context).cancel(RESEARCH_SESSION_NOTIFICATION_ID) }
+}
+
+// ══════════════════════════════════════════════════════════════════════
+//  Session Evidence Button — Compact action button for attachments
+// ══════════════════════════════════════════════════════════════════════
+
+@Composable
+private fun SessionEvidenceButton(
+    onClick: () -> Unit,
+    icon: MaterialSymbolIcon,
+    label: String,
+    accent: androidx.compose.ui.graphics.Color = FieldMindTheme.colors.observation,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier.height(56.dp).clickable(onClick = onClick),
+        shape = RoundedCornerShape(14.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.10f)),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Row(
+            Modifier.fillMaxSize().padding(8.dp),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(icon, null, tint = accent, size = 18.dp)
+            Spacer(Modifier.size(4.dp))
+            Text(
+                label,
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.SemiBold,
+                color = accent
+            )
+        }
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════════
+//  Recording Indicator — Animated recording UI
+// ══════════════════════════════════════════════════════════════════════
+
+@Composable
+private fun RecordingIndicator(seconds: Int) {
+    val transition = rememberInfiniteTransition(label = "rec")
+    val alpha by transition.animateFloat(initialValue = 1f, targetValue = 0.25f, animationSpec = infiniteRepeatable(tween(700), RepeatMode.Reverse), label = "recDot")
+    Row(
+        Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 4.dp).clip(RoundedCornerShape(12.dp)).background(MaterialTheme.colorScheme.errorContainer).padding(horizontal = 12.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Box(Modifier.size(10.dp).graphicsLayer { this.alpha = alpha }.clip(CircleShape).background(MaterialTheme.colorScheme.error))
+        Text("Recording…", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onErrorContainer)
+        Spacer(Modifier.weight(1f))
+        Text("%d:%02d".format(seconds / 60, seconds % 60), style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onErrorContainer)
+    }
 }

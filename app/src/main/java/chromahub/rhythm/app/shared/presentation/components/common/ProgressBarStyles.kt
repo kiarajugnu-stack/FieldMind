@@ -871,7 +871,8 @@ private fun GradientProgressBar(
         MaterialTheme.colorScheme.primary,
         MaterialTheme.colorScheme.secondary,
         MaterialTheme.colorScheme.tertiary
-    )
+    ).filter { it != Color.Unspecified && it.alpha > 0 }.takeIf { it.size >= 2 }
+        ?: listOf(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.secondary)
     
     val actualHeight = height.coerceAtLeast(4.dp)
     

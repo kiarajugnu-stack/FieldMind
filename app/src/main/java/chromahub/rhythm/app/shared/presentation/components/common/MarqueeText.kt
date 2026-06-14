@@ -123,9 +123,13 @@ fun AutoScrollingText(
                             val gradientWidthPx = gradientWidth.toPx()
 
                             // Left fade-in: Animates its color from opaque to transparent
+                            val leftGradientColors = listOf(
+                                animatedLeftGradientStartColor,
+                                gradientEdgeColor.takeIf { it.alpha > 0f } ?: Color.Transparent.copy(alpha = 0.5f)
+                            )
                             drawRect(
                                 brush = Brush.horizontalGradient(
-                                    colors = listOf(animatedLeftGradientStartColor, gradientEdgeColor),
+                                    colors = leftGradientColors,
                                     startX = 0f,
                                     endX = gradientWidthPx
                                 ),

@@ -17,12 +17,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import fieldmind.research.app.features.field.data.database.entity.*
+import fieldmind.research.app.features.field.data.weather.WeatherSnapshot
 import fieldmind.research.app.features.field.data.learn.LearnResource
 import fieldmind.research.app.features.field.data.learn.LearnLibrary
 import fieldmind.research.app.features.field.data.stats.FieldMindStreaks
@@ -82,16 +86,12 @@ fun HomeScreen(
     }
 
 
-    val weatherObs = remember(observations) { observations.firstOrNull { it.weatherTemperature != null } }
-
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(20.dp, 0.dp, 20.dp, 96.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
         // ── Hero Section ──
         item { HomeHeroSection(todayCount, goal, currentStreak, observations.size, questions.size, onOpenSettings, onNavigate) }
 
-        // ── Weather Card (when observations have weather data) ──
-        if (weatherObs != null) {
-            item { WeatherStatusCard(observations, viewModel, onNavigate) }
-        }
+        // ── Live Weather Dashboard Widget ──
+        item { LiveWeatherDashboardWidget(viewModel, observations) }
 
         // ── Daily Goal ──
         item { DailyGoalCard(todayCount, goal, currentStreak) { onNavigate(FieldMindScreen.Observe) } }
@@ -139,6 +139,25 @@ fun HomeScreen(
                 notes = notes.sortedByDescending { it.updatedAt },
                 onOpenDetail = onOpenDetail
             )
+        }
+
+        // ── Session Observations (grouped by research session) ──
+        if (observations.isNotEmpty()) {
+            item {
+                val sessionObs = remember(observations, researchSessions) {
+                    val map = mutableMapOf<String, MutableList<ObservationEntity>>()
+                    observations.filter { it.tags.contains("research-session") }
+                        .sortedByDescending { it.timestamp }
+                        .forEach { obs ->
+                            val key = obs.moodOrContext.ifBlank { "Session ${obs.date}" }
+                            map.getOrPut(key) { mutableListOf() }.add(obs)
+                        }
+                    map.toMap()
+                }
+                if (sessionObs.isNotEmpty()) {
+                    SessionObservationsCard(sessionObs, researchSessions, onOpenDetail, onNavigate)
+                }
+            }
         }
 
         // ── Current Project ──
@@ -323,101 +342,7 @@ private fun HeroActionChip(
     }
 }
 
-// ══════════════════════════════════════════════════════════════════════
-//  Weather Status Card — Current conditions + weather correlation
-// ══════════════════════════════════════════════════════════════════════
 
-@Composable
-private fun WeatherStatusCard(
-    observations: List<ObservationEntity>,
-    viewModel: FieldMindViewModel,
-    onNavigate: (FieldMindScreen) -> Unit
-) {
-    val colors = FieldMindTheme.colors
-    val weatherObs = remember(observations) {
-        observations.filter { it.weatherTemperature != null }.sortedByDescending { it.timestamp }
-    }
-    val lastWeather = weatherObs.firstOrNull()
-    val tempRange = remember(weatherObs) {
-        val temps = weatherObs.mapNotNull { it.weatherTemperature }
-        if (temps.isEmpty()) null else (temps.minOrNull() to temps.maxOrNull())
-    }
-    val weatherSummary = remember(weatherObs) {
-        val conditions = weatherObs.map { it.weatherCondition }.filter { it.isNotBlank() }.distinct()
-        conditions.take(3).joinToString(" • ")
-    }
-
-    Card(
-        modifier = Modifier.fillMaxWidth().animateContentSize(),
-        shape = RoundedCornerShape(28.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-    ) {
-        Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                Box(
-                    Modifier.size(42.dp).clip(RoundedCornerShape(13.dp))
-                        .background(colors.info.copy(alpha = 0.14f)),
-                    contentAlignment = Alignment.Center
-                ) { Icon(FieldMindIcons.Weather, null, tint = colors.info, size = 24.dp) }
-                Column(Modifier.weight(1f)) {
-                    Text("Weather observations", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                    Text("${weatherObs.size} observations with weather data", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-                TextButton(onClick = { onNavigate(FieldMindScreen.WeatherDatabase) }) { Text("View all") }
-            }
-
-            if (lastWeather != null) {
-                Row(
-                    Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceEvenly,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    // Temperature
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(
-                            "${lastWeather.weatherTemperature?.let { "%.0f°".format(it) } ?: "--"}",
-                            style = MaterialTheme.typography.headlineMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = colors.info
-                        )
-                        Text("Latest temp", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
-                    if (tempRange != null) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text(
-                                "${tempRange.first?.let { "%.0f".format(it) } ?: "--"}° — ${tempRange.second?.let { "%.0f".format(it) } ?: "--"}°",
-                                style = MaterialTheme.typography.titleSmall,
-                                fontWeight = FontWeight.SemiBold,
-                                color = colors.warning
-                            )
-                            Text("Range", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        }
-                    }
-                    // Humidity
-                    lastWeather.weatherHumidity?.let { hum ->
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text("$hum%", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = colors.data)
-                            Text("Humidity", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        }
-                    }
-                }
-            }
-
-            if (weatherSummary.isNotBlank()) {
-                InfoChip(weatherSummary, icon = FieldMindIcons.Weather, color = colors.info)
-            }
-
-            if (lastWeather?.manualLocation.isNullOrBlank()) {
-                Text("Weather captured across multiple locations",
-                    style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            } else {
-                Text("Weather at ${lastWeather?.manualLocation ?: "current location"}",
-                    style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
-        }
-    }
-}
 
 private fun timeOfDay(): String {
     val hour = LocalTime.now().hour
@@ -425,6 +350,399 @@ private fun timeOfDay(): String {
         in 5..11 -> "morning"
         in 12..16 -> "afternoon"
         else -> "evening"
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════════
+//  Live Weather Dashboard Widget — Live Open-Meteo weather with animations
+// ══════════════════════════════════════════════════════════════════════
+
+@Composable
+private fun LiveWeatherDashboardWidget(
+    viewModel: FieldMindViewModel,
+    observations: List<ObservationEntity>
+) {
+    val colors = FieldMindTheme.colors
+    var currentWeather by remember { mutableStateOf<WeatherSnapshot?>(null) }
+    var weatherLoading by remember { mutableStateOf(false) }
+    var weatherError by remember { mutableStateOf(false) }
+    var isRotating by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
+    val refreshRotation = remember { Animatable(0f) }
+
+    // Load weather on composition
+    LaunchedEffect(Unit) {
+        weatherLoading = true
+        val snapshot = viewModel.refreshWeatherFromLocation()
+        currentWeather = snapshot
+        weatherError = snapshot == null
+        weatherLoading = false
+    }
+
+    // Auto-refresh every 30 minutes
+    LaunchedEffect(Unit) {
+        while (true) {
+            delay(30 * 60 * 1000L)
+            weatherLoading = true
+            val snapshot = viewModel.refreshWeatherFromLocation()
+            currentWeather = snapshot
+            weatherError = snapshot == null
+            weatherLoading = false
+        }
+    }
+
+    // Weather-based gradient
+    val weatherGradient = remember(currentWeather) {
+        val temp = currentWeather?.temperature ?: 20.0
+        val colors = when {
+            temp < 0 -> listOf(Color(0xFF1A237E), Color(0xFF42A5F5)) // Freezing → deep blue
+            temp < 10 -> listOf(Color(0xFF1565C0), Color(0xFF64B5F6))  // Cold → blue
+            temp < 20 -> listOf(Color(0xFF0D47A1), Color(0xFF66BB6A))  // Cool → blue-green
+            temp < 30 -> listOf(Color(0xFFE65100), Color(0xFFFFB74D))  // Warm → orange
+            else -> listOf(Color(0xFFBF360C), Color(0xFFE57373))       // Hot → deep red
+        }
+        Brush.horizontalGradient(colors)
+    }
+
+    val conditionColor = remember(currentWeather) {
+        val code = currentWeather?.weatherCode ?: 0
+        when {
+            code == 0 || code == 1 -> colors.positive            // Clear
+            code in 2..3 -> colors.info                           // Cloudy
+            code in 45..48 -> colors.warning                      // Fog
+            code in 51..67 -> colors.data                         // Rain
+            code in 71..86 -> colors.observation                   // Snow
+            code >= 95 -> Color(0xFFE53935)                        // Thunderstorm
+            else -> colors.info
+        }
+    }
+
+    // Live indicator pulse
+    val infiniteTransition = rememberInfiniteTransition(label = "livePulse")
+    val pulseAlpha by infiniteTransition.animateFloat(
+        0.4f, 1.0f,
+        infiniteRepeatable(tween(1200), RepeatMode.Reverse),
+        label = "liveAlpha"
+    )
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .animateContentSize(
+                animationSpec = tween(durationMillis = 400, easing = FastOutSlowInEasing)
+            )
+            .clickable {
+                if (!weatherLoading) {
+                    scope.launch {
+                        isRotating = true
+                        refreshRotation.animateTo(360f, tween(400))
+                        refreshRotation.snapTo(0f)
+                        isRotating = false
+                        weatherLoading = true
+                        val snapshot = viewModel.refreshWeatherFromLocation()
+                        currentWeather = snapshot
+                        weatherError = snapshot == null
+                        weatherLoading = false
+                    }
+                }
+            },
+        shape = RoundedCornerShape(28.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Column(
+            Modifier.fillMaxWidth().padding(18.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            // ── Header row with live indicator ──
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                Box(
+                    Modifier.size(42.dp)
+                        .clip(RoundedCornerShape(13.dp))
+                        .background(
+                            if (currentWeather != null) weatherGradient
+                            else Brush.horizontalGradient(listOf(colors.info.copy(alpha = 0.14f)))
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
+                    if (weatherLoading) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(22.dp),
+                            strokeWidth = 2.5.dp,
+                            color = Color.White
+                        )
+                    } else {
+                        Icon(
+                            weatherConditionIcon(currentWeather?.weatherCode ?: 0),
+                            null,
+                            tint = Color.White,
+                            size = 24.dp
+                        )
+                    }
+                }
+                Column(Modifier.weight(1f)) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Text(
+                            "Live weather",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                        // Live pulse dot
+                        if (currentWeather != null) {
+                            Box(
+                                Modifier.size(8.dp)
+                                    .clip(CircleShape)
+                                    .background(colors.positive.copy(alpha = pulseAlpha))
+                            )
+                        }
+                    }
+                    Text(
+                        when {
+                            weatherLoading -> "Updating…"
+                            currentWeather != null -> "Tap to refresh • ${currentWeather?.weatherDescription ?: ""}"
+                            weatherError -> "Enable location for live weather"
+                            else -> "Weather unavailable"
+                        },
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                // Refresh button
+                Icon(
+                    FieldMindIcons.Weather,
+                    null,
+                    tint = if (currentWeather != null) conditionColor else MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier
+                        .clip(CircleShape)
+                        .background(
+                            if (currentWeather != null) conditionColor.copy(alpha = 0.12f)
+                            else MaterialTheme.colorScheme.surfaceContainerHigh
+                        )
+                        .padding(8.dp)
+                        .graphicsLayer { rotationZ = refreshRotation.value },
+                    size = 20.dp
+                )
+            }
+
+            // ── Weather data when available ──
+            if (currentWeather != null) {
+                val w = currentWeather!!
+
+                // Main temperature + condition
+                Row(
+                    Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceEvenly,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(
+                            "${w.temperature?.let { "%.0f°".format(it) } ?: "--"}",
+                            style = MaterialTheme.typography.displaySmall.copy(
+                                fontWeight = FontWeight.Bold,
+                                brush = weatherGradient
+                            )
+                        )
+                        Text(
+                            "Feels like",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Icon(
+                            weatherConditionIcon(w.weatherCode),
+                            null,
+                            tint = conditionColor,
+                            size = 40.dp
+                        )
+                        Text(
+                            w.weatherDescription,
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
+                    w.humidity?.let { hum ->
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text(
+                                "$hum%",
+                                style = MaterialTheme.typography.titleLarge,
+                                fontWeight = FontWeight.Bold,
+                                color = colors.data
+                            )
+                            Text(
+                                "Humidity",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                }
+
+                // ── Extra metrics row ──
+                Row(
+                    Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceEvenly
+                ) {
+                    // Wind
+                    w.windSpeed?.let { wind ->
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Icon(
+                                FieldMindIcons.Flag,
+                                null,
+                                tint = colors.warning,
+                                size = 18.dp
+                            )
+                            Text(
+                                "%.1f km/h".format(wind),
+                                style = MaterialTheme.typography.bodySmall,
+                                fontWeight = FontWeight.SemiBold,
+                                color = colors.warning
+                            )
+                            Text(
+                                "Wind",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                    // Cloud cover
+                    w.cloudCover?.let { cloud ->
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Icon(
+                                FieldMindIcons.Cloud,
+                                null,
+                                tint = colors.hypothesis,
+                                size = 18.dp
+                            )
+                            Text(
+                                "$cloud%",
+                                style = MaterialTheme.typography.bodySmall,
+                                fontWeight = FontWeight.SemiBold,
+                                color = colors.hypothesis
+                            )
+                            Text(
+                                "Cloud cover",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                    // Pressure
+                    w.pressure?.let { press ->
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Icon(
+                                FieldMindIcons.Compress,
+                                null,
+                                tint = colors.project,
+                                size = 18.dp
+                            )
+                            Text(
+                                "%.0f hPa".format(press),
+                                style = MaterialTheme.typography.bodySmall,
+                                fontWeight = FontWeight.SemiBold,
+                                color = colors.project
+                            )
+                            Text(
+                                "Pressure",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                    // Wind direction
+                    w.windDirection?.let { dir ->
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text(
+                                "$dir°",
+                                style = MaterialTheme.typography.bodySmall,
+                                fontWeight = FontWeight.SemiBold,
+                                color = colors.source
+                            )
+                            Text(
+                                "Direction",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                }
+
+                // ── Weather observation count ──
+                val weatherObsCount = observations.count { it.weatherTemperature != null }
+                if (weatherObsCount > 0) {
+                    Row(
+                        Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            "$weatherObsCount observation${if (weatherObsCount != 1) "s" else ""} with weather data",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                        )
+                        Text(
+                            "Auto-refresh 30m",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                        )
+                    }
+                }
+            } else if (weatherError) {
+                // Empty state
+                Row(
+                    Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Icon(
+                            FieldMindIcons.Weather,
+                            null,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+                            size = 32.dp
+                        )
+                        Text(
+                            "Enable GPS for live weather",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Text(
+                            "Tap to retry",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+private fun weatherConditionIcon(code: Int): MaterialSymbolIcon {
+    return when (code) {
+        0, 1 -> FieldMindIcons.Weather    // Clear / mainly clear
+        2 -> FieldMindIcons.Cloud          // Partly cloudy
+        3 -> FieldMindIcons.Cloud          // Overcast
+        45, 48 -> FieldMindIcons.Weather    // Fog
+        51, 53, 55, 56, 57 -> FieldMindIcons.Rainy  // Drizzle
+        61, 63, 65, 66, 67 -> FieldMindIcons.Rainy  // Rain
+        71, 73, 75, 77 -> FieldMindIcons.Weather    // Snow
+        80, 81, 82 -> FieldMindIcons.Rainy          // Rain showers
+        85, 86 -> FieldMindIcons.Weather            // Snow showers
+        95, 96, 99 -> FieldMindIcons.Alert          // Thunderstorm
+        else -> FieldMindIcons.Weather
     }
 }
 
@@ -522,7 +840,8 @@ private fun PulseMetric(
 // ══════════════════════════════════════════════════════════════════════
 
 @Composable
-private fun QuickActionsRow(onNavigate: (FieldMindScreen) -> Unit) {            SectionHeader("Quick actions", "Map, Export, Search, Flashcards")
+private fun QuickActionsRow(onNavigate: (FieldMindScreen) -> Unit) {
+    SectionHeader("Quick actions", "Map, Export, Search, Flashcards")
     LazyRow(
         contentPadding = PaddingValues(horizontal = 20.dp),
         horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -987,6 +1306,212 @@ private fun HomeWidgetCard(widget: HomeWidget, modifier: Modifier = Modifier, on
         }
     }
 }
+
+// ══════════════════════════════════════════════════════════════════════
+//  Session Observations — Grouped by research session
+// ══════════════════════════════════════════════════════════════════════
+
+@Composable
+private fun SessionObservationsCard(
+    sessionObs: Map<String, List<ObservationEntity>>,
+    researchSessions: List<ResearchSessionEntity>,
+    onOpenDetail: (String, Long) -> Unit,
+    onNavigate: (FieldMindScreen) -> Unit
+) {
+    val colors = FieldMindTheme.colors
+    var expandedSessions by remember { mutableStateOf<Set<String>>(emptySet()) }
+    val totalSessionObs = sessionObs.values.sumOf { it.size }
+
+    Card(
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            // Header
+            Row(
+                Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                Box(
+                    Modifier.size(40.dp).clip(RoundedCornerShape(12.dp))
+                        .background(colors.observation.copy(alpha = 0.14f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(FieldMindIcons.Session, null, tint = colors.observation, size = 22.dp)
+                }
+                Column(Modifier.weight(1f)) {
+                    Text(
+                        "Session observations",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        "$totalSessionObs observation${if (totalSessionObs != 1) "s" else ""} across ${sessionObs.size} session${if (sessionObs.size != 1) "s" else ""}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                TextButton(onClick = { onNavigate(FieldMindScreen.ResearchSession) }) {
+                    Text("New session")
+                }
+            }
+
+            // Session groups
+            sessionObs.entries.take(5).forEach { (sessionName, obs) ->
+                val session = researchSessions.firstOrNull {
+                    sessionName.contains(it.name, ignoreCase = true) ||
+                    it.name.contains(sessionName, ignoreCase = true)
+                }
+                val isExpanded = sessionName in expandedSessions
+                val dateLabel = obs.firstOrNull()?.let {
+                    try {
+                        SimpleDateFormat("MMM d, yyyy", Locale.getDefault())
+                            .format(SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).parse(it.date) ?: Date())
+                    } catch (_: Exception) { it.date }
+                } ?: ""
+
+                Card(
+                    modifier = Modifier.fillMaxWidth().animateContentSize().clickable {
+                        expandedSessions = if (isExpanded) expandedSessions - sessionName
+                        else expandedSessions + sessionName
+                    },
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+                    ),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                ) {
+                    Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        // Session header with stats
+                        Row(
+                            Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Icon(
+                                FieldMindIcons.Session,
+                                null,
+                                tint = colors.observation,
+                                size = 18.dp
+                            )
+                            Column(Modifier.weight(1f)) {
+                                Text(
+                                    sessionName.removePrefix("Research session: "),
+                                    style = MaterialTheme.typography.labelLarge,
+                                    fontWeight = FontWeight.SemiBold,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    Text(
+                                        "${obs.size} observation${if (obs.size != 1) "s" else ""}",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                    if (dateLabel.isNotBlank()) {
+                                        Text(
+                                            dateLabel,
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                }
+                            }
+                            Icon(
+                                if (isExpanded) FieldMindIcons.Up else FieldMindIcons.Down,
+                                null,
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                size = 18.dp
+                            )
+                        }
+
+                        // Session duration from the session entity
+                        session?.let { s ->
+                            if (s.totalDurationMs > 0) {
+                                val dur = s.totalDurationMs / 1000
+                                val hrs = dur / 3600
+                                val min = (dur % 3600) / 60
+                                Text(
+                                    "Duration: ${if (hrs > 0) "${hrs}h ${min}m" else "${min}m"}",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                                )
+                            }
+                        }
+
+                        // Observation list (expandable)
+                        AnimatedVisibility(visible = isExpanded) {
+                            Column(
+                                Modifier.padding(top = 4.dp),
+                                verticalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                obs.forEach { observation ->
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .clip(RoundedCornerShape(12.dp))
+                                            .clickable { onOpenDetail("observation", observation.id) }
+                                            .padding(vertical = 6.dp, horizontal = 4.dp),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                                    ) {
+                                        Box(
+                                            Modifier.size(6.dp).clip(CircleShape)
+                                                .background(colors.observation)
+                                        )
+                                        Column(Modifier.weight(1f)) {
+                                            Text(
+                                                observation.subject.ifBlank { observation.category },
+                                                style = MaterialTheme.typography.bodySmall,
+                                                fontWeight = FontWeight.SemiBold,
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis
+                                            )
+                                            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                                InfoChip(
+                                                    observation.category,
+                                                    icon = FieldMindIcons.iconForCategory(observation.category)
+                                                )
+                                                Text(
+                                                    observation.time.takeIf { it.isNotBlank() } ?: "",
+                                                    style = MaterialTheme.typography.labelSmall,
+                                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                                )
+                                            }
+                                        }
+                                        Icon(
+                                            FieldMindIcons.Forward,
+                                            null,
+                                            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+                                            size = 16.dp
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Show more indicator
+            if (sessionObs.size > 5) {
+                Text(
+                    "+${sessionObs.size - 5} more session${if (sessionObs.size - 5 != 1) "s" else ""}",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+                    modifier = Modifier.align(Alignment.CenterHorizontally)
+                )
+            }
+        }
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════════
+//  Recent Captures Card
+// ══════════════════════════════════════════════════════════════════════
 
 @Composable
 private fun RecentCapturesCard(observations: List<ObservationEntity>, onOpenDetail: (String, Long) -> Unit) {

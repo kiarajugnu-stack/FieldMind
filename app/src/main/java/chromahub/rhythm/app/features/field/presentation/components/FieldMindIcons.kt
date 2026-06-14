@@ -97,6 +97,8 @@ object FieldMindIcons {
     val Weather = MaterialSymbolIcon("partly_cloudy_day")
     val Cloud = MaterialSymbolIcon("cloud")
     val Rainy = MaterialSymbolIcon("rainy")
+    val Flag = MaterialSymbolIcon("flag")
+    val Compress = MaterialSymbolIcon("speed")
     val Water = MaterialSymbolIcon("water_drop")
     val HumanBehavior = MaterialSymbolIcon("groups")
     val ReadingInsight = MaterialSymbolIcon("menu_book")

@@ -31,6 +31,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
@@ -49,6 +50,16 @@ import fieldmind.research.app.features.field.presentation.viewmodel.FieldMindVie
 import fieldmind.research.app.shared.data.model.AppSettings
 import fieldmind.research.app.shared.presentation.components.icons.Icon
 import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon
+
+private fun formatElapsed(startedAt: Long): String {
+    val ms = System.currentTimeMillis() - startedAt
+    val totalSec = ms / 1000
+    val hours = totalSec / 3600
+    val minutes = (totalSec % 3600) / 60
+    val seconds = totalSec % 60
+    return if (hours > 0) "%d:%02d:%02d".format(hours, minutes, seconds)
+    else "%d:%02d".format(minutes, seconds)
+}
 
 /**
  * FieldMind destinations. Four primary lifecycle tabs (Today → Capture → Workspace → Library)
@@ -166,7 +177,7 @@ fun FieldMindNavigation(viewModel: FieldMindViewModel, onResetOnboarding: () -> 
                     NavigationRail(
                         header = {
                             FloatingActionButton(
-                                onClick = { haptics.light(); navController.navigateToDestination(if (activeResearchSession != null) FieldMindScreen.ResearchSession.route else FieldMindScreen.Observe.route) },
+                                onClick = { haptics.light(); navController.navigateToDestination(if (activeResearchSession != null) FieldMindScreen.ResearchSession.route else FieldMindScreen.FieldMode.route) },
                                 containerColor = if (activeResearchSession != null) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.tertiaryContainer,
                                 contentColor = if (activeResearchSession != null) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onTertiaryContainer
                             ) { Icon(icon = if (activeResearchSession != null) FieldMindIcons.Timer else FieldMindIcons.Bolt, contentDescription = "Capture", size = 26.dp) }
@@ -191,11 +202,11 @@ fun FieldMindNavigation(viewModel: FieldMindViewModel, onResetOnboarding: () -> 
                 floatingActionButton = {
                     if (!hideChrome) {
                         ExtendedFloatingActionButton(
-                            onClick = { haptics.light(); navController.navigateToDestination(if (activeResearchSession != null) FieldMindScreen.ResearchSession.route else FieldMindScreen.Observe.route) },
+                            onClick = { haptics.light(); navController.navigateToDestination(if (activeResearchSession != null) FieldMindScreen.ResearchSession.route else FieldMindScreen.FieldMode.route) },
                             containerColor = if (activeResearchSession != null) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.tertiaryContainer,
                             contentColor = if (activeResearchSession != null) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onTertiaryContainer,
                             icon = { Icon(icon = if (activeResearchSession != null) FieldMindIcons.Timer else FieldMindIcons.Bolt, contentDescription = null, size = 22.dp) },
-                            text = { Text(activeResearchSession?.let { "Live session • ${it.observationCount}" } ?: "Capture") }
+                            text = { Text(activeResearchSession?.let { "Live session • ${formatElapsed(it.startedAt)} • ${it.observationCount} obs" } ?: "Quick capture") }
                         )
                     }
                 },
