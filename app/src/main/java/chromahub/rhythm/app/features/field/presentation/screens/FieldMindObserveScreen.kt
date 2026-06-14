@@ -988,7 +988,19 @@ internal fun ObservationCaptureCard(viewModel: FieldMindViewModel, compact: Bool
     var subject by remember { mutableStateOf("") }
     var category by remember(defaultCategory, initialCategory) { mutableStateOf(initialCategory ?: defaultCategory) }
     var facts by remember { mutableStateOf("") }
-    var confidence by remember(defaultConfidence) { mutableStateOf(defaultConfidence) }
+    var confidence by remember(defaultConfidence) { mutableStateOf(defaultConfidence.takeIf { it in confidenceOptions } ?: "Likely") }
+    var observationMode by remember { mutableStateOf("Single observation") }
+    var count by remember { mutableStateOf("") }
+    var speciesConfidence by remember { mutableStateOf("Likely") }
+    var observerDistance by remember { mutableStateOf("10m") }
+    var checklist by remember { mutableStateOf(setOf("Seen")) }
+    var height by remember { mutableStateOf("") }
+    var width by remember { mutableStateOf("") }
+    var length by remember { mutableStateOf("") }
+    var diameter by remember { mutableStateOf("") }
+    var weight by remember { mutableStateOf("") }
+    var colorDetail by remember { mutableStateOf("") }
+    var followUp by remember { mutableStateOf("None") }
     var manualLocation by remember { mutableStateOf("") }
     var capturedLocation by remember { mutableStateOf<CapturedLocation?>(null) }
     var weatherSnapshot by remember { mutableStateOf<WeatherSnapshot?>(null) }
@@ -1035,6 +1047,7 @@ internal fun ObservationCaptureCard(viewModel: FieldMindViewModel, compact: Bool
     LaunchedEffect(recording) { if (recording) { recordSeconds = 0; while (recording) { delay(1000); recordSeconds++ } } }
     val mediaPicker = rememberLauncherForActivityResult(ActivityResultContracts.PickMultipleVisualMedia(10)) { uris -> if (uris.isEmpty()) scope.launch { snackbar.showSnackbar("Gallery selection cancelled.") }; attachments = attachments + uris.map { durableEvidenceAttachment(context, "Gallery", it, "Selected media") } }
     val filePicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri -> if (uri == null) scope.launch { snackbar.showSnackbar("File selection cancelled.") } else { runCatching { context.contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION) }; attachments = attachments + durableEvidenceAttachment(context, "File", uri, "Reference file / PDF") } }
+    val audioImportPicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri -> if (uri == null) scope.launch { snackbar.showSnackbar("Audio import cancelled.") } else { runCatching { context.contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION) }; attachments = attachments + durableEvidenceAttachment(context, "Audio", uri, "Imported field audio") } }
     val locationPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { result -> if (result.values.any { it }) startLocating(); else scope.launch { snackbar.showSnackbar("Location denied.") } }
     val audioPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
         if (granted) {
@@ -1065,14 +1078,26 @@ internal fun ObservationCaptureCard(viewModel: FieldMindViewModel, compact: Bool
                         AttachmentPreviewList(attachments, onCaptionChange = { index, caption -> attachments = attachments.mapIndexed { i, item -> if (i == index) item.copy(caption = caption) else item } }, onRemove = { remove -> attachments = attachments.filterIndexed { index, _ -> index != remove } })
                     }
                 }
+                val qualityMissing = listOfNotNull(
+                    "subject".takeIf { subject.isBlank() },
+                    "facts".takeIf { facts.isBlank() },
+                    "location".takeIf { manualLocation.isBlank() && capturedLocation == null },
+                    "weather".takeIf { weatherSnapshot == null },
+                    "evidence".takeIf { attachments.isEmpty() }
+                )
+                ObservationQualityCard(score = ((5 - qualityMissing.size) * 20).coerceIn(0, 100), missing = qualityMissing)
                 CaptureStep(if (snapFirst) "Subject & confidence" else "Subject", "What did you observe, and how sure are you?", FieldMindIcons.iconForCategory(category)) {
-                    FieldTextField(subject, { subject = it }, "Subject", supportingText = "Example: Crow on wire")
-                    if (!compact) { Text("Category", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant); ChoiceChips(observationCategories, category) { category = it } }
+                    FieldTextField(subject, { value -> subject = value; tags = autoObservationTags(value, facts, category, tags) }, "Subject", supportingText = "Example: Crow on wire")
+                    Text("Capture mode", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant); ChoiceChips(listOf("Single observation", "Each photo = observation"), observationMode) { observationMode = it }
+                    if (!compact) { Text("Category", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant); ChoiceChips(observationCategories, category) { category = it; tags = autoObservationTags(subject, facts, it, tags) } }
                     Text("Confidence", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant); ChoiceChips(confidenceOptions, confidence) { confidence = it }
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) { FieldTextField(count, { count = it }, "Count", modifier = Modifier.weight(1f)); FieldTextField(observerDistance, { observerDistance = it }, "Distance", supportingText = "2m, 10m, 50m, 100m+", modifier = Modifier.weight(1f)) }
+                    Text("Species confidence", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant); ChoiceChips(confidenceOptions, speciesConfidence) { speciesConfidence = it }
                 }
                 CaptureStep(if (snapFirst) "Facts after evidence" else "Facts", "Record only what you observed — keep guesses out.", FieldMindIcons.Edit) {
-                    FactsInterpretationBanner(); FieldTextField(facts, { facts = it }, "Facts-only notes", minLines = if (compact) 3 else 5, supportingText = "Write only what you saw/heard/measured.")
-                    if (!compact) { Text("Context presets", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant); ChoiceChips(contextPresets, fieldContext) { fieldContext = if (fieldContext.isBlank()) it else "$fieldContext, $it" }; FieldTextField(fieldContext, { fieldContext = it }, "Mood / field context", minLines = 2) }
+                    FactsInterpretationBanner(); FieldTextField(facts, { value -> facts = value; tags = autoObservationTags(subject, value, category, tags) }, "Facts-only notes", minLines = if (compact) 3 else 5, supportingText = "Write only what you saw/heard/measured.")
+                    ObservationChecklist(checklist) { checklist = it }
+                    if (!compact) { MoodDropdown(fieldContext, { fieldContext = it }); FieldTextField(fieldContext, { fieldContext = it }, "Mood / field context", minLines = 2) }
                 }
                 CaptureStep("Location", "GPS is optional; manual place names work offline.", FieldMindIcons.Location) {
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -1102,12 +1127,19 @@ internal fun ObservationCaptureCard(viewModel: FieldMindViewModel, compact: Bool
                     TextButton(onClick = { showStructured = !showStructured }) { Text(if (showStructured) "Hide structured fields" else "Add structured details") }
                     if (showStructured) { observationCategoryDefinitions.firstOrNull { it.label == category }?.fields.orEmpty().forEach { field -> FieldTextField(structuredDetails[field.key].orEmpty(), { value -> structuredDetails = structuredDetails + (field.key to value) }, field.label, supportingText = field.hint) } }
                 }
+                CaptureStep("Measurements", "Structured measurements keep field evidence comparable.", FieldMindIcons.Graph) {
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) { FieldTextField(height, { height = it }, "Height", modifier = Modifier.weight(1f)); FieldTextField(width, { width = it }, "Width", modifier = Modifier.weight(1f)) }
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) { FieldTextField(length, { length = it }, "Length", modifier = Modifier.weight(1f)); FieldTextField(diameter, { diameter = it }, "Diameter", modifier = Modifier.weight(1f)) }
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) { FieldTextField(weight, { weight = it }, "Weight", modifier = Modifier.weight(1f)); FieldTextField(colorDetail, { colorDetail = it }, "Color", modifier = Modifier.weight(1f)) }
+                }
+                CaptureStep("Follow-up", "Turn needs follow-up into an actionable reminder note.", FieldMindIcons.Notifications) { ChoiceChips(listOf("None", "Tomorrow", "3 days", "1 week", "Custom"), followUp) { followUp = it } }
                 if (mediaEnabled && !snapFirst) {
                     CaptureStep("Evidence", "Back your observation with photos, files, or a voice note.", FieldMindIcons.Camera) {
                         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             OutlinedButton(onClick = { showInAppCamera = true }, Modifier.weight(1f)) { Icon(icon = FieldMindIcons.Camera, contentDescription = "Camera", size = 18.dp) }
                             OutlinedButton(onClick = { mediaPicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageAndVideo)) }, Modifier.weight(1f)) { Icon(icon = FieldMindIcons.Gallery, contentDescription = "Gallery", size = 18.dp) }
                             OutlinedButton(onClick = { filePicker.launch(arrayOf("application/pdf", "text/*", "image/*", "video/*", "audio/*")) }, Modifier.weight(1f)) { Icon(icon = FieldMindIcons.File, contentDescription = "File", size = 18.dp) }
+                            OutlinedButton(onClick = { audioImportPicker.launch(arrayOf("audio/*")) }, Modifier.weight(1f)) { Icon(icon = FieldMindIcons.Mic, contentDescription = "Import audio", size = 18.dp) }
                         }
                         if (audioEnabled) {
                             if (recording) RecordingIndicator(recordSeconds)
@@ -1130,7 +1162,23 @@ internal fun ObservationCaptureCard(viewModel: FieldMindViewModel, compact: Bool
                         val now = System.currentTimeMillis(); val liveElapsed = stopwatchAccumulatedMs + if (stopwatchRunning) (now - (stopwatchStartedAt ?: now)) else 0L
                         val manualDurationMs = manualDurationMinutes.toDoubleOrNull()?.let { (it * 60_000).toLong() }; val durationMs = manualDurationMs ?: liveElapsed.takeIf { it > 0L }
                         val changeDurationMs = changeAtMinutes.toDoubleOrNull()?.let { (it * 60_000).toLong() }
-                        viewModel.addObservation(subject, category, facts, confidence, manualLocation, tags, evidence, fieldContext, projectId, capturedLocation?.latitude, capturedLocation?.longitude, attachments, weatherSnapshot, structuredDetails.toJsonObject(), startedAt = stopwatchStartedAt, endedAt = if (durationMs != null) now else null, durationMs = durationMs, changeObservedAt = changeDurationMs?.let { (stopwatchStartedAt ?: now) + it }, changeDurationMs = changeDurationMs, timeNote = timeNote) {
+                        val enrichedDetails = structuredDetails + mapOf(
+                            "captureMode" to observationMode,
+                            "count" to count,
+                            "speciesConfidence" to speciesConfidence,
+                            "distanceFromObserver" to observerDistance,
+                            "checklist" to checklist.joinToString(", "),
+                            "height" to height,
+                            "width" to width,
+                            "length" to length,
+                            "diameter" to diameter,
+                            "weight" to weight,
+                            "color" to colorDetail,
+                            "followUp" to followUp
+                        ).filterValues { it.isNotBlank() && it != "None" }
+                        val finalTags = autoObservationTags(subject, facts, category, tags)
+                        val finalEvidence = listOf(evidence, "Evidence count: ${attachments.size}", "Checklist: ${checklist.joinToString()}").filter { it.isNotBlank() }.joinToString(" | ")
+                        viewModel.addObservation(subject, category, facts, confidence, manualLocation, finalTags, finalEvidence, fieldContext, projectId, capturedLocation?.latitude, capturedLocation?.longitude, attachments, weatherSnapshot, enrichedDetails.toJsonObject(), startedAt = stopwatchStartedAt, endedAt = if (durationMs != null) now else null, durationMs = durationMs, changeObservedAt = changeDurationMs?.let { (stopwatchStartedAt ?: now) + it }, changeDurationMs = changeDurationMs, timeNote = listOf(timeNote, "Follow-up: $followUp".takeIf { followUp != "None" }).filterNotNull().joinToString(" | ")) {
                             subject = ""; facts = ""; manualLocation = ""; tags = ""; evidence = ""; fieldContext = ""; attachments = emptyList(); capturedLocation = null; weatherSnapshot = null; structuredDetails = emptyMap(); stopwatchStartedAt = null; stopwatchAccumulatedMs = 0L; stopwatchRunning = false
                             scope.launch { snackbar.showSnackbar("Observation saved to your archive.") }; onSaved()
                         }
@@ -1144,6 +1192,80 @@ internal fun ObservationCaptureCard(viewModel: FieldMindViewModel, compact: Bool
 }
 
 // ── Helpers ──
+
+
+@Composable
+private fun ObservationQualityCard(score: Int, missing: List<String>) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(18.dp),
+        color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.45f)
+    ) {
+        Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                Icon(FieldMindIcons.Check, null, tint = MaterialTheme.colorScheme.primary, size = 20.dp)
+                Text("Observation Quality", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
+                Text("$score%", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.primary)
+            }
+            LinearProgressIndicator(progress = { score / 100f }, modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(99.dp)))
+            Text(if (missing.isEmpty()) "Complete core evidence captured." else "Missing: ${missing.joinToString()}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun ObservationChecklist(selected: Set<String>, onSelected: (Set<String>) -> Unit) {
+    val options = listOf("Seen", "Heard", "Smelled", "Touched", "Measured")
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text("Observation checklist", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            options.forEach { option ->
+                FilterChip(
+                    selected = option in selected,
+                    onClick = { onSelected(if (option in selected) selected - option else selected + option) },
+                    label = { Text(option) },
+                    leadingIcon = if (option in selected) ({ Icon(FieldMindIcons.Check, null, size = 16.dp) }) else null
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun MoodDropdown(value: String, onValueChange: (String) -> Unit) {
+    var expanded by remember { mutableStateOf(false) }
+    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Text("Mood / context preset", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Box {
+            OutlinedButton(onClick = { expanded = true }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp)) {
+                Text(value.ifBlank { "Choose context" }, modifier = Modifier.weight(1f), textAlign = TextAlign.Start)
+                Icon(FieldMindIcons.Down, null, size = 18.dp)
+            }
+            DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+                contextPresets.forEach { preset ->
+                    DropdownMenuItem(text = { Text(preset) }, onClick = { onValueChange(preset); expanded = false })
+                }
+            }
+        }
+    }
+}
+
+private fun autoObservationTags(subject: String, facts: String, category: String, current: String): String {
+    val base = current.split(',').map { it.trim() }.filter { it.isNotBlank() }.toMutableSet()
+    observationCategoryDefinitions.firstOrNull { it.label == category }?.defaultTags?.let { base.addAll(it) }
+    val text = "$subject $facts".lowercase()
+    val signals = listOf(
+        "bird" to listOf("bird", "crow", "sparrow", "call", "nest", "feather"),
+        "fungi" to listOf("mushroom", "fungus", "cap", "gill", "stem"),
+        "water" to listOf("water", "pond", "river", "rain", "flow"),
+        "insect" to listOf("ant", "bee", "butterfly", "insect", "larva"),
+        "weather" to listOf("cloud", "wind", "rain", "temperature", "humid"),
+        "behavior" to listOf("feeding", "carrying", "calling", "moving", "gathering")
+    )
+    signals.forEach { (tag, words) -> if (words.any { it in text }) base.add(tag) }
+    return base.take(12).joinToString(", ")
+}
 
 @Composable
 private fun FactsInterpretationBanner() {

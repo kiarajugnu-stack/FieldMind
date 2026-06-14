@@ -53,15 +53,29 @@ fun ResearchSessionScreen(
     val scope = rememberCoroutineScope()
     val projects by viewModel.projects.collectAsState()
     val defaultConfidence by viewModel.fieldSettings.defaultConfidence.collectAsState()
+    val researchSessions by viewModel.researchSessions.collectAsState()
+    val activeStoredSession = remember(researchSessions) { researchSessions.firstOrNull { it.status == "Active" } }
 
     // Session state
-    var sessionActive by remember { mutableStateOf(false) }
+    var sessionActive by remember { mutableStateOf(activeStoredSession != null) }
     var sessionName by remember { mutableStateOf("") }
     var selectedProjectId by remember { mutableStateOf<Long?>(null) }
     var sessionElapsedMs by remember { mutableLongStateOf(0L) }
     var observationCount by remember { mutableIntStateOf(0) }
-    var sessionStartedAt by remember { mutableLongStateOf(0L) }
+    var sessionStartedAt by remember { mutableLongStateOf(activeStoredSession?.startedAt ?: 0L) }
+    var activeSessionId by remember { mutableStateOf<Long?>(activeStoredSession?.id) }
     var showSummary by remember { mutableStateOf(false) }
+
+    LaunchedEffect(activeStoredSession?.id) {
+        activeStoredSession?.let { stored ->
+            activeSessionId = stored.id
+            sessionActive = true
+            sessionName = stored.name
+            selectedProjectId = stored.projectId
+            sessionStartedAt = stored.startedAt
+            observationCount = maxOf(observationCount, stored.observationCount)
+        }
+    }
 
     // Quick observation input
     var quickSubject by remember { mutableStateOf("") }
@@ -71,7 +85,7 @@ fun ResearchSessionScreen(
     // Timer
     LaunchedEffect(sessionActive) {
         if (sessionActive) {
-            sessionStartedAt = System.currentTimeMillis()
+            if (sessionStartedAt == 0L) sessionStartedAt = System.currentTimeMillis()
             while (sessionActive) {
                 delay(1000)
                 sessionElapsedMs = System.currentTimeMillis() - sessionStartedAt
@@ -88,16 +102,27 @@ fun ResearchSessionScreen(
         else "%d:%02d".format(minutes, seconds)
     }
 
+    fun smartSessionName(): String {
+        val project = projects.firstOrNull { it.id == selectedProjectId }
+        val categoryHint = quickCategory.takeIf { it != "Other" } ?: project?.topicType?.takeIf { it.isNotBlank() }
+        val time = java.text.SimpleDateFormat("HH:mm", java.util.Locale.getDefault()).format(java.util.Date())
+        return listOfNotNull(categoryHint, project?.title).joinToString(" • ").ifBlank { "Field session" } + " · $time"
+    }
+
     fun startSession() {
+        val name = sessionName.ifBlank { smartSessionName() }
         sessionActive = true
+        sessionStartedAt = System.currentTimeMillis()
         sessionElapsedMs = 0
         observationCount = 0
-        sessionName = sessionName.ifBlank { "Session ${java.text.SimpleDateFormat("HH:mm", java.util.Locale.getDefault()).format(java.util.Date())}" }
+        sessionName = name
+        viewModel.addResearchSession(name, selectedProjectId) { id -> activeSessionId = id }
         haptics.confirm()
     }
 
     fun endSession() {
         sessionActive = false
+        activeSessionId?.let { viewModel.endResearchSession(it, observationCount, sessionElapsedMs) }
         showSummary = true
         haptics.confirm()
     }
@@ -113,8 +138,13 @@ fun ResearchSessionScreen(
             tags = "research-session",
             evidence = "",
             context = "Research session: $sessionName",
-            projectId = selectedProjectId
-        ) {
+            projectId = selectedProjectId,
+            startedAt = sessionStartedAt.takeIf { it > 0L },
+            endedAt = System.currentTimeMillis(),
+            durationMs = sessionElapsedMs,
+            timeNote = "Captured at ${formatTime(sessionElapsedMs)} in $sessionName"
+        ) { observationId ->
+            activeSessionId?.let { viewModel.linkObservationToSession(it, observationId) }
             observationCount++
             quickSubject = ""
             quickFacts = ""
@@ -158,7 +188,7 @@ fun ResearchSessionScreen(
                             if (sessionName.isNotBlank()) {
                                 Text("Session: $sessionName", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onPrimaryContainer)
                             }
-                            Button(onClick = { showSummary = false; sessionElapsedMs = 0; observationCount = 0 }, shape = RoundedCornerShape(16.dp), modifier = Modifier.fillMaxWidth()) {
+                            Button(onClick = { showSummary = false; sessionElapsedMs = 0; observationCount = 0; activeSessionId = null; sessionStartedAt = 0L }, shape = RoundedCornerShape(16.dp), modifier = Modifier.fillMaxWidth()) {
                                 Text("Start new session")
                             }
                         }
@@ -205,6 +235,13 @@ fun ResearchSessionScreen(
                                 Text(formatTime(sessionElapsedMs), style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onPrimaryContainer)
                                 Text("$observationCount observation${if (observationCount != 1) "s" else ""} captured", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.78f))
                             }
+                        }
+                        Row(Modifier.padding(horizontal = 20.dp, vertical = 0.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                            AssistChip(onClick = { scope.launch { snackbar.showSnackbar("Camera evidence can be added from Capture.") } }, label = { Text("Camera") }, leadingIcon = { Icon(FieldMindIcons.Camera, null, size = 18.dp) })
+                            AssistChip(onClick = { scope.launch { snackbar.showSnackbar("Gallery import can be added from Capture.") } }, label = { Text("Gallery") }, leadingIcon = { Icon(FieldMindIcons.Gallery, null, size = 18.dp) })
+                            AssistChip(onClick = { scope.launch { snackbar.showSnackbar("Attachments can be added from Capture.") } }, label = { Text("Attach") }, leadingIcon = { Icon(FieldMindIcons.File, null, size = 18.dp) })
+                        }
+                        Row(Modifier.padding(20.dp), horizontalArrangement = Arrangement.End) {
                             Button(onClick = ::endSession, colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error), shape = RoundedCornerShape(16.dp)) {
                                 Text("End")
                             }

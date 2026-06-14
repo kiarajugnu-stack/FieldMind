@@ -141,17 +141,19 @@ private fun ProjectsTab(
     var show by remember { mutableStateOf(false) }
     var title by remember { mutableStateOf("") }
     var question by remember { mutableStateOf("") }
+    var projectType by remember { mutableStateOf("Observation") }
+    var investigationPlan by remember { mutableStateOf(setOf("Photo documentation", "Daily observations")) }
     var selectedTemplate by remember { mutableStateOf<Int?>(-1) }
     var showTemplates by remember { mutableStateOf(false) }
     val haptics = rememberFieldMindHaptics()
 
     // Project templates
     val projectTemplates = listOf(
-        "Species Survey" to Pair("Conduct a systematic species survey across selected sites", "What species are present at this location?"),
-        "Weather Study" to Pair("Record daily weather conditions and patterns", "How does weather vary at this location?"),
-        "Phenology Study" to Pair("Track seasonal changes in plants and animals", "What seasonal patterns are observable?"),
-        "Site Comparison" to Pair("Compare observations across multiple locations", "How do different sites compare?"),
-        "Behavior Study" to Pair("Document and analyze specific behaviors", "What behaviors are observed and when?")
+        ProjectTemplate("Species Survey", "Observation", "What species occur here?", "Recommended data: Species Tracker. Evidence: photos, audio, location. Charts: bar + timeline. Duration: 1 day to 1 month.", setOf("Species counting", "Photo documentation", "Audio recording")),
+        ProjectTemplate("Behavior Study", "Investigation", "What behavior is happening, when, and under what conditions?", "Recommended data: Event Log. Evidence: video, time notes, repeated observations. Charts: timeline + by-hour.", setOf("Video documentation", "Daily observations", "Behavior logging")),
+        ProjectTemplate("Site Survey", "Survey", "What are the main conditions and evidence at this site?", "Recommended data: Site Log. Evidence: photos, GPS, weather, measurements. Duration: one visit to seasonal monitoring.", setOf("Photo documentation", "Measurement logging", "Weather logging")),
+        ProjectTemplate("Experiment", "Experiment", "What changes when one condition varies?", "Recommended data: Comparison Table. Evidence: measurements, controls, notes. Charts: comparison + line.", setOf("Measurement logging", "Comparison table", "Weekly observations")),
+        ProjectTemplate("Monitoring", "Monitoring", "How does this place or subject change over time?", "Recommended data: Time Series. Evidence: repeated photos, weather, count. Charts: trend + timeline.", setOf("Daily observations", "Photo documentation", "Weather logging"))
     )
 
     LazyColumn(contentPadding = panelPadding(), verticalArrangement = Arrangement.spacedBy(14.dp)) {
@@ -200,13 +202,15 @@ private fun ProjectsTab(
                     Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         Text("Project templates", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
                         Text("Choose a template to pre-fill your project setup.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        projectTemplates.forEachIndexed { i, (name, details) ->
+                        projectTemplates.forEachIndexed { i, template ->
                             val isSelected = selectedTemplate == i
                             Card(
                                 modifier = Modifier.fillMaxWidth().clickable {
                                     selectedTemplate = i
-                                    title = name
-                                    question = details.second
+                                    title = template.name
+                                    question = template.question
+                                    projectType = template.type
+                                    investigationPlan = template.methods
                                     show = true
                                     showTemplates = false
                                 },
@@ -227,8 +231,8 @@ private fun ProjectsTab(
                                         contentAlignment = Alignment.Center
                                     ) { Icon(FieldMindIcons.Project, null, tint = FieldMindTheme.colors.project, size = 20.dp) }
                                     Column(Modifier.weight(1f)) {
-                                        Text(name, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
-                                        Text(details.first, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                                        Text(template.name, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
+                                        Text(template.summary, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 3, overflow = TextOverflow.Ellipsis)
                                     }
                                     Icon(FieldMindIcons.Add, null, tint = FieldMindTheme.colors.project, size = 18.dp)
                                 }
@@ -242,12 +246,17 @@ private fun ProjectsTab(
         if (show) item {
             InlineFormCard("New Project", onDismiss = { show = false; title = ""; question = "" }, onSave = {
                 if (title.isNotBlank()) {
-                    viewModel.addProject(title, "Other", "", question)
-                    show = false; title = ""; question = ""
+                    val methods = investigationPlan.joinToString(" • ")
+                    viewModel.addProject(title, projectType, "Project type: $projectType", question, methods)
+                    show = false; title = ""; question = ""; projectType = "Observation"; investigationPlan = setOf("Photo documentation", "Daily observations")
                 }
             }, saveEnabled = title.isNotBlank()) {
                 FieldTextField(title, { title = it }, "Project title", supportingText = "Give your investigation a name")
+                Text("Project type", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                ChoiceChips(listOf("Observation", "Investigation", "Survey", "Experiment", "Monitoring"), projectType) { projectType = it }
                 FieldTextField(question, { question = it }, "Research question", minLines = 2, supportingText = "What do you want to find out?")
+                ResearchMethodBuilder(investigationPlan) { investigationPlan = it }
+                ResearchPreviewCard(projectType, investigationPlan)
             }
         }
 
@@ -282,6 +291,9 @@ private fun EvidenceTab(
     sources: List<SourceEntity>,
     onOpenDetail: (String, Long) -> Unit
 ) {
+    var filterKind by remember { mutableStateOf("All") }
+    var filterGroup by remember { mutableStateOf("All") }
+    var bulkMode by remember { mutableStateOf(false) }
     // Merge all evidence into chronological list
     val evidence = remember(observations, notes, questions, sources) {
         buildList {
@@ -291,10 +303,13 @@ private fun EvidenceTab(
             sources.forEach { add(EvidenceItem("source", it.id, it.updatedAt, it.title, "${it.type} • ${it.readingStatus}", it.type)) }
         }.sortedByDescending { it.timestamp }
     }
+    val groups = remember(evidence) { listOf("All") + evidence.map { it.group }.distinct().sorted().take(16) }
+    val filteredEvidence = remember(evidence, filterKind, filterGroup) { evidence.filter { (filterKind == "All" || it.kind == filterKind.lowercase()) && (filterGroup == "All" || it.group == filterGroup) } }
 
     LazyColumn(contentPadding = panelPadding(), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-        item { SectionHeader("All evidence", "${evidence.size} items across observations, notes, questions, and sources") }
-        if (evidence.isEmpty()) {
+        item { SectionHeader("Evidence hub", "${filteredEvidence.size} of ${evidence.size} items • filter, review, bulk-manage") }
+        item { EvidenceFilterBar(filterKind, { filterKind = it }, filterGroup, { filterGroup = it }, groups, bulkMode, { bulkMode = !bulkMode }) }
+        if (filteredEvidence.isEmpty()) {
             item {
                 EmptyState(
                     "No evidence yet",
@@ -304,13 +319,68 @@ private fun EvidenceTab(
                 ) { onOpenDetail("observe", 0) }
             }
         }
-        items(evidence) { item ->
+        items(filteredEvidence) { item ->
             EntityCard(
                 item.title, item.kind,
                 body = item.subtitle,
                 meta = listOf(item.group),
                 onClick = { onOpenDetail(item.kind, item.id) }
             )
+        }
+    }
+}
+
+private data class ProjectTemplate(val name: String, val type: String, val question: String, val summary: String, val methods: Set<String>)
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun ResearchMethodBuilder(selected: Set<String>, onSelected: (Set<String>) -> Unit) {
+    val options = listOf("Daily observations", "Weekly observations", "Photo documentation", "Audio recording", "Video documentation", "Measurement logging", "Species counting", "Weather logging", "Behavior logging", "Comparison table")
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text("Research method builder", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            options.forEach { option ->
+                FilterChip(selected = option in selected, onClick = { onSelected(if (option in selected) selected - option else selected + option) }, label = { Text(option) }, leadingIcon = if (option in selected) ({ Icon(FieldMindIcons.Check, null, size = 16.dp) }) else null)
+            }
+        }
+    }
+}
+
+@Composable
+private fun ResearchPreviewCard(projectType: String, methods: Set<String>) {
+    Card(shape = RoundedCornerShape(18.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.55f)), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)) {
+        Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text("Auto workspace preview", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+            Text("Type: $projectType", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onPrimaryContainer)
+            Text("Recommended data: ${recommendedDatasetFor(methods)}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onPrimaryContainer)
+            Text("Recommended evidence: ${recommendedEvidenceFor(methods)}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onPrimaryContainer)
+        }
+    }
+}
+
+private fun recommendedDatasetFor(methods: Set<String>): String = when {
+    methods.any { "Species" in it } -> "Species Tracker"
+    methods.any { "Measurement" in it } -> "Measurement Log"
+    methods.any { "Weather" in it } -> "Weather Log"
+    methods.any { "Comparison" in it } -> "Comparison Table"
+    else -> "Observation Timeline"
+}
+
+private fun recommendedEvidenceFor(methods: Set<String>): String = listOfNotNull(
+    "photos".takeIf { methods.any { "Photo" in it } },
+    "audio".takeIf { methods.any { "Audio" in it } },
+    "video".takeIf { methods.any { "Video" in it } },
+    "measurements".takeIf { methods.any { "Measurement" in it } },
+    "GPS + weather".takeIf { methods.any { "Weather" in it || "Daily" in it } }
+).ifEmpty { listOf("notes", "observations") }.joinToString(", ")
+
+@Composable
+private fun EvidenceFilterBar(kind: String, onKind: (String) -> Unit, group: String, onGroup: (String) -> Unit, groups: List<String>, bulkMode: Boolean, onBulk: () -> Unit) {
+    Card(shape = RoundedCornerShape(20.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)) {
+        Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            ChoiceChips(listOf("All", "Observation", "Note", "Question", "Source"), kind) { onKind(it) }
+            ChoiceChips(groups, group) { onGroup(it) }
+            OutlinedButton(onClick = onBulk, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp)) { Text(if (bulkMode) "Done bulk selection" else "Bulk select / manage") }
         }
     }
 }
@@ -439,8 +509,8 @@ private fun AnalysisTab(
 
         // Data tools
         item { Divider12() }
-        item { SectionHeader("Live Data Workspace", "${data.size} records • Bar, Line, Donut, Timeline") }
-        item { DatasetModeCards() }
+        item { SectionHeader("Live Data Workspace", "${data.size} records • choose what you are tracking") }
+        item { TrackingFlowCards() }
         item { AddButton(if (showData) "Cancel" else "Add data record") { showData = !showData } }
         if (showData) {
             item {
@@ -464,6 +534,29 @@ private fun AnalysisTab(
     }
 }
 
+
+@Composable
+private fun TrackingFlowCards() {
+    val modes = listOf(
+        "Count things" to "Creates a Counter dataset with bar charts.",
+        "Measure something" to "Creates a Measurement Log with trend charts.",
+        "Compare locations" to "Creates a Comparison Table with grouped charts.",
+        "Track changes over time" to "Creates a Time Series with timeline preview.",
+        "Record weather" to "Creates a Weather Log linked to observations.",
+        "Track species" to "Creates a Species Tracker with evidence requirements."
+    )
+    LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+        items(modes) { (title, body) ->
+            Card(shape = RoundedCornerShape(18.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)) {
+                Column(Modifier.width(180.dp).padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Icon(FieldMindIcons.Data, null, tint = MaterialTheme.colorScheme.primary, size = 22.dp)
+                    Text(title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+                    Text(body, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+        }
+    }
+}
 
 @Composable
 private fun DatasetModeCards() {
@@ -506,6 +599,26 @@ private fun ProjectSummaryCard(
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun ResearchRelationshipStrip(observations: Int, sources: Int, hypotheses: Int, data: Int, reports: Int) {
+    val metrics = listOf(
+        "Observations" to observations,
+        "Sources" to sources,
+        "Hypotheses" to hypotheses,
+        "Data" to data,
+        "Reports" to reports
+    )
+    Card(shape = RoundedCornerShape(18.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.72f)), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)) {
+        Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text("Connected research assets", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                metrics.forEach { (label, count) -> AssistChip(onClick = {}, label = { Text("$count $label") }) }
+            }
+        }
+    }
+}
+
 @Composable
 private fun ProjectWorkspaceCard(
     project: ProjectEntity, questions: List<QuestionEntity>, hypotheses: List<HypothesisEntity>,
@@ -514,13 +627,10 @@ private fun ProjectWorkspaceCard(
 ) {
     val relatedQuestions = questions.count { it.relatedProjectId == project.id }
     val relatedObservations = observations.count { it.projectId == project.id }
+    val relatedHypotheses = hypotheses.count { hypothesis -> questions.any { it.id == hypothesis.linkedQuestionId && it.relatedProjectId == project.id } }
+    val relatedSources = sources.count { it.relatedProjectId == project.id }
     val relatedData = data.count { it.projectId == project.id }
     val relatedReports = reports.count { it.projectId == project.id }
-    val bars = listOf(
-        "Q" to relatedQuestions.toFloat(),
-        "Obs" to relatedObservations.toFloat(),
-        "Data" to relatedData.toFloat()
-    )
     val progressMetrics = listOf(
         "Questions" to relatedQuestions.toFloat(),
         "Observations" to relatedObservations.toFloat(),
@@ -551,6 +661,7 @@ private fun ProjectWorkspaceCard(
                 InfoChip(project.status)
             }
             Text(project.objective.ifBlank { project.researchQuestion.ifBlank { "Open project workspace" } }, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2, overflow = TextOverflow.Ellipsis)
+            ResearchRelationshipStrip(relatedObservations, relatedSources, relatedHypotheses, relatedData, relatedReports)
             
             // Mini progress bars for each metric
             progressMetrics.forEach { (label, count) ->
