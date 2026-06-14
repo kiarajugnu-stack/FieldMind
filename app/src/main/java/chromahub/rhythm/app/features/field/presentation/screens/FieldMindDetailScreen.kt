@@ -361,8 +361,71 @@ private fun ObservationDetailContent(
                 ObservationLocationCard(o.latitude, o.longitude, o.manualLocation)
             }
 
-            // ── 11. Attachments gallery ──
+            // ── 11. Re-observation linking ──
+            ReObservationLink(o, viewModel, onOpenDetail)
+
+            // ── 12. Attachments gallery ──
             ObservationAttachmentsPanel(viewModel, o.id, onOpenReader)
+        }
+    }
+}
+
+@Composable
+private fun ReObservationLink(
+    o: ObservationEntity,
+    viewModel: FieldMindViewModel,
+    onOpenDetail: (String, Long) -> Unit
+) {
+    val observations by viewModel.observations.collectAsState()
+    val colors = FieldMindTheme.colors
+
+    // ── Parent observation (this is a re-observation of) ──
+    o.parentObservationId?.let { parentId ->
+        val parent = observations.firstOrNull { it.id == parentId }
+        if (parent != null) {
+            Card(
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(containerColor = colors.hypothesis.copy(alpha = 0.08f)),
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+            ) {
+                Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Icon(FieldMindIcons.Link, null, tint = colors.hypothesis, size = 18.dp)
+                        Text("Re-observation chain", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold, color = colors.hypothesis)
+                    }
+                    Text("This is a follow-up observation of:", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    EntityCard(
+                        title = parent.subject.ifBlank { "Observation #${parent.id}" },
+                        kind = "observation",
+                        meta = listOf(parent.date, parent.category, parent.confidenceLevel),
+                        onClick = { onOpenDetail("observation", parent.id) }
+                    )
+                }
+            }
+        }
+    }
+
+    // ── Child observations (re-observations of this one) ──
+    val children = observations.filter { it.parentObservationId == o.id }
+    if (children.isNotEmpty()) {
+        Card(
+            shape = RoundedCornerShape(20.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+        ) {
+            Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Icon(FieldMindIcons.Project, null, tint = colors.observation, size = 18.dp)
+                        Text("${children.size} follow-up observation${if (children.size != 1) "s" else ""}", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold)
+                }
+                children.forEach { child ->
+                    EntityCard(
+                        title = child.subject.ifBlank { "Observation #${child.id}" },
+                        kind = "observation",
+                        meta = listOf(child.date, child.category, child.confidenceLevel),
+                        onClick = { onOpenDetail("observation", child.id) }
+                    )
+                }
+            }
         }
     }
 }

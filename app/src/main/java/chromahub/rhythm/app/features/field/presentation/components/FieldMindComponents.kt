@@ -554,8 +554,250 @@ fun OutlinedSection(modifier: Modifier = Modifier, content: @Composable () -> Un
 fun Divider12() { Spacer(Modifier.height(12.dp)) }
 
 // ──────────────────────────────────────────────────────────────────────
-//  Note Templates & Composer (Redesign)
+//  Field Protocol System — Step-by-step survey protocols
 // ──────────────────────────────────────────────────────────────────────
+
+/**
+ * Protocol definition for structured field surveys.
+ * A protocol specifies a series of steps to follow during a capture session.
+ */
+data class FieldProtocol(
+    val id: String,
+    val name: String,
+    val description: String,
+    val icon: MaterialSymbolIcon,
+    val steps: List<ProtocolStep>,
+    val suggestedCategory: String = "Other",
+    val defaultTags: String = ""
+)
+
+data class ProtocolStep(
+    val id: String,
+    val label: String,
+    val instruction: String,
+    val inputType: ProtocolInputType = ProtocolInputType.Text,
+    val placeholder: String = "",
+    val options: List<String> = emptyList(),
+    val required: Boolean = false
+)
+
+enum class ProtocolInputType {
+    Text, Number, Decimal, Choice, MultiChoice, YesNo, Photo, Location
+}
+
+/** Built-in field protocols. */
+object FieldProtocols {
+    val all: List<FieldProtocol> = listOf(
+        FieldProtocol(
+            id = "point_count",
+            name = "Point Count",
+            description = "Bird survey: count all birds seen/heard at a single point over a fixed time.",
+            icon = FieldMindIcons.Observation,
+            suggestedCategory = "Bird",
+            defaultTags = "protocol, point-count, bird-survey",
+            steps = listOf(
+                ProtocolStep("location", "Location", "Record your exact position.", ProtocolInputType.Location, "GPS coordinates", required = true),
+                ProtocolStep("start_time", "Start time", "Note the exact start time of this count.", ProtocolInputType.Text, "HH:MM", required = true),
+                ProtocolStep("duration", "Duration (min)", "How many minutes did you count?", ProtocolInputType.Number, "10", required = true),
+                ProtocolStep("distance", "Distance radius (m)", "What was the counting radius?", ProtocolInputType.Number, "50", required = true),
+                ProtocolStep("weather", "Weather conditions", "Describe wind, precipitation, visibility.", ProtocolInputType.Text, "Calm, clear, 100m visibility"),
+                ProtocolStep("species_seen", "Species seen", "List the species and counts you observed.", ProtocolInputType.Text, "Crow: 2, Sparrow: 5", required = true),
+                ProtocolStep("species_heard", "Species heard only", "List species heard but not seen.", ProtocolInputType.Text, "Blue Jay call"),
+                ProtocolStep("notes", "Notes", "Any additional observations or disturbances.", ProtocolInputType.Text, "Dog walker passed at 5 min")
+            )
+        ),
+        FieldProtocol(
+            id = "transect_survey",
+            name = "Transect Survey",
+            description = "Walk a fixed path and record all observations within a set distance.",
+            icon = FieldMindIcons.Map,
+            suggestedCategory = "Other",
+            defaultTags = "protocol, transect, survey",
+            steps = listOf(
+                ProtocolStep("transect_name", "Transect name", "Name or identifier for this path.", ProtocolInputType.Text, "North Meadow Loop", required = true),
+                ProtocolStep("length", "Length (m)", "How long was the transect?", ProtocolInputType.Number, "200", required = true),
+                ProtocolStep("width", "Width (m)", "Detection width on each side.", ProtocolInputType.Number, "25", required = true),
+                ProtocolStep("start_location", "Start point", "Location where the transect begins.", ProtocolInputType.Location, "GPS or landmark", required = true),
+                ProtocolStep("end_location", "End point", "Location where the transect ends.", ProtocolInputType.Location, "GPS or landmark", required = true),
+                ProtocolStep("habitat_type", "Habitat type", "Dominant habitat along the transect.", ProtocolInputType.Text, "Grassland / woodland edge"),
+                ProtocolStep("observations", "Observations", "Log each observation with distance and behavior.", ProtocolInputType.Text, "Red Fox at 10m, moving east", required = true)
+            )
+        ),
+        FieldProtocol(
+            id = "water_quality",
+            name = "Water Quality",
+            description = "Log water conditions: clarity, flow, chemistry, and life.",
+            icon = FieldMindIcons.Water,
+            suggestedCategory = "Water",
+            defaultTags = "protocol, water-quality, monitoring",
+            steps = listOf(
+                ProtocolStep("water_body", "Water body name", "Pond, stream, river, or lake name.", ProtocolInputType.Text, "Mill Pond", required = true),
+                ProtocolStep("clarity", "Clarity", "How clear is the water?", ProtocolInputType.Choice, options = listOf("Clear", "Slightly turbid", "Turbid", "Opaque"), required = true),
+                ProtocolStep("flow", "Flow rate", "Describe the water flow.", ProtocolInputType.Choice, options = listOf("Still", "Slow", "Moderate", "Fast"), required = true),
+                ProtocolStep("depth", "Depth estimate (cm)", "Approximate depth at sampling point.", ProtocolInputType.Number, "30", required = true),
+                ProtocolStep("temperature", "Temperature (°C)", "Water temperature.", ProtocolInputType.Decimal, "15.5"),
+                ProtocolStep("organisms", "Organisms found", "List any aquatic life observed.", ProtocolInputType.Text, "Caddisfly larvae, water striders"),
+                ProtocolStep("notes", "Notes", "Odors, color, nearby land use, weather.", ProtocolInputType.Text, "Slight algae bloom near edges")
+            )
+        ),
+        FieldProtocol(
+            id = "phenology_check",
+            name = "Phenology Check",
+            description = "Track seasonal changes: leaf-out, flowering, fruiting, migration.",
+            icon = FieldMindIcons.Nature,
+            suggestedCategory = "Plant",
+            defaultTags = "protocol, phenology, seasonal",
+            steps = listOf(
+                ProtocolStep("species", "Species / plant", "What species are you monitoring?", ProtocolInputType.Text, "Oak, Maple", required = true),
+                ProtocolStep("stage", "Phenological stage", "What stage has been reached?", ProtocolInputType.Choice, options = listOf("Bud burst", "Leaf-out", "Flowering", "Fruiting", "Senescence", "Dormant"), required = true),
+                ProtocolStep("percent", "Percent complete", "Approximate percentage of individuals at this stage.", ProtocolInputType.Number, "50", required = true),
+                ProtocolStep("evidence", "Photo evidence", "Take a photo showing the stage clearly.", ProtocolInputType.Photo, "Photo required"),
+                ProtocolStep("notes", "Notes", "Weather, unusual timing, insect activity.", ProtocolInputType.Text, "First flowering seen this year")
+            )
+        ),
+        FieldProtocol(
+            id = "soil_pit",
+            name = "Soil Pit",
+            description = "Dig a small pit and log soil horizons, texture, moisture, and organisms.",
+            icon = FieldMindIcons.Data,
+            suggestedCategory = "Soil",
+            defaultTags = "protocol, soil, geology",
+            steps = listOf(
+                ProtocolStep("location", "Pit location", "Where was the pit dug?", ProtocolInputType.Location, "GPS coordinates", required = true),
+                ProtocolStep("depth", "Depth (cm)", "How deep was the pit?", ProtocolInputType.Number, "30", required = true),
+                ProtocolStep("horizons", "Horizons observed", "Describe the soil layers.", ProtocolInputType.Text, "O: 2cm leaf litter, A: 10cm dark loam", required = true),
+                ProtocolStep("texture", "Texture", "Soil texture by feel.", ProtocolInputType.Choice, options = listOf("Sandy", "Loamy", "Clay", "Silty", "Peaty"), required = true),
+                ProtocolStep("moisture", "Moisture", "How moist was the soil?", ProtocolInputType.Choice, options = listOf("Dry", "Moist", "Wet", "Saturated"), required = true),
+                ProtocolStep("organisms", "Soil organisms", "Any worms, insects, roots found.", ProtocolInputType.Text, "Earthworms at 10cm depth")
+            )
+        )
+    )
+}
+
+/** Composable that renders the input field for a ProtocolStep. */
+@Composable
+fun ProtocolStepField(
+    step: ProtocolStep,
+    value: String,
+    onValueChange: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    when (step.inputType) {
+        ProtocolInputType.Number -> NumberField(
+            value = value,
+            onValueChange = onValueChange,
+            label = step.label,
+            modifier = modifier,
+            suffix = "",
+            decimalPlaces = 0,
+            supportingText = step.instruction
+        )
+        ProtocolInputType.Decimal -> NumberField(
+            value = value,
+            onValueChange = onValueChange,
+            label = step.label,
+            modifier = modifier,
+            suffix = "",
+            decimalPlaces = 2,
+            supportingText = step.instruction
+        )
+        ProtocolInputType.Choice -> {
+            Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(step.label, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold)
+                Text(step.instruction, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                if (step.options.isNotEmpty()) {
+                    ChoiceChips(step.options, value, modifier = Modifier.fillMaxWidth(), onSelected = onValueChange)
+                }
+            }
+        }
+        ProtocolInputType.Location -> FieldTextField(
+            value = value,
+            onValueChange = onValueChange,
+            label = step.label,
+            modifier = modifier,
+            supportingText = step.instruction
+        )
+        ProtocolInputType.Photo -> {
+            Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(step.label, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold)
+                Text(step.instruction, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
+                    color = MaterialTheme.colorScheme.surfaceContainerHigh
+                ) {
+                    Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Icon(FieldMindIcons.Camera, null, tint = MaterialTheme.colorScheme.primary, size = 22.dp)
+                        Text("Add photo evidence", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
+                    }
+                }
+            }
+        }
+        else -> FieldTextField(
+            value = value,
+            onValueChange = onValueChange,
+            label = step.label,
+            modifier = modifier,
+            supportingText = step.instruction
+        )
+    }
+}
+
+/** Protocol selector dialog. */
+@Composable
+fun ProtocolPicker(
+    selectedId: String?,
+    onSelect: (FieldProtocol?) -> Unit,
+    onDismiss: () -> Unit
+) {
+    Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
+        Card(
+            modifier = Modifier.fillMaxWidth(0.94f).wrapContentHeight().padding(vertical = 24.dp),
+            shape = RoundedCornerShape(32.dp),
+            elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
+        ) {
+            Column(Modifier.verticalScroll(rememberScrollState()).padding(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                Text("Choose a protocol", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+                Text("Protocols guide you through structured field surveys step by step.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                FieldProtocols.all.forEach { protocol ->
+                    val isSelected = selectedId == protocol.id
+                    Card(
+                        modifier = Modifier.fillMaxWidth().clickable { onSelect(protocol) },
+                        shape = RoundedCornerShape(18.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainerHigh
+                        ),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+                        border = if (isSelected) BorderStroke(1.5.dp, MaterialTheme.colorScheme.primary) else null
+                    ) {
+                        Row(Modifier.padding(14.dp), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                            Box(Modifier.size(42.dp).clip(RoundedCornerShape(12.dp)).background(MaterialTheme.colorScheme.primary.copy(alpha = 0.14f)), contentAlignment = Alignment.Center) {
+                                Icon(protocol.icon, null, tint = MaterialTheme.colorScheme.primary, size = 22.dp)
+                            }
+                            Column(Modifier.weight(1f)) {
+                                Text(protocol.name, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                                Text(protocol.description, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                                Text("${protocol.steps.size} steps", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f))
+                            }
+                            if (isSelected) {
+                                Icon(FieldMindIcons.Check, null, tint = MaterialTheme.colorScheme.primary, size = 20.dp)
+                            }
+                        }
+                    }
+                }
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                    TextButton(onClick = { onSelect(null) }) { Text("No protocol (manual entry)") }
+                    Spacer(Modifier.size(8.dp))
+                    TextButton(onClick = onDismiss) { Text("Cancel") }
+                }
+            }
+        }
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════════
+//  Note Templates & Composer (Redesign)
+// ══════════════════════════════════════════════════════════════════════
 
 /** Pre-built note template definitions for quick-start composition. */
 data class NoteTemplate(val title: String, val prompts: List<String>, val icon: MaterialSymbolIcon)
