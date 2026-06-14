@@ -747,13 +747,6 @@ private fun ProjectWorkspaceCard(
             }
             Text(project.objective.ifBlank { project.researchQuestion.ifBlank { "Open project workspace" } }, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2, overflow = TextOverflow.Ellipsis)
             ResearchRelationshipStrip(relatedObservations, relatedSources, relatedHypotheses, relatedData, relatedReports)
-
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                AssistChip(onClick = {}, label = { Text("$relatedQuestions questions") }, leadingIcon = { Icon(FieldMindIcons.Question, null, size = 16.dp) })
-                AssistChip(onClick = {}, label = { Text("$relatedObservations observations") }, leadingIcon = { Icon(FieldMindIcons.Observation, null, size = 16.dp) })
-                AssistChip(onClick = {}, label = { Text("$relatedData data") }, leadingIcon = { Icon(FieldMindIcons.Data, null, size = 16.dp) })
-                AssistChip(onClick = {}, label = { Text("$relatedReports reports") }, leadingIcon = { Icon(FieldMindIcons.Report, null, size = 16.dp) })
-            }
         }
     }
 }
