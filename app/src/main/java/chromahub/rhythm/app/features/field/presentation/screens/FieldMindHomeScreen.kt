@@ -44,10 +44,12 @@ import java.util.Date
 import java.util.Locale
 import java.time.LocalDate
 import java.time.LocalTime
+import java.time.temporal.ChronoUnit
+import kotlin.math.floor
 import kotlin.math.roundToInt
 
 // ══════════════════════════════════════════════════════════════════════
-//  Today (Home) — Redesigned with Hero Section & Research Pulse
+//  Today (Home) — Animated weather centerpiece + research dashboard
 // ══════════════════════════════════════════════════════════════════════
 
 @Composable
@@ -71,6 +73,8 @@ fun HomeScreen(
     val streaksEnabled by viewModel.fieldSettings.streaksEnabled.collectAsState()
     val todayKey = remember { today() }
     val todayCount = observations.count { it.date == todayKey }
+    val yesterdayKey = remember { LocalDate.now().minusDays(1).toString() }
+    val yesterdayCount = observations.count { it.date == yesterdayKey }
     val currentStreak = remember(observations, streaksEnabled) { if (streaksEnabled) FieldMindStreaks.currentStreakDays(observations.map { it.date }) else 0 }
     val activeProject = projects.firstOrNull { it.status == "Active" } ?: projects.firstOrNull()
     val learnSignals = remember(observations, questions, projects) {
@@ -96,14 +100,13 @@ fun HomeScreen(
     var homePlaceName by remember { mutableStateOf<String?>(null) }
     val context = LocalContext.current
 
-    // Initial fetch + auto-refresh every 30 minutes (persists because this is outside the LazyColumn)
+    // Initial fetch + auto-refresh every 30 minutes
     LaunchedEffect(Unit) {
         homeWeatherLoading = true
         homeCurrentWeather = viewModel.refreshWeatherFromLocation()
         homeWeatherError = homeCurrentWeather == null
         homeWeatherLoading = false
         
-        // Resolve place name for display
         val locProvider = runCatching { FieldLocationProvider(context) }.getOrNull()
         if (locProvider != null && locProvider.hasAnyLocationPermission()) {
             locProvider.lastKnownLocation()?.let { loc ->
@@ -120,7 +123,6 @@ fun HomeScreen(
                 homeCurrentWeather = snapshot
                 homeWeatherError = false
             }
-            // Don't set weatherLoading = true during auto-refresh — keeps old data visible
         }
     }
 
@@ -128,12 +130,28 @@ fun HomeScreen(
         researchSessions.filter { it.status == "Completed" }.maxByOrNull { it.endedAt ?: it.createdAt }
     }
 
+    // ── Yesterday vs today delta ──
+    val obsDelta = todayCount - yesterdayCount
+    val deltaLabel = when {
+        obsDelta > 0 -> "+$obsDelta vs yesterday"
+        obsDelta < 0 -> "$obsDelta vs yesterday"
+        todayCount > 0 -> "Same as yesterday"
+        else -> ""
+    }
+
+    // ── Moon phase ──
+    val moonPhase = remember { getMoonPhase(LocalDate.now()) }
+
+    // ── Conditions nudge ──
+    val conditionsNudge = remember(homeCurrentWeather) {
+        homeCurrentWeather?.let { computeFieldworkNudge(it) } ?: ""
+    }
 
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(20.dp, 0.dp, 20.dp, 96.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
         // ── Hero Section ──
         item { HomeHeroSection(todayCount, goal, currentStreak, observations.size, questions.size, onOpenSettings, onNavigate) }
 
-        // ── Live Weather Dashboard Widget ──
+        // ── Weather as animated centerpiece ──
         item {
             LiveWeatherDashboardWidget(
                 viewModel = viewModel,
@@ -152,34 +170,24 @@ fun HomeScreen(
                 showHumidity = weatherShowHumidity,
                 showWind = weatherShowWind,
                 showCloudCover = weatherShowCloud,
-                showPressure = weatherShowPressure
+                showPressure = weatherShowPressure,
+                moonPhase = moonPhase,
+                conditionsNudge = conditionsNudge,
+                sunrise = homeCurrentWeather?.sunrise,
+                sunset = homeCurrentWeather?.sunset
             )
         }
 
-        // ── Daily Goal ──
-        item { DailyGoalCard(todayCount, goal, currentStreak) { onNavigate(FieldMindScreen.Observe) } }
+        // ── Daily Goal with delta ──
+        item { DailyGoalCard(todayCount, goal, currentStreak, deltaLabel) { onNavigate(FieldMindScreen.Observe) } }
 
         // ── Research Session CTA ──
-        item {
-            val activeSession = remember(researchSessions) { researchSessions.firstOrNull { it.status == "Active" } }
-            var timerMs by remember { mutableStateOf(0L) }
-            
-            LaunchedEffect(activeSession) {
-                if (activeSession != null) {
-                    while (true) {
-                        timerMs = System.currentTimeMillis() - (activeSession.createdAt)
-                        delay(100)
-                    }
-                }
-            }
-            
-            ResearchSessionCtaCard(
+        item { ResearchSessionCtaCard(
                 lastSessionLabel = if (lastSession != null) "Resume your last session" else null,
-                activeSessionName = activeSession?.name,
-                timerMs = timerMs,
+                activeSessionName = researchSessions.firstOrNull { it.status == "Active" }?.name,
+                timerMs = 0L,
                 onStartSession = { onNavigate(FieldMindScreen.ResearchSession) }
-            )
-        }
+            ) }
 
         // ── Widget Grid ──
         item { SectionHeader("Research areas", "Quick overview of your work") }
@@ -204,7 +212,7 @@ fun HomeScreen(
             )
         }
 
-        // ── Session Observations (grouped by research session) ──
+        // ── Session Observations ──
         if (observations.isNotEmpty()) {
             item {
                 val sessionObs = remember(observations, researchSessions) {
@@ -435,7 +443,11 @@ private fun LiveWeatherDashboardWidget(
     showHumidity: Boolean = true,
     showWind: Boolean = true,
     showCloudCover: Boolean = true,
-    showPressure: Boolean = true
+    showPressure: Boolean = true,
+    moonPhase: String = "",
+    conditionsNudge: String = "",
+    sunrise: String? = null,
+    sunset: String? = null
 ) {
     val colors = FieldMindTheme.colors
     var isRotating by remember { mutableStateOf(false) }
@@ -737,6 +749,56 @@ private fun LiveWeatherDashboardWidget(
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
+                        }
+                    }
+                }
+
+                // ── Sunrise / Sunset ──
+                if (sunrise != null || sunset != null) {
+                    Row(
+                        Modifier.fillMaxWidth().padding(top = 2.dp),
+                        horizontalArrangement = Arrangement.SpaceEvenly
+                    ) {
+                        sunrise?.let { s ->
+                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                                Icon(FieldMindIcons.Weather, null, tint = colors.warning, size = 14.dp)
+                                Text("Sunrise $s", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
+                        }
+                        sunset?.let { s ->
+                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                                Icon(FieldMindIcons.Weather, null, tint = colors.data, size = 14.dp)
+                                Text("Sunset $s", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
+                        }
+                        if (moonPhase.isNotBlank()) {
+                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                                Text("🌙", style = MaterialTheme.typography.labelSmall)
+                                Text(moonPhase, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
+                        }
+                    }
+                }
+
+                // ── Conditions nudge ──
+                if (conditionsNudge.isNotBlank()) {
+                    Surface(
+                        shape = RoundedCornerShape(14.dp),
+                        color = colors.warning.copy(alpha = if (colors.isDark) 0.18f else 0.10f),
+                        tonalElevation = 0.dp
+                    ) {
+                        Row(
+                            Modifier.padding(horizontal = 12.dp, vertical = 8.dp).fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Icon(FieldMindIcons.Info, null, tint = colors.warning, size = 16.dp)
+                            Text(
+                                conditionsNudge,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = colors.warning,
+                                fontWeight = FontWeight.SemiBold
+                            )
                         }
                     }
                 }
@@ -1163,7 +1225,7 @@ private fun RecommendedLearningCard(items: List<LearnRecommendation>, onOpenRead
 }
 
 @Composable
-private fun DailyGoalCard(todayCount: Int, goal: Int, streakDays: Int, onClick: () -> Unit) {
+private fun DailyGoalCard(todayCount: Int, goal: Int, streakDays: Int, deltaLabel: String = "", onClick: () -> Unit) {
     val colors = FieldMindTheme.colors
     val complete = todayCount >= goal && goal > 0
     val progress = if (goal > 0) todayCount.toFloat() / goal else 0f
@@ -1203,6 +1265,14 @@ private fun DailyGoalCard(todayCount: Int, goal: Int, streakDays: Int, onClick: 
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     GoalStatChip(FieldMindIcons.Streak, "$streakDays day${if (streakDays == 1) "" else "s"} streak", colors.warning)
                     GoalStatChip(if (complete) FieldMindIcons.Check else FieldMindIcons.Observation, if (complete) "Done" else "$todayCount logged", if (complete) colors.positive else colors.observation)
+                }
+                if (deltaLabel.isNotBlank()) {
+                    Text(
+                        deltaLabel,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = colors.observation,
+                        fontWeight = FontWeight.Medium
+                    )
                 }
             }
         }
@@ -1567,6 +1637,70 @@ private fun SessionObservationsCard(
             }
         }
     }
+}
+
+// ══════════════════════════════════════════════════════════════════════
+//  Moon Phase Calculation — Based on the age of the lunar cycle
+// ══════════════════════════════════════════════════════════════════════
+
+private fun getMoonPhase(date: LocalDate): String {
+    // Calculate approximate moon phase using the Julian day of the reference new moon
+    // Reference: 2000-01-06 18:14 UTC was a new moon
+    val knownNewMoon = LocalDate.of(2000, 1, 6)
+    val daysSince = ChronoUnit.DAYS.between(knownNewMoon, date).toDouble()
+    val lunations = daysSince / 29.53058770576
+    val phase = lunations - floor(lunations)
+    return when {
+        phase < 0.03 || phase >= 0.97 -> "🌑 New"
+        phase < 0.20 -> "🌒 Waxing crescent"
+        phase < 0.28 -> "🌓 First quarter"
+        phase < 0.45 -> "🌔 Waxing gibbous"
+        phase < 0.53 -> "🌕 Full"
+        phase < 0.68 -> "🌖 Waning gibbous"
+        phase < 0.78 -> "🌗 Last quarter"
+        else -> "🌘 Waning crescent"
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════════
+//  Fieldwork Conditions Nudge — Based on weather thresholds
+// ══════════════════════════════════════════════════════════════════════
+
+private fun computeFieldworkNudge(weather: WeatherSnapshot): String {
+    val temp = weather.temperature
+    val wind = weather.windSpeed
+    val code = weather.weatherCode
+    val parts = mutableListOf<String>()
+
+    // Temperature nudges
+    if (temp != null) {
+        when {
+            temp > 38 -> parts.add("Extreme heat — postpone fieldwork if possible")
+            temp > 32 -> parts.add("Very hot — take frequent breaks and hydrate")
+            temp < -10 -> parts.add("Dangerous cold — limit outdoor exposure")
+            temp < 0 -> parts.add("Freezing — watch for ice on equipment")
+            temp in 0.0..3.0 -> parts.add("Near-freezing — layer up and keep batteries warm")
+        }
+    }
+
+    // Wind nudges
+    if (wind != null) {
+        when {
+            wind > 60 -> parts.add("Gale-force winds — avoid open areas")
+            wind > 40 -> parts.add("Very windy — secure loose gear")
+            wind > 25 -> parts.add("Windy — consider sheltered transects")
+        }
+    }
+
+    // Precipitation nudges
+    when {
+        code in 51..67 -> parts.add("Rain likely — bring waterproof gear")
+        code in 71..86 -> parts.add("Snow — tread carefully, watch visibility")
+        code >= 95 -> parts.add("Thunderstorms — seek shelter immediately")
+        code in 45..48 -> parts.add("Fog — reduced visibility, use caution")
+    }
+
+    return parts.firstOrNull() ?: ""
 }
 
 // ══════════════════════════════════════════════════════════════════════
