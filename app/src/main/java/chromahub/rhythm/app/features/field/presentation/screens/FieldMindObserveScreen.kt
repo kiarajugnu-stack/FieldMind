@@ -991,6 +991,11 @@ private fun FieldModeScreen(viewModel: FieldMindViewModel, onBack: () -> Unit) {
     val gpsMode by viewModel.fieldSettings.gpsMode.collectAsState()
     val autoWeatherEnabled by viewModel.fieldSettings.autoWeatherEnabled.collectAsState()
     val locationMode by viewModel.fieldSettings.locationMode.collectAsState()
+    // Field mode defaults from Settings
+    val fieldModeDefaultSession by viewModel.fieldSettings.fieldModeDefaultSession.collectAsState()
+    val fieldModeAutoStartTimer by viewModel.fieldSettings.fieldModeAutoStartTimer.collectAsState()
+    val fieldModeObservationSpacing by viewModel.fieldSettings.fieldModeObservationSpacing.collectAsState()
+
     val context = LocalContext.current
     val haptics = rememberFieldMindHaptics()
     var showFull by remember { mutableStateOf(false) }
@@ -1001,6 +1006,48 @@ private fun FieldModeScreen(viewModel: FieldMindViewModel, onBack: () -> Unit) {
     var quickSnapStatus by remember { mutableStateOf<String?>(null) }
     val locationProvider = remember { FieldLocationProvider(context) }
     val canAutoLocate = gpsMode != "Off" && locationMode != "Manual only"
+
+    // ── Observation spacing cooldown (prevents rapid duplicate saves) ──
+    var lastSaveTime by remember { mutableLongStateOf(0L) }
+    val spacingMs = remember(fieldModeObservationSpacing) {
+        when (fieldModeObservationSpacing) {
+            "30s" -> 30_000L
+            "1m" -> 60_000L
+            "5m" -> 300_000L
+            else -> 0L
+        }
+    }
+
+    // ── Auto-start timer when field mode opens ──
+    var sessionTimerStarted by remember { mutableStateOf(false) }
+    var timerStartTime by remember { mutableLongStateOf(0L) }
+    LaunchedEffect(fieldModeAutoStartTimer) {
+        if (fieldModeAutoStartTimer && !sessionTimerStarted) {
+            timerStartTime = System.currentTimeMillis()
+            sessionTimerStarted = true
+        }
+    }
+    // Tick every second when timer is running
+    var tick by remember { mutableIntStateOf(0) }
+    LaunchedEffect(sessionTimerStarted) {
+        if (sessionTimerStarted && fieldModeAutoStartTimer) {
+            while (true) {
+                delay(1000)
+                tick++
+            }
+        }
+    }
+    val elapsedFormatted = remember(tick, timerStartTime, sessionTimerStarted) {
+        if (sessionTimerStarted && fieldModeAutoStartTimer && timerStartTime > 0L) {
+            val elapsed = System.currentTimeMillis() - timerStartTime
+            val seconds = (elapsed / 1000) % 60
+            val minutes = (elapsed / 60000) % 60
+            val hours = elapsed / 3600000
+            if (hours > 0) "%d:%02d:%02d".format(hours, minutes, seconds)
+            else "%02d:%02d".format(minutes, seconds)
+        } else "00:00"
+    }
+
     Box(Modifier.fillMaxSize()) {
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background
@@ -1010,7 +1057,43 @@ private fun FieldModeScreen(viewModel: FieldMindViewModel, onBack: () -> Unit) {
             contentPadding = PaddingValues(20.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            item { FieldScreenHeader("Field mode", "One tap logs an observation. Add details later.", icon = FieldMindIcons.Bolt, actionIcon = FieldMindIcons.Close, onAction = onBack) }
+            item {
+                FieldScreenHeader(
+                    "Field mode",
+                    when {
+                        fieldModeAutoStartTimer && sessionTimerStarted ->
+                            "$fieldModeDefaultSession mode · $elapsedFormatted elapsed"
+                        fieldModeDefaultSession != "Quick capture" ->
+                            "$fieldModeDefaultSession mode — one tap logs an observation"
+                        else -> "One tap logs an observation. Add details later."
+                    },
+                    icon = FieldMindIcons.Bolt,
+                    actionIcon = FieldMindIcons.Close,
+                    onAction = onBack
+                )
+            }
+            // Auto-start timer indicator
+            if (fieldModeAutoStartTimer && sessionTimerStarted && timerStartTime > 0L) {
+                item {
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp),
+                        color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
+                    ) {
+                        Row(
+                            Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            Icon(FieldMindIcons.Timer, null, tint = MaterialTheme.colorScheme.onPrimaryContainer, size = 18.dp)
+                            Text("Session timer active — $elapsedFormatted", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onPrimaryContainer)
+                            if (fieldModeObservationSpacing != "None") {
+                                Text("${fieldModeObservationSpacing} spacing", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f))
+                            }
+                        }
+                    }
+                }
+            }
             if (showFull) {
                 item { ObservationCaptureCard(viewModel = viewModel, compact = true) { showFull = false } }
             } else {
@@ -1026,6 +1109,15 @@ private fun FieldModeScreen(viewModel: FieldMindViewModel, onBack: () -> Unit) {
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                         row.forEach { category ->
                             FieldModeButton(category, Modifier.weight(1f)) {
+                                // Apply spacing cooldown
+                                val now = System.currentTimeMillis()
+                                if (spacingMs > 0L && (now - lastSaveTime) < spacingMs) {
+                                    scope.launch {
+                                        snackbar.showSnackbar("Spacing: wait ${fieldModeObservationSpacing} between saves")
+                                    }
+                                    return@FieldModeButton
+                                }
+                                lastSaveTime = now
                                 haptics.confirm()
                                 viewModel.addObservation(
                                     subject = category, category = category,
