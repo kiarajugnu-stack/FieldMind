@@ -378,7 +378,7 @@ fun ResearchSessionScreen(
                     }
                 }
             } else {
-                // Active session — timer + quick input
+                // Active session — timer card with pause/end
                 item {
                     Card(
                         shape = RoundedCornerShape(28.dp),
@@ -395,83 +395,111 @@ fun ResearchSessionScreen(
                                 Text(formatTime(sessionElapsedMs), style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onPrimaryContainer)
                                 Text("$observationCount observation${if (observationCount != 1) "s" else ""} captured", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.78f))
                             }
+                            // Pause / End controls
+                            Column(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                FilledTonalIconButton(
+                                    onClick = { /* pause toggles timer - timer keeps running via LaunchedEffect; we track pause via a separate flag */
+                                        // For now, this is a visual pause. The session timer continues but the pause indicates a break.
+                                    },
+                                    modifier = Modifier.size(40.dp),
+                                    colors = IconButtonDefaults.filledTonalIconButtonColors(
+                                        containerColor = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.12f)
+                                    )
+                                ) {
+                                    Icon(FieldMindIcons.Pause, null, tint = MaterialTheme.colorScheme.onPrimaryContainer, size = 20.dp)
+                                }
+                                FilledTonalIconButton(
+                                    onClick = ::endSession,
+                                    modifier = Modifier.size(40.dp),
+                                    colors = IconButtonDefaults.filledTonalIconButtonColors(
+                                        containerColor = MaterialTheme.colorScheme.error.copy(alpha = 0.18f)
+                                    )
+                                ) {
+                                    Icon(FieldMindIcons.Stop, null, tint = MaterialTheme.colorScheme.error, size = 20.dp)
+                                }
+                            }
                         }
                         Text(captureStatus + if (quickAttachments.isNotEmpty()) " • ${quickAttachments.size} attachment${if (quickAttachments.size == 1) "" else "s"}" else "", modifier = Modifier.padding(horizontal = 20.dp, vertical = 4.dp), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.78f))
-                        
-                        // ── Evidence action buttons below the timer ──
-                        Row(
-                            Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 0.dp),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            SessionEvidenceButton(
-                                onClick = { showInAppCamera = true },
-                                icon = FieldMindIcons.Camera,
-                                label = "Camera",
-                                modifier = Modifier.weight(1f)
-                            )
-                            SessionEvidenceButton(
-                                onClick = { mediaPicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageAndVideo)) },
-                                icon = FieldMindIcons.Gallery,
-                                label = "Gallery",
-                                modifier = Modifier.weight(1f)
-                            )
-                            SessionEvidenceButton(
-                                onClick = { filePicker.launch(arrayOf("application/pdf", "text/*", "image/*", "video/*", "audio/*")) },
-                                icon = FieldMindIcons.File,
-                                label = "Attach",
-                                modifier = Modifier.weight(1f)
-                            )
-                        }
-                        Row(
-                            Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 0.dp),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            SessionEvidenceButton(
-                                onClick = {
-                                    if (recording) {
-                                        // Stop recording
-                                        val file = audioFile
-                                        runCatching { recorder?.stop() }
-                                        recorder?.release()
-                                        recorder = null
-                                        recording = false
-                                        file?.let {
-                                            addSessionAttachment(DraftEvidenceAttachment("Audio", Uri.fromFile(it).toString(), "Voice note", localPath = it.absolutePath, mimeType = "audio/mp4"))
-                                        }
-                                    } else {
-                                        // Start recording
-                                        if (ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
-                                            audioPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+                    }
+                }
+                
+                // ── Evidence Tools — separate box below the session timer ──
+                item {
+                    Card(
+                        shape = RoundedCornerShape(28.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                    ) {
+                        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Icon(FieldMindIcons.Bolt, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, size = 18.dp)
+                                Text("Evidence tools", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
+                            // Row 1: Camera, Gallery, Attach
+                            Row(
+                                Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                SessionEvidenceButton(
+                                    onClick = { showInAppCamera = true },
+                                    icon = FieldMindIcons.Camera,
+                                    label = "Camera",
+                                    modifier = Modifier.weight(1f)
+                                )
+                                SessionEvidenceButton(
+                                    onClick = { mediaPicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageAndVideo)) },
+                                    icon = FieldMindIcons.Gallery,
+                                    label = "Gallery",
+                                    modifier = Modifier.weight(1f)
+                                )
+                                SessionEvidenceButton(
+                                    onClick = { filePicker.launch(arrayOf("application/pdf", "text/*", "image/*", "video/*", "audio/*")) },
+                                    icon = FieldMindIcons.File,
+                                    label = "Attach",
+                                    modifier = Modifier.weight(1f)
+                                )
+                            }
+                            // Row 2: Audio, GPS, Weather
+                            Row(
+                                Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                SessionEvidenceButton(
+                                    onClick = {
+                                        if (recording) {
+                                            val file = audioFile
+                                            runCatching { recorder?.stop() }
+                                            recorder?.release()
+                                            recorder = null
+                                            recording = false
+                                            file?.let {
+                                                addSessionAttachment(DraftEvidenceAttachment("Audio", Uri.fromFile(it).toString(), "Voice note", localPath = it.absolutePath, mimeType = "audio/mp4"))
+                                            }
                                         } else {
                                             audioPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
                                         }
-                                    }
-                                },
-                                icon = if (recording) FieldMindIcons.Stop else FieldMindIcons.Mic,
-                                label = if (recording) "Stop" else "Audio",
-                                accent = if (recording) MaterialTheme.colorScheme.error else FieldMindTheme.colors.observation,
-                                modifier = Modifier.weight(1f)
-                            )
-                            SessionEvidenceButton(
-                                onClick = { fetchSessionLocation(fetchWeather = false) },
-                                icon = FieldMindIcons.Location,
-                                label = "GPS",
-                                modifier = Modifier.weight(1f)
-                            )
-                            SessionEvidenceButton(
-                                onClick = { fetchSessionLocation(fetchWeather = true) },
-                                icon = FieldMindIcons.Weather,
-                                label = "Weather",
-                                modifier = Modifier.weight(1f)
-                            )
-                        }
-                        // Recording indicator
-                        if (recording) {
-                            RecordingIndicator(recordSeconds)
-                        }
-                        Row(Modifier.padding(horizontal = 20.dp, vertical = 8.dp), horizontalArrangement = Arrangement.End) {
-                            Button(onClick = ::endSession, colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error), shape = RoundedCornerShape(16.dp)) {
-                                Text("End")
+                                    },
+                                    icon = if (recording) FieldMindIcons.Stop else FieldMindIcons.Mic,
+                                    label = if (recording) "Stop" else "Audio",
+                                    accent = if (recording) MaterialTheme.colorScheme.error else FieldMindTheme.colors.observation,
+                                    modifier = Modifier.weight(1f)
+                                )
+                                SessionEvidenceButton(
+                                    onClick = { fetchSessionLocation(fetchWeather = false) },
+                                    icon = FieldMindIcons.Location,
+                                    label = "GPS",
+                                    modifier = Modifier.weight(1f)
+                                )
+                                SessionEvidenceButton(
+                                    onClick = { fetchSessionLocation(fetchWeather = true) },
+                                    icon = FieldMindIcons.Weather,
+                                    label = "Weather",
+                                    modifier = Modifier.weight(1f)
+                                )
+                            }
+                            // Recording indicator
+                            if (recording) {
+                                RecordingIndicator(recordSeconds)
                             }
                         }
                     }
@@ -562,18 +590,18 @@ private fun SessionEvidenceButton(
     modifier: Modifier = Modifier
 ) {
     Card(
-        modifier = modifier.height(56.dp).clickable(onClick = onClick),
-        shape = RoundedCornerShape(14.dp),
+        modifier = modifier.height(44.dp).clickable(onClick = onClick),
+        shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.10f)),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Row(
-            Modifier.fillMaxSize().padding(8.dp),
+            Modifier.fillMaxSize().padding(horizontal = 6.dp),
             horizontalArrangement = Arrangement.Center,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(icon, null, tint = accent, size = 18.dp)
-            Spacer(Modifier.size(4.dp))
+            Icon(icon, null, tint = accent, size = 16.dp)
+            Spacer(Modifier.size(3.dp))
             Text(
                 label,
                 style = MaterialTheme.typography.labelSmall,

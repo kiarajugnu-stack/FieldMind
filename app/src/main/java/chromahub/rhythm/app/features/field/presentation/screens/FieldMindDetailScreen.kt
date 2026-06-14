@@ -290,6 +290,46 @@ private fun ObservationDetailContent(
                 }
             }
 
+            // Weather data
+            if (o.weatherTemperature != null) {
+                Card(
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = colors.info.copy(alpha = 0.08f)),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                ) {
+                    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Icon(FieldMindIcons.Weather, null, tint = colors.info, size = 20.dp)
+                            Text("Weather at capture", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold, color = colors.info)
+                        }
+                        Row(
+                            Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceEvenly
+                        ) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Text("${o.weatherTemperature?.let { "%.1f°".format(it) } ?: "--"}", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = colors.info)
+                                Text("Temperature", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
+                            if (o.weatherHumidity != null) {
+                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                    Text("${o.weatherHumidity}%", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = colors.data)
+                                    Text("Humidity", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                }
+                            }
+                            if (o.weatherWindSpeed != null) {
+                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                    Text("%.1f km/h".format(o.weatherWindSpeed), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = colors.warning)
+                                    Text("Wind", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                }
+                            }
+                        }
+                        if (o.weatherCondition.isNotBlank()) {
+                            Text(o.weatherCondition, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                    }
+                }
+            }
+
             // Map card
             if (o.latitude != null && o.longitude != null) {
                 ObservationLocationCard(o.latitude, o.longitude, o.manualLocation)

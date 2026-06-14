@@ -91,7 +91,7 @@ fun HomeScreen(
         item { HomeHeroSection(todayCount, goal, currentStreak, observations.size, questions.size, onOpenSettings, onNavigate) }
 
         // ── Live Weather Dashboard Widget ──
-        item { LiveWeatherDashboardWidget(viewModel, observations) }
+        item { LiveWeatherDashboardWidget(viewModel, observations, onNavigate) }
 
         // ── Daily Goal ──
         item { DailyGoalCard(todayCount, goal, currentStreak) { onNavigate(FieldMindScreen.Observe) } }
@@ -360,7 +360,8 @@ private fun timeOfDay(): String {
 @Composable
 private fun LiveWeatherDashboardWidget(
     viewModel: FieldMindViewModel,
-    observations: List<ObservationEntity>
+    observations: List<ObservationEntity>,
+    onNavigate: (FieldMindScreen) -> Unit = {}
 ) {
     val colors = FieldMindTheme.colors
     var currentWeather by remember { mutableStateOf<WeatherSnapshot?>(null) }
@@ -370,13 +371,17 @@ private fun LiveWeatherDashboardWidget(
     val scope = rememberCoroutineScope()
     val refreshRotation = remember { Animatable(0f) }
 
-    // Load weather on composition
+    // Load weather on first composition only (prevents re-fetching on scroll)
+    var weatherInitialized by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) {
-        weatherLoading = true
-        val snapshot = viewModel.refreshWeatherFromLocation()
-        currentWeather = snapshot
-        weatherError = snapshot == null
-        weatherLoading = false
+        if (!weatherInitialized) {
+            weatherLoading = true
+            val snapshot = viewModel.refreshWeatherFromLocation()
+            currentWeather = snapshot
+            weatherError = snapshot == null
+            weatherLoading = false
+            weatherInitialized = true
+        }
     }
 
     // Auto-refresh every 30 minutes
@@ -431,21 +436,7 @@ private fun LiveWeatherDashboardWidget(
             .animateContentSize(
                 animationSpec = tween(durationMillis = 400, easing = FastOutSlowInEasing)
             )
-            .clickable {
-                if (!weatherLoading) {
-                    scope.launch {
-                        isRotating = true
-                        refreshRotation.animateTo(360f, tween(400))
-                        refreshRotation.snapTo(0f)
-                        isRotating = false
-                        weatherLoading = true
-                        val snapshot = viewModel.refreshWeatherFromLocation()
-                        currentWeather = snapshot
-                        weatherError = snapshot == null
-                        weatherLoading = false
-                    }
-                }
-            },
+            .clickable { onNavigate(FieldMindScreen.WeatherDatabase) },
         shape = RoundedCornerShape(28.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerLow
@@ -512,7 +503,7 @@ private fun LiveWeatherDashboardWidget(
                     Text(
                         when {
                             weatherLoading -> "Updating…"
-                            currentWeather != null -> "Tap to refresh • ${currentWeather?.weatherDescription ?: ""}"
+                            currentWeather != null -> "Tap to open dashboard • ${currentWeather?.weatherDescription ?: ""}"
                             weatherError -> "Enable location for live weather"
                             else -> "Weather unavailable"
                         },
@@ -520,7 +511,7 @@ private fun LiveWeatherDashboardWidget(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
-                // Refresh button
+                // Refresh button (top-right weather icon) — tap to refresh
                 Icon(
                     FieldMindIcons.Weather,
                     null,
@@ -532,7 +523,20 @@ private fun LiveWeatherDashboardWidget(
                             else MaterialTheme.colorScheme.surfaceContainerHigh
                         )
                         .padding(8.dp)
-                        .graphicsLayer { rotationZ = refreshRotation.value },
+                        .graphicsLayer { rotationZ = refreshRotation.value }
+                        .clickable(enabled = !weatherLoading) {
+                            scope.launch {
+                                isRotating = true
+                                refreshRotation.animateTo(360f, tween(400))
+                                refreshRotation.snapTo(0f)
+                                isRotating = false
+                                weatherLoading = true
+                                val snapshot = viewModel.refreshWeatherFromLocation()
+                                currentWeather = snapshot
+                                weatherError = snapshot == null
+                                weatherLoading = false
+                            }
+                        },
                     size = 20.dp
                 )
             }
