@@ -72,7 +72,7 @@ data class TrackRecording(
 
     val polylineOverlay: Polyline
         get() = Polyline().apply {
-            setPoints(points.map { it.toGeoPoint() })
+            setPoints(points.map { GeoPoint(it.latitude, it.longitude) })
         }
 }
 
