@@ -294,6 +294,16 @@ private fun EvidenceTab(
     var filterKind by remember { mutableStateOf("All") }
     var filterGroup by remember { mutableStateOf("All") }
     var bulkMode by remember { mutableStateOf(false) }
+    var selectedEvidence by remember { mutableStateOf(setOf<String>()) }
+    fun evidenceKey(item: EvidenceItem) = "${item.kind}:${item.id}"
+    fun deleteEvidence(item: EvidenceItem) {
+        when (item.kind) {
+            "observation" -> viewModel.deleteObservation(item.id)
+            "note" -> viewModel.deleteNote(item.id)
+            "question" -> viewModel.deleteQuestion(item.id)
+            "source" -> viewModel.deleteSource(item.id)
+        }
+    }
     // Merge all evidence into chronological list
     val evidence = remember(observations, notes, questions, sources) {
         buildList {
@@ -308,7 +318,19 @@ private fun EvidenceTab(
 
     LazyColumn(contentPadding = panelPadding(), verticalArrangement = Arrangement.spacedBy(14.dp)) {
         item { SectionHeader("Evidence hub", "${filteredEvidence.size} of ${evidence.size} items • filter, review, bulk-manage") }
-        item { EvidenceFilterBar(filterKind, { filterKind = it }, filterGroup, { filterGroup = it }, groups, bulkMode, { bulkMode = !bulkMode }) }
+        item { EvidenceFilterBar(filterKind, { filterKind = it }, filterGroup, { filterGroup = it }, groups, bulkMode, { bulkMode = !bulkMode; selectedEvidence = emptySet() }) }
+        if (bulkMode) {
+            item {
+                Card(shape = RoundedCornerShape(20.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)) {
+                    Row(Modifier.fillMaxWidth().padding(14.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Text("${selectedEvidence.size} selected", modifier = Modifier.weight(1f), style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onPrimaryContainer)
+                        TextButton(onClick = { selectedEvidence = filteredEvidence.map { evidenceKey(it) }.toSet() }) { Text("All") }
+                        TextButton(onClick = { selectedEvidence = emptySet() }) { Text("Clear") }
+                        Button(onClick = { filteredEvidence.filter { evidenceKey(it) in selectedEvidence }.forEach(::deleteEvidence); selectedEvidence = emptySet() }, enabled = selectedEvidence.isNotEmpty(), shape = RoundedCornerShape(14.dp)) { Text("Delete") }
+                    }
+                }
+            }
+        }
         if (filteredEvidence.isEmpty()) {
             item {
                 EmptyState(
@@ -320,11 +342,15 @@ private fun EvidenceTab(
             }
         }
         items(filteredEvidence) { item ->
+            val key = evidenceKey(item)
             EntityCard(
-                item.title, item.kind,
+                item.title, if (bulkMode && key in selectedEvidence) "selected" else item.kind,
                 body = item.subtitle,
-                meta = listOf(item.group),
-                onClick = { onOpenDetail(item.kind, item.id) }
+                meta = if (bulkMode) listOf(item.group, if (key in selectedEvidence) "Selected" else "Tap to select") else listOf(item.group),
+                onClick = {
+                    if (bulkMode) selectedEvidence = if (key in selectedEvidence) selectedEvidence - key else selectedEvidence + key
+                    else onOpenDetail(item.kind, item.id)
+                }
             )
         }
     }
@@ -619,6 +645,7 @@ private fun ResearchRelationshipStrip(observations: Int, sources: Int, hypothese
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun ProjectWorkspaceCard(
     project: ProjectEntity, questions: List<QuestionEntity>, hypotheses: List<HypothesisEntity>,
@@ -631,14 +658,6 @@ private fun ProjectWorkspaceCard(
     val relatedSources = sources.count { it.relatedProjectId == project.id }
     val relatedData = data.count { it.projectId == project.id }
     val relatedReports = reports.count { it.projectId == project.id }
-    val progressMetrics = listOf(
-        "Questions" to relatedQuestions.toFloat(),
-        "Observations" to relatedObservations.toFloat(),
-        "Data" to relatedData.toFloat(),
-        "Reports" to relatedReports.toFloat()
-    )
-    val maxMetric = progressMetrics.maxOfOrNull { it.second }?.coerceAtLeast(1f) ?: 1f
-
     Card(
         modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),
         shape = RoundedCornerShape(24.dp),
@@ -662,28 +681,12 @@ private fun ProjectWorkspaceCard(
             }
             Text(project.objective.ifBlank { project.researchQuestion.ifBlank { "Open project workspace" } }, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2, overflow = TextOverflow.Ellipsis)
             ResearchRelationshipStrip(relatedObservations, relatedSources, relatedHypotheses, relatedData, relatedReports)
-            
-            // Mini progress bars for each metric
-            progressMetrics.forEach { (label, count) ->
-                val fraction = (count / maxMetric).coerceIn(0f, 1f)
-                Row(
-                    Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(label, style = MaterialTheme.typography.labelSmall, modifier = Modifier.width(72.dp))
-                    Row(
-                        Modifier.weight(1f).height(6.dp).clip(RoundedCornerShape(3.dp))
-                            .background(MaterialTheme.colorScheme.surfaceContainerHighest),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Box(
-                            Modifier.fillMaxWidth(fraction).fillMaxHeight()
-                                .background(FieldMindTheme.colors.project.copy(alpha = 0.4f + fraction * 0.6f), RoundedCornerShape(3.dp))
-                        )
-                    }
-                    Text("${count.toInt()}", style = MaterialTheme.typography.labelSmall, modifier = Modifier.width(24.dp), color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
+
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                AssistChip(onClick = {}, label = { Text("$relatedQuestions questions") }, leadingIcon = { Icon(FieldMindIcons.Question, null, size = 16.dp) })
+                AssistChip(onClick = {}, label = { Text("$relatedObservations observations") }, leadingIcon = { Icon(FieldMindIcons.Observation, null, size = 16.dp) })
+                AssistChip(onClick = {}, label = { Text("$relatedData data") }, leadingIcon = { Icon(FieldMindIcons.Data, null, size = 16.dp) })
+                AssistChip(onClick = {}, label = { Text("$relatedReports reports") }, leadingIcon = { Icon(FieldMindIcons.Report, null, size = 16.dp) })
             }
         }
     }

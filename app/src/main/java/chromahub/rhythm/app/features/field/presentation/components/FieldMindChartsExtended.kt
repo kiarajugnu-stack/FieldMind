@@ -5,6 +5,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -32,6 +33,7 @@ import androidx.compose.ui.unit.sp
 import fieldmind.research.app.features.field.presentation.theme.FieldMindTheme
 import java.time.Instant
 import java.time.LocalDate
+import java.time.YearMonth
 import java.time.ZoneId
 import java.time.temporal.ChronoUnit
 
@@ -58,143 +60,123 @@ fun CalendarHeatmap(
     accentColor: Color = FieldMindTheme.colors.observation,
     onTapDay: ((LocalDate, Int) -> Unit)? = null
 ) {
-    val today = LocalDate.now()
-    val startDate = today.minusMonths(monthsToShow.toLong())
-    val dayCount = ChronoUnit.DAYS.between(startDate, today).toInt().coerceAtLeast(1)
-    val maxCount = (dailyCounts.values.maxOrNull() ?: 1).coerceAtLeast(1)
-    // Build color scale: 5 shades from surface to accent
+    @Suppress("UNUSED_PARAMETER")
+    val ignoredMonthsToShow = monthsToShow
+    var visibleMonth by remember { mutableStateOf(YearMonth.now()) }
+    val todayMonth = YearMonth.now()
+    val firstDay = visibleMonth.atDay(1)
+    val daysInMonth = visibleMonth.lengthOfMonth()
+    val leadingBlankDays = firstDay.dayOfWeek.value - 1 // Monday-first calendar
+    val maxCount = (dailyCounts.filterKeys { YearMonth.from(it) == visibleMonth }.values.maxOrNull() ?: 1).coerceAtLeast(1)
     val emptyColor = MaterialTheme.colorScheme.surfaceContainerHighest
     val colors = (0..4).map { i ->
         val fraction = (i + 1) / 5f
         accentColor.copy(alpha = 0.15f + fraction * 0.85f)
     }
-
     var selectedDay by remember { mutableStateOf<LocalDate?>(null) }
 
-    Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        // Month labels row
-        val monthLabels = remember(startDate, today) {
-            val months = mutableListOf<Pair<Int, String>>() // (weekIndex, label)
-            var current = startDate
-            while (current <= today) {
-                if (current.dayOfMonth <= 7) {
-                    val weekOfYear = (ChronoUnit.DAYS.between(startDate, current).toInt() + startDate.dayOfWeek.value - 1) / 7
-                    months.add(weekOfYear to current.month.name.take(3))
-                }
-                current = current.plusDays(1)
-            }
-            months.distinctBy { it.first }
+    Column(
+        modifier
+            .fillMaxWidth()
+            .pointerInput(visibleMonth) {
+                var totalDrag = 0f
+                detectHorizontalDragGestures(
+                    onDragEnd = {
+                        if (totalDrag > 80f) visibleMonth = visibleMonth.minusMonths(1)
+                        if (totalDrag < -80f && visibleMonth < todayMonth) visibleMonth = visibleMonth.plusMonths(1)
+                        selectedDay = null
+                        totalDrag = 0f
+                    }
+                ) { _, dragAmount -> totalDrag += dragAmount }
+            },
+        verticalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                "${visibleMonth.month.name.lowercase().replaceFirstChar { it.titlecase() }} ${visibleMonth.year}",
+                modifier = Modifier.weight(1f),
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.Bold
+            )
+            Text(
+                "Swipe or use arrows",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Text(
+                "‹",
+                modifier = Modifier
+                    .clip(CircleShape)
+                    .clickable { visibleMonth = visibleMonth.minusMonths(1); selectedDay = null }
+                    .padding(horizontal = 12.dp, vertical = 4.dp),
+                style = MaterialTheme.typography.titleLarge,
+                color = accentColor
+            )
+            Text(
+                "›",
+                modifier = Modifier
+                    .clip(CircleShape)
+                    .clickable(enabled = visibleMonth < todayMonth) { visibleMonth = visibleMonth.plusMonths(1); selectedDay = null }
+                    .padding(horizontal = 12.dp, vertical = 4.dp),
+                style = MaterialTheme.typography.titleLarge,
+                color = if (visibleMonth < todayMonth) accentColor else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.35f)
+            )
         }
 
-        Row(Modifier.fillMaxWidth()) {
-            // Day labels column (Mon, Wed, Fri)
-            Column(
-                modifier = Modifier.width(24.dp),
-                verticalArrangement = Arrangement.spacedBy(2.dp)
-            ) {
-                listOf("Mon", "", "Wed", "", "Fri", "").forEach { label ->
-                    Text(
-                        label,
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        fontSize = 8.sp,
-                        modifier = Modifier.height(12.dp)
-                    )
-                }
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+            listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun").forEach { label ->
+                Text(label, modifier = Modifier.weight(1f), textAlign = TextAlign.Center, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
+        }
 
-            Column(Modifier.weight(1f)) {
-                // Month labels
-                Row(Modifier.fillMaxWidth()) {
-                    monthLabels.forEach { (weekIdx, label) ->
-                        Spacer(Modifier.width((weekIdx * 14).dp))
-                        Text(
-                            label,
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            fontSize = 8.sp
-                        )
-                    }
-                }
-
-                // Heatmap grid
-                Canvas(
-                    Modifier
-                        .fillMaxWidth()
-                        .height(96.dp)
-                        .pointerInput(dailyCounts) {
-                            detectTapGestures { offset ->
-                                val cellSize = size.width / 53f
-                                val col = (offset.x / cellSize).toInt().coerceIn(0, 52)
-                                val row = (offset.y / (size.height / 7f)).toInt().coerceIn(0, 6)
-                                val dayIndex = col * 7 + row
-                                if (dayIndex < dayCount) {
-                                    val date = startDate.plusDays(dayIndex.toLong())
-                                val count = dailyCounts[date] ?: 0
-                                selectedDay = date
-                                onTapDay?.invoke(date, count)
-                                }
+        val totalCells = leadingBlankDays + daysInMonth
+        val rows = (totalCells + 6) / 7
+        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            (0 until rows).forEach { row ->
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    (0 until 7).forEach { col ->
+                        val cellIndex = row * 7 + col
+                        val dayNumber = cellIndex - leadingBlankDays + 1
+                        if (dayNumber in 1..daysInMonth) {
+                            val date = visibleMonth.atDay(dayNumber)
+                            val count = dailyCounts[date] ?: 0
+                            val cellColor = if (count == 0) emptyColor else colors[(count.toFloat() / maxCount * 4).toInt().coerceIn(0, 4)]
+                            Box(
+                                Modifier
+                                    .weight(1f)
+                                    .aspectRatio(1f)
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(cellColor)
+                                    .clickable {
+                                        selectedDay = date
+                                        onTapDay?.invoke(date, count)
+                                    },
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(dayNumber.toString(), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurface)
                             }
-                        }
-                ) {
-                    val cellSize = this.size.width / 53f
-                    val cellPad = 1.5f
-                    val cellInner = (cellSize - cellPad * 2).coerceAtLeast(3f)
-
-                    (0 until dayCount).forEach { dayIndex ->
-                        val date = startDate.plusDays(dayIndex.toLong())
-                        val dow = (date.dayOfWeek.value - 1) // 0=Mon, 1=Tue...
-                        val weekOffset = (ChronoUnit.DAYS.between(startDate, date).toInt() + startDate.dayOfWeek.value - 1) / 7
-
-                        val x = weekOffset * cellSize + cellPad
-                        val y = dow * (this.size.height / 7f) + cellPad
-                        val count = dailyCounts[date] ?: 0
-                        val color = when {
-                            count == 0 -> emptyColor
-                            else -> colors[(count.toFloat() / maxCount * 4).toInt().coerceIn(0, 4)]
-                        }
-                        drawRoundRect(
-                            color = color,
-                            topLeft = Offset(x, y),
-                            size = Size(cellInner, cellInner),
-                            cornerRadius = CornerRadius(2f, 2f)
-                        )
-                        // Highlight selected day
-                        if (date == selectedDay) {
-                            drawRoundRect(
-                                color = Color.White.copy(alpha = 0.5f),
-                                topLeft = Offset(x - 1f, y - 1f),
-                                size = Size(cellInner + 2f, cellInner + 2f),
-                                cornerRadius = CornerRadius(3f, 3f),
-                                style = Stroke(width = 2f)
-                            )
+                        } else {
+                            Spacer(Modifier.weight(1f).aspectRatio(1f))
                         }
                     }
                 }
             }
         }
 
-        // Selected day info
         selectedDay?.let { date ->
             val count = dailyCounts[date] ?: 0
             Text(
-                "${date.month.name} ${date.dayOfMonth}, ${date.year}: $count observation${if (count != 1) "s" else ""}",
+                "${date.month.name.lowercase().replaceFirstChar { it.titlecase() }} ${date.dayOfMonth}, ${date.year}: $count observation${if (count != 1) "s" else ""}",
                 style = MaterialTheme.typography.labelMedium,
                 color = accentColor,
                 fontWeight = FontWeight.SemiBold
             )
         }
 
-        // Legend
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(4.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
+        Row(horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically) {
             Text("Less", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 8.sp)
             Box(Modifier.size(10.dp).background(emptyColor, RoundedCornerShape(2.dp)))
-            colors.take(4).forEach { c ->
-                Box(Modifier.size(10.dp).background(c, RoundedCornerShape(2.dp)))
-            }
+            colors.take(4).forEach { c -> Box(Modifier.size(10.dp).background(c, RoundedCornerShape(2.dp))) }
             Text("More", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 8.sp)
         }
     }

@@ -145,6 +145,8 @@ fun FieldMindNavigation(viewModel: FieldMindViewModel, onResetOnboarding: () -> 
     val currentDestination = backStackEntry?.destination
     val currentRoute = currentDestination?.route
     val haptics = rememberFieldMindHaptics()
+    val researchSessions by viewModel.researchSessions.collectAsState()
+    val activeResearchSession = researchSessions.firstOrNull { it.status == "Active" }
     val hideChrome = currentRoute == FieldMindScreen.Settings.route ||
         currentRoute == FieldMindScreen.FieldMode.route ||
         currentRoute == FieldMindScreen.Reader.route ||
@@ -163,10 +165,10 @@ fun FieldMindNavigation(viewModel: FieldMindViewModel, onResetOnboarding: () -> 
                     NavigationRail(
                         header = {
                             FloatingActionButton(
-                                onClick = { haptics.light(); navController.navigateToDestination(FieldMindScreen.FieldMode.route) },
-                                containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                                contentColor = MaterialTheme.colorScheme.onTertiaryContainer
-                            ) { Icon(icon = FieldMindIcons.Bolt, contentDescription = "Field mode capture", size = 26.dp) }
+                                onClick = { haptics.light(); navController.navigateToDestination(if (activeResearchSession != null) FieldMindScreen.ResearchSession.route else FieldMindScreen.Observe.route) },
+                                containerColor = if (activeResearchSession != null) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.tertiaryContainer,
+                                contentColor = if (activeResearchSession != null) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onTertiaryContainer
+                            ) { Icon(icon = if (activeResearchSession != null) FieldMindIcons.Timer else FieldMindIcons.Bolt, contentDescription = "Capture", size = 26.dp) }
                         }
                     ) {
                         bottomTabs.forEach { screen ->
@@ -188,11 +190,11 @@ fun FieldMindNavigation(viewModel: FieldMindViewModel, onResetOnboarding: () -> 
                 floatingActionButton = {
                     if (!hideChrome) {
                         ExtendedFloatingActionButton(
-                            onClick = { haptics.light(); navController.navigateToDestination(FieldMindScreen.FieldMode.route) },
-                            containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                            contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
-                            icon = { Icon(icon = FieldMindIcons.Bolt, contentDescription = null, size = 22.dp) },
-                            text = { Text("Capture") }
+                            onClick = { haptics.light(); navController.navigateToDestination(if (activeResearchSession != null) FieldMindScreen.ResearchSession.route else FieldMindScreen.Observe.route) },
+                            containerColor = if (activeResearchSession != null) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.tertiaryContainer,
+                            contentColor = if (activeResearchSession != null) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onTertiaryContainer,
+                            icon = { Icon(icon = if (activeResearchSession != null) FieldMindIcons.Timer else FieldMindIcons.Bolt, contentDescription = null, size = 22.dp) },
+                            text = { Text(activeResearchSession?.let { "Live session • ${it.observationCount}" } ?: "Capture") }
                         )
                     }
                 },

@@ -57,9 +57,9 @@ fun HomeScreen(
     val projects by viewModel.projects.collectAsState()
     val sources by viewModel.sources.collectAsState()
     val reports by viewModel.reports.collectAsState()
+    val hypotheses by viewModel.hypotheses.collectAsState()
     val flashcards by viewModel.flashcards.collectAsState()
     val data by viewModel.dataRecords.collectAsState()
-    val tags by viewModel.commonTags.collectAsState()
     val goal by viewModel.fieldSettings.dailyObservationGoal.collectAsState()
     val streaksEnabled by viewModel.fieldSettings.streaksEnabled.collectAsState()
     val todayKey = remember { today() }
@@ -111,36 +111,28 @@ fun HomeScreen(
         item { RecommendedLearningCard(recommendations, onOpenReader, onSeeAll = { onNavigate(FieldMindScreen.Learn) }) }
         item { ReadingReviewCard(sources, flashcards, onNavigate) }
 
-        // ── Current Project ──
-        if (activeProject != null) {
-            item { SectionHeader("Current project", "Your active research focus") }
-            item {
-                EntityCard(
-                    title = activeProject.title,
-                    kind = "project",
-                    body = activeProject.objective.ifBlank { activeProject.researchQuestion.ifBlank { "Open the project workspace." } },
-                    meta = listOf(activeProject.status, activeProject.topicType),
-                    onClick = { onOpenDetail("project", activeProject.id) }
-                )
-            }
+        // ── Observation Timeline ──
+        item {
+            ObservationTimelinePreview(
+                observations = observations.sortedByDescending { it.timestamp },
+                notes = notes.sortedByDescending { it.updatedAt },
+                onOpenDetail = onOpenDetail
+            )
         }
 
-        // ── Recent Activity ──
-        val activity = buildList {
-            observations.forEach { add(RecentEntry("observation", it.id, it.timestamp, it.subject.ifBlank { "Observation" }, "${it.category} • ${it.date} ${it.time}", it.category)) }
-            notes.forEach { add(RecentEntry("note", it.id, it.updatedAt, it.title.ifBlank { "Untitled note" }, it.body.ifBlank { it.category }, it.category)) }
-            questions.forEach { add(RecentEntry("question", it.id, it.updatedAt, it.questionText, "${it.status} • ${it.priority}", it.status)) }
-            sources.forEach { add(RecentEntry("source", it.id, it.updatedAt, it.title, "${it.type} • ${it.readingStatus}", it.type)) }
-        }.sortedByDescending { it.time }
-
-        if (activity.isNotEmpty()) {
-            item { SectionHeader("Recent activity", if (tags.isNotEmpty()) "Top tag: ${tags.first().name}" else "Latest actions across all tools") }
-            val groups = activity.groupBy { "${it.kind}:${it.group}" }.values.map { it.sortedByDescending { entry -> entry.time } }.sortedByDescending { it.first().time }.take(7)
-            items(groups, key = { "${it.first().kind}-${it.first().group}" }) { group ->
-                RecentActivityGroupCard(group, onOpenDetail)
+        // ── Current Project ──
+        if (activeProject != null) {
+            item {
+                CurrentProjectResearchCard(
+                    project = activeProject,
+                    observations = observations,
+                    sources = sources,
+                    data = data,
+                    hypotheses = hypotheses,
+                    reports = reports,
+                    onOpen = { onOpenDetail("project", activeProject.id) }
+                )
             }
-        } else {
-            item { EmptyState("No activity yet", "Start with one factual observation or a free-form note. Both stay clearly separated.", icon = FieldMindIcons.Observation, actionLabel = "Open capture") { onNavigate(FieldMindScreen.Observe) } }
         }
 
         item { Spacer(Modifier.height(24.dp)) }
@@ -583,6 +575,109 @@ private fun MiniActionTile(title: String, value: String, subtitle: String, icon:
     }
 }
 
+@Composable
+private fun ObservationTimelinePreview(
+    observations: List<ObservationEntity>,
+    notes: List<NoteEntity>,
+    onOpenDetail: (String, Long) -> Unit
+) {
+    val events = buildList {
+        observations.take(8).forEach { add(TimelinePreviewEvent("observation", it.id, it.date, it.time, it.subject.ifBlank { "Observation" }, it.category)) }
+        notes.take(4).forEach { note ->
+            val date = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date(note.updatedAt))
+            val time = SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date(note.updatedAt))
+            add(TimelinePreviewEvent("note", note.id, date, time, note.title.ifBlank { "Untitled note" }, "Journal"))
+        }
+    }.sortedWith(compareByDescending<TimelinePreviewEvent> { it.date }.thenByDescending { it.time }).take(8)
+
+    Card(shape = RoundedCornerShape(24.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp), modifier = Modifier.fillMaxWidth()) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                Icon(FieldMindIcons.Calendar, null, tint = FieldMindTheme.colors.project, size = 22.dp)
+                Column(Modifier.weight(1f)) {
+                    Text("Observation timeline", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    Text("Date-grouped research story preview", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+            if (events.isEmpty()) {
+                Text("Your timeline will group observations and notes by day.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            } else {
+                events.groupBy { it.date }.entries.take(3).forEach { (date, dayEvents) ->
+                    Text(date, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold, color = FieldMindTheme.colors.project)
+                    dayEvents.take(3).forEach { event ->
+                        Row(
+                            Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).clickable { onOpenDetail(event.kind, event.id) }.padding(horizontal = 10.dp, vertical = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            Box(Modifier.size(8.dp).clip(CircleShape).background(if (event.kind == "note") FieldMindTheme.colors.source else FieldMindTheme.colors.observation))
+                            Column(Modifier.weight(1f)) {
+                                Text(event.title, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                Text("${event.time} • ${event.meta}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+private data class TimelinePreviewEvent(val kind: String, val id: Long, val date: String, val time: String, val title: String, val meta: String)
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun CurrentProjectResearchCard(
+    project: ProjectEntity,
+    observations: List<ObservationEntity>,
+    sources: List<SourceEntity>,
+    data: List<DataRecordEntity>,
+    hypotheses: List<HypothesisEntity>,
+    reports: List<ReportEntity>,
+    onOpen: () -> Unit
+) {
+    val projectObservations = observations.filter { it.projectId == project.id }
+    val connectedObservations = projectObservations.size
+    val evidenceCount = projectObservations.count { it.evidenceSummary.isNotBlank() } + project.attachmentUris.split(",").count { it.trim().isNotBlank() }
+    val connectedData = data.count { it.projectId == project.id }
+    val connectedSources = sources.count { it.relatedProjectId == project.id }
+    val connectedReports = reports.count { it.projectId == project.id }
+
+    Card(onClick = onOpen, shape = RoundedCornerShape(24.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp), modifier = Modifier.fillMaxWidth()) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                Icon(FieldMindIcons.Project, null, tint = FieldMindTheme.colors.project, size = 24.dp)
+                Column(Modifier.weight(1f)) {
+                    Text("Current project", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(project.title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                }
+                Text(project.status, style = MaterialTheme.typography.labelSmall, color = FieldMindTheme.colors.project)
+            }
+            Text(project.researchQuestion.ifBlank { project.objective.ifBlank { "Open the workspace to define the research question." } }, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2, overflow = TextOverflow.Ellipsis)
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                ProjectAssetChip("Observations", connectedObservations, FieldMindIcons.Observation, FieldMindTheme.colors.observation)
+                ProjectAssetChip("Evidence", evidenceCount, FieldMindIcons.Camera, FieldMindTheme.colors.observation)
+                ProjectAssetChip("Data", connectedData, FieldMindIcons.Data, FieldMindTheme.colors.data)
+                ProjectAssetChip("Sources", connectedSources, FieldMindIcons.Source, FieldMindTheme.colors.source)
+                ProjectAssetChip("Hypotheses", hypotheses.size, FieldMindIcons.Hypothesis, FieldMindTheme.colors.hypothesis)
+                ProjectAssetChip("Reports", connectedReports, FieldMindIcons.Report, FieldMindTheme.colors.report)
+            }
+        }
+    }
+}
+
+@Composable
+private fun ProjectAssetChip(label: String, count: Int, icon: MaterialSymbolIcon, color: androidx.compose.ui.graphics.Color) {
+    Row(
+        Modifier.clip(RoundedCornerShape(99.dp)).background(color.copy(alpha = if (FieldMindTheme.colors.isDark) 0.22f else 0.12f)).padding(horizontal = 10.dp, vertical = 7.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(6.dp)
+    ) {
+        Icon(icon, null, tint = color, size = 14.dp)
+        Text("$count $label", style = MaterialTheme.typography.labelSmall, color = color, fontWeight = FontWeight.SemiBold)
+    }
+}
+
 private data class RecentEntry(val kind: String, val id: Long, val time: Long, val title: String, val sub: String, val group: String)
 
 @Composable
@@ -794,6 +889,7 @@ private fun HomeWidgetGrid(
 }
 
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun HomeDataOptionsCard(data: List<DataRecordEntity>, onOpenData: () -> Unit) {
     val tools = listOf(

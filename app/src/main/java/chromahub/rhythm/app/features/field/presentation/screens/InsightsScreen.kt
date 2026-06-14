@@ -34,6 +34,7 @@ import java.util.Date
 import java.util.Locale
 import java.time.LocalDate
 import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 
 // ══════════════════════════════════════════════════════════════════════
 //  Research Dashboard — Insights Redesign
@@ -251,7 +252,6 @@ fun InsightsScreen(
             }
 
             item { ResearchProfileCard(profileName, profileRole, profileFocus, todayCount, weekCount, goal) }
-            item { ResearchJourneyCard(observations, questions, hypotheses, projects) }
 
             if (observations.isEmpty()) {
                 item {
@@ -265,40 +265,46 @@ fun InsightsScreen(
                 return@LazyColumn
             }
 
-            // ═══════════ SECTION 2: Key Performance Metrics ═══════════
+            // ═══════════ SECTION 2: Research Journey Metrics ═══════════
             item {
-                SectionHeader("Performance", "Your research at a glance")
+                SectionHeader("Research journey", "Question → observations → patterns → findings")
             }
             item {
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     MetricTile(
                         "Observations", observations.size.toString(),
                         FieldMindIcons.Observation, Modifier.weight(1f), colors.observation,
-                        trend = if (weekCount > 0) "+$weekCount this week" else null
+                        trend = if (weekCount > 0) "+$weekCount this week" else null,
+                        onClick = { onNavigate(FieldMindScreen.Observe) }
                     )
                     MetricTile(
                         "Questions", "${questions.count { it.status != "Answered" }}/${questions.size}",
-                        FieldMindIcons.Question, Modifier.weight(1f), colors.question
+                        FieldMindIcons.Question, Modifier.weight(1f), colors.question,
+                        onClick = { onNavigate(FieldMindScreen.Questions) }
                     )
                     MetricTile(
                         "Sources", "${sources.count { it.readingStatus == "Read" }}/${sources.size}",
-                        FieldMindIcons.Source, Modifier.weight(1f), colors.source
+                        FieldMindIcons.Source, Modifier.weight(1f), colors.source,
+                        onClick = { onNavigate(FieldMindScreen.Library) }
                     )
                 }
             }
             item {
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     MetricTile(
-                        "Hypotheses", hypotheses.size.toString(),
-                        FieldMindIcons.Hypothesis, Modifier.weight(1f), colors.hypothesis
+                        "Projects", projects.size.toString(),
+                        FieldMindIcons.Project, Modifier.weight(1f), colors.project,
+                        onClick = { onNavigate(FieldMindScreen.Projects) }
                     )
                     MetricTile(
                         "Reports", reports.size.toString(),
-                        FieldMindIcons.Report, Modifier.weight(1f), colors.report
+                        FieldMindIcons.Report, Modifier.weight(1f), colors.report,
+                        onClick = { onNavigate(FieldMindScreen.Reports) }
                     )
                     MetricTile(
-                        "Flashcards", "${flashcards.count { it.repetitionCount >= 3 }} mature",
-                        FieldMindIcons.Flashcard, Modifier.weight(1f), colors.flashcard
+                        "Data", dataRecords.size.toString(),
+                        FieldMindIcons.Data, Modifier.weight(1f), colors.data,
+                        onClick = { onNavigate(FieldMindScreen.DataTools) }
                     )
                 }
             }
@@ -310,10 +316,17 @@ fun InsightsScreen(
             if (calendarData.isNotEmpty()) {
                 item {
                     InsightCard("Activity calendar", FieldMindIcons.Calendar) {
+                        var selectedCalendarDay by remember { mutableStateOf<String?>(null) }
                         CalendarHeatmap(
                             dailyCounts = calendarData,
-                            accentColor = colors.observation
+                            accentColor = colors.observation,
+                            onTapDay = { date, count ->
+                                selectedCalendarDay = "${date.format(DateTimeFormatter.ofPattern("MMM d, yyyy"))}: $count observation${if (count != 1) "s" else ""}"
+                            }
                         )
+                        selectedCalendarDay?.let {
+                            Text(it, style = MaterialTheme.typography.labelMedium, color = colors.observation)
+                        }
                     }
                 }
             }

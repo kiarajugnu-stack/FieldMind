@@ -213,8 +213,8 @@ fun ObserveScreen(
             // ── Header ──
             item {
                 FieldScreenHeader(
-                    "Capture",
-                    "Start with evidence, then add details.",
+                    "Observation",
+                    "Capture evidence, time, place, weather, then add facts.",
                     icon = FieldMindIcons.Capture
                 )
             }
@@ -271,7 +271,7 @@ fun ObserveScreen(
                     ) {
                         Icon(icon = FieldMindIcons.Add, contentDescription = null, size = 20.dp)
                         Spacer(Modifier.size(8.dp))
-                        Text("Start capture session")
+                        Text("Start observation session")
                     }
                 }
             }
@@ -338,7 +338,7 @@ fun ObserveScreen(
             // ── Recent captures ──
             item {
                 SectionHeader(
-                    "Recent captures",
+                    "Recent observations",
                     "${observations.size} observations • ${notes.size} notes"
                 )
             }
@@ -346,10 +346,10 @@ fun ObserveScreen(
             if (observations.isEmpty() && notes.isEmpty()) {
                 item {
                     EmptyState(
-                        "No captures yet",
+                        "No observations yet",
                         "Snap evidence or write facts. Observations stay facts-only; notes stay free-form.",
                         icon = FieldMindIcons.Observation,
-                        actionLabel = "Start capture"
+                        actionLabel = "Start observation"
                     ) { startCapture() }
                 }
             }

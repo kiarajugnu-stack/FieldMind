@@ -1,5 +1,15 @@
 package fieldmind.research.app.features.field.presentation.screens
 
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.content.Context
+import android.content.Intent
+import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.app.NotificationCompat
+import androidx.core.app.NotificationManagerCompat
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.RepeatMode
@@ -21,7 +31,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.platform.LocalContext
 import fieldmind.research.app.features.field.data.database.entity.*
+import fieldmind.research.app.features.field.data.location.CapturedLocation
+import fieldmind.research.app.features.field.data.location.FieldLocationProvider
+import fieldmind.research.app.features.field.data.weather.WeatherSnapshot
 import fieldmind.research.app.features.field.presentation.components.*
 import fieldmind.research.app.features.field.presentation.theme.FieldMindTheme
 import fieldmind.research.app.features.field.presentation.viewmodel.FieldMindViewModel
@@ -42,6 +56,7 @@ import kotlinx.coroutines.launch
  * 2. Timer runs → add observations rapidly (subject + facts only)
  * 3. Session summary at end: all observations, time spent, photos taken
  */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun ResearchSessionScreen(
     viewModel: FieldMindViewModel,
@@ -51,6 +66,8 @@ fun ResearchSessionScreen(
     val haptics = rememberFieldMindHaptics()
     val snackbar = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
+    val context = LocalContext.current
+    val locationProvider = remember { FieldLocationProvider(context) }
     val projects by viewModel.projects.collectAsState()
     val defaultConfidence by viewModel.fieldSettings.defaultConfidence.collectAsState()
     val researchSessions by viewModel.researchSessions.collectAsState()
@@ -81,6 +98,54 @@ fun ResearchSessionScreen(
     var quickSubject by remember { mutableStateOf("") }
     var quickFacts by remember { mutableStateOf("") }
     var quickCategory by remember { mutableStateOf("Other") }
+    var quickAttachments by remember { mutableStateOf<List<DraftEvidenceAttachment>>(emptyList()) }
+    var quickLocation by remember { mutableStateOf<CapturedLocation?>(null) }
+    var quickPlaceName by remember { mutableStateOf("") }
+    var quickWeather by remember { mutableStateOf<WeatherSnapshot?>(null) }
+    var captureStatus by remember { mutableStateOf("Ready") }
+
+    fun addSessionAttachment(attachment: DraftEvidenceAttachment) {
+        quickAttachments = quickAttachments + attachment
+        scope.launch { snackbar.showSnackbar("${attachment.type} ready for next observation") }
+    }
+
+    val mediaPicker = rememberLauncherForActivityResult(ActivityResultContracts.PickMultipleVisualMedia(10)) { uris ->
+        uris.forEach { uri -> addSessionAttachment(DraftEvidenceAttachment("Gallery", uri.toString(), "Session media")) }
+    }
+    val filePicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        uri?.let {
+            runCatching { context.contentResolver.takePersistableUriPermission(it, Intent.FLAG_GRANT_READ_URI_PERMISSION) }
+            addSessionAttachment(DraftEvidenceAttachment("File", it.toString(), "Session attachment"))
+        }
+    }
+    val audioPicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        uri?.let {
+            runCatching { context.contentResolver.takePersistableUriPermission(it, Intent.FLAG_GRANT_READ_URI_PERMISSION) }
+            addSessionAttachment(DraftEvidenceAttachment("Audio", it.toString(), "Session audio"))
+        }
+    }
+
+    fun fetchSessionLocation(fetchWeather: Boolean = false) {
+        captureStatus = "Fetching GPS…"
+        locationProvider.requestCurrentLocation { captured ->
+            quickLocation = captured
+            if (captured == null) {
+                captureStatus = "GPS unavailable or permission missing"
+                scope.launch { snackbar.showSnackbar(captureStatus) }
+                return@requestCurrentLocation
+            }
+            captureStatus = captured.asDisplayText()
+            locationProvider.resolvePlaceName(captured.latitude, captured.longitude) { place ->
+                quickPlaceName = place.orEmpty()
+            }
+            if (fetchWeather) {
+                scope.launch {
+                    quickWeather = viewModel.fetchWeatherSnapshot(captured.latitude, captured.longitude)
+                    captureStatus = quickWeather?.asDisplayText() ?: "Weather unavailable"
+                }
+            }
+        }
+    }
 
     // Timer
     LaunchedEffect(sessionActive) {
@@ -117,12 +182,14 @@ fun ResearchSessionScreen(
         observationCount = 0
         sessionName = name
         viewModel.addResearchSession(name, selectedProjectId) { id -> activeSessionId = id }
+        showResearchSessionNotification(context, name, "Research session is running")
         haptics.confirm()
     }
 
     fun endSession() {
         sessionActive = false
         activeSessionId?.let { viewModel.endResearchSession(it, observationCount, sessionElapsedMs) }
+        cancelResearchSessionNotification(context)
         showSummary = true
         haptics.confirm()
     }
@@ -134,11 +201,15 @@ fun ResearchSessionScreen(
             category = quickCategory,
             facts = quickFacts.ifBlank { "Quick session observation" },
             confidence = defaultConfidence,
-            manualLocation = "",
+            manualLocation = quickPlaceName.ifBlank { quickLocation?.coordinateText().orEmpty() },
             tags = "research-session",
-            evidence = "",
+            evidence = quickAttachments.joinToString { it.type },
             context = "Research session: $sessionName",
             projectId = selectedProjectId,
+            latitude = quickLocation?.latitude,
+            longitude = quickLocation?.longitude,
+            attachments = quickAttachments,
+            weather = quickWeather,
             startedAt = sessionStartedAt.takeIf { it > 0L },
             endedAt = System.currentTimeMillis(),
             durationMs = sessionElapsedMs,
@@ -148,6 +219,7 @@ fun ResearchSessionScreen(
             observationCount++
             quickSubject = ""
             quickFacts = ""
+            quickAttachments = emptyList()
             scope.launch { snackbar.showSnackbar("Observation #$observationCount saved") }
         }
     }
@@ -236,11 +308,15 @@ fun ResearchSessionScreen(
                                 Text("$observationCount observation${if (observationCount != 1) "s" else ""} captured", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.78f))
                             }
                         }
-                        Row(Modifier.padding(horizontal = 20.dp, vertical = 0.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                            AssistChip(onClick = { scope.launch { snackbar.showSnackbar("Camera evidence can be added from Capture.") } }, label = { Text("Camera") }, leadingIcon = { Icon(FieldMindIcons.Camera, null, size = 18.dp) })
-                            AssistChip(onClick = { scope.launch { snackbar.showSnackbar("Gallery import can be added from Capture.") } }, label = { Text("Gallery") }, leadingIcon = { Icon(FieldMindIcons.Gallery, null, size = 18.dp) })
-                            AssistChip(onClick = { scope.launch { snackbar.showSnackbar("Attachments can be added from Capture.") } }, label = { Text("Attach") }, leadingIcon = { Icon(FieldMindIcons.File, null, size = 18.dp) })
+                        FlowRow(Modifier.padding(horizontal = 20.dp, vertical = 0.dp), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                            AssistChip(onClick = { mediaPicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) }, label = { Text("Camera/photo") }, leadingIcon = { Icon(FieldMindIcons.Camera, null, size = 18.dp) })
+                            AssistChip(onClick = { mediaPicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageAndVideo)) }, label = { Text("Gallery") }, leadingIcon = { Icon(FieldMindIcons.Gallery, null, size = 18.dp) })
+                            AssistChip(onClick = { filePicker.launch(arrayOf("application/pdf", "text/*", "image/*", "video/*", "audio/*")) }, label = { Text("Attach") }, leadingIcon = { Icon(FieldMindIcons.File, null, size = 18.dp) })
+                            AssistChip(onClick = { audioPicker.launch(arrayOf("audio/*")) }, label = { Text("Audio") }, leadingIcon = { Icon(FieldMindIcons.Mic, null, size = 18.dp) })
+                            AssistChip(onClick = { fetchSessionLocation(fetchWeather = false) }, label = { Text("GPS") }, leadingIcon = { Icon(FieldMindIcons.Location, null, size = 18.dp) })
+                            AssistChip(onClick = { fetchSessionLocation(fetchWeather = true) }, label = { Text("Weather") }, leadingIcon = { Icon(FieldMindIcons.Weather, null, size = 18.dp) })
                         }
+                        Text(captureStatus + if (quickAttachments.isNotEmpty()) " • ${quickAttachments.size} attachment${if (quickAttachments.size == 1) "" else "s"}" else "", modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.78f))
                         Row(Modifier.padding(20.dp), horizontalArrangement = Arrangement.End) {
                             Button(onClick = ::endSession, colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error), shape = RoundedCornerShape(16.dp)) {
                                 Text("End")
@@ -272,4 +348,32 @@ fun ResearchSessionScreen(
             }
         }
     }
+}
+
+
+private const val RESEARCH_SESSION_CHANNEL_ID = "fieldmind_research_session"
+private const val RESEARCH_SESSION_NOTIFICATION_ID = 4107
+
+private fun showResearchSessionNotification(context: Context, title: String, text: String) {
+    runCatching {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            manager.createNotificationChannel(
+                NotificationChannel(RESEARCH_SESSION_CHANNEL_ID, "Research sessions", NotificationManager.IMPORTANCE_LOW)
+            )
+        }
+        val notification = NotificationCompat.Builder(context, RESEARCH_SESSION_CHANNEL_ID)
+            .setSmallIcon(android.R.drawable.ic_menu_compass)
+            .setContentTitle(title)
+            .setContentText(text)
+            .setOngoing(true)
+            .setCategory(NotificationCompat.CATEGORY_STATUS)
+            .setPriority(NotificationCompat.PRIORITY_LOW)
+            .build()
+        NotificationManagerCompat.from(context).notify(RESEARCH_SESSION_NOTIFICATION_ID, notification)
+    }
+}
+
+private fun cancelResearchSessionNotification(context: Context) {
+    runCatching { NotificationManagerCompat.from(context).cancel(RESEARCH_SESSION_NOTIFICATION_ID) }
 }
