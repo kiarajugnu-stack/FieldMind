@@ -112,6 +112,20 @@ class FieldMindSettings private constructor(context: Context) {
     private val _weatherRefreshInterval = MutableStateFlow(prefs.getString(KEY_WEATHER_REFRESH, "30 min") ?: "30 min")
     val weatherRefreshInterval: StateFlow<String> = _weatherRefreshInterval.asStateFlow()
 
+    // ── Weather display preferences ──
+    private val _weatherShowTemperature = MutableStateFlow(prefs.getBoolean(KEY_WEATHER_SHOW_TEMP, true))
+    val weatherShowTemperature: StateFlow<Boolean> = _weatherShowTemperature.asStateFlow()
+    private val _weatherShowCondition = MutableStateFlow(prefs.getBoolean(KEY_WEATHER_SHOW_CONDITION, true))
+    val weatherShowCondition: StateFlow<Boolean> = _weatherShowCondition.asStateFlow()
+    private val _weatherShowHumidity = MutableStateFlow(prefs.getBoolean(KEY_WEATHER_SHOW_HUMIDITY, true))
+    val weatherShowHumidity: StateFlow<Boolean> = _weatherShowHumidity.asStateFlow()
+    private val _weatherShowWind = MutableStateFlow(prefs.getBoolean(KEY_WEATHER_SHOW_WIND, true))
+    val weatherShowWind: StateFlow<Boolean> = _weatherShowWind.asStateFlow()
+    private val _weatherShowCloudCover = MutableStateFlow(prefs.getBoolean(KEY_WEATHER_SHOW_CLOUD, true))
+    val weatherShowCloudCover: StateFlow<Boolean> = _weatherShowCloudCover.asStateFlow()
+    private val _weatherShowPressure = MutableStateFlow(prefs.getBoolean(KEY_WEATHER_SHOW_PRESSURE, false))
+    val weatherShowPressure: StateFlow<Boolean> = _weatherShowPressure.asStateFlow()
+
     private val _gpsMode = MutableStateFlow(prefs.getString(KEY_GPS_MODE, "On capture only") ?: "On capture only")
     val gpsMode: StateFlow<String> = _gpsMode.asStateFlow()
 
@@ -174,6 +188,12 @@ class FieldMindSettings private constructor(context: Context) {
     fun setAutoWeatherEnabled(value: Boolean) = edit(KEY_AUTO_WEATHER, value) { _autoWeatherEnabled.value = value }
     fun setTempUnit(value: String) = edit(KEY_TEMP_UNIT, value) { _tempUnit.value = value }
     fun setWeatherRefreshInterval(value: String) = edit(KEY_WEATHER_REFRESH, value) { _weatherRefreshInterval.value = value }
+    fun setWeatherShowTemperature(value: Boolean) = edit(KEY_WEATHER_SHOW_TEMP, value) { _weatherShowTemperature.value = value }
+    fun setWeatherShowCondition(value: Boolean) = edit(KEY_WEATHER_SHOW_CONDITION, value) { _weatherShowCondition.value = value }
+    fun setWeatherShowHumidity(value: Boolean) = edit(KEY_WEATHER_SHOW_HUMIDITY, value) { _weatherShowHumidity.value = value }
+    fun setWeatherShowWind(value: Boolean) = edit(KEY_WEATHER_SHOW_WIND, value) { _weatherShowWind.value = value }
+    fun setWeatherShowCloudCover(value: Boolean) = edit(KEY_WEATHER_SHOW_CLOUD, value) { _weatherShowCloudCover.value = value }
+    fun setWeatherShowPressure(value: Boolean) = edit(KEY_WEATHER_SHOW_PRESSURE, value) { _weatherShowPressure.value = value }
     fun setGpsMode(value: String) = edit(KEY_GPS_MODE, value) { _gpsMode.value = value }
     fun setLockTimeout(value: String) = edit(KEY_LOCK_TIMEOUT, value) { _lockTimeout.value = value }
     fun setAutoLockOnBackground(value: Boolean) = edit(KEY_AUTO_LOCK_BACKGROUND, value) { _autoLockOnBackground.value = value }
@@ -221,6 +241,12 @@ class FieldMindSettings private constructor(context: Context) {
         private const val KEY_AUTO_WEATHER = "auto_weather"
         private const val KEY_TEMP_UNIT = "temp_unit"
         private const val KEY_WEATHER_REFRESH = "weather_refresh"
+        private const val KEY_WEATHER_SHOW_TEMP = "weather_show_temp"
+        private const val KEY_WEATHER_SHOW_CONDITION = "weather_show_condition"
+        private const val KEY_WEATHER_SHOW_HUMIDITY = "weather_show_humidity"
+        private const val KEY_WEATHER_SHOW_WIND = "weather_show_wind"
+        private const val KEY_WEATHER_SHOW_CLOUD = "weather_show_cloud"
+        private const val KEY_WEATHER_SHOW_PRESSURE = "weather_show_pressure"
         private const val KEY_GPS_MODE = "gps_mode"
         private const val KEY_LOCK_TIMEOUT = "lock_timeout"
         private const val KEY_AUTO_LOCK_BACKGROUND = "auto_lock_background"

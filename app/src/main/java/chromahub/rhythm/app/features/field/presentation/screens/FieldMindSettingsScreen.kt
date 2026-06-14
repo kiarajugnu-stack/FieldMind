@@ -194,6 +194,12 @@ fun CaptureDefaultsSettingsPage(viewModel: FieldMindViewModel, onBack: () -> Uni
     val autoWeather by settings.autoWeatherEnabled.collectAsState()
     val tempUnit by settings.tempUnit.collectAsState()
     val weatherRefresh by settings.weatherRefreshInterval.collectAsState()
+    val showTemp by settings.weatherShowTemperature.collectAsState()
+    val showCondition by settings.weatherShowCondition.collectAsState()
+    val showHumidity by settings.weatherShowHumidity.collectAsState()
+    val showWind by settings.weatherShowWind.collectAsState()
+    val showCloud by settings.weatherShowCloudCover.collectAsState()
+    val showPressure by settings.weatherShowPressure.collectAsState()
     val reminders by settings.remindersEnabled.collectAsState()
     val streaks by settings.streaksEnabled.collectAsState()
 
@@ -238,6 +244,24 @@ fun CaptureDefaultsSettingsPage(viewModel: FieldMindViewModel, onBack: () -> Uni
                 ChoiceItemForm("Temperature unit", listOf("Celsius", "Fahrenheit"), tempUnit, FieldMindIcons.Weather, settings::setTempUnit)
                 HorizontalDivider(Modifier.padding(start = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
                 ChoiceItemForm("Dashboard refresh", listOf("15 min", "30 min", "60 min"), weatherRefresh, FieldMindIcons.Timer, settings::setWeatherRefreshInterval)
+            }
+        }
+        item {
+            SectionHeader("Dashboard metrics", "Choose which weather fields to show on the home card and dashboard.")
+        }
+        item {
+            SettingsGroupCard {
+                ToggleItem("Temperature", "Current temperature display on weather widget.", showTemp, settings::setWeatherShowTemperature, FieldMindIcons.Weather)
+                HorizontalDivider(Modifier.padding(start = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+                ToggleItem("Condition icon", "Weather condition icon and description.", showCondition, settings::setWeatherShowCondition, FieldMindIcons.Cloud)
+                HorizontalDivider(Modifier.padding(start = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+                ToggleItem("Humidity", "Humidity percentage.", showHumidity, settings::setWeatherShowHumidity, FieldMindIcons.Water)
+                HorizontalDivider(Modifier.padding(start = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+                ToggleItem("Wind speed", "Wind speed in km/h.", showWind, settings::setWeatherShowWind, FieldMindIcons.Flag)
+                HorizontalDivider(Modifier.padding(start = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+                ToggleItem("Cloud cover", "Cloud cover percentage.", showCloud, settings::setWeatherShowCloudCover, FieldMindIcons.Cloud)
+                HorizontalDivider(Modifier.padding(start = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+                ToggleItem("Pressure", "Atmospheric pressure in hPa.", showPressure, settings::setWeatherShowPressure, FieldMindIcons.Compress)
             }
         }
     }

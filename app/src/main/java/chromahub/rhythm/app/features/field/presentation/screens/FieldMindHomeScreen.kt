@@ -80,6 +80,12 @@ fun HomeScreen(
     }
     val researchSessions by viewModel.researchSessions.collectAsState()
     val recommendations = remember(learnSignals) { recommendedResources(learnSignals) }
+    val weatherShowTemp by viewModel.fieldSettings.weatherShowTemperature.collectAsState()
+    val weatherShowCondition by viewModel.fieldSettings.weatherShowCondition.collectAsState()
+    val weatherShowHumidity by viewModel.fieldSettings.weatherShowHumidity.collectAsState()
+    val weatherShowWind by viewModel.fieldSettings.weatherShowWind.collectAsState()
+    val weatherShowCloud by viewModel.fieldSettings.weatherShowCloudCover.collectAsState()
+    val weatherShowPressure by viewModel.fieldSettings.weatherShowPressure.collectAsState()
 
     val lastSession = remember(researchSessions) {
         researchSessions.filter { it.status == "Completed" }.maxByOrNull { it.endedAt ?: it.createdAt }
@@ -91,7 +97,19 @@ fun HomeScreen(
         item { HomeHeroSection(todayCount, goal, currentStreak, observations.size, questions.size, onOpenSettings, onNavigate) }
 
         // ── Live Weather Dashboard Widget ──
-        item { LiveWeatherDashboardWidget(viewModel, observations, onNavigate) }
+        item {
+            LiveWeatherDashboardWidget(
+                viewModel = viewModel,
+                observations = observations,
+                onNavigate = onNavigate,
+                showTemp = weatherShowTemp,
+                showCondition = weatherShowCondition,
+                showHumidity = weatherShowHumidity,
+                showWind = weatherShowWind,
+                showCloudCover = weatherShowCloud,
+                showPressure = weatherShowPressure
+            )
+        }
 
         // ── Daily Goal ──
         item { DailyGoalCard(todayCount, goal, currentStreak) { onNavigate(FieldMindScreen.Observe) } }
@@ -361,7 +379,13 @@ private fun timeOfDay(): String {
 private fun LiveWeatherDashboardWidget(
     viewModel: FieldMindViewModel,
     observations: List<ObservationEntity>,
-    onNavigate: (FieldMindScreen) -> Unit = {}
+    onNavigate: (FieldMindScreen) -> Unit = {},
+    showTemp: Boolean = true,
+    showCondition: Boolean = true,
+    showHumidity: Boolean = true,
+    showWind: Boolean = true,
+    showCloudCover: Boolean = true,
+    showPressure: Boolean = true
 ) {
     val colors = FieldMindTheme.colors
     var currentWeather by remember { mutableStateOf<WeatherSnapshot?>(null) }
@@ -503,7 +527,7 @@ private fun LiveWeatherDashboardWidget(
                     Text(
                         when {
                             weatherLoading -> "Updating…"
-                            currentWeather != null -> "Tap to open dashboard • ${currentWeather?.weatherDescription ?: ""}"
+                            currentWeather != null -> "Tap to open dashboard${if (showCondition) " • ${currentWeather?.weatherDescription ?: ""}" else ""}"
                             weatherError -> "Enable location for live weather"
                             else -> "Weather unavailable"
                         },
@@ -551,47 +575,53 @@ private fun LiveWeatherDashboardWidget(
                     horizontalArrangement = Arrangement.SpaceEvenly,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(
-                            "${w.temperature?.let { "%.0f°".format(it) } ?: "--"}",
-                            style = MaterialTheme.typography.displaySmall.copy(
-                                fontWeight = FontWeight.Bold,
-                                brush = weatherGradient
-                            )
-                        )
-                        Text(
-                            "Feels like",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Icon(
-                            weatherConditionIcon(w.weatherCode),
-                            null,
-                            tint = conditionColor,
-                            size = 40.dp
-                        )
-                        Text(
-                            w.weatherDescription,
-                            style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            fontWeight = FontWeight.SemiBold
-                        )
-                    }
-                    w.humidity?.let { hum ->
+                    if (showTemp) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Text(
-                                "$hum%",
-                                style = MaterialTheme.typography.titleLarge,
-                                fontWeight = FontWeight.Bold,
-                                color = colors.data
+                                "${w.temperature?.let { "%.0f°".format(it) } ?: "--"}",
+                                style = MaterialTheme.typography.displaySmall.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    brush = weatherGradient
+                                )
                             )
                             Text(
-                                "Humidity",
+                                "Feels like",
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
+                        }
+                    }
+                    if (showCondition) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Icon(
+                                weatherConditionIcon(w.weatherCode),
+                                null,
+                                tint = conditionColor,
+                                size = 40.dp
+                            )
+                            Text(
+                                w.weatherDescription,
+                                style = MaterialTheme.typography.labelMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        }
+                    }
+                    if (showHumidity) {
+                        w.humidity?.let { hum ->
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Text(
+                                    "$hum%",
+                                    style = MaterialTheme.typography.titleLarge,
+                                    fontWeight = FontWeight.Bold,
+                                    color = colors.data
+                                )
+                                Text(
+                                    "Humidity",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
                         }
                     }
                 }
@@ -602,85 +632,75 @@ private fun LiveWeatherDashboardWidget(
                     horizontalArrangement = Arrangement.SpaceEvenly
                 ) {
                     // Wind
-                    w.windSpeed?.let { wind ->
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Icon(
-                                FieldMindIcons.Flag,
-                                null,
-                                tint = colors.warning,
-                                size = 18.dp
-                            )
-                            Text(
-                                "%.1f km/h".format(wind),
-                                style = MaterialTheme.typography.bodySmall,
-                                fontWeight = FontWeight.SemiBold,
-                                color = colors.warning
-                            )
-                            Text(
-                                "Wind",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
+                    if (showWind) {
+                        w.windSpeed?.let { wind ->
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Icon(
+                                    FieldMindIcons.Flag,
+                                    null,
+                                    tint = colors.warning,
+                                    size = 18.dp
+                                )
+                                Text(
+                                    "%.1f km/h".format(wind),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = colors.warning
+                                )
+                                Text(
+                                    "Wind",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
                         }
                     }
                     // Cloud cover
-                    w.cloudCover?.let { cloud ->
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Icon(
-                                FieldMindIcons.Cloud,
-                                null,
-                                tint = colors.hypothesis,
-                                size = 18.dp
-                            )
-                            Text(
-                                "$cloud%",
-                                style = MaterialTheme.typography.bodySmall,
-                                fontWeight = FontWeight.SemiBold,
-                                color = colors.hypothesis
-                            )
-                            Text(
-                                "Cloud cover",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
+                    if (showCloudCover) {
+                        w.cloudCover?.let { cloud ->
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Icon(
+                                    FieldMindIcons.Cloud,
+                                    null,
+                                    tint = colors.hypothesis,
+                                    size = 18.dp
+                                )
+                                Text(
+                                    "$cloud%",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = colors.hypothesis
+                                )
+                                Text(
+                                    "Cloud cover",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
                         }
                     }
                     // Pressure
-                    w.pressure?.let { press ->
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Icon(
-                                FieldMindIcons.Compress,
-                                null,
-                                tint = colors.project,
-                                size = 18.dp
-                            )
-                            Text(
-                                "%.0f hPa".format(press),
-                                style = MaterialTheme.typography.bodySmall,
-                                fontWeight = FontWeight.SemiBold,
-                                color = colors.project
-                            )
-                            Text(
-                                "Pressure",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                    }
-                    // Wind direction
-                    w.windDirection?.let { dir ->
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text(
-                                "$dir°",
-                                style = MaterialTheme.typography.bodySmall,
-                                fontWeight = FontWeight.SemiBold,
-                                color = colors.source
-                            )
-                            Text(
-                                "Direction",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
+                    if (showPressure) {
+                        w.pressure?.let { press ->
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Icon(
+                                    FieldMindIcons.Compress,
+                                    null,
+                                    tint = colors.project,
+                                    size = 18.dp
+                                )
+                                Text(
+                                    "%.0f hPa".format(press),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = colors.project
+                                )
+                                Text(
+                                    "Pressure",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
                         }
                     }
                 }
