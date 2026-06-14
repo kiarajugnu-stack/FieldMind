@@ -256,7 +256,6 @@ fun FieldMindChangelogScreen(onBack: () -> Unit) {
         items(fieldMindChangelog) { entry -> ChangelogEntryCard(entry) }
     }
 }
-}
 
 @Composable
 private fun ChangelogEntryCard(entry: FieldMindChangelogEntry) {
