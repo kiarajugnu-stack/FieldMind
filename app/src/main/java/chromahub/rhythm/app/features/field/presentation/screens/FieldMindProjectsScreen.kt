@@ -402,11 +402,77 @@ private fun recommendedEvidenceFor(methods: Set<String>): String = listOfNotNull
 
 @Composable
 private fun EvidenceFilterBar(kind: String, onKind: (String) -> Unit, group: String, onGroup: (String) -> Unit, groups: List<String>, bulkMode: Boolean, onBulk: () -> Unit) {
-    Card(shape = RoundedCornerShape(20.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)) {
-        Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            ChoiceChips(listOf("All", "Observation", "Note", "Question", "Source"), kind) { onKind(it) }
-            ChoiceChips(groups, group) { onGroup(it) }
-            OutlinedButton(onClick = onBulk, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp)) { Text(if (bulkMode) "Done bulk selection" else "Bulk select / manage") }
+    var expanded by remember { mutableStateOf(false) }
+    
+    Card(
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            // Filter header row
+            Row(
+                Modifier.fillMaxWidth().clickable { expanded = !expanded },
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(FieldMindIcons.Filter, null, size = 18.dp, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("Filter & sort", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold)
+                }
+                Icon(
+                    if (expanded) FieldMindIcons.Up else FieldMindIcons.Down,
+                    null,
+                    size = 20.dp,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            
+            // Expandable filter content
+            AnimatedVisibility(visible = expanded, enter = expandVertically(), exit = shrinkVertically()) {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    // Type filter
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text("Type", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        ChoiceChips(listOf("All", "Observation", "Note", "Question", "Source"), kind) { onKind(it) }
+                    }
+                    
+                    // Group/category filter
+                    if (groups.size > 1) {
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Text("Category", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                items(groups.take(8)) { g ->
+                                    FilterChip(
+                                        selected = g == group,
+                                        onClick = { onGroup(g) },
+                                        label = { Text(g, maxLines = 1) },
+                                        shape = RoundedCornerShape(12.dp)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                    
+                    // Bulk management button
+                    OutlinedButton(
+                        onClick = onBulk,
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp)
+                    ) {
+                        Icon(
+                            if (bulkMode) FieldMindIcons.Check else FieldMindIcons.Select,
+                            null,
+                            size = 18.dp,
+                            modifier = Modifier.padding(end = 8.dp)
+                        )
+                        Text(if (bulkMode) "Done bulk selection" else "Bulk select / manage")
+                    }
+                }
+            }
         }
     }
 }
