@@ -396,7 +396,7 @@ fun ResearchSessionScreen(
                                 Text("$observationCount observation${if (observationCount != 1) "s" else ""} captured", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.78f))
                             }
                             // Pause / End controls
-                            Column(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                                 FilledTonalIconButton(
                                     onClick = { /* pause toggles timer - timer keeps running via LaunchedEffect; we track pause via a separate flag */
                                         // For now, this is a visual pause. The session timer continues but the pause indicates a break.

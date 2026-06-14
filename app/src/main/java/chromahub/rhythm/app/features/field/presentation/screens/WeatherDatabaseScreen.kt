@@ -173,7 +173,6 @@ fun WeatherDatabaseScreen(
         }
     }
 }
-}
 
 @Composable
 private fun LiveCurrentWeatherCard(
