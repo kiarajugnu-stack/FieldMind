@@ -1,0 +1,33 @@
+@import "tailwindcss";
+
+@layer base {
+  html {
+    @apply scroll-smooth;
+  }
+
+  body {
+    @apply antialiased;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply px-6 py-3 bg-primary text-on-primary rounded-lg font-semibold hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 transition-all duration-300;
+  }
+
+  .btn-secondary {
+    @apply px-6 py-3 bg-secondary-container text-on-secondary-container rounded-lg font-semibold hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 transition-all duration-300;
+  }
+
+  .btn-outline {
+    @apply px-6 py-3 border-2 border-outline text-on-background rounded-lg font-semibold hover:bg-surface-variant/50 transition-all duration-300;
+  }
+
+  .card {
+    @apply bg-surface rounded-xl p-6 border border-outline-variant/20 shadow-sm hover:shadow-md transition-shadow duration-300;
+  }
+
+  .gradient-text {
+    @apply bg-gradient-to-r from-primary via-tertiary to-primary bg-clip-text text-transparent;
+  }
+}
