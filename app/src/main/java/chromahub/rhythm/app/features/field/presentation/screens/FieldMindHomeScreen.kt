@@ -898,7 +898,7 @@ private fun ResearchSessionCtaCard(
     }
 
 @Composable
-private fun GoalStatChip(icon: MaterialSymbolIcon, label: String, tint: androidx.compose.ui.graphics.Color) {
+fun GoalStatChip(icon: MaterialSymbolIcon, label: String, tint: androidx.compose.ui.graphics.Color) {
     Row(
         Modifier
             .clip(RoundedCornerShape(12.dp))
@@ -914,7 +914,7 @@ private fun GoalStatChip(icon: MaterialSymbolIcon, label: String, tint: androidx
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun HomeWidgetGrid(
+fun HomeWidgetGrid(
     observations: List<ObservationEntity>,
     notes: List<NoteEntity>,
     questions: List<QuestionEntity>,
