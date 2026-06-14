@@ -147,7 +147,7 @@ fun HomeScreen(
             observations.filter { it.tags.contains("research-session") }
                 .sortedByDescending { it.timestamp }
                 .forEach { obs ->
-                    val key = obs.context.ifBlank { "Unnamed session" }
+                    val key = obs.moodOrContext.ifBlank { "Session ${obs.date}" }
                     map.getOrPut(key) { mutableListOf() }.add(obs)
                 }
             map.toMap()
