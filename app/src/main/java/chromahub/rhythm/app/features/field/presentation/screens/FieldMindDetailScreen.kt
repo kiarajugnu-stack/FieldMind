@@ -573,6 +573,12 @@ private fun ProjectDetailContent(
                 Text(p.objective, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
 
+            // Background notes
+            if (p.backgroundNotes.isNotBlank()) {
+                Text("Background", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(p.backgroundNotes, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+
             // Methods
             if (p.methods.isNotBlank()) {
                 Text("Methods", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold, color = colors.info)
