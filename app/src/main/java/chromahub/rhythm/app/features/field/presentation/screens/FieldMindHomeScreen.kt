@@ -142,18 +142,22 @@ fun HomeScreen(
         }
 
         // ── Session Observations (grouped by research session) ──
-        val sessionObs = remember(observations, researchSessions) {
-            val map = mutableMapOf<String, MutableList<ObservationEntity>>()
-            observations.filter { it.tags.contains("research-session") }
-                .sortedByDescending { it.timestamp }
-                .forEach { obs ->
-                    val key = obs.moodOrContext.ifBlank { "Session ${obs.date}" }
-                    map.getOrPut(key) { mutableListOf() }.add(obs)
+        if (observations.isNotEmpty()) {
+            item {
+                val sessionObs = remember(observations, researchSessions) {
+                    val map = mutableMapOf<String, MutableList<ObservationEntity>>()
+                    observations.filter { it.tags.contains("research-session") }
+                        .sortedByDescending { it.timestamp }
+                        .forEach { obs ->
+                            val key = obs.moodOrContext.ifBlank { "Session ${obs.date}" }
+                            map.getOrPut(key) { mutableListOf() }.add(obs)
+                        }
+                    map.toMap()
                 }
-            map.toMap()
-        }
-        if (sessionObs.isNotEmpty()) {
-            item { SessionObservationsCard(sessionObs, researchSessions, onOpenDetail, onNavigate) }
+                if (sessionObs.isNotEmpty()) {
+                    SessionObservationsCard(sessionObs, researchSessions, onOpenDetail, onNavigate)
+                }
+            }
         }
 
         // ── Current Project ──
