@@ -574,7 +574,7 @@ private fun ResearchHealthSummary(dataQualityScore: Triple<Int, List<Pair<String
 
 @Composable
 private fun DataRecordInsightCard(record: DataRecordEntity, onClick: () -> Unit) {
-    EntityCard(record.label.ifBlank { record.toolType }, "data", body = "Value: ${record.value} ${record.unit}\nNotes: ${record.notes}", meta = listOf(record.toolType, record.date), onClick = onClick)
+    EntityCard(record.label.ifBlank { record.toolType }, "data", body = "Value: ${record.value} ${record.unit}\nNotes: ${record.notes}", meta = listOf(record.toolType, SimpleDateFormat("MMM d", Locale.getDefault()).format(Date(record.timestamp))), onClick = onClick)
 }
 
 // ══════════════════════════════════════════════════════════════════════

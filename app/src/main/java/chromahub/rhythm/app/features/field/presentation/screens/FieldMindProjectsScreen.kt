@@ -627,8 +627,8 @@ private fun ProjectWorkspaceCard(
 ) {
     val relatedQuestions = questions.count { it.relatedProjectId == project.id }
     val relatedObservations = observations.count { it.projectId == project.id }
-    val relatedHypotheses = hypotheses.count { hypothesis -> questions.any { it.id == hypothesis.questionId && it.relatedProjectId == project.id } }
-    val relatedSources = sources.count { it.projectId == project.id }
+    val relatedHypotheses = hypotheses.count { hypothesis -> questions.any { it.id == hypothesis.linkedQuestionId && it.relatedProjectId == project.id } }
+    val relatedSources = sources.count { it.relatedProjectId == project.id }
     val relatedData = data.count { it.projectId == project.id }
     val relatedReports = reports.count { it.projectId == project.id }
     val progressMetrics = listOf(
