@@ -163,7 +163,8 @@ fun FieldMindNavigation(viewModel: FieldMindViewModel, onResetOnboarding: () -> 
     val currentRoute = currentDestination?.route
     val haptics = rememberFieldMindHaptics()
     val researchSessions by viewModel.researchSessions.collectAsState()
-    val activeResearchSession = researchSessions.firstOrNull { it.status == "Active" }        val hideChrome = currentRoute == FieldMindScreen.Settings.route ||
+    val activeResearchSession = researchSessions.firstOrNull { it.status == "Active" }
+    val hideChrome = currentRoute == FieldMindScreen.Settings.route ||
         currentRoute == FieldMindScreen.FieldMode.route ||
         currentRoute == FieldMindScreen.Reader.route ||
         currentRoute == FieldMindScreen.Changelog.route ||

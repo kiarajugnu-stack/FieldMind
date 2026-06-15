@@ -685,10 +685,12 @@ private fun ObservationEvidenceCountsRow(
         a.uri.contains(Regex("\\.(jpg|jpeg|png|webp|gif|heic|bmp)", RegexOption.IGNORE_CASE))
     }
     val videoCount = attachments.count { a ->
-        a.type.equals("Video", true) || a.mimeType?.startsWith("video/") == true
+        a.type.equals("Video", true) || 
+        a.uri.contains(Regex("\\.(mp4|mov|avi|mkv|webm|3gp)", RegexOption.IGNORE_CASE))
     }
     val audioCount = attachments.count { a ->
-        a.type.equals("Audio", true) || a.type.equals("Mic", true) || a.mimeType?.startsWith("audio/") == true
+        a.type.equals("Audio", true) || a.type.equals("Mic", true) || 
+        a.uri.contains(Regex("\\.(m4a|mp3|wav|ogg|flac|aac)", RegexOption.IGNORE_CASE))
     }
     val otherCount = attachments.size - photoCount - videoCount - audioCount
     
