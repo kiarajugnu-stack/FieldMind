@@ -802,7 +802,11 @@ internal fun ObservationLocationCard(latitude: Double, longitude: Double, manual
             }
             if (placeName != null) Text(placeName, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold)
             Box(Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp))) {
-                OsmMap(listOf(latitude to longitude), markerColor = colors.observation)
+                MapboxMapView(
+                    points = listOf(latitude to longitude),
+                    showEmptyState = false,
+                    modifier = Modifier.fillMaxWidth().height(200.dp)
+                )
             }
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(coords, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1f))

@@ -92,7 +92,8 @@ androidx-room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = 
 androidx-room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "roomKtx" }
 androidx-room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "roomKtx" }
 androidx-compose-ui-unit = { group = "androidx.compose.ui", name = "ui-unit", version.ref = "uiUnit" }
-osmdroid-android = { group = "org.osmdroid", name = "osmdroid-android", version = "6.1.20" }
+mapbox-maps-android = { group = "com.mapbox.maps", name = "android", version = "11.25.0" }
+mapbox-maps-compose = { group = "com.mapbox.extension", name = "maps-compose", version = "11.25.0" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

@@ -250,8 +250,9 @@ dependencies {
 //    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
 //    implementation("com.jakewharton.retrofit:retrofit2-kotlinx-serialization-converter:1.0.0")
 
-    // OpenStreetMap for offline GPS maps
-    implementation(libs.osmdroid.android)
+    // Mapbox Maps SDK for offline maps (PRO feature)
+    implementation(libs.mapbox.maps.android)
+    implementation(libs.mapbox.maps.compose)
 
     // Biometric authentication for privacy lock
     implementation("androidx.biometric:biometric:1.2.0-alpha05")

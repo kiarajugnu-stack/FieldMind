@@ -1,3 +1,5 @@
+import org.gradle.api.credentials.BasicAuthentication
+
 pluginManagement {
     repositories {
         google {
@@ -20,6 +22,18 @@ dependencyResolutionManagement {
         google()
         mavenCentral()
         maven { url = uri("https://jitpack.io") }
+        // Mapbox Maven repository (requires access token as gradle property)
+        maven {
+            url = uri("https://api.mapbox.com/downloads/v2/releases/maven")
+            authentication {
+                create<BasicAuthentication>("basic")
+            }
+            credentials {
+                // Mapbox downloads token: set mapbox_downloads_token in ~/.gradle/gradle.properties
+                username = "mapbox"
+                password = project.properties["mapbox_downloads_token"] as? String ?: ""
+            }
+        }
     }
 }
 

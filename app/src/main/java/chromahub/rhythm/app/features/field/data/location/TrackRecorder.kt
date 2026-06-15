@@ -23,8 +23,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.withContext
-import org.osmdroid.util.GeoPoint
-import org.osmdroid.views.overlay.Polyline
 import java.io.File
 import java.io.FileWriter
 
@@ -41,7 +39,8 @@ data class TrackPoint(
     val timestamp: Long = System.currentTimeMillis(),
     val provider: String = "gps"
 ) {
-    fun toGeoPoint(): GeoPoint = GeoPoint(latitude, longitude)
+    /** Convert to a Pair for Mapbox coordinate display. */
+    fun toCoordinate(): Pair<Double, Double> = latitude to longitude
 }
 
 /**
@@ -70,10 +69,9 @@ data class TrackRecording(
         return total
     }
 
-    val polylineOverlay: Polyline
-        get() = Polyline().apply {
-            setPoints(points.map { GeoPoint(it.latitude, it.longitude) })
-        }
+    /** Convert points to a list of coordinate pairs for Mapbox polyline rendering. */
+    val coordinatePairs: List<Pair<Double, Double>>
+        get() = points.map { it.latitude to it.longitude }
 }
 
 /**
