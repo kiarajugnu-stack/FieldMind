@@ -467,18 +467,16 @@ private fun LiveWeatherDashboardWidget(
     // loading spinner ONLY if there's no data yet (first load)
     val showLoadingSpinner = weatherLoading && currentWeather == null
 
-    // Weather-based gradient
-    val weatherGradient = remember(currentWeather) {
-        val temp = currentWeather?.temperature ?: 20.0
-        val colors = when {
-            temp < 0 -> listOf(Color(0xFF1A237E), Color(0xFF42A5F5)) // Freezing → deep blue
-            temp < 10 -> listOf(Color(0xFF1565C0), Color(0xFF64B5F6))  // Cold → blue
-            temp < 20 -> listOf(Color(0xFF0D47A1), Color(0xFF66BB6A))  // Cool → blue-green
-            temp < 30 -> listOf(Color(0xFFE65100), Color(0xFFFFB74D))  // Warm → orange
-            else -> listOf(Color(0xFFBF360C), Color(0xFFE57373))       // Hot → deep red
-        }
-        Brush.horizontalGradient(colors)
+    // Temperature-based palette for display
+    val tempDisplay = currentWeather?.temperature ?: 20.0
+    val displayColors = when {
+        tempDisplay < 0 -> listOf(Color(0xFF1A237E), Color(0xFF42A5F5))
+        tempDisplay < 10 -> listOf(Color(0xFF1565C0), Color(0xFF64B5F6))
+        tempDisplay < 20 -> listOf(Color(0xFF0D47A1), Color(0xFF66BB6A))
+        tempDisplay < 30 -> listOf(Color(0xFFE65100), Color(0xFFFFB74D))
+        else -> listOf(Color(0xFFBF360C), Color(0xFFE57373))
     }
+    val weatherGradient = Brush.horizontalGradient(displayColors)
 
     val conditionColor = remember(currentWeather) {
         val code = currentWeather?.weatherCode ?: 0
@@ -509,15 +507,35 @@ private fun LiveWeatherDashboardWidget(
             )
             .clickable { onNavigate(FieldMindScreen.WeatherDatabase) },
         shape = RoundedCornerShape(28.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-        ),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
-        Column(
-            Modifier.fillMaxWidth().padding(18.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+        Box(
+            modifier = Modifier.fillMaxWidth()
         ) {
+            // Animated weather scene as background
+            if (currentWeather != null) {
+                Box(
+                    modifier = Modifier
+                        .matchParentSize()
+                        .then(
+                            Modifier.clip(RoundedCornerShape(28.dp))
+                        )
+                ) {
+                    AnimatedWeatherScene(
+                        weatherCode = currentWeather!!.weatherCode,
+                        temperature = currentWeather!!.temperature,
+                        sunrise = currentWeather!!.sunrise,
+                        sunset = currentWeather!!.sunset,
+                        compact = false
+                    )
+                }
+            }
+
+            // Content overlay
+            Column(
+                Modifier.fillMaxWidth().padding(18.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
             // ── Header row with live indicator ──
             Row(
                 verticalAlignment = Alignment.CenterVertically,
