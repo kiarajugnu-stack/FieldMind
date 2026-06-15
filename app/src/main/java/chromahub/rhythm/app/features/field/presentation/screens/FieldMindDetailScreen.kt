@@ -170,7 +170,7 @@ fun DetailScreen(
                         }, onOpenDetail) }
                     }
                     "project" -> projects.firstOrNull { it.id == id }?.let { p ->
-                        item { ProjectDetailContent(p, observations, questions, sources, data, reports) }
+                        item { ProjectDetailContent(p, observations, questions, sources, data, reports, viewModel) }
                         item { BacklinksPanel(buildList {
                             observations.filter { it.projectId == p.id }.forEach { add(Triple("observation", it.subject, it.id)) }
                             questions.filter { it.relatedProjectId == p.id }.forEach { add(Triple("question", it.questionText, it.id)) }
@@ -1341,12 +1341,13 @@ private fun ProjectDetailContent(
     questions: List<QuestionEntity>,
     sources: List<SourceEntity>,
     dataRecords: List<DataRecordEntity>,
-    reports: List<ReportEntity>
+    reports: List<ReportEntity>,
+    viewModel: FieldMindViewModel
 ) {
     val colors = FieldMindTheme.colors
     val haptics = rememberFieldMindHaptics()
     var tab by remember { mutableIntStateOf(0) }
-    val projectTabs = listOf("Overview", "Questions", "Observations", "Evidence", "Reports", "Sources")
+    val projectTabs = listOf("Overview", "Questions", "Observations", "Evidence", "Reports", "Sources", "Species", "Tasks")
     val obsCount = observations.count { it.projectId == p.id }
     val qCount = questions.count { it.relatedProjectId == p.id }
     val srcCount = sources.count { it.relatedProjectId == p.id }
@@ -1380,7 +1381,7 @@ private fun ProjectDetailContent(
                 }
             }
 
-            // Tab row
+            // Tab row (now includes Species and Tasks)
             ScrollableTabRow(selectedTabIndex = tab, edgePadding = 0.dp, containerColor = androidx.compose.ui.graphics.Color.Transparent) {
                 projectTabs.forEachIndexed { i, label ->
                     Tab(tab == i, { haptics.light(); tab = i }, text = { 
@@ -1391,7 +1392,7 @@ private fun ProjectDetailContent(
 
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
 
-            // Tab content
+            // Tab content (existing tabs preserved, new tabs added)
             when (tab) {
                 0 -> { // Overview — stats + description
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
@@ -1469,6 +1470,321 @@ private fun ProjectDetailContent(
                     } else {
                         projectSrcs.forEach { s ->
                             EntityCard(s.title, "source", body = s.author, meta = listOf(s.type, s.readingStatus)) { }
+                        }
+                    }
+                }
+                6 -> { // Species Registry Builder
+                    SpeciesRegistryBuilder(p.id, viewModel)
+                }
+                7 -> { // Project Tasks Builder
+                    ProjectTasksBuilder(p.id, viewModel)
+                }
+            }
+        }
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════════
+//  Species Registry Builder — Full taxonomy form + list per spec
+// ══════════════════════════════════════════════════════════════════════
+
+@Composable
+@OptIn(ExperimentalLayoutApi::class)
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun SpeciesRegistryBuilder(projectId: Long, viewModel: FieldMindViewModel) {
+    val colors = FieldMindTheme.colors
+    val haptics = rememberFieldMindHaptics()
+    var showForm by remember { mutableStateOf(false) }
+    
+    // Form state
+    var commonName by remember { mutableStateOf("") }
+    var scientificName by remember { mutableStateOf("") }
+    var kingdom by remember { mutableStateOf("") }
+    var phylum by remember { mutableStateOf("") }
+    var classs by remember { mutableStateOf("") }
+    var order by remember { mutableStateOf("") }
+    var family by remember { mutableStateOf("") }
+    var genus by remember { mutableStateOf("") }
+    var speciesName by remember { mutableStateOf("") }
+    var conservationStatus by remember { mutableStateOf("Not Evaluated") }
+    var targetCount by remember { mutableStateOf("") }
+    var autoCount by remember { mutableStateOf(false) }
+
+    // Live species list for this project
+    val allSpecies by viewModel.speciesRegistry.collectAsState()
+    val projectSpecies = remember(allSpecies, projectId) { allSpecies.filter { it.projectId == projectId } }
+
+    val conservationOptions = listOf("Not Evaluated", "Data Deficient", "Least Concern", "Near Threatened", "Vulnerable", "Endangered", "Critically Endangered", "Extinct in Wild", "Extinct")
+    
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Button(
+            onClick = { showForm = !showForm; if (!showForm) { commonName = ""; scientificName = ""; speciesName = "" } },
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(14.dp)
+        ) {
+            Icon(FieldMindIcons.Add, null, size = 18.dp)
+            Spacer(Modifier.size(6.dp))
+            Text(if (showForm) "Cancel" else "Add Species")
+        }
+
+        if (showForm) {
+            Card(shape = RoundedCornerShape(18.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh)) {
+                Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.verticalScroll(rememberScrollState())) {
+                    Text("Add Species to Registry", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = colors.observation)
+                    FieldTextField(commonName, { commonName = it }, "Common Name *", supportingText = "e.g. House Crow")
+                    FieldTextField(scientificName, { scientificName = it }, "Scientific Name", supportingText = "e.g. Corvus splendens")
+                    Text("Taxonomy", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        FieldTextField(kingdom, { kingdom = it }, "Kingdom", modifier = Modifier.weight(1f))
+                        FieldTextField(phylum, { phylum = it }, "Phylum", modifier = Modifier.weight(1f))
+                    }
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        FieldTextField(classs, { classs = it }, "Class", modifier = Modifier.weight(1f))
+                        FieldTextField(order, { order = it }, "Order", modifier = Modifier.weight(1f))
+                    }
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        FieldTextField(family, { family = it }, "Family", modifier = Modifier.weight(1f))
+                        FieldTextField(genus, { genus = it }, "Genus", modifier = Modifier.weight(1f))
+                    }
+                    FieldTextField(speciesName, { speciesName = it }, "Species", supportingText = "Specific epithet")
+                    Text("Conservation Status", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    ChoiceChips(conservationOptions, conservationStatus) { conservationStatus = it }
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                        FieldTextField(targetCount, { targetCount = it }, "Target Count", modifier = Modifier.weight(1f), supportingText = "Goal")
+                        FilterChip(selected = autoCount, onClick = { autoCount = !autoCount }, label = { Text("Auto Count", style = MaterialTheme.typography.labelSmall) })
+                    }
+                    Button(
+                        onClick = {
+                            haptics.confirm()
+                            viewModel.addSpecies(
+                                commonName = commonName,
+                                scientificName = scientificName,
+                                kingdom = kingdom, phylum = phylum, classs = classs,
+                                order = order, family = family, genus = genus,
+                                species = speciesName,
+                                conservationStatus = conservationStatus,
+                                targetCount = targetCount.toIntOrNull() ?: 0,
+                                autoCountTracking = autoCount,
+                                projectId = projectId
+                            )
+                            showForm = false
+                            commonName = ""; scientificName = ""; speciesName = ""
+                            kingdom = ""; phylum = ""; classs = ""
+                            order = ""; family = ""; genus = ""
+                        },
+                        modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(14.dp),
+                        enabled = commonName.isNotBlank()
+                    ) { Text("Save to Registry") }
+                }
+            }
+        }
+
+        Text("Species Registry (${projectSpecies.size})", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+        if (projectSpecies.isEmpty()) {
+            Surface(shape = RoundedCornerShape(16.dp), color = MaterialTheme.colorScheme.surfaceContainerHigh) {
+                Box(Modifier.fillMaxWidth().padding(32.dp), contentAlignment = Alignment.Center) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Icon(FieldMindIcons.Nature, null, tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f), size = 40.dp)
+                        Text("No species registered yet", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text("Add species with full taxonomy and conservation status", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f))
+                    }
+                }
+            }
+        } else {
+            projectSpecies.forEach { sp ->
+                Card(shape = RoundedCornerShape(14.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh)) {
+                    Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Icon(FieldMindIcons.Nature, null, tint = colors.observation, size = 18.dp)
+                            Column(Modifier.weight(1f)) {
+                                Text(sp.commonName, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
+                                if (sp.scientificName.isNotBlank()) Text(sp.scientificName, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
+                            if (sp.conservationStatus != "Not Evaluated") {
+                                val statusColor = when {
+                                    sp.conservationStatus.contains("Endangered") || sp.conservationStatus.contains("Critically") -> MaterialTheme.colorScheme.error
+                                    sp.conservationStatus.contains("Vulnerable") || sp.conservationStatus.contains("Near") -> colors.warning
+                                    else -> colors.positive
+                                }
+                                Surface(shape = RoundedCornerShape(8.dp), color = statusColor.copy(alpha = 0.12f)) {
+                                    Text(sp.conservationStatus.take(12), modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp), style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, color = statusColor)
+                                }
+                            }
+                        }
+                        FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            listOfNotNull(sp.genus.takeIf { it.isNotBlank() }, sp.family.takeIf { it.isNotBlank() }, sp.order.takeIf { it.isNotBlank() }).forEach { tax ->
+                                Surface(shape = RoundedCornerShape(6.dp), color = MaterialTheme.colorScheme.surfaceContainerHighest) {
+                                    Text(tax, modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════════
+//  Project Tasks Builder — Per spec: title, type, priority, due date, assignee, subtasks
+// ══════════════════════════════════════════════════════════════════════
+
+@Composable
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun ProjectTasksBuilder(projectId: Long, viewModel: FieldMindViewModel) {
+    val colors = FieldMindTheme.colors
+    val haptics = rememberFieldMindHaptics()
+    var showForm by remember { mutableStateOf(false) }
+    val taskTypes = listOf("Field Survey", "Observation Collection", "Species Count", "Audio Recording", "Photo Collection", "Video Collection", "Habitat Mapping", "Literature Review", "Data Analysis", "Report Writing", "Verification", "Sample Collection", "GPS Tracking", "Custom")
+    val priorityLevels = listOf("Low", "Medium", "High")
+    
+    // Form state
+    var taskTitle by remember { mutableStateOf("") }
+    var taskDesc by remember { mutableStateOf("") }
+    var taskType by remember { mutableStateOf(taskTypes[0]) }
+    var taskPriority by remember { mutableStateOf("Medium") }
+    var taskDueDate by remember { mutableStateOf("") }
+    var taskAssignee by remember { mutableStateOf("") }
+    var subtaskInput by remember { mutableStateOf("") }
+    var subtasks by remember { mutableStateOf<List<String>>(emptyList()) }
+
+    // Live task list for this project
+    val allTasks by viewModel.tasks.collectAsState()
+    val projectTasks = remember(allTasks, projectId) { allTasks.filter { it.projectId == projectId } }
+
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Button(
+            onClick = { showForm = !showForm; if (!showForm) { taskTitle = ""; taskDesc = ""; subtasks = emptyList() } },
+            modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(14.dp)
+        ) {
+            Icon(FieldMindIcons.Add, null, size = 18.dp)
+            Spacer(Modifier.size(6.dp))
+            Text(if (showForm) "Cancel" else "Add Task")
+        }
+
+        if (showForm) {
+            Card(shape = RoundedCornerShape(18.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh)) {
+                Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.verticalScroll(rememberScrollState())) {
+                    Text("Create Project Task", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = colors.project)
+                    FieldTextField(taskTitle, { taskTitle = it }, "Task Title *", supportingText = "e.g. Survey Zone A")
+                    FieldTextField(taskDesc, { taskDesc = it }, "Description", minLines = 2)
+                    Text("Task Type", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        items(taskTypes) { type ->
+                            FilterChip(selected = taskType == type, onClick = { taskType = type }, label = { Text(type, style = MaterialTheme.typography.labelSmall, maxLines = 1) })
+                        }
+                    }
+                    Text("Priority", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        priorityLevels.forEach { p ->
+                            FilterChip(
+                                selected = taskPriority == p,
+                                onClick = { taskPriority = p },
+                                label = { Text(p) },
+                                leadingIcon = if (taskPriority == p) ({ Icon(FieldMindIcons.Check, null, size = 16.dp) }) else null
+                            )
+                        }
+                    }
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        FieldTextField(taskDueDate, { taskDueDate = it }, "Due Date", modifier = Modifier.weight(1f), supportingText = "YYYY-MM-DD")
+                        FieldTextField(taskAssignee, { taskAssignee = it }, "Assigned To", modifier = Modifier.weight(1f))
+                    }
+                    Text("Subtasks", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                        OutlinedTextField(
+                            value = subtaskInput, onValueChange = { subtaskInput = it },
+                            modifier = Modifier.weight(1f),
+                            placeholder = { Text("Add subtask...") },
+                            shape = RoundedCornerShape(12.dp), singleLine = true,
+                            textStyle = MaterialTheme.typography.bodySmall
+                        )
+                        FilledTonalButton(onClick = { if (subtaskInput.isNotBlank()) { subtasks = subtasks + subtaskInput; subtaskInput = "" } }, shape = RoundedCornerShape(12.dp)) {
+                            Icon(FieldMindIcons.Add, null, size = 18.dp)
+                        }
+                    }
+                    subtasks.forEach { sub ->
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Icon(FieldMindIcons.List, null, tint = colors.project, size = 16.dp)
+                            Text(sub, style = MaterialTheme.typography.bodySmall, modifier = Modifier.weight(1f))
+                            IconButton(onClick = { subtasks = subtasks - sub }, modifier = Modifier.size(24.dp)) {
+                                Icon(FieldMindIcons.Close, null, size = 14.dp)
+                            }
+                        }
+                    }
+                    Button(
+                        onClick = {
+                            haptics.confirm()
+                            viewModel.addTask(
+                                title = taskTitle,
+                                description = taskDesc,
+                                taskType = taskType,
+                                priority = taskPriority,
+                                dueDate = taskDueDate,
+                                assignedTo = taskAssignee,
+                                projectId = projectId
+                            )
+                            // Create subtasks as separate tasks linked via parentTaskId
+                            var parentId: Long? = null
+                            subtasks.forEach { sub ->
+                                viewModel.addTask(
+                                    title = sub,
+                                    taskType = taskType,
+                                    priority = taskPriority,
+                                    projectId = projectId,
+                                    parentTaskId = parentId
+                                )
+                            }
+                            showForm = false
+                            taskTitle = ""; taskDesc = ""; subtasks = emptyList()
+                        },
+                        modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(14.dp),
+                        enabled = taskTitle.isNotBlank()
+                    ) { Text(if (subtasks.isEmpty()) "Save Task" else "Save Task with ${subtasks.size} Subtasks") }
+                }
+            }
+        }
+
+        Text("Project Tasks (${projectTasks.size})", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+        if (projectTasks.isEmpty()) {
+            Surface(shape = RoundedCornerShape(16.dp), color = MaterialTheme.colorScheme.surfaceContainerHigh) {
+                Box(Modifier.fillMaxWidth().padding(32.dp), contentAlignment = Alignment.Center) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Icon(FieldMindIcons.Check, null, tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f), size = 40.dp)
+                        Text("No tasks created yet", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text("Tasks can be linked to observations, species, and questions", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f))
+                    }
+                }
+            }
+        } else {
+            projectTasks.forEach { task ->
+                val priorityColor = when (task.priority.lowercase()) {
+                    "high" -> MaterialTheme.colorScheme.error
+                    "medium" -> colors.warning
+                    else -> colors.positive
+                }
+                Card(shape = RoundedCornerShape(14.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh)) {
+                    Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Icon(
+                            if (task.status == "Completed") FieldMindIcons.Check else FieldMindIcons.List,
+                            null,
+                            tint = if (task.status == "Completed") colors.positive else colors.project,
+                            size = 20.dp
+                        )
+                        Column(Modifier.weight(1f)) {
+                            Text(task.title, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
+                            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                Surface(shape = RoundedCornerShape(6.dp), color = colors.project.copy(alpha = 0.1f)) {
+                                    Text(task.taskType, modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp), style = MaterialTheme.typography.labelSmall, color = colors.project)
+                                }
+                                Surface(shape = RoundedCornerShape(6.dp), color = priorityColor.copy(alpha = 0.1f)) {
+                                    Text(task.priority, modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp), style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, color = priorityColor)
+                                }
+                            }
+                        }
+                        if (task.dueDate.isNotBlank()) {
+                            Text(task.dueDate, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     }
                 }

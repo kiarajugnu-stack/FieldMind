@@ -116,4 +116,28 @@ interface FieldMindDao {
     suspend fun linkSessionObservation(ref: SessionObservationCrossRef)
     @Query("SELECT o.* FROM field_observations o INNER JOIN field_session_observations x ON x.observationId = o.id WHERE x.sessionId = :sessionId AND o.deletedAt IS NULL ORDER BY o.timestamp DESC")
     fun observeObservationsForSession(sessionId: Long): Flow<List<ObservationEntity>>
+
+    // ── Species Registry ──
+    @Query("SELECT * FROM field_species WHERE deletedAt IS NULL ORDER BY commonName ASC")
+    fun observeSpecies(): Flow<List<SpeciesEntity>>
+    @Query("SELECT * FROM field_species WHERE projectId = :projectId AND deletedAt IS NULL ORDER BY commonName ASC")
+    fun observeSpeciesForProject(projectId: Long): Flow<List<SpeciesEntity>>
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertSpecies(entity: SpeciesEntity): Long
+    @Update
+    suspend fun updateSpecies(entity: SpeciesEntity)
+    @Query("UPDATE field_species SET deletedAt = :time, updatedAt = :time WHERE id = :id")
+    suspend fun softDeleteSpecies(id: Long, time: Long)
+
+    // ── Tasks ──
+    @Query("SELECT * FROM field_tasks WHERE deletedAt IS NULL ORDER BY sortOrder ASC, createdAt DESC")
+    fun observeTasks(): Flow<List<TaskEntity>>
+    @Query("SELECT * FROM field_tasks WHERE projectId = :projectId AND deletedAt IS NULL ORDER BY sortOrder ASC, createdAt DESC")
+    fun observeTasksForProject(projectId: Long): Flow<List<TaskEntity>>
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertTask(entity: TaskEntity): Long
+    @Update
+    suspend fun updateTask(entity: TaskEntity)
+    @Query("UPDATE field_tasks SET deletedAt = :time, updatedAt = :time WHERE id = :id")
+    suspend fun softDeleteTask(id: Long, time: Long)
 }

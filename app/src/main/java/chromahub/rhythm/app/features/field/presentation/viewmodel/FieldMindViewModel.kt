@@ -409,6 +409,84 @@ class FieldMindViewModel(application: Application) : AndroidViewModel(applicatio
         return result
     }
 
+    // ── Species Registry methods ──
+    fun addSpecies(
+        commonName: String,
+        scientificName: String = "",
+        kingdom: String = "",
+        phylum: String = "",
+        classs: String = "",
+        order: String = "",
+        family: String = "",
+        genus: String = "",
+        species: String = "",
+        conservationStatus: String = "Not Evaluated",
+        targetCount: Int = 0,
+        autoCountTracking: Boolean = false,
+        projectId: Long? = null,
+        notes: String = ""
+    ) = viewModelScope.launch {
+        repository.addSpecies(
+            SpeciesEntity(
+                commonName = commonName.trim(),
+                scientificName = scientificName.trim(),
+                kingdom = kingdom.trim(),
+                phylum = phylum.trim(),
+                classs = classs.trim(),
+                order = order.trim(),
+                family = family.trim(),
+                genus = genus.trim(),
+                species = species.trim(),
+                conservationStatus = conservationStatus,
+                targetCount = targetCount,
+                autoCountTracking = autoCountTracking,
+                projectId = projectId,
+                notes = notes.trim()
+            )
+        )
+    }
+
+    val speciesRegistry: StateFlow<List<SpeciesEntity>> = repository.species.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+    fun observeSpeciesForProject(projectId: Long) = repository.observeSpeciesForProject(projectId)
+
+    // ── Task methods ──
+    fun addTask(
+        title: String,
+        description: String = "",
+        taskType: String = "Field Survey",
+        priority: String = "Medium",
+        dueDate: String = "",
+        assignedTo: String = "",
+        status: String = "Pending",
+        linkedQuestionId: Long? = null,
+        linkedObservationId: Long? = null,
+        linkedSpeciesId: Long? = null,
+        projectId: Long? = null,
+        parentTaskId: Long? = null
+    ) = viewModelScope.launch {
+        repository.addTask(
+            TaskEntity(
+                title = title.trim(),
+                description = description.trim(),
+                taskType = taskType,
+                priority = priority,
+                dueDate = dueDate.trim(),
+                assignedTo = assignedTo.trim(),
+                status = status,
+                linkedQuestionId = linkedQuestionId,
+                linkedObservationId = linkedObservationId,
+                linkedSpeciesId = linkedSpeciesId,
+                projectId = projectId,
+                parentTaskId = parentTaskId
+            )
+        )
+    }
+
+    fun updateTaskEntity(entity: TaskEntity) = viewModelScope.launch { repository.updateTask(entity) }
+    fun deleteTask(id: Long) = viewModelScope.launch { repository.deleteTask(id) }
+    val tasks: StateFlow<List<TaskEntity>> = repository.tasks.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+    fun observeTasksForProject(projectId: Long) = repository.observeTasksForProject(projectId)
+
     fun addFlashcard(front: String, back: String, type: String, sourceId: Long? = null, projectId: Long? = null, deckMode: String = "basic") = viewModelScope.launch {
         repository.addFlashcard(FlashcardEntity(front = front.trim(), back = back.trim(), type = type, sourceId = sourceId, projectId = projectId, deckMode = deckMode))
     }
