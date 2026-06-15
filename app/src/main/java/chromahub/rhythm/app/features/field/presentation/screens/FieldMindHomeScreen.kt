@@ -1824,3 +1824,4 @@ private fun RecentCapturesCard(observations: List<ObservationEntity>, onOpenDeta
         }
     }
 }
+}

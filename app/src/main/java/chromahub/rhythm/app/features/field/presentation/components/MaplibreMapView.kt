@@ -60,7 +60,7 @@ fun MaplibreMapView(
     onOverlaysChanged: (List<MapOverlay>) -> Unit = {}
 ) {
     val context = LocalContext.current
-    val isOffline by tileManager?.isOffline.collectAsState() ?: remember { mutableStateOf(false) }
+    val isOffline by tileManager?.isOffline?.collectAsState() ?: remember { mutableStateOf(false) }
     var mapView by remember { mutableStateOf<MapView?>(null) }
 
     if (points.isEmpty() && savedOverlays.isEmpty() && showEmptyState) {
@@ -104,12 +104,11 @@ fun MaplibreMapView(
                 MapView(ctx).also { mv ->
                     mapView = mv
                     mv.getMapAsync { mapLibreMap ->
-                        map = mapLibreMap
                         // Load free demo tile style — no API key needed
                         mapLibreMap.setStyle(
                             "https://demotiles.maplibre.org/style.json",
                             object : Style.OnStyleLoaded {
-                                override fun onStyleLoaded(style: Style?) {
+                                override fun onStyleLoaded(style: Style) {
                                     // Move camera to the computed center
                                     mapLibreMap.moveCamera(
                                         CameraUpdateFactory.newLatLngZoom(

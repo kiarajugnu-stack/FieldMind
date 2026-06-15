@@ -125,13 +125,17 @@ class MaplibreOfflineManager(private val context: Context) {
             suspendCancellableCoroutine<OfflineRegion> { continuation ->
                 offlineManager.createOfflineRegion(
                     definition,
+                    byteArrayOf(), // metadata — empty for now
                     object : OfflineManager.CreateOfflineRegionCallback {
                         override fun onCreate(offlineRegion: OfflineRegion) {
                             // Start downloading the region
                             offlineRegion.setDownloadState(OfflineRegion.STATE_ACTIVE)
                             offlineRegion.setObserver(object : OfflineRegion.OfflineRegionObserver {
                                 override fun onStatusChanged(status: OfflineRegionStatus) {
-                                    val pct = status.percentage.toFloat() / 100f
+                                    // Calculate progress from completed/total resources
+                                    val pct = if (status.requiredResourceCount > 0)
+                                        status.completedResourceCount.toFloat() / status.requiredResourceCount.toFloat()
+                                    else 0f
                                     _downloadProgress.value = _downloadProgress.value + (id to pct)
                                     if (status.isComplete) {
                                         continuation.resume(offlineRegion)
@@ -216,8 +220,8 @@ class MaplibreOfflineManager(private val context: Context) {
     suspend fun clearAllCaches() = withContext(Dispatchers.IO) {
         suspendCancellableCoroutine<Unit> { continuation ->
             offlineManager.listOfflineRegions(object : OfflineManager.ListOfflineRegionsCallback {
-                override fun onList(regions: Array<out OfflineRegion>) {
-                    if (regions.isEmpty()) {
+                override fun onList(regions: Array<OfflineRegion>?) {
+                    if (regions.isNullOrEmpty()) {
                         continuation.resume(Unit)
                         return
                     }

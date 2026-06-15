@@ -315,7 +315,6 @@ private fun ObservationDetailContent(
                     CompactWeatherIcon(
                         weatherCode = weatherDescriptionToCode(o.weatherCondition, o.weatherTemperature),
                         temperature = o.weatherTemperature ?: 20.0,
-                        isDay = true,
                         modifier = Modifier.size(24.dp)
                     )
                     WeatherChip(WeatherUnitConverter.formatTemp(o.weatherTemperature, tempUnit), colors.info)
