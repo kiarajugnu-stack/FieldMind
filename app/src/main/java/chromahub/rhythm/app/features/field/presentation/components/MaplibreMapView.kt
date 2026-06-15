@@ -1,6 +1,5 @@
 package fieldmind.research.app.features.field.presentation.components
 
-import android.view.Gravity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -63,7 +62,6 @@ fun MaplibreMapView(
     val context = LocalContext.current
     val isOffline by tileManager?.isOffline.collectAsState() ?: remember { mutableStateOf(false) }
     var mapView by remember { mutableStateOf<MapView?>(null) }
-    var map by remember { mutableStateOf<MapLibreMap?>(null) }
 
     if (points.isEmpty() && savedOverlays.isEmpty() && showEmptyState) {
         Box(modifier.fillMaxWidth().height(height), contentAlignment = Alignment.Center) {

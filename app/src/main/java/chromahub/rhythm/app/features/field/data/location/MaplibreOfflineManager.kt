@@ -179,62 +179,34 @@ class MaplibreOfflineManager(private val context: Context) {
     }
 
     /**
-     * Remove a cached tile region.
+     * Remove a cached tile region from the metadata list.
+     *
+     * MapLibre's [OfflineRegion] uses internal database IDs not exposed in the public API,
+     * so selective tile deletion is not possible via the SDK. This method removes the region
+     * metadata from storage so it no longer shows in the UI. The actual tile data on disk
+     * will be cleaned up when [clearAllCaches] is called explicitly.
      */
     suspend fun removeRegion(regionId: String) = withContext(Dispatchers.IO) {
-        // List all regions and find the matching one
-        suspendCancellableCoroutine<Unit> { continuation ->
-            offlineManager.listOfflineRegions(object : OfflineManager.ListOfflineRegionsCallback {
-                override fun onList(regions: Array<out OfflineRegion>) {
-                    regions.firstOrNull {
-                        // Match by checking if the region definition matches our stored bounds
-                        try {
-                            val def = it.definition
-                            it.delete(OfflineRegion.OfflineRegionDeleteCallback {
-                                continuation.resume(Unit)
-                            })
-                        } catch (_: Exception) {
-                            false
-                        }
-                    }
-                    continuation.resume(Unit)
-                }
-
-                override fun onError(error: String) {
-                    continuation.resume(Unit) // Graceful fallback
-                }
-            })
-        }
-        removeRegionFromStorage(regionId)
+        val kept = _cachedRegions.value.filter { it.id != regionId }
+        clearRegionsFromStorage()
+        _cachedRegions.value = emptyList()
+        kept.forEach { saveRegionToStorage(it) }
+        _cachedRegions.value = kept
         refreshCachedRegions()
     }
 
     /**
-     * Get total cache size on disk.
+     * Get total cache size on disk by walking the MapLibre cache directory.
      */
     suspend fun getCacheSizeBytes(): Long = withContext(Dispatchers.IO) {
-        suspendCancellableCoroutine { continuation ->
-            offlineManager.listOfflineRegions(object : OfflineManager.ListOfflineRegionsCallback {
-                override fun onList(regions: Array<out OfflineRegion>) {
-                    val total = regions.sumOf {
-                        try {
-                            val status = it.definition
-                            // Approximate: use region bounds area
-                            1_000_000L
-                        } catch (_: Exception) { 0L }
-                    }
-                    continuation.resume(total.coerceAtLeast(1_000_000L))
-                }
-
-                override fun onError(error: String) {
-                    val dirSize = runCatching {
-                        val dir = context.filesDir.resolve("maplibre_offline")
-                        if (dir.exists()) dir.walkTopDown().filter { it.isFile }.sumOf { it.length() }
-                        else 0L
-                    }.getOrDefault(0L)
-                    continuation.resume(dirSize)
-                }
-            })
+        val dir = context.filesDir.resolve("maplibre_offline")
+        if (dir.exists()) {
+            dir.walkTopDown().filter { it.isFile }.sumOf { it.length() }
+        } else {
+            // Fall back to app-level cache if MapLibre hasn't created its dir yet
+            val cacheDir = context.cacheDir.resolve("maplibre")
+            if (cacheDir.exists()) cacheDir.walkTopDown().filter { it.isFile }.sumOf { it.length() }
+            else 0L
         }
     }
 
