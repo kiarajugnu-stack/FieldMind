@@ -234,6 +234,13 @@ class MaplibreOfflineManager(private val context: Context) {
                                     continuation.resume(Unit)
                                 }
                             }
+
+                            override fun onError(error: String) {
+                                deleted++
+                                if (deleted >= regions.size) {
+                                    continuation.resume(Unit)
+                                }
+                            }
                         })
                     }
                 }
