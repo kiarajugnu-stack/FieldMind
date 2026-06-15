@@ -1,5 +1,6 @@
 package fieldmind.research.app.features.field.presentation.navigation
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
@@ -11,29 +12,20 @@ import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
-import androidx.compose.foundation.layout.BoxWithConstraints
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.ExtendedFloatingActionButton
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.NavigationRail
-import androidx.compose.material3.NavigationRailItem
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.Modifier
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.*
+import androidx.compose.material3.Surface
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
@@ -46,6 +38,7 @@ import fieldmind.research.app.features.field.presentation.components.FieldMindSn
 import fieldmind.research.app.features.field.presentation.components.FieldMindIcons
 import fieldmind.research.app.features.field.presentation.components.rememberFieldMindHaptics
 import fieldmind.research.app.features.field.presentation.screens.*
+import fieldmind.research.app.features.field.presentation.theme.FieldMindTheme
 import fieldmind.research.app.features.field.presentation.viewmodel.FieldMindViewModel
 import fieldmind.research.app.shared.data.model.AppSettings
 import fieldmind.research.app.shared.presentation.components.icons.Icon
@@ -117,8 +110,8 @@ private val bottomTabs = listOf(
     FieldMindScreen.Home,
     FieldMindScreen.Observe,
     FieldMindScreen.Projects,
-    FieldMindScreen.Library,
-    FieldMindScreen.Insights
+    FieldMindScreen.Insights,
+    FieldMindScreen.Library
 )
 
 @Composable
@@ -169,31 +162,25 @@ fun FieldMindNavigation(viewModel: FieldMindViewModel, onResetOnboarding: () -> 
     val currentRoute = currentDestination?.route
     val haptics = rememberFieldMindHaptics()
     val researchSessions by viewModel.researchSessions.collectAsState()
-    val activeResearchSession = researchSessions.firstOrNull { it.status == "Active" }
-    val hideChrome = currentRoute == FieldMindScreen.Settings.route ||
+    val activeResearchSession = researchSessions.firstOrNull { it.status == "Active" }        val hideChrome = currentRoute == FieldMindScreen.Settings.route ||
         currentRoute == FieldMindScreen.FieldMode.route ||
         currentRoute == FieldMindScreen.Reader.route ||
         currentRoute == FieldMindScreen.Changelog.route ||
         currentRoute == FieldMindScreen.Flashcards.route ||
+        currentRoute == FieldMindScreen.ResearchSession.route ||
         currentRoute?.startsWith("field_detail/") == true
 
     fun isSelected(screen: FieldMindScreen) =
         currentDestination?.hierarchy?.any { it.route == screen.route } == true
+
+    var showQuickNav by remember { mutableStateOf(false) }
 
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val expanded = maxWidth >= 720.dp
         if (expanded) {
             Row(Modifier.fillMaxSize()) {
                 if (!hideChrome) {
-                    NavigationRail(
-                        header = {
-                            FloatingActionButton(
-                                onClick = { haptics.light(); navController.navigateToDestination(if (activeResearchSession != null) FieldMindScreen.ResearchSession.route else FieldMindScreen.FieldMode.route) },
-                                containerColor = if (activeResearchSession != null) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.tertiaryContainer,
-                                contentColor = if (activeResearchSession != null) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onTertiaryContainer
-                            ) { Icon(icon = if (activeResearchSession != null) FieldMindIcons.Timer else FieldMindIcons.Bolt, contentDescription = "Capture", size = 26.dp) }
-                        }
-                    ) {
+                    NavigationRail {
                         bottomTabs.forEach { screen ->
                             val selected = isSelected(screen)
                             NavigationRailItem(
@@ -210,28 +197,34 @@ fun FieldMindNavigation(viewModel: FieldMindViewModel, onResetOnboarding: () -> 
         } else {
             Scaffold(
                 containerColor = MaterialTheme.colorScheme.background,
-                floatingActionButton = {
-                    if (!hideChrome) {
-                        ExtendedFloatingActionButton(
-                            onClick = { haptics.light(); navController.navigateToDestination(if (activeResearchSession != null) FieldMindScreen.ResearchSession.route else FieldMindScreen.FieldMode.route) },
-                            containerColor = if (activeResearchSession != null) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.tertiaryContainer,
-                            contentColor = if (activeResearchSession != null) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onTertiaryContainer,
-                            icon = { Icon(icon = if (activeResearchSession != null) FieldMindIcons.Timer else FieldMindIcons.Bolt, contentDescription = null, size = 22.dp) },
-                            text = { Text(activeResearchSession?.let { "Live session • ${formatElapsed(it.startedAt)} • ${it.observationCount} obs" } ?: "Quick capture") }
-                        )
-                    }
-                },
                 bottomBar = {
                     if (!hideChrome) {
-                        NavigationBar {
-                            bottomTabs.forEach { screen ->
-                                val selected = isSelected(screen)
-                                NavigationBarItem(
-                                    selected = selected,
-                                    onClick = { haptics.light(); navController.navigateToTab(screen.route) },
-                                    icon = { AnimatedNavIcon(screen, selected) },
-                                    label = { AnimatedNavLabel(screen.label, selected) }
-                                )
+                        Column(verticalArrangement = Arrangement.spacedBy(0.dp)) {
+                            // ── Floating Action Row (above bottom nav) ──
+                            FloatingActionRow(
+                                onSearch = { haptics.light(); navController.navigateToDestination(FieldMindScreen.Search.route) },
+                                onQuestions = { haptics.light(); showQuickNav = !showQuickNav },
+                                onResearcher = { haptics.light(); navController.navigateToDestination(FieldMindScreen.Questions.route) },
+                                quickNavExpanded = showQuickNav,
+                                onQuickNavItem = { screen ->
+                                    showQuickNav = false
+                                    haptics.light()
+                                    navController.navigateToDestination(screen.route)
+                                },
+                                activeResearchSession = activeResearchSession
+                            )
+
+                            // ── Main Navigation Bar ──
+                            NavigationBar {
+                                bottomTabs.forEach { screen ->
+                                    val selected = isSelected(screen)
+                                    NavigationBarItem(
+                                        selected = selected,
+                                        onClick = { haptics.light(); navController.navigateToTab(screen.route) },
+                                        icon = { AnimatedNavIcon(screen, selected) },
+                                        label = { AnimatedNavLabel(screen.label, selected) }
+                                    )
+                                }
                             }
                         }
                     }
@@ -241,6 +234,176 @@ fun FieldMindNavigation(viewModel: FieldMindViewModel, onResetOnboarding: () -> 
             }
         }
     }
+}
+
+// ── Floating Action Row ──
+
+@Composable
+private fun FloatingActionRow(
+    onSearch: () -> Unit,
+    onQuestions: () -> Unit,
+    onResearcher: () -> Unit,
+    quickNavExpanded: Boolean,
+    onQuickNavItem: (FieldMindScreen) -> Unit,
+    activeResearchSession: ResearchSessionEntity?
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 4.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        // QuickNav speed-dial (expands upward)
+        AnimatedVisibility(visible = quickNavExpanded) {
+            Surface(
+                shape = RoundedCornerShape(20.dp),
+                color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                tonalElevation = 4.dp,
+                shadowElevation = 8.dp
+            ) {
+                Column(
+                    Modifier.padding(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Text(
+                        "Quick navigation",
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                    )
+                    QuickNavButton("Questions", FieldMindIcons.Question, FieldMindScreen.Questions, onQuickNavItem)
+                    QuickNavButton("Hypotheses", FieldMindIcons.Hypothesis, FieldMindScreen.Hypotheses, onQuickNavItem)
+                    QuickNavButton("Research Session", FieldMindIcons.Bolt, FieldMindScreen.ResearchSession, onQuickNavItem)
+                    QuickNavButton("Field Mode", FieldMindIcons.Bolt, FieldMindScreen.FieldMode, onQuickNavItem)
+                    QuickNavButton("Settings", FieldMindIcons.Settings, FieldMindScreen.Settings, onQuickNavItem)
+                }
+            }
+        }
+
+        // Floating action row
+        Surface(
+            shape = RoundedCornerShape(18.dp),
+            color = MaterialTheme.colorScheme.surfaceContainerLow,
+            tonalElevation = 2.dp,
+            shadowElevation = 4.dp
+        ) {
+            Row(
+                Modifier
+                    .padding(horizontal = 4.dp, vertical = 4.dp),
+                horizontalArrangement = Arrangement.spacedBy(2.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Search
+                FloatingActionChip(
+                    icon = FieldMindIcons.Search,
+                    label = "Search",
+                    onClick = onSearch
+                )
+
+                // Divider
+                Box(
+                    Modifier
+                        .width(1.dp)
+                        .height(24.dp)
+                        .background(MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
+                )
+
+                // QuickNav / speed dial toggle
+                FloatingActionChip(
+                    icon = FieldMindIcons.Forward,
+                    label = "QuickNav",
+                    onClick = onQuestions,
+                    isActive = quickNavExpanded
+                )
+
+                // Divider
+                Box(
+                    Modifier
+                        .width(1.dp)
+                        .height(24.dp)
+                        .background(MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
+                )
+
+                // Researcher / AI
+                FloatingActionChip(
+                    icon = FieldMindIcons.Sparkle,
+                    label = "AI",
+                    onClick = onResearcher
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun FloatingActionChip(
+    icon: MaterialSymbolIcon,
+    label: String,
+    onClick: () -> Unit,
+    isActive: Boolean = false
+) {
+    val bg = if (isActive) MaterialTheme.colorScheme.primaryContainer
+    else Color.Transparent
+    Surface(
+        onClick = onClick,
+        shape = RoundedCornerShape(14.dp),
+        color = bg,
+        tonalElevation = 0.dp
+    ) {
+        Row(
+            Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            Icon(
+                icon = icon,
+                contentDescription = label,
+                tint = if (isActive) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant,
+                size = 18.dp
+            )
+            Text(
+                label,
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = if (isActive) FontWeight.SemiBold else FontWeight.Normal,
+                color = if (isActive) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
+
+@Composable
+private fun QuickNavButton(
+    label: String,
+    icon: MaterialSymbolIcon,
+    screen: FieldMindScreen,
+    onSelect: (FieldMindScreen) -> Unit
+) {
+    Surface(
+        onClick = { onSelect(screen) },
+        shape = RoundedCornerShape(12.dp),
+        color = MaterialTheme.colorScheme.surfaceContainerHigh
+    ) {
+        Row(
+            Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Icon(
+                icon = icon,
+                contentDescription = label,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                size = 18.dp
+            )
+            Text(
+                label,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Medium
+            )
+        }
+    }
+}
 }
 
 

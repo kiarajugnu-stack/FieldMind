@@ -20,11 +20,15 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import android.net.Uri
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
+import androidx.compose.ui.window.SecureFlagPolicy
 import fieldmind.research.app.features.field.data.database.entity.*
 import fieldmind.research.app.features.field.data.location.FieldLocationProvider
 import fieldmind.research.app.features.field.data.weather.WeatherSnapshot
@@ -35,11 +39,11 @@ import fieldmind.research.app.features.field.data.stats.FieldMindStreaks
 import fieldmind.research.app.features.field.presentation.components.*
 import fieldmind.research.app.features.field.presentation.navigation.FieldMindScreen
 import fieldmind.research.app.features.field.presentation.theme.FieldMindTheme
+import fieldmind.research.app.features.field.presentation.viewmodel.DraftEvidenceAttachment
 import fieldmind.research.app.features.field.presentation.viewmodel.FieldMindViewModel
 import fieldmind.research.app.shared.presentation.components.icons.Icon
 import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon
 import androidx.compose.ui.platform.LocalContext
-
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -61,6 +65,17 @@ fun HomeScreen(
     onOpenDetail: (String, Long) -> Unit = { _, _ -> },
     onOpenReader: (String, String) -> Unit = { _, _ -> }
 ) {
+    // ── Camera-first capture state ──
+    var showCamera by remember { mutableStateOf(false) }
+    var capturedPhotoUri by remember { mutableStateOf<String?>(null) }
+    var capturedPhotoMime by remember { mutableStateOf<String?>(null) }
+    var showCategoryPicker by remember { mutableStateOf(false) }
+    var selectedCaptureCategory by remember { mutableStateOf("Bird") }
+    
+    // Centered snackbar host state
+    val captureSnackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
+
     val observations by viewModel.observations.collectAsState()
     val notes by viewModel.notes.collectAsState()
     val questions by viewModel.questions.collectAsState()
@@ -159,108 +174,313 @@ fun HomeScreen(
         homeCurrentWeather?.let { computeFieldworkNudge(it) } ?: ""
     }
 
-    LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(20.dp, 0.dp, 20.dp, 96.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
-        // ── Hero Section ──
-        item { HomeHeroSection(todayCount, goal, currentStreak, observations.size, questions.size, onOpenSettings, onNavigate) }
+    Box(Modifier.fillMaxSize()) {
+        LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(20.dp, 0.dp, 20.dp, 96.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
+            // ── Hero Section ──
+            item { HomeHeroSection(todayCount, goal, currentStreak, observations.size, questions.size, onOpenSettings, onNavigate) }
 
-        // ── Weather as animated centerpiece ──
-        item {
-            LiveWeatherDashboardWidget(
-                viewModel = viewModel,
-                observations = observations,
-                onNavigate = onNavigate,
-                currentWeather = homeCurrentWeather,
-                weatherLoading = homeWeatherLoading,
-                weatherError = homeWeatherError,
-                placeName = homePlaceName,
-                onRefresh = { snapshot ->
-                    homeCurrentWeather = snapshot
-                    homeWeatherError = snapshot == null
-                },
-                showTemp = weatherShowTemp,
-                showCondition = weatherShowCondition,
-                showHumidity = weatherShowHumidity,
-                showWind = weatherShowWind,
-                showCloudCover = weatherShowCloud,
-                showPressure = weatherShowPressure,
-                tempUnit = tempUnit,
-                windSpeedUnit = windSpeedUnit,
-                moonPhase = moonPhase,
-                conditionsNudge = conditionsNudge,
-                sunrise = homeCurrentWeather?.sunrise,
-                sunset = homeCurrentWeather?.sunset
-            )
-        }
-
-        // ── Daily Goal with delta ──
-        item { DailyGoalCard(todayCount, goal, currentStreak, deltaLabel) { onNavigate(FieldMindScreen.Observe) } }
-
-        // ── Research Session CTA ──
-        item { ResearchSessionCtaCard(
-                lastSessionLabel = if (lastSession != null) "Resume your last session" else null,
-                activeSessionName = researchSessions.firstOrNull { it.status == "Active" }?.name,
-                timerMs = 0L,
-                onStartSession = { onNavigate(FieldMindScreen.ResearchSession) }
-            ) }
-
-        // ── Widget Grid ──
-        item { SectionHeader("Research areas", "Quick overview of your work") }
-        item { HomeWidgetGrid(observations, notes, questions, sources, projects, reports, data) { onNavigate(it) } }
-        item { HomeDataOptionsCard(data, onNavigate) }
-        
-        // ── Recent Captures ──
-        if (observations.isNotEmpty()) {
-            item { RecentCapturesCard(observations, onOpenDetail) }
-        }
-
-        // ── Learning & Reading ──
-        item { RecommendedLearningCard(recommendations, onOpenReader, onSeeAll = { onNavigate(FieldMindScreen.Learn) }) }
-        item { ReadingReviewCard(sources, flashcards, onNavigate) }
-
-        // ── Observation Timeline ──
-        item {
-            ObservationTimelinePreview(
-                observations = observations.sortedByDescending { it.timestamp },
-                notes = notes.sortedByDescending { it.updatedAt },
-                onOpenDetail = onOpenDetail
-            )
-        }
-
-        // ── Session Observations ──
-        if (observations.isNotEmpty()) {
+            // ── Weather as animated centerpiece ──
             item {
-                val sessionObs = remember(observations, researchSessions) {
-                    val map = mutableMapOf<String, MutableList<ObservationEntity>>()
-                    observations.filter { it.tags.contains("research-session") }
-                        .sortedByDescending { it.timestamp }
-                        .forEach { obs ->
-                            val key = obs.moodOrContext.ifBlank { "Session ${obs.date}" }
-                            map.getOrPut(key) { mutableListOf() }.add(obs)
-                        }
-                    map.toMap()
-                }
-                if (sessionObs.isNotEmpty()) {
-                    SessionObservationsCard(sessionObs, researchSessions, onOpenDetail, onNavigate)
+                LiveWeatherDashboardWidget(
+                    viewModel = viewModel,
+                    observations = observations,
+                    onNavigate = onNavigate,
+                    currentWeather = homeCurrentWeather,
+                    weatherLoading = homeWeatherLoading,
+                    weatherError = homeWeatherError,
+                    placeName = homePlaceName,
+                    onRefresh = { snapshot ->
+                        homeCurrentWeather = snapshot
+                        homeWeatherError = snapshot == null
+                    },
+                    showTemp = weatherShowTemp,
+                    showCondition = weatherShowCondition,
+                    showHumidity = weatherShowHumidity,
+                    showWind = weatherShowWind,
+                    showCloudCover = weatherShowCloud,
+                    showPressure = weatherShowPressure,
+                    tempUnit = tempUnit,
+                    windSpeedUnit = windSpeedUnit,
+                    moonPhase = moonPhase,
+                    conditionsNudge = conditionsNudge,
+                    sunrise = homeCurrentWeather?.sunrise,
+                    sunset = homeCurrentWeather?.sunset
+                )
+            }
+
+            // ── Daily Goal with delta ──
+            item { DailyGoalCard(todayCount, goal, currentStreak, deltaLabel) { onNavigate(FieldMindScreen.Observe) } }
+
+            // ── Research Session CTA ──
+            item { ResearchSessionCtaCard(
+                    lastSessionLabel = if (lastSession != null) "Resume your last session" else null,
+                    activeSessionName = researchSessions.firstOrNull { it.status == "Active" }?.name,
+                    timerMs = 0L,
+                    onStartSession = { onNavigate(FieldMindScreen.ResearchSession) }
+                ) }
+
+            // ── Widget Grid ──
+            item { SectionHeader("Research areas", "Quick overview of your work") }
+            item { HomeWidgetGrid(observations, notes, questions, sources, projects, reports, data) { onNavigate(it) } }
+            item { HomeDataOptionsCard(data, onNavigate) }
+            
+            // ── Recent Captures ──
+            if (observations.isNotEmpty()) {
+                item { RecentCapturesCard(observations, onOpenDetail) }
+            }
+
+            // ── Learning & Reading ──
+            item { RecommendedLearningCard(recommendations, onOpenReader, onSeeAll = { onNavigate(FieldMindScreen.Learn) }) }
+            item { ReadingReviewCard(sources, flashcards, onNavigate) }
+
+            // ── Observation Timeline ──
+            item {
+                ObservationTimelinePreview(
+                    observations = observations.sortedByDescending { it.timestamp },
+                    notes = notes.sortedByDescending { it.updatedAt },
+                    onOpenDetail = onOpenDetail
+                )
+            }
+
+            // ── Session Observations ──
+            if (observations.isNotEmpty()) {
+                item {
+                    val sessionObs = remember(observations, researchSessions) {
+                        val map = mutableMapOf<String, MutableList<ObservationEntity>>()
+                        observations.filter { it.tags.contains("research-session") }
+                            .sortedByDescending { it.timestamp }
+                            .forEach { obs ->
+                                val key = obs.moodOrContext.ifBlank { "Session ${obs.date}" }
+                                map.getOrPut(key) { mutableListOf() }.add(obs)
+                            }
+                        map.toMap()
+                    }
+                    if (sessionObs.isNotEmpty()) {
+                        SessionObservationsCard(sessionObs, researchSessions, onOpenDetail, onNavigate)
+                    }
                 }
             }
+
+            // ── Current Project ──
+            if (activeProject != null) {
+                item {
+                    CurrentProjectResearchCard(
+                        project = activeProject,
+                        observations = observations,
+                        sources = sources,
+                        data = data,
+                        hypotheses = hypotheses,
+                        reports = reports,
+                        onOpen = { onOpenDetail("project", activeProject.id) }
+                    )
+                }
+            }
+
+            item { Spacer(Modifier.height(24.dp)) }
         }
 
-        // ── Current Project ──
-        if (activeProject != null) {
-            item {
-                CurrentProjectResearchCard(
-                    project = activeProject,
-                    observations = observations,
-                    sources = sources,
-                    data = data,
-                    hypotheses = hypotheses,
-                    reports = reports,
-                    onOpen = { onOpenDetail("project", activeProject.id) }
+        // ── Centered Snackbar for capture confirmation ──
+        SnackbarHost(
+            hostState = captureSnackbarHostState,
+            modifier = Modifier.align(Alignment.Center),
+            snackbar = { data ->
+                Surface(
+                    shape = RoundedCornerShape(20.dp),
+                    color = MaterialTheme.colorScheme.inverseSurface,
+                    tonalElevation = 6.dp,
+                    shadowElevation = 8.dp
+                ) {
+                    Row(
+                        Modifier.padding(horizontal = 24.dp, vertical = 14.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        Icon(
+                            FieldMindIcons.Check,
+                            null,
+                            tint = MaterialTheme.colorScheme.inverseOnSurface,
+                            size = 22.dp
+                        )
+                        Text(
+                            data.visuals.message,
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.inverseOnSurface
+                        )
+                    }
+                }
+            }
+        )
+    }
+
+    // ── Camera Dialog (full-screen, opens immediately) ──
+    if (showCamera) {
+        Dialog(
+            onDismissRequest = { showCamera = false },
+            properties = DialogProperties(
+                usePlatformDefaultWidth = false,
+                securePolicy = SecureFlagPolicy.SecureOn
+            )
+        ) {
+            Box(Modifier.fillMaxSize().background(Color.Black)) {
+                FieldMindCameraV2(
+                    onPhotoCaptured = { uri, mime ->
+                        capturedPhotoUri = uri
+                        capturedPhotoMime = mime
+                        showCamera = false
+                        scope.launch {
+                            captureSnackbarHostState.showSnackbar("Photo captured")
+                        }
+                        // Delay slightly for snackbar visibility, then show category picker
+                        scope.launch {
+                            delay(600)
+                            showCategoryPicker = true
+                        }
+                    },
+                    onDismiss = {
+                        showCamera = false
+                    }
                 )
             }
         }
+    }
 
-        item { Spacer(Modifier.height(24.dp)) }
+    // ── Category Picker Dialog ──
+    if (showCategoryPicker) {
+        Dialog(
+            onDismissRequest = { showCategoryPicker = false },
+            properties = DialogProperties(usePlatformDefaultWidth = false)
+        ) {
+            Box(
+                Modifier.fillMaxSize(),
+                contentAlignment = Alignment.BottomCenter
+            ) {
+                // Semi-transparent scrim
+                Box(
+                    Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.4f))
+                        .clickable { showCategoryPicker = false }
+                )
+                
+                // Category picker bottom sheet
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp),
+                    color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                    tonalElevation = 4.dp
+                ) {
+                    Column(
+                        Modifier.padding(24.dp),
+                        verticalArrangement = Arrangement.spacedBy(18.dp)
+                    ) {
+                        // Header
+                        Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
+                            Box(
+                                Modifier.width(40.dp).height(4.dp)
+                                    .clip(RoundedCornerShape(2.dp))
+                                    .background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f))
+                            )
+                            Spacer(Modifier.height(12.dp))
+                            Text(
+                                "What category?",
+                                style = MaterialTheme.typography.headlineSmall,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Text(
+                                "Categorize your capture to organize your research",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+
+                        // Category grid
+                        val categories = listOf(
+                            "Bird" to FieldMindIcons.Nature,
+                            "Mammal" to FieldMindIcons.Nature,
+                            "Plant" to FieldMindIcons.Nature,
+                            "Insect" to FieldMindIcons.Nature,
+                            "Water" to FieldMindIcons.Water,
+                            "Soil" to FieldMindIcons.Water,
+                            "Weather" to FieldMindIcons.Weather,
+                            "Other" to FieldMindIcons.Water
+                        )
+                        
+                        val colors = FieldMindTheme.colors
+
+                        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                            categories.chunked(2).forEach { row ->
+                                Row(
+                                    Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                                ) {
+                                    row.forEach { (name, icon) ->
+                                        val isSelected = selectedCaptureCategory == name
+                                        val accent = colors.accentFor(name)
+                                        Card(
+                                            modifier = Modifier.weight(1f).clickable {
+                                                selectedCaptureCategory = name
+                                            },
+                                            shape = RoundedCornerShape(18.dp),
+                                            colors = CardDefaults.cardColors(
+                                                containerColor = if (isSelected) accent.copy(alpha = 0.18f) else MaterialTheme.colorScheme.surfaceContainerHighest
+                                            ),
+                                            border = if (isSelected) androidx.compose.foundation.BorderStroke(2.dp, accent) else null,
+                                            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                                        ) {
+                                            Column(
+                                                Modifier.padding(16.dp),
+                                                horizontalAlignment = Alignment.CenterHorizontally,
+                                                verticalArrangement = Arrangement.spacedBy(6.dp)
+                                            ) {
+                                                Box(
+                                                    Modifier.size(40.dp).clip(RoundedCornerShape(12.dp))
+                                                        .background(
+                                                            if (isSelected) accent.copy(alpha = 0.22f)
+                                                            else MaterialTheme.colorScheme.surfaceContainerLow
+                                                        ),
+                                                    contentAlignment = Alignment.Center
+                                                ) {
+                                                    Icon(
+                                                        icon,
+                                                        null,
+                                                        tint = if (isSelected) accent else MaterialTheme.colorScheme.onSurfaceVariant,
+                                                        size = 22.dp
+                                                    )
+                                                }
+                                                Text(
+                                                    name,
+                                                    style = MaterialTheme.typography.labelMedium,
+                                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                                    color = if (isSelected) accent else MaterialTheme.colorScheme.onSurfaceVariant
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        // Confirm button
+                        Button(
+                            onClick = {
+                                showCategoryPicker = false
+                                // Navigate to ObserveScreen with photo URI
+                                onNavigate(FieldMindScreen.Observe)
+                            },
+                            modifier = Modifier.fillMaxWidth().height(52.dp),
+                            shape = RoundedCornerShape(18.dp)
+                        ) {
+                            Icon(FieldMindIcons.Observation, null, size = 18.dp)
+                            Spacer(Modifier.size(8.dp))
+                            Text(
+                                "Create $selectedCaptureCategory observation",
+                                style = MaterialTheme.typography.labelLarge,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -345,7 +565,7 @@ private fun HomeHeroSection(
                     label = "Capture",
                     accent = colors.observation,
                     modifier = Modifier.weight(1f)
-                ) { onNavigate(FieldMindScreen.Observe) }
+                ) { showCamera = true }
                 HeroActionChip(
                     icon = FieldMindIcons.Note,
                     label = "Note",

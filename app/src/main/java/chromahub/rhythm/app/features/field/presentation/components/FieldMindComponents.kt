@@ -133,6 +133,68 @@ fun SectionHeader(
 }
 
 // ──────────────────────────────────────────────────────────────────────
+//  Standardized Screen Header — Used across every screen
+// ──────────────────────────────────────────────────────────────────────
+
+/**
+ * Standardized screen header for the redesign.
+ * A rounded card at the top of every screen with:
+ * - Semantic accent color icon
+ * - Title + optional subtitle
+ * - Optional trailing action
+ * Consistent height and padding across all screens.
+ */
+@Composable
+fun StandardScreenHeader(
+    title: String,
+    subtitle: String? = null,
+    icon: MaterialSymbolIcon,
+    heroColor: Color = FieldMindTheme.colors.accentFor(title),
+    backgroundColor: Color = MaterialTheme.colorScheme.primaryContainer,
+    trailing: @Composable (() -> Unit)? = null,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(20.dp),
+        color = backgroundColor.copy(alpha = 0.25f),
+        tonalElevation = 0.dp
+    ) {
+        Row(
+            Modifier.padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(14.dp)
+        ) {
+            Box(
+                Modifier
+                    .size(46.dp)
+                    .background(heroColor.copy(alpha = if (FieldMindTheme.colors.isDark) 0.28f else 0.14f), RoundedCornerShape(14.dp)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(icon = icon, contentDescription = null, tint = heroColor, size = 24.dp)
+            }
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text(
+                    title,
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold
+                )
+                if (!subtitle.isNullOrBlank()) {
+                    Text(
+                        subtitle,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+            }
+            trailing?.invoke()
+        }
+    }
+}
+
+// ──────────────────────────────────────────────────────────────────────
 //  Badges & chips
 // ──────────────────────────────────────────────────────────────────────
 
