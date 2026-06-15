@@ -884,6 +884,7 @@ private fun LiveWeatherDashboardWidget(
         }
     }
 }
+}
 
 private fun weatherConditionIcon(code: Int): MaterialSymbolIcon {
     return when (code) {
@@ -1823,5 +1824,4 @@ private fun RecentCapturesCard(observations: List<ObservationEntity>, onOpenDeta
             }
         }
     }
-}
 }
