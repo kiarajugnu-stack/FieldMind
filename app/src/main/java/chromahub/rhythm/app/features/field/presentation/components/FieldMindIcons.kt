@@ -106,6 +106,11 @@ object FieldMindIcons {
     val Snowy = MaterialSymbolIcon("weather_snowy")
     val Foggy = MaterialSymbolIcon("foggy")
     val Flag = MaterialSymbolIcon("flag")
+    val WindLight = MaterialSymbolIcon("air")
+    val WindModerate = MaterialSymbolIcon("air", defaultWeight = 400)
+    val WindStrong = MaterialSymbolIcon("air", defaultWeight = 600)
+    val WindGale = MaterialSymbolIcon("cyclone")
+    val AirWave = MaterialSymbolIcon("airwave")
     val Compress = MaterialSymbolIcon("speed")
     val Water = MaterialSymbolIcon("water_drop")
     val Sunrise = MaterialSymbolIcon("sunny")
@@ -133,6 +138,17 @@ object FieldMindIcons {
         "reading insight", "reading", "insight" -> ReadingInsight
         "other" -> Category
         else -> Observation
+    }
+
+    /**
+     * Pick a wind icon that reflects the current wind speed.
+     * Light (< 10 km/h), Moderate (10-30), Strong (30-60), Gale (60+)
+     */
+    fun windIconForSpeed(speedKmh: Double): MaterialSymbolIcon = when {
+        speedKmh < 10 -> WindLight
+        speedKmh < 30 -> WindModerate
+        speedKmh < 60 -> WindStrong
+        else -> WindGale
     }
 
     /** Icon for an entity kind keyword (case-insensitive). */

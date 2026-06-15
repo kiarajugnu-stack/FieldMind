@@ -41,6 +41,7 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import fieldmind.research.app.features.field.data.export.FieldMindExport
 import fieldmind.research.app.features.field.data.location.FieldLocationProvider
+import fieldmind.research.app.features.field.data.weather.WeatherUnitConverter
 import fieldmind.research.app.features.field.presentation.components.*
 import fieldmind.research.app.features.field.presentation.navigation.FieldMindScreen
 import fieldmind.research.app.features.field.presentation.theme.FieldMindTheme
@@ -228,6 +229,9 @@ private fun ObservationDetailContent(
     onOpenDetail: (String, Long) -> Unit = { _, _ -> }
 ) {
     val colors = FieldMindTheme.colors
+    val tempUnit by viewModel.fieldSettings.tempUnit.collectAsState()
+    val windSpeedUnit by viewModel.fieldSettings.windSpeedUnit.collectAsState()
+    val distUnit by viewModel.fieldSettings.distanceUnit.collectAsState()
     Card(
         shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
@@ -307,11 +311,17 @@ private fun ObservationDetailContent(
                     horizontalArrangement = Arrangement.spacedBy(10.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Icon(FieldMindIcons.Weather, null, tint = colors.info, size = 18.dp)
-                    WeatherChip("${o.weatherTemperature?.let { "%.1f°".format(it) } ?: "--"}", colors.info)
+                    // Compact animated weather icon for current conditions
+                    CompactWeatherIcon(
+                        weatherCode = weatherDescriptionToCode(o.weatherCondition, o.weatherTemperature),
+                        temperature = o.weatherTemperature ?: 20.0,
+                        isDay = true,
+                        modifier = Modifier.size(24.dp)
+                    )
+                    WeatherChip(WeatherUnitConverter.formatTemp(o.weatherTemperature, tempUnit), colors.info)
                     if (o.weatherCondition.isNotBlank()) WeatherChip(o.weatherCondition.take(12), colors.info)
                     if (o.weatherHumidity != null) WeatherChip("${o.weatherHumidity}% RH", colors.data)
-                    if (o.weatherWindSpeed != null) WeatherChip("%.1f km/h".format(o.weatherWindSpeed), colors.warning)
+                    if (o.weatherWindSpeed != null) WeatherChip(WeatherUnitConverter.formatWind(o.weatherWindSpeed, windSpeedUnit), colors.warning)
                     if (o.weatherCloudCover != null) WeatherChip("☁ ${o.weatherCloudCover}%", MaterialTheme.colorScheme.onSurfaceVariant)
                     if (o.weatherPressure != null) WeatherChip("${o.weatherPressure?.toInt()} hPa", MaterialTheme.colorScheme.onSurfaceVariant)
                 }
@@ -1139,6 +1149,37 @@ private fun ConfirmDeleteDialog(kind: String, onDismiss: () -> Unit, onConfirm: 
         confirmButton = { Button(onClick = { haptics.confirm(); onConfirm() }, colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)) { Text("Delete") } },
         dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } }
     )
+}
+
+/**
+ * Reverse-map a weather condition description back to a WMO code for the animated icon.
+ * Uses the observation's temperature to differentiate freezing vs regular rain/snow.
+ */
+private fun weatherDescriptionToCode(condition: String, temp: Double?): Int {
+    val c = condition.lowercase()
+    return when {
+        c.contains("clear") || c.contains("mainly clear") || c.isBlank() -> 0
+        c.contains("partly cloudy") -> 2
+        c.contains("overcast") || c.contains("cloudy") -> 3
+        c.contains("fog") || c.contains("rime") -> 45
+        c.contains("drizzle") -> if (temp != null && temp < 0) 56 else 53
+        c.contains("rain") && c.contains("heavy") && c.contains("freezing") -> 67
+        c.contains("rain") && c.contains("freezing") -> 66
+        c.contains("rain") && c.contains("heavy") -> 65
+        c.contains("rain") && c.contains("slight") -> 61
+        c.contains("rain") -> 63
+        c.contains("snow showers") && c.contains("heavy") -> 86
+        c.contains("snow showers") -> 85
+        c.contains("snow") && c.contains("heavy") -> 75
+        c.contains("snow") && c.contains("slight") -> 71
+        c.contains("snow") -> 73
+        c.contains("rain showers") && (c.contains("violent") || c.contains("heavy")) -> 82
+        c.contains("rain showers") && c.contains("slight") -> 80
+        c.contains("rain showers") -> 81
+        c.contains("thunderstorm") && (c.contains("heavy") || c.contains("hail")) -> 99
+        c.contains("thunderstorm") -> 95
+        else -> 0
+    }
 }
 
 private fun deleteEntityByKind(kind: String, id: Long, viewModel: FieldMindViewModel) {

@@ -20,6 +20,7 @@ import androidx.compose.ui.unit.sp
 import fieldmind.research.app.features.field.data.database.entity.ObservationEntity
 import fieldmind.research.app.features.field.data.location.FieldLocationProvider
 import fieldmind.research.app.features.field.data.weather.WeatherSnapshot
+import fieldmind.research.app.features.field.data.weather.WeatherUnitConverter
 import fieldmind.research.app.features.field.presentation.components.FieldMindIcons
 import fieldmind.research.app.features.field.presentation.components.FieldScreenHeader
 import fieldmind.research.app.features.field.presentation.theme.FieldMindTheme
@@ -40,6 +41,8 @@ fun WeatherDatabaseScreen(
 ) {
     val observations by viewModel.observations.collectAsState()
     val colors = FieldMindTheme.colors
+    val tempUnit by viewModel.fieldSettings.tempUnit.collectAsState()
+    val windSpeedUnit by viewModel.fieldSettings.windSpeedUnit.collectAsState()
 
     // Weather Database always shows all data (display prefs only affect the home widget)
 
@@ -183,7 +186,9 @@ fun WeatherDatabaseScreen(
                     isRefreshing = isRefreshing,
                     placeName = dashboardPlaceName,
                     refreshTimestampText = refreshTimestampText,
-                    onOpenSettings = onOpenSettings
+                    onOpenSettings = onOpenSettings,
+                    tempUnit = tempUnit,
+                    windSpeedUnit = windSpeedUnit
                 )
             }
 
@@ -245,13 +250,13 @@ fun WeatherDatabaseScreen(
                 ) {
                     StatCard(
                         "Avg Temp",
-                        "${dayStats.avgTemp?.let { "%.1f°".format(it) } ?: "--"}",
+                        dayStats.avgTemp?.let { WeatherUnitConverter.formatTemp(it, tempUnit) } ?: "--",
                         colors.info,
                         Modifier.weight(1f)
                     )
                     StatCard(
                         "Range",
-                        "${dayStats.minTemp?.let { "%.0f".format(it) } ?: "--"}° - ${dayStats.maxTemp?.let { "%.0f".format(it) } ?: "--"}°",
+                        "${dayStats.minTemp?.let { WeatherUnitConverter.formatTemp(it, tempUnit) } ?: "--"} - ${dayStats.maxTemp?.let { WeatherUnitConverter.formatTemp(it, tempUnit) } ?: "--"}",
                         colors.observation,
                         Modifier.weight(1f)
                     )
@@ -271,7 +276,7 @@ fun WeatherDatabaseScreen(
                     )
                     StatCard(
                         "Avg Wind",
-                        "${dayStats.avgWind?.let { "%.1f km/h".format(it) } ?: "--"}",
+                        dayStats.avgWind?.let { WeatherUnitConverter.formatWind(it, windSpeedUnit) } ?: "--",
                         colors.warning,
                         Modifier.weight(1f)
                     )
@@ -336,7 +341,9 @@ private fun LiveCurrentWeatherCard(
     isRefreshing: Boolean,
     placeName: String? = null,
     onOpenSettings: () -> Unit = {},
-    refreshTimestampText: String = "Updated just now"
+    refreshTimestampText: String = "Updated just now",
+    tempUnit: String = "Celsius",
+    windSpeedUnit: String = "km/h"
 ) {
     val colors = FieldMindTheme.colors
 
@@ -415,7 +422,7 @@ private fun LiveCurrentWeatherCard(
                     // Temperature
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text(
-                            "${weather.temperature?.let { "%.0f°".format(it) } ?: "--"}",
+                            WeatherUnitConverter.formatTemp(weather.temperature, tempUnit),
                             style = MaterialTheme.typography.displaySmall,
                             fontWeight = FontWeight.Bold,
                             color = colors.info
@@ -462,8 +469,14 @@ private fun LiveCurrentWeatherCard(
                 ) {
                     weather.windSpeed?.let { wind ->
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Icon(
+                                FieldMindIcons.windIconForSpeed(wind),
+                                null,
+                                tint = colors.warning,
+                                size = 18.dp
+                            )
                             Text(
-                                "%.1f km/h".format(wind),
+                                WeatherUnitConverter.formatWind(wind, windSpeedUnit),
                                 style = MaterialTheme.typography.bodyMedium,
                                 fontWeight = FontWeight.SemiBold,
                                 color = colors.warning
@@ -627,7 +640,7 @@ private fun WeatherRecordCard(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        "${observation.weatherTemperature?.let { "%.1f°".format(it) } ?: "--"}",
+                        WeatherUnitConverter.formatTemp(observation.weatherTemperature, "Celsius"),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = colors.info
@@ -642,8 +655,8 @@ private fun WeatherRecordCard(
                     observation.weatherHumidity?.let {
                         Text("Humidity: $it%", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
-                    observation.weatherWindSpeed?.let {
-                        Text("Wind: %.1f km/h".format(it), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    observation.weatherWindSpeed?.let { ws ->
+                        Text("Wind: ${WeatherUnitConverter.formatWind(ws, "km/h")}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                     observation.weatherCloudCover?.let {
                         Text("Cloud: $it%", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)

@@ -713,7 +713,7 @@ fun UnitsFormatSettingsPage(viewModel: FieldMindViewModel, onBack: () -> Unit) {
                 HorizontalDivider(Modifier.padding(start = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
                 ChoiceItemForm("Distance", listOf("km", "miles"), distanceUnit, FieldMindIcons.Map, settings::setDistanceUnit)
                 HorizontalDivider(Modifier.padding(start = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
-                ChoiceItemForm("Wind speed", listOf("km/h", "mph", "knots"), windSpeedUnit, FieldMindIcons.Flag, settings::setWindSpeedUnit)
+                ChoiceItemForm("Wind speed", listOf("km/h", "mph", "knots"), windSpeedUnit, FieldMindIcons.AirWave, settings::setWindSpeedUnit)
             }
         }
         item {
@@ -778,7 +778,7 @@ fun WeatherSettingsPage(viewModel: FieldMindViewModel, onBack: () -> Unit) {
                 HorizontalDivider(Modifier.padding(start = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
                 ToggleItem("Show humidity", "Humidity percentage.", showHumidity, settings::setWeatherShowHumidity, FieldMindIcons.Water)
                 HorizontalDivider(Modifier.padding(start = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
-                ToggleItem("Show wind", "Wind speed in km/h.", showWind, settings::setWeatherShowWind, FieldMindIcons.Flag)
+                ToggleItem("Show wind", "Wind speed.", showWind, settings::setWeatherShowWind, FieldMindIcons.AirWave)
                 HorizontalDivider(Modifier.padding(start = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
                 ToggleItem("Show cloud cover", "Cloud cover percentage.", showCloud, settings::setWeatherShowCloudCover, FieldMindIcons.Cloud)
                 HorizontalDivider(Modifier.padding(start = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))

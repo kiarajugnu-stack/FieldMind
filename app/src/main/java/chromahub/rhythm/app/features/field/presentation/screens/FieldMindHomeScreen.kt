@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.dp
 import fieldmind.research.app.features.field.data.database.entity.*
 import fieldmind.research.app.features.field.data.location.FieldLocationProvider
 import fieldmind.research.app.features.field.data.weather.WeatherSnapshot
+import fieldmind.research.app.features.field.data.weather.WeatherUnitConverter
 import fieldmind.research.app.features.field.data.learn.LearnResource
 import fieldmind.research.app.features.field.data.learn.LearnLibrary
 import fieldmind.research.app.features.field.data.stats.FieldMindStreaks
@@ -92,6 +93,8 @@ fun HomeScreen(
     val weatherShowWind by viewModel.fieldSettings.weatherShowWind.collectAsState()
     val weatherShowCloud by viewModel.fieldSettings.weatherShowCloudCover.collectAsState()
     val weatherShowPressure by viewModel.fieldSettings.weatherShowPressure.collectAsState()
+    val tempUnit by viewModel.fieldSettings.tempUnit.collectAsState()
+    val windSpeedUnit by viewModel.fieldSettings.windSpeedUnit.collectAsState()
 
     // ── Weather state (hoisted outside LazyColumn so it persists across scroll) ──
     var homeCurrentWeather by remember { mutableStateOf<WeatherSnapshot?>(null) }
@@ -180,6 +183,8 @@ fun HomeScreen(
                 showWind = weatherShowWind,
                 showCloudCover = weatherShowCloud,
                 showPressure = weatherShowPressure,
+                tempUnit = tempUnit,
+                windSpeedUnit = windSpeedUnit,
                 moonPhase = moonPhase,
                 conditionsNudge = conditionsNudge,
                 sunrise = homeCurrentWeather?.sunrise,
@@ -453,6 +458,8 @@ private fun LiveWeatherDashboardWidget(
     showWind: Boolean = true,
     showCloudCover: Boolean = true,
     showPressure: Boolean = true,
+    tempUnit: String = "Celsius",
+    windSpeedUnit: String = "km/h",
     moonPhase: String = "",
     conditionsNudge: String = "",
     sunrise: String? = null,
@@ -647,7 +654,7 @@ private fun LiveWeatherDashboardWidget(
                     if (showTemp) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Text(
-                                "${w.temperature?.let { "%.0f°".format(it) } ?: "--"}",
+                                WeatherUnitConverter.formatTemp(w.temperature, tempUnit),
                                 style = MaterialTheme.typography.displaySmall.copy(
                                     fontWeight = FontWeight.Bold,
                                     brush = weatherGradient
@@ -705,13 +712,13 @@ private fun LiveWeatherDashboardWidget(
                         w.windSpeed?.let { wind ->
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                 Icon(
-                                    FieldMindIcons.Flag,
+                                    FieldMindIcons.windIconForSpeed(wind),
                                     null,
                                     tint = colors.warning,
                                     size = 18.dp
                                 )
                                 Text(
-                                    "%.1f km/h".format(wind),
+                                    WeatherUnitConverter.formatWind(wind, windSpeedUnit),
                                     style = MaterialTheme.typography.bodySmall,
                                     fontWeight = FontWeight.SemiBold,
                                     color = colors.warning

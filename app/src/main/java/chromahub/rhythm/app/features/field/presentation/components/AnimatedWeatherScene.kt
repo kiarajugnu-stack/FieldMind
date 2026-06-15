@@ -24,6 +24,7 @@ import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.platform.LocalInspectionMode
 import kotlin.math.cos
 import kotlin.math.sin
+import kotlin.math.PI
 import kotlin.random.Random
 
 /**
@@ -174,7 +175,7 @@ private fun ClearSkyScene(
             val rayLength = sunRadius * 1.8f
             for (i in 0 until rayCount) {
                 val angle = sunRotation + (360f / rayCount) * i
-                val rad = Math.toRadians(angle.toDouble())
+                val rad = (angle * PI.toFloat() / 180f)
                 val x1 = cx + cos(rad) * sunRadius * 0.8f
                 val y1 = cy + sin(rad) * sunRadius * 0.8f
                 val x2 = cx + cos(rad) * rayLength
@@ -524,6 +525,7 @@ private fun ThunderstormScene(
     // Includes rain effect
     RainScene(weatherCode = 65, palette = palette, compact = compact, modifier = modifier)
 
+    val randomDelay = remember { Random(789).nextInt(3000) }
     val infiniteTransition = rememberInfiniteTransition(label = "thunder")
     val flashAlpha by infiniteTransition.animateFloat(
         initialValue = 0f,
@@ -531,7 +533,7 @@ private fun ThunderstormScene(
         animationSpec = infiniteRepeatable(
             animation = tween(150, easing = LinearEasing),
             repeatMode = RepeatMode.Reverse,
-            initialStartOffset = androidx.compose.animation.core.StartOffset(Random(789).nextInt(3000))
+            initialStartOffset = androidx.compose.animation.core.StartOffset(randomDelay)
         ),
         label = "lightningFlash"
     )
@@ -541,7 +543,7 @@ private fun ThunderstormScene(
         animationSpec = infiniteRepeatable(
             animation = tween(100, easing = LinearEasing),
             repeatMode = RepeatMode.Reverse,
-            initialStartOffset = androidx.compose.animation.core.StartOffset(Random(789).nextInt(3000))
+            initialStartOffset = androidx.compose.animation.core.StartOffset(randomDelay + 500)
         ),
         label = "glowFlash"
     )
@@ -571,6 +573,16 @@ private fun ThunderstormScene(
         )
     }
 }
+
+// ══════════════════════════════════════════════════════════════════════
+//  Utility: weather code to description mapping for detail screen
+// ══════════════════════════════════════════════════════════════════════
+
+/**
+ * Resolve a WMO weather code to its description.
+ * Used by CompactWeatherIcon and detail screen components.
+ */
+fun weatherCodeToDescription(code: Int): String = WeatherSnapshot.descriptionForCode(code)
 
 // ══════════════════════════════════════════════════════════════════════
 //  Static frame for previews/exports
