@@ -26,6 +26,7 @@ import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.math.PI
 import kotlin.random.Random
+import fieldmind.research.app.features.field.data.weather.WeatherSnapshot
 
 /**
  * Animated weather scene that renders Canvas-drawn weather effects based on WMO weather codes.

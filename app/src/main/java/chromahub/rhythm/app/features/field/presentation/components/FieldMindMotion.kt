@@ -88,22 +88,21 @@ fun Modifier.pressScale(
     val reduceMotion = FieldMindMotion.isReduceMotion()
     val target = if (isPressed && enabled && !reduceMotion) scaleDown else 1f
 
-    // Simple press detection via pointer input
-    androidx.compose.ui.input.pointer.pointerInput(enabled) {
+    val scale by androidx.compose.animation.core.animateFloatAsState(
+        targetValue = target,
+        animationSpec = FieldMindMotion.pressSpring,
+        label = "pressScale"
+    )
+
+    // Pointer input for press detection, chained with scale animation
+    this.pointerInput(enabled) {
         awaitPointerEventScope {
             while (true) {
                 val event = awaitPointerEvent()
                 isPressed = event.changes.any { it.pressed }
             }
         }
-    }
-
-    val scale by androidx.compose.animation.core.animateFloatAsState(
-        targetValue = target,
-        animationSpec = FieldMindMotion.pressSpring,
-        label = "pressScale"
-    )
-    this.scale(scale)
+    }.scale(scale)
 }
 
 /**
