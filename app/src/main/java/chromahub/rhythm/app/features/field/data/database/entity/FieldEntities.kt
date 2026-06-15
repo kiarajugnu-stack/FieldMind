@@ -334,3 +334,83 @@ data class ResearchSessionEntity(
 
 @Entity(tableName = "field_session_observations", primaryKeys = ["sessionId", "observationId"])
 data class SessionObservationCrossRef(val sessionId: Long, val observationId: Long)
+
+// ══════════════════════════════════════════════════════════════════════
+//  New Entities for Full Spec (Phase 4 — Tasks, Species, Evidence Reports)
+// ══════════════════════════════════════════════════════════════════════
+
+@Entity(tableName = "field_tasks")
+data class TaskEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val title: String,
+    val description: String = "",
+    val taskType: String = "Field Survey",
+    val priority: String = "Medium",
+    val dueDate: String = "",
+    val assignedTo: String = "",
+    val status: String = "Pending",
+    val linkedQuestionId: Long? = null,
+    val linkedObservationId: Long? = null,
+    val linkedSpeciesId: Long? = null,
+    val linkedEvidenceId: Long? = null,
+    val linkedSessionId: Long? = null,
+    val projectId: Long? = null,
+    val parentTaskId: Long? = null,
+    val sortOrder: Int = 0,
+    val archivedAt: Long? = null,
+    val deletedAt: Long? = null,
+    val createdAt: Long = System.currentTimeMillis(),
+    val updatedAt: Long = System.currentTimeMillis()
+)
+
+@Entity(tableName = "field_species")
+data class SpeciesEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val commonName: String,
+    val scientificName: String = "",
+    val kingdom: String = "",
+    val phylum: String = "",
+    val classs: String = "",
+    val order: String = "",
+    val family: String = "",
+    val genus: String = "",
+    val species: String = "",
+    val conservationStatus: String = "Not Evaluated",
+    val targetCount: Int = 0,
+    val autoCountTracking: Boolean = false,
+    val observationCount: Int = 0,
+    val projectId: Long? = null,
+    val notes: String = "",
+    val archivedAt: Long? = null,
+    val deletedAt: Long? = null,
+    val createdAt: Long = System.currentTimeMillis(),
+    val updatedAt: Long = System.currentTimeMillis()
+)
+
+@Entity(tableName = "field_team_members")
+data class TeamMemberEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val name: String,
+    val role: String = "",
+    val projectId: Long? = null,
+    val email: String = "",
+    val createdAt: Long = System.currentTimeMillis(),
+    val updatedAt: Long = System.currentTimeMillis()
+)
+
+// Cross-reference tables for new entities
+@Entity(tableName = "field_task_observations", primaryKeys = ["taskId", "observationId"])
+data class TaskObservationCrossRef(val taskId: Long, val observationId: Long)
+
+@Entity(tableName = "field_task_evidence", primaryKeys = ["taskId", "evidenceId"])
+data class TaskEvidenceCrossRef(val taskId: Long, val evidenceId: Long)
+
+@Entity(tableName = "field_species_observations", primaryKeys = ["speciesId", "observationId"])
+data class SpeciesObservationCrossRef(val speciesId: Long, val observationId: Long)
+
+@Entity(tableName = "field_species_questions", primaryKeys = ["speciesId", "questionId"])
+data class SpeciesQuestionCrossRef(val speciesId: Long, val questionId: Long)
+
+@Entity(tableName = "field_evidence_reports", primaryKeys = ["evidenceId", "reportId"])
+data class EvidenceReportCrossRef(val evidenceId: Long, val reportId: Long)
+

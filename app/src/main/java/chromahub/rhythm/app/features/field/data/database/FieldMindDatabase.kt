@@ -31,9 +31,17 @@ import fieldmind.research.app.features.field.data.database.entity.*
         ProjectDataRecordCrossRef::class,
         HypothesisEvidenceCrossRef::class,
         ResearchSessionEntity::class,
-        SessionObservationCrossRef::class
+        SessionObservationCrossRef::class,
+        TaskEntity::class,
+        SpeciesEntity::class,
+        TeamMemberEntity::class,
+        TaskObservationCrossRef::class,
+        TaskEvidenceCrossRef::class,
+        SpeciesObservationCrossRef::class,
+        SpeciesQuestionCrossRef::class,
+        EvidenceReportCrossRef::class
     ],
-    version = 10,
+    version = 11,
     exportSchema = false
 )
 abstract class FieldMindDatabase : RoomDatabase() {
@@ -125,6 +133,7 @@ abstract class FieldMindDatabase : RoomDatabase() {
                 "fieldmind_database"
             )
                 .addMigrations(MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10)
+                .fallbackToDestructiveMigration()
                 .build()
                 .also { INSTANCE = it }
         }

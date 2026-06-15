@@ -1344,11 +1344,19 @@ private fun ProjectDetailContent(
     reports: List<ReportEntity>
 ) {
     val colors = FieldMindTheme.colors
+    val haptics = rememberFieldMindHaptics()
+    var tab by remember { mutableIntStateOf(0) }
+    val projectTabs = listOf("Overview", "Questions", "Observations", "Evidence", "Reports", "Sources")
     val obsCount = observations.count { it.projectId == p.id }
     val qCount = questions.count { it.relatedProjectId == p.id }
     val srcCount = sources.count { it.relatedProjectId == p.id }
     val dataCount = dataRecords.count { it.projectId == p.id }
     val repCount = reports.count { it.projectId == p.id }
+    val projectObs = observations.filter { it.projectId == p.id }
+    val projectQs = questions.filter { it.relatedProjectId == p.id }
+    val projectSrcs = sources.filter { it.relatedProjectId == p.id }
+    val projectReports = reports.filter { it.projectId == p.id }
+    val projectData = dataRecords.filter { it.projectId == p.id }
 
     Card(
         shape = RoundedCornerShape(24.dp),
@@ -1356,7 +1364,7 @@ private fun ProjectDetailContent(
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-            // Header
+            // Header with action bar
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 Box(
                     Modifier.size(48.dp).clip(RoundedCornerShape(16.dp))
@@ -1365,72 +1373,115 @@ private fun ProjectDetailContent(
                 ) { Icon(FieldMindIcons.Project, null, tint = colors.project, size = 26.dp) }
                 Column(Modifier.weight(1f)) {
                     Text(p.title.ifBlank { "Project" }, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-                    StatusChip(p.status.ifBlank { "Active" }, colors.project)
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        StatusChip(p.status.ifBlank { "Active" }, colors.project)
+                        InfoChip(p.topicType)
+                    }
+                }
+            }
+
+            // Tab row
+            ScrollableTabRow(selectedTabIndex = tab, edgePadding = 0.dp, containerColor = androidx.compose.ui.graphics.Color.Transparent) {
+                projectTabs.forEachIndexed { i, label ->
+                    Tab(tab == i, { haptics.light(); tab = i }, text = { 
+                        Text(label, style = MaterialTheme.typography.labelSmall, fontWeight = if (tab == i) FontWeight.Bold else FontWeight.Normal) 
+                    })
                 }
             }
 
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
 
-            // Research question
-            if (p.researchQuestion.isNotBlank()) {
-                Text("Research question", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold, color = colors.project)
-                Text(p.researchQuestion, style = MaterialTheme.typography.bodyMedium)
-            }
-
-            // Objective
-            if (p.objective.isNotBlank()) {
-                Text("Objective", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                Text(p.objective, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
-
-            // Background notes
-            if (p.backgroundNotes.isNotBlank()) {
-                Text("Background", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                Text(p.backgroundNotes, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
-
-            // Methods
-            if (p.methods.isNotBlank()) {
-                Text("Methods", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold, color = colors.info)
-                Text(p.methods, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
-
-            // Data summary
-            if (p.dataSummary.isNotBlank()) {
-                Text("Data summary", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold, color = colors.data)
-                Text(p.dataSummary, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
-
-            // Analysis
-            if (p.analysis.isNotBlank()) {
-                Text("Analysis", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold, color = colors.hypothesis)
-                Text(p.analysis, style = MaterialTheme.typography.bodySmall)
-            }
-
-            // Conclusion
-            if (p.conclusion.isNotBlank()) {
-                Text("Conclusion", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold, color = colors.positive)
-                Text(p.conclusion, style = MaterialTheme.typography.bodyMedium)
-            }
-
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
-
-            // Linked entity counts
-            Text("Connected records", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                AssetCountChip("Observations", obsCount, FieldMindIcons.Observation, colors.observation)
-                AssetCountChip("Questions", qCount, FieldMindIcons.Question, colors.question)
-                AssetCountChip("Sources", srcCount, FieldMindIcons.Source, colors.source)
-                AssetCountChip("Data", dataCount, FieldMindIcons.Data, colors.data)
-                AssetCountChip("Reports", repCount, FieldMindIcons.Report, colors.report)
-            }
-
-            // Future questions
-            if (p.futureQuestions.isNotBlank()) {
-                Text("Future questions", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold, color = colors.question)
-                Text(p.futureQuestions, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            // Tab content
+            when (tab) {
+                0 -> { // Overview — stats + description
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
+                        ProjectStatTile("${obsCount}", "Observations", colors.observation)
+                        ProjectStatTile("${qCount}", "Questions", colors.question)
+                        ProjectStatTile("${srcCount}", "Sources", colors.source)
+                        ProjectStatTile("${dataCount}", "Data", colors.data)
+                        ProjectStatTile("${repCount}", "Reports", colors.report)
+                    }
+                    if (p.researchQuestion.isNotBlank()) {
+                        Text("Research question", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold, color = colors.project)
+                        Text(p.researchQuestion, style = MaterialTheme.typography.bodyMedium)
+                    }
+                    if (p.objective.isNotBlank()) {
+                        Text("Objective", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(p.objective, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                    if (p.methods.isNotBlank()) {
+                        Text("Methods", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold, color = colors.info)
+                        Text(p.methods, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                    if (p.conclusion.isNotBlank()) {
+                        Text("Conclusion", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold, color = colors.positive)
+                        Text(p.conclusion, style = MaterialTheme.typography.bodyMedium)
+                    }
+                }
+                1 -> { // Questions
+                    if (projectQs.isEmpty()) {
+                        Text("No questions for this project yet.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    } else {
+                        projectQs.forEach { q ->
+                            Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(colors.question.copy(alpha = 0.06f)).padding(12.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Icon(FieldMindIcons.Question, null, tint = colors.question, size = 18.dp)
+                                Column(Modifier.weight(1f)) {
+                                    Text(q.questionText, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.SemiBold, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                                    Text("Status: ${q.status}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                }
+                            }
+                        }
+                    }
+                }
+                2 -> { // Observations
+                    if (projectObs.isEmpty()) {
+                        Text("No observations linked to this project.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    } else {
+                        projectObs.take(5).forEach { o ->
+                            EntityCard(o.subject.ifBlank { "Observation" }, "observation",
+                                body = "${o.category} • ${o.date}",
+                                meta = listOf(o.confidenceLevel)) { }
+                        }
+                        if (projectObs.size > 5) {
+                            Text("+${projectObs.size - 5} more observations", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                    }
+                }
+                3 -> { // Evidence
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
+                        ProjectStatTile("${projectObs.count { it.evidenceSummary.isNotBlank() }}", "With evidence", colors.observation)
+                        ProjectStatTile("${projectObs.count { it.weatherTemperature != null }}", "Weather data", colors.info)
+                    }
+                    Text("Collect photos, audio, video, and notes as evidence for each observation.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                4 -> { // Reports
+                    if (projectReports.isEmpty()) {
+                        Text("No reports for this project.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    } else {
+                        projectReports.forEach { r ->
+                            EntityCard(r.title, "report", body = r.conclusion.ifBlank { r.question }, meta = listOf(r.type, r.status)) { }
+                        }
+                    }
+                }
+                5 -> { // Sources
+                    if (projectSrcs.isEmpty()) {
+                        Text("No sources linked to this project.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    } else {
+                        projectSrcs.forEach { s ->
+                            EntityCard(s.title, "source", body = s.author, meta = listOf(s.type, s.readingStatus)) { }
+                        }
+                    }
+                }
             }
         }
+    }
+}
+
+@Composable
+private fun ProjectStatTile(value: String, label: String, color: androidx.compose.ui.graphics.Color) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(2.dp)) {
+        Text(value, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = color)
+        Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 
