@@ -492,14 +492,14 @@ private fun SnowScene(
     val snowColor = Color.White.copy(alpha = if (isHeavy) 0.8f else 0.6f)
 
     Canvas(modifier = modifier.fillMaxSize()) {
-        flakes.forEach { (x, speed, size) ->
-            val y = (snowProgress * size.height * speed + x * size.height * 0.2f) % (size.height + size)
+        flakes.forEach { (x, speed, flakeSize) ->
+            val y = (snowProgress * size.height * speed + x * size.height * 0.2f) % (size.height + flakeSize)
             val swayX = sin(swayOffset * 2f * Math.PI.toFloat() + x * size.width * 0.01f) * 15f
             val adjustedX = (x * size.width + swayX).coerceIn(0f, size.width)
 
             drawCircle(
                 color = snowColor,
-                radius = size,
+                radius = flakeSize,
                 center = Offset(adjustedX, y)
             )
         }

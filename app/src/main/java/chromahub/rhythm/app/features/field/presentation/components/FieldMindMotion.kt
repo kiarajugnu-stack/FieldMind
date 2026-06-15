@@ -13,6 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.platform.debugInspectorInfo
 
@@ -60,9 +61,10 @@ object FieldMindMotion {
         // In inspection mode (preview), reduce motion is always off
         if (LocalInspectionMode.current) return false
         // Check system-level animation scale
+        val context = LocalContext.current
         val animatorScale = try {
             android.provider.Settings.Global.getFloat(
-                androidx.compose.ui.platform.LocalContext.current.contentResolver,
+                context.contentResolver,
                 android.provider.Settings.Global.ANIMATOR_DURATION_SCALE
             )
         } catch (_: Exception) { 1f }
