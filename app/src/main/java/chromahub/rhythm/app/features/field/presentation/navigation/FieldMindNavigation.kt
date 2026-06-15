@@ -39,6 +39,7 @@ import fieldmind.research.app.features.field.presentation.components.FieldMindIc
 import fieldmind.research.app.features.field.presentation.components.rememberFieldMindHaptics
 import fieldmind.research.app.features.field.presentation.screens.*
 import fieldmind.research.app.features.field.presentation.theme.FieldMindTheme
+import fieldmind.research.app.features.field.data.database.entity.ResearchSessionEntity
 import fieldmind.research.app.features.field.presentation.viewmodel.FieldMindViewModel
 import fieldmind.research.app.shared.data.model.AppSettings
 import fieldmind.research.app.shared.presentation.components.icons.Icon
@@ -402,10 +403,7 @@ private fun QuickNavButton(
                 fontWeight = FontWeight.Medium
             )
         }
-    }
-}
-}
-
+    }    }
 
 @Composable
 private fun AnimatedNavIcon(screen: FieldMindScreen, selected: Boolean) {

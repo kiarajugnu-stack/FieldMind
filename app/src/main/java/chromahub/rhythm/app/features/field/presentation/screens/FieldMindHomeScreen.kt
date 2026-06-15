@@ -177,7 +177,7 @@ fun HomeScreen(
     Box(Modifier.fillMaxSize()) {
         LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(20.dp, 0.dp, 20.dp, 96.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
             // ── Hero Section ──
-            item { HomeHeroSection(todayCount, goal, currentStreak, observations.size, questions.size, onOpenSettings, onNavigate) }
+            item { HomeHeroSection(todayCount, goal, currentStreak, observations.size, questions.size, onOpenSettings, onNavigate) { showCamera = true } }
 
             // ── Weather as animated centerpiece ──
             item {
@@ -496,7 +496,8 @@ private fun HomeHeroSection(
     totalObs: Int,
     totalQuestions: Int,
     onOpenSettings: () -> Unit,
-    onNavigate: (FieldMindScreen) -> Unit
+    onNavigate: (FieldMindScreen) -> Unit,
+    onCapture: () -> Unit = {}
 ) {
     val colors = FieldMindTheme.colors
     Surface(
@@ -565,7 +566,7 @@ private fun HomeHeroSection(
                     label = "Capture",
                     accent = colors.observation,
                     modifier = Modifier.weight(1f)
-                ) { showCamera = true }
+                ) { onCapture() }
                 HeroActionChip(
                     icon = FieldMindIcons.Note,
                     label = "Note",

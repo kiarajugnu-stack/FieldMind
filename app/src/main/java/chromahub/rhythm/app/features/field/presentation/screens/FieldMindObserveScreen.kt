@@ -1099,19 +1099,22 @@ private fun AutoMetadataStatusCard(
                     detail = if (hasGps && gpsAccuracy != null) "±${gpsAccuracy.toInt()}m" else null,
                     icon = FieldMindIcons.Location,
                     accent = if (hasGps) colors.positive else colors.warning,
-                    onTap = if (!hasGps) onFetchGps else null
+                    onTap = if (!hasGps) onFetchGps else null,
+                    modifier = Modifier.weight(1f)
                 )
                 MetadataStatusChip(
                     label = "Weather",
                     acquired = hasWeather,
                     icon = FieldMindIcons.Weather,
-                    accent = if (hasWeather) colors.positive else colors.warning
+                    accent = if (hasWeather) colors.positive else colors.warning,
+                    modifier = Modifier.weight(1f)
                 )
                 MetadataStatusChip(
                     label = "Timestamp",
                     acquired = hasTimestamp,
                     icon = FieldMindIcons.Calendar,
-                    accent = if (hasTimestamp) colors.positive else colors.warning
+                    accent = if (hasTimestamp) colors.positive else colors.warning,
+                    modifier = Modifier.weight(1f)
                 )
             }
         }
@@ -1125,7 +1128,8 @@ private fun MetadataStatusChip(
     detail: String? = null,
     icon: MaterialSymbolIcon,
     accent: Color,
-    onTap: (() -> Unit)? = null
+    onTap: (() -> Unit)? = null,
+    modifier: Modifier = Modifier
 ) {
     val haptics = rememberFieldMindHaptics()
     Surface(
@@ -1133,7 +1137,7 @@ private fun MetadataStatusChip(
         shape = RoundedCornerShape(14.dp),
         color = if (acquired) accent.copy(alpha = 0.12f) else MaterialTheme.colorScheme.surfaceContainerHigh,
         tonalElevation = 0.dp,
-        modifier = Modifier.weight(1f)
+        modifier = modifier
     ) {
         Column(
             Modifier.padding(10.dp),
@@ -1932,6 +1936,8 @@ private fun FieldModeButton(category: String, modifier: Modifier = Modifier, onC
 
 @Composable
 internal fun ObservationCaptureCard(viewModel: FieldMindViewModel, compact: Boolean, initialCategory: String? = null, snapFirst: Boolean = false, onSaved: () -> Unit) {
+    // Note: This function is called from FieldModeScreen's LazyColumn item.
+    // All Modifier.weight calls are inside Row/Column scopes where they work correctly.
     val context = LocalContext.current
     val snackbar = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()

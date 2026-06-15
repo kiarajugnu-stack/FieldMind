@@ -88,9 +88,10 @@ fun MaplibreMapView(
     val lonSpread = (allPoints.maxOf { it.second } - allPoints.minOf { it.second }).coerceAtLeast(0.01)
     val zoom = (14.0 - log2(maxOf(latSpread, lonSpread).coerceAtLeast(0.01))).coerceIn(4.0, 18.0)
 
-    // Initialize MapLibre (safe to call multiple times)
-    LaunchedEffect(Unit) {
+    // Initialize MapLibre eagerly BEFORE creating the MapView
+    val mapLibreReady = remember {
         MapLibre.getInstance(context)
+        true
     }
 
     Box(

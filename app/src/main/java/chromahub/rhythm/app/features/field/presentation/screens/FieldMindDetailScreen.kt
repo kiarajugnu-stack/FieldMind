@@ -236,7 +236,6 @@ private fun ObservationDetailContent(
     val clipboard = LocalClipboardManager.current
     val scope = rememberCoroutineScope()
     val snackbar = remember { SnackbarHostState() }
-    var showExportMenu by remember { mutableStateOf(false) }
     
     Card(
         shape = RoundedCornerShape(24.dp),
@@ -389,16 +388,7 @@ private fun ObservationDetailContent(
         }
     }
     
-    // ── Export menu dialog ──
-    if (showExportMenu) {
-        ExportFormatDialog(
-            onDismiss = { showExportMenu = false },
-            onExportPdf = { showExportMenu = false },
-            onExportCsv = { showExportMenu = false },
-            onExportJson = { showExportMenu = false },
-            onShare = { showExportMenu = false }
-        )
-    }
+    // Export menu dialog removed — export is handled inline in ObservationExportSection
 }
 
 @Composable
@@ -555,6 +545,7 @@ private data class SpeciesInfoData(
     val description: String
 )
 
+@Composable
 private fun InfoRow(label: String, value: String) {
     Row(
         Modifier.fillMaxWidth(),
@@ -1010,7 +1001,7 @@ private fun ObservationExportSection(
                     modifier = Modifier.weight(1f),
                     shape = RoundedCornerShape(14.dp)
                 ) {
-                    Icon(FieldMindIcons.Code, null, size = 16.dp)
+                    Icon(FieldMindIcons.Data, null, size = 16.dp)
                     Spacer(Modifier.size(4.dp))
                     Text("JSON", style = MaterialTheme.typography.labelSmall)
                 }
@@ -1024,7 +1015,7 @@ private fun ObservationExportSection(
                     modifier = Modifier.weight(1f),
                     shape = RoundedCornerShape(14.dp)
                 ) {
-                    Icon(FieldMindIcons.Share, null, size = 16.dp)
+                    Icon(FieldMindIcons.Export, null, size = 16.dp)
                     Spacer(Modifier.size(4.dp))
                     Text("Share", style = MaterialTheme.typography.labelSmall)
                 }
