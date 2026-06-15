@@ -342,6 +342,11 @@ class FieldMindViewModel(application: Application) : AndroidViewModel(applicatio
     private val weatherService = fieldmind.research.app.features.field.data.weather.WeatherApiService()
     var lastWeatherSnapshot: fieldmind.research.app.features.field.data.weather.WeatherSnapshot? = null
         private set
+    private var lastWeatherFetchTime: Long = 0L
+        private set
+    private var isWeatherFetching = false
+        private set
+
     fun fetchWeatherForLocation(latitude: Double, longitude: Double) = viewModelScope.launch {
         lastWeatherSnapshot = weatherService.fetchWeather(latitude, longitude)
     }
@@ -351,21 +356,57 @@ class FieldMindViewModel(application: Application) : AndroidViewModel(applicatio
     }
 
     /**
-     * Fetches current weather using the device's last known location.
-     * Returns null if location permission is not granted or location is unavailable.
+     * Returns the configured weather refresh interval in milliseconds.
      */
-    suspend fun refreshWeatherFromLocation(): WeatherSnapshot? {
+    private fun getWeatherRefreshIntervalMs(): Long {
+        val setting = fieldSettings.weatherRefreshInterval.value
+        return when (setting) {
+            "15 min" -> 15 * 60 * 1000L
+            "60 min" -> 60 * 60 * 1000L
+            else -> 30 * 60 * 1000L // default 30 min
+        }
+    }
+
+    /**
+     * Fetches current weather using the device's last known location.
+     * Respects the configured refresh interval — returns the cached snapshot
+     * without making a network request if the interval hasn't elapsed.
+     * Set [forceRefresh] = true to bypass the cooldown (e.g. on manual refresh tap).
+     */
+    suspend fun refreshWeatherFromLocation(forceRefresh: Boolean = false): WeatherSnapshot? {
+        val intervalMs = getWeatherRefreshIntervalMs()
+        val elapsed = System.currentTimeMillis() - lastWeatherFetchTime
+
+        // Return cached snapshot if within cooldown period (unless forced)
+        if (!forceRefresh && elapsed < intervalMs && lastWeatherSnapshot != null) {
+            return lastWeatherSnapshot
+        }
+
+        // Avoid concurrent fetches
+        if (isWeatherFetching && !forceRefresh) {
+            return lastWeatherSnapshot
+        }
+
         val provider = runCatching {
             fieldmind.research.app.features.field.data.location.FieldLocationProvider(getApplication())
         }.getOrNull() ?: return null
 
         if (!provider.hasAnyLocationPermission()) return null
 
-        provider.lastKnownLocation()?.let { loc ->
-            return weatherService.fetchWeather(loc.latitude, loc.longitude).also { lastWeatherSnapshot = it }
+        isWeatherFetching = true
+        val result = try {
+            provider.lastKnownLocation()?.let { loc ->
+                weatherService.fetchWeather(loc.latitude, loc.longitude)
+            }
+        } finally {
+            isWeatherFetching = false
         }
 
-        return null
+        if (result != null) {
+            lastWeatherSnapshot = result
+            lastWeatherFetchTime = System.currentTimeMillis()
+        }
+        return result
     }
 
     fun addFlashcard(front: String, back: String, type: String, sourceId: Long? = null, projectId: Long? = null, deckMode: String = "basic") = viewModelScope.launch {

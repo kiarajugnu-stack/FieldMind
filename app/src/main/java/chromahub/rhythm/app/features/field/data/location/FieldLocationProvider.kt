@@ -128,10 +128,21 @@ class FieldLocationProvider(private val context: Context) {
 
     private fun formatPlace(address: android.location.Address): String {
         val locality = address.locality ?: address.subAdminArea ?: address.adminArea
-        val feature = address.featureName?.takeIf { it != locality && !it.all(Char::isDigit) }
-            ?: address.subLocality ?: address.thoroughfare
+        val feature = address.featureName?.takeIf { 
+            it != locality && 
+            !it.all(Char::isDigit) &&
+            // Filter out coordinate-like / grid-reference strings
+            !it.matches(Regex("^[A-Z]\\d+[A-Z]=\\w+$")) &&
+            !it.matches(Regex("^[A-Z]{1,3}\\d{1,4}$")) &&
+            !it.matches(Regex("^\\d+[A-Z]$")) &&
+            it.length > 2
+        } ?: address.subLocality ?: address.thoroughfare
         return listOfNotNull(feature, locality).distinct().joinToString(", ").ifBlank {
-            address.getAddressLine(0) ?: "Unknown place"
+            address.getAddressLine(0)?.let { line ->
+                // For address lines, only use the part after the first comma if it exists
+                val parts = line.split(",")
+                if (parts.size > 1) parts.drop(1).joinToString(",").trim() else line
+            } ?: "Unknown place"
         }
     }
 }

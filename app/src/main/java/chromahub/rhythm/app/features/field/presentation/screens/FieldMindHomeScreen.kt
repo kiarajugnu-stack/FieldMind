@@ -100,13 +100,21 @@ fun HomeScreen(
     var homePlaceName by remember { mutableStateOf<String?>(null) }
     val context = LocalContext.current
 
-    // Initial fetch + auto-refresh every 30 minutes
+    // Initial fetch on first composition + auto-refresh at configured interval
+    // Uses cooldown in ViewModel so navigating away and back doesn't re-fetch
     LaunchedEffect(Unit) {
-        homeWeatherLoading = true
-        homeCurrentWeather = viewModel.refreshWeatherFromLocation()
-        homeWeatherError = homeCurrentWeather == null
-        homeWeatherLoading = false
-        
+        // First fetch on fresh app open (forceRefresh = true only once)
+        val cached = viewModel.lastWeatherSnapshot
+        if (cached == null) {
+            homeWeatherLoading = true
+            homeCurrentWeather = viewModel.refreshWeatherFromLocation(forceRefresh = true)
+            homeWeatherError = homeCurrentWeather == null
+            homeWeatherLoading = false
+        } else {
+            homeCurrentWeather = cached
+            homeWeatherError = false
+        }
+
         val locProvider = runCatching { FieldLocationProvider(context) }.getOrNull()
         if (locProvider != null && locProvider.hasAnyLocationPermission()) {
             locProvider.lastKnownLocation()?.let { loc ->
@@ -116,6 +124,7 @@ fun HomeScreen(
             }
         }
 
+        // Periodic refresh at configured interval (respects cooldown internally)
         while (true) {
             delay(30 * 60 * 1000L)
             val snapshot = viewModel.refreshWeatherFromLocation()
@@ -569,15 +578,9 @@ private fun LiveWeatherDashboardWidget(
                             weatherLoading && currentWeather != null -> "Refreshing…"
                             weatherLoading -> "Loading…"
                             currentWeather != null -> {
+                                // Subtitle shows condition description only (temp shown below in main row)
                                 val desc = currentWeather?.weatherDescription ?: ""
-                                val temp = currentWeather?.temperature?.let { "%.0f°".format(it) } ?: ""
-                                buildString {
-                                    if (showCondition && desc.isNotBlank()) append(desc)
-                                    if (showTemp && temp.isNotBlank()) {
-                                        if (isNotEmpty()) append(" • ")
-                                        append(temp)
-                                    }
-                                }
+                                if (showCondition && desc.isNotBlank()) desc else "Weather data available"
                             }
                             weatherError -> "Enable location for live weather"
                             else -> "Weather unavailable"
@@ -633,7 +636,7 @@ private fun LiveWeatherDashboardWidget(
                                 )
                             )
                             Text(
-                                "Feels like",
+                                "Temperature",
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -761,19 +764,24 @@ private fun LiveWeatherDashboardWidget(
                     ) {
                         sunrise?.let { s ->
                             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                                Icon(FieldMindIcons.Weather, null, tint = colors.warning, size = 14.dp)
-                                Text("Sunrise $s", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Icon(FieldMindIcons.Sunrise, null, tint = colors.warning, size = 14.dp)
+                                Text("Sunrise ${formatTimeFromIso(s)}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
                         }
                         sunset?.let { s ->
                             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                                Icon(FieldMindIcons.Weather, null, tint = colors.data, size = 14.dp)
-                                Text("Sunset $s", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Icon(FieldMindIcons.Sunset, null, tint = colors.data, size = 14.dp)
+                                Text("Sunset ${formatTimeFromIso(s)}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
                         }
                         if (moonPhase.isNotBlank()) {
                             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                                Text("🌙", style = MaterialTheme.typography.labelSmall)
+                                Icon(
+                                    moonPhaseIcon(moonPhase),
+                                    null,
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    size = 14.dp
+                                )
                                 Text(moonPhase, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
                         }
@@ -1652,14 +1660,38 @@ private fun getMoonPhase(date: LocalDate): String {
     val lunations = daysSince / 29.53058770576
     val phase = lunations - floor(lunations)
     return when {
-        phase < 0.03 || phase >= 0.97 -> "🌑 New"
-        phase < 0.20 -> "🌒 Waxing crescent"
-        phase < 0.28 -> "🌓 First quarter"
-        phase < 0.45 -> "🌔 Waxing gibbous"
-        phase < 0.53 -> "🌕 Full"
-        phase < 0.68 -> "🌖 Waning gibbous"
-        phase < 0.78 -> "🌗 Last quarter"
-        else -> "🌘 Waning crescent"
+        phase < 0.03 || phase >= 0.97 -> "New moon"
+        phase < 0.20 -> "Waxing crescent"
+        phase < 0.28 -> "First quarter"
+        phase < 0.45 -> "Waxing gibbous"
+        phase < 0.53 -> "Full moon"
+        phase < 0.68 -> "Waning gibbous"
+        phase < 0.78 -> "Last quarter"
+        else -> "Waning crescent"
+    }
+}
+
+private fun moonPhaseIcon(phase: String): MaterialSymbolIcon = when {
+    phase.startsWith("New") -> FieldMindIcons.MoonNew
+    phase.startsWith("Waxing crescent") || phase.startsWith("Waning crescent") -> FieldMindIcons.MoonCrescent
+    phase.startsWith("First") || phase.startsWith("Last") -> FieldMindIcons.MoonQuarter
+    phase.startsWith("Waxing gibbous") || phase.startsWith("Waning gibbous") -> FieldMindIcons.MoonGibbous
+    phase.startsWith("Full") -> FieldMindIcons.MoonFull
+    else -> FieldMindIcons.MoonNew
+}
+
+private fun formatTimeFromIso(isoString: String): String {
+    // Input format: "2026-06-15T05:03" or "2026-06-15T18:27"
+    return try {
+        // Extract time portion (after T) and take just the HH:mm part
+        val tIndex = isoString.indexOf('T')
+        if (tIndex >= 0 && tIndex + 6 <= isoString.length) {
+            isoString.substring(tIndex + 1, tIndex + 6)
+        } else {
+            isoString.takeLast(5)
+        }
+    } catch (_: Exception) {
+        isoString
     }
 }
 
