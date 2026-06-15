@@ -51,7 +51,57 @@ internal val observationCategoryDefinitions = listOf(
     ObservationCategoryDefinition("Other", "category", "Use a facts-first template for anything that does not fit yet.", listOf("field-note"), listOf(ObservationCategoryField("detail", "Structured detail"), ObservationCategoryField("measurement", "Measurement"), ObservationCategoryField("next", "Next check")))
 )
 internal val observationCategories = observationCategoryDefinitions.map { it.label }
+
+// Expanded category list matching the spec
+internal val expandedObservationCategories = listOf(
+    "Bird", "Mammal", "Reptile", "Amphibian",
+    "Insect", "Arachnid", "Fish", "Plant",
+    "Fungus", "Habitat", "Track/Sign", "Nest",
+    "Other"
+)
+
 internal val confidenceOptions = listOf("Certain", "Likely", "Unsure")
+
+// Expanded confidence per spec: Certain, Very Likely, Probable, Unsure, Needs Review
+internal val expandedConfidenceOptions = listOf(
+    "Certain", "Very Likely", "Probable", "Unsure", "Needs Review"
+)
+
+// Behavior dropdown per spec
+internal val behaviorOptions = listOf(
+    "Feeding", "Hunting", "Nesting", "Resting",
+    "Flying", "Walking", "Swimming", "Calling",
+    "Mating", "Territorial", "Social Interaction", "Other"
+)
+
+// Life Stage dropdown per spec
+internal val lifeStageOptions = listOf(
+    "Egg", "Juvenile", "Subadult", "Adult", "Unknown"
+)
+
+// Sex options per spec
+internal val sexOptions = listOf(
+    "Male", "Female", "Unknown"
+)
+
+// Habitat Type dropdown per spec
+internal val habitatTypeOptions = listOf(
+    "Forest", "Wetland", "Grassland", "Urban",
+    "Agricultural", "Desert", "Coastal", "Freshwater", "Marine"
+)
+
+// Observation Quality dropdown per spec
+internal val observationQualityOptions = listOf(
+    "Excellent", "Good", "Fair", "Poor"
+)
+
+// Weather condition options for manual override
+internal val weatherConditionOptions = listOf(
+    "Auto", "Clear", "Partly Cloudy", "Overcast",
+    "Fog", "Drizzle", "Rain", "Heavy Rain",
+    "Snow", "Thunderstorm", "Windy"
+)
+
 internal val contextPresets = listOf("Calm", "Windy", "After rain", "Dawn", "Dusk", "Crowded", "Disturbed", "Healthy", "Stressed", "Needs follow-up")
 internal val sourceTypes = listOf("Observation", "Reading", "Video", "Thought", "Discussion")
 internal val questionStatuses = listOf("New", "Researching", "Tested", "Answered", "Abandoned")

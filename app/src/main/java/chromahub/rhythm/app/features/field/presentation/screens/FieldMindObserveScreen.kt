@@ -86,19 +86,35 @@ private data class CaptureSessionState(
     val subject: String = "",
     val facts: String = "",
     val category: String = "Other",
-    val confidence: String = "Sure",
+    val confidence: String = "Certain",
     val tags: String = "",
     val evidence: String = "",
     val fieldContext: String = "",
     val manualLocation: String = "",
     val attachments: List<DraftEvidenceAttachment> = emptyList(),
-    // Phase 3: Structured observation fields
+    // Enhanced fields matching the full spec
+    val speciesName: String = "",
     val speciesConfidence: String = "Likely",
+    val behavior: String = "",
+    val lifeStage: String = "",
+    val sex: String = "",
+    val habitatType: String = "",
+    val conservationStatus: String = "",
+    val observationQuality: String = "Good",
+    val weatherOverride: String = "Auto",
+    val count: String = "",
     val distanceFromObserver: String = "10m",
     val observationChecklist: Set<String> = emptySet(),
     val measurements: Map<String, String> = emptyMap(),
     val followUpSchedule: String = "None",
     val qualityScore: Int = 0,
+    val isDraft: Boolean = false,
+    val draftId: Long? = null,
+    val autoSaveTimer: Int = 0,
+    // Species identification state
+    var speciesIdProgress: Float = 0f,
+    var speciesIdResults: List<String> = emptyList(),
+    var speciesIdRunning: Boolean = false,
     // Live timer state
     val timerStartedAt: Long? = null,
     val timerAccumulatedMs: Long = 0L,
@@ -117,9 +133,6 @@ fun ObserveScreen(
 ) {
     if (compactFieldMode) { FieldModeScreen(viewModel, onBack ?: {}); return }
 
-    val observations by viewModel.observations.collectAsState()
-    val notes by viewModel.notes.collectAsState()
-    val projects by viewModel.projects.collectAsState()
     val defaultConfidence by viewModel.fieldSettings.defaultConfidence.collectAsState()
     val mediaEnabled by viewModel.fieldSettings.mediaAttachmentsEnabled.collectAsState()
 
@@ -332,102 +345,66 @@ fun ObserveScreen(
                     )
                 }
 
-                // ── Quick Observation Form (auto-expanded after evidence) ──
+                // ── Quick Classification Grid (always visible) ──
                 item {
-                    // Phase 3: Calculate quality score
-                    val qualityScore = calculateObservationQuality(
-                        hasSubject = session.subject.isNotBlank(),
-                        hasEvidence = session.attachments.size,
-                        hasLocation = session.manualLocation.isNotBlank(),
-                        hasWeather = false,  // Will be added via weather fetch
-                        hasMeasurements = session.measurements.values.any { it.isNotBlank() },
-                        hasNotes = session.facts.isNotBlank(),
-                        hasDuration = false,
-                        hasConfidence = session.confidence.isNotBlank()
+                    QuickClassificationGrid(
+                        selectedCategory = session.category,
+                        onCategorySelected = { session = session.copy(category = it) }
                     )
-                    
-                    QuickObservationForm(
-                        subject = session.subject,
-                        onSubjectChange = { session = session.copy(subject = it) },
-                        facts = session.facts,
-                        onFactsChange = { session = session.copy(facts = it) },
-                        category = session.category,
-                        onCategoryChange = { session = session.copy(category = it) },
-                        confidence = session.confidence,
-                        onConfidenceChange = { session = session.copy(confidence = it) },
-                        tags = session.tags,
-                        onTagsChange = { session = session.copy(tags = it) },
-                        evidenceSummary = session.evidence,
-                        onEvidenceChange = { session = session.copy(evidence = it) },
-                        fieldContext = session.fieldContext,
-                        onFieldContextChange = { session = session.copy(fieldContext = it) },
-                        manualLocation = session.manualLocation,
-                        onLocationChange = { session = session.copy(manualLocation = it) },
-                        projects = projects,
-                        onSave = { saveObservation() },
-                        // Phase 3 parameters
-                        speciesConfidence = session.speciesConfidence,
-                        onSpeciesConfidenceChange = { session = session.copy(speciesConfidence = it) },
-                        distanceFromObserver = session.distanceFromObserver,
-                        onDistanceChange = { session = session.copy(distanceFromObserver = it) },
-                        observationChecklist = session.observationChecklist,
-                        onChecklistChange = { session = session.copy(observationChecklist = it) },
-                        measurements = session.measurements,
-                        onMeasurementChange = { key, value -> 
-                            val updated = session.measurements.toMutableMap()
-                            updated[key] = value
-                            session = session.copy(measurements = updated)
-                        },
-                        followUpSchedule = session.followUpSchedule,
-                        onFollowUpChange = { session = session.copy(followUpSchedule = it) },
-                        qualityScore = qualityScore
+                }
+
+                // ── Enhanced Observation Form ──
+                item {
+                    EnhancedObservationForm(
+                        session = session,
+                        onSessionChange = { session = it },
+                        onSave = { saveObservation() }
+                    )
+                }
+
+                // ── Auto Metadata Status ──
+                item {
+                    AutoMetadataStatusCard(
+                        hasGps = capturedLocation != null,
+                        hasWeather = false,
+                        hasTimestamp = true,
+                        gpsAccuracy = capturedLocation?.accuracyMeters,
+                        onFetchGps = {
+                            if (locationProvider.hasAnyLocationPermission()) {
+                                locationProvider.requestCurrentLocation { loc ->
+                                    if (loc != null) capturedLocation = loc
+                                }
+                            }
+                        }
+                    )
+                }
+
+                // ── Species Identification Live Card ──
+                item {
+                    SpeciesIdentificationLiveCard(
+                        attachments = session.attachments,
+                        progress = session.speciesIdProgress,
+                        results = session.speciesIdResults,
+                        isRunning = session.speciesIdRunning,
+                        identifiedSpecies = identifiedSpecies,
+                        onRunIdentification = { uri ->
+                            speciesIdImageUri = uri
+                            showSpeciesId = true
+                        }
                     )
                 }
             }
 
-            // ── Recent captures ──
-            item {
-                SectionHeader(
-                    "Recent observations",
-                    "${observations.size} observations • ${notes.size} notes"
-                )
-            }
-
-            if (observations.isEmpty() && notes.isEmpty()) {
+            // ── Empty state (only when no form is open) ──
+            if (!showEvidenceForm && !session.isActive) {
                 item {
                     EmptyState(
                         "No observations yet",
-                        "Snap evidence or write facts. Observations stay facts-only; notes stay free-form.",
+                        "Start a session below to capture evidence and log observations.",
                         icon = FieldMindIcons.Observation,
                         actionLabel = "Start observation"
                     ) { startCapture() }
                 }
-            }
-
-            items(notes.take(6), key = { "note-${it.id}" }) { item ->
-                EntityCard(
-                    title = item.title,
-                    kind = "note",
-                    body = item.body.take(140).ifBlank { "No body yet." },
-                    meta = listOf(item.category, recentRelativeTime(item.updatedAt)),
-                    onClick = { onOpenDetail("note", item.id) }
-                )
-            }
-
-            items(observations.take(10), key = { "obs-${it.id}" }) { item ->
-                EntityCard(
-                    title = item.subject,
-                    kind = "observation",
-                    body = item.factsOnlyNotes.take(140).ifBlank { "No factual notes recorded." },
-                    confidence = item.confidenceLevel,
-                    meta = buildList {
-                        add(item.category)
-                        add("${item.date} ${item.time}")
-                        if (item.manualLocation.isNotBlank()) add(item.manualLocation)
-                        if (item.tags.isNotBlank()) add(item.tags)
-                    },
-                    onClick = { onOpenDetail("observation", item.id) }
-                )
             }
         }
     }
@@ -1024,6 +1001,664 @@ private fun QuickObservationForm(
             }
         }
     }
+}
+
+// ══════════════════════════════════════════════════════════════════════
+//  Quick Classification Grid — Prominent category grid per spec
+// ══════════════════════════════════════════════════════════════════════
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun QuickClassificationGrid(
+    selectedCategory: String,
+    onCategorySelected: (String) -> Unit
+) {
+    val colors = FieldMindTheme.colors
+    val displayCategories = listOf(
+        "Bird" to "🐦",
+        "Mammal" to "🐾",
+        "Reptile" to "🦎",
+        "Amphibian" to "🐸",
+        "Insect" to "🦋",
+        "Plant" to "🌳",
+        "Fungus" to "🍄",
+        "Habitat" to "🌊"
+    )
+
+    Card(
+        shape = RoundedCornerShape(28.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Icon(FieldMindIcons.Category, null, tint = MaterialTheme.colorScheme.primary, size = 18.dp)
+                Text("Quick classification", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+            }
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                displayCategories.forEach { (name, emoji) ->
+                    val isSelected = selectedCategory == name
+                    val accent = colors.accentFor(name)
+                    Surface(
+                        onClick = { onCategorySelected(name) },
+                        shape = RoundedCornerShape(14.dp),
+                        color = if (isSelected) accent.copy(alpha = 0.18f) else MaterialTheme.colorScheme.surfaceContainerHigh,
+                        border = if (isSelected) androidx.compose.foundation.BorderStroke(1.5.dp, accent) else null,
+                        tonalElevation = 0.dp
+                    ) {
+                        Row(
+                            Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Text(emoji, style = MaterialTheme.typography.bodyMedium)
+                            Text(
+                                name,
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                color = if (isSelected) accent else MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════════
+//  Auto Metadata Status Card — Per spec: GPS, Weather, Timestamp
+// ══════════════════════════════════════════════════════════════════════
+
+@Composable
+private fun AutoMetadataStatusCard(
+    hasGps: Boolean,
+    hasWeather: Boolean,
+    hasTimestamp: Boolean,
+    gpsAccuracy: Float?,
+    onFetchGps: () -> Unit
+) {
+    val colors = FieldMindTheme.colors
+    Card(
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Icon(FieldMindIcons.Info, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, size = 18.dp)
+                Text("Auto metadata", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+            }
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                MetadataStatusChip(
+                    label = "GPS",
+                    acquired = hasGps,
+                    detail = if (hasGps && gpsAccuracy != null) "±${gpsAccuracy.toInt()}m" else null,
+                    icon = FieldMindIcons.Location,
+                    accent = if (hasGps) colors.positive else colors.warning,
+                    onTap = if (!hasGps) onFetchGps else null
+                )
+                MetadataStatusChip(
+                    label = "Weather",
+                    acquired = hasWeather,
+                    icon = FieldMindIcons.Weather,
+                    accent = if (hasWeather) colors.positive else colors.warning
+                )
+                MetadataStatusChip(
+                    label = "Timestamp",
+                    acquired = hasTimestamp,
+                    icon = FieldMindIcons.Calendar,
+                    accent = if (hasTimestamp) colors.positive else colors.warning
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun MetadataStatusChip(
+    label: String,
+    acquired: Boolean,
+    detail: String? = null,
+    icon: MaterialSymbolIcon,
+    accent: Color,
+    onTap: (() -> Unit)? = null
+) {
+    val haptics = rememberFieldMindHaptics()
+    Surface(
+        onClick = { if (onTap != null) { haptics.light(); onTap() } },
+        shape = RoundedCornerShape(14.dp),
+        color = if (acquired) accent.copy(alpha = 0.12f) else MaterialTheme.colorScheme.surfaceContainerHigh,
+        tonalElevation = 0.dp,
+        modifier = Modifier.weight(1f)
+    ) {
+        Column(
+            Modifier.padding(10.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            Icon(
+                icon,
+                null,
+                tint = if (acquired) accent else MaterialTheme.colorScheme.onSurfaceVariant,
+                size = 20.dp
+            )
+            Text(
+                label,
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.SemiBold,
+                color = if (acquired) accent else MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Text(
+                detail ?: if (acquired) "Acquired" else "Tap to fetch",
+                style = MaterialTheme.typography.labelSmall,
+                color = if (acquired) accent.copy(alpha = 0.7f) else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+            )
+        }
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════════
+//  Species Identification Live Card — Non-blocking ID progress
+// ══════════════════════════════════════════════════════════════════════
+
+@Composable
+private fun SpeciesIdentificationLiveCard(
+    attachments: List<DraftEvidenceAttachment>,
+    progress: Float,
+    results: List<String>,
+    isRunning: Boolean,
+    identifiedSpecies: SpeciesMatch?,
+    onRunIdentification: (String) -> Unit
+) {
+    val hasPhoto = attachments.any { it.isImage() }
+    val colors = FieldMindTheme.colors
+
+    if (!hasPhoto && identifiedSpecies == null) return
+
+    Card(
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = if (identifiedSpecies != null)
+                colors.observation.copy(alpha = 0.08f)
+            else
+                MaterialTheme.colorScheme.surfaceContainerLow
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Icon(
+                    FieldMindIcons.Nature,
+                    null,
+                    tint = if (identifiedSpecies != null) colors.observation else MaterialTheme.colorScheme.onSurfaceVariant,
+                    size = 18.dp
+                )
+                Text(
+                    if (identifiedSpecies != null) "Identified: ${identifiedSpecies.commonName}"
+                    else if (isRunning) "Identifying species…"
+                    else "Species identification",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+
+            if (isRunning && progress > 0f) {
+                LinearProgressIndicator(
+                    progress = { progress },
+                    modifier = Modifier.fillMaxWidth().height(4.dp).clip(RoundedCornerShape(2.dp))
+                )
+                Text(
+                    "${(progress * 100).toInt()}% — Analyzing photo…",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
+            if (results.isNotEmpty() && identifiedSpecies == null) {
+                results.forEach { result ->
+                    Text(
+                        result,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+
+            if (identifiedSpecies != null) {
+                Text(
+                    "${identifiedSpecies.scientificName} • ${(identifiedSpecies.confidence * 100).toInt()}% confidence",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = colors.observation
+                )
+            }
+
+            if (hasPhoto && identifiedSpecies == null && !isRunning) {
+                Button(
+                    onClick = {
+                        attachments.firstOrNull { it.isImage() }?.uri?.let { onRunIdentification(it) }
+                    },
+                    shape = RoundedCornerShape(14.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Icon(FieldMindIcons.Nature, null, size = 16.dp)
+                    Spacer(Modifier.size(6.dp))
+                    Text("Identify from photo")
+                }
+            }
+        }
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════════
+//  Enhanced Observation Form — Full form with all dropdowns per spec
+// ══════════════════════════════════════════════════════════════════════
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun EnhancedObservationForm(
+    session: CaptureSessionState,
+    onSessionChange: (CaptureSessionState) -> Unit,
+    onSave: () -> Unit
+) {
+    var showAdvanced by remember { mutableStateOf(false) }
+    var showSpeciesSearch by remember { mutableStateOf(false) }
+    var selectedSpecies by remember { mutableStateOf<String?>(null) }
+
+    Card(
+        shape = RoundedCornerShape(28.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+            // Form header
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                Box(
+                    Modifier.size(40.dp).clip(RoundedCornerShape(12.dp))
+                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(FieldMindIcons.Edit, null, tint = MaterialTheme.colorScheme.primary, size = 22.dp)
+                }
+                Column(Modifier.weight(1f)) {
+                    Text("Observation details", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    Text("Fill in what you observed", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+
+            // ── Subject Name ──
+            FieldTextField(
+                session.subject,
+                { onSessionChange(session.copy(subject = it)) },
+                "Subject name",
+                supportingText = "e.g. House Crow carrying twig"
+            )
+
+            // ── Species Search ──
+            OutlinedTextField(
+                value = selectedSpecies ?: "",
+                onValueChange = {
+                    selectedSpecies = it
+                    showSpeciesSearch = it.isNotEmpty()
+                },
+                label = { Text("Species") },
+                placeholder = { Text("Search species…") },
+                trailingIcon = {
+                    IconButton(onClick = { showSpeciesSearch = !showSpeciesSearch }) {
+                        Icon(
+                            FieldMindIcons.Search,
+                            null,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            size = 20.dp
+                        )
+                    }
+                },
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(18.dp),
+                singleLine = true
+            )
+
+            // ── Species search results (mock) ──
+            if (showSpeciesSearch && selectedSpecies.orEmpty().length >= 2) {
+                Card(
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh)
+                ) {
+                    Column(Modifier.padding(8.dp)) {
+                        listOf(
+                            "House Crow (Corvus splendens)" to "Bird",
+                            "Jungle Crow (Corvus macrorhynchos)" to "Bird",
+                            "Large-billed Crow (Corvus corax)" to "Bird",
+                            "Crow Butterfly (Euploea core)" to "Insect"
+                        ).forEach { (name, cat) ->
+                            if (name.contains(selectedSpecies ?: "", ignoreCase = true)) {
+                                Surface(
+                                    onClick = {
+                                        selectedSpecies = name
+                                        showSpeciesSearch = false
+                                        val parts = name.split(" (")
+                                        onSessionChange(session.copy(
+                                            subject = parts[0],
+                                            category = if (cat in observationCategories) cat else session.category
+                                        ))
+                                    },
+                                    shape = RoundedCornerShape(12.dp),
+                                    color = MaterialTheme.colorScheme.surfaceContainerLow
+                                ) {
+                                    Row(
+                                        Modifier.fillMaxWidth().padding(12.dp),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                                    ) {
+                                        Column(Modifier.weight(1f)) {
+                                            Text(name, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
+                                            Text(cat, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                        }
+                                        Icon(FieldMindIcons.Check, null, tint = MaterialTheme.colorScheme.primary, size = 18.dp)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // ── Category Dropdown ──
+            EnhancedDropdown(
+                label = "Category",
+                value = session.category,
+                options = expandedObservationCategories,
+                onSelect = { onSessionChange(session.copy(category = it)) },
+                icon = FieldMindIcons.Category
+            )
+
+            // ── Confidence Dropdown ──
+            EnhancedDropdown(
+                label = "Confidence",
+                value = session.confidence,
+                options = expandedConfidenceOptions,
+                onSelect = { onSessionChange(session.copy(confidence = it)) },
+                icon = FieldMindIcons.Check
+            )
+
+            // ── Behavior Dropdown ──
+            EnhancedDropdown(
+                label = "Behavior",
+                value = session.behavior.ifBlank { "Select behavior…" },
+                options = behaviorOptions,
+                onSelect = { onSessionChange(session.copy(behavior = it)) },
+                icon = FieldMindIcons.Trend
+            )
+
+            // ── Life Stage + Sex row ──
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                EnhancedDropdown(
+                    label = "Life stage",
+                    value = session.lifeStage.ifBlank { "Select…" },
+                    options = lifeStageOptions,
+                    onSelect = { onSessionChange(session.copy(lifeStage = it)) },
+                    icon = FieldMindIcons.Question,
+                    modifier = Modifier.weight(1f)
+                )
+                EnhancedDropdown(
+                    label = "Sex",
+                    value = session.sex.ifBlank { "Select…" },
+                    options = sexOptions,
+                    onSelect = { onSessionChange(session.copy(sex = it)) },
+                    icon = FieldMindIcons.Question,
+                    modifier = Modifier.weight(1f)
+                )
+            }
+
+            // ── Habitat + Quality row ──
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                EnhancedDropdown(
+                    label = "Habitat",
+                    value = session.habitatType.ifBlank { "Select…" },
+                    options = habitatTypeOptions,
+                    onSelect = { onSessionChange(session.copy(habitatType = it)) },
+                    icon = FieldMindIcons.Nature,
+                    modifier = Modifier.weight(1f)
+                )
+                EnhancedDropdown(
+                    label = "Quality",
+                    value = session.observationQuality,
+                    options = observationQualityOptions,
+                    onSelect = { onSessionChange(session.copy(observationQuality = it)) },
+                    icon = FieldMindIcons.Check,
+                    modifier = Modifier.weight(1f)
+                )
+            }
+
+            // ── Weather Override ──
+            EnhancedDropdown(
+                label = "Weather",
+                value = session.weatherOverride,
+                options = weatherConditionOptions,
+                onSelect = { onSessionChange(session.copy(weatherOverride = it)) },
+                icon = FieldMindIcons.Weather
+            )
+
+            // ── Facts-only notes ──
+            FactsInterpretationBanner()
+            FieldTextField(
+                session.facts,
+                { onSessionChange(session.copy(facts = it)) },
+                "Facts-only notes",
+                minLines = 3,
+                supportingText = "What did you see/hear/measure? Keep guesses out."
+            )
+
+            // ── Tags ──
+            FieldTextField(
+                session.tags,
+                { onSessionChange(session.copy(tags = it)) },
+                "Tags",
+                supportingText = "Comma-separated: birds, behavior, evening"
+            )
+
+            // ── Advanced fields (location, context) ──
+            TextButton(onClick = { showAdvanced = !showAdvanced }) {
+                Icon(if (showAdvanced) FieldMindIcons.Up else FieldMindIcons.Down, null, size = 18.dp)
+                Spacer(Modifier.size(6.dp))
+                Text(if (showAdvanced) "Hide location & context" else "Show location & context")
+            }
+            AnimatedVisibility(visible = showAdvanced, enter = expandVertically(), exit = shrinkVertically()) {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    FieldTextField(
+                        session.manualLocation,
+                        { onSessionChange(session.copy(manualLocation = it)) },
+                        "Place / location"
+                    )
+                    ChoiceChips(contextPresets, session.fieldContext) {
+                        onSessionChange(session.copy(
+                            fieldContext = if (session.fieldContext.isBlank()) it else "${session.fieldContext}, $it"
+                        ))
+                    }
+                    FieldTextField(
+                        session.fieldContext,
+                        { onSessionChange(session.copy(fieldContext = it)) },
+                        "Context / mood",
+                        minLines = 2
+                    )
+                }
+            }
+
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+
+            // ── Save Draft + Save Obs row per spec ──
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                OutlinedButton(
+                    onClick = {
+                        onSessionChange(session.copy(isDraft = true))
+                        onSave()
+                    },
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(16.dp),
+                    enabled = session.subject.isNotBlank() || session.facts.isNotBlank()
+                ) {
+                    Icon(FieldMindIcons.Archive, null, size = 18.dp)
+                    Spacer(Modifier.size(6.dp))
+                    Text("Save draft")
+                }
+                Button(
+                    onClick = onSave,
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(16.dp),
+                    enabled = session.subject.isNotBlank() || session.facts.isNotBlank()
+                ) {
+                    Icon(FieldMindIcons.Check, null, size = 18.dp)
+                    Spacer(Modifier.size(6.dp))
+                    Text("Save observation")
+                }
+            }
+        }
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════════
+//  Enhanced Dropdown — Reusable dropdown component
+// ══════════════════════════════════════════════════════════════════════
+
+@Composable
+private fun EnhancedDropdown(
+    label: String,
+    value: String,
+    options: List<String>,
+    onSelect: (String) -> Unit,
+    icon: MaterialSymbolIcon,
+    modifier: Modifier = Modifier
+) {
+    var expanded by remember { mutableStateOf(false) }
+    val haptics = rememberFieldMindHaptics()
+
+    Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Text(label, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        ExposedDropdownMenuBox(
+            expanded = expanded,
+            onExpandedChange = { expanded = !expanded }
+        ) {
+            OutlinedTextField(
+                value = value,
+                onValueChange = {},
+                readOnly = true,
+                label = null,
+                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .menuAnchor(),
+                shape = RoundedCornerShape(18.dp),
+                singleLine = true,
+                textStyle = MaterialTheme.typography.bodyMedium
+            )
+            ExposedDropdownMenu(
+                expanded = expanded,
+                onDismissRequest = { expanded = false }
+            ) {
+                options.forEach { option ->
+                    DropdownMenuItem(
+                        text = {
+                            Row(
+                                Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text(option, style = MaterialTheme.typography.bodyMedium)
+                                if (option == value) {
+                                    Icon(FieldMindIcons.Check, null, tint = MaterialTheme.colorScheme.primary, size = 16.dp)
+                                }
+                            }
+                        },
+                        onClick = {
+                            haptics.light()
+                            onSelect(option)
+                            expanded = false
+                        }
+                    )
+                }
+            }
+        }
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════════
+//  Quality Score Card (needed by EnhancedObservationForm)
+// ══════════════════════════════════════════════════════════════════════
+
+@Composable
+private fun QualityScoreCard(score: Int) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(18.dp),
+        color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.45f)
+    ) {
+        Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Icon(FieldMindIcons.Check, null, tint = MaterialTheme.colorScheme.primary, size = 18.dp)
+                    Text("Quality", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
+                }
+                Text("$score%", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.primary)
+            }
+            LinearProgressIndicator(progress = { score / 100f }, modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(99.dp)).height(6.dp))
+        }
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════════
+//  Missing Fields Checklist
+// ══════════════════════════════════════════════════════════════════════
+
+@Composable
+private fun MissingFieldsChecklist(
+    hasSubject: Boolean,
+    hasEvidence: Boolean,
+    hasLocation: Boolean,
+    hasWeather: Boolean,
+    hasMeasurements: Boolean,
+    hasNotes: Boolean,
+    hasDuration: Boolean,
+    hasConfidence: Boolean
+) {
+    val missing = buildList {
+        if (!hasSubject) add("subject")
+        if (!hasEvidence) add("evidence")
+        if (!hasLocation) add("location")
+        if (!hasNotes) add("notes")
+        if (!hasConfidence) add("confidence")
+    }
+    if (missing.isEmpty()) return
+    Surface(
+        shape = RoundedCornerShape(14.dp),
+        color = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.4f)
+    ) {
+        Row(Modifier.padding(horizontal = 12.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Icon(FieldMindIcons.Info, null, tint = MaterialTheme.colorScheme.onTertiaryContainer, size = 16.dp)
+            Text("Missing: ${missing.joinToString(", ")}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onTertiaryContainer, fontWeight = FontWeight.SemiBold)
+        }
+    }
+}
+
+internal fun calculateObservationQuality(
+    hasSubject: Boolean,
+    hasEvidence: Int,
+    hasLocation: Boolean,
+    hasWeather: Boolean,
+    hasMeasurements: Boolean,
+    hasNotes: Boolean,
+    hasDuration: Boolean,
+    hasConfidence: Boolean
+): Int {
+    val checks = listOf(hasSubject, hasEvidence > 0, hasLocation, hasWeather, hasMeasurements, hasNotes, hasDuration, hasConfidence)
+    val passed = checks.count { it }
+    return (passed * 100) / checks.size
 }
 
 // ══════════════════════════════════════════════════════════════════════
