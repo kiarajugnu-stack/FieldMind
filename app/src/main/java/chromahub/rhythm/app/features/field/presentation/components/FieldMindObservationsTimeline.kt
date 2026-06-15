@@ -215,7 +215,7 @@ fun ObservationsTimelineSection(
             var showSortMenu by remember { mutableStateOf(false) }
             Box {
                 IconButton(onClick = { showSortMenu = true }, modifier = Modifier.size(32.dp)) {
-                    Icon(FieldMindIcons.ArrowDownward, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, size = 20.dp)
+                    Icon(FieldMindIcons.Sort, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, size = 20.dp)
                 }
                 DropdownMenu(expanded = showSortMenu, onDismissRequest = { showSortMenu = false }) {
                     listOf("Date (newest)", "Date (oldest)", "Confidence", "Category").forEach { sort ->
@@ -235,6 +235,9 @@ fun ObservationsTimelineSection(
         }
 
         // ── Active Filter Chips ──
+        val hasActiveFilters = filterState.query.isNotBlank() || filterState.category.isNotBlank() || 
+                               filterState.confidence.isNotBlank() || filterState.projectId != null ||
+                               filterState.tags.isNotBlank() || filterState.habitat.isNotBlank()
         if (hasActiveFilters) {
             LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 if (filterState.query.isNotBlank()) item { FilterChip(selected = true, onClick = { filterState = filterState.copy(query = "") }, label = { Text("\"${filterState.query}\"") }) }
@@ -453,7 +456,9 @@ private fun ObservationGalleryView(
     onOpenDetail: (String, Long) -> Unit
 ) {
     if (observations.isEmpty()) {
-        EmptyState("No observations to display", icon = FieldMindIcons.Gallery)
+        EmptyState("No observations to display", icon = FieldMindIcons.Gallery) {
+            Text("Capture your first observation to get started")
+        }
         return
     }
     LazyVerticalGrid(
