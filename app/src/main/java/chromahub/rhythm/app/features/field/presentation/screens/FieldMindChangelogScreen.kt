@@ -104,6 +104,39 @@ private val fieldMindChangelog = listOf(
             )
         )
     ),
+        date = "2026-06-16",
+        title = "Random Thunderstorm, Expand Dashboard & Crash Fixes",
+        importance = "Patch",
+        tags = listOf("Weather", "UI", "Fixes", "Capture"),
+        sections = listOf(
+            "⛈️ Random Thunderstorm Flashes" to listOf(
+                "Thunderstorm animation completely rewritten: replaces constant 150ms flashing (headache-inducing) with random 2-6 second intervals — each lightning strike is unpredictable.",
+                "Random flash position (anywhere on screen) and intensity (subtle to bright) for natural variety.",
+                "Jagged lightning bolts with branching offshoots, each strike unique per event.",
+                "Optional double-flash (35% chance) and screen-edge glow afterglow with slow decay.",
+                "Bolt path stays stable for the entire flash duration — no frame-to-frame jitter."
+            ),
+            "🎬 Orphe-Style Expand Dashboard" to listOf(
+                "LiveWeatherDashboardWidget now expands full-screen with a smooth slide-up + fade-in transition (inspired by Orphe music player's beautiful full-screen animation).",
+                "Full-screen overlay shows: time-of-day greeting, large gradient temperature, animated weather scene background.",
+                "Detailed metrics card: humidity, wind speed, cloud cover, and atmospheric pressure at a glance.",
+                "Sunrise/sunset times and moon phase indicators with color-coded info chips.",
+                "Fieldwork conditions nudge with contextual advice based on current weather.",
+                "Tap the close button or anywhere on the backdrop to dismiss with a reverse slide-out animation."
+            ),
+            "🐛 Infinite-Height Crash Fixes" to listOf(
+                "Replaced AnimatedContent wrappers (which pass infinite maxHeight to scrollable children causing crashes) with static Box + when blocks in FieldMindProjectsScreen and FieldMindObservationsTimeline.",
+                "Added Modifier.heightIn(max = ...) constraints to scrollable Column forms inside LazyColumn items (ProjectsScreen, DetailScreen, ScreenUtils).",
+                "Added Modifier.fillMaxSize() to inner LazyColumn in ObservationsTimeline for safe layout sizing.",
+                "Fix applies to ProjectCreationForm, SpeciesRegistryBuilder, ProjectTasksBuilder, InlineFormCard, and all 4 tab LazyColumns."
+            ),
+            "📸 Capture Flow & Custom Categories" to listOf(
+                "Category picker confirm button now saves observations to database with photo as DraftEvidenceAttachment instead of just navigating away — no more lost captures.",
+                "OutlinedTextField appears when 'Other' is selected in the category picker, letting you type any custom category (e.g. 'Reptile', 'Amphibian', 'Fungus').",
+                "Confirm button label updates dynamically based on the selected category."
+            )
+        )
+    ),
     FieldMindChangelogEntry(
         version = "1.4.1-build-fixes",
         date = "2026-06-14",

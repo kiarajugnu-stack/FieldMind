@@ -55,8 +55,8 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -67,6 +67,26 @@ import kotlin.math.floor
 import kotlin.math.roundToInt
 import fieldmind.research.app.features.field.presentation.components.ObservationsTimelineSection
 import fieldmind.research.app.features.field.presentation.components.ObservationStatsDashboard
+
+/**
+ * Loads a PNG image from Android assets folder as an ImageBitmap for display.
+ * Returns null if the asset path is null or the file cannot be loaded.
+ */
+@Composable
+internal fun rememberAssetImage(assetPath: String?): androidx.compose.ui.graphics.ImageBitmap? {
+    val context = LocalContext.current
+    return remember(assetPath) {
+        if (assetPath != null) {
+            try {
+                val inputStream = context.assets.open(assetPath)
+                val bitmap = android.graphics.BitmapFactory.decodeStream(inputStream)
+                inputStream.close()
+                bitmap?.asImageBitmap()
+            } catch (_: Exception) { null }
+        } else null
+    }
+}
+
 
 // ══════════════════════════════════════════════════════════════════════
 //  Today (Home) — Animated weather centerpiece + research dashboard
@@ -1425,36 +1445,37 @@ internal fun weatherConditionIcon(code: Int): MaterialSymbolIcon {
 }
 
 /**
- * Maps weather code to the appropriate vector drawable resource ID for the weather condition icon.
- * Uses new vector XML drawables instead of old PNG assets for smaller APK size.
- */
-internal fun weatherConditionDrawable(code: Int, isNight: Boolean = false, isMidnight: Boolean = false): Int {
-    return when {
-        code in 45..48 -> R.drawable.ic_icons8_fog
-        isNight && code <= 1 && isMidnight -> R.drawable.ic_icons8_midnight
-        isNight && code <= 1 -> R.drawable.ic_icons8_night
-        isNight && code in 45..48 -> R.drawable.ic_icons8_night_wind
-        code <= 1 && !isNight -> R.drawable.ic_icons8_eclipse
-        code >= 95 -> R.drawable.ic_icons8_mars_rover
-        isNight -> R.drawable.ic_icons8_moon_symbol
-        else -> 0
-    }
-}
-
-/**
- * Displays a weather condition icon using a vector drawable when available.
- * Falls back to the MaterialSymbolIcon for conditions without dedicated drawables.
+ * Loads an icons8 PNG image for the given weather condition when available.
+ * Falls back to the MaterialSymbolIcon for conditions without PNG assets.
+ * Uses 100px PNGs for main display, 50px for compact mode.
  */
 @Composable
 internal fun WeatherConditionImage(code: Int, isNight: Boolean = false, compact: Boolean = false, size: androidx.compose.ui.unit.Dp = 40.dp) {
+    val suffix = if (compact) "50" else "100"
     val hour = remember { java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY) }
     val isMidnight = hour in 0..4
-    val drawableRes = remember(code, isNight, isMidnight) {
-        weatherConditionDrawable(code, isNight, isMidnight)
+    val assetPath = remember(code, isNight, isMidnight, compact) {
+        when {
+            // Fog → dedicated fog icon
+            code in 45..48 -> "moon_phases/icons8-fog-$suffix.png"
+            // Night clear sky → night scene
+            isNight && code <= 1 && isMidnight -> "moon_phases/icons8-midnight-$suffix.png"
+            isNight && code <= 1 -> "moon_phases/icons8-night-$suffix.png"
+            // Night fog → windy night
+            isNight && code in 45..48 -> "moon_phases/icons8-night-wind-$suffix.png"
+            // Eclipse → eclipse icon
+            code <= 1 && !isNight -> "moon_phases/icons8-eclipse-$suffix.png"
+            // Thunderstorm / extreme → mars-rover
+            code >= 95 -> "moon_phases/icons8-mars-rover-$suffix.png"
+            // Moon symbol fallback for night
+            isNight -> "moon_phases/icons8-moon-symbol-$suffix.png"
+            else -> null
+        }
     }
-    if (drawableRes != 0) {
+    val imageBitmap = rememberAssetImage(assetPath)
+    if (imageBitmap != null) {
         Image(
-            painter = painterResource(id = drawableRes),
+            bitmap = imageBitmap,
             contentDescription = "Weather condition",
             modifier = Modifier.size(size),
             contentScale = androidx.compose.ui.layout.ContentScale.Fit
