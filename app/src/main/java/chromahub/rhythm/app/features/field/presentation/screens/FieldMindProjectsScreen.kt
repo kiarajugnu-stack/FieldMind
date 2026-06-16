@@ -149,7 +149,7 @@ fun ProjectsScreen(
                     detectHorizontalDragGestures(
                         onDragStart = { totalDrag = 0f },
                         onHorizontalDrag = { _, dragAmount -> totalDrag += dragAmount },
-                        onDragEnd = { if (abs(totalDrag) > 96f) { if (totalDrag < 0) selectTab(selectedTab + 1) else selectTab(selectedTab - 1) } }
+                        onDragEnd = { if (abs(totalDrag) > 96f) { if (totalDrag < 0) selectTab(tab + 1) else selectTab(tab - 1) } }
                     )
                 }
             ) {

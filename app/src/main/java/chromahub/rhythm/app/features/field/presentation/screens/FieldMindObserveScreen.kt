@@ -161,6 +161,9 @@ fun ObserveScreen(
     var speciesIdImageUri by remember { mutableStateOf<String?>(null) }
     var identifiedSpecies by remember { mutableStateOf<SpeciesMatch?>(null) }
 
+    // ── Observations state (collected for reactive stats dashboard) ──
+    val observations by viewModel.observations.collectAsState()
+
     // ── Action: add attachment ──
     fun addAttachment(attachment: DraftEvidenceAttachment) {
         session = session.copy(attachments = session.attachments + attachment)
@@ -252,6 +255,15 @@ fun ObserveScreen(
                     "Capture evidence, time, place, weather, then add facts.",
                     icon = FieldMindIcons.Capture
                 )
+            }
+
+            // ── Observation stats overview (reused from HomeScreen) ──
+            if (observations.isNotEmpty()) {
+                item {
+                    ObservationStatsDashboard(
+                        observations = observations
+                    )
+                }
             }
 
             // ── Live Timer (persistent when active) ──

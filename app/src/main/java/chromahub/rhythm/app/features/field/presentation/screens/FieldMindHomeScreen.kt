@@ -52,6 +52,9 @@ import fieldmind.research.app.shared.presentation.components.icons.Icon
 import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import java.text.SimpleDateFormat
@@ -103,6 +106,9 @@ fun HomeScreen(
     var capturedPhotoMime by remember { mutableStateOf<String?>(null) }
     var showCategoryPicker by remember { mutableStateOf(false) }
     var selectedCaptureCategory by remember { mutableStateOf("Bird") }
+    
+    // ── Note creation dialog state ──
+    var showNoteDialog by remember { mutableStateOf(false) }
     
     // Centered snackbar host state
     val captureSnackbarHostState = remember { SnackbarHostState() }
@@ -210,7 +216,7 @@ fun HomeScreen(
     Box(Modifier.fillMaxSize()) {
         LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(20.dp, 0.dp, 20.dp, 96.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
             // ── Hero Section ──
-            item { HomeHeroSection(todayCount, goal, currentStreak, observations.size, questions.size, onOpenSettings, onNavigate) { showCamera = true } }
+            item { HomeHeroSection(todayCount, goal, currentStreak, observations.size, questions.size, onOpenSettings, onNavigate, onCapture = { showCamera = true }, onNewNote = { showNoteDialog = true }) }
 
             // ── Weather as animated centerpiece ──
             item {
@@ -402,6 +408,14 @@ fun HomeScreen(
                 )
             }
         }
+    }
+
+    // ── Note Creation Dialog ──
+    if (showNoteDialog) {
+        HomeNoteCaptureDialog(
+            viewModel = viewModel,
+            onDismiss = { showNoteDialog = false }
+        )
     }
 
     // ── Category Picker Dialog ──
@@ -596,7 +610,8 @@ private fun HomeHeroSection(
     totalQuestions: Int,
     onOpenSettings: () -> Unit,
     onNavigate: (FieldMindScreen) -> Unit,
-    onCapture: () -> Unit = {}
+    onCapture: () -> Unit = {},
+    onNewNote: () -> Unit = {}
 ) {
     val colors = FieldMindTheme.colors
     Surface(
@@ -671,7 +686,124 @@ private fun HomeHeroSection(
                     label = "Note",
                     accent = colors.source,
                     modifier = Modifier.weight(1f)
-                ) { onNavigate(FieldMindScreen.Library) }
+                ) { onNewNote() }
+            }
+        }
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════════
+//  Note Creation Dialog (inline, used by HomeScreen Note button)
+// ══════════════════════════════════════════════════════════════════════
+
+@Composable
+private fun HomeNoteCaptureDialog(
+    viewModel: FieldMindViewModel,
+    onDismiss: () -> Unit
+) {
+    val haptics = rememberFieldMindHaptics()
+    var title by remember { mutableStateOf("") }
+    var body by remember { mutableStateOf("") }
+    var category by remember { mutableStateOf("Other") }
+    var tags by remember { mutableStateOf("") }
+
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false)
+    ) {
+        Card(
+            modifier = Modifier.fillMaxWidth(0.94f).wrapContentHeight().padding(vertical = 24.dp),
+            shape = RoundedCornerShape(32.dp),
+            elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
+        ) {
+            Column(
+                Modifier.verticalScroll(rememberScrollState()).padding(20.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                // Header
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+                    Box(
+                        Modifier.size(48.dp).clip(RoundedCornerShape(16.dp))
+                            .background(FieldMindTheme.colors.source.copy(alpha = 0.12f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(FieldMindIcons.Note, null, tint = FieldMindTheme.colors.source, size = 24.dp)
+                    }
+                    Column(Modifier.weight(1f)) {
+                        Text("New Note", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+                        Text("Quickly capture an idea, observation, or thought", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                }
+
+                // Category selection
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text("Category", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    ChoiceChips(observationCategories, category) { category = it }
+                }
+
+                // Title
+                OutlinedTextField(
+                    value = title,
+                    onValueChange = { title = it },
+                    label = { Text("Title") },
+                    placeholder = { Text("Optional — auto-generated from content") },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(18.dp),
+                    singleLine = true
+                )
+
+                // Body
+                OutlinedTextField(
+                    value = body,
+                    onValueChange = { body = it },
+                    label = { Text("Note body") },
+                    placeholder = { Text("What would you like to note?…") },
+                    modifier = Modifier.fillMaxWidth().heightIn(min = 140.dp),
+                    shape = RoundedCornerShape(18.dp),
+                    minLines = 5
+                )
+
+                // Tags
+                OutlinedTextField(
+                    value = tags,
+                    onValueChange = { tags = it },
+                    label = { Text("Tags") },
+                    placeholder = { Text("Comma-separated, optional") },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(18.dp),
+                    singleLine = true
+                )
+
+                // Actions
+                Row(
+                    Modifier.fillMaxWidth().padding(top = 8.dp),
+                    horizontalArrangement = Arrangement.End,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    TextButton(onClick = onDismiss) { Text("Cancel") }
+                    Spacer(Modifier.size(8.dp))
+                    Button(
+                        onClick = {
+                            if (body.isNotBlank() || title.isNotBlank()) {
+                                haptics.confirm()
+                                val fallbackTitle = body
+                                    .lineSequence()
+                                    .firstOrNull { it.isNotBlank() }
+                                    ?.take(48)
+                                    ?: "Untitled note"
+                                viewModel.addNote(
+                                    title = title.ifBlank { fallbackTitle },
+                                    body = body,
+                                    category = category,
+                                    tags = tags,
+                                    onSaved = { onDismiss() }
+                                )
+                            }
+                        },
+                        shape = RoundedCornerShape(16.dp),
+                        enabled = body.isNotBlank() || title.isNotBlank()
+                    ) { Text("Save Note") }
+                }
             }
         }
     }
@@ -794,10 +926,6 @@ private fun LiveWeatherDashboardWidget(
     var testWeatherCode by remember { mutableStateOf<Int?>(null) }
     var testIsNight by remember { mutableStateOf(false) }
 
-    // Override weather code with test value if in developer mode
-    val displayWeatherCode = testWeatherCode ?: currentWeather?.weatherCode ?: 0
-    val displayNight = if (developerMode) testIsNight else isNight
-
     // Time of day awareness
     val currentHour = remember { java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY) }
     val timeOfDay = when (currentHour) {
@@ -807,6 +935,10 @@ private fun LiveWeatherDashboardWidget(
         else -> "night"
     }
     val isNight = timeOfDay == "night"
+
+    // Override weather code with test value if in developer mode
+    val displayWeatherCode = testWeatherCode ?: currentWeather?.weatherCode ?: 0
+    val displayNight = if (developerMode) testIsNight else isNight
     val timeGreeting = when (timeOfDay) {
         "morning" -> "Good morning"
         "afternoon" -> "Good afternoon"
@@ -1286,7 +1418,7 @@ private fun LiveWeatherDashboardWidget(
                                 }
                                 if (moonPhase.isNotBlank()) {
                                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                                        MoonPhaseImage(moonPhase, size = 24.dp)
+                                        Icon(moonPhaseIcon(moonPhase), null, tint = if (FieldMindTheme.colors.isDark) Color(0xFFB0B0FF) else MaterialTheme.colorScheme.onSurfaceVariant, size = 24.dp)
                                         Text(moonPhase, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                     }
                                 }
@@ -2388,7 +2520,7 @@ internal fun DevWeatherTestPanel(
                         if (testCode == null) onCodeChange(0)
                     },
                     label = { Text("Night mode", style = MaterialTheme.typography.labelSmall) },
-                    leadingIcon = if (testNight) {{ Icon(FieldMindIcons.Dark, null, size = 14.dp) }} else null
+                    leadingIcon = if (testNight) {{ Icon(FieldMindIcons.DarkMode, null, size = 14.dp) }} else null
                 )
                 // Reset button
                 TextButton(onClick = { onCodeChange(null); onNightChange(false) }) {
@@ -2400,7 +2532,7 @@ internal fun DevWeatherTestPanel(
             if (testCode != null) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     WeatherConditionImage(code = testCode, isNight = testNight, compact = true, size = 32.dp)
-                    val todayDate = remember { LocalDate.now() }; MoonPhaseImage(getMoonPhase(todayDate), size = 24.dp, decorative = testNight)
+                    val todayDate = remember { LocalDate.now() }; Icon(moonPhaseIcon(getMoonPhase(todayDate)), null, tint = Color.White, size = 24.dp)
                     Column {
                         Text("Icon preview (${testCode})", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         Text("Night: ${if (testNight) "ON" else "OFF"}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)

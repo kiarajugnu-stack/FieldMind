@@ -45,10 +45,173 @@ import android.Manifest
 import androidx.compose.ui.platform.LocalUriHandler
 import fieldmind.research.app.features.field.data.location.FieldLocationProvider
 // ══════════════════════════════════════════════════════════════════════
-//  Settings rows + dialogs + helpers
+//  Shared dialog helpers — consistent containers for all edit/create dialogs
 // ══════════════════════════════════════════════════════════════════════
 
-/** A grouped settings section: a header above a single rounded card holding related rows. */
+/**
+ * Wraps any dialog content in a consistent Material 3 card with scroll support.
+ */
+@Composable
+private fun DialogWrapper(
+    onDismiss: () -> Unit,
+    modifier: Modifier = Modifier,
+    verticalArrangement: Arrangement.Vertical = Arrangement.spacedBy(16.dp),
+    content: @Composable ColumnScope.() -> Unit
+) {
+    Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
+        Card(
+            modifier = modifier.fillMaxWidth(0.94f).wrapContentHeight().padding(vertical = 24.dp),
+            shape = RoundedCornerShape(32.dp),
+            elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
+        ) {
+            Column(
+                Modifier.verticalScroll(rememberScrollState()).padding(20.dp),
+                verticalArrangement = verticalArrangement
+            ) { content() }
+        }
+    }
+}
+
+/**
+ * Polished dialog header with icon, title, subtitle, and accent color.
+ */
+@Composable
+private fun DialogHeader(
+    icon: MaterialSymbolIcon,
+    title: String,
+    subtitle: String,
+    accent: Color = MaterialTheme.colorScheme.primary
+) {
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+        Box(
+            Modifier.size(48.dp).clip(RoundedCornerShape(16.dp))
+                .background(accent.copy(alpha = 0.12f)),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(icon, null, tint = accent, size = 24.dp)
+        }
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Text(title, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+            Text(subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+    }
+}
+
+/**
+ * Section header with optional icon and thin divider.
+ */
+@Composable
+private fun DialogDividerSection(
+    title: String,
+    icon: MaterialSymbolIcon? = null,
+    accent: Color = MaterialTheme.colorScheme.primary
+) {
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        if (icon != null) {
+            Icon(icon, null, tint = accent, size = 18.dp)
+        }
+        Text(title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+    }
+    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f))
+}
+
+/**
+ * Standardized action buttons row (Cancel + Save).
+ */
+@Composable
+private fun DialogActions(
+    onCancel: () -> Unit,
+    onSave: () -> Unit,
+    saveEnabled: Boolean = true,
+    saveLabel: String = "Save"
+) {
+    Row(
+        Modifier.fillMaxWidth().padding(top = 8.dp),
+        horizontalArrangement = Arrangement.End,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        TextButton(onClick = onCancel) { Text("Cancel") }
+        Spacer(Modifier.size(8.dp))
+        Button(
+            onClick = onSave,
+            shape = RoundedCornerShape(16.dp),
+            enabled = saveEnabled
+        ) { Text(saveLabel) }
+    }
+}
+
+/**
+ * Compact label + ChoiceChips row for form sections.
+ */
+@Composable
+private fun ChoiceChipsField(
+    label: String,
+    options: List<String>,
+    selected: String,
+    onSelected: (String) -> Unit
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Text(label, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        ChoiceChips(options, selected, onSelected = onSelected)
+    }
+}
+
+/**
+ * Slide-in field section with animated expand/collapse.
+ */
+@Composable
+private fun CollapsibleSection(
+    title: String,
+    subtitle: String = "",
+    icon: MaterialSymbolIcon = FieldMindIcons.Settings,
+    expanded: Boolean,
+    onToggle: () -> Unit,
+    content: @Composable ColumnScope.() -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth().animateContentSize(),
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = if (expanded) MaterialTheme.colorScheme.surfaceContainerLow
+            else MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.55f)
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Column(Modifier.padding(4.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth().clickable(onClick = onToggle).padding(horizontal = 14.dp, vertical = 10.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                Box(
+                    Modifier.size(34.dp).clip(RoundedCornerShape(10.dp))
+                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.08f)),
+                    contentAlignment = Alignment.Center
+                ) { Icon(icon, null, tint = MaterialTheme.colorScheme.primary, size = 18.dp) }
+                Column(Modifier.weight(1f)) {
+                    Text(title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+                    if (subtitle.isNotBlank()) {
+                        Text(subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                }
+                Icon(
+                    if (expanded) FieldMindIcons.Up else FieldMindIcons.Down,
+                    null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    size = 18.dp
+                )
+            }
+            AnimatedVisibility(visible = expanded, enter = expandVertically(), exit = shrinkVertically()) {
+                Column(Modifier.padding(start = 14.dp, end = 14.dp, bottom = 14.dp)) { content() }
+            }
+        }
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════════
+//  New Entity Dialogs
+// ══════════════════════════════════════════════════════════════════════
+
 @Composable
 internal fun NewQuestionDialog(viewModel: FieldMindViewModel, onDismiss: () -> Unit) {
     var question by remember { mutableStateOf("") }; var category by remember { mutableStateOf("Other") }; var source by remember { mutableStateOf("Observation") }; var status by remember { mutableStateOf("New") }; var priority by remember { mutableStateOf("Medium") }
@@ -60,38 +223,18 @@ internal fun NewQuestionDialog(viewModel: FieldMindViewModel, onDismiss: () -> U
         }
     }
 
-    Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
-        Card(
-            modifier = Modifier.fillMaxWidth(0.94f).wrapContentHeight().padding(vertical = 24.dp),
-            shape = RoundedCornerShape(32.dp),
-            elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
-        ) {
-            Column(Modifier.verticalScroll(rememberScrollState()).padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                Text("New Question", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-                Text("Turn curiosity into something observable, measurable, comparable, or verifiable.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                FieldTextField(question, { question = it }, "What do you want to find out?", minLines = 3, supportingText = "Example: Do bird visits increase after rain at this site?")
-                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
-                Text("Category", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                ChoiceChips(observationCategories, category) { category = it }
-                Text("Source", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                ChoiceChips(sourceTypes, source) { source = it }
-                Text("Priority", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                ChoiceChips(listOf("Low", "Medium", "High"), priority) { priority = it }
-                Text("Status", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                ChoiceChips(questionStatuses, status) { status = it }
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically) {
-                    TextButton(onClick = onDismiss) { Text("Cancel") }
-                    Spacer(Modifier.size(8.dp))
-                    Button(
-                        onClick = { save() },
-                        shape = RoundedCornerShape(16.dp),
-                        enabled = question.isNotBlank()
-                    ) { Text("Save") }
-                }
-            }
-        }
+    DialogWrapper(onDismiss = onDismiss) {
+        DialogHeader(FieldMindIcons.Question, "New Question", "Turn curiosity into something observable, measurable, comparable, or verifiable.")
+        FieldTextField(question, { question = it }, "What do you want to find out?", minLines = 3, supportingText = "Example: Do bird visits increase after rain at this site?")
+        DialogDividerSection("Classification", FieldMindIcons.Category)
+        ChoiceChipsField("Category", observationCategories, category) { category = it }
+        ChoiceChipsField("Source", sourceTypes, source) { source = it }
+        ChoiceChipsField("Priority", listOf("Low", "Medium", "High"), priority) { priority = it }
+        ChoiceChipsField("Status", questionStatuses, status) { status = it }
+        DialogActions(onCancel = onDismiss, onSave = { save() }, saveEnabled = question.isNotBlank())
     }
 }
+
 @Composable
 internal fun NewProjectDialog(viewModel: FieldMindViewModel, onDismiss: () -> Unit) {
     var title by remember { mutableStateOf("") }; var topic by remember { mutableStateOf("Biology") }; var objective by remember { mutableStateOf("") }; var question by remember { mutableStateOf("") }
@@ -104,45 +247,24 @@ internal fun NewProjectDialog(viewModel: FieldMindViewModel, onDismiss: () -> Un
         }
     }
 
-    Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
-        Card(
-            modifier = Modifier.fillMaxWidth(0.94f).wrapContentHeight().padding(vertical = 24.dp),
-            shape = RoundedCornerShape(32.dp),
-            elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
-        ) {
-            Column(Modifier.verticalScroll(rememberScrollState()).padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                Text("New Project", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-                Text("Define the question, evidence plan, data fields, and report direction.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                Text("Topic & title", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
-                FieldTextField(title, { title = it }, "Project title")
-                Text("Topic", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                ChoiceChips(listOf("Biology", "Geology", "Wildlife", "Ecology", "Plant Study", "Weather", "Human Pattern", "Other"), topic) { topic = it }
-                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
-                Text("Research purpose", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
-                FieldTextField(objective, { objective = it }, "Objective", minLines = 2)
-                FieldTextField(question, { question = it }, "Research question", minLines = 2)
-                FieldTextField(background, { background = it }, "Background / context", minLines = 2)
-                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
-                Text("Evidence plan", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
-                FieldTextField(methods, { methods = it }, "Method / data plan", minLines = 3)
-                FieldTextField(hypothesis, { hypothesis = it }, "Hypothesis summary", minLines = 2)
-                FieldTextField(dataPlan, { dataPlan = it }, "Data fields / units", supportingText = "Example: temperature °C, height cm, water clarity, count")
-                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
-                Text("Report direction", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
-                FieldTextField(analysis, { analysis = it }, "Analysis plan", minLines = 2)
-                FieldTextField(conclusion, { conclusion = it }, "Early conclusion / expected output", minLines = 2)
-                FieldTextField(nextAction, { nextAction = it }, "Next action", supportingText = "Example: observe the same site at sunset for 3 days")
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically) {
-                    TextButton(onClick = onDismiss) { Text("Cancel") }
-                    Spacer(Modifier.size(8.dp))
-                    Button(
-                        onClick = { save() },
-                        shape = RoundedCornerShape(16.dp),
-                        enabled = title.isNotBlank()
-                    ) { Text("Save") }
-                }
-            }
-        }
+    DialogWrapper(onDismiss = onDismiss) {
+        DialogHeader(FieldMindIcons.Project, "New Project", "Define the question, evidence plan, data fields, and report direction.", accent = FieldMindTheme.colors.project)
+        DialogDividerSection("Topic & title", FieldMindIcons.Category, FieldMindTheme.colors.project)
+        FieldTextField(title, { title = it }, "Project title")
+        ChoiceChipsField("Topic", listOf("Biology", "Geology", "Wildlife", "Ecology", "Plant Study", "Weather", "Human Pattern", "Other"), topic) { topic = it }
+        DialogDividerSection("Research purpose", FieldMindIcons.Research, FieldMindTheme.colors.project)
+        FieldTextField(objective, { objective = it }, "Objective", minLines = 2)
+        FieldTextField(question, { question = it }, "Research question", minLines = 2)
+        FieldTextField(background, { background = it }, "Background / context", minLines = 2)
+        DialogDividerSection("Evidence plan", FieldMindIcons.Data, FieldMindTheme.colors.project)
+        FieldTextField(methods, { methods = it }, "Method / data plan", minLines = 3)
+        FieldTextField(hypothesis, { hypothesis = it }, "Hypothesis summary", minLines = 2)
+        FieldTextField(dataPlan, { dataPlan = it }, "Data fields / units", supportingText = "Example: temperature °C, height cm, water clarity, count")
+        DialogDividerSection("Report direction", FieldMindIcons.Report, FieldMindTheme.colors.project)
+        FieldTextField(analysis, { analysis = it }, "Analysis plan", minLines = 2)
+        FieldTextField(conclusion, { conclusion = it }, "Early conclusion / expected output", minLines = 2)
+        FieldTextField(nextAction, { nextAction = it }, "Next action", supportingText = "Example: observe the same site at sunset for 3 days")
+        DialogActions(onCancel = onDismiss, onSave = { save() }, saveEnabled = title.isNotBlank())
     }
 }
 @Composable
@@ -308,19 +430,10 @@ internal fun NewSourceDialog(viewModel: FieldMindViewModel, onDismiss: () -> Uni
         }
     }
 
-    Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
-        Card(
-            modifier = Modifier.fillMaxWidth(0.94f).wrapContentHeight().padding(vertical = 24.dp),
-            shape = RoundedCornerShape(32.dp),
-            elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
-        ) {
-            Column(Modifier.verticalScroll(rememberScrollState()).padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                Text("Add Source", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-                Text("Start with title + type. Fill in what you have.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                Text("Source type", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                ChoiceChips(sourceLibraryTypes, type) { type = it }
-                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
-                Text("Identity", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+    DialogWrapper(onDismiss = onDismiss) {
+        DialogHeader(FieldMindIcons.Source, "Add Source", "Start with title + type. Fill in what you have.", accent = FieldMindTheme.colors.source)
+        ChoiceChipsField("Source type", sourceLibraryTypes, type) { type = it }
+        DialogDividerSection("Identity", FieldMindIcons.Article, FieldMindTheme.colors.source)
                 FieldTextField(title, { title = it }, "Title")
                 FieldTextField(author, { author = it }, "Author / creator")
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -365,17 +478,7 @@ internal fun NewSourceDialog(viewModel: FieldMindViewModel, onDismiss: () -> Uni
                     Text("Link to project", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     ChoiceChips(listOf("No project") + projects.map { it.title }, projects.firstOrNull { it.id == projectId }?.title ?: "No project") { selected -> projectId = projects.firstOrNull { it.title == selected }?.id }
                 }
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically) {
-                    TextButton(onClick = onDismiss) { Text("Cancel") }
-                    Spacer(Modifier.size(8.dp))
-                    Button(
-                        onClick = { save() },
-                        shape = RoundedCornerShape(16.dp),
-                        enabled = title.isNotBlank()
-                    ) { Text("Save") }
-                }
-            }
-        }
+                DialogActions(onCancel = onDismiss, onSave = { save() }, saveEnabled = title.isNotBlank())
     }
 }
 @Composable
@@ -389,46 +492,27 @@ internal fun NewHypothesisDialog(viewModel: FieldMindViewModel, questions: List<
         }
     }
 
-    Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
-        Card(
-            modifier = Modifier.fillMaxWidth(0.94f).wrapContentHeight().padding(vertical = 24.dp),
-            shape = RoundedCornerShape(32.dp),
-            elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
-        ) {
-            Column(Modifier.verticalScroll(rememberScrollState()).padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                Text("New Hypothesis", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-                Text("State the prediction, what would support it, and what would weaken it.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                if (questions.isNotEmpty()) {
-                    Text("Linked question", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    ChoiceChips(listOf("No question") + questions.take(8).map { it.questionText.take(28) }, questions.firstOrNull { it.id == linkedId }?.questionText?.take(28) ?: "No question") { picked -> linkedId = questions.firstOrNull { it.questionText.startsWith(picked) }?.id }
-                }
-                FieldTextField(prediction, { prediction = it }, "Prediction", minLines = 3)
-                FieldTextField(reasoning, { reasoning = it }, "Why this might happen", minLines = 2)
-                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
-                Text("Evidence rules", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
-                Text("Decide success/failure before you bias yourself.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                FieldTextField(evidence, { evidence = it }, "Evidence needed", minLines = 2)
-                FieldTextField(support, { support = it }, "Support criteria")
-                FieldTextField(weaken, { weaken = it }, "Weakening criteria")
-                FieldTextField(test, { test = it }, "Test method")
-                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                    Text("Confidence", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Text("${confidence.toInt()}%", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
-                }
-                Slider(confidence, { confidence = it }, valueRange = 0f..100f)
-                LinearProgressIndicator(progress = { confidence / 100f }, modifier = Modifier.fillMaxWidth().height(6.dp).clip(RoundedCornerShape(3.dp)), color = MaterialTheme.colorScheme.primary)
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically) {
-                    TextButton(onClick = onDismiss) { Text("Cancel") }
-                    Spacer(Modifier.size(8.dp))
-                    Button(
-                        onClick = { save() },
-                        shape = RoundedCornerShape(16.dp),
-                        enabled = prediction.isNotBlank()
-                    ) { Text("Save") }
-                }
-            }
+    DialogWrapper(onDismiss = onDismiss) {
+        DialogHeader(FieldMindIcons.Hypothesis, "New Hypothesis", "State the prediction, what would support it, and what would weaken it.", accent = FieldMindTheme.colors.hypothesis)
+        if (questions.isNotEmpty()) {
+            ChoiceChipsField("Linked question", listOf("No question") + questions.take(8).map { it.questionText.take(28) }, questions.firstOrNull { it.id == linkedId }?.questionText?.take(28) ?: "No question") { picked -> linkedId = questions.firstOrNull { it.questionText.startsWith(picked) }?.id }
         }
+        FieldTextField(prediction, { prediction = it }, "Prediction", minLines = 3)
+        FieldTextField(reasoning, { reasoning = it }, "Why this might happen", minLines = 2)
+        DialogDividerSection("Evidence rules", FieldMindIcons.Verify, FieldMindTheme.colors.hypothesis)
+        Text("Decide success/failure before you bias yourself.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        FieldTextField(evidence, { evidence = it }, "Evidence needed", minLines = 2)
+        FieldTextField(support, { support = it }, "Support criteria")
+        FieldTextField(weaken, { weaken = it }, "Weakening criteria")
+        FieldTextField(test, { test = it }, "Test method")
+        DialogDividerSection("Confidence", FieldMindIcons.Streak, FieldMindTheme.colors.hypothesis)
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+            Text("Confidence", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text("${confidence.toInt()}%", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+        }
+        Slider(confidence, { confidence = it }, valueRange = 0f..100f)
+        LinearProgressIndicator(progress = { confidence / 100f }, modifier = Modifier.fillMaxWidth().height(6.dp).clip(RoundedCornerShape(3.dp)), color = MaterialTheme.colorScheme.primary)
+        DialogActions(onCancel = onDismiss, onSave = { save() }, saveEnabled = prediction.isNotBlank())
     }
 }
 
@@ -481,47 +565,27 @@ internal fun NewDataRecordDialog(viewModel: FieldMindViewModel, onDismiss: () ->
         }
     }
 
-    Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
-        Card(
-            modifier = Modifier.fillMaxWidth(0.94f).wrapContentHeight().padding(vertical = 24.dp),
-            shape = RoundedCornerShape(32.dp),
-            elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
-        ) {
-            Column(Modifier.verticalScroll(rememberScrollState()).padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                Text("Data Collection Tool", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-                Text("Choose a preset so units and labels match the kind of thing you measured.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                Text("Preset", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
-                Text("Tool", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                ChoiceChips(dataTools, tool) { tool = it; unit = defaultUnitForTool(it); label = defaultLabelForTool(it) }
-                FieldTextField(label, { label = it }, "Label")
-                if (tool == "Counter" || tool == "Species Tracker") {
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                        OutlinedButton({ value = ((value.toIntOrNull() ?: 0) - 1).toString() }) { Text("−1") }
-                        Text(value, style = MaterialTheme.typography.headlineSmall)
-                        Button({ value = ((value.toIntOrNull() ?: 0) + 1).toString() }) { Text("+1") }
-                        TextButton({ value = "0" }) { Text("Reset") }
-                    }
-                }
-                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
-                Text("Measurement", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
-                FieldTextField(value, { value = it }, "Value / items / samples")
-                FieldTextField(unit, { unit = it }, "Unit", supportingText = "Suggested for $tool: ${defaultUnitForTool(tool)}")
-                FieldTextField(location, { location = it }, "Location / site")
-                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
-                Text("Context", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
-                ChoiceChips(contextPresets, notes) { notes = if (notes.isBlank()) it else "$notes, $it" }
-                FieldTextField(notes, { notes = it }, "Notes", minLines = 3)
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically) {
-                    TextButton(onClick = onDismiss) { Text("Cancel") }
-                    Spacer(Modifier.size(8.dp))
-                    Button(
-                        onClick = { save() },
-                        shape = RoundedCornerShape(16.dp),
-                        enabled = label.isNotBlank()
-                    ) { Text("Save") }
-                }
+    DialogWrapper(onDismiss = onDismiss) {
+        DialogHeader(FieldMindIcons.Data, "Data Collection Tool", "Choose a preset so units and labels match the kind of thing you measured.", accent = FieldMindTheme.colors.data)
+        DialogDividerSection("Preset", FieldMindIcons.Settings, FieldMindTheme.colors.data)
+        ChoiceChipsField("Tool", dataTools, tool) { tool = it; unit = defaultUnitForTool(it); label = defaultLabelForTool(it) }
+        FieldTextField(label, { label = it }, "Label")
+        if (tool == "Counter" || tool == "Species Tracker") {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                OutlinedButton({ value = ((value.toIntOrNull() ?: 0) - 1).toString() }) { Text("−1") }
+                Text(value, style = MaterialTheme.typography.headlineSmall)
+                Button({ value = ((value.toIntOrNull() ?: 0) + 1).toString() }) { Text("+1") }
+                TextButton({ value = "0" }) { Text("Reset") }
             }
         }
+        DialogDividerSection("Measurement", FieldMindIcons.Measurement, FieldMindTheme.colors.data)
+        FieldTextField(value, { value = it }, "Value / items / samples")
+        FieldTextField(unit, { unit = it }, "Unit", supportingText = "Suggested for $tool: ${defaultUnitForTool(tool)}")
+        FieldTextField(location, { location = it }, "Location / site")
+        DialogDividerSection("Context", FieldMindIcons.Note, FieldMindTheme.colors.data)
+        ChoiceChips(contextPresets, notes) { notes = if (notes.isBlank()) it else "$notes, $it" }
+        FieldTextField(notes, { notes = it }, "Notes", minLines = 3)
+        DialogActions(onCancel = onDismiss, onSave = { save() }, saveEnabled = label.isNotBlank())
     }
 }
 @Composable
@@ -535,45 +599,24 @@ internal fun NewReportDialog(viewModel: FieldMindViewModel, onDismiss: () -> Uni
         }
     }
 
-    Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
-        Card(
-            modifier = Modifier.fillMaxWidth(0.94f).wrapContentHeight().padding(vertical = 24.dp),
-            shape = RoundedCornerShape(32.dp),
-            elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
-        ) {
-            Column(Modifier.verticalScroll(rememberScrollState()).padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                Text("Report Builder", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-                Text("Create a clean local draft: claim, evidence, reasoning, limitations, and next steps.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                Text("Type & title", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
-                Text("Report type", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                ChoiceChips(reportTypes, type) { type = it }
-                FieldTextField(title, { title = it }, "Title")
-                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
-                Text("Setup", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
-                FieldTextField(background, { background = it }, "Background", minLines = 2)
-                FieldTextField(question, { question = it }, "Question", minLines = 2)
-                FieldTextField(methods, { methods = it }, "Methods", minLines = 2)
-                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
-                Text("Evidence", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
-                FieldTextField(observations, { observations = it }, "Observations", minLines = 2)
-                FieldTextField(results, { results = it }, "Data / results", minLines = 2)
-                FieldTextField(interpretation, { interpretation = it }, "Interpretation", minLines = 2)
-                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
-                Text("Conclusion", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
-                FieldTextField(conclusion, { conclusion = it }, "Conclusion", minLines = 2)
-                FieldTextField(limitations, { limitations = it }, "Limitations", minLines = 2)
-                FieldTextField(next, { next = it }, "Next steps", minLines = 2)
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically) {
-                    TextButton(onClick = onDismiss) { Text("Cancel") }
-                    Spacer(Modifier.size(8.dp))
-                    Button(
-                        onClick = { save() },
-                        shape = RoundedCornerShape(16.dp),
-                        enabled = title.isNotBlank()
-                    ) { Text("Save") }
-                }
-            }
-        }
+    DialogWrapper(onDismiss = onDismiss) {
+        DialogHeader(FieldMindIcons.Report, "Report Builder", "Create a clean local draft: claim, evidence, reasoning, limitations, and next steps.", accent = FieldMindTheme.colors.report)
+        DialogDividerSection("Type & title", FieldMindIcons.Category, FieldMindTheme.colors.report)
+        ChoiceChipsField("Report type", reportTypes, type) { type = it }
+        FieldTextField(title, { title = it }, "Title")
+        DialogDividerSection("Setup", FieldMindIcons.Research, FieldMindTheme.colors.report)
+        FieldTextField(background, { background = it }, "Background", minLines = 2)
+        FieldTextField(question, { question = it }, "Question", minLines = 2)
+        FieldTextField(methods, { methods = it }, "Methods", minLines = 2)
+        DialogDividerSection("Evidence", FieldMindIcons.Data, FieldMindTheme.colors.report)
+        FieldTextField(observations, { observations = it }, "Observations", minLines = 2)
+        FieldTextField(results, { results = it }, "Data / results", minLines = 2)
+        FieldTextField(interpretation, { interpretation = it }, "Interpretation", minLines = 2)
+        DialogDividerSection("Conclusion", FieldMindIcons.Check, FieldMindTheme.colors.report)
+        FieldTextField(conclusion, { conclusion = it }, "Conclusion", minLines = 2)
+        FieldTextField(limitations, { limitations = it }, "Limitations", minLines = 2)
+        FieldTextField(next, { next = it }, "Next steps", minLines = 2)
+        DialogActions(onCancel = onDismiss, onSave = { save() }, saveEnabled = title.isNotBlank())
     }
 }
 @Composable
@@ -587,39 +630,21 @@ internal fun NewFlashcardDialog(viewModel: FieldMindViewModel, onDismiss: () -> 
         }
     }
 
-    Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
-        Card(
-            modifier = Modifier.fillMaxWidth(0.94f).wrapContentHeight().padding(vertical = 24.dp),
-            shape = RoundedCornerShape(32.dp),
-            elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
-        ) {
-            Column(Modifier.verticalScroll(rememberScrollState()).padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                Text("Create Flashcard", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-                Text("Design one card that flips cleanly during review — one prompt, one answer.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                Text("Card preset", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                ChoiceChips(listOf("term", "definition", "concept", "question-answer", "mistake card", "field ID", "method step"), type) { type = it }
-                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
-                FieldTextField(front, { front = it }, "Prompt / front", minLines = 2)
-                FieldTextField(back, { back = it }, "Answer / back", minLines = 4)
-                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                    Column(Modifier.weight(1f)) {
-                        Text("Spaced repetition (SM-2)", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
-                        Text("Review at optimal intervals", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
-                    Switch(checked = useSm2, onCheckedChange = { useSm2 = it })
-                }
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically) {
-                    TextButton(onClick = onDismiss) { Text("Cancel") }
-                    Spacer(Modifier.size(8.dp))
-                    Button(
-                        onClick = { save() },
-                        shape = RoundedCornerShape(16.dp),
-                        enabled = front.isNotBlank() && back.isNotBlank()
-                    ) { Text("Save") }
-                }
+    DialogWrapper(onDismiss = onDismiss) {
+        DialogHeader(FieldMindIcons.Flashcard, "Create Flashcard", "Design one card that flips cleanly during review — one prompt, one answer.", accent = FieldMindTheme.colors.flashcard)
+        ChoiceChipsField("Card preset", listOf("term", "definition", "concept", "question-answer", "mistake card", "field ID", "method step"), type) { type = it }
+        DialogDividerSection("Content", FieldMindIcons.Edit, FieldMindTheme.colors.flashcard)
+        FieldTextField(front, { front = it }, "Prompt / front", minLines = 2)
+        FieldTextField(back, { back = it }, "Answer / back", minLines = 4)
+        DialogDividerSection("Study mode", FieldMindIcons.Flip, FieldMindTheme.colors.flashcard)
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f)) {
+                Text("Spaced repetition (SM-2)", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
+                Text("Review at optimal intervals", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
+            Switch(checked = useSm2, onCheckedChange = { useSm2 = it })
         }
+        DialogActions(onCancel = onDismiss, onSave = { save() }, saveEnabled = front.isNotBlank() && back.isNotBlank())
     }
 }
 @Composable
@@ -655,35 +680,14 @@ private fun EditNoteDialog(entity: NoteEntity, viewModel: FieldMindViewModel, on
         }
     }
 
-    Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
-        Card(
-            modifier = Modifier
-                .fillMaxWidth(0.94f)
-                .wrapContentHeight()
-                .padding(vertical = 24.dp),
-            shape = RoundedCornerShape(32.dp),
-            elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
-        ) {
-            Column(Modifier.verticalScroll(rememberScrollState()).padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                Text("Edit Note", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-                Text("Update title, content, and metadata", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                Text("Category", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                ChoiceChips(observationCategories, category) { category = it }
-                FieldTextField(title, { title = it }, "Title", supportingText = "Auto-filled from body if left blank")
-                FieldTextField(body, { body = it }, "Body", minLines = 6)
-                FieldTextField(tags, { tags = it }, "Tags", supportingText = "Comma-separated keywords")
-                FieldTextField(attachments, { attachments = it }, "Attachments", minLines = 2, supportingText = "One per line: type|caption|uri")
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically) {
-                    TextButton(onClick = onDismiss) { Text("Cancel") }
-                    Spacer(Modifier.size(8.dp))
-                    Button(
-                        onClick = { save() },
-                        shape = RoundedCornerShape(16.dp),
-                        enabled = title.isNotBlank() || body.isNotBlank()
-                    ) { Text("Save") }
-                }
-            }
-        }
+    DialogWrapper(onDismiss = onDismiss) {
+        DialogHeader(FieldMindIcons.Note, "Edit Note", "Update title, content, and metadata", accent = FieldMindTheme.colors.source)
+        ChoiceChipsField("Category", observationCategories, category) { category = it }
+        FieldTextField(title, { title = it }, "Title", supportingText = "Auto-filled from body if left blank")
+        FieldTextField(body, { body = it }, "Body", minLines = 6)
+        FieldTextField(tags, { tags = it }, "Tags", supportingText = "Comma-separated keywords")
+        FieldTextField(attachments, { attachments = it }, "Attachments", minLines = 2, supportingText = "One per line: type|caption|uri")
+        DialogActions(onCancel = onDismiss, onSave = { save() }, saveEnabled = title.isNotBlank() || body.isNotBlank(), saveLabel = "Save changes")
     }
 }
 
@@ -751,65 +755,43 @@ private fun EditObservationDialog(entity: ObservationEntity, viewModel: FieldMin
         }
     }
 
-    Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
-        Card(
-            modifier = Modifier.fillMaxWidth(0.94f).wrapContentHeight().padding(vertical = 24.dp),
-            shape = RoundedCornerShape(32.dp),
-            elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
-        ) {
-            Column(Modifier.verticalScroll(rememberScrollState()).padding(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-                Text("Edit Observation", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-                Text("Update facts, location, evidence, and metadata", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                Text("Subject", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                FieldTextField(subject, { subject = it }, "Subject")
-                Text("Category", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                ChoiceChips(observationCategories, category) { category = it }
-                Text("Confidence", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                ChoiceChips(confidenceOptions, confidence) { confidence = it }
-                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
-                Text("Facts & context", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
-                FieldTextField(facts, { facts = it }, "Facts only", minLines = 3)
-                ChoiceChips(contextPresets, fieldContext) { fieldContext = if (fieldContext.isBlank()) it else "$fieldContext, $it" }
-                FieldTextField(fieldContext, { fieldContext = it }, "Context / mood", minLines = 2)
-                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
-                Text("GPS & Location", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    FilledTonalButton(
-                        onClick = { if (locationProvider.hasAnyLocationPermission()) startLocating() else locationPermission.launch(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION)) },
-                        modifier = Modifier.weight(1f),
-                        enabled = !locating
-                    ) {
-                        if (locating) CircularProgressIndicator(Modifier.size(16.dp), strokeWidth = 2.dp) else Icon(FieldMindIcons.Location, null, size = 18.dp)
-                        Spacer(Modifier.size(6.dp)); Text(if (locating) "Locating…" else "Use GPS")
-                    }
-                    OutlinedButton(onClick = { latitude = ""; longitude = ""; location = "" }, modifier = Modifier.weight(1f)) { Text("Clear") }
-                }
-                FieldTextField(location, { location = it }, "Location")
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    FieldTextField(latitude, { latitude = it }, "Latitude", modifier = Modifier.weight(1f))
-                    FieldTextField(longitude, { longitude = it }, "Longitude", modifier = Modifier.weight(1f))
-                }
-                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
-                Text("Evidence & tags", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OutlinedButton(onClick = { showEditCamera = true }, Modifier.weight(1f)) { Icon(FieldMindIcons.Camera, null, size = 18.dp); Spacer(Modifier.size(6.dp)); Text("Photo") }
-                    OutlinedButton(onClick = { mediaPicker.launch("image/*") }, Modifier.weight(1f)) { Icon(FieldMindIcons.Gallery, null, size = 18.dp); Spacer(Modifier.size(6.dp)); Text("Gallery") }
-                    OutlinedButton(onClick = { filePicker.launch(arrayOf("application/pdf", "text/*", "image/*", "video/*", "audio/*")) }, Modifier.weight(1f)) { Icon(FieldMindIcons.File, null, size = 18.dp); Spacer(Modifier.size(6.dp)); Text("File") }
-                }
-                AttachmentPreviewList(attachments, onCaptionChange = { index, caption -> attachments = attachments.mapIndexed { i, item -> if (i == index) item.copy(caption = caption) else item } }, onRemove = { remove -> attachments = attachments.filterIndexed { index, _ -> index != remove } })
-                FieldTextField(tags, { tags = it }, "Tags", supportingText = "Comma-separated keywords")
-                FieldTextField(evidence, { evidence = it }, "Evidence summary", minLines = 2)
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically) {
-                    TextButton(onClick = onDismiss) { Text("Cancel") }
-                    Spacer(Modifier.size(8.dp))
-                    Button(
-                        onClick = { save() },
-                        shape = RoundedCornerShape(16.dp),
-                        enabled = subject.isNotBlank()
-                    ) { Text("Save changes") }
-                }
+    DialogWrapper(onDismiss = onDismiss) {
+        DialogHeader(FieldMindIcons.Observation, "Edit Observation", "Update facts, location, evidence, and metadata", accent = FieldMindTheme.colors.observation)
+        FieldTextField(subject, { subject = it }, "Subject")
+        DialogDividerSection("Classification", FieldMindIcons.Category, FieldMindTheme.colors.observation)
+        ChoiceChipsField("Category", observationCategories, category) { category = it }
+        ChoiceChipsField("Confidence", confidenceOptions, confidence) { confidence = it }
+        DialogDividerSection("Facts & context", FieldMindIcons.Edit, FieldMindTheme.colors.observation)
+        FieldTextField(facts, { facts = it }, "Facts only", minLines = 3)
+        ChoiceChips(contextPresets, fieldContext) { fieldContext = if (fieldContext.isBlank()) it else "$fieldContext, $it" }
+        FieldTextField(fieldContext, { fieldContext = it }, "Context / mood", minLines = 2)
+        DialogDividerSection("GPS & Location", FieldMindIcons.Location, FieldMindTheme.colors.observation)
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            FilledTonalButton(
+                onClick = { if (locationProvider.hasAnyLocationPermission()) startLocating() else locationPermission.launch(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION)) },
+                modifier = Modifier.weight(1f),
+                enabled = !locating
+            ) {
+                if (locating) CircularProgressIndicator(Modifier.size(16.dp), strokeWidth = 2.dp) else Icon(FieldMindIcons.Location, null, size = 18.dp)
+                Spacer(Modifier.size(6.dp)); Text(if (locating) "Locating…" else "Use GPS")
             }
+            OutlinedButton(onClick = { latitude = ""; longitude = ""; location = "" }, modifier = Modifier.weight(1f)) { Text("Clear") }
         }
+        FieldTextField(location, { location = it }, "Location")
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            FieldTextField(latitude, { latitude = it }, "Latitude", modifier = Modifier.weight(1f))
+            FieldTextField(longitude, { longitude = it }, "Longitude", modifier = Modifier.weight(1f))
+        }
+        DialogDividerSection("Evidence & tags", FieldMindIcons.Camera, FieldMindTheme.colors.observation)
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            OutlinedButton(onClick = { showEditCamera = true }, Modifier.weight(1f)) { Icon(FieldMindIcons.Camera, null, size = 18.dp); Spacer(Modifier.size(6.dp)); Text("Photo") }
+            OutlinedButton(onClick = { mediaPicker.launch("image/*") }, Modifier.weight(1f)) { Icon(FieldMindIcons.Gallery, null, size = 18.dp); Spacer(Modifier.size(6.dp)); Text("Gallery") }
+            OutlinedButton(onClick = { filePicker.launch(arrayOf("application/pdf", "text/*", "image/*", "video/*", "audio/*")) }, Modifier.weight(1f)) { Icon(FieldMindIcons.File, null, size = 18.dp); Spacer(Modifier.size(6.dp)); Text("File") }
+        }
+        AttachmentPreviewList(attachments, onCaptionChange = { index, caption -> attachments = attachments.mapIndexed { i, item -> if (i == index) item.copy(caption = caption) else item } }, onRemove = { remove -> attachments = attachments.filterIndexed { index, _ -> index != remove } })
+        FieldTextField(tags, { tags = it }, "Tags", supportingText = "Comma-separated keywords")
+        FieldTextField(evidence, { evidence = it }, "Evidence summary", minLines = 2)
+        DialogActions(onCancel = onDismiss, onSave = { save() }, saveEnabled = subject.isNotBlank(), saveLabel = "Save changes")
     }
     // In-app camera overlay
     if (showEditCamera) {
@@ -844,40 +826,17 @@ private fun EditQuestionDialog(entity: QuestionEntity, viewModel: FieldMindViewM
         }
     }
 
-    Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
-        Card(
-            modifier = Modifier.fillMaxWidth(0.94f).wrapContentHeight().padding(vertical = 24.dp),
-            shape = RoundedCornerShape(32.dp),
-            elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
-        ) {
-            Column(Modifier.verticalScroll(rememberScrollState()).padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                Text("Edit Question", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-                Text("Update question text, classification, and answer", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                FieldTextField(question, { question = it }, "Question", minLines = 2)
-                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
-                Text("Classification", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
-                Text("Category", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                ChoiceChips(observationCategories, category) { category = it }
-                Text("Source type", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                ChoiceChips(sourceTypes, source) { source = it }
-                Text("Status", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                ChoiceChips(questionStatuses, status) { status = it }
-                Text("Priority", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                ChoiceChips(listOf("Low", "Medium", "High"), priority) { priority = it }
-                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
-                Text("Answer", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
-                FieldTextField(answer, { answer = it }, "Answer", minLines = 2)
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically) {
-                    TextButton(onClick = onDismiss) { Text("Cancel") }
-                    Spacer(Modifier.size(8.dp))
-                    Button(
-                        onClick = { save() },
-                        shape = RoundedCornerShape(16.dp),
-                        enabled = question.isNotBlank()
-                    ) { Text("Save changes") }
-                }
-            }
-        }
+    DialogWrapper(onDismiss = onDismiss) {
+        DialogHeader(FieldMindIcons.Question, "Edit Question", "Update question text, classification, and answer")
+        FieldTextField(question, { question = it }, "Question", minLines = 2)
+        DialogDividerSection("Classification", FieldMindIcons.Category)
+        ChoiceChipsField("Category", observationCategories, category) { category = it }
+        ChoiceChipsField("Source type", sourceTypes, source) { source = it }
+        ChoiceChipsField("Status", questionStatuses, status) { status = it }
+        ChoiceChipsField("Priority", listOf("Low", "Medium", "High"), priority) { priority = it }
+        DialogDividerSection("Answer", FieldMindIcons.Check)
+        FieldTextField(answer, { answer = it }, "Answer", minLines = 2)
+        DialogActions(onCancel = onDismiss, onSave = { save() }, saveEnabled = question.isNotBlank(), saveLabel = "Save changes")
     }
 }
 
@@ -901,48 +860,24 @@ private fun EditHypothesisDialog(entity: HypothesisEntity, viewModel: FieldMindV
         }
     }
 
-    Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
-        Card(
-            modifier = Modifier.fillMaxWidth(0.94f).wrapContentHeight().padding(vertical = 24.dp),
-            shape = RoundedCornerShape(32.dp),
-            elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
-        ) {
-            Column(Modifier.verticalScroll(rememberScrollState()).padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                Text("Edit Hypothesis", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-                Text("Update prediction, evidence rules, and confidence", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                FieldTextField(prediction, { prediction = it }, "Prediction", minLines = 2)
-                FieldTextField(reasoning, { reasoning = it }, "Reasoning", minLines = 2)
-                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
-                Text("Evidence rules", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
-                FieldTextField(evidence, { evidence = it }, "Evidence needed", minLines = 2)
-                FieldTextField(support, { support = it }, "Support criteria")
-                FieldTextField(weaken, { weaken = it }, "Weakening criteria")
-                FieldTextField(test, { test = it }, "Test method")
-                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
-                Text("Status & confidence", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
-                Text("Result", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                ChoiceChips(listOf("Unknown", "Supported", "Weakened", "Inconclusive"), result) { result = it }
-                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text("Confidence", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Text("${confidence.toInt()}%", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
-                }
-                Slider(confidence, { confidence = it }, valueRange = 0f..100f)
-                LinearProgressIndicator(
-                    progress = { confidence / 100f },
-                    modifier = Modifier.fillMaxWidth().height(6.dp).clip(RoundedCornerShape(3.dp)),
-                    color = MaterialTheme.colorScheme.primary
-                )
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically) {
-                    TextButton(onClick = onDismiss) { Text("Cancel") }
-                    Spacer(Modifier.size(8.dp))
-                    Button(
-                        onClick = { save() },
-                        shape = RoundedCornerShape(16.dp),
-                        enabled = prediction.isNotBlank()
-                    ) { Text("Save changes") }
-                }
-            }
+    DialogWrapper(onDismiss = onDismiss) {
+        DialogHeader(FieldMindIcons.Hypothesis, "Edit Hypothesis", "Update prediction, evidence rules, and confidence", accent = FieldMindTheme.colors.hypothesis)
+        FieldTextField(prediction, { prediction = it }, "Prediction", minLines = 2)
+        FieldTextField(reasoning, { reasoning = it }, "Reasoning", minLines = 2)
+        DialogDividerSection("Evidence rules", FieldMindIcons.Verify, FieldMindTheme.colors.hypothesis)
+        FieldTextField(evidence, { evidence = it }, "Evidence needed", minLines = 2)
+        FieldTextField(support, { support = it }, "Support criteria")
+        FieldTextField(weaken, { weaken = it }, "Weakening criteria")
+        FieldTextField(test, { test = it }, "Test method")
+        DialogDividerSection("Status & confidence", FieldMindIcons.Streak, FieldMindTheme.colors.hypothesis)
+        ChoiceChipsField("Result", listOf("Unknown", "Supported", "Weakened", "Inconclusive"), result) { result = it }
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
+            Text("Confidence", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text("${confidence.toInt()}%", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
         }
+        Slider(confidence, { confidence = it }, valueRange = 0f..100f)
+        LinearProgressIndicator(progress = { confidence / 100f }, modifier = Modifier.fillMaxWidth().height(6.dp).clip(RoundedCornerShape(3.dp)), color = MaterialTheme.colorScheme.primary)
+        DialogActions(onCancel = onDismiss, onSave = { save() }, saveEnabled = prediction.isNotBlank(), saveLabel = "Save changes")
     }
 }
 
@@ -969,45 +904,24 @@ private fun EditProjectDialog(entity: ProjectEntity, viewModel: FieldMindViewMod
         }
     }
 
-    Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
-        Card(
-            modifier = Modifier.fillMaxWidth(0.94f).wrapContentHeight().padding(vertical = 24.dp),
-            shape = RoundedCornerShape(32.dp),
-            elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
-        ) {
-            Column(Modifier.verticalScroll(rememberScrollState()).padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                Text("Edit Project", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-                Text("Update project details and research plan", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                Text("Project info", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
-                FieldTextField(title, { title = it }, "Project title")
-                Text("Topic / category", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                ChoiceChips(listOf("Biology", "Geology", "Wildlife", "Ecology", "Plant Study", "Weather", "Human Pattern", "Other"), topic) { topic = it }
-                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
-                Text("Research setup", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
-                FieldTextField(objective, { objective = it }, "Objective", minLines = 2)
-                FieldTextField(question, { question = it }, "Research question", minLines = 2)
-                FieldTextField(background, { background = it }, "Background notes", minLines = 2)
-                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
-                Text("Methods & analysis", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
-                FieldTextField(methods, { methods = it }, "Methods", minLines = 2)
-                FieldTextField(hypothesis, { hypothesis = it }, "Hypothesis summary", minLines = 2)
-                FieldTextField(dataSummary, { dataSummary = it }, "Data fields / summary", minLines = 2)
-                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
-                Text("Analysis & conclusions", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
-                FieldTextField(analysis, { analysis = it }, "Analysis", minLines = 2)
-                FieldTextField(conclusion, { conclusion = it }, "Conclusion", minLines = 2)
-                FieldTextField(future, { future = it }, "Future questions", minLines = 2)
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically) {
-                    TextButton(onClick = onDismiss) { Text("Cancel") }
-                    Spacer(Modifier.size(8.dp))
-                    Button(
-                        onClick = { save() },
-                        shape = RoundedCornerShape(16.dp),
-                        enabled = title.isNotBlank()
-                    ) { Text("Save changes") }
-                }
-            }
-        }
+    DialogWrapper(onDismiss = onDismiss) {
+        DialogHeader(FieldMindIcons.Project, "Edit Project", "Update project details and research plan", accent = FieldMindTheme.colors.project)
+        DialogDividerSection("Project info", FieldMindIcons.Category, FieldMindTheme.colors.project)
+        FieldTextField(title, { title = it }, "Project title")
+        ChoiceChipsField("Topic / category", listOf("Biology", "Geology", "Wildlife", "Ecology", "Plant Study", "Weather", "Human Pattern", "Other"), topic) { topic = it }
+        DialogDividerSection("Research setup", FieldMindIcons.Research, FieldMindTheme.colors.project)
+        FieldTextField(objective, { objective = it }, "Objective", minLines = 2)
+        FieldTextField(question, { question = it }, "Research question", minLines = 2)
+        FieldTextField(background, { background = it }, "Background notes", minLines = 2)
+        DialogDividerSection("Methods & analysis", FieldMindIcons.Data, FieldMindTheme.colors.project)
+        FieldTextField(methods, { methods = it }, "Methods", minLines = 2)
+        FieldTextField(hypothesis, { hypothesis = it }, "Hypothesis summary", minLines = 2)
+        FieldTextField(dataSummary, { dataSummary = it }, "Data fields / summary", minLines = 2)
+        DialogDividerSection("Analysis & conclusions", FieldMindIcons.Report, FieldMindTheme.colors.project)
+        FieldTextField(analysis, { analysis = it }, "Analysis", minLines = 2)
+        FieldTextField(conclusion, { conclusion = it }, "Conclusion", minLines = 2)
+        FieldTextField(future, { future = it }, "Future questions", minLines = 2)
+        DialogActions(onCancel = onDismiss, onSave = { save() }, saveEnabled = title.isNotBlank(), saveLabel = "Save changes")
     }
 }
 @Composable
@@ -1062,66 +976,42 @@ private fun EditSourceDialog(entity: SourceEntity, viewModel: FieldMindViewModel
         }
     }
 
-    Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
-        Card(
-            modifier = Modifier.fillMaxWidth(0.94f).wrapContentHeight().padding(vertical = 24.dp),
-            shape = RoundedCornerShape(32.dp),
-            elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
-        ) {
-            Column(Modifier.verticalScroll(rememberScrollState()).padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                Text("Edit Source", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-                Text("Update source identity, notes, and status", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
-                Text("Source type", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                ChoiceChips(sourceLibraryTypes, type) { type = it }
-                Text("Identity", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
-                FieldTextField(title, { title = it }, "Title")
-                FieldTextField(author, { author = it }, "Author / creator")
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    FieldTextField(dateOrYear, { dateOrYear = it }, "Date / year", modifier = Modifier.weight(1f))
-                    FieldTextField(accessDate, { accessDate = it }, "Accessed", modifier = Modifier.weight(1f))
-                }
-                FieldTextField(doiOrIsbn, { doiOrIsbn = it }, "DOI / ISBN")
-                FieldTextField(publisherOrJournal, { publisherOrJournal = it }, "Publisher / journal")
-                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
-                Text("Link and file", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
-                FieldTextField(link, { link = it }, "Web link")
-                FieldTextField(fileUri, { fileUri = it }, "File URI")
-                SourcePreviewCard(link, fileUri)
-                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
-                Text("Reading notes", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
-                FieldTextField(summary, { summary = it }, "Main idea", minLines = 2)
-                FieldTextField(findings, { findings = it }, "Key findings", minLines = 2)
-                FieldTextField(taught, { taught = it }, "What this taught me", minLines = 2)
-                FieldTextField(questions, { questions = it }, "New questions", minLines = 2)
-                FieldTextField(notes, { notes = it }, "Paper notes", minLines = 3)
-                FieldTextField(citationStyleNote, { citationStyleNote = it }, "Citation style note")
-                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
-                Text("Status", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
-                Text("Reading status", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                ChoiceChips(readingStatuses, readingStatus) { readingStatus = it }
-                Text("Importance", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                ChoiceChips(sourceImportanceLevels, importance) { importance = it }
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                    Text("Credibility", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Text("${reliability.toInt()}/5", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
-                }
-                Slider(reliability, { reliability = it }, valueRange = 1f..5f, steps = 3)
-                if (projects.isNotEmpty()) {
-                    Text("Project", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    ChoiceChips(listOf("No project") + projects.map { it.title }, projects.firstOrNull { it.id == projectId }?.title ?: "No project") { selected -> projectId = projects.firstOrNull { it.title == selected }?.id }
-                }
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically) {
-                    TextButton(onClick = onDismiss) { Text("Cancel") }
-                    Spacer(Modifier.size(8.dp))
-                    Button(
-                        onClick = { save() },
-                        shape = RoundedCornerShape(16.dp),
-                        enabled = title.isNotBlank()
-                    ) { Text("Save changes") }
-                }
-            }
+    DialogWrapper(onDismiss = onDismiss) {
+        DialogHeader(FieldMindIcons.Source, "Edit Source", "Update source identity, notes, and status", accent = FieldMindTheme.colors.source)
+        DialogDividerSection("Source type", FieldMindIcons.Category, FieldMindTheme.colors.source)
+        ChoiceChipsField("Type", sourceLibraryTypes, type) { type = it }
+        DialogDividerSection("Identity", FieldMindIcons.Article, FieldMindTheme.colors.source)
+        FieldTextField(title, { title = it }, "Title")
+        FieldTextField(author, { author = it }, "Author / creator")
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            FieldTextField(dateOrYear, { dateOrYear = it }, "Date / year", modifier = Modifier.weight(1f))
+            FieldTextField(accessDate, { accessDate = it }, "Accessed", modifier = Modifier.weight(1f))
         }
+        FieldTextField(doiOrIsbn, { doiOrIsbn = it }, "DOI / ISBN")
+        FieldTextField(publisherOrJournal, { publisherOrJournal = it }, "Publisher / journal")
+        DialogDividerSection("Link and file", FieldMindIcons.Link, FieldMindTheme.colors.source)
+        FieldTextField(link, { link = it }, "Web link")
+        FieldTextField(fileUri, { fileUri = it }, "File URI")
+        SourcePreviewCard(link, fileUri)
+        DialogDividerSection("Reading notes", FieldMindIcons.Edit, FieldMindTheme.colors.source)
+        FieldTextField(summary, { summary = it }, "Main idea", minLines = 2)
+        FieldTextField(findings, { findings = it }, "Key findings", minLines = 2)
+        FieldTextField(taught, { taught = it }, "What this taught me", minLines = 2)
+        FieldTextField(questions, { questions = it }, "New questions", minLines = 2)
+        FieldTextField(notes, { notes = it }, "Paper notes", minLines = 3)
+        FieldTextField(citationStyleNote, { citationStyleNote = it }, "Citation style note")
+        DialogDividerSection("Status", FieldMindIcons.Check, FieldMindTheme.colors.source)
+        ChoiceChipsField("Reading status", readingStatuses, readingStatus) { readingStatus = it }
+        ChoiceChipsField("Importance", sourceImportanceLevels, importance) { importance = it }
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+            Text("Credibility", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text("${reliability.toInt()}/5", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+        }
+        Slider(reliability, { reliability = it }, valueRange = 1f..5f, steps = 3)
+        if (projects.isNotEmpty()) {
+            ChoiceChipsField("Project", listOf("No project") + projects.map { it.title }, projects.firstOrNull { it.id == projectId }?.title ?: "No project") { selected -> projectId = projects.firstOrNull { it.title == selected }?.id }
+        }
+        DialogActions(onCancel = onDismiss, onSave = { save() }, saveEnabled = title.isNotBlank(), saveLabel = "Save changes")
     }
 }
 @Composable
@@ -1142,35 +1032,17 @@ private fun EditDataRecordDialog(entity: DataRecordEntity, viewModel: FieldMindV
         }
     }
 
-    Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
-        Card(
-            modifier = Modifier.fillMaxWidth(0.94f).wrapContentHeight().padding(vertical = 24.dp),
-            shape = RoundedCornerShape(32.dp),
-            elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
-        ) {
-            Column(Modifier.verticalScroll(rememberScrollState()).padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                Text("Edit Data Record", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-                Text("Update tool type, value, and notes", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                Text("Tool", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                ChoiceChips(dataTools, tool) { tool = it }
-                FieldTextField(label, { label = it }, "Label")
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    FieldTextField(value, { value = it }, "Value", modifier = Modifier.weight(1f))
-                    FieldTextField(unit, { unit = it }, "Unit", modifier = Modifier.weight(1f))
-                }
-                FieldTextField(location, { location = it }, "Location / site")
-                FieldTextField(notes, { notes = it }, "Notes", minLines = 3)
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically) {
-                    TextButton(onClick = onDismiss) { Text("Cancel") }
-                    Spacer(Modifier.size(8.dp))
-                    Button(
-                        onClick = { save() },
-                        shape = RoundedCornerShape(16.dp),
-                        enabled = label.isNotBlank()
-                    ) { Text("Save changes") }
-                }
-            }
+    DialogWrapper(onDismiss = onDismiss) {
+        DialogHeader(FieldMindIcons.Data, "Edit Data Record", "Update tool type, value, and notes", accent = FieldMindTheme.colors.data)
+        ChoiceChipsField("Tool", dataTools, tool) { tool = it }
+        FieldTextField(label, { label = it }, "Label")
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            FieldTextField(value, { value = it }, "Value", modifier = Modifier.weight(1f))
+            FieldTextField(unit, { unit = it }, "Unit", modifier = Modifier.weight(1f))
         }
+        FieldTextField(location, { location = it }, "Location / site")
+        FieldTextField(notes, { notes = it }, "Notes", minLines = 3)
+        DialogActions(onCancel = onDismiss, onSave = { save() }, saveEnabled = label.isNotBlank(), saveLabel = "Save changes")
     }
 }
 @Composable
@@ -1192,35 +1064,17 @@ private fun EditReportDialog(entity: ReportEntity, viewModel: FieldMindViewModel
         }
     }
 
-    Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
-        Card(
-            modifier = Modifier.fillMaxWidth(0.94f).wrapContentHeight().padding(vertical = 24.dp),
-            shape = RoundedCornerShape(32.dp),
-            elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
-        ) {
-            Column(Modifier.verticalScroll(rememberScrollState()).padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                Text("Edit Report", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-                Text("Update report content and findings", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                Text("Report type", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                ChoiceChips(reportTypes, type) { type = it }
-                FieldTextField(title, { title = it }, "Title")
-                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
-                FieldTextField(question, { question = it }, "Question", minLines = 2)
-                FieldTextField(methods, { methods = it }, "Methods", minLines = 2)
-                FieldTextField(results, { results = it }, "Data / results", minLines = 2)
-                FieldTextField(conclusion, { conclusion = it }, "Conclusion", minLines = 2)
-                FieldTextField(next, { next = it }, "Next steps", minLines = 2)
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically) {
-                    TextButton(onClick = onDismiss) { Text("Cancel") }
-                    Spacer(Modifier.size(8.dp))
-                    Button(
-                        onClick = { save() },
-                        shape = RoundedCornerShape(16.dp),
-                        enabled = title.isNotBlank()
-                    ) { Text("Save changes") }
-                }
-            }
-        }
+    DialogWrapper(onDismiss = onDismiss) {
+        DialogHeader(FieldMindIcons.Report, "Edit Report", "Update report content and findings", accent = FieldMindTheme.colors.report)
+        ChoiceChipsField("Report type", reportTypes, type) { type = it }
+        FieldTextField(title, { title = it }, "Title")
+        DialogDividerSection("Content", FieldMindIcons.Edit, FieldMindTheme.colors.report)
+        FieldTextField(question, { question = it }, "Question", minLines = 2)
+        FieldTextField(methods, { methods = it }, "Methods", minLines = 2)
+        FieldTextField(results, { results = it }, "Data / results", minLines = 2)
+        FieldTextField(conclusion, { conclusion = it }, "Conclusion", minLines = 2)
+        FieldTextField(next, { next = it }, "Next steps", minLines = 2)
+        DialogActions(onCancel = onDismiss, onSave = { save() }, saveEnabled = title.isNotBlank(), saveLabel = "Save changes")
     }
 }
 @Composable
@@ -1239,38 +1093,20 @@ private fun EditFlashcardDialog(entity: FlashcardEntity, viewModel: FieldMindVie
         }
     }
 
-    Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
-        Card(
-            modifier = Modifier.fillMaxWidth(0.94f).wrapContentHeight().padding(vertical = 24.dp),
-            shape = RoundedCornerShape(32.dp),
-            elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
-        ) {
-            Column(Modifier.verticalScroll(rememberScrollState()).padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                Text("Edit Flashcard", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-                Text("Update card content and study mode", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                Text("Card type", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                ChoiceChips(listOf("term", "definition", "concept", "question-answer", "mistake card"), type) { type = it }
-                FieldTextField(front, { front = it }, "Front", minLines = 2, supportingText = "The prompt shown during review")
-                FieldTextField(back, { back = it }, "Back", minLines = 3, supportingText = "The answer or explanation")
-                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                    Column(Modifier.weight(1f)) {
-                        Text("Spaced repetition (SM-2)", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
-                        Text(if (useSm2) "SM-2 scheduling active" else "Basic flip mode", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
-                    Switch(checked = useSm2, onCheckedChange = { useSm2 = it })
-                }
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically) {
-                    TextButton(onClick = onDismiss) { Text("Cancel") }
-                    Spacer(Modifier.size(8.dp))
-                    Button(
-                        onClick = { save() },
-                        shape = RoundedCornerShape(16.dp),
-                        enabled = front.isNotBlank() && back.isNotBlank()
-                    ) { Text("Save changes") }
-                }
+    DialogWrapper(onDismiss = onDismiss) {
+        DialogHeader(FieldMindIcons.Flashcard, "Edit Flashcard", "Update card content and study mode", accent = FieldMindTheme.colors.flashcard)
+        ChoiceChipsField("Card type", listOf("term", "definition", "concept", "question-answer", "mistake card"), type) { type = it }
+        FieldTextField(front, { front = it }, "Front", minLines = 2, supportingText = "The prompt shown during review")
+        FieldTextField(back, { back = it }, "Back", minLines = 3, supportingText = "The answer or explanation")
+        DialogDividerSection("Study mode", FieldMindIcons.Flip, FieldMindTheme.colors.flashcard)
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f)) {
+                Text("Spaced repetition (SM-2)", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
+                Text(if (useSm2) "SM-2 scheduling active" else "Basic flip mode", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
+            Switch(checked = useSm2, onCheckedChange = { useSm2 = it })
         }
+        DialogActions(onCancel = onDismiss, onSave = { save() }, saveEnabled = front.isNotBlank() && back.isNotBlank(), saveLabel = "Save changes")
     }
 }
 /**
