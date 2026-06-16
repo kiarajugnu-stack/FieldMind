@@ -8,6 +8,10 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.*
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -48,6 +52,9 @@ import fieldmind.research.app.features.field.presentation.viewmodel.DraftEvidenc
 import fieldmind.research.app.features.field.presentation.viewmodel.FieldMindViewModel
 import fieldmind.research.app.shared.presentation.components.icons.Icon
 import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.foundation.Image
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -849,7 +856,7 @@ private fun LiveWeatherDashboardWidget(
         modifier = Modifier
             .fillMaxWidth()
             .animateContentSize(
-                animationSpec = tween(durationMillis = 400, easing = FastOutSlowInEasing)
+                animationSpec = tween(durationMillis = 500, easing = FastOutSlowInEasing)
             )
             .clickable { isExpanded = true },
         shape = RoundedCornerShape(28.dp),
@@ -953,30 +960,50 @@ private fun LiveWeatherDashboardWidget(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
-                // Refresh button (top-right weather icon) — tap to refresh
-                Icon(
-                    FieldMindIcons.Weather,
-                    null,
-                    tint = if (currentWeather != null) conditionColor else MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier
-                        .clip(CircleShape)
-                        .background(
-                            if (currentWeather != null) conditionColor.copy(alpha = 0.12f)
-                            else MaterialTheme.colorScheme.surfaceContainerHigh
-                        )
-                        .padding(8.dp)
-                        .graphicsLayer { rotationZ = refreshRotation.value }
-                        .clickable(enabled = !weatherLoading) {
-                            scope.launch {
-                                isRotating = true
-                                refreshRotation.animateTo(360f, tween(400))
-                                refreshRotation.snapTo(0f)
-                                isRotating = false
-                                val snapshot = viewModel.refreshWeatherFromLocation()
-                                onRefresh(snapshot)
-                            }
-                        },
-                    size = 20.dp
+                // Actions row: expand indicator + refresh
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    // Expand/collapse indicator
+                    Icon(
+                        if (isExpanded) FieldMindIcons.Up else FieldMindIcons.Down,
+                        null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+                        size = 18.dp
+                    )
+                    // Refresh button
+                    Icon(
+                        FieldMindIcons.Weather,
+                        null,
+                        tint = if (currentWeather != null) conditionColor else MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier
+                            .clip(CircleShape)
+                            .background(
+                                if (currentWeather != null) conditionColor.copy(alpha = 0.12f)
+                                else MaterialTheme.colorScheme.surfaceContainerHigh
+                            )
+                            .padding(8.dp)
+                            .graphicsLayer { rotationZ = refreshRotation.value }
+                            .clickable(enabled = !weatherLoading) {
+                                scope.launch {
+                                    isRotating = true
+                                    refreshRotation.animateTo(360f, tween(400))
+                                    refreshRotation.snapTo(0f)
+                                    isRotating = false
+                                    val snapshot = viewModel.refreshWeatherFromLocation()
+                                    onRefresh(snapshot)
+                                }
+                            },
+                        size = 20.dp
+                    )
+                }
+            }
+
+            // ── Time-of-day greeting ──
+            if (currentWeather != null) {
+                Text(
+                    "$timeGreeting. ${currentWeather!!.weatherDescription.ifBlank { "Clear skies" }}.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontWeight = FontWeight.Medium
                 )
             }
 
@@ -984,7 +1011,7 @@ private fun LiveWeatherDashboardWidget(
             if (currentWeather != null) {
                 val w = currentWeather!!
 
-                // Main temperature + condition
+                // Main temperature + condition (always visible)
                 Row(
                     Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceEvenly,
@@ -1021,7 +1048,7 @@ private fun LiveWeatherDashboardWidget(
                             )
                         }
                     }
-                    if (showHumidity) {
+                    if (showHumidity && isExpanded) {
                         w.humidity?.let { hum ->
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                 Text(
@@ -1164,34 +1191,163 @@ private fun LiveWeatherDashboardWidget(
                         tonalElevation = 0.dp
                     ) {
                         Row(
-                            Modifier.padding(horizontal = 12.dp, vertical = 8.dp).fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceEvenly
                         ) {
-                            Icon(FieldMindIcons.Info, null, tint = colors.warning, size = 16.dp)
-                            Text(
-                                conditionsNudge,
-                                style = MaterialTheme.typography.labelSmall,
-                                color = colors.warning,
-                                fontWeight = FontWeight.SemiBold
-                            )
+                            // Wind
+                            if (showWind) {
+                                w.windSpeed?.let { wind ->
+                                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                        Icon(
+                                            FieldMindIcons.windIconForSpeed(wind),
+                                            null,
+                                            tint = colors.warning,
+                                            size = 18.dp
+                                        )
+                                        Text(
+                                            WeatherUnitConverter.formatWind(wind, windSpeedUnit),
+                                            style = MaterialTheme.typography.bodySmall,
+                                            fontWeight = FontWeight.SemiBold,
+                                            color = colors.warning
+                                        )
+                                        Text(
+                                            "Wind",
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                }
+                            }
+                            // Cloud cover
+                            if (showCloudCover) {
+                                w.cloudCover?.let { cloud ->
+                                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                        Icon(
+                                            FieldMindIcons.Cloud,
+                                            null,
+                                            tint = colors.hypothesis,
+                                            size = 18.dp
+                                        )
+                                        Text(
+                                            "$cloud%",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            fontWeight = FontWeight.SemiBold,
+                                            color = colors.hypothesis
+                                        )
+                                        Text(
+                                            "Cloud cover",
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                }
+                            }
+                            // Pressure
+                            if (showPressure) {
+                                w.pressure?.let { press ->
+                                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                        Icon(
+                                            FieldMindIcons.Compress,
+                                            null,
+                                            tint = colors.project,
+                                            size = 18.dp
+                                        )
+                                        Text(
+                                            "%.0f hPa".format(press),
+                                            style = MaterialTheme.typography.bodySmall,
+                                            fontWeight = FontWeight.SemiBold,
+                                            color = colors.project
+                                        )
+                                        Text(
+                                            "Pressure",
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                }
+                            }
                         }
-                    }
-                }
 
-                // ── Weather observation count ──
-                val weatherObsCount = observations.count { it.weatherTemperature != null }
-                if (weatherObsCount > 0) {
-                    Row(
-                        Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            "$weatherObsCount observation${if (weatherObsCount != 1) "s" else ""} with weather data",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
-                        )
+                        // ── Sunrise / Sunset / Moon phase (with icons8 PNGs) ──
+                        if (sunrise != null || sunset != null || moonPhase.isNotBlank()) {
+                            Row(
+                                Modifier.fillMaxWidth().padding(top = 2.dp),
+                                horizontalArrangement = Arrangement.SpaceEvenly
+                            ) {
+                                sunrise?.let { s ->
+                                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                                        Icon(FieldMindIcons.Sunrise, null, tint = colors.warning, size = 14.dp)
+                                        Text("Sunrise ${formatTimeFromIso(s)}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                    }
+                                }
+                                sunset?.let { s ->
+                                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                                        Icon(FieldMindIcons.Sunset, null, tint = colors.data, size = 14.dp)
+                                        Text("Sunset ${formatTimeFromIso(s)}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                    }
+                                }
+                                if (moonPhase.isNotBlank()) {
+                                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                                        MoonPhaseImage(moonPhase, size = 24.dp)
+                                        Text(moonPhase, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                    }
+                                }
+                            }
+                        }
+
+                        // ── Conditions nudge ──
+                        if (conditionsNudge.isNotBlank()) {
+                            Surface(
+                                shape = RoundedCornerShape(14.dp),
+                                color = colors.warning.copy(alpha = if (colors.isDark) 0.18f else 0.10f),
+                                tonalElevation = 0.dp
+                            ) {
+                                Row(
+                                    Modifier.padding(horizontal = 12.dp, vertical = 8.dp).fillMaxWidth(),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    Icon(FieldMindIcons.Info, null, tint = colors.warning, size = 16.dp)
+                                    Text(
+                                        conditionsNudge,
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = colors.warning,
+                                        fontWeight = FontWeight.SemiBold
+                                    )
+                                }
+                            }
+                        }
+
+                        // ── Weather observation count ──
+                        val weatherObsCount = observations.count { it.weatherTemperature != null }
+                        if (weatherObsCount > 0) {
+                            Row(
+                                Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    "$weatherObsCount observation${if (weatherObsCount != 1) "s" else ""} with weather data",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                                )
+                            }
+                        }
+
+                        // ── View Full Details button ──
+                        Button(
+                            onClick = { onNavigate(FieldMindScreen.WeatherDatabase) },
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(16.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = conditionColor.copy(alpha = 0.15f),
+                                contentColor = conditionColor
+                            )
+                        ) {
+                            Icon(FieldMindIcons.Weather, null, size = 18.dp)
+                            Spacer(Modifier.size(8.dp))
+                            Text("View full weather dashboard", fontWeight = FontWeight.SemiBold)
+                        }
                     }
                 }
             } else if (weatherError) {
@@ -2275,7 +2431,6 @@ private fun getMoonPhase(date: LocalDate): String {
     }
 }
 
-<<<<<<< Updated upstream
 private fun moonPhaseIcon(phase: String): MaterialSymbolIcon = when {
     phase.startsWith("New") -> FieldMindIcons.MoonNew
     phase.startsWith("Waxing crescent") || phase.startsWith("Waning crescent") -> FieldMindIcons.MoonCrescent
@@ -2283,51 +2438,6 @@ private fun moonPhaseIcon(phase: String): MaterialSymbolIcon = when {
     phase.startsWith("Waxing gibbous") || phase.startsWith("Waning gibbous") -> FieldMindIcons.MoonGibbous
     phase.startsWith("Full") -> FieldMindIcons.MoonFull
     else -> FieldMindIcons.MoonNew
-=======
-@Composable
-internal fun MoonPhaseImage(phase: String, size: androidx.compose.ui.unit.Dp = 28.dp, decorative: Boolean = false) {
-    val suffix = if (size < 24.dp) "50" else "100"
-    val assetPath = remember(phase, decorative, size) {
-        if (decorative) {
-            // Decorative/heritage icons for special display
-            when {
-                phase.startsWith("Full") -> "moon_phases/icons8-werewolf-$suffix.png"
-                phase.startsWith("Waxing crescent") || phase.startsWith("Waning crescent") || phase.startsWith("First") || phase.startsWith("Last") -> "moon_phases/icons8-ramadan-$suffix.png"
-                phase.startsWith("New") -> "moon_phases/icons8-moon-and-stars-$suffix.png"
-                else -> "moon_phases/icons8-moonset-plumpy-" + when {
-                    size <= 20.dp -> "16"
-                    size <= 40.dp -> "32"
-                    size <= 80.dp -> "72"
-                    else -> "96"
-                } + ".png"
-            }
-        } else {
-            // Standard moon phase icons
-            when {
-                phase.startsWith("New") -> "moon_phases/icons8-new-moon-$suffix.png"
-                phase.startsWith("Waxing crescent") -> "moon_phases/icons8-waxing-crescent-$suffix.png"
-                phase.startsWith("Waning crescent") -> "moon_phases/icons8-waning-crescent-$suffix.png"
-                phase.startsWith("First") -> "moon_phases/icons8-first-quarter-$suffix.png"
-                phase.startsWith("Last") -> "moon_phases/icons8-waning-crescent-$suffix.png"
-                phase.startsWith("Waxing gibbous") -> "moon_phases/icons8-waxing-gibbous-$suffix.png"
-                phase.startsWith("Waning gibbous") -> "moon_phases/icons8-waning-gibbous-$suffix.png"
-                phase.startsWith("Full") -> "moon_phases/icons8-full-moon-$suffix.png"
-                else -> "moon_phases/icons8-moon-phase-$suffix.png"
-            }
-        }
-    }
-    val imageBitmap = rememberAssetImage(assetPath)
-    if (imageBitmap != null) {
-        Image(
-            bitmap = imageBitmap,
-            contentDescription = "Moon phase: $phase",
-            modifier = Modifier.size(size),
-            contentScale = androidx.compose.ui.layout.ContentScale.Fit
-        )
-    } else {
-        Icon(weatherConditionIcon(0), null, tint = MaterialTheme.colorScheme.onSurface, size = size)
-    }
->>>>>>> Stashed changes
 }
 
 private fun formatTimeFromIso(isoString: String): String {
