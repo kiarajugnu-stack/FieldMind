@@ -33,6 +33,7 @@ object FieldMindIcons {
     val Settings = MaterialSymbolIcon("settings")
     val Search = MaterialSymbolIcon("search")
     val Filter = MaterialSymbolIcon("filter_list")
+    val Sort = MaterialSymbolIcon("sort")
     val Select = MaterialSymbolIcon("check_box")
     val Back = MaterialSymbolIcon("arrow_back")
     val Forward = MaterialSymbolIcon("chevron_right")

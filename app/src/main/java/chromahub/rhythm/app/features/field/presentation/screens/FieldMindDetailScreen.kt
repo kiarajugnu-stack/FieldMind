@@ -11,6 +11,8 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -1488,8 +1490,6 @@ private fun ProjectDetailContent(
 //  Species Registry Builder — Full taxonomy form + list per spec
 // ══════════════════════════════════════════════════════════════════════
 
-@Composable
-@OptIn(ExperimentalLayoutApi::class)
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun SpeciesRegistryBuilder(projectId: Long, viewModel: FieldMindViewModel) {
@@ -1630,7 +1630,6 @@ private fun SpeciesRegistryBuilder(projectId: Long, viewModel: FieldMindViewMode
 //  Project Tasks Builder — Per spec: title, type, priority, due date, assignee, subtasks
 // ══════════════════════════════════════════════════════════════════════
 
-@Composable
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun ProjectTasksBuilder(projectId: Long, viewModel: FieldMindViewModel) {
