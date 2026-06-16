@@ -12,6 +12,15 @@ import java.util.concurrent.TimeUnit
  * Weather data fetched from Open-Meteo API (free, no API key required).
  * Attaches weather snapshots to observations automatically.
  */
+data class DailyForecast(
+    val date: String,
+    val temperatureMax: Double,
+    val temperatureMin: Double,
+    val weatherCode: Int,
+    val weatherDescription: String,
+    val precipitationSum: Double? = null
+)
+
 data class WeatherSnapshot(
     val temperature: Double? = null,
     val weatherCode: Int = 0,
@@ -23,6 +32,7 @@ data class WeatherSnapshot(
     val pressure: Double? = null,
     val sunrise: String? = null,
     val sunset: String? = null,
+    val dailyForecasts: List<DailyForecast> = emptyList(),
     val fetchedAt: Long = System.currentTimeMillis()
 ) {
     fun asDisplayText(): String = buildString {
@@ -76,7 +86,12 @@ private data class Current(
 
 private data class DailyData(
     @SerializedName("sunrise") val sunrise: List<String>? = null,
-    @SerializedName("sunset") val sunset: List<String>? = null
+    @SerializedName("sunset") val sunset: List<String>? = null,
+    @SerializedName("temperature_2m_max") val tempMax: List<Double>? = null,
+    @SerializedName("temperature_2m_min") val tempMin: List<Double>? = null,
+    @SerializedName("weather_code") val weatherCode: List<Int>? = null,
+    @SerializedName("precipitation_sum") val precipitationSum: List<Double>? = null,
+    @SerializedName("time") val time: List<String>? = null
 )
 
 private data class OpenMeteoResponseFull(
@@ -106,7 +121,7 @@ class WeatherApiService {
                 "?latitude=$latitude" +
                 "&longitude=$longitude" +
                 "&current=temperature_2m,relative_humidity_2m,weather_code,cloud_cover,surface_pressure,wind_speed_10m,wind_direction_10m" +
-                "&daily=sunrise,sunset" +
+                "&daily=sunrise,sunset,temperature_2m_max,temperature_2m_min,weather_code,precipitation_sum,time" +
                 "&timezone=auto"
 
             val request = Request.Builder().url(url).get().build()
@@ -133,6 +148,23 @@ class WeatherApiService {
             val sunrise = daily?.sunrise?.firstOrNull { it.isNotBlank() }
             val sunset = daily?.sunset?.firstOrNull { it.isNotBlank() }
 
+            // Parse daily forecasts
+            val forecasts = if (daily?.time != null && daily.tempMax != null && daily.tempMin != null) {
+                daily.time.zip(daily.tempMax.zip(daily.tempMin)).mapIndexed { index, (date, temps) ->
+                    val (tMax, tMin) = temps
+                    val wCode = daily.weatherCode?.getOrNull(index) ?: 0
+                    val precip = daily.precipitationSum?.getOrNull(index)
+                    DailyForecast(
+                        date = date,
+                        temperatureMax = tMax,
+                        temperatureMin = tMin,
+                        weatherCode = wCode,
+                        weatherDescription = WeatherSnapshot.descriptionForCode(wCode),
+                        precipitationSum = precip
+                    )
+                }
+            } else emptyList()
+
             WeatherSnapshot(
                 temperature = temp,
                 weatherCode = code,
@@ -143,7 +175,8 @@ class WeatherApiService {
                 cloudCover = cloudCover,
                 pressure = pressure,
                 sunrise = sunrise,
-                sunset = sunset
+                sunset = sunset,
+                dailyForecasts = forecasts
             )
         } catch (e: Exception) {
             null // Silent failure — weather is optional

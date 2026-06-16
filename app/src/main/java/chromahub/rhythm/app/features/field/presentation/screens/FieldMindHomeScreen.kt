@@ -1141,33 +1141,7 @@ private fun LiveWeatherDashboardWidget(
                         color = if (currentWeather != null) textOnScene.copy(alpha = 0.7f) else MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
-                // Actions row: expand indicator + refresh
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    // Refresh button
-                    Icon(FieldMindIcons.Weather,
-                        null,
-                        tint = if (currentWeather != null) conditionColor else MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier
-                            .clip(CircleShape)
-                            .background(
-                                if (currentWeather != null) conditionColor.copy(alpha = 0.12f)
-                                else MaterialTheme.colorScheme.surfaceContainerHigh
-                            )
-                            .padding(8.dp)
-                            .graphicsLayer { rotationZ = refreshRotation.value }
-                            .clickable(enabled = !weatherLoading) {
-                                scope.launch {
-                                    isRotating = true
-                                    refreshRotation.animateTo(360f, tween(400))
-                                    refreshRotation.snapTo(0f)
-                                    isRotating = false
-                                    val snapshot = viewModel.refreshWeatherFromLocation()
-                                    onRefresh(snapshot)
-                                }
-                            },
-                        size = 20.dp
-                    )
-                }
+
             }
 
             // ── Time-of-day greeting ──
@@ -1354,6 +1328,54 @@ private fun LiveWeatherDashboardWidget(
                             }
                         }
                     }
+                }
+
+                // ── 5-Day Forecast ──
+                if (w.dailyForecasts.isNotEmpty()) {
+                    val dayNames = listOf("Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat")
+                    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            Icon(FieldMindIcons.Calendar, null, tint = textOnScene.copy(alpha = 0.6f), size = 14.dp)
+                            Text("5-day forecast", style = MaterialTheme.typography.labelSmall, color = textOnScene.copy(alpha = 0.6f), fontWeight = FontWeight.SemiBold)
+                        }
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
+                            w.dailyForecasts.take(5).forEachIndexed { index, day ->
+                                val dayName = if (index == 0) "Today" else {
+                                    val cal = java.util.Calendar.getInstance()
+                                    cal.add(java.util.Calendar.DAY_OF_MONTH, index)
+                                    dayNames[cal.get(java.util.Calendar.DAY_OF_WEEK) - 1]
+                                }
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    verticalArrangement = Arrangement.spacedBy(4.dp),
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(12.dp))
+                                        .background(textOnScene.copy(alpha = 0.06f))
+                                        .padding(horizontal = 6.dp, vertical = 8.dp)
+                                ) {
+                                    Text(dayName, style = MaterialTheme.typography.labelSmall, color = textOnScene.copy(alpha = 0.7f), fontWeight = FontWeight.Medium)
+                                    Icon(
+                                        weatherConditionIcon(day.weatherCode),
+                                        null,
+                                        tint = textOnScene.copy(alpha = 0.8f),
+                                        size = 18.dp
+                                    )
+                                    Text(
+                                        "%.0f°".format(day.temperatureMax),
+                                        style = MaterialTheme.typography.bodySmall,
+                                        fontWeight = FontWeight.Bold,
+                                        color = textOnScene
+                                    )
+                                    Text(
+                                        "%.0f°".format(day.temperatureMin),
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = textOnScene.copy(alpha = 0.5f)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                    Spacer(Modifier.height(4.dp))
                 }
 
                 // ── Conditions nudge ──

@@ -1051,7 +1051,7 @@ private fun EditQuestionDialog(entity: QuestionEntity, viewModel: FieldMindViewM
 private fun EditHypothesisDialog(entity: HypothesisEntity, viewModel: FieldMindViewModel, onDismiss: () -> Unit) {
     val questions by viewModel.questions.collectAsState()
     var prediction by remember { mutableStateOf(entity.prediction) }; var reasoning by remember { mutableStateOf(entity.reasoning) }; var evidence by remember { mutableStateOf(entity.evidenceNeeded) }; var support by remember { mutableStateOf(entity.supportCriteria) }; var weaken by remember { mutableStateOf(entity.weakeningCriteria) }; var test by remember { mutableStateOf(entity.testMethod) }; var result by remember { mutableStateOf(entity.resultStatus) }; var confidence by remember { mutableStateOf(entity.confidencePercent.toFloat()) }
-    var linkedId by remember { mutableStateOf(entity.relatedQuestionId) }
+    var linkedId by remember { mutableStateOf(entity.linkedQuestionId) }
     var showAdvanced by remember { mutableStateOf(false) }
 
     fun save() {
@@ -1065,7 +1065,7 @@ private fun EditHypothesisDialog(entity: HypothesisEntity, viewModel: FieldMindV
                 testMethod = test.trim(),
                 resultStatus = result,
                 confidencePercent = confidence.toInt(),
-                relatedQuestionId = linkedId
+                linkedQuestionId = linkedId
             ))
             onDismiss()
         }
