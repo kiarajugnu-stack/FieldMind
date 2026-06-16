@@ -25,6 +25,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -627,7 +628,7 @@ internal fun NewDataRecordDialog(viewModel: FieldMindViewModel, onDismiss: () ->
             }
         }
         DialogDividerSection("Measurement", FieldMindIcons.Line, FieldMindTheme.colors.data)
-        FieldTextField(value, { value = it }, "Value / items / samples")
+        FieldTextField(value, { value = it }, "Value / items / samples", keyboardType = KeyboardType.Number)
         FieldTextField(unit, { unit = it }, "Unit", supportingText = "Suggested for $tool: ${defaultUnitForTool(tool)}")
         FieldTextField(location, { location = it }, "Location / site")
         DialogDividerSection("Context", FieldMindIcons.Note, FieldMindTheme.colors.data)
@@ -855,8 +856,8 @@ private fun EditObservationDialog(entity: ObservationEntity, viewModel: FieldMin
         }
         FieldTextField(location, { location = it }, "Location")
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            FieldTextField(latitude, { latitude = it }, "Latitude", modifier = Modifier.weight(1f))
-            FieldTextField(longitude, { longitude = it }, "Longitude", modifier = Modifier.weight(1f))
+            FieldTextField(latitude, { latitude = it }, "Latitude", modifier = Modifier.weight(1f), keyboardType = KeyboardType.Decimal)
+            FieldTextField(longitude, { longitude = it }, "Longitude", modifier = Modifier.weight(1f), keyboardType = KeyboardType.Decimal)
         }
         DialogDividerSection("Evidence & tags", FieldMindIcons.Camera, FieldMindTheme.colors.observation)
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -1113,7 +1114,7 @@ private fun EditDataRecordDialog(entity: DataRecordEntity, viewModel: FieldMindV
         ChoiceChipsField("Tool", dataTools, tool) { tool = it }
         FieldTextField(label, { label = it }, "Label")
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            FieldTextField(value, { value = it }, "Value", modifier = Modifier.weight(1f))
+            FieldTextField(value, { value = it }, "Value", modifier = Modifier.weight(1f), keyboardType = KeyboardType.Number)
             FieldTextField(unit, { unit = it }, "Unit", modifier = Modifier.weight(1f))
         }
         FieldTextField(location, { location = it }, "Location / site")
