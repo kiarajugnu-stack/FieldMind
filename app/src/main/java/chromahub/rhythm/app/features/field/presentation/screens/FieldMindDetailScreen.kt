@@ -2314,21 +2314,65 @@ private fun BacklinksPanel(links: List<Triple<String, String, Long>>, onOpenDeta
 
 @Composable
 private fun InlineEditNote(entity: NoteEntity, viewModel: FieldMindViewModel, onDone: () -> Unit) {
+    val colors = FieldMindTheme.colors
     var title by remember { mutableStateOf(entity.title) }
     var body by remember { mutableStateOf(entity.body) }
     var category by remember { mutableStateOf(entity.category) }
     var tags by remember { mutableStateOf(entity.tags) }
     var attachments by remember { mutableStateOf(entity.attachmentUris) }
-    InlineFormCard("Edit Note", onDismiss = onDone, onSave = {
+
+    fun save() {
         if (title.isNotBlank() || body.isNotBlank()) {
-            viewModel.updateNoteEntity(entity.copy(title = title.trim().ifBlank { body.take(36) }, body = body.trim(), category = category, tags = tags.trim(), attachmentUris = attachments.trim())); onDone()
+            viewModel.updateNoteEntity(entity.copy(
+                title = title.trim().ifBlank { body.take(36) },
+                body = body.trim(),
+                category = category,
+                tags = tags.trim(),
+                attachmentUris = attachments.trim()
+            ))
+            onDone()
         }
-    }, saveEnabled = title.isNotBlank() || body.isNotBlank()) {
-        FormChoice("Category", observationCategories, category) { category = it }
-        FieldTextField(title, { title = it }, "Title")
-        FieldTextField(body, { body = it }, "Body", minLines = 5)
-        FieldTextField(tags, { tags = it }, "Tags")
-        FieldTextField(attachments, { attachments = it }, "Attachments", minLines = 2, supportingText = "One stored attachment per line: type|caption|uri")
+    }
+
+    Card(
+        shape = RoundedCornerShape(28.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                Box(
+                    Modifier.size(40.dp).clip(RoundedCornerShape(12.dp))
+                        .background(colors.source.copy(alpha = 0.14f)),
+                    contentAlignment = Alignment.Center
+                ) { Icon(FieldMindIcons.Note, null, tint = colors.source, size = 22.dp) }
+                Column(Modifier.weight(1f)) {
+                    Text("Edit note", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    Text("Update title, content, and metadata", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+            Text("Category", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            ChoiceChips(observationCategories, category, onSelected = { category = it })
+            FieldTextField(title, { title = it }, "Title", supportingText = "Auto-filled from body if left blank")
+            FieldTextField(body, { body = it }, "Body", minLines = 6)
+            FieldTextField(tags, { tags = it }, "Tags", supportingText = "Comma-separated keywords")
+            FieldTextField(attachments, { attachments = it }, "Attachments", minLines = 2, supportingText = "One per line: type|caption|uri")
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                OutlinedButton(onClick = onDone, modifier = Modifier.weight(1f), shape = RoundedCornerShape(14.dp)) {
+                    Text("Cancel")
+                }
+                Button(
+                    onClick = { save() },
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(14.dp),
+                    enabled = title.isNotBlank() || body.isNotBlank()
+                ) {
+                    Icon(FieldMindIcons.Check, null, size = 18.dp)
+                    Spacer(Modifier.size(6.dp))
+                    Text("Save changes")
+                }
+            }
+        }
     }
 }
 
@@ -2358,23 +2402,46 @@ private fun InlineEditObservation(entity: ObservationEntity, viewModel: FieldMin
             }
         }
     }
-    InlineFormCard("Edit Observation", onDismiss = onDone, onSave = {
+    fun save() {
         if (subject.isNotBlank()) {
-            viewModel.updateObservation(entity.copy(subject = subject.trim(), category = category, factsOnlyNotes = facts.trim(), confidenceLevel = confidence, manualLocation = location.trim(), latitude = latitude.toDoubleOrNull(), longitude = longitude.toDoubleOrNull(), evidenceSummary = evidence.trim(), moodOrContext = fieldContext.trim()), tags)
+            viewModel.updateObservation(entity.copy(
+                subject = subject.trim(),
+                category = category,
+                factsOnlyNotes = facts.trim(),
+                confidenceLevel = confidence,
+                manualLocation = location.trim(),
+                latitude = latitude.toDoubleOrNull(),
+                longitude = longitude.toDoubleOrNull(),
+                evidenceSummary = evidence.trim(),
+                moodOrContext = fieldContext.trim()
+            ), tags)
             onDone()
         }
-    }, saveEnabled = subject.isNotBlank()) {
-        CaptureStep("Identity", "Keep the subject and category easy to scan later.", FieldMindIcons.Observation) {
+    }
+
+    Card(
+        shape = RoundedCornerShape(28.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                Box(
+                    Modifier.size(40.dp).clip(RoundedCornerShape(12.dp))
+                        .background(FieldMindTheme.colors.observation.copy(alpha = 0.14f)),
+                    contentAlignment = Alignment.Center
+                ) { Icon(FieldMindIcons.Observation, null, tint = FieldMindTheme.colors.observation, size = 22.dp) }
+                Column(Modifier.weight(1f)) {
+                    Text("Edit observation", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    Text("Update facts, location, and metadata", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+            Text("Subject", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
             FieldTextField(subject, { subject = it }, "Subject")
+            Text("Category", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
             ChoiceChips(observationCategories, category) { category = it }
+            Text("Confidence", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
             ChoiceChips(confidenceOptions, confidence) { confidence = it }
-        }
-        CaptureStep("Facts & context", "Separate facts from mood, context, or field conditions.", FieldMindIcons.Edit) {
-            FieldTextField(facts, { facts = it }, "Facts only", minLines = 3)
-            ChoiceChips(contextPresets, fieldContext) { fieldContext = if (fieldContext.isBlank()) it else "$fieldContext, $it" }
-            FieldTextField(fieldContext, { fieldContext = it }, "Context / mood", minLines = 2)
-        }
-        CaptureStep("GPS", "Use automatic GPS or repair coordinates manually.", FieldMindIcons.Location) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 FilledTonalButton(onClick = { if (locationProvider.hasAnyLocationPermission()) startLocating() else appContext.startActivity(android.content.Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS)) }, modifier = Modifier.weight(1f), enabled = !locating) {
                     if (locating) { CircularProgressIndicator(Modifier.size(16.dp), strokeWidth = 2.dp); Spacer(Modifier.size(6.dp)); Text("Locating…") } else { Icon(FieldMindIcons.Location, null, size = 18.dp); Spacer(Modifier.size(6.dp)); Text("Use GPS") }
@@ -2386,8 +2453,26 @@ private fun InlineEditObservation(entity: ObservationEntity, viewModel: FieldMin
                 FieldTextField(latitude, { latitude = it }, "Latitude", modifier = Modifier.weight(1f))
                 FieldTextField(longitude, { longitude = it }, "Longitude", modifier = Modifier.weight(1f))
             }
+            FieldTextField(facts, { facts = it }, "Facts only", minLines = 3)
+            ChoiceChips(contextPresets, fieldContext) { fieldContext = if (fieldContext.isBlank()) it else "$fieldContext, $it" }
+            FieldTextField(fieldContext, { fieldContext = it }, "Context / mood", minLines = 2)
+            FieldTextField(tags, { tags = it }, "Tags", supportingText = "Comma-separated keywords")
+            FieldTextField(evidence, { evidence = it }, "Evidence summary", minLines = 2)
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                OutlinedButton(onClick = onDone, modifier = Modifier.weight(1f), shape = RoundedCornerShape(14.dp)) {
+                    Text("Cancel")
+                }
+                Button(
+                    onClick = { save() },
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(14.dp),
+                    enabled = subject.isNotBlank()
+                ) {
+                    Icon(FieldMindIcons.Check, null, size = 18.dp)
+                    Spacer(Modifier.size(6.dp))
+                    Text("Save changes")
+                }
+            }
         }
-        FieldTextField(tags, { tags = it }, "Tags (comma separated)")
-        FieldTextField(evidence, { evidence = it }, "Evidence summary", minLines = 2)
     }
 }

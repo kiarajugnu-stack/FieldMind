@@ -1007,22 +1007,22 @@ private fun QuickObservationForm(
 //  Quick Classification Grid — Prominent category grid per spec
 // ══════════════════════════════════════════════════════════════════════
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun QuickClassificationGrid(
     selectedCategory: String,
     onCategorySelected: (String) -> Unit
 ) {
     val colors = FieldMindTheme.colors
+    data class CategoryItem(val name: String, val icon: MaterialSymbolIcon)
     val displayCategories = listOf(
-        "Bird" to "🐦",
-        "Mammal" to "🐾",
-        "Reptile" to "🦎",
-        "Amphibian" to "🐸",
-        "Insect" to "🦋",
-        "Plant" to "🌳",
-        "Fungus" to "🍄",
-        "Habitat" to "🌊"
+        CategoryItem("Bird", FieldMindIcons.Bird),
+        CategoryItem("Mammal", FieldMindIcons.Animal),
+        CategoryItem("Reptile", FieldMindIcons.Animal),
+        CategoryItem("Amphibian", FieldMindIcons.Animal),
+        CategoryItem("Insect", FieldMindIcons.Insect),
+        CategoryItem("Plant", FieldMindIcons.Plant),
+        CategoryItem("Fungus", FieldMindIcons.Plant),
+        CategoryItem("Habitat", FieldMindIcons.Nature)
     )
 
     Card(
@@ -1030,37 +1030,55 @@ private fun QuickClassificationGrid(
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
-        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Icon(FieldMindIcons.Category, null, tint = MaterialTheme.colorScheme.primary, size = 18.dp)
                 Text("Quick classification", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
             }
-            FlowRow(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                displayCategories.forEach { (name, emoji) ->
-                    val isSelected = selectedCategory == name
-                    val accent = colors.accentFor(name)
-                    Surface(
-                        onClick = { onCategorySelected(name) },
-                        shape = RoundedCornerShape(14.dp),
-                        color = if (isSelected) accent.copy(alpha = 0.18f) else MaterialTheme.colorScheme.surfaceContainerHigh,
-                        border = if (isSelected) androidx.compose.foundation.BorderStroke(1.5.dp, accent) else null,
-                        tonalElevation = 0.dp
-                    ) {
-                        Row(
-                            Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+            // Responsive grid: chunk into 4-per-row tiles
+            displayCategories.chunked(4).forEach { row ->
+                Row(
+                    Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    row.forEach { cat ->
+                        val isSelected = selectedCategory == cat.name
+                        val accent = colors.accentFor(cat.name)
+                        Surface(
+                            onClick = { onCategorySelected(cat.name) },
+                            shape = RoundedCornerShape(16.dp),
+                            color = if (isSelected) accent.copy(alpha = 0.18f) else MaterialTheme.colorScheme.surfaceContainerHigh,
+                            border = if (isSelected) androidx.compose.foundation.BorderStroke(1.5.dp, accent) else null,
+                            tonalElevation = 0.dp,
+                            modifier = Modifier.weight(1f)
                         ) {
-                            Text(emoji, style = MaterialTheme.typography.bodyMedium)
-                            Text(
-                                name,
-                                style = MaterialTheme.typography.labelMedium,
-                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                                color = if (isSelected) accent else MaterialTheme.colorScheme.onSurfaceVariant
-                            )
+                            Column(
+                                Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 10.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                Icon(
+                                    icon = cat.icon,
+                                    contentDescription = cat.name,
+                                    tint = if (isSelected) accent else MaterialTheme.colorScheme.onSurfaceVariant,
+                                    size = 22.dp
+                                )
+                                Text(
+                                    cat.name,
+                                    style = MaterialTheme.typography.labelSmall,
+                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                    color = if (isSelected) accent else MaterialTheme.colorScheme.onSurfaceVariant,
+                                    maxLines = 1
+                                )
+                            }
+                        }
+                        // Balance the row if fewer than 4 items
+                        if (row.size < 4 && cat == row.last()) {
+                            repeat(4 - row.size) {
+                                Spacer(Modifier.weight(1f))
+                            }
                         }
                     }
                 }

@@ -55,6 +55,26 @@ import kotlin.math.roundToInt
 import fieldmind.research.app.features.field.presentation.components.ObservationsTimelineSection
 import fieldmind.research.app.features.field.presentation.components.ObservationStatsDashboard
 
+/**
+ * Loads a PNG image from Android assets folder as an ImageBitmap for display.
+ * Returns null if the asset path is null or the file cannot be loaded.
+ */
+@Composable
+internal fun rememberAssetImage(assetPath: String?): androidx.compose.ui.graphics.ImageBitmap? {
+    val context = LocalContext.current
+    return remember(assetPath) {
+        if (assetPath != null) {
+            try {
+                val inputStream = context.assets.open(assetPath)
+                val bitmap = android.graphics.BitmapFactory.decodeStream(inputStream)
+                inputStream.close()
+                bitmap?.asImageBitmap()
+            } catch (_: Exception) { null }
+        } else null
+    }
+}
+
+
 // ══════════════════════════════════════════════════════════════════════
 //  Today (Home) — Animated weather centerpiece + research dashboard
 // ══════════════════════════════════════════════════════════════════════
@@ -112,6 +132,7 @@ fun HomeScreen(
     val weatherShowPressure by viewModel.fieldSettings.weatherShowPressure.collectAsState()
     val tempUnit by viewModel.fieldSettings.tempUnit.collectAsState()
     val windSpeedUnit by viewModel.fieldSettings.windSpeedUnit.collectAsState()
+    val developerMode by viewModel.fieldSettings.developerMode.collectAsState()
 
     // ── Weather state (hoisted outside LazyColumn so it persists across scroll) ──
     var homeCurrentWeather by remember { mutableStateOf<WeatherSnapshot?>(null) }
@@ -206,7 +227,8 @@ fun HomeScreen(
                     moonPhase = moonPhase,
                     conditionsNudge = conditionsNudge,
                     sunrise = homeCurrentWeather?.sunrise,
-                    sunset = homeCurrentWeather?.sunset
+                    sunset = homeCurrentWeather?.sunset,
+                    developerMode = developerMode
                 )
             }
 
@@ -430,6 +452,7 @@ fun HomeScreen(
                             "Weather" to FieldMindIcons.Weather,
                             "Other" to FieldMindIcons.Water
                         )
+                        var customCategory by remember { mutableStateOf("") }
                         
                         val colors = FieldMindTheme.colors
 
@@ -484,14 +507,53 @@ fun HomeScreen(
                                     }
                                 }
                             }
+                            
+                            // Custom category text field when "Other" is selected
+                            if (selectedCaptureCategory == "Other") {
+                                OutlinedTextField(
+                                    value = customCategory,
+                                    onValueChange = { customCategory = it },
+                                    label = { Text("Specify category") },
+                                    placeholder = { Text("e.g. Reptile, Amphibian, Fungus…") },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    shape = RoundedCornerShape(16.dp),
+                                    singleLine = true,
+                                    colors = OutlinedTextFieldDefaults.colors(
+                                        focusedBorderColor = colors.accentFor("Other"),
+                                        cursorColor = colors.accentFor("Other")
+                                    )
+                                )
+                            }
                         }
 
-                        // Confirm button
+                        // Confirm button - actually create observation
                         Button(
                             onClick = {
+                                val photoUri = capturedPhotoUri
+                                if (photoUri != null) {
+                                    val effectiveCategory = if (selectedCaptureCategory == "Other" && customCategory.isNotBlank()) customCategory else selectedCaptureCategory
+                                    val effectiveSubject = "$effectiveCategory observation"
+                                    val attachment = capturedPhotoUri?.let { uri ->
+                                        listOf(DraftEvidenceAttachment("Photo", uri, "Camera capture", mimeType = capturedPhotoMime))
+                                    } ?: emptyList()
+                                    viewModel.addObservation(
+                                        subject = effectiveSubject,
+                                        category = effectiveCategory,
+                                        facts = "Auto-captured $effectiveCategory observation from camera.",
+                                        confidence = "Likely",
+                                        manualLocation = "",
+                                        tags = "camera, $effectiveCategory",
+                                        evidence = "Photo evidence captured via camera",
+                                        context = "",
+                                        attachments = attachment
+                                    )
+                                    scope.launch {
+                                        captureSnackbarHostState.showSnackbar("$effectiveCategory observation saved")
+                                    }
+                                }
                                 showCategoryPicker = false
-                                // Navigate to ObserveScreen with photo URI
-                                onNavigate(FieldMindScreen.Observe)
+                                capturedPhotoUri = null
+                                capturedPhotoMime = null
                             },
                             modifier = Modifier.fillMaxWidth().height(52.dp),
                             shape = RoundedCornerShape(18.dp)
@@ -711,12 +773,39 @@ private fun LiveWeatherDashboardWidget(
     moonPhase: String = "",
     conditionsNudge: String = "",
     sunrise: String? = null,
-    sunset: String? = null
+    sunset: String? = null,
+    developerMode: Boolean = false
 ) {
     val colors = FieldMindTheme.colors
     var isRotating by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
     val refreshRotation = remember { Animatable(0f) }
+<<<<<<< Updated upstream
+=======
+    var isExpanded by remember { mutableStateOf(false) }
+    var testWeatherCode by remember { mutableStateOf<Int?>(null) }
+    var testIsNight by remember { mutableStateOf(false) }
+
+    // Override weather code with test value if in developer mode
+    val displayWeatherCode = testWeatherCode ?: currentWeather?.weatherCode ?: 0
+    val displayNight = if (developerMode) testIsNight else isNight
+
+    // Time of day awareness
+    val currentHour = remember { java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY) }
+    val timeOfDay = when (currentHour) {
+        in 5..11 -> "morning"
+        in 12..16 -> "afternoon"
+        in 17..20 -> "evening"
+        else -> "night"
+    }
+    val isNight = timeOfDay == "night"
+    val timeGreeting = when (timeOfDay) {
+        "morning" -> "Good morning"
+        "afternoon" -> "Good afternoon"
+        "evening" -> "Good evening"
+        else -> "Good night"
+    }
+>>>>>>> Stashed changes
 
     // Show the weather condition icon in the header — show weather icon if we have data, 
     // loading spinner ONLY if there's no data yet (first load)
@@ -734,7 +823,7 @@ private fun LiveWeatherDashboardWidget(
     val weatherGradient = Brush.horizontalGradient(displayColors)
 
     val conditionColor = remember(currentWeather) {
-        val code = currentWeather?.weatherCode ?: 0
+        val code = displayWeatherCode
         when {
             code == 0 || code == 1 -> colors.positive            // Clear
             code in 2..3 -> colors.info                           // Cloudy
@@ -777,7 +866,7 @@ private fun LiveWeatherDashboardWidget(
                         )
                 ) {
                     AnimatedWeatherScene(
-                        weatherCode = currentWeather!!.weatherCode,
+                        weatherCode = displayWeatherCode,
                         temperature = currentWeather!!.temperature,
                         sunrise = currentWeather!!.sunrise,
                         sunset = currentWeather!!.sunset,
@@ -818,7 +907,7 @@ private fun LiveWeatherDashboardWidget(
                         )
                     } else {
                         Icon(
-                            weatherConditionIcon(currentWeather?.weatherCode ?: 0),
+                            weatherConditionIcon(displayWeatherCode),
                             null,
                             tint = Color.White,
                             size = 24.dp
@@ -917,10 +1006,9 @@ private fun LiveWeatherDashboardWidget(
                     }
                     if (showCondition) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Icon(
-                                weatherConditionIcon(w.weatherCode),
-                                null,
-                                tint = conditionColor,
+                            WeatherConditionImage(
+                                code = displayWeatherCode,
+                                isNight = displayNight,
                                 size = 40.dp
                             )
                             Text(
@@ -1001,6 +1089,11 @@ private fun LiveWeatherDashboardWidget(
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
+                        }
+
+                        // ── Developer: Test weather conditions ──
+                        if (developerMode) {
+                            DevWeatherTestPanel(testWeatherCode, testIsNight, { testWeatherCode = it }, { testIsNight = it })
                         }
                     }
                     // Pressure
@@ -1134,7 +1227,7 @@ private fun LiveWeatherDashboardWidget(
 }
 }
 
-private fun weatherConditionIcon(code: Int): MaterialSymbolIcon {
+internal fun weatherConditionIcon(code: Int): MaterialSymbolIcon {
     return when (code) {
         0, 1 -> FieldMindIcons.Weather         // Clear / mainly clear
         2 -> FieldMindIcons.Cloud               // Partly cloudy
@@ -1147,6 +1240,47 @@ private fun weatherConditionIcon(code: Int): MaterialSymbolIcon {
         85, 86 -> FieldMindIcons.Snowy              // Snow showers
         95, 96, 99 -> FieldMindIcons.Thunderstorm   // Thunderstorm
         else -> FieldMindIcons.Weather
+    }
+}
+
+/**
+ * Loads an icons8 PNG image for the given weather condition when available.
+ * Falls back to the MaterialSymbolIcon for conditions without PNG assets.
+ * Uses 100px PNGs for main display, 50px for compact mode.
+ */
+@Composable
+internal fun WeatherConditionImage(code: Int, isNight: Boolean = false, compact: Boolean = false, size: androidx.compose.ui.unit.Dp = 40.dp) {
+    val suffix = if (compact) "50" else "100"
+    val hour = remember { java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY) }
+    val isMidnight = hour in 0..4
+    val assetPath = remember(code, isNight, isMidnight, compact) {
+        when {
+            // Fog → dedicated fog icon
+            code in 45..48 -> "moon_phases/icons8-fog-$suffix.png"
+            // Night clear sky → night scene
+            isNight && code <= 1 && isMidnight -> "moon_phases/icons8-midnight-$suffix.png"
+            isNight && code <= 1 -> "moon_phases/icons8-night-$suffix.png"
+            // Night fog → windy night
+            isNight && code in 45..48 -> "moon_phases/icons8-night-wind-$suffix.png"
+            // Eclipse → eclipse icon
+            code <= 1 && !isNight -> "moon_phases/icons8-eclipse-$suffix.png"
+            // Thunderstorm / extreme → mars-rover
+            code >= 95 -> "moon_phases/icons8-mars-rover-$suffix.png"
+            // Moon symbol fallback for night
+            isNight -> "moon_phases/icons8-moon-symbol-$suffix.png"
+            else -> null
+        }
+    }
+    val imageBitmap = rememberAssetImage(assetPath)
+    if (imageBitmap != null) {
+        Image(
+            bitmap = imageBitmap,
+            contentDescription = "Weather condition",
+            modifier = Modifier.size(size),
+            contentScale = androidx.compose.ui.layout.ContentScale.Fit
+        )
+    } else {
+        Icon(weatherConditionIcon(code), null, tint = MaterialTheme.colorScheme.onSurface, size = size)
     }
 }
 
@@ -1926,6 +2060,110 @@ private fun SessionObservationsCard(
 //  Moon Phase Calculation — Based on the age of the lunar cycle
 // ══════════════════════════════════════════════════════════════════════
 
+@Composable
+internal fun DevWeatherTestPanel(
+    testCode: Int?,
+    testNight: Boolean,
+    onCodeChange: (Int?) -> Unit,
+    onNightChange: (Boolean) -> Unit
+) {
+    val colors = FieldMindTheme.colors
+    val weatherCodes = listOf(
+        0 to "Clear", 1 to "Mainly Clear", 2 to "Cloudy", 3 to "Overcast",
+        45 to "Fog", 48 to "Rime Fog", 51 to "Drizzle", 61 to "Rain",
+        71 to "Snow", 80 to "Rain Showers", 85 to "Snow Showers", 95 to "Thunderstorm", 99 to "Severe TS"
+    )
+
+    // Night-specific preset codes
+    val nightCodes = listOf(
+        0 to "Night Clear", 45 to "Night Fog", 95 to "Night Storm"
+    )
+    val currentLabel = if (testNight && testCode != null) {
+        nightCodes.firstOrNull { it.first == testCode }?.second ?: "Custom ($testCode)"
+    } else if (testCode != null) {
+        weatherCodes.firstOrNull { it.first == testCode }?.second ?: "Custom ($testCode)"
+    } else {
+        "Live (${testCode ?: "-"})"
+    }
+
+    Card(
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.3f)
+        )
+    ) {
+        Column(
+            Modifier.padding(12.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                Icon(FieldMindIcons.Sparkle, null, tint = colors.info, size = 16.dp)
+                Text(
+                    "Dev: Test conditions",
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = colors.info
+                )
+                Spacer(Modifier.weight(1f))
+                Text(
+                    if (testCode != null) "Override: $currentLabel" else "Using live data",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
+            // Weather condition chips
+            Text("Weather codes:", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            LazyRow(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                items(weatherCodes) { (code, label) ->
+                    FilterChip(
+                        selected = testCode == code && !testNight,
+                        onClick = {
+                            if (testCode == code && !testNight) {
+                                onCodeChange(null)
+                            } else {
+                                onCodeChange(code)
+                                onNightChange(false)
+                            }
+                        },
+                        label = { Text(label, style = MaterialTheme.typography.labelSmall) },
+                        leadingIcon = if (testCode == code && !testNight) {{ Icon(FieldMindIcons.Check, null, size = 14.dp) }} else null
+                    )
+                }
+            }
+
+            // Night mode toggle
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                FilterChip(
+                    selected = testNight,
+                    onClick = {
+                        onNightChange(!testNight)
+                        if (testCode == null) onCodeChange(0)
+                    },
+                    label = { Text("Night mode", style = MaterialTheme.typography.labelSmall) },
+                    leadingIcon = if (testNight) {{ Icon(FieldMindIcons.Dark, null, size = 14.dp) }} else null
+                )
+                // Reset button
+                TextButton(onClick = { onCodeChange(null); onNightChange(false) }) {
+                    Text("Reset", style = MaterialTheme.typography.labelSmall)
+                }
+            }
+
+            // Show preview of the selected icons8 PNG
+            if (testCode != null) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    WeatherConditionImage(code = testCode, isNight = testNight, compact = true, size = 32.dp)
+                    val todayDate = remember { LocalDate.now() }; MoonPhaseImage(getMoonPhase(todayDate), size = 24.dp, decorative = testNight)
+                    Column {
+                        Text("Icon preview (${testCode})", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text("Night: ${if (testNight) "ON" else "OFF"}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                }
+            }
+        }
+    }
+}
+
 private fun getMoonPhase(date: LocalDate): String {
     // Calculate approximate moon phase using the Julian day of the reference new moon
     // Reference: 2000-01-06 18:14 UTC was a new moon
@@ -1945,6 +2183,7 @@ private fun getMoonPhase(date: LocalDate): String {
     }
 }
 
+<<<<<<< Updated upstream
 private fun moonPhaseIcon(phase: String): MaterialSymbolIcon = when {
     phase.startsWith("New") -> FieldMindIcons.MoonNew
     phase.startsWith("Waxing crescent") || phase.startsWith("Waning crescent") -> FieldMindIcons.MoonCrescent
@@ -1952,6 +2191,51 @@ private fun moonPhaseIcon(phase: String): MaterialSymbolIcon = when {
     phase.startsWith("Waxing gibbous") || phase.startsWith("Waning gibbous") -> FieldMindIcons.MoonGibbous
     phase.startsWith("Full") -> FieldMindIcons.MoonFull
     else -> FieldMindIcons.MoonNew
+=======
+@Composable
+internal fun MoonPhaseImage(phase: String, size: androidx.compose.ui.unit.Dp = 28.dp, decorative: Boolean = false) {
+    val suffix = if (size < 24.dp) "50" else "100"
+    val assetPath = remember(phase, decorative, size) {
+        if (decorative) {
+            // Decorative/heritage icons for special display
+            when {
+                phase.startsWith("Full") -> "moon_phases/icons8-werewolf-$suffix.png"
+                phase.startsWith("Waxing crescent") || phase.startsWith("Waning crescent") || phase.startsWith("First") || phase.startsWith("Last") -> "moon_phases/icons8-ramadan-$suffix.png"
+                phase.startsWith("New") -> "moon_phases/icons8-moon-and-stars-$suffix.png"
+                else -> "moon_phases/icons8-moonset-plumpy-" + when {
+                    size <= 20.dp -> "16"
+                    size <= 40.dp -> "32"
+                    size <= 80.dp -> "72"
+                    else -> "96"
+                } + ".png"
+            }
+        } else {
+            // Standard moon phase icons
+            when {
+                phase.startsWith("New") -> "moon_phases/icons8-new-moon-$suffix.png"
+                phase.startsWith("Waxing crescent") -> "moon_phases/icons8-waxing-crescent-$suffix.png"
+                phase.startsWith("Waning crescent") -> "moon_phases/icons8-waning-crescent-$suffix.png"
+                phase.startsWith("First") -> "moon_phases/icons8-first-quarter-$suffix.png"
+                phase.startsWith("Last") -> "moon_phases/icons8-waning-crescent-$suffix.png"
+                phase.startsWith("Waxing gibbous") -> "moon_phases/icons8-waxing-gibbous-$suffix.png"
+                phase.startsWith("Waning gibbous") -> "moon_phases/icons8-waning-gibbous-$suffix.png"
+                phase.startsWith("Full") -> "moon_phases/icons8-full-moon-$suffix.png"
+                else -> "moon_phases/icons8-moon-phase-$suffix.png"
+            }
+        }
+    }
+    val imageBitmap = rememberAssetImage(assetPath)
+    if (imageBitmap != null) {
+        Image(
+            bitmap = imageBitmap,
+            contentDescription = "Moon phase: $phase",
+            modifier = Modifier.size(size),
+            contentScale = androidx.compose.ui.layout.ContentScale.Fit
+        )
+    } else {
+        Icon(weatherConditionIcon(0), null, tint = MaterialTheme.colorScheme.onSurface, size = size)
+    }
+>>>>>>> Stashed changes
 }
 
 private fun formatTimeFromIso(isoString: String): String {

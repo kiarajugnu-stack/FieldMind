@@ -111,11 +111,19 @@ class SpeciesDatabase(private val context: Context) {
     private val downloadState = mutableMapOf<String, Boolean>()
 
     /**
+     * Get all species in the catalog (browsable list).
+     */
+    suspend fun getAll(limit: Int = 50): List<SpeciesRecord> = withContext(Dispatchers.Default) {
+        getCatalog().take(limit)
+    }
+
+    /**
      * Search species by query string.
      * Searches common name, scientific name, category, and tags.
+     * When query is blank, returns all species (up to limit) for browsing.
      */
     suspend fun search(query: String, limit: Int = 30): List<SpeciesRecord> = withContext(Dispatchers.Default) {
-        if (query.isBlank()) return@withContext emptyList()
+        if (query.isBlank()) return@withContext getCatalog().take(limit)
         val q = query.trim().lowercase()
         val catalog = getCatalog()
         catalog.filter { entry ->

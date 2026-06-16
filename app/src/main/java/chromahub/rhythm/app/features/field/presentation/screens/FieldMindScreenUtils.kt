@@ -188,7 +188,11 @@ internal fun InlineFormCard(
                 TextButton(onClick = onDismiss) { Text("Cancel") }
             }
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
-            Column(verticalArrangement = Arrangement.spacedBy(16.dp), content = content)
+            Column(
+                modifier = Modifier.heightIn(max = 480.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+                content = content
+            )
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                 Button(onClick = onSave, shape = RoundedCornerShape(16.dp), enabled = effectiveEnabled) { Text(saveLabel) }

@@ -23,3 +23,4 @@ private.properties.base64
 release.keystore
 keystore_base64.txt
 .config/keystore.properties
+node_modules

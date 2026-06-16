@@ -96,13 +96,9 @@ fun SpeciesIdentificationSheet(
         categories = database.getCategories()
     }
 
-    // Search when query changes
+    // Load all species on mount for immediate browsing; filter when query typed
     LaunchedEffect(query) {
-        if (query.length >= 2) {
-            searchResults = database.search(query)
-        } else {
-            searchResults = emptyList()
-        }
+        searchResults = database.search(query, limit = 50)
     }
 
     Dialog(
@@ -564,39 +560,7 @@ private fun SearchModeContent(
             searchResults.filter { it.category == selectedCategory }
         } else searchResults
 
-        if (query.length < 2) {
-            // Show category browse when no search query
-            item {
-                Surface(
-                    shape = RoundedCornerShape(16.dp),
-                    color = MaterialTheme.colorScheme.surfaceContainerLow
-                ) {
-                    Column(
-                        Modifier.padding(20.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Icon(
-                            MaterialSymbolIcon("search_hands_free"),
-                            null,
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
-                            size = 48.dp
-                        )
-                        Text(
-                            "Type at least 2 characters to search",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            textAlign = TextAlign.Center
-                        )
-                        Text(
-                            "Or browse by category above",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
-                        )
-                    }
-                }
-            }
-        } else if (filtered.isEmpty()) {
+        if (filtered.isEmpty()) {
             item {
                 Surface(
                     shape = RoundedCornerShape(16.dp),
