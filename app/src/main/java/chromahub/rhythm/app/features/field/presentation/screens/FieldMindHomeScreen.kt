@@ -1,6 +1,11 @@
 package fieldmind.research.app.features.field.presentation.screens
 
 import androidx.compose.animation.AnimatedVisibility
+
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
@@ -780,8 +785,6 @@ private fun LiveWeatherDashboardWidget(
     var isRotating by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
     val refreshRotation = remember { Animatable(0f) }
-<<<<<<< Updated upstream
-=======
     var isExpanded by remember { mutableStateOf(false) }
     var testWeatherCode by remember { mutableStateOf<Int?>(null) }
     var testIsNight by remember { mutableStateOf(false) }
@@ -805,7 +808,6 @@ private fun LiveWeatherDashboardWidget(
         "evening" -> "Good evening"
         else -> "Good night"
     }
->>>>>>> Stashed changes
 
     // Show the weather condition icon in the header — show weather icon if we have data, 
     // loading spinner ONLY if there's no data yet (first load)
@@ -849,7 +851,7 @@ private fun LiveWeatherDashboardWidget(
             .animateContentSize(
                 animationSpec = tween(durationMillis = 400, easing = FastOutSlowInEasing)
             )
-            .clickable { onNavigate(FieldMindScreen.WeatherDatabase) },
+            .clickable { isExpanded = true },
         shape = RoundedCornerShape(28.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
@@ -1224,7 +1226,97 @@ private fun LiveWeatherDashboardWidget(
             }
         }
     }
-}
+    // ── Expand to full-screen dashboard overlay (beautiful slide-up transition like Orphe) ──
+    AnimatedVisibility(
+        visible = isExpanded,
+        enter = slideInVertically(
+            initialOffsetY = { it },
+            animationSpec = tween(500, easing = FastOutSlowInEasing)
+        ) + fadeIn(tween(400)),
+        exit = slideOutVertically(
+            targetOffsetY = { it },
+            animationSpec = tween(350, easing = FastOutSlowInEasing)
+        ) + fadeOut(tween(250))
+    ) {
+        Box(
+            Modifier
+                .fillMaxSize()
+                .clickable { isExpanded = false }
+                .background(Color.Black.copy(alpha = 0.1f))
+        ) {
+            if (currentWeather != null) {
+                AnimatedWeatherScene(
+                    weatherCode = displayWeatherCode,
+                    temperature = currentWeather!!.temperature,
+                    sunrise = currentWeather!!.sunrise,
+                    sunset = currentWeather!!.sunset,
+                    compact = false,
+                    modifier = Modifier.fillMaxSize()
+                )
+            }
+            
+            Column(
+                Modifier
+                    .fillMaxSize()
+                    .statusBarsPadding()
+                    .padding(24.dp),
+                verticalArrangement = Arrangement.spacedBy(20.dp)
+            ) {
+                Row(
+                    Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column {
+                        Text(placeName ?: "Weather Dashboard", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold, color = Color.White)
+                        Text(timeGreeting, style = MaterialTheme.typography.titleMedium, color = Color.White.copy(alpha = 0.7f))
+                    }
+                    Surface(onClick = { isExpanded = false }, shape = CircleShape, color = Color.White.copy(alpha = 0.2f), modifier = Modifier.size(48.dp)) {
+                        Box(contentAlignment = Alignment.Center) { Icon(FieldMindIcons.Close, null, tint = Color.White, size = 24.dp) }
+                    }
+                }
+                
+                if (currentWeather != null) {
+                    val w = currentWeather!!
+                    Text(WeatherUnitConverter.formatTemp(w.temperature, tempUnit), style = MaterialTheme.typography.displayLarge.copy(fontWeight = FontWeight.ExtraBold, brush = Brush.horizontalGradient(displayColors)))
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        WeatherConditionImage(code = displayWeatherCode, isNight = displayNight, size = 56.dp)
+                        Text(w.weatherDescription, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = Color.White.copy(alpha = 0.9f))
+                    }
+                    
+                    Card(shape = RoundedCornerShape(28.dp), colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.12f)), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)) {
+                        Column(Modifier.fillMaxWidth().padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                            Text("Detailed metrics", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = Color.White)
+                            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
+                                if (showHumidity && w.humidity != null) { ExpandMetric("${w.humidity}%", "Humidity", FieldMindIcons.Water, colors.data) }
+                                if (showWind && w.windSpeed != null) { ExpandMetric(WeatherUnitConverter.formatWind(w.windSpeed, windSpeedUnit), "Wind", FieldMindIcons.windIconForSpeed(w.windSpeed), colors.warning) }
+                                if (showCloudCover && w.cloudCover != null) { ExpandMetric("${w.cloudCover}%", "Clouds", FieldMindIcons.Cloud, colors.hypothesis) }
+                                if (showPressure && w.pressure != null) { ExpandMetric("%.0f".format(w.pressure), "hPa", FieldMindIcons.Compress, colors.project) }
+                            }
+                        }
+                    }
+                    
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        if (sunrise != null) { ExpandInfoChip(FieldMindIcons.Sunrise, "Sunrise ${formatTimeFromIso(sunrise)}", Modifier.weight(1f)) }
+                        if (sunset != null) { ExpandInfoChip(FieldMindIcons.Sunset, "Sunset ${formatTimeFromIso(sunset)}", Modifier.weight(1f)) }
+                        if (moonPhase.isNotBlank()) { ExpandInfoChip(moonPhaseIcon(moonPhase), moonPhase, Modifier.weight(1f)) }
+                    }
+                    
+                    if (conditionsNudge.isNotBlank()) {
+                        Surface(shape = RoundedCornerShape(16.dp), color = colors.warning.copy(alpha = 0.2f)) {
+                            Row(Modifier.padding(horizontal = 16.dp, vertical = 12.dp).fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                                Icon(FieldMindIcons.Info, null, tint = colors.warning, size = 20.dp)
+                                Text(conditionsNudge, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold, color = colors.warning)
+                            }
+                        }
+                    }
+                    
+                    val weatherObsCount = observations.count { it.weatherTemperature != null }
+                    if (weatherObsCount > 0) { Text("$weatherObsCount observations with weather data", style = MaterialTheme.typography.bodySmall, color = Color.White.copy(alpha = 0.6f)) }
+                }
+            }
+        }
+    }
 }
 
 internal fun weatherConditionIcon(code: Int): MaterialSymbolIcon {
@@ -2354,6 +2446,64 @@ private fun RecentCapturesCard(observations: List<ObservationEntity>, onOpenDeta
                     }
                 }
             }
+        }
+    }
+}
+
+
+// ══════════════════════════════════════════════════════════════════════
+//  Expand Dashboard Helper Composables
+// ══════════════════════════════════════════════════════════════════════
+
+@Composable
+private fun ExpandMetric(
+    value: String,
+    label: String,
+    icon: MaterialSymbolIcon,
+    accent: Color
+) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        Icon(icon, null, tint = accent, size = 24.dp)
+        Text(
+            value,
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold,
+            color = Color.White
+        )
+        Text(
+            label,
+            style = MaterialTheme.typography.labelSmall,
+            color = Color.White.copy(alpha = 0.7f)
+        )
+    }
+}
+
+@Composable
+private fun ExpandInfoChip(
+    icon: MaterialSymbolIcon,
+    text: String,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        modifier = modifier,
+        shape = RoundedCornerShape(14.dp),
+        color = Color.White.copy(alpha = 0.1f)
+    ) {
+        Row(
+            Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            Icon(icon, null, tint = Color.White.copy(alpha = 0.8f), size = 16.dp)
+            Text(
+                text,
+                style = MaterialTheme.typography.labelMedium,
+                color = Color.White.copy(alpha = 0.8f),
+                fontWeight = FontWeight.Medium
+            )
         }
     }
 }
