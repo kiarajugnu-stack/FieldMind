@@ -46,6 +46,7 @@ import android.content.Intent
 import android.Manifest
 import androidx.compose.ui.platform.LocalUriHandler
 import fieldmind.research.app.features.field.data.location.FieldLocationProvider
+import androidx.activity.compose.BackHandler
 // ══════════════════════════════════════════════════════════════════════
 //  Shared dialog helpers — consistent containers for all edit/create dialogs
 // ══════════════════════════════════════════════════════════════════════
@@ -53,6 +54,7 @@ import fieldmind.research.app.features.field.data.location.FieldLocationProvider
 /**
  * Wraps any dialog content in a consistent Material 3 card with scroll support.
  * @param fullScreen When true, renders as a full-screen dialog (like ObserveScreen).
+ * @param isDirty When true and back is pressed, shows a confirmation dialog to prevent data loss.
  */
 @Composable
 private fun DialogWrapper(
@@ -60,33 +62,83 @@ private fun DialogWrapper(
     modifier: Modifier = Modifier,
     fullScreen: Boolean = false,
     verticalArrangement: Arrangement.Vertical = Arrangement.spacedBy(16.dp),
+    isDirty: () -> Boolean = { false },
     content: @Composable ColumnScope.() -> Unit
 ) {
-    Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false, dismissOnBackPress = !fullScreen, dismissOnClickOutside = !fullScreen)) {
+    var showExitConfirm by remember { mutableStateOf(false) }
+
+    // Handle system back button for full-screen mode with dirty confirmation
+    BackHandler(enabled = fullScreen) {
+        if (isDirty()) {
+            showExitConfirm = true
+        } else {
+            onDismiss()
+        }
+    }
+
+    // Confirmation dialog when exiting with unsaved changes
+    if (showExitConfirm) {
+        AlertDialog(
+            onDismissRequest = { showExitConfirm = false },
+            icon = { Icon(icon = FieldMindIcons.Info, contentDescription = null, size = 28.dp) },
+            title = { Text("Unsaved changes") },
+            text = {
+                Text(
+                    "You have unsaved changes. What would you like to do?",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = { showExitConfirm = false; onDismiss() },
+                    shape = RoundedCornerShape(14.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                ) {
+                    Text("Discard")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showExitConfirm = false }) {
+                    Text("Keep editing")
+                }
+            }
+        )
+    }
+
+    Dialog(onDismissRequest = { if (fullScreen && isDirty()) showExitConfirm = true else onDismiss() }, properties = DialogProperties(usePlatformDefaultWidth = false, dismissOnBackPress = false, dismissOnClickOutside = !fullScreen)) {
         if (fullScreen) {
             Surface(
                 modifier = Modifier.fillMaxSize(),
                 color = MaterialTheme.colorScheme.background
             ) {
                 Column(Modifier.fillMaxSize()) {
-                    // Full-screen header with back button
+                    // Full-screen header with back button + smooth divider
                     Row(
                         Modifier
                             .fillMaxWidth()
                             .background(MaterialTheme.colorScheme.background)
-                            .padding(horizontal = 20.dp, vertical = 12.dp),
+                            .padding(horizontal = 16.dp, vertical = 8.dp),
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
+                        horizontalArrangement = Arrangement.Start
                     ) {
-                        IconButton(onClick = onDismiss) {
-                            Icon(FieldMindIcons.Back, null, tint = MaterialTheme.colorScheme.onSurface, size = 24.dp)
+                        Surface(
+                            onClick = { if (isDirty()) showExitConfirm = true else onDismiss() },
+                            shape = RoundedCornerShape(14.dp),
+                            color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                            modifier = Modifier.size(44.dp)
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Icon(FieldMindIcons.Back, null, tint = MaterialTheme.colorScheme.onSurface, size = 22.dp)
+                            }
                         }
                     }
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
                     Column(
                         Modifier
                             .fillMaxSize()
                             .verticalScroll(rememberScrollState())
-                            .padding(horizontal = 20.dp, vertical = 8.dp),
+                            .padding(horizontal = 20.dp, vertical = 12.dp)
+                            .padding(bottom = 32.dp),
                         verticalArrangement = verticalArrangement
                     ) { content() }
                 }
@@ -259,7 +311,7 @@ internal fun NewQuestionDialog(viewModel: FieldMindViewModel, onDismiss: () -> U
         }
     }
 
-    DialogWrapper(onDismiss = onDismiss, fullScreen = true) {
+    DialogWrapper(onDismiss = onDismiss, fullScreen = true, isDirty = { question.isNotBlank() || answer.isNotBlank() }) {
         DialogHeader(FieldMindIcons.Question, "New Question", "Turn curiosity into something observable, measurable, comparable, or verifiable.")
         FieldTextField(question, { question = it }, "What do you want to find out?", minLines = 3, supportingText = "Example: Do bird visits increase after rain at this site?")
         DialogDividerSection("Classification", FieldMindIcons.Category)
@@ -287,7 +339,7 @@ internal fun NewProjectDialog(viewModel: FieldMindViewModel, onDismiss: () -> Un
         }
     }
 
-    DialogWrapper(onDismiss = onDismiss, fullScreen = true) {
+    DialogWrapper(onDismiss = onDismiss, fullScreen = true, isDirty = { title.isNotBlank() || objective.isNotBlank() || question.isNotBlank() || methods.isNotBlank() }) {
         DialogHeader(FieldMindIcons.Project, "New Project", "Define the question, evidence plan, data fields, and report direction.", accent = FieldMindTheme.colors.project)
         DialogDividerSection("Topic & title", FieldMindIcons.Category, FieldMindTheme.colors.project)
         FieldTextField(title, { title = it }, "Project title")
@@ -475,7 +527,7 @@ internal fun NewSourceDialog(viewModel: FieldMindViewModel, onDismiss: () -> Uni
         }
     }
 
-    DialogWrapper(onDismiss = onDismiss, fullScreen = true) {
+    DialogWrapper(onDismiss = onDismiss, fullScreen = true, isDirty = { title.isNotBlank() || author.isNotBlank() || summary.isNotBlank() || link.isNotBlank() || notes.isNotBlank() }) {
         DialogHeader(FieldMindIcons.Source, "Add Source", "Start with title + type. Fill in what you have.", accent = FieldMindTheme.colors.source)
         ChoiceChipsField("Source type", sourceLibraryTypes, type) { type = it }
         DialogDividerSection("Identity", FieldMindIcons.Article, FieldMindTheme.colors.source)
@@ -538,7 +590,7 @@ internal fun NewHypothesisDialog(viewModel: FieldMindViewModel, questions: List<
         }
     }
 
-    DialogWrapper(onDismiss = onDismiss, fullScreen = true) {
+    DialogWrapper(onDismiss = onDismiss, fullScreen = true, isDirty = { prediction.isNotBlank() || reasoning.isNotBlank() }) {
         DialogHeader(FieldMindIcons.Hypothesis, "New Hypothesis", "State the prediction, what would support it, and what would weaken it.", accent = FieldMindTheme.colors.hypothesis)
         if (questions.isNotEmpty()) {
             ChoiceChipsField("Linked question", listOf("No question") + questions.take(8).map { it.questionText.take(28) }, questions.firstOrNull { it.id == linkedId }?.questionText?.take(28) ?: "No question") { picked -> linkedId = questions.firstOrNull { it.questionText.startsWith(picked) }?.id }
@@ -648,7 +700,7 @@ internal fun NewReportDialog(viewModel: FieldMindViewModel, onDismiss: () -> Uni
         }
     }
 
-    DialogWrapper(onDismiss = onDismiss, fullScreen = true) {
+    DialogWrapper(onDismiss = onDismiss, fullScreen = true, isDirty = { title.isNotBlank() || background.isNotBlank() || question.isNotBlank() || methods.isNotBlank() }) {
         DialogHeader(FieldMindIcons.Report, "Report Builder", "Create a clean local draft: claim, evidence, reasoning, limitations, and next steps.", accent = FieldMindTheme.colors.report)
         DialogDividerSection("Type & title", FieldMindIcons.Category, FieldMindTheme.colors.report)
         ChoiceChipsField("Report type", reportTypes, type) { type = it }
@@ -832,7 +884,13 @@ private fun EditObservationDialog(entity: ObservationEntity, viewModel: FieldMin
         }
     }
 
-    DialogWrapper(onDismiss = onDismiss, fullScreen = true) {
+    val originalEntity = entity
+    DialogWrapper(onDismiss = onDismiss, fullScreen = true, isDirty = {
+        subject != originalEntity.subject || facts != originalEntity.factsOnlyNotes ||
+        category != originalEntity.category || confidence != originalEntity.confidenceLevel ||
+        location != originalEntity.manualLocation || tags != originalEntity.tags ||
+        evidence != originalEntity.evidenceSummary || fieldContext != originalEntity.moodOrContext
+    }) {
         DialogHeader(FieldMindIcons.Observation, "Edit Observation", "Update facts, location, evidence, and metadata", accent = FieldMindTheme.colors.observation)
         FieldTextField(subject, { subject = it }, "Subject")
         DialogDividerSection("Classification", FieldMindIcons.Category, FieldMindTheme.colors.observation)
@@ -981,7 +1039,12 @@ private fun EditProjectDialog(entity: ProjectEntity, viewModel: FieldMindViewMod
         }
     }
 
-    DialogWrapper(onDismiss = onDismiss, fullScreen = true) {
+    val originalProject = entity
+    DialogWrapper(onDismiss = onDismiss, fullScreen = true, isDirty = {
+        title != originalProject.title || objective != originalProject.objective ||
+        question != originalProject.researchQuestion || background != originalProject.backgroundNotes ||
+        methods != originalProject.methods || conclusion != originalProject.conclusion
+    }) {
         DialogHeader(FieldMindIcons.Project, "Edit Project", "Update project details and research plan", accent = FieldMindTheme.colors.project)
         DialogDividerSection("Project info", FieldMindIcons.Category, FieldMindTheme.colors.project)
         FieldTextField(title, { title = it }, "Project title")
@@ -1053,7 +1116,12 @@ private fun EditSourceDialog(entity: SourceEntity, viewModel: FieldMindViewModel
         }
     }
 
-    DialogWrapper(onDismiss = onDismiss, fullScreen = true) {
+    val originalSource = entity
+    DialogWrapper(onDismiss = onDismiss, fullScreen = true, isDirty = {
+        title != originalSource.title || author != originalSource.author ||
+        summary != originalSource.personalSummary || findings != originalSource.keyFindings ||
+        notes != originalSource.paperNotes || link != originalSource.link
+    }) {
         DialogHeader(FieldMindIcons.Source, "Edit Source", "Update source identity, notes, and status", accent = FieldMindTheme.colors.source)
         DialogDividerSection("Source type", FieldMindIcons.Category, FieldMindTheme.colors.source)
         ChoiceChipsField("Type", sourceLibraryTypes, type) { type = it }
@@ -1146,7 +1214,12 @@ private fun EditReportDialog(entity: ReportEntity, viewModel: FieldMindViewModel
         }
     }
 
-    DialogWrapper(onDismiss = onDismiss, fullScreen = true) {
+    val originalReport = entity
+    DialogWrapper(onDismiss = onDismiss, fullScreen = true, isDirty = {
+        title != originalReport.title || question != originalReport.question ||
+        methods != originalReport.methods || results != originalReport.results ||
+        conclusion != originalReport.conclusion || background != originalReport.background
+    }) {
         DialogHeader(FieldMindIcons.Report, "Edit Report", "Update report content and findings", accent = FieldMindTheme.colors.report)
         ChoiceChipsField("Report type", reportTypes, type) { type = it }
         FieldTextField(title, { title = it }, "Title")

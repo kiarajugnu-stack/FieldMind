@@ -7,6 +7,7 @@ import android.content.pm.PackageManager
 import android.media.MediaRecorder
 import android.net.Uri
 import android.os.Build
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -265,6 +266,59 @@ fun ObserveScreen(
             )
             showFastSnackbar(snackbar, scope, "Observation saved! Session: ${session.sessionObservationCount + 1}")
         }
+    }
+
+    // ── System back handler with unsaved data confirmation ──
+    val hasDirtyContent = session.isActive && (
+        session.subject.isNotBlank() || session.facts.isNotBlank() ||
+        session.attachments.isNotEmpty() || session.tags.isNotBlank() ||
+        session.fieldContext.isNotBlank() || session.manualLocation.isNotBlank()
+    )
+    var showExitConfirm by remember { mutableStateOf(false) }
+
+    BackHandler(enabled = true) {
+        if (hasDirtyContent) {
+            showExitConfirm = true
+        } else {
+            onBack?.invoke()
+        }
+    }
+
+    if (showExitConfirm) {
+        AlertDialog(
+            onDismissRequest = { showExitConfirm = false },
+            icon = { Icon(icon = FieldMindIcons.Info, contentDescription = null, size = 28.dp) },
+            title = { Text("Unsaved observation") },
+            text = {
+                Text(
+                    "You have an active observation with unsaved data. What would you like to do?",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        saveObservation()
+                        showExitConfirm = false
+                        onBack?.invoke()
+                    },
+                    shape = RoundedCornerShape(14.dp)
+                ) { Text("Save and exit") }
+            },
+            dismissButton = {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    TextButton(onClick = {
+                        showExitConfirm = false
+                        onBack?.invoke()
+                    }) {
+                        Text("Discard", color = MaterialTheme.colorScheme.error)
+                    }
+                    TextButton(onClick = { showExitConfirm = false }) {
+                        Text("Keep editing")
+                    }
+                }
+            }
+        )
     }
 
     Box(Modifier.fillMaxSize()) {

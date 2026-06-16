@@ -41,7 +41,69 @@ internal data class FieldMindChangelogEntry(
 
 private val fieldMindChangelog = listOf(
     FieldMindChangelogEntry(
+        version = "1.5.1-weather-crash-ui-polish",
+        date = "2026-06-16",
+        title = "Weather Animation Polish, Crash Fixes & Back Navigation",
+        importance = "Patch",
+        tags = listOf("Weather", "Fixes", "UI", "Navigation"),
+        sections = listOf(
+            "🌙 Weather Animation Polish" to listOf(
+                "Shooting star now fades in gradually during the first 25% of its flight instead of appearing suddenly, then fades out smoothly for a natural appear-then-disappear arc.",
+                "Moon repositioned to top-right corner with reduced size (0.07 normal / 0.09 compact) and tighter glow rings (2x/3x radius) so the glow doesn't wash over the whole scene.",
+                "Sun repositioned to top-right corner with reduced size, shorter rays (1.3x–1.5x radius), slower rotation (20s), and slower glow pulse (5s) for a calmer day scene.",
+                "Rain streaks reduced by ~40% (heavy 80→50, normal 50→30) with per-drop random phase delays so drops fall continuously as scattered random drops instead of synchronized sheets.",
+                "Rain fall speed reduced (base animation slowed from 400ms→700ms heavy, 700ms→1200ms normal) for a more gentle, natural look.",
+                "All rain types (drizzle, rain, showers, heavy rain) benefit from the continuous random-drop behavior."
+            ),
+            "🐛 Infinite-Height Scroll Crash Fix" to listOf(
+                "Fixed crash when tapping 'Add Species' or 'Add Task' in Project Detail — the root cause was 'verticalScroll' being placed before 'heightIn(max=...)' in the modifier chain, causing infinite height constraints inside LazyColumn items.",
+                "Reordered modifiers to Modifier.heightIn(max = 420.dp).verticalScroll(...) in SpeciesRegistryBuilder and ProjectTasksBuilder so height constraints clamp before the scroll check.",
+                "Replaced nested LazyRow (which conflicted with parent verticalScroll) with FlowRow in ProjectTasksBuilder to eliminate the nested scrollable issue entirely."
+            ),
+            "🔙 Back Navigation & Confirmation Dialogs" to listOf(
+                "Added BackHandler to all full-screen editors (projects, sources, questions, hypotheses, reports, observations) so the device back button works properly — previously dismissOnBackPress=false had no handler.",
+                "Added isDirty tracking with confirmation dialog: when content is filled and the user presses back, shows an AlertDialog with Discard (red) and Keep Editing options.",
+                "Dirty detection added to all 9 full-screen dialogs: NewQuestion, NewProject, NewSource, NewHypothesis, NewReport, EditObservation, EditProject, EditSource, EditReport.",
+                "Added BackHandler with unsaved-data protection to the Observation/Add Observation screen — shows Save & Exit, Discard, or Keep Editing dialog when content exists and back is pressed.",
+                "Fixed sharp edges on full-screen dialogs by styling the back button with a rounded Surface (RoundedCornerShape 14dp), adding HorizontalDivider below header, and proper bottom padding (32dp)."
+            )
+        )
+    ),
+    FieldMindChangelogEntry(
         version = "1.5.0-weather-v3-expand",
+        date = "2026-06-16",
+        title = "Random Thunderstorm, Expand Dashboard & Crash Fixes",
+        importance = "Patch",
+        tags = listOf("Weather", "UI", "Fixes", "Capture"),
+        sections = listOf(
+            "⛈️ Random Thunderstorm Flashes" to listOf(
+                "Thunderstorm animation completely rewritten: replaces constant 150ms flashing (headache-inducing) with random 2-6 second intervals — each lightning strike is unpredictable.",
+                "Random flash position (anywhere on screen) and intensity (subtle to bright) for natural variety.",
+                "Jagged lightning bolts with branching offshoots, each strike unique per event.",
+                "Optional double-flash (35% chance) and screen-edge glow afterglow with slow decay.",
+                "Bolt path stays stable for the entire flash duration — no frame-to-frame jitter."
+            ),
+            "🎬 Orphe-Style Expand Dashboard" to listOf(
+                "LiveWeatherDashboardWidget now expands full-screen with a smooth slide-up + fade-in transition (inspired by Orphe music player's beautiful full-screen animation).",
+                "Full-screen overlay shows: time-of-day greeting, large gradient temperature, animated weather scene background.",
+                "Detailed metrics card: humidity, wind speed, cloud cover, and atmospheric pressure at a glance.",
+                "Sunrise/sunset times and moon phase indicators with color-coded info chips.",
+                "Fieldwork conditions nudge with contextual advice based on current weather.",
+                "Tap the close button or anywhere on the backdrop to dismiss with a reverse slide-out animation."
+            ),
+            "🐛 Infinite-Height Crash Fixes" to listOf(
+                "Replaced AnimatedContent wrappers (which pass infinite maxHeight to scrollable children causing crashes) with static Box + when blocks in FieldMindProjectsScreen and FieldMindObservationsTimeline.",
+                "Added Modifier.heightIn(max = ...) constraints to scrollable Column forms inside LazyColumn items (ProjectsScreen, DetailScreen, ScreenUtils).",
+                "Added Modifier.fillMaxSize() to inner LazyColumn in ObservationsTimeline for safe layout sizing.",
+                "Fix applies to ProjectCreationForm, SpeciesRegistryBuilder, ProjectTasksBuilder, InlineFormCard, and all 4 tab LazyColumns."
+            ),
+            "📸 Capture Flow & Custom Categories" to listOf(
+                "Category picker confirm button now saves observations to database with photo as DraftEvidenceAttachment instead of just navigating away — no more lost captures.",
+                "OutlinedTextField appears when 'Other' is selected in the category picker, letting you type any custom category (e.g. 'Reptile', 'Amphibian', 'Fungus').",
+                "Confirm button label updates dynamically based on the selected category."
+            )
+        )
+    ),
         date = "2026-06-16",
         title = "Random Thunderstorm, Expand Dashboard & Crash Fixes",
         importance = "Patch",
