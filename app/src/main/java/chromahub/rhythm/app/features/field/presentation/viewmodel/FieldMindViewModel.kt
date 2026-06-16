@@ -345,8 +345,16 @@ class FieldMindViewModel(application: Application) : AndroidViewModel(applicatio
     }
     val researchSessions: StateFlow<List<ResearchSessionEntity>> = repository.researchSessions.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
-    // ── Weather (Open-Meteo) ──
-    private val weatherService = fieldmind.research.app.features.field.data.weather.WeatherApiService()
+    // ── Weather (multi-provider) ──
+    private var _currentProvider = fieldmind.research.app.features.field.data.weather.WeatherProviders.getProvider(fieldSettings.weatherProvider.value)
+    private fun getWeatherProvider(): fieldmind.research.app.features.field.data.weather.WeatherProvider {
+        val slug = fieldSettings.weatherProvider.value
+        // Re-create provider if slug changed (avoids stale reference)
+        if (_currentProvider.slug != slug) {
+            _currentProvider = fieldmind.research.app.features.field.data.weather.WeatherProviders.getProvider(slug)
+        }
+        return _currentProvider
+    }
     var lastWeatherSnapshot: fieldmind.research.app.features.field.data.weather.WeatherSnapshot? = null
         private set
     private var lastWeatherFetchTime: Long = 0L
@@ -355,11 +363,13 @@ class FieldMindViewModel(application: Application) : AndroidViewModel(applicatio
         private set
 
     fun fetchWeatherForLocation(latitude: Double, longitude: Double) = viewModelScope.launch {
-        lastWeatherSnapshot = weatherService.fetchWeather(latitude, longitude)
+        val apiKey = fieldSettings.weatherApiKey.value.ifBlank { null }
+        lastWeatherSnapshot = getWeatherProvider().fetchWeather(latitude, longitude, apiKey)
     }
 
     suspend fun fetchWeatherSnapshot(latitude: Double, longitude: Double): WeatherSnapshot? {
-        return weatherService.fetchWeather(latitude, longitude).also { lastWeatherSnapshot = it }
+        val apiKey = fieldSettings.weatherApiKey.value.ifBlank { null }
+        return getWeatherProvider().fetchWeather(latitude, longitude, apiKey).also { lastWeatherSnapshot = it }
     }
 
     /**
@@ -403,7 +413,7 @@ class FieldMindViewModel(application: Application) : AndroidViewModel(applicatio
         isWeatherFetching = true
         val result = try {
             provider.lastKnownLocation()?.let { loc ->
-                weatherService.fetchWeather(loc.latitude, loc.longitude)
+                getWeatherProvider().fetchWeather(loc.latitude, loc.longitude, fieldSettings.weatherApiKey.value.ifBlank { null })
             }
         } finally {
             isWeatherFetching = false

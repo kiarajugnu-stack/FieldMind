@@ -126,6 +126,13 @@ class FieldMindSettings private constructor(context: Context) {
     private val _weatherShowPressure = MutableStateFlow(prefs.getBoolean(KEY_WEATHER_SHOW_PRESSURE, false))
     val weatherShowPressure: StateFlow<Boolean> = _weatherShowPressure.asStateFlow()
 
+    // ── Weather provider selection ──
+    private val _weatherProvider = MutableStateFlow(prefs.getString(KEY_WEATHER_PROVIDER, "open-meteo") ?: "open-meteo")
+    val weatherProvider: StateFlow<String> = _weatherProvider.asStateFlow()
+
+    private val _weatherApiKey = MutableStateFlow(prefs.getString(KEY_WEATHER_API_KEY, "") ?: "")
+    val weatherApiKey: StateFlow<String> = _weatherApiKey.asStateFlow()
+
     private val _gpsMode = MutableStateFlow(prefs.getString(KEY_GPS_MODE, "On capture only") ?: "On capture only")
     val gpsMode: StateFlow<String> = _gpsMode.asStateFlow()
 
@@ -226,6 +233,8 @@ class FieldMindSettings private constructor(context: Context) {
     fun setWeatherShowWind(value: Boolean) = edit(KEY_WEATHER_SHOW_WIND, value) { _weatherShowWind.value = value }
     fun setWeatherShowCloudCover(value: Boolean) = edit(KEY_WEATHER_SHOW_CLOUD, value) { _weatherShowCloudCover.value = value }
     fun setWeatherShowPressure(value: Boolean) = edit(KEY_WEATHER_SHOW_PRESSURE, value) { _weatherShowPressure.value = value }
+    fun setWeatherProvider(value: String) = edit(KEY_WEATHER_PROVIDER, value) { _weatherProvider.value = value }
+    fun setWeatherApiKey(value: String) = edit(KEY_WEATHER_API_KEY, value.trim()) { _weatherApiKey.value = value.trim() }
     fun setGpsMode(value: String) = edit(KEY_GPS_MODE, value) { _gpsMode.value = value }
     fun setDistanceUnit(value: String) = edit(KEY_DISTANCE_UNIT, value) { _distanceUnit.value = value }
     fun setWindSpeedUnit(value: String) = edit(KEY_WIND_SPEED_UNIT, value) { _windSpeedUnit.value = value }
@@ -291,6 +300,8 @@ class FieldMindSettings private constructor(context: Context) {
         private const val KEY_WEATHER_SHOW_WIND = "weather_show_wind"
         private const val KEY_WEATHER_SHOW_CLOUD = "weather_show_cloud"
         private const val KEY_WEATHER_SHOW_PRESSURE = "weather_show_pressure"
+        private const val KEY_WEATHER_PROVIDER = "weather_provider"
+        private const val KEY_WEATHER_API_KEY = "weather_api_key"
         private const val KEY_GPS_MODE = "gps_mode"
         private const val KEY_DISTANCE_UNIT = "distance_unit"
         private const val KEY_WIND_SPEED_UNIT = "wind_speed_unit"

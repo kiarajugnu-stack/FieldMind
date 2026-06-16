@@ -24,6 +24,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import fieldmind.research.app.features.field.data.database.entity.*
 import fieldmind.research.app.features.field.data.settings.FieldMindSettings
+import fieldmind.research.app.features.field.data.weather.WeatherProviders
 import fieldmind.research.app.features.field.presentation.components.*
 import fieldmind.research.app.features.field.presentation.theme.FieldMindTheme
 import fieldmind.research.app.features.field.presentation.viewmodel.FieldMindViewModel
@@ -753,6 +754,9 @@ fun WeatherSettingsPage(viewModel: FieldMindViewModel, onBack: () -> Unit) {
     val showWind by settings.weatherShowWind.collectAsState()
     val showCloud by settings.weatherShowCloudCover.collectAsState()
     val showPressure by settings.weatherShowPressure.collectAsState()
+    val providerSlug by settings.weatherProvider.collectAsState()
+    val apiKey by settings.weatherApiKey.collectAsState()
+    val currentProvider = remember(providerSlug) { WeatherProviders.getProvider(providerSlug) }
 
     SettingsSubPage("Weather", icon = FieldMindIcons.Weather, onBack = onBack) {
         item {
@@ -765,6 +769,83 @@ fun WeatherSettingsPage(viewModel: FieldMindViewModel, onBack: () -> Unit) {
                 ChoiceItemForm("Temperature unit", listOf("Celsius", "Fahrenheit"), tempUnit, FieldMindIcons.Weather, settings::setTempUnit)
                 HorizontalDivider(Modifier.padding(start = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
                 ChoiceItemForm("Auto-refresh interval", listOf("15 min", "30 min", "60 min"), weatherRefresh, FieldMindIcons.Timer, settings::setWeatherRefreshInterval)
+            }
+        }
+        item {
+            SectionHeader("Weather provider", "Choose which weather API service to use. Open-Meteo is free and needs no key. The others require a free API key.")
+        }
+        item {
+            SettingsGroupCard {
+                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text("Provider", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    WeatherProviders.providers.forEach { provider ->
+                        val isSelected = providerSlug == provider.slug
+                        val providerColor = FieldMindTheme.colors.info
+                        Surface(
+                            onClick = { settings.setWeatherProvider(provider.slug) },
+                            shape = RoundedCornerShape(14.dp),
+                            color = if (isSelected) providerColor.copy(alpha = 0.15f) else MaterialTheme.colorScheme.surfaceContainerHigh,
+                            border = if (isSelected) BorderStroke(1.5.dp, providerColor) else null
+                        ) {
+                            Row(
+                                Modifier.fillMaxWidth().padding(14.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column(Modifier.weight(1f)) {
+                                    Text(provider.displayName, fontWeight = FontWeight.SemiBold)
+                                    Text(
+                                        if (provider.requiresApiKey) "Requires API key" else "Free, no key needed",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                                if (isSelected) {
+                                    Icon(FieldMindIcons.Check, null, tint = providerColor, size = 20.dp)
+                                }
+                            }
+                        }
+                    }
+
+                    if (currentProvider.requiresApiKey) {
+                        Spacer(Modifier.height(4.dp))
+                        OutlinedTextField(
+                            value = apiKey,
+                            onValueChange = settings::setWeatherApiKey,
+                            label = { Text(currentProvider.apiKeyLabel) },
+                            placeholder = { Text(currentProvider.apiKeyPlaceholder) },
+                            visualTransformation = PasswordVisualTransformation(),
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(18.dp),
+                            singleLine = true,
+                            supportingText = {
+                                Text(
+                                    if (apiKey.isBlank()) "No API key saved. Get one free from the provider's website."
+                                    else "API key saved locally on this device."
+                                )
+                            }
+                        )
+                    } else {
+                        Spacer(Modifier.height(4.dp))
+                        Surface(
+                            shape = RoundedCornerShape(14.dp),
+                            color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
+                        ) {
+                            Row(
+                                Modifier.padding(12.dp).fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(FieldMindIcons.Info, null, tint = MaterialTheme.colorScheme.primary, size = 18.dp)
+                                Text(
+                                    "Open-Meteo is completely free with no API key required. 10,000 requests/day limit.",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                    }
+                }
             }
         }
         item {
