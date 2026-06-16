@@ -20,6 +20,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -160,7 +161,7 @@ private fun ChoiceChipsField(
  * Slide-in field section with animated expand/collapse.
  */
 @Composable
-private fun CollapsibleSection(
+internal fun CollapsibleSection(
     title: String,
     subtitle: String = "",
     icon: MaterialSymbolIcon = FieldMindIcons.Settings,
@@ -215,10 +216,11 @@ private fun CollapsibleSection(
 @Composable
 internal fun NewQuestionDialog(viewModel: FieldMindViewModel, onDismiss: () -> Unit) {
     var question by remember { mutableStateOf("") }; var category by remember { mutableStateOf("Other") }; var source by remember { mutableStateOf("Observation") }; var status by remember { mutableStateOf("New") }; var priority by remember { mutableStateOf("Medium") }
+    var answer by remember { mutableStateOf("") }; var showAdvanced by remember { mutableStateOf(false) }
 
     fun save() {
         if (question.isNotBlank()) {
-            viewModel.addQuestion(question, category, source, status, priority)
+            viewModel.addQuestion(question, category, source, status, priority, answer = answer)
             onDismiss()
         }
     }
@@ -231,6 +233,9 @@ internal fun NewQuestionDialog(viewModel: FieldMindViewModel, onDismiss: () -> U
         ChoiceChipsField("Source", sourceTypes, source) { source = it }
         ChoiceChipsField("Priority", listOf("Low", "Medium", "High"), priority) { priority = it }
         ChoiceChipsField("Status", questionStatuses, status) { status = it }
+        CollapsibleSection("Advanced options", "Answer, cross-links, and metadata", expanded = showAdvanced, onToggle = { showAdvanced = !showAdvanced }) {
+            FieldTextField(answer, { answer = it }, "Preliminary answer", minLines = 2, supportingText = "Optional — add if you already have a working answer")
+        }
         DialogActions(onCancel = onDismiss, onSave = { save() }, saveEnabled = question.isNotBlank())
     }
 }
@@ -239,10 +244,11 @@ internal fun NewQuestionDialog(viewModel: FieldMindViewModel, onDismiss: () -> U
 internal fun NewProjectDialog(viewModel: FieldMindViewModel, onDismiss: () -> Unit) {
     var title by remember { mutableStateOf("") }; var topic by remember { mutableStateOf("Biology") }; var objective by remember { mutableStateOf("") }; var question by remember { mutableStateOf("") }
     var background by remember { mutableStateOf("") }; var methods by remember { mutableStateOf("") }; var hypothesis by remember { mutableStateOf("") }; var dataPlan by remember { mutableStateOf("") }; var analysis by remember { mutableStateOf("") }; var conclusion by remember { mutableStateOf("") }; var nextAction by remember { mutableStateOf("") }
+    var projectType by remember { mutableStateOf("Observation") }; var selectedMethods by remember { mutableStateOf("") }; var connectionMap by remember { mutableStateOf("") }; var showAdvanced by remember { mutableStateOf(false) }
 
     fun save() {
         if (title.isNotBlank()) {
-            viewModel.addProject(title, topic, objective, question, methods, nextAction, background, hypothesis, dataPlan, analysis, conclusion)
+            viewModel.addProject(title, topic, objective, question, methods, nextAction, background, hypothesis, dataPlan, analysis, conclusion, projectType = projectType, selectedMethods = selectedMethods, connectionMap = connectionMap)
             onDismiss()
         }
     }
@@ -252,7 +258,7 @@ internal fun NewProjectDialog(viewModel: FieldMindViewModel, onDismiss: () -> Un
         DialogDividerSection("Topic & title", FieldMindIcons.Category, FieldMindTheme.colors.project)
         FieldTextField(title, { title = it }, "Project title")
         ChoiceChipsField("Topic", listOf("Biology", "Geology", "Wildlife", "Ecology", "Plant Study", "Weather", "Human Pattern", "Other"), topic) { topic = it }
-        DialogDividerSection("Research purpose", FieldMindIcons.Research, FieldMindTheme.colors.project)
+        DialogDividerSection("Research purpose", FieldMindIcons.School, FieldMindTheme.colors.project)
         FieldTextField(objective, { objective = it }, "Objective", minLines = 2)
         FieldTextField(question, { question = it }, "Research question", minLines = 2)
         FieldTextField(background, { background = it }, "Background / context", minLines = 2)
@@ -264,6 +270,11 @@ internal fun NewProjectDialog(viewModel: FieldMindViewModel, onDismiss: () -> Un
         FieldTextField(analysis, { analysis = it }, "Analysis plan", minLines = 2)
         FieldTextField(conclusion, { conclusion = it }, "Early conclusion / expected output", minLines = 2)
         FieldTextField(nextAction, { nextAction = it }, "Next action", supportingText = "Example: observe the same site at sunset for 3 days")
+        CollapsibleSection("Advanced options", "Project type, methods, and connection map", expanded = showAdvanced, onToggle = { showAdvanced = !showAdvanced }) {
+            ChoiceChipsField("Project type", listOf("Observation", "Experiment", "Literature Review", "Field Survey", "Long-term Monitor"), projectType) { projectType = it }
+            FieldTextField(selectedMethods, { selectedMethods = it }, "Selected methods", supportingText = "e.g. transect, quadrat, interview, water test")
+            FieldTextField(connectionMap, { connectionMap = it }, "Connection map", minLines = 2, supportingText = "How this project relates to other observations or projects")
+        }
         DialogActions(onCancel = onDismiss, onSave = { save() }, saveEnabled = title.isNotBlank())
     }
 }
@@ -484,10 +495,11 @@ internal fun NewSourceDialog(viewModel: FieldMindViewModel, onDismiss: () -> Uni
 @Composable
 internal fun NewHypothesisDialog(viewModel: FieldMindViewModel, questions: List<QuestionEntity>, onDismiss: () -> Unit) {
     var prediction by remember { mutableStateOf("") }; var reasoning by remember { mutableStateOf("") }; var evidence by remember { mutableStateOf("") }; var support by remember { mutableStateOf("") }; var weaken by remember { mutableStateOf("") }; var test by remember { mutableStateOf("") }; var confidence by remember { mutableStateOf(50f) }; var linkedId by remember { mutableStateOf(questions.firstOrNull()?.id) }
+    var resultStatus by remember { mutableStateOf("Unknown") }; var showAdvanced by remember { mutableStateOf(false) }
 
     fun save() {
         if (prediction.isNotBlank()) {
-            viewModel.addHypothesis(linkedId, prediction, evidence, confidence.toInt(), reasoning, support, weaken, test)
+            viewModel.addHypothesis(linkedId, prediction, evidence, confidence.toInt(), reasoning, support, weaken, test, resultStatus = resultStatus)
             onDismiss()
         }
     }
@@ -499,7 +511,7 @@ internal fun NewHypothesisDialog(viewModel: FieldMindViewModel, questions: List<
         }
         FieldTextField(prediction, { prediction = it }, "Prediction", minLines = 3)
         FieldTextField(reasoning, { reasoning = it }, "Why this might happen", minLines = 2)
-        DialogDividerSection("Evidence rules", FieldMindIcons.Verify, FieldMindTheme.colors.hypothesis)
+        DialogDividerSection("Evidence rules", FieldMindIcons.Done, FieldMindTheme.colors.hypothesis)
         Text("Decide success/failure before you bias yourself.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         FieldTextField(evidence, { evidence = it }, "Evidence needed", minLines = 2)
         FieldTextField(support, { support = it }, "Support criteria")
@@ -512,6 +524,9 @@ internal fun NewHypothesisDialog(viewModel: FieldMindViewModel, questions: List<
         }
         Slider(confidence, { confidence = it }, valueRange = 0f..100f)
         LinearProgressIndicator(progress = { confidence / 100f }, modifier = Modifier.fillMaxWidth().height(6.dp).clip(RoundedCornerShape(3.dp)), color = MaterialTheme.colorScheme.primary)
+        CollapsibleSection("Advanced options", "Result status tracking", expanded = showAdvanced, onToggle = { showAdvanced = !showAdvanced }) {
+            ChoiceChipsField("Result status", listOf("Unknown", "Supported", "Weakened", "Inconclusive"), resultStatus) { resultStatus = it }
+        }
         DialogActions(onCancel = onDismiss, onSave = { save() }, saveEnabled = prediction.isNotBlank())
     }
 }
@@ -578,7 +593,7 @@ internal fun NewDataRecordDialog(viewModel: FieldMindViewModel, onDismiss: () ->
                 TextButton({ value = "0" }) { Text("Reset") }
             }
         }
-        DialogDividerSection("Measurement", FieldMindIcons.Measurement, FieldMindTheme.colors.data)
+        DialogDividerSection("Measurement", FieldMindIcons.Line, FieldMindTheme.colors.data)
         FieldTextField(value, { value = it }, "Value / items / samples")
         FieldTextField(unit, { unit = it }, "Unit", supportingText = "Suggested for $tool: ${defaultUnitForTool(tool)}")
         FieldTextField(location, { location = it }, "Location / site")
@@ -604,7 +619,7 @@ internal fun NewReportDialog(viewModel: FieldMindViewModel, onDismiss: () -> Uni
         DialogDividerSection("Type & title", FieldMindIcons.Category, FieldMindTheme.colors.report)
         ChoiceChipsField("Report type", reportTypes, type) { type = it }
         FieldTextField(title, { title = it }, "Title")
-        DialogDividerSection("Setup", FieldMindIcons.Research, FieldMindTheme.colors.report)
+        DialogDividerSection("Setup", FieldMindIcons.School, FieldMindTheme.colors.report)
         FieldTextField(background, { background = it }, "Background", minLines = 2)
         FieldTextField(question, { question = it }, "Question", minLines = 2)
         FieldTextField(methods, { methods = it }, "Methods", minLines = 2)
@@ -864,7 +879,7 @@ private fun EditHypothesisDialog(entity: HypothesisEntity, viewModel: FieldMindV
         DialogHeader(FieldMindIcons.Hypothesis, "Edit Hypothesis", "Update prediction, evidence rules, and confidence", accent = FieldMindTheme.colors.hypothesis)
         FieldTextField(prediction, { prediction = it }, "Prediction", minLines = 2)
         FieldTextField(reasoning, { reasoning = it }, "Reasoning", minLines = 2)
-        DialogDividerSection("Evidence rules", FieldMindIcons.Verify, FieldMindTheme.colors.hypothesis)
+        DialogDividerSection("Evidence rules", FieldMindIcons.Done, FieldMindTheme.colors.hypothesis)
         FieldTextField(evidence, { evidence = it }, "Evidence needed", minLines = 2)
         FieldTextField(support, { support = it }, "Support criteria")
         FieldTextField(weaken, { weaken = it }, "Weakening criteria")
@@ -909,7 +924,7 @@ private fun EditProjectDialog(entity: ProjectEntity, viewModel: FieldMindViewMod
         DialogDividerSection("Project info", FieldMindIcons.Category, FieldMindTheme.colors.project)
         FieldTextField(title, { title = it }, "Project title")
         ChoiceChipsField("Topic / category", listOf("Biology", "Geology", "Wildlife", "Ecology", "Plant Study", "Weather", "Human Pattern", "Other"), topic) { topic = it }
-        DialogDividerSection("Research setup", FieldMindIcons.Research, FieldMindTheme.colors.project)
+        DialogDividerSection("Research setup", FieldMindIcons.School, FieldMindTheme.colors.project)
         FieldTextField(objective, { objective = it }, "Objective", minLines = 2)
         FieldTextField(question, { question = it }, "Research question", minLines = 2)
         FieldTextField(background, { background = it }, "Background notes", minLines = 2)
@@ -1048,16 +1063,21 @@ private fun EditDataRecordDialog(entity: DataRecordEntity, viewModel: FieldMindV
 @Composable
 private fun EditReportDialog(entity: ReportEntity, viewModel: FieldMindViewModel, onDismiss: () -> Unit) {
     var type by remember { mutableStateOf(entity.type) }; var title by remember { mutableStateOf(entity.title) }; var question by remember { mutableStateOf(entity.question) }; var methods by remember { mutableStateOf(entity.methods) }; var results by remember { mutableStateOf(entity.results) }; var conclusion by remember { mutableStateOf(entity.conclusion) }; var next by remember { mutableStateOf(entity.nextSteps) }
+    var background by remember { mutableStateOf(entity.background) }; var observations by remember { mutableStateOf(entity.observations) }; var interpretation by remember { mutableStateOf(entity.interpretation) }; var limitations by remember { mutableStateOf(entity.limitations) }; var showAdvanced by remember { mutableStateOf(false) }
 
     fun save() {
         if (title.isNotBlank()) {
             viewModel.updateReportEntity(entity.copy(
                 type = type,
                 title = title.trim(),
+                background = background.trim(),
                 question = question.trim(),
                 methods = methods.trim(),
+                observations = observations.trim(),
                 results = results.trim(),
+                interpretation = interpretation.trim(),
                 conclusion = conclusion.trim(),
+                limitations = limitations.trim(),
                 nextSteps = next.trim()
             ))
             onDismiss()
@@ -1074,6 +1094,12 @@ private fun EditReportDialog(entity: ReportEntity, viewModel: FieldMindViewModel
         FieldTextField(results, { results = it }, "Data / results", minLines = 2)
         FieldTextField(conclusion, { conclusion = it }, "Conclusion", minLines = 2)
         FieldTextField(next, { next = it }, "Next steps", minLines = 2)
+        CollapsibleSection("Advanced options", "Background, observations, interpretation, and limitations", expanded = showAdvanced, onToggle = { showAdvanced = !showAdvanced }) {
+            FieldTextField(background, { background = it }, "Background", minLines = 2)
+            FieldTextField(observations, { observations = it }, "Observations", minLines = 2)
+            FieldTextField(interpretation, { interpretation = it }, "Interpretation", minLines = 2)
+            FieldTextField(limitations, { limitations = it }, "Limitations", minLines = 2)
+        }
         DialogActions(onCancel = onDismiss, onSave = { save() }, saveEnabled = title.isNotBlank(), saveLabel = "Save changes")
     }
 }

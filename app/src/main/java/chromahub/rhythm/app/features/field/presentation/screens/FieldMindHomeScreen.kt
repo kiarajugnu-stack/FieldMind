@@ -706,6 +706,8 @@ private fun HomeNoteCaptureDialog(
     var body by remember { mutableStateOf("") }
     var category by remember { mutableStateOf("Other") }
     var tags by remember { mutableStateOf("") }
+    var attachments by remember { mutableStateOf("") }
+    var showAdvanced by remember { mutableStateOf(false) }
 
     Dialog(
         onDismissRequest = onDismiss,
@@ -774,6 +776,19 @@ private fun HomeNoteCaptureDialog(
                     singleLine = true
                 )
 
+                // Advanced options
+                CollapsibleSection("Advanced options", "Attachments and metadata", expanded = showAdvanced, onToggle = { showAdvanced = !showAdvanced }) {
+                    OutlinedTextField(
+                        value = attachments,
+                        onValueChange = { attachments = it },
+                        label = { Text("Attachments") },
+                        placeholder = { Text("One per line: type|caption|uri") },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(18.dp),
+                        minLines = 2
+                    )
+                }
+
                 // Actions
                 Row(
                     Modifier.fillMaxWidth().padding(top = 8.dp),
@@ -791,11 +806,23 @@ private fun HomeNoteCaptureDialog(
                                     .firstOrNull { it.isNotBlank() }
                                     ?.take(48)
                                     ?: "Untitled note"
+                                val parsedAttachments = attachments
+                                    .lineSequence()
+                                    .filter { it.isNotBlank() }
+                                    .map { line ->
+                                        val parts = line.split("|", limit = 3)
+                                        DraftEvidenceAttachment(
+                                            type = parts.getOrElse(0) { "File" },
+                                            caption = parts.getOrElse(1) { "" },
+                                            uri = parts.getOrElse(2) { parts[0] }
+                                        )
+                                    }.toList()
                                 viewModel.addNote(
                                     title = title.ifBlank { fallbackTitle },
                                     body = body,
                                     category = category,
                                     tags = tags,
+                                    attachments = parsedAttachments,
                                     onSaved = { onDismiss() }
                                 )
                             }
@@ -2520,7 +2547,7 @@ internal fun DevWeatherTestPanel(
                         if (testCode == null) onCodeChange(0)
                     },
                     label = { Text("Night mode", style = MaterialTheme.typography.labelSmall) },
-                    leadingIcon = if (testNight) {{ Icon(FieldMindIcons.DarkMode, null, size = 14.dp) }} else null
+                    leadingIcon = if (testNight) {{ Icon(FieldMindIcons.MoonNew, null, size = 14.dp) }} else null
                 )
                 // Reset button
                 TextButton(onClick = { onCodeChange(null); onNightChange(false) }) {

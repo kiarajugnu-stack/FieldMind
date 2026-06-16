@@ -163,7 +163,6 @@ fun ProjectsScreen(
             }
         }
     }
-}
 
 // ══════════════════════════════════════════════════════════════════════
 //  Research Hub Overview Tab — Full redesign with templates, emoji, dates

@@ -191,8 +191,9 @@ class FieldMindViewModel(application: Application) : AndroidViewModel(applicatio
 
     fun attachmentsForObservation(id: Long) = repository.observeAttachmentsForObservation(id)
 
-    fun addQuestion(question: String, category: String, sourceType: String, status: String, priority: String, observationId: Long? = null, sourceId: Long? = null, projectId: Long? = null) = viewModelScope.launch {
-        val id = repository.addQuestion(QuestionEntity(questionText = question.trim(), category = category, sourceType = sourceType, status = status, priority = priority, relatedProjectId = projectId))
+    fun addQuestion(question: String, category: String, sourceType: String, status: String, priority: String, observationId: Long? = null, sourceId: Long? = null, projectId: Long? = null, answer: String = "") = viewModelScope.launch {
+        val trimmedAnswer = answer.trim()
+        val id = repository.addQuestion(QuestionEntity(questionText = question.trim(), category = category, sourceType = sourceType, status = status, priority = priority, relatedProjectId = projectId, answer = trimmedAnswer))
         observationId?.let { repository.linkQuestionObservation(id, it) }
         sourceId?.let { repository.linkQuestionSource(id, it) }
     }
@@ -208,7 +209,10 @@ class FieldMindViewModel(application: Application) : AndroidViewModel(applicatio
         hypothesisSummary: String = "",
         dataSummary: String = "",
         analysis: String = "",
-        conclusion: String = ""
+        conclusion: String = "",
+        projectType: String = "Observation",
+        selectedMethods: String = "",
+        connectionMap: String = ""
     ) = viewModelScope.launch {
         repository.addProject(
             ProjectEntity(
@@ -222,7 +226,10 @@ class FieldMindViewModel(application: Application) : AndroidViewModel(applicatio
                 dataSummary = dataSummary.trim(),
                 analysis = analysis.trim(),
                 conclusion = conclusion.trim(),
-                futureQuestions = futureQuestions.trim()
+                futureQuestions = futureQuestions.trim(),
+                projectType = projectType,
+                selectedMethods = selectedMethods.trim(),
+                connectionMap = connectionMap.trim()
             )
         )
     }
@@ -308,8 +315,8 @@ class FieldMindViewModel(application: Application) : AndroidViewModel(applicatio
         }.also(onResult)
     }
 
-    fun addHypothesis(questionId: Long?, prediction: String, evidenceNeeded: String, confidence: Int, reasoning: String = "", supportCriteria: String = "", weakeningCriteria: String = "", testMethod: String = "") = viewModelScope.launch {
-        repository.addHypothesis(HypothesisEntity(linkedQuestionId = questionId, prediction = prediction.trim(), reasoning = reasoning.trim(), evidenceNeeded = evidenceNeeded.trim(), supportCriteria = supportCriteria.trim(), weakeningCriteria = weakeningCriteria.trim(), testMethod = testMethod.trim(), confidencePercent = confidence))
+    fun addHypothesis(questionId: Long?, prediction: String, evidenceNeeded: String, confidence: Int, reasoning: String = "", supportCriteria: String = "", weakeningCriteria: String = "", testMethod: String = "", resultStatus: String = "Unknown") = viewModelScope.launch {
+        repository.addHypothesis(HypothesisEntity(linkedQuestionId = questionId, prediction = prediction.trim(), reasoning = reasoning.trim(), evidenceNeeded = evidenceNeeded.trim(), supportCriteria = supportCriteria.trim(), weakeningCriteria = weakeningCriteria.trim(), testMethod = testMethod.trim(), confidencePercent = confidence, resultStatus = resultStatus))
     }
 
     fun addDataRecord(toolType: String, label: String, value: String, unit: String = "", notes: String = "", location: String = "", projectId: Long? = null, observationId: Long? = null, datasetKind: String = "Manual", chartPreference: String = "Line") = viewModelScope.launch {
