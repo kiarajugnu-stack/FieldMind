@@ -1340,7 +1340,7 @@ private fun LiveWeatherDashboardWidget(
                         }
                         // ── Day tiles row ──
                         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
-                            w.dailyForecasts.take(5).forEachIndexed { index, day ->
+                            w.dailyForecasts.take(4).forEachIndexed { index, day ->
                                 val dayName = if (index == 0) "Today" else {
                                     val cal = java.util.Calendar.getInstance()
                                     cal.add(java.util.Calendar.DAY_OF_MONTH, index)
@@ -1351,10 +1351,11 @@ private fun LiveWeatherDashboardWidget(
                                     horizontalAlignment = Alignment.CenterHorizontally,
                                     verticalArrangement = Arrangement.spacedBy(4.dp),
                                     modifier = Modifier
+                                        .weight(1f)
                                         .clip(RoundedCornerShape(12.dp))
                                         .background(if (isExpanded) textOnScene.copy(alpha = 0.14f) else textOnScene.copy(alpha = 0.06f))
                                         .clickable { expandedDayIndex = if (isExpanded) -1 else index }
-                                        .padding(horizontal = 6.dp, vertical = 8.dp)
+                                        .padding(horizontal = 4.dp, vertical = 8.dp)
                                         .animateContentSize()
                                 ) {
                                     Text(dayName, style = MaterialTheme.typography.labelSmall, color = textOnScene.copy(alpha = 0.7f), fontWeight = FontWeight.Medium)
@@ -1380,14 +1381,14 @@ private fun LiveWeatherDashboardWidget(
                         }
                         // ── Expanded detail card ──
                         AnimatedVisibility(
-                            visible = expandedDayIndex in 0..4,
+                            visible = expandedDayIndex in 0..3,
                             enter = expandVertically(animationSpec = tween(300)) + fadeIn(animationSpec = tween(300)),
                             exit = shrinkVertically(animationSpec = tween(200)) + fadeOut(animationSpec = tween(200))
                         ) {
                             // Keep last valid day so content stays rendered during exit animation
                             val lastValidDay = remember { mutableStateOf<fieldmind.research.app.features.field.data.weather.DailyForecast?>(null) }
                             val expandedIdx = expandedDayIndex
-                            if (expandedIdx in 0..4) lastValidDay.value = w.dailyForecasts[expandedIdx]
+                            if (expandedIdx in 0..3) lastValidDay.value = w.dailyForecasts[expandedIdx]
                             val day = lastValidDay.value ?: return@AnimatedVisibility
                                 val dayName = if (expandedIdx == 0) "Today" else {
                                     val cal = java.util.Calendar.getInstance()
