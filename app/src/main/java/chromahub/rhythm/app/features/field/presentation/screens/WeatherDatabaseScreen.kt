@@ -715,8 +715,8 @@ private fun iconForWeatherCondition(condition: String): fieldmind.research.app.s
         c.contains("clear") || c.contains("mainly") || c.isBlank() -> FieldMindIcons.Weather
         c.contains("cloudy") || c.contains("overcast") || c.contains("partly") -> FieldMindIcons.Cloud
         c.contains("fog") || c.contains("rime") -> FieldMindIcons.Foggy
+        c.contains("snow") || c.contains("snow grains") || c.contains("sleet") || c.contains("ice pellets") -> FieldMindIcons.Snowy
         c.contains("drizzle") || c.contains("rain") || c.contains("shower") -> FieldMindIcons.Rainy
-        c.contains("snow") || c.contains("snow grains") -> FieldMindIcons.Snowy
         c.contains("thunder") || c.contains("hail") -> FieldMindIcons.Thunderstorm
         else -> FieldMindIcons.Weather
     }

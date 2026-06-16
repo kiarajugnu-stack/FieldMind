@@ -116,20 +116,23 @@ data class WeatherPalette(
 private fun weatherPalette(temp: Double?, isDay: Boolean): WeatherPalette {
     val tempC = temp ?: 20.0
     val (top, bottom) = when {
-        tempC < -5 -> Color(0xFF0D0D2B) to Color(0xFF1A237E) // Deep freezing
-        tempC < 0 -> Color(0xFF1A237E) to Color(0xFF42A5F5)  // Freezing
-        tempC < 10 -> Color(0xFF1565C0) to Color(0xFF90CAF9) // Cold
-        tempC < 20 -> Color(0xFF0D47A1) to Color(0xFF66BB6A) // Cool
-        tempC < 30 -> Color(0xFFE65100) to Color(0xFFFFCC80) // Warm
-        tempC < 38 -> Color(0xFFBF360C) to Color(0xFFFFAB91) // Hot
-        else -> Color(0xFFB71C1C) to Color(0xFFE57373)      // Extreme heat
+        tempC < -5 -> Color(0xFF1A1A3E) to Color(0xFF2C3E7B) // Deep freezing - softer dark
+        tempC < 0 -> Color(0xFF2C3E7B) to Color(0xFF5C8FCF)  // Freezing - muted blue
+        tempC < 10 -> Color(0xFF3A6BA5) to Color(0xFF8FB8D9) // Cold - muted
+        tempC < 20 -> Color(0xFF4A7C9E) to Color(0xFF7DB87A) // Cool - muted teal/green
+        tempC < 30 -> Color(0xFFA86D32) to Color(0xFFD4A574) // Warm - muted orange
+        tempC < 38 -> Color(0xFF9C4A3A) to Color(0xFFD48F7A) // Hot - muted red
+        else -> Color(0xFF7A3030) to Color(0xFFC96E6E)      // Extreme heat - muted dark red
     }
 
-    val bgColors = if (isDay) listOf(top, bottom) else listOf(top.copy(alpha = 0.7f), bottom.copy(red = bottom.red * 0.5f, green = bottom.green * 0.5f, blue = bottom.blue * 0.6f))
+    val bgColors = if (isDay) listOf(top, bottom) else listOf(
+        top.copy(red = top.red * 0.6f, green = top.green * 0.6f, blue = top.blue * 0.7f, alpha = 0.8f),
+        bottom.copy(red = bottom.red * 0.4f, green = bottom.green * 0.4f, blue = bottom.blue * 0.5f, alpha = 0.7f)
+    )
     return WeatherPalette(
         primary = top,
         secondary = bottom,
-        accent = if (isDay) Color(0xFFFFD54F) else Color(0xFFB0BEC5),
+        accent = if (isDay) Color(0xFFFFCC80) else Color(0xFF90A4AE),
         background = bgColors
     )
 }
@@ -515,7 +518,7 @@ private fun rememberSnowflakes(count: Int): List<Triple<Float, Float, Float>> {
 }
 
 // ══════════════════════════════════════════════════════════════════════
-//  Thunderstorm — Rain + periodic lightning flash + screen-edge glow
+//  Thunderstorm — Heavy rain, dark storm clouds, zigzag lightning, flash
 // ══════════════════════════════════════════════════════════════════════
 
 @Composable
@@ -524,55 +527,156 @@ private fun ThunderstormScene(
     compact: Boolean,
     modifier: Modifier
 ) {
-    // Includes rain effect
-    RainScene(weatherCode = 65, palette = palette, compact = compact, modifier = modifier)
-
-    val randomDelay = remember { Random(789).nextInt(3000) }
     val infiniteTransition = rememberInfiniteTransition(label = "thunder")
-    val flashAlpha by infiniteTransition.animateFloat(
+
+    // Two-phase lightning: fast bright flash, slower fade
+    val lightningPhase by infiniteTransition.animateFloat(
         initialValue = 0f,
         targetValue = 1f,
         animationSpec = infiniteRepeatable(
-            animation = tween(150, easing = LinearEasing),
+            animation = tween(200, easing = LinearEasing),
             repeatMode = RepeatMode.Reverse,
-            initialStartOffset = androidx.compose.animation.core.StartOffset(randomDelay)
+            initialStartOffset = androidx.compose.animation.core.StartOffset(Random(789).nextInt(4000))
         ),
         label = "lightningFlash"
     )
-    val glowAlpha by infiniteTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 0.4f,
+
+    // Dark storm cloud pulse
+    val cloudDarkAlpha by infiniteTransition.animateFloat(
+        initialValue = 0.15f,
+        targetValue = 0.35f,
         animationSpec = infiniteRepeatable(
-            animation = tween(100, easing = LinearEasing),
-            repeatMode = RepeatMode.Reverse,
-            initialStartOffset = androidx.compose.animation.core.StartOffset(randomDelay + 500)
+            animation = tween(3000, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse
         ),
-        label = "glowFlash"
+        label = "cloudDark"
     )
 
-    Canvas(modifier = modifier.fillMaxSize()) {
-        // Lightning flash (brief full-screen white flash)
-        if (flashAlpha > 0.5f) {
+    // Lightning bolt position (fixed per session)
+    val boltStartX = remember { 0.25f + Random(123).nextFloat() * 0.3f }
+    val boltStartY = remember { 0.05f + Random(123).nextFloat() * 0.1f }
+    val boltEndX = remember { 0.35f + Random(456).nextFloat() * 0.3f }
+    val boltEndY = remember { 0.6f + Random(789).nextFloat() * 0.2f }
+
+    Box(modifier = modifier.fillMaxSize()) {
+        // Draw heavy rain behind everything
+        val rainColor = Color(0xFF90CAF9).copy(alpha = 0.5f)
+        val streakCount = if (compact) 40 else 80
+        val streaks = rememberRainStreaks(streakCount)
+        val rainProgress by infiniteTransition.animateFloat(
+            initialValue = 0f,
+            targetValue = 1f,
+            animationSpec = infiniteRepeatable(tween(400, easing = LinearEasing), RepeatMode.Restart),
+            label = "stormRain"
+        )
+
+        // Storm clouds overlay (dark band at top)
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            // Dark storm cloud layer
             drawRect(
-                color = Color.White.copy(alpha = flashAlpha * 0.3f),
+                brush = Brush.verticalGradient(
+                    0f to Color(0xFF1A1A2E).copy(alpha = 0.85f),
+                    0.15f to Color(0xFF2D2D44).copy(alpha = cloudDarkAlpha),
+                    1f to Color.Transparent
+                ),
                 size = size
             )
         }
 
-        // Screen-edge glow
-        val glowColor = Color(0xFFFFF9C4).copy(alpha = glowAlpha)
-        drawRect(
-            brush = Brush.radialGradient(
-                colors = listOf(
-                    glowColor,
-                    glowColor.copy(alpha = 0f),
-                    Color.Transparent
-                ),
-                center = Offset(size.width * 0.3f, size.height * 0.1f),
-                radius = size.maxDimension * 0.6f
-            ),
-            size = size
-        )
+        // Heavy rain
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            streaks.forEach { (x, speed, length) ->
+                val y = (rainProgress * size.height * speed + x * size.height * 0.5f) % (size.height + length)
+                val yEnd = y - length
+                drawLine(
+                    color = rainColor,
+                    start = Offset(x * size.width, y),
+                    end = Offset(x * size.width, yEnd),
+                    strokeWidth = 2.5f
+                )
+            }
+        }
+
+        // Lightning bolt + flash (on top of everything)
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            val isFlash = lightningPhase > 0.5f
+
+            if (isFlash) {
+                // Full-screen white flash
+                val flashStrength = (lightningPhase - 0.5f) * 2f // 0..1
+                drawRect(
+                    color = Color.White.copy(alpha = flashStrength * 0.25f),
+                    size = size
+                )
+
+                // Screen-edge glow
+                val glowColor = Color(0xFFE0F7FA).copy(alpha = flashStrength * 0.35f)
+                drawRect(
+                    brush = Brush.radialGradient(
+                        listOf(glowColor, glowColor.copy(alpha = 0f)),
+                        center = Offset(size.width * boltStartX, size.height * boltStartY),
+                        radius = size.maxDimension * 0.7f
+                    ),
+                    size = size
+                )
+
+                // Draw zigzag lightning bolt
+                val boltBrightness = (0.7f + flashStrength * 0.3f).coerceIn(0f, 1f)
+                val boltColor = Color(0xFFFFF9C4).copy(alpha = boltBrightness * 0.9f)
+                val glowBoltColor = Color(0xFF81D4FA).copy(alpha = boltBrightness * 0.4f)
+
+                val startX = size.width * boltStartX
+                val startY = size.height * boltStartY
+                val endX = size.width * boltEndX
+                val endY = size.height * boltEndY
+
+                // Generate zigzag segments
+                val segments = if (compact) 4 else 8
+                val zigzag = Path()
+                zigzag.moveTo(startX, startY)
+
+                var currentX = startX
+                var currentY = startY
+                for (i in 0 until segments) {
+                    val t = (i + 1).toFloat() / segments
+                    val targetX = startX + (endX - startX) * t
+                    val targetY = startY + (endY - startY) * t
+                    // Add zigzag offset
+                    val zigzagOffset = (size.width * 0.04f) * (if (i % 2 == 0) 1f else -1f)
+                    val branchX = targetX + zigzagOffset * (1f - t * 0.5f)
+                    val branchY = targetY
+                    zigzag.lineTo(branchX, branchY)
+                    currentX = branchX
+                    currentY = branchY
+                }
+                zigzag.lineTo(endX, endY)
+
+                // Draw glow around bolt
+                drawPath(
+                    path = zigzag,
+                    color = glowBoltColor,
+                    style = Stroke(width = 12f, cap = androidx.compose.ui.graphics.StrokeCap.Round)
+                )
+                // Draw bright bolt core
+                drawPath(
+                    path = zigzag,
+                    color = boltColor,
+                    style = Stroke(width = 4f, cap = androidx.compose.ui.graphics.StrokeCap.Round)
+                )
+
+                // Small branch bolt
+                val branchStart = Offset(startX + size.width * 0.05f, startY + size.height * 0.2f)
+                val branchEnd = Offset(branchStart.x - size.width * 0.08f, branchStart.y + size.height * 0.15f)
+                val branchPath = Path()
+                branchPath.moveTo(branchStart.x, branchStart.y)
+                branchPath.lineTo(branchEnd.x, branchEnd.y)
+                drawPath(
+                    path = branchPath,
+                    color = boltColor.copy(alpha = 0.5f),
+                    style = Stroke(width = 2f, cap = androidx.compose.ui.graphics.StrokeCap.Round)
+                )
+            }
+        }
     }
 }
 
