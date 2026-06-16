@@ -1342,150 +1342,34 @@ private fun LiveWeatherDashboardWidget(
                         tonalElevation = 0.dp
                     ) {
                         Row(
-                            Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceEvenly
+                            Modifier.padding(horizontal = 12.dp, vertical = 8.dp).fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            // Wind
-                            if (showWind) {
-                                w.windSpeed?.let { wind ->
-                                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                        Icon(
-                                            FieldMindIcons.windIconForSpeed(wind),
-                                            null,
-                                            tint = colors.warning,
-                                            size = 18.dp
-                                        )
-                                        Text(
-                                            WeatherUnitConverter.formatWind(wind, windSpeedUnit),
-                                            style = MaterialTheme.typography.bodySmall,
-                                            fontWeight = FontWeight.SemiBold,
-                                            color = colors.warning
-                                        )
-                                        Text(
-                                            "Wind",
-                                            style = MaterialTheme.typography.labelSmall,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                                        )
-                                    }
-                                }
-                            }
-                            // Cloud cover
-                            if (showCloudCover) {
-                                w.cloudCover?.let { cloud ->
-                                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                        Icon(
-                                            FieldMindIcons.Cloud,
-                                            null,
-                                            tint = colors.hypothesis,
-                                            size = 18.dp
-                                        )
-                                        Text(
-                                            "$cloud%",
-                                            style = MaterialTheme.typography.bodySmall,
-                                            fontWeight = FontWeight.SemiBold,
-                                            color = colors.hypothesis
-                                        )
-                                        Text(
-                                            "Cloud cover",
-                                            style = MaterialTheme.typography.labelSmall,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                                        )
-                                    }
-                                }
-                            }
-                            // Pressure
-                            if (showPressure) {
-                                w.pressure?.let { press ->
-                                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                        Icon(
-                                            FieldMindIcons.Compress,
-                                            null,
-                                            tint = colors.project,
-                                            size = 18.dp
-                                        )
-                                        Text(
-                                            "%.0f hPa".format(press),
-                                            style = MaterialTheme.typography.bodySmall,
-                                            fontWeight = FontWeight.SemiBold,
-                                            color = colors.project
-                                        )
-                                        Text(
-                                            "Pressure",
-                                            style = MaterialTheme.typography.labelSmall,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                                        )
-                                    }
-                                }
-                            }
+                            Icon(FieldMindIcons.Info, null, tint = colors.warning, size = 16.dp)
+                            Text(
+                                conditionsNudge,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = colors.warning,
+                                fontWeight = FontWeight.SemiBold
+                            )
                         }
+                    }
+                }
 
-                        // ── Sunrise / Sunset / Moon phase (with icons8 PNGs) ──
-                        if (sunrise != null || sunset != null || moonPhase.isNotBlank()) {
-                            Row(
-                                Modifier.fillMaxWidth().padding(top = 2.dp),
-                                horizontalArrangement = Arrangement.SpaceEvenly
-                            ) {
-                                sunrise?.let { s ->
-                                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                                        Icon(FieldMindIcons.Sunrise, null, tint = colors.warning, size = 14.dp)
-                                        Text("Sunrise ${formatTimeFromIso(s)}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                    }
-                                }
-                                sunset?.let { s ->
-                                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                                        Icon(FieldMindIcons.Sunset, null, tint = colors.data, size = 14.dp)
-                                        Text("Sunset ${formatTimeFromIso(s)}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                    }
-                                }
-                                if (moonPhase.isNotBlank()) {
-                                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                                        Icon(moonPhaseIcon(moonPhase), null, tint = if (FieldMindTheme.colors.isDark) Color(0xFFB0B0FF) else MaterialTheme.colorScheme.onSurfaceVariant, size = 24.dp)
-                                        Text(moonPhase, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                    }
-                                }
-                            }
-                        }
-
-                        // ── Conditions nudge ──
-                        if (conditionsNudge.isNotBlank()) {
-                            Surface(
-                                shape = RoundedCornerShape(14.dp),
-                                color = colors.warning.copy(alpha = if (colors.isDark) 0.18f else 0.10f),
-                                tonalElevation = 0.dp
-                            ) {
-                                Row(
-                                    Modifier.padding(horizontal = 12.dp, vertical = 8.dp).fillMaxWidth(),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                ) {
-                                    Icon(FieldMindIcons.Info, null, tint = colors.warning, size = 16.dp)
-                                    Text(
-                                        conditionsNudge,
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = colors.warning,
-                                        fontWeight = FontWeight.SemiBold
-                                    )
-                                }
-                            }
-                        }
-
-                        // ── Weather observation count ──
-                        val weatherObsCount = observations.count { it.weatherTemperature != null }
-                        if (weatherObsCount > 0) {
-                            Row(
-                                Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(
-                                    "$weatherObsCount observation${if (weatherObsCount != 1) "s" else ""} with weather data",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
-                                )
-                            }
-                        }
-
-
+                // ── Weather observation count ──
+                val weatherObsCount = observations.count { it.weatherTemperature != null }
+                if (weatherObsCount > 0) {
+                    Row(
+                        Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            "$weatherObsCount observation${if (weatherObsCount != 1) "s" else ""} with weather data",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                        )
                     }
                 }
             } else if (weatherError) {
@@ -1520,8 +1404,6 @@ private fun LiveWeatherDashboardWidget(
             }
         }
     }
-
-
 }
 }
 internal fun weatherConditionIcon(code: Int): MaterialSymbolIcon {

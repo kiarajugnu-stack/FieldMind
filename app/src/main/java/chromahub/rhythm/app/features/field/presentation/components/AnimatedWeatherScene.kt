@@ -75,9 +75,14 @@ fun AnimatedWeatherScene(
         }
 
         // Specific weather effects
+        // weatherCode -1 = day cloudy, -2 = night sky (used by weather widget for enhanced display)
         when {
-            weatherCode in 0..1 -> ClearSkyScene(palette, isDay, compact, modifier)
+            weatherCode == -1 -> DayCloudyScene(palette, compact, modifier)
+            weatherCode == -2 -> NightSkyScene(palette, compact, modifier)
+            weatherCode in 0..1 -> if (isDay) DayCloudyScene(palette, compact, modifier) else NightSkyScene(palette, compact, modifier)
             weatherCode in 2..3 -> CloudyScene(palette, compact, modifier)
+            weatherCode == -1 -> DayCloudyScene(palette, compact, modifier)
+            weatherCode == -2 -> NightSkyScene(palette, compact, modifier)
             weatherCode in 45..48 -> FogScene(palette, compact, modifier)
             weatherCode in 51..67 || weatherCode in 80..82 -> RainScene(weatherCode, palette, compact, modifier)
             weatherCode in 71..77 || weatherCode in 85..86 -> SnowScene(weatherCode, palette, compact, modifier)
@@ -141,6 +146,253 @@ private fun weatherPalette(temp: Double?, isDay: Boolean): WeatherPalette {
         accent = if (isDay) Color(0xFFFFCC80) else Color(0xFF90A4AE),
         background = bgColors
     )
+}
+
+// ══════════════════════════════════════════════════════════════════════
+//  Enhanced Day Scene — Sun + drifting clouds + weather condition
+// ══════════════════════════════════════════════════════════════════════
+
+/**
+ * Day scene with sun, drifting clouds, and subtle weather condition overlay.
+ * Used by the weather widget as the default day background.
+ */
+@Composable
+private fun DayCloudyScene(
+    palette: WeatherPalette,
+    compact: Boolean,
+    modifier: Modifier
+) {
+    val infiniteTransition = rememberInfiniteTransition(label = "dayClouds")
+    val sunRotation by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 360f,
+        animationSpec = infiniteRepeatable(tween(12000, easing = LinearEasing), RepeatMode.Restart),
+        label = "sunRotate"
+    )
+    val sunGlow by infiniteTransition.animateFloat(
+        initialValue = 0.6f,
+        targetValue = 1.0f,
+        animationSpec = infiniteRepeatable(tween(3000, easing = FastOutSlowInEasing), RepeatMode.Reverse),
+        label = "sunGlow"
+    )
+    val cloudOffset1 by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(tween(15000, easing = LinearEasing), RepeatMode.Restart),
+        label = "cloudDrift1"
+    )
+    val cloudOffset2 by infiniteTransition.animateFloat(
+        initialValue = 0.3f,
+        targetValue = 1.3f,
+        animationSpec = infiniteRepeatable(tween(22000, easing = LinearEasing), RepeatMode.Restart),
+        label = "cloudDrift2"
+    )
+
+    val cloudColor = Color(0xFFFFFFFF).copy(alpha = 0.35f)
+    val cloudColorDark = Color(0xFFB0BEC5).copy(alpha = 0.25f)
+
+    Canvas(modifier = modifier.fillMaxSize()) {
+        val cx = size.width / 2
+        val cy = size.height * 0.35f
+        val sunRadius = if (compact) size.minDimension * 0.12f else size.minDimension * 0.10f
+
+        // Sun glow
+        drawCircle(
+            color = palette.accent.copy(alpha = sunGlow * 0.12f),
+            radius = sunRadius * 2.5f,
+            center = Offset(cx, cy)
+        )
+        drawCircle(
+            color = Color.White.copy(alpha = sunGlow * 0.06f),
+            radius = sunRadius * 3.5f,
+            center = Offset(cx, cy)
+        )
+
+        // Sun rays
+        val rayCount = if (compact) 6 else 10
+        val rayLength = sunRadius * 2.0f
+        for (i in 0 until rayCount) {
+            val angle = sunRotation + (360f / rayCount) * i
+            val rad = (angle * PI.toFloat() / 180f)
+            val x1 = cx + cos(rad) * sunRadius * 0.9f
+            val y1 = cy + sin(rad) * sunRadius * 0.9f
+            val x2 = cx + cos(rad) * rayLength
+            val y2 = cy + sin(rad) * rayLength
+            drawLine(
+                color = Color(0xFFFFF9C4).copy(alpha = 0.2f * sunGlow),
+                start = Offset(x1, y1),
+                end = Offset(x2, y2),
+                strokeWidth = if (compact) 2f else 3f
+            )
+        }
+
+        // Sun body
+        drawCircle(
+            color = Color(0xFFFFF176),
+            radius = sunRadius,
+            center = Offset(cx, cy)
+        )
+        drawCircle(
+            color = Color(0xFFFFF9C4),
+            radius = sunRadius * 0.55f,
+            center = Offset(cx, cy)
+        )
+
+        // Back layer clouds (slow drift, behind sun)
+        drawCloud(
+            offset = cloudOffset1,
+            baseX = size.width * 0.1f,
+            baseY = size.height * 0.15f,
+            scale = size.width * 0.45f,
+            color = cloudColor.copy(alpha = 0.3f)
+        )
+        drawCloud(
+            offset = cloudOffset1,
+            baseX = size.width * 0.55f,
+            baseY = size.height * 0.12f,
+            scale = size.width * 0.35f,
+            color = cloudColor.copy(alpha = 0.25f)
+        )
+
+        // Front layer clouds
+        drawCloud(
+            offset = cloudOffset2,
+            baseX = size.width * 0.25f,
+            baseY = size.height * 0.55f,
+            scale = size.width * 0.5f,
+            color = cloudColorDark.copy(alpha = 0.35f)
+        )
+        drawCloud(
+            offset = cloudOffset2,
+            baseX = size.width * 0.65f,
+            baseY = size.height * 0.5f,
+            scale = size.width * 0.4f,
+            color = cloudColorDark.copy(alpha = 0.3f)
+        )
+        drawCloud(
+            offset = cloudOffset2,
+            baseX = size.width * 0.8f,
+            baseY = size.height * 0.7f,
+            scale = size.width * 0.3f,
+            color = cloudColor.copy(alpha = 0.25f)
+        )
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════════
+//  Enhanced Night Scene — Moon + bright stars + weather condition
+// ══════════════════════════════════════════════════════════════════════
+
+/**
+ * Night scene with crescent moon, bright twinkling stars, and drifting clouds.
+ * Used by the weather widget as the default night background.
+ */
+@Composable
+private fun NightSkyScene(
+    palette: WeatherPalette,
+    compact: Boolean,
+    modifier: Modifier
+) {
+    val infiniteTransition = rememberInfiniteTransition(label = "nightSky")
+    val starAlpha by infiniteTransition.animateFloat(
+        initialValue = 0.2f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(tween(2000, easing = LinearEasing), RepeatMode.Reverse),
+        label = "starTwinkle"
+    )
+    val cloudOffset by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(tween(20000, easing = LinearEasing), RepeatMode.Restart),
+        label = "nightClouds"
+    )
+    val moonGlow by infiniteTransition.animateFloat(
+        initialValue = 0.7f,
+        targetValue = 1.0f,
+        animationSpec = infiniteRepeatable(tween(4000, easing = FastOutSlowInEasing), RepeatMode.Reverse),
+        label = "moonGlow"
+    )
+
+    val starCount = if (compact) 25 else 60
+    val stars = remember { rememberStarPositions(starCount) }
+
+    Canvas(modifier = modifier.fillMaxSize()) {
+        val cx = size.width / 2
+        val cy = size.height * 0.3f
+        val moonRadius = if (compact) size.minDimension * 0.12f else size.minDimension * 0.10f
+
+        // Moon glow ring
+        drawCircle(
+            color = Color(0xFFECEFF1).copy(alpha = 0.12f * moonGlow),
+            radius = moonRadius * 3.0f,
+            center = Offset(cx, cy)
+        )
+        drawCircle(
+            color = Color(0xFFFFF9C4).copy(alpha = 0.04f * moonGlow),
+            radius = moonRadius * 4.5f,
+            center = Offset(cx, cy)
+        )
+
+        // Moon body
+        drawCircle(
+            color = Color(0xFFECEFF1),
+            radius = moonRadius,
+            center = Offset(cx, cy)
+        )
+        // Crescent shadow
+        drawCircle(
+            color = palette.background.last().copy(alpha = 0.65f),
+            radius = moonRadius * 0.82f,
+            center = Offset(cx + moonRadius * 0.2f, cy - moonRadius * 0.12f)
+        )
+
+        // Stars with bright twinkle
+        stars.forEach { (x, y) ->
+            val twinkle = (sin(starAlpha * 8f + x * 25f + y * 35f) * 0.5f + 0.5f).coerceIn(0.15f, 1f)
+            val starRadius = 1.0f + twinkle * 2.5f
+            val starColor = when {
+                twinkle > 0.85f -> Color(0xFFB3E5FC) // Blue-white for bright stars
+                twinkle > 0.5f -> Color(0xFFFFF9C4) // Warm white
+                else -> Color.White
+            }
+            drawCircle(
+                color = starColor.copy(alpha = twinkle * 0.95f),
+                radius = starRadius,
+                center = Offset(x * size.width, y * size.height)
+            )
+            // Cross glow on brightest stars
+            if (twinkle > 0.8f && !compact) {
+                drawLine(
+                    color = starColor.copy(alpha = twinkle * 0.3f),
+                    start = Offset(x * size.width - starRadius * 2, y * size.height),
+                    end = Offset(x * size.width + starRadius * 2, y * size.height),
+                    strokeWidth = 0.8f
+                )
+                drawLine(
+                    color = starColor.copy(alpha = twinkle * 0.3f),
+                    start = Offset(x * size.width, y * size.height - starRadius * 2),
+                    end = Offset(x * size.width, y * size.height + starRadius * 2),
+                    strokeWidth = 0.8f
+                )
+            }
+        }
+
+        // Drifting faint clouds at night
+        drawCloud(
+            offset = cloudOffset,
+            baseX = size.width * 0.15f,
+            baseY = size.height * 0.6f,
+            scale = size.width * 0.4f,
+            color = Color(0xFF37474F).copy(alpha = 0.15f)
+        )
+        drawCloud(
+            offset = cloudOffset,
+            baseX = size.width * 0.55f,
+            baseY = size.height * 0.75f,
+            scale = size.width * 0.35f,
+            color = Color(0xFF263238).copy(alpha = 0.12f)
+        )
+    }
 }
 
 // ══════════════════════════════════════════════════════════════════════
@@ -338,55 +590,99 @@ private fun CloudyScene(
 
     Canvas(modifier = modifier.fillMaxSize()) {
         val cloudScale = if (compact) size.width * 0.4f else size.width * 0.5f
-        val cloudScale2 = if (compact) size.width * 0.3f else size.width * 0.4f
+        val cloudScale2 = if (compact) size.width * 0.3f else size.width * 0.4f        // Back layer clouds (slow drift, seamless loop)
+            val backDrift = cloudOffset1 % 1f
+            drawCloud(
+                offset = backDrift,
+                baseX = size.width * 0.1f,
+                baseY = size.height * 0.2f,
+                scale = cloudScale,
+                color = cloudColor.copy(alpha = 0.4f)
+            )
+            // Repeat to fill screen width for seamless loop
+            drawCloud(
+                offset = backDrift - 1f,
+                baseX = size.width * 0.1f,
+                baseY = size.height * 0.2f,
+                scale = cloudScale,
+                color = cloudColor.copy(alpha = 0.4f)
+            )
+            drawCloud(
+                offset = backDrift,
+                baseX = size.width * 0.5f,
+                baseY = size.height * 0.15f,
+                scale = cloudScale * 0.8f,
+                color = cloudColor.copy(alpha = 0.3f)
+            )
+            drawCloud(
+                offset = backDrift - 1f,
+                baseX = size.width * 0.5f,
+                baseY = size.height * 0.15f,
+                scale = cloudScale * 0.8f,
+                color = cloudColor.copy(alpha = 0.3f)
+            )
 
-        // Back layer clouds (slow drift)
-        drawCloud(
-            offset = cloudOffset1,
-            baseX = size.width * 0.1f,
-            baseY = size.height * 0.2f,
-            scale = cloudScale,
-            color = cloudColor.copy(alpha = 0.4f)
-        )
-        drawCloud(
-            offset = cloudOffset1,
-            baseX = size.width * 0.5f,
-            baseY = size.height * 0.15f,
-            scale = cloudScale * 0.8f,
-            color = cloudColor.copy(alpha = 0.3f)
-        )
+            // Middle layer clouds (seamless loop)
+            val midDrift = cloudOffset2 % 1f
+            drawCloud(
+                offset = midDrift,
+                baseX = size.width * 0.3f,
+                baseY = size.height * 0.35f,
+                scale = cloudScale2,
+                color = cloudColorDark.copy(alpha = 0.5f)
+            )
+            drawCloud(
+                offset = midDrift - 1f,
+                baseX = size.width * 0.3f,
+                baseY = size.height * 0.35f,
+                scale = cloudScale2,
+                color = cloudColorDark.copy(alpha = 0.5f)
+            )
+            drawCloud(
+                offset = midDrift,
+                baseX = size.width * 0.7f,
+                baseY = size.height * 0.3f,
+                scale = cloudScale2 * 0.9f,
+                color = cloudColorDark.copy(alpha = 0.4f)
+            )
+            drawCloud(
+                offset = midDrift - 1f,
+                baseX = size.width * 0.7f,
+                baseY = size.height * 0.3f,
+                scale = cloudScale2 * 0.9f,
+                color = cloudColorDark.copy(alpha = 0.4f)
+            )
 
-        // Middle layer clouds
-        drawCloud(
-            offset = cloudOffset2,
-            baseX = size.width * 0.3f,
-            baseY = size.height * 0.35f,
-            scale = cloudScale2,
-            color = cloudColorDark.copy(alpha = 0.5f)
-        )
-        drawCloud(
-            offset = cloudOffset2,
-            baseX = size.width * 0.7f,
-            baseY = size.height * 0.3f,
-            scale = cloudScale2 * 0.9f,
-            color = cloudColorDark.copy(alpha = 0.4f)
-        )
-
-        // Front layer clouds (fast drift)
-        drawCloud(
-            offset = cloudOffset3,
-            baseX = size.width * 0.15f,
-            baseY = size.height * 0.7f,
-            scale = cloudScale * 1.1f,
-            color = cloudColor.copy(alpha = 0.6f)
-        )
-        drawCloud(
-            offset = cloudOffset3,
-            baseX = size.width * 0.6f,
-            baseY = size.height * 0.65f,
-            scale = cloudScale * 0.7f,
-            color = cloudColor.copy(alpha = 0.5f)
-        )
+            // Front layer clouds (fast drift, seamless loop)
+            val frontDrift = cloudOffset3 % 1f
+            drawCloud(
+                offset = frontDrift,
+                baseX = size.width * 0.15f,
+                baseY = size.height * 0.7f,
+                scale = cloudScale * 1.1f,
+                color = cloudColor.copy(alpha = 0.6f)
+            )
+            drawCloud(
+                offset = frontDrift - 1f,
+                baseX = size.width * 0.15f,
+                baseY = size.height * 0.7f,
+                scale = cloudScale * 1.1f,
+                color = cloudColor.copy(alpha = 0.6f)
+            )
+            drawCloud(
+                offset = frontDrift,
+                baseX = size.width * 0.6f,
+                baseY = size.height * 0.65f,
+                scale = cloudScale * 0.7f,
+                color = cloudColor.copy(alpha = 0.5f)
+            )
+            drawCloud(
+                offset = frontDrift - 1f,
+                baseX = size.width * 0.6f,
+                baseY = size.height * 0.65f,
+                scale = cloudScale * 0.7f,
+                color = cloudColor.copy(alpha = 0.5f)
+            )
     }
 }
 

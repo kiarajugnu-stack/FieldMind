@@ -99,7 +99,10 @@ fun OptionPickerDialog(
     onDismiss: () -> Unit,
     accentColor: Color = MaterialTheme.colorScheme.primary,
     iconProvider: ((String) -> MaterialSymbolIcon?)? = null,
-    showSearch: Boolean = false
+    showSearch: Boolean = false,
+    multiSelect: Boolean = false,
+    selectedMulti: Set<String> = emptySet(),
+    onMultiSelect: ((Set<String>) -> Unit)? = null
 ) {
     val haptics = rememberFieldMindHaptics()
     var searchQuery by remember { mutableStateOf("") }
@@ -160,14 +163,19 @@ fun OptionPickerDialog(
 
                 // Options list
                 filteredOptions.forEach { option ->
-                    val isSelected = option == selected
+                    val isSelected = if (multiSelect) option in selectedMulti else option == selected
                     val icon = iconProvider?.invoke(option)
                     
                     Surface(
                         onClick = {
                             haptics.light()
-                            onSelect(option)
-                            onDismiss()
+                            if (multiSelect && onMultiSelect != null) {
+                                val newSet = if (isSelected) selectedMulti - option else selectedMulti + option
+                                onMultiSelect(newSet)
+                            } else {
+                                onSelect(option)
+                                onDismiss()
+                            }
                         },
                         shape = RoundedCornerShape(18.dp),
                         color = if (isSelected) accentColor.copy(alpha = 0.12f) else MaterialTheme.colorScheme.surfaceContainerHigh,
@@ -217,8 +225,95 @@ fun OptionPickerDialog(
                     }
                 }
 
+                if (multiSelect && onMultiSelect != null) {
+                    Spacer(Modifier.height(4.dp))
+                    Button(
+                        onClick = {
+                            haptics.confirm()
+                            onDismiss()
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp),
+                        enabled = selectedMulti.isNotEmpty()
+                    ) {
+                        Icon(FieldMindIcons.Check, null, size = 18.dp)
+                        Spacer(Modifier.size(8.dp))
+                        Text("Done (${selectedMulti.size} selected)")
+                    }
+                }
+
                 Spacer(Modifier.height(8.dp))
             }
+        }
+    }
+}
+
+/**
+ * Multi-select variant of OptionPickerField. Opens a dialog with checkboxes.
+ */
+@Composable
+fun MultiSelectPickerField(
+    label: String,
+    selected: Set<String>,
+    options: List<String>,
+    onSelectionChanged: (Set<String>) -> Unit,
+    modifier: Modifier = Modifier,
+    accentColor: Color = MaterialTheme.colorScheme.primary,
+    icon: MaterialSymbolIcon? = null,
+    subtitle: String = "",
+    iconProvider: ((String) -> MaterialSymbolIcon?)? = null,
+    showSearch: Boolean = false
+) {
+    val haptics = rememberFieldMindHaptics()
+    var showDialog by remember { mutableStateOf(false) }
+
+    Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Text(label, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
+
+        Surface(
+            onClick = { haptics.light(); showDialog = true },
+            shape = RoundedCornerShape(18.dp),
+            color = MaterialTheme.colorScheme.surfaceContainerHigh,
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+        ) {
+            Row(
+                Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                if (icon != null) {
+                    Icon(icon, null, tint = accentColor, size = 20.dp)
+                }
+
+                val displayText = if (selected.isEmpty()) "Select…" else "${selected.size} selected"
+                Text(
+                    displayText,
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Medium,
+                    modifier = Modifier.weight(1f),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+
+                Icon(FieldMindIcons.Down, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, size = 18.dp)
+            }
+        }
+
+        if (showDialog) {
+            OptionPickerDialog(
+                title = label,
+                subtitle = subtitle,
+                options = options,
+                selected = "",
+                onSelect = {},
+                onDismiss = { showDialog = false },
+                accentColor = accentColor,
+                iconProvider = iconProvider,
+                showSearch = showSearch,
+                multiSelect = true,
+                selectedMulti = selected,
+                onMultiSelect = onSelectionChanged
+            )
         }
     }
 }
@@ -640,7 +735,8 @@ fun FieldTextField(
     supportingText: String? = null,
     required: Boolean = false,
     error: String? = null,
-    enabled: Boolean = true
+    enabled: Boolean = true,
+    keyboardType: KeyboardType = KeyboardType.Text
 ) {
     val displayLabel = if (required) "$label *" else label
     OutlinedTextField(
@@ -649,6 +745,7 @@ fun FieldTextField(
         label = { Text(displayLabel) },
         minLines = minLines,
         isError = error != null,
+        keyboardOptions = if (keyboardType != KeyboardType.Text) KeyboardOptions(keyboardType = keyboardType) else KeyboardOptions.Default,
         supportingText = {
             when {
                 error != null -> Text(error, color = MaterialTheme.colorScheme.error)
@@ -669,7 +766,8 @@ fun FieldTextField(
     modifier: Modifier = Modifier,
     minLines: Int = 1,
     supportingText: String? = null,
-    enabled: Boolean = true
+    enabled: Boolean = true,
+    keyboardType: KeyboardType = KeyboardType.Text
 ) {
     FieldTextField(
         value = fieldState.value,
@@ -680,7 +778,8 @@ fun FieldTextField(
         supportingText = supportingText,
         required = fieldState.isRequired,
         error = if (fieldState.isTouched) fieldState.error else null,
-        enabled = enabled
+        enabled = enabled,
+        keyboardType = keyboardType
     )
 }
 

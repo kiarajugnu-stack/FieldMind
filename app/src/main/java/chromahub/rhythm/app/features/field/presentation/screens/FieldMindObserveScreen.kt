@@ -2051,7 +2051,7 @@ internal fun ObservationCaptureCard(viewModel: FieldMindViewModel, compact: Bool
                         OutlinedButton(onClick = { if (stopwatchRunning) { stopwatchAccumulatedMs += System.currentTimeMillis() - (stopwatchStartedAt ?: System.currentTimeMillis()); stopwatchRunning = false } }, Modifier.weight(1f)) { Text("Pause") }
                         OutlinedButton(onClick = { stopwatchStartedAt = null; stopwatchAccumulatedMs = 0L; stopwatchRunning = false }, Modifier.weight(1f)) { Text("Reset") }
                     }
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) { FieldTextField(manualDurationMinutes, { manualDurationMinutes = it }, "Manual min", modifier = Modifier.weight(1f)); FieldTextField(changeAtMinutes, { changeAtMinutes = it }, "Change +min", modifier = Modifier.weight(1f)) }
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) { FieldTextField(manualDurationMinutes, { manualDurationMinutes = it }, "Manual min", modifier = Modifier.weight(1f), keyboardType = KeyboardType.Number); FieldTextField(changeAtMinutes, { changeAtMinutes = it }, "Change +min", modifier = Modifier.weight(1f), keyboardType = KeyboardType.Number) }
                     FieldTextField(timeNote, { timeNote = it }, "Timing note", minLines = 2)
                 }
                 CaptureStep("Structured details", observationCategoryDefinitions.firstOrNull { it.label == category }?.prompt ?: "Add category-specific fields.", FieldMindIcons.Data) {
