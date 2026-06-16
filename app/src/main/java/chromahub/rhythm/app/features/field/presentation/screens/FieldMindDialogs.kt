@@ -51,7 +51,8 @@ import android.content.Intent
 import android.Manifest
 import androidx.compose.ui.platform.LocalUriHandler
 import fieldmind.research.app.features.field.data.location.FieldLocationProvider
-import androidx.activity.compose.BackHandler
+import androidx.activity.OnBackPressedCallback
+import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
 import kotlinx.coroutines.delay
 // ══════════════════════════════════════════════════════════════════════
 //  Shared dialog helpers — consistent containers for all edit/create dialogs
@@ -72,15 +73,6 @@ private fun DialogWrapper(
     content: @Composable ColumnScope.() -> Unit
 ) {
     var showExitConfirm by remember { mutableStateOf(false) }
-
-    // Handle system back button for full-screen mode with dirty confirmation
-    BackHandler(enabled = fullScreen) {
-        if (isDirty()) {
-            showExitConfirm = true
-        } else {
-            onDismiss()
-        }
-    }
 
     // Confirmation dialog when exiting with unsaved changes
     if (showExitConfirm) {
@@ -112,6 +104,19 @@ private fun DialogWrapper(
     }
 
     Dialog(onDismissRequest = { if (fullScreen && isDirty()) showExitConfirm = true else onDismiss() }, properties = DialogProperties(usePlatformDefaultWidth = false, dismissOnBackPress = false, dismissOnClickOutside = !fullScreen)) {
+        // Handle system back button — placed INSIDE Dialog content for proper composition context
+        val dispatcher = LocalOnBackPressedDispatcherOwner.current?.onBackPressedDispatcher
+        DisposableEffect(dispatcher, fullScreen) {
+            if (dispatcher != null && fullScreen) {
+                val callback = object : OnBackPressedCallback(true) {
+                    override fun handleOnBackPressed() {
+                        if (isDirty()) showExitConfirm = true else onDismiss()
+                    }
+                }
+                dispatcher.addCallback(callback)
+                onDispose { callback.remove() }
+            }
+        }
         if (fullScreen) {
             Surface(
                 modifier = Modifier.fillMaxSize(),
