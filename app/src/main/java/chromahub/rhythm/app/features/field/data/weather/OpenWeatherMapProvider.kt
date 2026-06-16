@@ -92,18 +92,19 @@ class OpenWeatherMapProvider : WeatherProvider {
             val tMax = temps.maxOrNull() ?: 0.0
             val tMin = temps.minOrNull() ?: 0.0
             val wCode = owmIdToWmo(dominantWeather)
-            val desc = weatherItems.firstOrNull()?.description?.replaceFirstChar { it.uppercase() } ?: ""
-
-            DailyForecast(
-                date = date,
-                temperatureMax = tMax,
-                temperatureMin = tMin,
-                weatherCode = wCode,
-                weatherDescription = desc,
-                precipitationSum = items.sumOf { it.rain?.the3H ?: 0.0 }.takeIf { it > 0 },
-                windSpeedMax = items.maxOfOrNull { it.wind?.speed?.let { s -> s * 3.6 } ?: 0.0 },
-                humidityMax = items.maxOfOrNull { it.main?.humidity ?: 0 }
-            )
+            val desc = weatherItems.firstOrNull()?.description?.replaceFirstChar { it.uppercase() } ?: ""                    val feelsLikeTemps = items.mapNotNull { it.main?.feelsLike }
+                    val apparentAvg = if (feelsLikeTemps.isNotEmpty()) feelsLikeTemps.average() else null
+                    DailyForecast(
+                        date = date,
+                        temperatureMax = tMax,
+                        temperatureMin = tMin,
+                        weatherCode = wCode,
+                        weatherDescription = desc,
+                        precipitationSum = items.sumOf { it.rain?.the3H ?: 0.0 }.takeIf { it > 0 },
+                        windSpeedMax = items.maxOfOrNull { it.wind?.speed?.let { s -> s * 3.6 } ?: 0.0 },
+                        humidityMax = items.maxOfOrNull { it.main?.humidity ?: 0 },
+                        apparentTemperature = apparentAvg
+                    )
         }
     }
 

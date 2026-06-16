@@ -66,7 +66,8 @@ class WeatherApiDotComProvider : WeatherProvider {
                         weatherDescription = day.day?.condition?.text ?: "",
                         precipitationSum = day.day?.totalprecip_mm,
                         windSpeedMax = day.day?.maxwind_kph,
-                        humidityMax = day.day?.avghumidity
+                        humidityMax = day.day?.avghumidity,
+                        apparentTemperature = day.day?.avgtemp_c
                     )
                 } ?: emptyList()
 

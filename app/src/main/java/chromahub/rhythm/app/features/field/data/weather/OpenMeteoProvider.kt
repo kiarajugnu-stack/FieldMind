@@ -38,7 +38,7 @@ class OpenMeteoProvider : WeatherProvider {
                 "?latitude=$latitude" +
                 "&longitude=$longitude" +
                 "&current=temperature_2m,relative_humidity_2m,weather_code,cloud_cover,surface_pressure,wind_speed_10m,wind_direction_10m" +
-                "&daily=sunrise,sunset,temperature_2m_max,temperature_2m_min,weather_code,precipitation_sum,wind_speed_10m_max,relative_humidity_2m_max,time" +
+                "&daily=sunrise,sunset,temperature_2m_max,temperature_2m_min,weather_code,precipitation_sum,wind_speed_10m_max,relative_humidity_2m_max,apparent_temperature_max,apparent_temperature_min,time" +
                 "&timezone=auto"
 
             val request = Request.Builder().url(url).get().build()
@@ -73,6 +73,9 @@ class OpenMeteoProvider : WeatherProvider {
                     val precip = daily.precipitationSum?.getOrNull(index)
                     val windMax = daily.windSpeedMax?.getOrNull(index)
                     val humMax = daily.humidityMax?.getOrNull(index)
+                    val apparentMax = daily.apparentTempMax?.getOrNull(index)
+                    val apparentMin = daily.apparentTempMin?.getOrNull(index)
+                    val apparentAvg = if (apparentMax != null && apparentMin != null) (apparentMax + apparentMin) / 2.0 else null
                     DailyForecast(
                         date = date,
                         temperatureMax = tMax,
@@ -81,7 +84,8 @@ class OpenMeteoProvider : WeatherProvider {
                         weatherDescription = WeatherSnapshot.descriptionForCode(wCode),
                         precipitationSum = precip,
                         windSpeedMax = windMax,
-                        humidityMax = humMax
+                        humidityMax = humMax,
+                        apparentTemperature = apparentAvg
                     )
                 }
             } else emptyList()
@@ -137,6 +141,8 @@ internal data class DailyData(
     @SerializedName("precipitation_sum") val precipitationSum: List<Double>? = null,
     @SerializedName("wind_speed_10m_max") val windSpeedMax: List<Double>? = null,
     @SerializedName("relative_humidity_2m_max") val humidityMax: List<Int>? = null,
+    @SerializedName("apparent_temperature_max") val apparentTempMax: List<Double>? = null,
+    @SerializedName("apparent_temperature_min") val apparentTempMin: List<Double>? = null,
     @SerializedName("time") val time: List<String>? = null
 )
 

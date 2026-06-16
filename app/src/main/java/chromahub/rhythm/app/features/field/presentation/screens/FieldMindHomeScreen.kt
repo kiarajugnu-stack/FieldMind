@@ -1472,6 +1472,9 @@ private fun LiveWeatherDashboardWidget(
                                             day.humidityMax?.let { hum ->
                                                 ForecastDetailItem("Humidity", "$hum%", FieldMindTheme.colors.data)
                                             }
+                                            day.apparentTemperature?.let { feels ->
+                                                ForecastDetailItem("Feels like", "%.0f°".format(feels), FieldMindTheme.colors.warning)
+                                            }
                                         }
                                     }
                                 }
