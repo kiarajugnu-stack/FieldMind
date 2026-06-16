@@ -662,6 +662,11 @@ private fun ThunderstormScene(
     var flashAlpha by remember { mutableStateOf(0f) }
     val flashPosition = remember { mutableStateOf(Offset(0.3f, 0.1f)) }
     var flashIntensity by remember { mutableStateOf(0.3f) }
+    
+    // ── Lightning bolt paths computed from flash counter (stable for entire flash) ──
+    // boltSeed increments each time a new flash starts directly in the main flash loop,
+    // so the bolt path is fixed for the entire duration of a single flash — no frame-to-frame jitter.
+    var boltSeed by remember { mutableStateOf(0) }
 
     // Seed the random generator once
     val rng = remember { Random(789) }
@@ -734,11 +739,7 @@ private fun ThunderstormScene(
         }
     }
 
-    // ── Lightning bolt paths computed from flash counter (stable for entire flash) ──
-    // boltSeed increments each time a new flash starts directly in the main flash loop,
-    // so the bolt path is fixed for the entire duration of a single flash — no frame-to-frame jitter.
-    var boltSeed by remember { mutableStateOf(0) }
-    
+    // ── Lightning bolt path is seeded by boltSeed from above — stable for entire flash ──
     Canvas(modifier = modifier.fillMaxSize()) {
         // ── Lightning bolt (jagged line from cloud to ground) ──
         if (flashAlpha > 0.3f) {

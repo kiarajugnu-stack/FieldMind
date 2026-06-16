@@ -144,7 +144,7 @@ fun ProjectsScreen(
         }
         // Static tab content (no AnimatedContent to avoid infinite-height crash with LazyColumn)
         Box(
-            modifier = Modifier.fillMaxSize().pointerInput(selectedTab) {
+            modifier = Modifier.fillMaxSize().pointerInput(tab) {
                     var totalDrag = 0f
                     detectHorizontalDragGestures(
                         onDragStart = { totalDrag = 0f },
@@ -153,7 +153,7 @@ fun ProjectsScreen(
                     )
                 }
             ) {
-                when (selectedTab) {
+                when (tab) {
                     0 -> ResearchHubOverviewTab(viewModel, projects, observations, questions, hypotheses, sources, data, reports, researchSessions, onOpenDetail, onStartSession)
                     1 -> ObservationsTab(viewModel, observations, projects, onOpenDetail)
                     2 -> HypothesesTab(viewModel, hypotheses, questions, observations, onOpenDetail)
