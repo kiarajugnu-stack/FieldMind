@@ -4,11 +4,9 @@
     android:viewportWidth="24"
     android:viewportHeight="24">
     <!-- Moon setting -->
-    <circle
+    <path
         android:fillColor="#FFF5E6A0"
-        android:cx="12"
-        android:cy="10"
-        android:r="5"/>
+        android:pathData="M12,5A5,5 0,1,1 12,15A5,5 0,1,1 12,5Z"/>
     <!-- Hill/ground -->
     <path
         android:fillColor="#FF4A4A4A"

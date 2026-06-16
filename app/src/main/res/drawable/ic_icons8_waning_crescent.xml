@@ -4,11 +4,9 @@
     android:viewportWidth="24"
     android:viewportHeight="24">
     <!-- Dark circle -->
-    <circle
+    <path
         android:fillColor="#FF2D2D2D"
-        android:cx="12"
-        android:cy="12"
-        android:r="8"/>
+        android:pathData="M12,4A8,8 0,1,1 12,20A8,8 0,1,1 12,4Z"/>
     <!-- Left crescent illuminated -->
     <path
         android:fillColor="#FFF5E6A0"

@@ -8,20 +8,14 @@
         android:fillColor="#FF4A4A4A"
         android:pathData="M12,2C10,2 8,4 8,6L8,7L6,6L5,8L7,9.5L7,10C7,12 9,14 9,14L9,16L7,17L8,19L10,18L11,19L12,22L13,19L14,18L16,19L17,17L15,16L15,14C15,14 17,12 17,10L17,9.5L19,8L18,6L16,7L16,6C16,4 14,2 12,2Z"/>
     <!-- Eyes -->
-    <circle
+    <path
         android:fillColor="#FFFF6B35"
-        android:cx="9"
-        android:cy="9"
-        android:r="1"/>
-    <circle
+        android:pathData="M9,8A1,1 0,1,1 9,10A1,1 0,1,1 9,8Z"/>
+    <path
         android:fillColor="#FFFF6B35"
-        android:cx="15"
-        android:cy="9"
-        android:r="1"/>
+        android:pathData="M15,8A1,1 0,1,1 15,10A1,1 0,1,1 15,8Z"/>
     <!-- Nose -->
-    <circle
+    <path
         android:fillColor="#FF2D2D2D"
-        android:cx="12"
-        android:cy="11"
-        android:r="0.8"/>
+        android:pathData="M12,10.2A0.8,0.8 0,1,1 12,11.8A0.8,0.8 0,1,1 12,10.2Z"/>
 </vector>

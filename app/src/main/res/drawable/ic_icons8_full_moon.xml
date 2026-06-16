@@ -4,28 +4,20 @@
     android:viewportWidth="24"
     android:viewportHeight="24">
     <!-- Full moon circle -->
-    <circle
+    <path
         android:fillColor="#FFF5E6A0"
-        android:cx="12"
-        android:cy="12"
-        android:r="8"/>
+        android:pathData="M12,4A8,8 0,1,1 12,20A8,8 0,1,1 12,4Z"/>
     <!-- Subtle craters -->
-    <circle
+    <path
         android:fillColor="#FFE8D88A"
-        android:cx="9"
-        android:cy="10"
-        android:r="1.5"
+        android:pathData="M9,8.5A1.5,1.5 0,1,1 9,11.5A1.5,1.5 0,1,1 9,8.5Z"
         android:alpha="0.5"/>
-    <circle
+    <path
         android:fillColor="#FFE8D88A"
-        android:cx="14"
-        android:cy="13"
-        android:r="2"
+        android:pathData="M14,11A2,2 0,1,1 14,15A2,2 0,1,1 14,11Z"
         android:alpha="0.4"/>
-    <circle
+    <path
         android:fillColor="#FFE8D88A"
-        android:cx="10"
-        android:cy="15"
-        android:r="1"
+        android:pathData="M10,14A1,1 0,1,1 10,16A1,1 0,1,1 10,14Z"
         android:alpha="0.3"/>
 </vector>
