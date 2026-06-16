@@ -6,6 +6,8 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.*
 import androidx.compose.animation.expandVertically
@@ -946,9 +948,6 @@ private fun LiveWeatherDashboardWidget(
     developerMode: Boolean = false
 ) {
     val colors = FieldMindTheme.colors
-    var isRotating by remember { mutableStateOf(false) }
-    val scope = rememberCoroutineScope()
-    val refreshRotation = remember { Animatable(0f) }
     var testWeatherCode by remember { mutableStateOf<Int?>(null) }
     var testIsNight by remember { mutableStateOf(false) }
 
@@ -1330,14 +1329,16 @@ private fun LiveWeatherDashboardWidget(
                     }
                 }
 
-                // ── 5-Day Forecast ──
+                // ── 5-Day Forecast (tap to expand) ──
                 if (w.dailyForecasts.isNotEmpty()) {
+                    var expandedDayIndex by remember { mutableIntStateOf(-1) }
                     val dayNames = listOf("Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat")
                     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                             Icon(FieldMindIcons.Calendar, null, tint = textOnScene.copy(alpha = 0.6f), size = 14.dp)
                             Text("5-day forecast", style = MaterialTheme.typography.labelSmall, color = textOnScene.copy(alpha = 0.6f), fontWeight = FontWeight.SemiBold)
                         }
+                        // ── Day tiles row ──
                         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
                             w.dailyForecasts.take(5).forEachIndexed { index, day ->
                                 val dayName = if (index == 0) "Today" else {
@@ -1345,13 +1346,16 @@ private fun LiveWeatherDashboardWidget(
                                     cal.add(java.util.Calendar.DAY_OF_MONTH, index)
                                     dayNames[cal.get(java.util.Calendar.DAY_OF_WEEK) - 1]
                                 }
+                                val isExpanded = expandedDayIndex == index
                                 Column(
                                     horizontalAlignment = Alignment.CenterHorizontally,
                                     verticalArrangement = Arrangement.spacedBy(4.dp),
                                     modifier = Modifier
                                         .clip(RoundedCornerShape(12.dp))
-                                        .background(textOnScene.copy(alpha = 0.06f))
+                                        .background(if (isExpanded) textOnScene.copy(alpha = 0.14f) else textOnScene.copy(alpha = 0.06f))
+                                        .clickable { expandedDayIndex = if (isExpanded) -1 else index }
                                         .padding(horizontal = 6.dp, vertical = 8.dp)
+                                        .animateContentSize()
                                 ) {
                                     Text(dayName, style = MaterialTheme.typography.labelSmall, color = textOnScene.copy(alpha = 0.7f), fontWeight = FontWeight.Medium)
                                     Icon(
@@ -1371,6 +1375,66 @@ private fun LiveWeatherDashboardWidget(
                                         style = MaterialTheme.typography.labelSmall,
                                         color = textOnScene.copy(alpha = 0.5f)
                                     )
+                                }
+                            }
+                        }
+                        // ── Expanded detail card ──
+                        AnimatedVisibility(
+                            visible = expandedDayIndex in 0..4,
+                            enter = expandVertically(animationSpec = tween(300)) + fadeIn(animationSpec = tween(300)),
+                            exit = shrinkVertically(animationSpec = tween(200)) + fadeOut(animationSpec = tween(200))
+                        ) {
+                            val expandedIdx = expandedDayIndex
+                            val day = remember(expandedIdx) { w.dailyForecasts.getOrNull(expandedIdx) }
+                            if (day != null) {
+                                val dayName = if (expandedIdx == 0) "Today" else {
+                                    val cal = java.util.Calendar.getInstance()
+                                    cal.add(java.util.Calendar.DAY_OF_MONTH, expandedIdx)
+                                    dayNames[cal.get(java.util.Calendar.DAY_OF_WEEK) - 1]
+                                }
+                                Card(
+                                    shape = RoundedCornerShape(16.dp),
+                                    colors = CardDefaults.cardColors(
+                                        containerColor = textOnScene.copy(alpha = 0.08f)
+                                    ),
+                                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Column(
+                                        Modifier.padding(14.dp),
+                                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                                    ) {
+                                        Row(
+                                            Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                                Icon(weatherConditionIcon(day.weatherCode), null, tint = textOnScene, size = 22.dp)
+                                                Column {
+                                                    Text(dayName, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = textOnScene)
+                                                    Text(day.weatherDescription, style = MaterialTheme.typography.bodySmall, color = textOnScene.copy(alpha = 0.7f))
+                                                }
+                                            }
+                                            IconButton(onClick = { expandedDayIndex = -1 }, modifier = Modifier.size(28.dp)) {
+                                                Icon(FieldMindIcons.Close, null, tint = textOnScene.copy(alpha = 0.5f), size = 16.dp)
+                                            }
+                                        }
+                                        HorizontalDivider(color = textOnScene.copy(alpha = 0.1f))
+                                        Row(
+                                            Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.SpaceAround
+                                        ) {
+                                            ForecastDetailItem("Hi", "%.0f°".format(day.temperatureMax), textOnScene)
+                                            ForecastDetailItem("Lo", "%.0f°".format(day.temperatureMin), textOnScene.copy(alpha = 0.7f))
+                                            day.precipitationSum?.let { precip ->
+                                                ForecastDetailItem("Rain", "%.0f mm".format(precip), FieldMindTheme.colors.data)
+                                            }
+                                            day.windSpeedMax?.let { wind ->
+                                                ForecastDetailItem("Wind", "%.0f km/h".format(wind), FieldMindTheme.colors.warning)
+                                            }
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -1450,6 +1514,15 @@ private fun LiveWeatherDashboardWidget(
     }
 }
 }
+
+@Composable
+private fun ForecastDetailItem(label: String, value: String, tint: Color) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(2.dp)) {
+        Text(label, style = MaterialTheme.typography.labelSmall, color = tint.copy(alpha = 0.6f))
+        Text(value, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold, color = tint)
+    }
+}
+
 internal fun weatherConditionIcon(code: Int): MaterialSymbolIcon {
     return when (code) {
         0, 1 -> FieldMindIcons.Weather         // Clear / mainly clear

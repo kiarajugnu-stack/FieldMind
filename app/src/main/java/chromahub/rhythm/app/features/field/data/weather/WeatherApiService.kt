@@ -18,7 +18,8 @@ data class DailyForecast(
     val temperatureMin: Double,
     val weatherCode: Int,
     val weatherDescription: String,
-    val precipitationSum: Double? = null
+    val precipitationSum: Double? = null,
+    val windSpeedMax: Double? = null
 )
 
 data class WeatherSnapshot(
@@ -91,6 +92,7 @@ private data class DailyData(
     @SerializedName("temperature_2m_min") val tempMin: List<Double>? = null,
     @SerializedName("weather_code") val weatherCode: List<Int>? = null,
     @SerializedName("precipitation_sum") val precipitationSum: List<Double>? = null,
+    @SerializedName("wind_speed_10m_max") val windSpeedMax: List<Double>? = null,
     @SerializedName("time") val time: List<String>? = null
 )
 
@@ -121,7 +123,7 @@ class WeatherApiService {
                 "?latitude=$latitude" +
                 "&longitude=$longitude" +
                 "&current=temperature_2m,relative_humidity_2m,weather_code,cloud_cover,surface_pressure,wind_speed_10m,wind_direction_10m" +
-                "&daily=sunrise,sunset,temperature_2m_max,temperature_2m_min,weather_code,precipitation_sum,time" +
+                "&daily=sunrise,sunset,temperature_2m_max,temperature_2m_min,weather_code,precipitation_sum,wind_speed_10m_max,time" +
                 "&timezone=auto"
 
             val request = Request.Builder().url(url).get().build()
@@ -154,13 +156,15 @@ class WeatherApiService {
                     val (tMax, tMin) = temps
                     val wCode = daily.weatherCode?.getOrNull(index) ?: 0
                     val precip = daily.precipitationSum?.getOrNull(index)
+                    val windMax = daily.windSpeedMax?.getOrNull(index)
                     DailyForecast(
                         date = date,
                         temperatureMax = tMax,
                         temperatureMin = tMin,
                         weatherCode = wCode,
                         weatherDescription = WeatherSnapshot.descriptionForCode(wCode),
-                        precipitationSum = precip
+                        precipitationSum = precip,
+                        windSpeedMax = windMax
                     )
                 }
             } else emptyList()
