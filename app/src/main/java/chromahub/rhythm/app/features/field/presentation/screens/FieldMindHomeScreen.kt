@@ -1347,9 +1347,16 @@ private fun LiveWeatherDashboardWidget(
                                     dayNames[cal.get(java.util.Calendar.DAY_OF_WEEK) - 1]
                                 }
                                 val isExpanded = expandedDayIndex == index
+                                // Compute global min/max across all forecast days for range bar
+                                val allTemps = w.dailyForecasts.take(4)
+                                val globalMin = allTemps.minOfOrNull { it.temperatureMin } ?: day.temperatureMin
+                                val globalMax = allTemps.maxOfOrNull { it.temperatureMax } ?: day.temperatureMax
+                                val tempRange = (globalMax - globalMin).coerceAtLeast(1.0)
+                                val rangeBarLeft = ((day.temperatureMin - globalMin) / tempRange).toFloat().coerceIn(0f, 1f)
+                                val rangeBarRight = ((day.temperatureMax - globalMin) / tempRange).toFloat().coerceIn(0f, 1f)
                                 Column(
                                     horizontalAlignment = Alignment.CenterHorizontally,
-                                    verticalArrangement = Arrangement.spacedBy(4.dp),
+                                    verticalArrangement = Arrangement.spacedBy(3.dp),
                                     modifier = Modifier
                                         .weight(1f)
                                         .clip(RoundedCornerShape(12.dp))
@@ -1365,6 +1372,32 @@ private fun LiveWeatherDashboardWidget(
                                         tint = textOnScene.copy(alpha = 0.8f),
                                         size = 18.dp
                                     )
+                                    // Temperature range bar — positioned within global min/max
+                                    val barWidth = (rangeBarRight - rangeBarLeft).coerceIn(0.03f, 1f)
+                                    BoxWithConstraints(
+                                        modifier = Modifier
+                                            .fillMaxWidth(0.8f)
+                                            .height(3.dp)
+                                            .clip(RoundedCornerShape(2.dp))
+                                            .background(textOnScene.copy(alpha = 0.1f))
+                                    ) {
+                                        val availableWidth = this.maxWidth
+                                        Box(
+                                            modifier = Modifier
+                                                .fillMaxHeight()
+                                                .width(availableWidth * barWidth)
+                                                .offset(x = availableWidth * rangeBarLeft)
+                                                .clip(RoundedCornerShape(2.dp))
+                                                .background(
+                                                    Brush.horizontalGradient(
+                                                        listOf(
+                                                            colors.hypothesis.copy(alpha = 0.65f),
+                                                            colors.warning.copy(alpha = 0.65f)
+                                                        )
+                                                    )
+                                                )
+                                        )
+                                    }
                                     Text(
                                         "%.0f°".format(day.temperatureMax),
                                         style = MaterialTheme.typography.bodySmall,
