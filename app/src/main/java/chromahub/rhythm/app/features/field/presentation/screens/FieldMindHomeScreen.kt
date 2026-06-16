@@ -1384,9 +1384,11 @@ private fun LiveWeatherDashboardWidget(
                             enter = expandVertically(animationSpec = tween(300)) + fadeIn(animationSpec = tween(300)),
                             exit = shrinkVertically(animationSpec = tween(200)) + fadeOut(animationSpec = tween(200))
                         ) {
+                            // Keep last valid day so content stays rendered during exit animation
+                            val lastValidDay = remember { mutableStateOf<fieldmind.research.app.features.field.data.weather.DailyForecast?>(null) }
                             val expandedIdx = expandedDayIndex
-                            val day = remember(expandedIdx) { w.dailyForecasts.getOrNull(expandedIdx) }
-                            if (day != null) {
+                            if (expandedIdx in 0..4) lastValidDay.value = w.dailyForecasts[expandedIdx]
+                            val day = lastValidDay.value ?: return@AnimatedVisibility
                                 val dayName = if (expandedIdx == 0) "Today" else {
                                     val cal = java.util.Calendar.getInstance()
                                     cal.add(java.util.Calendar.DAY_OF_MONTH, expandedIdx)
