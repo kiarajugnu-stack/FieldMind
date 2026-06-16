@@ -186,9 +186,11 @@ fun QuestionsScreen(
                 showBuilder = true
             }
         }
-        if (showBuilder) {
-            NewQuestionDialog(viewModel, onDismiss = { showBuilder = false })
-        }
+    }
+    if (showBuilder) {
+        NewQuestionDialog(viewModel, onDismiss = { showBuilder = false })
+    }
+}
 
         // Filters
         if (categories.size > 1) {

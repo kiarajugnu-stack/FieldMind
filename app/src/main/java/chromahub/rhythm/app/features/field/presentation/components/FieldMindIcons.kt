@@ -125,6 +125,9 @@ object FieldMindIcons {
     val Temperature = MaterialSymbolIcon("thermostat")
     val ReadingInsight = MaterialSymbolIcon("menu_book")
     val Category = MaterialSymbolIcon("category")
+    val User = MaterialSymbolIcon("person")
+    val Photo = MaterialSymbolIcon("photo")
+    val Image = Photo
 
     /** Icon for an observation category (case-insensitive). Falls back to the observation icon. */
     fun iconForCategory(category: String): MaterialSymbolIcon = when (category.trim().lowercase()) {

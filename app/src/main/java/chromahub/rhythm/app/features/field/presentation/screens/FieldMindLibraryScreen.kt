@@ -105,9 +105,11 @@ private fun SourcePanel(viewModel: FieldMindViewModel, items: List<SourceEntity>
     var questions by remember { mutableStateOf("") }; var notes by remember { mutableStateOf("") }; var reliability by remember { mutableStateOf(3f) }; var projectId by remember { mutableStateOf<Long?>(null) }
     LazyColumn(contentPadding = panelPadding(), verticalArrangement = Arrangement.spacedBy(14.dp)) {
         item { AddButton("Add source") { show = true } }
-        if (show) {
-            NewSourceDialog(viewModel, onDismiss = { show = false })
-        }
+    }
+    if (show) {
+        NewSourceDialog(viewModel, onDismiss = { show = false })
+    }
+    LazyColumn(contentPadding = panelPadding(), verticalArrangement = Arrangement.spacedBy(14.dp)) {
         if (items.isEmpty()) item { EmptyState("No sources yet", "Save articles, videos, PDFs, books, summaries, citations, and what each source taught you.", icon = FieldMindIcons.Source) }
         items(items) { EntityCard(it.title, "source", body = it.whatThisSourceTaughtMe.ifBlank { it.personalSummary }, meta = listOf(it.type, it.author.ifBlank { "Unknown author" }, it.readingStatus, it.importance, "reliability ${it.reliabilityScore}/5")) { onOpenDetail("source", it.id) } }
     }
@@ -290,9 +292,14 @@ private fun FlashcardPanel(
                 }
             }
         }
-        if (show) {
-            NewFlashcardDialog(viewModel, onDismiss = { show = false })
-        }
+    }
+    if (show) {
+        NewFlashcardDialog(viewModel, onDismiss = { show = false })
+    }
+}
+
+@Composable
+private fun continuation() {
         item {
             LocalStudyModelCard(localEnabled, localDownloaded, localModel) {
                 val generated = autoFlashcardsFromLibrary(sources, notes).take(6)

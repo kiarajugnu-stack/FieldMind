@@ -648,7 +648,7 @@ private fun HypothesesTab(
     }
     // Dialog for new hypothesis
     if (showForm) {
-        NewHypothesisDialog(viewModel, onDismiss = { showForm = false })
+        NewHypothesisDialog(viewModel, viewModel.questions.value, onDismiss = { showForm = false })
     }
 }
 

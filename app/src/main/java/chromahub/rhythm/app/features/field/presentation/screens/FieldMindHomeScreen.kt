@@ -1118,11 +1118,8 @@ private fun LiveWeatherDashboardWidget(
                 }
                 // Actions row: expand indicator + refresh
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    size = 18.dp
-                    )
                     // Refresh button
-                    Icon(
-                        FieldMindIcons.Weather,
+                    Icon(FieldMindIcons.Weather,
                         null,
                         tint = if (currentWeather != null) conditionColor else MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier
@@ -1139,7 +1136,7 @@ private fun LiveWeatherDashboardWidget(
                                     refreshRotation.animateTo(360f, tween(400))
                                     refreshRotation.snapTo(0f)
                                     isRotating = false
-                                    val snapshot = viewModel.refreshWeatherFromLocation()
+                                    val snapshot = viewModel.refreshWeatherFromLocation()reshWeatherFromLocation()
                                     onRefresh(snapshot)
                                 }
                             },

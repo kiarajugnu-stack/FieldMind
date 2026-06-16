@@ -53,6 +53,7 @@ import fieldmind.research.app.shared.presentation.components.icons.Icon
 import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon
 import fieldmind.research.app.features.field.data.vision.SpeciesClassifier
 import fieldmind.research.app.features.field.data.vision.SpeciesDatabase
+import fieldmind.research.app.features.field.data.vision.SpeciesMatch
 import fieldmind.research.app.features.field.presentation.screens.species.SpeciesIdentificationSheet
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -124,8 +125,8 @@ fun ResearchSessionScreen(
     var captureStatus by remember { mutableStateOf("Ready") }
 
     // ── Species identification state ──
-    val speciesClassifier = remember { SpeciesClassifier() }
-    val speciesDatabase = remember { SpeciesDatabase() }
+    val speciesClassifier = remember { SpeciesClassifier(context) }
+    val speciesDatabase = remember { SpeciesDatabase(context) }
     var showSpeciesSearch by remember { mutableStateOf(false) }
     var speciesIdImageUri by remember { mutableStateOf<String?>(null) }
     var identifiedSpecies by remember { mutableStateOf<SpeciesMatch?>(null) }
