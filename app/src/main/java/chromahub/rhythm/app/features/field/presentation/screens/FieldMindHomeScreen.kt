@@ -1000,6 +1000,13 @@ private fun LiveWeatherDashboardWidget(
         }
     }
 
+    // Text color that adapts to the animated weather scene background
+    val textOnScene = when {
+        colors.isDark -> Color.White               // Dark mode: always dark scene bg
+        isNight -> Color.White                      // Night scene even in light mode: dark bg
+        else -> Color(0xFF1A1A3E)                    // Light mode + day scene: pastel bg, dark text
+    }
+
     // Live indicator pulse
     val infiniteTransition = rememberInfiniteTransition(label = "livePulse")
     val pulseAlpha by infiniteTransition.animateFloat(
@@ -1038,6 +1045,23 @@ private fun LiveWeatherDashboardWidget(
                         compact = false
                     )
                 }
+                // Glass-morphism scrim for better text readability
+                Box(
+                    modifier = Modifier
+                        .matchParentSize()
+                        .clip(RoundedCornerShape(28.dp))
+                        .background(
+                            Brush.verticalGradient(
+                                colors = listOf(
+                                    textOnScene.copy(alpha = 0.02f),
+                                    textOnScene.copy(alpha = 0.06f),
+                                    textOnScene.copy(alpha = 0.10f),
+                                    textOnScene.copy(alpha = 0.06f),
+                                    textOnScene.copy(alpha = 0.02f)
+                                )
+                            )
+                        )
+                )
             }
 
             // Content overlay
@@ -1074,7 +1098,7 @@ private fun LiveWeatherDashboardWidget(
                         Icon(
                             weatherConditionIcon(displayWeatherCode),
                             null,
-                            tint = Color.White,
+                            tint = if (currentWeather != null) textOnScene else Color.White,
                             size = 24.dp
                         )
                     }
@@ -1089,7 +1113,8 @@ private fun LiveWeatherDashboardWidget(
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
                             maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
+                            overflow = TextOverflow.Ellipsis,
+                            color = if (currentWeather != null) textOnScene else MaterialTheme.colorScheme.onSurface
                         )
                         // Live pulse dot
                         if (currentWeather != null) {
@@ -1113,7 +1138,7 @@ private fun LiveWeatherDashboardWidget(
                             else -> "Weather unavailable"
                         },
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = if (currentWeather != null) textOnScene.copy(alpha = 0.7f) else MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
                 // Actions row: expand indicator + refresh
@@ -1150,7 +1175,7 @@ private fun LiveWeatherDashboardWidget(
                 Text(
                     "$timeGreeting. ${currentWeather!!.weatherDescription.ifBlank { "Clear skies" }}.",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = textOnScene.copy(alpha = 0.75f),
                     fontWeight = FontWeight.Medium
                 )
             }
@@ -1177,7 +1202,7 @@ private fun LiveWeatherDashboardWidget(
                             Text(
                                 "Temperature",
                                 style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                color = textOnScene.copy(alpha = 0.6f)
                             )
                         }
                     }
@@ -1191,7 +1216,7 @@ private fun LiveWeatherDashboardWidget(
                             Text(
                                 w.weatherDescription,
                                 style = MaterialTheme.typography.labelMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                color = textOnScene.copy(alpha = 0.8f),
                                 fontWeight = FontWeight.SemiBold
                             )
                         }
@@ -1208,7 +1233,7 @@ private fun LiveWeatherDashboardWidget(
                                 Text(
                                     "Humidity",
                                     style = MaterialTheme.typography.labelSmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    color = textOnScene.copy(alpha = 0.6f)
                                 )
                             }
                         }
@@ -1239,7 +1264,7 @@ private fun LiveWeatherDashboardWidget(
                                 Text(
                                     "Wind",
                                     style = MaterialTheme.typography.labelSmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    color = textOnScene.copy(alpha = 0.6f)
                                 )
                             }
                         }
@@ -1263,7 +1288,7 @@ private fun LiveWeatherDashboardWidget(
                                 Text(
                                     "Cloud cover",
                                     style = MaterialTheme.typography.labelSmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    color = textOnScene.copy(alpha = 0.6f)
                                 )
                             }
                         }
@@ -1292,7 +1317,7 @@ private fun LiveWeatherDashboardWidget(
                                 Text(
                                     "Pressure",
                                     style = MaterialTheme.typography.labelSmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    color = textOnScene.copy(alpha = 0.6f)
                                 )
                             }
                         }
@@ -1308,13 +1333,13 @@ private fun LiveWeatherDashboardWidget(
                         sunrise?.let { s ->
                             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                                 Icon(FieldMindIcons.Sunrise, null, tint = colors.warning, size = 14.dp)
-                                Text("Sunrise ${formatTimeFromIso(s)}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Text("Sunrise ${formatTimeFromIso(s)}", style = MaterialTheme.typography.labelSmall, color = textOnScene.copy(alpha = 0.7f))
                             }
                         }
                         sunset?.let { s ->
                             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                                 Icon(FieldMindIcons.Sunset, null, tint = colors.data, size = 14.dp)
-                                Text("Sunset ${formatTimeFromIso(s)}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Text("Sunset ${formatTimeFromIso(s)}", style = MaterialTheme.typography.labelSmall, color = textOnScene.copy(alpha = 0.7f))
                             }
                         }
                         if (moonPhase.isNotBlank()) {
@@ -1325,7 +1350,7 @@ private fun LiveWeatherDashboardWidget(
                                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                                     size = 14.dp
                                 )
-                                Text(moonPhase, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Text(moonPhase, style = MaterialTheme.typography.labelSmall, color = textOnScene.copy(alpha = 0.7f))
                             }
                         }
                     }
@@ -1365,7 +1390,7 @@ private fun LiveWeatherDashboardWidget(
                         Text(
                             "$weatherObsCount observation${if (weatherObsCount != 1) "s" else ""} with weather data",
                             style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                            color = textOnScene.copy(alpha = 0.5f)
                         )
                     }
                 }

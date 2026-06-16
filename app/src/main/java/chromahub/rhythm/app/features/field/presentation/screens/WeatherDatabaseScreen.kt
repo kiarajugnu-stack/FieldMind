@@ -350,6 +350,7 @@ private fun LiveCurrentWeatherCard(
     windSpeedUnit: String = "km/h"
 ) {
     val colors = FieldMindTheme.colors
+    val isDarkTheme = colors.isDark
     val currentHour = remember { java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY) }
     val timeOfDay = when (currentHour) {
         in 5..11 -> "morning"
@@ -364,6 +365,13 @@ private fun LiveCurrentWeatherCard(
         else -> "Good night"
     }
     val isNight = timeOfDay == "night"
+    // Text color that adapts to the animated weather scene background
+    // White works on dark/night scenes; dark text is needed on light/day pastel scenes
+    val textOnScene = when {
+        isDarkTheme -> Color.White               // Dark mode: always dark scene bg
+        isNight -> Color.White                    // Night scene even in light mode: dark bg
+        else -> Color(0xFF1A1A3E)                 // Light mode + day scene: pastel bg, dark text
+    }
     
     // Temperature gradient
     val tempDisplay = weather?.temperature ?: 20.0
@@ -415,12 +423,12 @@ private fun LiveCurrentWeatherCard(
                             placeName ?: "Weather Dashboard",
                             style = MaterialTheme.typography.headlineMedium,
                             fontWeight = FontWeight.Bold,
-                            color = if (weather != null) Color.White else MaterialTheme.colorScheme.onSurface
+                            color = if (weather != null) textOnScene else MaterialTheme.colorScheme.onSurface
                         )
                         Text(
                             timeGreeting,
                             style = MaterialTheme.typography.titleMedium,
-                            color = if (weather != null) Color.White.copy(alpha = 0.7f) else MaterialTheme.colorScheme.onSurfaceVariant
+                            color = if (weather != null) textOnScene.copy(alpha = 0.7f) else MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -428,14 +436,14 @@ private fun LiveCurrentWeatherCard(
                         Surface(
                             onClick = onOpenSettings,
                             shape = CircleShape,
-                            color = if (weather != null) Color.White.copy(alpha = 0.2f) else MaterialTheme.colorScheme.surfaceContainerHigh,
+                            color = if (weather != null) textOnScene.copy(alpha = 0.2f) else MaterialTheme.colorScheme.surfaceContainerHigh,
                             modifier = Modifier.size(48.dp)
                         ) {
                             Box(contentAlignment = Alignment.Center) {
                                 Icon(
                                     FieldMindIcons.Settings,
                                     null,
-                                    tint = if (weather != null) Color.White else MaterialTheme.colorScheme.onSurfaceVariant,
+                                    tint = if (weather != null) textOnScene else MaterialTheme.colorScheme.onSurfaceVariant,
                                     size = 22.dp
                                 )
                             }
@@ -445,7 +453,7 @@ private fun LiveCurrentWeatherCard(
                             CircularProgressIndicator(
                                 modifier = Modifier.size(18.dp),
                                 strokeWidth = 2.dp,
-                                color = if (weather != null) Color.White else colors.info
+                                color = if (weather != null) textOnScene else colors.info
                             )
                         }
                     }
@@ -473,18 +481,18 @@ private fun LiveCurrentWeatherCard(
                             isNight = isNight,
                             size = 56.dp
                         )
-                        Text(
-                            w.weatherDescription,
-                            style = MaterialTheme.typography.headlineSmall,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.White.copy(alpha = 0.9f)
-                        )
+                    Text(
+                        w.weatherDescription,
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = textOnScene.copy(alpha = 0.9f)
+                    )
                     }
 
                     // Glass-morphism detailed metrics card
                     Card(
                         shape = RoundedCornerShape(28.dp),
-                        colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.12f)),
+                        colors = CardDefaults.cardColors(containerColor = if (isDarkTheme || isNight) Color.White.copy(alpha = 0.12f) else Color(0xFF1A1A3E).copy(alpha = 0.06f)),
                         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
                     ) {
                         Column(
@@ -495,7 +503,7 @@ private fun LiveCurrentWeatherCard(
                                 "Detailed metrics",
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
-                                color = Color.White
+                                color = textOnScene
                             )
                             Row(
                                 Modifier.fillMaxWidth(),
@@ -528,10 +536,10 @@ private fun LiveCurrentWeatherCard(
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         w.sunrise?.let {
-                            ExpandInfoChip(FieldMindIcons.Sunrise, "Sunrise ${formatTimeFromIso(it)}", Modifier.weight(1f))
+                            ExpandInfoChip(FieldMindIcons.Sunrise, "Sunrise ${formatTimeFromIso(it)}", Modifier.weight(1f), textOnScene)
                         }
                         w.sunset?.let {
-                            ExpandInfoChip(FieldMindIcons.Sunset, "Sunset ${formatTimeFromIso(it)}", Modifier.weight(1f))
+                            ExpandInfoChip(FieldMindIcons.Sunset, "Sunset ${formatTimeFromIso(it)}", Modifier.weight(1f), textOnScene)
                         }
                     }
 
@@ -544,12 +552,12 @@ private fun LiveCurrentWeatherCard(
                         Text(
                             refreshTimestampText,
                             style = MaterialTheme.typography.labelSmall,
-                            color = if (weather != null) Color.White.copy(alpha = 0.6f) else MaterialTheme.colorScheme.onSurfaceVariant
+                            color = if (weather != null) textOnScene.copy(alpha = 0.6f) else MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         Text(
                             "Auto-refreshes every 30 min",
                             style = MaterialTheme.typography.labelSmall,
-                            color = if (weather != null) Color.White.copy(alpha = 0.4f) else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                            color = if (weather != null) textOnScene.copy(alpha = 0.4f) else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
                         )
                     }
                 } else if (hasError) {
@@ -637,20 +645,21 @@ private fun StatCard(
 }
 
 @Composable
-private fun ExpandMetric(value: String, label: String, icon: MaterialSymbolIcon, color: Color) {
+private fun ExpandMetric(value: String, label: String, icon: MaterialSymbolIcon, color: Color, textColor: Color = Color.White) {
     Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Icon(icon, null, tint = color, size = 24.dp)
-        Text(value, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = Color.White)
-        Text(label, style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.7f))
+        Text(value, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = textColor)
+        Text(label, style = MaterialTheme.typography.labelSmall, color = textColor.copy(alpha = 0.7f))
     }
 }
 
 @Composable
-private fun ExpandInfoChip(icon: MaterialSymbolIcon, text: String, modifier: Modifier = Modifier) {
-    Surface(shape = RoundedCornerShape(14.dp), color = Color.White.copy(alpha = 0.12f), modifier = modifier) {
+private fun ExpandInfoChip(icon: MaterialSymbolIcon, text: String, modifier: Modifier = Modifier, textColor: Color = Color.White) {
+    val chipBg = textColor.copy(alpha = 0.12f)
+    Surface(shape = RoundedCornerShape(14.dp), color = chipBg, modifier = modifier) {
         Row(Modifier.padding(horizontal = 12.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            Icon(icon, null, tint = Color.White.copy(alpha = 0.8f), size = 16.dp)
-            Text(text, style = MaterialTheme.typography.labelSmall, color = Color.White, fontWeight = FontWeight.SemiBold)
+            Icon(icon, null, tint = textColor.copy(alpha = 0.8f), size = 16.dp)
+            Text(text, style = MaterialTheme.typography.labelSmall, color = textColor, fontWeight = FontWeight.SemiBold)
         }
     }
 }
