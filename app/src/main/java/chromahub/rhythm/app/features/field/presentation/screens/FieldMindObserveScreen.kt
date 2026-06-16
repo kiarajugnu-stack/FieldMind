@@ -964,7 +964,7 @@ private fun QuickObservationForm(
                 Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
                     FieldTextField(tags, onTagsChange, "Tags", supportingText = "Comma-separated: birds, behavior, evening")
                     FieldTextField(manualLocation, onLocationChange, "Place / location")
-                    OptionPickerField(label = "Context", selected = if (fieldContext.isBlank()) "Select…" else fieldContext.split(",").last().trim(), options = contextPresets, onSelected = { onFieldContextChange(if (fieldContext.isBlank()) it else "$fieldContext, $it") }, icon = FieldMindIcons.Info)
+                    MultiSelectPickerField(label = "Context presets", selected = if (fieldContext.isBlank()) emptySet() else fieldContext.split(",").map { it.trim() }.filter { it.isNotBlank() }.toSet(), options = contextPresets, onSelectionChanged = { onFieldContextChange(it.joinToString(", ")) }, subtitle = "Select field conditions", icon = FieldMindIcons.Info, showSearch = false)
                     FieldTextField(fieldContext, onFieldContextChange, "Context / mood", minLines = 2)
                     FieldTextField(evidenceSummary, onEvidenceChange, "Evidence summary", minLines = 2)
                 }
@@ -1510,7 +1510,7 @@ private fun EnhancedObservationForm(
                         { onSessionChange(session.copy(manualLocation = it)) },
                         "Place / location"
                     )
-                    OptionPickerField(label = "Context", selected = if (session.fieldContext.isBlank()) "Select…" else session.fieldContext.split(",").last().trim(), options = contextPresets, onSelected = { onSessionChange(session.copy(fieldContext = if (session.fieldContext.isBlank()) it else "${session.fieldContext}, $it")) }, icon = FieldMindIcons.Info)
+                    MultiSelectPickerField(label = "Context presets", selected = if (session.fieldContext.isBlank()) emptySet() else session.fieldContext.split(",").map { it.trim() }.filter { it.isNotBlank() }.toSet(), options = contextPresets, onSelectionChanged = { onSessionChange(session.copy(fieldContext = it.joinToString(", "))) }, subtitle = "Select field conditions", icon = FieldMindIcons.Info, showSearch = false)
                     FieldTextField(
                         session.fieldContext,
                         { onSessionChange(session.copy(fieldContext = it)) },
@@ -2165,22 +2165,19 @@ private fun ObservationQualityCard(score: Int, missing: List<String>) {
     }
 }
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun ObservationChecklist(selected: Set<String>, onSelected: (Set<String>) -> Unit) {
     val options = listOf("Seen", "Heard", "Smelled", "Touched", "Measured")
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text("Observation checklist", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            options.forEach { option ->
-                FilterChip(
-                    selected = option in selected,
-                    onClick = { onSelected(if (option in selected) selected - option else selected + option) },
-                    label = { Text(option) },
-                    leadingIcon = if (option in selected) ({ Icon(FieldMindIcons.Check, null, size = 16.dp) }) else null
-                )
-            }
-        }
+        MultiSelectPickerField(
+            label = "How did you observe it?",
+            selected = selected,
+            options = options,
+            onSelectionChanged = onSelected,
+            accentColor = MaterialTheme.colorScheme.primary,
+            subtitle = "Select all that apply"
+        )
     }
 }
 
