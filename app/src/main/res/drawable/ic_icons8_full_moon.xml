@@ -1,0 +1,31 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <!-- Full moon circle -->
+    <circle
+        android:fillColor="#FFF5E6A0"
+        android:cx="12"
+        android:cy="12"
+        android:r="8"/>
+    <!-- Subtle craters -->
+    <circle
+        android:fillColor="#FFE8D88A"
+        android:cx="9"
+        android:cy="10"
+        android:r="1.5"
+        android:alpha="0.5"/>
+    <circle
+        android:fillColor="#FFE8D88A"
+        android:cx="14"
+        android:cy="13"
+        android:r="2"
+        android:alpha="0.4"/>
+    <circle
+        android:fillColor="#FFE8D88A"
+        android:cx="10"
+        android:cy="15"
+        android:r="1"
+        android:alpha="0.3"/>
+</vector>
