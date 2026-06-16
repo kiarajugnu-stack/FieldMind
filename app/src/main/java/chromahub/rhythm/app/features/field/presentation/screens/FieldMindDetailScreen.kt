@@ -11,6 +11,8 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -1488,8 +1490,6 @@ private fun ProjectDetailContent(
 //  Species Registry Builder — Full taxonomy form + list per spec
 // ══════════════════════════════════════════════════════════════════════
 
-@Composable
-@OptIn(ExperimentalLayoutApi::class)
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun SpeciesRegistryBuilder(projectId: Long, viewModel: FieldMindViewModel) {
@@ -1530,7 +1530,7 @@ private fun SpeciesRegistryBuilder(projectId: Long, viewModel: FieldMindViewMode
 
         if (showForm) {
             Card(shape = RoundedCornerShape(18.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh)) {
-                Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.verticalScroll(rememberScrollState())) {
+                Column(modifier = Modifier.padding(14.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     Text("Add Species to Registry", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = colors.observation)
                     FieldTextField(commonName, { commonName = it }, "Common Name *", supportingText = "e.g. House Crow")
                     FieldTextField(scientificName, { scientificName = it }, "Scientific Name", supportingText = "e.g. Corvus splendens")
@@ -1630,7 +1630,6 @@ private fun SpeciesRegistryBuilder(projectId: Long, viewModel: FieldMindViewMode
 //  Project Tasks Builder — Per spec: title, type, priority, due date, assignee, subtasks
 // ══════════════════════════════════════════════════════════════════════
 
-@Composable
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun ProjectTasksBuilder(projectId: Long, viewModel: FieldMindViewModel) {
@@ -1666,7 +1665,7 @@ private fun ProjectTasksBuilder(projectId: Long, viewModel: FieldMindViewModel) 
 
         if (showForm) {
             Card(shape = RoundedCornerShape(18.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh)) {
-                Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.verticalScroll(rememberScrollState())) {
+                Column(modifier = Modifier.padding(14.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     Text("Create Project Task", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = colors.project)
                     FieldTextField(taskTitle, { taskTitle = it }, "Task Title *", supportingText = "e.g. Survey Zone A")
                     FieldTextField(taskDesc, { taskDesc = it }, "Description", minLines = 2)

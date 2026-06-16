@@ -736,7 +736,7 @@ internal fun AddButton(label: String, onClick: () -> Unit) {
     }
 }
 
-private fun panelPadding() = PaddingValues(20.dp, 4.dp, 20.dp, 96.dp)
+internal fun panelPadding() = PaddingValues(20.dp, 4.dp, 20.dp, 96.dp)
 
 // ── Tab 1: Observations ──
 
