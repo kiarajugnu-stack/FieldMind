@@ -2,6 +2,7 @@ package fieldmind.research.app.features.field.presentation.components
 
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
@@ -25,6 +26,7 @@ import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.platform.LocalInspectionMode
 import kotlin.math.cos
 import kotlin.math.sin
+import kotlin.math.abs
 import kotlin.math.PI
 import kotlin.random.Random
 import fieldmind.research.app.features.field.data.weather.WeatherSnapshot
@@ -152,23 +154,41 @@ private fun ClearSkyScene(
     val sunRotation by infiniteTransition.animateFloat(
         initialValue = 0f,
         targetValue = 360f,
-        animationSpec = infiniteRepeatable(tween(8000, easing = LinearEasing), RepeatMode.Restart),
+        animationSpec = infiniteRepeatable(tween(10000, easing = LinearEasing), RepeatMode.Restart),
         label = "sunRotate"
     )
+    // Sun pulse glow
+    val sunGlow by infiniteTransition.animateFloat(
+        initialValue = 0.6f,
+        targetValue = 1.0f,
+        animationSpec = infiniteRepeatable(tween(3000, easing = FastOutSlowInEasing), RepeatMode.Reverse),
+        label = "sunGlow"
+    )
     val starAlpha by infiniteTransition.animateFloat(
-        initialValue = 0.3f,
+        initialValue = 0.2f,
         targetValue = 1f,
-        animationSpec = infiniteRepeatable(tween(2000, easing = LinearEasing), RepeatMode.Reverse),
+        animationSpec = infiniteRepeatable(tween(2500, easing = LinearEasing), RepeatMode.Reverse),
         label = "starTwinkle"
+    )
+    // Drifting particles (dust motes / fireflies)
+    val particleDrift by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(tween(6000, easing = LinearEasing), RepeatMode.Restart),
+        label = "particleDrift"
     )
 
     val rayCount = if (compact) 6 else 12
-    val starCount = if (compact) 8 else 20
+    val starCount = if (compact) 10 else 30
 
-    // Pre-generate star positions
-    val stars = if (!isDay && !compact) {
-        rememberStarPositions(starCount)
-    } else null
+    // Pre-generate star positions and particle positions
+    val stars = remember { rememberStarPositions(starCount) }
+    val particles = remember {
+        val rng = Random(99)
+        List(if (compact) 4 else 8) {
+            Triple(rng.nextFloat(), rng.nextFloat(), rng.nextFloat() * 0.5f + 0.5f)
+        }
+    }
 
     Canvas(modifier = modifier.fillMaxSize()) {
         val cx = size.width / 2
@@ -176,6 +196,18 @@ private fun ClearSkyScene(
         val sunRadius = if (compact) size.minDimension * 0.15f else size.minDimension * 0.12f
 
         if (isDay) {
+            // Outer sun glow
+            drawCircle(
+                color = palette.accent.copy(alpha = sunGlow * 0.12f),
+                radius = sunRadius * 2.2f,
+                center = Offset(cx, cy)
+            )
+            drawCircle(
+                color = Color.White.copy(alpha = sunGlow * 0.06f),
+                radius = sunRadius * 3.0f,
+                center = Offset(cx, cy)
+            )
+
             // Sun rays
             val rayLength = sunRadius * 1.8f
             for (i in 0 until rayCount) {
@@ -186,7 +218,7 @@ private fun ClearSkyScene(
                 val x2 = cx + cos(rad) * rayLength
                 val y2 = cy + sin(rad) * rayLength
                 drawLine(
-                    color = palette.accent.copy(alpha = 0.3f),
+                    color = palette.accent.copy(alpha = 0.25f * sunGlow),
                     start = Offset(x1, y1),
                     end = Offset(x2, y2),
                     strokeWidth = if (compact) 2f else 3f
@@ -200,11 +232,29 @@ private fun ClearSkyScene(
                 center = Offset(cx, cy)
             )
             drawCircle(
-                color = Color.White.copy(alpha = 0.3f),
+                color = Color.White.copy(alpha = 0.4f),
                 radius = sunRadius * 0.6f,
                 center = Offset(cx, cy)
             )
+
+            // Drifting dust motes (tiny circles)
+            particles.forEach { (x, y, speed) ->
+                val px = (x * size.width + particleDrift * size.width * 0.3f * speed) % (size.width + 20f) - 10f
+                val py = (y * size.height + particleDrift * size.height * 0.1f * speed) % size.height
+                drawCircle(
+                    color = Color.White.copy(alpha = 0.15f * sunGlow),
+                    radius = 1.5f,
+                    center = Offset(px, py)
+                )
+            }
         } else {
+            // Moon glow
+            drawCircle(
+                color = Color(0xFFECEFF1).copy(alpha = 0.15f),
+                radius = sunRadius * 2.5f,
+                center = Offset(cx, cy)
+            )
+
             // Moon
             drawCircle(
                 color = Color(0xFFECEFF1),
@@ -218,12 +268,25 @@ private fun ClearSkyScene(
                 center = Offset(cx + sunRadius * 0.2f, cy - sunRadius * 0.1f)
             )
 
-            // Stars
-            stars?.forEach { (x, y) ->
+            // Stars with twinkle
+            stars.forEach { (x, y) ->
+                val twinkle = (sin(starAlpha * 6f + x * 20f + y * 30f) * 0.5f + 0.5f).coerceIn(0.2f, 1f)
                 drawCircle(
-                    color = Color.White.copy(alpha = starAlpha * (0.5f + Random.nextFloat() * 0.5f)),
-                    radius = 1.5f + Random.nextFloat() * 1.5f,
+                    color = Color.White.copy(alpha = twinkle * 0.9f),
+                    radius = 1.2f + twinkle * 1.8f,
                     center = Offset(x * size.width, y * size.height)
+                )
+            }
+
+            // Fireflies / floating particles at night
+            particles.forEach { (x, y, speed) ->
+                val px = (x * size.width + particleDrift * size.width * 0.2f * speed) % (size.width + 20f) - 10f
+                val py = (y * size.height + particleDrift * size.height * 0.08f * speed) % size.height
+                val glow = (sin(particleDrift * 4f + x * 10f) * 0.5f + 0.5f) * 0.6f
+                drawCircle(
+                    color = Color(0xFFFFF9C4).copy(alpha = glow),
+                    radius = 2f + glow * 2f,
+                    center = Offset(px, py)
                 )
             }
         }
@@ -399,8 +462,8 @@ private fun RainScene(
     modifier: Modifier
 ) {
     val isHeavy = weatherCode >= 65 || weatherCode in 80..82
-    val streakCount = if (compact) (if (isHeavy) 30 else 15) else (if (isHeavy) 60 else 30)
-    val streakSpeed = if (isHeavy) 600f else 1000f
+    val streakCount = if (compact) (if (isHeavy) 30 else 15) else (if (isHeavy) 70 else 40)
+    val streakSpeed = if (isHeavy) 500f else 800f
 
     val infiniteTransition = rememberInfiniteTransition(label = "rain")
     val rainProgress by infiniteTransition.animateFloat(
@@ -411,44 +474,69 @@ private fun RainScene(
     )
 
     val rippleAlpha by infiniteTransition.animateFloat(
-        initialValue = 0.3f,
+        initialValue = 0.4f,
         targetValue = 0f,
-        animationSpec = infiniteRepeatable(tween(1500, easing = LinearEasing), RepeatMode.Restart),
+        animationSpec = infiniteRepeatable(tween(1200, easing = LinearEasing), RepeatMode.Restart),
         label = "rippleAlpha"
     )
     val rippleScale by infiniteTransition.animateFloat(
         initialValue = 0f,
         targetValue = 1f,
-        animationSpec = infiniteRepeatable(tween(1500, easing = LinearEasing), RepeatMode.Restart),
+        animationSpec = infiniteRepeatable(tween(1200, easing = LinearEasing), RepeatMode.Restart),
         label = "rippleScale"
+    )
+    // Wind gust effect
+    val windGust by infiniteTransition.animateFloat(
+        initialValue = -1f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(tween(3000, easing = LinearEasing), RepeatMode.Reverse),
+        label = "windGust"
     )
 
     val rainColor = Color(0xFFB3E5FC).copy(alpha = if (isHeavy) 0.6f else 0.4f)
     val streaks = rememberRainStreaks(streakCount)
 
     Canvas(modifier = modifier.fillMaxSize()) {
-        // Rain streaks
+        // Wind-blown rain streaks
         streaks.forEach { (x, speed, length) ->
+            val windSway = windGust * 20f
             val y = (rainProgress * size.height + x * size.height * 0.3f * speed) % (size.height + length)
             val yEnd = y - length
+            val xPos = x * size.width + windSway * (1f - y / size.height)
             drawLine(
                 color = rainColor,
-                start = Offset(x * size.width, y),
-                end = Offset(x * size.width, yEnd),
-                strokeWidth = if (isHeavy) 2f else 1.5f
+                start = Offset(xPos, y),
+                end = Offset(xPos + windSway * 0.3f, yEnd),
+                strokeWidth = if (isHeavy) 2.5f else 1.5f
             )
         }
 
-        // Rain ripples on ground
+        // Rain ripples on ground + splash particles
         if (!compact) {
-            for (i in 0..3) {
-                val rippleX = size.width * (0.15f + i * 0.22f)
+            for (i in 0..5) {
+                val rippleX = size.width * (0.1f + i * 0.16f)
                 val rippleY = size.height * 0.95f
+                // Expanding ring
                 drawCircle(
-                    color = rainColor.copy(alpha = rippleAlpha),
-                    radius = 8f + rippleScale * 20f,
+                    color = rainColor.copy(alpha = rippleAlpha * 0.8f),
+                    radius = 6f + rippleScale * 18f,
                     center = Offset(rippleX, rippleY),
                     style = Stroke(width = 1.5f)
+                )
+                // Splash dot at center
+                drawCircle(
+                    color = rainColor.copy(alpha = rippleAlpha * 0.5f),
+                    radius = 2f,
+                    center = Offset(rippleX, rippleY)
+                )
+                // Tiny splash particle
+                val splashAngle = i * 60f + rainProgress * 360f
+                val rad = splashAngle * PI.toFloat() / 180f
+                val splashDist = 4f + rippleScale * 12f
+                drawCircle(
+                    color = rainColor.copy(alpha = rippleAlpha * 0.3f),
+                    radius = 1.5f,
+                    center = Offset(rippleX + cos(rad) * splashDist, rippleY - abs(sin(rad)) * splashDist * 0.5f)
                 )
             }
         }
@@ -475,36 +563,70 @@ private fun SnowScene(
     modifier: Modifier
 ) {
     val isHeavy = weatherCode >= 75 || weatherCode == 86
-    val flakeCount = if (compact) (if (isHeavy) 25 else 12) else (if (isHeavy) 50 else 25)
+    val flakeCount = if (compact) (if (isHeavy) 30 else 15) else (if (isHeavy) 60 else 35)
 
     val infiniteTransition = rememberInfiniteTransition(label = "snow")
     val snowProgress by infiniteTransition.animateFloat(
         initialValue = 0f,
         targetValue = 1f,
-        animationSpec = infiniteRepeatable(tween(3000, easing = LinearEasing), RepeatMode.Restart),
+        animationSpec = infiniteRepeatable(tween(4000, easing = LinearEasing), RepeatMode.Restart),
         label = "snowFall"
     )
     val swayOffset by infiniteTransition.animateFloat(
         initialValue = 0f,
         targetValue = 1f,
-        animationSpec = infiniteRepeatable(tween(2000, easing = LinearEasing), RepeatMode.Restart),
+        animationSpec = infiniteRepeatable(tween(3000, easing = LinearEasing), RepeatMode.Restart),
         label = "snowSway"
+    )
+    // Sparkle twinkle for snow
+    val sparkleGlow by infiniteTransition.animateFloat(
+        initialValue = 0.3f,
+        targetValue = 1.0f,
+        animationSpec = infiniteRepeatable(tween(1500, easing = LinearEasing), RepeatMode.Reverse),
+        label = "sparkleGlow"
     )
 
     val flakes = rememberSnowflakes(flakeCount)
-    val snowColor = Color.White.copy(alpha = if (isHeavy) 0.8f else 0.6f)
+    val snowColor = Color.White.copy(alpha = if (isHeavy) 0.85f else 0.6f)
+    val sparkleColor = Color(0xFFE0F7FA)
 
     Canvas(modifier = modifier.fillMaxSize()) {
         flakes.forEach { (x, speed, flakeSize) ->
-            val y = (snowProgress * size.height * speed + x * size.height * 0.2f) % (size.height + flakeSize)
-            val swayX = sin(swayOffset * 2f * Math.PI.toFloat() + x * size.width * 0.01f) * 15f
-            val adjustedX = (x * size.width + swayX).coerceIn(0f, size.width)
+            val y = (snowProgress * size.height * speed + x * size.height * 0.15f) % (size.height + flakeSize * 3f)
+            // Gentle figure-8 sway pattern
+            val swayX = sin(swayOffset * 2f * Math.PI.toFloat() + x * size.width * 0.008f) * 20f
+            val swayX2 = cos(swayOffset * 1.3f * Math.PI.toFloat() + x * size.width * 0.012f) * 8f
+            val adjustedX = (x * size.width + swayX + swayX2).coerceIn(0f, size.width)
 
+            // Draw snowflake (white circle)
             drawCircle(
                 color = snowColor,
                 radius = flakeSize,
                 center = Offset(adjustedX, y)
             )
+
+            // Sparkle highlight on larger flakes
+            if (flakeSize > 3.5f) {
+                val sparkleAlpha = (sin(sparkleGlow * 3f + x * 15f + y * 10f) * 0.5f + 0.5f) * 0.8f
+                drawCircle(
+                    color = sparkleColor.copy(alpha = sparkleAlpha * 0.6f),
+                    radius = flakeSize * 0.4f,
+                    center = Offset(adjustedX - 1.5f, y - 1.5f)
+                )
+            }
+        }
+
+        // Occasional sparkling particle floating
+        if (!compact && isHeavy) {
+            for (i in 0..3) {
+                val sx = (sin(sparkleGlow * 2f + i * 1.7f) * 0.5f + 0.5f) * size.width
+                val sy = (cos(sparkleGlow * 1.5f + i * 2.3f) * 0.5f + 0.5f) * size.height * 0.5f
+                drawCircle(
+                    color = sparkleColor.copy(alpha = sparkleGlow * 0.3f),
+                    radius = 1f + sparkleGlow * 2f,
+                    center = Offset(sx, sy)
+                )
+            }
         }
     }
 }
@@ -513,7 +635,7 @@ private fun rememberSnowflakes(count: Int): List<Triple<Float, Float, Float>> {
     val seed = 456L
     val rng = Random(seed)
     return List(count) {
-        Triple(rng.nextFloat(), 0.5f + rng.nextFloat() * 1.0f, 2f + rng.nextFloat() * 4f)
+        Triple(rng.nextFloat(), 0.4f + rng.nextFloat() * 0.8f, 2f + rng.nextFloat() * 5f)
     }
 }
 
