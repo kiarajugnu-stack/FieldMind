@@ -34,6 +34,7 @@ import kotlin.math.abs
 import kotlin.math.PI
 import kotlin.random.Random
 import fieldmind.research.app.features.field.data.weather.WeatherSnapshot
+import fieldmind.research.app.features.field.presentation.theme.FieldMindTheme
 
 /**
  * Animated weather scene that renders Canvas-drawn weather effects based on WMO weather codes.
@@ -57,7 +58,8 @@ fun AnimatedWeatherScene(
     compact: Boolean = false
 ) {
     val isDay = isDaytime(sunrise, sunset)
-    val palette = weatherPalette(temperature, isDay)
+    val isDarkTheme = FieldMindTheme.colors.isDark
+    val palette = weatherPalette(temperature, isDay, isDarkTheme)
 
     // In preview/inspection mode, show a static frame
     if (LocalInspectionMode.current) {
@@ -81,8 +83,6 @@ fun AnimatedWeatherScene(
             weatherCode == -2 -> NightSkyScene(palette, compact, modifier)
             weatherCode in 0..1 -> if (isDay) DayCloudyScene(palette, compact, modifier) else NightSkyScene(palette, compact, modifier)
             weatherCode in 2..3 -> CloudyScene(palette, compact, modifier)
-            weatherCode == -1 -> DayCloudyScene(palette, compact, modifier)
-            weatherCode == -2 -> NightSkyScene(palette, compact, modifier)
             weatherCode in 45..48 -> FogScene(palette, compact, modifier)
             weatherCode in 51..67 || weatherCode in 80..82 -> RainScene(weatherCode, palette, compact, modifier)
             weatherCode in 71..77 || weatherCode in 85..86 -> SnowScene(weatherCode, palette, compact, modifier)
@@ -124,28 +124,52 @@ data class WeatherPalette(
     val background: List<Color>
 )
 
-private fun weatherPalette(temp: Double?, isDay: Boolean): WeatherPalette {
+private fun weatherPalette(temp: Double?, isDay: Boolean, isDarkTheme: Boolean): WeatherPalette {
     val tempC = temp ?: 20.0
-    val (top, bottom) = when {
-        tempC < -5 -> Color(0xFF1A1A3E) to Color(0xFF2C3E7B) // Deep freezing - softer dark
-        tempC < 0 -> Color(0xFF2C3E7B) to Color(0xFF5C8FCF)  // Freezing - muted blue
-        tempC < 10 -> Color(0xFF3A6BA5) to Color(0xFF8FB8D9) // Cold - muted
-        tempC < 20 -> Color(0xFF4A7C9E) to Color(0xFF7DB87A) // Cool - muted teal/green
-        tempC < 30 -> Color(0xFFA86D32) to Color(0xFFD4A574) // Warm - muted orange
-        tempC < 38 -> Color(0xFF9C4A3A) to Color(0xFFD48F7A) // Hot - muted red
-        else -> Color(0xFF7A3030) to Color(0xFFC96E6E)      // Extreme heat - muted dark red
-    }
 
-    val bgColors = if (isDay) listOf(top, bottom) else listOf(
-        top.copy(red = top.red * 0.6f, green = top.green * 0.6f, blue = top.blue * 0.7f, alpha = 0.8f),
-        bottom.copy(red = bottom.red * 0.4f, green = bottom.green * 0.4f, blue = bottom.blue * 0.5f, alpha = 0.7f)
-    )
-    return WeatherPalette(
-        primary = top,
-        secondary = bottom,
-        accent = if (isDay) Color(0xFFFFCC80) else Color(0xFF90A4AE),
-        background = bgColors
-    )
+    if (isDarkTheme) {
+        // Dark theme: deep, rich, muted backgrounds — colors have substance on dark canvases
+        val (top, bottom) = when {
+            tempC < -5 -> Color(0xFF1A237E) to Color(0xFF303F9F)   // Freezing — deep indigo
+            tempC < 0 -> Color(0xFF0D47A1) to Color(0xFF1565C0)    // Freezing — deep blue
+            tempC < 10 -> Color(0xFF004D40) to Color(0xFF00695C)   // Cold — deep teal
+            tempC < 20 -> Color(0xFF1B3A1B) to Color(0xFF2E5C2E)   // Cool — muted forest
+            tempC < 30 -> Color(0xFF4E342E) to Color(0xFF5D4037)   // Warm — deep brown
+            tempC < 38 -> Color(0xFF4E2A1A) to Color(0xFF6D3A1A)   // Hot — deep rust
+            else -> Color(0xFF4A0000) to Color(0xFF6A1B1B)         // Extreme — deep crimson
+        }
+        val bgColors = if (isDay) listOf(top, bottom) else listOf(
+            Color(0xFF0D0D2B),  // Very dark night sky top
+            top.copy(alpha = 0.7f)
+        )
+        return WeatherPalette(
+            primary = top,
+            secondary = bottom,
+            accent = Color(0xFFFFCC80),   // Warm amber accent visible on dark
+            background = bgColors
+        )
+    } else {
+        // Light theme: soft, muted, airy backgrounds — pastels with a subtle tint
+        val (top, bottom) = when {
+            tempC < -5 -> Color(0xFFE8EAF6) to Color(0xFFC5CAE9)   // Freezing — soft lavender
+            tempC < 0 -> Color(0xFFE3F2FD) to Color(0xFFBBDEFB)    // Cold — soft sky blue
+            tempC < 10 -> Color(0xFFE0F2F1) to Color(0xFFB2DFDB)   // Cool — soft teal
+            tempC < 20 -> Color(0xFFF1F8E9) to Color(0xFFDCEDC8)   // Mild — soft green
+            tempC < 30 -> Color(0xFFFFF8E1) to Color(0xFFFFECB3)   // Warm — soft amber
+            tempC < 38 -> Color(0xFFFBE9E7) to Color(0xFFFFCCBC)   // Hot — soft coral
+            else -> Color(0xFFFCE4EC) to Color(0xFFF8BBD0)         // Extreme — soft pink
+        }
+        val bgColors = if (isDay) listOf(top, bottom) else listOf(
+            bottom.copy(red = bottom.red * 0.85f, green = bottom.green * 0.85f, blue = bottom.blue * 0.9f),
+            top.copy(red = top.red * 0.7f, green = top.green * 0.7f, blue = top.blue * 0.8f, alpha = 0.8f)
+        )
+        return WeatherPalette(
+            primary = top,
+            secondary = bottom,
+            accent = Color(0xFFFF8F00),   // Muted amber accent for light theme
+            background = bgColors
+        )
+    }
 }
 
 // ══════════════════════════════════════════════════════════════════════
@@ -188,8 +212,12 @@ private fun DayCloudyScene(
         label = "cloudDrift2"
     )
 
-    val cloudColor = Color(0xFFFFFFFF).copy(alpha = 0.35f)
-    val cloudColorDark = Color(0xFFB0BEC5).copy(alpha = 0.25f)
+    // Sky and cloud colors derived from palette
+    val cloudColor = Color.White.copy(alpha = if (FieldMindTheme.colors.isDark) 0.30f else 0.25f)
+    val cloudColorDark = palette.primary.copy(alpha = if (FieldMindTheme.colors.isDark) 0.20f else 0.15f)
+    val sunBody = Color(0xFFFFF176).copy(alpha = 0.95f)
+    val sunInner = Color(0xFFFFF9C4).copy(alpha = 0.85f)
+    val rayColor = Color(0xFFFFF9C4).copy(alpha = 0.15f * sunGlow)
 
     Canvas(modifier = modifier.fillMaxSize()) {
         val cx = size.width / 2
@@ -208,7 +236,7 @@ private fun DayCloudyScene(
             center = Offset(cx, cy)
         )
 
-        // Sun rays
+        // Sun rays — softer, fewer in dark mode
         val rayCount = if (compact) 6 else 10
         val rayLength = sunRadius * 2.0f
         for (i in 0 until rayCount) {
@@ -219,7 +247,7 @@ private fun DayCloudyScene(
             val x2 = cx + cos(rad) * rayLength
             val y2 = cy + sin(rad) * rayLength
             drawLine(
-                color = Color(0xFFFFF9C4).copy(alpha = 0.2f * sunGlow),
+                color = rayColor,
                 start = Offset(x1, y1),
                 end = Offset(x2, y2),
                 strokeWidth = if (compact) 2f else 3f
@@ -228,12 +256,12 @@ private fun DayCloudyScene(
 
         // Sun body
         drawCircle(
-            color = Color(0xFFFFF176),
+            color = sunBody,
             radius = sunRadius,
             center = Offset(cx, cy)
         )
         drawCircle(
-            color = Color(0xFFFFF9C4),
+            color = sunInner,
             radius = sunRadius * 0.55f,
             center = Offset(cx, cy)
         )
@@ -321,21 +349,27 @@ private fun NightSkyScene(
         val cy = size.height * 0.3f
         val moonRadius = if (compact) size.minDimension * 0.12f else size.minDimension * 0.10f
 
+        val moonBody = Color(0xFFECEFF1).copy(alpha = if (FieldMindTheme.colors.isDark) 1f else 0.95f)
+        val moonGlowColor = if (FieldMindTheme.colors.isDark) Color(0xFFECEFF1) else Color(0xFFFFF9C4)
+        val starBright = Color(0xFFB3E5FC)  // Blue-white for bright stars
+        val starWarm = Color(0xFFFFF9C4)    // Warm white
+        val nightCloudColor = if (FieldMindTheme.colors.isDark) Color(0xFF37474F).copy(alpha = 0.18f) else Color(0xFF78909C).copy(alpha = 0.12f)
+
         // Moon glow ring
         drawCircle(
-            color = Color(0xFFECEFF1).copy(alpha = 0.12f * moonGlow),
+            color = moonGlowColor.copy(alpha = 0.12f * moonGlow),
             radius = moonRadius * 3.0f,
             center = Offset(cx, cy)
         )
         drawCircle(
-            color = Color(0xFFFFF9C4).copy(alpha = 0.04f * moonGlow),
+            color = moonGlowColor.copy(alpha = 0.04f * moonGlow),
             radius = moonRadius * 4.5f,
             center = Offset(cx, cy)
         )
 
         // Moon body
         drawCircle(
-            color = Color(0xFFECEFF1),
+            color = moonBody,
             radius = moonRadius,
             center = Offset(cx, cy)
         )
@@ -351,8 +385,8 @@ private fun NightSkyScene(
             val twinkle = (sin(starAlpha * 8f + x * 25f + y * 35f) * 0.5f + 0.5f).coerceIn(0.15f, 1f)
             val starRadius = 1.0f + twinkle * 2.5f
             val starColor = when {
-                twinkle > 0.85f -> Color(0xFFB3E5FC) // Blue-white for bright stars
-                twinkle > 0.5f -> Color(0xFFFFF9C4) // Warm white
+                twinkle > 0.85f -> starBright
+                twinkle > 0.5f -> starWarm
                 else -> Color.White
             }
             drawCircle(
@@ -383,14 +417,14 @@ private fun NightSkyScene(
             baseX = size.width * 0.15f,
             baseY = size.height * 0.6f,
             scale = size.width * 0.4f,
-            color = Color(0xFF37474F).copy(alpha = 0.15f)
+            color = nightCloudColor
         )
         drawCloud(
             offset = cloudOffset,
             baseX = size.width * 0.55f,
             baseY = size.height * 0.75f,
             scale = size.width * 0.35f,
-            color = Color(0xFF263238).copy(alpha = 0.12f)
+            color = nightCloudColor.copy(alpha = nightCloudColor.alpha * 0.7f)
         )
     }
 }
@@ -436,6 +470,7 @@ private fun ClearSkyScene(
 
     val rayCount = if (compact) 6 else 12
     val starCount = if (compact) 10 else 30
+    val isDark = FieldMindTheme.colors.isDark
 
     // Pre-generate star positions and particle positions
     val stars = remember { rememberStarPositions(starCount) }
@@ -504,22 +539,25 @@ private fun ClearSkyScene(
                 )
             }
         } else {
+            val moonBody = Color(0xFFECEFF1).copy(alpha = if (isDark) 1f else 0.95f)
+            val moonGlowColor = if (isDark) Color(0xFFECEFF1) else Color(0xFFFFF9C4)
+
             // Moon glow
             drawCircle(
-                color = Color(0xFFECEFF1).copy(alpha = 0.15f),
+                color = moonGlowColor.copy(alpha = 0.15f),
                 radius = sunRadius * 2.5f,
                 center = Offset(cx, cy)
             )
 
             // Moon
             drawCircle(
-                color = Color(0xFFECEFF1),
+                color = moonBody,
                 radius = sunRadius,
                 center = Offset(cx, cy)
             )
             // Moon crescent shadow
             drawCircle(
-                color = palette.background.last().copy(alpha = 0.7f),
+                color = palette.background.last().copy(alpha = if (isDark) 0.75f else 0.7f),
                 radius = sunRadius * 0.85f,
                 center = Offset(cx + sunRadius * 0.2f, cy - sunRadius * 0.1f)
             )
@@ -527,8 +565,9 @@ private fun ClearSkyScene(
             // Stars with twinkle
             stars.forEach { (x, y) ->
                 val twinkle = (sin(starAlpha * 6f + x * 20f + y * 30f) * 0.5f + 0.5f).coerceIn(0.2f, 1f)
+                val starColor = if (isDark) Color(0xFFB3E5FC).copy(alpha = twinkle * 0.95f) else Color.White.copy(alpha = twinkle * 0.85f)
                 drawCircle(
-                    color = Color.White.copy(alpha = twinkle * 0.9f),
+                    color = starColor,
                     radius = 1.2f + twinkle * 1.8f,
                     center = Offset(x * size.width, y * size.height)
                 )
@@ -539,8 +578,9 @@ private fun ClearSkyScene(
                 val px = (x * size.width + particleDrift * size.width * 0.2f * speed) % (size.width + 20f) - 10f
                 val py = (y * size.height + particleDrift * size.height * 0.08f * speed) % size.height
                 val glow = (sin(particleDrift * 4f + x * 10f) * 0.5f + 0.5f) * 0.6f
+                val fireflyColor = if (isDark) Color(0xFFFFF9C4).copy(alpha = glow * 0.8f) else Color(0xFFFFF9C4).copy(alpha = glow * 0.5f)
                 drawCircle(
-                    color = Color(0xFFFFF9C4).copy(alpha = glow),
+                    color = fireflyColor,
                     radius = 2f + glow * 2f,
                     center = Offset(px, py)
                 )
@@ -585,8 +625,9 @@ private fun CloudyScene(
         label = "cloudDrift3"
     )
 
-    val cloudColor = Color(0xFFB0BEC5)
-    val cloudColorDark = Color(0xFF78909C)
+    val isDark = FieldMindTheme.colors.isDark
+    val cloudColor = if (isDark) Color(0xFF90A4AE).copy(alpha = 0.35f) else Color(0xFFB0BEC5).copy(alpha = 0.30f)
+    val cloudColorDark = if (isDark) Color(0xFF78909C).copy(alpha = 0.25f) else Color(0xFF90A4AE).copy(alpha = 0.20f)
 
     Canvas(modifier = modifier.fillMaxSize()) {
         val cloudScale = if (compact) size.width * 0.4f else size.width * 0.5f
@@ -729,9 +770,12 @@ private fun FogScene(
     )
 
     val bandCount = if (compact) 3 else 5
+    val fogColor = if (FieldMindTheme.colors.isDark)
+        Color(0xFF90A4AE).copy(alpha = fogAlpha * 0.35f)
+    else
+        Color(0xFFB0BEC5).copy(alpha = fogAlpha * 0.25f)
 
     Canvas(modifier = modifier.fillMaxSize()) {
-        val fogColor = Color(0xFFB0BEC5).copy(alpha = fogAlpha * 0.5f)
 
         for (i in 0 until bandCount) {
             val yBase = size.height * (0.2f + i * 0.15f)
@@ -793,7 +837,10 @@ private fun RainScene(
         label = "windGust"
     )
 
-    val rainColor = Color(0xFFB3E5FC).copy(alpha = if (isHeavy) 0.6f else 0.4f)
+    val rainColor = if (FieldMindTheme.colors.isDark)
+        Color(0xFF81D4FA).copy(alpha = if (isHeavy) 0.45f else 0.30f)
+    else
+        Color(0xFFB3E5FC).copy(alpha = if (isHeavy) 0.40f else 0.25f)
     val streaks = rememberRainStreaks(streakCount)
 
     Canvas(modifier = modifier.fillMaxSize()) {
@@ -887,7 +934,10 @@ private fun SnowScene(
     )
 
     val flakes = rememberSnowflakes(flakeCount)
-    val snowColor = Color.White.copy(alpha = if (isHeavy) 0.85f else 0.6f)
+    val snowColor = if (FieldMindTheme.colors.isDark)
+        Color.White.copy(alpha = if (isHeavy) 0.70f else 0.50f)
+    else
+        Color.White.copy(alpha = if (isHeavy) 0.60f else 0.40f)
     val sparkleColor = Color(0xFFE0F7FA)
 
     Canvas(modifier = modifier.fillMaxSize()) {
@@ -1097,7 +1147,10 @@ private fun ThunderstormScene(
         if (glowAlpha > 0.01f) {
             val glowX = glowPosition.value.x * size.width
             val glowY = glowPosition.value.y * size.height
-            val glowColor = Color(0xFFFFF9C4).copy(alpha = glowAlpha)
+            val glowColor = if (FieldMindTheme.colors.isDark)
+                Color(0xFFFFF9C4).copy(alpha = glowAlpha * 0.8f)
+            else
+                Color(0xFFFFF9C4).copy(alpha = glowAlpha)
             drawRect(
                 brush = Brush.radialGradient(
                     colors = listOf(
@@ -1154,7 +1207,8 @@ private fun StaticWeatherFrame(
             }
             weatherCode in 2..3 -> {
                 // Static cloud
-                drawCloud(0f, cx - r, cy, r * 2f, Color(0xFFB0BEC5).copy(alpha = 0.6f))
+                val cloudColor = if (FieldMindTheme.colors.isDark) Color(0xFF90A4AE).copy(alpha = 0.45f) else Color(0xFFB0BEC5).copy(alpha = 0.40f)
+                drawCloud(0f, cx - r, cy, r * 2f, cloudColor)
             }
             else -> {
                 // Generic weather icon

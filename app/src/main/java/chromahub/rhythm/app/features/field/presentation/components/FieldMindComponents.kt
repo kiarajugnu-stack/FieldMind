@@ -287,7 +287,14 @@ fun MultiSelectPickerField(
                     Icon(icon, null, tint = accentColor, size = 20.dp)
                 }
 
-                val displayText = if (selected.isEmpty()) "Select…" else "${selected.size} selected"
+                val displayText = when {
+                    selected.isEmpty() -> "Select…"
+                    selected.size <= 2 -> selected.joinToString(", ")
+                    else -> {
+                        val firstTwo = selected.take(2).joinToString(", ")
+                        "$firstTwo +${selected.size - 2}"
+                    }
+                }
                 Text(
                     displayText,
                     style = MaterialTheme.typography.bodyMedium,
