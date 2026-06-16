@@ -16,9 +16,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import fieldmind.research.app.features.field.data.database.entity.ObservationEntity
 import fieldmind.research.app.features.field.data.location.FieldLocationProvider
 import fieldmind.research.app.features.field.data.weather.WeatherSnapshot
+import fieldmind.research.app.features.field.data.weather.WeatherUnitConverter
 import fieldmind.research.app.features.field.presentation.components.FieldMindIcons
 import fieldmind.research.app.features.field.presentation.components.FieldScreenHeader
 import fieldmind.research.app.features.field.presentation.theme.FieldMindTheme
@@ -39,14 +41,10 @@ fun WeatherDatabaseScreen(
 ) {
     val observations by viewModel.observations.collectAsState()
     val colors = FieldMindTheme.colors
+    val tempUnit by viewModel.fieldSettings.tempUnit.collectAsState()
+    val windSpeedUnit by viewModel.fieldSettings.windSpeedUnit.collectAsState()
 
-    // ── Weather display preferences ──
-    val showTemp by viewModel.fieldSettings.weatherShowTemperature.collectAsState()
-    val showCondition by viewModel.fieldSettings.weatherShowCondition.collectAsState()
-    val showHumidity by viewModel.fieldSettings.weatherShowHumidity.collectAsState()
-    val showWind by viewModel.fieldSettings.weatherShowWind.collectAsState()
-    val showCloudPref by viewModel.fieldSettings.weatherShowCloudCover.collectAsState()
-    val showPressure by viewModel.fieldSettings.weatherShowPressure.collectAsState()
+    // Weather Database always shows all data (display prefs only affect the home widget)
 
     // ── Live current weather with auto-refresh ──
     var currentWeather by remember { mutableStateOf<WeatherSnapshot?>(null) }
@@ -55,27 +53,52 @@ fun WeatherDatabaseScreen(
     var dashboardPlaceName by remember { mutableStateOf<String?>(null) }
     val ctx = LocalContext.current
 
-    // Refresh on screen open and every 30 minutes
+    // ── Track last refresh time for "Updated just now" fix ──
+    var lastRefreshTime by remember { mutableStateOf(System.currentTimeMillis()) }
+    var refreshTimestampText by remember { mutableStateOf("Initializing…") }
+    
+    // Refresh on screen open (respects cooldown — won't re-fetch if within interval)
     LaunchedEffect(Unit) {
-        while (true) {
-            isRefreshing = true
-            val snapshot = viewModel.refreshWeatherFromLocation()
+        // Use cached data if available to avoid unnecessary loading states
+        val cached = viewModel.lastWeatherSnapshot
+        if (cached != null) {
+            currentWeather = cached
+            weatherError = false
+            lastRefreshTime = System.currentTimeMillis()
+        }
+        
+        // This call respects the ViewModel cooldown — returns cached data if within interval
+        val snapshot = viewModel.refreshWeatherFromLocation()
+        if (snapshot != null) {
             currentWeather = snapshot
-            weatherError = snapshot == null
-            isRefreshing = false
-            
-            // Resolve place name for display
-            if (snapshot != null) {
-                val locProvider = runCatching { FieldLocationProvider(ctx) }.getOrNull()
-                if (locProvider != null && locProvider.hasAnyLocationPermission()) {
-                    locProvider.lastKnownLocation()?.let { loc ->
-                        locProvider.resolvePlaceName(loc.latitude, loc.longitude) { place ->
-                            dashboardPlaceName = place
-                        }
-                    }
+            weatherError = false
+            lastRefreshTime = System.currentTimeMillis()
+        } else if (currentWeather == null) {
+            weatherError = true
+        }
+        
+        // Resolve place name for display
+        val locProvider = runCatching { FieldLocationProvider(ctx) }.getOrNull()
+        if (locProvider != null && locProvider.hasAnyLocationPermission()) {
+            locProvider.lastKnownLocation()?.let { loc ->
+                locProvider.resolvePlaceName(loc.latitude, loc.longitude) { place ->
+                    dashboardPlaceName = place
                 }
             }
-            delay(30 * 60 * 1000L) // 30 minutes
+        }
+    }
+    
+    // Update the "last updated" text every 30 seconds
+    LaunchedEffect(lastRefreshTime) {
+        while (true) {
+            val elapsed = System.currentTimeMillis() - lastRefreshTime
+            refreshTimestampText = when {
+                elapsed < 60_000 -> "Updated just now"
+                elapsed < 120_000 -> "Updated 1 min ago"
+                elapsed < 3600_000 -> "Updated ${elapsed / 60_000} min ago"
+                else -> "Updated ${elapsed / 3600_000}h ago"
+            }
+            delay(30_000L) // Update every 30 seconds
         }
     }
 
@@ -134,19 +157,6 @@ fun WeatherDatabaseScreen(
         } ?: "All time"
     }
 
-    // Overall stats (all days)
-    val allStats = remember(weatherObs) {
-        val temps = weatherObs.mapNotNull<ObservationEntity, Double> { it.weatherTemperature }
-        val humidities = weatherObs.mapNotNull<ObservationEntity, Double> { it.weatherHumidity?.toDouble() }
-        mapOf<String, Any?>(
-            "avg_temp" to temps.takeIf { it.isNotEmpty() }?.average(),
-            "min_temp" to temps.minOrNull(),
-            "max_temp" to temps.maxOrNull(),
-            "avg_humidity" to humidities.takeIf { it.isNotEmpty() }?.average(),
-            "total_records" to weatherObs.size
-        )
-    }
-
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
         topBar = {
@@ -175,13 +185,10 @@ fun WeatherDatabaseScreen(
                     hasError = weatherError,
                     isRefreshing = isRefreshing,
                     placeName = dashboardPlaceName,
-                    showTemp = showTemp,
-                    showCondition = showCondition,
-                    showHumidity = showHumidity,
-                    showWind = showWind,
-                    showCloudCover = showCloudPref,
-                    showPressure = showPressure,
-                    onOpenSettings = onOpenSettings
+                    refreshTimestampText = refreshTimestampText,
+                    onOpenSettings = onOpenSettings,
+                    tempUnit = tempUnit,
+                    windSpeedUnit = windSpeedUnit
                 )
             }
 
@@ -205,26 +212,27 @@ fun WeatherDatabaseScreen(
                             fontWeight = FontWeight.Bold,
                             modifier = Modifier.weight(1f)
                         )
-                        // Previous / Next day arrows
+                        // ← Previous (older) — dailyGroups is sorted newest-first, so index++ goes to older
                         IconButton(
                             onClick = { if (selectedDayIndex < dailyGroups.size - 1) selectedDayIndex++ },
                             enabled = selectedDayIndex < dailyGroups.size - 1,
                             modifier = Modifier.size(32.dp)
                         ) {
                             Icon(
-                                FieldMindIcons.Forward,
+                                FieldMindIcons.Back,
                                 null,
                                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
                                 size = 18.dp
                             )
                         }
+                        // → Next (newer) — index-- goes to newer (index 0 = newest)
                         IconButton(
                             onClick = { if (selectedDayIndex > 0) selectedDayIndex-- },
                             enabled = selectedDayIndex > 0,
                             modifier = Modifier.size(32.dp)
                         ) {
                             Icon(
-                                FieldMindIcons.Back,
+                                FieldMindIcons.Forward,
                                 null,
                                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
                                 size = 18.dp
@@ -242,13 +250,13 @@ fun WeatherDatabaseScreen(
                 ) {
                     StatCard(
                         "Avg Temp",
-                        "${dayStats.avgTemp?.let { "%.1f°".format(it) } ?: "--"}",
+                        dayStats.avgTemp?.let { WeatherUnitConverter.formatTemp(it, tempUnit) } ?: "--",
                         colors.info,
                         Modifier.weight(1f)
                     )
                     StatCard(
                         "Range",
-                        "${dayStats.minTemp?.let { "%.0f".format(it) } ?: "--"}° - ${dayStats.maxTemp?.let { "%.0f".format(it) } ?: "--"}°",
+                        "${dayStats.minTemp?.let { WeatherUnitConverter.formatTemp(it, tempUnit) } ?: "--"} - ${dayStats.maxTemp?.let { WeatherUnitConverter.formatTemp(it, tempUnit) } ?: "--"}",
                         colors.observation,
                         Modifier.weight(1f)
                     )
@@ -268,7 +276,7 @@ fun WeatherDatabaseScreen(
                     )
                     StatCard(
                         "Avg Wind",
-                        "${dayStats.avgWind?.let { "%.1f km/h".format(it) } ?: "--"}",
+                        dayStats.avgWind?.let { WeatherUnitConverter.formatWind(it, windSpeedUnit) } ?: "--",
                         colors.warning,
                         Modifier.weight(1f)
                     )
@@ -332,13 +340,10 @@ private fun LiveCurrentWeatherCard(
     hasError: Boolean,
     isRefreshing: Boolean,
     placeName: String? = null,
-    showTemp: Boolean = true,
-    showCondition: Boolean = true,
-    showHumidity: Boolean = true,
-    showWind: Boolean = true,
-    showCloudCover: Boolean = true,
-    showPressure: Boolean = true,
-    onOpenSettings: () -> Unit = {}
+    onOpenSettings: () -> Unit = {},
+    refreshTimestampText: String = "Updated just now",
+    tempUnit: String = "Celsius",
+    windSpeedUnit: String = "km/h"
 ) {
     val colors = FieldMindTheme.colors
 
@@ -379,7 +384,7 @@ private fun LiveCurrentWeatherCard(
                     )
                     Text(
                         if (isRefreshing) "Refreshing..."
-                        else if (weather != null) "Updated just now"
+                        else if (weather != null) refreshTimestampText
                         else if (hasError) "Enable location for live weather"
                         else "No weather data available",
                         style = MaterialTheme.typography.bodySmall,
@@ -415,20 +420,18 @@ private fun LiveCurrentWeatherCard(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     // Temperature
-                    if (showTemp) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text(
-                                "${weather.temperature?.let { "%.0f°".format(it) } ?: "--"}",
-                                style = MaterialTheme.typography.displaySmall,
-                                fontWeight = FontWeight.Bold,
-                                color = colors.info
-                            )
-                            Text("Temperature", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        }
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(
+                            WeatherUnitConverter.formatTemp(weather.temperature, tempUnit),
+                            style = MaterialTheme.typography.displaySmall,
+                            fontWeight = FontWeight.Bold,
+                            color = colors.info
+                        )
+                        Text("Temperature", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
 
                     // Condition
-                    if (showCondition && weather.weatherDescription.isNotBlank()) {
+                    if (weather.weatherDescription.isNotBlank()) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Icon(
                                 weatherIconForCode(weather.weatherCode),
@@ -446,17 +449,15 @@ private fun LiveCurrentWeatherCard(
                     }
 
                     // Humidity
-                    if (showHumidity) {
-                        weather.humidity?.let { hum ->
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Text(
-                                    "$hum%",
-                                    style = MaterialTheme.typography.titleLarge,
-                                    fontWeight = FontWeight.Bold,
-                                    color = colors.data
-                                )
-                                Text("Humidity", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                            }
+                    weather.humidity?.let { hum ->
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text(
+                                "$hum%",
+                                style = MaterialTheme.typography.titleLarge,
+                                fontWeight = FontWeight.Bold,
+                                color = colors.data
+                            )
+                            Text("Humidity", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     }
                 }
@@ -466,43 +467,43 @@ private fun LiveCurrentWeatherCard(
                     Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceEvenly
                 ) {
-                    if (showWind) {
-                        weather.windSpeed?.let { wind ->
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Text(
-                                    "%.1f km/h".format(wind),
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = colors.warning
-                                )
-                                Text("Wind", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                            }
+                    weather.windSpeed?.let { wind ->
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Icon(
+                                FieldMindIcons.windIconForSpeed(wind),
+                                null,
+                                tint = colors.warning,
+                                size = 18.dp
+                            )
+                            Text(
+                                WeatherUnitConverter.formatWind(wind, windSpeedUnit),
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.SemiBold,
+                                color = colors.warning
+                            )
+                            Text("Wind", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     }
-                    if (showCloudCover) {
-                        weather.cloudCover?.let { cloud ->
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Text(
-                                    "$cloud%",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = colors.hypothesis
-                                )
-                                Text("Cloud cover", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                            }
+                    weather.cloudCover?.let { cloud ->
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text(
+                                "$cloud%",
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.SemiBold,
+                                color = colors.hypothesis
+                            )
+                            Text("Cloud cover", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     }
-                    if (showPressure) {
-                        weather.pressure?.let { press ->
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Text(
-                                    "%.0f hPa".format(press),
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = colors.project
-                                )
-                                Text("Pressure", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                            }
+                    weather.pressure?.let { press ->
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text(
+                                "%.0f hPa".format(press),
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.SemiBold,
+                                color = colors.project
+                            )
+                            Text("Pressure", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     }
                 }
@@ -515,6 +516,48 @@ private fun LiveCurrentWeatherCard(
                     modifier = Modifier.align(Alignment.CenterHorizontally)
                 )
             }
+        }
+    }
+}
+
+@Composable
+private fun StatCard(
+    label: String,
+    value: String,
+    color: androidx.compose.ui.graphics.Color,
+    modifier: Modifier = Modifier
+) {
+    val fontSize = remember(value) {
+        when {
+            value.length > 8 -> 14.sp
+            value.length > 5 -> 18.sp
+            else -> 24.sp
+        }
+    }
+    Card(
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+        modifier = modifier
+    ) {
+        Column(
+            Modifier.fillMaxWidth().padding(12.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(2.dp)
+        ) {
+            Text(
+                value,
+                style = MaterialTheme.typography.headlineSmall.copy(fontSize = fontSize, fontWeight = FontWeight.Bold),
+                color = color,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+                textAlign = TextAlign.Center
+            )
+            Text(
+                label,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
     }
 }
@@ -543,29 +586,7 @@ private fun weatherIconForCode(code: Int): fieldmind.research.app.shared.present
     }
 }
 
-@Composable
-private fun StatCard(
-    label: String,
-    value: String,
-    color: androidx.compose.ui.graphics.Color,
-    modifier: Modifier = Modifier
-) {
-    Card(
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-        modifier = modifier
-    ) {
-        Column(
-            Modifier.fillMaxWidth().padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(4.dp)
-        ) {
-            Text(value, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = color)
-            Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        }
-    }
-}
+
 
 @Composable
 private fun WeatherRecordCard(
@@ -619,7 +640,7 @@ private fun WeatherRecordCard(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        "${observation.weatherTemperature?.let { "%.1f°".format(it) } ?: "--"}",
+                        WeatherUnitConverter.formatTemp(observation.weatherTemperature, "Celsius"),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = colors.info
@@ -634,8 +655,8 @@ private fun WeatherRecordCard(
                     observation.weatherHumidity?.let {
                         Text("Humidity: $it%", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
-                    observation.weatherWindSpeed?.let {
-                        Text("Wind: %.1f km/h".format(it), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    observation.weatherWindSpeed?.let { ws ->
+                        Text("Wind: ${WeatherUnitConverter.formatWind(ws, "km/h")}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                     observation.weatherCloudCover?.let {
                         Text("Cloud: $it%", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)

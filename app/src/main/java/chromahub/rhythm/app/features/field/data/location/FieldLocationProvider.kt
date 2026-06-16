@@ -103,7 +103,7 @@ class FieldLocationProvider(private val context: Context) {
 
     /**
      * Reverse-geocodes coordinates into a short, human-readable place name (e.g.
-     * "Cubbon Park, Bengaluru"). Delivers on the main thread; returns null if geocoding is
+     * "Bengaluru"). Delivers on the main thread; returns null if geocoding is
      * unavailable or fails. Geocoding may require connectivity, so callers must handle null.
      */
     fun resolvePlaceName(latitude: Double, longitude: Double, onResult: (String?) -> Unit) {
@@ -126,12 +126,20 @@ class FieldLocationProvider(private val context: Context) {
         }
     }
 
+    /**
+     * Formats an [android.location.Address] into a concise place name using only the
+     * locality/city — the most stable and recognizable part of an address, without the
+     * unreliable feature/street prefix that varies by location.
+     */
     private fun formatPlace(address: android.location.Address): String {
-        val locality = address.locality ?: address.subAdminArea ?: address.adminArea
-        val feature = address.featureName?.takeIf { it != locality && !it.all(Char::isDigit) }
-            ?: address.subLocality ?: address.thoroughfare
-        return listOfNotNull(feature, locality).distinct().joinToString(", ").ifBlank {
-            address.getAddressLine(0) ?: "Unknown place"
-        }
+        return address.locality
+            ?: address.subAdminArea  // district
+            ?: address.adminArea     // state
+            ?: address.getAddressLine(0)?.let { line ->
+                // Strip the street/feature prefix; everything after the first comma
+                val parts = line.split(",")
+                if (parts.size > 1) parts.drop(1).joinToString(",").trim() else line
+            }
+            ?: "Unknown place"
     }
 }

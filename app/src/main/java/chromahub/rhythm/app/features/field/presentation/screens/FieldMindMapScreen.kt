@@ -30,7 +30,8 @@ import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbo
 import kotlinx.coroutines.launch
 
 // ══════════════════════════════════════════════════════════════════════
-//  Map Screen — full-screen OSM map with offline tiles, drawing tools,
+// ══════════════════════════════════════════════════════════════════════
+//  Map Screen — full-screen MapLibre map with offline tiles, drawing tools,
 //  track recording, and geo-fence reminders (PRO FEATURE)
 // ══════════════════════════════════════════════════════════════════════
 
@@ -51,7 +52,7 @@ fun MapFieldScreen(
     var fullScreen by remember { mutableStateOf(false) }
 
     // ── Pro Feature Managers (shared across tabs) ──
-    val tileManager = remember { OfflineTileManager(context) }
+    val tileManager = remember { MaplibreOfflineManager(context) }
     val trackRecorder = remember { TrackRecorder(context) }
     val geoFenceReminder = remember { GeoFenceReminder(context) }
 
@@ -210,7 +211,7 @@ private fun FullScreenMapView(
     savedOverlays: List<MapOverlay>,
     drawingMode: DrawingMode,
     currentTrack: TrackRecording?,
-    tileManager: OfflineTileManager? = null,
+    tileManager: MaplibreOfflineManager? = null,
     onClose: () -> Unit,
     onDrawingModeChanged: (DrawingMode) -> Unit,
     onOverlaysChanged: (List<MapOverlay>) -> Unit,
@@ -221,7 +222,7 @@ private fun FullScreenMapView(
     val colors = FieldMindTheme.colors
 
     Box(Modifier.fillMaxSize()) {
-        EnhancedOsmMap(
+        MaplibreMapView(
             points = points,
             savedOverlays = savedOverlays,
             drawingMode = drawingMode,
@@ -316,7 +317,7 @@ private fun FullScreenMapView(
 
         // Attribution
         Text(
-            "© OpenStreetMap contributors",
+            "© MapLibre | © OpenStreetMap",
             modifier = Modifier.align(Alignment.BottomEnd).padding(8.dp),
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
@@ -374,7 +375,7 @@ private fun MapViewTab(
     drawingMode: DrawingMode,
     currentTrack: TrackRecording?,
     isRecording: Boolean,
-    tileManager: OfflineTileManager? = null,
+    tileManager: MaplibreOfflineManager? = null,
     onFullScreen: () -> Unit,
     onDrawingModeChanged: (DrawingMode) -> Unit,
     onOverlaysChanged: (List<MapOverlay>) -> Unit,
@@ -393,7 +394,7 @@ private fun MapViewTab(
             Modifier
                 .fillMaxWidth()
                 .height(320.dp)
-        ) {                EnhancedOsmMap(
+        ) {                MaplibreMapView(
                     points = points,
                     savedOverlays = savedOverlays,
                     drawingMode = drawingMode,
@@ -532,8 +533,8 @@ private fun TrackRecordingCard(
 @Composable
 private fun OfflineTilesTab(
     modifier: Modifier,
-    tileManager: OfflineTileManager,
-    cachedRegions: List<TileRegion>
+    tileManager: MaplibreOfflineManager,
+    cachedRegions: List<MaplibreTileRegion>
 ) {
     val scope = rememberCoroutineScope()
     val isDownloading by tileManager.isDownloading.collectAsState()
@@ -555,7 +556,7 @@ private fun OfflineTilesTab(
                         Icon(FieldMindIcons.Download, null, tint = FieldMindTheme.colors.info, size = 20.dp)
                         Text("Offline tile cache", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
                     }
-                    Text("Download OSM tiles for your study area so the map works without internet.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(                "Download tiles for offline use so the map works without internet.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                         Text("Cache: $cacheSize", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         Text("${cachedRegions.size} region${if (cachedRegions.size == 1) "" else "s"}", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -602,7 +603,7 @@ private fun OfflineTilesTab(
 @Composable
 private fun DownloadRegionDialog(
     onDismiss: () -> Unit,
-    tileManager: OfflineTileManager
+    tileManager: MaplibreOfflineManager
 ) {
     val scope = rememberCoroutineScope()
     var name by remember { mutableStateOf("") }
@@ -618,7 +619,7 @@ private fun DownloadRegionDialog(
         title = { Text("Download tile region") },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                Text("Download OSM tiles for offline use. Enter the bounding box coordinates.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text("Download tiles for offline use. Enter the bounding box coordinates.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 FieldTextField(name, { name = it }, "Region name (e.g. Study Area)")
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     FieldTextField(latNorth, { latNorth = it }, "Lat N", modifier = Modifier.weight(1f))

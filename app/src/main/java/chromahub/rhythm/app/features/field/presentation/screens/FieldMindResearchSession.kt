@@ -76,7 +76,8 @@ fun ResearchSessionScreen(
     onOpenDetail: (String, Long) -> Unit = { _, _ -> }
 ) {
     val haptics = rememberFieldMindHaptics()
-    val snackbar = remember { SnackbarHostState() }
+    // Use centralized snackbar system (swipeable, auto-dismiss, no stacking)
+    val snackbarHelper = rememberFieldMindSnackbar()
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
     val locationProvider = remember { FieldLocationProvider(context) }
@@ -128,7 +129,7 @@ fun ResearchSessionScreen(
 
     fun addSessionAttachment(attachment: DraftEvidenceAttachment) {
         quickAttachments = quickAttachments + attachment
-        scope.launch { snackbar.showSnackbar("${attachment.type} ready for next observation") }
+        snackbarHelper.show("${attachment.type} ready for next observation")
     }
 
     val mediaPicker = rememberLauncherForActivityResult(ActivityResultContracts.PickMultipleVisualMedia(10)) { uris ->
@@ -158,10 +159,10 @@ fun ResearchSessionScreen(
                 recording = true
             }.onFailure {
                 newRecorder.release()
-                scope.launch { snackbar.showSnackbar("Could not start recording: ${it.localizedMessage}") }
+                snackbarHelper.showError("Could not start recording: ${it.localizedMessage}")
             }
         } else {
-            scope.launch { snackbar.showSnackbar("Audio permission denied.") }
+            snackbarHelper.showError("Audio permission denied.")
         }
     }
 
@@ -182,7 +183,7 @@ fun ResearchSessionScreen(
             quickLocation = captured
             if (captured == null) {
                 captureStatus = "GPS unavailable or permission missing"
-                scope.launch { snackbar.showSnackbar(captureStatus) }
+                snackbarHelper.show(captureStatus)
                 return@requestCurrentLocation
             }
             captureStatus = captured.asDisplayText()
@@ -283,13 +284,14 @@ fun ResearchSessionScreen(
             quickSubject = ""
             quickFacts = ""
             quickAttachments = emptyList()
-            scope.launch { snackbar.showSnackbar("Observation #$observationCount saved") }
+            snackbarHelper.showWithAction("Observation #$observationCount saved", "Undo") {
+                viewModel.archiveObservation(observationId)
+            }
         }
     }
 
     Scaffold(
-        containerColor = MaterialTheme.colorScheme.background,
-        snackbarHost = { SnackbarHost(snackbar) }
+        containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
         LazyColumn(
             Modifier.fillMaxSize().padding(padding),
