@@ -1436,6 +1436,9 @@ private fun LiveWeatherDashboardWidget(
                                             day.windSpeedMax?.let { wind ->
                                                 ForecastDetailItem("Wind", "%.0f km/h".format(wind), FieldMindTheme.colors.warning)
                                             }
+                                            day.humidityMax?.let { hum ->
+                                                ForecastDetailItem("Humidity", "$hum%", FieldMindTheme.colors.data)
+                                            }
                                         }
                                     }
                                 }
