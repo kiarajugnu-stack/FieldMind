@@ -202,7 +202,7 @@ fun ExportStudioHero(scope: String, onScope: (String) -> Unit, projects: Int, ob
                     Text("$scope package • attachments: $attachmentMode", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.78f))
                 }
             }
-            ChoiceChips(listOf("All", "Projects", "Observations", "Sources", "Reports"), scope, onSelected = onScope)
+            OptionPickerField(label = "Scope", selected = scope, options = listOf("All", "Projects", "Observations", "Sources", "Reports"), onSelected = onScope, icon = FieldMindIcons.Archive)
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 ExportCount("Projects", projects, Modifier.weight(1f))
                 ExportCount("Obs", observations, Modifier.weight(1f))
@@ -234,7 +234,7 @@ fun AutoBackupOptionsCard(enabled: Boolean, interval: String, lastBackup: String
                 }
                 Switch(checked = enabled, onCheckedChange = onEnabled)
             }
-            AnimatedVisibility(enabled) { ChoiceChips(listOf("Daily", "Weekly", "Monthly"), interval, onSelected = onInterval) }
+            AnimatedVisibility(enabled) { OptionPickerField(label = "Interval", selected = interval, options = listOf("Daily", "Weekly", "Monthly"), onSelected = onInterval, icon = FieldMindIcons.Calendar) }
             FilledTonalButton(onClick = onBackupNow, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp)) {
                 Icon(FieldMindIcons.Archive, null, size = 18.dp); Spacer(Modifier.size(8.dp)); Text("Save backup now")
             }

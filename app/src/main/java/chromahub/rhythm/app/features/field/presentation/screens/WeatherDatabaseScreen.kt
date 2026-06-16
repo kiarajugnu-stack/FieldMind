@@ -21,8 +21,12 @@ import fieldmind.research.app.features.field.data.database.entity.ObservationEnt
 import fieldmind.research.app.features.field.data.location.FieldLocationProvider
 import fieldmind.research.app.features.field.data.weather.WeatherSnapshot
 import fieldmind.research.app.features.field.data.weather.WeatherUnitConverter
+import fieldmind.research.app.features.field.presentation.components.AnimatedWeatherScene
 import fieldmind.research.app.features.field.presentation.components.FieldMindIcons
 import fieldmind.research.app.features.field.presentation.components.FieldScreenHeader
+import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import fieldmind.research.app.features.field.presentation.theme.FieldMindTheme
 import fieldmind.research.app.features.field.presentation.viewmodel.FieldMindViewModel
 import fieldmind.research.app.shared.presentation.components.icons.Icon
@@ -346,175 +350,245 @@ private fun LiveCurrentWeatherCard(
     windSpeedUnit: String = "km/h"
 ) {
     val colors = FieldMindTheme.colors
+    val currentHour = remember { java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY) }
+    val timeOfDay = when (currentHour) {
+        in 5..11 -> "morning"
+        in 12..16 -> "afternoon"
+        in 17..20 -> "evening"
+        else -> "night"
+    }
+    val timeGreeting = when (timeOfDay) {
+        "morning" -> "Good morning"
+        "afternoon" -> "Good afternoon"
+        "evening" -> "Good evening"
+        else -> "Good night"
+    }
+    val isNight = timeOfDay == "night"
+    
+    // Temperature gradient
+    val tempDisplay = weather?.temperature ?: 20.0
+    val displayColors = when {
+        tempDisplay < 0 -> listOf(Color(0xFF1A237E), Color(0xFF42A5F5))
+        tempDisplay < 10 -> listOf(Color(0xFF1565C0), Color(0xFF64B5F6))
+        tempDisplay < 20 -> listOf(Color(0xFF0D47A1), Color(0xFF66BB6A))
+        tempDisplay < 30 -> listOf(Color(0xFFE65100), Color(0xFFFFB74D))
+        else -> listOf(Color(0xFFBF360C), Color(0xFFE57373))
+    }
+    val weatherGradient = Brush.horizontalGradient(displayColors)
 
     Card(
-        shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = if (weather != null) colors.info.copy(alpha = 0.08f)
-            else MaterialTheme.colorScheme.surfaceContainerLow
-        ),
+        shape = RoundedCornerShape(28.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
         modifier = Modifier.fillMaxWidth()
     ) {
-        Column(
-            Modifier.fillMaxWidth().padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp)
-        ) {
-            // Header row
-            Row(
-                Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
+        Box(modifier = Modifier.fillMaxWidth()) {
+            // Animated weather scene background
+            if (weather != null) {
                 Box(
-                    Modifier.size(44.dp)
-                        .clip(RoundedCornerShape(14.dp))
-                        .background(colors.info.copy(alpha = 0.14f)),
-                    contentAlignment = Alignment.Center
+                    modifier = Modifier
+                        .matchParentSize()
+                        .clip(RoundedCornerShape(28.dp))
                 ) {
-                    Icon(FieldMindIcons.Weather, null, tint = colors.info, size = 26.dp)
-                }
-                Column(Modifier.weight(1f)) {
-                    Text(
-                        placeName ?: "Current conditions",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                    Text(
-                        if (isRefreshing) "Refreshing..."
-                        else if (weather != null) refreshTimestampText
-                        else if (hasError) "Enable location for live weather"
-                        else "No weather data available",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-                // Settings gear icon — opens Capture defaults where weather dashboard metrics are configured
-                IconButton(
-                    onClick = onOpenSettings,
-                    modifier = Modifier.size(36.dp)
-                ) {
-                    Icon(
-                        FieldMindIcons.Settings,
-                        null,
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        size = 20.dp
-                    )
-                }
-                if (isRefreshing) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(18.dp),
-                        strokeWidth = 2.dp,
-                        color = colors.info
+                    AnimatedWeatherScene(
+                        weatherCode = weather.weatherCode,
+                        temperature = weather.temperature,
+                        sunrise = weather.sunrise,
+                        sunset = weather.sunset,
+                        compact = false
                     )
                 }
             }
 
-            // Weather data row
-            if (weather != null) {
+            Column(
+                Modifier.fillMaxWidth().padding(20.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                // Top row: greeting + settings + refresh
                 Row(
                     Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceEvenly,
+                    horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // Temperature
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Column {
                         Text(
-                            WeatherUnitConverter.formatTemp(weather.temperature, tempUnit),
-                            style = MaterialTheme.typography.displaySmall,
+                            placeName ?: "Weather Dashboard",
+                            style = MaterialTheme.typography.headlineMedium,
                             fontWeight = FontWeight.Bold,
+                            color = if (weather != null) Color.White else MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            timeGreeting,
+                            style = MaterialTheme.typography.titleMedium,
+                            color = if (weather != null) Color.White.copy(alpha = 0.7f) else MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        // Settings
+                        Surface(
+                            onClick = onOpenSettings,
+                            shape = CircleShape,
+                            color = if (weather != null) Color.White.copy(alpha = 0.2f) else MaterialTheme.colorScheme.surfaceContainerHigh,
+                            modifier = Modifier.size(48.dp)
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Icon(
+                                    FieldMindIcons.Settings,
+                                    null,
+                                    tint = if (weather != null) Color.White else MaterialTheme.colorScheme.onSurfaceVariant,
+                                    size = 22.dp
+                                )
+                            }
+                        }
+                        // Refresh spinner
+                        if (isRefreshing) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(18.dp),
+                                strokeWidth = 2.dp,
+                                color = if (weather != null) Color.White else colors.info
+                            )
+                        }
+                    }
+                }
+
+                if (weather != null) {
+                    val w = weather
+
+                    // Large gradient temperature
+                    Text(
+                        WeatherUnitConverter.formatTemp(w.temperature, tempUnit),
+                        style = MaterialTheme.typography.displayLarge.copy(
+                            fontWeight = FontWeight.ExtraBold,
+                            brush = weatherGradient
+                        )
+                    )
+
+                    // Condition row
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        WeatherConditionImage(
+                            code = w.weatherCode,
+                            isNight = isNight,
+                            size = 56.dp
+                        )
+                        Text(
+                            w.weatherDescription,
+                            style = MaterialTheme.typography.headlineSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White.copy(alpha = 0.9f)
+                        )
+                    }
+
+                    // Glass-morphism detailed metrics card
+                    Card(
+                        shape = RoundedCornerShape(28.dp),
+                        colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.12f)),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                    ) {
+                        Column(
+                            Modifier.fillMaxWidth().padding(20.dp),
+                            verticalArrangement = Arrangement.spacedBy(16.dp)
+                        ) {
+                            Text(
+                                "Detailed metrics",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White
+                            )
+                            Row(
+                                Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceEvenly
+                            ) {
+                                w.humidity?.let {
+                                    ExpandMetric("$it%", "Humidity", FieldMindIcons.Water, colors.data)
+                                }
+                                w.windSpeed?.let { wind ->
+                                    ExpandMetric(
+                                        WeatherUnitConverter.formatWind(wind, windSpeedUnit),
+                                        "Wind",
+                                        FieldMindIcons.windIconForSpeed(wind),
+                                        colors.warning
+                                    )
+                                }
+                                w.cloudCover?.let {
+                                    ExpandMetric("$it%", "Clouds", FieldMindIcons.Cloud, colors.hypothesis)
+                                }
+                                w.pressure?.let {
+                                    ExpandMetric("%.0f".format(it), "hPa", FieldMindIcons.Compress, colors.project)
+                                }
+                            }
+                        }
+                    }
+
+                    // Sunrise / Sunset
+                    Row(
+                        Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        w.sunrise?.let {
+                            ExpandInfoChip(FieldMindIcons.Sunrise, "Sunrise ${formatTimeFromIso(it)}", Modifier.weight(1f))
+                        }
+                        w.sunset?.let {
+                            ExpandInfoChip(FieldMindIcons.Sunset, "Sunset ${formatTimeFromIso(it)}", Modifier.weight(1f))
+                        }
+                    }
+
+                    // Update timestamp
+                    Row(
+                        Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            refreshTimestampText,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = if (weather != null) Color.White.copy(alpha = 0.6f) else MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Text(
+                            "Auto-refreshes every 30 min",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = if (weather != null) Color.White.copy(alpha = 0.4f) else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                        )
+                    }
+                } else if (hasError) {
+                    // Empty state
+                    Column(
+                        Modifier.fillMaxWidth(),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Icon(
+                            FieldMindIcons.Weather,
+                            null,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+                            size = 48.dp
+                        )
+                        Text(
+                            "Enable GPS for live weather",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Text(
+                            refreshTimestampText,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                        )
+                    }
+                } else {
+                    // Loading
+                    Box(
+                        Modifier.fillMaxWidth().height(120.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(32.dp),
+                            strokeWidth = 3.dp,
                             color = colors.info
                         )
-                        Text("Temperature", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
-
-                    // Condition
-                    if (weather.weatherDescription.isNotBlank()) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Icon(
-                                weatherIconForCode(weather.weatherCode),
-                                null,
-                                tint = colors.observation,
-                                size = 32.dp
-                            )
-                            Text(
-                                weather.weatherDescription,
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                textAlign = TextAlign.Center
-                            )
-                        }
-                    }
-
-                    // Humidity
-                    weather.humidity?.let { hum ->
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text(
-                                "$hum%",
-                                style = MaterialTheme.typography.titleLarge,
-                                fontWeight = FontWeight.Bold,
-                                color = colors.data
-                            )
-                            Text("Humidity", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        }
                     }
                 }
-
-                // Extra details row
-                Row(
-                    Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceEvenly
-                ) {
-                    weather.windSpeed?.let { wind ->
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Icon(
-                                FieldMindIcons.windIconForSpeed(wind),
-                                null,
-                                tint = colors.warning,
-                                size = 18.dp
-                            )
-                            Text(
-                                WeatherUnitConverter.formatWind(wind, windSpeedUnit),
-                                style = MaterialTheme.typography.bodyMedium,
-                                fontWeight = FontWeight.SemiBold,
-                                color = colors.warning
-                            )
-                            Text("Wind", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        }
-                    }
-                    weather.cloudCover?.let { cloud ->
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text(
-                                "$cloud%",
-                                style = MaterialTheme.typography.bodyMedium,
-                                fontWeight = FontWeight.SemiBold,
-                                color = colors.hypothesis
-                            )
-                            Text("Cloud cover", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        }
-                    }
-                    weather.pressure?.let { press ->
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text(
-                                "%.0f hPa".format(press),
-                                style = MaterialTheme.typography.bodyMedium,
-                                fontWeight = FontWeight.SemiBold,
-                                color = colors.project
-                            )
-                            Text("Pressure", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        }
-                    }
-                }
-
-                // Auto-refresh indicator
-                Text(
-                    "Auto-refreshes every 30 minutes",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
-                    modifier = Modifier.align(Alignment.CenterHorizontally)
-                )
             }
         }
     }
@@ -558,6 +632,25 @@ private fun StatCard(
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
+        }
+    }
+}
+
+@Composable
+private fun ExpandMetric(value: String, label: String, icon: MaterialSymbolIcon, color: Color) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Icon(icon, null, tint = color, size = 24.dp)
+        Text(value, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = Color.White)
+        Text(label, style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.7f))
+    }
+}
+
+@Composable
+private fun ExpandInfoChip(icon: MaterialSymbolIcon, text: String, modifier: Modifier = Modifier) {
+    Surface(shape = RoundedCornerShape(14.dp), color = Color.White.copy(alpha = 0.12f), modifier = modifier) {
+        Row(Modifier.padding(horizontal = 12.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            Icon(icon, null, tint = Color.White.copy(alpha = 0.8f), size = 16.dp)
+            Text(text, style = MaterialTheme.typography.labelSmall, color = Color.White, fontWeight = FontWeight.SemiBold)
         }
     }
 }

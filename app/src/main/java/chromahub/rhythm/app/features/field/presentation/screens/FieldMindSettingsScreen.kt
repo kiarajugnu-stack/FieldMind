@@ -138,9 +138,9 @@ fun ProfileSettingsPage(viewModel: FieldMindViewModel, onBack: () -> Unit) {
                     Text("FieldMind has no app server: profile, observations, sources, and local model settings are stored on this device unless you export or share them.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     OutlinedTextField(value = profileName, onValueChange = settings::setProfileName, label = { Text("Display name") }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(18.dp), singleLine = true)
                     Text("Role", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    ChoiceChips(listOf("Field learner", "Student", "Naturalist", "Researcher"), profileRole) { settings.setProfileRole(it) }
+                    OptionPickerField(label = "Role", selected = profileRole, options = listOf("Field learner", "Student", "Naturalist", "Researcher"), onSelected = { settings.setProfileRole(it) }, icon = FieldMindIcons.User)
                     Text("Focus", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    ChoiceChips(listOf("Wildlife & ecology", "Plants & botany", "Weather", "Water", "Geology", "General science"), profileFocus) { settings.setProfileFocus(it) }
+                    OptionPickerField(label = "Focus", selected = profileFocus, options = listOf("Wildlife & ecology", "Plants & botany", "Weather", "Water", "Geology", "General science"), onSelected = { settings.setProfileFocus(it) }, icon = FieldMindIcons.Category)
                 }
             }
         }
@@ -182,7 +182,7 @@ private fun ThemeToggle(current: String, onSet: (String) -> Unit) {
         Icon(icon = FieldMindIcons.Palette, contentDescription = null, tint = MaterialTheme.colorScheme.primary, size = 22.dp)
         Column(Modifier.weight(1f)) {
             Text("Theme", fontWeight = FontWeight.SemiBold)
-            ChoiceChips(listOf("System", "Light", "Dark"), current) { onSet(it) }
+            OptionPickerField(label = "Theme", selected = current, options = listOf("System", "Light", "Dark"), onSelected = { onSet(it) }, icon = FieldMindIcons.Image)
         }
     }
 }
@@ -270,11 +270,11 @@ fun AiAssistantSettingsPage(viewModel: FieldMindViewModel, onBack: () -> Unit) {
                         if (provider == "OpenAI") {
                             OutlinedTextField(value = openAiKey, onValueChange = settings::setOpenAiApiKey, label = { Text("OpenAI API key") }, visualTransformation = PasswordVisualTransformation(), modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(18.dp), singleLine = true, supportingText = { Text(if (openAiKey.isBlank()) "No OpenAI key saved." else "OpenAI key saved locally.") })
                             Text("Model", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                            ChoiceChips(listOf("gpt-4.1-mini", "gpt-4.1", "gpt-4o-mini"), openAiModel) { settings.setOpenAiModel(it) }
+                            OptionPickerField(label = "OpenAI model", selected = openAiModel, options = listOf("gpt-4.1-mini", "gpt-4.1", "gpt-4o-mini"), onSelected = { settings.setOpenAiModel(it) }, icon = FieldMindIcons.Bolt)
                         } else {
                             OutlinedTextField(value = key, onValueChange = settings::setGeminiApiKey, label = { Text("Gemini API key") }, visualTransformation = PasswordVisualTransformation(), modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(18.dp), singleLine = true, supportingText = { Text(if (key.isBlank()) "No key saved — get one at aistudio.google.com." else "Key saved locally.") })
                             Text("Model", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                            ChoiceChips(listOf("gemini-1.5-flash", "gemini-1.5-pro", "gemini-2.0-flash"), model) { settings.setGeminiModel(it) }
+                            OptionPickerField(label = "Gemini model", selected = model, options = listOf("gemini-1.5-flash", "gemini-1.5-pro", "gemini-2.0-flash"), onSelected = { settings.setGeminiModel(it) }, icon = FieldMindIcons.Bolt)
                         }
                     }
                 }

@@ -325,52 +325,6 @@ private fun ResearchHubOverviewTab(
             } }
         }
 
-        // ── 6. Project Creation Form (full spec) ──
-        if (showNewProject) item {
-            ProjectCreationForm(
-                title = projTitle, onTitleChange = { projTitle = it },
-                projectType = projType, onProjectTypeChange = { projType = it },
-                template = projTemplate, onTemplateChange = { projTemplate = it },
-                emoji = projEmoji, onEmojiChange = { projEmoji = it },
-                description = projDesc, onDescChange = { projDesc = it },
-                category = projCategory, onCategoryChange = { projCategory = it },
-                priority = projPriority, onPriorityChange = { projPriority = it },
-                status = projStatus, onStatusChange = { projStatus = it },
-                startDate = projStartDate, onStartDateChange = { projStartDate = it },
-                endDate = projEndDate, onEndDateChange = { projEndDate = it },
-                team = projTeam, onTeamChange = { projTeam = it },
-                tags = projTags, onTagsChange = { projTags = it },
-                question = projQuestion, onQuestionChange = { projQuestion = it },
-                methods = projMethods, onMethodsChange = { projMethods = it },
-                hypothesis = projHypothesis, onHypothesisChange = { projHypothesis = it },
-                showEmojiPicker = showEmojiPicker, onToggleEmojiPicker = { showEmojiPicker = !showEmojiPicker },
-                onSave = {
-                    if (projTitle.isNotBlank()) {
-                        val methodsStr = projMethods.joinToString(" • ")
-                        val fullDesc = buildString {
-                            append(projDesc)
-                            if (projCategory.isNotBlank()) append("\nCategory: $projCategory")
-                            if (projHypothesis.isNotBlank()) append("\nHypothesis: $projHypothesis")
-                            if (projTags.isNotBlank()) append("\nTags: $projTags")
-                            if (projTeam.isNotBlank()) append("\nTeam: $projTeam")
-                            if (projStartDate.isNotBlank()) append("\nStart: $projStartDate")
-                            if (projEndDate.isNotBlank()) append("\nEnd: $projEndDate")
-                        }
-                        viewModel.addProject(
-                            title = "$projEmoji $projTitle",
-                            topicType = projType,
-                            objective = fullDesc.trim(),
-                            researchQuestion = projQuestion,
-                            methods = methodsStr,
-                            backgroundNotes = "Priority: $projPriority • Status: $projStatus • Template: $projTemplate"
-                        )
-                        showNewProject = false; projTitle = ""; projDesc = ""; projQuestion = ""; projHypothesis = ""
-                    }
-                },
-                onDismiss = { showNewProject = false; projTitle = ""; projDesc = ""; projQuestion = "" }
-            )
-        }
-
         // ── 7. Projects List ──
         if (totalProjects == 0) {
             item {
@@ -380,6 +334,10 @@ private fun ResearchHubOverviewTab(
             item { SectionHeader("Projects ($totalProjects)", "Tap any project to open the workspace") }
             items(projects) { project -> ProjectDashboardCardCompact(project, observations, questions, hypotheses, sources, data, reports, researchSessions) { onOpenDetail("project", project.id) } }
         }
+    }
+    // Dialog outside LazyColumn
+    if (showNewProject) {
+        NewProjectDialog(viewModel, onDismiss = { showNewProject = false })
     }
 }
 
@@ -474,129 +432,6 @@ private fun TemplatesGrid(templates: List<ProjectTemplateDef>, onSelect: (Projec
 // ══════════════════════════════════════════════════════════════════════
 //  Project Creation Form — Full spec with all fields
 // ══════════════════════════════════════════════════════════════════════
-
-@OptIn(ExperimentalLayoutApi::class)
-@Composable
-private fun ProjectCreationForm(
-    title: String, onTitleChange: (String) -> Unit,
-    projectType: String, onProjectTypeChange: (String) -> Unit,
-    template: String, onTemplateChange: (String) -> Unit,
-    emoji: String, onEmojiChange: (String) -> Unit,
-    description: String, onDescChange: (String) -> Unit,
-    category: String, onCategoryChange: (String) -> Unit,
-    priority: String, onPriorityChange: (String) -> Unit,
-    status: String, onStatusChange: (String) -> Unit,
-    startDate: String, onStartDateChange: (String) -> Unit,
-    endDate: String, onEndDateChange: (String) -> Unit,
-    team: String, onTeamChange: (String) -> Unit,
-    tags: String, onTagsChange: (String) -> Unit,
-    question: String, onQuestionChange: (String) -> Unit,
-    methods: Set<String>, onMethodsChange: (Set<String>) -> Unit,
-    hypothesis: String, onHypothesisChange: (String) -> Unit,
-    showEmojiPicker: Boolean, onToggleEmojiPicker: () -> Unit,
-    onSave: () -> Unit,
-    onDismiss: () -> Unit
-) {
-    val haptics = rememberFieldMindHaptics()
-    val scrollState = rememberScrollState()
-
-    InlineFormCard("New Research Project", onDismiss = onDismiss, onSave = onSave, saveEnabled = title.isNotBlank()) {
-        Column(
-            Modifier.verticalScroll(scrollState).heightIn(max = 520.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp)
-        ) {
-            // Project Title
-            FieldTextField(title, onTitleChange, "Project Title", supportingText = "Give your investigation a name")
-
-            // Project Type
-            Text("Project Type", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                items(researchProjectTypes) { type ->
-                    FilterChip(
-                        selected = projectType == type,
-                        onClick = { onProjectTypeChange(type) },
-                        label = { Text(type, maxLines = 1, style = MaterialTheme.typography.labelSmall) }
-                    )
-                }
-            }
-
-            // Template
-            Text("Template", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            ChoiceChips(projectTemplates.map { it.name }, template) { onTemplateChange(it) }
-
-            // Emoji Icon Picker
-            Text("Project Icon", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(emoji, fontSize = 32.sp)
-                OutlinedButton(onClick = onToggleEmojiPicker, shape = RoundedCornerShape(12.dp)) { Text("Choose icon") }
-            }
-            AnimatedVisibility(showEmojiPicker) {
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(4.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    projectEmojis.forEach { e ->
-                        Surface(
-                            onClick = { onEmojiChange(e); onToggleEmojiPicker() },
-                            shape = RoundedCornerShape(8.dp),
-                            color = if (emoji == e) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainerHigh
-                        ) {
-                            Text(e, modifier = Modifier.padding(6.dp), fontSize = 20.sp)
-                        }
-                    }
-                }
-            }
-
-            // Description
-            FieldTextField(description, onDescChange, "Description", minLines = 3, supportingText = "Describe your project objectives and scope")
-
-            // Research Category
-            Text("Research Category", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            ChoiceChips(researchCategories, category) { onCategoryChange(it) }
-
-            // Priority
-            Text("Priority", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                listOf("Low", "Medium", "High").forEach { p ->
-                    FilterChip(
-                        selected = priority == p,
-                        onClick = { onPriorityChange(p) },
-                        label = { Text(p) },
-                        leadingIcon = if (priority == p) ({ Icon(FieldMindIcons.Check, null, size = 16.dp) }) else null
-                    )
-                }
-            }
-
-            // Status
-            Text("Status", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            ChoiceChips(listOf("Planning", "Active", "On Hold", "Completed", "Archived"), status) { onStatusChange(it) }
-
-            // Dates
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                FieldTextField(startDate, onStartDateChange, "Start Date", modifier = Modifier.weight(1f), supportingText = "YYYY-MM-DD")
-                FieldTextField(endDate, onEndDateChange, "End Date", modifier = Modifier.weight(1f), supportingText = "YYYY-MM-DD")
-            }
-
-            // Team Members
-            FieldTextField(team, onTeamChange, "Team Members", supportingText = "Comma-separated names")
-
-            // Tags
-            FieldTextField(tags, onTagsChange, "Tags", supportingText = "Comma-separated keywords")
-
-            // Research Question
-            Text("Research Question Builder", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold, color = FieldMindTheme.colors.question)
-            FieldTextField(question, onQuestionChange, "Research Question", minLines = 2, supportingText = "What do you want to find out?")
-
-            // Hypothesis
-            Text("Hypothesis", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            FieldTextField(hypothesis, onHypothesisChange, "Hypothesis Statement", minLines = 2, supportingText = "What do you predict?")
-
-            // Research Methods
-            Text("Research Methods", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            ResearchMethodBuilder(methods, onMethodsChange)
-
-            // Preview
-            ResearchPreviewCard(projectType, methods)
-        }
-    }
-}
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -786,92 +621,6 @@ private fun ObservationsTab(
 // ── Hypothesis Form ──
 
 @Composable
-private fun HypothesisForm(
-    questions: List<QuestionEntity>,
-    viewModel: FieldMindViewModel,
-    onDismiss: () -> Unit
-) {
-    var prediction by remember { mutableStateOf("") }
-    var reasoning by remember { mutableStateOf("") }
-    var evidence by remember { mutableStateOf("") }
-    var linkedId by remember { mutableStateOf(questions.firstOrNull()?.id) }
-    InlineFormCard("New Hypothesis", onDismiss = { onDismiss(); prediction = "" }, onSave = {
-        if (prediction.isNotBlank()) { viewModel.addHypothesis(linkedId, prediction, evidence, 50, reasoning); onDismiss(); prediction = "" }
-    }, saveEnabled = prediction.isNotBlank()) {
-        if (questions.isNotEmpty()) {
-            ChoiceChips(listOf("No question") + questions.take(6).map { it.questionText.take(28) }, questions.firstOrNull { it.id == linkedId }?.questionText?.take(28) ?: "No question") { picked ->
-                linkedId = questions.firstOrNull { it.questionText.startsWith(picked) }?.id
-            }
-        }
-        FieldTextField(prediction, { prediction = it }, "Hypothesis", minLines = 2, supportingText = "If... then... because...")
-        FieldTextField(reasoning, { reasoning = it }, "Reasoning", minLines = 2)
-        FieldTextField(evidence, { evidence = it }, "Evidence needed", minLines = 2)
-    }
-}
-
-// ── Data Record Form ──
-
-@Composable
-private fun DataRecordForm(viewModel: FieldMindViewModel, onDismiss: () -> Unit) {
-    var tool by remember { mutableStateOf("Counter") }
-    var label by remember { mutableStateOf("") }
-    var value by remember { mutableStateOf("0") }
-    var unit by remember { mutableStateOf("count") }
-    var notes by remember { mutableStateOf("") }
-    var datasetKind by remember { mutableStateOf("Measurements") }
-    var chartMode by remember { mutableStateOf("Line") }
-    InlineFormCard("Data Entry", onDismiss = { onDismiss(); label = "" }, onSave = {
-        if (label.isNotBlank()) { viewModel.addDataRecord(tool, label, value, unit, notes, datasetKind = datasetKind, chartPreference = chartMode); onDismiss(); label = "" }
-    }, saveEnabled = label.isNotBlank()) {
-        ChoiceChips(listOf("Counters", "Measurements", "Event logs", "Weather logs", "Species tracking", "Comparison table", "Time series"), datasetKind) { datasetKind = it }
-        ChoiceChips(listOf("Bar", "Line", "Donut/Pie", "Breakdown", "Timeline"), chartMode) { chartMode = it }
-        ChoiceChips(dataTools, tool) { tool = it }
-        FieldTextField(label, { label = it }, "Label")
-        FieldTextField(value, { value = it }, "Value")
-        FieldTextField(unit, { unit = it }, "Unit")
-        FieldTextField(notes, { notes = it }, "Notes", minLines = 2)
-    }
-}
-
-// ── Report Form ──
-
-@Composable
-private fun ReportForm(viewModel: FieldMindViewModel, onDismiss: () -> Unit) {
-    val templates = FieldReportTemplates.defaults
-    var selectedTemplate by remember { mutableStateOf(templates.first()) }
-    var preset by remember { mutableStateOf(selectedTemplate.presets.first()) }
-    var title by remember { mutableStateOf("") }
-    var background by remember { mutableStateOf("") }
-    var question by remember { mutableStateOf("") }
-    var methods by remember { mutableStateOf("") }
-    var observations by remember { mutableStateOf("") }
-    var results by remember { mutableStateOf("") }
-    var interpretation by remember { mutableStateOf("") }
-    var conclusion by remember { mutableStateOf("") }
-    var limitations by remember { mutableStateOf("") }
-    var nextSteps by remember { mutableStateOf("") }
-    InlineFormCard("Report Builder", onDismiss = { onDismiss(); title = "" }, onSave = {
-        if (title.isNotBlank()) { viewModel.addReport(selectedTemplate.label, title, background, question, methods, observations, results, interpretation, conclusion, limitations, nextSteps); onDismiss(); title = "" }
-    }, saveEnabled = title.isNotBlank()) {
-        ChoiceChips(templates.map { it.label }, selectedTemplate.label) { label -> selectedTemplate = templates.first { it.label == label } }
-        ChoiceChips(selectedTemplate.presets, preset) { preset = it }
-        Text(selectedTemplate.helperPrompt, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        FieldTextField(title, { title = it }, "Title")
-        FieldTextField(background, { background = it }, "Background", minLines = 2)
-        FieldTextField(question, { question = it }, "Research question", minLines = 2)
-        FieldTextField(methods, { methods = it }, "Methods", minLines = 3)
-        FieldTextField(observations, { observations = it }, "Observations / evidence", minLines = 3)
-        FieldTextField(results, { results = it }, "Results", minLines = 2)
-        FieldTextField(interpretation, { interpretation = it }, "Interpretation", minLines = 2)
-        FieldTextField(conclusion, { conclusion = it }, "Conclusion", minLines = 2)
-        FieldTextField(limitations, { limitations = it }, "Limitations", minLines = 2)
-        FieldTextField(nextSteps, { nextSteps = it }, "Next steps", minLines = 2)
-    }
-}
-
-// ── Tab 2: Hypotheses ──
-
-@Composable
 private fun HypothesesTab(
     viewModel: FieldMindViewModel,
     hypotheses: List<HypothesisEntity>,
@@ -887,7 +636,6 @@ private fun HypothesesTab(
     ) {
         item { SectionHeader("Hypotheses", "${hypotheses.size} predictions • ${hypotheses.count { it.resultStatus == "Supported" }} supported, ${hypotheses.count { it.resultStatus == "Refuted" }} refuted") }
         item { AddButton(if (showForm) "Cancel" else "New hypothesis") { showForm = !showForm } }
-        if (showForm) item { HypothesisForm(questions, viewModel, onDismiss = { showForm = false }) }
         if (hypotheses.isEmpty()) item { EmptyState("No hypotheses yet", "Predict what evidence would show, then test it.", icon = FieldMindIcons.Hypothesis) }
         items(hypotheses.sortedByDescending { it.createdAt }) { h ->
             val supportColor = when (h.resultStatus.lowercase()) {
@@ -897,6 +645,10 @@ private fun HypothesesTab(
             }
             EntityCard(h.prediction, "hypothesis", body = h.reasoning.take(120), meta = listOf("${h.confidencePercent}%", h.resultStatus), onClick = { onOpenDetail("hypothesis", h.id) })
         }
+    }
+    // Dialog for new hypothesis
+    if (showForm) {
+        NewHypothesisDialog(viewModel, onDismiss = { showForm = false })
     }
 }
 
@@ -920,9 +672,12 @@ private fun DataTab(
         item { SectionHeader("Data Records", "${data.size} records across ${data.map { it.datasetKind }.distinct().size} datasets") }
         item { TrackingFlowCards() }
         item { AddButton(if (showForm) "Cancel" else "Add data record") { showForm = !showForm } }
-        if (showForm) item { DataRecordForm(viewModel, onDismiss = { showForm = false }) }
         if (data.isEmpty()) item { EmptyState("No data records yet", "Measure, count, compare, or log with offline tools.", icon = FieldMindIcons.Data) }
         items(data.sortedByDescending { it.timestamp }) { d -> EntityCard(d.label, "data", body = "${d.value} ${d.unit}", meta = listOf(d.toolType, d.datasetKind), onClick = { onOpenDetail("data", d.id) }) }
+    }
+    // Dialog for new data record
+    if (showForm) {
+        NewDataRecordDialog(viewModel, onDismiss = { showForm = false })
     }
 }
 
@@ -943,9 +698,12 @@ private fun ReportsTab(
     ) {
         item { SectionHeader("Reports", "${reports.size} reports • ${reports.count { it.status == "Published" }} published") }
         item { AddButton(if (showForm) "Cancel" else "Build report") { showForm = !showForm } }
-        if (showForm) item { ReportForm(viewModel, onDismiss = { showForm = false }) }
         if (reports.isEmpty()) item { EmptyState("No reports yet", "Write up your findings with background, methods, results, and conclusions.", icon = FieldMindIcons.Report) }
         items(reports.sortedByDescending { it.createdAt }) { r -> EntityCard(r.title, "report", body = r.conclusion.ifBlank { r.question }, meta = listOf(r.type, r.status), onClick = { onOpenDetail("report", r.id) }) }
+    }
+    // Dialog for new report
+    if (showForm) {
+        NewReportDialog(viewModel, onDismiss = { showForm = false })
     }
 }
 

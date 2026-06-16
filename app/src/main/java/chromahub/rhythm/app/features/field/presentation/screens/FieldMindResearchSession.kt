@@ -51,6 +51,9 @@ import fieldmind.research.app.features.field.presentation.viewmodel.FieldMindVie
 import fieldmind.research.app.features.field.presentation.components.FieldMindCameraV2
 import fieldmind.research.app.shared.presentation.components.icons.Icon
 import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon
+import fieldmind.research.app.features.field.data.vision.SpeciesClassifier
+import fieldmind.research.app.features.field.data.vision.SpeciesDatabase
+import fieldmind.research.app.features.field.presentation.screens.species.SpeciesIdentificationSheet
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.io.File
@@ -119,6 +122,24 @@ fun ResearchSessionScreen(
     var quickPlaceName by remember { mutableStateOf("") }
     var quickWeather by remember { mutableStateOf<WeatherSnapshot?>(null) }
     var captureStatus by remember { mutableStateOf("Ready") }
+
+    // ── Species identification state ──
+    val speciesClassifier = remember { SpeciesClassifier() }
+    val speciesDatabase = remember { SpeciesDatabase() }
+    var showSpeciesSearch by remember { mutableStateOf(false) }
+    var speciesIdImageUri by remember { mutableStateOf<String?>(null) }
+    var identifiedSpecies by remember { mutableStateOf<SpeciesMatch?>(null) }
+
+    // ── Advanced fields state ──
+    var speciesName by remember { mutableStateOf("") }
+    var speciesConfidence by remember { mutableStateOf("") }
+    var quickTags by remember { mutableStateOf("") }
+    var behavior by remember { mutableStateOf("") }
+    var lifeStage by remember { mutableStateOf("") }
+    var sex by remember { mutableStateOf("") }
+    var habitatType by remember { mutableStateOf("") }
+    var weatherOverride by remember { mutableStateOf("") }
+    var showAdvanced by remember { mutableStateOf(false) }
 
     // ── In-app camera & audio recording state ──
     var showInAppCamera by remember { mutableStateOf(false) }
@@ -260,13 +281,26 @@ fun ResearchSessionScreen(
 
     fun saveQuickObservation() {
         if (quickSubject.isBlank() && quickFacts.isBlank()) return
+        val structuredJson = org.json.JSONObject().apply {
+            if (speciesName.isNotBlank()) put("speciesName", speciesName)
+            if (speciesConfidence.isNotBlank()) put("speciesConfidence", speciesConfidence)
+            if (behavior.isNotBlank()) put("behavior", behavior)
+            if (lifeStage.isNotBlank()) put("lifeStage", lifeStage)
+            if (sex.isNotBlank()) put("sex", sex)
+            if (habitatType.isNotBlank()) put("habitatType", habitatType)
+            if (weatherOverride.isNotBlank()) put("weatherOverride", weatherOverride)
+        }.toString()
+        val tagsStr = listOfNotNull(
+            "research-session",
+            quickTags.takeIf { it.isNotBlank() }
+        ).joinToString(",")
         viewModel.addObservation(
             subject = quickSubject.ifBlank { quickCategory },
             category = quickCategory,
             facts = quickFacts.ifBlank { "Quick session observation" },
             confidence = defaultConfidence,
             manualLocation = quickPlaceName.ifBlank { quickLocation?.coordinateText().orEmpty() },
-            tags = "research-session",
+            tags = tagsStr,
             evidence = quickAttachments.joinToString { it.type },
             context = "Research session: $sessionName",
             projectId = selectedProjectId,
@@ -274,6 +308,7 @@ fun ResearchSessionScreen(
             longitude = quickLocation?.longitude,
             attachments = quickAttachments,
             weather = quickWeather,
+            structuredDetailsJson = structuredJson,
             startedAt = sessionStartedAt.takeIf { it > 0L },
             endedAt = System.currentTimeMillis(),
             durationMs = sessionElapsedMs,
@@ -372,12 +407,7 @@ fun ResearchSessionScreen(
                             FieldTextField(sessionName, { sessionName = it }, "Session name (optional)", supportingText = "Auto-named if left blank")
                             if (projects.isNotEmpty()) {
                                 Text("Link to project", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                ChoiceChips(
-                                    listOf("No project") + projects.map { it.title },
-                                    projects.firstOrNull { it.id == selectedProjectId }?.title ?: "No project"
-                                ) { selected ->
-                                    selectedProjectId = projects.firstOrNull { it.title == selected }?.id
-                                }
+                                OptionPickerField(label = "Project", selected = projects.firstOrNull { it.id == selectedProjectId }?.title ?: "No project", options = listOf("No project") + projects.map { it.title }, onSelected = { selected -> selectedProjectId = projects.firstOrNull { it.title == selected }?.id }, icon = FieldMindIcons.Project, modifier = Modifier.fillMaxWidth())
                             }
                             Button(onClick = ::startSession, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp)) {
                                 Icon(FieldMindIcons.Bolt, null, size = 18.dp); Spacer(Modifier.size(8.dp)); Text("Start session")
@@ -533,9 +563,66 @@ fun ResearchSessionScreen(
                         Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
                             Text("Quick observation", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                             Text("Type what you see. Tap save. Repeat.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                            ChoiceChips(observationCategories, quickCategory) { quickCategory = it }
+                            OptionPickerField(label = "Category", selected = quickCategory, options = observationCategories, onSelected = { quickCategory = it }, icon = FieldMindIcons.Category)
                             FieldTextField(quickSubject, { quickSubject = it }, "Subject", supportingText = "e.g. Crow on wire")
                             FieldTextField(quickFacts, { quickFacts = it }, "Facts", minLines = 2, supportingText = "What did you observe?")
+                            // ── Advanced details collapsible ──
+                            TextButton(
+                                onClick = { showAdvanced = !showAdvanced },
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Row(
+                                    Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                                        Icon(FieldMindIcons.Data, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, size = 18.dp)
+                                        Text("Advanced details", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold)
+                                    }
+                                    Icon(if (showAdvanced) FieldMindIcons.Up else FieldMindIcons.Down, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, size = 18.dp)
+                                }
+                            }
+                            AnimatedVisibility(visible = showAdvanced) {
+                                Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
+
+                                    // Species name + search button
+                                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                                        FieldTextField(speciesName, { speciesName = it }, "Species name",
+                                            modifier = Modifier.weight(1f),
+                                            supportingText = "Common or scientific name")
+                                        IconButton(
+                                            onClick = { speciesIdImageUri = null; showSpeciesSearch = true },
+                                            modifier = Modifier.size(44.dp)
+                                        ) {
+                                            Icon(FieldMindIcons.Nature, null, tint = MaterialTheme.colorScheme.primary, size = 22.dp)
+                                        }
+                                    }
+                                    FieldTextField(speciesConfidence, { speciesConfidence = it }, "Species confidence", supportingText = "e.g. High, 85%")
+                                    FieldTextField(quickTags, { quickTags = it }, "Tags", supportingText = "Comma-separated keywords")
+
+                                    // Behavior
+                                    Text("Behavior", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                    OptionPickerField(label = "Behavior", selected = behavior, options = listOf("Foraging", "Resting", "Flying", "Hunting", "Socializing", "Mating", "Nesting", "Moving", "Calling", "Feeding", "Other"), onSelected = { behavior = it }, icon = FieldMindIcons.Trend, modifier = Modifier.fillMaxWidth())
+
+                                    // Life Stage
+                                    Text("Life stage", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                    OptionPickerField(label = "Life stage", selected = lifeStage, options = listOf("Adult", "Juvenile", "Larva", "Pupa", "Nymph", "Egg", "Fledgling", "Subadult"), onSelected = { lifeStage = it }, icon = FieldMindIcons.Question, modifier = Modifier.fillMaxWidth())
+
+                                    // Sex
+                                    Text("Sex", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                    OptionPickerField(label = "Sex", selected = sex, options = listOf("Male", "Female", "Unknown", "Hermaphrodite"), onSelected = { sex = it }, icon = FieldMindIcons.Question, modifier = Modifier.fillMaxWidth())
+
+                                    // Habitat Type
+                                    Text("Habitat type", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                    OptionPickerField(label = "Habitat", selected = habitatType, options = listOf("Forest", "Grassland", "Wetland", "Desert", "Marine", "Freshwater", "Urban", "Agricultural", "Coastal", "Mountain", "Cave"), onSelected = { habitatType = it }, icon = FieldMindIcons.Nature, modifier = Modifier.fillMaxWidth())
+
+                                    // Weather override
+                                    FieldTextField(weatherOverride, { weatherOverride = it }, "Weather override", supportingText = "e.g. Partly cloudy, light breeze")
+                                }
+                            }
+
                             Button(
                                 onClick = ::saveQuickObservation,
                                 modifier = Modifier.fillMaxWidth(),
@@ -549,6 +636,23 @@ fun ResearchSessionScreen(
                 }
             }
         }
+    }
+
+
+    // ── Species Identification Sheet ──
+    if (showSpeciesSearch) {
+        SpeciesIdentificationSheet(
+            imageUri = speciesIdImageUri,
+            classifier = speciesClassifier,
+            database = speciesDatabase,
+            onSelectSpecies = { match ->
+                speciesName = match.commonName
+                speciesConfidence = if (match.confidence > 0) "${match.confidence}" else ""
+                identifiedSpecies = match
+                showSpeciesSearch = false
+            },
+            onDismiss = { showSpeciesSearch = false }
+        )
     }
 
     // ── In-app CameraX overlay ──
