@@ -389,6 +389,7 @@ private fun ObservationDetailContent(
     }
     
     // Export menu dialog removed — export is handled inline in ObservationExportSection}
+}
 
 private fun ReObservationLink(
     o: ObservationEntity,
