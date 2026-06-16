@@ -1530,7 +1530,7 @@ private fun SpeciesRegistryBuilder(projectId: Long, viewModel: FieldMindViewMode
 
         if (showForm) {
             Card(shape = RoundedCornerShape(18.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh)) {
-                Column(modifier = Modifier.padding(14.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Column(modifier = Modifier.padding(14.dp).verticalScroll(rememberScrollState()).heightIn(max = 420.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     Text("Add Species to Registry", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = colors.observation)
                     FieldTextField(commonName, { commonName = it }, "Common Name *", supportingText = "e.g. House Crow")
                     FieldTextField(scientificName, { scientificName = it }, "Scientific Name", supportingText = "e.g. Corvus splendens")
@@ -1665,7 +1665,7 @@ private fun ProjectTasksBuilder(projectId: Long, viewModel: FieldMindViewModel) 
 
         if (showForm) {
             Card(shape = RoundedCornerShape(18.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh)) {
-                Column(modifier = Modifier.padding(14.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Column(modifier = Modifier.padding(14.dp).verticalScroll(rememberScrollState()).heightIn(max = 420.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     Text("Create Project Task", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = colors.project)
                     FieldTextField(taskTitle, { taskTitle = it }, "Task Title *", supportingText = "e.g. Survey Zone A")
                     FieldTextField(taskDesc, { taskDesc = it }, "Description", minLines = 2)

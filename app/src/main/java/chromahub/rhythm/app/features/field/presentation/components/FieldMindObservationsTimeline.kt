@@ -1,13 +1,6 @@
 package fieldmind.research.app.features.field.presentation.components
 
-import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.animateContentSize
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -247,16 +240,9 @@ fun ObservationsTimelineSection(
             }
         }
 
-        // ── Content by View Mode ──
-        AnimatedContent(
-            targetState = viewMode,
-            transitionSpec = {
-                (fadeIn(tween(180)) + slideInVertically { it / 8 }) togetherWith
-                    (fadeOut(tween(120)) + slideOutVertically { -it / 8 })
-            },
-            label = "timelineView"
-        ) { mode ->
-            when (mode) {
+        // ── Content by View Mode (static Box to avoid infinite-height crash with LazyColumn inside AnimatedContent) ──
+        Box(modifier = Modifier.fillMaxWidth().heightIn(max = 600.dp)) {
+            when (viewMode) {
                 TimelineViewMode.List -> ObservationListView(filteredObservations, viewModel, onOpenDetail)
                 TimelineViewMode.Gallery -> ObservationGalleryView(filteredObservations, viewModel, onOpenDetail)
                 TimelineViewMode.Map -> ObservationMapPrompt(filteredObservations, onOpenMap)
@@ -307,7 +293,7 @@ fun ObservationListView(
         EmptyState("No observations found", "Adjust your filters or start capturing.", icon = FieldMindIcons.Observation)
         return
     }
-    LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    LazyColumn(Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         items(observations) { obs ->
             ObservationTimelineCard(obs, viewModel, onClick = { onOpenDetail("observation", obs.id) })
         }
