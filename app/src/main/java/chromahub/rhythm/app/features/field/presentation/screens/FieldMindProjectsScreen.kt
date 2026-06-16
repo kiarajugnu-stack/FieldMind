@@ -142,26 +142,18 @@ fun ProjectsScreen(
         ScrollableTabRow(selectedTabIndex = tab, edgePadding = 20.dp, containerColor = MaterialTheme.colorScheme.background) {
             tabs.forEachIndexed { i, label -> Tab(tab == i, { selectTab(i) }, text = { Text(label) }) }
         }
-        AnimatedContent(
-            targetState = tab,
-            transitionSpec = {
-                val direction = if (targetState > initialState) 1 else -1
-                (slideInHorizontally(tween(210)) { direction * it / 3 } + fadeIn(tween(180))) togetherWith
-                    (slideOutHorizontally(tween(210)) { -direction * it / 4 } + fadeOut(tween(180)))
-            },
-            label = "workspacePage"
-        ) { selectedTab ->
-            Box(
-                Modifier.fillMaxSize().pointerInput(selectedTab) {
+        // Static tab content (no AnimatedContent to avoid infinite-height crash with LazyColumn)
+        Box(
+            modifier = Modifier.fillMaxSize().pointerInput(tab) {
                     var totalDrag = 0f
                     detectHorizontalDragGestures(
                         onDragStart = { totalDrag = 0f },
                         onHorizontalDrag = { _, dragAmount -> totalDrag += dragAmount },
-                        onDragEnd = { if (abs(totalDrag) > 96f) { if (totalDrag < 0) selectTab(selectedTab + 1) else selectTab(selectedTab - 1) } }
+                        onDragEnd = { if (abs(totalDrag) > 96f) { if (totalDrag < 0) selectTab(tab + 1) else selectTab(tab - 1) } }
                     )
                 }
             ) {
-                when (selectedTab) {
+                when (tab) {
                     0 -> ResearchHubOverviewTab(viewModel, projects, observations, questions, hypotheses, sources, data, reports, researchSessions, onOpenDetail, onStartSession)
                     1 -> ObservationsTab(viewModel, observations, projects, onOpenDetail)
                     2 -> HypothesesTab(viewModel, hypotheses, questions, observations, onOpenDetail)
@@ -171,7 +163,6 @@ fun ProjectsScreen(
             }
         }
     }
-}
 
 // ══════════════════════════════════════════════════════════════════════
 //  Research Hub Overview Tab — Full redesign with templates, emoji, dates
@@ -229,7 +220,11 @@ private fun ResearchHubOverviewTab(
     val totalSessions = researchSessions.size
     val totalObsInSessions = researchSessions.sumOf { it.observationCount }
 
-    LazyColumn(contentPadding = PaddingValues(20.dp, 4.dp, 20.dp, 96.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(20.dp, 4.dp, 20.dp, 96.dp),
+        verticalArrangement = Arrangement.spacedBy(14.dp)
+    ) {
         // ── 1. Start Research Session ──
         item {
             Card(
@@ -506,7 +501,10 @@ private fun ProjectCreationForm(
     val scrollState = rememberScrollState()
 
     InlineFormCard("New Research Project", onDismiss = onDismiss, onSave = onSave, saveEnabled = title.isNotBlank()) {
-        Column(Modifier.verticalScroll(scrollState), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+        Column(
+            Modifier.verticalScroll(scrollState).heightIn(max = 520.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp)
+        ) {
             // Project Title
             FieldTextField(title, onTitleChange, "Project Title", supportingText = "Give your investigation a name")
 
@@ -752,7 +750,11 @@ private fun ObservationsTab(
     val filtered = remember(observations, selectedProjectId) {
         if (selectedProjectId == null) observations else observations.filter { it.projectId == selectedProjectId }
     }
-    LazyColumn(contentPadding = panelPadding(), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = panelPadding(),
+        verticalArrangement = Arrangement.spacedBy(14.dp)
+    ) {
         item { SectionHeader("Observations", "${filtered.size} of ${observations.size} total") }
         item {
             Card(shape = RoundedCornerShape(20.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)) {
@@ -878,7 +880,11 @@ private fun HypothesesTab(
     onOpenDetail: (String, Long) -> Unit
 ) {
     var showForm by remember { mutableStateOf(false) }
-    LazyColumn(contentPadding = panelPadding(), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = panelPadding(),
+        verticalArrangement = Arrangement.spacedBy(14.dp)
+    ) {
         item { SectionHeader("Hypotheses", "${hypotheses.size} predictions • ${hypotheses.count { it.resultStatus == "Supported" }} supported, ${hypotheses.count { it.resultStatus == "Refuted" }} refuted") }
         item { AddButton(if (showForm) "Cancel" else "New hypothesis") { showForm = !showForm } }
         if (showForm) item { HypothesisForm(questions, viewModel, onDismiss = { showForm = false }) }
@@ -906,7 +912,11 @@ private fun DataTab(
     onOpenDetail: (String, Long) -> Unit
 ) {
     var showForm by remember { mutableStateOf(false) }
-    LazyColumn(contentPadding = panelPadding(), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = panelPadding(),
+        verticalArrangement = Arrangement.spacedBy(14.dp)
+    ) {
         item { SectionHeader("Data Records", "${data.size} records across ${data.map { it.datasetKind }.distinct().size} datasets") }
         item { TrackingFlowCards() }
         item { AddButton(if (showForm) "Cancel" else "Add data record") { showForm = !showForm } }
@@ -926,7 +936,11 @@ private fun ReportsTab(
     onOpenDetail: (String, Long) -> Unit
 ) {
     var showForm by remember { mutableStateOf(false) }
-    LazyColumn(contentPadding = panelPadding(), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = panelPadding(),
+        verticalArrangement = Arrangement.spacedBy(14.dp)
+    ) {
         item { SectionHeader("Reports", "${reports.size} reports • ${reports.count { it.status == "Published" }} published") }
         item { AddButton(if (showForm) "Cancel" else "Build report") { showForm = !showForm } }
         if (showForm) item { ReportForm(viewModel, onDismiss = { showForm = false }) }

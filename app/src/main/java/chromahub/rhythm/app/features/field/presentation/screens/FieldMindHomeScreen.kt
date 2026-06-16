@@ -1,12 +1,15 @@
 package fieldmind.research.app.features.field.presentation.screens
 
 import androidx.compose.animation.AnimatedVisibility
+
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.*
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -49,6 +52,9 @@ import fieldmind.research.app.shared.presentation.components.icons.Icon
 import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import java.text.SimpleDateFormat
@@ -61,6 +67,26 @@ import kotlin.math.floor
 import kotlin.math.roundToInt
 import fieldmind.research.app.features.field.presentation.components.ObservationsTimelineSection
 import fieldmind.research.app.features.field.presentation.components.ObservationStatsDashboard
+
+/**
+ * Loads a PNG image from Android assets folder as an ImageBitmap for display.
+ * Returns null if the asset path is null or the file cannot be loaded.
+ */
+@Composable
+internal fun rememberAssetImage(assetPath: String?): androidx.compose.ui.graphics.ImageBitmap? {
+    val context = LocalContext.current
+    return remember(assetPath) {
+        if (assetPath != null) {
+            try {
+                val inputStream = context.assets.open(assetPath)
+                val bitmap = android.graphics.BitmapFactory.decodeStream(inputStream)
+                inputStream.close()
+                bitmap?.asImageBitmap()
+            } catch (_: Exception) { null }
+        } else null
+    }
+}
+
 
 // ══════════════════════════════════════════════════════════════════════
 //  Today (Home) — Animated weather centerpiece + research dashboard
@@ -80,6 +106,9 @@ fun HomeScreen(
     var capturedPhotoMime by remember { mutableStateOf<String?>(null) }
     var showCategoryPicker by remember { mutableStateOf(false) }
     var selectedCaptureCategory by remember { mutableStateOf("Bird") }
+    
+    // ── Note creation dialog state ──
+    var showNoteDialog by remember { mutableStateOf(false) }
     
     // Centered snackbar host state
     val captureSnackbarHostState = remember { SnackbarHostState() }
@@ -119,6 +148,7 @@ fun HomeScreen(
     val weatherShowPressure by viewModel.fieldSettings.weatherShowPressure.collectAsState()
     val tempUnit by viewModel.fieldSettings.tempUnit.collectAsState()
     val windSpeedUnit by viewModel.fieldSettings.windSpeedUnit.collectAsState()
+    val developerMode by viewModel.fieldSettings.developerMode.collectAsState()
 
     // ── Weather state (hoisted outside LazyColumn so it persists across scroll) ──
     var homeCurrentWeather by remember { mutableStateOf<WeatherSnapshot?>(null) }
@@ -186,7 +216,7 @@ fun HomeScreen(
     Box(Modifier.fillMaxSize()) {
         LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(20.dp, 0.dp, 20.dp, 96.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
             // ── Hero Section ──
-            item { HomeHeroSection(todayCount, goal, currentStreak, observations.size, questions.size, onOpenSettings, onNavigate) { showCamera = true } }
+            item { HomeHeroSection(todayCount, goal, currentStreak, observations.size, questions.size, onOpenSettings, onNavigate, onCapture = { showCamera = true }, onNewNote = { showNoteDialog = true }) }
 
             // ── Weather as animated centerpiece ──
             item {
@@ -213,7 +243,8 @@ fun HomeScreen(
                     moonPhase = moonPhase,
                     conditionsNudge = conditionsNudge,
                     sunrise = homeCurrentWeather?.sunrise,
-                    sunset = homeCurrentWeather?.sunset
+                    sunset = homeCurrentWeather?.sunset,
+                    developerMode = developerMode
                 )
             }
 
@@ -379,6 +410,14 @@ fun HomeScreen(
         }
     }
 
+    // ── Note Creation Dialog ──
+    if (showNoteDialog) {
+        HomeNoteCaptureDialog(
+            viewModel = viewModel,
+            onDismiss = { showNoteDialog = false }
+        )
+    }
+
     // ── Category Picker Dialog ──
     if (showCategoryPicker) {
         Dialog(
@@ -437,6 +476,7 @@ fun HomeScreen(
                             "Weather" to FieldMindIcons.Weather,
                             "Other" to FieldMindIcons.Water
                         )
+                        var customCategory by remember { mutableStateOf("") }
                         
                         val colors = FieldMindTheme.colors
 
@@ -491,14 +531,53 @@ fun HomeScreen(
                                     }
                                 }
                             }
+                            
+                            // Custom category text field when "Other" is selected
+                            if (selectedCaptureCategory == "Other") {
+                                OutlinedTextField(
+                                    value = customCategory,
+                                    onValueChange = { customCategory = it },
+                                    label = { Text("Specify category") },
+                                    placeholder = { Text("e.g. Reptile, Amphibian, Fungus…") },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    shape = RoundedCornerShape(16.dp),
+                                    singleLine = true,
+                                    colors = OutlinedTextFieldDefaults.colors(
+                                        focusedBorderColor = colors.accentFor("Other"),
+                                        cursorColor = colors.accentFor("Other")
+                                    )
+                                )
+                            }
                         }
 
-                        // Confirm button
+                        // Confirm button - actually create observation
                         Button(
                             onClick = {
+                                val photoUri = capturedPhotoUri
+                                if (photoUri != null) {
+                                    val effectiveCategory = if (selectedCaptureCategory == "Other" && customCategory.isNotBlank()) customCategory else selectedCaptureCategory
+                                    val effectiveSubject = "$effectiveCategory observation"
+                                    val attachment = capturedPhotoUri?.let { uri ->
+                                        listOf(DraftEvidenceAttachment("Photo", uri, "Camera capture", mimeType = capturedPhotoMime))
+                                    } ?: emptyList()
+                                    viewModel.addObservation(
+                                        subject = effectiveSubject,
+                                        category = effectiveCategory,
+                                        facts = "Auto-captured $effectiveCategory observation from camera.",
+                                        confidence = "Likely",
+                                        manualLocation = "",
+                                        tags = "camera, $effectiveCategory",
+                                        evidence = "Photo evidence captured via camera",
+                                        context = "",
+                                        attachments = attachment
+                                    )
+                                    scope.launch {
+                                        captureSnackbarHostState.showSnackbar("$effectiveCategory observation saved")
+                                    }
+                                }
                                 showCategoryPicker = false
-                                // Navigate to ObserveScreen with photo URI
-                                onNavigate(FieldMindScreen.Observe)
+                                capturedPhotoUri = null
+                                capturedPhotoMime = null
                             },
                             modifier = Modifier.fillMaxWidth().height(52.dp),
                             shape = RoundedCornerShape(18.dp)
@@ -531,7 +610,8 @@ private fun HomeHeroSection(
     totalQuestions: Int,
     onOpenSettings: () -> Unit,
     onNavigate: (FieldMindScreen) -> Unit,
-    onCapture: () -> Unit = {}
+    onCapture: () -> Unit = {},
+    onNewNote: () -> Unit = {}
 ) {
     val colors = FieldMindTheme.colors
     Surface(
@@ -606,7 +686,151 @@ private fun HomeHeroSection(
                     label = "Note",
                     accent = colors.source,
                     modifier = Modifier.weight(1f)
-                ) { onNavigate(FieldMindScreen.Library) }
+                ) { onNewNote() }
+            }
+        }
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════════
+//  Note Creation Dialog (inline, used by HomeScreen Note button)
+// ══════════════════════════════════════════════════════════════════════
+
+@Composable
+private fun HomeNoteCaptureDialog(
+    viewModel: FieldMindViewModel,
+    onDismiss: () -> Unit
+) {
+    val haptics = rememberFieldMindHaptics()
+    var title by remember { mutableStateOf("") }
+    var body by remember { mutableStateOf("") }
+    var category by remember { mutableStateOf("Other") }
+    var tags by remember { mutableStateOf("") }
+    var attachments by remember { mutableStateOf("") }
+    var showAdvanced by remember { mutableStateOf(false) }
+
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false)
+    ) {
+        Card(
+            modifier = Modifier.fillMaxWidth(0.94f).wrapContentHeight().padding(vertical = 24.dp),
+            shape = RoundedCornerShape(32.dp),
+            elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
+        ) {
+            Column(
+                Modifier.verticalScroll(rememberScrollState()).padding(20.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                // Header
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+                    Box(
+                        Modifier.size(48.dp).clip(RoundedCornerShape(16.dp))
+                            .background(FieldMindTheme.colors.source.copy(alpha = 0.12f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(FieldMindIcons.Note, null, tint = FieldMindTheme.colors.source, size = 24.dp)
+                    }
+                    Column(Modifier.weight(1f)) {
+                        Text("New Note", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+                        Text("Quickly capture an idea, observation, or thought", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                }
+
+                // Category selection
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text("Category", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    ChoiceChips(observationCategories, category) { category = it }
+                }
+
+                // Title
+                OutlinedTextField(
+                    value = title,
+                    onValueChange = { title = it },
+                    label = { Text("Title") },
+                    placeholder = { Text("Optional — auto-generated from content") },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(18.dp),
+                    singleLine = true
+                )
+
+                // Body
+                OutlinedTextField(
+                    value = body,
+                    onValueChange = { body = it },
+                    label = { Text("Note body") },
+                    placeholder = { Text("What would you like to note?…") },
+                    modifier = Modifier.fillMaxWidth().heightIn(min = 140.dp),
+                    shape = RoundedCornerShape(18.dp),
+                    minLines = 5
+                )
+
+                // Tags
+                OutlinedTextField(
+                    value = tags,
+                    onValueChange = { tags = it },
+                    label = { Text("Tags") },
+                    placeholder = { Text("Comma-separated, optional") },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(18.dp),
+                    singleLine = true
+                )
+
+                // Advanced options
+                CollapsibleSection("Advanced options", "Attachments and metadata", expanded = showAdvanced, onToggle = { showAdvanced = !showAdvanced }) {
+                    OutlinedTextField(
+                        value = attachments,
+                        onValueChange = { attachments = it },
+                        label = { Text("Attachments") },
+                        placeholder = { Text("One per line: type|caption|uri") },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(18.dp),
+                        minLines = 2
+                    )
+                }
+
+                // Actions
+                Row(
+                    Modifier.fillMaxWidth().padding(top = 8.dp),
+                    horizontalArrangement = Arrangement.End,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    TextButton(onClick = onDismiss) { Text("Cancel") }
+                    Spacer(Modifier.size(8.dp))
+                    Button(
+                        onClick = {
+                            if (body.isNotBlank() || title.isNotBlank()) {
+                                haptics.confirm()
+                                val fallbackTitle = body
+                                    .lineSequence()
+                                    .firstOrNull { it.isNotBlank() }
+                                    ?.take(48)
+                                    ?: "Untitled note"
+                                val parsedAttachments = attachments
+                                    .lineSequence()
+                                    .filter { it.isNotBlank() }
+                                    .map { line ->
+                                        val parts = line.split("|", limit = 3)
+                                        DraftEvidenceAttachment(
+                                            type = parts.getOrElse(0) { "File" },
+                                            caption = parts.getOrElse(1) { "" },
+                                            uri = parts.getOrElse(2) { parts[0] }
+                                        )
+                                    }.toList()
+                                viewModel.addNote(
+                                    title = title.ifBlank { fallbackTitle },
+                                    body = body,
+                                    category = category,
+                                    tags = tags,
+                                    attachments = parsedAttachments,
+                                    onSaved = { onDismiss() }
+                                )
+                            }
+                        },
+                        shape = RoundedCornerShape(16.dp),
+                        enabled = body.isNotBlank() || title.isNotBlank()
+                    ) { Text("Save Note") }
+                }
             }
         }
     }
@@ -718,13 +942,16 @@ private fun LiveWeatherDashboardWidget(
     moonPhase: String = "",
     conditionsNudge: String = "",
     sunrise: String? = null,
-    sunset: String? = null
+    sunset: String? = null,
+    developerMode: Boolean = false
 ) {
     val colors = FieldMindTheme.colors
     var isRotating by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
     val refreshRotation = remember { Animatable(0f) }
     var isExpanded by remember { mutableStateOf(false) }
+    var testWeatherCode by remember { mutableStateOf<Int?>(null) }
+    var testIsNight by remember { mutableStateOf(false) }
 
     // Time of day awareness
     val currentHour = remember { java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY) }
@@ -734,6 +961,11 @@ private fun LiveWeatherDashboardWidget(
         in 17..20 -> "evening"
         else -> "night"
     }
+    val isNight = timeOfDay == "night"
+
+    // Override weather code with test value if in developer mode
+    val displayWeatherCode = testWeatherCode ?: currentWeather?.weatherCode ?: 0
+    val displayNight = if (developerMode) testIsNight else isNight
     val timeGreeting = when (timeOfDay) {
         "morning" -> "Good morning"
         "afternoon" -> "Good afternoon"
@@ -757,7 +989,7 @@ private fun LiveWeatherDashboardWidget(
     val weatherGradient = Brush.horizontalGradient(displayColors)
 
     val conditionColor = remember(currentWeather) {
-        val code = currentWeather?.weatherCode ?: 0
+        val code = displayWeatherCode
         when {
             code == 0 || code == 1 -> colors.positive            // Clear
             code in 2..3 -> colors.info                           // Cloudy
@@ -783,7 +1015,7 @@ private fun LiveWeatherDashboardWidget(
             .animateContentSize(
                 animationSpec = tween(durationMillis = 500, easing = FastOutSlowInEasing)
             )
-            .clickable { isExpanded = !isExpanded },
+            .clickable { isExpanded = true },
         shape = RoundedCornerShape(28.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
@@ -800,7 +1032,7 @@ private fun LiveWeatherDashboardWidget(
                         )
                 ) {
                     AnimatedWeatherScene(
-                        weatherCode = currentWeather!!.weatherCode,
+                        weatherCode = displayWeatherCode,
                         temperature = currentWeather!!.temperature,
                         sunrise = currentWeather!!.sunrise,
                         sunset = currentWeather!!.sunset,
@@ -841,7 +1073,7 @@ private fun LiveWeatherDashboardWidget(
                         )
                     } else {
                         Icon(
-                            weatherConditionIcon(currentWeather?.weatherCode ?: 0),
+                            weatherConditionIcon(displayWeatherCode),
                             null,
                             tint = Color.White,
                             size = 24.dp
@@ -960,10 +1192,9 @@ private fun LiveWeatherDashboardWidget(
                     }
                     if (showCondition) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Icon(
-                                weatherConditionIcon(w.weatherCode),
-                                null,
-                                tint = conditionColor,
+                            WeatherConditionImage(
+                                code = displayWeatherCode,
+                                isNight = displayNight,
                                 size = 40.dp
                             )
                             Text(
@@ -993,10 +1224,129 @@ private fun LiveWeatherDashboardWidget(
                     }
                 }
 
-                // ── Expanded details ──
-                AnimatedVisibility(visible = isExpanded, enter = fadeIn() + expandVertically(), exit = fadeOut() + shrinkVertically()) {
-                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        // Extra metrics row (always visible when expanded)
+                // ── Extra metrics row ──
+                Row(
+                    Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceEvenly
+                ) {
+                    // Wind
+                    if (showWind) {
+                        w.windSpeed?.let { wind ->
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Icon(
+                                    FieldMindIcons.windIconForSpeed(wind),
+                                    null,
+                                    tint = colors.warning,
+                                    size = 18.dp
+                                )
+                                Text(
+                                    WeatherUnitConverter.formatWind(wind, windSpeedUnit),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = colors.warning
+                                )
+                                Text(
+                                    "Wind",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                    }
+                    // Cloud cover
+                    if (showCloudCover) {
+                        w.cloudCover?.let { cloud ->
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Icon(
+                                    FieldMindIcons.Cloud,
+                                    null,
+                                    tint = colors.hypothesis,
+                                    size = 18.dp
+                                )
+                                Text(
+                                    "$cloud%",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = colors.hypothesis
+                                )
+                                Text(
+                                    "Cloud cover",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+
+                        // ── Developer: Test weather conditions ──
+                        if (developerMode) {
+                            DevWeatherTestPanel(testWeatherCode, testIsNight, { testWeatherCode = it }, { testIsNight = it })
+                        }
+                    }
+                    // Pressure
+                    if (showPressure) {
+                        w.pressure?.let { press ->
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Icon(
+                                    FieldMindIcons.Compress,
+                                    null,
+                                    tint = colors.project,
+                                    size = 18.dp
+                                )
+                                Text(
+                                    "%.0f hPa".format(press),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = colors.project
+                                )
+                                Text(
+                                    "Pressure",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                    }
+                }
+
+                // ── Sunrise / Sunset ──
+                if (sunrise != null || sunset != null) {
+                    Row(
+                        Modifier.fillMaxWidth().padding(top = 2.dp),
+                        horizontalArrangement = Arrangement.SpaceEvenly
+                    ) {
+                        sunrise?.let { s ->
+                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                                Icon(FieldMindIcons.Sunrise, null, tint = colors.warning, size = 14.dp)
+                                Text("Sunrise ${formatTimeFromIso(s)}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
+                        }
+                        sunset?.let { s ->
+                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                                Icon(FieldMindIcons.Sunset, null, tint = colors.data, size = 14.dp)
+                                Text("Sunset ${formatTimeFromIso(s)}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
+                        }
+                        if (moonPhase.isNotBlank()) {
+                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                                Icon(
+                                    moonPhaseIcon(moonPhase),
+                                    null,
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    size = 14.dp
+                                )
+                                Text(moonPhase, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
+                        }
+                    }
+                }
+
+                // ── Conditions nudge ──
+                if (conditionsNudge.isNotBlank()) {
+                    Surface(
+                        shape = RoundedCornerShape(14.dp),
+                        color = colors.warning.copy(alpha = if (colors.isDark) 0.18f else 0.10f),
+                        tonalElevation = 0.dp
+                    ) {
                         Row(
                             Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceEvenly
@@ -1095,7 +1445,7 @@ private fun LiveWeatherDashboardWidget(
                                 }
                                 if (moonPhase.isNotBlank()) {
                                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                                        MoonPhaseImage(moonPhase, size = 24.dp)
+                                        Icon(moonPhaseIcon(moonPhase), null, tint = if (FieldMindTheme.colors.isDark) Color(0xFFB0B0FF) else MaterialTheme.colorScheme.onSurfaceVariant, size = 24.dp)
                                         Text(moonPhase, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                     }
                                 }
@@ -1189,10 +1539,101 @@ private fun LiveWeatherDashboardWidget(
             }
         }
     }
-}
+    // ── Expand to full-screen dashboard overlay (beautiful slide-up transition like Orphe) ──
+    AnimatedVisibility(
+        visible = isExpanded,
+        enter = slideInVertically(
+            initialOffsetY = { it },
+            animationSpec = tween(500, easing = FastOutSlowInEasing)
+        ) + fadeIn(tween(400)),
+        exit = slideOutVertically(
+            targetOffsetY = { it },
+            animationSpec = tween(350, easing = FastOutSlowInEasing)
+        ) + fadeOut(tween(250))
+    ) {
+        Box(
+            Modifier
+                .fillMaxSize()
+                .clickable { isExpanded = false }
+                .background(Color.Black.copy(alpha = 0.1f))
+        ) {
+            if (currentWeather != null) {
+                AnimatedWeatherScene(
+                    weatherCode = displayWeatherCode,
+                    temperature = currentWeather!!.temperature,
+                    sunrise = currentWeather!!.sunrise,
+                    sunset = currentWeather!!.sunset,
+                    compact = false,
+                    modifier = Modifier.fillMaxSize()
+                )
+            }
+            
+            Column(
+                Modifier
+                    .fillMaxSize()
+                    .statusBarsPadding()
+                    .padding(24.dp),
+                verticalArrangement = Arrangement.spacedBy(20.dp)
+            ) {
+                Row(
+                    Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column {
+                        Text(placeName ?: "Weather Dashboard", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold, color = Color.White)
+                        Text(timeGreeting, style = MaterialTheme.typography.titleMedium, color = Color.White.copy(alpha = 0.7f))
+                    }
+                    Surface(onClick = { isExpanded = false }, shape = CircleShape, color = Color.White.copy(alpha = 0.2f), modifier = Modifier.size(48.dp)) {
+                        Box(contentAlignment = Alignment.Center) { Icon(FieldMindIcons.Close, null, tint = Color.White, size = 24.dp) }
+                    }
+                }
+                
+                if (currentWeather != null) {
+                    val w = currentWeather!!
+                    Text(WeatherUnitConverter.formatTemp(w.temperature, tempUnit), style = MaterialTheme.typography.displayLarge.copy(fontWeight = FontWeight.ExtraBold, brush = Brush.horizontalGradient(displayColors)))
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        WeatherConditionImage(code = displayWeatherCode, isNight = displayNight, size = 56.dp)
+                        Text(w.weatherDescription, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = Color.White.copy(alpha = 0.9f))
+                    }
+                    
+                    Card(shape = RoundedCornerShape(28.dp), colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.12f)), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)) {
+                        Column(Modifier.fillMaxWidth().padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                            Text("Detailed metrics", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = Color.White)
+                            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
+                                if (showHumidity && w.humidity != null) { ExpandMetric("${w.humidity}%", "Humidity", FieldMindIcons.Water, colors.data) }
+                                if (showWind && w.windSpeed != null) { ExpandMetric(WeatherUnitConverter.formatWind(w.windSpeed, windSpeedUnit), "Wind", FieldMindIcons.windIconForSpeed(w.windSpeed), colors.warning) }
+                                if (showCloudCover && w.cloudCover != null) { ExpandMetric("${w.cloudCover}%", "Clouds", FieldMindIcons.Cloud, colors.hypothesis) }
+                                if (showPressure && w.pressure != null) { ExpandMetric("%.0f".format(w.pressure), "hPa", FieldMindIcons.Compress, colors.project) }
+                            }
+                        }
+                    }
+                    
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        if (sunrise != null) { ExpandInfoChip(FieldMindIcons.Sunrise, "Sunrise ${formatTimeFromIso(sunrise)}", Modifier.weight(1f)) }
+                        if (sunset != null) { ExpandInfoChip(FieldMindIcons.Sunset, "Sunset ${formatTimeFromIso(sunset)}", Modifier.weight(1f)) }
+                        if (moonPhase.isNotBlank()) { ExpandInfoChip(moonPhaseIcon(moonPhase), moonPhase, Modifier.weight(1f)) }
+                    }
+                    
+                    if (conditionsNudge.isNotBlank()) {
+                        Surface(shape = RoundedCornerShape(16.dp), color = colors.warning.copy(alpha = 0.2f)) {
+                            Row(Modifier.padding(horizontal = 16.dp, vertical = 12.dp).fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                                Icon(FieldMindIcons.Info, null, tint = colors.warning, size = 20.dp)
+                                Text(conditionsNudge, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold, color = colors.warning)
+                            }
+                        }
+                    }
+                    
+                    val weatherObsCount = observations.count { it.weatherTemperature != null }
+                    if (weatherObsCount > 0) { Text("$weatherObsCount observations with weather data", style = MaterialTheme.typography.bodySmall, color = Color.White.copy(alpha = 0.6f)) }
+                }
+            }
+        }
+    }
+    }
 }
 
-private fun weatherConditionIcon(code: Int): MaterialSymbolIcon {
+internal fun weatherConditionIcon(code: Int): MaterialSymbolIcon {
     return when (code) {
         0, 1 -> FieldMindIcons.Weather         // Clear / mainly clear
         2 -> FieldMindIcons.Cloud               // Partly cloudy
@@ -1205,6 +1646,47 @@ private fun weatherConditionIcon(code: Int): MaterialSymbolIcon {
         85, 86 -> FieldMindIcons.Snowy              // Snow showers
         95, 96, 99 -> FieldMindIcons.Thunderstorm   // Thunderstorm
         else -> FieldMindIcons.Weather
+    }
+}
+
+/**
+ * Loads an icons8 PNG image for the given weather condition when available.
+ * Falls back to the MaterialSymbolIcon for conditions without PNG assets.
+ * Uses 100px PNGs for main display, 50px for compact mode.
+ */
+@Composable
+internal fun WeatherConditionImage(code: Int, isNight: Boolean = false, compact: Boolean = false, size: androidx.compose.ui.unit.Dp = 40.dp) {
+    val suffix = if (compact) "50" else "100"
+    val hour = remember { java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY) }
+    val isMidnight = hour in 0..4
+    val assetPath = remember(code, isNight, isMidnight, compact) {
+        when {
+            // Fog → dedicated fog icon
+            code in 45..48 -> "moon_phases/icons8-fog-$suffix.png"
+            // Night clear sky → night scene
+            isNight && code <= 1 && isMidnight -> "moon_phases/icons8-midnight-$suffix.png"
+            isNight && code <= 1 -> "moon_phases/icons8-night-$suffix.png"
+            // Night fog → windy night
+            isNight && code in 45..48 -> "moon_phases/icons8-night-wind-$suffix.png"
+            // Eclipse → eclipse icon
+            code <= 1 && !isNight -> "moon_phases/icons8-eclipse-$suffix.png"
+            // Thunderstorm / extreme → mars-rover
+            code >= 95 -> "moon_phases/icons8-mars-rover-$suffix.png"
+            // Moon symbol fallback for night
+            isNight -> "moon_phases/icons8-moon-symbol-$suffix.png"
+            else -> null
+        }
+    }
+    val imageBitmap = rememberAssetImage(assetPath)
+    if (imageBitmap != null) {
+        Image(
+            bitmap = imageBitmap,
+            contentDescription = "Weather condition",
+            modifier = Modifier.size(size),
+            contentScale = androidx.compose.ui.layout.ContentScale.Fit
+        )
+    } else {
+        Icon(weatherConditionIcon(code), null, tint = MaterialTheme.colorScheme.onSurface, size = size)
     }
 }
 
@@ -1984,6 +2466,110 @@ private fun SessionObservationsCard(
 //  Moon Phase Calculation — Based on the age of the lunar cycle
 // ══════════════════════════════════════════════════════════════════════
 
+@Composable
+internal fun DevWeatherTestPanel(
+    testCode: Int?,
+    testNight: Boolean,
+    onCodeChange: (Int?) -> Unit,
+    onNightChange: (Boolean) -> Unit
+) {
+    val colors = FieldMindTheme.colors
+    val weatherCodes = listOf(
+        0 to "Clear", 1 to "Mainly Clear", 2 to "Cloudy", 3 to "Overcast",
+        45 to "Fog", 48 to "Rime Fog", 51 to "Drizzle", 61 to "Rain",
+        71 to "Snow", 80 to "Rain Showers", 85 to "Snow Showers", 95 to "Thunderstorm", 99 to "Severe TS"
+    )
+
+    // Night-specific preset codes
+    val nightCodes = listOf(
+        0 to "Night Clear", 45 to "Night Fog", 95 to "Night Storm"
+    )
+    val currentLabel = if (testNight && testCode != null) {
+        nightCodes.firstOrNull { it.first == testCode }?.second ?: "Custom ($testCode)"
+    } else if (testCode != null) {
+        weatherCodes.firstOrNull { it.first == testCode }?.second ?: "Custom ($testCode)"
+    } else {
+        "Live (${testCode ?: "-"})"
+    }
+
+    Card(
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.3f)
+        )
+    ) {
+        Column(
+            Modifier.padding(12.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                Icon(FieldMindIcons.Sparkle, null, tint = colors.info, size = 16.dp)
+                Text(
+                    "Dev: Test conditions",
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = colors.info
+                )
+                Spacer(Modifier.weight(1f))
+                Text(
+                    if (testCode != null) "Override: $currentLabel" else "Using live data",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
+            // Weather condition chips
+            Text("Weather codes:", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            LazyRow(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                items(weatherCodes) { (code, label) ->
+                    FilterChip(
+                        selected = testCode == code && !testNight,
+                        onClick = {
+                            if (testCode == code && !testNight) {
+                                onCodeChange(null)
+                            } else {
+                                onCodeChange(code)
+                                onNightChange(false)
+                            }
+                        },
+                        label = { Text(label, style = MaterialTheme.typography.labelSmall) },
+                        leadingIcon = if (testCode == code && !testNight) {{ Icon(FieldMindIcons.Check, null, size = 14.dp) }} else null
+                    )
+                }
+            }
+
+            // Night mode toggle
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                FilterChip(
+                    selected = testNight,
+                    onClick = {
+                        onNightChange(!testNight)
+                        if (testCode == null) onCodeChange(0)
+                    },
+                    label = { Text("Night mode", style = MaterialTheme.typography.labelSmall) },
+                    leadingIcon = if (testNight) {{ Icon(FieldMindIcons.MoonNew, null, size = 14.dp) }} else null
+                )
+                // Reset button
+                TextButton(onClick = { onCodeChange(null); onNightChange(false) }) {
+                    Text("Reset", style = MaterialTheme.typography.labelSmall)
+                }
+            }
+
+            // Show preview of the selected icons8 PNG
+            if (testCode != null) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    WeatherConditionImage(code = testCode, isNight = testNight, compact = true, size = 32.dp)
+                    val todayDate = remember { LocalDate.now() }; Icon(moonPhaseIcon(getMoonPhase(todayDate)), null, tint = Color.White, size = 24.dp)
+                    Column {
+                        Text("Icon preview (${testCode})", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text("Night: ${if (testNight) "ON" else "OFF"}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                }
+            }
+        }
+    }
+}
+
 private fun getMoonPhase(date: LocalDate): String {
     // Calculate approximate moon phase using the Julian day of the reference new moon
     // Reference: 2000-01-06 18:14 UTC was a new moon
@@ -2003,38 +2589,13 @@ private fun getMoonPhase(date: LocalDate): String {
     }
 }
 
-@Composable
-private fun MoonPhaseImage(phase: String, size: androidx.compose.ui.unit.Dp = 28.dp) {
-    val assetPath = remember(phase) {
-        when {
-            phase.startsWith("New") -> "moon_phases/icons8-new-moon-100.png"
-            phase.startsWith("Waxing crescent") -> "moon_phases/icons8-waxing-crescent-100.png"
-            phase.startsWith("Waning crescent") -> "moon_phases/icons8-waning-crescent-100.png"
-            phase.startsWith("First") -> "moon_phases/icons8-first-quarter-100.png"
-            phase.startsWith("Last") -> "moon_phases/icons8-waning-crescent-100.png"
-            phase.startsWith("Waxing gibbous") -> "moon_phases/icons8-waxing-gibbous-100.png"
-            phase.startsWith("Waning gibbous") -> "moon_phases/icons8-waning-gibbous-100.png"
-            phase.startsWith("Full") -> "moon_phases/icons8-full-moon-100.png"
-            else -> "moon_phases/icons8-moon-phase-100.png"
-        }
-    }
-    val context = LocalContext.current
-    val imageBitmap = remember(assetPath) {
-        try {
-            val inputStream = context.assets.open(assetPath)
-            val bitmap = android.graphics.BitmapFactory.decodeStream(inputStream)
-            inputStream.close()
-            bitmap?.asImageBitmap()
-        } catch (_: Exception) { null }
-    }
-    if (imageBitmap != null) {
-        Image(
-            bitmap = imageBitmap,
-            contentDescription = phase,
-            modifier = Modifier.size(size),
-            contentScale = androidx.compose.ui.layout.ContentScale.Fit
-        )
-    }
+private fun moonPhaseIcon(phase: String): MaterialSymbolIcon = when {
+    phase.startsWith("New") -> FieldMindIcons.MoonNew
+    phase.startsWith("Waxing crescent") || phase.startsWith("Waning crescent") -> FieldMindIcons.MoonCrescent
+    phase.startsWith("First") || phase.startsWith("Last") -> FieldMindIcons.MoonQuarter
+    phase.startsWith("Waxing gibbous") || phase.startsWith("Waning gibbous") -> FieldMindIcons.MoonGibbous
+    phase.startsWith("Full") -> FieldMindIcons.MoonFull
+    else -> FieldMindIcons.MoonNew
 }
 
 private fun formatTimeFromIso(isoString: String): String {
@@ -2153,6 +2714,64 @@ private fun RecentCapturesCard(observations: List<ObservationEntity>, onOpenDeta
                     }
                 }
             }
+        }
+    }
+}
+
+
+// ══════════════════════════════════════════════════════════════════════
+//  Expand Dashboard Helper Composables
+// ══════════════════════════════════════════════════════════════════════
+
+@Composable
+private fun ExpandMetric(
+    value: String,
+    label: String,
+    icon: MaterialSymbolIcon,
+    accent: Color
+) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        Icon(icon, null, tint = accent, size = 24.dp)
+        Text(
+            value,
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold,
+            color = Color.White
+        )
+        Text(
+            label,
+            style = MaterialTheme.typography.labelSmall,
+            color = Color.White.copy(alpha = 0.7f)
+        )
+    }
+}
+
+@Composable
+private fun ExpandInfoChip(
+    icon: MaterialSymbolIcon,
+    text: String,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        modifier = modifier,
+        shape = RoundedCornerShape(14.dp),
+        color = Color.White.copy(alpha = 0.1f)
+    ) {
+        Row(
+            Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            Icon(icon, null, tint = Color.White.copy(alpha = 0.8f), size = 16.dp)
+            Text(
+                text,
+                style = MaterialTheme.typography.labelMedium,
+                color = Color.White.copy(alpha = 0.8f),
+                fontWeight = FontWeight.Medium
+            )
         }
     }
 }

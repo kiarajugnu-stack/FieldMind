@@ -11,8 +11,12 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import kotlinx.coroutines.delay
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -640,7 +644,9 @@ private fun rememberSnowflakes(count: Int): List<Triple<Float, Float, Float>> {
 }
 
 // ══════════════════════════════════════════════════════════════════════
-//  Thunderstorm — Heavy rain, dark storm clouds, zigzag lightning, flash
+//  Thunderstorm — Rain + random lightning flashes + screen-edge glow
+//  Uses unpredictable timing (2-6s apart) and random bolt positions
+//  to avoid the constant-flashing headache of a fixed animation.
 // ══════════════════════════════════════════════════════════════════════
 
 @Composable
@@ -649,155 +655,166 @@ private fun ThunderstormScene(
     compact: Boolean,
     modifier: Modifier
 ) {
-    val infiniteTransition = rememberInfiniteTransition(label = "thunder")
 
-    // Two-phase lightning: fast bright flash, slower fade
-    val lightningPhase by infiniteTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(200, easing = LinearEasing),
-            repeatMode = RepeatMode.Reverse,
-            initialStartOffset = androidx.compose.animation.core.StartOffset(Random(789).nextInt(4000))
-        ),
-        label = "lightningFlash"
-    )
+    // Includes heavy rain effect
+    RainScene(weatherCode = 65, palette = palette, compact = compact, modifier = modifier)
 
-    // Dark storm cloud pulse
-    val cloudDarkAlpha by infiniteTransition.animateFloat(
-        initialValue = 0.15f,
-        targetValue = 0.35f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(3000, easing = LinearEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "cloudDark"
-    )
+    // ── Lightning flash state (random timing, intensity, position) ──
+    var flashAlpha by remember { mutableStateOf(0f) }
+    val flashPosition = remember { mutableStateOf(Offset(0.3f, 0.1f)) }
+    var flashIntensity by remember { mutableStateOf(0.3f) }
+    
+    // ── Lightning bolt paths computed from flash counter (stable for entire flash) ──
+    // boltSeed increments each time a new flash starts directly in the main flash loop,
+    // so the bolt path is fixed for the entire duration of a single flash — no frame-to-frame jitter.
+    var boltSeed by remember { mutableStateOf(0) }
 
-    // Lightning bolt position (fixed per session)
-    val boltStartX = remember { 0.25f + Random(123).nextFloat() * 0.3f }
-    val boltStartY = remember { 0.05f + Random(123).nextFloat() * 0.1f }
-    val boltEndX = remember { 0.35f + Random(456).nextFloat() * 0.3f }
-    val boltEndY = remember { 0.6f + Random(789).nextFloat() * 0.2f }
+    // Seed the random generator once
+    val rng = remember { Random(789) }
 
-    Box(modifier = modifier.fillMaxSize()) {
-        // Draw heavy rain behind everything
-        val rainColor = Color(0xFF90CAF9).copy(alpha = 0.5f)
-        val streakCount = if (compact) 40 else 80
-        val streaks = rememberRainStreaks(streakCount)
-        val rainProgress by infiniteTransition.animateFloat(
-            initialValue = 0f,
-            targetValue = 1f,
-            animationSpec = infiniteRepeatable(tween(400, easing = LinearEasing), RepeatMode.Restart),
-            label = "stormRain"
-        )
+    // LaunchedEffect that triggers lightning flashes at random intervals
+    LaunchedEffect(Unit) {
+        while (true) {
+            // Random wait between 2 and 6 seconds before next flash
+            val nextFlashDelay = rng.nextLong(2000L, 6000L)
+            delay(nextFlashDelay)
 
-        // Storm clouds overlay (dark band at top)
-        Canvas(modifier = Modifier.fillMaxSize()) {
-            // Dark storm cloud layer
+            // Randomize position — lightning can strike anywhere
+            flashPosition.value = Offset(
+                0.1f + rng.nextFloat() * 0.8f,  // x: 10%-90% across screen
+                0.05f + rng.nextFloat() * 0.4f   // y: 5%-45% from top
+            )
+
+            // Randomize intensity — some flashes are bright, some subtle
+            flashIntensity = 0.2f + rng.nextFloat() * 0.5f  // 0.2 to 0.7
+
+            // Advance bolt seed before flash so Canvas draws stable path on first frame
+            boltSeed++
+            
+            // Quick flash on (80-150ms)
+            flashAlpha = 1f
+            val flashOnDuration = rng.nextLong(80L, 150L)
+            delay(flashOnDuration)
+
+            // Quick fade out (100-200ms)
+            val fadeSteps = rng.nextInt(3, 6)
+            for (step in 1..fadeSteps) {
+                flashAlpha = 1f - (step.toFloat() / fadeSteps)
+                delay(rng.nextLong(20L, 40L))
+            }
+            flashAlpha = 0f
+
+            // Sometimes do a double-flash (follow-up flash within 200-500ms)
+            if (rng.nextFloat() < 0.35f) {
+                delay(rng.nextLong(200L, 500L))
+                flashAlpha = 0.7f + rng.nextFloat() * 0.3f
+                delay(rng.nextLong(60L, 120L))
+
+                val fadeSteps2 = rng.nextInt(2, 4)
+                for (step in 1..fadeSteps2) {
+                    flashAlpha = 0.7f + rng.nextFloat() * 0.3f - (step.toFloat() / fadeSteps2)
+                    delay(rng.nextLong(20L, 40L))
+                }
+                flashAlpha = 0f
+            }
+        }
+    }
+
+    // ── Glow afterglow state (follows flash with slower decay) ──
+    var glowAlpha by remember { mutableStateOf(0f) }
+    val glowPosition = remember { mutableStateOf(Offset(0.3f, 0.1f)) }
+
+    LaunchedEffect(flashAlpha) {
+        if (flashAlpha > 0.5f) {
+            // Glow appears at the lightning strike position
+            glowPosition.value = flashPosition.value
+            glowAlpha = 0.4f
+            delay(400)
+
+            // Slow glow decay
+            for (step in 1..8) {
+                glowAlpha = 0.4f * (1f - step.toFloat() / 8f)
+                delay(50)
+            }
+            glowAlpha = 0f
+        }
+    }
+
+    // ── Lightning bolt path is seeded by boltSeed from above — stable for entire flash ──
+    Canvas(modifier = modifier.fillMaxSize()) {
+        // ── Lightning bolt (jagged line from cloud to ground) ──
+        if (flashAlpha > 0.3f) {
+            val drawRng = Random(boltSeed)
+            val boltX = flashPosition.value.x * size.width
+            val startY = flashPosition.value.y * size.height
+            val endY = size.height * (0.5f + drawRng.nextFloat() * 0.3f)
+
+            // Primary bolt
+            val boltPath = Path()
+            boltPath.moveTo(boltX, 0f)
+            var currentX = boltX
+            var currentY = 0f
+            val segments = 6 + drawRng.nextInt(4)
+            for (i in 0 until segments) {
+                val zigzagX = currentX + (drawRng.nextFloat() - 0.5f) * size.width * 0.08f
+                val zigzagY = startY + (endY - startY) * ((i + 1f) / segments) + (drawRng.nextFloat() - 0.5f) * size.height * 0.03f
+                boltPath.lineTo(zigzagX, zigzagY)
+                currentX = zigzagX
+                currentY = zigzagY
+            }
+            boltPath.lineTo(boltX + (drawRng.nextFloat() - 0.5f) * size.width * 0.05f, endY)
+
+            drawPath(
+                path = boltPath,
+                color = Color.White.copy(alpha = flashAlpha * 0.9f),
+                style = Stroke(width = 2f + flashIntensity * 4f)
+            )
+
+            // Secondary branches (smaller jagged offshoots)
+            val branchCount = 2 + drawRng.nextInt(3)
+            for (b in 0 until branchCount) {
+                val branchPath = Path()
+                val branchStart = startY + (endY - startY) * drawRng.nextFloat()
+                val branchX = boltX + (drawRng.nextFloat() - 0.5f) * size.width * 0.15f
+                branchPath.moveTo(boltX, branchStart)
+                branchPath.lineTo(branchX, branchStart + (drawRng.nextFloat() - 0.5f) * size.height * 0.05f)
+                branchPath.lineTo(branchX + (drawRng.nextFloat() - 0.5f) * size.width * 0.05f, branchStart + size.height * 0.06f)
+                drawPath(
+                    path = branchPath,
+                    color = Color.White.copy(alpha = flashAlpha * 0.5f),
+                    style = Stroke(width = 1.5f)
+                )
+            }
+        }
+
+        // ── Full-screen ambient flash ──
+        if (flashAlpha > 0.3f) {
             drawRect(
-                brush = Brush.verticalGradient(
-                    0f to Color(0xFF1A1A2E).copy(alpha = 0.85f),
-                    0.15f to Color(0xFF2D2D44).copy(alpha = cloudDarkAlpha),
-                    1f to Color.Transparent
-                ),
+                color = Color.White.copy(alpha = flashAlpha * 0.25f * flashIntensity),
+
                 size = size
             )
         }
 
-        // Heavy rain
-        Canvas(modifier = Modifier.fillMaxSize()) {
-            streaks.forEach { (x, speed, length) ->
-                val y = (rainProgress * size.height * speed + x * size.height * 0.5f) % (size.height + length)
-                val yEnd = y - length
-                drawLine(
-                    color = rainColor,
-                    start = Offset(x * size.width, y),
-                    end = Offset(x * size.width, yEnd),
-                    strokeWidth = 2.5f
-                )
-            }
-        }
 
-        // Lightning bolt + flash (on top of everything)
-        Canvas(modifier = Modifier.fillMaxSize()) {
-            val isFlash = lightningPhase > 0.5f
-
-            if (isFlash) {
-                // Full-screen white flash
-                val flashStrength = (lightningPhase - 0.5f) * 2f // 0..1
-                drawRect(
-                    color = Color.White.copy(alpha = flashStrength * 0.25f),
-                    size = size
-                )
-
-                // Screen-edge glow
-                val glowColor = Color(0xFFE0F7FA).copy(alpha = flashStrength * 0.35f)
-                drawRect(
-                    brush = Brush.radialGradient(
-                        listOf(glowColor, glowColor.copy(alpha = 0f)),
-                        center = Offset(size.width * boltStartX, size.height * boltStartY),
-                        radius = size.maxDimension * 0.7f
+        // ── Screen-edge glow at lightning position ──
+        if (glowAlpha > 0.01f) {
+            val glowX = glowPosition.value.x * size.width
+            val glowY = glowPosition.value.y * size.height
+            val glowColor = Color(0xFFFFF9C4).copy(alpha = glowAlpha)
+            drawRect(
+                brush = Brush.radialGradient(
+                    colors = listOf(
+                        glowColor,
+                        glowColor.copy(alpha = 0f),
+                        Color.Transparent
                     ),
-                    size = size
-                )
+                    center = Offset(glowX, glowY),
+                    radius = size.maxDimension * 0.6f
+                ),
+                size = size
+            )
 
-                // Draw zigzag lightning bolt
-                val boltBrightness = (0.7f + flashStrength * 0.3f).coerceIn(0f, 1f)
-                val boltColor = Color(0xFFFFF9C4).copy(alpha = boltBrightness * 0.9f)
-                val glowBoltColor = Color(0xFF81D4FA).copy(alpha = boltBrightness * 0.4f)
-
-                val startX = size.width * boltStartX
-                val startY = size.height * boltStartY
-                val endX = size.width * boltEndX
-                val endY = size.height * boltEndY
-
-                // Generate zigzag segments
-                val segments = if (compact) 4 else 8
-                val zigzag = Path()
-                zigzag.moveTo(startX, startY)
-
-                var currentX = startX
-                var currentY = startY
-                for (i in 0 until segments) {
-                    val t = (i + 1).toFloat() / segments
-                    val targetX = startX + (endX - startX) * t
-                    val targetY = startY + (endY - startY) * t
-                    // Add zigzag offset
-                    val zigzagOffset = (size.width * 0.04f) * (if (i % 2 == 0) 1f else -1f)
-                    val branchX = targetX + zigzagOffset * (1f - t * 0.5f)
-                    val branchY = targetY
-                    zigzag.lineTo(branchX, branchY)
-                    currentX = branchX
-                    currentY = branchY
-                }
-                zigzag.lineTo(endX, endY)
-
-                // Draw glow around bolt
-                drawPath(
-                    path = zigzag,
-                    color = glowBoltColor,
-                    style = Stroke(width = 12f, cap = androidx.compose.ui.graphics.StrokeCap.Round)
-                )
-                // Draw bright bolt core
-                drawPath(
-                    path = zigzag,
-                    color = boltColor,
-                    style = Stroke(width = 4f, cap = androidx.compose.ui.graphics.StrokeCap.Round)
-                )
-
-                // Small branch bolt
-                val branchStart = Offset(startX + size.width * 0.05f, startY + size.height * 0.2f)
-                val branchEnd = Offset(branchStart.x - size.width * 0.08f, branchStart.y + size.height * 0.15f)
-                val branchPath = Path()
-                branchPath.moveTo(branchStart.x, branchStart.y)
-                branchPath.lineTo(branchEnd.x, branchEnd.y)
-                drawPath(
-                    path = branchPath,
-                    color = boltColor.copy(alpha = 0.5f),
-                    style = Stroke(width = 2f, cap = androidx.compose.ui.graphics.StrokeCap.Round)
-                )
-            }
         }
     }
 }
