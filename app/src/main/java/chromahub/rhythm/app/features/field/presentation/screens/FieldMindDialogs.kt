@@ -1,7 +1,12 @@
 package fieldmind.research.app.features.field.presentation.screens
 
 import android.app.KeyguardManager
+import android.media.MediaRecorder
 import android.net.Uri
+import android.os.Build
+import android.content.pm.PackageManager
+import androidx.core.content.ContextCompat
+import java.io.File
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
@@ -47,6 +52,7 @@ import android.Manifest
 import androidx.compose.ui.platform.LocalUriHandler
 import fieldmind.research.app.features.field.data.location.FieldLocationProvider
 import androidx.activity.compose.BackHandler
+import kotlinx.coroutines.delay
 // ══════════════════════════════════════════════════════════════════════
 //  Shared dialog helpers — consistent containers for all edit/create dialogs
 // ══════════════════════════════════════════════════════════════════════
@@ -231,6 +237,10 @@ private fun DialogActions(
  * Compact label + ChoiceChips row for form sections.
  */
 @Composable
+/**
+ * Compact label + ChoiceChips row for form sections.
+ * Used in New dialogs; Edit dialogs use OptionPickerField instead.
+ */
 private fun ChoiceChipsField(
     label: String,
     options: List<String>,
@@ -793,7 +803,7 @@ internal fun EditEntityDialog(kind: String, id: Long, viewModel: FieldMindViewMo
 }
 
 @Composable
-private fun EditNoteDialog(entity: NoteEntity, viewModel: FieldMindViewModel, onDismiss: () -> Unit) {
+internal fun EditNoteDialog(entity: NoteEntity, viewModel: FieldMindViewModel, onDismiss: () -> Unit) {
     var title by remember { mutableStateOf(entity.title) }; var body by remember { mutableStateOf(entity.body) }; var category by remember { mutableStateOf(entity.category) }; var tags by remember { mutableStateOf(entity.tags) }; var attachments by remember { mutableStateOf(entity.attachmentUris) }
 
     fun save() {
@@ -811,7 +821,7 @@ private fun EditNoteDialog(entity: NoteEntity, viewModel: FieldMindViewModel, on
 
     DialogWrapper(onDismiss = onDismiss) {
         DialogHeader(FieldMindIcons.Note, "Edit Note", "Update title, content, and metadata", accent = FieldMindTheme.colors.source)
-        ChoiceChipsField("Category", observationCategories, category) { category = it }
+        OptionPickerField(label = "Category", selected = category, options = observationCategories, onSelected = { category = it }, icon = FieldMindIcons.Category)
         FieldTextField(title, { title = it }, "Title", supportingText = "Auto-filled from body if left blank")
         FieldTextField(body, { body = it }, "Body", minLines = 6)
         FieldTextField(tags, { tags = it }, "Tags", supportingText = "Comma-separated keywords")
@@ -884,6 +894,36 @@ private fun EditObservationDialog(entity: ObservationEntity, viewModel: FieldMin
         }
     }
 
+    // ── Audio recording state ──
+    var recorder by remember { mutableStateOf<MediaRecorder?>(null) }
+    var audioFile by remember { mutableStateOf<File?>(null) }
+    var recording by remember { mutableStateOf(false) }
+    var recordSeconds by remember { mutableIntStateOf(0) }
+
+    val audioImportPicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        if (uri != null) {
+            runCatching { appContext.contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION) }
+            attachments = attachments + durableEvidenceAttachment(appContext, "Audio", uri, "Imported field audio")
+        }
+    }
+    val audioPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        if (granted) {
+            val file = createFieldMindFile(appContext, "audio", ".m4a")
+            val newRecorder = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) MediaRecorder(appContext) else MediaRecorder()
+            runCatching {
+                newRecorder.setAudioSource(MediaRecorder.AudioSource.MIC)
+                newRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
+                newRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
+                newRecorder.setOutputFile(file.absolutePath)
+                newRecorder.prepare()
+                newRecorder.start()
+                audioFile = file; recorder = newRecorder; recording = true
+            }.onFailure { newRecorder.release() }
+        }
+    }
+
+    LaunchedEffect(recording) { if (recording) { recordSeconds = 0; while (recording) { delay(1000); recordSeconds++ } } }
+
     val originalEntity = entity
     DialogWrapper(onDismiss = onDismiss, fullScreen = true, isDirty = {
         subject != originalEntity.subject || facts != originalEntity.factsOnlyNotes ||
@@ -894,11 +934,11 @@ private fun EditObservationDialog(entity: ObservationEntity, viewModel: FieldMin
         DialogHeader(FieldMindIcons.Observation, "Edit Observation", "Update facts, location, evidence, and metadata", accent = FieldMindTheme.colors.observation)
         FieldTextField(subject, { subject = it }, "Subject")
         DialogDividerSection("Classification", FieldMindIcons.Category, FieldMindTheme.colors.observation)
-        ChoiceChipsField("Category", observationCategories, category) { category = it }
-        ChoiceChipsField("Confidence", confidenceOptions, confidence) { confidence = it }
+        OptionPickerField(label = "Category", selected = category, options = observationCategories, onSelected = { category = it }, icon = FieldMindIcons.Category)
+        OptionPickerField(label = "Confidence", selected = confidence, options = confidenceOptions, onSelected = { confidence = it }, icon = FieldMindIcons.Check)
         DialogDividerSection("Facts & context", FieldMindIcons.Edit, FieldMindTheme.colors.observation)
         FieldTextField(facts, { facts = it }, "Facts only", minLines = 3)
-        ChoiceChips(contextPresets, fieldContext) { fieldContext = if (fieldContext.isBlank()) it else "$fieldContext, $it" }
+        MultiSelectPickerField(label = "Context presets", selected = if (fieldContext.isBlank()) emptySet() else fieldContext.split(",").map { it.trim() }.filter { it.isNotBlank() }.toSet(), options = contextPresets, onSelectionChanged = { fieldContext = it.joinToString(", ") }, subtitle = "Select field conditions", icon = FieldMindIcons.Info, showSearch = false)
         FieldTextField(fieldContext, { fieldContext = it }, "Context / mood", minLines = 2)
         DialogDividerSection("GPS & Location", FieldMindIcons.Location, FieldMindTheme.colors.observation)
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -922,6 +962,37 @@ private fun EditObservationDialog(entity: ObservationEntity, viewModel: FieldMin
             OutlinedButton(onClick = { showEditCamera = true }, Modifier.weight(1f)) { Icon(FieldMindIcons.Camera, null, size = 18.dp); Spacer(Modifier.size(6.dp)); Text("Photo") }
             OutlinedButton(onClick = { mediaPicker.launch("image/*") }, Modifier.weight(1f)) { Icon(FieldMindIcons.Gallery, null, size = 18.dp); Spacer(Modifier.size(6.dp)); Text("Gallery") }
             OutlinedButton(onClick = { filePicker.launch(arrayOf("application/pdf", "text/*", "image/*", "video/*", "audio/*")) }, Modifier.weight(1f)) { Icon(FieldMindIcons.File, null, size = 18.dp); Spacer(Modifier.size(6.dp)); Text("File") }
+        }
+        // ── Audio recording section ──
+        Spacer(Modifier.height(6.dp))
+        Card(shape = RoundedCornerShape(16.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp), modifier = Modifier.fillMaxWidth()) {
+            Column(Modifier.fillMaxWidth().padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Icon(FieldMindIcons.Mic, null, tint = FieldMindTheme.colors.observation, size = 20.dp)
+                    Text("Voice note", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold)
+                    if (recording) {
+                        Spacer(Modifier.weight(1f))
+                        Text("${recordSeconds}s", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.error)
+                    }
+                }
+                Button(
+                    onClick = {
+                        if (recording) {
+                            val file = audioFile
+                            runCatching { recorder?.stop() }; recorder?.release(); recorder = null; recording = false
+                            file?.let { attachments = attachments + DraftEvidenceAttachment("Audio", Uri.fromFile(it).toString(), "Voice note", localPath = it.absolutePath, mimeType = "audio/mp4") }
+                            scope.launch { snackbar.showSnackbar("Voice note attached.") }
+                        } else if (ContextCompat.checkSelfPermission(appContext, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) audioPermission.launch(Manifest.permission.RECORD_AUDIO) else audioPermission.launch(Manifest.permission.RECORD_AUDIO)
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = if (recording) ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.errorContainer, contentColor = MaterialTheme.colorScheme.onErrorContainer) else ButtonDefaults.buttonColors()
+                ) {
+                    Icon(icon = if (recording) FieldMindIcons.Stop else FieldMindIcons.Mic, contentDescription = null, size = 18.dp)
+                    Spacer(Modifier.size(6.dp))
+                    Text(if (recording) "Stop recording" else "Record voice note")
+                }
+                OutlinedButton(onClick = { audioImportPicker.launch(arrayOf("audio/*")) }, Modifier.fillMaxWidth()) { Icon(FieldMindIcons.Mic, null, size = 18.dp); Spacer(Modifier.size(6.dp)); Text("Or import audio file") }
+            }
         }
         AttachmentPreviewList(attachments, onCaptionChange = { index, caption -> attachments = attachments.mapIndexed { i, item -> if (i == index) item.copy(caption = caption) else item } }, onRemove = { remove -> attachments = attachments.filterIndexed { index, _ -> index != remove } })
         FieldTextField(tags, { tags = it }, "Tags", supportingText = "Comma-separated keywords")
@@ -965,10 +1036,10 @@ private fun EditQuestionDialog(entity: QuestionEntity, viewModel: FieldMindViewM
         DialogHeader(FieldMindIcons.Question, "Edit Question", "Update question text, classification, and answer")
         FieldTextField(question, { question = it }, "Question", minLines = 2)
         DialogDividerSection("Classification", FieldMindIcons.Category)
-        ChoiceChipsField("Category", observationCategories, category) { category = it }
-        ChoiceChipsField("Source type", sourceTypes, source) { source = it }
-        ChoiceChipsField("Status", questionStatuses, status) { status = it }
-        ChoiceChipsField("Priority", listOf("Low", "Medium", "High"), priority) { priority = it }
+        OptionPickerField(label = "Category", selected = category, options = observationCategories, onSelected = { category = it }, icon = FieldMindIcons.Category)
+        OptionPickerField(label = "Source type", selected = source, options = sourceTypes, onSelected = { source = it }, icon = FieldMindIcons.Source)
+        OptionPickerField(label = "Status", selected = status, options = questionStatuses, onSelected = { status = it }, icon = FieldMindIcons.Check)
+        OptionPickerField(label = "Priority", selected = priority, options = listOf("Low", "Medium", "High"), onSelected = { priority = it }, icon = FieldMindIcons.Streak)
         DialogDividerSection("Answer", FieldMindIcons.Check)
         FieldTextField(answer, { answer = it }, "Answer", minLines = 2)
         DialogActions(onCancel = onDismiss, onSave = { save() }, saveEnabled = question.isNotBlank(), saveLabel = "Save changes")
@@ -1005,7 +1076,7 @@ private fun EditHypothesisDialog(entity: HypothesisEntity, viewModel: FieldMindV
         FieldTextField(weaken, { weaken = it }, "Weakening criteria")
         FieldTextField(test, { test = it }, "Test method")
         DialogDividerSection("Status & confidence", FieldMindIcons.Streak, FieldMindTheme.colors.hypothesis)
-        ChoiceChipsField("Result", listOf("Unknown", "Supported", "Weakened", "Inconclusive"), result) { result = it }
+        OptionPickerField(label = "Result", selected = result, options = listOf("Unknown", "Supported", "Weakened", "Inconclusive"), onSelected = { result = it }, icon = FieldMindIcons.Check)
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
             Text("Confidence", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Text("${confidence.toInt()}%", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
@@ -1048,7 +1119,7 @@ private fun EditProjectDialog(entity: ProjectEntity, viewModel: FieldMindViewMod
         DialogHeader(FieldMindIcons.Project, "Edit Project", "Update project details and research plan", accent = FieldMindTheme.colors.project)
         DialogDividerSection("Project info", FieldMindIcons.Category, FieldMindTheme.colors.project)
         FieldTextField(title, { title = it }, "Project title")
-        ChoiceChipsField("Topic / category", listOf("Biology", "Geology", "Wildlife", "Ecology", "Plant Study", "Weather", "Human Pattern", "Other"), topic) { topic = it }
+        OptionPickerField(label = "Topic / category", selected = topic, options = listOf("Biology", "Geology", "Wildlife", "Ecology", "Plant Study", "Weather", "Human Pattern", "Other"), onSelected = { topic = it }, icon = FieldMindIcons.Category)
         DialogDividerSection("Research setup", FieldMindIcons.School, FieldMindTheme.colors.project)
         FieldTextField(objective, { objective = it }, "Objective", minLines = 2)
         FieldTextField(question, { question = it }, "Research question", minLines = 2)
@@ -1124,7 +1195,7 @@ private fun EditSourceDialog(entity: SourceEntity, viewModel: FieldMindViewModel
     }) {
         DialogHeader(FieldMindIcons.Source, "Edit Source", "Update source identity, notes, and status", accent = FieldMindTheme.colors.source)
         DialogDividerSection("Source type", FieldMindIcons.Category, FieldMindTheme.colors.source)
-        ChoiceChipsField("Type", sourceLibraryTypes, type) { type = it }
+        OptionPickerField(label = "Type", selected = type, options = sourceLibraryTypes, onSelected = { type = it }, icon = FieldMindIcons.Category)
         DialogDividerSection("Identity", FieldMindIcons.Article, FieldMindTheme.colors.source)
         FieldTextField(title, { title = it }, "Title")
         FieldTextField(author, { author = it }, "Author / creator")
@@ -1146,15 +1217,15 @@ private fun EditSourceDialog(entity: SourceEntity, viewModel: FieldMindViewModel
         FieldTextField(notes, { notes = it }, "Paper notes", minLines = 3)
         FieldTextField(citationStyleNote, { citationStyleNote = it }, "Citation style note")
         DialogDividerSection("Status", FieldMindIcons.Check, FieldMindTheme.colors.source)
-        ChoiceChipsField("Reading status", readingStatuses, readingStatus) { readingStatus = it }
-        ChoiceChipsField("Importance", sourceImportanceLevels, importance) { importance = it }
+        OptionPickerField(label = "Reading status", selected = readingStatus, options = readingStatuses, onSelected = { readingStatus = it }, icon = FieldMindIcons.Check)
+        OptionPickerField(label = "Importance", selected = importance, options = sourceImportanceLevels, onSelected = { importance = it }, icon = FieldMindIcons.Streak)
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
             Text("Credibility", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Text("${reliability.toInt()}/5", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
         }
         Slider(reliability, { reliability = it }, valueRange = 1f..5f, steps = 3)
         if (projects.isNotEmpty()) {
-            ChoiceChipsField("Project", listOf("No project") + projects.map { it.title }, projects.firstOrNull { it.id == projectId }?.title ?: "No project") { selected -> projectId = projects.firstOrNull { it.title == selected }?.id }
+            OptionPickerField(label = "Project", selected = projects.firstOrNull { it.id == projectId }?.title ?: "No project", options = listOf("No project") + projects.map { it.title }, onSelected = { selected -> projectId = projects.firstOrNull { it.title == selected }?.id }, icon = FieldMindIcons.Project)
         }
         DialogActions(onCancel = onDismiss, onSave = { save() }, saveEnabled = title.isNotBlank(), saveLabel = "Save changes")
     }
@@ -1179,7 +1250,8 @@ private fun EditDataRecordDialog(entity: DataRecordEntity, viewModel: FieldMindV
 
     DialogWrapper(onDismiss = onDismiss) {
         DialogHeader(FieldMindIcons.Data, "Edit Data Record", "Update tool type, value, and notes", accent = FieldMindTheme.colors.data)
-        ChoiceChipsField("Tool", dataTools, tool) { tool = it }
+        OptionPickerField(label = "Tool", selected = tool, options = dataTools, onSelected = { tool = it; unit = defaultUnitForTool(it); label = defaultLabelForTool(it) }, icon = FieldMindIcons.Settings)
+        // Note: unit/label auto-update when tool changes via onSelected
         FieldTextField(label, { label = it }, "Label")
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             FieldTextField(value, { value = it }, "Value", modifier = Modifier.weight(1f), keyboardType = KeyboardType.Number)
@@ -1221,7 +1293,7 @@ private fun EditReportDialog(entity: ReportEntity, viewModel: FieldMindViewModel
         conclusion != originalReport.conclusion || background != originalReport.background
     }) {
         DialogHeader(FieldMindIcons.Report, "Edit Report", "Update report content and findings", accent = FieldMindTheme.colors.report)
-        ChoiceChipsField("Report type", reportTypes, type) { type = it }
+        OptionPickerField(label = "Report type", selected = type, options = reportTypes, onSelected = { type = it }, icon = FieldMindIcons.Category)
         FieldTextField(title, { title = it }, "Title")
         DialogDividerSection("Content", FieldMindIcons.Edit, FieldMindTheme.colors.report)
         FieldTextField(question, { question = it }, "Question", minLines = 2)
@@ -1256,7 +1328,7 @@ private fun EditFlashcardDialog(entity: FlashcardEntity, viewModel: FieldMindVie
 
     DialogWrapper(onDismiss = onDismiss) {
         DialogHeader(FieldMindIcons.Flashcard, "Edit Flashcard", "Update card content and study mode", accent = FieldMindTheme.colors.flashcard)
-        ChoiceChipsField("Card type", listOf("term", "definition", "concept", "question-answer", "mistake card"), type) { type = it }
+        OptionPickerField(label = "Card type", selected = type, options = listOf("term", "definition", "concept", "question-answer", "mistake card"), onSelected = { type = it }, icon = FieldMindIcons.Category)
         FieldTextField(front, { front = it }, "Front", minLines = 2, supportingText = "The prompt shown during review")
         FieldTextField(back, { back = it }, "Back", minLines = 3, supportingText = "The answer or explanation")
         DialogDividerSection("Study mode", FieldMindIcons.Flip, FieldMindTheme.colors.flashcard)

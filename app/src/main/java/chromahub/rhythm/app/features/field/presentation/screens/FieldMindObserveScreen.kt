@@ -172,6 +172,53 @@ fun ObserveScreen(
         showFastSnackbar(snackbar, scope, "${attachment.type} attached")
     }
 
+    // ── Audio recording state ──
+    var recorder by remember { mutableStateOf<MediaRecorder?>(null) }
+    var audioFile by remember { mutableStateOf<File?>(null) }
+    var recording by remember { mutableStateOf(false) }
+    var recordSeconds by remember { mutableIntStateOf(0) }
+
+    LaunchedEffect(recording) { if (recording) { recordSeconds = 0; while (recording) { delay(1000); recordSeconds++ } } }
+
+    val audioImportPicker = rememberLauncherForActivityResult(
+        ActivityResultContracts.OpenDocument()
+    ) { uri ->
+        if (uri != null) {
+            runCatching { context.contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION) }
+            addAttachment(durableEvidenceAttachment(context, "Audio", uri, "Imported field audio"))
+        }
+    }
+    val audioPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        if (granted) {
+            val file = createFieldMindFile(context, "audio", ".m4a")
+            val newRecorder = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) MediaRecorder(context) else MediaRecorder()
+            runCatching {
+                newRecorder.setAudioSource(MediaRecorder.AudioSource.MIC)
+                newRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
+                newRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
+                newRecorder.setOutputFile(file.absolutePath)
+                newRecorder.prepare()
+                newRecorder.start()
+                audioFile = file; recorder = newRecorder; recording = true
+            }.onFailure {
+                newRecorder.release()
+                showFastSnackbar(snackbar, scope, "Could not start recording: ${it.localizedMessage}")
+            }
+        } else showFastSnackbar(snackbar, scope, "Audio permission denied.")
+    }
+
+    fun toggleRecording() {
+        if (recording) {
+            val file = audioFile
+            runCatching { recorder?.stop() }; recorder?.release(); recorder = null; recording = false
+            file?.let { addAttachment(DraftEvidenceAttachment("Audio", Uri.fromFile(it).toString(), "Voice note", localPath = it.absolutePath, mimeType = "audio/mp4")) }
+        } else if (ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
+            audioPermission.launch(Manifest.permission.RECORD_AUDIO)
+        } else {
+            audioPermission.launch(Manifest.permission.RECORD_AUDIO)
+        }
+    }
+
     // ── Media picker and file picker launchers (MUST be at composable scope) ──
     val mediaPicker = rememberLauncherForActivityResult(
         ActivityResultContracts.PickMultipleVisualMedia(10)
@@ -424,6 +471,10 @@ fun ObserveScreen(
                             haptics.light()
                             filePicker.launch(arrayOf("application/pdf", "text/*", "image/*", "video/*", "audio/*"))
                         },
+                        onLaunchAudio = { toggleRecording() },
+                        onLaunchAudioImport = { haptics.light(); audioImportPicker.launch(arrayOf("audio/*")) },
+                        isRecording = recording,
+                        recordSeconds = recordSeconds,
                         onRemoveAttachment = { idx ->
                             session = session.copy(
                                 attachments = session.attachments.filterIndexed { i, _ -> i != idx }
@@ -766,6 +817,10 @@ private fun EvidenceCaptureRow(
     onLaunchCamera: () -> Unit,
     onLaunchGallery: () -> Unit,
     onLaunchFile: () -> Unit,
+    onLaunchAudio: () -> Unit = {},
+    onLaunchAudioImport: () -> Unit = {},
+    isRecording: Boolean = false,
+    recordSeconds: Int = 0,
     onRemoveAttachment: (Int) -> Unit,
     onCaptionChange: (Int, String) -> Unit
 ) {
@@ -816,8 +871,26 @@ private fun EvidenceCaptureRow(
                         accent = FieldMindTheme.colors.data,
                         modifier = Modifier.weight(1f)
                     )
+                    EvidenceButton(
+                        onClick = onLaunchAudio,
+                        icon = if (isRecording) FieldMindIcons.Stop else FieldMindIcons.Mic,
+                        label = if (isRecording) "$recordSeconds" else "Audio",
+                        accent = if (isRecording) MaterialTheme.colorScheme.error else FieldMindTheme.colors.accentFor("observation"),
+                        modifier = Modifier.weight(1f)
+                    )
                 }
             }
+            // Audio import button (shown when not recording)
+            if (!isRecording) {
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                    TextButton(onClick = onLaunchAudioImport) {
+                        Icon(FieldMindIcons.Mic, null, size = 16.dp)
+                        Spacer(Modifier.size(4.dp))
+                        Text("Import audio", style = MaterialTheme.typography.labelSmall)
+                    }
+                }
+            }
+
             // Species identification button (always visible when form is active)
             Spacer(Modifier.height(8.dp))
             SpeciesIdButton(
