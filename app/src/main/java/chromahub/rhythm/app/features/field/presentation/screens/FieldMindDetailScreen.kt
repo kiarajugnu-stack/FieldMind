@@ -391,6 +391,7 @@ private fun ObservationDetailContent(
     // Export menu dialog removed — export is handled inline in ObservationExportSection}
 }
 
+@Composable
 private fun ReObservationLink(
     o: ObservationEntity,
     viewModel: FieldMindViewModel,
@@ -889,6 +890,7 @@ private fun ObservationEvidenceCountsRow(
         }
     }}
 
+@Composable
 private fun EvidenceCountItem(
     label: String,
     count: Int,
@@ -1009,6 +1011,7 @@ private fun ObservationWeatherLocationSection(
         }
     }}
 
+@Composable
 private fun WeatherDetailRow(label: String, value: String) {
     Row(
         Modifier.fillMaxWidth(),
@@ -1201,6 +1204,7 @@ private fun ObservationExportSection(
         }
     }}
 
+@Composable
 private fun WeatherChip(text: String, color: androidx.compose.ui.graphics.Color) {
     Box(
         Modifier
@@ -1212,6 +1216,7 @@ private fun WeatherChip(text: String, color: androidx.compose.ui.graphics.Color)
         Text(text, style = MaterialTheme.typography.labelSmall, color = color, fontWeight = FontWeight.SemiBold)
     }}
 
+@Composable
 private fun ProvenanceRow(label: String, value: String) {
     Row(
         Modifier.fillMaxWidth(),
@@ -1301,6 +1306,7 @@ private fun ObservationHeroCarousel(viewModel: FieldMindViewModel, observationId
         }
     }}
 
+@Composable
 private fun ObsStatItem(value: String, label: String, icon: MaterialSymbolIcon) {
     Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Icon(icon, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, size = 18.dp)
@@ -1309,6 +1315,7 @@ private fun ObsStatItem(value: String, label: String, icon: MaterialSymbolIcon) 
     }}
 
 @OptIn(ExperimentalLayoutApi::class)
+@Composable
 private fun NoteDetailContent(
     n: NoteEntity,
     onOpenDetail: (String, Long) -> Unit
@@ -1424,6 +1431,7 @@ private fun QuestionDetailContent(
     }}
 
 @OptIn(ExperimentalLayoutApi::class)
+@Composable
 private fun HypothesisDetailContent(
     h: HypothesisEntity
 ) {
@@ -1499,6 +1507,7 @@ private fun HypothesisDetailContent(
     }}
 
 @OptIn(ExperimentalLayoutApi::class)
+@Composable
 private fun ProjectDetailContent(
     p: ProjectEntity,
     observations: List<ObservationEntity>,
