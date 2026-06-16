@@ -2,6 +2,7 @@ package fieldmind.research.app.features.field.presentation.components
 
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
@@ -25,6 +26,7 @@ import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.platform.LocalInspectionMode
 import kotlin.math.cos
 import kotlin.math.sin
+import kotlin.math.abs
 import kotlin.math.PI
 import kotlin.random.Random
 import fieldmind.research.app.features.field.data.weather.WeatherSnapshot
