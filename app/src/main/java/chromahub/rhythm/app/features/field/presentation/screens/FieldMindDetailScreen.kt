@@ -202,7 +202,6 @@ fun DetailScreen(
                 }
             }
         }
-    }
     if (showEdit) EditEntityDialog(kind, id, viewModel) { showEdit = false }
     if (showDelete) ConfirmDeleteDialog(kind, onDismiss = { showDelete = false }) {
         deleteEntityByKind(kind, id, viewModel); showDelete = false; onBack()
@@ -2377,7 +2376,7 @@ private fun SourceActionPanel(source: SourceEntity, projects: List<ProjectEntity
             AnimatedVisibility(showProjects) {
                 OptionPickerField(label = "Project", selected = projects.firstOrNull { it.id == source.relatedProjectId }?.title ?: "No project", options = listOf("No project") + projects.map { it.title }, onSelected = { selected ->
                     haptics.confirm(); viewModel.linkSourceToProject(source, projects.firstOrNull { it.title == selected }?.id); showProjects = false
-                }
+                })
             }
             if (source.relatedProjectId != null) {
                 projects.firstOrNull { it.id == source.relatedProjectId }?.let { project ->
