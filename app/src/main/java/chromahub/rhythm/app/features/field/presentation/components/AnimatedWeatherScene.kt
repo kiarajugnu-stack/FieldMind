@@ -364,7 +364,7 @@ private fun NightSkyScene(
     val shootingStarProgress by infiniteTransition.animateFloat(
         initialValue = 0f,
         targetValue = 1f,
-        animationSpec = infiniteRepeatable(tween(8000, delayMs = 3000, easing = LinearEasing), RepeatMode.Restart),
+        animationSpec = infiniteRepeatable(tween(8000, delayMillis = 3000, easing = LinearEasing), RepeatMode.Restart),
         label = "shootingStar"
     )
 
@@ -525,7 +525,7 @@ private fun ClearSkyScene(
     val shootingStarProgress by infiniteTransition.animateFloat(
         initialValue = 0f,
         targetValue = 1f,
-        animationSpec = infiniteRepeatable(tween(10000, delayMs = 2000, easing = LinearEasing), RepeatMode.Restart),
+        animationSpec = infiniteRepeatable(tween(10000, delayMillis = 2000, easing = LinearEasing), RepeatMode.Restart),
         label = "shootingStar"
     )
     // Drifting particles (dust motes / fireflies)
@@ -1379,7 +1379,7 @@ private fun ThunderstormScene(
             boltSeed++
 
             // Thunder rumble precedes flash
-            rumblePosition.value = flashPosition.value.x
+            rumblePosition = flashPosition.value.x
             rumbleAlpha = 0.15f
             delay(50)
             for (step in 1..4) {

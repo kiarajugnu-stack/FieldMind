@@ -186,12 +186,6 @@ fun QuestionsScreen(
                 showBuilder = true
             }
         }
-    }
-    if (showBuilder) {
-        NewQuestionDialog(viewModel, onDismiss = { showBuilder = false })
-    }
-}
-
         // Filters
         if (categories.size > 1) {
             item {
@@ -244,6 +238,9 @@ fun QuestionsScreen(
                 }
             }
         }
+    }
+    if (showBuilder) {
+        NewQuestionDialog(viewModel, onDismiss = { showBuilder = false })
     }
 }
 

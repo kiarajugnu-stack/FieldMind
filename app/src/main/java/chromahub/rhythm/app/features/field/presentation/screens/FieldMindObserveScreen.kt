@@ -63,6 +63,7 @@ import kotlinx.coroutines.isActive
 import fieldmind.research.app.features.field.data.weather.WeatherSnapshot
 import java.io.File
 import kotlin.coroutines.resume
+import androidx.compose.ui.text.input.KeyboardType
 
 // ══════════════════════════════════════════════════════════════════════
 //  Capture — Evidence-First Redesign with Live Timer

@@ -207,6 +207,7 @@ fun DetailScreen(
     if (showDelete) ConfirmDeleteDialog(kind, onDismiss = { showDelete = false }) {
         deleteEntityByKind(kind, id, viewModel); showDelete = false; onBack()
     }
+}
 
 // ══════════════════════════════════════════════════════════════════════
 //  Entity-Specific Detail Content

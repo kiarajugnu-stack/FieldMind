@@ -1161,7 +1161,7 @@ private fun LiveWeatherDashboardWidget(
                                     refreshRotation.animateTo(360f, tween(400))
                                     refreshRotation.snapTo(0f)
                                     isRotating = false
-                                    val snapshot = viewModel.refreshWeatherFromLocation()reshWeatherFromLocation()
+                                    val snapshot = viewModel.refreshWeatherFromLocation()
                                     onRefresh(snapshot)
                                 }
                             },
