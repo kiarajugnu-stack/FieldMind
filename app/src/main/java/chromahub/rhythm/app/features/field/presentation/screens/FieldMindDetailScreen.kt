@@ -1707,16 +1707,16 @@ private fun SpeciesRegistryBuilder(projectId: Long, viewModel: FieldMindViewMode
                     FieldTextField(scientificName, { scientificName = it }, "Scientific Name", supportingText = "e.g. Corvus splendens")
                     Text("Taxonomy", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        FieldTextField(kingdom, { kingdom = it }, "Kingdom", modifier = Modifier.weight(1f))
-                        FieldTextField(phylum, { phylum = it }, "Phylum", modifier = Modifier.weight(1f))
+                        TaxonomyPickerField("Kingdom", kingdom, "kingdom", "", onValueChange = { kingdom = it }, modifier = Modifier.weight(1f))
+                        TaxonomyPickerField("Phylum", phylum, "phylum", kingdom, onValueChange = { phylum = it }, modifier = Modifier.weight(1f))
                     }
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        FieldTextField(classs, { classs = it }, "Class", modifier = Modifier.weight(1f))
-                        FieldTextField(order, { order = it }, "Order", modifier = Modifier.weight(1f))
+                        TaxonomyPickerField("Class", classs, "class", phylum, onValueChange = { classs = it }, modifier = Modifier.weight(1f))
+                        TaxonomyPickerField("Order", order, "order", classs, onValueChange = { order = it }, modifier = Modifier.weight(1f))
                     }
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        FieldTextField(family, { family = it }, "Family", modifier = Modifier.weight(1f))
-                        FieldTextField(genus, { genus = it }, "Genus", modifier = Modifier.weight(1f))
+                        TaxonomyPickerField("Family", family, "family", order, onValueChange = { family = it }, modifier = Modifier.weight(1f))
+                        TaxonTextField("Genus", genus, { genus = it }, modifier = Modifier.weight(1f), supportingText = "e.g. Corvus")
                     }
                     FieldTextField(speciesName, { speciesName = it }, "Species", supportingText = "Specific epithet")
                     Text("Conservation Status", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)

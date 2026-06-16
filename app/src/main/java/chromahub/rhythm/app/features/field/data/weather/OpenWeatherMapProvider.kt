@@ -117,7 +117,7 @@ class OpenWeatherMapProvider : WeatherProvider {
             in 700..781 -> 45  // Fog/mist/haze
             800 -> 0           // Clear
             801 -> 2           // Few clouds → partly cloudy
-            802 -> 3           // Scattered clouds → overcast
+            802 -> 2           // Scattered clouds → partly cloudy
             803, 804 -> 3      // Broken/overcast → overcast
             else -> 0
         }

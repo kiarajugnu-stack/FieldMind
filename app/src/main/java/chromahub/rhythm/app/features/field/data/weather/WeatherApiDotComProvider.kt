@@ -79,8 +79,8 @@ class WeatherApiDotComProvider : WeatherProvider {
                 windDirection = current.wind_degree,
                 cloudCover = current.cloud,
                 pressure = current.pressure_mb?.toDouble(),
-                sunrise = data.forecast?.forecastday?.firstOrNull()?.astro?.sunrise,
-                sunset = data.forecast?.forecastday?.firstOrNull()?.astro?.sunset,
+                sunrise = data.forecast?.forecastday?.firstOrNull()?.astro?.sunrise?.let { normalizeTime12to24(it) },
+                sunset = data.forecast?.forecastday?.firstOrNull()?.astro?.sunset?.let { normalizeTime12to24(it) },
                 dailyForecasts = forecasts
             )
         } catch (e: Exception) {
@@ -89,6 +89,26 @@ class WeatherApiDotComProvider : WeatherProvider {
     }
 
     companion object {
+        /** Convert WeatherAPI 12-hour time (e.g. "06:30 AM") to 24-hour format ("06:30"). */
+        private fun normalizeTime12to24(time12: String): String {
+            val trimmed = time12.trim()
+            try {
+                val parts = trimmed.split(" ")
+                if (parts.size != 2) return trimmed.take(5)
+                val timeParts = parts[0].split(":")
+                if (timeParts.size != 2) return trimmed.take(5)
+                var hour = timeParts[0].toInt()
+                val minute = timeParts[1]
+                val isPM = parts[1].equals("PM", ignoreCase = true)
+                val isAM = parts[1].equals("AM", ignoreCase = true)
+                if (isPM && hour != 12) hour += 12
+                if (isAM && hour == 12) hour = 0
+                return "%02d:%s".format(hour, minute)
+            } catch (_: Exception) {
+                return trimmed.take(5)
+            }
+        }
+
         /** Map WeatherAPI.com condition codes to WMO codes. */
         private fun wapiCodeToWmo(code: Int): Int = when (code) {
             1000 -> 0           // Clear/Sunny

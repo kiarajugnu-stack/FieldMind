@@ -346,14 +346,9 @@ class FieldMindViewModel(application: Application) : AndroidViewModel(applicatio
     val researchSessions: StateFlow<List<ResearchSessionEntity>> = repository.researchSessions.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     // ── Weather (multi-provider) ──
-    private var _currentProvider = fieldmind.research.app.features.field.data.weather.WeatherProviders.getProvider(fieldSettings.weatherProvider.value)
     private fun getWeatherProvider(): fieldmind.research.app.features.field.data.weather.WeatherProvider {
         val slug = fieldSettings.weatherProvider.value
-        // Re-create provider if slug changed (avoids stale reference)
-        if (_currentProvider.slug != slug) {
-            _currentProvider = fieldmind.research.app.features.field.data.weather.WeatherProviders.getProvider(slug)
-        }
-        return _currentProvider
+        return fieldmind.research.app.features.field.data.weather.WeatherProviders.getProvider(slug)
     }
     var lastWeatherSnapshot: fieldmind.research.app.features.field.data.weather.WeatherSnapshot? = null
         private set
