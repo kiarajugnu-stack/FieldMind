@@ -456,9 +456,7 @@ private fun ObservationGalleryView(
     onOpenDetail: (String, Long) -> Unit
 ) {
     if (observations.isEmpty()) {
-        EmptyState("No observations to display", icon = FieldMindIcons.Gallery) {
-            Text("Capture your first observation to get started")
-        }
+        EmptyState("No observations to display", "Capture your first observation to get started", icon = FieldMindIcons.Gallery)
         return
     }
     LazyVerticalGrid(
