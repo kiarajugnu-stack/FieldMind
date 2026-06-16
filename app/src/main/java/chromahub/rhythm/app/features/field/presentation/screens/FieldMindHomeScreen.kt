@@ -65,7 +65,6 @@ import java.time.LocalTime
 import java.time.temporal.ChronoUnit
 import kotlin.math.floor
 import kotlin.math.roundToInt
-import fieldmind.research.app.R
 import fieldmind.research.app.features.field.presentation.components.ObservationsTimelineSection
 import fieldmind.research.app.features.field.presentation.components.ObservationStatsDashboard
 
