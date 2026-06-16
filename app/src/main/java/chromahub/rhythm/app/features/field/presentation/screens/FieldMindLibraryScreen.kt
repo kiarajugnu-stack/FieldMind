@@ -293,14 +293,6 @@ private fun FlashcardPanel(
                 }
             }
         }
-    }
-    if (show) {
-        NewFlashcardDialog(viewModel, onDismiss = { show = false })
-    }
-}
-
-@Composable
-private fun LazyListScope.continuation() {
         item {
             LocalStudyModelCard(localEnabled, localDownloaded, localModel) {
                 val generated = autoFlashcardsFromLibrary(sources, notes).take(6)
@@ -324,7 +316,10 @@ private fun LazyListScope.continuation() {
             }
         }
     }
-}
+    if (show) {
+        NewFlashcardDialog(viewModel, onDismiss = { show = false })
+    }
+    }
 
 
 @Composable
