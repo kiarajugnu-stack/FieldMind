@@ -67,7 +67,9 @@ fun SpeciesIdentificationSheet(
     var error by remember { mutableStateOf<String?>(null) }
     var query by remember { mutableStateOf("") }
     var searchResults by remember { mutableStateOf<List<SpeciesRecord>>(emptyList()) }
-    var searchMode by remember { mutableStateOf(false) }
+    // Default to search mode when no image is provided
+    val initialSearchMode = imageUri == null
+    var searchMode by remember { mutableStateOf(initialSearchMode) }
     var selectedCategory by remember { mutableStateOf<String?>(null) }
     var categories by remember { mutableStateOf<List<Pair<String, Int>>>(emptyList()) }
     var selectedMatch by remember { mutableStateOf<SpeciesMatch?>(null) }

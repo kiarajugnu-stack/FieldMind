@@ -571,7 +571,7 @@ fun WeatherLogToolScreen(
                                 style = MaterialTheme.typography.titleSmall,
                                 fontWeight = FontWeight.Bold
                             )
-                            ChoiceChips(conditions, condition) { condition = it }
+                            OptionPickerField(label = "Condition", selected = condition, options = conditions, onSelected = { condition = it }, icon = FieldMindIcons.Info)
 
                             Row(
                                 Modifier.fillMaxWidth(),
@@ -793,7 +793,7 @@ fun SpeciesToolScreen(
                                 style = MaterialTheme.typography.labelLarge,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
-                            ChoiceChips(confidenceOptions, confidence) { confidence = it }
+                            OptionPickerField(label = "Confidence", selected = confidence, options = confidenceOptions, onSelected = { confidence = it }, icon = FieldMindIcons.Check)
                         }
                     }
                 }
@@ -814,7 +814,7 @@ fun SpeciesToolScreen(
                                 fontWeight = FontWeight.Bold
                             )
 
-                            ChoiceChips(behaviors, behavior) { behavior = it }
+                            OptionPickerField(label = "Behavior", selected = behavior, options = behaviors, onSelected = { behavior = it }, icon = FieldMindIcons.Trend)
                             FieldTextField(habitat, { habitat = it }, "Habitat / substrate", supportingText = "e.g. Woodland edge, Garden pond, Decaying log")
                             FieldTextField(notes, { notes = it }, "Additional notes", minLines = 2, supportingText = "Plumage, markings, size, sounds, or other ID clues")
                         }

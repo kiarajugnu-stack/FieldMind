@@ -17,6 +17,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -104,54 +105,12 @@ private fun SourcePanel(viewModel: FieldMindViewModel, items: List<SourceEntity>
     var summary by remember { mutableStateOf("") }; var taught by remember { mutableStateOf("") }; var findings by remember { mutableStateOf("") }
     var questions by remember { mutableStateOf("") }; var notes by remember { mutableStateOf("") }; var reliability by remember { mutableStateOf(3f) }; var projectId by remember { mutableStateOf<Long?>(null) }
     LazyColumn(contentPadding = panelPadding(), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-        item { AddButton(if (show) "Cancel source form" else "Add source") { show = !show; if (!show) { title = ""; author = ""; link = "" } } }
-        if (show) item {
-            InlineFormCard("Add Source", onDismiss = { show = false; title = "" }, onSave = {
-                if (title.isNotBlank()) {
-                    viewModel.addSource(type, title, author, link, summary, taught, reliability.toInt(), findings, questions, notes, projectId, dateOrYear, doiOrIsbn, publisherOrJournal, accessDate, fileUri, citationStyleNote, importance, readingStatus)
-                    show = false; title = ""
-                }
-            }, saveEnabled = title.isNotBlank()) {
-                CaptureStep("Source type", "Choose what kind of material this is.", FieldMindIcons.Source) {
-                    ChoiceChips(sourceLibraryTypes, type) { type = it }
-                }
-                CaptureStep("Identity", "Capture citation identifiers now so export stays useful later.", FieldMindIcons.Article) {
-                    FieldTextField(title, { title = it }, "Title")
-                    FieldTextField(author, { author = it }, "Author / creator")
-                    FieldTextField(doiOrIsbn, { doiOrIsbn = it }, "DOI / ISBN")
-                    FieldTextField(publisherOrJournal, { publisherOrJournal = it }, "Publisher / journal")
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                        FieldTextField(dateOrYear, { dateOrYear = it }, "Date / year", modifier = Modifier.weight(1f))
-                        FieldTextField(accessDate, { accessDate = it }, "Accessed", modifier = Modifier.weight(1f))
-                    }
-                }
-                CaptureStep("Link or file", "Attach PDFs, images, local documents, or a web link.", FieldMindIcons.Link) {
-                    FieldTextField(link, { link = it }, "Web link")
-                    FieldTextField(fileUri, { fileUri = it }, "File URI")
-                    SourcePreviewCard(link = link, fileUri = fileUri)
-                }
-                CaptureStep("Reading notes", "Use Cornell-style cues: main idea, evidence, questions, and takeaways.", FieldMindIcons.Edit) {
-                    FieldTextField(summary, { summary = it }, "Main idea", minLines = 2)
-                    FieldTextField(findings, { findings = it }, "Key findings / definitions", minLines = 2)
-                    FieldTextField(taught, { taught = it }, "What this source taught me", minLines = 2)
-                    FieldTextField(questions, { questions = it }, "New questions / cue column", minLines = 2)
-                    FieldTextField(notes, { notes = it }, "Paper / Cornell notes", minLines = 4)
-                    FieldTextField(citationStyleNote, { citationStyleNote = it }, "Citation style note")
-                }
-                CaptureStep("Review & project", "Mark priority, reading state, credibility, and where it belongs.", FieldMindIcons.Check) {
-                    Text("Reading status", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    ChoiceChips(readingStatuses, readingStatus) { readingStatus = it }
-                    Text("Importance", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    ChoiceChips(sourceImportanceLevels, importance) { importance = it }
-                    Text("Credibility: ${reliability.toInt()}/5")
-                    Slider(reliability, { reliability = it }, valueRange = 1f..5f, steps = 3)
-                    if (projects.isNotEmpty()) {
-                        Text("Link to project", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        ChoiceChips(listOf("No project") + projects.map { it.title }, projects.firstOrNull { it.id == projectId }?.title ?: "No project") { selected -> projectId = projects.firstOrNull { it.title == selected }?.id }
-                    }
-                }
-            }
-        }
+        item { AddButton("Add source") { show = true } }
+    }
+    if (show) {
+        NewSourceDialog(viewModel, onDismiss = { show = false })
+    }
+    LazyColumn(contentPadding = panelPadding(), verticalArrangement = Arrangement.spacedBy(14.dp)) {
         if (items.isEmpty()) item { EmptyState("No sources yet", "Save articles, videos, PDFs, books, summaries, citations, and what each source taught you.", icon = FieldMindIcons.Source) }
         items(items) { EntityCard(it.title, "source", body = it.whatThisSourceTaughtMe.ifBlank { it.personalSummary }, meta = listOf(it.type, it.author.ifBlank { "Unknown author" }, it.readingStatus, it.importance, "reliability ${it.reliabilityScore}/5")) { onOpenDetail("source", it.id) } }
     }
@@ -198,34 +157,7 @@ private fun NoteCaptureCard(
     var category by remember(initialCategory) { mutableStateOf(initialCategory) }
     var tags by remember { mutableStateOf("") }
 
-    InlineFormCard(
-        title = "Capture Note",
-        onDismiss = onSaved,
-        onSave = {
-            if (body.isNotBlank() || title.isNotBlank()) {
-                haptics.confirm()
-                val fallbackTitle = body
-                    .lineSequence()
-                    .firstOrNull { it.isNotBlank() }
-                    ?.take(48)
-                    ?: "Untitled note"
-                viewModel.addNote(
-                    title = title.ifBlank { fallbackTitle },
-                    body = body,
-                    category = category,
-                    tags = tags,
-                    onSaved = { onSaved() }
-                )
-            }
-        },
-        saveEnabled = body.isNotBlank() || title.isNotBlank()
-    ) {
-        FieldTextField(title, { title = it }, "Title", supportingText = "Optional — generated from the note if blank")
-        FieldTextField(body, { body = it }, "Note body", minLines = 5, required = true)
-        Text("Category", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        ChoiceChips(observationCategories, category) { category = it }
-        FieldTextField(tags, { tags = it }, "Tags", supportingText = "Comma-separated, optional")
-    }
+    NewNoteDialog(viewModel, onDismiss = onSaved)
 }
 
 @Composable
@@ -361,28 +293,6 @@ private fun FlashcardPanel(
                 }
             }
         }
-        if (show) item {
-            InlineFormCard("Create Flashcard", onDismiss = { show = false; front = ""; back = "" }, onSave = {
-                if (front.isNotBlank() && back.isNotBlank()) { viewModel.addFlashcard(front, back, type, deckMode = if (useSm2) "sm2" else "basic"); show = false; front = ""; back = "" }
-            }, saveEnabled = front.isNotBlank() && back.isNotBlank()) {
-                CaptureStep("Card preset", "Choose how this should be practiced.", FieldMindIcons.Flashcard) {
-                    ChoiceChips(listOf("term", "definition", "concept", "question-answer", "mistake card", "field ID", "method step"), type) { type = it }
-                }
-                CaptureStep("Front", "Make the prompt short enough to answer from memory.", FieldMindIcons.Question) {
-                    FieldTextField(front, { front = it }, "Prompt / front", minLines = 2)
-                }
-                CaptureStep("Back", "Add the answer, evidence, or correction.", FieldMindIcons.Answer) {
-                    FieldTextField(back, { back = it }, "Answer / back", minLines = 4)
-                }
-                Row(Modifier.fillMaxWidth().padding(horizontal = 40.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                    Column(Modifier.weight(1f)) {
-                        Text("Spaced repetition (SM-2)", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
-                        Text("Review at optimal intervals", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
-                    Switch(checked = useSm2, onCheckedChange = { useSm2 = it })
-                }
-            }
-        }
         item {
             LocalStudyModelCard(localEnabled, localDownloaded, localModel) {
                 val generated = autoFlashcardsFromLibrary(sources, notes).take(6)
@@ -406,7 +316,10 @@ private fun FlashcardPanel(
             }
         }
     }
-}
+    if (show) {
+        NewFlashcardDialog(viewModel, onDismiss = { show = false })
+    }
+    }
 
 
 @Composable

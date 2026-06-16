@@ -180,27 +180,12 @@ fun QuestionsScreen(
             }
         }
 
-        // Quick add
+        // Quick add — uses dialog from FieldMindDialogs.kt
         item {
-            AddButton(if (showBuilder) "Cancel" else "Quick question") {
-                showBuilder = !showBuilder
-                if (!showBuilder) { questionText = ""; category = "Other" }
+            AddButton("Add question") {
+                showBuilder = true
             }
         }
-        if (showBuilder) item {
-            InlineFormCard("Add Question", onDismiss = { showBuilder = false; questionText = "" }, onSave = {
-                if (questionText.isNotBlank()) {                                viewModel.addQuestion(questionText, category, selectedSourceType, "Open", priority)
-                    showBuilder = false; questionText = ""; sourceNotes = ""
-                }
-            }, saveEnabled = questionText.isNotBlank()) {
-                FieldTextField(questionText, { questionText = it }, "Write your question", minLines = 3)
-                ChoiceChips(listOf("Other", "Ecology", "Behavior", "Climate", "Site", "Method", "Taxonomy"), category) { category = it }
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    ChoiceChips(listOf("Low", "Medium", "High", "Critical"), priority) { priority = it }
-                }
-            }
-        }
-
         // Filters
         if (categories.size > 1) {
             item {
@@ -253,6 +238,9 @@ fun QuestionsScreen(
                 }
             }
         }
+    }
+    if (showBuilder) {
+        NewQuestionDialog(viewModel, onDismiss = { showBuilder = false })
     }
 }
 

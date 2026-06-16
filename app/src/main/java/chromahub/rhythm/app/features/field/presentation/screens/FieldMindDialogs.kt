@@ -25,6 +25,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -51,24 +52,57 @@ import fieldmind.research.app.features.field.data.location.FieldLocationProvider
 
 /**
  * Wraps any dialog content in a consistent Material 3 card with scroll support.
+ * @param fullScreen When true, renders as a full-screen dialog (like ObserveScreen).
  */
 @Composable
 private fun DialogWrapper(
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
+    fullScreen: Boolean = false,
     verticalArrangement: Arrangement.Vertical = Arrangement.spacedBy(16.dp),
     content: @Composable ColumnScope.() -> Unit
 ) {
-    Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
-        Card(
-            modifier = modifier.fillMaxWidth(0.94f).wrapContentHeight().padding(vertical = 24.dp),
-            shape = RoundedCornerShape(32.dp),
-            elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
-        ) {
-            Column(
-                Modifier.verticalScroll(rememberScrollState()).padding(20.dp),
-                verticalArrangement = verticalArrangement
-            ) { content() }
+    Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false, dismissOnBackPress = !fullScreen, dismissOnClickOutside = !fullScreen)) {
+        if (fullScreen) {
+            Surface(
+                modifier = Modifier.fillMaxSize(),
+                color = MaterialTheme.colorScheme.background
+            ) {
+                Column(Modifier.fillMaxSize()) {
+                    // Full-screen header with back button
+                    Row(
+                        Modifier
+                            .fillMaxWidth()
+                            .background(MaterialTheme.colorScheme.background)
+                            .padding(horizontal = 20.dp, vertical = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        IconButton(onClick = onDismiss) {
+                            Icon(FieldMindIcons.Back, null, tint = MaterialTheme.colorScheme.onSurface, size = 24.dp)
+                        }
+                    }
+                    Column(
+                        Modifier
+                            .fillMaxSize()
+                            .verticalScroll(rememberScrollState())
+                            .padding(horizontal = 20.dp, vertical = 8.dp),
+                        verticalArrangement = verticalArrangement
+                    ) { content() }
+                }
+            }
+        } else {
+            Surface(
+                modifier = modifier.fillMaxWidth(0.94f).wrapContentHeight().padding(vertical = 24.dp),
+                shape = RoundedCornerShape(32.dp),
+                color = MaterialTheme.colorScheme.surfaceContainerLow,
+                tonalElevation = 6.dp
+            ) {
+                Column(
+                    Modifier.verticalScroll(rememberScrollState()).padding(20.dp),
+                    verticalArrangement = verticalArrangement
+                ) { content() }
+            }
         }
     }
 }
@@ -225,7 +259,7 @@ internal fun NewQuestionDialog(viewModel: FieldMindViewModel, onDismiss: () -> U
         }
     }
 
-    DialogWrapper(onDismiss = onDismiss) {
+    DialogWrapper(onDismiss = onDismiss, fullScreen = true) {
         DialogHeader(FieldMindIcons.Question, "New Question", "Turn curiosity into something observable, measurable, comparable, or verifiable.")
         FieldTextField(question, { question = it }, "What do you want to find out?", minLines = 3, supportingText = "Example: Do bird visits increase after rain at this site?")
         DialogDividerSection("Classification", FieldMindIcons.Category)
@@ -253,7 +287,7 @@ internal fun NewProjectDialog(viewModel: FieldMindViewModel, onDismiss: () -> Un
         }
     }
 
-    DialogWrapper(onDismiss = onDismiss) {
+    DialogWrapper(onDismiss = onDismiss, fullScreen = true) {
         DialogHeader(FieldMindIcons.Project, "New Project", "Define the question, evidence plan, data fields, and report direction.", accent = FieldMindTheme.colors.project)
         DialogDividerSection("Topic & title", FieldMindIcons.Category, FieldMindTheme.colors.project)
         FieldTextField(title, { title = it }, "Project title")
@@ -441,7 +475,7 @@ internal fun NewSourceDialog(viewModel: FieldMindViewModel, onDismiss: () -> Uni
         }
     }
 
-    DialogWrapper(onDismiss = onDismiss) {
+    DialogWrapper(onDismiss = onDismiss, fullScreen = true) {
         DialogHeader(FieldMindIcons.Source, "Add Source", "Start with title + type. Fill in what you have.", accent = FieldMindTheme.colors.source)
         ChoiceChipsField("Source type", sourceLibraryTypes, type) { type = it }
         DialogDividerSection("Identity", FieldMindIcons.Article, FieldMindTheme.colors.source)
@@ -504,7 +538,7 @@ internal fun NewHypothesisDialog(viewModel: FieldMindViewModel, questions: List<
         }
     }
 
-    DialogWrapper(onDismiss = onDismiss) {
+    DialogWrapper(onDismiss = onDismiss, fullScreen = true) {
         DialogHeader(FieldMindIcons.Hypothesis, "New Hypothesis", "State the prediction, what would support it, and what would weaken it.", accent = FieldMindTheme.colors.hypothesis)
         if (questions.isNotEmpty()) {
             ChoiceChipsField("Linked question", listOf("No question") + questions.take(8).map { it.questionText.take(28) }, questions.firstOrNull { it.id == linkedId }?.questionText?.take(28) ?: "No question") { picked -> linkedId = questions.firstOrNull { it.questionText.startsWith(picked) }?.id }
@@ -594,7 +628,7 @@ internal fun NewDataRecordDialog(viewModel: FieldMindViewModel, onDismiss: () ->
             }
         }
         DialogDividerSection("Measurement", FieldMindIcons.Line, FieldMindTheme.colors.data)
-        FieldTextField(value, { value = it }, "Value / items / samples")
+        FieldTextField(value, { value = it }, "Value / items / samples", keyboardType = KeyboardType.Number)
         FieldTextField(unit, { unit = it }, "Unit", supportingText = "Suggested for $tool: ${defaultUnitForTool(tool)}")
         FieldTextField(location, { location = it }, "Location / site")
         DialogDividerSection("Context", FieldMindIcons.Note, FieldMindTheme.colors.data)
@@ -614,7 +648,7 @@ internal fun NewReportDialog(viewModel: FieldMindViewModel, onDismiss: () -> Uni
         }
     }
 
-    DialogWrapper(onDismiss = onDismiss) {
+    DialogWrapper(onDismiss = onDismiss, fullScreen = true) {
         DialogHeader(FieldMindIcons.Report, "Report Builder", "Create a clean local draft: claim, evidence, reasoning, limitations, and next steps.", accent = FieldMindTheme.colors.report)
         DialogDividerSection("Type & title", FieldMindIcons.Category, FieldMindTheme.colors.report)
         ChoiceChipsField("Report type", reportTypes, type) { type = it }
@@ -660,6 +694,34 @@ internal fun NewFlashcardDialog(viewModel: FieldMindViewModel, onDismiss: () -> 
             Switch(checked = useSm2, onCheckedChange = { useSm2 = it })
         }
         DialogActions(onCancel = onDismiss, onSave = { save() }, saveEnabled = front.isNotBlank() && back.isNotBlank())
+    }
+}
+
+@Composable
+internal fun NewNoteDialog(viewModel: FieldMindViewModel, onDismiss: () -> Unit) {
+    var title by remember { mutableStateOf("") }; var body by remember { mutableStateOf("") }; var category by remember { mutableStateOf("Other") }; var tags by remember { mutableStateOf("") }; var showAdvanced by remember { mutableStateOf(false) }
+
+    fun save() {
+        if (title.isNotBlank() || body.isNotBlank()) {
+            val fallbackTitle = body.lineSequence().firstOrNull { it.isNotBlank() }?.take(48) ?: "Untitled note"
+            viewModel.addNote(
+                title = title.ifBlank { fallbackTitle },
+                body = body,
+                category = category,
+                tags = tags,
+                onSaved = { onDismiss() }
+            )
+            onDismiss()
+        }
+    }
+
+    DialogWrapper(onDismiss = onDismiss) {
+        DialogHeader(FieldMindIcons.Note, "New Note", "Capture a quick idea, observation, or thought.", accent = FieldMindTheme.colors.source)
+        ChoiceChipsField("Category", observationCategories, category) { category = it }
+        FieldTextField(title, { title = it }, "Title", supportingText = "Auto-filled from body if left blank")
+        FieldTextField(body, { body = it }, "Note body", minLines = 6)
+        FieldTextField(tags, { tags = it }, "Tags", supportingText = "Comma-separated keywords")
+        DialogActions(onCancel = onDismiss, onSave = { save() }, saveEnabled = title.isNotBlank() || body.isNotBlank())
     }
 }
 @Composable
@@ -770,7 +832,7 @@ private fun EditObservationDialog(entity: ObservationEntity, viewModel: FieldMin
         }
     }
 
-    DialogWrapper(onDismiss = onDismiss) {
+    DialogWrapper(onDismiss = onDismiss, fullScreen = true) {
         DialogHeader(FieldMindIcons.Observation, "Edit Observation", "Update facts, location, evidence, and metadata", accent = FieldMindTheme.colors.observation)
         FieldTextField(subject, { subject = it }, "Subject")
         DialogDividerSection("Classification", FieldMindIcons.Category, FieldMindTheme.colors.observation)
@@ -794,8 +856,8 @@ private fun EditObservationDialog(entity: ObservationEntity, viewModel: FieldMin
         }
         FieldTextField(location, { location = it }, "Location")
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            FieldTextField(latitude, { latitude = it }, "Latitude", modifier = Modifier.weight(1f))
-            FieldTextField(longitude, { longitude = it }, "Longitude", modifier = Modifier.weight(1f))
+            FieldTextField(latitude, { latitude = it }, "Latitude", modifier = Modifier.weight(1f), keyboardType = KeyboardType.Decimal)
+            FieldTextField(longitude, { longitude = it }, "Longitude", modifier = Modifier.weight(1f), keyboardType = KeyboardType.Decimal)
         }
         DialogDividerSection("Evidence & tags", FieldMindIcons.Camera, FieldMindTheme.colors.observation)
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -919,7 +981,7 @@ private fun EditProjectDialog(entity: ProjectEntity, viewModel: FieldMindViewMod
         }
     }
 
-    DialogWrapper(onDismiss = onDismiss) {
+    DialogWrapper(onDismiss = onDismiss, fullScreen = true) {
         DialogHeader(FieldMindIcons.Project, "Edit Project", "Update project details and research plan", accent = FieldMindTheme.colors.project)
         DialogDividerSection("Project info", FieldMindIcons.Category, FieldMindTheme.colors.project)
         FieldTextField(title, { title = it }, "Project title")
@@ -991,7 +1053,7 @@ private fun EditSourceDialog(entity: SourceEntity, viewModel: FieldMindViewModel
         }
     }
 
-    DialogWrapper(onDismiss = onDismiss) {
+    DialogWrapper(onDismiss = onDismiss, fullScreen = true) {
         DialogHeader(FieldMindIcons.Source, "Edit Source", "Update source identity, notes, and status", accent = FieldMindTheme.colors.source)
         DialogDividerSection("Source type", FieldMindIcons.Category, FieldMindTheme.colors.source)
         ChoiceChipsField("Type", sourceLibraryTypes, type) { type = it }
@@ -1052,7 +1114,7 @@ private fun EditDataRecordDialog(entity: DataRecordEntity, viewModel: FieldMindV
         ChoiceChipsField("Tool", dataTools, tool) { tool = it }
         FieldTextField(label, { label = it }, "Label")
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            FieldTextField(value, { value = it }, "Value", modifier = Modifier.weight(1f))
+            FieldTextField(value, { value = it }, "Value", modifier = Modifier.weight(1f), keyboardType = KeyboardType.Number)
             FieldTextField(unit, { unit = it }, "Unit", modifier = Modifier.weight(1f))
         }
         FieldTextField(location, { location = it }, "Location / site")
@@ -1084,7 +1146,7 @@ private fun EditReportDialog(entity: ReportEntity, viewModel: FieldMindViewModel
         }
     }
 
-    DialogWrapper(onDismiss = onDismiss) {
+    DialogWrapper(onDismiss = onDismiss, fullScreen = true) {
         DialogHeader(FieldMindIcons.Report, "Edit Report", "Update report content and findings", accent = FieldMindTheme.colors.report)
         ChoiceChipsField("Report type", reportTypes, type) { type = it }
         FieldTextField(title, { title = it }, "Title")

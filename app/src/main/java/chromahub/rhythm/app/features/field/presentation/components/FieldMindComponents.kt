@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
@@ -28,6 +29,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.IconButton
@@ -56,6 +58,7 @@ import androidx.compose.ui.unit.sp
 import fieldmind.research.app.features.field.presentation.theme.FieldMindTheme
 import fieldmind.research.app.shared.presentation.components.icons.Icon
 import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon
+// FieldMindIcons is in the same package (components.FieldMindIcons)
 
 
 @Composable
@@ -71,6 +74,325 @@ class FieldMindHaptics internal constructor(
     val light: () -> Unit,
     val confirm: () -> Unit
 )
+// ══════════════════════════════════════════════════════════════════════
+//  OptionPickerDialog — Beautiful Material 3 dialog for picking options
+//  Replaces ChoiceChips, ExposedDropdownMenu, and other inline pickers
+//  with a full-screen-style dialog that shows options as large touch targets.
+// ══════════════════════════════════════════════════════════════════════
+
+/**
+ * A stunning Material 3 dialog that presents a list of options as large, tappable cards.
+ * Use this to replace ChoiceChips and ExposedDropdownMenu.
+ *
+ * Features:
+ * - Beautiful card-based option layout with icons
+ * - Selected option shown with check mark and accent color
+ * - Smooth scroll for many options
+ * - Optional header with title and subtitle
+ * - Optionally shows check icon next to the selected value
+ */
+@Composable
+fun OptionPickerDialog(
+    title: String,
+    subtitle: String = "",
+    options: List<String>,
+    selected: String,
+    onSelect: (String) -> Unit,
+    onDismiss: () -> Unit,
+    accentColor: Color = MaterialTheme.colorScheme.primary,
+    iconProvider: ((String) -> MaterialSymbolIcon?)? = null,
+    showSearch: Boolean = false,
+    multiSelect: Boolean = false,
+    selectedMulti: Set<String> = emptySet(),
+    onMultiSelect: ((Set<String>) -> Unit)? = null
+) {
+    val haptics = rememberFieldMindHaptics()
+    var searchQuery by remember { mutableStateOf("") }
+    
+    val filteredOptions = remember(options, searchQuery) {
+        if (searchQuery.isBlank()) options
+        else options.filter { it.contains(searchQuery, ignoreCase = true) }
+    }
+
+    Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth(0.94f)
+                .wrapContentHeight()
+                .padding(vertical = 24.dp),
+            shape = RoundedCornerShape(32.dp),
+            elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+        ) {
+            Column(
+                Modifier.verticalScroll(rememberScrollState()).padding(20.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                // Header
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+                    Box(
+                        Modifier.size(48.dp).clip(RoundedCornerShape(16.dp))
+                            .background(accentColor.copy(alpha = 0.12f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(FieldMindIcons.Question, null, tint = accentColor, size = 24.dp)
+                    }
+                    Column(Modifier.weight(1f)) {
+                        Text(title, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+                        if (subtitle.isNotBlank()) {
+                            Text(subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                    }
+                    IconButton(onClick = onDismiss, modifier = Modifier.size(36.dp)) {
+                        Icon(FieldMindIcons.Close, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, size = 22.dp)
+                    }
+                }
+
+                // Optional search
+                if (showSearch && options.size > 6) {
+                    OutlinedTextField(
+                        value = searchQuery,
+                        onValueChange = { searchQuery = it },
+                        placeholder = { Text("Search options…") },
+                        leadingIcon = { Icon(FieldMindIcons.Search, null, size = 20.dp) },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(18.dp)
+                    )
+                }
+
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f))
+
+                // Options list
+                filteredOptions.forEach { option ->
+                    val isSelected = if (multiSelect) option in selectedMulti else option == selected
+                    val icon = iconProvider?.invoke(option)
+                    
+                    Surface(
+                        onClick = {
+                            haptics.light()
+                            if (multiSelect && onMultiSelect != null) {
+                                val newSet = if (isSelected) selectedMulti - option else selectedMulti + option
+                                onMultiSelect(newSet)
+                            } else {
+                                onSelect(option)
+                                onDismiss()
+                            }
+                        },
+                        shape = RoundedCornerShape(18.dp),
+                        color = if (isSelected) accentColor.copy(alpha = 0.12f) else MaterialTheme.colorScheme.surfaceContainerHigh,
+                        border = if (isSelected) BorderStroke(1.5.dp, accentColor) else null,
+                        tonalElevation = 0.dp
+                    ) {
+                        Row(
+                            Modifier.fillMaxWidth().padding(14.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            if (icon != null) {
+                                Box(
+                                    Modifier.size(36.dp).clip(RoundedCornerShape(12.dp))
+                                        .background(accentColor.copy(alpha = if (isSelected) 0.18f else 0.08f)),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(icon, null, tint = if (isSelected) accentColor else MaterialTheme.colorScheme.onSurfaceVariant, size = 20.dp)
+                                }
+                            }
+                            
+                            Column(Modifier.weight(1f)) {
+                                Text(
+                                    option,
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                    color = if (isSelected) accentColor else MaterialTheme.colorScheme.onSurface
+                                )
+                            }
+                            
+                            if (isSelected) {
+                                Box(
+                                    Modifier.size(28.dp).clip(CircleShape)
+                                        .background(accentColor),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(FieldMindIcons.Check, null, tint = MaterialTheme.colorScheme.surface, size = 16.dp)
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if (filteredOptions.isEmpty()) {
+                    Box(Modifier.fillMaxWidth().padding(24.dp), contentAlignment = Alignment.Center) {
+                        Text("No matching options", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                }
+
+                if (multiSelect && onMultiSelect != null) {
+                    Spacer(Modifier.height(4.dp))
+                    Button(
+                        onClick = {
+                            haptics.confirm()
+                            onDismiss()
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp),
+                        enabled = selectedMulti.isNotEmpty()
+                    ) {
+                        Icon(FieldMindIcons.Check, null, size = 18.dp)
+                        Spacer(Modifier.size(8.dp))
+                        Text("Done (${selectedMulti.size} selected)")
+                    }
+                }
+
+                Spacer(Modifier.height(8.dp))
+            }
+        }
+    }
+}
+
+/**
+ * Multi-select variant of OptionPickerField. Opens a dialog with checkboxes.
+ */
+@Composable
+fun MultiSelectPickerField(
+    label: String,
+    selected: Set<String>,
+    options: List<String>,
+    onSelectionChanged: (Set<String>) -> Unit,
+    modifier: Modifier = Modifier,
+    accentColor: Color = MaterialTheme.colorScheme.primary,
+    icon: MaterialSymbolIcon? = null,
+    subtitle: String = "",
+    iconProvider: ((String) -> MaterialSymbolIcon?)? = null,
+    showSearch: Boolean = false
+) {
+    val haptics = rememberFieldMindHaptics()
+    var showDialog by remember { mutableStateOf(false) }
+
+    Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Text(label, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
+
+        Surface(
+            onClick = { haptics.light(); showDialog = true },
+            shape = RoundedCornerShape(18.dp),
+            color = MaterialTheme.colorScheme.surfaceContainerHigh,
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+        ) {
+            Row(
+                Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                if (icon != null) {
+                    Icon(icon, null, tint = accentColor, size = 20.dp)
+                }
+
+                val displayText = when {
+                    selected.isEmpty() -> "Select…"
+                    selected.size <= 2 -> selected.joinToString(", ")
+                    else -> {
+                        val firstTwo = selected.take(2).joinToString(", ")
+                        "$firstTwo +${selected.size - 2}"
+                    }
+                }
+                Text(
+                    displayText,
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Medium,
+                    modifier = Modifier.weight(1f),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+
+                Icon(FieldMindIcons.Down, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, size = 18.dp)
+            }
+        }
+
+        if (showDialog) {
+            OptionPickerDialog(
+                title = label,
+                subtitle = subtitle,
+                options = options,
+                selected = "",
+                onSelect = {},
+                onDismiss = { showDialog = false },
+                accentColor = accentColor,
+                iconProvider = iconProvider,
+                showSearch = showSearch,
+                multiSelect = true,
+                selectedMulti = selected,
+                onMultiSelect = onSelectionChanged
+            )
+        }
+    }
+}
+
+/**
+ * Trigger button that opens an OptionPickerDialog when clicked.
+ * Shows the current selected value with a dropdown-style appearance.
+ */
+@Composable
+fun OptionPickerField(
+    label: String,
+    selected: String,
+    options: List<String>,
+    onSelected: (String) -> Unit,
+    modifier: Modifier = Modifier,
+    accentColor: Color = MaterialTheme.colorScheme.primary,
+    icon: MaterialSymbolIcon? = null,
+    subtitle: String = "",
+    iconProvider: ((String) -> MaterialSymbolIcon?)? = null,
+    showSearch: Boolean = false
+) {
+    val haptics = rememberFieldMindHaptics()
+    var showDialog by remember { mutableStateOf(false) }
+
+    Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Text(label, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        
+        Surface(
+            onClick = { haptics.light(); showDialog = true },
+            shape = RoundedCornerShape(18.dp),
+            color = MaterialTheme.colorScheme.surfaceContainerHigh,
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+        ) {
+            Row(
+                Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                if (icon != null) {
+                    Icon(icon, null, tint = accentColor, size = 20.dp)
+                }
+                
+                Text(
+                    selected,
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Medium,
+                    modifier = Modifier.weight(1f),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                
+                Icon(FieldMindIcons.Down, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, size = 18.dp)
+            }
+        }
+        
+        if (showDialog) {
+            OptionPickerDialog(
+                title = label,
+                subtitle = subtitle,
+                options = options,
+                selected = selected,
+                onSelect = onSelected,
+                onDismiss = { showDialog = false },
+                accentColor = accentColor,
+                iconProvider = iconProvider,
+                showSearch = showSearch
+            )
+        }
+    }
+}
 
 // ──────────────────────────────────────────────────────────────────────
 //  Headers
@@ -422,7 +744,8 @@ fun FieldTextField(
     supportingText: String? = null,
     required: Boolean = false,
     error: String? = null,
-    enabled: Boolean = true
+    enabled: Boolean = true,
+    keyboardType: KeyboardType = KeyboardType.Text
 ) {
     val displayLabel = if (required) "$label *" else label
     OutlinedTextField(
@@ -431,6 +754,7 @@ fun FieldTextField(
         label = { Text(displayLabel) },
         minLines = minLines,
         isError = error != null,
+        keyboardOptions = if (keyboardType != KeyboardType.Text) KeyboardOptions(keyboardType = keyboardType) else KeyboardOptions.Default,
         supportingText = {
             when {
                 error != null -> Text(error, color = MaterialTheme.colorScheme.error)
@@ -451,7 +775,8 @@ fun FieldTextField(
     modifier: Modifier = Modifier,
     minLines: Int = 1,
     supportingText: String? = null,
-    enabled: Boolean = true
+    enabled: Boolean = true,
+    keyboardType: KeyboardType = KeyboardType.Text
 ) {
     FieldTextField(
         value = fieldState.value,
@@ -462,7 +787,8 @@ fun FieldTextField(
         supportingText = supportingText,
         required = fieldState.isRequired,
         error = if (fieldState.isTouched) fieldState.error else null,
-        enabled = enabled
+        enabled = enabled,
+        keyboardType = keyboardType
     )
 }
 

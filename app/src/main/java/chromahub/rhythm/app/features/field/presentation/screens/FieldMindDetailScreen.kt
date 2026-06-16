@@ -133,17 +133,8 @@ fun DetailScreen(
                 item { DetailActionBar(onEdit = { showEdit = true }, onDelete = { showDelete = true }) }
             }
 
-            if (showEdit) {
-                when (kind) {
-                    "note" -> notes.firstOrNull { it.id == id }?.let { n ->
-                        item { InlineEditNote(n, viewModel, { showEdit = false; onBack() }) }
-                    }
-                    "observation" -> observations.firstOrNull { it.id == id }?.let { o ->
-                        item { InlineEditObservation(o, viewModel, { showEdit = false; onBack() }) }
-                    }
-                }
-            } else {
-                when (kind) {
+            // Editing is handled via EditEntityDialog overlay — detail content always shows behind it
+            when (kind) {
                     "note" -> notes.firstOrNull { it.id == id }?.let { n ->
                         item { NoteDetailContent(n, onOpenDetail) }
                         item { BacklinksPanel(buildList {
@@ -211,8 +202,7 @@ fun DetailScreen(
                 }
             }
         }
-    }
-    if (showEdit && kind !in setOf("note", "observation")) EditEntityDialog(kind, id, viewModel) { showEdit = false }
+    if (showEdit) EditEntityDialog(kind, id, viewModel) { showEdit = false }
     if (showDelete) ConfirmDeleteDialog(kind, onDismiss = { showDelete = false }) {
         deleteEntityByKind(kind, id, viewModel); showDelete = false; onBack()
     }
@@ -325,7 +315,15 @@ private fun ObservationDetailContent(
                 }
             }
 
-            // ── 10. Evidence counts (Photo / Video / Audio) ──
+            // ── 10. Quality Score (always show if > 0) ──
+            if (o.qualityScore > 0) {
+                QualityScoreCard(o.qualityScore)
+            }
+
+            // ── 10b. Comprehensive Structured Details ──
+            ObservationStructuredDetailsSection(o)
+
+            // ── 10c. Evidence counts (Photo / Video / Audio) ──
             ObservationEvidenceCountsRow(viewModel, o.id)
 
             // ── 11. Weather & Location details ──
@@ -390,7 +388,7 @@ private fun ObservationDetailContent(
         }
     }
     
-    // Export menu dialog removed — export is handled inline in ObservationExportSection
+    // Export menu dialog removed — export is handled inline in ObservationExportSection}
 }
 
 @Composable
@@ -662,6 +660,187 @@ private fun ObservationBehaviorSection(
     }
 }
 
+// ══════════════════════════════════════════════════════════════════════
+//  Comprehensive Structured Details Section — Shows ALL enhanced fields
+// ══════════════════════════════════════════════════════════════════════
+
+@Composable
+@OptIn(ExperimentalLayoutApi::class)
+private fun ObservationStructuredDetailsSection(
+    o: ObservationEntity
+) {
+    val colors = FieldMindTheme.colors
+
+    // Parse ALL enhanced fields from structuredDetailsJson
+    val details = remember(o.structuredDetailsJson) {
+        if (o.structuredDetailsJson.isNotBlank()) {
+            try {
+                val json = org.json.JSONObject(o.structuredDetailsJson)
+                StructuredDetailsData(
+                    speciesName = json.optString("speciesName", ""),
+                    speciesConfidence = json.optString("speciesConfidence", ""),
+                    behavior = json.optString("behavior", ""),
+                    lifeStage = json.optString("lifeStage", ""),
+                    sex = json.optString("sex", ""),
+                    habitatType = json.optString("habitatType", ""),
+                    conservationStatus = json.optString("conservationStatus", ""),
+                    observationQuality = json.optString("observationQuality", ""),
+                    weatherOverride = json.optString("weatherOverride", ""),
+                    count = json.optString("count", ""),
+                    distanceFromObserver = json.optString("distanceFromObserver", ""),
+                    observationChecklist = json.optString("observationChecklist", ""),
+                    measurements = json.optString("measurements", ""),
+                    followUpSchedule = json.optString("followUpSchedule", ""),
+                    qualityScore = json.optString("qualityScore", ""),
+                    gpsAccuracy = json.optString("gpsAccuracy", ""),
+                    altitude = json.optString("altitude", "")
+                )
+            } catch (_: Exception) { null }
+        } else null
+    }
+
+    // Collect all non-blank fields into display rows
+    val displayRows = remember(details) {
+        details?.let { d ->
+            buildList {
+                // Skip behavior, lifeStage, sex — already shown in BehaviorSection
+                if (d.speciesName.isNotBlank()) add("Species" to d.speciesName)
+                if (d.speciesConfidence.isNotBlank()) add("Species confidence" to d.speciesConfidence)
+                if (d.habitatType.isNotBlank()) add("Habitat" to d.habitatType)
+                if (d.conservationStatus.isNotBlank()) add("Conservation" to d.conservationStatus)
+                if (d.observationQuality.isNotBlank()) add("Observation quality" to d.observationQuality)
+                if (d.weatherOverride.isNotBlank()) add("Weather override" to d.weatherOverride)
+                if (d.count.isNotBlank()) add("Count" to d.count)
+                if (d.distanceFromObserver.isNotBlank()) add("Distance" to d.distanceFromObserver)
+                if (d.qualityScore.isNotBlank()) add("Quality score" to d.qualityScore)
+                if (d.gpsAccuracy.isNotBlank()) add("GPS accuracy" to "±${d.gpsAccuracy}m")
+                if (d.altitude.isNotBlank()) add("Altitude" to "${d.altitude}m")
+                if (d.followUpSchedule.isNotBlank()) add("Follow-up" to d.followUpSchedule)
+            }
+        } ?: emptyList()
+    }
+
+    val hasChecklist = details?.observationChecklist?.isNotBlank() == true
+    val hasMeasurements = details?.measurements?.isNotBlank() == true
+    val hasAnyContent = displayRows.isNotEmpty() || hasChecklist || hasMeasurements
+    if (!hasAnyContent) return
+
+    Card(
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = colors.data.copy(alpha = 0.06f)),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Icon(FieldMindIcons.Data, null, tint = colors.data, size = 20.dp)
+                Text("Observation details", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = colors.data)
+            }
+
+            // Key-value rows
+            displayRows.forEach { (label, value) ->
+                Row(
+                    Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(value, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Medium)
+                }
+            }
+
+            // Observation checklist chips
+            if (hasChecklist) {
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f))
+                Text("Checklist", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(4.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    details!!.observationChecklist.split(",").filter { it.isNotBlank() }.forEach { item ->
+                        TagChip(item.trim())
+                    }
+                }
+            }
+
+            // Measurements
+            if (hasMeasurements) {
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f))
+                Text("Measurements", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                details!!.measurements.split(";").filter { it.isNotBlank() }.forEach { entry ->
+                    val parts = entry.split("=", limit = 2)
+                    if (parts.size == 2) {
+                        Row(
+                            Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(parts[0].trim(), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text(parts[1].trim(), style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Medium)
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+private data class StructuredDetailsData(
+    val speciesName: String,
+    val speciesConfidence: String,
+    val behavior: String,
+    val lifeStage: String,
+    val sex: String,
+    val habitatType: String,
+    val conservationStatus: String,
+    val observationQuality: String,
+    val weatherOverride: String,
+    val count: String,
+    val distanceFromObserver: String,
+    val observationChecklist: String,
+    val measurements: String,
+    val followUpSchedule: String,
+    val qualityScore: String,
+    val gpsAccuracy: String,
+    val altitude: String
+)
+
+// ══════════════════════════════════════════════════════════════════════
+//  Quality Score Card
+// ══════════════════════════════════════════════════════════════════════
+
+@Composable
+private fun QualityScoreCard(score: Int) {
+    val colors = FieldMindTheme.colors
+    val scoreColor = when {
+        score >= 80 -> colors.positive
+        score >= 50 -> colors.warning
+        else -> MaterialTheme.colorScheme.error
+    }
+
+    Card(
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = scoreColor.copy(alpha = 0.08f)),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Row(
+            Modifier.fillMaxWidth().padding(12.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Icon(FieldMindIcons.Check, null, tint = scoreColor, size = 20.dp)
+                Column {
+                    Text("Quality score", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("$score/100", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = scoreColor)
+                }
+            }
+            LinearProgressIndicator(
+                progress = { score.coerceIn(0, 100) / 100f },
+                modifier = Modifier.width(100.dp).height(6.dp).clip(RoundedCornerShape(3.dp)),
+                color = scoreColor,
+                trackColor = scoreColor.copy(alpha = 0.12f)
+            )
+        }
+    }
+}
+
 private data class BehaviorData(
     val behavior: String,
     val lifeStage: String,
@@ -709,8 +888,7 @@ private fun ObservationEvidenceCountsRow(
         if (otherCount > 0) {
             EvidenceCountItem("Files", otherCount, FieldMindIcons.File, MaterialTheme.colorScheme.onSurfaceVariant)
         }
-    }
-}
+    }}
 
 @Composable
 private fun EvidenceCountItem(
@@ -831,8 +1009,7 @@ private fun ObservationWeatherLocationSection(
                 }
             }
         }
-    }
-}
+    }}
 
 @Composable
 private fun WeatherDetailRow(label: String, value: String) {
@@ -1025,8 +1202,7 @@ private fun ObservationExportSection(
                 }
             }
         }
-    }
-}
+    }}
 
 @Composable
 private fun WeatherChip(text: String, color: androidx.compose.ui.graphics.Color) {
@@ -1038,8 +1214,7 @@ private fun WeatherChip(text: String, color: androidx.compose.ui.graphics.Color)
         contentAlignment = Alignment.Center
     ) {
         Text(text, style = MaterialTheme.typography.labelSmall, color = color, fontWeight = FontWeight.SemiBold)
-    }
-}
+    }}
 
 @Composable
 private fun ProvenanceRow(label: String, value: String) {
@@ -1129,8 +1304,7 @@ private fun ObservationHeroCarousel(viewModel: FieldMindViewModel, observationId
                 )
             }
         }
-    }
-}
+    }}
 
 @Composable
 private fun ObsStatItem(value: String, label: String, icon: MaterialSymbolIcon) {
@@ -1138,11 +1312,10 @@ private fun ObsStatItem(value: String, label: String, icon: MaterialSymbolIcon) 
         Icon(icon, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, size = 18.dp)
         Text(value, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
         Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f))
-    }
-}
+    }}
 
-@Composable
 @OptIn(ExperimentalLayoutApi::class)
+@Composable
 private fun NoteDetailContent(
     n: NoteEntity,
     onOpenDetail: (String, Long) -> Unit
@@ -1255,11 +1428,10 @@ private fun QuestionDetailContent(
                 }
             }
         }
-    }
-}
+    }}
 
-@Composable
 @OptIn(ExperimentalLayoutApi::class)
+@Composable
 private fun HypothesisDetailContent(
     h: HypothesisEntity
 ) {
@@ -1332,11 +1504,10 @@ private fun HypothesisDetailContent(
                 trackColor = resultColor.copy(alpha = 0.12f)
             )
         }
-    }
-}
+    }}
 
-@Composable
 @OptIn(ExperimentalLayoutApi::class)
+@Composable
 private fun ProjectDetailContent(
     p: ProjectEntity,
     observations: List<ObservationEntity>,
@@ -1549,7 +1720,7 @@ private fun SpeciesRegistryBuilder(projectId: Long, viewModel: FieldMindViewMode
                     }
                     FieldTextField(speciesName, { speciesName = it }, "Species", supportingText = "Specific epithet")
                     Text("Conservation Status", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    ChoiceChips(conservationOptions, conservationStatus) { conservationStatus = it }
+                    OptionPickerField(label = "Conservation status", selected = conservationStatus, options = conservationOptions, onSelected = { conservationStatus = it }, icon = FieldMindIcons.Nature)
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
                         FieldTextField(targetCount, { targetCount = it }, "Target Count", modifier = Modifier.weight(1f), supportingText = "Goal")
                         FilterChip(selected = autoCount, onClick = { autoCount = !autoCount }, label = { Text("Auto Count", style = MaterialTheme.typography.labelSmall) })
@@ -2213,9 +2384,9 @@ private fun SourceActionPanel(source: SourceEntity, projects: List<ProjectEntity
                 Icon(FieldMindIcons.Project, null, size = 18.dp); Spacer(Modifier.size(6.dp)); Text("Link to project")
             }
             AnimatedVisibility(showProjects) {
-                ChoiceChips(listOf("No project") + projects.map { it.title }, projects.firstOrNull { it.id == source.relatedProjectId }?.title ?: "No project") { selected ->
+                OptionPickerField(label = "Project", selected = projects.firstOrNull { it.id == source.relatedProjectId }?.title ?: "No project", options = listOf("No project") + projects.map { it.title }, onSelected = { selected ->
                     haptics.confirm(); viewModel.linkSourceToProject(source, projects.firstOrNull { it.title == selected }?.id); showProjects = false
-                }
+                })
             }
             if (source.relatedProjectId != null) {
                 projects.firstOrNull { it.id == source.relatedProjectId }?.let { project ->
@@ -2312,167 +2483,3 @@ private fun BacklinksPanel(links: List<Triple<String, String, Long>>, onOpenDeta
     }
 }
 
-@Composable
-private fun InlineEditNote(entity: NoteEntity, viewModel: FieldMindViewModel, onDone: () -> Unit) {
-    val colors = FieldMindTheme.colors
-    var title by remember { mutableStateOf(entity.title) }
-    var body by remember { mutableStateOf(entity.body) }
-    var category by remember { mutableStateOf(entity.category) }
-    var tags by remember { mutableStateOf(entity.tags) }
-    var attachments by remember { mutableStateOf(entity.attachmentUris) }
-
-    fun save() {
-        if (title.isNotBlank() || body.isNotBlank()) {
-            viewModel.updateNoteEntity(entity.copy(
-                title = title.trim().ifBlank { body.take(36) },
-                body = body.trim(),
-                category = category,
-                tags = tags.trim(),
-                attachmentUris = attachments.trim()
-            ))
-            onDone()
-        }
-    }
-
-    Card(
-        shape = RoundedCornerShape(28.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-    ) {
-        Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                Box(
-                    Modifier.size(40.dp).clip(RoundedCornerShape(12.dp))
-                        .background(colors.source.copy(alpha = 0.14f)),
-                    contentAlignment = Alignment.Center
-                ) { Icon(FieldMindIcons.Note, null, tint = colors.source, size = 22.dp) }
-                Column(Modifier.weight(1f)) {
-                    Text("Edit note", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                    Text("Update title, content, and metadata", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-            }
-            Text("Category", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            ChoiceChips(observationCategories, category, onSelected = { category = it })
-            FieldTextField(title, { title = it }, "Title", supportingText = "Auto-filled from body if left blank")
-            FieldTextField(body, { body = it }, "Body", minLines = 6)
-            FieldTextField(tags, { tags = it }, "Tags", supportingText = "Comma-separated keywords")
-            FieldTextField(attachments, { attachments = it }, "Attachments", minLines = 2, supportingText = "One per line: type|caption|uri")
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                OutlinedButton(onClick = onDone, modifier = Modifier.weight(1f), shape = RoundedCornerShape(14.dp)) {
-                    Text("Cancel")
-                }
-                Button(
-                    onClick = { save() },
-                    modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(14.dp),
-                    enabled = title.isNotBlank() || body.isNotBlank()
-                ) {
-                    Icon(FieldMindIcons.Check, null, size = 18.dp)
-                    Spacer(Modifier.size(6.dp))
-                    Text("Save changes")
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun InlineEditObservation(entity: ObservationEntity, viewModel: FieldMindViewModel, onDone: () -> Unit) {
-    val appContext = LocalContext.current
-    var subject by remember { mutableStateOf(entity.subject) }
-    var category by remember { mutableStateOf(entity.category) }
-    var facts by remember { mutableStateOf(entity.factsOnlyNotes) }
-    var confidence by remember { mutableStateOf(entity.confidenceLevel) }
-    var location by remember { mutableStateOf(entity.manualLocation) }
-    var latitude by remember { mutableStateOf(entity.latitude?.toString().orEmpty()) }
-    var longitude by remember { mutableStateOf(entity.longitude?.toString().orEmpty()) }
-    var tags by remember { mutableStateOf(entity.tags) }
-    var evidence by remember { mutableStateOf(entity.evidenceSummary) }
-    var fieldContext by remember { mutableStateOf(entity.moodOrContext) }
-    var locating by remember { mutableStateOf(false) }
-    val locationProvider = remember { FieldLocationProvider(appContext) }
-    fun startLocating() {
-        locating = true
-        locationProvider.requestCurrentLocation { captured ->
-            locating = false
-            if (captured != null) {
-                latitude = captured.latitude.toString(); longitude = captured.longitude.toString()
-                location = captured.asDisplayText()
-                locationProvider.resolvePlaceName(captured.latitude, captured.longitude) { place -> if (!place.isNullOrBlank()) location = captured.copy(placeName = place).asDisplayText() }
-            }
-        }
-    }
-    fun save() {
-        if (subject.isNotBlank()) {
-            viewModel.updateObservation(entity.copy(
-                subject = subject.trim(),
-                category = category,
-                factsOnlyNotes = facts.trim(),
-                confidenceLevel = confidence,
-                manualLocation = location.trim(),
-                latitude = latitude.toDoubleOrNull(),
-                longitude = longitude.toDoubleOrNull(),
-                evidenceSummary = evidence.trim(),
-                moodOrContext = fieldContext.trim()
-            ), tags)
-            onDone()
-        }
-    }
-
-    Card(
-        shape = RoundedCornerShape(28.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-    ) {
-        Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                Box(
-                    Modifier.size(40.dp).clip(RoundedCornerShape(12.dp))
-                        .background(FieldMindTheme.colors.observation.copy(alpha = 0.14f)),
-                    contentAlignment = Alignment.Center
-                ) { Icon(FieldMindIcons.Observation, null, tint = FieldMindTheme.colors.observation, size = 22.dp) }
-                Column(Modifier.weight(1f)) {
-                    Text("Edit observation", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                    Text("Update facts, location, and metadata", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-            }
-            Text("Subject", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            FieldTextField(subject, { subject = it }, "Subject")
-            Text("Category", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            ChoiceChips(observationCategories, category) { category = it }
-            Text("Confidence", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            ChoiceChips(confidenceOptions, confidence) { confidence = it }
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                FilledTonalButton(onClick = { if (locationProvider.hasAnyLocationPermission()) startLocating() else appContext.startActivity(android.content.Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS)) }, modifier = Modifier.weight(1f), enabled = !locating) {
-                    if (locating) { CircularProgressIndicator(Modifier.size(16.dp), strokeWidth = 2.dp); Spacer(Modifier.size(6.dp)); Text("Locating…") } else { Icon(FieldMindIcons.Location, null, size = 18.dp); Spacer(Modifier.size(6.dp)); Text("Use GPS") }
-                }
-                OutlinedButton(onClick = { latitude = ""; longitude = ""; location = "" }, modifier = Modifier.weight(1f)) { Text("Clear") }
-            }
-            FieldTextField(location, { location = it }, "Location")
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                FieldTextField(latitude, { latitude = it }, "Latitude", modifier = Modifier.weight(1f))
-                FieldTextField(longitude, { longitude = it }, "Longitude", modifier = Modifier.weight(1f))
-            }
-            FieldTextField(facts, { facts = it }, "Facts only", minLines = 3)
-            ChoiceChips(contextPresets, fieldContext) { fieldContext = if (fieldContext.isBlank()) it else "$fieldContext, $it" }
-            FieldTextField(fieldContext, { fieldContext = it }, "Context / mood", minLines = 2)
-            FieldTextField(tags, { tags = it }, "Tags", supportingText = "Comma-separated keywords")
-            FieldTextField(evidence, { evidence = it }, "Evidence summary", minLines = 2)
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                OutlinedButton(onClick = onDone, modifier = Modifier.weight(1f), shape = RoundedCornerShape(14.dp)) {
-                    Text("Cancel")
-                }
-                Button(
-                    onClick = { save() },
-                    modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(14.dp),
-                    enabled = subject.isNotBlank()
-                ) {
-                    Icon(FieldMindIcons.Check, null, size = 18.dp)
-                    Spacer(Modifier.size(6.dp))
-                    Text("Save changes")
-                }
-            }
-        }
-    }
-}
