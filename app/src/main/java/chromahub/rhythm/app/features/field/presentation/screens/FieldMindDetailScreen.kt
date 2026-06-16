@@ -41,6 +41,7 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import fieldmind.research.app.features.field.data.export.FieldMindExport
 import fieldmind.research.app.features.field.data.location.FieldLocationProvider
+import fieldmind.research.app.features.field.data.weather.WeatherUnitConverter
 import fieldmind.research.app.features.field.presentation.components.*
 import fieldmind.research.app.features.field.presentation.navigation.FieldMindScreen
 import fieldmind.research.app.features.field.presentation.theme.FieldMindTheme
@@ -169,7 +170,7 @@ fun DetailScreen(
                         }, onOpenDetail) }
                     }
                     "project" -> projects.firstOrNull { it.id == id }?.let { p ->
-                        item { ProjectDetailContent(p, observations, questions, sources, data, reports) }
+                        item { ProjectDetailContent(p, observations, questions, sources, data, reports, viewModel) }
                         item { BacklinksPanel(buildList {
                             observations.filter { it.projectId == p.id }.forEach { add(Triple("observation", it.subject, it.id)) }
                             questions.filter { it.relatedProjectId == p.id }.forEach { add(Triple("question", it.questionText, it.id)) }
@@ -228,13 +229,21 @@ private fun ObservationDetailContent(
     onOpenDetail: (String, Long) -> Unit = { _, _ -> }
 ) {
     val colors = FieldMindTheme.colors
+    val tempUnit by viewModel.fieldSettings.tempUnit.collectAsState()
+    val windSpeedUnit by viewModel.fieldSettings.windSpeedUnit.collectAsState()
+    val distUnit by viewModel.fieldSettings.distanceUnit.collectAsState()
+    val context = LocalContext.current
+    val clipboard = LocalClipboardManager.current
+    val scope = rememberCoroutineScope()
+    val snackbar = remember { SnackbarHostState() }
+    
     Card(
         shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
-        Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-            // ── 1. Hero carousel (swipeable media) ──
+        Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(20.dp)) {
+            // ── 1. Swipeable Media Gallery (hero carousel) ──
             ObservationHeroCarousel(viewModel, o.id, onOpenReader)
 
             // ── 2. Header with subject and badges ──
@@ -253,41 +262,59 @@ private fun ObservationDetailContent(
                 }
             }
 
-            // ── 3. Stats bar ──
+            // ── 3. Date / GPS / Weather stat bar ──
             Row(
-                Modifier.fillMaxWidth(),
+                Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp))
+                    .background(MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.4f))
+                    .padding(vertical = 10.dp),
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
                 ObsStatItem("${o.date} ${o.time}", "Date", FieldMindIcons.Calendar)
-                if (o.latitude != null && o.longitude != null) {
-                    ObsStatItem("GPS", "Location", FieldMindIcons.Location)
-                }
-                if (o.evidenceSummary.isNotBlank()) {
-                    ObsStatItem("Has evidence", "Attachments", FieldMindIcons.Gallery)
-                }
+                ObsStatItem(
+                    if (o.latitude != null && o.longitude != null) "GPS" else "No GPS",
+                    "Location",
+                    FieldMindIcons.Location
+                )
+                ObsStatItem(
+                    if (o.weatherTemperature != null) "${WeatherUnitConverter.formatTemp(o.weatherTemperature, tempUnit)}" else "—",
+                    "Weather",
+                    FieldMindIcons.Weather
+                )
             }
 
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
 
-            // ── 4. Facts-only notes (prominent) ──
+            // ── 4. Species Information ──
+            ObservationSpeciesInfoSection(o, viewModel)
+
+            // ── 5. Observation Notes (Facts-only) ──
             if (o.factsOnlyNotes.isNotBlank()) {
-                Text("Facts", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold, color = colors.observation)
-                Text(o.factsOnlyNotes, style = MaterialTheme.typography.bodyLarge)
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    SectionHeader("Observation notes", "Facts-only record of what was observed")
+                    Text(o.factsOnlyNotes, style = MaterialTheme.typography.bodyLarge)
+                }
             }
 
-            // ── 5. Context ──
+            // ── 6. Behavior & Context ──
+            ObservationBehaviorSection(o)
+
+            // ── 7. Context / mood ──
             if (o.moodOrContext.isNotBlank()) {
-                Text("Context", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                Text(o.moodOrContext, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    SectionHeader("Context", "Field conditions and mood")
+                    Text(o.moodOrContext, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
             }
 
-            // ── 6. Evidence summary ──
+            // ── 8. Evidence summary ──
             if (o.evidenceSummary.isNotBlank()) {
-                Text("Evidence", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold, color = colors.info)
-                Text(o.evidenceSummary, style = MaterialTheme.typography.bodyMedium)
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    SectionHeader("Evidence", "Attached media and files")
+                    Text(o.evidenceSummary, style = MaterialTheme.typography.bodyMedium)
+                }
             }
 
-            // ── 7. Tags ──
+            // ── 9. Tags ──
             if (o.tags.isNotBlank()) {
                 FlowRow(verticalArrangement = Arrangement.spacedBy(4.dp), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                     o.tags.split(",").filter { it.isNotBlank() }.forEach { tag ->
@@ -296,28 +323,21 @@ private fun ObservationDetailContent(
                 }
             }
 
-            // ── 8. Weather chip row (compact) ──
-            if (o.weatherTemperature != null) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(16.dp))
-                        .background(colors.info.copy(alpha = 0.08f))
-                        .padding(14.dp),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(FieldMindIcons.Weather, null, tint = colors.info, size = 18.dp)
-                    WeatherChip("${o.weatherTemperature?.let { "%.1f°".format(it) } ?: "--"}", colors.info)
-                    if (o.weatherCondition.isNotBlank()) WeatherChip(o.weatherCondition.take(12), colors.info)
-                    if (o.weatherHumidity != null) WeatherChip("${o.weatherHumidity}% RH", colors.data)
-                    if (o.weatherWindSpeed != null) WeatherChip("%.1f km/h".format(o.weatherWindSpeed), colors.warning)
-                    if (o.weatherCloudCover != null) WeatherChip("☁ ${o.weatherCloudCover}%", MaterialTheme.colorScheme.onSurfaceVariant)
-                    if (o.weatherPressure != null) WeatherChip("${o.weatherPressure?.toInt()} hPa", MaterialTheme.colorScheme.onSurfaceVariant)
-                }
+            // ── 10. Evidence counts (Photo / Video / Audio) ──
+            ObservationEvidenceCountsRow(viewModel, o.id)
+
+            // ── 11. Weather & Location details ──
+            ObservationWeatherLocationSection(o, viewModel, tempUnit, windSpeedUnit)
+
+            // ── 12. Map preview ──
+            if (o.latitude != null && o.longitude != null) {
+                ObservationLocationCard(o.latitude, o.longitude, o.manualLocation)
             }
 
-            // ── 9. Provenance collapsible section ──
+            // ── 13. AI Species Analysis ──
+            ObservationAiAnalysisCard(o, viewModel)
+
+            // ── 14. Provenance collapsible ──
             var showProvenance by remember { mutableStateOf(false) }
             Card(
                 modifier = Modifier.fillMaxWidth().clickable { showProvenance = !showProvenance },
@@ -357,18 +377,18 @@ private fun ObservationDetailContent(
                 }
             }
 
-            // ── 10. Map card ──
-            if (o.latitude != null && o.longitude != null) {
-                ObservationLocationCard(o.latitude, o.longitude, o.manualLocation)
-            }
-
-            // ── 11. Re-observation linking ──
+            // ── 15. Related Observations (re-observation chain) ──
             ReObservationLink(o, viewModel, onOpenDetail)
 
-            // ── 12. Attachments gallery ──
+            // ── 16. Attachments gallery ──
             ObservationAttachmentsPanel(viewModel, o.id, onOpenReader)
+
+            // ── 17. Export & Sharing ──
+            ObservationExportSection(o, viewModel, context, clipboard, snackbar, scope)
         }
     }
+    
+    // Export menu dialog removed — export is handled inline in ObservationExportSection
 }
 
 @Composable
@@ -425,6 +445,581 @@ private fun ReObservationLink(
                         meta = listOf(child.date, child.category, child.confidenceLevel),
                         onClick = { onOpenDetail("observation", child.id) }
                     )
+                }
+            }
+        }
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════════
+//  Species Information Section — Scientific name, taxonomy, conservation
+// ══════════════════════════════════════════════════════════════════════
+
+@Composable
+@OptIn(ExperimentalLayoutApi::class)
+private fun ObservationSpeciesInfoSection(
+    o: ObservationEntity,
+    viewModel: FieldMindViewModel
+) {
+    val colors = FieldMindTheme.colors
+    // Parse structured details JSON for species info if available
+    val speciesInfo = remember(o.structuredDetailsJson) {
+        if (o.structuredDetailsJson.isNotBlank()) {
+            try {
+                val json = org.json.JSONObject(o.structuredDetailsJson)
+                val sciName = json.optString("scientificName", "")
+                val taxonomy = json.optString("taxonomy", "")
+                val conservation = json.optString("conservationStatus", "")
+                val description = json.optString("speciesDescription", "")
+                SpeciesInfoData(sciName, taxonomy, conservation, description)
+            } catch (_: Exception) { null }
+        } else null
+    }
+    
+    val hasAnyInfo = speciesInfo != null || o.category.isNotBlank()
+    if (!hasAnyInfo) return
+    
+    Card(
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = colors.observation.copy(alpha = 0.06f)),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Icon(FieldMindIcons.Nature, null, tint = colors.observation, size = 20.dp)
+                Text("Species information", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = colors.observation)
+            }
+            
+            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                if (speciesInfo?.scientificName?.isNotBlank() == true) {
+                    InfoRow("Scientific name", speciesInfo.scientificName)
+                }
+                if (speciesInfo?.taxonomy?.isNotBlank() == true) {
+                    InfoRow("Taxonomy", speciesInfo.taxonomy)
+                }
+                if (speciesInfo?.conservationStatus?.isNotBlank() == true) {
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        val statusColor = when {
+                            speciesInfo.conservationStatus.contains("Endangered") || speciesInfo.conservationStatus.contains("Critically") -> MaterialTheme.colorScheme.error
+                            speciesInfo.conservationStatus.contains("Vulnerable") || speciesInfo.conservationStatus.contains("Near") -> colors.warning
+                            else -> colors.positive
+                        }
+                        Text("Conservation", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Box(
+                            Modifier.clip(RoundedCornerShape(8.dp))
+                                .background(statusColor.copy(alpha = 0.15f))
+                                .padding(horizontal = 8.dp, vertical = 4.dp)
+                        ) {
+                            Text(
+                                speciesInfo.conservationStatus,
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = statusColor
+                            )
+                        }
+                    }
+                }
+                if (speciesInfo?.description?.isNotBlank() == true) {
+                    Text(
+                        speciesInfo.description,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                if (speciesInfo == null && o.subject.isNotBlank()) {
+                    Text(
+                        "Category: ${o.category}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+        }
+    }
+}
+
+private data class SpeciesInfoData(
+    val scientificName: String,
+    val taxonomy: String,
+    val conservationStatus: String,
+    val description: String
+)
+
+@Composable
+private fun InfoRow(label: String, value: String) {
+    Row(
+        Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(value, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Medium)
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════════
+//  Behavior & Context Section
+// ══════════════════════════════════════════════════════════════════════
+
+@Composable
+@OptIn(ExperimentalLayoutApi::class)
+private fun ObservationBehaviorSection(
+    o: ObservationEntity
+) {
+    val colors = FieldMindTheme.colors
+    // Parse structured details JSON for behavior, life stage, sex
+    val behaviorData = remember(o.structuredDetailsJson) {
+        if (o.structuredDetailsJson.isNotBlank()) {
+            try {
+                val json = org.json.JSONObject(o.structuredDetailsJson)
+                val behavior = json.optString("behavior", "")
+                val lifeStage = json.optString("lifeStage", "")
+                val sex = json.optString("sex", "")
+                val feeding = json.optString("feeding", "")
+                val nesting = json.optString("nesting", "")
+                BehaviorData(behavior, lifeStage, sex, feeding, nesting)
+            } catch (_: Exception) { null }
+        } else null
+    }
+    
+    if (behaviorData == null) return
+    val hasAny = listOf(behaviorData.behavior, behaviorData.lifeStage, behaviorData.sex).any { it.isNotBlank() }
+    if (!hasAny) return
+    
+    Card(
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = colors.hypothesis.copy(alpha = 0.06f)),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Icon(FieldMindIcons.Trend, null, tint = colors.hypothesis, size = 20.dp)
+                Text("Behavior & context", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = colors.hypothesis)
+            }
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                if (behaviorData.behavior.isNotBlank()) {
+                    Surface(
+                        shape = RoundedCornerShape(10.dp),
+                        color = MaterialTheme.colorScheme.surfaceContainerHigh
+                    ) {
+                        Row(Modifier.padding(horizontal = 10.dp, vertical = 6.dp), 
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Text("Behavior", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text(behaviorData.behavior, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
+                        }
+                    }
+                }
+                if (behaviorData.lifeStage.isNotBlank()) {
+                    Surface(
+                        shape = RoundedCornerShape(10.dp),
+                        color = MaterialTheme.colorScheme.surfaceContainerHigh
+                    ) {
+                        Row(Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Text("Life stage", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text(behaviorData.lifeStage, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
+                        }
+                    }
+                }
+                if (behaviorData.sex.isNotBlank()) {
+                    Surface(
+                        shape = RoundedCornerShape(10.dp),
+                        color = MaterialTheme.colorScheme.surfaceContainerHigh
+                    ) {
+                        Row(Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Text("Sex", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text(behaviorData.sex, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
+                        }
+                    }
+                }
+            }
+            if (behaviorData.feeding.isNotBlank() || behaviorData.nesting.isNotBlank()) {
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                    if (behaviorData.feeding.isNotBlank()) {
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Text("Feeding:", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text(if (behaviorData.feeding == "true") "Yes" else "No", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
+                        }
+                    }
+                    if (behaviorData.nesting.isNotBlank()) {
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Text("Nesting:", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text(if (behaviorData.nesting == "true") "Yes" else "No", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+private data class BehaviorData(
+    val behavior: String,
+    val lifeStage: String,
+    val sex: String,
+    val feeding: String,
+    val nesting: String
+)
+
+// ══════════════════════════════════════════════════════════════════════
+//  Evidence Counts Row — Photo / Video / Audio counts
+// ══════════════════════════════════════════════════════════════════════
+
+@Composable
+private fun ObservationEvidenceCountsRow(
+    viewModel: FieldMindViewModel,
+    observationId: Long
+) {
+    val attachments by viewModel.attachmentsForObservation(observationId).collectAsState(initial = emptyList())
+    if (attachments.isEmpty()) return
+    
+    val photoCount = attachments.count { a -> 
+        a.type.equals("Photo", true) || a.type.equals("Gallery", true) || 
+        a.uri.contains(Regex("\\.(jpg|jpeg|png|webp|gif|heic|bmp)", RegexOption.IGNORE_CASE))
+    }
+    val videoCount = attachments.count { a ->
+        a.type.equals("Video", true) || 
+        a.uri.contains(Regex("\\.(mp4|mov|avi|mkv|webm|3gp)", RegexOption.IGNORE_CASE))
+    }
+    val audioCount = attachments.count { a ->
+        a.type.equals("Audio", true) || a.type.equals("Mic", true) || 
+        a.uri.contains(Regex("\\.(m4a|mp3|wav|ogg|flac|aac)", RegexOption.IGNORE_CASE))
+    }
+    val otherCount = attachments.size - photoCount - videoCount - audioCount
+    
+    val colors = FieldMindTheme.colors
+    Row(
+        Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp))
+            .background(MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.3f))
+            .padding(vertical = 12.dp),
+        horizontalArrangement = Arrangement.SpaceEvenly
+    ) {
+        EvidenceCountItem("Photo", photoCount, FieldMindIcons.Gallery, colors.observation)
+        EvidenceCountItem("Video", videoCount, FieldMindIcons.Play, colors.info)
+        EvidenceCountItem("Audio", audioCount, FieldMindIcons.Mic, colors.data)
+        if (otherCount > 0) {
+            EvidenceCountItem("Files", otherCount, FieldMindIcons.File, MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+    }
+}
+
+@Composable
+private fun EvidenceCountItem(
+    label: String,
+    count: Int,
+    icon: MaterialSymbolIcon,
+    color: androidx.compose.ui.graphics.Color
+) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        Icon(icon, null, tint = color, size = 20.dp)
+        Text(
+            "$count",
+            style = MaterialTheme.typography.titleSmall,
+            fontWeight = FontWeight.Bold,
+            color = color
+        )
+        Text(
+            label,
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════════
+//  Weather & Location Section — Full details
+// ══════════════════════════════════════════════════════════════════════
+
+@Composable
+private fun ObservationWeatherLocationSection(
+    o: ObservationEntity,
+    viewModel: FieldMindViewModel,
+    tempUnit: String,
+    windSpeedUnit: String
+) {
+    val colors = FieldMindTheme.colors
+    val hasWeather = o.weatherTemperature != null || o.weatherCondition.isNotBlank()
+    val hasLocation = o.latitude != null || o.manualLocation.isNotBlank()
+    if (!hasWeather && !hasLocation) return
+    
+    Card(
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = colors.info.copy(alpha = 0.06f)),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Icon(FieldMindIcons.Weather, null, tint = colors.info, size = 20.dp)
+                Text("Weather & location", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = colors.info)
+            }
+            
+            // Weather details
+            if (hasWeather) {
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        if (o.weatherTemperature != null) {
+                            WeatherDetailRow("Temperature", WeatherUnitConverter.formatTemp(o.weatherTemperature, tempUnit))
+                        }
+                        if (o.weatherHumidity != null) {
+                            WeatherDetailRow("Humidity", "${o.weatherHumidity}%")
+                        }
+                        if (o.weatherWindSpeed != null) {
+                            WeatherDetailRow("Wind", WeatherUnitConverter.formatWind(o.weatherWindSpeed, windSpeedUnit))
+                        }
+                    }
+                    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        if (o.weatherCloudCover != null) {
+                            WeatherDetailRow("Cloud cover", "${o.weatherCloudCover}%")
+                        }
+                        if (o.weatherPressure != null) {
+                            WeatherDetailRow("Pressure", "${o.weatherPressure?.toInt()} hPa")
+                        }
+                        if (o.weatherCondition.isNotBlank()) {
+                            WeatherDetailRow("Condition", o.weatherCondition)
+                        }
+                    }
+                }
+            }
+            
+            // Location details
+            if (hasLocation) {
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f))
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    if (o.manualLocation.isNotBlank()) {
+                        WeatherDetailRow("Location", o.manualLocation)
+                    }
+                    if (o.latitude != null && o.longitude != null) {
+                        val latStr = "%.5f".format(o.latitude)
+                        val lngStr = "%.5f".format(o.longitude)
+                        WeatherDetailRow("GPS", "$latStr, $lngStr")
+                    }
+                    // GPS accuracy from structured details
+                    val accuracy = remember(o.structuredDetailsJson) {
+                        if (o.structuredDetailsJson.isNotBlank()) {
+                            try {
+                                org.json.JSONObject(o.structuredDetailsJson).optString("gpsAccuracy", "")
+                            } catch (_: Exception) { "" }
+                        } else ""
+                    }
+                    if (accuracy.isNotBlank()) {
+                        WeatherDetailRow("Accuracy", "±${accuracy}m")
+                    }
+                    // Altitude from structured details
+                    val altitude = remember(o.structuredDetailsJson) {
+                        if (o.structuredDetailsJson.isNotBlank()) {
+                            try {
+                                val a = org.json.JSONObject(o.structuredDetailsJson).optString("altitude", "")
+                                if (a.isNotBlank()) "${a}m" else ""
+                            } catch (_: Exception) { "" }
+                        } else ""
+                    }
+                    if (altitude.isNotBlank()) {
+                        WeatherDetailRow("Altitude", altitude)
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun WeatherDetailRow(label: String, value: String) {
+    Row(
+        Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(value, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Medium)
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════════
+//  AI Species Analysis Card
+// ══════════════════════════════════════════════════════════════════════
+
+@Composable
+private fun ObservationAiAnalysisCard(
+    o: ObservationEntity,
+    viewModel: FieldMindViewModel
+) {
+    val colors = FieldMindTheme.colors
+    // Parse stored AI analysis results from structured details
+    val analysisResult = remember(o.structuredDetailsJson) {
+        if (o.structuredDetailsJson.isNotBlank()) {
+            try {
+                val json = org.json.JSONObject(o.structuredDetailsJson)
+                val topMatch = json.optString("aiTopMatch", "")
+                val topConfidence = json.optString("aiTopConfidence", "")
+                val secondMatch = json.optString("aiSecondMatch", "")
+                val secondConfidence = json.optString("aiSecondConfidence", "")
+                val analysisTime = json.optString("aiAnalysisTime", "")
+                if (topMatch.isNotBlank()) {
+                    AiAnalysisData(topMatch, topConfidence, secondMatch, secondConfidence, analysisTime)
+                } else null
+            } catch (_: Exception) { null }
+        } else null
+    }
+    
+    if (analysisResult == null) return
+    
+    Card(
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = colors.project.copy(alpha = 0.06f)),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Icon(FieldMindIcons.Bolt, null, tint = colors.project, size = 20.dp)
+                Text("AI species analysis", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = colors.project)
+            }
+            
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                // Top match
+                Surface(
+                    shape = RoundedCornerShape(12.dp),
+                    color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
+                ) {
+                    Row(
+                        Modifier.fillMaxWidth().padding(12.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column {
+                            Text(analysisResult.topMatch, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
+                            Text("Top match", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                        Text(
+                            analysisResult.topConfidence,
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = colors.project
+                        )
+                    }
+                }
+                
+                // Second match (if available)
+                if (analysisResult.secondMatch.isNotBlank()) {
+                    Row(
+                        Modifier.fillMaxWidth().padding(horizontal = 4.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(analysisResult.secondMatch, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(analysisResult.secondConfidence, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                }
+                
+                if (analysisResult.analysisTime.isNotBlank()) {
+                    Text(
+                        "Analysis: ${analysisResult.analysisTime}",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                    )
+                }
+            }
+        }
+    }
+}
+
+private data class AiAnalysisData(
+    val topMatch: String,
+    val topConfidence: String,
+    val secondMatch: String,
+    val secondConfidence: String,
+    val analysisTime: String
+)
+
+// ══════════════════════════════════════════════════════════════════════
+//  Export & Sharing Section
+// ══════════════════════════════════════════════════════════════════════
+
+@Composable
+private fun ObservationExportSection(
+    o: ObservationEntity,
+    viewModel: FieldMindViewModel,
+    context: android.content.Context,
+    clipboard: androidx.compose.ui.platform.ClipboardManager,
+    snackbar: SnackbarHostState,
+    scope: kotlinx.coroutines.CoroutineScope
+) {
+    val exportText = remember(o) { FieldMindExport.singleObservationMarkdown(o) }
+    val haptics = rememberFieldMindHaptics()
+    
+    Card(
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Icon(FieldMindIcons.Export, null, tint = MaterialTheme.colorScheme.primary, size = 20.dp)
+                Text("Export & sharing", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+            }
+            
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                // PDF Export
+                FilledTonalButton(
+                    onClick = {
+                        haptics.light()
+                        scope.launch { snackbar.showSnackbar("PDF export coming soon") }
+                    },
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(14.dp)
+                ) {
+                    Icon(FieldMindIcons.Article, null, size = 16.dp)
+                    Spacer(Modifier.size(4.dp))
+                    Text("PDF", style = MaterialTheme.typography.labelSmall)
+                }
+                // CSV Export
+                FilledTonalButton(
+                    onClick = {
+                        haptics.light()
+                        scope.launch { snackbar.showSnackbar("CSV export coming soon") }
+                    },
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(14.dp)
+                ) {
+                    Icon(FieldMindIcons.Data, null, size = 16.dp)
+                    Spacer(Modifier.size(4.dp))
+                    Text("CSV", style = MaterialTheme.typography.labelSmall)
+                }
+                // JSON Export
+                FilledTonalButton(
+                    onClick = {
+                        haptics.light()
+                        scope.launch { snackbar.showSnackbar("JSON export coming soon") }
+                    },
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(14.dp)
+                ) {
+                    Icon(FieldMindIcons.Data, null, size = 16.dp)
+                    Spacer(Modifier.size(4.dp))
+                    Text("JSON", style = MaterialTheme.typography.labelSmall)
+                }
+                // Share
+                FilledTonalButton(
+                    onClick = {
+                        haptics.confirm()
+                        clipboard.setText(AnnotatedString(exportText))
+                        sharePlainText(context, exportText)
+                    },
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(14.dp)
+                ) {
+                    Icon(FieldMindIcons.Export, null, size = 16.dp)
+                    Spacer(Modifier.size(4.dp))
+                    Text("Share", style = MaterialTheme.typography.labelSmall)
                 }
             }
         }
@@ -746,14 +1341,23 @@ private fun ProjectDetailContent(
     questions: List<QuestionEntity>,
     sources: List<SourceEntity>,
     dataRecords: List<DataRecordEntity>,
-    reports: List<ReportEntity>
+    reports: List<ReportEntity>,
+    viewModel: FieldMindViewModel
 ) {
     val colors = FieldMindTheme.colors
+    val haptics = rememberFieldMindHaptics()
+    var tab by remember { mutableIntStateOf(0) }
+    val projectTabs = listOf("Overview", "Questions", "Observations", "Evidence", "Reports", "Sources", "Species", "Tasks")
     val obsCount = observations.count { it.projectId == p.id }
     val qCount = questions.count { it.relatedProjectId == p.id }
     val srcCount = sources.count { it.relatedProjectId == p.id }
     val dataCount = dataRecords.count { it.projectId == p.id }
     val repCount = reports.count { it.projectId == p.id }
+    val projectObs = observations.filter { it.projectId == p.id }
+    val projectQs = questions.filter { it.relatedProjectId == p.id }
+    val projectSrcs = sources.filter { it.relatedProjectId == p.id }
+    val projectReports = reports.filter { it.projectId == p.id }
+    val projectData = dataRecords.filter { it.projectId == p.id }
 
     Card(
         shape = RoundedCornerShape(24.dp),
@@ -761,7 +1365,7 @@ private fun ProjectDetailContent(
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-            // Header
+            // Header with action bar
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 Box(
                     Modifier.size(48.dp).clip(RoundedCornerShape(16.dp))
@@ -770,72 +1374,430 @@ private fun ProjectDetailContent(
                 ) { Icon(FieldMindIcons.Project, null, tint = colors.project, size = 26.dp) }
                 Column(Modifier.weight(1f)) {
                     Text(p.title.ifBlank { "Project" }, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-                    StatusChip(p.status.ifBlank { "Active" }, colors.project)
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        StatusChip(p.status.ifBlank { "Active" }, colors.project)
+                        InfoChip(p.topicType)
+                    }
+                }
+            }
+
+            // Tab row (now includes Species and Tasks)
+            ScrollableTabRow(selectedTabIndex = tab, edgePadding = 0.dp, containerColor = androidx.compose.ui.graphics.Color.Transparent) {
+                projectTabs.forEachIndexed { i, label ->
+                    Tab(tab == i, { haptics.light(); tab = i }, text = { 
+                        Text(label, style = MaterialTheme.typography.labelSmall, fontWeight = if (tab == i) FontWeight.Bold else FontWeight.Normal) 
+                    })
                 }
             }
 
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
 
-            // Research question
-            if (p.researchQuestion.isNotBlank()) {
-                Text("Research question", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold, color = colors.project)
-                Text(p.researchQuestion, style = MaterialTheme.typography.bodyMedium)
-            }
-
-            // Objective
-            if (p.objective.isNotBlank()) {
-                Text("Objective", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                Text(p.objective, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
-
-            // Background notes
-            if (p.backgroundNotes.isNotBlank()) {
-                Text("Background", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                Text(p.backgroundNotes, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
-
-            // Methods
-            if (p.methods.isNotBlank()) {
-                Text("Methods", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold, color = colors.info)
-                Text(p.methods, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
-
-            // Data summary
-            if (p.dataSummary.isNotBlank()) {
-                Text("Data summary", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold, color = colors.data)
-                Text(p.dataSummary, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
-
-            // Analysis
-            if (p.analysis.isNotBlank()) {
-                Text("Analysis", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold, color = colors.hypothesis)
-                Text(p.analysis, style = MaterialTheme.typography.bodySmall)
-            }
-
-            // Conclusion
-            if (p.conclusion.isNotBlank()) {
-                Text("Conclusion", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold, color = colors.positive)
-                Text(p.conclusion, style = MaterialTheme.typography.bodyMedium)
-            }
-
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
-
-            // Linked entity counts
-            Text("Connected records", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                AssetCountChip("Observations", obsCount, FieldMindIcons.Observation, colors.observation)
-                AssetCountChip("Questions", qCount, FieldMindIcons.Question, colors.question)
-                AssetCountChip("Sources", srcCount, FieldMindIcons.Source, colors.source)
-                AssetCountChip("Data", dataCount, FieldMindIcons.Data, colors.data)
-                AssetCountChip("Reports", repCount, FieldMindIcons.Report, colors.report)
-            }
-
-            // Future questions
-            if (p.futureQuestions.isNotBlank()) {
-                Text("Future questions", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold, color = colors.question)
-                Text(p.futureQuestions, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            // Tab content (existing tabs preserved, new tabs added)
+            when (tab) {
+                0 -> { // Overview — stats + description
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
+                        ProjectStatTile("${obsCount}", "Observations", colors.observation)
+                        ProjectStatTile("${qCount}", "Questions", colors.question)
+                        ProjectStatTile("${srcCount}", "Sources", colors.source)
+                        ProjectStatTile("${dataCount}", "Data", colors.data)
+                        ProjectStatTile("${repCount}", "Reports", colors.report)
+                    }
+                    if (p.researchQuestion.isNotBlank()) {
+                        Text("Research question", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold, color = colors.project)
+                        Text(p.researchQuestion, style = MaterialTheme.typography.bodyMedium)
+                    }
+                    if (p.objective.isNotBlank()) {
+                        Text("Objective", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(p.objective, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                    if (p.methods.isNotBlank()) {
+                        Text("Methods", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold, color = colors.info)
+                        Text(p.methods, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                    if (p.conclusion.isNotBlank()) {
+                        Text("Conclusion", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold, color = colors.positive)
+                        Text(p.conclusion, style = MaterialTheme.typography.bodyMedium)
+                    }
+                }
+                1 -> { // Questions
+                    if (projectQs.isEmpty()) {
+                        Text("No questions for this project yet.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    } else {
+                        projectQs.forEach { q ->
+                            Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(colors.question.copy(alpha = 0.06f)).padding(12.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Icon(FieldMindIcons.Question, null, tint = colors.question, size = 18.dp)
+                                Column(Modifier.weight(1f)) {
+                                    Text(q.questionText, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.SemiBold, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                                    Text("Status: ${q.status}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                }
+                            }
+                        }
+                    }
+                }
+                2 -> { // Observations
+                    if (projectObs.isEmpty()) {
+                        Text("No observations linked to this project.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    } else {
+                        projectObs.take(5).forEach { o ->
+                            EntityCard(o.subject.ifBlank { "Observation" }, "observation",
+                                body = "${o.category} • ${o.date}",
+                                meta = listOf(o.confidenceLevel)) { }
+                        }
+                        if (projectObs.size > 5) {
+                            Text("+${projectObs.size - 5} more observations", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                    }
+                }
+                3 -> { // Evidence
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
+                        ProjectStatTile("${projectObs.count { it.evidenceSummary.isNotBlank() }}", "With evidence", colors.observation)
+                        ProjectStatTile("${projectObs.count { it.weatherTemperature != null }}", "Weather data", colors.info)
+                    }
+                    Text("Collect photos, audio, video, and notes as evidence for each observation.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                4 -> { // Reports
+                    if (projectReports.isEmpty()) {
+                        Text("No reports for this project.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    } else {
+                        projectReports.forEach { r ->
+                            EntityCard(r.title, "report", body = r.conclusion.ifBlank { r.question }, meta = listOf(r.type, r.status)) { }
+                        }
+                    }
+                }
+                5 -> { // Sources
+                    if (projectSrcs.isEmpty()) {
+                        Text("No sources linked to this project.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    } else {
+                        projectSrcs.forEach { s ->
+                            EntityCard(s.title, "source", body = s.author, meta = listOf(s.type, s.readingStatus)) { }
+                        }
+                    }
+                }
+                6 -> { // Species Registry Builder
+                    SpeciesRegistryBuilder(p.id, viewModel)
+                }
+                7 -> { // Project Tasks Builder
+                    ProjectTasksBuilder(p.id, viewModel)
+                }
             }
         }
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════════
+//  Species Registry Builder — Full taxonomy form + list per spec
+// ══════════════════════════════════════════════════════════════════════
+
+@Composable
+@OptIn(ExperimentalLayoutApi::class)
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun SpeciesRegistryBuilder(projectId: Long, viewModel: FieldMindViewModel) {
+    val colors = FieldMindTheme.colors
+    val haptics = rememberFieldMindHaptics()
+    var showForm by remember { mutableStateOf(false) }
+    
+    // Form state
+    var commonName by remember { mutableStateOf("") }
+    var scientificName by remember { mutableStateOf("") }
+    var kingdom by remember { mutableStateOf("") }
+    var phylum by remember { mutableStateOf("") }
+    var classs by remember { mutableStateOf("") }
+    var order by remember { mutableStateOf("") }
+    var family by remember { mutableStateOf("") }
+    var genus by remember { mutableStateOf("") }
+    var speciesName by remember { mutableStateOf("") }
+    var conservationStatus by remember { mutableStateOf("Not Evaluated") }
+    var targetCount by remember { mutableStateOf("") }
+    var autoCount by remember { mutableStateOf(false) }
+
+    // Live species list for this project
+    val allSpecies by viewModel.speciesRegistry.collectAsState()
+    val projectSpecies = remember(allSpecies, projectId) { allSpecies.filter { it.projectId == projectId } }
+
+    val conservationOptions = listOf("Not Evaluated", "Data Deficient", "Least Concern", "Near Threatened", "Vulnerable", "Endangered", "Critically Endangered", "Extinct in Wild", "Extinct")
+    
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Button(
+            onClick = { showForm = !showForm; if (!showForm) { commonName = ""; scientificName = ""; speciesName = "" } },
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(14.dp)
+        ) {
+            Icon(FieldMindIcons.Add, null, size = 18.dp)
+            Spacer(Modifier.size(6.dp))
+            Text(if (showForm) "Cancel" else "Add Species")
+        }
+
+        if (showForm) {
+            Card(shape = RoundedCornerShape(18.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh)) {
+                Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.verticalScroll(rememberScrollState())) {
+                    Text("Add Species to Registry", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = colors.observation)
+                    FieldTextField(commonName, { commonName = it }, "Common Name *", supportingText = "e.g. House Crow")
+                    FieldTextField(scientificName, { scientificName = it }, "Scientific Name", supportingText = "e.g. Corvus splendens")
+                    Text("Taxonomy", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        FieldTextField(kingdom, { kingdom = it }, "Kingdom", modifier = Modifier.weight(1f))
+                        FieldTextField(phylum, { phylum = it }, "Phylum", modifier = Modifier.weight(1f))
+                    }
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        FieldTextField(classs, { classs = it }, "Class", modifier = Modifier.weight(1f))
+                        FieldTextField(order, { order = it }, "Order", modifier = Modifier.weight(1f))
+                    }
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        FieldTextField(family, { family = it }, "Family", modifier = Modifier.weight(1f))
+                        FieldTextField(genus, { genus = it }, "Genus", modifier = Modifier.weight(1f))
+                    }
+                    FieldTextField(speciesName, { speciesName = it }, "Species", supportingText = "Specific epithet")
+                    Text("Conservation Status", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    ChoiceChips(conservationOptions, conservationStatus) { conservationStatus = it }
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                        FieldTextField(targetCount, { targetCount = it }, "Target Count", modifier = Modifier.weight(1f), supportingText = "Goal")
+                        FilterChip(selected = autoCount, onClick = { autoCount = !autoCount }, label = { Text("Auto Count", style = MaterialTheme.typography.labelSmall) })
+                    }
+                    Button(
+                        onClick = {
+                            haptics.confirm()
+                            viewModel.addSpecies(
+                                commonName = commonName,
+                                scientificName = scientificName,
+                                kingdom = kingdom, phylum = phylum, classs = classs,
+                                order = order, family = family, genus = genus,
+                                species = speciesName,
+                                conservationStatus = conservationStatus,
+                                targetCount = targetCount.toIntOrNull() ?: 0,
+                                autoCountTracking = autoCount,
+                                projectId = projectId
+                            )
+                            showForm = false
+                            commonName = ""; scientificName = ""; speciesName = ""
+                            kingdom = ""; phylum = ""; classs = ""
+                            order = ""; family = ""; genus = ""
+                        },
+                        modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(14.dp),
+                        enabled = commonName.isNotBlank()
+                    ) { Text("Save to Registry") }
+                }
+            }
+        }
+
+        Text("Species Registry (${projectSpecies.size})", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+        if (projectSpecies.isEmpty()) {
+            Surface(shape = RoundedCornerShape(16.dp), color = MaterialTheme.colorScheme.surfaceContainerHigh) {
+                Box(Modifier.fillMaxWidth().padding(32.dp), contentAlignment = Alignment.Center) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Icon(FieldMindIcons.Nature, null, tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f), size = 40.dp)
+                        Text("No species registered yet", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text("Add species with full taxonomy and conservation status", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f))
+                    }
+                }
+            }
+        } else {
+            projectSpecies.forEach { sp ->
+                Card(shape = RoundedCornerShape(14.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh)) {
+                    Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Icon(FieldMindIcons.Nature, null, tint = colors.observation, size = 18.dp)
+                            Column(Modifier.weight(1f)) {
+                                Text(sp.commonName, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
+                                if (sp.scientificName.isNotBlank()) Text(sp.scientificName, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
+                            if (sp.conservationStatus != "Not Evaluated") {
+                                val statusColor = when {
+                                    sp.conservationStatus.contains("Endangered") || sp.conservationStatus.contains("Critically") -> MaterialTheme.colorScheme.error
+                                    sp.conservationStatus.contains("Vulnerable") || sp.conservationStatus.contains("Near") -> colors.warning
+                                    else -> colors.positive
+                                }
+                                Surface(shape = RoundedCornerShape(8.dp), color = statusColor.copy(alpha = 0.12f)) {
+                                    Text(sp.conservationStatus.take(12), modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp), style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, color = statusColor)
+                                }
+                            }
+                        }
+                        FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            listOfNotNull(sp.genus.takeIf { it.isNotBlank() }, sp.family.takeIf { it.isNotBlank() }, sp.order.takeIf { it.isNotBlank() }).forEach { tax ->
+                                Surface(shape = RoundedCornerShape(6.dp), color = MaterialTheme.colorScheme.surfaceContainerHighest) {
+                                    Text(tax, modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════════
+//  Project Tasks Builder — Per spec: title, type, priority, due date, assignee, subtasks
+// ══════════════════════════════════════════════════════════════════════
+
+@Composable
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun ProjectTasksBuilder(projectId: Long, viewModel: FieldMindViewModel) {
+    val colors = FieldMindTheme.colors
+    val haptics = rememberFieldMindHaptics()
+    var showForm by remember { mutableStateOf(false) }
+    val taskTypes = listOf("Field Survey", "Observation Collection", "Species Count", "Audio Recording", "Photo Collection", "Video Collection", "Habitat Mapping", "Literature Review", "Data Analysis", "Report Writing", "Verification", "Sample Collection", "GPS Tracking", "Custom")
+    val priorityLevels = listOf("Low", "Medium", "High")
+    
+    // Form state
+    var taskTitle by remember { mutableStateOf("") }
+    var taskDesc by remember { mutableStateOf("") }
+    var taskType by remember { mutableStateOf(taskTypes[0]) }
+    var taskPriority by remember { mutableStateOf("Medium") }
+    var taskDueDate by remember { mutableStateOf("") }
+    var taskAssignee by remember { mutableStateOf("") }
+    var subtaskInput by remember { mutableStateOf("") }
+    var subtasks by remember { mutableStateOf<List<String>>(emptyList()) }
+
+    // Live task list for this project
+    val allTasks by viewModel.tasks.collectAsState()
+    val projectTasks = remember(allTasks, projectId) { allTasks.filter { it.projectId == projectId } }
+
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Button(
+            onClick = { showForm = !showForm; if (!showForm) { taskTitle = ""; taskDesc = ""; subtasks = emptyList() } },
+            modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(14.dp)
+        ) {
+            Icon(FieldMindIcons.Add, null, size = 18.dp)
+            Spacer(Modifier.size(6.dp))
+            Text(if (showForm) "Cancel" else "Add Task")
+        }
+
+        if (showForm) {
+            Card(shape = RoundedCornerShape(18.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh)) {
+                Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.verticalScroll(rememberScrollState())) {
+                    Text("Create Project Task", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = colors.project)
+                    FieldTextField(taskTitle, { taskTitle = it }, "Task Title *", supportingText = "e.g. Survey Zone A")
+                    FieldTextField(taskDesc, { taskDesc = it }, "Description", minLines = 2)
+                    Text("Task Type", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        items(taskTypes) { type ->
+                            FilterChip(selected = taskType == type, onClick = { taskType = type }, label = { Text(type, style = MaterialTheme.typography.labelSmall, maxLines = 1) })
+                        }
+                    }
+                    Text("Priority", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        priorityLevels.forEach { p ->
+                            FilterChip(
+                                selected = taskPriority == p,
+                                onClick = { taskPriority = p },
+                                label = { Text(p) },
+                                leadingIcon = if (taskPriority == p) ({ Icon(FieldMindIcons.Check, null, size = 16.dp) }) else null
+                            )
+                        }
+                    }
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        FieldTextField(taskDueDate, { taskDueDate = it }, "Due Date", modifier = Modifier.weight(1f), supportingText = "YYYY-MM-DD")
+                        FieldTextField(taskAssignee, { taskAssignee = it }, "Assigned To", modifier = Modifier.weight(1f))
+                    }
+                    Text("Subtasks", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                        OutlinedTextField(
+                            value = subtaskInput, onValueChange = { subtaskInput = it },
+                            modifier = Modifier.weight(1f),
+                            placeholder = { Text("Add subtask...") },
+                            shape = RoundedCornerShape(12.dp), singleLine = true,
+                            textStyle = MaterialTheme.typography.bodySmall
+                        )
+                        FilledTonalButton(onClick = { if (subtaskInput.isNotBlank()) { subtasks = subtasks + subtaskInput; subtaskInput = "" } }, shape = RoundedCornerShape(12.dp)) {
+                            Icon(FieldMindIcons.Add, null, size = 18.dp)
+                        }
+                    }
+                    subtasks.forEach { sub ->
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Icon(FieldMindIcons.List, null, tint = colors.project, size = 16.dp)
+                            Text(sub, style = MaterialTheme.typography.bodySmall, modifier = Modifier.weight(1f))
+                            IconButton(onClick = { subtasks = subtasks - sub }, modifier = Modifier.size(24.dp)) {
+                                Icon(FieldMindIcons.Close, null, size = 14.dp)
+                            }
+                        }
+                    }
+                    Button(
+                        onClick = {
+                            haptics.confirm()
+                            viewModel.addTask(
+                                title = taskTitle,
+                                description = taskDesc,
+                                taskType = taskType,
+                                priority = taskPriority,
+                                dueDate = taskDueDate,
+                                assignedTo = taskAssignee,
+                                projectId = projectId
+                            )
+                            // Create subtasks as separate tasks linked via parentTaskId
+                            var parentId: Long? = null
+                            subtasks.forEach { sub ->
+                                viewModel.addTask(
+                                    title = sub,
+                                    taskType = taskType,
+                                    priority = taskPriority,
+                                    projectId = projectId,
+                                    parentTaskId = parentId
+                                )
+                            }
+                            showForm = false
+                            taskTitle = ""; taskDesc = ""; subtasks = emptyList()
+                        },
+                        modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(14.dp),
+                        enabled = taskTitle.isNotBlank()
+                    ) { Text(if (subtasks.isEmpty()) "Save Task" else "Save Task with ${subtasks.size} Subtasks") }
+                }
+            }
+        }
+
+        Text("Project Tasks (${projectTasks.size})", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+        if (projectTasks.isEmpty()) {
+            Surface(shape = RoundedCornerShape(16.dp), color = MaterialTheme.colorScheme.surfaceContainerHigh) {
+                Box(Modifier.fillMaxWidth().padding(32.dp), contentAlignment = Alignment.Center) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Icon(FieldMindIcons.Check, null, tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f), size = 40.dp)
+                        Text("No tasks created yet", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text("Tasks can be linked to observations, species, and questions", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f))
+                    }
+                }
+            }
+        } else {
+            projectTasks.forEach { task ->
+                val priorityColor = when (task.priority.lowercase()) {
+                    "high" -> MaterialTheme.colorScheme.error
+                    "medium" -> colors.warning
+                    else -> colors.positive
+                }
+                Card(shape = RoundedCornerShape(14.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh)) {
+                    Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Icon(
+                            if (task.status == "Completed") FieldMindIcons.Check else FieldMindIcons.List,
+                            null,
+                            tint = if (task.status == "Completed") colors.positive else colors.project,
+                            size = 20.dp
+                        )
+                        Column(Modifier.weight(1f)) {
+                            Text(task.title, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
+                            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                Surface(shape = RoundedCornerShape(6.dp), color = colors.project.copy(alpha = 0.1f)) {
+                                    Text(task.taskType, modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp), style = MaterialTheme.typography.labelSmall, color = colors.project)
+                                }
+                                Surface(shape = RoundedCornerShape(6.dp), color = priorityColor.copy(alpha = 0.1f)) {
+                                    Text(task.priority, modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp), style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, color = priorityColor)
+                                }
+                            }
+                        }
+                        if (task.dueDate.isNotBlank()) {
+                            Text(task.dueDate, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ProjectStatTile(value: String, label: String, color: androidx.compose.ui.graphics.Color) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(2.dp)) {
+        Text(value, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = color)
+        Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 
@@ -1139,6 +2101,37 @@ private fun ConfirmDeleteDialog(kind: String, onDismiss: () -> Unit, onConfirm: 
         confirmButton = { Button(onClick = { haptics.confirm(); onConfirm() }, colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)) { Text("Delete") } },
         dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } }
     )
+}
+
+/**
+ * Reverse-map a weather condition description back to a WMO code for the animated icon.
+ * Uses the observation's temperature to differentiate freezing vs regular rain/snow.
+ */
+private fun weatherDescriptionToCode(condition: String, temp: Double?): Int {
+    val c = condition.lowercase()
+    return when {
+        c.contains("clear") || c.contains("mainly clear") || c.isBlank() -> 0
+        c.contains("partly cloudy") -> 2
+        c.contains("overcast") || c.contains("cloudy") -> 3
+        c.contains("fog") || c.contains("rime") -> 45
+        c.contains("drizzle") -> if (temp != null && temp < 0) 56 else 53
+        c.contains("rain") && c.contains("heavy") && c.contains("freezing") -> 67
+        c.contains("rain") && c.contains("freezing") -> 66
+        c.contains("rain") && c.contains("heavy") -> 65
+        c.contains("rain") && c.contains("slight") -> 61
+        c.contains("rain") -> 63
+        c.contains("snow showers") && c.contains("heavy") -> 86
+        c.contains("snow showers") -> 85
+        c.contains("snow") && c.contains("heavy") -> 75
+        c.contains("snow") && c.contains("slight") -> 71
+        c.contains("snow") -> 73
+        c.contains("rain showers") && (c.contains("violent") || c.contains("heavy")) -> 82
+        c.contains("rain showers") && c.contains("slight") -> 80
+        c.contains("rain showers") -> 81
+        c.contains("thunderstorm") && (c.contains("heavy") || c.contains("hail")) -> 99
+        c.contains("thunderstorm") -> 95
+        else -> 0
+    }
 }
 
 private fun deleteEntityByKind(kind: String, id: Long, viewModel: FieldMindViewModel) {

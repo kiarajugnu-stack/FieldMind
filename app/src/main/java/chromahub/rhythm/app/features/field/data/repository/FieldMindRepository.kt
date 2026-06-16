@@ -112,4 +112,18 @@ class FieldMindRepository(private val dao: FieldMindDao) {
     suspend fun deleteResearchSession(id: Long) = dao.softDeleteResearchSession(id, System.currentTimeMillis())
     suspend fun linkSessionObservation(sessionId: Long, observationId: Long) = dao.linkSessionObservation(SessionObservationCrossRef(sessionId, observationId))
     fun observeObservationsForSession(sessionId: Long) = dao.observeObservationsForSession(sessionId)
+
+    // ── Species Registry ──
+    val species: Flow<List<SpeciesEntity>> = dao.observeSpecies()
+    fun observeSpeciesForProject(projectId: Long) = dao.observeSpeciesForProject(projectId)
+    suspend fun addSpecies(entity: SpeciesEntity): Long = dao.insertSpecies(entity)
+    suspend fun updateSpecies(entity: SpeciesEntity) = dao.updateSpecies(entity.copy(updatedAt = System.currentTimeMillis()))
+    suspend fun deleteSpecies(id: Long) = dao.softDeleteSpecies(id, System.currentTimeMillis())
+
+    // ── Tasks ──
+    val tasks: Flow<List<TaskEntity>> = dao.observeTasks()
+    fun observeTasksForProject(projectId: Long) = dao.observeTasksForProject(projectId)
+    suspend fun addTask(entity: TaskEntity): Long = dao.insertTask(entity)
+    suspend fun updateTask(entity: TaskEntity) = dao.updateTask(entity.copy(updatedAt = System.currentTimeMillis()))
+    suspend fun deleteTask(id: Long) = dao.softDeleteTask(id, System.currentTimeMillis())
 }

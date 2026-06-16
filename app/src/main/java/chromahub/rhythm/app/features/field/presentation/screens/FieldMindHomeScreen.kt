@@ -20,25 +20,30 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import android.net.Uri
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
+import androidx.compose.ui.window.SecureFlagPolicy
 import fieldmind.research.app.features.field.data.database.entity.*
 import fieldmind.research.app.features.field.data.location.FieldLocationProvider
 import fieldmind.research.app.features.field.data.weather.WeatherSnapshot
+import fieldmind.research.app.features.field.data.weather.WeatherUnitConverter
 import fieldmind.research.app.features.field.data.learn.LearnResource
 import fieldmind.research.app.features.field.data.learn.LearnLibrary
 import fieldmind.research.app.features.field.data.stats.FieldMindStreaks
 import fieldmind.research.app.features.field.presentation.components.*
 import fieldmind.research.app.features.field.presentation.navigation.FieldMindScreen
 import fieldmind.research.app.features.field.presentation.theme.FieldMindTheme
+import fieldmind.research.app.features.field.presentation.viewmodel.DraftEvidenceAttachment
 import fieldmind.research.app.features.field.presentation.viewmodel.FieldMindViewModel
 import fieldmind.research.app.shared.presentation.components.icons.Icon
 import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon
 import androidx.compose.ui.platform.LocalContext
-
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -47,6 +52,8 @@ import java.time.LocalTime
 import java.time.temporal.ChronoUnit
 import kotlin.math.floor
 import kotlin.math.roundToInt
+import fieldmind.research.app.features.field.presentation.components.ObservationsTimelineSection
+import fieldmind.research.app.features.field.presentation.components.ObservationStatsDashboard
 
 // ══════════════════════════════════════════════════════════════════════
 //  Today (Home) — Animated weather centerpiece + research dashboard
@@ -60,6 +67,17 @@ fun HomeScreen(
     onOpenDetail: (String, Long) -> Unit = { _, _ -> },
     onOpenReader: (String, String) -> Unit = { _, _ -> }
 ) {
+    // ── Camera-first capture state ──
+    var showCamera by remember { mutableStateOf(false) }
+    var capturedPhotoUri by remember { mutableStateOf<String?>(null) }
+    var capturedPhotoMime by remember { mutableStateOf<String?>(null) }
+    var showCategoryPicker by remember { mutableStateOf(false) }
+    var selectedCaptureCategory by remember { mutableStateOf("Bird") }
+    
+    // Centered snackbar host state
+    val captureSnackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
+
     val observations by viewModel.observations.collectAsState()
     val notes by viewModel.notes.collectAsState()
     val questions by viewModel.questions.collectAsState()
@@ -92,6 +110,8 @@ fun HomeScreen(
     val weatherShowWind by viewModel.fieldSettings.weatherShowWind.collectAsState()
     val weatherShowCloud by viewModel.fieldSettings.weatherShowCloudCover.collectAsState()
     val weatherShowPressure by viewModel.fieldSettings.weatherShowPressure.collectAsState()
+    val tempUnit by viewModel.fieldSettings.tempUnit.collectAsState()
+    val windSpeedUnit by viewModel.fieldSettings.windSpeedUnit.collectAsState()
 
     // ── Weather state (hoisted outside LazyColumn so it persists across scroll) ──
     var homeCurrentWeather by remember { mutableStateOf<WeatherSnapshot?>(null) }
@@ -100,13 +120,21 @@ fun HomeScreen(
     var homePlaceName by remember { mutableStateOf<String?>(null) }
     val context = LocalContext.current
 
-    // Initial fetch + auto-refresh every 30 minutes
+    // Initial fetch on first composition + auto-refresh at configured interval
+    // Uses cooldown in ViewModel so navigating away and back doesn't re-fetch
     LaunchedEffect(Unit) {
-        homeWeatherLoading = true
-        homeCurrentWeather = viewModel.refreshWeatherFromLocation()
-        homeWeatherError = homeCurrentWeather == null
-        homeWeatherLoading = false
-        
+        // First fetch on fresh app open (forceRefresh = true only once)
+        val cached = viewModel.lastWeatherSnapshot
+        if (cached == null) {
+            homeWeatherLoading = true
+            homeCurrentWeather = viewModel.refreshWeatherFromLocation(forceRefresh = true)
+            homeWeatherError = homeCurrentWeather == null
+            homeWeatherLoading = false
+        } else {
+            homeCurrentWeather = cached
+            homeWeatherError = false
+        }
+
         val locProvider = runCatching { FieldLocationProvider(context) }.getOrNull()
         if (locProvider != null && locProvider.hasAnyLocationPermission()) {
             locProvider.lastKnownLocation()?.let { loc ->
@@ -116,6 +144,7 @@ fun HomeScreen(
             }
         }
 
+        // Periodic refresh at configured interval (respects cooldown internally)
         while (true) {
             delay(30 * 60 * 1000L)
             val snapshot = viewModel.refreshWeatherFromLocation()
@@ -147,106 +176,338 @@ fun HomeScreen(
         homeCurrentWeather?.let { computeFieldworkNudge(it) } ?: ""
     }
 
-    LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(20.dp, 0.dp, 20.dp, 96.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
-        // ── Hero Section ──
-        item { HomeHeroSection(todayCount, goal, currentStreak, observations.size, questions.size, onOpenSettings, onNavigate) }
+    Box(Modifier.fillMaxSize()) {
+        LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(20.dp, 0.dp, 20.dp, 96.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
+            // ── Hero Section ──
+            item { HomeHeroSection(todayCount, goal, currentStreak, observations.size, questions.size, onOpenSettings, onNavigate) { showCamera = true } }
 
-        // ── Weather as animated centerpiece ──
-        item {
-            LiveWeatherDashboardWidget(
-                viewModel = viewModel,
-                observations = observations,
-                onNavigate = onNavigate,
-                currentWeather = homeCurrentWeather,
-                weatherLoading = homeWeatherLoading,
-                weatherError = homeWeatherError,
-                placeName = homePlaceName,
-                onRefresh = { snapshot ->
-                    homeCurrentWeather = snapshot
-                    homeWeatherError = snapshot == null
-                },
-                showTemp = weatherShowTemp,
-                showCondition = weatherShowCondition,
-                showHumidity = weatherShowHumidity,
-                showWind = weatherShowWind,
-                showCloudCover = weatherShowCloud,
-                showPressure = weatherShowPressure,
-                moonPhase = moonPhase,
-                conditionsNudge = conditionsNudge,
-                sunrise = homeCurrentWeather?.sunrise,
-                sunset = homeCurrentWeather?.sunset
-            )
-        }
-
-        // ── Daily Goal with delta ──
-        item { DailyGoalCard(todayCount, goal, currentStreak, deltaLabel) { onNavigate(FieldMindScreen.Observe) } }
-
-        // ── Research Session CTA ──
-        item { ResearchSessionCtaCard(
-                lastSessionLabel = if (lastSession != null) "Resume your last session" else null,
-                activeSessionName = researchSessions.firstOrNull { it.status == "Active" }?.name,
-                timerMs = 0L,
-                onStartSession = { onNavigate(FieldMindScreen.ResearchSession) }
-            ) }
-
-        // ── Widget Grid ──
-        item { SectionHeader("Research areas", "Quick overview of your work") }
-        item { HomeWidgetGrid(observations, notes, questions, sources, projects, reports, data) { onNavigate(it) } }
-        item { HomeDataOptionsCard(data, onNavigate) }
-        
-        // ── Recent Captures ──
-        if (observations.isNotEmpty()) {
-            item { RecentCapturesCard(observations, onOpenDetail) }
-        }
-
-        // ── Learning & Reading ──
-        item { RecommendedLearningCard(recommendations, onOpenReader, onSeeAll = { onNavigate(FieldMindScreen.Learn) }) }
-        item { ReadingReviewCard(sources, flashcards, onNavigate) }
-
-        // ── Observation Timeline ──
-        item {
-            ObservationTimelinePreview(
-                observations = observations.sortedByDescending { it.timestamp },
-                notes = notes.sortedByDescending { it.updatedAt },
-                onOpenDetail = onOpenDetail
-            )
-        }
-
-        // ── Session Observations ──
-        if (observations.isNotEmpty()) {
+            // ── Weather as animated centerpiece ──
             item {
-                val sessionObs = remember(observations, researchSessions) {
-                    val map = mutableMapOf<String, MutableList<ObservationEntity>>()
-                    observations.filter { it.tags.contains("research-session") }
-                        .sortedByDescending { it.timestamp }
-                        .forEach { obs ->
-                            val key = obs.moodOrContext.ifBlank { "Session ${obs.date}" }
-                            map.getOrPut(key) { mutableListOf() }.add(obs)
+                LiveWeatherDashboardWidget(
+                    viewModel = viewModel,
+                    observations = observations,
+                    onNavigate = onNavigate,
+                    currentWeather = homeCurrentWeather,
+                    weatherLoading = homeWeatherLoading,
+                    weatherError = homeWeatherError,
+                    placeName = homePlaceName,
+                    onRefresh = { snapshot ->
+                        homeCurrentWeather = snapshot
+                        homeWeatherError = snapshot == null
+                    },
+                    showTemp = weatherShowTemp,
+                    showCondition = weatherShowCondition,
+                    showHumidity = weatherShowHumidity,
+                    showWind = weatherShowWind,
+                    showCloudCover = weatherShowCloud,
+                    showPressure = weatherShowPressure,
+                    tempUnit = tempUnit,
+                    windSpeedUnit = windSpeedUnit,
+                    moonPhase = moonPhase,
+                    conditionsNudge = conditionsNudge,
+                    sunrise = homeCurrentWeather?.sunrise,
+                    sunset = homeCurrentWeather?.sunset
+                )
+            }
+
+            // ── Daily Goal with delta ──
+            item { DailyGoalCard(todayCount, goal, currentStreak, deltaLabel) { onNavigate(FieldMindScreen.Observe) } }
+
+            // ── Research Session CTA ──
+            item { ResearchSessionCtaCard(
+                    lastSessionLabel = if (lastSession != null) "Resume your last session" else null,
+                    activeSessionName = researchSessions.firstOrNull { it.status == "Active" }?.name,
+                    timerMs = 0L,
+                    onStartSession = { onNavigate(FieldMindScreen.ResearchSession) }
+                ) }
+
+            // ── Widget Grid ──
+            item { SectionHeader("Research areas", "Quick overview of your work") }
+            item { HomeWidgetGrid(observations, notes, questions, sources, projects, reports, data) { onNavigate(it) } }
+            item { HomeDataOptionsCard(data, onNavigate) }
+            
+            // ── Recent Captures ──
+            if (observations.isNotEmpty()) {
+                item { RecentCapturesCard(observations, onOpenDetail) }
+            }
+
+            // ── Learning & Reading ──
+            item { RecommendedLearningCard(recommendations, onOpenReader, onSeeAll = { onNavigate(FieldMindScreen.Learn) }) }
+            item { ReadingReviewCard(sources, flashcards, onNavigate) }
+
+            // ── Observations Timeline — Full redesign with list/gallery/map/calendar ──
+            item {
+                Card(
+                    shape = RoundedCornerShape(24.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                            Icon(FieldMindIcons.Calendar, null, tint = FieldMindTheme.colors.project, size = 22.dp)
+                            Column(Modifier.weight(1f)) {
+                                Text("Observation timeline", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                                Text("Search, filter, and explore your observations", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
                         }
-                    map.toMap()
-                }
-                if (sessionObs.isNotEmpty()) {
-                    SessionObservationsCard(sessionObs, researchSessions, onOpenDetail, onNavigate)
+                        ObservationsTimelineSection(
+                            observations = observations,
+                            viewModel = viewModel,
+                            onOpenDetail = onOpenDetail,
+                            onStartCapture = { onNavigate(FieldMindScreen.Observe) },
+                            onOpenMap = { onNavigate(FieldMindScreen.MapScreen) }
+                        )
+                    }
                 }
             }
+
+            // ── Observation Statistics Dashboard ──
+            if (observations.isNotEmpty()) {
+                item {
+                    ObservationStatsDashboard(observations = observations)
+                }
+            }
+
+            // ── Session Observations ──
+            if (observations.isNotEmpty()) {
+                item {
+                    val sessionObs = remember(observations, researchSessions) {
+                        val map = mutableMapOf<String, MutableList<ObservationEntity>>()
+                        observations.filter { it.tags.contains("research-session") }
+                            .sortedByDescending { it.timestamp }
+                            .forEach { obs ->
+                                val key = obs.moodOrContext.ifBlank { "Session ${obs.date}" }
+                                map.getOrPut(key) { mutableListOf() }.add(obs)
+                            }
+                        map.toMap()
+                    }
+                    if (sessionObs.isNotEmpty()) {
+                        SessionObservationsCard(sessionObs, researchSessions, onOpenDetail, onNavigate)
+                    }
+                }
+            }
+
+            // ── Current Project ──
+            if (activeProject != null) {
+                item {
+                    CurrentProjectResearchCard(
+                        project = activeProject,
+                        observations = observations,
+                        sources = sources,
+                        data = data,
+                        hypotheses = hypotheses,
+                        reports = reports,
+                        onOpen = { onOpenDetail("project", activeProject.id) }
+                    )
+                }
+            }
+
+            item { Spacer(Modifier.height(24.dp)) }
         }
 
-        // ── Current Project ──
-        if (activeProject != null) {
-            item {
-                CurrentProjectResearchCard(
-                    project = activeProject,
-                    observations = observations,
-                    sources = sources,
-                    data = data,
-                    hypotheses = hypotheses,
-                    reports = reports,
-                    onOpen = { onOpenDetail("project", activeProject.id) }
+        // ── Centered Snackbar for capture confirmation ──
+        SnackbarHost(
+            hostState = captureSnackbarHostState,
+            modifier = Modifier.align(Alignment.Center),
+            snackbar = { data ->
+                Surface(
+                    shape = RoundedCornerShape(20.dp),
+                    color = MaterialTheme.colorScheme.inverseSurface,
+                    tonalElevation = 6.dp,
+                    shadowElevation = 8.dp
+                ) {
+                    Row(
+                        Modifier.padding(horizontal = 24.dp, vertical = 14.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        Icon(
+                            FieldMindIcons.Check,
+                            null,
+                            tint = MaterialTheme.colorScheme.inverseOnSurface,
+                            size = 22.dp
+                        )
+                        Text(
+                            data.visuals.message,
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.inverseOnSurface
+                        )
+                    }
+                }
+            }
+        )
+    }
+
+    // ── Camera Dialog (full-screen, opens immediately) ──
+    if (showCamera) {
+        Dialog(
+            onDismissRequest = { showCamera = false },
+            properties = DialogProperties(
+                usePlatformDefaultWidth = false,
+                securePolicy = SecureFlagPolicy.SecureOn
+            )
+        ) {
+            Box(Modifier.fillMaxSize().background(Color.Black)) {
+                FieldMindCameraV2(
+                    onPhotoCaptured = { uri, mime ->
+                        capturedPhotoUri = uri
+                        capturedPhotoMime = mime
+                        showCamera = false
+                        scope.launch {
+                            captureSnackbarHostState.showSnackbar("Photo captured")
+                        }
+                        // Delay slightly for snackbar visibility, then show category picker
+                        scope.launch {
+                            delay(600)
+                            showCategoryPicker = true
+                        }
+                    },
+                    onDismiss = {
+                        showCamera = false
+                    }
                 )
             }
         }
+    }
 
-        item { Spacer(Modifier.height(24.dp)) }
+    // ── Category Picker Dialog ──
+    if (showCategoryPicker) {
+        Dialog(
+            onDismissRequest = { showCategoryPicker = false },
+            properties = DialogProperties(usePlatformDefaultWidth = false)
+        ) {
+            Box(
+                Modifier.fillMaxSize(),
+                contentAlignment = Alignment.BottomCenter
+            ) {
+                // Semi-transparent scrim
+                Box(
+                    Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.4f))
+                        .clickable { showCategoryPicker = false }
+                )
+                
+                // Category picker bottom sheet
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp),
+                    color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                    tonalElevation = 4.dp
+                ) {
+                    Column(
+                        Modifier.padding(24.dp),
+                        verticalArrangement = Arrangement.spacedBy(18.dp)
+                    ) {
+                        // Header
+                        Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
+                            Box(
+                                Modifier.width(40.dp).height(4.dp)
+                                    .clip(RoundedCornerShape(2.dp))
+                                    .background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f))
+                            )
+                            Spacer(Modifier.height(12.dp))
+                            Text(
+                                "What category?",
+                                style = MaterialTheme.typography.headlineSmall,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Text(
+                                "Categorize your capture to organize your research",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+
+                        // Category grid
+                        val categories = listOf(
+                            "Bird" to FieldMindIcons.Nature,
+                            "Mammal" to FieldMindIcons.Nature,
+                            "Plant" to FieldMindIcons.Nature,
+                            "Insect" to FieldMindIcons.Nature,
+                            "Water" to FieldMindIcons.Water,
+                            "Soil" to FieldMindIcons.Water,
+                            "Weather" to FieldMindIcons.Weather,
+                            "Other" to FieldMindIcons.Water
+                        )
+                        
+                        val colors = FieldMindTheme.colors
+
+                        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                            categories.chunked(2).forEach { row ->
+                                Row(
+                                    Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                                ) {
+                                    row.forEach { (name, icon) ->
+                                        val isSelected = selectedCaptureCategory == name
+                                        val accent = colors.accentFor(name)
+                                        Card(
+                                            modifier = Modifier.weight(1f).clickable {
+                                                selectedCaptureCategory = name
+                                            },
+                                            shape = RoundedCornerShape(18.dp),
+                                            colors = CardDefaults.cardColors(
+                                                containerColor = if (isSelected) accent.copy(alpha = 0.18f) else MaterialTheme.colorScheme.surfaceContainerHighest
+                                            ),
+                                            border = if (isSelected) androidx.compose.foundation.BorderStroke(2.dp, accent) else null,
+                                            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                                        ) {
+                                            Column(
+                                                Modifier.padding(16.dp),
+                                                horizontalAlignment = Alignment.CenterHorizontally,
+                                                verticalArrangement = Arrangement.spacedBy(6.dp)
+                                            ) {
+                                                Box(
+                                                    Modifier.size(40.dp).clip(RoundedCornerShape(12.dp))
+                                                        .background(
+                                                            if (isSelected) accent.copy(alpha = 0.22f)
+                                                            else MaterialTheme.colorScheme.surfaceContainerLow
+                                                        ),
+                                                    contentAlignment = Alignment.Center
+                                                ) {
+                                                    Icon(
+                                                        icon,
+                                                        null,
+                                                        tint = if (isSelected) accent else MaterialTheme.colorScheme.onSurfaceVariant,
+                                                        size = 22.dp
+                                                    )
+                                                }
+                                                Text(
+                                                    name,
+                                                    style = MaterialTheme.typography.labelMedium,
+                                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                                    color = if (isSelected) accent else MaterialTheme.colorScheme.onSurfaceVariant
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        // Confirm button
+                        Button(
+                            onClick = {
+                                showCategoryPicker = false
+                                // Navigate to ObserveScreen with photo URI
+                                onNavigate(FieldMindScreen.Observe)
+                            },
+                            modifier = Modifier.fillMaxWidth().height(52.dp),
+                            shape = RoundedCornerShape(18.dp)
+                        ) {
+                            Icon(FieldMindIcons.Observation, null, size = 18.dp)
+                            Spacer(Modifier.size(8.dp))
+                            Text(
+                                "Create $selectedCaptureCategory observation",
+                                style = MaterialTheme.typography.labelLarge,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -262,7 +523,8 @@ private fun HomeHeroSection(
     totalObs: Int,
     totalQuestions: Int,
     onOpenSettings: () -> Unit,
-    onNavigate: (FieldMindScreen) -> Unit
+    onNavigate: (FieldMindScreen) -> Unit,
+    onCapture: () -> Unit = {}
 ) {
     val colors = FieldMindTheme.colors
     Surface(
@@ -331,7 +593,7 @@ private fun HomeHeroSection(
                     label = "Capture",
                     accent = colors.observation,
                     modifier = Modifier.weight(1f)
-                ) { onNavigate(FieldMindScreen.Observe) }
+                ) { onCapture() }
                 HeroActionChip(
                     icon = FieldMindIcons.Note,
                     label = "Note",
@@ -444,6 +706,8 @@ private fun LiveWeatherDashboardWidget(
     showWind: Boolean = true,
     showCloudCover: Boolean = true,
     showPressure: Boolean = true,
+    tempUnit: String = "Celsius",
+    windSpeedUnit: String = "km/h",
     moonPhase: String = "",
     conditionsNudge: String = "",
     sunrise: String? = null,
@@ -458,18 +722,16 @@ private fun LiveWeatherDashboardWidget(
     // loading spinner ONLY if there's no data yet (first load)
     val showLoadingSpinner = weatherLoading && currentWeather == null
 
-    // Weather-based gradient
-    val weatherGradient = remember(currentWeather) {
-        val temp = currentWeather?.temperature ?: 20.0
-        val colors = when {
-            temp < 0 -> listOf(Color(0xFF1A237E), Color(0xFF42A5F5)) // Freezing → deep blue
-            temp < 10 -> listOf(Color(0xFF1565C0), Color(0xFF64B5F6))  // Cold → blue
-            temp < 20 -> listOf(Color(0xFF0D47A1), Color(0xFF66BB6A))  // Cool → blue-green
-            temp < 30 -> listOf(Color(0xFFE65100), Color(0xFFFFB74D))  // Warm → orange
-            else -> listOf(Color(0xFFBF360C), Color(0xFFE57373))       // Hot → deep red
-        }
-        Brush.horizontalGradient(colors)
+    // Temperature-based palette for display
+    val tempDisplay = currentWeather?.temperature ?: 20.0
+    val displayColors = when {
+        tempDisplay < 0 -> listOf(Color(0xFF1A237E), Color(0xFF42A5F5))
+        tempDisplay < 10 -> listOf(Color(0xFF1565C0), Color(0xFF64B5F6))
+        tempDisplay < 20 -> listOf(Color(0xFF0D47A1), Color(0xFF66BB6A))
+        tempDisplay < 30 -> listOf(Color(0xFFE65100), Color(0xFFFFB74D))
+        else -> listOf(Color(0xFFBF360C), Color(0xFFE57373))
     }
+    val weatherGradient = Brush.horizontalGradient(displayColors)
 
     val conditionColor = remember(currentWeather) {
         val code = currentWeather?.weatherCode ?: 0
@@ -500,15 +762,35 @@ private fun LiveWeatherDashboardWidget(
             )
             .clickable { onNavigate(FieldMindScreen.WeatherDatabase) },
         shape = RoundedCornerShape(28.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-        ),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
-        Column(
-            Modifier.fillMaxWidth().padding(18.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+        Box(
+            modifier = Modifier.fillMaxWidth()
         ) {
+            // Animated weather scene as background
+            if (currentWeather != null) {
+                Box(
+                    modifier = Modifier
+                        .matchParentSize()
+                        .then(
+                            Modifier.clip(RoundedCornerShape(28.dp))
+                        )
+                ) {
+                    AnimatedWeatherScene(
+                        weatherCode = currentWeather!!.weatherCode,
+                        temperature = currentWeather!!.temperature,
+                        sunrise = currentWeather!!.sunrise,
+                        sunset = currentWeather!!.sunset,
+                        compact = false
+                    )
+                }
+            }
+
+            // Content overlay
+            Column(
+                Modifier.fillMaxWidth().padding(18.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
             // ── Header row with live indicator ──
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -569,15 +851,9 @@ private fun LiveWeatherDashboardWidget(
                             weatherLoading && currentWeather != null -> "Refreshing…"
                             weatherLoading -> "Loading…"
                             currentWeather != null -> {
+                                // Subtitle shows condition description only (temp shown below in main row)
                                 val desc = currentWeather?.weatherDescription ?: ""
-                                val temp = currentWeather?.temperature?.let { "%.0f°".format(it) } ?: ""
-                                buildString {
-                                    if (showCondition && desc.isNotBlank()) append(desc)
-                                    if (showTemp && temp.isNotBlank()) {
-                                        if (isNotEmpty()) append(" • ")
-                                        append(temp)
-                                    }
-                                }
+                                if (showCondition && desc.isNotBlank()) desc else "Weather data available"
                             }
                             weatherError -> "Enable location for live weather"
                             else -> "Weather unavailable"
@@ -626,14 +902,14 @@ private fun LiveWeatherDashboardWidget(
                     if (showTemp) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Text(
-                                "${w.temperature?.let { "%.0f°".format(it) } ?: "--"}",
+                                WeatherUnitConverter.formatTemp(w.temperature, tempUnit),
                                 style = MaterialTheme.typography.displaySmall.copy(
                                     fontWeight = FontWeight.Bold,
                                     brush = weatherGradient
                                 )
                             )
                             Text(
-                                "Feels like",
+                                "Temperature",
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -684,13 +960,13 @@ private fun LiveWeatherDashboardWidget(
                         w.windSpeed?.let { wind ->
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                 Icon(
-                                    FieldMindIcons.Flag,
+                                    FieldMindIcons.windIconForSpeed(wind),
                                     null,
                                     tint = colors.warning,
                                     size = 18.dp
                                 )
                                 Text(
-                                    "%.1f km/h".format(wind),
+                                    WeatherUnitConverter.formatWind(wind, windSpeedUnit),
                                     style = MaterialTheme.typography.bodySmall,
                                     fontWeight = FontWeight.SemiBold,
                                     color = colors.warning
@@ -761,19 +1037,24 @@ private fun LiveWeatherDashboardWidget(
                     ) {
                         sunrise?.let { s ->
                             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                                Icon(FieldMindIcons.Weather, null, tint = colors.warning, size = 14.dp)
-                                Text("Sunrise $s", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Icon(FieldMindIcons.Sunrise, null, tint = colors.warning, size = 14.dp)
+                                Text("Sunrise ${formatTimeFromIso(s)}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
                         }
                         sunset?.let { s ->
                             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                                Icon(FieldMindIcons.Weather, null, tint = colors.data, size = 14.dp)
-                                Text("Sunset $s", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Icon(FieldMindIcons.Sunset, null, tint = colors.data, size = 14.dp)
+                                Text("Sunset ${formatTimeFromIso(s)}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
                         }
                         if (moonPhase.isNotBlank()) {
                             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                                Text("🌙", style = MaterialTheme.typography.labelSmall)
+                                Icon(
+                                    moonPhaseIcon(moonPhase),
+                                    null,
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    size = 14.dp
+                                )
                                 Text(moonPhase, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
                         }
@@ -850,6 +1131,7 @@ private fun LiveWeatherDashboardWidget(
             }
         }
     }
+}
 }
 
 private fun weatherConditionIcon(code: Int): MaterialSymbolIcon {
@@ -1652,14 +1934,38 @@ private fun getMoonPhase(date: LocalDate): String {
     val lunations = daysSince / 29.53058770576
     val phase = lunations - floor(lunations)
     return when {
-        phase < 0.03 || phase >= 0.97 -> "🌑 New"
-        phase < 0.20 -> "🌒 Waxing crescent"
-        phase < 0.28 -> "🌓 First quarter"
-        phase < 0.45 -> "🌔 Waxing gibbous"
-        phase < 0.53 -> "🌕 Full"
-        phase < 0.68 -> "🌖 Waning gibbous"
-        phase < 0.78 -> "🌗 Last quarter"
-        else -> "🌘 Waning crescent"
+        phase < 0.03 || phase >= 0.97 -> "New moon"
+        phase < 0.20 -> "Waxing crescent"
+        phase < 0.28 -> "First quarter"
+        phase < 0.45 -> "Waxing gibbous"
+        phase < 0.53 -> "Full moon"
+        phase < 0.68 -> "Waning gibbous"
+        phase < 0.78 -> "Last quarter"
+        else -> "Waning crescent"
+    }
+}
+
+private fun moonPhaseIcon(phase: String): MaterialSymbolIcon = when {
+    phase.startsWith("New") -> FieldMindIcons.MoonNew
+    phase.startsWith("Waxing crescent") || phase.startsWith("Waning crescent") -> FieldMindIcons.MoonCrescent
+    phase.startsWith("First") || phase.startsWith("Last") -> FieldMindIcons.MoonQuarter
+    phase.startsWith("Waxing gibbous") || phase.startsWith("Waning gibbous") -> FieldMindIcons.MoonGibbous
+    phase.startsWith("Full") -> FieldMindIcons.MoonFull
+    else -> FieldMindIcons.MoonNew
+}
+
+private fun formatTimeFromIso(isoString: String): String {
+    // Input format: "2026-06-15T05:03" or "2026-06-15T18:27"
+    return try {
+        // Extract time portion (after T) and take just the HH:mm part
+        val tIndex = isoString.indexOf('T')
+        if (tIndex >= 0 && tIndex + 6 <= isoString.length) {
+            isoString.substring(tIndex + 1, tIndex + 6)
+        } else {
+            isoString.takeLast(5)
+        }
+    } catch (_: Exception) {
+        isoString
     }
 }
 

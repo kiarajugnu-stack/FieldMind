@@ -20,6 +20,14 @@ dependencyResolutionManagement {
         google()
         mavenCentral()
         maven { url = uri("https://jitpack.io") }
+        // Mapbox Maven repository (requires access token in gradle.properties)
+        maven {
+            url = uri("https://api.mapbox.com/downloads/v2/releases/maven")
+            credentials {
+                username = "mapbox"
+                password = providers.gradleProperty("mapbox_downloads_token").orElse("").get()
+            }
+        }
     }
 }
 

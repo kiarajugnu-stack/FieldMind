@@ -403,7 +403,11 @@ fun InsightsScreen(
             if (mapPoints.isNotEmpty()) {
                 item {
                     InsightCard("Field map (${mapPoints.size} points)", FieldMindIcons.Map) {
-                        OsmMap(points = mapPoints, markerColor = colors.observation)
+                        MaplibreMapView(
+                            points = mapPoints,
+                            showEmptyState = false,
+                            modifier = Modifier.fillMaxWidth().height(250.dp)
+                        )
                         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                             TextButton(onClick = { onNavigate(FieldMindScreen.MapScreen) }) {
                                 Text("Open full map")

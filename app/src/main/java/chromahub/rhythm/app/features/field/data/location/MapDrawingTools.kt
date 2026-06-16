@@ -1,16 +1,6 @@
 package fieldmind.research.app.features.field.data.location
 
-import android.graphics.Canvas
 import android.graphics.Color
-import android.graphics.Paint
-import android.graphics.Point
-import android.view.MotionEvent
-import org.osmdroid.util.GeoPoint
-import org.osmdroid.views.MapView
-import org.osmdroid.views.overlay.Marker
-import org.osmdroid.views.overlay.Overlay
-import org.osmdroid.views.overlay.Polygon
-import org.osmdroid.views.overlay.Polyline
 import java.util.UUID
 
 /**
@@ -31,6 +21,8 @@ enum class DrawingMode {
 
 /**
  * A persisted geometry overlay on the map.
+ * These are rendered by Mapbox annotation managers (PointAnnotationManager,
+ * PolylineAnnotationManager, PolygonAnnotationManager) in the Mapbox map view.
  */
 sealed class MapOverlay(
     open val id: String = UUID.randomUUID().toString(),
@@ -65,29 +57,10 @@ sealed class MapOverlay(
 }
 
 /**
- * Renders [MapOverlay] objects onto an osmdroid [MapView] using osmdroid's built-in
- * [Marker], [Polyline], and [Polygon] overlay types.
+ * Handles serialization/deserialization of MapOverlay objects for persistence.
+ * Also provides color helper and track overlay creation.
  */
-object MapOverlayRenderer {
-
-    /**
-     * Apply a list of [MapOverlay]s to the given [MapView].
-     * Removes any previously-applied drawing overlays first, then adds fresh ones.
-     */
-    fun applyOverlays(mapView: MapView, overlays: List<MapOverlay>) {
-        // Remove our custom drawing overlays (keep osmdroid built-ins like my-location)
-        mapView.overlays.removeAll { it is DrawingOverlayTag }
-        mapView.overlays.removeAll { it is Marker && (it.relatedObject as? String)?.startsWith("drawing_") == true }
-
-        overlays.forEach { overlay ->
-            when (overlay) {
-                is MapOverlay.PointOverlay -> addPointMarker(mapView, overlay)
-                is MapOverlay.LineOverlay -> addPolyline(mapView, overlay)
-                is MapOverlay.PolygonOverlay -> addPolygon(mapView, overlay)
-            }
-        }
-        mapView.invalidate()
-    }
+object MapOverlayUtils {
 
     /**
      * Converts a [MapOverlay] list to a JSON-like string for persistence.
@@ -143,184 +116,22 @@ object MapOverlayRenderer {
         }
     }
 
-    private fun addPointMarker(mapView: MapView, overlay: MapOverlay.PointOverlay) {
-        val marker = Marker(mapView).apply {
-            position = GeoPoint(overlay.latitude, overlay.longitude)
-            setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_CENTER)
-            title = overlay.label.ifBlank { "Site point" }
-            snippet = "%.5f, %.5f".format(overlay.latitude, overlay.longitude)
-            icon = mapView.context.getDrawable(android.R.drawable.ic_menu_mylocation)?.let { drawable ->
-                // Tint with overlay color
-                val tinted = drawable.mutate()
-                tinted.setTint(overlay.color.toInt())
-                tinted
-            }
-            relatedObject = "drawing_${overlay.id}"
-        }
-        mapView.overlays.add(marker)
-    }
+    /**
+     * Convert a Long ARGB color to android.graphics.Color int.
+     */
+    fun colorToInt(colorLong: Long): Int = colorLong.toInt()
 
-    private fun addPolyline(mapView: MapView, overlay: MapOverlay.LineOverlay) {
-        if (overlay.points.size < 2) return
-        val polyline = Polyline().apply {
-            setPoints(overlay.points.map { GeoPoint(it.first, it.second) })
-            outlinePaint.apply {
-                color = overlay.color.toInt()
-                strokeWidth = 6f
-                style = Paint.Style.STROKE
-                isAntiAlias = true
-            }
-            title = overlay.label.ifBlank { "Transect line" }
-            relatedObject = DrawingOverlayTag("line_${overlay.id}")
-        }
-        mapView.overlays.add(polyline)
-    }
-
-    private fun addPolygon(mapView: MapView, overlay: MapOverlay.PolygonOverlay) {
-        if (overlay.points.size < 3) return
-        val polygon = Polygon().apply {
-            setPoints(overlay.points.map { GeoPoint(it.first, it.second) })
-            fillPaint.apply {
-                color = (overlay.color.toInt() and 0x00FFFFFF) or (0x33000000) // 20% alpha
-                style = Paint.Style.FILL
-                isAntiAlias = true
-            }
-            outlinePaint.apply {
-                color = overlay.color.toInt()
-                strokeWidth = 4f
-                style = Paint.Style.STROKE
-                isAntiAlias = true
-            }
-            title = overlay.label.ifBlank { "Survey boundary" }
-            relatedObject = DrawingOverlayTag("polygon_${overlay.id}")
-        }
-        mapView.overlays.add(polygon)
-    }
-}
-
-/**
- * Tag interface to identify our custom drawing overlays in osmdroid's overlay list.
- */
-class DrawingOverlayTag(val drawingId: String) {
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        return other is DrawingOverlayTag && drawingId == other.drawingId
-    }
-
-    override fun hashCode(): Int = drawingId.hashCode()
-}
-
-/**
- * Handles the interactive drawing mode — processes taps on the map to build
- * points/lines/polygons and manages the drawing state machine.
- */
-class DrawingInputHandler(
-    private val mapView: MapView,
-    private val mode: () -> DrawingMode,
-    private val onPointCreated: (MapOverlay.PointOverlay) -> Unit = {},
-    private val onLineCreated: (MapOverlay.LineOverlay) -> Unit = {},
-    private val onPolygonCreated: (MapOverlay.PolygonOverlay) -> Unit = {},
-    private val onDrawingComplete: () -> Unit = {}
-) : Overlay() {
-
-    private val currentPoints = mutableListOf<GeoPoint>()
-    private var tempMarkerDrawer = TempMarkerDrawer()
-
-    data class TempMarkerDrawer(
-        var markers: List<Marker> = emptyList()
-    )
-
-    private var originPoint: Point = Point()
-
-    override fun draw(canvas: Canvas, mapView: MapView, shadow: Boolean) {
-        // Nothing to draw at the overlay level — markers/polylines handle their own rendering
-    }
-
-    override fun onSingleTapConfirmed(e: MotionEvent, mapView: MapView): Boolean {
-        val currentMode = mode()
-        if (currentMode == DrawingMode.View || currentMode == DrawingMode.Select) return false
-
-        // Convert screen pixel coordinates to GeoPoint
-        val projection = mapView.projection
-        val geoPoint = projection.fromPixels(e.x.toInt(), e.y.toInt()) as GeoPoint
-
-        when (currentMode) {
-            DrawingMode.PlacePoint -> {
-                onPointCreated(
-                    MapOverlay.PointOverlay(
-                        latitude = geoPoint.latitude,
-                        longitude = geoPoint.longitude,
-                        label = "Site point"
-                    )
-                )
-                onDrawingComplete()
-            }
-            DrawingMode.DrawLine -> {
-                currentPoints.add(geoPoint)
-                addTempMarker(geoPoint)
-                if (currentPoints.size >= 2) {
-                    val overlay = createLineFromTemp()
-                    if (overlay != null) onLineCreated(overlay)
-                    clearTemp()
-                    onDrawingComplete()
-                }
-            }
-            DrawingMode.DrawPolygon -> {
-                currentPoints.add(geoPoint)
-                addTempMarker(geoPoint)
-                if (currentPoints.size >= 3 && isNearFirstPoint(geoPoint)) {
-                    val overlay = createPolygonFromTemp()
-                    if (overlay != null) onPolygonCreated(overlay)
-                    clearTemp()
-                    onDrawingComplete()
-                }
-            }
-            else -> {}
-        }
-        return true
-    }
-
-    private fun addTempMarker(geoPoint: GeoPoint) {
-        val marker = Marker(mapView).apply {
-            position = geoPoint
-            setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_CENTER)
-            icon = mapView.context.getDrawable(android.R.drawable.ic_menu_mylocation)
-            alpha = 0.6f
-        }
-        mapView.overlays.add(marker)
-        tempMarkerDrawer = tempMarkerDrawer.copy(
-            markers = tempMarkerDrawer.markers + marker
-        )
-    }
-
-    private fun isNearFirstPoint(geoPoint: GeoPoint): Boolean {
-        if (currentPoints.isEmpty()) return false
-        val first = currentPoints.first()
-        val distance = geoPoint.distanceToAsDouble(first)
-        // If within ~50 meters of the first point, close the polygon
-        return distance < 50.0
-    }
-
-    private fun createLineFromTemp(): MapOverlay.LineOverlay? {
-        if (currentPoints.size < 2) return null
+    /**
+     * Create a track overlay from recording points for rendering on the map.
+     */
+    fun trackOverlayFromPoints(points: List<Pair<Double, Double>>): MapOverlay.LineOverlay {
         return MapOverlay.LineOverlay(
-            points = currentPoints.map { it.latitude to it.longitude },
-            label = "Transect ${System.currentTimeMillis() % 1000}"
+            points = points,
+            label = "Current track",
+            color = 0xFFFF5252
         )
     }
 
-    private fun createPolygonFromTemp(): MapOverlay.PolygonOverlay? {
-        if (currentPoints.size < 3) return null
-        return MapOverlay.PolygonOverlay(
-            points = currentPoints.map { it.latitude to it.longitude },
-            label = "Boundary ${System.currentTimeMillis() % 1000}"
-        )
-    }
-
-    private fun clearTemp() {
-        mapView.overlays.removeAll(tempMarkerDrawer.markers)
-        tempMarkerDrawer = TempMarkerDrawer()
-        currentPoints.clear()
-        mapView.invalidate()
-    }
+    /** Android Color int for the observation marker. */
+    val observationMarkerColor: Int = Color.parseColor("#4CAF50")
 }
