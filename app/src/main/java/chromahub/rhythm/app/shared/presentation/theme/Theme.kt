@@ -1061,22 +1061,68 @@ fun parseCustomColorScheme(schemeName: String, darkTheme: Boolean): androidx.com
         val secondary = Color(("FF$secondaryHex").toLong(16))
         val tertiary = Color(("FF$tertiaryHex").toLong(16))
         
-        // Create a basic color scheme using the custom colors
-        // For simplicity, we'll use a similar structure to the default schemes
+        // Generate proper container tints instead of using raw colors directly.
+        // For light mode: container = color mixed with white (lighter tint)
+        // For dark mode: container = color mixed with black (darker shade)
+        val isPrimaryLight = primary.luminance() > 0.5f
+        val isSecondaryLight = secondary.luminance() > 0.5f
+        val isTertiaryLight = tertiary.luminance() > 0.5f
+        
+        val primaryContainer = if (darkTheme) {
+            // Dark mode: darken the color for container
+            if (isPrimaryLight) {
+                val mix = 0.3f
+                Color(
+                    primary.red * mix + Color.Black.red * (1 - mix),
+                    primary.green * mix + Color.Black.green * (1 - mix),
+                    primary.blue * mix + Color.Black.blue * (1 - mix),
+                    primary.alpha
+                )
+            } else {
+                // Already dark, use muted version
+                val mix = 0.5f
+                Color(
+                    primary.red * mix + Color(0xFF333333).red * (1 - mix),
+                    primary.green * mix + Color(0xFF333333).green * (1 - mix),
+                    primary.blue * mix + Color(0xFF333333).blue * (1 - mix),
+                    primary.alpha
+                )
+            }
+        } else {
+            // Light mode: lighten the color for container
+            val mix = if (isPrimaryLight) 0.4f else 0.25f
+            Color(
+                primary.red * mix + Color.White.red * (1 - mix),
+                primary.green * mix + Color.White.green * (1 - mix),
+                primary.blue * mix + Color.White.blue * (1 - mix),
+                primary.alpha
+            )
+        }
+        
         return if (darkTheme) {
             darkColorScheme(
                 primary = primary,
-                onPrimary = if (primary.luminance() > 0.5f) Color.Black else Color.White,
-                primaryContainer = primary,
-                onPrimaryContainer = if (primary.luminance() > 0.5f) Color.Black else Color.White,
+                onPrimary = if (isPrimaryLight) Color(0xFF1C1B1F) else Color.White,
+                primaryContainer = primaryContainer,
+                onPrimaryContainer = if (primaryContainer.luminance() > 0.5f) Color(0xFF1C1B1F) else Color.White,
                 secondary = secondary,
-                onSecondary = if (secondary.luminance() > 0.5f) Color.Black else Color.White,
-                secondaryContainer = secondary,
-                onSecondaryContainer = if (secondary.luminance() > 0.5f) Color.Black else Color.White,
+                onSecondary = if (isSecondaryLight) Color(0xFF1C1B1F) else Color.White,
+                secondaryContainer = Color(
+                    secondary.red * 0.3f + Color.Black.red * 0.7f,
+                    secondary.green * 0.3f + Color.Black.green * 0.7f,
+                    secondary.blue * 0.3f + Color.Black.blue * 0.7f,
+                    secondary.alpha
+                ),
+                onSecondaryContainer = Color.White,
                 tertiary = tertiary,
-                onTertiary = if (tertiary.luminance() > 0.5f) Color.Black else Color.White,
-                tertiaryContainer = tertiary,
-                onTertiaryContainer = if (tertiary.luminance() > 0.5f) Color.Black else Color.White,
+                onTertiary = if (isTertiaryLight) Color(0xFF1C1B1F) else Color.White,
+                tertiaryContainer = Color(
+                    tertiary.red * 0.3f + Color.Black.red * 0.7f,
+                    tertiary.green * 0.3f + Color.Black.green * 0.7f,
+                    tertiary.blue * 0.3f + Color.Black.blue * 0.7f,
+                    tertiary.alpha
+                ),
+                onTertiaryContainer = Color.White,
                 error = ErrorDark,
                 onError = OnErrorDark,
                 errorContainer = ErrorContainerDark,
@@ -1104,17 +1150,27 @@ fun parseCustomColorScheme(schemeName: String, darkTheme: Boolean): androidx.com
         } else {
             lightColorScheme(
                 primary = primary,
-                onPrimary = if (primary.luminance() > 0.5f) Color.Black else Color.White,
-                primaryContainer = primary,
-                onPrimaryContainer = if (primary.luminance() > 0.5f) Color.Black else Color.White,
+                onPrimary = if (isPrimaryLight) Color(0xFF1C1B1F) else Color.White,
+                primaryContainer = primaryContainer,
+                onPrimaryContainer = if (primaryContainer.luminance() > 0.5f) Color(0xFF1C1B1F) else Color.White,
                 secondary = secondary,
-                onSecondary = if (secondary.luminance() > 0.5f) Color.Black else Color.White,
-                secondaryContainer = secondary,
-                onSecondaryContainer = if (secondary.luminance() > 0.5f) Color.Black else Color.White,
+                onSecondary = if (isSecondaryLight) Color(0xFF1C1B1F) else Color.White,
+                secondaryContainer = Color(
+                    secondary.red * 0.25f + Color.White.red * 0.75f,
+                    secondary.green * 0.25f + Color.White.green * 0.75f,
+                    secondary.blue * 0.25f + Color.White.blue * 0.75f,
+                    secondary.alpha
+                ),
+                onSecondaryContainer = if (isSecondaryLight) Color(0xFF1C1B1F) else Color.White,
                 tertiary = tertiary,
-                onTertiary = if (tertiary.luminance() > 0.5f) Color.Black else Color.White,
-                tertiaryContainer = tertiary,
-                onTertiaryContainer = if (tertiary.luminance() > 0.5f) Color.Black else Color.White,
+                onTertiary = if (isTertiaryLight) Color(0xFF1C1B1F) else Color.White,
+                tertiaryContainer = Color(
+                    tertiary.red * 0.25f + Color.White.red * 0.75f,
+                    tertiary.green * 0.25f + Color.White.green * 0.75f,
+                    tertiary.blue * 0.25f + Color.White.blue * 0.75f,
+                    tertiary.alpha
+                ),
+                onTertiaryContainer = if (isTertiaryLight) Color(0xFF1C1B1F) else Color.White,
                 error = ErrorLight,
                 onError = OnErrorLight,
                 errorContainer = ErrorContainerLight,

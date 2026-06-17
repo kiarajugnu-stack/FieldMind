@@ -26,11 +26,13 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import coil.compose.AsyncImage
+import fieldmind.research.app.features.field.data.vision.PhashDatabase
 import fieldmind.research.app.features.field.data.vision.SpeciesClassifier
 import fieldmind.research.app.features.field.data.vision.SpeciesDatabase
 import fieldmind.research.app.features.field.data.vision.SpeciesMatch
@@ -57,10 +59,12 @@ fun SpeciesIdentificationSheet(
     classifier: SpeciesClassifier,
     database: SpeciesDatabase,
     onSelectSpecies: (SpeciesMatch) -> Unit,
-    onDismiss: () -> Unit
-) {
-    val scope = rememberCoroutineScope()
+    onDismiss: () -> Unit,
+    phashDatabase: PhashDatabase? = null
+) {    val scope = rememberCoroutineScope()
     val haptics = rememberFieldMindHaptics()
+    val localContext = LocalContext.current
+    val localPhashDb = phashDatabase ?: remember { PhashDatabase(localContext) }
 
     var matches by remember { mutableStateOf<List<SpeciesMatch>>(emptyList()) }
     var loading by remember { mutableStateOf(false) }
@@ -211,6 +215,16 @@ fun SpeciesIdentificationSheet(
                         onCategorySelect = { selectedCategory = it },
                         onSelectRecord = { record ->
                             haptics.confirm()
+                            // Store fingerprint for future identifications
+                            scope.launch {
+                                runCatching {
+                                    localPhashDb.addConfirmation(
+                                        imageUri = imageUri ?: record.commonName,
+                                        speciesName = record.commonName,
+                                        category = record.category
+                                    )
+                                }
+                            }
                             onSelectSpecies(
                                 SpeciesMatch(
                                     commonName = record.commonName,
@@ -313,6 +327,16 @@ fun SpeciesIdentificationSheet(
                                         },
                                         onConfirm = {
                                             haptics.confirm()
+                                            // Store fingerprint for future identifications
+                                            scope.launch {
+                                                runCatching {
+                                                    localPhashDb.addConfirmation(
+                                                        imageUri = imageUri ?: match.commonName,
+                                                        speciesName = match.commonName,
+                                                        category = match.category
+                                                    )
+                                                }
+                                            }
                                             onSelectSpecies(match)
                                             onDismiss()
                                         }

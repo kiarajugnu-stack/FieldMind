@@ -77,30 +77,86 @@ fun SpeciesBrowserScreen(
 
     var searchQuery by remember { mutableStateOf("") }
     var selectedCategory by remember { mutableStateOf<String?>(null) }
+    var selectedContinent by remember { mutableStateOf<String?>(null) }
     var categories by remember { mutableStateOf<List<Pair<String, Int>>>(emptyList()) }
+    var continents by remember { mutableStateOf<List<String>>(emptyList()) }
     var species by remember { mutableStateOf<List<SpeciesRecord>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
     var totalCount by remember { mutableStateOf(0) }
 
-    // Load categories and initial species
+    // ── Sorting state ──
+    val sortOptions = listOf(
+        "Common name (A-Z)",
+        "Common name (Z-A)",
+        "Scientific name (A-Z)",
+        "Scientific name (Z-A)",
+        "Genus (A-Z)",
+        "Family (A-Z)",
+        "Order (A-Z)",
+        "Kingdom (A-Z)",
+        "Category (A-Z)"
+    )
+    var selectedSort by remember { mutableStateOf(sortOptions[0]) }
+    var showSortDropdown by remember { mutableStateOf(false) }
+
+    // Load categories, continents, and initial species
     LaunchedEffect(Unit) {
         categories = database.getCategories()
+        continents = database.getContinents()
         totalCount = database.getTotalSpeciesCount()
         species = database.search("", limit = 200)
         isLoading = false
     }
 
-    // Debounced search
-    LaunchedEffect(searchQuery, selectedCategory) {
+    // ── Sort helper ──
+    fun List<SpeciesRecord>.sortedByOption(option: String): List<SpeciesRecord> {
+        return when (option) {
+            "Common name (A-Z)" -> sortedBy { it.commonName.lowercase() }
+            "Common name (Z-A)" -> sortedByDescending { it.commonName.lowercase() }
+            "Scientific name (A-Z)" -> sortedBy { it.scientificName.lowercase() }
+            "Scientific name (Z-A)" -> sortedByDescending { it.scientificName.lowercase() }
+            "Genus (A-Z)" -> sortedBy { it.genus.lowercase() }
+            "Family (A-Z)" -> sortedBy { it.family.lowercase() }
+            "Order (A-Z)" -> sortedBy { it.order.lowercase() }
+            "Kingdom (A-Z)" -> sortedBy { it.kingdom.lowercase() }
+            "Category (A-Z)" -> sortedBy { it.category.lowercase() }
+            else -> this
+        }
+    }
+
+    // Debounced search + sort + continent filter
+    LaunchedEffect(searchQuery, selectedCategory, selectedContinent, selectedSort) {
         delay(200) // 200ms debounce
         isLoading = true
-        species = if (selectedCategory != null) {
+
+        // Get base results (by category or full search)
+        val base = if (selectedCategory != null) {
             val byCategory = database.getByCategory(selectedCategory!!)
             if (searchQuery.isBlank()) byCategory
-            else byCategory.filter { it.commonName.lowercase().contains(searchQuery.lowercase()) || it.scientificName.lowercase().contains(searchQuery.lowercase()) }
+            else byCategory.filter {
+                val q = searchQuery.lowercase()
+                it.commonName.lowercase().contains(q) ||
+                it.scientificName.lowercase().contains(q) ||
+                it.genus.lowercase().contains(q) ||
+                it.family.lowercase().contains(q) ||
+                it.order.lowercase().contains(q) ||
+                it.phylum.lowercase().contains(q) ||
+                it.kingdom.lowercase().contains(q) ||
+                it.tags.any { t -> t.lowercase().contains(q) } ||
+                it.habitat.lowercase().contains(q)
+            }
         } else {
             database.search(searchQuery, limit = 200)
         }
+
+        // Apply continent filter
+        val filtered = if (selectedContinent != null) {
+            base.filter { it.continents.any { c -> c.equals(selectedContinent, ignoreCase = true) } }
+        } else {
+            base
+        }
+
+        species = filtered.sortedByOption(selectedSort)
         isLoading = false
     }
 
@@ -153,7 +209,7 @@ fun SpeciesBrowserScreen(
                     OutlinedTextField(
                         value = searchQuery,
                         onValueChange = { searchQuery = it },
-                        placeholder = { Text("Search by name, scientific name, or tag…") },
+                        placeholder = { Text("Search by name, scientific name, genus, family, order…") },
                         leadingIcon = { Icon(FieldMindIcons.Search, null, size = 20.dp) },
                         trailingIcon = {
                             if (searchQuery.isNotBlank()) {
@@ -205,6 +261,40 @@ fun SpeciesBrowserScreen(
                             }
                         }
                     }
+
+                    // Continent filter chips
+                    if (continents.isNotEmpty()) {
+                        Row(
+                            Modifier
+                                .fillMaxWidth()
+                                .horizontalScroll(rememberScrollState())
+                                .padding(horizontal = 16.dp, vertical = 2.dp),
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            // "All regions" chip
+                            FilterChip(
+                                selected = selectedContinent == null,
+                                onClick = { selectedContinent = null },
+                                label = { Text("All regions", fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.labelSmall) },
+                                shape = RoundedCornerShape(16.dp),
+                                leadingIcon = if (selectedContinent == null) {{ Icon(FieldMindIcons.Check, null, size = 14.dp) }} else null,
+                                colors = FilterChipDefaults.filterChipColors(
+                                    selectedContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+                                    selectedLabelColor = MaterialTheme.colorScheme.primary
+                                )
+                            )
+                            continents.forEach { c ->
+                                val isSelected = selectedContinent == c
+                                FilterChip(
+                                    selected = isSelected,
+                                    onClick = { selectedContinent = if (isSelected) null else c },
+                                    label = { Text(c, fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal, style = MaterialTheme.typography.labelSmall) },
+                                    shape = RoundedCornerShape(16.dp),
+                                    leadingIcon = if (isSelected) {{ Icon(FieldMindIcons.Check, null, size = 14.dp) }} else null
+                                )
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -237,14 +327,90 @@ fun SpeciesBrowserScreen(
                 contentPadding = PaddingValues(start = 16.dp, top = 8.dp, end = 16.dp, bottom = 96.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                // Results count
+                // Results count + sort
                 item {
-                    Text(
-                        "${species.size} species",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(bottom = 4.dp)
-                    )
+                    Row(
+                        Modifier.fillMaxWidth().padding(bottom = 4.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            "${species.size} species",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        // Sort button
+                        Box {
+                            Surface(
+                                onClick = { showSortDropdown = !showSortDropdown },
+                                shape = RoundedCornerShape(10.dp),
+                                color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                                tonalElevation = 0.dp
+                            ) {
+                                Row(
+                                    Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                ) {
+                                    Icon(
+                                        FieldMindIcons.Category,
+                                        null,
+                                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        size = 14.dp
+                                    )
+                                    Text(
+                                        selectedSort.substringBefore(" ("),
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        fontWeight = FontWeight.SemiBold
+                                    )
+                                    Icon(
+                                        if (showSortDropdown) FieldMindIcons.Up else FieldMindIcons.Down,
+                                        null,
+                                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        size = 14.dp
+                                    )
+                                }
+                            }
+
+                            // Sort dropdown
+                            DropdownMenu(
+                                expanded = showSortDropdown,
+                                onDismissRequest = { showSortDropdown = false },
+                                modifier = Modifier.width(200.dp)
+                            ) {
+                                sortOptions.forEach { option ->
+                                    DropdownMenuItem(
+                                        text = {
+                                            Row(
+                                                Modifier.fillMaxWidth(),
+                                                horizontalArrangement = Arrangement.SpaceBetween,
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                Text(
+                                                    option,
+                                                    style = MaterialTheme.typography.bodySmall,
+                                                    fontWeight = if (option == selectedSort) FontWeight.Bold else FontWeight.Normal
+                                                )
+                                                if (option == selectedSort) {
+                                                    Icon(
+                                                        FieldMindIcons.Check,
+                                                        null,
+                                                        tint = MaterialTheme.colorScheme.primary,
+                                                        size = 16.dp
+                                                    )
+                                                }
+                                            }
+                                        },
+                                        onClick = {
+                                            selectedSort = option
+                                            showSortDropdown = false
+                                        }
+                                    )
+                                }
+                            }
+                        }
+                    }
                 }
 
                 items(species, key = { it.id }) { record ->

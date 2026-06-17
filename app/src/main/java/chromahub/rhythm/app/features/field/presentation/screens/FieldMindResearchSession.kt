@@ -53,9 +53,12 @@ import fieldmind.research.app.features.field.presentation.viewmodel.FieldMindVie
 import fieldmind.research.app.features.field.presentation.components.FieldMindCameraV2
 import fieldmind.research.app.shared.presentation.components.icons.Icon
 import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon
+import fieldmind.research.app.features.field.data.vision.PhashDatabase
 import fieldmind.research.app.features.field.data.vision.SpeciesClassifier
 import fieldmind.research.app.features.field.data.vision.SpeciesDatabase
+import fieldmind.research.app.features.field.data.vision.SpeciesImageAnalyzer
 import fieldmind.research.app.features.field.data.vision.SpeciesMatch
+import fieldmind.research.app.features.field.data.vision.SpeciesRecord
 import fieldmind.research.app.features.field.presentation.screens.species.SpeciesIdentificationSheet
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -133,7 +136,9 @@ fun ResearchSessionScreen(
 
     // ── Species identification state ──
     val speciesDatabase = remember { SpeciesDatabase(context) }
-    val speciesClassifier = remember { SpeciesClassifier(context, speciesDatabase) }
+    val speciesImageAnalyzer = remember { SpeciesImageAnalyzer(context) }
+    val speciesPhashDb = remember { PhashDatabase(context) }
+    val speciesClassifier = remember { SpeciesClassifier(context, speciesDatabase, speciesImageAnalyzer, speciesPhashDb) }
     var showSpeciesSearch by remember { mutableStateOf(false) }
     var speciesIdImageUri by remember { mutableStateOf<String?>(null) }
     var identifiedSpecies by remember { mutableStateOf<SpeciesMatch?>(null) }
@@ -147,7 +152,13 @@ fun ResearchSessionScreen(
     var sex by remember { mutableStateOf("") }
     var habitatType by remember { mutableStateOf("") }
     var weatherOverride by remember { mutableStateOf("") }
+
     var showAdvanced by remember { mutableStateOf(false) }
+
+    // ── Species record lookup (for inline info card + detail sheet) ──
+    var selectedSpeciesRecord by remember { mutableStateOf<SpeciesRecord?>(null) }
+    var showTaxonomy by remember { mutableStateOf(false) }
+    var showSpeciesDetail by remember { mutableStateOf(false) }
 
     // ── In-app camera & audio recording state ──
     var showInAppCamera by remember { mutableStateOf(false) }
@@ -250,6 +261,20 @@ fun ResearchSessionScreen(
                 val label = if (sessionPaused) "Paused" else "Running"
                 showResearchSessionNotification(context, sessionName.ifBlank { "Research Session" }, "$label • ${formatTime(sessionElapsedMs)} • $observationCount obs")
             }
+        }
+    }
+
+    // ── Look up full species record when speciesName changes ──
+    LaunchedEffect(speciesName) {
+        if (speciesName.isNotBlank() && speciesName != selectedSpeciesRecord?.commonName) {
+            val results = speciesDatabase.search(speciesName, limit = 5)
+            selectedSpeciesRecord = results.firstOrNull {
+                it.commonName.equals(speciesName, ignoreCase = true) ||
+                    it.scientificName.equals(speciesName, ignoreCase = true)
+            }
+        } else if (speciesName.isBlank()) {
+            selectedSpeciesRecord = null
+            showTaxonomy = false
         }
     }
 
@@ -775,6 +800,19 @@ fun ResearchSessionScreen(
                                             Icon(FieldMindIcons.Nature, null, tint = MaterialTheme.colorScheme.primary, size = 22.dp)
                                         }
                                     }
+
+                                    // ── Selected species info card ──
+                                    val curRecord = selectedSpeciesRecord
+                                    AnimatedVisibility(visible = curRecord != null && speciesName.isNotBlank()) {
+                                        curRecord?.let { record ->
+                                            SpeciesInfoCard(
+                                                record = record,
+                                                showTaxonomy = showTaxonomy,
+                                                onToggleTaxonomy = { showTaxonomy = !showTaxonomy },
+                                                onOpenDetail = { showSpeciesDetail = true }
+                                            )
+                                        }
+                                    }
                                     FieldTextField(speciesConfidence, { speciesConfidence = it }, "Species confidence", supportingText = "e.g. High, 85%")
                                     FieldTextField(quickTags, { quickTags = it }, "Tags", supportingText = "Comma-separated keywords")
 
@@ -815,12 +853,24 @@ fun ResearchSessionScreen(
     }
 
 
+    // ── Species Detail Sheet ──
+    if (showSpeciesDetail) {
+        val detailRecord = selectedSpeciesRecord
+        if (detailRecord != null) {
+            SpeciesDetailSheet(
+                record = detailRecord,
+                onDismiss = { showSpeciesDetail = false }
+            )
+        }
+    }
+
     // ── Species Identification Sheet ──
     if (showSpeciesSearch) {
         SpeciesIdentificationSheet(
             imageUri = speciesIdImageUri,
             classifier = speciesClassifier,
             database = speciesDatabase,
+            phashDatabase = speciesPhashDb,
             onSelectSpecies = { match ->
                 speciesName = match.commonName
                 speciesConfidence = if (match.confidence > 0) "${match.confidence}" else ""

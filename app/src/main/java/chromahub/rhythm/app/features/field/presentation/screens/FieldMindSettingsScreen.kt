@@ -63,7 +63,8 @@ fun FieldMindSettingsScreen(
     onOpenMap: (() -> Unit)? = null,
     onOpenDataIntegrity: (() -> Unit)? = null,
     onOpenDeveloper: (() -> Unit)? = null,
-    onOpenSpeciesPacks: (() -> Unit)? = null
+    onOpenSpeciesPacks: (() -> Unit)? = null,
+    onOpenSpeciesId: (() -> Unit)? = null
 ) {
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(20.dp, 20.dp, 20.dp, 40.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
         item { FieldScreenHeader("Settings", "Offline-first setup, profile, capture, local AI, export, and privacy.", icon = FieldMindIcons.Settings, actionIcon = FieldMindIcons.Back, onAction = onBack) }
@@ -94,6 +95,7 @@ fun FieldMindSettingsScreen(
         item { SettingsNavCard("Data integrity", "Orphaned records, database health", FieldMindIcons.Archive, FieldMindTheme.colors.hypothesis) { onOpenDataIntegrity?.invoke() } }
         item { SettingsNavCard("Developer", "Debug logging, dev tools, version info", FieldMindIcons.Sparkle, FieldMindTheme.colors.flashcard) { onOpenDeveloper?.invoke() } }
         item { SettingsNavCard("Species packs", "Download regional model packs for species ID", FieldMindIcons.Download, FieldMindTheme.colors.observation) { onOpenSpeciesPacks?.invoke() } }
+        item { SettingsNavCard("Species identification", "Image analysis, API key, and model URL configuration", FieldMindIcons.Nature, FieldMindTheme.colors.observation) { onOpenSpeciesId?.invoke() } }
         item { SettingsNavCard("Export Studio", "Export as PDF, CSV, JSON, HTML, SVG", FieldMindIcons.Export, FieldMindTheme.colors.report) { onOpenExport?.invoke() } }
         item { SettingsNavCard("What’s new", "FieldMind-specific redesign notes and migration changes", FieldMindIcons.Info, FieldMindTheme.colors.info) { onOpenChangelog?.invoke() } }
         item { SettingsNavCard("About", "Credits, acknowledgements, and version", FieldMindIcons.Info, FieldMindTheme.colors.source) { onOpenAbout?.invoke() } }
@@ -1427,6 +1429,206 @@ fun SpeciesPackSettingsPage(onBack: () -> Unit) {
                 .align(Alignment.TopCenter)
                 .padding(top = 8.dp, start = 16.dp, end = 16.dp)
         )
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════════
+//  Species Identification Settings Page
+// ══════════════════════════════════════════════════════════════════════
+
+@Composable
+fun SpeciesIdentificationSettingsPage(
+    viewModel: FieldMindViewModel,
+    onBack: () -> Unit
+) {
+    val settings = viewModel.fieldSettings
+    val apiKey by settings.speciesIdApiKey.collectAsState()
+    val offlineFirst by settings.speciesIdOfflineFirst.collectAsState()
+    val modelBaseUrl by settings.speciesModelBaseUrl.collectAsState()
+    val uriHandler = LocalUriHandler.current
+
+    SettingsSubPage("Species identification", icon = FieldMindIcons.Nature, onBack = onBack) {
+        // ── How it works ──
+        item {
+            Card(
+                shape = RoundedCornerShape(22.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)),
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+            ) {
+                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Box(
+                            Modifier.size(32.dp).clip(RoundedCornerShape(10.dp)).background(FieldMindTheme.colors.observation.copy(alpha = 0.14f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(FieldMindIcons.Nature, null, tint = FieldMindTheme.colors.observation, size = 18.dp)
+                        }
+                        Text("Offline-first image analysis", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                    }
+                    Text(
+                        "FieldMind uses a pure-Kotlin image analysis engine (color histograms, edge detection, texture analysis, perceptual hashing) to identify species — no AI or network required. Results improve as you confirm IDs. Regional model packs expand coverage.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+        }
+
+        // ── Offline-first toggle ──
+        item {
+            SettingsGroupCard {
+                ToggleItem(
+                    "Offline-first mode",
+                    "Prefer the on-device image analyzer over cloud APIs for species identification. Turn off to use cloud API when a key is provided.",
+                    offlineFirst,
+                    settings::setSpeciesIdOfflineFirst,
+                    FieldMindIcons.Nature
+                )
+            }
+        }
+
+        // ── API key for cloud fallback ──
+        item {
+            SettingsGroupCard {
+                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Box(
+                            Modifier.size(40.dp).clip(RoundedCornerShape(12.dp)).background(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(FieldMindIcons.Sparkle, null, tint = MaterialTheme.colorScheme.primary, size = 22.dp)
+                        }
+                        Column(Modifier.weight(1f)) {
+                            Text("Cloud API key (optional)", fontWeight = FontWeight.SemiBold)
+                            Text(
+                                "Used when offline-first is off. Supports any species identification API (e.g. iNaturalist, PlantNet, custom endpoint).",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+
+                    Spacer(Modifier.height(4.dp))
+
+                    OutlinedTextField(
+                        value = apiKey,
+                        onValueChange = settings::setSpeciesIdApiKey,
+                        label = { Text("Species ID API key") },
+                        placeholder = { Text("Paste your API key here") },
+                        visualTransformation = PasswordVisualTransformation(),
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(18.dp),
+                        singleLine = true,
+                        supportingText = {
+                            Text(
+                                if (apiKey.isBlank()) "No key saved. Get one from your provider's website."
+                                else "Key saved locally on this device."
+                            )
+                        }
+                    )
+
+                    OutlinedButton(
+                        onClick = {
+                            runCatching {
+                                uriHandler.openUri("https://www.inaturalist.org/pages/api+reference")
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(14.dp)
+                    ) {
+                        Icon(FieldMindIcons.OpenLink, null, size = 18.dp)
+                        Spacer(Modifier.size(8.dp))
+                        Text("Get API key (iNaturalist)")
+                    }
+
+                    Surface(
+                        shape = RoundedCornerShape(14.dp),
+                        color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
+                    ) {
+                        Row(
+                            Modifier.padding(12.dp).fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(FieldMindIcons.Info, null, tint = MaterialTheme.colorScheme.primary, size = 18.dp)
+                            Text(
+                                "Your API key is stored only on this device and is never sent to FieldMind servers.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
+        // ── Model download URL ──
+        item {
+            SettingsGroupCard {
+                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Box(
+                            Modifier.size(40.dp).clip(RoundedCornerShape(12.dp)).background(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(FieldMindIcons.Download, null, tint = MaterialTheme.colorScheme.primary, size = 22.dp)
+                        }
+                        Column(Modifier.weight(1f)) {
+                            Text("Model download URL", fontWeight = FontWeight.SemiBold)
+                            Text(
+                                "Base URL for regional species pack downloads. Leave blank to use the default.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+
+                    OutlinedTextField(
+                        value = modelBaseUrl,
+                        onValueChange = settings::setSpeciesModelBaseUrl,
+                        label = { Text("Model base URL") },
+                        placeholder = { Text("https://models.example.com") },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(18.dp),
+                        singleLine = true,
+                        supportingText = {
+                            Text(
+                                if (modelBaseUrl.isBlank()) "Default: https://models.fieldmind.app"
+                                else "Custom URL set. Packs will download from: $modelBaseUrl"
+                            )
+                        }
+                    )
+                }
+            }
+        }
+
+        // ── Info card ──
+        item {
+            Card(
+                shape = RoundedCornerShape(22.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+            ) {
+                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("About species identification", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                    Text(
+                        "FieldMind identifies species by analyzing the actual image content — color distribution, edge density, and texture patterns — not by guessing from the filename. This works completely offline with no AI model required.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        "For higher accuracy, download regional species packs (Settings > Species packs) which contain specialized models with thousands of species per region.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        "Predictions improve over time as you confirm identifications, adding reference images to the database.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+        }
     }
 }
 

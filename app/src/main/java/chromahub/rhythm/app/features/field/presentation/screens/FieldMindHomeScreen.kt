@@ -68,7 +68,6 @@ import java.time.LocalTime
 import java.time.temporal.ChronoUnit
 import kotlin.math.floor
 import kotlin.math.roundToInt
-import fieldmind.research.app.features.field.presentation.components.ObservationsTimelineSection
 import fieldmind.research.app.features.field.presentation.components.ObservationStatsDashboard
 
 /**
@@ -293,29 +292,47 @@ fun HomeScreen(
             item { RecommendedLearningCard(recommendations, onOpenReader, onSeeAll = { onNavigate(FieldMindScreen.Learn) }) }
             item { ReadingReviewCard(sources, flashcards, onNavigate) }
 
-            // ── Observations Timeline — Full redesign with list/gallery/map/calendar ──
+            // ── Observations Timeline — Compact card, opens full page ──
             item {
+                val colors = FieldMindTheme.colors
                 Card(
                     shape = RoundedCornerShape(24.dp),
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
                     elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                            Icon(FieldMindIcons.Calendar, null, tint = FieldMindTheme.colors.project, size = 22.dp)
-                            Column(Modifier.weight(1f)) {
-                                Text("Observation timeline", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                                Text("Search, filter, and explore your observations", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                            }
+                    Row(
+                        Modifier.fillMaxWidth().padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(14.dp)
+                    ) {
+                        Box(
+                            Modifier.size(44.dp).clip(RoundedCornerShape(14.dp))
+                                .background(colors.project.copy(alpha = 0.14f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(FieldMindIcons.Calendar, null, tint = colors.project, size = 24.dp)
                         }
-                        ObservationsTimelineSection(
-                            observations = observations,
-                            viewModel = viewModel,
-                            onOpenDetail = onOpenDetail,
-                            onStartCapture = { onNavigate(FieldMindScreen.Observe) },
-                            onOpenMap = { onNavigate(FieldMindScreen.MapScreen) }
-                        )
+                        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                            Text("Observation timeline", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                            Text(
+                                if (observations.isNotEmpty()) "${observations.size} observations • View, filter, and explore"
+                                else "No observations yet — start capturing",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        FilledTonalButton(
+                            onClick = { onNavigate(FieldMindScreen.FieldLog) },
+                            shape = RoundedCornerShape(14.dp),
+                            colors = ButtonDefaults.filledTonalButtonColors(
+                                containerColor = colors.project.copy(alpha = 0.12f)
+                            )
+                        ) {
+                            Text("Open", fontWeight = FontWeight.SemiBold)
+                            Spacer(Modifier.size(4.dp))
+                            Icon(FieldMindIcons.Forward, null, size = 16.dp)
+                        }
                     }
                 }
             }
