@@ -15,7 +15,7 @@ import java.io.FileReader
 import java.util.concurrent.TimeUnit
 
 /**
- * Species metadata record with identification details.
+ * Species metadata record with identification details and taxonomic classification.
  */
 data class SpeciesRecord(
     val id: String,
@@ -33,7 +33,13 @@ data class SpeciesRecord(
     /** Visual characteristics for identification hints */
     val keyFeatures: List<String> = emptyList(),
     /** Similar species for disambiguation */
-    val similarSpecies: List<String> = emptyList()
+    val similarSpecies: List<String> = emptyList(),
+    // ── Taxonomic classification ──
+    val kingdom: String = "",
+    val phylum: String = "",
+    val order: String = "",
+    val family: String = "",
+    val genus: String = ""
 )
 
 /**
@@ -331,6 +337,80 @@ class SpeciesDatabase(private val context: Context) {
         getCatalog().size
     }
 
+    // ── Taxonomic drill-down methods ──
+
+    /**
+     * Get all distinct kingdoms in the catalog.
+     */
+    suspend fun getKingdoms(): List<String> = withContext(Dispatchers.Default) {
+        getCatalog().map { it.kingdom }.filter { it.isNotBlank() }.distinct().sorted()
+    }
+
+    /**
+     * Get distinct phyla for a given kingdom.
+     */
+    suspend fun getPhyla(kingdom: String): List<String> = withContext(Dispatchers.Default) {
+        getCatalog().filter { it.kingdom.equals(kingdom, ignoreCase = true) }
+            .map { it.phylum }.filter { it.isNotBlank() }.distinct().sorted()
+    }
+
+    /**
+     * Get distinct classes (categories) for a given phylum.
+     * Uses the existing `category` field as the class level.
+     */
+    suspend fun getClasses(phylum: String): List<String> = withContext(Dispatchers.Default) {
+        getCatalog().filter { it.phylum.equals(phylum, ignoreCase = true) }
+            .map { it.category }.filter { it.isNotBlank() }.distinct().sorted()
+    }
+
+    /**
+     * Get distinct orders for a given class (category).
+     */
+    suspend fun getOrders(category: String): List<String> = withContext(Dispatchers.Default) {
+        getCatalog().filter { it.category.equals(category, ignoreCase = true) }
+            .map { it.order }.filter { it.isNotBlank() }.distinct().sorted()
+    }
+
+    /**
+     * Get distinct families for a given order.
+     */
+    suspend fun getFamilies(order: String): List<String> = withContext(Dispatchers.Default) {
+        getCatalog().filter { it.order.equals(order, ignoreCase = true) }
+            .map { it.family }.filter { it.isNotBlank() }.distinct().sorted()
+    }
+
+    /**
+     * Get distinct genera for a given family.
+     */
+    suspend fun getGenera(family: String): List<String> = withContext(Dispatchers.Default) {
+        getCatalog().filter { it.family.equals(family, ignoreCase = true) }
+            .map { it.genus }.filter { it.isNotBlank() }.distinct().sorted()
+    }
+
+    /**
+     * Get species for a given combination of filters.
+     * Non-null parameters filter at that level.
+     */
+    suspend fun getSpeciesByTaxonomy(
+        kingdom: String? = null,
+        phylum: String? = null,
+        category: String? = null,
+        order: String? = null,
+        family: String? = null,
+        genus: String? = null
+    ): List<SpeciesRecord> = withContext(Dispatchers.Default) {
+        var results = getCatalog()
+        kingdom?.let { k -> results = results.filter { r -> r.kingdom.equals(k, ignoreCase = true) } }
+        phylum?.let { p -> results = results.filter { r -> r.phylum.equals(p, ignoreCase = true) } }
+        category?.let { c -> results = results.filter { r -> r.category.equals(c, ignoreCase = true) } }
+        order?.let { o -> results = results.filter { r -> r.order.equals(o, ignoreCase = true) } }
+        family?.let { f -> results = results.filter { r -> r.family.equals(f, ignoreCase = true) } }
+        genus?.let { g -> results = results.filter { r -> r.genus.equals(g, ignoreCase = true) } }
+        results
+    }
+
+    // ── Category inference ──
+
     /**
      * Auto-suggest category based on species name keywords.
      */
@@ -396,7 +476,13 @@ class SpeciesDatabase(private val context: Context) {
         @SerializedName("thumbnail_url") val thumbnailUrl: String = "",
         @SerializedName("tags") val tags: List<String> = emptyList(),
         @SerializedName("key_features") val keyFeatures: List<String> = emptyList(),
-        @SerializedName("similar_species") val similarSpecies: List<String> = emptyList()
+        @SerializedName("similar_species") val similarSpecies: List<String> = emptyList(),
+        // ── Taxonomic classification ──
+        @SerializedName("kingdom") val kingdom: String = "",
+        @SerializedName("phylum") val phylum: String = "",
+        @SerializedName("order") val order: String = "",
+        @SerializedName("family") val family: String = "",
+        @SerializedName("genus") val genus: String = ""
     ) {
         fun toRecord() = SpeciesRecord(
             id = id.ifBlank { "species_${commonName.lowercase().replace(" ", "_")}" },
@@ -411,7 +497,12 @@ class SpeciesDatabase(private val context: Context) {
             thumbnailUrl = thumbnailUrl,
             tags = tags,
             keyFeatures = keyFeatures,
-            similarSpecies = similarSpecies
+            similarSpecies = similarSpecies,
+            kingdom = kingdom,
+            phylum = phylum,
+            order = order,
+            family = family,
+            genus = genus
         )
     }
 }

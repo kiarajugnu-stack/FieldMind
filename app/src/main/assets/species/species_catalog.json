@@ -29,7 +29,12 @@
       "Northern Cardinal",
       "Blue Jay",
       "American Crow"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Passeriformes",
+    "family": "Turdidae",
+    "genus": "Turdus"
   },
   {
     "id": "northern_cardinal",
@@ -61,7 +66,12 @@
       "American Robin",
       "Blue Jay",
       "American Crow"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Passeriformes",
+    "family": "Cardinalidae",
+    "genus": "Cardinalis"
   },
   {
     "id": "blue_jay",
@@ -92,7 +102,12 @@
       "American Robin",
       "Northern Cardinal",
       "American Crow"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Passeriformes",
+    "family": "Corvidae",
+    "genus": "Cyanocitta"
   },
   {
     "id": "american_crow",
@@ -123,7 +138,12 @@
       "American Robin",
       "Northern Cardinal",
       "Blue Jay"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Passeriformes",
+    "family": "Corvidae",
+    "genus": "Corvus"
   },
   {
     "id": "black_capped_chickadee",
@@ -154,7 +174,12 @@
       "American Robin",
       "Northern Cardinal",
       "Blue Jay"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "",
+    "family": "",
+    "genus": "Poecile"
   },
   {
     "id": "mourning_dove",
@@ -185,7 +210,12 @@
       "White-winged Dove",
       "American Robin",
       "Northern Cardinal"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Passeriformes",
+    "family": "",
+    "genus": "Zenaida"
   },
   {
     "id": "red_tailed_hawk",
@@ -217,7 +247,12 @@
       "Broad-winged Hawk",
       "American Robin",
       "Northern Cardinal"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Accipitriformes",
+    "family": "Accipitridae",
+    "genus": "Buteo"
   },
   {
     "id": "bald_eagle",
@@ -249,7 +284,12 @@
       "American Robin",
       "Northern Cardinal",
       "Blue Jay"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Accipitriformes",
+    "family": "Accipitridae",
+    "genus": "Haliaeetus"
   },
   {
     "id": "american_goldfinch",
@@ -280,7 +320,12 @@
       "American Robin",
       "Northern Cardinal",
       "Blue Jay"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Passeriformes",
+    "family": "Fringillidae",
+    "genus": "Spinus"
   },
   {
     "id": "downy_woodpecker",
@@ -311,7 +356,12 @@
       "Hairy Woodpecker",
       "American Robin",
       "Northern Cardinal"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Piciformes",
+    "family": "Picidae",
+    "genus": "Dryobates"
   },
   {
     "id": "house_sparrow",
@@ -344,7 +394,12 @@
       "American Robin",
       "Northern Cardinal",
       "Blue Jay"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Passeriformes",
+    "family": "Passerellidae",
+    "genus": "Passer"
   },
   {
     "id": "european_starling",
@@ -374,7 +429,12 @@
       "American Robin",
       "Northern Cardinal",
       "Blue Jay"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "",
+    "family": "",
+    "genus": "Sturnus"
   },
   {
     "id": "great_blue_heron",
@@ -405,7 +465,12 @@
       "Great Egret",
       "American Robin",
       "Northern Cardinal"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Pelecaniformes",
+    "family": "Ardeidae",
+    "genus": "Ardea"
   },
   {
     "id": "canada_goose",
@@ -437,7 +502,12 @@
       "American Robin",
       "Northern Cardinal",
       "Blue Jay"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Anseriformes",
+    "family": "Anatidae",
+    "genus": "Branta"
   },
   {
     "id": "mallard",
@@ -467,7 +537,12 @@
       "American Black Duck",
       "Northern Pintail",
       "American Robin"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "",
+    "family": "",
+    "genus": "Anas"
   },
   {
     "id": "ruby_throated_hummingbird",
@@ -498,7 +573,12 @@
       "American Robin",
       "Northern Cardinal",
       "Blue Jay"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Apodiformes",
+    "family": "Trochilidae",
+    "genus": "Archilochus"
   },
   {
     "id": "eastern_bluebird",
@@ -529,7 +609,12 @@
       "American Robin",
       "Northern Cardinal",
       "Blue Jay"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Passeriformes",
+    "family": "Turdidae",
+    "genus": "Sialia"
   },
   {
     "id": "tufted_titmouse",
@@ -560,7 +645,12 @@
       "American Robin",
       "Northern Cardinal",
       "Blue Jay"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Rodentia",
+    "family": "",
+    "genus": "Baeolophus"
   },
   {
     "id": "white_breasted_nuthatch",
@@ -591,7 +681,12 @@
       "American Robin",
       "Northern Cardinal",
       "Blue Jay"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "",
+    "family": "",
+    "genus": "Sitta"
   },
   {
     "id": "northern_mockingbird",
@@ -622,7 +717,12 @@
       "American Robin",
       "Northern Cardinal",
       "Blue Jay"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Passeriformes",
+    "family": "",
+    "genus": "Mimus"
   },
   {
     "id": "red_winged_blackbird",
@@ -653,7 +753,12 @@
       "American Robin",
       "Northern Cardinal",
       "Blue Jay"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Passeriformes",
+    "family": "",
+    "genus": "Agelaius"
   },
   {
     "id": "common_grackle",
@@ -684,7 +789,12 @@
       "American Robin",
       "Northern Cardinal",
       "Blue Jay"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Passeriformes",
+    "family": "",
+    "genus": "Quiscalus"
   },
   {
     "id": "barn_swallow",
@@ -715,7 +825,12 @@
       "American Robin",
       "Northern Cardinal",
       "Blue Jay"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Passeriformes",
+    "family": "",
+    "genus": "Hirundo"
   },
   {
     "id": "song_sparrow",
@@ -745,7 +860,12 @@
       "American Robin",
       "Northern Cardinal",
       "Blue Jay"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Passeriformes",
+    "family": "Passerellidae",
+    "genus": "Melospiza"
   },
   {
     "id": "dark_eyed_junco",
@@ -776,7 +896,12 @@
       "American Robin",
       "Northern Cardinal",
       "Blue Jay"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "",
+    "family": "",
+    "genus": "Junco"
   },
   {
     "id": "white_tailed_deer",
@@ -805,7 +930,12 @@
       "Mule Deer",
       "Eastern Gray Squirrel",
       "Eastern Cottontail"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Artiodactyla",
+    "family": "Cervidae",
+    "genus": "Odocoileus"
   },
   {
     "id": "eastern_gray_squirrel",
@@ -834,7 +964,12 @@
       "Eastern Fox Squirrel",
       "White-tailed Deer",
       "Eastern Cottontail"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Charadriiformes",
+    "family": "Laridae",
+    "genus": "Sciurus"
   },
   {
     "id": "eastern_cottontail",
@@ -864,7 +999,12 @@
       "Eastern Cottontail Rabbit",
       "New England Cottontail",
       "White-tailed Deer"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Charadriiformes",
+    "family": "Laridae",
+    "genus": "Sylvilagus"
   },
   {
     "id": "red_fox",
@@ -893,7 +1033,12 @@
       "Arctic Fox",
       "Swift Fox",
       "White-tailed Deer"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Carnivora",
+    "family": "Canidae",
+    "genus": "Vulpes"
   },
   {
     "id": "raccoon",
@@ -923,7 +1068,12 @@
       "Northern Raccoon",
       "White-tailed Deer",
       "Eastern Gray Squirrel"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Carnivora",
+    "family": "",
+    "genus": "Procyon"
   },
   {
     "id": "american_black_bear",
@@ -955,7 +1105,12 @@
       "White-tailed Deer",
       "Eastern Gray Squirrel",
       "Eastern Cottontail"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Carnivora",
+    "family": "Ursidae",
+    "genus": "Ursus"
   },
   {
     "id": "coyote",
@@ -984,7 +1139,12 @@
       "Gray Wolf",
       "Gray Wolf",
       "White-tailed Deer"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Carnivora",
+    "family": "Canidae",
+    "genus": "Canis"
   },
   {
     "id": "virginia_opossum",
@@ -1012,7 +1172,12 @@
       "White-tailed Deer",
       "Eastern Gray Squirrel",
       "Eastern Cottontail"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Didelphimorphia",
+    "family": "",
+    "genus": "Didelphis"
   },
   {
     "id": "striped_skunk",
@@ -1041,7 +1206,12 @@
       "White-tailed Deer",
       "Eastern Gray Squirrel",
       "Eastern Cottontail"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Carnivora",
+    "family": "",
+    "genus": "Mephitis"
   },
   {
     "id": "little_brown_bat",
@@ -1070,7 +1240,12 @@
       "Northern Long-eared Bat",
       "Indiana Bat",
       "White-tailed Deer"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Chiroptera",
+    "family": "Vespertilionidae",
+    "genus": "Myotis"
   },
   {
     "id": "eastern_chipmunk",
@@ -1100,7 +1275,12 @@
       "Red Squirrel",
       "Least Chipmunk",
       "White-tailed Deer"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Charadriiformes",
+    "family": "Laridae",
+    "genus": "Tamias"
   },
   {
     "id": "muskrat",
@@ -1127,7 +1307,12 @@
       "White-tailed Deer",
       "Eastern Gray Squirrel",
       "Eastern Cottontail"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Rodentia",
+    "family": "",
+    "genus": "Ondatra"
   },
   {
     "id": "beaver",
@@ -1156,7 +1341,12 @@
       "White-tailed Deer",
       "Eastern Gray Squirrel",
       "Eastern Cottontail"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Rodentia",
+    "family": "",
+    "genus": "Castor"
   },
   {
     "id": "river_otter",
@@ -1184,7 +1374,12 @@
       "North American River Otter",
       "White-tailed Deer",
       "Eastern Gray Squirrel"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Carnivora",
+    "family": "",
+    "genus": "Lontra"
   },
   {
     "id": "bobcat",
@@ -1213,7 +1408,12 @@
       "Canada Lynx",
       "White-tailed Deer",
       "Eastern Gray Squirrel"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Carnivora",
+    "family": "Felidae",
+    "genus": "Lynx"
   },
   {
     "id": "eastern_mole",
@@ -1241,7 +1441,12 @@
       "White-tailed Deer",
       "Eastern Gray Squirrel",
       "Eastern Cottontail"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Charadriiformes",
+    "family": "Laridae",
+    "genus": "Scalopus"
   },
   {
     "id": "white_footed_mouse",
@@ -1271,7 +1476,12 @@
       "Deer Mouse",
       "White-tailed Deer",
       "Eastern Gray Squirrel"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Rodentia",
+    "family": "",
+    "genus": "Peromyscus"
   },
   {
     "id": "meadow_vole",
@@ -1303,7 +1513,12 @@
       "Prairie Vole",
       "White-tailed Deer",
       "Eastern Gray Squirrel"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Rodentia",
+    "family": "",
+    "genus": "Microtus"
   },
   {
     "id": "gray_wolf",
@@ -1332,7 +1547,12 @@
       "Coyote",
       "Eastern Coyote",
       "White-tailed Deer"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Carnivora",
+    "family": "Canidae",
+    "genus": "Canis"
   },
   {
     "id": "moose",
@@ -1361,7 +1581,12 @@
       "White-tailed Deer",
       "Eastern Gray Squirrel",
       "Eastern Cottontail"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Artiodactyla",
+    "family": "Cervidae",
+    "genus": "Alces"
   },
   {
     "id": "monarch_butterfly",
@@ -1391,7 +1616,12 @@
       "Eastern Tiger Swallowtail",
       "Honey Bee",
       "Bumble Bee"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "Lepidoptera",
+    "family": "Nymphalidae",
+    "genus": "Danaus"
   },
   {
     "id": "eastern_tiger_swallowtail",
@@ -1421,7 +1651,12 @@
       "Black Swallowtail",
       "Spicebush Swallowtail",
       "Monarch Butterfly"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "Passeriformes",
+    "family": "Laridae",
+    "genus": "Papilio"
   },
   {
     "id": "honey_bee",
@@ -1451,7 +1686,12 @@
       "Monarch Butterfly",
       "Eastern Tiger Swallowtail",
       "Bumble Bee"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "Hymenoptera",
+    "family": "Apidae",
+    "genus": "Apis"
   },
   {
     "id": "bumble_bee",
@@ -1480,7 +1720,12 @@
       "Monarch Butterfly",
       "Eastern Tiger Swallowtail",
       "Honey Bee"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "Hymenoptera",
+    "family": "Apidae",
+    "genus": "Bombus"
   },
   {
     "id": "seven_spotted_ladybug",
@@ -1510,7 +1755,12 @@
       "Monarch Butterfly",
       "Eastern Tiger Swallowtail",
       "Honey Bee"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "Coleoptera",
+    "family": "",
+    "genus": "Coccinella"
   },
   {
     "id": "firefly",
@@ -1537,7 +1787,12 @@
       "Monarch Butterfly",
       "Eastern Tiger Swallowtail",
       "Honey Bee"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "Diptera",
+    "family": "",
+    "genus": "Lampyridae"
   },
   {
     "id": "dragonfly",
@@ -1566,7 +1821,12 @@
       "Monarch Butterfly",
       "Eastern Tiger Swallowtail",
       "Honey Bee"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "Odonata",
+    "family": "",
+    "genus": "Anisoptera"
   },
   {
     "id": "cicada",
@@ -1594,7 +1854,12 @@
       "Monarch Butterfly",
       "Eastern Tiger Swallowtail",
       "Honey Bee"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "Hemiptera",
+    "family": "",
+    "genus": "Cicadidae"
   },
   {
     "id": "praying_mantis",
@@ -1624,7 +1889,12 @@
       "Monarch Butterfly",
       "Eastern Tiger Swallowtail",
       "Honey Bee"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "Hymenoptera",
+    "family": "",
+    "genus": "Mantis"
   },
   {
     "id": "eastern_tent_caterpillar",
@@ -1652,7 +1922,12 @@
       "Monarch Butterfly",
       "Eastern Tiger Swallowtail",
       "Honey Bee"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "Charadriiformes",
+    "family": "Laridae",
+    "genus": "Malacosoma"
   },
   {
     "id": "japanese_beetle",
@@ -1681,7 +1956,12 @@
       "Monarch Butterfly",
       "Eastern Tiger Swallowtail",
       "Honey Bee"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "Hymenoptera",
+    "family": "Apidae",
+    "genus": "Popillia"
   },
   {
     "id": "luna_moth",
@@ -1711,7 +1991,12 @@
       "Monarch Butterfly",
       "Eastern Tiger Swallowtail",
       "Honey Bee"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "Lepidoptera",
+    "family": "",
+    "genus": "Actias"
   },
   {
     "id": "red_maple",
@@ -1738,7 +2023,12 @@
       "Sugar Maple",
       "Sugar Maple",
       "White Oak"
-    ]
+    ],
+    "kingdom": "Plantae",
+    "phylum": "Angiospermae",
+    "order": "",
+    "family": "",
+    "genus": "Acer"
   },
   {
     "id": "sugar_maple",
@@ -1764,7 +2054,12 @@
       "Red Maple",
       "Red Maple",
       "White Oak"
-    ]
+    ],
+    "kingdom": "Plantae",
+    "phylum": "Angiospermae",
+    "order": "Lepisosteiformes",
+    "family": "",
+    "genus": "Acer"
   },
   {
     "id": "white_oak",
@@ -1791,7 +2086,12 @@
       "Northern Red Oak",
       "Pin Oak",
       "Red Maple"
-    ]
+    ],
+    "kingdom": "Plantae",
+    "phylum": "Angiospermae",
+    "order": "",
+    "family": "",
+    "genus": "Quercus"
   },
   {
     "id": "eastern_white_pine",
@@ -1818,7 +2118,12 @@
       "Red Pine",
       "White Pine",
       "Red Maple"
-    ]
+    ],
+    "kingdom": "Plantae",
+    "phylum": "Angiospermae",
+    "order": "Charadriiformes",
+    "family": "Laridae",
+    "genus": "Pinus"
   },
   {
     "id": "black_eyed_susan",
@@ -1847,7 +2152,12 @@
       "Red Maple",
       "Sugar Maple",
       "White Oak"
-    ]
+    ],
+    "kingdom": "Plantae",
+    "phylum": "Angiospermae",
+    "order": "",
+    "family": "",
+    "genus": "Rudbeckia"
   },
   {
     "id": "purple_coneflower",
@@ -1873,7 +2183,12 @@
       "Red Maple",
       "Sugar Maple",
       "White Oak"
-    ]
+    ],
+    "kingdom": "Plantae",
+    "phylum": "Angiospermae",
+    "order": "",
+    "family": "",
+    "genus": "Echinacea"
   },
   {
     "id": "common_dandelion",
@@ -1900,7 +2215,12 @@
       "Red Maple",
       "Sugar Maple",
       "White Oak"
-    ]
+    ],
+    "kingdom": "Plantae",
+    "phylum": "Angiospermae",
+    "order": "Carnivora",
+    "family": "Felidae",
+    "genus": "Taraxacum"
   },
   {
     "id": "queen_annes_lace",
@@ -1928,7 +2248,12 @@
       "Red Maple",
       "Sugar Maple",
       "White Oak"
-    ]
+    ],
+    "kingdom": "Plantae",
+    "phylum": "Angiospermae",
+    "order": "",
+    "family": "",
+    "genus": "Daucus"
   },
   {
     "id": "milkweed",
@@ -1954,7 +2279,12 @@
       "Common Milkweed",
       "Swamp Milkweed",
       "Red Maple"
-    ]
+    ],
+    "kingdom": "Plantae",
+    "phylum": "Angiospermae",
+    "order": "",
+    "family": "",
+    "genus": "Asclepias"
   },
   {
     "id": "goldenrod",
@@ -1981,7 +2311,12 @@
       "Red Maple",
       "Sugar Maple",
       "White Oak"
-    ]
+    ],
+    "kingdom": "Plantae",
+    "phylum": "Angiospermae",
+    "order": "",
+    "family": "",
+    "genus": "Solidago"
   },
   {
     "id": "trillium",
@@ -2009,7 +2344,12 @@
       "Red Maple",
       "Sugar Maple",
       "White Oak"
-    ]
+    ],
+    "kingdom": "Plantae",
+    "phylum": "Angiospermae",
+    "order": "",
+    "family": "",
+    "genus": "Trillium"
   },
   {
     "id": "poison_ivy",
@@ -2035,7 +2375,12 @@
       "Red Maple",
       "Sugar Maple",
       "White Oak"
-    ]
+    ],
+    "kingdom": "Plantae",
+    "phylum": "Angiospermae",
+    "order": "",
+    "family": "",
+    "genus": "Toxicodendron"
   },
   {
     "id": "eastern_hemlock",
@@ -2063,7 +2408,12 @@
       "Red Maple",
       "Sugar Maple",
       "White Oak"
-    ]
+    ],
+    "kingdom": "Plantae",
+    "phylum": "Angiospermae",
+    "order": "Charadriiformes",
+    "family": "Laridae",
+    "genus": "Tsuga"
   },
   {
     "id": "american_elm",
@@ -2090,7 +2440,12 @@
       "Slippery Elm",
       "Red Maple",
       "Sugar Maple"
-    ]
+    ],
+    "kingdom": "Plantae",
+    "phylum": "Angiospermae",
+    "order": "",
+    "family": "",
+    "genus": "Ulmus"
   },
   {
     "id": "fly_agaric",
@@ -2119,7 +2474,12 @@
       "Destroying Angel",
       "Death Cap",
       "Turkey Tail"
-    ]
+    ],
+    "kingdom": "Fungi",
+    "phylum": "Basidiomycota",
+    "order": "Diptera",
+    "family": "",
+    "genus": "Amanita"
   },
   {
     "id": "turkey_tail",
@@ -2146,7 +2506,12 @@
       "Fly Agaric",
       "Shaggy Mane",
       "Chicken of the Woods"
-    ]
+    ],
+    "kingdom": "Fungi",
+    "phylum": "Basidiomycota",
+    "order": "",
+    "family": "",
+    "genus": "Trametes"
   },
   {
     "id": "shaggy_mane",
@@ -2173,7 +2538,12 @@
       "Fly Agaric",
       "Turkey Tail",
       "Chicken of the Woods"
-    ]
+    ],
+    "kingdom": "Fungi",
+    "phylum": "Basidiomycota",
+    "order": "",
+    "family": "",
+    "genus": "Coprinus"
   },
   {
     "id": "chicken_of_the_woods",
@@ -2202,7 +2572,12 @@
       "Fly Agaric",
       "Turkey Tail",
       "Shaggy Mane"
-    ]
+    ],
+    "kingdom": "Fungi",
+    "phylum": "Basidiomycota",
+    "order": "",
+    "family": "",
+    "genus": "Laetiporus"
   },
   {
     "id": "morel",
@@ -2230,7 +2605,12 @@
       "Common Morel",
       "Black Morel",
       "Fly Agaric"
-    ]
+    ],
+    "kingdom": "Fungi",
+    "phylum": "Basidiomycota",
+    "order": "",
+    "family": "",
+    "genus": "Morchella"
   },
   {
     "id": "artists_conk",
@@ -2258,7 +2638,12 @@
       "Reishi (Lingzhi)",
       "Fly Agaric",
       "Turkey Tail"
-    ]
+    ],
+    "kingdom": "Fungi",
+    "phylum": "Basidiomycota",
+    "order": "",
+    "family": "",
+    "genus": "Ganoderma"
   },
   {
     "id": "american_bullfrog",
@@ -2285,7 +2670,12 @@
       "Green Frog",
       "Pickerel Frog",
       "Gray Tree Frog"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Anura",
+    "family": "Ranidae",
+    "genus": "Lithobates"
   },
   {
     "id": "gray_tree_frog",
@@ -2313,7 +2703,12 @@
       "Cope's Gray Treefrog",
       "American Bullfrog",
       "Eastern Red-backed Salamander"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Anura",
+    "family": "Ranidae",
+    "genus": "Hyla"
   },
   {
     "id": "eastern_red_backed_salamander",
@@ -2341,7 +2736,12 @@
       "Northern Slimy Salamander",
       "Wehrle's Salamander",
       "American Bullfrog"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Charadriiformes",
+    "family": "Laridae",
+    "genus": "Plethodon"
   },
   {
     "id": "spotted_salamander",
@@ -2370,7 +2770,12 @@
       "Marbled Salamander",
       "Jefferson Salamander",
       "American Bullfrog"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Caudata",
+    "family": "",
+    "genus": "Ambystoma"
   },
   {
     "id": "eastern_garter_snake",
@@ -2397,7 +2802,12 @@
       "Common Garter Snake",
       "Eastern Ribbon Snake",
       "Eastern Box Turtle"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Charadriiformes",
+    "family": "Laridae",
+    "genus": "Thamnophis"
   },
   {
     "id": "eastern_box_turtle",
@@ -2423,7 +2833,12 @@
       "Ornate Box Turtle",
       "Eastern Garter Snake",
       "Painted Turtle"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Charadriiformes",
+    "family": "Laridae",
+    "genus": "Terrapene"
   },
   {
     "id": "painted_turtle",
@@ -2450,7 +2865,12 @@
       "Eastern Painted Turtle",
       "Eastern Garter Snake",
       "Eastern Box Turtle"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Testudines",
+    "family": "Testudinidae",
+    "genus": "Chrysemys"
   },
   {
     "id": "five_lined_skink",
@@ -2476,7 +2896,12 @@
       "Broad-headed Skink",
       "Common Five-lined Skink",
       "Eastern Garter Snake"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Squamata",
+    "family": "",
+    "genus": "Plestiodon"
   },
   {
     "id": "common_snapping_turtle",
@@ -2502,7 +2927,12 @@
       "Eastern Garter Snake",
       "Eastern Box Turtle",
       "Painted Turtle"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Testudines",
+    "family": "Testudinidae",
+    "genus": "Chelydra"
   },
   {
     "id": "timber_rattlesnake",
@@ -2528,7 +2958,12 @@
       "Eastern Garter Snake",
       "Eastern Box Turtle",
       "Painted Turtle"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Squamata",
+    "family": "Colubridae",
+    "genus": "Crotalus"
   },
   {
     "id": "largemouth_bass",
@@ -2556,7 +2991,12 @@
       "Smallmouth Bass",
       "Spotted Bass",
       "Bluegill"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Perciformes",
+    "family": "",
+    "genus": "Micropterus"
   },
   {
     "id": "bluegill",
@@ -2585,7 +3025,12 @@
       "Green Sunfish",
       "Pumpkinseed",
       "Largemouth Bass"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Perciformes",
+    "family": "",
+    "genus": "Lepomis"
   },
   {
     "id": "brook_trout",
@@ -2614,7 +3059,12 @@
       "Lake Trout",
       "Arctic Char",
       "Largemouth Bass"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Salmoniformes",
+    "family": "",
+    "genus": "Salvelinus"
   },
   {
     "id": "atlantic_salmon",
@@ -2640,7 +3090,12 @@
       "Brown Trout",
       "Largemouth Bass",
       "Bluegill"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Hymenoptera",
+    "family": "",
+    "genus": "Salmo"
   },
   {
     "id": "garden_snail",
@@ -2666,7 +3121,12 @@
     ],
     "similar_species": [
       "Eastern Oyster"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Mollusca",
+    "order": "Lepisosteiformes",
+    "family": "",
+    "genus": "Cornu"
   },
   {
     "id": "eastern_oyster",
@@ -2690,7 +3150,12 @@
     ],
     "similar_species": [
       "Garden Snail"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Mollusca",
+    "order": "Charadriiformes",
+    "family": "Laridae",
+    "genus": "Crassostrea"
   },
   {
     "id": "peregrine_falcon",
@@ -2719,7 +3184,12 @@
       "American Kestrel",
       "American Robin",
       "Northern Cardinal"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "",
+    "family": "Falconidae",
+    "genus": "Falco"
   },
   {
     "id": "american_kestrel",
@@ -2749,7 +3219,12 @@
       "Peregrine Falcon",
       "American Robin",
       "Northern Cardinal"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "",
+    "family": "",
+    "genus": "Falco"
   },
   {
     "id": "great_horned_owl",
@@ -2779,7 +3254,12 @@
       "Snowy Owl",
       "American Robin",
       "Northern Cardinal"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Strigiformes",
+    "family": "Strigidae",
+    "genus": "Bubo"
   },
   {
     "id": "barred_owl",
@@ -2810,7 +3290,12 @@
       "American Robin",
       "Northern Cardinal",
       "Blue Jay"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Strigiformes",
+    "family": "Strigidae",
+    "genus": "Strix"
   },
   {
     "id": "eastern_screech_owl",
@@ -2840,7 +3325,12 @@
       "American Robin",
       "Northern Cardinal",
       "Blue Jay"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Strigiformes",
+    "family": "Strigidae",
+    "genus": "Megascops"
   },
   {
     "id": "snowy_owl",
@@ -2871,7 +3361,12 @@
       "Great Horned Owl",
       "American Robin",
       "Northern Cardinal"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Strigiformes",
+    "family": "Strigidae",
+    "genus": "Bubo"
   },
   {
     "id": "osprey",
@@ -2901,7 +3396,12 @@
       "American Robin",
       "Northern Cardinal",
       "Blue Jay"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "",
+    "family": "Accipitridae",
+    "genus": "Pandion"
   },
   {
     "id": "coopers_hawk",
@@ -2932,7 +3432,12 @@
       "Sharp-shinned Hawk",
       "American Robin",
       "Northern Cardinal"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Accipitriformes",
+    "family": "Accipitridae",
+    "genus": "Accipiter"
   },
   {
     "id": "sharp_shinned_hawk",
@@ -2962,7 +3467,12 @@
       "Cooper's Hawk",
       "American Robin",
       "Northern Cardinal"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Accipitriformes",
+    "family": "Accipitridae",
+    "genus": "Accipiter"
   },
   {
     "id": "broad_winged_hawk",
@@ -2994,7 +3504,12 @@
       "Red-tailed Hawk",
       "American Robin",
       "Northern Cardinal"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Accipitriformes",
+    "family": "Accipitridae",
+    "genus": "Buteo"
   },
   {
     "id": "turkey_vulture",
@@ -3025,7 +3540,12 @@
       "American Robin",
       "Northern Cardinal",
       "Blue Jay"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Accipitriformes",
+    "family": "Accipitridae",
+    "genus": "Cathartes"
   },
   {
     "id": "black_vulture",
@@ -3056,7 +3576,12 @@
       "American Robin",
       "Northern Cardinal",
       "Blue Jay"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Accipitriformes",
+    "family": "Accipitridae",
+    "genus": "Coragyps"
   },
   {
     "id": "belted_kingfisher",
@@ -3087,7 +3612,12 @@
       "American Robin",
       "Northern Cardinal",
       "Blue Jay"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Coraciiformes",
+    "family": "",
+    "genus": "Megaceryle"
   },
   {
     "id": "pileated_woodpecker",
@@ -3118,7 +3648,12 @@
       "American Robin",
       "Northern Cardinal",
       "Blue Jay"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Piciformes",
+    "family": "Picidae",
+    "genus": "Dryocopus"
   },
   {
     "id": "red_bellied_woodpecker",
@@ -3149,7 +3684,12 @@
       "American Robin",
       "Northern Cardinal",
       "Blue Jay"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Piciformes",
+    "family": "Picidae",
+    "genus": "Melanerpes"
   },
   {
     "id": "northern_flicker",
@@ -3180,7 +3720,12 @@
       "American Robin",
       "Northern Cardinal",
       "Blue Jay"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "",
+    "family": "",
+    "genus": "Colaptes"
   },
   {
     "id": "hairy_woodpecker",
@@ -3211,7 +3756,12 @@
       "Downy Woodpecker",
       "American Robin",
       "Northern Cardinal"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Piciformes",
+    "family": "Picidae",
+    "genus": "Dryobates"
   },
   {
     "id": "yellow_bellied_sapsucker",
@@ -3240,7 +3790,12 @@
       "American Robin",
       "Northern Cardinal",
       "Blue Jay"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "",
+    "family": "",
+    "genus": "Sphyrapicus"
   },
   {
     "id": "eastern_phoebe",
@@ -3271,7 +3826,12 @@
       "American Robin",
       "Northern Cardinal",
       "Blue Jay"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Charadriiformes",
+    "family": "Laridae",
+    "genus": "Sayornis"
   },
   {
     "id": "great_crested_flycatcher",
@@ -3301,7 +3861,12 @@
       "American Robin",
       "Northern Cardinal",
       "Blue Jay"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Diptera",
+    "family": "Felidae",
+    "genus": "Myiarchus"
   },
   {
     "id": "eastern_wood_pewee",
@@ -3331,7 +3896,12 @@
       "American Robin",
       "Northern Cardinal",
       "Blue Jay"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Charadriiformes",
+    "family": "Laridae",
+    "genus": "Contopus"
   },
   {
     "id": "american_redstart",
@@ -3362,7 +3932,12 @@
       "Yellow Warbler",
       "Black-throated Blue Warbler",
       "American Robin"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "",
+    "family": "",
+    "genus": "Setophaga"
   },
   {
     "id": "common_yellowthroat",
@@ -3393,7 +3968,12 @@
       "American Robin",
       "Northern Cardinal",
       "Blue Jay"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "",
+    "family": "",
+    "genus": "Geothlypis"
   },
   {
     "id": "yellow_warbler",
@@ -3424,7 +4004,12 @@
       "American Redstart",
       "Black-throated Blue Warbler",
       "American Robin"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Passeriformes",
+    "family": "",
+    "genus": "Setophaga"
   },
   {
     "id": "black_throated_blue_warbler",
@@ -3455,7 +4040,12 @@
       "American Redstart",
       "Yellow Warbler",
       "American Robin"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Passeriformes",
+    "family": "",
+    "genus": "Setophaga"
   },
   {
     "id": "cedar_waxwing",
@@ -3486,7 +4076,12 @@
       "American Robin",
       "Northern Cardinal",
       "Blue Jay"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "",
+    "family": "",
+    "genus": "Bombycilla"
   },
   {
     "id": "gray_catbird",
@@ -3516,7 +4111,12 @@
       "American Robin",
       "Northern Cardinal",
       "Blue Jay"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "",
+    "family": "Felidae",
+    "genus": "Dumetella"
   },
   {
     "id": "brown_thrasher",
@@ -3547,7 +4147,12 @@
       "American Robin",
       "Northern Cardinal",
       "Blue Jay"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "",
+    "family": "",
+    "genus": "Toxostoma"
   },
   {
     "id": "house_wren",
@@ -3578,7 +4183,12 @@
       "Winter Wren",
       "American Robin",
       "Northern Cardinal"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "",
+    "family": "",
+    "genus": "Troglodytes"
   },
   {
     "id": "carolina_wren",
@@ -3608,7 +4218,12 @@
       "American Robin",
       "Northern Cardinal",
       "Blue Jay"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "",
+    "family": "",
+    "genus": "Thryothorus"
   },
   {
     "id": "winter_wren",
@@ -3639,7 +4254,12 @@
       "House Wren",
       "American Robin",
       "Northern Cardinal"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "",
+    "family": "",
+    "genus": "Troglodytes"
   },
   {
     "id": "hermit_thrush",
@@ -3670,7 +4290,12 @@
       "Veery",
       "Swainson's Thrush",
       "American Robin"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Passeriformes",
+    "family": "Turdidae",
+    "genus": "Catharus"
   },
   {
     "id": "wood_thrush",
@@ -3699,7 +4324,12 @@
       "American Robin",
       "Northern Cardinal",
       "Blue Jay"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Passeriformes",
+    "family": "Turdidae",
+    "genus": "Hylocichla"
   },
   {
     "id": "veery",
@@ -3728,7 +4358,12 @@
       "Hermit Thrush",
       "Swainson's Thrush",
       "American Robin"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "",
+    "family": "",
+    "genus": "Catharus"
   },
   {
     "id": "swainsons_thrush",
@@ -3759,7 +4394,12 @@
       "Hermit Thrush",
       "Veery",
       "American Robin"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Passeriformes",
+    "family": "Turdidae",
+    "genus": "Catharus"
   },
   {
     "id": "american_woodcock",
@@ -3791,7 +4431,12 @@
       "American Robin",
       "Northern Cardinal",
       "Blue Jay"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "",
+    "family": "",
+    "genus": "Scolopax"
   },
   {
     "id": "wilsons_snipe",
@@ -3823,7 +4468,12 @@
       "American Robin",
       "Northern Cardinal",
       "Blue Jay"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "",
+    "family": "",
+    "genus": "Gallinago"
   },
   {
     "id": "spotted_sandpiper",
@@ -3854,7 +4504,12 @@
       "American Robin",
       "Northern Cardinal",
       "Blue Jay"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "",
+    "family": "",
+    "genus": "Actitis"
   },
   {
     "id": "killdeer",
@@ -3885,7 +4540,12 @@
       "American Robin",
       "Northern Cardinal",
       "Blue Jay"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Artiodactyla",
+    "family": "Cervidae",
+    "genus": "Charadrius"
   },
   {
     "id": "ring_billed_gull",
@@ -3917,7 +4577,12 @@
       "Herring Gull",
       "Great Black-backed Gull",
       "American Robin"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Charadriiformes",
+    "family": "Laridae",
+    "genus": "Larus"
   },
   {
     "id": "herring_gull",
@@ -3948,7 +4613,12 @@
       "Ring-billed Gull",
       "Great Black-backed Gull",
       "American Robin"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Charadriiformes",
+    "family": "Laridae",
+    "genus": "Larus"
   },
   {
     "id": "great_black_backed_gull",
@@ -3979,7 +4649,12 @@
       "Ring-billed Gull",
       "Herring Gull",
       "American Robin"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Charadriiformes",
+    "family": "Laridae",
+    "genus": "Larus"
   },
   {
     "id": "common_tern",
@@ -4010,7 +4685,12 @@
       "American Robin",
       "Northern Cardinal",
       "Blue Jay"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Charadriiformes",
+    "family": "Laridae",
+    "genus": "Sterna"
   },
   {
     "id": "double_crested_cormorant",
@@ -4041,7 +4721,12 @@
       "American Robin",
       "Northern Cardinal",
       "Blue Jay"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Suliformes",
+    "family": "",
+    "genus": "Nannopterum"
   },
   {
     "id": "great_egret",
@@ -4072,7 +4757,12 @@
       "Great Blue Heron",
       "American Robin",
       "Northern Cardinal"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Pelecaniformes",
+    "family": "Ardeidae",
+    "genus": "Ardea"
   },
   {
     "id": "snowy_egret",
@@ -4103,7 +4793,12 @@
       "American Robin",
       "Northern Cardinal",
       "Blue Jay"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Pelecaniformes",
+    "family": "Ardeidae",
+    "genus": "Egretta"
   },
   {
     "id": "green_heron",
@@ -4134,7 +4829,12 @@
       "American Robin",
       "Northern Cardinal",
       "Blue Jay"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Pelecaniformes",
+    "family": "Ardeidae",
+    "genus": "Butorides"
   },
   {
     "id": "black_crowned_night_heron",
@@ -4164,7 +4864,12 @@
       "American Robin",
       "Northern Cardinal",
       "Blue Jay"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Passeriformes",
+    "family": "Corvidae",
+    "genus": "Nycticorax"
   },
   {
     "id": "sandhill_crane",
@@ -4195,7 +4900,12 @@
       "American Robin",
       "Northern Cardinal",
       "Blue Jay"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "",
+    "family": "",
+    "genus": "Antigone"
   },
   {
     "id": "american_coot",
@@ -4226,7 +4936,12 @@
       "American Robin",
       "Northern Cardinal",
       "Blue Jay"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "",
+    "family": "",
+    "genus": "Fulica"
   },
   {
     "id": "common_loon",
@@ -4257,7 +4972,12 @@
       "American Robin",
       "Northern Cardinal",
       "Blue Jay"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Gaviiformes",
+    "family": "",
+    "genus": "Gavia"
   },
   {
     "id": "pied_billed_grebe",
@@ -4288,7 +5008,12 @@
       "American Robin",
       "Northern Cardinal",
       "Blue Jay"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "",
+    "family": "",
+    "genus": "Podilymbus"
   },
   {
     "id": "horned_grebe",
@@ -4318,7 +5043,12 @@
       "American Robin",
       "Northern Cardinal",
       "Blue Jay"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "",
+    "family": "",
+    "genus": "Podiceps"
   },
   {
     "id": "wood_duck",
@@ -4348,7 +5078,12 @@
       "American Robin",
       "Northern Cardinal",
       "Blue Jay"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Anseriformes",
+    "family": "Anatidae",
+    "genus": "Aix"
   },
   {
     "id": "american_black_duck",
@@ -4378,7 +5113,12 @@
       "Mallard",
       "Northern Pintail",
       "American Robin"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Anseriformes",
+    "family": "Anatidae",
+    "genus": "Anas"
   },
   {
     "id": "northern_pintail",
@@ -4409,7 +5149,12 @@
       "Mallard",
       "American Black Duck",
       "American Robin"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "",
+    "family": "",
+    "genus": "Anas"
   },
   {
     "id": "green_winged_teal",
@@ -4440,7 +5185,12 @@
       "Mallard",
       "American Black Duck",
       "American Robin"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "",
+    "family": "",
+    "genus": "Anas"
   },
   {
     "id": "blue_winged_teal",
@@ -4471,7 +5221,12 @@
       "Northern Shoveler",
       "American Robin",
       "Northern Cardinal"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "",
+    "family": "",
+    "genus": "Spatula"
   },
   {
     "id": "northern_shoveler",
@@ -4502,7 +5257,12 @@
       "Blue-winged Teal",
       "American Robin",
       "Northern Cardinal"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "",
+    "family": "",
+    "genus": "Spatula"
   },
   {
     "id": "gadwall",
@@ -4533,7 +5293,12 @@
       "American Wigeon",
       "American Robin",
       "Northern Cardinal"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "",
+    "family": "",
+    "genus": "Mareca"
   },
   {
     "id": "american_wigeon",
@@ -4564,7 +5329,12 @@
       "Gadwall",
       "American Robin",
       "Northern Cardinal"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "",
+    "family": "",
+    "genus": "Mareca"
   },
   {
     "id": "canvasback",
@@ -4594,7 +5364,12 @@
       "Redhead",
       "Ring-necked Duck",
       "American Robin"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "",
+    "family": "",
+    "genus": "Aythya"
   },
   {
     "id": "redhead",
@@ -4625,7 +5400,12 @@
       "Canvasback",
       "Ring-necked Duck",
       "American Robin"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "",
+    "family": "",
+    "genus": "Aythya"
   },
   {
     "id": "ring_necked_duck",
@@ -4656,7 +5436,12 @@
       "Canvasback",
       "Redhead",
       "American Robin"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Anseriformes",
+    "family": "Anatidae",
+    "genus": "Aythya"
   },
   {
     "id": "lesser_scaup",
@@ -4687,7 +5472,12 @@
       "Canvasback",
       "Redhead",
       "American Robin"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "",
+    "family": "",
+    "genus": "Aythya"
   },
   {
     "id": "greater_scaup",
@@ -4718,7 +5508,12 @@
       "Canvasback",
       "Redhead",
       "American Robin"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "",
+    "family": "",
+    "genus": "Aythya"
   },
   {
     "id": "common_goldeneye",
@@ -4748,7 +5543,12 @@
       "Bufflehead",
       "American Robin",
       "Northern Cardinal"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "",
+    "family": "",
+    "genus": "Bucephala"
   },
   {
     "id": "bufflehead",
@@ -4779,7 +5579,12 @@
       "Common Goldeneye",
       "American Robin",
       "Northern Cardinal"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "",
+    "family": "",
+    "genus": "Bucephala"
   },
   {
     "id": "hooded_merganser",
@@ -4810,7 +5615,12 @@
       "American Robin",
       "Northern Cardinal",
       "Blue Jay"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "",
+    "family": "",
+    "genus": "Lophodytes"
   },
   {
     "id": "common_merganser",
@@ -4841,7 +5651,12 @@
       "Red-breasted Merganser",
       "American Robin",
       "Northern Cardinal"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "",
+    "family": "",
+    "genus": "Mergus"
   },
   {
     "id": "red_breasted_merganser",
@@ -4871,7 +5686,12 @@
       "Common Merganser",
       "American Robin",
       "Northern Cardinal"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "",
+    "family": "",
+    "genus": "Mergus"
   },
   {
     "id": "ruffed_grouse",
@@ -4901,7 +5721,12 @@
       "American Robin",
       "Northern Cardinal",
       "Blue Jay"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "",
+    "family": "",
+    "genus": "Bonasa"
   },
   {
     "id": "wild_turkey",
@@ -4933,7 +5758,12 @@
       "American Robin",
       "Northern Cardinal",
       "Blue Jay"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "",
+    "family": "",
+    "genus": "Meleagris"
   },
   {
     "id": "northern_bobwhite",
@@ -4964,7 +5794,12 @@
       "American Robin",
       "Northern Cardinal",
       "Blue Jay"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "",
+    "family": "",
+    "genus": "Colinus"
   },
   {
     "id": "ring_necked_pheasant",
@@ -4996,7 +5831,12 @@
       "American Robin",
       "Northern Cardinal",
       "Blue Jay"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Hymenoptera",
+    "family": "",
+    "genus": "Phasianus"
   },
   {
     "id": "rock_pigeon",
@@ -5027,7 +5867,12 @@
       "American Robin",
       "Northern Cardinal",
       "Blue Jay"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "",
+    "family": "",
+    "genus": "Columba"
   },
   {
     "id": "eurasian_collared_dove",
@@ -5057,7 +5902,12 @@
       "American Robin",
       "Northern Cardinal",
       "Blue Jay"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Passeriformes",
+    "family": "",
+    "genus": "Streptopelia"
   },
   {
     "id": "white_winged_dove",
@@ -5088,7 +5938,12 @@
       "Mourning Dove",
       "American Robin",
       "Northern Cardinal"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Passeriformes",
+    "family": "",
+    "genus": "Zenaida"
   },
   {
     "id": "common_nighthawk",
@@ -5118,7 +5973,12 @@
       "American Robin",
       "Northern Cardinal",
       "Blue Jay"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Accipitriformes",
+    "family": "Accipitridae",
+    "genus": "Chordeiles"
   },
   {
     "id": "chimney_swift",
@@ -5147,7 +6007,12 @@
       "American Robin",
       "Northern Cardinal",
       "Blue Jay"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "",
+    "family": "",
+    "genus": "Chaetura"
   },
   {
     "id": "ruby_throated_hummingbird_2",
@@ -5178,7 +6043,12 @@
       "American Robin",
       "Northern Cardinal",
       "Blue Jay"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Apodiformes",
+    "family": "Trochilidae",
+    "genus": "Archilochus"
   },
   {
     "id": "rufous_hummingbird",
@@ -5209,7 +6079,12 @@
       "American Robin",
       "Northern Cardinal",
       "Blue Jay"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Apodiformes",
+    "family": "Trochilidae",
+    "genus": "Selasphorus"
   },
   {
     "id": "annas_hummingbird",
@@ -5239,7 +6114,12 @@
       "American Robin",
       "Northern Cardinal",
       "Blue Jay"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Apodiformes",
+    "family": "Trochilidae",
+    "genus": "Calypte"
   },
   {
     "id": "north_american_river_otter",
@@ -5266,7 +6146,12 @@
       "River Otter",
       "White-tailed Deer",
       "Eastern Gray Squirrel"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Carnivora",
+    "family": "",
+    "genus": "Lontra"
   },
   {
     "id": "long_tailed_weasel",
@@ -5295,7 +6180,12 @@
       "American Mink",
       "White-tailed Deer",
       "Eastern Gray Squirrel"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "",
+    "family": "",
+    "genus": "Neogale"
   },
   {
     "id": "ermine_short_tailed_weasel",
@@ -5324,7 +6214,12 @@
       "Black-footed Ferret",
       "White-tailed Deer",
       "Eastern Gray Squirrel"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "",
+    "family": "",
+    "genus": "Mustela"
   },
   {
     "id": "american_mink",
@@ -5353,7 +6248,12 @@
       "Long-tailed Weasel",
       "White-tailed Deer",
       "Eastern Gray Squirrel"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "",
+    "family": "",
+    "genus": "Neogale"
   },
   {
     "id": "fisher",
@@ -5384,7 +6284,12 @@
       "White-tailed Deer",
       "Eastern Gray Squirrel",
       "Eastern Cottontail"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "",
+    "family": "",
+    "genus": "Pekania"
   },
   {
     "id": "american_marten",
@@ -5413,7 +6318,12 @@
       "White-tailed Deer",
       "Eastern Gray Squirrel",
       "Eastern Cottontail"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "",
+    "family": "",
+    "genus": "Martes"
   },
   {
     "id": "wolverine",
@@ -5440,7 +6350,12 @@
       "White-tailed Deer",
       "Eastern Gray Squirrel",
       "Eastern Cottontail"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "",
+    "family": "",
+    "genus": "Gulo"
   },
   {
     "id": "badger",
@@ -5467,7 +6382,12 @@
       "White-tailed Deer",
       "Eastern Gray Squirrel",
       "Eastern Cottontail"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "",
+    "family": "",
+    "genus": "Taxidea"
   },
   {
     "id": "northern_raccoon",
@@ -5495,7 +6415,12 @@
       "Raccoon",
       "White-tailed Deer",
       "Eastern Gray Squirrel"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Carnivora",
+    "family": "",
+    "genus": "Procyon"
   },
   {
     "id": "black_footed_ferret",
@@ -5524,7 +6449,12 @@
       "Ermine (Short-tailed Weasel)",
       "White-tailed Deer",
       "Eastern Gray Squirrel"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "",
+    "family": "",
+    "genus": "Mustela"
   },
   {
     "id": "woodchuck_groundhog",
@@ -5554,7 +6484,12 @@
       "Yellow-bellied Marmot",
       "White-tailed Deer",
       "Eastern Gray Squirrel"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "",
+    "family": "",
+    "genus": "Marmota"
   },
   {
     "id": "yellow_bellied_marmot",
@@ -5582,7 +6517,12 @@
       "Woodchuck (Groundhog)",
       "White-tailed Deer",
       "Eastern Gray Squirrel"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "",
+    "family": "",
+    "genus": "Marmota"
   },
   {
     "id": "thirteen_lined_ground_squirrel",
@@ -5611,7 +6551,12 @@
       "White-tailed Deer",
       "Eastern Gray Squirrel",
       "Eastern Cottontail"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Rodentia",
+    "family": "Sciuridae",
+    "genus": "Ictidomys"
   },
   {
     "id": "eastern_fox_squirrel",
@@ -5641,7 +6586,12 @@
       "Eastern Gray Squirrel",
       "White-tailed Deer",
       "Eastern Cottontail"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Charadriiformes",
+    "family": "Laridae",
+    "genus": "Sciurus"
   },
   {
     "id": "red_squirrel",
@@ -5670,7 +6620,12 @@
       "White-tailed Deer",
       "Eastern Gray Squirrel",
       "Eastern Cottontail"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Rodentia",
+    "family": "Sciuridae",
+    "genus": "Tamiasciurus"
   },
   {
     "id": "northern_flying_squirrel",
@@ -5699,7 +6654,12 @@
       "Southern Flying Squirrel",
       "White-tailed Deer",
       "Eastern Gray Squirrel"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Rodentia",
+    "family": "Sciuridae",
+    "genus": "Glaucomys"
   },
   {
     "id": "southern_flying_squirrel",
@@ -5729,7 +6689,12 @@
       "Northern Flying Squirrel",
       "White-tailed Deer",
       "Eastern Gray Squirrel"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Rodentia",
+    "family": "Sciuridae",
+    "genus": "Glaucomys"
   },
   {
     "id": "least_chipmunk",
@@ -5759,7 +6724,12 @@
       "Eastern Chipmunk",
       "Red Squirrel",
       "White-tailed Deer"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Rodentia",
+    "family": "Sciuridae",
+    "genus": "Tamias"
   },
   {
     "id": "gray_wolf_2",
@@ -5788,7 +6758,12 @@
       "Coyote",
       "Eastern Coyote",
       "White-tailed Deer"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Carnivora",
+    "family": "Canidae",
+    "genus": "Canis"
   },
   {
     "id": "eastern_coyote",
@@ -5815,7 +6790,12 @@
       "Coyote",
       "Gray Wolf",
       "White-tailed Deer"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Charadriiformes",
+    "family": "Laridae",
+    "genus": "Canis"
   },
   {
     "id": "red_wolf",
@@ -5844,7 +6824,12 @@
       "Coyote",
       "Gray Wolf",
       "White-tailed Deer"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Carnivora",
+    "family": "Canidae",
+    "genus": "Canis"
   },
   {
     "id": "arctic_fox",
@@ -5872,7 +6857,12 @@
       "Red Fox",
       "Swift Fox",
       "White-tailed Deer"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Carnivora",
+    "family": "Canidae",
+    "genus": "Vulpes"
   },
   {
     "id": "gray_fox",
@@ -5900,7 +6890,12 @@
       "White-tailed Deer",
       "Eastern Gray Squirrel",
       "Eastern Cottontail"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Carnivora",
+    "family": "Canidae",
+    "genus": "Urocyon"
   },
   {
     "id": "swift_fox",
@@ -5929,7 +6924,12 @@
       "Red Fox",
       "Arctic Fox",
       "White-tailed Deer"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Carnivora",
+    "family": "Canidae",
+    "genus": "Vulpes"
   },
   {
     "id": "kit_fox",
@@ -5959,7 +6959,12 @@
       "Red Fox",
       "Arctic Fox",
       "White-tailed Deer"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Carnivora",
+    "family": "Canidae",
+    "genus": "Vulpes"
   },
   {
     "id": "bobcat_2",
@@ -5989,7 +6994,12 @@
       "Canada Lynx",
       "White-tailed Deer",
       "Eastern Gray Squirrel"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Carnivora",
+    "family": "Felidae",
+    "genus": "Lynx"
   },
   {
     "id": "canada_lynx",
@@ -6017,7 +7027,12 @@
       "Bobcat",
       "Bobcat",
       "White-tailed Deer"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Carnivora",
+    "family": "Felidae",
+    "genus": "Lynx"
   },
   {
     "id": "cougar_mountain_lion",
@@ -6045,7 +7060,12 @@
       "White-tailed Deer",
       "Eastern Gray Squirrel",
       "Eastern Cottontail"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Carnivora",
+    "family": "Felidae",
+    "genus": "Puma"
   },
   {
     "id": "jaguar",
@@ -6073,7 +7093,12 @@
       "White-tailed Deer",
       "Eastern Gray Squirrel",
       "Eastern Cottontail"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "",
+    "family": "",
+    "genus": "Panthera"
   },
   {
     "id": "ocelot",
@@ -6101,7 +7126,12 @@
       "White-tailed Deer",
       "Eastern Gray Squirrel",
       "Eastern Cottontail"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "",
+    "family": "",
+    "genus": "Leopardus"
   },
   {
     "id": "american_bison",
@@ -6128,7 +7158,12 @@
       "White-tailed Deer",
       "Eastern Gray Squirrel",
       "Eastern Cottontail"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Artiodactyla",
+    "family": "",
+    "genus": "Bison"
   },
   {
     "id": "mountain_goat",
@@ -6156,7 +7191,12 @@
       "White-tailed Deer",
       "Eastern Gray Squirrel",
       "Eastern Cottontail"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "",
+    "family": "",
+    "genus": "Oreamnos"
   },
   {
     "id": "bighorn_sheep",
@@ -6184,7 +7224,12 @@
       "White-tailed Deer",
       "Eastern Gray Squirrel",
       "Eastern Cottontail"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "",
+    "family": "",
+    "genus": "Ovis"
   },
   {
     "id": "pronghorn",
@@ -6211,7 +7256,12 @@
       "White-tailed Deer",
       "Eastern Gray Squirrel",
       "Eastern Cottontail"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "",
+    "family": "",
+    "genus": "Antilocapra"
   },
   {
     "id": "elk_wapiti",
@@ -6239,7 +7289,12 @@
       "White-tailed Deer",
       "Eastern Gray Squirrel",
       "Eastern Cottontail"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Artiodactyla",
+    "family": "Cervidae",
+    "genus": "Cervus"
   },
   {
     "id": "caribou_reindeer",
@@ -6268,7 +7323,12 @@
       "White-tailed Deer",
       "Eastern Gray Squirrel",
       "Eastern Cottontail"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Artiodactyla",
+    "family": "Cervidae",
+    "genus": "Rangifer"
   },
   {
     "id": "moose_2",
@@ -6297,7 +7357,12 @@
       "White-tailed Deer",
       "Eastern Gray Squirrel",
       "Eastern Cottontail"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Artiodactyla",
+    "family": "Cervidae",
+    "genus": "Alces"
   },
   {
     "id": "white_tailed_deer_2",
@@ -6326,7 +7391,12 @@
       "Mule Deer",
       "Eastern Gray Squirrel",
       "Eastern Cottontail"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Artiodactyla",
+    "family": "Cervidae",
+    "genus": "Odocoileus"
   },
   {
     "id": "mule_deer",
@@ -6354,7 +7424,12 @@
       "White-tailed Deer",
       "White-tailed Deer",
       "Eastern Gray Squirrel"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Artiodactyla",
+    "family": "Cervidae",
+    "genus": "Odocoileus"
   },
   {
     "id": "collared_peccary_javelina",
@@ -6382,7 +7457,12 @@
       "White-tailed Deer",
       "Eastern Gray Squirrel",
       "Eastern Cottontail"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "",
+    "family": "",
+    "genus": "Pecari"
   },
   {
     "id": "nine_banded_armadillo",
@@ -6410,7 +7490,12 @@
       "White-tailed Deer",
       "Eastern Gray Squirrel",
       "Eastern Cottontail"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "",
+    "family": "",
+    "genus": "Dasypus"
   },
   {
     "id": "north_american_porcupine",
@@ -6439,7 +7524,12 @@
       "White-tailed Deer",
       "Eastern Gray Squirrel",
       "Eastern Cottontail"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Rodentia",
+    "family": "",
+    "genus": "Erethizon"
   },
   {
     "id": "southern_bog_lemming",
@@ -6467,7 +7557,12 @@
       "White-tailed Deer",
       "Eastern Gray Squirrel",
       "Eastern Cottontail"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "",
+    "family": "",
+    "genus": "Synaptomys"
   },
   {
     "id": "muskrat_2",
@@ -6495,7 +7590,12 @@
       "White-tailed Deer",
       "Eastern Gray Squirrel",
       "Eastern Cottontail"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Rodentia",
+    "family": "",
+    "genus": "Ondatra"
   },
   {
     "id": "norway_rat",
@@ -6526,7 +7626,12 @@
       "White-tailed Deer",
       "Eastern Gray Squirrel",
       "Eastern Cottontail"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "",
+    "family": "",
+    "genus": "Rattus"
   },
   {
     "id": "house_mouse",
@@ -6555,7 +7660,12 @@
       "Ermine (Short-tailed Weasel)",
       "Black-footed Ferret",
       "White-tailed Deer"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Rodentia",
+    "family": "",
+    "genus": "Mus"
   },
   {
     "id": "deer_mouse",
@@ -6585,7 +7695,12 @@
       "White-footed Mouse",
       "White-tailed Deer",
       "Eastern Gray Squirrel"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Artiodactyla",
+    "family": "Cervidae",
+    "genus": "Peromyscus"
   },
   {
     "id": "meadow_jumping_mouse",
@@ -6615,7 +7730,12 @@
       "White-tailed Deer",
       "Eastern Gray Squirrel",
       "Eastern Cottontail"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Rodentia",
+    "family": "",
+    "genus": "Zapus"
   },
   {
     "id": "southern_red_backed_vole",
@@ -6645,7 +7765,12 @@
       "White-tailed Deer",
       "Eastern Gray Squirrel",
       "Eastern Cottontail"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Rodentia",
+    "family": "",
+    "genus": "Clethrionomys"
   },
   {
     "id": "prairie_vole",
@@ -6674,7 +7799,12 @@
       "Meadow Vole",
       "White-tailed Deer",
       "Eastern Gray Squirrel"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Rodentia",
+    "family": "",
+    "genus": "Microtus"
   },
   {
     "id": "star_nosed_mole",
@@ -6701,7 +7831,12 @@
       "White-tailed Deer",
       "Eastern Gray Squirrel",
       "Eastern Cottontail"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Rodentia",
+    "family": "",
+    "genus": "Condylura"
   },
   {
     "id": "hairy_tailed_mole",
@@ -6729,7 +7864,12 @@
       "White-tailed Deer",
       "Eastern Gray Squirrel",
       "Eastern Cottontail"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Rodentia",
+    "family": "",
+    "genus": "Parascalops"
   },
   {
     "id": "eastern_red_bat",
@@ -6757,7 +7897,12 @@
       "Hoary Bat",
       "White-tailed Deer",
       "Eastern Gray Squirrel"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Charadriiformes",
+    "family": "Laridae",
+    "genus": "Lasiurus"
   },
   {
     "id": "hoary_bat",
@@ -6785,7 +7930,12 @@
       "Eastern Red Bat",
       "White-tailed Deer",
       "Eastern Gray Squirrel"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Chiroptera",
+    "family": "Vespertilionidae",
+    "genus": "Lasiurus"
   },
   {
     "id": "silver_haired_bat",
@@ -6813,7 +7963,12 @@
       "White-tailed Deer",
       "Eastern Gray Squirrel",
       "Eastern Cottontail"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Chiroptera",
+    "family": "Vespertilionidae",
+    "genus": "Lasionycteris"
   },
   {
     "id": "big_brown_bat",
@@ -6842,7 +7997,12 @@
       "White-tailed Deer",
       "Eastern Gray Squirrel",
       "Eastern Cottontail"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Chiroptera",
+    "family": "Vespertilionidae",
+    "genus": "Eptesicus"
   },
   {
     "id": "northern_long_eared_bat",
@@ -6870,7 +8030,12 @@
       "Little Brown Bat",
       "Indiana Bat",
       "White-tailed Deer"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Chiroptera",
+    "family": "Vespertilionidae",
+    "genus": "Myotis"
   },
   {
     "id": "indiana_bat",
@@ -6900,7 +8065,12 @@
       "Little Brown Bat",
       "Northern Long-eared Bat",
       "White-tailed Deer"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Chiroptera",
+    "family": "Vespertilionidae",
+    "genus": "Myotis"
   },
   {
     "id": "eastern_cottontail_rabbit",
@@ -6931,7 +8101,12 @@
       "Eastern Cottontail",
       "New England Cottontail",
       "White-tailed Deer"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Charadriiformes",
+    "family": "Laridae",
+    "genus": "Sylvilagus"
   },
   {
     "id": "new_england_cottontail",
@@ -6958,7 +8133,12 @@
       "Eastern Cottontail",
       "Eastern Cottontail Rabbit",
       "White-tailed Deer"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "",
+    "family": "",
+    "genus": "Sylvilagus"
   },
   {
     "id": "snowshoe_hare",
@@ -6987,7 +8167,12 @@
       "White-tailed Jackrabbit",
       "Black-tailed Jackrabbit",
       "White-tailed Deer"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Lagomorpha",
+    "family": "Leporidae",
+    "genus": "Lepus"
   },
   {
     "id": "white_tailed_jackrabbit",
@@ -7017,7 +8202,12 @@
       "Snowshoe Hare",
       "Black-tailed Jackrabbit",
       "White-tailed Deer"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Lagomorpha",
+    "family": "Leporidae",
+    "genus": "Lepus"
   },
   {
     "id": "black_tailed_jackrabbit",
@@ -7047,7 +8237,12 @@
       "Snowshoe Hare",
       "White-tailed Jackrabbit",
       "White-tailed Deer"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Lagomorpha",
+    "family": "Leporidae",
+    "genus": "Lepus"
   },
   {
     "id": "cabbage_white_butterfly",
@@ -7078,7 +8273,12 @@
       "Monarch Butterfly",
       "Eastern Tiger Swallowtail",
       "Honey Bee"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "Lepidoptera",
+    "family": "Nymphalidae",
+    "genus": "Pieris"
   },
   {
     "id": "red_admiral_butterfly",
@@ -7108,7 +8308,12 @@
       "Painted Lady Butterfly",
       "Monarch Butterfly",
       "Eastern Tiger Swallowtail"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "Lepidoptera",
+    "family": "Nymphalidae",
+    "genus": "Vanessa"
   },
   {
     "id": "painted_lady_butterfly",
@@ -7137,7 +8342,12 @@
       "Red Admiral Butterfly",
       "Monarch Butterfly",
       "Eastern Tiger Swallowtail"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "Lepidoptera",
+    "family": "Nymphalidae",
+    "genus": "Vanessa"
   },
   {
     "id": "viceroy_butterfly",
@@ -7166,7 +8376,12 @@
       "Monarch Butterfly",
       "Eastern Tiger Swallowtail",
       "Honey Bee"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "Lepidoptera",
+    "family": "Nymphalidae",
+    "genus": "Limenitis"
   },
   {
     "id": "great_spangled_fritillary",
@@ -7196,7 +8411,12 @@
       "Monarch Butterfly",
       "Eastern Tiger Swallowtail",
       "Honey Bee"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "",
+    "family": "",
+    "genus": "Speyeria"
   },
   {
     "id": "mourning_cloak",
@@ -7226,7 +8446,12 @@
       "Monarch Butterfly",
       "Eastern Tiger Swallowtail",
       "Honey Bee"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "",
+    "family": "",
+    "genus": "Nymphalis"
   },
   {
     "id": "question_mark_butterfly",
@@ -7254,7 +8479,12 @@
       "Monarch Butterfly",
       "Eastern Tiger Swallowtail",
       "Honey Bee"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "Lepidoptera",
+    "family": "Nymphalidae",
+    "genus": "Polygonia"
   },
   {
     "id": "common_buckeye",
@@ -7283,7 +8513,12 @@
       "Monarch Butterfly",
       "Eastern Tiger Swallowtail",
       "Honey Bee"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "",
+    "family": "",
+    "genus": "Junonia"
   },
   {
     "id": "pearl_crescent",
@@ -7313,7 +8548,12 @@
       "Monarch Butterfly",
       "Eastern Tiger Swallowtail",
       "Honey Bee"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "",
+    "family": "",
+    "genus": "Phyciodes"
   },
   {
     "id": "silver_spotted_skipper",
@@ -7343,7 +8583,12 @@
       "Monarch Butterfly",
       "Eastern Tiger Swallowtail",
       "Honey Bee"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "",
+    "family": "",
+    "genus": "Epargyreus"
   },
   {
     "id": "cecropia_moth",
@@ -7372,7 +8617,12 @@
       "Monarch Butterfly",
       "Eastern Tiger Swallowtail",
       "Honey Bee"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "Lepidoptera",
+    "family": "",
+    "genus": "Hyalophora"
   },
   {
     "id": "io_moth",
@@ -7402,7 +8652,12 @@
       "Monarch Butterfly",
       "Eastern Tiger Swallowtail",
       "Honey Bee"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "Lepidoptera",
+    "family": "",
+    "genus": "Automeris"
   },
   {
     "id": "polyphemus_moth",
@@ -7432,7 +8687,12 @@
       "Giant Silkworm Moth",
       "Monarch Butterfly",
       "Eastern Tiger Swallowtail"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "Lepidoptera",
+    "family": "",
+    "genus": "Antheraea"
   },
   {
     "id": "giant_silkworm_moth",
@@ -7460,7 +8720,12 @@
       "Monarch Butterfly",
       "Eastern Tiger Swallowtail",
       "Honey Bee"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "Hymenoptera",
+    "family": "",
+    "genus": "Antheraea"
   },
   {
     "id": "sphinx_moth_hummingbird_moth",
@@ -7487,7 +8752,12 @@
       "Monarch Butterfly",
       "Eastern Tiger Swallowtail",
       "Honey Bee"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "Apodiformes",
+    "family": "Trochilidae",
+    "genus": "Hemaris"
   },
   {
     "id": "fall_webworm",
@@ -7515,7 +8785,12 @@
       "Monarch Butterfly",
       "Eastern Tiger Swallowtail",
       "Honey Bee"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "",
+    "family": "",
+    "genus": "Hyphantria"
   },
   {
     "id": "eastern_tiger_swallowtail_2",
@@ -7545,7 +8820,12 @@
       "Black Swallowtail",
       "Spicebush Swallowtail",
       "Monarch Butterfly"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "Passeriformes",
+    "family": "Laridae",
+    "genus": "Papilio"
   },
   {
     "id": "black_swallowtail",
@@ -7575,7 +8855,12 @@
       "Eastern Tiger Swallowtail",
       "Eastern Tiger Swallowtail",
       "Monarch Butterfly"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "Passeriformes",
+    "family": "",
+    "genus": "Papilio"
   },
   {
     "id": "spicebush_swallowtail",
@@ -7605,7 +8890,12 @@
       "Eastern Tiger Swallowtail",
       "Eastern Tiger Swallowtail",
       "Monarch Butterfly"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "Passeriformes",
+    "family": "",
+    "genus": "Papilio"
   },
   {
     "id": "zebra_swallowtail",
@@ -7635,7 +8925,12 @@
       "Monarch Butterfly",
       "Eastern Tiger Swallowtail",
       "Honey Bee"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "Passeriformes",
+    "family": "",
+    "genus": "Eurytides"
   },
   {
     "id": "giant_swallowtail",
@@ -7665,7 +8960,12 @@
       "Eastern Tiger Swallowtail",
       "Eastern Tiger Swallowtail",
       "Monarch Butterfly"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "Passeriformes",
+    "family": "",
+    "genus": "Papilio"
   },
   {
     "id": "common_green_darner",
@@ -7694,7 +8994,12 @@
       "Monarch Butterfly",
       "Eastern Tiger Swallowtail",
       "Honey Bee"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "",
+    "family": "",
+    "genus": "Anax"
   },
   {
     "id": "blue_dasher",
@@ -7724,7 +9029,12 @@
       "Monarch Butterfly",
       "Eastern Tiger Swallowtail",
       "Honey Bee"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "",
+    "family": "",
+    "genus": "Pachydiplax"
   },
   {
     "id": "eastern_pondhawk",
@@ -7753,7 +9063,12 @@
       "Monarch Butterfly",
       "Eastern Tiger Swallowtail",
       "Honey Bee"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "Accipitriformes",
+    "family": "Accipitridae",
+    "genus": "Erythemis"
   },
   {
     "id": "widow_skimmer",
@@ -7783,7 +9098,12 @@
       "Monarch Butterfly",
       "Eastern Tiger Swallowtail",
       "Honey Bee"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "",
+    "family": "",
+    "genus": "Libellula"
   },
   {
     "id": "common_whitetail",
@@ -7811,7 +9131,12 @@
       "Monarch Butterfly",
       "Eastern Tiger Swallowtail",
       "Honey Bee"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "",
+    "family": "",
+    "genus": "Plathemis"
   },
   {
     "id": "ebony_jewelwing",
@@ -7841,7 +9166,12 @@
       "Monarch Butterfly",
       "Eastern Tiger Swallowtail",
       "Honey Bee"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "",
+    "family": "",
+    "genus": "Calopteryx"
   },
   {
     "id": "american_rubyspot",
@@ -7871,7 +9201,12 @@
       "Monarch Butterfly",
       "Eastern Tiger Swallowtail",
       "Honey Bee"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "",
+    "family": "",
+    "genus": "Hetaerina"
   },
   {
     "id": "carolina_grasshopper",
@@ -7901,7 +9236,12 @@
       "Monarch Butterfly",
       "Eastern Tiger Swallowtail",
       "Honey Bee"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "Orthoptera",
+    "family": "",
+    "genus": "Dissosteira"
   },
   {
     "id": "red_legged_grasshopper",
@@ -7930,7 +9270,12 @@
       "Differential Grasshopper",
       "Monarch Butterfly",
       "Eastern Tiger Swallowtail"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "Orthoptera",
+    "family": "",
+    "genus": "Melanoplus"
   },
   {
     "id": "differential_grasshopper",
@@ -7958,7 +9303,12 @@
       "Red-legged Grasshopper",
       "Monarch Butterfly",
       "Eastern Tiger Swallowtail"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "Orthoptera",
+    "family": "",
+    "genus": "Melanoplus"
   },
   {
     "id": "green_striped_grasshopper",
@@ -7987,7 +9337,12 @@
       "Monarch Butterfly",
       "Eastern Tiger Swallowtail",
       "Honey Bee"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "Orthoptera",
+    "family": "",
+    "genus": "Chortophaga"
   },
   {
     "id": "field_cricket",
@@ -8016,7 +9371,12 @@
       "Monarch Butterfly",
       "Eastern Tiger Swallowtail",
       "Honey Bee"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "Orthoptera",
+    "family": "",
+    "genus": "Gryllus"
   },
   {
     "id": "snowy_tree_cricket",
@@ -8044,7 +9404,12 @@
       "Monarch Butterfly",
       "Eastern Tiger Swallowtail",
       "Honey Bee"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "Orthoptera",
+    "family": "",
+    "genus": "Oecanthus"
   },
   {
     "id": "mole_cricket",
@@ -8072,7 +9437,12 @@
       "Monarch Butterfly",
       "Eastern Tiger Swallowtail",
       "Honey Bee"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "Rodentia",
+    "family": "",
+    "genus": "Gryllotalpa"
   },
   {
     "id": "dog_day_cicada",
@@ -8100,7 +9470,12 @@
       "Monarch Butterfly",
       "Eastern Tiger Swallowtail",
       "Honey Bee"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "Hemiptera",
+    "family": "",
+    "genus": "Neotibicen"
   },
   {
     "id": "periodical_cicada",
@@ -8127,7 +9502,12 @@
       "Monarch Butterfly",
       "Eastern Tiger Swallowtail",
       "Honey Bee"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "Hemiptera",
+    "family": "",
+    "genus": "Magicicada"
   },
   {
     "id": "assassin_bug",
@@ -8157,7 +9537,12 @@
       "Monarch Butterfly",
       "Eastern Tiger Swallowtail",
       "Honey Bee"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "",
+    "family": "",
+    "genus": "Reduviidae"
   },
   {
     "id": "wheel_bug",
@@ -8186,7 +9571,12 @@
       "Monarch Butterfly",
       "Eastern Tiger Swallowtail",
       "Honey Bee"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "",
+    "family": "",
+    "genus": "Arilus"
   },
   {
     "id": "milkweed_bug",
@@ -8215,7 +9605,12 @@
       "Monarch Butterfly",
       "Eastern Tiger Swallowtail",
       "Honey Bee"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "",
+    "family": "",
+    "genus": "Oncopeltus"
   },
   {
     "id": "stink_bug_green",
@@ -8243,7 +9638,12 @@
       "Monarch Butterfly",
       "Eastern Tiger Swallowtail",
       "Honey Bee"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "",
+    "family": "",
+    "genus": "Chinavia"
   },
   {
     "id": "brown_marmorated_stink_bug",
@@ -8272,7 +9672,12 @@
       "Monarch Butterfly",
       "Eastern Tiger Swallowtail",
       "Honey Bee"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "",
+    "family": "",
+    "genus": "Halyomorpha"
   },
   {
     "id": "japanese_beetle_2",
@@ -8301,7 +9706,12 @@
       "Monarch Butterfly",
       "Eastern Tiger Swallowtail",
       "Honey Bee"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "Hymenoptera",
+    "family": "Apidae",
+    "genus": "Popillia"
   },
   {
     "id": "eastern_hercules_beetle",
@@ -8331,7 +9741,12 @@
       "Monarch Butterfly",
       "Eastern Tiger Swallowtail",
       "Honey Bee"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "Charadriiformes",
+    "family": "Laridae",
+    "genus": "Dynastes"
   },
   {
     "id": "green_june_beetle",
@@ -8359,7 +9774,12 @@
       "Monarch Butterfly",
       "Eastern Tiger Swallowtail",
       "Honey Bee"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "Hymenoptera",
+    "family": "Apidae",
+    "genus": "Cotinis"
   },
   {
     "id": "firefly_lightning_bug",
@@ -8386,7 +9806,12 @@
       "Monarch Butterfly",
       "Eastern Tiger Swallowtail",
       "Honey Bee"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "Diptera",
+    "family": "",
+    "genus": "Photinus"
   },
   {
     "id": "click_beetle",
@@ -8413,7 +9838,12 @@
       "Monarch Butterfly",
       "Eastern Tiger Swallowtail",
       "Honey Bee"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "Hymenoptera",
+    "family": "Apidae",
+    "genus": "Elateridae"
   },
   {
     "id": "soldier_beetle",
@@ -8443,7 +9873,12 @@
       "Monarch Butterfly",
       "Eastern Tiger Swallowtail",
       "Honey Bee"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "Hymenoptera",
+    "family": "Apidae",
+    "genus": "Cantharidae"
   },
   {
     "id": "whirligig_beetle",
@@ -8471,7 +9906,12 @@
       "Monarch Butterfly",
       "Eastern Tiger Swallowtail",
       "Honey Bee"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "Hymenoptera",
+    "family": "Apidae",
+    "genus": "Gyrinidae"
   },
   {
     "id": "diving_beetle",
@@ -8500,7 +9940,12 @@
       "Monarch Butterfly",
       "Eastern Tiger Swallowtail",
       "Honey Bee"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "Hymenoptera",
+    "family": "Apidae",
+    "genus": "Dytiscidae"
   },
   {
     "id": "carpenter_ant",
@@ -8529,7 +9974,12 @@
       "Monarch Butterfly",
       "Eastern Tiger Swallowtail",
       "Honey Bee"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "Hymenoptera",
+    "family": "",
+    "genus": "Camponotus"
   },
   {
     "id": "odorous_house_ant",
@@ -8558,7 +10008,12 @@
       "Monarch Butterfly",
       "Eastern Tiger Swallowtail",
       "Honey Bee"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "Hymenoptera",
+    "family": "",
+    "genus": "Tapinoma"
   },
   {
     "id": "red_imported_fire_ant",
@@ -8586,7 +10041,12 @@
       "Monarch Butterfly",
       "Eastern Tiger Swallowtail",
       "Honey Bee"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "Hymenoptera",
+    "family": "",
+    "genus": "Solenopsis"
   },
   {
     "id": "eastern_yellow_jacket",
@@ -8616,7 +10076,12 @@
       "Monarch Butterfly",
       "Eastern Tiger Swallowtail",
       "Honey Bee"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "Charadriiformes",
+    "family": "Laridae",
+    "genus": "Vespula"
   },
   {
     "id": "paper_wasp",
@@ -8644,7 +10109,12 @@
       "Monarch Butterfly",
       "Eastern Tiger Swallowtail",
       "Honey Bee"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "Hymenoptera",
+    "family": "",
+    "genus": "Polistes"
   },
   {
     "id": "bald_faced_hornet",
@@ -8674,7 +10144,12 @@
       "Monarch Butterfly",
       "Eastern Tiger Swallowtail",
       "Honey Bee"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "Hymenoptera",
+    "family": "",
+    "genus": "Dolichovespula"
   },
   {
     "id": "european_hornet",
@@ -8704,7 +10179,12 @@
       "Monarch Butterfly",
       "Eastern Tiger Swallowtail",
       "Honey Bee"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "Hymenoptera",
+    "family": "",
+    "genus": "Vespa"
   },
   {
     "id": "cicada_killer_wasp",
@@ -8732,7 +10212,12 @@
       "Monarch Butterfly",
       "Eastern Tiger Swallowtail",
       "Honey Bee"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "Hymenoptera",
+    "family": "",
+    "genus": "Sphecius"
   },
   {
     "id": "great_black_wasp",
@@ -8762,7 +10247,12 @@
       "Monarch Butterfly",
       "Eastern Tiger Swallowtail",
       "Honey Bee"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "Hymenoptera",
+    "family": "",
+    "genus": "Sphex"
   },
   {
     "id": "honey_bee_2",
@@ -8792,7 +10282,12 @@
       "Monarch Butterfly",
       "Eastern Tiger Swallowtail",
       "Bumble Bee"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "Hymenoptera",
+    "family": "Apidae",
+    "genus": "Apis"
   },
   {
     "id": "bumble_bee_2",
@@ -8821,7 +10316,12 @@
       "Monarch Butterfly",
       "Eastern Tiger Swallowtail",
       "Honey Bee"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "Hymenoptera",
+    "family": "Apidae",
+    "genus": "Bombus"
   },
   {
     "id": "carpenter_bee",
@@ -8850,7 +10350,12 @@
       "Monarch Butterfly",
       "Eastern Tiger Swallowtail",
       "Honey Bee"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "Hymenoptera",
+    "family": "Apidae",
+    "genus": "Xylocopa"
   },
   {
     "id": "sweat_bee",
@@ -8878,7 +10383,12 @@
       "Monarch Butterfly",
       "Eastern Tiger Swallowtail",
       "Honey Bee"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "Hymenoptera",
+    "family": "Apidae",
+    "genus": "Halictidae"
   },
   {
     "id": "mining_bee",
@@ -8906,7 +10416,12 @@
       "Monarch Butterfly",
       "Eastern Tiger Swallowtail",
       "Honey Bee"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "Hymenoptera",
+    "family": "Apidae",
+    "genus": "Andrena"
   },
   {
     "id": "leafcutter_bee",
@@ -8933,7 +10448,12 @@
       "Monarch Butterfly",
       "Eastern Tiger Swallowtail",
       "Honey Bee"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "Hymenoptera",
+    "family": "Apidae",
+    "genus": "Megachile"
   },
   {
     "id": "deer_fly",
@@ -8962,7 +10482,12 @@
       "Monarch Butterfly",
       "Eastern Tiger Swallowtail",
       "Honey Bee"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "Artiodactyla",
+    "family": "Cervidae",
+    "genus": "Chrysops"
   },
   {
     "id": "horse_fly",
@@ -8990,7 +10515,12 @@
       "Monarch Butterfly",
       "Eastern Tiger Swallowtail",
       "Honey Bee"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "Diptera",
+    "family": "",
+    "genus": "Tabanus"
   },
   {
     "id": "house_fly",
@@ -9019,7 +10549,12 @@
       "Monarch Butterfly",
       "Eastern Tiger Swallowtail",
       "Honey Bee"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "Diptera",
+    "family": "",
+    "genus": "Musca"
   },
   {
     "id": "bluebottle_fly",
@@ -9047,7 +10582,12 @@
       "Monarch Butterfly",
       "Eastern Tiger Swallowtail",
       "Honey Bee"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "Diptera",
+    "family": "",
+    "genus": "Calliphora"
   },
   {
     "id": "green_bottle_fly",
@@ -9075,7 +10615,12 @@
       "Monarch Butterfly",
       "Eastern Tiger Swallowtail",
       "Honey Bee"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "Diptera",
+    "family": "",
+    "genus": "Lucilia"
   },
   {
     "id": "mosquito",
@@ -9103,7 +10648,12 @@
       "Monarch Butterfly",
       "Eastern Tiger Swallowtail",
       "Honey Bee"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "Diptera",
+    "family": "",
+    "genus": "Culicidae"
   },
   {
     "id": "dance_fly",
@@ -9132,7 +10682,12 @@
       "Monarch Butterfly",
       "Eastern Tiger Swallowtail",
       "Honey Bee"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "Diptera",
+    "family": "",
+    "genus": "Empididae"
   },
   {
     "id": "robber_fly",
@@ -9161,7 +10716,12 @@
       "Monarch Butterfly",
       "Eastern Tiger Swallowtail",
       "Honey Bee"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "Diptera",
+    "family": "",
+    "genus": "Asilidae"
   },
   {
     "id": "crane_fly",
@@ -9189,7 +10749,12 @@
       "Monarch Butterfly",
       "Eastern Tiger Swallowtail",
       "Honey Bee"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "Diptera",
+    "family": "",
+    "genus": "Tipulidae"
   },
   {
     "id": "pleasing_fungus_beetle",
@@ -9216,7 +10781,12 @@
       "Monarch Butterfly",
       "Eastern Tiger Swallowtail",
       "Honey Bee"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "Hymenoptera",
+    "family": "Apidae",
+    "genus": "Erotylidae"
   },
   {
     "id": "goldenrod_soldier_beetle",
@@ -9245,7 +10815,12 @@
       "Monarch Butterfly",
       "Eastern Tiger Swallowtail",
       "Honey Bee"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "Hymenoptera",
+    "family": "Apidae",
+    "genus": "Chauliognathus"
   },
   {
     "id": "margined_blister_beetle",
@@ -9275,7 +10850,12 @@
       "Monarch Butterfly",
       "Eastern Tiger Swallowtail",
       "Honey Bee"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "Hymenoptera",
+    "family": "Apidae",
+    "genus": "Epicauta"
   },
   {
     "id": "sugar_maple_2",
@@ -9301,7 +10881,12 @@
       "Red Maple",
       "Red Maple",
       "White Oak"
-    ]
+    ],
+    "kingdom": "Plantae",
+    "phylum": "Angiospermae",
+    "order": "Lepisosteiformes",
+    "family": "",
+    "genus": "Acer"
   },
   {
     "id": "red_maple_2",
@@ -9328,7 +10913,12 @@
       "Sugar Maple",
       "Sugar Maple",
       "White Oak"
-    ]
+    ],
+    "kingdom": "Plantae",
+    "phylum": "Angiospermae",
+    "order": "",
+    "family": "",
+    "genus": "Acer"
   },
   {
     "id": "silver_maple",
@@ -9355,7 +10945,12 @@
       "Red Maple",
       "Sugar Maple",
       "White Oak"
-    ]
+    ],
+    "kingdom": "Plantae",
+    "phylum": "Angiospermae",
+    "order": "",
+    "family": "",
+    "genus": "Acer"
   },
   {
     "id": "norway_maple",
@@ -9382,7 +10977,12 @@
       "Red Maple",
       "Sugar Maple",
       "White Oak"
-    ]
+    ],
+    "kingdom": "Plantae",
+    "phylum": "Angiospermae",
+    "order": "",
+    "family": "",
+    "genus": "Acer"
   },
   {
     "id": "striped_maple",
@@ -9410,7 +11010,12 @@
       "Red Maple",
       "Sugar Maple",
       "White Oak"
-    ]
+    ],
+    "kingdom": "Plantae",
+    "phylum": "Angiospermae",
+    "order": "",
+    "family": "",
+    "genus": "Acer"
   },
   {
     "id": "boxelder",
@@ -9436,7 +11041,12 @@
       "Red Maple",
       "Sugar Maple",
       "White Oak"
-    ]
+    ],
+    "kingdom": "Plantae",
+    "phylum": "Angiospermae",
+    "order": "",
+    "family": "",
+    "genus": "Acer"
   },
   {
     "id": "northern_red_oak",
@@ -9463,7 +11073,12 @@
       "White Oak",
       "Pin Oak",
       "Red Maple"
-    ]
+    ],
+    "kingdom": "Plantae",
+    "phylum": "Angiospermae",
+    "order": "",
+    "family": "",
+    "genus": "Quercus"
   },
   {
     "id": "pin_oak",
@@ -9489,7 +11104,12 @@
       "White Oak",
       "Northern Red Oak",
       "Red Maple"
-    ]
+    ],
+    "kingdom": "Plantae",
+    "phylum": "Angiospermae",
+    "order": "",
+    "family": "",
+    "genus": "Quercus"
   },
   {
     "id": "bur_oak",
@@ -9517,7 +11137,12 @@
       "White Oak",
       "Northern Red Oak",
       "Red Maple"
-    ]
+    ],
+    "kingdom": "Plantae",
+    "phylum": "Angiospermae",
+    "order": "",
+    "family": "",
+    "genus": "Quercus"
   },
   {
     "id": "swamp_white_oak",
@@ -9543,7 +11168,12 @@
       "White Oak",
       "Northern Red Oak",
       "Red Maple"
-    ]
+    ],
+    "kingdom": "Plantae",
+    "phylum": "Angiospermae",
+    "order": "",
+    "family": "",
+    "genus": "Quercus"
   },
   {
     "id": "chestnut_oak",
@@ -9569,7 +11199,12 @@
       "White Oak",
       "Northern Red Oak",
       "Red Maple"
-    ]
+    ],
+    "kingdom": "Plantae",
+    "phylum": "Angiospermae",
+    "order": "",
+    "family": "",
+    "genus": "Quercus"
   },
   {
     "id": "scarlet_oak",
@@ -9595,7 +11230,12 @@
       "White Oak",
       "Northern Red Oak",
       "Red Maple"
-    ]
+    ],
+    "kingdom": "Plantae",
+    "phylum": "Angiospermae",
+    "order": "",
+    "family": "",
+    "genus": "Quercus"
   },
   {
     "id": "black_oak",
@@ -9622,7 +11262,12 @@
       "White Oak",
       "Northern Red Oak",
       "Red Maple"
-    ]
+    ],
+    "kingdom": "Plantae",
+    "phylum": "Angiospermae",
+    "order": "",
+    "family": "",
+    "genus": "Quercus"
   },
   {
     "id": "american_beech",
@@ -9650,7 +11295,12 @@
       "Red Maple",
       "Sugar Maple",
       "White Oak"
-    ]
+    ],
+    "kingdom": "Plantae",
+    "phylum": "Angiospermae",
+    "order": "Hymenoptera",
+    "family": "Apidae",
+    "genus": "Fagus"
   },
   {
     "id": "yellow_birch",
@@ -9677,7 +11327,12 @@
       "Paper Birch",
       "Gray Birch",
       "Red Maple"
-    ]
+    ],
+    "kingdom": "Plantae",
+    "phylum": "Angiospermae",
+    "order": "",
+    "family": "",
+    "genus": "Betula"
   },
   {
     "id": "paper_birch",
@@ -9704,7 +11359,12 @@
       "Yellow Birch",
       "Gray Birch",
       "Red Maple"
-    ]
+    ],
+    "kingdom": "Plantae",
+    "phylum": "Angiospermae",
+    "order": "",
+    "family": "",
+    "genus": "Betula"
   },
   {
     "id": "gray_birch",
@@ -9731,7 +11391,12 @@
       "Yellow Birch",
       "Paper Birch",
       "Red Maple"
-    ]
+    ],
+    "kingdom": "Plantae",
+    "phylum": "Angiospermae",
+    "order": "",
+    "family": "",
+    "genus": "Betula"
   },
   {
     "id": "river_birch",
@@ -9758,7 +11423,12 @@
       "Yellow Birch",
       "Paper Birch",
       "Red Maple"
-    ]
+    ],
+    "kingdom": "Plantae",
+    "phylum": "Angiospermae",
+    "order": "",
+    "family": "",
+    "genus": "Betula"
   },
   {
     "id": "eastern_hop_hornbeam",
@@ -9785,7 +11455,12 @@
       "Red Maple",
       "Sugar Maple",
       "White Oak"
-    ]
+    ],
+    "kingdom": "Plantae",
+    "phylum": "Angiospermae",
+    "order": "Charadriiformes",
+    "family": "Laridae",
+    "genus": "Ostrya"
   },
   {
     "id": "american_hornbeam",
@@ -9813,7 +11488,12 @@
       "Red Maple",
       "Sugar Maple",
       "White Oak"
-    ]
+    ],
+    "kingdom": "Plantae",
+    "phylum": "Angiospermae",
+    "order": "",
+    "family": "",
+    "genus": "Carpinus"
   },
   {
     "id": "eastern_cottonwood",
@@ -9840,7 +11520,12 @@
       "Quaking Aspen",
       "Bigtooth Aspen",
       "Red Maple"
-    ]
+    ],
+    "kingdom": "Plantae",
+    "phylum": "Angiospermae",
+    "order": "Charadriiformes",
+    "family": "Laridae",
+    "genus": "Populus"
   },
   {
     "id": "quaking_aspen",
@@ -9867,7 +11552,12 @@
       "Eastern Cottonwood",
       "Bigtooth Aspen",
       "Red Maple"
-    ]
+    ],
+    "kingdom": "Plantae",
+    "phylum": "Angiospermae",
+    "order": "",
+    "family": "",
+    "genus": "Populus"
   },
   {
     "id": "bigtooth_aspen",
@@ -9894,7 +11584,12 @@
       "Eastern Cottonwood",
       "Quaking Aspen",
       "Red Maple"
-    ]
+    ],
+    "kingdom": "Plantae",
+    "phylum": "Angiospermae",
+    "order": "",
+    "family": "",
+    "genus": "Populus"
   },
   {
     "id": "balsam_poplar",
@@ -9920,7 +11615,12 @@
       "Eastern Cottonwood",
       "Quaking Aspen",
       "Red Maple"
-    ]
+    ],
+    "kingdom": "Plantae",
+    "phylum": "Angiospermae",
+    "order": "",
+    "family": "",
+    "genus": "Populus"
   },
   {
     "id": "black_willow",
@@ -9947,7 +11647,12 @@
       "Weeping Willow",
       "Pussy Willow",
       "Red Maple"
-    ]
+    ],
+    "kingdom": "Plantae",
+    "phylum": "Angiospermae",
+    "order": "",
+    "family": "",
+    "genus": "Salix"
   },
   {
     "id": "weeping_willow",
@@ -9973,7 +11678,12 @@
       "Black Willow",
       "Pussy Willow",
       "Red Maple"
-    ]
+    ],
+    "kingdom": "Plantae",
+    "phylum": "Angiospermae",
+    "order": "",
+    "family": "",
+    "genus": "Salix"
   },
   {
     "id": "pussy_willow",
@@ -10000,7 +11710,12 @@
       "Black Willow",
       "Weeping Willow",
       "Red Maple"
-    ]
+    ],
+    "kingdom": "Plantae",
+    "phylum": "Angiospermae",
+    "order": "",
+    "family": "",
+    "genus": "Salix"
   },
   {
     "id": "tulip_tree",
@@ -10026,7 +11741,12 @@
       "Red Maple",
       "Sugar Maple",
       "White Oak"
-    ]
+    ],
+    "kingdom": "Plantae",
+    "phylum": "Angiospermae",
+    "order": "",
+    "family": "",
+    "genus": "Liriodendron"
   },
   {
     "id": "black_cherry",
@@ -10054,7 +11774,12 @@
       "Pin Cherry",
       "Choke Cherry",
       "Red Maple"
-    ]
+    ],
+    "kingdom": "Plantae",
+    "phylum": "Angiospermae",
+    "order": "",
+    "family": "",
+    "genus": "Prunus"
   },
   {
     "id": "pin_cherry",
@@ -10083,7 +11808,12 @@
       "Black Cherry",
       "Choke Cherry",
       "Red Maple"
-    ]
+    ],
+    "kingdom": "Plantae",
+    "phylum": "Angiospermae",
+    "order": "",
+    "family": "",
+    "genus": "Prunus"
   },
   {
     "id": "choke_cherry",
@@ -10111,7 +11841,12 @@
       "Black Cherry",
       "Pin Cherry",
       "Red Maple"
-    ]
+    ],
+    "kingdom": "Plantae",
+    "phylum": "Angiospermae",
+    "order": "",
+    "family": "",
+    "genus": "Prunus"
   },
   {
     "id": "serviceberry",
@@ -10141,7 +11876,12 @@
       "Red Maple",
       "Sugar Maple",
       "White Oak"
-    ]
+    ],
+    "kingdom": "Plantae",
+    "phylum": "Angiospermae",
+    "order": "",
+    "family": "",
+    "genus": "Amelanchier"
   },
   {
     "id": "downy_serviceberry",
@@ -10167,7 +11907,12 @@
       "Serviceberry",
       "Red Maple",
       "Sugar Maple"
-    ]
+    ],
+    "kingdom": "Plantae",
+    "phylum": "Angiospermae",
+    "order": "",
+    "family": "",
+    "genus": "Amelanchier"
   },
   {
     "id": "flowering_dogwood",
@@ -10196,7 +11941,12 @@
       "Alternate-leaf Dogwood",
       "Red Osier Dogwood",
       "Red Maple"
-    ]
+    ],
+    "kingdom": "Plantae",
+    "phylum": "Angiospermae",
+    "order": "",
+    "family": "",
+    "genus": "Cornus"
   },
   {
     "id": "alternate_leaf_dogwood",
@@ -10223,7 +11973,12 @@
       "Flowering Dogwood",
       "Red Osier Dogwood",
       "Red Maple"
-    ]
+    ],
+    "kingdom": "Plantae",
+    "phylum": "Angiospermae",
+    "order": "Charadriiformes",
+    "family": "Laridae",
+    "genus": "Cornus"
   },
   {
     "id": "red_osier_dogwood",
@@ -10251,7 +12006,12 @@
       "Flowering Dogwood",
       "Alternate-leaf Dogwood",
       "Red Maple"
-    ]
+    ],
+    "kingdom": "Plantae",
+    "phylum": "Angiospermae",
+    "order": "",
+    "family": "",
+    "genus": "Cornus"
   },
   {
     "id": "american_holly",
@@ -10279,7 +12039,12 @@
       "Winterberry",
       "Red Maple",
       "Sugar Maple"
-    ]
+    ],
+    "kingdom": "Plantae",
+    "phylum": "Angiospermae",
+    "order": "",
+    "family": "",
+    "genus": "Ilex"
   },
   {
     "id": "winterberry",
@@ -10307,7 +12072,12 @@
       "American Holly",
       "Red Maple",
       "Sugar Maple"
-    ]
+    ],
+    "kingdom": "Plantae",
+    "phylum": "Angiospermae",
+    "order": "",
+    "family": "",
+    "genus": "Ilex"
   },
   {
     "id": "sassafras",
@@ -10333,7 +12103,12 @@
       "Red Maple",
       "Sugar Maple",
       "White Oak"
-    ]
+    ],
+    "kingdom": "Plantae",
+    "phylum": "Angiospermae",
+    "order": "",
+    "family": "",
+    "genus": "Sassafras"
   },
   {
     "id": "black_tupelo_black_gum",
@@ -10361,7 +12136,12 @@
       "Red Maple",
       "Sugar Maple",
       "White Oak"
-    ]
+    ],
+    "kingdom": "Plantae",
+    "phylum": "Angiospermae",
+    "order": "",
+    "family": "",
+    "genus": "Nyssa"
   },
   {
     "id": "sweetgum",
@@ -10387,7 +12167,12 @@
       "Red Maple",
       "Sugar Maple",
       "White Oak"
-    ]
+    ],
+    "kingdom": "Plantae",
+    "phylum": "Angiospermae",
+    "order": "",
+    "family": "",
+    "genus": "Liquidambar"
   },
   {
     "id": "cucumber_tree",
@@ -10413,7 +12198,12 @@
       "Red Maple",
       "Sugar Maple",
       "White Oak"
-    ]
+    ],
+    "kingdom": "Plantae",
+    "phylum": "Angiospermae",
+    "order": "",
+    "family": "",
+    "genus": "Magnolia"
   },
   {
     "id": "sourwood",
@@ -10440,7 +12230,12 @@
       "Red Maple",
       "Sugar Maple",
       "White Oak"
-    ]
+    ],
+    "kingdom": "Plantae",
+    "phylum": "Angiospermae",
+    "order": "",
+    "family": "",
+    "genus": "Oxydendrum"
   },
   {
     "id": "basswood_american_linden",
@@ -10467,7 +12262,12 @@
       "Red Maple",
       "Sugar Maple",
       "White Oak"
-    ]
+    ],
+    "kingdom": "Plantae",
+    "phylum": "Angiospermae",
+    "order": "Perciformes",
+    "family": "",
+    "genus": "Tilia"
   },
   {
     "id": "butternut",
@@ -10494,7 +12294,12 @@
       "Black Walnut",
       "Red Maple",
       "Sugar Maple"
-    ]
+    ],
+    "kingdom": "Plantae",
+    "phylum": "Angiospermae",
+    "order": "Charadriiformes",
+    "family": "Laridae",
+    "genus": "Juglans"
   },
   {
     "id": "black_walnut",
@@ -10520,7 +12325,12 @@
       "Butternut",
       "Red Maple",
       "Sugar Maple"
-    ]
+    ],
+    "kingdom": "Plantae",
+    "phylum": "Angiospermae",
+    "order": "",
+    "family": "",
+    "genus": "Juglans"
   },
   {
     "id": "shagbark_hickory",
@@ -10546,7 +12356,12 @@
       "Pignut Hickory",
       "Bitternut Hickory",
       "Red Maple"
-    ]
+    ],
+    "kingdom": "Plantae",
+    "phylum": "Angiospermae",
+    "order": "",
+    "family": "",
+    "genus": "Carya"
   },
   {
     "id": "pignut_hickory",
@@ -10572,7 +12387,12 @@
       "Shagbark Hickory",
       "Bitternut Hickory",
       "Red Maple"
-    ]
+    ],
+    "kingdom": "Plantae",
+    "phylum": "Angiospermae",
+    "order": "",
+    "family": "",
+    "genus": "Carya"
   },
   {
     "id": "bitternut_hickory",
@@ -10599,7 +12419,12 @@
       "Shagbark Hickory",
       "Pignut Hickory",
       "Red Maple"
-    ]
+    ],
+    "kingdom": "Plantae",
+    "phylum": "Angiospermae",
+    "order": "Charadriiformes",
+    "family": "Laridae",
+    "genus": "Carya"
   },
   {
     "id": "mockernut_hickory",
@@ -10626,7 +12451,12 @@
       "Shagbark Hickory",
       "Pignut Hickory",
       "Red Maple"
-    ]
+    ],
+    "kingdom": "Plantae",
+    "phylum": "Angiospermae",
+    "order": "",
+    "family": "",
+    "genus": "Carya"
   },
   {
     "id": "eastern_redbud",
@@ -10654,7 +12484,12 @@
       "Red Maple",
       "Sugar Maple",
       "White Oak"
-    ]
+    ],
+    "kingdom": "Plantae",
+    "phylum": "Angiospermae",
+    "order": "Charadriiformes",
+    "family": "Laridae",
+    "genus": "Cercis"
   },
   {
     "id": "black_locust",
@@ -10682,7 +12517,12 @@
       "Red Maple",
       "Sugar Maple",
       "White Oak"
-    ]
+    ],
+    "kingdom": "Plantae",
+    "phylum": "Angiospermae",
+    "order": "",
+    "family": "",
+    "genus": "Robinia"
   },
   {
     "id": "honey_locust",
@@ -10710,7 +12550,12 @@
       "Red Maple",
       "Sugar Maple",
       "White Oak"
-    ]
+    ],
+    "kingdom": "Plantae",
+    "phylum": "Angiospermae",
+    "order": "",
+    "family": "",
+    "genus": "Gleditsia"
   },
   {
     "id": "kentucky_coffee_tree",
@@ -10737,7 +12582,12 @@
       "Red Maple",
       "Sugar Maple",
       "White Oak"
-    ]
+    ],
+    "kingdom": "Plantae",
+    "phylum": "Angiospermae",
+    "order": "",
+    "family": "",
+    "genus": "Gymnocladus"
   },
   {
     "id": "northern_catalpa",
@@ -10764,7 +12614,12 @@
       "Red Maple",
       "Sugar Maple",
       "White Oak"
-    ]
+    ],
+    "kingdom": "Plantae",
+    "phylum": "Angiospermae",
+    "order": "",
+    "family": "Felidae",
+    "genus": "Catalpa"
   },
   {
     "id": "white_ash",
@@ -10790,7 +12645,12 @@
       "Green Ash",
       "Black Ash",
       "Red Maple"
-    ]
+    ],
+    "kingdom": "Plantae",
+    "phylum": "Angiospermae",
+    "order": "",
+    "family": "",
+    "genus": "Fraxinus"
   },
   {
     "id": "green_ash",
@@ -10817,7 +12677,12 @@
       "White Ash",
       "Black Ash",
       "Red Maple"
-    ]
+    ],
+    "kingdom": "Plantae",
+    "phylum": "Angiospermae",
+    "order": "",
+    "family": "",
+    "genus": "Fraxinus"
   },
   {
     "id": "black_ash",
@@ -10843,7 +12708,12 @@
       "White Ash",
       "Green Ash",
       "Red Maple"
-    ]
+    ],
+    "kingdom": "Plantae",
+    "phylum": "Angiospermae",
+    "order": "",
+    "family": "",
+    "genus": "Fraxinus"
   },
   {
     "id": "american_sycamore",
@@ -10870,7 +12740,12 @@
       "Red Maple",
       "Sugar Maple",
       "White Oak"
-    ]
+    ],
+    "kingdom": "Plantae",
+    "phylum": "Angiospermae",
+    "order": "",
+    "family": "",
+    "genus": "Platanus"
   },
   {
     "id": "red_mulberry",
@@ -10897,7 +12772,12 @@
       "White Mulberry",
       "Red Maple",
       "Sugar Maple"
-    ]
+    ],
+    "kingdom": "Plantae",
+    "phylum": "Angiospermae",
+    "order": "",
+    "family": "",
+    "genus": "Morus"
   },
   {
     "id": "white_mulberry",
@@ -10926,7 +12806,12 @@
       "Red Mulberry",
       "Red Maple",
       "Sugar Maple"
-    ]
+    ],
+    "kingdom": "Plantae",
+    "phylum": "Angiospermae",
+    "order": "",
+    "family": "",
+    "genus": "Morus"
   },
   {
     "id": "eastern_hemlock_2",
@@ -10954,7 +12839,12 @@
       "Red Maple",
       "Sugar Maple",
       "White Oak"
-    ]
+    ],
+    "kingdom": "Plantae",
+    "phylum": "Angiospermae",
+    "order": "Charadriiformes",
+    "family": "Laridae",
+    "genus": "Tsuga"
   },
   {
     "id": "american_elm_2",
@@ -10980,7 +12870,12 @@
       "Slippery Elm",
       "Red Maple",
       "Sugar Maple"
-    ]
+    ],
+    "kingdom": "Plantae",
+    "phylum": "Angiospermae",
+    "order": "",
+    "family": "",
+    "genus": "Ulmus"
   },
   {
     "id": "slippery_elm",
@@ -11006,7 +12901,12 @@
       "American Elm",
       "American Elm",
       "Red Maple"
-    ]
+    ],
+    "kingdom": "Plantae",
+    "phylum": "Angiospermae",
+    "order": "",
+    "family": "",
+    "genus": "Ulmus"
   },
   {
     "id": "red_pine",
@@ -11034,7 +12934,12 @@
       "Eastern White Pine",
       "White Pine",
       "Red Maple"
-    ]
+    ],
+    "kingdom": "Plantae",
+    "phylum": "Angiospermae",
+    "order": "",
+    "family": "",
+    "genus": "Pinus"
   },
   {
     "id": "white_pine",
@@ -11060,7 +12965,12 @@
       "Eastern White Pine",
       "Red Pine",
       "Red Maple"
-    ]
+    ],
+    "kingdom": "Plantae",
+    "phylum": "Angiospermae",
+    "order": "",
+    "family": "",
+    "genus": "Pinus"
   },
   {
     "id": "pitch_pine",
@@ -11086,7 +12996,12 @@
       "Eastern White Pine",
       "Red Pine",
       "Red Maple"
-    ]
+    ],
+    "kingdom": "Plantae",
+    "phylum": "Angiospermae",
+    "order": "",
+    "family": "",
+    "genus": "Pinus"
   },
   {
     "id": "jack_pine",
@@ -11112,7 +13027,12 @@
       "Eastern White Pine",
       "Red Pine",
       "Red Maple"
-    ]
+    ],
+    "kingdom": "Plantae",
+    "phylum": "Angiospermae",
+    "order": "",
+    "family": "",
+    "genus": "Pinus"
   },
   {
     "id": "scotch_pine",
@@ -11139,7 +13059,12 @@
       "Eastern White Pine",
       "Red Pine",
       "Red Maple"
-    ]
+    ],
+    "kingdom": "Plantae",
+    "phylum": "Angiospermae",
+    "order": "",
+    "family": "",
+    "genus": "Pinus"
   },
   {
     "id": "norway_spruce",
@@ -11165,7 +13090,12 @@
       "White Spruce",
       "Black Spruce",
       "Red Maple"
-    ]
+    ],
+    "kingdom": "Plantae",
+    "phylum": "Angiospermae",
+    "order": "",
+    "family": "",
+    "genus": "Picea"
   },
   {
     "id": "white_spruce",
@@ -11191,7 +13121,12 @@
       "Norway Spruce",
       "Black Spruce",
       "Red Maple"
-    ]
+    ],
+    "kingdom": "Plantae",
+    "phylum": "Angiospermae",
+    "order": "",
+    "family": "",
+    "genus": "Picea"
   },
   {
     "id": "black_spruce",
@@ -11218,7 +13153,12 @@
       "Norway Spruce",
       "White Spruce",
       "Red Maple"
-    ]
+    ],
+    "kingdom": "Plantae",
+    "phylum": "Angiospermae",
+    "order": "",
+    "family": "",
+    "genus": "Picea"
   },
   {
     "id": "red_spruce",
@@ -11245,7 +13185,12 @@
       "Norway Spruce",
       "White Spruce",
       "Red Maple"
-    ]
+    ],
+    "kingdom": "Plantae",
+    "phylum": "Angiospermae",
+    "order": "",
+    "family": "",
+    "genus": "Picea"
   },
   {
     "id": "balsam_fir",
@@ -11271,7 +13216,12 @@
       "Fraser Fir",
       "Red Maple",
       "Sugar Maple"
-    ]
+    ],
+    "kingdom": "Plantae",
+    "phylum": "Angiospermae",
+    "order": "",
+    "family": "",
+    "genus": "Abies"
   },
   {
     "id": "fraser_fir",
@@ -11297,7 +13247,12 @@
       "Balsam Fir",
       "Red Maple",
       "Sugar Maple"
-    ]
+    ],
+    "kingdom": "Plantae",
+    "phylum": "Angiospermae",
+    "order": "",
+    "family": "",
+    "genus": "Abies"
   },
   {
     "id": "eastern_redcedar",
@@ -11324,7 +13279,12 @@
       "Red Maple",
       "Sugar Maple",
       "White Oak"
-    ]
+    ],
+    "kingdom": "Plantae",
+    "phylum": "Angiospermae",
+    "order": "Charadriiformes",
+    "family": "Laridae",
+    "genus": "Juniperus"
   },
   {
     "id": "northern_white_cedar",
@@ -11351,7 +13311,12 @@
       "Red Maple",
       "Sugar Maple",
       "White Oak"
-    ]
+    ],
+    "kingdom": "Plantae",
+    "phylum": "Angiospermae",
+    "order": "",
+    "family": "",
+    "genus": "Thuja"
   },
   {
     "id": "atlantic_white_cedar",
@@ -11378,7 +13343,12 @@
       "Red Maple",
       "Sugar Maple",
       "White Oak"
-    ]
+    ],
+    "kingdom": "Plantae",
+    "phylum": "Angiospermae",
+    "order": "Hymenoptera",
+    "family": "",
+    "genus": "Chamaecyparis"
   },
   {
     "id": "tamarack_eastern_larch",
@@ -11404,7 +13374,12 @@
       "Red Maple",
       "Sugar Maple",
       "White Oak"
-    ]
+    ],
+    "kingdom": "Plantae",
+    "phylum": "Angiospermae",
+    "order": "Charadriiformes",
+    "family": "Laridae",
+    "genus": "Larix"
   },
   {
     "id": "lady_fern",
@@ -11430,7 +13405,12 @@
       "Red Maple",
       "Sugar Maple",
       "White Oak"
-    ]
+    ],
+    "kingdom": "Plantae",
+    "phylum": "Angiospermae",
+    "order": "",
+    "family": "",
+    "genus": "Athyrium"
   },
   {
     "id": "cinnamon_fern",
@@ -11457,7 +13437,12 @@
       "Red Maple",
       "Sugar Maple",
       "White Oak"
-    ]
+    ],
+    "kingdom": "Plantae",
+    "phylum": "Angiospermae",
+    "order": "",
+    "family": "",
+    "genus": "Osmundastrum"
   },
   {
     "id": "christmas_fern",
@@ -11484,7 +13469,12 @@
       "Red Maple",
       "Sugar Maple",
       "White Oak"
-    ]
+    ],
+    "kingdom": "Plantae",
+    "phylum": "Angiospermae",
+    "order": "",
+    "family": "",
+    "genus": "Polystichum"
   },
   {
     "id": "bracken_fern",
@@ -11511,7 +13501,12 @@
       "Red Maple",
       "Sugar Maple",
       "White Oak"
-    ]
+    ],
+    "kingdom": "Plantae",
+    "phylum": "Angiospermae",
+    "order": "",
+    "family": "",
+    "genus": "Pteridium"
   },
   {
     "id": "maidenhair_fern",
@@ -11537,7 +13532,12 @@
       "Red Maple",
       "Sugar Maple",
       "White Oak"
-    ]
+    ],
+    "kingdom": "Plantae",
+    "phylum": "Angiospermae",
+    "order": "",
+    "family": "",
+    "genus": "Adiantum"
   },
   {
     "id": "trout_lily",
@@ -11564,7 +13564,12 @@
       "Red Maple",
       "Sugar Maple",
       "White Oak"
-    ]
+    ],
+    "kingdom": "Plantae",
+    "phylum": "Angiospermae",
+    "order": "Salmoniformes",
+    "family": "",
+    "genus": "Erythronium"
   },
   {
     "id": "bloodroot",
@@ -11593,7 +13598,12 @@
       "Red Maple",
       "Sugar Maple",
       "White Oak"
-    ]
+    ],
+    "kingdom": "Plantae",
+    "phylum": "Angiospermae",
+    "order": "",
+    "family": "",
+    "genus": "Sanguinaria"
   },
   {
     "id": "jack_in_the_pulpit",
@@ -11619,7 +13629,12 @@
       "Red Maple",
       "Sugar Maple",
       "White Oak"
-    ]
+    ],
+    "kingdom": "Plantae",
+    "phylum": "Angiospermae",
+    "order": "",
+    "family": "",
+    "genus": "Arisaema"
   },
   {
     "id": "dutchmans_breeches",
@@ -11647,7 +13662,12 @@
       "Red Maple",
       "Sugar Maple",
       "White Oak"
-    ]
+    ],
+    "kingdom": "Plantae",
+    "phylum": "Angiospermae",
+    "order": "",
+    "family": "",
+    "genus": "Dicentra"
   },
   {
     "id": "wild_geranium",
@@ -11673,7 +13693,12 @@
       "Red Maple",
       "Sugar Maple",
       "White Oak"
-    ]
+    ],
+    "kingdom": "Plantae",
+    "phylum": "Angiospermae",
+    "order": "",
+    "family": "",
+    "genus": "Geranium"
   },
   {
     "id": "foamflower",
@@ -11700,7 +13725,12 @@
       "Red Maple",
       "Sugar Maple",
       "White Oak"
-    ]
+    ],
+    "kingdom": "Plantae",
+    "phylum": "Angiospermae",
+    "order": "",
+    "family": "",
+    "genus": "Tiarella"
   },
   {
     "id": "blue_cohosh",
@@ -11728,7 +13758,12 @@
       "Red Maple",
       "Sugar Maple",
       "White Oak"
-    ]
+    ],
+    "kingdom": "Plantae",
+    "phylum": "Angiospermae",
+    "order": "",
+    "family": "",
+    "genus": "Caulophyllum"
   },
   {
     "id": "mayapple",
@@ -11755,7 +13790,12 @@
       "Red Maple",
       "Sugar Maple",
       "White Oak"
-    ]
+    ],
+    "kingdom": "Plantae",
+    "phylum": "Angiospermae",
+    "order": "",
+    "family": "",
+    "genus": "Podophyllum"
   },
   {
     "id": "wild_ginger",
@@ -11781,7 +13821,12 @@
       "Red Maple",
       "Sugar Maple",
       "White Oak"
-    ]
+    ],
+    "kingdom": "Plantae",
+    "phylum": "Angiospermae",
+    "order": "",
+    "family": "",
+    "genus": "Asarum"
   },
   {
     "id": "hepatica",
@@ -11808,7 +13853,12 @@
       "Red Maple",
       "Sugar Maple",
       "White Oak"
-    ]
+    ],
+    "kingdom": "Plantae",
+    "phylum": "Angiospermae",
+    "order": "",
+    "family": "",
+    "genus": "Hepatica"
   },
   {
     "id": "virginia_bluebell",
@@ -11836,7 +13886,12 @@
       "Red Maple",
       "Sugar Maple",
       "White Oak"
-    ]
+    ],
+    "kingdom": "Plantae",
+    "phylum": "Angiospermae",
+    "order": "",
+    "family": "",
+    "genus": "Mertensia"
   },
   {
     "id": "canada_anemone",
@@ -11863,7 +13918,12 @@
       "Red Maple",
       "Sugar Maple",
       "White Oak"
-    ]
+    ],
+    "kingdom": "Plantae",
+    "phylum": "Angiospermae",
+    "order": "",
+    "family": "",
+    "genus": "Anemone"
   },
   {
     "id": "swamp_buttercup",
@@ -11891,7 +13951,12 @@
       "Red Maple",
       "Sugar Maple",
       "White Oak"
-    ]
+    ],
+    "kingdom": "Plantae",
+    "phylum": "Angiospermae",
+    "order": "",
+    "family": "",
+    "genus": "Ranunculus"
   },
   {
     "id": "common_milkweed",
@@ -11917,7 +13982,12 @@
       "Milkweed",
       "Swamp Milkweed",
       "Red Maple"
-    ]
+    ],
+    "kingdom": "Plantae",
+    "phylum": "Angiospermae",
+    "order": "",
+    "family": "",
+    "genus": "Asclepias"
   },
   {
     "id": "swamp_milkweed",
@@ -11944,7 +14014,12 @@
       "Milkweed",
       "Common Milkweed",
       "Red Maple"
-    ]
+    ],
+    "kingdom": "Plantae",
+    "phylum": "Angiospermae",
+    "order": "",
+    "family": "",
+    "genus": "Asclepias"
   },
   {
     "id": "butterfly_weed",
@@ -11972,7 +14047,12 @@
       "Milkweed",
       "Common Milkweed",
       "Red Maple"
-    ]
+    ],
+    "kingdom": "Plantae",
+    "phylum": "Angiospermae",
+    "order": "Lepidoptera",
+    "family": "Nymphalidae",
+    "genus": "Asclepias"
   },
   {
     "id": "common_cattail",
@@ -12000,7 +14080,12 @@
       "Red Maple",
       "Sugar Maple",
       "White Oak"
-    ]
+    ],
+    "kingdom": "Plantae",
+    "phylum": "Angiospermae",
+    "order": "",
+    "family": "Felidae",
+    "genus": "Typha"
   },
   {
     "id": "phragmites",
@@ -12028,7 +14113,12 @@
       "Red Maple",
       "Sugar Maple",
       "White Oak"
-    ]
+    ],
+    "kingdom": "Plantae",
+    "phylum": "Angiospermae",
+    "order": "",
+    "family": "",
+    "genus": "Phragmites"
   },
   {
     "id": "cinnamon_vine_yam",
@@ -12054,7 +14144,12 @@
       "Red Maple",
       "Sugar Maple",
       "White Oak"
-    ]
+    ],
+    "kingdom": "Plantae",
+    "phylum": "Angiospermae",
+    "order": "",
+    "family": "",
+    "genus": "Dioscorea"
   },
   {
     "id": "chicken_of_the_woods_2",
@@ -12084,7 +14179,12 @@
       "Fly Agaric",
       "Turkey Tail",
       "Shaggy Mane"
-    ]
+    ],
+    "kingdom": "Fungi",
+    "phylum": "Basidiomycota",
+    "order": "",
+    "family": "",
+    "genus": "Laetiporus"
   },
   {
     "id": "hen_of_the_woods",
@@ -12112,7 +14212,12 @@
       "Fly Agaric",
       "Turkey Tail",
       "Shaggy Mane"
-    ]
+    ],
+    "kingdom": "Fungi",
+    "phylum": "Basidiomycota",
+    "order": "",
+    "family": "",
+    "genus": "Grifola"
   },
   {
     "id": "lions_mane",
@@ -12139,7 +14244,12 @@
       "Bear's Head Tooth",
       "Fly Agaric",
       "Turkey Tail"
-    ]
+    ],
+    "kingdom": "Fungi",
+    "phylum": "Basidiomycota",
+    "order": "Carnivora",
+    "family": "Felidae",
+    "genus": "Hericium"
   },
   {
     "id": "bears_head_tooth",
@@ -12166,7 +14276,12 @@
       "Lion's Mane",
       "Fly Agaric",
       "Turkey Tail"
-    ]
+    ],
+    "kingdom": "Fungi",
+    "phylum": "Basidiomycota",
+    "order": "Carnivora",
+    "family": "Ursidae",
+    "genus": "Hericium"
   },
   {
     "id": "giant_puffball",
@@ -12194,7 +14309,12 @@
       "Fly Agaric",
       "Turkey Tail",
       "Shaggy Mane"
-    ]
+    ],
+    "kingdom": "Fungi",
+    "phylum": "Basidiomycota",
+    "order": "Hymenoptera",
+    "family": "",
+    "genus": "Calvatia"
   },
   {
     "id": "pear_shaped_puffball",
@@ -12221,7 +14341,12 @@
       "Fly Agaric",
       "Turkey Tail",
       "Shaggy Mane"
-    ]
+    ],
+    "kingdom": "Fungi",
+    "phylum": "Basidiomycota",
+    "order": "",
+    "family": "",
+    "genus": "Apioperdon"
   },
   {
     "id": "common_puffball",
@@ -12248,7 +14373,12 @@
       "Fly Agaric",
       "Turkey Tail",
       "Shaggy Mane"
-    ]
+    ],
+    "kingdom": "Fungi",
+    "phylum": "Basidiomycota",
+    "order": "",
+    "family": "",
+    "genus": "Lycoperdon"
   },
   {
     "id": "dryads_saddle",
@@ -12274,7 +14404,12 @@
       "Fly Agaric",
       "Turkey Tail",
       "Shaggy Mane"
-    ]
+    ],
+    "kingdom": "Fungi",
+    "phylum": "Basidiomycota",
+    "order": "",
+    "family": "",
+    "genus": "Cerioporus"
   },
   {
     "id": "birch_polypore",
@@ -12300,7 +14435,12 @@
       "Fly Agaric",
       "Turkey Tail",
       "Shaggy Mane"
-    ]
+    ],
+    "kingdom": "Fungi",
+    "phylum": "Basidiomycota",
+    "order": "",
+    "family": "",
+    "genus": "Fomitopsis"
   },
   {
     "id": "tinder_polypore",
@@ -12326,7 +14466,12 @@
       "Fly Agaric",
       "Turkey Tail",
       "Shaggy Mane"
-    ]
+    ],
+    "kingdom": "Fungi",
+    "phylum": "Basidiomycota",
+    "order": "",
+    "family": "",
+    "genus": "Fomes"
   },
   {
     "id": "reishi_lingzhi",
@@ -12353,7 +14498,12 @@
       "Artist's Conk",
       "Fly Agaric",
       "Turkey Tail"
-    ]
+    ],
+    "kingdom": "Fungi",
+    "phylum": "Basidiomycota",
+    "order": "",
+    "family": "",
+    "genus": "Ganoderma"
   },
   {
     "id": "chaga",
@@ -12381,7 +14531,12 @@
       "Fly Agaric",
       "Turkey Tail",
       "Shaggy Mane"
-    ]
+    ],
+    "kingdom": "Fungi",
+    "phylum": "Basidiomycota",
+    "order": "",
+    "family": "",
+    "genus": "Inonotus"
   },
   {
     "id": "oyster_mushroom",
@@ -12408,7 +14563,12 @@
       "Fly Agaric",
       "Turkey Tail",
       "Shaggy Mane"
-    ]
+    ],
+    "kingdom": "Fungi",
+    "phylum": "Basidiomycota",
+    "order": "Bivalvia",
+    "family": "",
+    "genus": "Pleurotus"
   },
   {
     "id": "shiitake",
@@ -12436,7 +14596,12 @@
       "Fly Agaric",
       "Turkey Tail",
       "Shaggy Mane"
-    ]
+    ],
+    "kingdom": "Fungi",
+    "phylum": "Basidiomycota",
+    "order": "",
+    "family": "",
+    "genus": "Lentinula"
   },
   {
     "id": "common_white_mushroom",
@@ -12463,7 +14628,12 @@
       "Field Mushroom",
       "Fly Agaric",
       "Turkey Tail"
-    ]
+    ],
+    "kingdom": "Fungi",
+    "phylum": "Basidiomycota",
+    "order": "",
+    "family": "",
+    "genus": "Agaricus"
   },
   {
     "id": "field_mushroom",
@@ -12491,7 +14661,12 @@
       "Common White Mushroom",
       "Fly Agaric",
       "Turkey Tail"
-    ]
+    ],
+    "kingdom": "Fungi",
+    "phylum": "Basidiomycota",
+    "order": "",
+    "family": "",
+    "genus": "Agaricus"
   },
   {
     "id": "honey_mushroom",
@@ -12518,7 +14693,12 @@
       "Fly Agaric",
       "Turkey Tail",
       "Shaggy Mane"
-    ]
+    ],
+    "kingdom": "Fungi",
+    "phylum": "Basidiomycota",
+    "order": "",
+    "family": "",
+    "genus": "Armillaria"
   },
   {
     "id": "sulfur_tuft",
@@ -12546,7 +14726,12 @@
       "Fly Agaric",
       "Turkey Tail",
       "Shaggy Mane"
-    ]
+    ],
+    "kingdom": "Fungi",
+    "phylum": "Basidiomycota",
+    "order": "",
+    "family": "",
+    "genus": "Hypholoma"
   },
   {
     "id": "jack_olantern",
@@ -12573,7 +14758,12 @@
       "Fly Agaric",
       "Turkey Tail",
       "Shaggy Mane"
-    ]
+    ],
+    "kingdom": "Fungi",
+    "phylum": "Basidiomycota",
+    "order": "Charadriiformes",
+    "family": "Laridae",
+    "genus": "Omphalotus"
   },
   {
     "id": "false_chanterelle",
@@ -12601,7 +14791,12 @@
       "Fly Agaric",
       "Turkey Tail",
       "Shaggy Mane"
-    ]
+    ],
+    "kingdom": "Fungi",
+    "phylum": "Basidiomycota",
+    "order": "Hymenoptera",
+    "family": "",
+    "genus": "Hygrophoropsis"
   },
   {
     "id": "destroying_angel",
@@ -12629,7 +14824,12 @@
       "Fly Agaric",
       "Death Cap",
       "Turkey Tail"
-    ]
+    ],
+    "kingdom": "Fungi",
+    "phylum": "Basidiomycota",
+    "order": "",
+    "family": "",
+    "genus": "Amanita"
   },
   {
     "id": "death_cap",
@@ -12658,7 +14858,12 @@
       "Fly Agaric",
       "Destroying Angel",
       "Turkey Tail"
-    ]
+    ],
+    "kingdom": "Fungi",
+    "phylum": "Basidiomycota",
+    "order": "",
+    "family": "",
+    "genus": "Amanita"
   },
   {
     "id": "false_morel",
@@ -12684,7 +14889,12 @@
       "Fly Agaric",
       "Turkey Tail",
       "Shaggy Mane"
-    ]
+    ],
+    "kingdom": "Fungi",
+    "phylum": "Basidiomycota",
+    "order": "",
+    "family": "",
+    "genus": "Gyromitra"
   },
   {
     "id": "earthstar",
@@ -12710,7 +14920,12 @@
       "Fly Agaric",
       "Turkey Tail",
       "Shaggy Mane"
-    ]
+    ],
+    "kingdom": "Fungi",
+    "phylum": "Basidiomycota",
+    "order": "",
+    "family": "",
+    "genus": "Geastrum"
   },
   {
     "id": "birds_nest_fungus",
@@ -12737,7 +14952,12 @@
       "Fly Agaric",
       "Turkey Tail",
       "Shaggy Mane"
-    ]
+    ],
+    "kingdom": "Fungi",
+    "phylum": "Basidiomycota",
+    "order": "",
+    "family": "",
+    "genus": "Crucibulum"
   },
   {
     "id": "stinkhorn",
@@ -12763,7 +14983,12 @@
       "Fly Agaric",
       "Turkey Tail",
       "Shaggy Mane"
-    ]
+    ],
+    "kingdom": "Fungi",
+    "phylum": "Basidiomycota",
+    "order": "",
+    "family": "",
+    "genus": "Phallus"
   },
   {
     "id": "common_morel",
@@ -12791,7 +15016,12 @@
       "Morel",
       "Black Morel",
       "Fly Agaric"
-    ]
+    ],
+    "kingdom": "Fungi",
+    "phylum": "Basidiomycota",
+    "order": "",
+    "family": "",
+    "genus": "Morchella"
   },
   {
     "id": "black_morel",
@@ -12818,7 +15048,12 @@
       "Morel",
       "Common Morel",
       "Fly Agaric"
-    ]
+    ],
+    "kingdom": "Fungi",
+    "phylum": "Basidiomycota",
+    "order": "",
+    "family": "",
+    "genus": "Morchella"
   },
   {
     "id": "wood_ear_jelly_ear",
@@ -12844,7 +15079,12 @@
       "Fly Agaric",
       "Turkey Tail",
       "Shaggy Mane"
-    ]
+    ],
+    "kingdom": "Fungi",
+    "phylum": "Basidiomycota",
+    "order": "",
+    "family": "",
+    "genus": "Auricularia"
   },
   {
     "id": "yellow_brain_fungus",
@@ -12871,7 +15111,12 @@
       "Fly Agaric",
       "Turkey Tail",
       "Shaggy Mane"
-    ]
+    ],
+    "kingdom": "Fungi",
+    "phylum": "Basidiomycota",
+    "order": "",
+    "family": "",
+    "genus": "Tremella"
   },
   {
     "id": "coral_fungus",
@@ -12897,7 +15142,12 @@
       "Fly Agaric",
       "Turkey Tail",
       "Shaggy Mane"
-    ]
+    ],
+    "kingdom": "Fungi",
+    "phylum": "Basidiomycota",
+    "order": "Squamata",
+    "family": "",
+    "genus": "Ramaria"
   },
   {
     "id": "violet_toothed_polypore",
@@ -12923,7 +15173,12 @@
       "Fly Agaric",
       "Turkey Tail",
       "Shaggy Mane"
-    ]
+    ],
+    "kingdom": "Fungi",
+    "phylum": "Basidiomycota",
+    "order": "",
+    "family": "",
+    "genus": "Trichaptum"
   },
   {
     "id": "angel_wings_mushroom",
@@ -12950,7 +15205,12 @@
       "Fly Agaric",
       "Turkey Tail",
       "Shaggy Mane"
-    ]
+    ],
+    "kingdom": "Fungi",
+    "phylum": "Basidiomycota",
+    "order": "",
+    "family": "",
+    "genus": "Pleurocybella"
   },
   {
     "id": "turkey_tail_2",
@@ -12977,7 +15237,12 @@
       "Fly Agaric",
       "Shaggy Mane",
       "Chicken of the Woods"
-    ]
+    ],
+    "kingdom": "Fungi",
+    "phylum": "Basidiomycota",
+    "order": "",
+    "family": "",
+    "genus": "Trametes"
   },
   {
     "id": "green_frog",
@@ -13003,7 +15268,12 @@
       "American Bullfrog",
       "Pickerel Frog",
       "Gray Tree Frog"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Anura",
+    "family": "Ranidae",
+    "genus": "Lithobates"
   },
   {
     "id": "pickerel_frog",
@@ -13030,7 +15300,12 @@
       "American Bullfrog",
       "Green Frog",
       "Gray Tree Frog"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Anura",
+    "family": "Ranidae",
+    "genus": "Lithobates"
   },
   {
     "id": "northern_leopard_frog",
@@ -13058,7 +15333,12 @@
       "American Bullfrog",
       "Green Frog",
       "Gray Tree Frog"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Carnivora",
+    "family": "Felidae",
+    "genus": "Lithobates"
   },
   {
     "id": "wood_frog",
@@ -13086,7 +15366,12 @@
       "American Bullfrog",
       "Green Frog",
       "Gray Tree Frog"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Anura",
+    "family": "Ranidae",
+    "genus": "Lithobates"
   },
   {
     "id": "spring_peeper",
@@ -13113,7 +15398,12 @@
       "American Bullfrog",
       "Gray Tree Frog",
       "Eastern Red-backed Salamander"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "",
+    "family": "",
+    "genus": "Pseudacris"
   },
   {
     "id": "american_toad",
@@ -13140,7 +15430,12 @@
       "Fowler's Toad",
       "American Bullfrog",
       "Gray Tree Frog"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Anura",
+    "family": "Bufonidae",
+    "genus": "Anaxyrus"
   },
   {
     "id": "fowlers_toad",
@@ -13165,7 +15460,12 @@
       "American Toad",
       "American Bullfrog",
       "Gray Tree Frog"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Strigiformes",
+    "family": "Strigidae",
+    "genus": "Anaxyrus"
   },
   {
     "id": "eastern_spadefoot_toad",
@@ -13190,7 +15490,12 @@
       "American Bullfrog",
       "Gray Tree Frog",
       "Eastern Red-backed Salamander"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Charadriiformes",
+    "family": "Laridae",
+    "genus": "Scaphiopus"
   },
   {
     "id": "eastern_newt_red_eft",
@@ -13216,7 +15521,12 @@
       "American Bullfrog",
       "Gray Tree Frog",
       "Eastern Red-backed Salamander"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Charadriiformes",
+    "family": "Laridae",
+    "genus": "Notophthalmus"
   },
   {
     "id": "marbled_salamander",
@@ -13244,7 +15554,12 @@
       "Spotted Salamander",
       "Jefferson Salamander",
       "American Bullfrog"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Caudata",
+    "family": "",
+    "genus": "Ambystoma"
   },
   {
     "id": "jefferson_salamander",
@@ -13272,7 +15587,12 @@
       "Spotted Salamander",
       "Marbled Salamander",
       "American Bullfrog"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Caudata",
+    "family": "",
+    "genus": "Ambystoma"
   },
   {
     "id": "blue_spotted_salamander",
@@ -13300,7 +15620,12 @@
       "Spotted Salamander",
       "Marbled Salamander",
       "American Bullfrog"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Caudata",
+    "family": "",
+    "genus": "Ambystoma"
   },
   {
     "id": "northern_two_lined_salamander",
@@ -13328,7 +15653,12 @@
       "American Bullfrog",
       "Gray Tree Frog",
       "Eastern Red-backed Salamander"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Caudata",
+    "family": "",
+    "genus": "Eurycea"
   },
   {
     "id": "northern_dusky_salamander",
@@ -13354,7 +15684,12 @@
       "American Bullfrog",
       "Gray Tree Frog",
       "Eastern Red-backed Salamander"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Caudata",
+    "family": "",
+    "genus": "Desmognathus"
   },
   {
     "id": "spring_salamander",
@@ -13380,7 +15715,12 @@
       "American Bullfrog",
       "Gray Tree Frog",
       "Eastern Red-backed Salamander"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Caudata",
+    "family": "",
+    "genus": "Gyrinophilus"
   },
   {
     "id": "four_toed_salamander",
@@ -13407,7 +15747,12 @@
       "American Bullfrog",
       "Gray Tree Frog",
       "Eastern Red-backed Salamander"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Caudata",
+    "family": "",
+    "genus": "Hemidactylium"
   },
   {
     "id": "northern_slimy_salamander",
@@ -13434,7 +15779,12 @@
       "Eastern Red-backed Salamander",
       "Wehrle's Salamander",
       "American Bullfrog"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Caudata",
+    "family": "",
+    "genus": "Plethodon"
   },
   {
     "id": "wehrles_salamander",
@@ -13462,7 +15812,12 @@
       "Eastern Red-backed Salamander",
       "Northern Slimy Salamander",
       "American Bullfrog"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Caudata",
+    "family": "",
+    "genus": "Plethodon"
   },
   {
     "id": "bullfrog",
@@ -13489,7 +15844,12 @@
       "American Bullfrog",
       "Green Frog",
       "Gray Tree Frog"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Anura",
+    "family": "Ranidae",
+    "genus": "Lithobates"
   },
   {
     "id": "copes_gray_treefrog",
@@ -13518,7 +15878,12 @@
       "Gray Tree Frog",
       "American Bullfrog",
       "Eastern Red-backed Salamander"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Anura",
+    "family": "Ranidae",
+    "genus": "Hyla"
   },
   {
     "id": "mudpuppy",
@@ -13545,7 +15910,12 @@
       "American Bullfrog",
       "Gray Tree Frog",
       "Eastern Red-backed Salamander"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "",
+    "family": "",
+    "genus": "Necturus"
   },
   {
     "id": "hellbender",
@@ -13573,7 +15943,12 @@
       "American Bullfrog",
       "Gray Tree Frog",
       "Eastern Red-backed Salamander"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "",
+    "family": "",
+    "genus": "Cryptobranchus"
   },
   {
     "id": "eastern_rat_snake",
@@ -13600,7 +15975,12 @@
       "Eastern Garter Snake",
       "Eastern Box Turtle",
       "Painted Turtle"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Charadriiformes",
+    "family": "Laridae",
+    "genus": "Pantherophis"
   },
   {
     "id": "eastern_milk_snake",
@@ -13627,7 +16007,12 @@
       "Eastern Garter Snake",
       "Eastern Box Turtle",
       "Painted Turtle"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Charadriiformes",
+    "family": "Laridae",
+    "genus": "Lampropeltis"
   },
   {
     "id": "northern_water_snake",
@@ -13653,7 +16038,12 @@
       "Eastern Garter Snake",
       "Eastern Box Turtle",
       "Painted Turtle"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Squamata",
+    "family": "Colubridae",
+    "genus": "Nerodia"
   },
   {
     "id": "northern_ring_necked_snake",
@@ -13682,7 +16072,12 @@
       "Eastern Garter Snake",
       "Eastern Box Turtle",
       "Painted Turtle"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Squamata",
+    "family": "Colubridae",
+    "genus": "Diadophis"
   },
   {
     "id": "red_bellied_snake",
@@ -13710,7 +16105,12 @@
       "Dekay's Brown Snake",
       "Eastern Garter Snake",
       "Eastern Box Turtle"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Squamata",
+    "family": "Colubridae",
+    "genus": "Storeria"
   },
   {
     "id": "dekays_brown_snake",
@@ -13738,7 +16138,12 @@
       "Red-bellied Snake",
       "Eastern Garter Snake",
       "Eastern Box Turtle"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Squamata",
+    "family": "Colubridae",
+    "genus": "Storeria"
   },
   {
     "id": "smooth_green_snake",
@@ -13765,7 +16170,12 @@
       "Rough Green Snake",
       "Eastern Garter Snake",
       "Eastern Box Turtle"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Squamata",
+    "family": "Colubridae",
+    "genus": "Opheodrys"
   },
   {
     "id": "rough_green_snake",
@@ -13792,7 +16202,12 @@
       "Smooth Green Snake",
       "Eastern Garter Snake",
       "Eastern Box Turtle"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Squamata",
+    "family": "Colubridae",
+    "genus": "Opheodrys"
   },
   {
     "id": "eastern_hognose_snake",
@@ -13817,7 +16232,12 @@
       "Eastern Garter Snake",
       "Eastern Box Turtle",
       "Painted Turtle"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Charadriiformes",
+    "family": "Laridae",
+    "genus": "Heterodon"
   },
   {
     "id": "northern_copperhead",
@@ -13843,7 +16263,12 @@
       "Eastern Garter Snake",
       "Eastern Box Turtle",
       "Painted Turtle"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Squamata",
+    "family": "",
+    "genus": "Agkistrodon"
   },
   {
     "id": "timber_rattlesnake_2",
@@ -13869,7 +16294,12 @@
       "Eastern Garter Snake",
       "Eastern Box Turtle",
       "Painted Turtle"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Squamata",
+    "family": "Colubridae",
+    "genus": "Crotalus"
   },
   {
     "id": "eastern_massasauga",
@@ -13897,7 +16327,12 @@
       "Eastern Garter Snake",
       "Eastern Box Turtle",
       "Painted Turtle"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Charadriiformes",
+    "family": "Laridae",
+    "genus": "Sistrurus"
   },
   {
     "id": "common_garter_snake",
@@ -13923,7 +16358,12 @@
       "Eastern Garter Snake",
       "Eastern Ribbon Snake",
       "Eastern Box Turtle"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Squamata",
+    "family": "Colubridae",
+    "genus": "Thamnophis"
   },
   {
     "id": "eastern_ribbon_snake",
@@ -13950,7 +16390,12 @@
       "Eastern Garter Snake",
       "Common Garter Snake",
       "Eastern Box Turtle"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Charadriiformes",
+    "family": "Laridae",
+    "genus": "Thamnophis"
   },
   {
     "id": "eastern_box_turtle_2",
@@ -13975,7 +16420,12 @@
       "Ornate Box Turtle",
       "Eastern Garter Snake",
       "Painted Turtle"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Charadriiformes",
+    "family": "Laridae",
+    "genus": "Terrapene"
   },
   {
     "id": "ornate_box_turtle",
@@ -14000,7 +16450,12 @@
       "Eastern Box Turtle",
       "Eastern Box Turtle",
       "Eastern Garter Snake"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Testudines",
+    "family": "Testudinidae",
+    "genus": "Terrapene"
   },
   {
     "id": "spotted_turtle",
@@ -14029,7 +16484,12 @@
       "Eastern Garter Snake",
       "Eastern Box Turtle",
       "Painted Turtle"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Testudines",
+    "family": "Testudinidae",
+    "genus": "Clemmys"
   },
   {
     "id": "blandings_turtle",
@@ -14056,7 +16516,12 @@
       "Eastern Garter Snake",
       "Eastern Box Turtle",
       "Painted Turtle"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Testudines",
+    "family": "Testudinidae",
+    "genus": "Emydoidea"
   },
   {
     "id": "eastern_mud_turtle",
@@ -14082,7 +16547,12 @@
       "Eastern Garter Snake",
       "Eastern Box Turtle",
       "Painted Turtle"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Charadriiformes",
+    "family": "Laridae",
+    "genus": "Kinosternon"
   },
   {
     "id": "common_musk_turtle_stinkpot",
@@ -14108,7 +16578,12 @@
       "Eastern Garter Snake",
       "Eastern Box Turtle",
       "Painted Turtle"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Testudines",
+    "family": "Testudinidae",
+    "genus": "Sternotherus"
   },
   {
     "id": "wood_turtle",
@@ -14135,7 +16610,12 @@
       "Eastern Garter Snake",
       "Eastern Box Turtle",
       "Painted Turtle"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Testudines",
+    "family": "Testudinidae",
+    "genus": "Glyptemys"
   },
   {
     "id": "eastern_painted_turtle",
@@ -14162,7 +16642,12 @@
       "Painted Turtle",
       "Eastern Garter Snake",
       "Eastern Box Turtle"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Charadriiformes",
+    "family": "Laridae",
+    "genus": "Chrysemys"
   },
   {
     "id": "red_eared_slider",
@@ -14188,7 +16673,12 @@
       "Eastern Garter Snake",
       "Eastern Box Turtle",
       "Painted Turtle"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "",
+    "family": "",
+    "genus": "Trachemys"
   },
   {
     "id": "northern_map_turtle",
@@ -14214,7 +16704,12 @@
       "Eastern Garter Snake",
       "Eastern Box Turtle",
       "Painted Turtle"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Testudines",
+    "family": "Testudinidae",
+    "genus": "Graptemys"
   },
   {
     "id": "diamondback_terrapin",
@@ -14240,7 +16735,12 @@
       "Eastern Garter Snake",
       "Eastern Box Turtle",
       "Painted Turtle"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "",
+    "family": "",
+    "genus": "Malaclemys"
   },
   {
     "id": "common_snapping_turtle_2",
@@ -14266,7 +16766,12 @@
       "Eastern Garter Snake",
       "Eastern Box Turtle",
       "Painted Turtle"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Testudines",
+    "family": "Testudinidae",
+    "genus": "Chelydra"
   },
   {
     "id": "alligator_snapping_turtle",
@@ -14292,7 +16797,12 @@
       "Eastern Garter Snake",
       "Eastern Box Turtle",
       "Painted Turtle"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Testudines",
+    "family": "Testudinidae",
+    "genus": "Macrochelys"
   },
   {
     "id": "five_lined_skink_2",
@@ -14318,7 +16828,12 @@
       "Broad-headed Skink",
       "Common Five-lined Skink",
       "Eastern Garter Snake"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Squamata",
+    "family": "",
+    "genus": "Plestiodon"
   },
   {
     "id": "broad_headed_skink",
@@ -14345,7 +16860,12 @@
       "Five-lined Skink",
       "Five-lined Skink",
       "Eastern Garter Snake"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Squamata",
+    "family": "",
+    "genus": "Plestiodon"
   },
   {
     "id": "ground_skink",
@@ -14371,7 +16891,12 @@
       "Eastern Garter Snake",
       "Eastern Box Turtle",
       "Painted Turtle"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Squamata",
+    "family": "",
+    "genus": "Scincella"
   },
   {
     "id": "eastern_fence_lizard",
@@ -14399,7 +16924,12 @@
       "Eastern Garter Snake",
       "Eastern Box Turtle",
       "Painted Turtle"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Charadriiformes",
+    "family": "Laridae",
+    "genus": "Sceloporus"
   },
   {
     "id": "six_lined_racerunner",
@@ -14425,7 +16955,12 @@
       "Eastern Garter Snake",
       "Eastern Box Turtle",
       "Painted Turtle"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "",
+    "family": "",
+    "genus": "Aspidoscelis"
   },
   {
     "id": "common_five_lined_skink",
@@ -14453,7 +16988,12 @@
       "Five-lined Skink",
       "Five-lined Skink",
       "Eastern Garter Snake"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Squamata",
+    "family": "",
+    "genus": "Plestiodon"
   },
   {
     "id": "smallmouth_bass",
@@ -14480,7 +17020,12 @@
       "Largemouth Bass",
       "Spotted Bass",
       "Bluegill"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Perciformes",
+    "family": "",
+    "genus": "Micropterus"
   },
   {
     "id": "spotted_bass",
@@ -14506,7 +17051,12 @@
       "Largemouth Bass",
       "Smallmouth Bass",
       "Bluegill"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Perciformes",
+    "family": "",
+    "genus": "Micropterus"
   },
   {
     "id": "rock_bass",
@@ -14534,7 +17084,12 @@
       "Largemouth Bass",
       "Bluegill",
       "Brook Trout"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Perciformes",
+    "family": "",
+    "genus": "Ambloplites"
   },
   {
     "id": "green_sunfish",
@@ -14563,7 +17118,12 @@
       "Bluegill",
       "Pumpkinseed",
       "Largemouth Bass"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Perciformes",
+    "family": "",
+    "genus": "Lepomis"
   },
   {
     "id": "pumpkinseed",
@@ -14590,7 +17150,12 @@
       "Bluegill",
       "Green Sunfish",
       "Largemouth Bass"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "",
+    "family": "",
+    "genus": "Lepomis"
   },
   {
     "id": "redbreast_sunfish",
@@ -14618,7 +17183,12 @@
       "Bluegill",
       "Green Sunfish",
       "Largemouth Bass"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Perciformes",
+    "family": "",
+    "genus": "Lepomis"
   },
   {
     "id": "warmouth",
@@ -14645,7 +17215,12 @@
       "Bluegill",
       "Green Sunfish",
       "Largemouth Bass"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "",
+    "family": "",
+    "genus": "Lepomis"
   },
   {
     "id": "white_crappie",
@@ -14671,7 +17246,12 @@
       "Black Crappie",
       "Largemouth Bass",
       "Bluegill"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Perciformes",
+    "family": "",
+    "genus": "Pomoxis"
   },
   {
     "id": "black_crappie",
@@ -14697,7 +17277,12 @@
       "White Crappie",
       "Largemouth Bass",
       "Bluegill"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Perciformes",
+    "family": "",
+    "genus": "Pomoxis"
   },
   {
     "id": "yellow_perch",
@@ -14725,7 +17310,12 @@
       "Largemouth Bass",
       "Bluegill",
       "Brook Trout"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Perciformes",
+    "family": "",
+    "genus": "Perca"
   },
   {
     "id": "walleye",
@@ -14752,7 +17342,12 @@
       "Sauger",
       "Largemouth Bass",
       "Bluegill"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Perciformes",
+    "family": "",
+    "genus": "Sander"
   },
   {
     "id": "sauger",
@@ -14781,7 +17376,12 @@
       "Walleye",
       "Largemouth Bass",
       "Bluegill"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "",
+    "family": "",
+    "genus": "Sander"
   },
   {
     "id": "northern_pike",
@@ -14811,7 +17411,12 @@
       "Muskellunge (Muskie)",
       "Chain Pickerel",
       "Largemouth Bass"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Esociformes",
+    "family": "",
+    "genus": "Esox"
   },
   {
     "id": "muskellunge_muskie",
@@ -14840,7 +17445,12 @@
       "Northern Pike",
       "Chain Pickerel",
       "Largemouth Bass"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Esociformes",
+    "family": "",
+    "genus": "Esox"
   },
   {
     "id": "chain_pickerel",
@@ -14866,7 +17476,12 @@
       "Northern Pike",
       "Muskellunge (Muskie)",
       "Largemouth Bass"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "",
+    "family": "",
+    "genus": "Esox"
   },
   {
     "id": "channel_catfish",
@@ -14893,7 +17508,12 @@
       "Largemouth Bass",
       "Bluegill",
       "Brook Trout"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Siluriformes",
+    "family": "Felidae",
+    "genus": "Ictalurus"
   },
   {
     "id": "flathead_catfish",
@@ -14920,7 +17540,12 @@
       "Largemouth Bass",
       "Bluegill",
       "Brook Trout"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Siluriformes",
+    "family": "Felidae",
+    "genus": "Pylodictis"
   },
   {
     "id": "brown_bullhead",
@@ -14948,7 +17573,12 @@
       "White Catfish",
       "Largemouth Bass",
       "Bluegill"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "",
+    "family": "",
+    "genus": "Ameiurus"
   },
   {
     "id": "white_catfish",
@@ -14977,7 +17607,12 @@
       "Brown Bullhead",
       "Brown Bullhead",
       "Largemouth Bass"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Siluriformes",
+    "family": "Felidae",
+    "genus": "Ameiurus"
   },
   {
     "id": "common_carp",
@@ -15004,7 +17639,12 @@
       "Largemouth Bass",
       "Bluegill",
       "Brook Trout"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Cypriniformes",
+    "family": "",
+    "genus": "Cyprinus"
   },
   {
     "id": "goldfish",
@@ -15031,7 +17671,12 @@
       "Largemouth Bass",
       "Bluegill",
       "Brook Trout"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "",
+    "family": "",
+    "genus": "Carassius"
   },
   {
     "id": "rainbow_trout",
@@ -15060,7 +17705,12 @@
       "Cutthroat Trout",
       "Largemouth Bass",
       "Bluegill"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Salmoniformes",
+    "family": "",
+    "genus": "Oncorhynchus"
   },
   {
     "id": "brown_trout",
@@ -15089,7 +17739,12 @@
       "Atlantic Salmon",
       "Largemouth Bass",
       "Bluegill"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Salmoniformes",
+    "family": "",
+    "genus": "Salmo"
   },
   {
     "id": "cutthroat_trout",
@@ -15116,7 +17771,12 @@
       "Rainbow Trout",
       "Largemouth Bass",
       "Bluegill"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Salmoniformes",
+    "family": "",
+    "genus": "Oncorhynchus"
   },
   {
     "id": "lake_trout",
@@ -15144,7 +17804,12 @@
       "Brook Trout",
       "Arctic Char",
       "Largemouth Bass"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Salmoniformes",
+    "family": "",
+    "genus": "Salvelinus"
   },
   {
     "id": "arctic_char",
@@ -15171,7 +17836,12 @@
       "Brook Trout",
       "Lake Trout",
       "Largemouth Bass"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "",
+    "family": "",
+    "genus": "Salvelinus"
   },
   {
     "id": "brook_trout_2",
@@ -15200,7 +17870,12 @@
       "Lake Trout",
       "Arctic Char",
       "Largemouth Bass"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Salmoniformes",
+    "family": "",
+    "genus": "Salvelinus"
   },
   {
     "id": "brown_bullhead_2",
@@ -15227,7 +17902,12 @@
       "White Catfish",
       "Largemouth Bass",
       "Bluegill"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "",
+    "family": "",
+    "genus": "Ameiurus"
   },
   {
     "id": "white_sucker",
@@ -15253,7 +17933,12 @@
       "Largemouth Bass",
       "Bluegill",
       "Brook Trout"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "",
+    "family": "",
+    "genus": "Catostomus"
   },
   {
     "id": "longnose_gar",
@@ -15280,7 +17965,12 @@
       "Largemouth Bass",
       "Bluegill",
       "Brook Trout"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "Lepisosteiformes",
+    "family": "",
+    "genus": "Lepisosteus"
   },
   {
     "id": "bowfin",
@@ -15306,7 +17996,12 @@
       "Largemouth Bass",
       "Bluegill",
       "Brook Trout"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "",
+    "family": "",
+    "genus": "Amia"
   },
   {
     "id": "american_eel",
@@ -15332,7 +18027,12 @@
       "Largemouth Bass",
       "Bluegill",
       "Brook Trout"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "",
+    "family": "",
+    "genus": "Anguilla"
   },
   {
     "id": "alewife",
@@ -15360,7 +18060,12 @@
       "American Shad",
       "Largemouth Bass",
       "Bluegill"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "",
+    "family": "",
+    "genus": "Alosa"
   },
   {
     "id": "american_shad",
@@ -15387,7 +18092,12 @@
       "Alewife",
       "Largemouth Bass",
       "Bluegill"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "",
+    "family": "",
+    "genus": "Alosa"
   },
   {
     "id": "gizzard_shad",
@@ -15414,7 +18124,12 @@
       "Largemouth Bass",
       "Bluegill",
       "Brook Trout"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Chordata",
+    "order": "",
+    "family": "",
+    "genus": "Dorosoma"
   },
   {
     "id": "blue_crab",
@@ -15442,7 +18157,12 @@
       "Dungeness Crab",
       "Red Rock Crab",
       "Hermit Crab"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "Decapoda",
+    "family": "Cancridae",
+    "genus": "Callinectes"
   },
   {
     "id": "dungeness_crab",
@@ -15470,7 +18190,12 @@
       "Blue Crab",
       "Red Rock Crab",
       "Hermit Crab"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "Decapoda",
+    "family": "Cancridae",
+    "genus": "Metacarcinus"
   },
   {
     "id": "red_rock_crab",
@@ -15499,7 +18224,12 @@
       "Blue Crab",
       "Dungeness Crab",
       "Hermit Crab"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "Decapoda",
+    "family": "Cancridae",
+    "genus": "Cancer"
   },
   {
     "id": "hermit_crab",
@@ -15527,7 +18257,12 @@
       "Blue Crab",
       "Dungeness Crab",
       "Red Rock Crab"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "Decapoda",
+    "family": "Cancridae",
+    "genus": "Paguroidea"
   },
   {
     "id": "fiddler_crab",
@@ -15555,7 +18290,12 @@
       "Blue Crab",
       "Dungeness Crab",
       "Red Rock Crab"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "Decapoda",
+    "family": "Cancridae",
+    "genus": "Uca"
   },
   {
     "id": "ghost_crab",
@@ -15581,7 +18321,12 @@
       "Blue Crab",
       "Dungeness Crab",
       "Red Rock Crab"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "Decapoda",
+    "family": "Cancridae",
+    "genus": "Ocypode"
   },
   {
     "id": "horseshoe_crab",
@@ -15609,7 +18354,12 @@
       "Blue Crab",
       "Dungeness Crab",
       "Red Rock Crab"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "Decapoda",
+    "family": "Cancridae",
+    "genus": "Limulus"
   },
   {
     "id": "american_lobster",
@@ -15637,7 +18387,12 @@
       "Blue Crab",
       "Dungeness Crab",
       "Red Rock Crab"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "Decapoda",
+    "family": "",
+    "genus": "Homarus"
   },
   {
     "id": "spiny_lobster",
@@ -15665,7 +18420,12 @@
       "Blue Crab",
       "Dungeness Crab",
       "Red Rock Crab"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "Decapoda",
+    "family": "",
+    "genus": "Panulirus"
   },
   {
     "id": "crayfish_crawfish",
@@ -15693,7 +18453,12 @@
       "Blue Crab",
       "Dungeness Crab",
       "Red Rock Crab"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "Decapoda",
+    "family": "",
+    "genus": "Cambaridae"
   },
   {
     "id": "red_swamp_crayfish",
@@ -15721,7 +18486,12 @@
       "White River Crayfish",
       "Blue Crab",
       "Dungeness Crab"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "Decapoda",
+    "family": "",
+    "genus": "Procambarus"
   },
   {
     "id": "northern_clearwater_crayfish",
@@ -15748,7 +18518,12 @@
       "Blue Crab",
       "Dungeness Crab",
       "Red Rock Crab"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "Decapoda",
+    "family": "",
+    "genus": "Orconectes"
   },
   {
     "id": "white_river_crayfish",
@@ -15774,7 +18549,12 @@
       "Red Swamp Crayfish",
       "Blue Crab",
       "Dungeness Crab"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "Decapoda",
+    "family": "",
+    "genus": "Procambarus"
   },
   {
     "id": "grass_shrimp",
@@ -15801,7 +18581,12 @@
       "Blue Crab",
       "Dungeness Crab",
       "Red Rock Crab"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "Decapoda",
+    "family": "",
+    "genus": "Palaemonetes"
   },
   {
     "id": "sand_shrimp",
@@ -15829,7 +18614,12 @@
       "Blue Crab",
       "Dungeness Crab",
       "Red Rock Crab"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "Decapoda",
+    "family": "",
+    "genus": "Crangon"
   },
   {
     "id": "mantis_shrimp",
@@ -15858,7 +18648,12 @@
       "Blue Crab",
       "Dungeness Crab",
       "Red Rock Crab"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "Hymenoptera",
+    "family": "",
+    "genus": "Stomatopoda"
   },
   {
     "id": "copepod",
@@ -15885,7 +18680,12 @@
       "Blue Crab",
       "Dungeness Crab",
       "Red Rock Crab"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "",
+    "family": "",
+    "genus": "Copepoda"
   },
   {
     "id": "daphnia_water_flea",
@@ -15912,7 +18712,12 @@
       "Blue Crab",
       "Dungeness Crab",
       "Red Rock Crab"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "",
+    "family": "",
+    "genus": "Daphnia"
   },
   {
     "id": "isopod_pill_bug_roly_poly",
@@ -15938,7 +18743,12 @@
       "Blue Crab",
       "Dungeness Crab",
       "Red Rock Crab"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "",
+    "family": "",
+    "genus": "Armadillidiidae"
   },
   {
     "id": "amphipod_scud",
@@ -15965,7 +18775,12 @@
       "Blue Crab",
       "Dungeness Crab",
       "Red Rock Crab"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "",
+    "family": "",
+    "genus": "Amphipoda"
   },
   {
     "id": "krill",
@@ -15992,7 +18807,12 @@
       "Blue Crab",
       "Dungeness Crab",
       "Red Rock Crab"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "Euphausiacea",
+    "family": "",
+    "genus": "Euphausiacea"
   },
   {
     "id": "barnacle",
@@ -16018,7 +18838,12 @@
       "Blue Crab",
       "Dungeness Crab",
       "Red Rock Crab"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "Balanomorpha",
+    "family": "",
+    "genus": "Cirripedia"
   },
   {
     "id": "acorn_barnacle",
@@ -16044,7 +18869,12 @@
       "Blue Crab",
       "Dungeness Crab",
       "Red Rock Crab"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "Balanomorpha",
+    "family": "",
+    "genus": "Semibalanus"
   },
   {
     "id": "gooseneck_barnacle",
@@ -16070,7 +18900,12 @@
       "Blue Crab",
       "Dungeness Crab",
       "Red Rock Crab"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "Anseriformes",
+    "family": "Anatidae",
+    "genus": "Lepas"
   },
   {
     "id": "black_widow_spider",
@@ -16099,7 +18934,12 @@
       "Brown Recluse Spider",
       "Wolf Spider",
       "Fishing Spider"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "Araneae",
+    "family": "Araneidae",
+    "genus": "Latrodectus"
   },
   {
     "id": "brown_recluse_spider",
@@ -16126,7 +18966,12 @@
       "Black Widow Spider",
       "Wolf Spider",
       "Fishing Spider"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "Araneae",
+    "family": "Araneidae",
+    "genus": "Loxosceles"
   },
   {
     "id": "wolf_spider",
@@ -16153,7 +18998,12 @@
       "Black Widow Spider",
       "Brown Recluse Spider",
       "Fishing Spider"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "Carnivora",
+    "family": "Canidae",
+    "genus": "Lycosidae"
   },
   {
     "id": "fishing_spider",
@@ -16180,7 +19030,12 @@
       "Black Widow Spider",
       "Brown Recluse Spider",
       "Wolf Spider"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "Araneae",
+    "family": "Araneidae",
+    "genus": "Dolomedes"
   },
   {
     "id": "nursery_web_spider",
@@ -16206,7 +19061,12 @@
       "Black Widow Spider",
       "Brown Recluse Spider",
       "Wolf Spider"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "Araneae",
+    "family": "Araneidae",
+    "genus": "Pisauridae"
   },
   {
     "id": "orb_weaver_spider",
@@ -16232,7 +19092,12 @@
       "Black Widow Spider",
       "Brown Recluse Spider",
       "Wolf Spider"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "Araneae",
+    "family": "Araneidae",
+    "genus": "Araneidae"
   },
   {
     "id": "yellow_garden_spider",
@@ -16261,7 +19126,12 @@
       "Black Widow Spider",
       "Brown Recluse Spider",
       "Wolf Spider"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "Araneae",
+    "family": "Araneidae",
+    "genus": "Argiope"
   },
   {
     "id": "barn_spider",
@@ -16287,7 +19157,12 @@
       "Black Widow Spider",
       "Brown Recluse Spider",
       "Wolf Spider"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "Araneae",
+    "family": "Araneidae",
+    "genus": "Araneus"
   },
   {
     "id": "crab_spider",
@@ -16313,7 +19188,12 @@
       "Black Widow Spider",
       "Brown Recluse Spider",
       "Wolf Spider"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "Araneae",
+    "family": "Araneidae",
+    "genus": "Thomisidae"
   },
   {
     "id": "jumping_spider",
@@ -16341,7 +19221,12 @@
       "Black Widow Spider",
       "Brown Recluse Spider",
       "Wolf Spider"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "Araneae",
+    "family": "Araneidae",
+    "genus": "Salticidae"
   },
   {
     "id": "bold_jumper",
@@ -16368,7 +19253,12 @@
       "Black Widow Spider",
       "Brown Recluse Spider",
       "Wolf Spider"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "",
+    "family": "",
+    "genus": "Phidippus"
   },
   {
     "id": "zebra_jumping_spider",
@@ -16397,7 +19287,12 @@
       "Black Widow Spider",
       "Brown Recluse Spider",
       "Wolf Spider"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "Araneae",
+    "family": "Araneidae",
+    "genus": "Salticus"
   },
   {
     "id": "cellar_spider_daddy_longlegs",
@@ -16424,7 +19319,12 @@
       "Black Widow Spider",
       "Brown Recluse Spider",
       "Wolf Spider"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "Araneae",
+    "family": "Araneidae",
+    "genus": "Pholcidae"
   },
   {
     "id": "house_spider",
@@ -16451,7 +19351,12 @@
       "Black Widow Spider",
       "Brown Recluse Spider",
       "Wolf Spider"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "Araneae",
+    "family": "Araneidae",
+    "genus": "Parasteatoda"
   },
   {
     "id": "grass_spider",
@@ -16477,7 +19382,12 @@
       "Black Widow Spider",
       "Brown Recluse Spider",
       "Wolf Spider"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "Araneae",
+    "family": "Araneidae",
+    "genus": "Agelenopsis"
   },
   {
     "id": "tarantula",
@@ -16504,7 +19414,12 @@
       "Black Widow Spider",
       "Brown Recluse Spider",
       "Wolf Spider"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "Hymenoptera",
+    "family": "",
+    "genus": "Theraphosidae"
   },
   {
     "id": "harvestman_daddy_longlegs",
@@ -16531,7 +19446,12 @@
       "Black Widow Spider",
       "Brown Recluse Spider",
       "Wolf Spider"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "",
+    "family": "",
+    "genus": "Opiliones"
   },
   {
     "id": "tick",
@@ -16557,7 +19477,12 @@
       "Black Widow Spider",
       "Brown Recluse Spider",
       "Wolf Spider"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "Ixodida",
+    "family": "",
+    "genus": "Ixodida"
   },
   {
     "id": "deer_tick_black_legged_tick",
@@ -16583,7 +19508,12 @@
       "Black Widow Spider",
       "Brown Recluse Spider",
       "Wolf Spider"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "Artiodactyla",
+    "family": "Cervidae",
+    "genus": "Ixodes"
   },
   {
     "id": "dog_tick",
@@ -16611,7 +19541,12 @@
       "Black Widow Spider",
       "Brown Recluse Spider",
       "Wolf Spider"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "Ixodida",
+    "family": "",
+    "genus": "Dermacentor"
   },
   {
     "id": "lone_star_tick",
@@ -16638,7 +19573,12 @@
       "Black Widow Spider",
       "Brown Recluse Spider",
       "Wolf Spider"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "Ixodida",
+    "family": "",
+    "genus": "Amblyomma"
   },
   {
     "id": "mite",
@@ -16665,7 +19605,12 @@
       "Black Widow Spider",
       "Brown Recluse Spider",
       "Wolf Spider"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "",
+    "family": "",
+    "genus": "Acari"
   },
   {
     "id": "pseudoscorpion",
@@ -16694,7 +19639,12 @@
       "Black Widow Spider",
       "Brown Recluse Spider",
       "Wolf Spider"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "Scorpiones",
+    "family": "",
+    "genus": "Pseudoscorpiones"
   },
   {
     "id": "wind_scorpion_solifugid",
@@ -16722,7 +19672,12 @@
       "Black Widow Spider",
       "Brown Recluse Spider",
       "Wolf Spider"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "Scorpiones",
+    "family": "",
+    "genus": "Solifugae"
   },
   {
     "id": "scorpion",
@@ -16748,7 +19703,12 @@
       "Black Widow Spider",
       "Brown Recluse Spider",
       "Wolf Spider"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "Scorpiones",
+    "family": "",
+    "genus": "Scorpiones"
   },
   {
     "id": "striped_bark_scorpion",
@@ -16775,6 +19735,11 @@
       "Black Widow Spider",
       "Brown Recluse Spider",
       "Wolf Spider"
-    ]
+    ],
+    "kingdom": "Animalia",
+    "phylum": "Arthropoda",
+    "order": "Scorpiones",
+    "family": "",
+    "genus": "Centruroides"
   }
 ]

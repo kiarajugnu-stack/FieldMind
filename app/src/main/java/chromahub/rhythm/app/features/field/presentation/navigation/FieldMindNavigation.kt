@@ -105,6 +105,7 @@ sealed class FieldMindScreen(val route: String, val label: String, val icon: Mat
     data object WeatherLogTool : FieldMindScreen("field_weather_log_tool", "Weather", FieldMindIcons.Weather)
     data object SpeciesTool : FieldMindScreen("field_species_tool", "Species", FieldMindIcons.Nature)
     data object SpeciesBrowser : FieldMindScreen("field_species_browser", "Species Browser", FieldMindIcons.Nature)
+    data object TaxonomicBrowser : FieldMindScreen("field_taxonomic_browser", "Taxonomic Browser", FieldMindIcons.Category)
 }
 
 private const val NavTransitionDurationMillis = 180
@@ -346,6 +347,7 @@ composable(FieldMindScreen.Reports.route) { ProjectsScreen(viewModel = viewModel
         composable(FieldMindScreen.SettingsDataIntegrity.route) { DataIntegritySettingsPage(viewModel = viewModel, onBack = { navController.popBackStack() }) }
         composable(FieldMindScreen.SettingsDeveloper.route) { DeveloperSettingsPage(viewModel = viewModel, onBack = { navController.popBackStack() }) }
         composable(FieldMindScreen.SpeciesBrowser.route) { SpeciesBrowserScreen(onBack = { navController.popBackStack() }, onOpenDetail = { id -> navController.navigateToDestination("field_species_detail/$id") }) }
+        composable(FieldMindScreen.TaxonomicBrowser.route) { TaxonomicBrowserScreen(onBack = { navController.popBackStack() }, onOpenDetail = { id -> navController.navigateToDestination("field_species_detail/$id") }) }
         composable("field_species_detail/{speciesId}") { entry ->
             val speciesId = entry.arguments?.getString("speciesId") ?: ""
             SpeciesDetailScreen(speciesId = speciesId, onBack = { navController.popBackStack() })
@@ -354,7 +356,7 @@ composable(FieldMindScreen.Reports.route) { ProjectsScreen(viewModel = viewModel
         composable(FieldMindScreen.CounterTool.route) { CounterToolScreen(viewModel = viewModel, onBack = { navController.popBackStack() }) }
         composable(FieldMindScreen.MeasurementTool.route) { MeasurementToolScreen(viewModel = viewModel, onBack = { navController.popBackStack() }) }
         composable(FieldMindScreen.WeatherLogTool.route) { WeatherLogToolScreen(viewModel = viewModel, onBack = { navController.popBackStack() }) }
-        composable(FieldMindScreen.SpeciesTool.route) { SpeciesToolScreen(viewModel = viewModel, onBack = { navController.popBackStack() }, onOpenBrowser = { navController.navigateToDestination(FieldMindScreen.SpeciesBrowser.route) }) }
+        composable(FieldMindScreen.SpeciesTool.route) { SpeciesToolScreen(viewModel = viewModel, onBack = { navController.popBackStack() }, onOpenBrowser = { navController.navigateToDestination(FieldMindScreen.SpeciesBrowser.route) }, onOpenTaxonomicBrowser = { navController.navigateToDestination(FieldMindScreen.TaxonomicBrowser.route) }) }
         composable("field_detail/{kind}/{id}") { entry ->
             val kind = entry.arguments?.getString("kind") ?: "observation"
             val id = entry.arguments?.getString("id")?.toLongOrNull() ?: 0L

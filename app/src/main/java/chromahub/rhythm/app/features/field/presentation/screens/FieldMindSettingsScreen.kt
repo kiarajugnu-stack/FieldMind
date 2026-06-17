@@ -1220,7 +1220,7 @@ fun SpeciesPackSettingsPage(onBack: () -> Unit) {
                 }
             }
 
-            items(packs, key = { it.regionId }) { pack ->
+            items(items = packs, key = { it.regionId }) { pack ->
                 val isDownloaded = pack.isDownloaded
                 val isDownloading = downloadingId == pack.regionId
 
