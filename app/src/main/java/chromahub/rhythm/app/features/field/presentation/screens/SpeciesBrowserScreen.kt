@@ -263,7 +263,7 @@ fun SpeciesBrowserScreen(
 // ══════════════════════════════════════════════════════════════════════
 
 @Composable
-private fun SpeciesCard(
+internal fun SpeciesCard(
     record: SpeciesRecord,
     onClick: () -> Unit
 ) {

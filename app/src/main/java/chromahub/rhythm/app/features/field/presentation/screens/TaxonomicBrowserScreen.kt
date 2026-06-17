@@ -20,6 +20,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import fieldmind.research.app.features.field.data.vision.SpeciesDatabase
 import fieldmind.research.app.features.field.data.vision.SpeciesRecord
+import kotlinx.coroutines.launch
 import fieldmind.research.app.features.field.presentation.components.FieldMindIcons
 import fieldmind.research.app.features.field.presentation.theme.FieldMindTheme
 import fieldmind.research.app.shared.presentation.components.icons.Icon
