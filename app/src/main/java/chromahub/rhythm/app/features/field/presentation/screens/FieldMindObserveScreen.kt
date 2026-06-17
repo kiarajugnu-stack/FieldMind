@@ -47,6 +47,7 @@ import coil.compose.AsyncImage
 import fieldmind.research.app.features.field.data.database.entity.*
 import fieldmind.research.app.features.field.data.location.CapturedLocation
 import fieldmind.research.app.features.field.data.location.FieldLocationProvider
+import fieldmind.research.app.features.field.data.vision.PhashDatabase
 import fieldmind.research.app.features.field.data.vision.SpeciesClassifier
 import fieldmind.research.app.features.field.data.vision.SpeciesDatabase
 import fieldmind.research.app.features.field.data.vision.SpeciesImageAnalyzer
@@ -161,7 +162,8 @@ fun ObserveScreen(
     // ── Species identification state ──
     val speciesDatabase = remember { SpeciesDatabase(context) }
     val speciesImageAnalyzer = remember { SpeciesImageAnalyzer(context) }
-    val speciesClassifier = remember { SpeciesClassifier(context, speciesDatabase, speciesImageAnalyzer) }
+    val speciesPhashDb = remember { PhashDatabase(context) }
+    val speciesClassifier = remember { SpeciesClassifier(context, speciesDatabase, speciesImageAnalyzer, speciesPhashDb) }
     var showSpeciesId by remember { mutableStateOf(false) }
     var speciesIdImageUri by remember { mutableStateOf<String?>(null) }
     var identifiedSpecies by remember { mutableStateOf<SpeciesMatch?>(null) }
@@ -742,6 +744,7 @@ fun ObserveScreen(
             imageUri = speciesIdImageUri,
             classifier = speciesClassifier,
             database = speciesDatabase,
+            phashDatabase = speciesPhashDb,
             onSelectSpecies = { match ->
                 identifiedSpecies = match
                 session = session.copy(

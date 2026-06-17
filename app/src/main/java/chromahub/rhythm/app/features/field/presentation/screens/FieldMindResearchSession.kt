@@ -53,6 +53,7 @@ import fieldmind.research.app.features.field.presentation.viewmodel.FieldMindVie
 import fieldmind.research.app.features.field.presentation.components.FieldMindCameraV2
 import fieldmind.research.app.shared.presentation.components.icons.Icon
 import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon
+import fieldmind.research.app.features.field.data.vision.PhashDatabase
 import fieldmind.research.app.features.field.data.vision.SpeciesClassifier
 import fieldmind.research.app.features.field.data.vision.SpeciesDatabase
 import fieldmind.research.app.features.field.data.vision.SpeciesImageAnalyzer
@@ -136,7 +137,8 @@ fun ResearchSessionScreen(
     // ── Species identification state ──
     val speciesDatabase = remember { SpeciesDatabase(context) }
     val speciesImageAnalyzer = remember { SpeciesImageAnalyzer(context) }
-    val speciesClassifier = remember { SpeciesClassifier(context, speciesDatabase, speciesImageAnalyzer) }
+    val speciesPhashDb = remember { PhashDatabase(context) }
+    val speciesClassifier = remember { SpeciesClassifier(context, speciesDatabase, speciesImageAnalyzer, speciesPhashDb) }
     var showSpeciesSearch by remember { mutableStateOf(false) }
     var speciesIdImageUri by remember { mutableStateOf<String?>(null) }
     var identifiedSpecies by remember { mutableStateOf<SpeciesMatch?>(null) }
@@ -868,6 +870,7 @@ fun ResearchSessionScreen(
             imageUri = speciesIdImageUri,
             classifier = speciesClassifier,
             database = speciesDatabase,
+            phashDatabase = speciesPhashDb,
             onSelectSpecies = { match ->
                 speciesName = match.commonName
                 speciesConfidence = if (match.confidence > 0) "${match.confidence}" else ""

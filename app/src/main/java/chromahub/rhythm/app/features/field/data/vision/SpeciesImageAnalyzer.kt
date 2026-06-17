@@ -227,23 +227,38 @@ class SpeciesImageAnalyzer(
 
     /**
      * Compare image features against species profiles and return ranked matches.
+     *
+     * @param features The extracted image features.
+     * @param candidates Species to compare against.
+     * @param topK Maximum number of results.
+     * @param phashBoosts Optional map of speciesName → (boost amount, isStrictMatch)
+     *        from [PhashDatabase.computeHashBoosts]. Stored fingerprint matches are
+     *        added on top of the color/texture analysis scores.
      */
     suspend fun scoreAgainstSpecies(
         features: ImageFeatures,
         candidates: List<SpeciesRecord>,
-        topK: Int = 10
+        topK: Int = 10,
+        phashBoosts: Map<String, Pair<Float, Boolean>> = emptyMap()
     ): List<SpeciesMatch> = withContext(Dispatchers.Default) {
         val scored = candidates.map { species ->
             val colorScore = colorProfileScore(species.commonName, features.dominantColors)
             val textureScore = textureCategoryScore(species.category, features.edgeDensity)
-            val hashScore = 0f  // No reference hashes yet — would need a database of images
 
-            // Weighted fusion
-            val confidence = (
+            // Base score from color + texture analysis
+            var confidence = (
                 colorScore * 0.50f +
                 textureScore * 0.20f +
                 0.05f  // base score from fallback
             ).coerceIn(0f, 0.95f)
+
+            // ── pHash boost from stored user-confirmed fingerprints ──
+            val hashBoost = phashBoosts[species.commonName]
+            if (hashBoost != null) {
+                val (boost, isStrict) = hashBoost
+                // Progressive boost: each matching confirmation adds diminishing returns
+                confidence = (confidence + boost * (1f - confidence)).coerceIn(0f, 0.99f)
+            }
 
             SpeciesMatch(
                 commonName = species.commonName,

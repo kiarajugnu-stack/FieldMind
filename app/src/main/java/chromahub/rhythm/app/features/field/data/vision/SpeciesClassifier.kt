@@ -33,7 +33,8 @@ data class SpeciesMatch(
 class SpeciesClassifier(
     private val context: Context,
     private val database: SpeciesDatabase? = null,
-    private val imageAnalyzer: SpeciesImageAnalyzer? = null
+    private val imageAnalyzer: SpeciesImageAnalyzer? = null,
+    private val phashDatabase: PhashDatabase? = null
 ) {
 
     companion object {
@@ -739,9 +740,46 @@ class SpeciesClassifier(
                 }
             }
 
-            val scored = analyzer.scoreAgainstSpecies(features, candidates, topK)
+            // Compute pHash boost from stored user-confirmed fingerprints
+            val phashBoosts = phashDatabase?.computeHashBoosts(features.perceptualHash) ?: emptyMap()
+
+            val scored = analyzer.scoreAgainstSpecies(features, candidates, topK, phashBoosts)
             if (scored.isNotEmpty()) {
                 return@withContext scored
+            }
+        }
+
+        // If we got here with features but no score, still check for hash-only matches
+        if (features != null) {
+            val phashBoosts = phashDatabase?.computeHashBoosts(features.perceptualHash) ?: emptyMap()
+            if (phashBoosts.isNotEmpty()) {
+                val boostedCandidates = if (database != null) {
+                    database.getAll(limit = 100)
+                } else {
+                    FALLBACK_SPECIES.map { entry ->
+                        SpeciesRecord(
+                            id = entry.commonName.lowercase().replace(" ", "_"),
+                            commonName = entry.commonName,
+                            scientificName = entry.scientificName,
+                            category = entry.category,
+                            description = entry.description
+                        )
+                    }
+                }
+                val hashScoreResults = boostedCandidates.mapNotNull { species ->
+                    val boost = phashBoosts[species.commonName] ?: return@mapNotNull null
+                    val (amount, _) = boost
+                    SpeciesMatch(
+                        commonName = species.commonName,
+                        scientificName = species.scientificName,
+                        confidence = amount.coerceIn(0f, 0.95f),
+                        category = species.category,
+                        description = species.description
+                    )
+                }
+                if (hashScoreResults.isNotEmpty()) {
+                    return@withContext hashScoreResults.sortedByDescending { it.confidence }.take(topK)
+                }
             }
         }
 
