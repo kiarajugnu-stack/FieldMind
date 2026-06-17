@@ -1164,7 +1164,7 @@ private fun LiveWeatherDashboardWidget(
                                 WeatherUnitConverter.formatTemp(w.temperature, tempUnit),
                                 style = MaterialTheme.typography.displaySmall.copy(
                                     fontWeight = FontWeight.Bold,
-                                    brush = weatherGradient
+                                    color = textOnScene
                                 )
                             )
                             Text(

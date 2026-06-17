@@ -125,63 +125,26 @@ fun AnimatedWeatherScene(
 // ══════════════════════════════════════════════════════════════════════
 
 /**
- * Compute the current time-of-day phase based on sunrise/sunset.
- * Falls back to Midday if times are unavailable.
+ * Compute the current time-of-day phase based on the device's local time.
+ * Uses the current hour to determine whether it's dawn, sunrise, morning,
+ * midday, afternoon, sunset, twilight, or night.
+ *
+ * This always uses device local time for consistency — avoids flickering
+ * that can occur when switching between API-based sunrise/sunset parsing
+ * and the local hour fallback, especially during data refresh cycles.
  */
 private fun computeTimeOfDay(sunrise: String?, sunset: String?): TimeOfDay {
-    if (sunrise == null || sunset == null) {
-        // Fallback: use current hour
-        val hour = java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY)
-        return when (hour) {
-            in 4..5 -> TimeOfDay.Dawn
-            in 6..7 -> TimeOfDay.Sunrise
-            in 8..10 -> TimeOfDay.Morning
-            in 11..14 -> TimeOfDay.Midday
-            in 15..16 -> TimeOfDay.Afternoon
-            in 17..18 -> TimeOfDay.Sunset
-            in 19..20 -> TimeOfDay.Twilight
-            else -> TimeOfDay.Night
-        }
-    }
-    val sunriseMs = parseIsoTimeToMillis(sunrise)
-    val sunsetMs = parseIsoTimeToMillis(sunset)
-    if (sunriseMs == null || sunsetMs == null) return TimeOfDay.Midday
-
-    val now = System.currentTimeMillis()
-    val dayLengthMs = sunsetMs - sunriseMs
-    if (dayLengthMs <= 0) return TimeOfDay.Midday
-
-    val elapsedSinceSunrise = now - sunriseMs
-    val fraction = elapsedSinceSunrise.toFloat() / dayLengthMs
-
-    return when {
-        // Before sunrise
-        fraction < -0.08f -> TimeOfDay.Night
-        fraction < -0.04f -> TimeOfDay.Dawn
-        // Dawn ramp-up (~30min before sunrise to sunrise)
-        fraction < 0f -> TimeOfDay.Sunrise
-        // Morning (~first 20% of day)
-        fraction < 0.20f -> TimeOfDay.Morning
-        // Midday (~20%-55% of day)
-        fraction < 0.55f -> TimeOfDay.Midday
-        // Afternoon (~55%-80% of day)
-        fraction < 0.80f -> TimeOfDay.Afternoon
-        // Sunset glow (~80%-92% of day)
-        fraction < 0.92f -> TimeOfDay.Sunset
-        // Twilight (~92%-100% of day)
-        fraction < 1.0f -> TimeOfDay.Twilight
-        // After sunset
-        fraction < 1.04f -> TimeOfDay.Twilight
+    val hour = java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY)
+    return when (hour) {
+        in 4..5 -> TimeOfDay.Dawn
+        in 6..7 -> TimeOfDay.Sunrise
+        in 8..10 -> TimeOfDay.Morning
+        in 11..14 -> TimeOfDay.Midday
+        in 15..16 -> TimeOfDay.Afternoon
+        in 17..18 -> TimeOfDay.Sunset
+        in 19..20 -> TimeOfDay.Twilight
         else -> TimeOfDay.Night
     }
-}
-
-private fun parseIsoTimeToMillis(iso: String): Long? {
-    return try {
-        val sdf = java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm", java.util.Locale.US)
-        sdf.timeZone = java.util.TimeZone.getDefault()
-        sdf.parse(iso)?.time
-    } catch (_: Exception) { null }
 }
 
 // ══════════════════════════════════════════════════════════════════════
