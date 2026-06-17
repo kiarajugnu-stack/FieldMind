@@ -91,13 +91,16 @@ fun DetailScreen(
             else -> null
         }.orEmpty()
     }
+    val detailSnackbar = remember { SnackbarHostState() }
+    val detailScope = rememberCoroutineScope()
 
+    Box(Modifier.fillMaxSize()) {
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
         LazyColumn(
             Modifier.fillMaxSize().padding(padding),
-            contentPadding = PaddingValues(0.dp, 0.dp, 0.dp, 40.dp),
+            contentPadding = PaddingValues(16.dp, 0.dp, 16.dp, 40.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             // ── Back header ──
@@ -106,7 +109,7 @@ fun DetailScreen(
                     Modifier
                         .fillMaxWidth()
                         .background(MaterialTheme.colorScheme.background)
-                        .padding(horizontal = 20.dp, vertical = 8.dp),
+                        .padding(vertical = 8.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
@@ -143,7 +146,7 @@ fun DetailScreen(
                         }, onOpenDetail) }
                     }
                     "observation" -> observations.firstOrNull { it.id == id }?.let { o ->
-                        item { ObservationDetailContent(o, viewModel, onOpenReader, onOpenDetail) }
+                        item { ObservationDetailContent(o, viewModel, onOpenReader, onOpenDetail, detailSnackbar, detailScope) }
                         item { BacklinksPanel(buildList {
                             projects.firstOrNull { it.id == o.projectId }?.let { add(Triple("project", it.title, it.id)) }
                             data.filter { it.observationId == o.id }.forEach { add(Triple("data", it.label, it.id)) }
@@ -173,8 +176,7 @@ fun DetailScreen(
                         }, onOpenDetail) }
                     }
                     "source" -> sources.firstOrNull { it.id == id }?.let { s ->
-                        item { DetailBody(s.title, "source", listOf("Type" to s.type, "Author" to s.author, "Year" to s.dateOrYear, "DOI / ISBN" to s.doiOrIsbn, "Publisher / journal" to s.publisherOrJournal, "Link" to s.link, "Access date" to s.accessDate, "Citation note" to s.citationStyleNote, "Importance" to s.importance, "Reading status" to s.readingStatus, "Project" to (projects.firstOrNull { it.id == s.relatedProjectId }?.title ?: "None"), "Main idea" to s.personalSummary, "Key findings" to s.keyFindings, "Taught me" to s.whatThisSourceTaughtMe, "Paper prompts" to s.paperNotes, "Questions" to s.questionsGenerated)) }
-                        item { SourcePreviewPanel(s, onOpenReader) }
+                        item { SourceDetailContent(s, projects, onOpenReader) }
                         item { SourceActionPanel(s, projects, viewModel, onOpenDetail) }
                         item { BacklinksPanel(buildList {
                             projects.firstOrNull { it.id == s.relatedProjectId }?.let { add(Triple("project", it.title, it.id)) }
@@ -207,6 +209,7 @@ fun DetailScreen(
         deleteEntityByKind(kind, id, viewModel); showDelete = false; onBack()
     }
 }
+}
 
 // ══════════════════════════════════════════════════════════════════════
 //  Entity-Specific Detail Content
@@ -214,11 +217,13 @@ fun DetailScreen(
 
 @Composable
 @OptIn(ExperimentalLayoutApi::class)
-private fun ObservationDetailContent(
+fun ObservationDetailContent(
     o: ObservationEntity,
     viewModel: FieldMindViewModel,
     onOpenReader: (String, String) -> Unit,
-    onOpenDetail: (String, Long) -> Unit = { _, _ -> }
+    onOpenDetail: (String, Long) -> Unit = { _, _ -> },
+    detailSnackbar: SnackbarHostState,
+    detailScope: kotlinx.coroutines.CoroutineScope
 ) {
     val colors = FieldMindTheme.colors
     val tempUnit by viewModel.fieldSettings.tempUnit.collectAsState()
@@ -226,8 +231,6 @@ private fun ObservationDetailContent(
     val distUnit by viewModel.fieldSettings.distanceUnit.collectAsState()
     val context = LocalContext.current
     val clipboard = LocalClipboardManager.current
-    val scope = rememberCoroutineScope()
-    val snackbar = remember { SnackbarHostState() }
     
     Card(
         shape = RoundedCornerShape(24.dp),
@@ -384,11 +387,11 @@ private fun ObservationDetailContent(
             ObservationAttachmentsPanel(viewModel, o.id, onOpenReader)
 
             // ── 17. Export & Sharing ──
-            ObservationExportSection(o, viewModel, context, clipboard, snackbar, scope)
+            ObservationExportSection(o, viewModel, context, clipboard, detailSnackbar, detailScope)
         }
     }
     
-    // Export menu dialog removed — export is handled inline in ObservationExportSection}
+    // Export menu dialog removed — export is handled inline in ObservationExportSection
 }
 
 @Composable
@@ -1151,7 +1154,7 @@ private fun ObservationExportSection(
                 FilledTonalButton(
                     onClick = {
                         haptics.light()
-                        scope.launch { snackbar.showSnackbar("PDF export coming soon") }
+                        showFastSnackbar(snackbar, scope, "PDF export coming soon")
                     },
                     modifier = Modifier.weight(1f),
                     shape = RoundedCornerShape(14.dp)
@@ -1164,7 +1167,7 @@ private fun ObservationExportSection(
                 FilledTonalButton(
                     onClick = {
                         haptics.light()
-                        scope.launch { snackbar.showSnackbar("CSV export coming soon") }
+                        showFastSnackbar(snackbar, scope, "CSV export coming soon")
                     },
                     modifier = Modifier.weight(1f),
                     shape = RoundedCornerShape(14.dp)
@@ -1177,7 +1180,7 @@ private fun ObservationExportSection(
                 FilledTonalButton(
                     onClick = {
                         haptics.light()
-                        scope.launch { snackbar.showSnackbar("JSON export coming soon") }
+                        showFastSnackbar(snackbar, scope, "JSON export coming soon")
                     },
                     modifier = Modifier.weight(1f),
                     shape = RoundedCornerShape(14.dp)
@@ -1614,7 +1617,7 @@ private fun ProjectDetailContent(
                         projectObs.take(5).forEach { o ->
                             EntityCard(o.subject.ifBlank { "Observation" }, "observation",
                                 body = "${o.category} • ${o.date}",
-                                meta = listOf(o.confidenceLevel)) { }
+                                meta = listOf(o.confidenceLevel))
                         }
                         if (projectObs.size > 5) {
                             Text("+${projectObs.size - 5} more observations", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -1633,7 +1636,7 @@ private fun ProjectDetailContent(
                         Text("No reports for this project.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     } else {
                         projectReports.forEach { r ->
-                            EntityCard(r.title, "report", body = r.conclusion.ifBlank { r.question }, meta = listOf(r.type, r.status)) { }
+                            EntityCard(r.title, "report", body = r.conclusion.ifBlank { r.question }, meta = listOf(r.type, r.status))
                         }
                     }
                 }
@@ -1642,7 +1645,7 @@ private fun ProjectDetailContent(
                         Text("No sources linked to this project.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     } else {
                         projectSrcs.forEach { s ->
-                            EntityCard(s.title, "source", body = s.author, meta = listOf(s.type, s.readingStatus)) { }
+                            EntityCard(s.title, "source", body = s.author, meta = listOf(s.type, s.readingStatus))
                         }
                     }
                 }
@@ -1701,22 +1704,22 @@ private fun SpeciesRegistryBuilder(projectId: Long, viewModel: FieldMindViewMode
 
         if (showForm) {
             Card(shape = RoundedCornerShape(18.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh)) {
-                Column(modifier = Modifier.padding(14.dp).verticalScroll(rememberScrollState()).heightIn(max = 420.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Column(modifier = Modifier.padding(14.dp).heightIn(max = 420.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     Text("Add Species to Registry", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = colors.observation)
                     FieldTextField(commonName, { commonName = it }, "Common Name *", supportingText = "e.g. House Crow")
                     FieldTextField(scientificName, { scientificName = it }, "Scientific Name", supportingText = "e.g. Corvus splendens")
                     Text("Taxonomy", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        FieldTextField(kingdom, { kingdom = it }, "Kingdom", modifier = Modifier.weight(1f))
-                        FieldTextField(phylum, { phylum = it }, "Phylum", modifier = Modifier.weight(1f))
+                        TaxonomyPickerField("Kingdom", kingdom, "kingdom", "", onValueChange = { kingdom = it }, modifier = Modifier.weight(1f))
+                        TaxonomyPickerField("Phylum", phylum, "phylum", kingdom, onValueChange = { phylum = it }, modifier = Modifier.weight(1f))
                     }
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        FieldTextField(classs, { classs = it }, "Class", modifier = Modifier.weight(1f))
-                        FieldTextField(order, { order = it }, "Order", modifier = Modifier.weight(1f))
+                        TaxonomyPickerField("Class", classs, "class", phylum, onValueChange = { classs = it }, modifier = Modifier.weight(1f))
+                        TaxonomyPickerField("Order", order, "order", classs, onValueChange = { order = it }, modifier = Modifier.weight(1f))
                     }
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        FieldTextField(family, { family = it }, "Family", modifier = Modifier.weight(1f))
-                        FieldTextField(genus, { genus = it }, "Genus", modifier = Modifier.weight(1f))
+                        TaxonomyPickerField("Family", family, "family", order, onValueChange = { family = it }, modifier = Modifier.weight(1f))
+                        TaxonTextField("Genus", genus, { genus = it }, modifier = Modifier.weight(1f), supportingText = "e.g. Corvus")
                     }
                     FieldTextField(speciesName, { speciesName = it }, "Species", supportingText = "Specific epithet")
                     Text("Conservation Status", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -1836,13 +1839,18 @@ private fun ProjectTasksBuilder(projectId: Long, viewModel: FieldMindViewModel) 
 
         if (showForm) {
             Card(shape = RoundedCornerShape(18.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh)) {
-                Column(modifier = Modifier.padding(14.dp).verticalScroll(rememberScrollState()).heightIn(max = 420.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Column(modifier = Modifier.padding(14.dp).heightIn(max = 420.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     Text("Create Project Task", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = colors.project)
                     FieldTextField(taskTitle, { taskTitle = it }, "Task Title *", supportingText = "e.g. Survey Zone A")
                     FieldTextField(taskDesc, { taskDesc = it }, "Description", minLines = 2)
                     Text("Task Type", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        items(taskTypes) { type ->
+                    // Use FlowRow instead of LazyRow to avoid nested scrollable conflict
+                    FlowRow(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        taskTypes.forEach { type ->
                             FilterChip(selected = taskType == type, onClick = { taskType = type }, label = { Text(type, style = MaterialTheme.typography.labelSmall, maxLines = 1) })
                         }
                     }
@@ -2318,6 +2326,110 @@ private fun deleteEntityByKind(kind: String, id: Long, viewModel: FieldMindViewM
     }
 }
 
+// ══════════════════════════════════════════════════════════════════════
+//  Source Detail Content — Sectioned layout with proper visual hierarchy
+// ══════════════════════════════════════════════════════════════════════
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun SourceDetailContent(
+    s: SourceEntity,
+    projects: List<ProjectEntity>,
+    onOpenReader: (String, String) -> Unit
+) {
+    val colors = FieldMindTheme.colors
+    Card(
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+            // ── Header ──
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                Box(
+                    Modifier.size(48.dp).clip(RoundedCornerShape(16.dp))
+                        .background(colors.source.copy(alpha = 0.14f)),
+                    contentAlignment = Alignment.Center
+                ) { Icon(FieldMindIcons.Source, null, tint = colors.source, size = 26.dp) }
+                Column(Modifier.weight(1f)) {
+                    Text(s.title.ifBlank { "Untitled source" }, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        InfoChip(s.type, icon = FieldMindIcons.Category)
+                        if (s.readingStatus.isNotBlank()) {
+                            InfoChip(s.readingStatus, icon = FieldMindIcons.Book)
+                        }
+                    }
+                }
+            }
+
+            // ── Source Preview ──
+            SourcePreviewPanel(s, onOpenReader)
+
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
+
+            // ── Identity section ──
+            SectionHeader("Identity", "Bibliographic details")
+            if (s.author.isNotBlank()) DetailRow("Author", s.author)
+            if (s.dateOrYear.isNotBlank()) DetailRow("Year", s.dateOrYear)
+            if (s.doiOrIsbn.isNotBlank()) DetailRow("DOI / ISBN", s.doiOrIsbn)
+            if (s.publisherOrJournal.isNotBlank()) DetailRow("Publisher / Journal", s.publisherOrJournal)
+            if (s.citationStyleNote.isNotBlank()) DetailRow("Citation note", s.citationStyleNote)
+
+            // ── Access section ──
+            if (s.link.isNotBlank() || s.accessDate.isNotBlank()) {
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f))
+                SectionHeader("Access", "Link and retrieval info")
+                if (s.link.isNotBlank()) DetailRow("Link", s.link)
+                if (s.accessDate.isNotBlank()) DetailRow("Access date", s.accessDate)
+            }
+
+            // ── Status section ──
+            val projectTitle = projects.firstOrNull { it.id == s.relatedProjectId }?.title ?: "None"
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f))
+            SectionHeader("Status", "Progress and priority")
+            DetailRow("Importance", s.importance)
+            DetailRow("Reading status", s.readingStatus)
+            DetailRow("Project", projectTitle)
+
+            // ── Reading notes section ──
+            if (s.personalSummary.isNotBlank() || s.keyFindings.isNotBlank() || s.whatThisSourceTaughtMe.isNotBlank() || s.paperNotes.isNotBlank() || s.questionsGenerated.isNotBlank()) {
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f))
+                SectionHeader("Reading notes", "Key takeaways and reflections")
+                if (s.personalSummary.isNotBlank()) {
+                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Text("Main idea", style = MaterialTheme.typography.labelSmall, color = colors.source, fontWeight = FontWeight.SemiBold)
+                        Text(s.personalSummary, style = MaterialTheme.typography.bodyMedium)
+                    }
+                }
+                if (s.keyFindings.isNotBlank()) {
+                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Text("Key findings", style = MaterialTheme.typography.labelSmall, color = colors.source, fontWeight = FontWeight.SemiBold)
+                        Text(s.keyFindings, style = MaterialTheme.typography.bodyMedium)
+                    }
+                }
+                if (s.whatThisSourceTaughtMe.isNotBlank()) {
+                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Text("What it taught me", style = MaterialTheme.typography.labelSmall, color = colors.source, fontWeight = FontWeight.SemiBold)
+                        Text(s.whatThisSourceTaughtMe, style = MaterialTheme.typography.bodyMedium)
+                    }
+                }
+                if (s.paperNotes.isNotBlank()) {
+                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Text("Paper notes", style = MaterialTheme.typography.labelSmall, color = colors.source, fontWeight = FontWeight.SemiBold)
+                        Text(s.paperNotes, style = MaterialTheme.typography.bodyMedium)
+                    }
+                }
+                if (s.questionsGenerated.isNotBlank()) {
+                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Text("Questions", style = MaterialTheme.typography.labelSmall, color = colors.source, fontWeight = FontWeight.SemiBold)
+                        Text(s.questionsGenerated, style = MaterialTheme.typography.bodyMedium)
+                    }
+                }
+            }
+        }
+    }
+}
+
 @Composable
 private fun DetailBody(title: String, kind: String, fields: List<Pair<String, String>>) {
     Card(shape = RoundedCornerShape(24.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)) {
@@ -2390,7 +2502,7 @@ private fun SourceActionPanel(source: SourceEntity, projects: List<ProjectEntity
             }
             if (source.relatedProjectId != null) {
                 projects.firstOrNull { it.id == source.relatedProjectId }?.let { project ->
-                    EntityCard(project.title, "project", body = project.objective.ifBlank { project.researchQuestion }, meta = listOf("Linked project")) { onOpenDetail("project", project.id) }
+                    EntityCard(project.title, "project", body = project.objective.ifBlank { project.researchQuestion }, meta = listOf("Linked project"), onClick = { onOpenDetail("project", project.id) })
                 }
             }
         }

@@ -4,7 +4,9 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -25,6 +27,11 @@ import fieldmind.research.app.features.field.presentation.components.AnimatedWea
 import fieldmind.research.app.features.field.presentation.components.FieldMindIcons
 import fieldmind.research.app.features.field.presentation.components.FieldScreenHeader
 import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import fieldmind.research.app.features.field.presentation.theme.FieldMindTheme
@@ -543,6 +550,16 @@ private fun LiveCurrentWeatherCard(
                         }
                     }
 
+                    // ── 7-Day Forecast ──
+                    if (w.dailyForecasts.isNotEmpty()) {
+                        Spacer(Modifier.height(4.dp))
+                        ForecastDashboard(
+                            forecasts = w.dailyForecasts.take(7),
+                            textOnScene = textOnScene,
+                            colors = colors
+                        )
+                    }
+
                     // Update timestamp
                     Row(
                         Modifier.fillMaxWidth(),
@@ -664,6 +681,152 @@ private fun ExpandInfoChip(icon: MaterialSymbolIcon, text: String, modifier: Mod
     }
 }
 
+@Composable
+private fun ForecastDashboard(
+    forecasts: List<fieldmind.research.app.features.field.data.weather.DailyForecast>,
+    textOnScene: Color,
+    colors: fieldmind.research.app.features.field.presentation.theme.FieldMindColors
+) {
+    var expandedIdx by remember { mutableIntStateOf(-1) }
+    val scrollState = rememberLazyListState()
+    val allTemps = forecasts.map { it.temperatureMax }
+    val globalMax = allTemps.maxOrNull() ?: 30.0
+    val globalMin = allTemps.minOrNull() ?: 0.0
+    val tempRange = (globalMax - globalMin).coerceAtLeast(10.0)
+
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(
+            Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                "7-Day Forecast",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = textOnScene
+            )
+            Row(horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically) {
+                Box(Modifier.size(6.dp).clip(androidx.compose.foundation.shape.CircleShape).background(textOnScene.copy(alpha = 0.3f)))
+                Text(
+                    "Swipe for more days →",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = textOnScene.copy(alpha = 0.6f),
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
+        }
+
+        LazyRow(
+            state = scrollState,
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            items(forecasts.take(7), key = { it.date }) { day ->
+                val isExpanded = expandedIdx == forecasts.indexOf(day)
+                val dayTemp = day.temperatureMax
+                val normalizedPos = ((dayTemp - globalMin) / tempRange).coerceIn(0.0, 1.0)
+
+                Column(
+                    Modifier
+                        .clip(RoundedCornerShape(16.dp))
+                        .clickable { expandedIdx = if (isExpanded) -1 else forecasts.indexOf(day) }
+                        .background(textOnScene.copy(alpha = 0.08f))
+                        .padding(10.dp)
+                        .animateContentSize(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    // Day name
+                    val dayName = try {
+                        val sdf = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault())
+                        val date = sdf.parse(day.date) ?: java.util.Date()
+                        java.text.SimpleDateFormat("EEE", java.util.Locale.getDefault()).format(date)
+                    } catch (_: Exception) { day.date.take(3) }
+                    Text(dayName, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, color = textOnScene.copy(alpha = 0.8f))
+
+                    // Weather icon
+                    val icon = when {
+                        day.weatherCode <= 1 -> FieldMindIcons.Weather
+                        day.weatherCode in 2..3 -> FieldMindIcons.Cloud
+                        day.weatherCode in 45..48 -> FieldMindIcons.Foggy
+                        day.weatherCode in 51..67 || day.weatherCode in 80..82 -> FieldMindIcons.Rainy
+                        day.weatherCode in 71..77 || day.weatherCode in 85..86 -> FieldMindIcons.Snowy
+                        day.weatherCode >= 95 -> FieldMindIcons.Thunderstorm
+                        else -> FieldMindIcons.Weather
+                    }
+                    Icon(icon, null, tint = textOnScene.copy(alpha = 0.8f), size = 20.dp)
+
+                    // Temperature bar
+                    Box(
+                        Modifier.width(28.dp).height(4.dp)
+                            .clip(RoundedCornerShape(2.dp))
+                            .background(
+                                Brush.horizontalGradient(
+                                    listOf(
+                                        colors.info.copy(alpha = 0.4f),
+                                        colors.warning.copy(alpha = 0.6f)
+                                    )
+                                )
+                            )
+                    )
+
+                    // High temp
+                    Text(
+                        "${day.temperatureMax.roundToInt()}°",
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = textOnScene
+                    )
+                    // Low temp
+                    Text(
+                        "${day.temperatureMin.roundToInt()}°",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = textOnScene.copy(alpha = 0.6f)
+                    )
+
+                    // Expanded details
+                    AnimatedVisibility(visible = isExpanded) {
+                        Column(
+                            Modifier.width(120.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            HorizontalDivider(color = textOnScene.copy(alpha = 0.15f))
+                            Spacer(Modifier.height(2.dp))
+
+                            day.precipitationSum?.let { precip ->
+                                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                                    Icon(FieldMindIcons.Water, null, tint = colors.data, size = 14.dp)
+                                    Text("$precip%", style = MaterialTheme.typography.labelSmall, color = colors.data, fontWeight = FontWeight.SemiBold)
+                                }
+                            }
+                            day.windSpeedMax?.let { ws ->
+                                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                                    Icon(FieldMindIcons.windIconForSpeed(ws), null, tint = colors.warning, size = 14.dp)
+                                    Text("${ws.roundToInt()} km/h", style = MaterialTheme.typography.labelSmall, color = colors.warning, fontWeight = FontWeight.SemiBold)
+                                }
+                            }
+                            day.humidityMax?.let { hum ->
+                                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                                    Icon(FieldMindIcons.Water, null, tint = colors.data, size = 14.dp)
+                                    Text("$hum%", style = MaterialTheme.typography.labelSmall, color = colors.data, fontWeight = FontWeight.SemiBold)
+                                }
+                            }
+                            day.apparentTemperature?.let { feels ->
+                                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                                    Icon(FieldMindIcons.Info, null, tint = textOnScene.copy(alpha = 0.6f), size = 14.dp)
+                                    Text("Feels ${feels.roundToInt()}°", style = MaterialTheme.typography.labelSmall, color = textOnScene.copy(alpha = 0.7f), fontWeight = FontWeight.SemiBold)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
 private data class DayStats(
     val recordCount: Int = 0,
     val avgTemp: Double? = null,
@@ -752,50 +915,54 @@ private fun WeatherRecordCard(
                     }
                 }
                 
-                // All weather data in a compact row
-                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                // All weather data in a compact row — explicitly left-aligned
+                Row(
+                    Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Start,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     observation.weatherHumidity?.let {
-                        Text("Humidity: $it%", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text("Humidity: $it% ", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Spacer(Modifier.width(12.dp))
                     }
                     observation.weatherWindSpeed?.let { ws ->
-                        Text("Wind: ${WeatherUnitConverter.formatWind(ws, "km/h")}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text("Wind: ${WeatherUnitConverter.formatWind(ws, "km/h")} ", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Spacer(Modifier.width(12.dp))
                     }
                     observation.weatherCloudCover?.let {
                         Text("Cloud: $it%", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
                 
-                // Location + time
+                // Location + time — always left-aligned, location takes precedence
                 Row(
                     Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
+                    horizontalArrangement = Arrangement.Start,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     if (observation.manualLocation.isNotBlank()) {
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(4.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            Icon(
-                                FieldMindIcons.Location,
-                                null,
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                size = 12.dp
-                            )
-                            Text(
-                                observation.manualLocation,
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
-                        }
+                        Icon(
+                            FieldMindIcons.Location,
+                            null,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            size = 12.dp
+                        )
+                        Spacer(Modifier.width(4.dp))
+                        Text(
+                            observation.manualLocation,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.weight(1f, fill = false)
+                        )
+                        Spacer(Modifier.width(8.dp))
                     }
                     Text(
                         SimpleDateFormat("MMM d, h:mm a", Locale.getDefault()).format(Date(observation.timestamp)),
                         style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                        modifier = Modifier.weight(1f, fill = false)
                     )
                 }
             }

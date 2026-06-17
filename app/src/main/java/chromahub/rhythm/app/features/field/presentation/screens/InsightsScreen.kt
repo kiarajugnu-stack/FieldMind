@@ -232,14 +232,14 @@ fun InsightsScreen(
     }
 
     Scaffold(
-        snackbarHost = { SnackbarHost(snackbarState) },
         containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
-        LazyColumn(
-            Modifier.fillMaxSize().padding(padding),
-            contentPadding = PaddingValues(16.dp, 16.dp, 16.dp, 96.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
+        Box(Modifier.fillMaxSize()) {
+            LazyColumn(
+                Modifier.fillMaxSize().padding(padding),
+                contentPadding = PaddingValues(16.dp, 16.dp, 16.dp, 96.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
             // ═══════════ SECTION 1: Header & Profile ═══════════
             item {
                 FieldScreenHeader(
@@ -460,13 +460,13 @@ fun InsightsScreen(
             if (questions.isNotEmpty()) {
                 item { SectionHeader("Open questions", "${questions.count { it.status != "Answered" }} unanswered") }
                 items(questions.filter { it.status != "Answered" }.take(5)) { q ->
-                    EntityCard(q.questionText, "question", meta = listOf(q.status, q.priority)) { onOpenDetail("question", q.id) }
+                    EntityCard(q.questionText, "question", meta = listOf(q.status, q.priority), onClick = { onOpenDetail("question", q.id) })
                 }
             }
             if (projects.isNotEmpty()) {
                 item { SectionHeader("Active projects", "${projects.count { it.status == "Active" }} active") }
                 items(projects.filter { it.status == "Active" }.take(4)) { p ->
-                    EntityCard(p.title, "project", body = p.objective.ifBlank { p.researchQuestion }, meta = listOf(p.status, p.topicType)) { onOpenDetail("project", p.id) }
+                    EntityCard(p.title, "project", body = p.objective.ifBlank { p.researchQuestion }, meta = listOf(p.status, p.topicType), onClick = { onOpenDetail("project", p.id) })
                 }
             }
 
@@ -477,6 +477,15 @@ fun InsightsScreen(
             }
 
             item { Spacer(Modifier.height(24.dp)) }
+        }
+
+            // ── Top snackbar overlay for achievements ──
+            FieldMindSnackbarOverlay(
+                hostState = snackbarState,
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .padding(top = 8.dp, start = 16.dp, end = 16.dp)
+            )
         }
     }
 }
@@ -646,7 +655,7 @@ private fun CollapsibleAchievements(
         if (unlockedCount > 0) {
             val prefs = context.getSharedPreferences("fieldmind_achievements_v2", 0)
             items.filter { it.unlocked && !prefs.getBoolean(it.title, false) }.forEach { a ->
-                scope.launch { snackbarState.showSnackbar("🏆 ${a.title} unlocked!") }
+                showFastSnackbar(snackbarState, scope, "🏆 ${a.title} unlocked!")
                 prefs.edit().putBoolean(a.title, true).apply()
             }
         }

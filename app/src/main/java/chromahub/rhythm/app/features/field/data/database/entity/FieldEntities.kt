@@ -398,6 +398,30 @@ data class TeamMemberEntity(
     val updatedAt: Long = System.currentTimeMillis()
 )
 
+// ══════════════════════════════════════════════════════════════════════
+//  Weather Catalog — Offline weather snapshot storage
+// ══════════════════════════════════════════════════════════════════════
+
+@Entity(tableName = "field_weather_catalog")
+data class WeatherCatalogEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val latitude: Double,
+    val longitude: Double,
+    val temperature: Double? = null,
+    val weatherCode: Int = 0,
+    val weatherDescription: String = "",
+    val humidity: Int? = null,
+    val windSpeed: Double? = null,
+    val windDirection: Int? = null,
+    val cloudCover: Int? = null,
+    val pressure: Double? = null,
+    val sunrise: String? = null,
+    val sunset: String? = null,
+    val placeName: String = "",
+    val fetchedAt: Long = System.currentTimeMillis(),
+    val createdAt: Long = System.currentTimeMillis()
+)
+
 // Cross-reference tables for new entities
 @Entity(tableName = "field_task_observations", primaryKeys = ["taskId", "observationId"])
 data class TaskObservationCrossRef(val taskId: Long, val observationId: Long)

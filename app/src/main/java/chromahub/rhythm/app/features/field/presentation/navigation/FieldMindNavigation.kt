@@ -5,6 +5,8 @@ import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.keyframes
 import androidx.compose.animation.fadeIn
 import androidx.compose.ui.Modifier
 import androidx.compose.animation.fadeOut
@@ -44,6 +46,7 @@ import fieldmind.research.app.features.field.presentation.viewmodel.FieldMindVie
 import fieldmind.research.app.shared.data.model.AppSettings
 import fieldmind.research.app.shared.presentation.components.icons.Icon
 import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon
+import fieldmind.research.app.features.field.presentation.components.FieldMindMotion
 
 private fun formatElapsed(startedAt: Long): String {
     val ms = System.currentTimeMillis() - startedAt
@@ -97,12 +100,15 @@ sealed class FieldMindScreen(val route: String, val label: String, val icon: Mat
     data object SettingsMap : FieldMindScreen("field_settings_map", "Map", FieldMindIcons.Map)
     data object SettingsDataIntegrity : FieldMindScreen("field_settings_data_integrity", "Data Integrity", FieldMindIcons.Archive)
     data object SettingsDeveloper : FieldMindScreen("field_settings_developer", "Developer", FieldMindIcons.Sparkle)
+    data object SettingsSpeciesPacks : FieldMindScreen("field_settings_species_packs", "Species Packs", FieldMindIcons.Download)
 
     // Group 1: Interactive Data Tools
     data object CounterTool : FieldMindScreen("field_counter_tool", "Counter", FieldMindIcons.Add)
     data object MeasurementTool : FieldMindScreen("field_measurement_tool", "Measure", FieldMindIcons.Graph)
     data object WeatherLogTool : FieldMindScreen("field_weather_log_tool", "Weather", FieldMindIcons.Weather)
     data object SpeciesTool : FieldMindScreen("field_species_tool", "Species", FieldMindIcons.Nature)
+    data object SpeciesBrowser : FieldMindScreen("field_species_browser", "Species Browser", FieldMindIcons.Nature)
+    data object TaxonomicBrowser : FieldMindScreen("field_taxonomic_browser", "Taxonomic Browser", FieldMindIcons.Category)
 }
 
 private const val NavTransitionDurationMillis = 180
@@ -135,20 +141,6 @@ fun FieldMindApp(appSettings: AppSettings, viewModel: FieldMindViewModel) {
         }
 }
 
-/**
- * Switch primary tabs deterministically: a tab tap always lands on that tab's root screen.
- * We intentionally avoid saveState/restoreState because restoring a tab's saved nested back
- * stack could re-open a previously-visited detail page instead of the tab root (the reported
- * "taps open a different page" bug).
- */
-private fun NavHostController.navigateToTab(route: String) {
-    if (currentDestination?.route == route) return
-    navigate(route) {
-        popUpTo(graph.findStartDestination().id) { inclusive = false }
-        launchSingleTop = true
-    }
-}
-
 /** Navigate to a non-tab destination, de-duplicating taps so the page always opens reliably. */
 private fun NavHostController.navigateToDestination(route: String) {
     if (currentDestination?.route == route) return
@@ -168,12 +160,68 @@ fun FieldMindNavigation(viewModel: FieldMindViewModel, onResetOnboarding: () -> 
         currentRoute == FieldMindScreen.Changelog.route ||
         currentRoute == FieldMindScreen.Flashcards.route ||
         currentRoute == FieldMindScreen.ResearchSession.route ||
+        (currentRoute == FieldMindScreen.Observe.route && viewModel.captureSessionActive) ||
         currentRoute?.startsWith("field_detail/") == true
+
+    // ── Capture session navigation guard ──
+    var showNavigateConfirm by remember { mutableStateOf(false) }
+    var pendingNavRoute by remember { mutableStateOf<String?>(null) }
+
+    fun navigateToTab(route: String) {
+        // Protect against accidental navigation while a capture session is active
+        if (currentRoute == FieldMindScreen.Observe.route && viewModel.captureSessionActive && route != FieldMindScreen.Observe.route) {
+            pendingNavRoute = route
+            showNavigateConfirm = true
+            return
+        }
+        if (currentDestination?.route == route) return
+        navController.navigate(route) {
+            popUpTo(navController.graph.findStartDestination().id) { inclusive = false }
+            launchSingleTop = true
+        }
+    }
 
     fun isSelected(screen: FieldMindScreen) =
         currentDestination?.hierarchy?.any { it.route == screen.route } == true
 
-
+    // ── Navigation confirmation dialog (for active capture session) ──
+    if (showNavigateConfirm) {
+        AlertDialog(
+            onDismissRequest = {
+                showNavigateConfirm = false
+                pendingNavRoute = null
+            },
+            icon = { Icon(icon = FieldMindIcons.Info, contentDescription = null, size = 28.dp) },
+            title = { Text("Active capture session") },
+            text = {
+                Text(
+                    "You have an active observation session with unsaved data. Navigate away and lose your progress?",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        viewModel.setCaptureSessionActive(false)
+                        showNavigateConfirm = false
+                        pendingNavRoute?.let { navController.navigate(it) {
+                            popUpTo(navController.graph.findStartDestination().id) { inclusive = false }
+                            launchSingleTop = true
+                        } }
+                        pendingNavRoute = null
+                    },
+                    shape = RoundedCornerShape(14.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                ) { Text("Discard & navigate") }
+            },
+            dismissButton = {
+                TextButton(onClick = {
+                    showNavigateConfirm = false
+                    pendingNavRoute = null
+                }) { Text("Stay on Capture") }
+            }
+        )
+    }
 
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val expanded = maxWidth >= 720.dp
@@ -185,7 +233,7 @@ fun FieldMindNavigation(viewModel: FieldMindViewModel, onResetOnboarding: () -> 
                             val selected = isSelected(screen)
                             NavigationRailItem(
                                 selected = selected,
-                                onClick = { haptics.light(); navController.navigateToTab(screen.route) },
+                                onClick = { haptics.light(); navigateToTab(screen.route) },
                                 icon = { AnimatedNavIcon(screen, selected) },
                                 label = { AnimatedNavLabel(screen.label, selected) }
                             )
@@ -204,7 +252,7 @@ fun FieldMindNavigation(viewModel: FieldMindViewModel, onResetOnboarding: () -> 
                                     val selected = isSelected(screen)
                                     NavigationBarItem(
                                         selected = selected,
-                                        onClick = { haptics.light(); navController.navigateToTab(screen.route) },
+                                        onClick = { haptics.light(); navigateToTab(screen.route) },
                                         icon = { AnimatedNavIcon(screen, selected) },
                                         label = { AnimatedNavLabel(screen.label, selected) }
                                     )
@@ -223,29 +271,63 @@ fun FieldMindNavigation(viewModel: FieldMindViewModel, onResetOnboarding: () -> 
 
 @Composable
 private fun AnimatedNavIcon(screen: FieldMindScreen, selected: Boolean) {
-    val scale by animateFloatAsState(if (selected) 1.22f else 0.98f, spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMediumLow), label = "navIconScale")
-    val lift by animateFloatAsState(if (selected) -3.5f else 0f, spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMediumLow), label = "navIconLift")
-    val alpha by animateFloatAsState(if (selected) 1f else 0.72f, tween(180), label = "navIconAlpha")
+    val scale by animateFloatAsState(
+        if (selected) 1.28f else 0.96f,
+        FieldMindMotion.expressiveSpring,
+        label = "navIconScale"
+    )
+    val lift by animateFloatAsState(
+        if (selected) -5f else 0f,
+        FieldMindMotion.expressiveSpring,
+        label = "navIconLift"
+    )
+    // Elastic rotation for a playful wiggle when selected
+    val rotation by animateFloatAsState(
+        if (selected) 0f else 0f,
+        FieldMindMotion.expressiveElastic,
+        label = "navIconRotation"
+    )
+    val alpha by animateFloatAsState(
+        if (selected) 1f else 0.66f,
+        FieldMindMotion.expressiveFloat,
+        label = "navIconAlpha"
+    )
     val tint by animateColorAsState(
-        if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
-        tween(180),
+        targetValue = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+        animationSpec = tween(durationMillis = FieldMindMotion.durationSubtle),
         label = "navIconTint"
     )
     Icon(
         icon = if (selected) screen.icon.filled() else screen.icon,
         contentDescription = screen.label,
         tint = tint,
-        modifier = Modifier.graphicsLayer { scaleX = scale; scaleY = scale; translationY = lift; this.alpha = alpha },
-        size = if (selected) 32.dp else 28.dp,
-        weight = if (selected) 650 else screen.icon.defaultWeight
+        modifier = Modifier.graphicsLayer {
+            scaleX = scale; scaleY = scale
+            translationY = lift
+            this.alpha = alpha
+            rotationZ = rotation
+        },
+        size = if (selected) 34.dp else 26.dp,
+        weight = if (selected) 700 else screen.icon.defaultWeight
     )
 }
 
 @Composable
 private fun AnimatedNavLabel(label: String, selected: Boolean) {
-    val scale by animateFloatAsState(if (selected) 1.04f else 0.98f, tween(220), label = "navLabelScale")
-    val alpha by animateFloatAsState(if (selected) 1f else 0.76f, tween(180), label = "navLabelAlpha")
-    Text(label, modifier = Modifier.graphicsLayer { scaleX = scale; scaleY = scale; this.alpha = alpha })
+    val scale by animateFloatAsState(
+        if (selected) 1.06f else 0.96f,
+        FieldMindMotion.expressiveSoft,
+        label = "navLabelScale"
+    )
+    val alpha by animateFloatAsState(
+        if (selected) 1f else 0.72f,
+        FieldMindMotion.expressiveFloat,
+        label = "navLabelAlpha"
+    )
+    Text(
+        label,
+        modifier = Modifier.graphicsLayer { scaleX = scale; scaleY = scale; this.alpha = alpha }
+    )
 }
 
 private fun primaryTabDirection(fromRoute: String?, toRoute: String?): Int {
@@ -275,19 +357,34 @@ private fun FieldMindNavHost(
         modifier = modifier,
         enterTransition = {
             val direction = primaryTabDirection(initialState.destination.route, targetState.destination.route)
-            if (direction == 0) fadeIn(tween(NavTransitionDurationMillis)) + scaleIn(initialScale = 0.985f, animationSpec = tween(NavTransitionDurationMillis))
-            else slideInHorizontally(tween(NavTransitionDurationMillis)) { direction * it / 4 } + fadeIn(tween(NavTransitionDurationMillis))
+            if (direction == 0) {
+                fadeIn(spring(dampingRatio = 0.75f, stiffness = 400f)) +
+                scaleIn(initialScale = 0.97f, animationSpec = spring(dampingRatio = 0.6f, stiffness = 500f))
+            } else {
+                slideInHorizontally(spring(dampingRatio = 0.7f, stiffness = 400f)) { direction * it / 4 } +
+                fadeIn(spring(dampingRatio = 0.8f, stiffness = 500f))
+            }
         },
         exitTransition = {
             val direction = primaryTabDirection(initialState.destination.route, targetState.destination.route)
-            if (direction == 0) fadeOut(tween(NavTransitionDurationMillis))
-            else slideOutHorizontally(tween(NavTransitionDurationMillis)) { -direction * it / 5 } + fadeOut(tween(NavTransitionDurationMillis))
+            if (direction == 0) {
+                fadeOut(spring(dampingRatio = 0.8f, stiffness = 600f))
+            } else {
+                slideOutHorizontally(spring(dampingRatio = 0.75f, stiffness = 500f)) { -direction * it / 5 } +
+                fadeOut(spring(dampingRatio = 0.8f, stiffness = 600f))
+            }
         },
-        popEnterTransition = { fadeIn(tween(NavTransitionDurationMillis)) + scaleIn(initialScale = 0.985f, animationSpec = tween(NavTransitionDurationMillis)) },
-        popExitTransition = { fadeOut(tween(NavTransitionDurationMillis)) + scaleOut(targetScale = 0.985f, animationSpec = tween(NavTransitionDurationMillis)) }
+        popEnterTransition = {
+            fadeIn(spring(dampingRatio = 0.75f, stiffness = 400f)) +
+            scaleIn(initialScale = 0.97f, animationSpec = spring(dampingRatio = 0.6f, stiffness = 500f))
+        },
+        popExitTransition = {
+            fadeOut(spring(dampingRatio = 0.8f, stiffness = 600f)) +
+            scaleOut(targetScale = 0.97f, animationSpec = spring(dampingRatio = 0.7f, stiffness = 500f))
+        }
     ) {
         composable(FieldMindScreen.Home.route) { HomeScreen(viewModel = viewModel, onOpenSettings = { navController.navigateToDestination(FieldMindScreen.Settings.route) }, onNavigate = { navController.navigateToDestination(it.route) }, onOpenDetail = openDetail, onOpenReader = openReader) }
-        composable(FieldMindScreen.Observe.route) { ObserveScreen(viewModel = viewModel, onOpenDetail = openDetail) }
+        composable(FieldMindScreen.Observe.route) { ObserveScreen(viewModel = viewModel, onBack = { navController.popBackStack() }, onOpenDetail = openDetail) }
         composable(FieldMindScreen.Projects.route) { ProjectsScreen(viewModel = viewModel, onOpenDetail = openDetail, onStartSession = { navController.navigateToDestination(FieldMindScreen.ResearchSession.route) }) }
         composable(FieldMindScreen.Library.route) { KnowledgeLibraryScreen(viewModel = viewModel, onNavigate = { navController.navigateToDestination(it.route) }, onOpenDetail = openDetail, onOpenReader = openReader) }
         composable(FieldMindScreen.Insights.route) { InsightsScreen(viewModel = viewModel, onNavigate = { navController.navigateToDestination(it.route) }, onOpenDetail = openDetail) }
@@ -326,7 +423,8 @@ composable(FieldMindScreen.Reports.route) { ProjectsScreen(viewModel = viewModel
                 onOpenUnits = { navController.navigateToDestination(FieldMindScreen.SettingsUnits.route) },
                 onOpenMap = { navController.navigateToDestination(FieldMindScreen.SettingsMap.route) },
                 onOpenDataIntegrity = { navController.navigateToDestination(FieldMindScreen.SettingsDataIntegrity.route) },
-                onOpenDeveloper = { navController.navigateToDestination(FieldMindScreen.SettingsDeveloper.route) }
+                onOpenDeveloper = { navController.navigateToDestination(FieldMindScreen.SettingsDeveloper.route) },
+                onOpenSpeciesPacks = { navController.navigateToDestination(FieldMindScreen.SettingsSpeciesPacks.route) }
             )
         }
         composable(FieldMindScreen.SettingsProfile.route) { ProfileSettingsPage(viewModel = viewModel, onBack = { navController.popBackStack() }) }
@@ -342,10 +440,17 @@ composable(FieldMindScreen.Reports.route) { ProjectsScreen(viewModel = viewModel
         composable(FieldMindScreen.SettingsMap.route) { MapSettingsPage(viewModel = viewModel, onBack = { navController.popBackStack() }) }
         composable(FieldMindScreen.SettingsDataIntegrity.route) { DataIntegritySettingsPage(viewModel = viewModel, onBack = { navController.popBackStack() }) }
         composable(FieldMindScreen.SettingsDeveloper.route) { DeveloperSettingsPage(viewModel = viewModel, onBack = { navController.popBackStack() }) }
+        composable(FieldMindScreen.SpeciesBrowser.route) { SpeciesBrowserScreen(onBack = { navController.popBackStack() }, onOpenDetail = { id -> navController.navigateToDestination("field_species_detail/$id") }) }
+        composable(FieldMindScreen.TaxonomicBrowser.route) { TaxonomicBrowserScreen(onBack = { navController.popBackStack() }, onOpenDetail = { id -> navController.navigateToDestination("field_species_detail/$id") }) }
+        composable("field_species_detail/{speciesId}") { entry ->
+            val speciesId = entry.arguments?.getString("speciesId") ?: ""
+            SpeciesDetailScreen(speciesId = speciesId, onBack = { navController.popBackStack() })
+        }
+        composable(FieldMindScreen.SettingsSpeciesPacks.route) { SpeciesPackSettingsPage(onBack = { navController.popBackStack() }) }
         composable(FieldMindScreen.CounterTool.route) { CounterToolScreen(viewModel = viewModel, onBack = { navController.popBackStack() }) }
         composable(FieldMindScreen.MeasurementTool.route) { MeasurementToolScreen(viewModel = viewModel, onBack = { navController.popBackStack() }) }
         composable(FieldMindScreen.WeatherLogTool.route) { WeatherLogToolScreen(viewModel = viewModel, onBack = { navController.popBackStack() }) }
-        composable(FieldMindScreen.SpeciesTool.route) { SpeciesToolScreen(viewModel = viewModel, onBack = { navController.popBackStack() }) }
+        composable(FieldMindScreen.SpeciesTool.route) { SpeciesToolScreen(viewModel = viewModel, onBack = { navController.popBackStack() }, onOpenBrowser = { navController.navigateToDestination(FieldMindScreen.SpeciesBrowser.route) }, onOpenTaxonomicBrowser = { navController.navigateToDestination(FieldMindScreen.TaxonomicBrowser.route) }) }
         composable("field_detail/{kind}/{id}") { entry ->
             val kind = entry.arguments?.getString("kind") ?: "observation"
             val id = entry.arguments?.getString("id")?.toLongOrNull() ?: 0L

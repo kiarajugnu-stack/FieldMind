@@ -7,6 +7,7 @@ import android.content.pm.PackageManager
 import android.media.MediaRecorder
 import android.net.Uri
 import android.os.Build
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -61,6 +62,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.isActive
 import fieldmind.research.app.features.field.data.weather.WeatherSnapshot
+import fieldmind.research.app.features.field.data.vision.SpeciesRecord
 import java.io.File
 import kotlin.coroutines.resume
 import androidx.compose.ui.text.input.KeyboardType
@@ -156,11 +158,15 @@ fun ObserveScreen(
     var showInAppCamera by remember { mutableStateOf(false) }
 
     // ── Species identification state ──
-    val speciesClassifier = remember { SpeciesClassifier(context) }
     val speciesDatabase = remember { SpeciesDatabase(context) }
+    val speciesClassifier = remember { SpeciesClassifier(context, speciesDatabase) }
     var showSpeciesId by remember { mutableStateOf(false) }
     var speciesIdImageUri by remember { mutableStateOf<String?>(null) }
     var identifiedSpecies by remember { mutableStateOf<SpeciesMatch?>(null) }
+
+    // ── Weather snapshot from catalog cache ──
+    var weatherSnapshot by remember { mutableStateOf<WeatherSnapshot?>(null) }
+    var weatherFetching by remember { mutableStateOf(false) }
 
     // ── Observations state (collected for reactive stats dashboard) ──
     val observations by viewModel.observations.collectAsState()
@@ -169,6 +175,53 @@ fun ObserveScreen(
     fun addAttachment(attachment: DraftEvidenceAttachment) {
         session = session.copy(attachments = session.attachments + attachment)
         showFastSnackbar(snackbar, scope, "${attachment.type} attached")
+    }
+
+    // ── Audio recording state ──
+    var recorder by remember { mutableStateOf<MediaRecorder?>(null) }
+    var audioFile by remember { mutableStateOf<File?>(null) }
+    var recording by remember { mutableStateOf(false) }
+    var recordSeconds by remember { mutableIntStateOf(0) }
+
+    LaunchedEffect(recording) { if (recording) { recordSeconds = 0; while (recording) { delay(1000); recordSeconds++ } } }
+
+    val audioImportPicker = rememberLauncherForActivityResult(
+        ActivityResultContracts.OpenDocument()
+    ) { uri ->
+        if (uri != null) {
+            runCatching { context.contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION) }
+            addAttachment(durableEvidenceAttachment(context, "Audio", uri, "Imported field audio"))
+        }
+    }
+    val audioPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        if (granted) {
+            val file = createFieldMindFile(context, "audio", ".m4a")
+            val newRecorder = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) MediaRecorder(context) else MediaRecorder()
+            runCatching {
+                newRecorder.setAudioSource(MediaRecorder.AudioSource.MIC)
+                newRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
+                newRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
+                newRecorder.setOutputFile(file.absolutePath)
+                newRecorder.prepare()
+                newRecorder.start()
+                audioFile = file; recorder = newRecorder; recording = true
+            }.onFailure {
+                newRecorder.release()
+                showFastSnackbar(snackbar, scope, "Could not start recording: ${it.localizedMessage}")
+            }
+        } else showFastSnackbar(snackbar, scope, "Audio permission denied.")
+    }
+
+    fun toggleRecording() {
+        if (recording) {
+            val file = audioFile
+            runCatching { recorder?.stop() }; recorder?.release(); recorder = null; recording = false
+            file?.let { addAttachment(DraftEvidenceAttachment("Audio", Uri.fromFile(it).toString(), "Voice note", localPath = it.absolutePath, mimeType = "audio/mp4")) }
+        } else if (ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
+            audioPermission.launch(Manifest.permission.RECORD_AUDIO)
+        } else {
+            audioPermission.launch(Manifest.permission.RECORD_AUDIO)
+        }
     }
 
     // ── Media picker and file picker launchers (MUST be at composable scope) ──
@@ -197,15 +250,62 @@ fun ObserveScreen(
         }
     }
 
+    // ── Metadata auto-fetch confirmation dialog ──
+    var showMetadataConfirm by remember { mutableStateOf(false) }
+    var metadataAutoFetching by remember { mutableStateOf(false) }
+    var metadataStatus by remember { mutableStateOf("Ready") }
+
+    fun performAutoFetch() {
+        metadataAutoFetching = true
+        metadataStatus = "Acquiring GPS…"
+        if (locationProvider.hasAnyLocationPermission()) {
+            locationProvider.requestCurrentLocation { loc ->
+                if (loc != null) {
+                    capturedLocation = loc
+                    metadataStatus = "GPS acquired (${loc.accuracyMeters?.toInt() ?: "?"}m accuracy) — fetching weather…"
+                    scope.launch {
+                        weatherFetching = true
+                        val snapshot = viewModel.fetchWeatherSnapshot(loc.latitude, loc.longitude)
+                        weatherSnapshot = snapshot
+                        weatherFetching = false
+                        if (snapshot != null) {
+                            // Log to offline weather catalog
+                            viewModel.saveWeatherSnapshot(snapshot, loc.latitude, loc.longitude)
+                            metadataStatus = "GPS + Weather acquired"
+                            showFastSnackbar(snackbar, scope, "Weather: ${snapshot.temperature}°C, ${snapshot.condition}")
+                        } else {
+                            metadataStatus = "GPS acquired, weather unavailable"
+                        }
+                        metadataAutoFetching = false
+                    }
+                    locationProvider.resolvePlaceName(loc.latitude, loc.longitude) { place ->
+                        if (!place.isNullOrBlank()) {
+                            capturedLocation = loc.copy(placeName = place)
+                        }
+                    }
+                } else {
+                    metadataStatus = "GPS unavailable — check permissions"
+                    metadataAutoFetching = false
+                }
+            }
+        } else {
+            metadataStatus = "Location permission required"
+            metadataAutoFetching = false
+        }
+    }
+
     // ── Action: start evidence capture ──
     fun startCapture() {
         haptics.light()
         session = session.copy(isActive = true, step = CaptureStep.Evidence)
         showEvidenceForm = true
+        viewModel.setCaptureSessionActive(true)
         // Auto-start timer if not already running
         if (!session.timerRunning && session.timerStartedAt == null) {
             session = session.copy(timerStartedAt = System.currentTimeMillis(), timerRunning = true)
         }
+        // Show metadata auto-fetch confirmation
+        showMetadataConfirm = true
     }
     // ── Action: save observation ──
     fun saveObservation() {
@@ -259,7 +359,7 @@ fun ObserveScreen(
             timeNote = "Captured via observation session"
         ) {
             session = session.copy(
-                subject = "", facts = "", tags = "", evidence = "",
+                subject = "", speciesName = "", facts = "", tags = "", evidence = "",
                 fieldContext = "", manualLocation = "", attachments = emptyList(),
                 sessionObservationCount = session.sessionObservationCount + 1
             )
@@ -267,198 +367,344 @@ fun ObserveScreen(
         }
     }
 
-    Box(Modifier.fillMaxSize()) {
+    // ── System back handler with unsaved data confirmation ──
+    val hasDirtyContent = session.isActive && (
+        session.subject.isNotBlank() || session.facts.isNotBlank() ||
+        session.attachments.isNotEmpty() || session.tags.isNotBlank() ||
+        session.fieldContext.isNotBlank() || session.manualLocation.isNotBlank()
+    )
+    var showExitConfirm by remember { mutableStateOf(false) }
+    var showSessionExitConfirm by remember { mutableStateOf(false) }
+
+    BackHandler(enabled = true) {
+        if (hasDirtyContent) {
+            showExitConfirm = true
+        } else if (session.isActive) {
+            showSessionExitConfirm = true
+        } else {
+            onBack?.invoke()
+        }
+    }
+
+    if (showExitConfirm) {
+        AlertDialog(
+            onDismissRequest = { showExitConfirm = false },
+            icon = { Icon(icon = FieldMindIcons.Info, contentDescription = null, size = 28.dp) },
+            title = { Text("Unsaved observation") },
+            text = {
+                Text(
+                    "You have an active observation with unsaved data. What would you like to do?",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        saveObservation()
+                        showExitConfirm = false
+                        onBack?.invoke()
+                    },
+                    shape = RoundedCornerShape(14.dp)
+                ) { Text("Save and exit") }
+            },
+            dismissButton = {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    TextButton(onClick = {
+                        viewModel.setCaptureSessionActive(false)
+                        session = CaptureSessionState()
+                        showEvidenceForm = false
+                        showExitConfirm = false
+                        onBack?.invoke()
+                    }) {
+                        Text("Discard", color = MaterialTheme.colorScheme.error)
+                    }
+                    TextButton(onClick = { showExitConfirm = false }) {
+                        Text("Keep editing")
+                    }
+                }
+            }
+        )
+    }
+
+    // ── Session exit confirm (active session, clean form) ──
+    if (showSessionExitConfirm) {
+        AlertDialog(
+            onDismissRequest = { showSessionExitConfirm = false },
+            icon = {
+                Icon(
+                    icon = FieldMindIcons.Timer,
+                    contentDescription = null,
+                    size = 28.dp,
+                    tint = MaterialTheme.colorScheme.primary
+                )
+            },
+            title = { Text("Active observation session") },
+            text = {
+                Text(
+                    "You have an active observation session in progress. Leaving now will discard the session and any timer data.",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = { showSessionExitConfirm = false }) {
+                    Text("Stay on Capture")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = {
+                    viewModel.setCaptureSessionActive(false)
+                    session = CaptureSessionState()
+                    showEvidenceForm = false
+                    showSessionExitConfirm = false
+                    onBack?.invoke()
+                }) {
+                    Text("Discard session", color = MaterialTheme.colorScheme.error)
+                }
+            }
+        )
+    }
+
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
-        LazyColumn(
-            Modifier.fillMaxSize().padding(padding),
-            contentPadding = PaddingValues(20.dp, 20.dp, 20.dp, 96.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            // ── Header ──
-            item {
-                FieldScreenHeader(
-                    "Observation",
-                    "Capture evidence, time, place, weather, then add facts.",
-                    icon = FieldMindIcons.Capture
-                )
-            }
-
-            // ── Observation stats overview (reused from HomeScreen) ──
-            if (observations.isNotEmpty()) {
+        Box(Modifier.fillMaxSize()) {
+            LazyColumn(
+                Modifier.fillMaxSize().padding(padding),
+                contentPadding = PaddingValues(20.dp, 12.dp, 20.dp, 96.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                // ── Header ──
                 item {
-                    ObservationStatsDashboard(
-                        observations = observations
+                    FieldScreenHeader(
+                        "Observation",
+                        "Capture evidence, time, place, weather, then add facts.",
+                        icon = FieldMindIcons.Capture
                     )
                 }
-            }
 
-            // ── Live Timer (persistent when active) ──
-            if (session.isActive) {
-                item {
-                    LiveObservationTimer(
-                        timerStartedAt = session.timerStartedAt,
-                        timerAccumulatedMs = session.timerAccumulatedMs,
-                        timerRunning = session.timerRunning,
-                        observationCount = session.sessionObservationCount,
-                        onStart = {
-                            if (!session.timerRunning) {
+                // ── Live Timer (persistent when active) ──
+                if (session.isActive) {
+                    item {
+                        LiveObservationTimer(
+                            timerStartedAt = session.timerStartedAt,
+                            timerAccumulatedMs = session.timerAccumulatedMs,
+                            timerRunning = session.timerRunning,
+                            observationCount = session.sessionObservationCount,
+                            onStart = {
+                                if (!session.timerRunning) {
+                                    session = session.copy(
+                                        timerStartedAt = System.currentTimeMillis(),
+                                        timerRunning = true
+                                    )
+                                }
+                            },
+                            onPause = {
+                                val startedAt = session.timerStartedAt
+                                if (session.timerRunning && startedAt != null) {
+                                    val elapsed = session.timerAccumulatedMs +
+                                        (System.currentTimeMillis() - startedAt)
+                                    session = session.copy(
+                                        timerAccumulatedMs = elapsed,
+                                        timerRunning = false,
+                                        timerStartedAt = null
+                                    )
+                                }
+                            },
+                            onReset = {
                                 session = session.copy(
                                     timerStartedAt = System.currentTimeMillis(),
-                                    timerRunning = true
+                                    timerAccumulatedMs = 0L,
+                                    timerRunning = true,
+                                    sessionObservationCount = 0
                                 )
+                            },
+                            onClose = {
+                                session = CaptureSessionState()
+                                showEvidenceForm = false
+                                viewModel.setCaptureSessionActive(false)
                             }
-                        },
-                        onPause = {
-                            val startedAt = session.timerStartedAt
-                            if (session.timerRunning && startedAt != null) {
-                                val elapsed = session.timerAccumulatedMs +
-                                    (System.currentTimeMillis() - startedAt)
-                                session = session.copy(
-                                    timerAccumulatedMs = elapsed,
-                                    timerRunning = false,
-                                    timerStartedAt = null
-                                )
-                            }
-                        },
-                        onReset = {
-                            session = session.copy(
-                                timerStartedAt = System.currentTimeMillis(),
-                                timerAccumulatedMs = 0L,
-                                timerRunning = true,
-                                sessionObservationCount = 0
-                            )
-                        },
-                        onClose = {
-                            session = CaptureSessionState()
-                            showEvidenceForm = false
+                        )
+                    }
+                } else {
+                    // ── Start capture button ──
+                    item {
+                        Button(
+                            onClick = { startCapture() },
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(18.dp)
+                        ) {
+                            Icon(icon = FieldMindIcons.Add, contentDescription = null, size = 20.dp)
+                            Spacer(Modifier.size(8.dp))
+                            Text("Start observation session")
                         }
-                    )
+                    }
                 }
-            } else {
-                // ── Start capture button ──
-                item {
-                    Button(
-                        onClick = { startCapture() },
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(18.dp)
-                    ) {
-                        Icon(icon = FieldMindIcons.Add, contentDescription = null, size = 20.dp)
-                        Spacer(Modifier.size(8.dp))
-                        Text("Start observation session")
+
+                // ── Observation stats overview (hidden during active session to avoid clutter) ──
+                if (observations.isNotEmpty() && !session.isActive) {
+                    item {
+                        ObservationStatsDashboard(
+                            observations = observations
+                        )
+                    }
+                }                    // ── Evidence-First Input ──
+                if (showEvidenceForm) {
+                    // Evidence capture buttons (always visible when form is open)
+                    item {
+                        EvidenceCaptureRow(
+                            mediaEnabled = mediaEnabled,
+                            attachments = session.attachments,
+                            onLaunchCamera = {
+                                haptics.light()
+                                showInAppCamera = true
+                            },
+                            onLaunchGallery = {
+                                haptics.light()
+                                mediaPicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageAndVideo))
+                            },
+                            onLaunchFile = {
+                                haptics.light()
+                                filePicker.launch(arrayOf("application/pdf", "text/*", "image/*", "video/*", "audio/*"))
+                            },
+                            onLaunchAudio = { toggleRecording() },
+                            onLaunchAudioImport = { haptics.light(); audioImportPicker.launch(arrayOf("audio/*")) },
+                            isRecording = recording,
+                            recordSeconds = recordSeconds,
+                            onRemoveAttachment = { idx ->
+                                session = session.copy(
+                                    attachments = session.attachments.filterIndexed { i, _ -> i != idx }
+                                )
+                            },
+                            onCaptionChange = { idx, caption ->
+                                session = session.copy(
+                                    attachments = session.attachments.mapIndexed { i, item ->
+                                        if (i == idx) item.copy(caption = caption) else item
+                                    }
+                                )
+                            }
+                        )
+                    }
+
+                    // ── Auto Metadata Status — MOVED TO TOP ──
+                    item {
+                        AutoMetadataStatusCard(
+                            hasGps = capturedLocation != null,
+                            hasWeather = weatherSnapshot != null,
+                            hasTimestamp = true,
+                            gpsAccuracy = capturedLocation?.accuracyMeters,
+                            weatherDetail = weatherSnapshot?.asDisplayText(),
+                            autoFetching = metadataAutoFetching,
+                            statusText = metadataStatus,
+                            onFetchGps = {
+                                if (locationProvider.hasAnyLocationPermission()) {
+                                    locationProvider.requestCurrentLocation { loc ->
+                                        if (loc != null) capturedLocation = loc
+                                    }
+                                }
+                            },
+                            onFetchWeather = {
+                                val loc = capturedLocation
+                                if (loc != null) {
+                                    scope.launch {
+                                        weatherFetching = true
+                                        val snapshot = viewModel.fetchWeatherSnapshot(loc.latitude, loc.longitude)
+                                        weatherSnapshot = snapshot
+                                        weatherFetching = false
+                                        if (snapshot != null) {
+                                            viewModel.saveWeatherSnapshot(snapshot, loc.latitude, loc.longitude)
+                                            showFastSnackbar(snackbar, scope, "Weather: ${snapshot.temperature}°C, ${snapshot.condition}")
+                                        }
+                                    }
+                                } else {
+                                    showFastSnackbar(snackbar, scope, "Acquire GPS location first")
+                                }
+                            },
+                            onFetchBoth = { performAutoFetch() }
+                        )
+                    }
+
+                    // ── Quick Classification Grid (always visible) ──
+                    item {
+                        QuickClassificationGrid(
+                            selectedCategory = session.category,
+                            onCategorySelected = { session = session.copy(category = it) }
+                        )
+                    }
+
+                    // ── Enhanced Observation Form (with species autocomplete) ──
+                    item {
+                        EnhancedObservationForm(
+                            session = session,
+                            onSessionChange = { session = it },
+                            onSave = { saveObservation() },
+                            speciesDatabase = speciesDatabase,
+                            onOpenSpeciesSearch = {
+                                speciesIdImageUri = null
+                                showSpeciesId = true
+                            },
+                            identifiedSpecies = identifiedSpecies,
+                            onSelectSpecies = { match ->
+                                identifiedSpecies = match
+                                session = session.copy(
+                                    speciesName = match.commonName,
+                                    category = match.category
+                                )
+                            }
+                        )
+                    }
+
+                    // ── Species Identification Live Card ──
+                    item {
+                        SpeciesIdentificationLiveCard(
+                            attachments = session.attachments,
+                            progress = session.speciesIdProgress,
+                            results = session.speciesIdResults,
+                            isRunning = session.speciesIdRunning,
+                            identifiedSpecies = identifiedSpecies,
+                            onRunIdentification = { uri ->
+                                speciesIdImageUri = uri
+                                showSpeciesId = true
+                            }
+                        )
+                    }
+                }
+
+                // ── Metadata auto-fetch confirmation dialog ──
+                if (showMetadataConfirm) {
+                    item {
+                        AutoFetchConfirmCard(
+                            onConfirm = {
+                                showMetadataConfirm = false
+                                performAutoFetch()
+                            },
+                            onSkip = {
+                                showMetadataConfirm = false
+                                metadataStatus = "Skipped — tap chips to fetch"
+                            }
+                        )
+                    }
+                }
+
+                // ── Empty state (only when no form is open) ──
+                if (!showEvidenceForm && !session.isActive) {
+                    item {
+                        EmptyState(
+                            "No observations yet",
+                            "Start a session below to capture evidence and log observations.",
+                            icon = FieldMindIcons.Observation
+                        )
                     }
                 }
             }
 
-            // ── Evidence-First Input ──
-            if (showEvidenceForm) {
-                // Evidence capture buttons (always visible when form is open)
-                item {
-                    EvidenceCaptureRow(
-                        mediaEnabled = mediaEnabled,
-                        attachments = session.attachments,
-                        onLaunchCamera = {
-                            haptics.light()
-                            showInAppCamera = true
-                        },
-                        onLaunchGallery = {
-                            haptics.light()
-                            mediaPicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageAndVideo))
-                        },
-                        onLaunchFile = {
-                            haptics.light()
-                            filePicker.launch(arrayOf("application/pdf", "text/*", "image/*", "video/*", "audio/*"))
-                        },
-                        onRemoveAttachment = { idx ->
-                            session = session.copy(
-                                attachments = session.attachments.filterIndexed { i, _ -> i != idx }
-                            )
-                        },
-                        onCaptionChange = { idx, caption ->
-                            session = session.copy(
-                                attachments = session.attachments.mapIndexed { i, item ->
-                                    if (i == idx) item.copy(caption = caption) else item
-                                }
-                            )
-                        }
-                    )
-                }
-
-                // ── Quick Classification Grid (always visible) ──
-                item {
-                    QuickClassificationGrid(
-                        selectedCategory = session.category,
-                        onCategorySelected = { session = session.copy(category = it) }
-                    )
-                }
-
-                // ── Enhanced Observation Form ──
-                item {
-                    EnhancedObservationForm(
-                        session = session,
-                        onSessionChange = { session = it },
-                        onSave = { saveObservation() },
-                        onOpenSpeciesSearch = {
-                            speciesIdImageUri = null
-                            showSpeciesId = true
-                        }
-                    )
-                }
-
-                // ── Auto Metadata Status ──
-                item {
-                    AutoMetadataStatusCard(
-                        hasGps = capturedLocation != null,
-                        hasWeather = false,
-                        hasTimestamp = true,
-                        gpsAccuracy = capturedLocation?.accuracyMeters,
-                        onFetchGps = {
-                            if (locationProvider.hasAnyLocationPermission()) {
-                                locationProvider.requestCurrentLocation { loc ->
-                                    if (loc != null) capturedLocation = loc
-                                }
-                            }
-                        }
-                    )
-                }
-
-                // ── Species Identification Live Card ──
-                item {
-                    SpeciesIdentificationLiveCard(
-                        attachments = session.attachments,
-                        progress = session.speciesIdProgress,
-                        results = session.speciesIdResults,
-                        isRunning = session.speciesIdRunning,
-                        identifiedSpecies = identifiedSpecies,
-                        onRunIdentification = { uri ->
-                            speciesIdImageUri = uri
-                            showSpeciesId = true
-                        }
-                    )
-                }
-            }
-
-            // ── Empty state (only when no form is open) ──
-            if (!showEvidenceForm && !session.isActive) {
-                item {
-    EmptyState(
-                        "No observations yet",
-                        "Start a session below to capture evidence and log observations.",
-                        icon = FieldMindIcons.Observation
-                    )
-                }
-            }
+            // ── Top snackbar overlay ──
+            FieldMindSnackbarOverlay(
+                hostState = snackbar,
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .padding(top = 8.dp, start = 16.dp, end = 16.dp)
+            )
         }
-    }
-
-    // ── Top snackbar overlay ──
-        FieldMindSnackbarOverlay(
-            hostState = snackbar,
-            modifier = Modifier
-                .align(Alignment.TopCenter)
-                .padding(top = 8.dp, start = 16.dp, end = 16.dp)
-        )
     }
 
     // ── Species identification sheet ──
@@ -471,6 +717,7 @@ fun ObserveScreen(
                 identifiedSpecies = match
                 session = session.copy(
                     subject = match.commonName,
+                    speciesName = match.commonName,
                     category = match.category,
                     speciesConfidence = when {
                         match.confidence >= 0.8f -> "Certain"
@@ -712,6 +959,10 @@ private fun EvidenceCaptureRow(
     onLaunchCamera: () -> Unit,
     onLaunchGallery: () -> Unit,
     onLaunchFile: () -> Unit,
+    onLaunchAudio: () -> Unit = {},
+    onLaunchAudioImport: () -> Unit = {},
+    isRecording: Boolean = false,
+    recordSeconds: Int = 0,
     onRemoveAttachment: (Int) -> Unit,
     onCaptionChange: (Int, String) -> Unit
 ) {
@@ -762,8 +1013,26 @@ private fun EvidenceCaptureRow(
                         accent = FieldMindTheme.colors.data,
                         modifier = Modifier.weight(1f)
                     )
+                    EvidenceButton(
+                        onClick = onLaunchAudio,
+                        icon = if (isRecording) FieldMindIcons.Stop else FieldMindIcons.Mic,
+                        label = if (isRecording) "$recordSeconds" else "Audio",
+                        accent = if (isRecording) MaterialTheme.colorScheme.error else FieldMindTheme.colors.accentFor("observation"),
+                        modifier = Modifier.weight(1f)
+                    )
                 }
             }
+            // Audio import button (shown when not recording)
+            if (!isRecording) {
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                    TextButton(onClick = onLaunchAudioImport) {
+                        Icon(FieldMindIcons.Mic, null, size = 16.dp)
+                        Spacer(Modifier.size(4.dp))
+                        Text("Import audio", style = MaterialTheme.typography.labelSmall)
+                    }
+                }
+            }
+
             // Species identification button (always visible when form is active)
             Spacer(Modifier.height(8.dp))
             SpeciesIdButton(
@@ -1129,7 +1398,66 @@ private fun QuickClassificationGrid(
 }
 
 // ══════════════════════════════════════════════════════════════════════
-//  Auto Metadata Status Card — Per spec: GPS, Weather, Timestamp
+//  Auto-Fetch Confirmation Card — Shown on session start
+// ══════════════════════════════════════════════════════════════════════
+
+@Composable
+private fun AutoFetchConfirmCard(
+    onConfirm: () -> Unit,
+    onSkip: () -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Column(
+            Modifier.padding(18.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                Box(
+                    Modifier.size(40.dp).clip(RoundedCornerShape(12.dp))
+                        .background(FieldMindTheme.colors.info.copy(alpha = 0.14f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(FieldMindIcons.Weather, null, tint = FieldMindTheme.colors.info, size = 22.dp)
+                }
+                Column(Modifier.weight(1f)) {
+                    Text("Acquire location & weather?", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    Text("Auto-fetch GPS coordinates and current weather for your observation.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                OutlinedButton(
+                    onClick = onSkip,
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(14.dp)
+                ) {
+                    Text("Skip", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                Button(
+                    onClick = onConfirm,
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(14.dp)
+                ) {
+                    Icon(FieldMindIcons.Location, null, size = 18.dp)
+                    Spacer(Modifier.size(6.dp))
+                    Text("Fetch now")
+                }
+            }
+        }
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════════
+//  Auto Metadata Status Card — Enhanced with weather detail, fetch-all, and confirmation
 // ══════════════════════════════════════════════════════════════════════
 
 @Composable
@@ -1138,9 +1466,16 @@ private fun AutoMetadataStatusCard(
     hasWeather: Boolean,
     hasTimestamp: Boolean,
     gpsAccuracy: Float?,
-    onFetchGps: () -> Unit
+    weatherDetail: String? = null,
+    autoFetching: Boolean = false,
+    statusText: String = "Ready",
+    onFetchGps: () -> Unit,
+    onFetchWeather: () -> Unit = {},
+    onFetchBoth: () -> Unit = {}
 ) {
     val colors = FieldMindTheme.colors
+    val showWeatherConfirm = remember { mutableStateOf(false) }
+    
     Card(
         shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
@@ -1149,31 +1484,74 @@ private fun AutoMetadataStatusCard(
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Icon(FieldMindIcons.Info, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, size = 18.dp)
-                Text("Auto metadata", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                Column(Modifier.weight(1f)) {
+                    Text("Location & weather", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                    if (autoFetching) {
+                        Text(statusText, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
+                    }
+                }
+                if (!hasGps && !autoFetching) {
+                    Surface(
+                        onClick = onFetchBoth,
+                        shape = RoundedCornerShape(12.dp),
+                        color = colors.info.copy(alpha = 0.12f)
+                    ) {
+                        Row(Modifier.padding(horizontal = 12.dp, vertical = 6.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Icon(FieldMindIcons.Weather, null, tint = colors.info, size = 16.dp)
+                            Text("Fetch all", style = MaterialTheme.typography.labelSmall, color = colors.info, fontWeight = FontWeight.SemiBold)
+                        }
+                    }
+                }
             }
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 MetadataStatusChip(
                     label = "GPS",
                     acquired = hasGps,
-                    detail = if (hasGps && gpsAccuracy != null) "±${gpsAccuracy.toInt()}m" else null,
+                    detail = if (hasGps && gpsAccuracy != null) "±${gpsAccuracy.toInt()}m" else if (hasGps) "Acquired" else null,
                     icon = FieldMindIcons.Location,
                     accent = if (hasGps) colors.positive else colors.warning,
-                    onTap = if (!hasGps) onFetchGps else null,
+                    onTap = if (!hasGps && !autoFetching) onFetchGps else null,
                     modifier = Modifier.weight(1f)
                 )
                 MetadataStatusChip(
                     label = "Weather",
                     acquired = hasWeather,
+                    detail = weatherDetail ?: if (hasWeather) "Logged" else null,
                     icon = FieldMindIcons.Weather,
                     accent = if (hasWeather) colors.positive else colors.warning,
+                    onTap = if (hasGps && !hasWeather && !autoFetching) {
+                        { showWeatherConfirm.value = true }
+                    } else null,
                     modifier = Modifier.weight(1f)
                 )
                 MetadataStatusChip(
-                    label = "Timestamp",
+                    label = "Time",
                     acquired = hasTimestamp,
                     icon = FieldMindIcons.Calendar,
                     accent = if (hasTimestamp) colors.positive else colors.warning,
                     modifier = Modifier.weight(1f)
+                )
+            }
+            
+            // Weather fetch confirmation dialog
+            if (showWeatherConfirm.value) {
+                AlertDialog(
+                    onDismissRequest = { showWeatherConfirm.value = false },
+                    icon = { Icon(FieldMindIcons.Weather, null, tint = MaterialTheme.colorScheme.primary, size = 28.dp) },
+                    title = { Text("Fetch weather data?") },
+                    text = { Text("Fetch current weather conditions from your location. This will use GPS coordinates.") },
+                    confirmButton = {
+                        Button(
+                            onClick = {
+                                showWeatherConfirm.value = false
+                                onFetchWeather()
+                            },
+                            shape = RoundedCornerShape(14.dp)
+                        ) { Text("Fetch weather") }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = { showWeatherConfirm.value = false }) { Text("Cancel") }
+                    }
                 )
             }
         }
@@ -1317,7 +1695,7 @@ private fun SpeciesIdentificationLiveCard(
 }
 
 // ══════════════════════════════════════════════════════════════════════
-//  Enhanced Observation Form — Full form with all dropdowns per spec
+//  Enhanced Observation Form — Full form with species autocomplete
 // ══════════════════════════════════════════════════════════════════════
 
 @OptIn(ExperimentalLayoutApi::class)
@@ -1326,11 +1704,70 @@ private fun EnhancedObservationForm(
     session: CaptureSessionState,
     onSessionChange: (CaptureSessionState) -> Unit,
     onSave: () -> Unit,
-    onOpenSpeciesSearch: () -> Unit = {}
+    speciesDatabase: SpeciesDatabase? = null,
+    onOpenSpeciesSearch: () -> Unit = {},
+    identifiedSpecies: SpeciesMatch? = null,
+    onSelectSpecies: ((SpeciesMatch) -> Unit)? = null
 ) {
     var showAdvanced by remember { mutableStateOf(false) }
     var showSpeciesSearch by remember { mutableStateOf(false) }
     var selectedSpecies by remember { mutableStateOf<String?>(null) }
+    var speciesSuggestions by remember { mutableStateOf<List<SpeciesRecord>>(emptyList()) }
+    var showSuggestions by remember { mutableStateOf(false) }
+    var searchingSpecies by remember { mutableStateOf(false) }
+
+    // ── Selected species record (full info from database) ──
+    var selectedSpeciesRecord by remember { mutableStateOf<SpeciesRecord?>(null) }
+    var showTaxonomy by remember { mutableStateOf(false) }
+    var showSpeciesDetailSheet by remember { mutableStateOf(false) }
+
+    // Look up full species record when speciesName changes
+    LaunchedEffect(session.speciesName) {
+        if (session.speciesName.isNotBlank() && session.speciesName != selectedSpeciesRecord?.commonName) {
+            val db = speciesDatabase
+            if (db != null) {
+                val results = db.search(session.speciesName, limit = 5)
+                selectedSpeciesRecord = results.firstOrNull { 
+                    it.commonName.equals(session.speciesName, ignoreCase = true) ||
+                    it.scientificName.equals(session.speciesName, ignoreCase = true)
+                }
+            }
+        } else if (session.speciesName.isBlank()) {
+            selectedSpeciesRecord = null
+            showTaxonomy = false
+        }
+    }
+
+    // Reset when session clears after save
+    LaunchedEffect(session.speciesName) {
+        if (session.speciesName.isBlank()) {
+            selectedSpecies = null
+            showSpeciesSearch = false
+            speciesSuggestions = emptyList()
+            showSuggestions = false
+            selectedSpeciesRecord = null
+            showTaxonomy = false
+        }
+    }
+
+    // Species search with debounce
+    val speciesSearchQuery = remember { mutableStateOf("") }
+    LaunchedEffect(speciesSearchQuery.value) {
+        if (speciesSearchQuery.value.length >= 2) {
+            searchingSpecies = true
+            kotlinx.coroutines.delay(300) // debounce
+            val db = speciesDatabase
+            if (db != null && speciesSearchQuery.value.isNotBlank()) {
+                val results = db.search(speciesSearchQuery.value, limit = 5)
+                speciesSuggestions = results
+                showSuggestions = results.isNotEmpty()
+            }
+            searchingSpecies = false
+        } else {
+            speciesSuggestions = emptyList()
+            showSuggestions = false
+        }
+    }
 
     Card(
         shape = RoundedCornerShape(28.dp),
@@ -1353,54 +1790,138 @@ private fun EnhancedObservationForm(
                 }
             }
 
-            // ── Subject Name ──
+            // ── Subject Name — also fills species ──
             FieldTextField(
                 session.subject,
-                { onSessionChange(session.copy(subject = it)) },
+                {
+                    val updated = session.copy(subject = it)
+                    if (it.isNotBlank() && session.speciesName.isBlank()) {
+                        onSessionChange(updated.copy(speciesName = it))
+                    } else {
+                        onSessionChange(updated)
+                    }
+                },
                 "Subject name",
                 supportingText = "e.g. House Crow carrying twig"
             )
 
-            // ── Species Search ──
-            OutlinedTextField(
-                value = selectedSpecies ?: session.subject,
-                onValueChange = {
-                    selectedSpecies = it
-                    showSpeciesSearch = it.isNotEmpty()
-                },
-                label = { Text("Species") },
-                placeholder = { Text("Search species…") },
-                trailingIcon = {
-                    IconButton(onClick = onOpenSpeciesSearch) {
-                        Icon(
-                            FieldMindIcons.Nature,
-                            null,
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                            size = 20.dp
-                        )
-                    }
-                },
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(18.dp),
-                singleLine = true
-            )
+            // ── Species Search with Autocomplete ──
+            Column(Modifier.fillMaxWidth()) {
+                OutlinedTextField(
+                    value = selectedSpecies ?: session.speciesName.ifBlank { session.subject },
+                    onValueChange = { query ->
+                        selectedSpecies = query
+                        speciesSearchQuery.value = query
+                        onSessionChange(session.copy(speciesName = query))
+                        showSpeciesSearch = query.isNotEmpty()
+                    },
+                    label = { Text("Species") },
+                    placeholder = { Text("Search species…") },
+                    trailingIcon = {
+                        Row(horizontalArrangement = Arrangement.spacedBy(0.dp)) {
+                            if (searchingSpecies) {
+                                CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
+                            }
+                            IconButton(onClick = onOpenSpeciesSearch) {
+                                Icon(
+                                    FieldMindIcons.Nature,
+                                    null,
+                                    tint = MaterialTheme.colorScheme.primary,
+                                    size = 20.dp
+                                )
+                            }
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(18.dp),
+                    singleLine = true
+                )
 
-            // ── Species search helper ──
-            if (showSpeciesSearch) {
-                Surface(
-                    onClick = onOpenSpeciesSearch,
-                    shape = RoundedCornerShape(16.dp),
-                    color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
-                ) {
-                    Row(
-                        Modifier.fillMaxWidth().padding(12.dp),
-                        horizontalArrangement = Arrangement.Center,
-                        verticalAlignment = Alignment.CenterVertically
+                // ── Species suggestion dropdown (up to 5 results) ──
+                AnimatedVisibility(visible = showSuggestions) {
+                    Card(
+                        modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+                        ),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
                     ) {
-                        Icon(FieldMindIcons.Search, null, tint = MaterialTheme.colorScheme.primary, size = 18.dp)
-                        Spacer(Modifier.size(8.dp))
-                        Text("Open species browser (${SpeciesClassifier.FALLBACK_SPECIES.size} species)", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
+                        Column(Modifier.padding(4.dp)) {
+                            speciesSuggestions.take(5).forEach { record ->
+                                Surface(
+                                    onClick = {
+                                        selectedSpecies = record.commonName
+                                        speciesSearchQuery.value = record.commonName
+                                        onSessionChange(
+                                            session.copy(
+                                                speciesName = record.commonName,
+                                                subject = if (session.subject.isBlank()) record.commonName else session.subject,
+                                                category = record.category
+                                            )
+                                        )
+                                        showSuggestions = false
+                                    },
+                                    shape = RoundedCornerShape(12.dp),
+                                    color = MaterialTheme.colorScheme.surfaceContainerHigh
+                                ) {
+                                    Row(
+                                        Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 10.dp),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                                    ) {
+                                        Box(
+                                            Modifier.size(32.dp).clip(RoundedCornerShape(10.dp))
+                                                .background(FieldMindTheme.colors.observation.copy(alpha = 0.14f)),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Icon(FieldMindIcons.Nature, null, tint = FieldMindTheme.colors.observation, size = 16.dp)
+                                        }
+                                        Column(Modifier.weight(1f)) {
+                                            Text(record.commonName, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
+                                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                                if (record.scientificName.isNotBlank()) {
+                                                    Text(record.scientificName, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                                }
+                                                if (record.category != "Other") {
+                                                    Text(record.category, style = MaterialTheme.typography.labelSmall, color = FieldMindTheme.colors.accentFor(record.category))
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
+                }
+
+                // ── Species search helper ──
+                if (showSpeciesSearch && !showSuggestions && speciesSearchQuery.value.isNotBlank()) {
+                    Surface(
+                        onClick = onOpenSpeciesSearch,
+                        shape = RoundedCornerShape(16.dp),
+                        color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
+                    ) {
+                        Row(
+                            Modifier.fillMaxWidth().padding(12.dp),
+                            horizontalArrangement = Arrangement.Center,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(FieldMindIcons.Search, null, tint = MaterialTheme.colorScheme.primary, size = 18.dp)
+                            Spacer(Modifier.size(8.dp))
+                            Text("Open species catalog", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
+                        }
+                    }
+                }
+
+                // ── Selected species info card ──
+                AnimatedVisibility(visible = selectedSpeciesRecord != null && speciesSearchQuery.value.isNotBlank()) {
+                    SpeciesInfoCard(
+                        record = selectedSpeciesRecord!!,
+                        showTaxonomy = showTaxonomy,
+                        onToggleTaxonomy = { showTaxonomy = !showTaxonomy },
+                        onOpenDetail = { showSpeciesDetailSheet = true }
+                    )
                 }
             }
 
@@ -1548,6 +2069,14 @@ private fun EnhancedObservationForm(
                     Spacer(Modifier.size(6.dp))
                     Text("Save observation")
                 }
+            }
+
+            // ── Species detail sheet dialog ──
+            if (showSpeciesDetailSheet && selectedSpeciesRecord != null) {
+                SpeciesDetailSheet(
+                    record = selectedSpeciesRecord!!,
+                    onDismiss = { showSpeciesDetailSheet = false }
+                )
             }
         }
     }
@@ -1699,110 +2228,111 @@ private fun FieldModeScreen(viewModel: FieldMindViewModel, onBack: () -> Unit) {
         } else "00:00"
     }
 
-    Box(Modifier.fillMaxSize()) {
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
-        LazyColumn(
-            Modifier.fillMaxSize().padding(padding),
-            contentPadding = PaddingValues(20.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            item {
-                FieldScreenHeader(
-                    "Field mode",
-                    when {
-                        fieldModeAutoStartTimer && sessionTimerStarted ->
-                            "$fieldModeDefaultSession mode · $elapsedFormatted elapsed"
-                        fieldModeDefaultSession != "Quick capture" ->
-                            "$fieldModeDefaultSession mode — one tap logs an observation"
-                        else -> "One tap logs an observation. Add details later."
-                    },
-                    icon = FieldMindIcons.Bolt,
-                    actionIcon = FieldMindIcons.Close,
-                    onAction = onBack
-                )
-            }
-            // Auto-start timer indicator
-            if (fieldModeAutoStartTimer && sessionTimerStarted && timerStartTime > 0L) {
+        Box(Modifier.fillMaxSize()) {
+            LazyColumn(
+                Modifier.fillMaxSize().padding(padding),
+                contentPadding = PaddingValues(20.dp, 12.dp, 20.dp, 80.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
                 item {
-                    Surface(
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(16.dp),
-                        color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
-                    ) {
-                        Row(
-                            Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    FieldScreenHeader(
+                        "Field mode",
+                        when {
+                            fieldModeAutoStartTimer && sessionTimerStarted ->
+                                "$fieldModeDefaultSession mode · $elapsedFormatted elapsed"
+                            fieldModeDefaultSession != "Quick capture" ->
+                                "$fieldModeDefaultSession mode — one tap logs an observation"
+                            else -> "One tap logs an observation. Add details later."
+                        },
+                        icon = FieldMindIcons.Bolt,
+                        actionIcon = FieldMindIcons.Close,
+                        onAction = onBack
+                    )
+                }
+                // Auto-start timer indicator
+                if (fieldModeAutoStartTimer && sessionTimerStarted && timerStartTime > 0L) {
+                    item {
+                        Surface(
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(16.dp),
+                            color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
                         ) {
-                            Icon(FieldMindIcons.Timer, null, tint = MaterialTheme.colorScheme.onPrimaryContainer, size = 18.dp)
-                            Text("Session timer active — $elapsedFormatted", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onPrimaryContainer)
-                            if (fieldModeObservationSpacing != "None") {
-                                Text("${fieldModeObservationSpacing} spacing", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f))
+                            Row(
+                                Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                            ) {
+                                Icon(FieldMindIcons.Timer, null, tint = MaterialTheme.colorScheme.onPrimaryContainer, size = 18.dp)
+                                Text("Session timer active — $elapsedFormatted", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onPrimaryContainer)
+                                if (fieldModeObservationSpacing != "None") {
+                                    Text("${fieldModeObservationSpacing} spacing", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f))
+                                }
                             }
+                        }
+                    }
+                }
+                if (showFull) {
+                    item { ObservationCaptureCard(viewModel = viewModel, compact = true) { showFull = false } }
+                } else {
+                    item { Text("Tap a type to save instantly", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold) }
+                    item {
+                        Button(onClick = { haptics.light(); showQuickSnapCategory = true }, Modifier.fillMaxWidth(), shape = RoundedCornerShape(18.dp)) {
+                            Icon(icon = FieldMindIcons.Camera, contentDescription = null, size = 18.dp)
+                            Spacer(Modifier.size(8.dp))
+                            Text("Quick snap")
+                        }
+                    }
+                    items(observationCategories.chunked(2)) { row ->
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                            row.forEach { category ->
+                                FieldModeButton(category, Modifier.weight(1f)) {
+                                    // Apply spacing cooldown
+                                    val now = System.currentTimeMillis()
+                                    if (spacingMs > 0L && (now - lastSaveTime) < spacingMs) {
+                                        scope.launch {
+                                            snackbar.showSnackbar("Spacing: wait ${fieldModeObservationSpacing} between saves")
+                                        }
+                                        return@FieldModeButton
+                                    }
+                                    lastSaveTime = now
+                                    haptics.confirm()
+                                    viewModel.addObservation(
+                                        subject = category, category = category,
+                                        facts = "Quick field capture — add details later.",
+                                        confidence = defaultConfidence, manualLocation = "", tags = "",
+                                        evidence = "", context = ""
+                                    ) { savedId ->
+                                        scope.launch {
+                                            val result = snackbar.showSnackbar("Saved $category", actionLabel = "Undo", duration = SnackbarDuration.Short)
+                                            if (result == SnackbarResult.ActionPerformed) viewModel.archiveObservation(savedId)
+                                        }
+                                    }
+                                }
+                            }
+                            if (row.size == 1) Spacer(Modifier.weight(1f))
+                        }
+                    }
+                    item {
+                        OutlinedButton(onClick = { showFull = true }, Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp)) {
+                            Icon(icon = FieldMindIcons.Edit, contentDescription = null, size = 18.dp)
+                            Spacer(Modifier.size(8.dp))
+                            Text("Add full details instead")
                         }
                     }
                 }
             }
-            if (showFull) {
-                item { ObservationCaptureCard(viewModel = viewModel, compact = true) { showFull = false } }
-            } else {
-                item { Text("Tap a type to save instantly", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold) }
-                item {
-                    Button(onClick = { haptics.light(); showQuickSnapCategory = true }, Modifier.fillMaxWidth(), shape = RoundedCornerShape(18.dp)) {
-                        Icon(icon = FieldMindIcons.Camera, contentDescription = null, size = 18.dp)
-                        Spacer(Modifier.size(8.dp))
-                        Text("Quick snap")
-                    }
-                }
-                items(observationCategories.chunked(2)) { row ->
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        row.forEach { category ->
-                            FieldModeButton(category, Modifier.weight(1f)) {
-                                // Apply spacing cooldown
-                                val now = System.currentTimeMillis()
-                                if (spacingMs > 0L && (now - lastSaveTime) < spacingMs) {
-                                    scope.launch {
-                                        snackbar.showSnackbar("Spacing: wait ${fieldModeObservationSpacing} between saves")
-                                    }
-                                    return@FieldModeButton
-                                }
-                                lastSaveTime = now
-                                haptics.confirm()
-                                viewModel.addObservation(
-                                    subject = category, category = category,
-                                    facts = "Quick field capture — add details later.",
-                                    confidence = defaultConfidence, manualLocation = "", tags = "",
-                                    evidence = "", context = ""
-                                ) { savedId ->
-                                    scope.launch {
-                                        val result = snackbar.showSnackbar("Saved $category", actionLabel = "Undo", duration = SnackbarDuration.Short)
-                                        if (result == SnackbarResult.ActionPerformed) viewModel.archiveObservation(savedId)
-                                    }
-                                }
-                            }
-                        }
-                        if (row.size == 1) Spacer(Modifier.weight(1f))
-                    }
-                }
-                item {
-                    OutlinedButton(onClick = { showFull = true }, Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp)) {
-                        Icon(icon = FieldMindIcons.Edit, contentDescription = null, size = 18.dp)
-                        Spacer(Modifier.size(8.dp))
-                        Text("Add full details instead")
-                    }
-                }
-            }
+
+            // ── Top snackbar overlay ──
+            FieldMindSnackbarOverlay(
+                hostState = snackbar,
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .padding(top = 8.dp, start = 16.dp, end = 16.dp)
+            )
         }
-    }
-    // ── Top snackbar overlay ──
-    FieldMindSnackbarOverlay(
-        hostState = snackbar,
-        modifier = Modifier
-            .align(Alignment.TopCenter)
-            .padding(top = 8.dp, start = 16.dp, end = 16.dp)
-    )
     }
     if (showQuickSnapCategory) {
         AlertDialog(

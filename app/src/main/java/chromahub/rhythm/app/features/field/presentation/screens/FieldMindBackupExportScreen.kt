@@ -319,13 +319,20 @@ fun FieldMindPrivacyGate(enabled: Boolean, title: String, body: String): Boolean
 fun BackupExportScreen(viewModel: FieldMindViewModel) {
     val scope = rememberCoroutineScope()
     val snackbar = remember { SnackbarHostState() }
-    Scaffold(snackbarHost = { SnackbarHost(snackbar) }, containerColor = MaterialTheme.colorScheme.background) { padding ->
-        ExportStudioContent(
-            viewModel = viewModel,
-            modifier = Modifier.padding(padding),
-            contentPadding = PaddingValues(20.dp, 20.dp, 20.dp, 96.dp),
-            onMessage = { message -> scope.launch { snackbar.showSnackbar(message) } }
-        )
+    Scaffold(containerColor = MaterialTheme.colorScheme.background) { padding ->
+        Box(Modifier.fillMaxSize()) {
+            ExportStudioContent(
+                viewModel = viewModel,
+                modifier = Modifier.padding(padding),
+                contentPadding = PaddingValues(20.dp, 20.dp, 20.dp, 96.dp),
+                onMessage = { message -> showFastSnackbar(snackbar, scope, message) }
+            )
+            FieldMindSnackbarOverlay(
+                hostState = snackbar,
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .padding(top = 8.dp, start = 16.dp, end = 16.dp)
+            )
+        }
     }
 }
-

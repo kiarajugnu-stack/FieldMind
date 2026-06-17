@@ -41,6 +41,35 @@ internal data class FieldMindChangelogEntry(
 
 private val fieldMindChangelog = listOf(
     FieldMindChangelogEntry(
+        version = "1.5.1-weather-crash-ui-polish",
+        date = "2026-06-16",
+        title = "Weather Animation Polish, Crash Fixes & Back Navigation",
+        importance = "Patch",
+        tags = listOf("Weather", "Fixes", "UI", "Navigation"),
+        sections = listOf(
+            "🌙 Weather Animation Polish" to listOf(
+                "Shooting star now fades in gradually during the first 25% of its flight instead of appearing suddenly, then fades out smoothly for a natural appear-then-disappear arc.",
+                "Moon repositioned to top-right corner with reduced size (0.07 normal / 0.09 compact) and tighter glow rings (2x/3x radius) so the glow doesn't wash over the whole scene.",
+                "Sun repositioned to top-right corner with reduced size, shorter rays (1.3x–1.5x radius), slower rotation (20s), and slower glow pulse (5s) for a calmer day scene.",
+                "Rain streaks reduced by ~40% (heavy 80→50, normal 50→30) with per-drop random phase delays so drops fall continuously as scattered random drops instead of synchronized sheets.",
+                "Rain fall speed reduced (base animation slowed from 400ms→700ms heavy, 700ms→1200ms normal) for a more gentle, natural look.",
+                "All rain types (drizzle, rain, showers, heavy rain) benefit from the continuous random-drop behavior."
+            ),
+            "🐛 Infinite-Height Scroll Crash Fix" to listOf(
+                "Fixed crash when tapping 'Add Species' or 'Add Task' in Project Detail — the root cause was 'verticalScroll' being placed before 'heightIn(max=...)' in the modifier chain, causing infinite height constraints inside LazyColumn items.",
+                "Reordered modifiers to Modifier.heightIn(max = 420.dp).verticalScroll(...) in SpeciesRegistryBuilder and ProjectTasksBuilder so height constraints clamp before the scroll check.",
+                "Replaced nested LazyRow (which conflicted with parent verticalScroll) with FlowRow in ProjectTasksBuilder to eliminate the nested scrollable issue entirely."
+            ),
+            "🔙 Back Navigation & Confirmation Dialogs" to listOf(
+                "Added BackHandler to all full-screen editors (projects, sources, questions, hypotheses, reports, observations) so the device back button works properly — previously dismissOnBackPress=false had no handler.",
+                "Added isDirty tracking with confirmation dialog: when content is filled and the user presses back, shows an AlertDialog with Discard (red) and Keep Editing options.",
+                "Dirty detection added to all 9 full-screen dialogs: NewQuestion, NewProject, NewSource, NewHypothesis, NewReport, EditObservation, EditProject, EditSource, EditReport.",
+                "Added BackHandler with unsaved-data protection to the Observation/Add Observation screen — shows Save & Exit, Discard, or Keep Editing dialog when content exists and back is pressed.",
+                "Fixed sharp edges on full-screen dialogs by styling the back button with a rounded Surface (RoundedCornerShape 14dp), adding HorizontalDivider below header, and proper bottom padding (32dp)."
+            )
+        )
+    ),
+    FieldMindChangelogEntry(
         version = "1.5.0-weather-v3-expand",
         date = "2026-06-16",
         title = "Random Thunderstorm, Expand Dashboard & Crash Fixes",
