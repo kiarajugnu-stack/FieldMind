@@ -25,7 +25,6 @@ import fieldmind.research.app.features.field.data.weather.WeatherSnapshot
 import fieldmind.research.app.features.field.data.weather.WeatherUnitConverter
 import fieldmind.research.app.features.field.presentation.components.AnimatedWeatherScene
 import fieldmind.research.app.features.field.presentation.components.FieldMindIcons
-import fieldmind.research.app.features.field.presentation.components.FieldScreenHeader
 import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
@@ -171,13 +170,88 @@ fun WeatherDatabaseScreen(
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
         topBar = {
-            FieldScreenHeader(
-                "Weather Database",
-                "${weatherObs.size} weather records collected offline",
-                icon = FieldMindIcons.Weather,
-                actionIcon = FieldMindIcons.Back,
-                onAction = onBack
-            )
+            Surface(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                shape = RoundedCornerShape(22.dp),
+                color = colors.info.copy(alpha = 0.08f),
+                tonalElevation = 0.dp
+            ) {
+                Row(
+                    Modifier.padding(start = 8.dp, end = 12.dp, top = 12.dp, bottom = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    // ── Back button (properly padded, won't clip) ──
+                    Surface(
+                        onClick = onBack,
+                        shape = RoundedCornerShape(14.dp),
+                        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                        modifier = Modifier.size(40.dp)
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Icon(
+                                FieldMindIcons.Back,
+                                contentDescription = "Back",
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                size = 20.dp
+                            )
+                        }
+                    }
+
+                    // ── Weather icon ──
+                    Box(
+                        Modifier
+                            .size(40.dp)
+                            .background(
+                                colors.info.copy(alpha = if (FieldMindTheme.colors.isDark) 0.28f else 0.14f),
+                                RoundedCornerShape(12.dp)
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            FieldMindIcons.Weather,
+                            contentDescription = null,
+                            tint = colors.info,
+                            size = 22.dp
+                        )
+                    }
+
+                    // ── Title + subtitle ──
+                    Column(Modifier.weight(1f)) {
+                        Text(
+                            "Weather Database",
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            "${weatherObs.size} weather records collected offline",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+
+                    // ── Settings button (moved to header) ──
+                    Surface(
+                        onClick = onOpenSettings,
+                        shape = RoundedCornerShape(14.dp),
+                        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                        modifier = Modifier.size(40.dp)
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Icon(
+                                FieldMindIcons.Settings,
+                                contentDescription = "Settings",
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                size = 20.dp
+                            )
+                        }
+                    }
+                }
+            }
         }
     ) { padding ->
         Box(
@@ -197,7 +271,6 @@ fun WeatherDatabaseScreen(
                     isRefreshing = isRefreshing,
                     placeName = dashboardPlaceName,
                     refreshTimestampText = refreshTimestampText,
-                    onOpenSettings = onOpenSettings,
                     tempUnit = tempUnit,
                     windSpeedUnit = windSpeedUnit
                 )
@@ -351,7 +424,6 @@ private fun LiveCurrentWeatherCard(
     hasError: Boolean,
     isRefreshing: Boolean,
     placeName: String? = null,
-    onOpenSettings: () -> Unit = {},
     refreshTimestampText: String = "Updated just now",
     tempUnit: String = "Celsius",
     windSpeedUnit: String = "km/h"
@@ -439,22 +511,6 @@ private fun LiveCurrentWeatherCard(
                         )
                     }
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        // Settings
-                        Surface(
-                            onClick = onOpenSettings,
-                            shape = CircleShape,
-                            color = if (weather != null) textOnScene.copy(alpha = 0.2f) else MaterialTheme.colorScheme.surfaceContainerHigh,
-                            modifier = Modifier.size(48.dp)
-                        ) {
-                            Box(contentAlignment = Alignment.Center) {
-                                Icon(
-                                    FieldMindIcons.Settings,
-                                    null,
-                                    tint = if (weather != null) textOnScene else MaterialTheme.colorScheme.onSurfaceVariant,
-                                    size = 22.dp
-                                )
-                            }
-                        }
                         // Refresh spinner
                         if (isRefreshing) {
                             CircularProgressIndicator(

@@ -948,8 +948,8 @@ private fun ObservationWeatherLocationSection(
             
             // Weather details
             if (hasWeather) {
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                         if (o.weatherTemperature != null) {
                             WeatherDetailRow("Temperature", WeatherUnitConverter.formatTemp(o.weatherTemperature, tempUnit))
                         }
@@ -960,7 +960,7 @@ private fun ObservationWeatherLocationSection(
                             WeatherDetailRow("Wind", WeatherUnitConverter.formatWind(o.weatherWindSpeed, windSpeedUnit))
                         }
                     }
-                    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                         if (o.weatherCloudCover != null) {
                             WeatherDetailRow("Cloud cover", "${o.weatherCloudCover}%")
                         }
@@ -1149,59 +1149,61 @@ private fun ObservationExportSection(
                 Text("Export & sharing", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
             }
             
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                // PDF Export
-                FilledTonalButton(
-                    onClick = {
-                        haptics.light()
-                        showFastSnackbar(snackbar, scope, "PDF export coming soon")
-                    },
-                    modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(14.dp)
-                ) {
-                    Icon(FieldMindIcons.Article, null, size = 16.dp)
-                    Spacer(Modifier.size(4.dp))
-                    Text("PDF", style = MaterialTheme.typography.labelSmall)
+            Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                // Row 1: PDF + CSV
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    FilledTonalButton(
+                        onClick = {
+                            haptics.light()
+                            showFastSnackbar(snackbar, scope, "PDF export coming soon")
+                        },
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(14.dp)
+                    ) {
+                        Icon(FieldMindIcons.Article, null, size = 16.dp)
+                        Spacer(Modifier.size(4.dp))
+                        Text("PDF", style = MaterialTheme.typography.labelSmall)
+                    }
+                    FilledTonalButton(
+                        onClick = {
+                            haptics.light()
+                            showFastSnackbar(snackbar, scope, "CSV export coming soon")
+                        },
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(14.dp)
+                    ) {
+                        Icon(FieldMindIcons.Data, null, size = 16.dp)
+                        Spacer(Modifier.size(4.dp))
+                        Text("CSV", style = MaterialTheme.typography.labelSmall)
+                    }
                 }
-                // CSV Export
-                FilledTonalButton(
-                    onClick = {
-                        haptics.light()
-                        showFastSnackbar(snackbar, scope, "CSV export coming soon")
-                    },
-                    modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(14.dp)
-                ) {
-                    Icon(FieldMindIcons.Data, null, size = 16.dp)
-                    Spacer(Modifier.size(4.dp))
-                    Text("CSV", style = MaterialTheme.typography.labelSmall)
-                }
-                // JSON Export
-                FilledTonalButton(
-                    onClick = {
-                        haptics.light()
-                        showFastSnackbar(snackbar, scope, "JSON export coming soon")
-                    },
-                    modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(14.dp)
-                ) {
-                    Icon(FieldMindIcons.Data, null, size = 16.dp)
-                    Spacer(Modifier.size(4.dp))
-                    Text("JSON", style = MaterialTheme.typography.labelSmall)
-                }
-                // Share
-                FilledTonalButton(
-                    onClick = {
-                        haptics.confirm()
-                        clipboard.setText(AnnotatedString(exportText))
-                        sharePlainText(context, exportText)
-                    },
-                    modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(14.dp)
-                ) {
-                    Icon(FieldMindIcons.Export, null, size = 16.dp)
-                    Spacer(Modifier.size(4.dp))
-                    Text("Share", style = MaterialTheme.typography.labelSmall)
+                // Row 2: JSON + Share
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    FilledTonalButton(
+                        onClick = {
+                            haptics.light()
+                            showFastSnackbar(snackbar, scope, "JSON export coming soon")
+                        },
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(14.dp)
+                    ) {
+                        Icon(FieldMindIcons.Data, null, size = 16.dp)
+                        Spacer(Modifier.size(4.dp))
+                        Text("JSON", style = MaterialTheme.typography.labelSmall)
+                    }
+                    FilledTonalButton(
+                        onClick = {
+                            haptics.confirm()
+                            clipboard.setText(AnnotatedString(exportText))
+                            sharePlainText(context, exportText)
+                        },
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(14.dp)
+                    ) {
+                        Icon(FieldMindIcons.Export, null, size = 16.dp)
+                        Spacer(Modifier.size(4.dp))
+                        Text("Share", style = MaterialTheme.typography.labelSmall)
+                    }
                 }
             }
         }

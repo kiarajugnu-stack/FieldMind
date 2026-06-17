@@ -8,6 +8,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -66,6 +67,7 @@ import fieldmind.research.app.features.field.presentation.theme.FieldMindTheme
 import fieldmind.research.app.shared.presentation.components.icons.Icon
 import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon
 import kotlinx.coroutines.delay
+// FieldMindIcons is in the same package (components.FieldMindIcons)
 // FieldMindIcons is in the same package (components.FieldMindIcons)
 
 
@@ -633,6 +635,8 @@ fun EntityCard(
     meta: List<String> = emptyList(),
     confidence: String? = null,
     onClick: (() -> Unit)? = null,
+    selected: Boolean = false,
+    onSelect: (() -> Unit)? = null,
     index: Int = 0,
     animate: Boolean = false
 ) {
@@ -670,8 +674,14 @@ fun EntityCard(
                     if (onClick != null) Modifier.expressiveCardPress(liftDp = 1.5f, scaleDown = 0.985f)
                     else Modifier
                 )
-                .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier),
-            shape = RoundedCornerShape(24.dp),
+            .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
+            .then(
+                if (selected) Modifier
+                    .border(1.5.dp, accent.copy(alpha = 0.6f), RoundedCornerShape(24.dp))
+                    .background(accent.copy(alpha = 0.06f), RoundedCornerShape(24.dp))
+                else Modifier
+            ),
+        shape = RoundedCornerShape(24.dp),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
             elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
         ) {
