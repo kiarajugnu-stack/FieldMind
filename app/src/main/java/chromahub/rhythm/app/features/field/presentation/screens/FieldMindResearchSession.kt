@@ -56,6 +56,7 @@ import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbo
 import fieldmind.research.app.features.field.data.vision.SpeciesClassifier
 import fieldmind.research.app.features.field.data.vision.SpeciesDatabase
 import fieldmind.research.app.features.field.data.vision.SpeciesMatch
+import fieldmind.research.app.features.field.data.vision.SpeciesRecord
 import fieldmind.research.app.features.field.presentation.screens.species.SpeciesIdentificationSheet
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -262,13 +263,10 @@ fun ResearchSessionScreen(
     // ── Look up full species record when speciesName changes ──
     LaunchedEffect(speciesName) {
         if (speciesName.isNotBlank() && speciesName != selectedSpeciesRecord?.commonName) {
-            val db = speciesDatabase
-            if (db != null) {
-                val results = db.search(speciesName, limit = 5)
-                selectedSpeciesRecord = results.firstOrNull {
-                    it.commonName.equals(speciesName, ignoreCase = true) ||
+            val results = speciesDatabase.search(speciesName, limit = 5)
+            selectedSpeciesRecord = results.firstOrNull {
+                it.commonName.equals(speciesName, ignoreCase = true) ||
                     it.scientificName.equals(speciesName, ignoreCase = true)
-                }
             }
         } else if (speciesName.isBlank()) {
             selectedSpeciesRecord = null
