@@ -217,8 +217,6 @@ private fun ResearchHubOverviewTab(
     // Computed metrics
     val totalProjects = projects.size
     val totalObs = observations.size
-    val obsThisWeek = observations.count { it.timestamp > System.currentTimeMillis() - 7 * 24 * 3600_000L }
-    val obsThisMonth = observations.count { it.timestamp > System.currentTimeMillis() - 30 * 24 * 3600_000L }
     val uniqueSites = observations.mapNotNull { it.manualLocation.ifBlank { if (it.latitude != null && it.longitude != null) "${it.latitude},${it.longitude}" else null } }.distinct().size
     val openQuestions = questions.count { it.answer.isBlank() }
     val supportedHypotheses = hypotheses.count { it.resultStatus.equals("Supported", true) }
@@ -226,7 +224,6 @@ private fun ResearchHubOverviewTab(
     val untestedHypotheses = hypotheses.size - supportedHypotheses - refutedHypotheses
     val totalFieldHours = researchSessions.sumOf { it.totalDurationMs } / 3600_000.0
     val totalSessions = researchSessions.size
-    val totalObsInSessions = researchSessions.sumOf { it.observationCount }
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -255,7 +252,7 @@ private fun ResearchHubOverviewTab(
         }
 
         // ── 2. Dashboard Metrics ──
-        item { ResearchHubDashboard(totalObs, obsThisWeek, obsThisMonth, uniqueSites, openQuestions, supportedHypotheses, refutedHypotheses, untestedHypotheses, totalFieldHours, totalSessions, totalObsInSessions) }
+        item { ResearchHubDashboard(totalObs, uniqueSites, openQuestions, supportedHypotheses, refutedHypotheses, untestedHypotheses, totalFieldHours, totalSessions) }
 
         // ── 3. New Project Button + Templates + Types ──
         item {
@@ -389,9 +386,9 @@ private fun ResearchHubOverviewTab(
 
 @Composable
 private fun ResearchHubDashboard(
-    totalObs: Int, obsThisWeek: Int, obsThisMonth: Int, uniqueSites: Int,
+    totalObs: Int, uniqueSites: Int,
     openQuestions: Int, supportedHyp: Int, refutedHyp: Int, untestedHyp: Int,
-    totalFieldHours: Double, totalSessions: Int, totalObsInSessions: Int
+    totalFieldHours: Double, totalSessions: Int
 ) {
     Card(
         shape = RoundedCornerShape(24.dp),
@@ -405,23 +402,19 @@ private fun ResearchHubDashboard(
             }
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
                 DashboardMetric(totalObs.toString(), "Total obs", FieldMindTheme.colors.observation)
-                DashboardMetric(obsThisWeek.toString(), "This week", MaterialTheme.colorScheme.primary)
-                DashboardMetric(obsThisMonth.toString(), "This month", MaterialTheme.colorScheme.secondary)
                 DashboardMetric(uniqueSites.toString(), "Sites", FieldMindTheme.colors.info)
-            }
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
                 DashboardMetric(openQuestions.toString(), "Open Qs", FieldMindTheme.colors.question)
-                DashboardMetric(supportedHyp.toString(), "Supported", FieldMindTheme.colors.positive)
-                DashboardMetric(refutedHyp.toString(), "Refuted", MaterialTheme.colorScheme.error)
-                DashboardMetric(untestedHyp.toString(), "Untested", MaterialTheme.colorScheme.onSurfaceVariant)
-            }
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
                 DashboardMetric("%.1f".format(totalFieldHours), "Field hours", FieldMindTheme.colors.warning)
                 DashboardMetric(totalSessions.toString(), "Sessions", FieldMindTheme.colors.data)
-                DashboardMetric(totalObsInSessions.toString(), "Session obs", FieldMindTheme.colors.observation)
             }
+            Spacer(Modifier.height(4.dp))
+            Text(
+                "Hypotheses: $supportedHyp supported · $refutedHyp refuted · $untestedHyp untested",
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.fillMaxWidth(),
+                textAlign = TextAlign.Center
+            )
         }
     }
 }
