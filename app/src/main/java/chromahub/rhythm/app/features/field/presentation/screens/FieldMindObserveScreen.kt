@@ -49,6 +49,7 @@ import fieldmind.research.app.features.field.data.location.CapturedLocation
 import fieldmind.research.app.features.field.data.location.FieldLocationProvider
 import fieldmind.research.app.features.field.data.vision.SpeciesClassifier
 import fieldmind.research.app.features.field.data.vision.SpeciesDatabase
+import fieldmind.research.app.features.field.data.vision.SpeciesImageAnalyzer
 import fieldmind.research.app.features.field.data.vision.SpeciesMatch
 import fieldmind.research.app.features.field.presentation.screens.species.SpeciesIdentificationSheet
 import fieldmind.research.app.features.field.presentation.viewmodel.FieldMindViewModel
@@ -159,7 +160,8 @@ fun ObserveScreen(
 
     // ── Species identification state ──
     val speciesDatabase = remember { SpeciesDatabase(context) }
-    val speciesClassifier = remember { SpeciesClassifier(context, speciesDatabase) }
+    val speciesImageAnalyzer = remember { SpeciesImageAnalyzer(context) }
+    val speciesClassifier = remember { SpeciesClassifier(context, speciesDatabase, speciesImageAnalyzer) }
     var showSpeciesId by remember { mutableStateOf(false) }
     var speciesIdImageUri by remember { mutableStateOf<String?>(null) }
     var identifiedSpecies by remember { mutableStateOf<SpeciesMatch?>(null) }
