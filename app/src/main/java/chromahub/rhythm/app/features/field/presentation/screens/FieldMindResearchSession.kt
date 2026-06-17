@@ -9,6 +9,7 @@ import android.content.pm.PackageManager
 import android.media.MediaRecorder
 import android.net.Uri
 import android.os.Build
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -326,6 +327,57 @@ fun ResearchSessionScreen(
         }
     }
 
+    // ── Back handler with Save & Exit confirmation ──
+    var showExitConfirm by remember { mutableStateOf(false) }
+
+    BackHandler(enabled = true) {
+        if (sessionActive) {
+            showExitConfirm = true
+        } else {
+            onBack()
+        }
+    }
+
+    if (showExitConfirm) {
+        AlertDialog(
+            onDismissRequest = { showExitConfirm = false },
+            icon = { Icon(icon = FieldMindIcons.Bolt, contentDescription = null, size = 28.dp) },
+            title = { Text("Active research session") },
+            text = {
+                Text(
+                    "You have an active session with $observationCount observation${if (observationCount != 1) "s" else ""} and ${formatTime(sessionElapsedMs)} elapsed. What would you like to do?",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showExitConfirm = false
+                        endSession()
+                        onBack()
+                    },
+                    shape = RoundedCornerShape(14.dp)
+                ) { Text("Save and exit") }
+            },
+            dismissButton = {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    TextButton(onClick = {
+                        sessionActive = false
+                        activeSessionId?.let { viewModel.endResearchSession(it, observationCount, sessionElapsedMs) }
+                        cancelResearchSessionNotification(context)
+                        showExitConfirm = false
+                        onBack()
+                    }) {
+                        Text("Discard", color = MaterialTheme.colorScheme.error)
+                    }
+                    TextButton(onClick = { showExitConfirm = false }) {
+                        Text("Keep editing")
+                    }
+                }
+            }
+        )
+    }
+
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
@@ -340,7 +392,13 @@ fun ResearchSessionScreen(
                     "Capture multiple observations with a running timer.",
                     icon = FieldMindIcons.Bolt,
                     actionIcon = FieldMindIcons.Back,
-                    onAction = onBack
+                    onAction = {
+                        if (sessionActive) {
+                            showExitConfirm = true
+                        } else {
+                            onBack()
+                        }
+                    }
                 )
             }
 
