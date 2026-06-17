@@ -350,6 +350,8 @@ private fun ResearchHubOverviewTab(
             iconProvider = { name -> projectTemplates.firstOrNull { it.name == name }?.icon }
         )
     }
+    if (showNewProject) {
+        NewProjectDialog(
             viewModel = viewModel,
             initialTitle = projTitle,
             initialTopic = projCategory,
