@@ -1380,13 +1380,20 @@ fun SpeciesPackSettingsPage(onBack: () -> Unit) {
                                         downloadingId = pack.regionId
                                         downloadProgress = 0f
                                         scope.launch {
-                                            val success = database.downloadPack(pack.regionId)
+                                            val result = runCatching {
+                                                database.downloadPack(pack.regionId)
+                                            }
                                             downloadingId = null
                                             refreshPacks()
-                                            snackbar.showSnackbar(
-                                                if (success) "${pack.regionName} pack downloaded"
-                                                else "Download failed. Check your connection and try again."
-                                            )
+                                            if (result.isSuccess) {
+                                                snackbar.showSnackbar("${pack.regionName} pack downloaded")
+                                            } else {
+                                                val errorMsg = result.exceptionOrNull()?.message
+                                                    ?: "Unknown error"
+                                                snackbar.showSnackbar(
+                                                    "Download failed: $errorMsg"
+                                                )
+                                            }
                                         }
                                     },
                                     modifier = Modifier.weight(1f),

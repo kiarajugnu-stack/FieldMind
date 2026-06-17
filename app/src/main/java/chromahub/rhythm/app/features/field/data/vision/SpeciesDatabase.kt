@@ -237,53 +237,34 @@ class SpeciesDatabase(private val context: Context) {
      * Download a regional pack (model + labels) from the configured URLs.
      * Saves files to the app's internal storage and persists download state.
      *
+     * On failure this throws a descriptive exception so the caller can show
+     * the exact error (HTTP code, connection refused, etc.) instead of a
+     * misleading "downloaded" message.
+     *
      * @param regionId The region ID to download (e.g. "na", "eu").
-     * @return true if download succeeded, false otherwise.
+     * @throws Exception with the HTTP or connection error detail.
      */
+    @Throws(Exception::class)
     suspend fun downloadPack(regionId: String): Boolean = withContext(Dispatchers.IO) {
-        val pack = REGIONAL_PACKS.firstOrNull { it.regionId == regionId } ?: return@withContext false
+        val pack = REGIONAL_PACKS.firstOrNull { it.regionId == regionId }
+            ?: throw IllegalArgumentException("Unknown region: $regionId")
         val dir = File(context.filesDir, "$DOWNLOAD_DIR/$regionId")
         dir.mkdirs()
 
-        try {
-            // Download model file
-            val modelFile = File(dir, "model.tflite")
-            downloadFile(pack.modelUrl, modelFile) { downloaded, total ->
-                progressListener?.invoke(regionId, downloaded, total)
-            }
-
-            // Download labels file
-            val labelsFile = File(dir, "labels.txt")
-            downloadFile(pack.labelsUrl, labelsFile) { downloaded, total ->
-                progressListener?.invoke(regionId, downloaded, total)
-            }
-
-            markPackDownloaded(regionId, true)
-            true
-        } catch (e: Exception) {
-            // The public model host is optional during development/offline builds. Keep the
-            // pack action useful by installing a tiny metadata-only fallback instead of
-            // surfacing a generic connection failure. Species search and labels become
-            // available immediately; classifier code can ignore the placeholder model.
-            runCatching { installMetadataOnlyPack(pack, dir) }
-                .onSuccess { markPackDownloaded(regionId, true) }
-                .isSuccess
+        // Download model file
+        val modelFile = File(dir, "model.tflite")
+        downloadFile(pack.modelUrl, modelFile) { downloaded, total ->
+            progressListener?.invoke(regionId, downloaded, total)
         }
-    }
 
-    /** Install a metadata-only regional pack when the remote model files are unavailable. */
-    private suspend fun installMetadataOnlyPack(pack: RegionalPack, dir: File) = withContext(Dispatchers.IO) {
-        dir.mkdirs()
-        File(dir, "model.tflite").writeText("FieldMind metadata-only placeholder for ${pack.regionName}.\n")
-        val labels = getCatalog().take(500).joinToString("\n") { it.commonName.ifBlank { it.scientificName } }
-        File(dir, "labels.txt").writeText(
-            listOf(
-                "# ${pack.regionName} metadata-only species pack",
-                "# Remote model unavailable; using bundled species labels until an updated pack host is configured.",
-                labels
-            ).joinToString("\n")
-        )
-        progressListener?.invoke(pack.regionId, pack.downloadSizeMb.toLong(), pack.downloadSizeMb.toLong())
+        // Download labels file
+        val labelsFile = File(dir, "labels.txt")
+        downloadFile(pack.labelsUrl, labelsFile) { downloaded, total ->
+            progressListener?.invoke(regionId, downloaded, total)
+        }
+
+        markPackDownloaded(regionId, true)
+        true
     }
 
     /**
