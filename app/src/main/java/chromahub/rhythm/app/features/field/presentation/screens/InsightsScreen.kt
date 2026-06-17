@@ -460,13 +460,13 @@ fun InsightsScreen(
             if (questions.isNotEmpty()) {
                 item { SectionHeader("Open questions", "${questions.count { it.status != "Answered" }} unanswered") }
                 items(questions.filter { it.status != "Answered" }.take(5)) { q ->
-                    EntityCard(q.questionText, "question", meta = listOf(q.status, q.priority)) { onOpenDetail("question", q.id) }
+                    EntityCard(q.questionText, "question", meta = listOf(q.status, q.priority), onClick = { onOpenDetail("question", q.id) })
                 }
             }
             if (projects.isNotEmpty()) {
                 item { SectionHeader("Active projects", "${projects.count { it.status == "Active" }} active") }
                 items(projects.filter { it.status == "Active" }.take(4)) { p ->
-                    EntityCard(p.title, "project", body = p.objective.ifBlank { p.researchQuestion }, meta = listOf(p.status, p.topicType)) { onOpenDetail("project", p.id) }
+                    EntityCard(p.title, "project", body = p.objective.ifBlank { p.researchQuestion }, meta = listOf(p.status, p.topicType), onClick = { onOpenDetail("project", p.id) })
                 }
             }
 

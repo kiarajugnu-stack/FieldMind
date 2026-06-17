@@ -1765,7 +1765,7 @@ private fun RecentActivityGroupCard(group: List<RecentEntry>, onOpenDetail: (Str
             AnimatedVisibility(expanded) {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     group.drop(1).forEach { entry ->
-                        EntityCard(entry.title, entry.kind, body = entry.sub, meta = listOf(recentRelativeTime(entry.time))) { onOpenDetail(entry.kind, entry.id) }
+                        EntityCard(entry.title, entry.kind, body = entry.sub, meta = listOf(recentRelativeTime(entry.time)), onClick = { onOpenDetail(entry.kind, entry.id) })
                     }
                 }
             }

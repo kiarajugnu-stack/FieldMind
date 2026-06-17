@@ -5,7 +5,6 @@ import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.keyframes
 import androidx.compose.animation.fadeIn
@@ -47,6 +46,7 @@ import fieldmind.research.app.features.field.presentation.viewmodel.FieldMindVie
 import fieldmind.research.app.shared.data.model.AppSettings
 import fieldmind.research.app.shared.presentation.components.icons.Icon
 import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon
+import fieldmind.research.app.features.field.presentation.components.FieldMindMotion
 
 private fun formatElapsed(startedAt: Long): String {
     val ms = System.currentTimeMillis() - startedAt
@@ -110,8 +110,6 @@ sealed class FieldMindScreen(val route: String, val label: String, val icon: Mat
     data object SpeciesBrowser : FieldMindScreen("field_species_browser", "Species Browser", FieldMindIcons.Nature)
     data object TaxonomicBrowser : FieldMindScreen("field_taxonomic_browser", "Taxonomic Browser", FieldMindIcons.Category)
 }
-
-import fieldmind.research.app.features.field.presentation.components.FieldMindMotion
 
 private const val NavTransitionDurationMillis = 180
 
@@ -295,8 +293,8 @@ private fun AnimatedNavIcon(screen: FieldMindScreen, selected: Boolean) {
         label = "navIconAlpha"
     )
     val tint by animateColorAsState(
-        if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
-        FieldMindMotion.fadeTween,
+        targetValue = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+        animationSpec = tween(durationMillis = FieldMindMotion.durationSubtle),
         label = "navIconTint"
     )
     Icon(

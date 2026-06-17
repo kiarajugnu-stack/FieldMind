@@ -210,6 +210,7 @@ fun DetailScreen(
         deleteEntityByKind(kind, id, viewModel); showDelete = false; onBack()
     }
 }
+}
 
 // ══════════════════════════════════════════════════════════════════════
 //  Entity-Specific Detail Content
@@ -217,7 +218,7 @@ fun DetailScreen(
 
 @Composable
 @OptIn(ExperimentalLayoutApi::class)
-private fun ObservationDetailContent(
+fun ObservationDetailContent(
     o: ObservationEntity,
     viewModel: FieldMindViewModel,
     onOpenReader: (String, String) -> Unit,
@@ -391,15 +392,7 @@ private fun ObservationDetailContent(
         }
     }
     
-    // Export menu dialog removed — export is handled inline in ObservationExportSection}
-}
-        FieldMindSnackbarOverlay(
-            hostState = detailSnackbar,
-            modifier = Modifier
-                .align(Alignment.TopCenter)
-                .padding(top = 8.dp, start = 16.dp, end = 16.dp)
-        )
-    } // end Box
+    // Export menu dialog removed — export is handled inline in ObservationExportSection
 }
 
 @Composable
@@ -1625,7 +1618,7 @@ private fun ProjectDetailContent(
                         projectObs.take(5).forEach { o ->
                             EntityCard(o.subject.ifBlank { "Observation" }, "observation",
                                 body = "${o.category} • ${o.date}",
-                                meta = listOf(o.confidenceLevel)) { }
+                                meta = listOf(o.confidenceLevel))
                         }
                         if (projectObs.size > 5) {
                             Text("+${projectObs.size - 5} more observations", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -1644,7 +1637,7 @@ private fun ProjectDetailContent(
                         Text("No reports for this project.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     } else {
                         projectReports.forEach { r ->
-                            EntityCard(r.title, "report", body = r.conclusion.ifBlank { r.question }, meta = listOf(r.type, r.status)) { }
+                            EntityCard(r.title, "report", body = r.conclusion.ifBlank { r.question }, meta = listOf(r.type, r.status))
                         }
                     }
                 }
@@ -1653,7 +1646,7 @@ private fun ProjectDetailContent(
                         Text("No sources linked to this project.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     } else {
                         projectSrcs.forEach { s ->
-                            EntityCard(s.title, "source", body = s.author, meta = listOf(s.type, s.readingStatus)) { }
+                            EntityCard(s.title, "source", body = s.author, meta = listOf(s.type, s.readingStatus))
                         }
                     }
                 }

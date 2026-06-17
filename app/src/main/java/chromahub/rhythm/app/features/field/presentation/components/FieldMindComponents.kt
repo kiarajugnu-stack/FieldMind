@@ -641,7 +641,7 @@ fun EntityCard(
     var visible by remember { mutableStateOf(!animate) }
     LaunchedEffect(animate, index) {
         if (animate) {
-            delay(FieldMindMotion.staggerDelay(index))
+            delay(FieldMindMotion.staggerDelay(index).toLong())
             visible = true
         }
     }
@@ -649,14 +649,22 @@ fun EntityCard(
     AnimatedVisibility(
         visible = visible,
         enter = slideInVertically(
-            animationSpec = FieldMindMotion.entranceSpec(FieldMindMotion.Emphasis.Standard),
+            animationSpec = spring(
+                dampingRatio = androidx.compose.animation.core.Spring.DampingRatioNoBouncy,
+                stiffness = androidx.compose.animation.core.Spring.StiffnessMediumLow
+            ),
             initialOffsetY = { it / 3 }
         ) + fadeIn(animationSpec = tween(FieldMindMotion.durationSubtle))
     ) {
         Card(
             modifier = modifier
                 .fillMaxWidth()
-                .animateContentSize(animationSpec = FieldMindMotion.layoutSpring)
+                .animateContentSize(
+                    animationSpec = spring(
+                        dampingRatio = androidx.compose.animation.core.Spring.DampingRatioNoBouncy,
+                        stiffness = androidx.compose.animation.core.Spring.StiffnessLow
+                    )
+                )
                 .then(
                     if (onClick != null) Modifier.expressiveCardPress(liftDp = 1.5f, scaleDown = 0.985f)
                     else Modifier

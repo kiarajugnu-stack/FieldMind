@@ -1162,7 +1162,7 @@ private fun SettingsTileGroup(title: String, content: @Composable ColumnScope.()
 fun SpeciesPackSettingsPage(onBack: () -> Unit) {
     val context = LocalContext.current
     val database = remember { SpeciesDatabase(context) }
-    val scopeCoroutine = rememberCoroutineScope()
+    val scope = rememberCoroutineScope()
     val haptics = rememberFieldMindHaptics()
     val snackbar = remember { SnackbarHostState() }
 

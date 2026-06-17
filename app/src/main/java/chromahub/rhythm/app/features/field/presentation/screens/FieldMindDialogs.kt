@@ -378,6 +378,8 @@ internal fun NewProjectDialog(
         DialogDividerSection("Topic & title", FieldMindIcons.Category, FieldMindTheme.colors.project)
         FieldTextField(title, { title = it }, "Project title")
         ChoiceChipsField("Topic", listOf("Biology", "Geology", "Wildlife", "Ecology", "Plant Study", "Weather", "Human Pattern", "Other"), topic) { topic = it }
+        DialogDividerSection("Project type", FieldMindIcons.Category, FieldMindTheme.colors.project)
+        OptionPickerField(label = "Type", selected = projectType, options = (listOf("Observation", "Experiment", "Literature Review", "Field Survey", "Long-term Monitor") + researchProjectTypes).distinct(), onSelected = { projectType = it }, icon = FieldMindIcons.Category)
         DialogDividerSection("Research purpose", FieldMindIcons.School, FieldMindTheme.colors.project)
         FieldTextField(objective, { objective = it }, "Objective", minLines = 2)
         FieldTextField(question, { question = it }, "Research question", minLines = 2)
@@ -390,8 +392,7 @@ internal fun NewProjectDialog(
         FieldTextField(analysis, { analysis = it }, "Analysis plan", minLines = 2)
         FieldTextField(conclusion, { conclusion = it }, "Early conclusion / expected output", minLines = 2)
         FieldTextField(nextAction, { nextAction = it }, "Next action", supportingText = "Example: observe the same site at sunset for 3 days")
-        CollapsibleSection("Advanced options", "Project type, methods, and connection map", expanded = showAdvanced, onToggle = { showAdvanced = !showAdvanced }) {
-            ChoiceChipsField("Project type", (listOf("Observation", "Experiment", "Literature Review", "Field Survey", "Long-term Monitor") + researchProjectTypes).distinct(), projectType) { projectType = it }
+        CollapsibleSection("Advanced options", "Methods, connection map, and tags", expanded = showAdvanced, onToggle = { showAdvanced = !showAdvanced }) {
             FieldTextField(selectedMethods, { selectedMethods = it }, "Selected methods", supportingText = "e.g. transect, quadrat, interview, water test")
             FieldTextField(connectionMap, { connectionMap = it }, "Connection map", minLines = 2, supportingText = "How this project relates to other observations or projects")
             FieldTextField(tags, { tags = it }, "Template tags", supportingText = "Comma-separated tags copied from the selected template")
