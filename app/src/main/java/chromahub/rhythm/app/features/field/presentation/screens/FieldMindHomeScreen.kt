@@ -216,6 +216,20 @@ fun HomeScreen(
         homeCurrentWeather?.let { computeFieldworkNudge(it) } ?: ""
     }
 
+    // ── Live session timer (hoisted outside LazyColumn for @Composable context) ──
+    val activeSession = researchSessions.firstOrNull { it.status == "Active" }
+    var liveTimerMs by remember(activeSession?.startedAt) { mutableLongStateOf(0L) }
+    LaunchedEffect(activeSession?.startedAt) {
+        if (activeSession != null) {
+            while (true) {
+                liveTimerMs = System.currentTimeMillis() - activeSession.startedAt
+                delay(1000)
+            }
+        } else {
+            liveTimerMs = 0L
+        }
+    }
+
     Box(Modifier.fillMaxSize()) {
         LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(20.dp, 0.dp, 20.dp, 96.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
             // ── Hero Section ──
@@ -255,19 +269,6 @@ fun HomeScreen(
             item { DailyGoalCard(todayCount, goal, currentStreak, deltaLabel) { onNavigate(FieldMindScreen.Observe) } }
 
             // ── Research Session CTA ──
-            // ── Live session timer ──
-            val activeSession = researchSessions.firstOrNull { it.status == "Active" }
-            var liveTimerMs by remember(activeSession?.startedAt) { mutableLongStateOf(0L) }
-            LaunchedEffect(activeSession?.startedAt) {
-                if (activeSession != null) {
-                    while (true) {
-                        liveTimerMs = System.currentTimeMillis() - activeSession.startedAt
-                        delay(1000)
-                    }
-                } else {
-                    liveTimerMs = 0L
-                }
-            }
             item { ResearchSessionCtaCard(
                     lastSessionLabel = if (lastSession != null) "Resume your last session" else null,
                     activeSessionName = activeSession?.name,
