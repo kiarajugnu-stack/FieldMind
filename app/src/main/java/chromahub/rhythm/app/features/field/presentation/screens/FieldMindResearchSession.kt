@@ -126,6 +126,11 @@ fun ResearchSessionScreen(
     var quickWeather by remember { mutableStateOf<WeatherSnapshot?>(null) }
     var captureStatus by remember { mutableStateOf("Ready") }
 
+    // ── Metadata auto-fetch confirmation ──
+    var showMetadataConfirm by remember { mutableStateOf(false) }
+    var metadataAutoFetching by remember { mutableStateOf(false) }
+    var metadataStatus by remember { mutableStateOf("Ready") }
+
     // ── Species identification state ──
     val speciesDatabase = remember { SpeciesDatabase(context) }
     val speciesClassifier = remember { SpeciesClassifier(context, speciesDatabase) }
@@ -255,6 +260,37 @@ fun ResearchSessionScreen(
         return listOfNotNull(categoryHint, project?.title).joinToString(" • ").ifBlank { "Field session" } + " · $time"
     }
 
+    fun performAutoFetch() {
+        metadataAutoFetching = true
+        metadataStatus = "Acquiring GPS…"
+        locationProvider.requestCurrentLocation { captured ->
+            quickLocation = captured
+            if (captured == null) {
+                metadataStatus = "GPS unavailable — check permissions"
+                metadataAutoFetching = false
+                snackbarHelper.show(metadataStatus)
+                return@requestCurrentLocation
+            }
+            metadataStatus = "GPS acquired — fetching weather…"
+            captureStatus = captured.asDisplayText()
+            locationProvider.resolvePlaceName(captured.latitude, captured.longitude) { place ->
+                quickPlaceName = place.orEmpty()
+            }
+            scope.launch {
+                val snapshot = viewModel.fetchWeatherSnapshot(captured.latitude, captured.longitude)
+                quickWeather = snapshot
+                if (snapshot != null) {
+                    viewModel.saveWeatherSnapshot(snapshot, captured.latitude, captured.longitude)
+                    metadataStatus = "GPS + Weather acquired"
+                    snackbarHelper.show("Weather: ${snapshot.temperature}°C, ${snapshot.condition}")
+                } else {
+                    metadataStatus = "GPS acquired, weather unavailable"
+                }
+                metadataAutoFetching = false
+            }
+        }
+    }
+
     fun startSession() {
         val name = sessionName.ifBlank { smartSessionName() }
         sessionCreating = true
@@ -269,6 +305,8 @@ fun ResearchSessionScreen(
         }
         showResearchSessionNotification(context, name, "Research session is running")
         haptics.confirm()
+        // Show metadata auto-fetch confirmation
+        showMetadataConfirm = true
     }
 
     fun endSession() {
@@ -534,8 +572,86 @@ fun ResearchSessionScreen(
                         Text(captureStatus + if (quickAttachments.isNotEmpty()) " • ${quickAttachments.size} attachment${if (quickAttachments.size == 1) "" else "s"}" else "", modifier = Modifier.padding(horizontal = 20.dp, vertical = 4.dp), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.78f))
                     }
                 }
+
+                // ── Metadata Auto-Fetch Confirmation Card ──
+                if (showMetadataConfirm) {
+                    item {
+                        SessionMetadataConfirmCard(
+                            onConfirm = {
+                                showMetadataConfirm = false
+                                performAutoFetch()
+                            },
+                            onSkip = {
+                                showMetadataConfirm = false
+                                metadataStatus = "Skipped — use GPS/Weather buttons"
+                            }
+                        )
+                    }
+                }
+
+                // ── Location & Weather Status (MOVED TO TOP) ──
+                item {
+                    Card(
+                        shape = RoundedCornerShape(24.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                    ) {
+                        Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Icon(FieldMindIcons.Info, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, size = 18.dp)
+                                Column(Modifier.weight(1f)) {
+                                    Text("Location & weather", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                                    if (metadataAutoFetching) {
+                                        Text(metadataStatus, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
+                                    }
+                                }
+                                if (quickLocation == null && !metadataAutoFetching) {
+                                    Surface(
+                                        onClick = { performAutoFetch() },
+                                        shape = RoundedCornerShape(12.dp),
+                                        color = FieldMindTheme.colors.info.copy(alpha = 0.12f)
+                                    ) {
+                                        Row(Modifier.padding(horizontal = 12.dp, vertical = 6.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                                            Icon(FieldMindIcons.Weather, null, tint = FieldMindTheme.colors.info, size = 16.dp)
+                                            Text("Fetch all", style = MaterialTheme.typography.labelSmall, color = FieldMindTheme.colors.info, fontWeight = FontWeight.SemiBold)
+                                        }
+                                    }
+                                }
+                            }
+                            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                                SessionMetaChip(
+                                    label = "GPS",
+                                    acquired = quickLocation != null,
+                                    detail = quickLocation?.let { "${it.accuracyMeters?.toInt() ?: "?"}m" } ?: "Tap to fetch",
+                                    icon = FieldMindIcons.Location,
+                                    accent = if (quickLocation != null) FieldMindTheme.colors.positive else FieldMindTheme.colors.warning,
+                                    onTap = if (quickLocation == null && !metadataAutoFetching) { { fetchSessionLocation(fetchWeather = false) } } else null,
+                                    modifier = Modifier.weight(1f)
+                                )
+                                SessionMetaChip(
+                                    label = "Weather",
+                                    acquired = quickWeather != null,
+                                    detail = quickWeather?.let { "${it.temperature}°C" } ?: "Tap to fetch",
+                                    icon = FieldMindIcons.Weather,
+                                    accent = if (quickWeather != null) FieldMindTheme.colors.positive else FieldMindTheme.colors.warning,
+                                    onTap = if (quickLocation != null && quickWeather == null && !metadataAutoFetching) {
+                                        { fetchSessionLocation(fetchWeather = true) }
+                                    } else null,
+                                    modifier = Modifier.weight(1f)
+                                )
+                                SessionMetaChip(
+                                    label = "Time",
+                                    acquired = true,
+                                    icon = FieldMindIcons.Calendar,
+                                    accent = FieldMindTheme.colors.positive,
+                                    modifier = Modifier.weight(1f)
+                                )
+                            }
+                        }
+                    }
+                }
                 
-                // ── Evidence Tools — separate box below the session timer ──
+                // ── Evidence Tools — separate box below metadata ──
                 item {
                     Card(
                         shape = RoundedCornerShape(28.dp),
@@ -571,7 +687,7 @@ fun ResearchSessionScreen(
                                     modifier = Modifier.weight(1f)
                                 )
                             }
-                            // Row 2: Audio, GPS, Weather
+                            // Row 2: Audio only (GPS/Weather moved to metadata card)
                             Row(
                                 Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -735,6 +851,112 @@ fun ResearchSessionScreen(
     }
 }
 
+
+// ══════════════════════════════════════════════════════════════════════
+//  Session Metadata Confirm Card — Shown on session start
+// ══════════════════════════════════════════════════════════════════════
+
+@Composable
+private fun SessionMetadataConfirmCard(
+    onConfirm: () -> Unit,
+    onSkip: () -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Column(
+            Modifier.padding(18.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                Box(
+                    Modifier.size(40.dp).clip(RoundedCornerShape(12.dp))
+                        .background(FieldMindTheme.colors.info.copy(alpha = 0.14f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(FieldMindIcons.Weather, null, tint = FieldMindTheme.colors.info, size = 22.dp)
+                }
+                Column(Modifier.weight(1f)) {
+                    Text("Acquire location & weather?", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    Text("Auto-fetch GPS coordinates and current weather for this session.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                OutlinedButton(
+                    onClick = onSkip,
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(14.dp)
+                ) {
+                    Text("Skip", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                Button(
+                    onClick = onConfirm,
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(14.dp)
+                ) {
+                    Icon(FieldMindIcons.Location, null, size = 18.dp)
+                    Spacer(Modifier.size(6.dp))
+                    Text("Fetch now")
+                }
+            }
+        }
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════════
+//  Session Meta Chip — Compact metadata status chip
+// ══════════════════════════════════════════════════════════════════════
+
+@Composable
+private fun SessionMetaChip(
+    label: String,
+    acquired: Boolean,
+    detail: String = "",
+    icon: MaterialSymbolIcon,
+    accent: androidx.compose.ui.graphics.Color,
+    onTap: (() -> Unit)? = null,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        onClick = { if (onTap != null) onTap() },
+        shape = RoundedCornerShape(14.dp),
+        color = if (acquired) accent.copy(alpha = 0.12f) else MaterialTheme.colorScheme.surfaceContainerHigh,
+        tonalElevation = 0.dp,
+        modifier = modifier
+    ) {
+        Column(
+            Modifier.padding(10.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            Icon(
+                icon,
+                null,
+                tint = if (acquired) accent else MaterialTheme.colorScheme.onSurfaceVariant,
+                size = 20.dp
+            )
+            Text(
+                label,
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.SemiBold,
+                color = if (acquired) accent else MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Text(
+                detail,
+                style = MaterialTheme.typography.labelSmall,
+                color = if (acquired) accent.copy(alpha = 0.7f) else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+            )
+        }
+    }
+}
 
 private const val RESEARCH_SESSION_CHANNEL_ID = "fieldmind_research_session"
 private const val RESEARCH_SESSION_NOTIFICATION_ID = 4107

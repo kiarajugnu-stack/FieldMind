@@ -201,6 +201,63 @@ class FieldMindViewModel(application: Application) : AndroidViewModel(applicatio
 
     fun attachmentsForObservation(id: Long) = repository.observeAttachmentsForObservation(id)
 
+    // ── Weather Catalog ──
+    fun observeWeatherCatalog(lat: Double, lon: Double) = repository.observeWeatherCatalog(lat, lon)
+    fun observeWeatherCatalogAll() = repository.observeWeatherCatalogAll()
+
+    /**
+     * Fetches weather for the given location and saves it to the offline weather catalog
+     * so it can be reused in observation sessions without re-fetching.
+     * Returns the fetched snapshot, or cached snapshot if already available.
+     */
+    suspend fun fetchAndSaveWeatherSnapshot(
+        latitude: Double,
+        longitude: Double,
+        forceRefresh: Boolean = false,
+        placeName: String = ""
+    ): WeatherSnapshot? {
+        val snapshot = fetchWeatherSnapshot(latitude, longitude)
+        if (snapshot != null) {
+            repository.addWeatherCatalog(
+                WeatherCatalogEntity(
+                    latitude = latitude,
+                    longitude = longitude,
+                    temperature = snapshot.temperature,
+                    weatherCode = snapshot.weatherCode,
+                    weatherDescription = snapshot.weatherDescription,
+                    humidity = snapshot.humidity,
+                    windSpeed = snapshot.windSpeed,
+                    windDirection = snapshot.windDirection,
+                    cloudCover = snapshot.cloudCover,
+                    pressure = snapshot.pressure,
+                    sunrise = snapshot.sunrise,
+                    sunset = snapshot.sunset,
+                    placeName = placeName,
+                    fetchedAt = snapshot.fetchedAt
+                )
+            )
+        }
+        return snapshot
+    }
+
+    /**
+     * Fetches GPS location, then fetches weather and saves to catalog.
+     * Returns (location, weather) pair.
+     */
+    suspend fun fetchLocationAndWeather(
+        locationProvider: fieldmind.research.app.features.field.data.location.FieldLocationProvider,
+        forceRefresh: Boolean = false
+    ): Pair<fieldmind.research.app.features.field.data.location.CapturedLocation?, WeatherSnapshot?> {
+        val captured = suspendCancellableCoroutine<fieldmind.research.app.features.field.data.location.CapturedLocation?> { cont ->
+            locationProvider.requestCurrentLocation { loc ->
+                if (cont.isActive) cont.resume(loc)
+            }
+        }
+        if (captured == null) return null to null
+        val weather = fetchAndSaveWeatherSnapshot(captured.latitude, captured.longitude, forceRefresh, captured.placeName ?: "")
+        return captured to weather
+    }
+
     fun addQuestion(question: String, category: String, sourceType: String, status: String, priority: String, observationId: Long? = null, sourceId: Long? = null, projectId: Long? = null, answer: String = "") = viewModelScope.launch {
         val trimmedAnswer = answer.trim()
         val id = repository.addQuestion(QuestionEntity(questionText = question.trim(), category = category, sourceType = sourceType, status = status, priority = priority, relatedProjectId = projectId, answer = trimmedAnswer))
