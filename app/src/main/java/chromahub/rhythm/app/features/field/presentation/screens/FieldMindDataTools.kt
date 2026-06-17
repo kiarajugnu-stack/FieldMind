@@ -661,7 +661,9 @@ fun WeatherLogToolScreen(
 @Composable
 fun SpeciesToolScreen(
     viewModel: FieldMindViewModel,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    onOpenBrowser: () -> Unit = {},
+    onOpenTaxonomicBrowser: () -> Unit = {}
 ) {
     val snackbar = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
@@ -821,7 +823,32 @@ fun SpeciesToolScreen(
                     }
                 }
 
-                // ── Save ──
+                // ── Browse species catalog ──
+                item {
+                    OutlinedButton(
+                        onClick = onOpenBrowser,
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp)
+                    ) {
+                        Icon(FieldMindIcons.Nature, null, size = 18.dp)
+                        Spacer(Modifier.size(8.dp))
+                        Text("Browse species catalog")
+                    }
+                }
+
+                // ── Browse by taxonomic hierarchy ──
+                item {
+                    OutlinedButton(
+                        onClick = onOpenTaxonomicBrowser,
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp)
+                    ) {
+                        Icon(FieldMindIcons.Category, null, size = 18.dp)
+                        Spacer(Modifier.size(8.dp))
+                        Text("Browse by taxonomy (Kingdom → Species)")
+                    }
+                }
+
                 item {
                     Button(
                         onClick = ::saveSpeciesObservation,

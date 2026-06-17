@@ -1,5 +1,6 @@
 package fieldmind.research.app.features.field.data.weather
 
+import android.util.Log
 import com.google.gson.Gson
 import com.google.gson.annotations.SerializedName
 import kotlinx.coroutines.Dispatchers
@@ -41,10 +42,17 @@ class OpenMeteoProvider : WeatherProvider {
                 "&daily=sunrise,sunset,temperature_2m_max,temperature_2m_min,weather_code,precipitation_sum,wind_speed_10m_max,relative_humidity_2m_max,apparent_temperature_max,apparent_temperature_min,time" +
                 "&timezone=auto"
 
-            val request = Request.Builder().url(url).get().build()
+            val request = Request.Builder()
+                .url(url)
+                .header("User-Agent", "FieldMind/1.0 (field-research-app)")
+                .get()
+                .build()
             val response = client.newCall(request).execute()
 
-            if (!response.isSuccessful) return@withContext null
+            if (!response.isSuccessful) {
+                Log.w("OpenMeteo", "HTTP ${response.code} for $latitude,$longitude")
+                return@withContext null
+            }
 
             val body = response.body?.string() ?: return@withContext null
             val parsed = gson.fromJson(body, OpenMeteoResponse::class.java)
@@ -104,7 +112,8 @@ class OpenMeteoProvider : WeatherProvider {
                 dailyForecasts = forecasts
             )
         } catch (e: Exception) {
-            null // Silent failure — weather is optional
+            Log.e("OpenMeteo", "fetchWeather failed", e)
+            null
         }
     }
 }

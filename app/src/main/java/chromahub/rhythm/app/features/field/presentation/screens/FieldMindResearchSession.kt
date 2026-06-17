@@ -125,8 +125,8 @@ fun ResearchSessionScreen(
     var captureStatus by remember { mutableStateOf("Ready") }
 
     // ── Species identification state ──
-    val speciesClassifier = remember { SpeciesClassifier(context) }
     val speciesDatabase = remember { SpeciesDatabase(context) }
+    val speciesClassifier = remember { SpeciesClassifier(context, speciesDatabase) }
     var showSpeciesSearch by remember { mutableStateOf(false) }
     var speciesIdImageUri by remember { mutableStateOf<String?>(null) }
     var identifiedSpecies by remember { mutableStateOf<SpeciesMatch?>(null) }
