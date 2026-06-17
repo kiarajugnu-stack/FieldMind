@@ -369,12 +369,12 @@ class FieldMindViewModel(application: Application) : AndroidViewModel(applicatio
 
     fun fetchWeatherForLocation(latitude: Double, longitude: Double) = viewModelScope.launch {
         val apiKey = fieldSettings.weatherApiKey.value.ifBlank { null }
-        lastWeatherSnapshot = getWeatherProvider().fetchWeather(latitude, longitude, apiKey)
+        lastWeatherSnapshot = fieldmind.research.app.features.field.data.weather.WeatherProviders.fetchMergedWeather(fieldSettings.weatherProviders.value, latitude, longitude, apiKey)
     }
 
     suspend fun fetchWeatherSnapshot(latitude: Double, longitude: Double): WeatherSnapshot? {
         val apiKey = fieldSettings.weatherApiKey.value.ifBlank { null }
-        return getWeatherProvider().fetchWeather(latitude, longitude, apiKey).also { lastWeatherSnapshot = it }
+        return fieldmind.research.app.features.field.data.weather.WeatherProviders.fetchMergedWeather(fieldSettings.weatherProviders.value, latitude, longitude, apiKey).also { lastWeatherSnapshot = it }
     }
 
     /**
@@ -418,7 +418,7 @@ class FieldMindViewModel(application: Application) : AndroidViewModel(applicatio
         isWeatherFetching = true
         val result = try {
             provider.lastKnownLocation()?.let { loc ->
-                getWeatherProvider().fetchWeather(loc.latitude, loc.longitude, fieldSettings.weatherApiKey.value.ifBlank { null })
+                fieldmind.research.app.features.field.data.weather.WeatherProviders.fetchMergedWeather(fieldSettings.weatherProviders.value, loc.latitude, loc.longitude, fieldSettings.weatherApiKey.value.ifBlank { null })
             }
         } finally {
             isWeatherFetching = false

@@ -29,7 +29,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import fieldmind.research.app.features.field.data.database.entity.*
 import fieldmind.research.app.features.field.data.export.FieldReportTemplates
 import fieldmind.research.app.features.field.presentation.components.*
@@ -61,33 +60,34 @@ internal val researchProjectTypes = listOf(
 internal data class ProjectTemplateDef(
     val name: String,
     val type: String,
-    val icon: String,
+    val icon: MaterialSymbolIcon,
     val description: String,
-    val defaultMethods: Set<String>
+    val category: String,
+    val priority: String = "Medium",
+    val defaultMethods: Set<String>,
+    val objective: String,
+    val question: String,
+    val background: String,
+    val methodPlan: String,
+    val hypothesis: String,
+    val dataPlan: String,
+    val analysisPlan: String,
+    val nextAction: String,
+    val tags: String
 )
 
 internal val projectTemplates = listOf(
-    ProjectTemplateDef("Bird Survey", "Species Survey", "🐦", "Systematic bird count and species identification with habitat notes.", setOf("Photo documentation", "Species counting", "Audio recording")),
-    ProjectTemplateDef("Mammal Survey", "Population Census", "🐾", "Track signs, scat, camera trap data and direct observations.", setOf("Photo documentation", "Species counting", "GPS tracking")),
-    ProjectTemplateDef("Butterfly Survey", "Pollinator Survey", "🦋", "Transect-based butterfly counts with host plant records.", setOf("Species counting", "Photo documentation", "Weather logging")),
-    ProjectTemplateDef("Plant Documentation", "Vegetation Survey", "🌿", "Quadrat-based vegetation sampling with growth stage records.", setOf("Measurement logging", "Photo documentation", "Species counting")),
-    ProjectTemplateDef("Nest Monitoring", "Wildlife Monitoring", "🏠", "Track active nests with periodic checks and success/failure records.", setOf("Daily observations", "Photo documentation", "Behavior logging")),
-    ProjectTemplateDef("Camera Trap Research", "Camera Trap Study", "📷", "Deploy camera traps with bait stations, check SD cards, classify captures.", setOf("Photo documentation", "Species counting", "Weekly observations")),
-    ProjectTemplateDef("Amphibian Survey", "Species Survey", "🐸", "Wetland/pond surveys for frogs, toads, and salamanders.", setOf("Audio recording", "Photo documentation", "Weather logging")),
-    ProjectTemplateDef("Reptile Survey", "Species Survey", "🦎", "Herp searches with cover object checks and basking observations.", setOf("Photo documentation", "Measurement logging", "GPS tracking")),
-    ProjectTemplateDef("Pollinator Study", "Pollinator Survey", "🐝", "Flower visitor observations with timed counts per plant species.", setOf("Daily observations", "Behavior logging", "Photo documentation")),
-    ProjectTemplateDef("Wetland Assessment", "Habitat Assessment", "💧", "Hydrology, vegetation, and water quality assessment of wetland sites.", setOf("Water testing", "Measurement logging", "Photo documentation")),
-    ProjectTemplateDef("Forest Biodiversity", "Biodiversity Inventory", "🌲", "Inventory all species in a forest plot with taxonomy records.", setOf("Species counting", "Photo documentation", "Measurement logging")),
-    ProjectTemplateDef("Urban Wildlife Survey", "Citizen Science Project", "🏙️", "Document urban wildlife with community participation.", setOf("Daily observations", "Photo documentation", "GPS tracking")),
-    ProjectTemplateDef("Species Count Project", "Population Census", "📊", "Repeated counts at fixed points for population estimation.", setOf("Species counting", "Daily observations", "Weather logging")),
-    ProjectTemplateDef("Migration Tracking", "Migration Study", "🗺️", "Track migration timing, routes, and stopover sites.", setOf("GPS tracking", "Daily observations", "Photo documentation")),
-    ProjectTemplateDef("Acoustic Survey", "Acoustic Monitoring", "🎧", "Deploy audio recorders for call-based species detection.", setOf("Audio recording", "Species counting", "Photo documentation")),
-    ProjectTemplateDef("Habitat Assessment", "Habitat Assessment", "🌍", "Full habitat structure assessment with vegetation and soil measurements.", setOf("Measurement logging", "Photo documentation", "GPS tracking")),
-    ProjectTemplateDef("Custom Blank Template", "Custom Research Project", "📋", "Start from scratch — define your own research from the ground up.", emptySet())
+    ProjectTemplateDef("Bird Survey", "Species Survey", FieldMindIcons.Bird, "Point counts and call/photo evidence for birds at fixed sites.", "Ornithology", defaultMethods = setOf("Species counting", "Audio recording", "Photo documentation", "Weather logging"), objective = "Measure bird richness and relative abundance across selected points.", question = "Which bird species are present, and how do detections vary by time, weather, and habitat?", background = "Bird activity changes with habitat structure, time of day, season, and disturbance.", methodPlan = "Run 10-minute point counts at marked GPS points; record seen/heard species, count, distance band, behavior, weather, and audio/photo evidence.", hypothesis = "Sites with more layered vegetation will have higher species richness and more detections.", dataPlan = "species, count, detection type, distance band m, habitat, time, temperature C, wind, photo/audio URI", analysisPlan = "Compare richness and counts by point, habitat, and visit; flag uncertain IDs for review.", nextAction = "Create 3 fixed count points and run the first morning survey.", tags = "birds, point-count, audio, habitat"),
+    ProjectTemplateDef("Mammal Track Survey", "Population Census", FieldMindIcons.Animal, "Tracks, scat, camera trap records, and direct mammal sightings.", "Mammalogy", defaultMethods = setOf("GPS tracking", "Photo documentation", "Camera trap", "Species counting"), objective = "Document mammal presence and activity signs along repeatable transects.", question = "Which mammals use this site, and where are signs concentrated?", background = "Mammals are often detected indirectly through tracks, scat, burrows, and camera-trap events.", methodPlan = "Walk fixed transects; photograph signs with scale, log substrate, freshness, GPS, and camera-trap station IDs.", hypothesis = "Mammal signs will cluster near water sources and edge habitats.", dataPlan = "species/sign type, confidence, GPS, substrate, freshness, camera station, photo URI", analysisPlan = "Map sign density by transect segment and compare direct vs indirect detections.", nextAction = "Set transect start/end points and place the first camera station.", tags = "mammals, tracks, camera-trap, transect"),
+    ProjectTemplateDef("Butterfly Transect", "Pollinator Survey", FieldMindIcons.Insect, "Timed pollinator walks with host-plant and weather context.", "Entomology", defaultMethods = setOf("Species counting", "Photo documentation", "Weather logging", "Behavior logging"), objective = "Track butterfly abundance and plant associations along a fixed route.", question = "Which butterfly species visit which plants under different weather conditions?", background = "Pollinator activity is strongly shaped by temperature, wind, sunlight, and flowering stage.", methodPlan = "Walk the same transect at steady pace; log species, count, plant visited, behavior, temperature, wind, and cloud cover.", hypothesis = "Sunny low-wind periods will produce higher butterfly counts and more feeding behavior.", dataPlan = "species, count, plant species, behavior, temperature C, wind km/h, cloud %, photo URI", analysisPlan = "Summarize counts by plant species and weather band; identify peak activity windows.", nextAction = "Mark the transect and list flowering plants before first count.", tags = "butterflies, pollinators, transect, flowers"),
+    ProjectTemplateDef("Vegetation Quadrat", "Vegetation Survey", FieldMindIcons.Plant, "Quadrat sampling for plant cover, growth stage, and evidence photos.", "Botany", defaultMethods = setOf("Measurement logging", "Photo documentation", "Species counting"), objective = "Estimate plant composition and percent cover in repeatable quadrats.", question = "How does plant cover and species composition differ among microhabitats?", background = "Quadrat surveys provide repeatable measurements for vegetation structure and change.", methodPlan = "Place quadrats using a consistent design; record species, percent cover, height, phenology, substrate, and overhead photos.", hypothesis = "Moister quadrats will have higher cover and different dominant species.", dataPlan = "quadrat ID, species, percent cover, height cm, phenology, substrate, soil moisture, photo URI", analysisPlan = "Calculate richness, mean cover, and dominant species per habitat/microhabitat.", nextAction = "Define quadrat size and sample locations.", tags = "plants, quadrat, cover, phenology"),
+    ProjectTemplateDef("Nest Monitoring", "Wildlife Monitoring", FieldMindIcons.Observation, "Scheduled nest checks with disturbance-minimizing visit notes.", "Ecology", "High", setOf("Daily observations", "Photo documentation", "Behavior logging"), "Monitor nesting status, adult behavior, and outcome without disturbing wildlife.", "What nesting stages occur and what factors are associated with success or failure?", "Nest monitoring needs consistent timing and careful notes to avoid influencing outcomes.", "Record nest ID, stage, adult activity, contents from a safe distance, visit duration, weather, and disturbance signs.", "Nests with lower disturbance and better cover will show higher success.", "nest ID, stage, adult behavior, contents, visit duration min, weather, disturbance, photo URI", "Build a timeline per nest and compare outcomes with cover and disturbance notes.", "Create nest IDs and safe observation distances before first check.", "nesting, behavior, monitoring"),
+    ProjectTemplateDef("Camera Trap Research", "Camera Trap Study", FieldMindIcons.Camera, "Camera station deployment, checks, and species-event classification.", "Wildlife", defaultMethods = setOf("Camera trap", "Photo documentation", "Species counting", "Weekly observations"), objective = "Estimate species presence and activity windows from camera-trap events.", question = "Which species pass each station, and at what times are they most active?", background = "Camera traps detect cryptic wildlife and support event-based activity analysis.", methodPlan = "Log station setup, height, bearing, habitat, lure/bait status, SD card checks, and classify independent events.", hypothesis = "Stations near game trails will record more independent events than random stations.", dataPlan = "station ID, species, event time, count, behavior, confidence, habitat, battery, SD card, media URI", analysisPlan = "Summarize events per station-night and activity by hour.", nextAction = "Deploy stations and record setup metadata.", tags = "camera-trap, mammals, activity"),
+    ProjectTemplateDef("Water Quality Check", "Water Quality Study", FieldMindIcons.Water, "Repeatable water observations and measurements for streams/ponds.", "Hydrology", defaultMethods = setOf("Water testing", "Measurement logging", "Photo documentation", "Weather logging"), objective = "Track basic water conditions over repeat visits.", question = "How do clarity, temperature, flow, and visible organisms change after weather events?", background = "Water quality shifts with runoff, temperature, flow, algae, and surrounding land use.", methodPlan = "At fixed points measure temperature, clarity/turbidity, flow class, depth, odor/color, organisms, rainfall context, and photos.", hypothesis = "Recent rainfall will reduce clarity and increase flow at sampling points.", dataPlan = "site ID, water temp C, clarity, flow, depth cm, odor, color, organisms, rainfall, photo URI", analysisPlan = "Plot water measures by date and rainfall; compare upstream/downstream sites.", nextAction = "Choose sampling points and prepare measurement tools.", tags = "water, hydrology, rainfall, quality"),
+    ProjectTemplateDef("Acoustic Survey", "Acoustic Monitoring", FieldMindIcons.Mic, "Audio-based detections for birds, frogs, bats, or soundscapes.", "Ecology", defaultMethods = setOf("Audio recording", "Species counting", "Weather logging"), objective = "Use repeat audio samples to detect vocal species and activity timing.", question = "Which species are detected by sound, and when are calling rates highest?", background = "Acoustic monitoring captures species that are hard to see and preserves evidence for review.", methodPlan = "Record fixed-duration clips at marked stations; log time, weather, habitat, device, noise level, and detected calls.", hypothesis = "Calling activity will peak near dawn/dusk and after suitable weather conditions.", dataPlan = "station, start time, duration, species/call, confidence, noise, weather, audio URI", analysisPlan = "Compare detections by station and time window; review uncertain calls.", nextAction = "Test recorder settings and create station IDs.", tags = "acoustic, audio, calls, monitoring"),
+    ProjectTemplateDef("Habitat Assessment", "Habitat Assessment", FieldMindIcons.Nature, "Habitat structure, disturbance, vegetation, soil, and photo points.", "Ecology", defaultMethods = setOf("Measurement logging", "Photo documentation", "GPS tracking"), objective = "Describe habitat structure and condition across mapped assessment points.", question = "Which habitat features and disturbance indicators characterize this site?", background = "Habitat assessments connect species observations to vegetation, substrate, water, and human impact.", methodPlan = "At each point record canopy/ground cover, dominant plants, substrate, water presence, disturbance, slope/aspect, and repeat photos.", hypothesis = "Higher structural diversity will correspond with more wildlife observations.", dataPlan = "point ID, canopy %, ground cover %, dominant plants, substrate, disturbance score, GPS, photo URI", analysisPlan = "Map habitat scores and compare with observations by point.", nextAction = "Lay out assessment points and create a scoring rubric.", tags = "habitat, vegetation, disturbance, GPS"),
+    ProjectTemplateDef("Custom Blank Template", "Custom Research Project", FieldMindIcons.Project, "Start from a clean workspace with only core planning fields.", "Other", defaultMethods = emptySet(), objective = "", question = "", background = "", methodPlan = "", hypothesis = "", dataPlan = "", analysisPlan = "", nextAction = "", tags = "")
 )
-
-// ── Emoji icon options for projects ──
-internal val projectEmojis = listOf("🐦", "🌿", "🦋", "🌳", "🦎", "🐸", "🐝", "🦉", "🦊", "🐟", "🌺", "🍄", "🪨", "💧", "🌊", "☀️", "🌙", "⭐", "📷", "🎧", "🗺️", "📊", "📋", "🧪")
 
 // ── Research Categories ──
 internal val researchCategories = listOf(
@@ -190,7 +190,6 @@ private fun ResearchHubOverviewTab(
     var projTitle by remember { mutableStateOf("") }
     var projType by remember { mutableStateOf(researchProjectTypes[0]) }
     var projTemplate by remember { mutableStateOf(projectTemplates.last().name) }
-    var projEmoji by remember { mutableStateOf("🐦") }
     var projDesc by remember { mutableStateOf("") }
     var projCategory by remember { mutableStateOf(researchCategories[0]) }
     var projPriority by remember { mutableStateOf("Medium") }
@@ -202,7 +201,6 @@ private fun ResearchHubOverviewTab(
     var projQuestion by remember { mutableStateOf("") }
     var projMethods by remember { mutableStateOf(setOf("Photo documentation", "Daily observations")) }
     var projHypothesis by remember { mutableStateOf("") }
-    var showEmojiPicker by remember { mutableStateOf(false) }
 
     val haptics = rememberFieldMindHaptics()
 
@@ -294,7 +292,20 @@ private fun ResearchHubOverviewTab(
                                 Column(Modifier.width(160.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                                     chunk.forEach { type ->
                                         Surface(
-                                            onClick = { projType = type; projTitle = ""; showTypes = false; showNewProject = true },
+                                            onClick = {
+                                                val preset = projectTemplates.firstOrNull { it.type == type }
+                                                projType = type
+                                                projTemplate = preset?.name ?: "Custom Blank Template"
+                                                projTitle = preset?.name ?: type
+                                                projDesc = preset?.objective ?: "Plan a ${type.lowercase()} with a clear question, field method, data plan, and evidence checklist."
+                                                projCategory = preset?.category ?: researchCategories.first()
+                                                projPriority = preset?.priority ?: "Medium"
+                                                projQuestion = preset?.question ?: "What pattern will this ${type.lowercase()} measure or explain?"
+                                                projMethods = preset?.defaultMethods ?: setOf("Daily observations", "Photo documentation")
+                                                projHypothesis = preset?.hypothesis ?: ""
+                                                projTags = preset?.tags ?: type.lowercase().replace(" ", ", ")
+                                                showTypes = false; showNewProject = true
+                                            },
                                             shape = RoundedCornerShape(12.dp),
                                             color = if (projType == type) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainerHigh
                                         ) {
@@ -318,8 +329,13 @@ private fun ResearchHubOverviewTab(
                 projTemplate = template.name
                 projType = template.type
                 projTitle = template.name
-                projDesc = template.description
+                projDesc = template.objective.ifBlank { template.description }
+                projCategory = template.category
+                projPriority = template.priority
+                projQuestion = template.question
                 projMethods = template.defaultMethods
+                projHypothesis = template.hypothesis
+                projTags = template.tags
                 showTemplates = false
                 showNewProject = true
             } }
@@ -337,7 +353,23 @@ private fun ResearchHubOverviewTab(
     }
     // Dialog outside LazyColumn
     if (showNewProject) {
-        NewProjectDialog(viewModel, onDismiss = { showNewProject = false })
+        NewProjectDialog(
+            viewModel = viewModel,
+            initialTitle = projTitle,
+            initialTopic = projCategory,
+            initialObjective = projDesc,
+            initialQuestion = projQuestion,
+            initialBackground = projectTemplates.firstOrNull { it.name == projTemplate }?.background ?: "",
+            initialProjectType = projType,
+            initialMethods = projectTemplates.firstOrNull { it.name == projTemplate }?.methodPlan ?: projMethods.joinToString(", "),
+            initialSelectedMethods = projMethods.joinToString(", "),
+            initialHypothesis = projHypothesis,
+            initialDataPlan = projectTemplates.firstOrNull { it.name == projTemplate }?.dataPlan ?: "",
+            initialAnalysis = projectTemplates.firstOrNull { it.name == projTemplate }?.analysisPlan ?: "",
+            initialNextAction = projectTemplates.firstOrNull { it.name == projTemplate }?.nextAction ?: "",
+            initialTags = projTags,
+            onDismiss = { showNewProject = false }
+        )
     }
 }
 
@@ -413,7 +445,7 @@ private fun TemplatesGrid(templates: List<ProjectTemplateDef>, onSelect: (Projec
                         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
                     ) {
                         Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Text(template.icon, fontSize = 28.sp)
+                            Icon(template.icon, null, tint = FieldMindTheme.colors.project, size = 28.dp)
                             Text(template.name, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
                             Text(template.description, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 3, overflow = TextOverflow.Ellipsis)
                             Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {

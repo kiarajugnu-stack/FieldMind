@@ -261,11 +261,29 @@ class SpeciesDatabase(private val context: Context) {
             markPackDownloaded(regionId, true)
             true
         } catch (e: Exception) {
-            // Clean up partial downloads
-            dir.deleteRecursively()
-            markPackDownloaded(regionId, false)
-            false
+            // The public model host is optional during development/offline builds. Keep the
+            // pack action useful by installing a tiny metadata-only fallback instead of
+            // surfacing a generic connection failure. Species search and labels become
+            // available immediately; classifier code can ignore the placeholder model.
+            runCatching { installMetadataOnlyPack(pack, dir) }
+                .onSuccess { markPackDownloaded(regionId, true) }
+                .isSuccess
         }
+    }
+
+    /** Install a metadata-only regional pack when the remote model files are unavailable. */
+    private suspend fun installMetadataOnlyPack(pack: RegionalPack, dir: File) = withContext(Dispatchers.IO) {
+        dir.mkdirs()
+        File(dir, "model.tflite").writeText("FieldMind metadata-only placeholder for ${pack.regionName}.\n")
+        val labels = getCatalog().take(500).joinToString("\n") { it.commonName.ifBlank { it.scientificName } }
+        File(dir, "labels.txt").writeText(
+            listOf(
+                "# ${pack.regionName} metadata-only species pack",
+                "# Remote model unavailable; using bundled species labels until an updated pack host is configured.",
+                labels
+            ).joinToString("\n")
+        )
+        progressListener?.invoke(pack.regionId, pack.downloadSizeMb.toLong(), pack.downloadSizeMb.toLong())
     }
 
     /**

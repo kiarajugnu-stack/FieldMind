@@ -892,8 +892,8 @@ private fun DrawScope.drawCloud(
  * This grounds the scene and makes the weather feel anchored in a real landscape.
  */
 private fun DrawScope.drawTreeLine(morph: Float = 0f, isDark: Boolean = false) {
-    val baseColor = if (isDark) Color(0xFF0A0A1A).copy(alpha = 0.6f) else Color(0xFF2D3A1E).copy(alpha = 0.25f)
-    val detailColor = if (isDark) Color(0xFF05050E).copy(alpha = 0.5f) else Color(0xFF1A2812).copy(alpha = 0.18f)
+    val baseColor = if (isDark) Color(0xFF07120B).copy(alpha = 0.72f) else Color(0xFF315331).copy(alpha = 0.30f)
+    val detailColor = if (isDark) Color(0xFF020704).copy(alpha = 0.66f) else Color(0xFF173219).copy(alpha = 0.24f)
     val groundY = size.height * 0.88f
 
     // Main treeline — undulating silhouette
@@ -918,21 +918,35 @@ private fun DrawScope.drawTreeLine(morph: Float = 0f, isDark: Boolean = false) {
 
     drawPath(path = path, color = baseColor, style = Fill)
 
-    // Detail layer — scattered individual tree peaks
-    val detailPath = Path()
-    for (i in 0..12) {
-        val t = (i.toFloat() / 12f) * size.width
+    // Detail layer — varied conifers with trunks and staggered canopies instead of
+    // simple spikes. The deterministic math keeps the animation stable across frames.
+    for (i in 0..18) {
+        val t = (i.toFloat() / 18f) * size.width
         val peakNoise = sin(t * 0.01f + morph * 0.4f + i.toFloat()) * 0.5f + 0.5f
         if (peakNoise > 0.5f) {
-            val px = t + 10f
+            val px = (t + 10f) % size.width
             val treeBaseY = groundY - (0.3f + peakNoise * 0.5f) * size.height * 0.05f
-            val treeTipY = treeBaseY - peakNoise * size.height * 0.03f
-            detailPath.moveTo(px - 6f, treeBaseY)
-            detailPath.lineTo(px, treeTipY)
-            detailPath.lineTo(px + 6f, treeBaseY)
+            val treeH = size.height * (0.035f + peakNoise * 0.045f)
+            drawRoundRect(
+                color = detailColor.copy(alpha = detailColor.alpha * 0.65f),
+                topLeft = Offset(px - 1.2f, treeBaseY - treeH * 0.28f),
+                size = Size(2.4f, treeH * 0.35f),
+                cornerRadius = androidx.compose.ui.geometry.CornerRadius(1.2f, 1.2f)
+            )
+            repeat(3) { layer ->
+                val layerT = layer / 3f
+                val y = treeBaseY - treeH * (0.18f + layerT * 0.26f)
+                val halfW = treeH * (0.20f + (2 - layer) * 0.08f)
+                val canopy = Path().apply {
+                    moveTo(px - halfW, y + treeH * 0.14f)
+                    lineTo(px, y - treeH * 0.22f)
+                    lineTo(px + halfW, y + treeH * 0.14f)
+                    close()
+                }
+                drawPath(canopy, detailColor, style = Fill)
+            }
         }
     }
-    drawPath(path = detailPath, color = detailColor, style = Fill)
 }
 
 /**
@@ -990,6 +1004,9 @@ private fun DrawScope.drawGround(
             if (isDark) Color(0xFF152A15).copy(alpha = 0.25f) else Color(0xFF4A6A4A).copy(alpha = 0.12f)
         )
     }
+
+    // Main rolling ground silhouette
+    drawMountainRange(isDark = isDark, isSnow = isSnow, isDay = isDay)
 
     // Main rolling ground silhouette
     val groundPath = Path()
@@ -1062,6 +1079,34 @@ private fun DrawScope.drawGround(
                 topLeft = Offset(px - puddleW * 0.3f, py - puddleH * 0.3f),
                 size = Size(puddleW * 0.6f, puddleH * 0.4f)
             )
+        }
+    }
+}
+
+private fun DrawScope.drawMountainRange(isDark: Boolean, isSnow: Boolean, isDay: Boolean) {
+    val ridgeBase = size.height * 0.78f
+    val farColor = if (isDark) Color(0xFF10182A).copy(alpha = 0.42f) else Color(0xFF78909C).copy(alpha = 0.20f)
+    val nearColor = if (isDark) Color(0xFF0B1422).copy(alpha = 0.52f) else Color(0xFF5E7D6A).copy(alpha = 0.22f)
+    listOf(0.58f to farColor, 0.68f to nearColor).forEachIndexed { layer, (base, color) ->
+        val path = Path().apply {
+            moveTo(-20f, ridgeBase)
+            val peaks = listOf(0.08f, 0.22f, 0.36f, 0.53f, 0.70f, 0.88f, 1.06f)
+            peaks.forEachIndexed { i, x ->
+                val px = size.width * x
+                val py = size.height * (base - (if (layer == 0) 0.10f else 0.08f) * (0.65f + 0.35f * sin(i.toFloat())))
+                lineTo(px - size.width * 0.08f, ridgeBase - layer * size.height * 0.03f)
+                lineTo(px, py)
+                lineTo(px + size.width * 0.10f, ridgeBase - layer * size.height * 0.025f)
+            }
+            lineTo(size.width + 20f, size.height)
+            lineTo(-20f, size.height)
+            close()
+        }
+        drawPath(path, color, style = Fill)
+        if (isSnow || isDay) {
+            for (x in listOf(0.22f, 0.53f, 0.88f)) {
+                drawCircle(Color.White.copy(alpha = if (isDark) 0.10f else 0.16f), radius = size.minDimension * 0.018f, center = Offset(size.width * x, size.height * (base - 0.08f)))
+            }
         }
     }
 }
