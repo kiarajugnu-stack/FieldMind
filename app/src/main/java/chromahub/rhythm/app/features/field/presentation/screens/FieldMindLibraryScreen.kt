@@ -116,22 +116,15 @@ fun KnowledgeLibraryScreen(
 private fun SourcePanel(viewModel: FieldMindViewModel, items: List<SourceEntity>, onOpenDetail: (String, Long) -> Unit) {
     var show by remember { mutableStateOf(false) }
     val projects by viewModel.projects.collectAsState()
-    val haptics = rememberFieldMindHaptics()
-    var type by remember { mutableStateOf("Article") }; var title by remember { mutableStateOf("") }; var author by remember { mutableStateOf("") }
-    var dateOrYear by remember { mutableStateOf("") }; var doiOrIsbn by remember { mutableStateOf("") }; var publisherOrJournal by remember { mutableStateOf("") }
-    var accessDate by remember { mutableStateOf(today()) }; var link by remember { mutableStateOf("") }; var fileUri by remember { mutableStateOf("") }
-    var citationStyleNote by remember { mutableStateOf("") }; var importance by remember { mutableStateOf("Normal") }; var readingStatus by remember { mutableStateOf("In progress") }
-    var summary by remember { mutableStateOf("") }; var taught by remember { mutableStateOf("") }; var findings by remember { mutableStateOf("") }
-    var questions by remember { mutableStateOf("") }; var notes by remember { mutableStateOf("") }; var reliability by remember { mutableStateOf(3f) }; var projectId by remember { mutableStateOf<Long?>(null) }
     LazyColumn(contentPadding = panelPadding(), verticalArrangement = Arrangement.spacedBy(14.dp)) {
         item { AddButton("Add source") { show = true } }
+        if (items.isEmpty()) {
+            item { EmptyState("No sources yet", "Save articles, videos, PDFs, books, summaries, citations, and what each source taught you.", icon = FieldMindIcons.Source) }
+        }
+        items(items) { EntityCard(it.title, "source", body = it.whatThisSourceTaughtMe.ifBlank { it.personalSummary }, meta = listOf(it.type, it.author.ifBlank { "Unknown author" }, it.readingStatus, it.importance, "reliability ${it.reliabilityScore}/5"), onClick = { onOpenDetail("source", it.id) }) }
     }
     if (show) {
         NewSourceDialog(viewModel, onDismiss = { show = false })
-    }
-    LazyColumn(contentPadding = panelPadding(), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-        if (items.isEmpty()) item { EmptyState("No sources yet", "Save articles, videos, PDFs, books, summaries, citations, and what each source taught you.", icon = FieldMindIcons.Source) }
-        items(items) { EntityCard(it.title, "source", body = it.whatThisSourceTaughtMe.ifBlank { it.personalSummary }, meta = listOf(it.type, it.author.ifBlank { "Unknown author" }, it.readingStatus, it.importance, "reliability ${it.reliabilityScore}/5"), onClick = { onOpenDetail("source", it.id) }) }
     }
 }
 
@@ -188,7 +181,7 @@ private fun PaperReadingPanel(items: List<SourceEntity>, onOpenDetail: (String, 
 
     LazyColumn(contentPadding = panelPadding(), verticalArrangement = Arrangement.spacedBy(14.dp)) {
         item {
-            SectionHeader("Paper reading mode", "Prompts: topic, problem, method, result, unclear points, new question, next verification.")
+            SectionHeader("Paper reading mode", "Track your reading progress across saved sources.")
         }
         if (items.isNotEmpty()) {
             item {
@@ -236,7 +229,7 @@ private fun PaperReadingPanel(items: List<SourceEntity>, onOpenDetail: (String, 
                 source.title,
                 "read",
                 body = source.paperNotes.ifBlank {
-                    if (source.readingStatus == "Read") "Completed reading" else "Open source detail and answer active-reading prompts."
+                    if (source.readingStatus == "Read") "Completed reading" else "Open source detail to read and take notes."
                 },
                 meta = listOf(
                     source.readingStatus.ifBlank { "Not started" },
