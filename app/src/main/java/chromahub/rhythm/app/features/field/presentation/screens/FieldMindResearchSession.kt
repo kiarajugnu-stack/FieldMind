@@ -282,7 +282,7 @@ fun ResearchSessionScreen(
                 if (snapshot != null) {
                     viewModel.saveWeatherSnapshot(snapshot, captured.latitude, captured.longitude)
                     metadataStatus = "GPS + Weather acquired"
-                    snackbarHelper.show("Weather: ${snapshot.temperature}°C, ${snapshot.condition}")
+                    snackbarHelper.show("Weather: ${snapshot.temperature}°C, ${snapshot.weatherDescription}")
                 } else {
                     metadataStatus = "GPS acquired, weather unavailable"
                 }

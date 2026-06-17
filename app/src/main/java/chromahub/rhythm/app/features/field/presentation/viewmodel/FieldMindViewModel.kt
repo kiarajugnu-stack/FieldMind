@@ -16,6 +16,8 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlin.coroutines.resume
 import kotlin.jvm.JvmName
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -238,6 +240,31 @@ class FieldMindViewModel(application: Application) : AndroidViewModel(applicatio
             )
         }
         return snapshot
+    }
+
+    /**
+     * Saves an already-fetched WeatherSnapshot to the offline weather catalog.
+     * This is used by observe and research session screens that have already fetched weather.
+     */
+    suspend fun saveWeatherSnapshot(snapshot: WeatherSnapshot, latitude: Double, longitude: Double, placeName: String = "") {
+        repository.addWeatherCatalog(
+            WeatherCatalogEntity(
+                latitude = latitude,
+                longitude = longitude,
+                temperature = snapshot.temperature,
+                weatherCode = snapshot.weatherCode,
+                weatherDescription = snapshot.weatherDescription,
+                humidity = snapshot.humidity,
+                windSpeed = snapshot.windSpeed,
+                windDirection = snapshot.windDirection,
+                cloudCover = snapshot.cloudCover,
+                pressure = snapshot.pressure,
+                sunrise = snapshot.sunrise,
+                sunset = snapshot.sunset,
+                placeName = placeName,
+                fetchedAt = snapshot.fetchedAt
+            )
+        )
     }
 
     /**

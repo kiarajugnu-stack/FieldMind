@@ -272,7 +272,7 @@ fun ObserveScreen(
                             // Log to offline weather catalog
                             viewModel.saveWeatherSnapshot(snapshot, loc.latitude, loc.longitude)
                             metadataStatus = "GPS + Weather acquired"
-                            showFastSnackbar(snackbar, scope, "Weather: ${snapshot.temperature}°C, ${snapshot.condition}")
+                            showFastSnackbar(snackbar, scope, "Weather: ${snapshot.temperature}°C, ${snapshot.weatherDescription}")
                         } else {
                             metadataStatus = "GPS acquired, weather unavailable"
                         }
@@ -612,7 +612,7 @@ fun ObserveScreen(
                                         weatherFetching = false
                                         if (snapshot != null) {
                                             viewModel.saveWeatherSnapshot(snapshot, loc.latitude, loc.longitude)
-                                            showFastSnackbar(snackbar, scope, "Weather: ${snapshot.temperature}°C, ${snapshot.condition}")
+                                            showFastSnackbar(snackbar, scope, "Weather: ${snapshot.temperature}°C, ${snapshot.weatherDescription}")
                                         }
                                     }
                                 } else {
