@@ -469,7 +469,7 @@ fun ObservationTimelineCard(
 // ══════════════════════════════════════════════════════════════════════
 
 @Composable
-private fun ObservationGalleryView(
+fun ObservationGalleryView(
     observations: List<ObservationEntity>,
     viewModel: FieldMindViewModel,
     onOpenDetail: (String, Long) -> Unit

@@ -381,7 +381,7 @@ class SpeciesImageAnalyzer(
         }
 
         val totalPixels = hsvValues.size
-        colorBins.entries
+        return colorBins.entries
             .sortedByDescending { it.value.size }
             .take(maxColors)
             .map { (_, pixelsInBin) ->
