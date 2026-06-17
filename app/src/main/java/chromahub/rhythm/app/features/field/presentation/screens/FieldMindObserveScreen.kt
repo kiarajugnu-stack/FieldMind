@@ -323,10 +323,13 @@ fun ObserveScreen(
         session.fieldContext.isNotBlank() || session.manualLocation.isNotBlank()
     )
     var showExitConfirm by remember { mutableStateOf(false) }
+    var showSessionExitConfirm by remember { mutableStateOf(false) }
 
     BackHandler(enabled = true) {
         if (hasDirtyContent) {
             showExitConfirm = true
+        } else if (session.isActive) {
+            showSessionExitConfirm = true
         } else {
             onBack?.invoke()
         }
@@ -367,6 +370,44 @@ fun ObserveScreen(
                     TextButton(onClick = { showExitConfirm = false }) {
                         Text("Keep editing")
                     }
+                }
+            }
+        )
+    }
+
+    // ── Session exit confirm (active session, clean form) ──
+    if (showSessionExitConfirm) {
+        AlertDialog(
+            onDismissRequest = { showSessionExitConfirm = false },
+            icon = {
+                Icon(
+                    icon = FieldMindIcons.Timer,
+                    contentDescription = null,
+                    size = 28.dp,
+                    tint = MaterialTheme.colorScheme.primary
+                )
+            },
+            title = { Text("Active observation session") },
+            text = {
+                Text(
+                    "You have an active observation session in progress. Leaving now will discard the session and any timer data.",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = { showSessionExitConfirm = false }) {
+                    Text("Stay on Capture")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = {
+                    viewModel.setCaptureSessionActive(false)
+                    session = CaptureSessionState()
+                    showEvidenceForm = false
+                    showSessionExitConfirm = false
+                    onBack?.invoke()
+                }) {
+                    Text("Discard session", color = MaterialTheme.colorScheme.error)
                 }
             }
         )

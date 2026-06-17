@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -689,7 +690,7 @@ private fun ForecastDashboard(
 ) {
     var expandedIdx by remember { mutableIntStateOf(-1) }
     val scrollState = rememberScrollState()
-    val allTemps = forecasts.map { it.tempMax }
+    val allTemps = forecasts.map { it.temperatureMax }
     val globalMax = allTemps.maxOrNull() ?: 30.0
     val globalMin = allTemps.minOrNull() ?: 0.0
     val tempRange = (globalMax - globalMin).coerceAtLeast(10.0)
@@ -724,7 +725,7 @@ private fun ForecastDashboard(
         ) {
             items(forecasts.take(7), key = { it.date }) { day ->
                 val isExpanded = expandedIdx == forecasts.indexOf(day)
-                val dayTemp = day.tempMax
+                val dayTemp = day.temperatureMax
                 val normalizedPos = ((dayTemp - globalMin) / tempRange).coerceIn(0.0, 1.0)
 
                 Column(
@@ -773,14 +774,14 @@ private fun ForecastDashboard(
 
                     // High temp
                     Text(
-                        "${day.tempMax.roundToInt()}°",
+                        "${day.temperatureMax.roundToInt()}°",
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.Bold,
                         color = textOnScene
                     )
                     // Low temp
                     Text(
-                        "${day.tempMin.roundToInt()}°",
+                        "${day.temperatureMin.roundToInt()}°",
                         style = MaterialTheme.typography.labelSmall,
                         color = textOnScene.copy(alpha = 0.6f)
                     )
@@ -795,19 +796,19 @@ private fun ForecastDashboard(
                             HorizontalDivider(color = textOnScene.copy(alpha = 0.15f))
                             Spacer(Modifier.height(2.dp))
 
-                            day.precipitationProbability?.let { precip ->
+                            day.precipitationSum?.let { precip ->
                                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                                     Icon(FieldMindIcons.Water, null, tint = colors.data, size = 14.dp)
                                     Text("$precip%", style = MaterialTheme.typography.labelSmall, color = colors.data, fontWeight = FontWeight.SemiBold)
                                 }
                             }
-                            day.windSpeed?.let { ws ->
+                            day.windSpeedMax?.let { ws ->
                                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                                     Icon(FieldMindIcons.windIconForSpeed(ws), null, tint = colors.warning, size = 14.dp)
                                     Text("${ws.roundToInt()} km/h", style = MaterialTheme.typography.labelSmall, color = colors.warning, fontWeight = FontWeight.SemiBold)
                                 }
                             }
-                            day.humidity?.let { hum ->
+                            day.humidityMax?.let { hum ->
                                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                                     Icon(FieldMindIcons.Water, null, tint = colors.data, size = 14.dp)
                                     Text("$hum%", style = MaterialTheme.typography.labelSmall, color = colors.data, fontWeight = FontWeight.SemiBold)
