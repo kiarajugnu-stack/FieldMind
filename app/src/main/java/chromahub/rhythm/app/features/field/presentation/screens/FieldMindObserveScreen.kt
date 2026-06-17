@@ -254,6 +254,7 @@ fun ObserveScreen(
     var showMetadataConfirm by remember { mutableStateOf(false) }
     var metadataAutoFetching by remember { mutableStateOf(false) }
     var metadataStatus by remember { mutableStateOf("Ready") }
+    var gpsFetching by remember { mutableStateOf(false) }
 
     fun performAutoFetch() {
         metadataAutoFetching = true
@@ -568,6 +569,16 @@ fun ObserveScreen(
                             },
                             onLaunchAudio = { toggleRecording() },
                             onLaunchAudioImport = { haptics.light(); audioImportPicker.launch(arrayOf("audio/*")) },
+                            onOpenSpeciesSearch = {
+                                speciesIdImageUri = null
+                                showSpeciesId = true
+                            },
+                            onIdentifyFromPhoto = { uri ->
+                                if (uri != null) {
+                                    speciesIdImageUri = uri
+                                    showSpeciesId = true
+                                }
+                            },
                             isRecording = recording,
                             recordSeconds = recordSeconds,
                             onRemoveAttachment = { idx ->
@@ -594,12 +605,24 @@ fun ObserveScreen(
                             gpsAccuracy = capturedLocation?.accuracyMeters,
                             weatherDetail = weatherSnapshot?.asDisplayText(),
                             autoFetching = metadataAutoFetching,
+                            gpsFetching = gpsFetching,
                             statusText = metadataStatus,
                             onFetchGps = {
                                 if (locationProvider.hasAnyLocationPermission()) {
+                                    gpsFetching = true
+                                    metadataStatus = "Acquiring GPS…"
                                     locationProvider.requestCurrentLocation { loc ->
-                                        if (loc != null) capturedLocation = loc
+                                        gpsFetching = false
+                                        if (loc != null) {
+                                            capturedLocation = loc
+                                            metadataStatus = "GPS acquired (${loc.accuracyMeters?.toInt() ?: "?"}m)"
+                                            showFastSnackbar(snackbar, scope, "GPS acquired")
+                                        } else {
+                                            metadataStatus = "GPS unavailable — check permissions"
+                                        }
                                     }
+                                } else {
+                                    showFastSnackbar(snackbar, scope, "Location permission required")
                                 }
                             },
                             onFetchWeather = {
@@ -607,12 +630,16 @@ fun ObserveScreen(
                                 if (loc != null) {
                                     scope.launch {
                                         weatherFetching = true
+                                        metadataStatus = "Fetching weather…"
                                         val snapshot = viewModel.fetchWeatherSnapshot(loc.latitude, loc.longitude)
                                         weatherSnapshot = snapshot
                                         weatherFetching = false
                                         if (snapshot != null) {
                                             viewModel.saveWeatherSnapshot(snapshot, loc.latitude, loc.longitude)
+                                            metadataStatus = "Weather acquired"
                                             showFastSnackbar(snackbar, scope, "Weather: ${snapshot.temperature}°C, ${snapshot.weatherDescription}")
+                                        } else {
+                                            metadataStatus = "Weather unavailable"
                                         }
                                     }
                                 } else {
@@ -708,7 +735,7 @@ fun ObserveScreen(
     }
 
     // ── Species identification sheet ──
-    if (showSpeciesId && speciesIdImageUri != null) {
+    if (showSpeciesId) {
         SpeciesIdentificationSheet(
             imageUri = speciesIdImageUri,
             classifier = speciesClassifier,
@@ -964,7 +991,9 @@ private fun EvidenceCaptureRow(
     isRecording: Boolean = false,
     recordSeconds: Int = 0,
     onRemoveAttachment: (Int) -> Unit,
-    onCaptionChange: (Int, String) -> Unit
+    onCaptionChange: (Int, String) -> Unit,
+    onOpenSpeciesSearch: () -> Unit = {},
+    onIdentifyFromPhoto: (String?) -> Unit = {}
 ) {
     Card(
         shape = RoundedCornerShape(28.dp),
@@ -1038,10 +1067,8 @@ private fun EvidenceCaptureRow(
             SpeciesIdButton(
                 attachments = attachments,
                 identifiedSpecies = null,
-                onIdentifyFromPhoto = { uri ->
-                    // This will be called from the ObserveScreen
-                },
-                onOpenSearch = { }
+                onIdentifyFromPhoto = onIdentifyFromPhoto,
+                onOpenSearch = onOpenSpeciesSearch
             )
 
             // Attachment previews
@@ -1468,6 +1495,7 @@ private fun AutoMetadataStatusCard(
     gpsAccuracy: Float?,
     weatherDetail: String? = null,
     autoFetching: Boolean = false,
+    gpsFetching: Boolean = false,
     statusText: String = "Ready",
     onFetchGps: () -> Unit,
     onFetchWeather: () -> Unit = {},
@@ -1507,10 +1535,10 @@ private fun AutoMetadataStatusCard(
                 MetadataStatusChip(
                     label = "GPS",
                     acquired = hasGps,
-                    detail = if (hasGps && gpsAccuracy != null) "±${gpsAccuracy.toInt()}m" else if (hasGps) "Acquired" else null,
+                    detail = if (gpsFetching) "Fetching…" else if (hasGps && gpsAccuracy != null) "±${gpsAccuracy.toInt()}m" else if (hasGps) "Acquired" else null,
                     icon = FieldMindIcons.Location,
                     accent = if (hasGps) colors.positive else colors.warning,
-                    onTap = if (!hasGps && !autoFetching) onFetchGps else null,
+                    onTap = if (!hasGps && !autoFetching && !gpsFetching) onFetchGps else null,
                     modifier = Modifier.weight(1f)
                 )
                 MetadataStatusChip(
@@ -1808,21 +1836,23 @@ private fun EnhancedObservationForm(
             // ── Species Search with Autocomplete ──
             Column(Modifier.fillMaxWidth()) {
                 OutlinedTextField(
-                    value = selectedSpecies ?: session.speciesName.ifBlank { session.subject },
+                    value = selectedSpecies ?: session.speciesName,
                     onValueChange = { query ->
                         selectedSpecies = query
                         speciesSearchQuery.value = query
                         onSessionChange(session.copy(speciesName = query))
-                        showSpeciesSearch = query.isNotEmpty()
+                        showSpeciesSearch = query.length >= 2
                     },
                     label = { Text("Species") },
                     placeholder = { Text("Search species…") },
                     trailingIcon = {
-                        Row(horizontalArrangement = Arrangement.spacedBy(0.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                             if (searchingSpecies) {
-                                CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
+                                Box(Modifier.size(24.dp), contentAlignment = Alignment.Center) {
+                                    CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
+                                }
                             }
-                            IconButton(onClick = onOpenSpeciesSearch) {
+                            IconButton(onClick = onOpenSpeciesSearch, modifier = Modifier.size(36.dp)) {
                                 Icon(
                                     FieldMindIcons.Nature,
                                     null,
@@ -1915,13 +1945,16 @@ private fun EnhancedObservationForm(
                 }
 
                 // ── Selected species info card ──
-                AnimatedVisibility(visible = selectedSpeciesRecord != null && speciesSearchQuery.value.isNotBlank()) {
-                    SpeciesInfoCard(
-                        record = selectedSpeciesRecord!!,
-                        showTaxonomy = showTaxonomy,
-                        onToggleTaxonomy = { showTaxonomy = !showTaxonomy },
-                        onOpenDetail = { showSpeciesDetailSheet = true }
-                    )
+                val currentRecord = selectedSpeciesRecord
+                AnimatedVisibility(visible = currentRecord != null && speciesSearchQuery.value.isNotBlank()) {
+                    currentRecord?.let { record ->
+                        SpeciesInfoCard(
+                            record = record,
+                            showTaxonomy = showTaxonomy,
+                            onToggleTaxonomy = { showTaxonomy = !showTaxonomy },
+                            onOpenDetail = { showSpeciesDetailSheet = true }
+                        )
+                    }
                 }
             }
 
@@ -2072,11 +2105,14 @@ private fun EnhancedObservationForm(
             }
 
             // ── Species detail sheet dialog ──
-            if (showSpeciesDetailSheet && selectedSpeciesRecord != null) {
-                SpeciesDetailSheet(
-                    record = selectedSpeciesRecord!!,
-                    onDismiss = { showSpeciesDetailSheet = false }
-                )
+            if (showSpeciesDetailSheet) {
+                val detailRecord = selectedSpeciesRecord
+                if (detailRecord != null) {
+                    SpeciesDetailSheet(
+                        record = detailRecord,
+                        onDismiss = { showSpeciesDetailSheet = false }
+                    )
+                }
             }
         }
     }
