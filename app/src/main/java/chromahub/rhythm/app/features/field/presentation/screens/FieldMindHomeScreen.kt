@@ -323,7 +323,7 @@ fun HomeScreen(
                             )
                         }
                         FilledTonalButton(
-                            onClick = { onNavigate(FieldMindScreen.Insights) },
+                            onClick = { onNavigate(FieldMindScreen.FieldLog) },
                             shape = RoundedCornerShape(14.dp),
                             colors = ButtonDefaults.filledTonalButtonColors(
                                 containerColor = colors.project.copy(alpha = 0.12f)
