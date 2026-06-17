@@ -129,6 +129,16 @@ interface FieldMindDao {
     @Query("UPDATE field_species SET deletedAt = :time, updatedAt = :time WHERE id = :id")
     suspend fun softDeleteSpecies(id: Long, time: Long)
 
+    // ── Weather Catalog ──
+    @Query("SELECT * FROM field_weather_catalog WHERE latitude = :lat AND longitude = :lon ORDER BY fetchedAt DESC")
+    fun observeWeatherCatalog(lat: Double, lon: Double): Flow<List<WeatherCatalogEntity>>
+    @Query("SELECT * FROM field_weather_catalog ORDER BY fetchedAt DESC LIMIT 50")
+    fun observeWeatherCatalogAll(): Flow<List<WeatherCatalogEntity>>
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertWeatherCatalog(entity: WeatherCatalogEntity): Long
+    @Query("DELETE FROM field_weather_catalog WHERE fetchedAt < :before")
+    suspend fun deleteWeatherCatalogBefore(before: Long)
+
     // ── Tasks ──
     @Query("SELECT * FROM field_tasks WHERE deletedAt IS NULL ORDER BY sortOrder ASC, createdAt DESC")
     fun observeTasks(): Flow<List<TaskEntity>>

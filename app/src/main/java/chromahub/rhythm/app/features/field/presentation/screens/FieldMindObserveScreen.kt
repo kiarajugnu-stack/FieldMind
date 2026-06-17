@@ -62,6 +62,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.isActive
 import fieldmind.research.app.features.field.data.weather.WeatherSnapshot
+import fieldmind.research.app.features.field.data.vision.SpeciesRecord
 import java.io.File
 import kotlin.coroutines.resume
 import androidx.compose.ui.text.input.KeyboardType
@@ -163,6 +164,10 @@ fun ObserveScreen(
     var speciesIdImageUri by remember { mutableStateOf<String?>(null) }
     var identifiedSpecies by remember { mutableStateOf<SpeciesMatch?>(null) }
 
+    // ── Weather snapshot from catalog cache ──
+    var weatherSnapshot by remember { mutableStateOf<WeatherSnapshot?>(null) }
+    var weatherFetching by remember { mutableStateOf(false) }
+
     // ── Observations state (collected for reactive stats dashboard) ──
     val observations by viewModel.observations.collectAsState()
 
@@ -245,6 +250,50 @@ fun ObserveScreen(
         }
     }
 
+    // ── Metadata auto-fetch confirmation dialog ──
+    var showMetadataConfirm by remember { mutableStateOf(false) }
+    var metadataAutoFetching by remember { mutableStateOf(false) }
+    var metadataStatus by remember { mutableStateOf("Ready") }
+
+    fun performAutoFetch() {
+        metadataAutoFetching = true
+        metadataStatus = "Acquiring GPS…"
+        if (locationProvider.hasAnyLocationPermission()) {
+            locationProvider.requestCurrentLocation { loc ->
+                if (loc != null) {
+                    capturedLocation = loc
+                    metadataStatus = "GPS acquired (${loc.accuracyMeters?.toInt() ?: "?"}m accuracy) — fetching weather…"
+                    scope.launch {
+                        weatherFetching = true
+                        val snapshot = viewModel.fetchWeatherSnapshot(loc.latitude, loc.longitude)
+                        weatherSnapshot = snapshot
+                        weatherFetching = false
+                        if (snapshot != null) {
+                            // Log to offline weather catalog
+                            viewModel.saveWeatherSnapshot(snapshot, loc.latitude, loc.longitude)
+                            metadataStatus = "GPS + Weather acquired"
+                            showFastSnackbar(snackbar, scope, "Weather: ${snapshot.temperature}°C, ${snapshot.condition}")
+                        } else {
+                            metadataStatus = "GPS acquired, weather unavailable"
+                        }
+                        metadataAutoFetching = false
+                    }
+                    locationProvider.resolvePlaceName(loc.latitude, loc.longitude) { place ->
+                        if (!place.isNullOrBlank()) {
+                            capturedLocation = loc.copy(placeName = place)
+                        }
+                    }
+                } else {
+                    metadataStatus = "GPS unavailable — check permissions"
+                    metadataAutoFetching = false
+                }
+            }
+        } else {
+            metadataStatus = "Location permission required"
+            metadataAutoFetching = false
+        }
+    }
+
     // ── Action: start evidence capture ──
     fun startCapture() {
         haptics.light()
@@ -255,6 +304,8 @@ fun ObserveScreen(
         if (!session.timerRunning && session.timerStartedAt == null) {
             session = session.copy(timerStartedAt = System.currentTimeMillis(), timerRunning = true)
         }
+        // Show metadata auto-fetch confirmation
+        showMetadataConfirm = true
     }
     // ── Action: save observation ──
     fun saveObservation() {
@@ -496,9 +547,7 @@ fun ObserveScreen(
                             observations = observations
                         )
                     }
-                }
-
-                // ── Evidence-First Input ──
+                }                    // ── Evidence-First Input ──
                 if (showEvidenceForm) {
                     // Evidence capture buttons (always visible when form is open)
                     item {
@@ -536,6 +585,44 @@ fun ObserveScreen(
                         )
                     }
 
+                    // ── Auto Metadata Status — MOVED TO TOP ──
+                    item {
+                        AutoMetadataStatusCard(
+                            hasGps = capturedLocation != null,
+                            hasWeather = weatherSnapshot != null,
+                            hasTimestamp = true,
+                            gpsAccuracy = capturedLocation?.accuracyMeters,
+                            weatherDetail = weatherSnapshot?.asDisplayText(),
+                            autoFetching = metadataAutoFetching,
+                            statusText = metadataStatus,
+                            onFetchGps = {
+                                if (locationProvider.hasAnyLocationPermission()) {
+                                    locationProvider.requestCurrentLocation { loc ->
+                                        if (loc != null) capturedLocation = loc
+                                    }
+                                }
+                            },
+                            onFetchWeather = {
+                                val loc = capturedLocation
+                                if (loc != null) {
+                                    scope.launch {
+                                        weatherFetching = true
+                                        val snapshot = viewModel.fetchWeatherSnapshot(loc.latitude, loc.longitude)
+                                        weatherSnapshot = snapshot
+                                        weatherFetching = false
+                                        if (snapshot != null) {
+                                            viewModel.saveWeatherSnapshot(snapshot, loc.latitude, loc.longitude)
+                                            showFastSnackbar(snackbar, scope, "Weather: ${snapshot.temperature}°C, ${snapshot.condition}")
+                                        }
+                                    }
+                                } else {
+                                    showFastSnackbar(snackbar, scope, "Acquire GPS location first")
+                                }
+                            },
+                            onFetchBoth = { performAutoFetch() }
+                        )
+                    }
+
                     // ── Quick Classification Grid (always visible) ──
                     item {
                         QuickClassificationGrid(
@@ -544,32 +631,24 @@ fun ObserveScreen(
                         )
                     }
 
-                    // ── Enhanced Observation Form ──
+                    // ── Enhanced Observation Form (with species autocomplete) ──
                     item {
                         EnhancedObservationForm(
                             session = session,
                             onSessionChange = { session = it },
                             onSave = { saveObservation() },
+                            speciesDatabase = speciesDatabase,
                             onOpenSpeciesSearch = {
                                 speciesIdImageUri = null
                                 showSpeciesId = true
-                            }
-                        )
-                    }
-
-                    // ── Auto Metadata Status ──
-                    item {
-                        AutoMetadataStatusCard(
-                            hasGps = capturedLocation != null,
-                            hasWeather = false,
-                            hasTimestamp = true,
-                            gpsAccuracy = capturedLocation?.accuracyMeters,
-                            onFetchGps = {
-                                if (locationProvider.hasAnyLocationPermission()) {
-                                    locationProvider.requestCurrentLocation { loc ->
-                                        if (loc != null) capturedLocation = loc
-                                    }
-                                }
+                            },
+                            identifiedSpecies = identifiedSpecies,
+                            onSelectSpecies = { match ->
+                                identifiedSpecies = match
+                                session = session.copy(
+                                    speciesName = match.commonName,
+                                    category = match.category
+                                )
                             }
                         )
                     }
@@ -585,6 +664,22 @@ fun ObserveScreen(
                             onRunIdentification = { uri ->
                                 speciesIdImageUri = uri
                                 showSpeciesId = true
+                            }
+                        )
+                    }
+                }
+
+                // ── Metadata auto-fetch confirmation dialog ──
+                if (showMetadataConfirm) {
+                    item {
+                        AutoFetchConfirmCard(
+                            onConfirm = {
+                                showMetadataConfirm = false
+                                performAutoFetch()
+                            },
+                            onSkip = {
+                                showMetadataConfirm = false
+                                metadataStatus = "Skipped — tap chips to fetch"
                             }
                         )
                     }
@@ -1303,7 +1398,66 @@ private fun QuickClassificationGrid(
 }
 
 // ══════════════════════════════════════════════════════════════════════
-//  Auto Metadata Status Card — Per spec: GPS, Weather, Timestamp
+//  Auto-Fetch Confirmation Card — Shown on session start
+// ══════════════════════════════════════════════════════════════════════
+
+@Composable
+private fun AutoFetchConfirmCard(
+    onConfirm: () -> Unit,
+    onSkip: () -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Column(
+            Modifier.padding(18.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                Box(
+                    Modifier.size(40.dp).clip(RoundedCornerShape(12.dp))
+                        .background(FieldMindTheme.colors.info.copy(alpha = 0.14f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(FieldMindIcons.Weather, null, tint = FieldMindTheme.colors.info, size = 22.dp)
+                }
+                Column(Modifier.weight(1f)) {
+                    Text("Acquire location & weather?", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    Text("Auto-fetch GPS coordinates and current weather for your observation.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                OutlinedButton(
+                    onClick = onSkip,
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(14.dp)
+                ) {
+                    Text("Skip", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                Button(
+                    onClick = onConfirm,
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(14.dp)
+                ) {
+                    Icon(FieldMindIcons.Location, null, size = 18.dp)
+                    Spacer(Modifier.size(6.dp))
+                    Text("Fetch now")
+                }
+            }
+        }
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════════
+//  Auto Metadata Status Card — Enhanced with weather detail, fetch-all, and confirmation
 // ══════════════════════════════════════════════════════════════════════
 
 @Composable
@@ -1312,9 +1466,16 @@ private fun AutoMetadataStatusCard(
     hasWeather: Boolean,
     hasTimestamp: Boolean,
     gpsAccuracy: Float?,
-    onFetchGps: () -> Unit
+    weatherDetail: String? = null,
+    autoFetching: Boolean = false,
+    statusText: String = "Ready",
+    onFetchGps: () -> Unit,
+    onFetchWeather: () -> Unit = {},
+    onFetchBoth: () -> Unit = {}
 ) {
     val colors = FieldMindTheme.colors
+    val showWeatherConfirm = remember { mutableStateOf(false) }
+    
     Card(
         shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
@@ -1323,31 +1484,74 @@ private fun AutoMetadataStatusCard(
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Icon(FieldMindIcons.Info, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, size = 18.dp)
-                Text("Auto metadata", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                Column(Modifier.weight(1f)) {
+                    Text("Location & weather", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                    if (autoFetching) {
+                        Text(statusText, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
+                    }
+                }
+                if (!hasGps && !autoFetching) {
+                    Surface(
+                        onClick = onFetchBoth,
+                        shape = RoundedCornerShape(12.dp),
+                        color = colors.info.copy(alpha = 0.12f)
+                    ) {
+                        Row(Modifier.padding(horizontal = 12.dp, vertical = 6.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Icon(FieldMindIcons.Weather, null, tint = colors.info, size = 16.dp)
+                            Text("Fetch all", style = MaterialTheme.typography.labelSmall, color = colors.info, fontWeight = FontWeight.SemiBold)
+                        }
+                    }
+                }
             }
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 MetadataStatusChip(
                     label = "GPS",
                     acquired = hasGps,
-                    detail = if (hasGps && gpsAccuracy != null) "±${gpsAccuracy.toInt()}m" else null,
+                    detail = if (hasGps && gpsAccuracy != null) "±${gpsAccuracy.toInt()}m" else if (hasGps) "Acquired" else null,
                     icon = FieldMindIcons.Location,
                     accent = if (hasGps) colors.positive else colors.warning,
-                    onTap = if (!hasGps) onFetchGps else null,
+                    onTap = if (!hasGps && !autoFetching) onFetchGps else null,
                     modifier = Modifier.weight(1f)
                 )
                 MetadataStatusChip(
                     label = "Weather",
                     acquired = hasWeather,
+                    detail = weatherDetail ?: if (hasWeather) "Logged" else null,
                     icon = FieldMindIcons.Weather,
                     accent = if (hasWeather) colors.positive else colors.warning,
+                    onTap = if (hasGps && !hasWeather && !autoFetching) {
+                        { showWeatherConfirm.value = true }
+                    } else null,
                     modifier = Modifier.weight(1f)
                 )
                 MetadataStatusChip(
-                    label = "Timestamp",
+                    label = "Time",
                     acquired = hasTimestamp,
                     icon = FieldMindIcons.Calendar,
                     accent = if (hasTimestamp) colors.positive else colors.warning,
                     modifier = Modifier.weight(1f)
+                )
+            }
+            
+            // Weather fetch confirmation dialog
+            if (showWeatherConfirm.value) {
+                AlertDialog(
+                    onDismissRequest = { showWeatherConfirm.value = false },
+                    icon = { Icon(FieldMindIcons.Weather, null, tint = MaterialTheme.colorScheme.primary, size = 28.dp) },
+                    title = { Text("Fetch weather data?") },
+                    text = { Text("Fetch current weather conditions from your location. This will use GPS coordinates.") },
+                    confirmButton = {
+                        Button(
+                            onClick = {
+                                showWeatherConfirm.value = false
+                                onFetchWeather()
+                            },
+                            shape = RoundedCornerShape(14.dp)
+                        ) { Text("Fetch weather") }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = { showWeatherConfirm.value = false }) { Text("Cancel") }
+                    }
                 )
             }
         }
@@ -1491,7 +1695,7 @@ private fun SpeciesIdentificationLiveCard(
 }
 
 // ══════════════════════════════════════════════════════════════════════
-//  Enhanced Observation Form — Full form with all dropdowns per spec
+//  Enhanced Observation Form — Full form with species autocomplete
 // ══════════════════════════════════════════════════════════════════════
 
 @OptIn(ExperimentalLayoutApi::class)
@@ -1500,17 +1704,68 @@ private fun EnhancedObservationForm(
     session: CaptureSessionState,
     onSessionChange: (CaptureSessionState) -> Unit,
     onSave: () -> Unit,
-    onOpenSpeciesSearch: () -> Unit = {}
+    speciesDatabase: SpeciesDatabase? = null,
+    onOpenSpeciesSearch: () -> Unit = {},
+    identifiedSpecies: SpeciesMatch? = null,
+    onSelectSpecies: ((SpeciesMatch) -> Unit)? = null
 ) {
     var showAdvanced by remember { mutableStateOf(false) }
     var showSpeciesSearch by remember { mutableStateOf(false) }
     var selectedSpecies by remember { mutableStateOf<String?>(null) }
+    var speciesSuggestions by remember { mutableStateOf<List<SpeciesRecord>>(emptyList()) }
+    var showSuggestions by remember { mutableStateOf(false) }
+    var searchingSpecies by remember { mutableStateOf(false) }
 
-    // Reset selectedSpecies when session clears after save
+    // ── Selected species record (full info from database) ──
+    var selectedSpeciesRecord by remember { mutableStateOf<SpeciesRecord?>(null) }
+    var showTaxonomy by remember { mutableStateOf(false) }
+    var showSpeciesDetailSheet by remember { mutableStateOf(false) }
+
+    // Look up full species record when speciesName changes
+    LaunchedEffect(session.speciesName) {
+        if (session.speciesName.isNotBlank() && session.speciesName != selectedSpeciesRecord?.commonName) {
+            val db = speciesDatabase
+            if (db != null) {
+                val results = db.search(session.speciesName, limit = 5)
+                selectedSpeciesRecord = results.firstOrNull { 
+                    it.commonName.equals(session.speciesName, ignoreCase = true) ||
+                    it.scientificName.equals(session.speciesName, ignoreCase = true)
+                }
+            }
+        } else if (session.speciesName.isBlank()) {
+            selectedSpeciesRecord = null
+            showTaxonomy = false
+        }
+    }
+
+    // Reset when session clears after save
     LaunchedEffect(session.speciesName) {
         if (session.speciesName.isBlank()) {
             selectedSpecies = null
             showSpeciesSearch = false
+            speciesSuggestions = emptyList()
+            showSuggestions = false
+            selectedSpeciesRecord = null
+            showTaxonomy = false
+        }
+    }
+
+    // Species search with debounce
+    val speciesSearchQuery = remember { mutableStateOf("") }
+    LaunchedEffect(speciesSearchQuery.value) {
+        if (speciesSearchQuery.value.length >= 2) {
+            searchingSpecies = true
+            kotlinx.coroutines.delay(300) // debounce
+            val db = speciesDatabase
+            if (db != null && speciesSearchQuery.value.isNotBlank()) {
+                val results = db.search(speciesSearchQuery.value, limit = 5)
+                speciesSuggestions = results
+                showSuggestions = results.isNotEmpty()
+            }
+            searchingSpecies = false
+        } else {
+            speciesSuggestions = emptyList()
+            showSuggestions = false
         }
     }
 
@@ -1535,55 +1790,138 @@ private fun EnhancedObservationForm(
                 }
             }
 
-            // ── Subject Name ──
+            // ── Subject Name — also fills species ──
             FieldTextField(
                 session.subject,
-                { onSessionChange(session.copy(subject = it)) },
+                {
+                    val updated = session.copy(subject = it)
+                    if (it.isNotBlank() && session.speciesName.isBlank()) {
+                        onSessionChange(updated.copy(speciesName = it))
+                    } else {
+                        onSessionChange(updated)
+                    }
+                },
                 "Subject name",
                 supportingText = "e.g. House Crow carrying twig"
             )
 
-            // ── Species Search ──
-            OutlinedTextField(
-                value = selectedSpecies ?: session.speciesName.ifBlank { session.subject },
-                onValueChange = {
-                    selectedSpecies = it
-                    onSessionChange(session.copy(speciesName = it))
-                    showSpeciesSearch = it.isNotEmpty()
-                },
-                label = { Text("Species") },
-                placeholder = { Text("Search species…") },
-                trailingIcon = {
-                    IconButton(onClick = onOpenSpeciesSearch) {
-                        Icon(
-                            FieldMindIcons.Nature,
-                            null,
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                            size = 20.dp
-                        )
-                    }
-                },
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(18.dp),
-                singleLine = true
-            )
+            // ── Species Search with Autocomplete ──
+            Column(Modifier.fillMaxWidth()) {
+                OutlinedTextField(
+                    value = selectedSpecies ?: session.speciesName.ifBlank { session.subject },
+                    onValueChange = { query ->
+                        selectedSpecies = query
+                        speciesSearchQuery.value = query
+                        onSessionChange(session.copy(speciesName = query))
+                        showSpeciesSearch = query.isNotEmpty()
+                    },
+                    label = { Text("Species") },
+                    placeholder = { Text("Search species…") },
+                    trailingIcon = {
+                        Row(horizontalArrangement = Arrangement.spacedBy(0.dp)) {
+                            if (searchingSpecies) {
+                                CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
+                            }
+                            IconButton(onClick = onOpenSpeciesSearch) {
+                                Icon(
+                                    FieldMindIcons.Nature,
+                                    null,
+                                    tint = MaterialTheme.colorScheme.primary,
+                                    size = 20.dp
+                                )
+                            }
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(18.dp),
+                    singleLine = true
+                )
 
-            // ── Species search helper ──
-            if (showSpeciesSearch) {
-                Surface(
-                    onClick = onOpenSpeciesSearch,
-                    shape = RoundedCornerShape(16.dp),
-                    color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
-                ) {
-                    Row(
-                        Modifier.fillMaxWidth().padding(12.dp),
-                        horizontalArrangement = Arrangement.Center,
-                        verticalAlignment = Alignment.CenterVertically
+                // ── Species suggestion dropdown (up to 5 results) ──
+                AnimatedVisibility(visible = showSuggestions) {
+                    Card(
+                        modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+                        ),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
                     ) {
-                        Icon(FieldMindIcons.Search, null, tint = MaterialTheme.colorScheme.primary, size = 18.dp)
-                        Spacer(Modifier.size(8.dp))
-                        Text("Open species browser (${SpeciesClassifier.FALLBACK_SPECIES.size} species)", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
+                        Column(Modifier.padding(4.dp)) {
+                            speciesSuggestions.take(5).forEach { record ->
+                                Surface(
+                                    onClick = {
+                                        selectedSpecies = record.commonName
+                                        speciesSearchQuery.value = record.commonName
+                                        onSessionChange(
+                                            session.copy(
+                                                speciesName = record.commonName,
+                                                subject = if (session.subject.isBlank()) record.commonName else session.subject,
+                                                category = record.category
+                                            )
+                                        )
+                                        showSuggestions = false
+                                    },
+                                    shape = RoundedCornerShape(12.dp),
+                                    color = MaterialTheme.colorScheme.surfaceContainerHigh
+                                ) {
+                                    Row(
+                                        Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 10.dp),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                                    ) {
+                                        Box(
+                                            Modifier.size(32.dp).clip(RoundedCornerShape(10.dp))
+                                                .background(FieldMindTheme.colors.observation.copy(alpha = 0.14f)),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Icon(FieldMindIcons.Nature, null, tint = FieldMindTheme.colors.observation, size = 16.dp)
+                                        }
+                                        Column(Modifier.weight(1f)) {
+                                            Text(record.commonName, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
+                                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                                if (record.scientificName.isNotBlank()) {
+                                                    Text(record.scientificName, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                                }
+                                                if (record.category != "Other") {
+                                                    Text(record.category, style = MaterialTheme.typography.labelSmall, color = FieldMindTheme.colors.accentFor(record.category))
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
+                }
+
+                // ── Species search helper ──
+                if (showSpeciesSearch && !showSuggestions && speciesSearchQuery.value.isNotBlank()) {
+                    Surface(
+                        onClick = onOpenSpeciesSearch,
+                        shape = RoundedCornerShape(16.dp),
+                        color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
+                    ) {
+                        Row(
+                            Modifier.fillMaxWidth().padding(12.dp),
+                            horizontalArrangement = Arrangement.Center,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(FieldMindIcons.Search, null, tint = MaterialTheme.colorScheme.primary, size = 18.dp)
+                            Spacer(Modifier.size(8.dp))
+                            Text("Open species catalog", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
+                        }
+                    }
+                }
+
+                // ── Selected species info card ──
+                AnimatedVisibility(visible = selectedSpeciesRecord != null && speciesSearchQuery.value.isNotBlank()) {
+                    SpeciesInfoCard(
+                        record = selectedSpeciesRecord!!,
+                        showTaxonomy = showTaxonomy,
+                        onToggleTaxonomy = { showTaxonomy = !showTaxonomy },
+                        onOpenDetail = { showSpeciesDetailSheet = true }
+                    )
                 }
             }
 
@@ -1731,6 +2069,14 @@ private fun EnhancedObservationForm(
                     Spacer(Modifier.size(6.dp))
                     Text("Save observation")
                 }
+            }
+
+            // ── Species detail sheet dialog ──
+            if (showSpeciesDetailSheet && selectedSpeciesRecord != null) {
+                SpeciesDetailSheet(
+                    record = selectedSpeciesRecord!!,
+                    onDismiss = { showSpeciesDetailSheet = false }
+                )
             }
         }
     }

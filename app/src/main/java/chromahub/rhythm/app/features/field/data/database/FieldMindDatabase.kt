@@ -34,6 +34,7 @@ import fieldmind.research.app.features.field.data.database.entity.*
         SessionObservationCrossRef::class,
         TaskEntity::class,
         SpeciesEntity::class,
+        WeatherCatalogEntity::class,
         TeamMemberEntity::class,
         TaskObservationCrossRef::class,
         TaskEvidenceCrossRef::class,
