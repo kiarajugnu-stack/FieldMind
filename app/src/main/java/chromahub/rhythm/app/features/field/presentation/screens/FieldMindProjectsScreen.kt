@@ -607,40 +607,162 @@ private fun ObservationsTab(
     onOpenDetail: (String, Long) -> Unit
 ) {
     var selectedProjectId by remember { mutableStateOf<Long?>(null) }
+    var sortOption by remember { mutableStateOf("Date (newest)") }
+    var selectedIds by remember { mutableStateOf<Set<Long>>(emptySet()) }
+    var selectMode by remember { mutableStateOf(false) }
+    var showDeleteConfirm by remember { mutableStateOf(false) }
+    var showSortMenu by remember { mutableStateOf(false) }
     val projectOptions = remember(projects) { listOf(null to "All projects") + projects.map { it.id to it.title } }
     val filtered = remember(observations, selectedProjectId) {
         if (selectedProjectId == null) observations else observations.filter { it.projectId == selectedProjectId }
     }
+    val sorted = remember(filtered, sortOption) {
+        when (sortOption) {
+            "Date (oldest)" -> filtered.sortedBy { it.timestamp }
+            "Category" -> filtered.sortedBy { it.category }
+            "Confidence" -> filtered.sortedByDescending { it.confidenceLevel }
+            "Location" -> filtered.sortedBy { it.manualLocation }
+            else -> filtered.sortedByDescending { it.timestamp } // Date (newest)
+        }
+    }
+
+    // If selectMode exits, deselect all
+    if (!selectMode && selectedIds.isNotEmpty()) {
+        selectedIds = emptySet()
+    }
+
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = panelPadding(),
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
         item { SectionHeader("Observations", "${filtered.size} of ${observations.size} total") }
+        
+        // ── Toolbar: Filter, Sort, Select, Delete ──
         item {
             Card(shape = RoundedCornerShape(20.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)) {
-                Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    // Project filter chips
                     Text("Filter by project", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         items(projectOptions.take(12)) { (id, label) ->
                             FilterChip(selected = selectedProjectId == id, onClick = { selectedProjectId = id }, label = { Text(label, maxLines = 1) })
                         }
                     }
+                    
+                    // Action row: Sort, Select, Delete
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                        // Sort button
+                        Box {
+                            FilledTonalButton(
+                                onClick = { showSortMenu = true },
+                                shape = RoundedCornerShape(12.dp),
+                                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
+                                modifier = Modifier.height(36.dp)
+                            ) {
+                                Icon(FieldMindIcons.Sort, null, size = 16.dp)
+                                Spacer(Modifier.size(4.dp))
+                                Text(sortOption.take(14), style = MaterialTheme.typography.labelSmall)
+                                Spacer(Modifier.size(2.dp))
+                                Icon(FieldMindIcons.Down, null, size = 14.dp)
+                            }
+                            DropdownMenu(expanded = showSortMenu, onDismissRequest = { showSortMenu = false }) {
+                                listOf("Date (newest)", "Date (oldest)", "Category", "Confidence", "Location").forEach { s ->
+                                    DropdownMenuItem(
+                                        text = { Text(s, style = MaterialTheme.typography.bodySmall) },
+                                        onClick = { sortOption = s; showSortMenu = false },
+                                        leadingIcon = if (sortOption == s) ({ Icon(FieldMindIcons.Check, null, size = 18.dp) }) else null
+                                    )
+                                }
+                            }
+                        }
+                        
+                        Spacer(Modifier.weight(1f))
+                        
+                        // Select mode toggle
+                        FilledTonalButton(
+                            onClick = { selectMode = !selectMode; if (!selectMode) selectedIds = emptySet() },
+                            shape = RoundedCornerShape(12.dp),
+                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
+                            colors = if (selectMode) ButtonDefaults.filledTonalButtonColors(containerColor = FieldMindTheme.colors.observation.copy(alpha = 0.18f)) else ButtonDefaults.filledTonalButtonColors(),
+                            modifier = Modifier.height(36.dp)
+                        ) {
+                            Icon(FieldMindIcons.Select, null, size = 16.dp)
+                            Spacer(Modifier.size(4.dp))
+                            Text(if (selectMode) "Cancel (${selectedIds.size})" else "Select", style = MaterialTheme.typography.labelSmall)
+                        }
+                        
+                        // Delete selected (only visible in select mode with items)
+                        if (selectMode && selectedIds.isNotEmpty()) {
+                            FilledTonalButton(
+                                onClick = { showDeleteConfirm = true },
+                                shape = RoundedCornerShape(12.dp),
+                                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
+                                colors = ButtonDefaults.filledTonalButtonColors(containerColor = MaterialTheme.colorScheme.errorContainer),
+                                modifier = Modifier.height(36.dp)
+                            ) {
+                                Icon(FieldMindIcons.Delete, null, size = 16.dp, tint = MaterialTheme.colorScheme.onErrorContainer)
+                                Spacer(Modifier.size(4.dp))
+                                Text("Delete (${selectedIds.size})", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onErrorContainer)
+                            }
+                        }
+                    }
                 }
             }
         }
-        items(filtered.sortedByDescending { it.timestamp }) { obs ->
+        
+        items(sorted) { obs ->
             EntityCard(
-                obs.subject.ifBlank { "Observation" },
-                "observation",
+                title = obs.subject.ifBlank { "Observation" },
+                kind = "observation",
                 body = "${obs.category} • ${obs.date}",
                 meta = listOfNotNull(obs.weatherCondition.takeIf { it.isNotBlank() }, obs.confidenceLevel),
-                onClick = { onOpenDetail("observation", obs.id) }
+                selected = selectMode && obs.id in selectedIds,
+                onSelect = if (selectMode) {{ 
+                    selectedIds = if (obs.id in selectedIds) selectedIds - obs.id else selectedIds + obs.id 
+                }} else null,
+                onClick = { 
+                    if (selectMode) {
+                        selectedIds = if (obs.id in selectedIds) selectedIds - obs.id else selectedIds + obs.id 
+                    } else {
+                        onOpenDetail("observation", obs.id)
+                    }
+                }
             )
         }
-        if (filtered.isEmpty()) {
+        if (sorted.isEmpty()) {
             item { EmptyState("No observations", "Observations will appear here, filtered by project.", icon = FieldMindIcons.Observation, actionLabel = "Start observing") { onOpenDetail("observe", 0) } }
         }
+    }
+    
+    // Delete confirmation dialog
+    if (showDeleteConfirm) {
+        AlertDialog(
+            onDismissRequest = { showDeleteConfirm = false },
+            icon = { Icon(icon = FieldMindIcons.Delete, contentDescription = null, size = 28.dp) },
+            title = { Text("Delete observations?") },
+            text = {
+                Text(
+                    "This will permanently delete ${selectedIds.size} selected observation${if (selectedIds.size != 1) "s" else ""}. This action cannot be undone.",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        selectedIds.forEach { viewModel.deleteObservation(it) }
+                        selectedIds = emptySet()
+                        selectMode = false
+                        showDeleteConfirm = false
+                    },
+                    shape = RoundedCornerShape(14.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                ) { Text("Delete ${selectedIds.size}") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteConfirm = false }) { Text("Cancel") }
+            }
+        )
     }
 }
 
