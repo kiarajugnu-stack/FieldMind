@@ -157,6 +157,7 @@ fun FieldMindNavigation(viewModel: FieldMindViewModel, onResetOnboarding: () -> 
         currentRoute == FieldMindScreen.Changelog.route ||
         currentRoute == FieldMindScreen.Flashcards.route ||
         currentRoute == FieldMindScreen.ResearchSession.route ||
+        (currentRoute == FieldMindScreen.Observe.route && viewModel.captureSessionActive) ||
         currentRoute?.startsWith("field_detail/") == true
 
     // ── Capture session navigation guard ──
