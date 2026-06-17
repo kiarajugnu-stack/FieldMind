@@ -157,24 +157,24 @@ private val LightFieldMindColors = FieldMindColors(
     isDark = false,
     observation = Color(0xFF2E7D32),
     question = Color(0xFF1565C0),
-    hypothesis = Color(0xFFC77800),
+    hypothesis = Color(0xFF8B5000),
     project = Color(0xFF00695C),
     source = Color(0xFF5E35B1),
-    data = Color(0xFF00838F),
+    data = Color(0xFF006D7A),
     report = Color(0xFFA1531F),
     flashcard = Color(0xFFAD1457),
     confidenceSure = Color(0xFF2E7D32),
-    confidenceGuess = Color(0xFFC77800),
+    confidenceGuess = Color(0xFF8B5000),
     confidenceVerify = Color(0xFFC62828),
     positive = Color(0xFF2E7D32),
-    warning = Color(0xFFC77800),
+    warning = Color(0xFF8B5000),
     info = Color(0xFF455A64),
     categorical = listOf(
         Color(0xFF2E7D32), // green
         Color(0xFF1565C0), // blue
-        Color(0xFFC77800), // amber
+        Color(0xFF8B5000), // amber
         Color(0xFF5E35B1), // violet
-        Color(0xFF00838F), // teal
+        Color(0xFF006D7A), // teal
         Color(0xFFAD1457), // magenta
         Color(0xFF00695C), // deep teal
         Color(0xFFD84315), // burnt orange
