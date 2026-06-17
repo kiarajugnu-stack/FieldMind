@@ -33,6 +33,7 @@ import kotlin.math.sin
 import kotlin.math.abs
 import kotlin.math.floor
 import kotlin.math.PI
+import kotlin.math.pow
 import kotlin.random.Random
 import java.time.LocalDate
 import java.time.temporal.ChronoUnit
@@ -180,6 +181,22 @@ private fun parseIsoTimeToMillis(iso: String): Long? {
 //  Color Palette
 // ══════════════════════════════════════════════════════════════════════
 
+/**
+ * Raw time-of-day color components before temperature modulation and theme processing.
+ * Named fields avoid Kotlin's 5-component List destructuring limit.
+ */
+private data class TimeOfDayColors(
+    val skyTop: Color,
+    val skyBottom: Color,
+    val skyAccent: Color,
+    val sunCol: Color,
+    val sunGlowCol: Color,
+    val moonCol: Color,
+    val moonGlowCol: Color,
+    val cloudCol: Color,
+    val hazeCol: Color
+)
+
 data class WeatherPalette(
     val primary: Color,
     val secondary: Color,
@@ -197,96 +214,105 @@ private fun weatherPalette(temp: Double?, timeOfDay: TimeOfDay, isDarkTheme: Boo
     val tempC = temp ?: 20.0
 
     // ── Time-of-day sky colors (override temperature base) ──
-    val (skyTop, skyBottom, skyAccent, sunCol, sunGlowCol, moonCol, moonGlowCol, cloudCol, hazeCol) = when (timeOfDay) {
-        TimeOfDay.Dawn -> listOf(
-            Color(0xFF8B6FC0),  // Soft purple
-            Color(0xFFF5C6A0),  // Warm peach
-            Color(0xFFE8A0B4),  // Pink accent
-            Color(0xFFFFD4A8),  // Warm pale sun
-            Color(0xFFFFE0C0),  // Warm glow
-            Color(0xFFC8B8D8),  // Dim moon
-            Color(0xFFD0C0E0),  // Subtle glow
-            Color(0xFFF0E0D0),  // Warm clouds
-            Color(0xFFFFD4B0)   // Peach haze
+    val timeColors = when (timeOfDay) {
+        TimeOfDay.Dawn -> TimeOfDayColors(
+            skyTop = Color(0xFF8B6FC0),
+            skyBottom = Color(0xFFF5C6A0),
+            skyAccent = Color(0xFFE8A0B4),
+            sunCol = Color(0xFFFFD4A8),
+            sunGlowCol = Color(0xFFFFE0C0),
+            moonCol = Color(0xFFC8B8D8),
+            moonGlowCol = Color(0xFFD0C0E0),
+            cloudCol = Color(0xFFF0E0D0),
+            hazeCol = Color(0xFFFFD4B0)
         )
-        TimeOfDay.Sunrise -> listOf(
-            Color(0xFFFF8A50),  // Golden orange
-            Color(0xFFFFD54F),  // Warm yellow
-            Color(0xFFFFAB40),  // Orange accent
-            Color(0xFFFFF176),  // Golden sun
-            Color(0xFFFFF9C4),  // Warm glow
-            Color(0xFFE0C8A0),  // Fading moon
-            Color(0xFFFFE0B0),  // Warm
-            Color(0xFFFFE0C0),  // Golden clouds
-            Color(0xFFFFD4A0)   // Golden haze
+        TimeOfDay.Sunrise -> TimeOfDayColors(
+            skyTop = Color(0xFFFF8A50),
+            skyBottom = Color(0xFFFFD54F),
+            skyAccent = Color(0xFFFFAB40),
+            sunCol = Color(0xFFFFF176),
+            sunGlowCol = Color(0xFFFFF9C4),
+            moonCol = Color(0xFFE0C8A0),
+            moonGlowCol = Color(0xFFFFE0B0),
+            cloudCol = Color(0xFFFFE0C0),
+            hazeCol = Color(0xFFFFD4A0)
         )
-        TimeOfDay.Morning -> listOf(
-            Color(0xFF87CEEB),  // Soft sky blue
-            Color(0xFFB0E0E6),  // Pale blue
-            Color(0xFF64B5F6),  // Blue accent
-            Color(0xFFFFF176),  // Bright sun
-            Color(0xFFFFF9C4),  // Warm glow
-            Color(0xFFD0D8E0),  // Faint moon
-            Color(0xFFE0E8F0),  // Subtle
-            Color(0xFFFFF8E1),  // Warm white clouds
-            Color(0xFFFFF9C4)   // Light haze
+        TimeOfDay.Morning -> TimeOfDayColors(
+            skyTop = Color(0xFF87CEEB),
+            skyBottom = Color(0xFFB0E0E6),
+            skyAccent = Color(0xFF64B5F6),
+            sunCol = Color(0xFFFFF176),
+            sunGlowCol = Color(0xFFFFF9C4),
+            moonCol = Color(0xFFD0D8E0),
+            moonGlowCol = Color(0xFFE0E8F0),
+            cloudCol = Color(0xFFFFF8E1),
+            hazeCol = Color(0xFFFFF9C4)
         )
-        TimeOfDay.Midday -> listOf(
-            Color(0xFF4A90D9),  // Bright blue
-            Color(0xFF87CEEB),  // Sky blue
-            Color(0xFF42A5F5),  // Blue accent
-            Color(0xFFFFF176),  // Yellow sun
-            Color(0xFFFFF9C4),  // White-gold glow
-            Color(0xFFD0D8E0),  // Faint moon
-            Color(0xFFE0E8F0),  // Subtle
-            Color.White,        // White clouds
-            Color(0xFFE3F2FD)   // Blue-white haze
+        TimeOfDay.Midday -> TimeOfDayColors(
+            skyTop = Color(0xFF4A90D9),
+            skyBottom = Color(0xFF87CEEB),
+            skyAccent = Color(0xFF42A5F5),
+            sunCol = Color(0xFFFFF176),
+            sunGlowCol = Color(0xFFFFF9C4),
+            moonCol = Color(0xFFD0D8E0),
+            moonGlowCol = Color(0xFFE0E8F0),
+            cloudCol = Color.White,
+            hazeCol = Color(0xFFE3F2FD)
         )
-        TimeOfDay.Afternoon -> listOf(
-            Color(0xFF5BA3D9),  // Slightly warmer blue
-            Color(0xFF9AC8E0),  // Soft blue
-            Color(0xFF64B5F6),  // Blue accent
-            Color(0xFFFFF176),  // Yellow sun
-            Color(0xFFFFF9C4),  // Warm glow
-            Color(0xFFD0D8E0),  // Faint moon
-            Color(0xFFE0E8F0),  // Subtle
-            Color(0xFFFFF8E1),  // Warm white clouds
-            Color(0xFFFFF3E0)   // Warm haze
+        TimeOfDay.Afternoon -> TimeOfDayColors(
+            skyTop = Color(0xFF5BA3D9),
+            skyBottom = Color(0xFF9AC8E0),
+            skyAccent = Color(0xFF64B5F6),
+            sunCol = Color(0xFFFFF176),
+            sunGlowCol = Color(0xFFFFF9C4),
+            moonCol = Color(0xFFD0D8E0),
+            moonGlowCol = Color(0xFFE0E8F0),
+            cloudCol = Color(0xFFFFF8E1),
+            hazeCol = Color(0xFFFFF3E0)
         )
-        TimeOfDay.Sunset -> listOf(
-            Color(0xFFFF6B35),  // Orange
-            Color(0xFF9C27B0),  // Purple
-            Color(0xFFFF5252),  // Red accent
-            Color(0xFFFF8A65),  // Orange-red sun
-            Color(0xFFFF6B35),  // Warm glow
-            Color(0xFFC8A0C0),  // Dim moon purple
-            Color(0xFFE0B0D0),  // Glow
-            Color(0xFFF0D0C0),  // Pink clouds
-            Color(0xFFFFAB91)   // Red-orange haze
+        TimeOfDay.Sunset -> TimeOfDayColors(
+            skyTop = Color(0xFFFF6B35),
+            skyBottom = Color(0xFF9C27B0),
+            skyAccent = Color(0xFFFF5252),
+            sunCol = Color(0xFFFF8A65),
+            sunGlowCol = Color(0xFFFF6B35),
+            moonCol = Color(0xFFC8A0C0),
+            moonGlowCol = Color(0xFFE0B0D0),
+            cloudCol = Color(0xFFF0D0C0),
+            hazeCol = Color(0xFFFFAB91)
         )
-        TimeOfDay.Twilight -> listOf(
-            Color(0xFF283593),  // Deep indigo
-            Color(0xFF4A148C),  // Deep purple
-            Color(0xFF7C4DFF),  // Purple accent
-            Color(0xFFFFCC80),  // Warm dim sun
-            Color(0xFFFFAB91),  // Dim glow
-            Color(0xFFB0BEC5),  // Dim moon
-            Color(0xFF90A4AE),  // Subtle
-            Color(0xFF546E7A),  // Dark clouds
-            Color(0xFF7E57C2)   // Purple haze
+        TimeOfDay.Twilight -> TimeOfDayColors(
+            skyTop = Color(0xFF283593),
+            skyBottom = Color(0xFF4A148C),
+            skyAccent = Color(0xFF7C4DFF),
+            sunCol = Color(0xFFFFCC80),
+            sunGlowCol = Color(0xFFFFAB91),
+            moonCol = Color(0xFFB0BEC5),
+            moonGlowCol = Color(0xFF90A4AE),
+            cloudCol = Color(0xFF546E7A),
+            hazeCol = Color(0xFF7E57C2)
         )
-        TimeOfDay.Night -> listOf(
-            Color(0xFF0D0D2B),  // Near-black blue
-            Color(0xFF1A1A3E),  // Dark indigo
-            Color(0xFF5C6BC0),  // Indigo accent
-            Color(0xFFECEFF1),  // White moon
-            Color(0xFFB0BEC5),  // Silver glow
-            Color(0xFFECEFF1),  // Moon
-            Color(0xFFB3E5FC),  // Moon glow
-            Color(0xFF37474F),  // Dark clouds
-            Color(0xFF1A237E)   // Blue-black haze
+        TimeOfDay.Night -> TimeOfDayColors(
+            skyTop = Color(0xFF0D0D2B),
+            skyBottom = Color(0xFF1A1A3E),
+            skyAccent = Color(0xFF5C6BC0),
+            sunCol = Color(0xFFECEFF1),
+            sunGlowCol = Color(0xFFB0BEC5),
+            moonCol = Color(0xFFECEFF1),
+            moonGlowCol = Color(0xFFB3E5FC),
+            cloudCol = Color(0xFF37474F),
+            hazeCol = Color(0xFF1A237E)
         )
     }
+    val skyTop = timeColors.skyTop
+    val skyBottom = timeColors.skyBottom
+    val skyAccent = timeColors.skyAccent
+    val sunCol = timeColors.sunCol
+    val sunGlowCol = timeColors.sunGlowCol
+    val moonCol = timeColors.moonCol
+    val moonGlowCol = timeColors.moonGlowCol
+    val cloudCol = timeColors.cloudCol
+    val hazeCol = timeColors.hazeCol
 
     // ── Temperature modulation: blend toward warm (hot) or cool (cold) ──
     val tempBlend = when {
@@ -1370,22 +1396,22 @@ private fun DrawScope.drawMountainRange(isDark: Boolean, isSnow: Boolean, isDay:
         if (isSnow || isDay) {
             for ((px, py) in peakPositions) {
                 val x = px * size.width
-                val peakHeight = ridgeBase - py.y / size.height
+                val peakHeight = ridgeBase - py / size.height
                 // Only cap peaks that are tall enough
                 if (peakHeight > 0.04f) {
                     val capSize = size.minDimension * (0.012f + peakHeight * 0.08f)
                     val capPath = Path()
-                    capPath.moveTo(x - capSize, py.y + capSize * 0.5f)
+                    capPath.moveTo(x - capSize, py + capSize * 0.5f)
                     // Jagged snow line across the peak
-                    capPath.lineTo(x - capSize * 0.5f, py.y - capSize * 0.3f)
-                    capPath.lineTo(x, py.y - capSize * 0.5f)
-                    capPath.lineTo(x + capSize * 0.5f, py.y - capSize * 0.2f)
-                    capPath.lineTo(x + capSize, py.y + capSize * 0.4f)
+                    capPath.lineTo(x - capSize * 0.5f, py - capSize * 0.3f)
+                    capPath.lineTo(x, py - capSize * 0.5f)
+                    capPath.lineTo(x + capSize * 0.5f, py - capSize * 0.2f)
+                    capPath.lineTo(x + capSize, py + capSize * 0.4f)
                     // Snow streaks running down the mountain
-                    capPath.lineTo(x + capSize * 0.6f, py.y + capSize * 0.8f)
-                    capPath.lineTo(x + capSize * 0.2f, py.y + capSize * 0.8f)
-                    capPath.lineTo(x - capSize * 0.2f, py.y + capSize * 0.7f)
-                    capPath.lineTo(x - capSize * 0.6f, py.y + capSize * 0.6f)
+                    capPath.lineTo(x + capSize * 0.6f, py + capSize * 0.8f)
+                    capPath.lineTo(x + capSize * 0.2f, py + capSize * 0.8f)
+                    capPath.lineTo(x - capSize * 0.2f, py + capSize * 0.7f)
+                    capPath.lineTo(x - capSize * 0.6f, py + capSize * 0.6f)
                     capPath.close()
                     drawPath(capPath, layer.snowColor, style = Fill)
                 }
@@ -1396,10 +1422,10 @@ private fun DrawScope.drawMountainRange(isDark: Boolean, isSnow: Boolean, isDay:
         if (!isDark) {
             for (peak in peakPositions.take(4)) {
                 val x = peak.first * size.width
-                val y = peak.second
+                val peakY = peak.second
                 for (streak in 0..2) {
                     val sx = x + (streak - 1) * size.width * 0.02f
-                    val sy = y + size.height * 0.03f + streak * size.height * 0.01f
+                    val sy = peakY + size.height * 0.03f + streak * size.height * 0.01f
                     drawLine(
                         color = layer.color.copy(alpha = layer.color.alpha * 0.3f),
                         start = Offset(sx - size.width * 0.01f, sy),
