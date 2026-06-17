@@ -120,7 +120,7 @@ private fun DialogWrapper(
         }
         if (fullScreen) {
             Surface(
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing),
                 color = MaterialTheme.colorScheme.background
             ) {
                 Column(Modifier.fillMaxSize()) {
@@ -129,7 +129,7 @@ private fun DialogWrapper(
                         Modifier
                             .fillMaxWidth()
                             .background(MaterialTheme.colorScheme.background)
-                            .padding(horizontal = 16.dp, vertical = 8.dp),
+                            .padding(horizontal = 20.dp, vertical = 10.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.Start
                     ) {
@@ -149,8 +149,8 @@ private fun DialogWrapper(
                         Modifier
                             .fillMaxSize()
                             .verticalScroll(rememberScrollState())
-                            .padding(horizontal = 20.dp, vertical = 12.dp)
-                            .padding(bottom = 32.dp),
+                            .padding(horizontal = 24.dp, vertical = 14.dp)
+                            .padding(bottom = 40.dp),
                         verticalArrangement = verticalArrangement
                     ) { content() }
                 }
@@ -343,14 +343,32 @@ internal fun NewQuestionDialog(viewModel: FieldMindViewModel, onDismiss: () -> U
 }
 
 @Composable
-internal fun NewProjectDialog(viewModel: FieldMindViewModel, onDismiss: () -> Unit) {
-    var title by remember { mutableStateOf("") }; var topic by remember { mutableStateOf("Biology") }; var objective by remember { mutableStateOf("") }; var question by remember { mutableStateOf("") }
-    var background by remember { mutableStateOf("") }; var methods by remember { mutableStateOf("") }; var hypothesis by remember { mutableStateOf("") }; var dataPlan by remember { mutableStateOf("") }; var analysis by remember { mutableStateOf("") }; var conclusion by remember { mutableStateOf("") }; var nextAction by remember { mutableStateOf("") }
-    var projectType by remember { mutableStateOf("Observation") }; var selectedMethods by remember { mutableStateOf("") }; var connectionMap by remember { mutableStateOf("") }; var showAdvanced by remember { mutableStateOf(false) }
+internal fun NewProjectDialog(
+    viewModel: FieldMindViewModel,
+    initialTitle: String = "",
+    initialTopic: String = "Biology",
+    initialObjective: String = "",
+    initialQuestion: String = "",
+    initialBackground: String = "",
+    initialMethods: String = "",
+    initialHypothesis: String = "",
+    initialDataPlan: String = "",
+    initialAnalysis: String = "",
+    initialConclusion: String = "",
+    initialNextAction: String = "",
+    initialProjectType: String = "Observation",
+    initialSelectedMethods: String = initialMethods,
+    initialConnectionMap: String = "",
+    initialTags: String = "",
+    onDismiss: () -> Unit
+) {
+    var title by remember(initialTitle) { mutableStateOf(initialTitle) }; var topic by remember(initialTopic) { mutableStateOf(initialTopic.ifBlank { "Biology" }) }; var objective by remember(initialObjective) { mutableStateOf(initialObjective) }; var question by remember(initialQuestion) { mutableStateOf(initialQuestion) }
+    var background by remember(initialBackground) { mutableStateOf(initialBackground) }; var methods by remember(initialMethods) { mutableStateOf(initialMethods) }; var hypothesis by remember(initialHypothesis) { mutableStateOf(initialHypothesis) }; var dataPlan by remember(initialDataPlan) { mutableStateOf(initialDataPlan) }; var analysis by remember(initialAnalysis) { mutableStateOf(initialAnalysis) }; var conclusion by remember(initialConclusion) { mutableStateOf(initialConclusion) }; var nextAction by remember(initialNextAction) { mutableStateOf(initialNextAction) }
+    var projectType by remember(initialProjectType) { mutableStateOf(initialProjectType.ifBlank { "Observation" }) }; var selectedMethods by remember(initialSelectedMethods) { mutableStateOf(initialSelectedMethods) }; var connectionMap by remember(initialConnectionMap) { mutableStateOf(initialConnectionMap) }; var tags by remember(initialTags) { mutableStateOf(initialTags) }; var showAdvanced by remember { mutableStateOf(initialProjectType.isNotBlank() || initialSelectedMethods.isNotBlank() || initialTags.isNotBlank()) }
 
     fun save() {
         if (title.isNotBlank()) {
-            viewModel.addProject(title, topic, objective, question, methods, nextAction, background, hypothesis, dataPlan, analysis, conclusion, projectType = projectType, selectedMethods = selectedMethods, connectionMap = connectionMap)
+            viewModel.addProject(title, topic, objective, question, methods, nextAction, background, hypothesis, dataPlan, analysis, conclusion, projectType = projectType, selectedMethods = selectedMethods, connectionMap = listOfNotNull(connectionMap.takeIf { it.isNotBlank() }, tags.takeIf { it.isNotBlank() }?.let { "Template tags: $it" }).joinToString("\n"))
             onDismiss()
         }
     }
@@ -367,15 +385,16 @@ internal fun NewProjectDialog(viewModel: FieldMindViewModel, onDismiss: () -> Un
         DialogDividerSection("Evidence plan", FieldMindIcons.Data, FieldMindTheme.colors.project)
         FieldTextField(methods, { methods = it }, "Method / data plan", minLines = 3)
         FieldTextField(hypothesis, { hypothesis = it }, "Hypothesis summary", minLines = 2)
-        FieldTextField(dataPlan, { dataPlan = it }, "Data fields / units", supportingText = "Example: temperature °C, height cm, water clarity, count")
+        FieldTextField(dataPlan, { dataPlan = it }, "Data fields / units", minLines = 2, supportingText = "Example: temperature °C, height cm, water clarity, count")
         DialogDividerSection("Report direction", FieldMindIcons.Report, FieldMindTheme.colors.project)
         FieldTextField(analysis, { analysis = it }, "Analysis plan", minLines = 2)
         FieldTextField(conclusion, { conclusion = it }, "Early conclusion / expected output", minLines = 2)
         FieldTextField(nextAction, { nextAction = it }, "Next action", supportingText = "Example: observe the same site at sunset for 3 days")
         CollapsibleSection("Advanced options", "Project type, methods, and connection map", expanded = showAdvanced, onToggle = { showAdvanced = !showAdvanced }) {
-            ChoiceChipsField("Project type", listOf("Observation", "Experiment", "Literature Review", "Field Survey", "Long-term Monitor"), projectType) { projectType = it }
+            ChoiceChipsField("Project type", (listOf("Observation", "Experiment", "Literature Review", "Field Survey", "Long-term Monitor") + researchProjectTypes).distinct(), projectType) { projectType = it }
             FieldTextField(selectedMethods, { selectedMethods = it }, "Selected methods", supportingText = "e.g. transect, quadrat, interview, water test")
             FieldTextField(connectionMap, { connectionMap = it }, "Connection map", minLines = 2, supportingText = "How this project relates to other observations or projects")
+            FieldTextField(tags, { tags = it }, "Template tags", supportingText = "Comma-separated tags copied from the selected template")
         }
         DialogActions(onCancel = onDismiss, onSave = { save() }, saveEnabled = title.isNotBlank())
     }
@@ -1155,7 +1174,7 @@ private fun EditProjectDialog(entity: ProjectEntity, viewModel: FieldMindViewMod
         FieldTextField(analysis, { analysis = it }, "Analysis plan", minLines = 2)
         FieldTextField(conclusion, { conclusion = it }, "Early conclusion / expected output", minLines = 2)
         CollapsibleSection("Advanced options", "Project type, methods, and connection map", expanded = showAdvanced, onToggle = { showAdvanced = !showAdvanced }) {
-            OptionPickerField(label = "Project type", selected = projectType, options = listOf("Observation", "Experiment", "Literature Review", "Field Survey", "Long-term Monitor"), onSelected = { projectType = it }, icon = FieldMindIcons.Category)
+            OptionPickerField(label = "Project type", selected = projectType, options = (listOf("Observation", "Experiment", "Literature Review", "Field Survey", "Long-term Monitor") + researchProjectTypes).distinct(), onSelected = { projectType = it }, icon = FieldMindIcons.Category)
             FieldTextField(selectedMethods, { selectedMethods = it }, "Selected methods", supportingText = "e.g. transect, quadrat, interview, water test")
             FieldTextField(connectionMap, { connectionMap = it }, "Connection map", minLines = 2, supportingText = "How this project relates to other observations or projects")
         }

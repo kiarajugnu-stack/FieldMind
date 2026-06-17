@@ -761,9 +761,10 @@ fun WeatherSettingsPage(viewModel: FieldMindViewModel, onBack: () -> Unit) {
     val showWind by settings.weatherShowWind.collectAsState()
     val showCloud by settings.weatherShowCloudCover.collectAsState()
     val showPressure by settings.weatherShowPressure.collectAsState()
-    val providerSlug by settings.weatherProvider.collectAsState()
+    val providerSlugs by settings.weatherProviders.collectAsState()
     val apiKey by settings.weatherApiKey.collectAsState()
-    val currentProvider = remember(providerSlug) { WeatherProviders.getProvider(providerSlug) }
+    val selectedProviderSet = remember(providerSlugs) { providerSlugs.split(",").map { it.trim() }.filter { it.isNotBlank() }.toSet().ifEmpty { setOf("open-meteo") } }
+    val keyProvider = remember(selectedProviderSet) { WeatherProviders.selectedProviders(selectedProviderSet.joinToString(",")).firstOrNull { it.requiresApiKey } ?: WeatherProviders.selectedProviders(selectedProviderSet.joinToString(",")).first() }
 
     SettingsSubPage("Weather", icon = FieldMindIcons.Weather, onBack = onBack) {
         item {
@@ -779,17 +780,17 @@ fun WeatherSettingsPage(viewModel: FieldMindViewModel, onBack: () -> Unit) {
             }
         }
         item {
-            SectionHeader("Weather provider", "Choose which weather API service to use. Open-Meteo is free and needs no key. The others require a free API key.")
+            SectionHeader("Weather services", "Choose one or more services. FieldMind merges every successful response and keeps partial data when a service misses a field.")
         }
         item {
             SettingsGroupCard {
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Text("Provider", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("Enabled services", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     WeatherProviders.providers.forEach { provider ->
-                        val isSelected = providerSlug == provider.slug
+                        val isSelected = provider.slug in selectedProviderSet
                         val providerColor = FieldMindTheme.colors.info
                         Surface(
-                            onClick = { settings.setWeatherProvider(provider.slug) },
+                            onClick = { settings.setWeatherProviderEnabled(provider.slug, !isSelected) },
                             shape = RoundedCornerShape(14.dp),
                             color = if (isSelected) providerColor.copy(alpha = 0.15f) else MaterialTheme.colorScheme.surfaceContainerHigh,
                             border = if (isSelected) BorderStroke(1.5.dp, providerColor) else null
@@ -807,20 +808,18 @@ fun WeatherSettingsPage(viewModel: FieldMindViewModel, onBack: () -> Unit) {
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
                                 }
-                                if (isSelected) {
-                                    Icon(FieldMindIcons.Check, null, tint = providerColor, size = 20.dp)
-                                }
+                                Checkbox(checked = isSelected, onCheckedChange = { settings.setWeatherProviderEnabled(provider.slug, it) })
                             }
                         }
                     }
 
-                    if (currentProvider.requiresApiKey) {
+                    if (keyProvider.requiresApiKey) {
                         Spacer(Modifier.height(4.dp))
                         OutlinedTextField(
                             value = apiKey,
                             onValueChange = settings::setWeatherApiKey,
-                            label = { Text(currentProvider.apiKeyLabel) },
-                            placeholder = { Text(currentProvider.apiKeyPlaceholder) },
+                            label = { Text(keyProvider.apiKeyLabel) },
+                            placeholder = { Text(keyProvider.apiKeyPlaceholder) },
                             visualTransformation = PasswordVisualTransformation(),
                             modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(18.dp),
@@ -845,7 +844,7 @@ fun WeatherSettingsPage(viewModel: FieldMindViewModel, onBack: () -> Unit) {
                             ) {
                                 Icon(FieldMindIcons.Info, null, tint = MaterialTheme.colorScheme.primary, size = 18.dp)
                                 Text(
-                                    "Open-Meteo is completely free with no API key required. 10,000 requests/day limit.",
+                                    "Open-Meteo, IMD India, MET Norway, and NWS are free with no API key. IMD is best inside India; NWS only returns data for U.S. points; paid-key services join the merge when a key is saved.",
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
