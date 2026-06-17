@@ -25,7 +25,6 @@ import fieldmind.research.app.features.field.data.weather.WeatherSnapshot
 import fieldmind.research.app.features.field.data.weather.WeatherUnitConverter
 import fieldmind.research.app.features.field.presentation.components.AnimatedWeatherScene
 import fieldmind.research.app.features.field.presentation.components.FieldMindIcons
-import fieldmind.research.app.features.field.presentation.components.FieldScreenHeader
 import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
