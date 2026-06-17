@@ -413,203 +413,203 @@ fun ObserveScreen(
         )
     }
 
-    Box(Modifier.fillMaxSize()) {
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
-        LazyColumn(
-            Modifier.fillMaxSize().padding(padding),
-            contentPadding = PaddingValues(20.dp, 20.dp, 20.dp, 96.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            // ── Header ──
-            item {
-                FieldScreenHeader(
-                    "Observation",
-                    "Capture evidence, time, place, weather, then add facts.",
-                    icon = FieldMindIcons.Capture
-                )
-            }
-
-            // ── Live Timer (persistent when active) ──
-            if (session.isActive) {
+        Box(Modifier.fillMaxSize()) {
+            LazyColumn(
+                Modifier.fillMaxSize().padding(padding),
+                contentPadding = PaddingValues(20.dp, 12.dp, 20.dp, 96.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                // ── Header ──
                 item {
-                    LiveObservationTimer(
-                        timerStartedAt = session.timerStartedAt,
-                        timerAccumulatedMs = session.timerAccumulatedMs,
-                        timerRunning = session.timerRunning,
-                        observationCount = session.sessionObservationCount,
-                        onStart = {
-                            if (!session.timerRunning) {
-                                session = session.copy(
-                                    timerStartedAt = System.currentTimeMillis(),
-                                    timerRunning = true
-                                )
-                            }
-                        },
-                        onPause = {
-                            val startedAt = session.timerStartedAt
-                            if (session.timerRunning && startedAt != null) {
-                                val elapsed = session.timerAccumulatedMs +
-                                    (System.currentTimeMillis() - startedAt)
-                                session = session.copy(
-                                    timerAccumulatedMs = elapsed,
-                                    timerRunning = false,
-                                    timerStartedAt = null
-                                )
-                            }
-                        },
-                        onReset = {
-                            session = session.copy(
-                                timerStartedAt = System.currentTimeMillis(),
-                                timerAccumulatedMs = 0L,
-                                timerRunning = true,
-                                sessionObservationCount = 0
-                            )
-                        },
-                        onClose = {
-                            session = CaptureSessionState()
-                            showEvidenceForm = false
-                            viewModel.setCaptureSessionActive(false)
-                        }
+                    FieldScreenHeader(
+                        "Observation",
+                        "Capture evidence, time, place, weather, then add facts.",
+                        icon = FieldMindIcons.Capture
                     )
                 }
-            } else {
-                // ── Start capture button ──
-                item {
-                    Button(
-                        onClick = { startCapture() },
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(18.dp)
-                    ) {
-                        Icon(icon = FieldMindIcons.Add, contentDescription = null, size = 20.dp)
-                        Spacer(Modifier.size(8.dp))
-                        Text("Start observation session")
+
+                // ── Live Timer (persistent when active) ──
+                if (session.isActive) {
+                    item {
+                        LiveObservationTimer(
+                            timerStartedAt = session.timerStartedAt,
+                            timerAccumulatedMs = session.timerAccumulatedMs,
+                            timerRunning = session.timerRunning,
+                            observationCount = session.sessionObservationCount,
+                            onStart = {
+                                if (!session.timerRunning) {
+                                    session = session.copy(
+                                        timerStartedAt = System.currentTimeMillis(),
+                                        timerRunning = true
+                                    )
+                                }
+                            },
+                            onPause = {
+                                val startedAt = session.timerStartedAt
+                                if (session.timerRunning && startedAt != null) {
+                                    val elapsed = session.timerAccumulatedMs +
+                                        (System.currentTimeMillis() - startedAt)
+                                    session = session.copy(
+                                        timerAccumulatedMs = elapsed,
+                                        timerRunning = false,
+                                        timerStartedAt = null
+                                    )
+                                }
+                            },
+                            onReset = {
+                                session = session.copy(
+                                    timerStartedAt = System.currentTimeMillis(),
+                                    timerAccumulatedMs = 0L,
+                                    timerRunning = true,
+                                    sessionObservationCount = 0
+                                )
+                            },
+                            onClose = {
+                                session = CaptureSessionState()
+                                showEvidenceForm = false
+                                viewModel.setCaptureSessionActive(false)
+                            }
+                        )
+                    }
+                } else {
+                    // ── Start capture button ──
+                    item {
+                        Button(
+                            onClick = { startCapture() },
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(18.dp)
+                        ) {
+                            Icon(icon = FieldMindIcons.Add, contentDescription = null, size = 20.dp)
+                            Spacer(Modifier.size(8.dp))
+                            Text("Start observation session")
+                        }
+                    }
+                }
+
+                // ── Observation stats overview (hidden during active session to avoid clutter) ──
+                if (observations.isNotEmpty() && !session.isActive) {
+                    item {
+                        ObservationStatsDashboard(
+                            observations = observations
+                        )
+                    }
+                }
+
+                // ── Evidence-First Input ──
+                if (showEvidenceForm) {
+                    // Evidence capture buttons (always visible when form is open)
+                    item {
+                        EvidenceCaptureRow(
+                            mediaEnabled = mediaEnabled,
+                            attachments = session.attachments,
+                            onLaunchCamera = {
+                                haptics.light()
+                                showInAppCamera = true
+                            },
+                            onLaunchGallery = {
+                                haptics.light()
+                                mediaPicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageAndVideo))
+                            },
+                            onLaunchFile = {
+                                haptics.light()
+                                filePicker.launch(arrayOf("application/pdf", "text/*", "image/*", "video/*", "audio/*"))
+                            },
+                            onLaunchAudio = { toggleRecording() },
+                            onLaunchAudioImport = { haptics.light(); audioImportPicker.launch(arrayOf("audio/*")) },
+                            isRecording = recording,
+                            recordSeconds = recordSeconds,
+                            onRemoveAttachment = { idx ->
+                                session = session.copy(
+                                    attachments = session.attachments.filterIndexed { i, _ -> i != idx }
+                                )
+                            },
+                            onCaptionChange = { idx, caption ->
+                                session = session.copy(
+                                    attachments = session.attachments.mapIndexed { i, item ->
+                                        if (i == idx) item.copy(caption = caption) else item
+                                    }
+                                )
+                            }
+                        )
+                    }
+
+                    // ── Quick Classification Grid (always visible) ──
+                    item {
+                        QuickClassificationGrid(
+                            selectedCategory = session.category,
+                            onCategorySelected = { session = session.copy(category = it) }
+                        )
+                    }
+
+                    // ── Enhanced Observation Form ──
+                    item {
+                        EnhancedObservationForm(
+                            session = session,
+                            onSessionChange = { session = it },
+                            onSave = { saveObservation() },
+                            onOpenSpeciesSearch = {
+                                speciesIdImageUri = null
+                                showSpeciesId = true
+                            }
+                        )
+                    }
+
+                    // ── Auto Metadata Status ──
+                    item {
+                        AutoMetadataStatusCard(
+                            hasGps = capturedLocation != null,
+                            hasWeather = false,
+                            hasTimestamp = true,
+                            gpsAccuracy = capturedLocation?.accuracyMeters,
+                            onFetchGps = {
+                                if (locationProvider.hasAnyLocationPermission()) {
+                                    locationProvider.requestCurrentLocation { loc ->
+                                        if (loc != null) capturedLocation = loc
+                                    }
+                                }
+                            }
+                        )
+                    }
+
+                    // ── Species Identification Live Card ──
+                    item {
+                        SpeciesIdentificationLiveCard(
+                            attachments = session.attachments,
+                            progress = session.speciesIdProgress,
+                            results = session.speciesIdResults,
+                            isRunning = session.speciesIdRunning,
+                            identifiedSpecies = identifiedSpecies,
+                            onRunIdentification = { uri ->
+                                speciesIdImageUri = uri
+                                showSpeciesId = true
+                            }
+                        )
+                    }
+                }
+
+                // ── Empty state (only when no form is open) ──
+                if (!showEvidenceForm && !session.isActive) {
+                    item {
+                        EmptyState(
+                            "No observations yet",
+                            "Start a session below to capture evidence and log observations.",
+                            icon = FieldMindIcons.Observation
+                        )
                     }
                 }
             }
 
-            // ── Observation stats overview (hidden during active session to avoid clutter) ──
-            if (observations.isNotEmpty() && !session.isActive) {
-                item {
-                    ObservationStatsDashboard(
-                        observations = observations
-                    )
-                }
-            }
-
-            // ── Evidence-First Input ──
-            if (showEvidenceForm) {
-                // Evidence capture buttons (always visible when form is open)
-                item {
-                    EvidenceCaptureRow(
-                        mediaEnabled = mediaEnabled,
-                        attachments = session.attachments,
-                        onLaunchCamera = {
-                            haptics.light()
-                            showInAppCamera = true
-                        },
-                        onLaunchGallery = {
-                            haptics.light()
-                            mediaPicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageAndVideo))
-                        },
-                        onLaunchFile = {
-                            haptics.light()
-                            filePicker.launch(arrayOf("application/pdf", "text/*", "image/*", "video/*", "audio/*"))
-                        },
-                        onLaunchAudio = { toggleRecording() },
-                        onLaunchAudioImport = { haptics.light(); audioImportPicker.launch(arrayOf("audio/*")) },
-                        isRecording = recording,
-                        recordSeconds = recordSeconds,
-                        onRemoveAttachment = { idx ->
-                            session = session.copy(
-                                attachments = session.attachments.filterIndexed { i, _ -> i != idx }
-                            )
-                        },
-                        onCaptionChange = { idx, caption ->
-                            session = session.copy(
-                                attachments = session.attachments.mapIndexed { i, item ->
-                                    if (i == idx) item.copy(caption = caption) else item
-                                }
-                            )
-                        }
-                    )
-                }
-
-                // ── Quick Classification Grid (always visible) ──
-                item {
-                    QuickClassificationGrid(
-                        selectedCategory = session.category,
-                        onCategorySelected = { session = session.copy(category = it) }
-                    )
-                }
-
-                // ── Enhanced Observation Form ──
-                item {
-                    EnhancedObservationForm(
-                        session = session,
-                        onSessionChange = { session = it },
-                        onSave = { saveObservation() },
-                        onOpenSpeciesSearch = {
-                            speciesIdImageUri = null
-                            showSpeciesId = true
-                        }
-                    )
-                }
-
-                // ── Auto Metadata Status ──
-                item {
-                    AutoMetadataStatusCard(
-                        hasGps = capturedLocation != null,
-                        hasWeather = false,
-                        hasTimestamp = true,
-                        gpsAccuracy = capturedLocation?.accuracyMeters,
-                        onFetchGps = {
-                            if (locationProvider.hasAnyLocationPermission()) {
-                                locationProvider.requestCurrentLocation { loc ->
-                                    if (loc != null) capturedLocation = loc
-                                }
-                            }
-                        }
-                    )
-                }
-
-                // ── Species Identification Live Card ──
-                item {
-                    SpeciesIdentificationLiveCard(
-                        attachments = session.attachments,
-                        progress = session.speciesIdProgress,
-                        results = session.speciesIdResults,
-                        isRunning = session.speciesIdRunning,
-                        identifiedSpecies = identifiedSpecies,
-                        onRunIdentification = { uri ->
-                            speciesIdImageUri = uri
-                            showSpeciesId = true
-                        }
-                    )
-                }
-            }
-
-            // ── Empty state (only when no form is open) ──
-            if (!showEvidenceForm && !session.isActive) {
-                item {
-    EmptyState(
-                        "No observations yet",
-                        "Start a session below to capture evidence and log observations.",
-                        icon = FieldMindIcons.Observation
-                    )
-                }
-            }
+            // ── Top snackbar overlay ──
+            FieldMindSnackbarOverlay(
+                hostState = snackbar,
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .padding(top = 8.dp, start = 16.dp, end = 16.dp)
+            )
         }
-    }
-
-    // ── Top snackbar overlay ──
-        FieldMindSnackbarOverlay(
-            hostState = snackbar,
-            modifier = Modifier
-                .align(Alignment.TopCenter)
-                .padding(top = 8.dp, start = 16.dp, end = 16.dp)
-        )
     }
 
     // ── Species identification sheet ──
@@ -1882,110 +1882,111 @@ private fun FieldModeScreen(viewModel: FieldMindViewModel, onBack: () -> Unit) {
         } else "00:00"
     }
 
-    Box(Modifier.fillMaxSize()) {
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
-        LazyColumn(
-            Modifier.fillMaxSize().padding(padding),
-            contentPadding = PaddingValues(20.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            item {
-                FieldScreenHeader(
-                    "Field mode",
-                    when {
-                        fieldModeAutoStartTimer && sessionTimerStarted ->
-                            "$fieldModeDefaultSession mode · $elapsedFormatted elapsed"
-                        fieldModeDefaultSession != "Quick capture" ->
-                            "$fieldModeDefaultSession mode — one tap logs an observation"
-                        else -> "One tap logs an observation. Add details later."
-                    },
-                    icon = FieldMindIcons.Bolt,
-                    actionIcon = FieldMindIcons.Close,
-                    onAction = onBack
-                )
-            }
-            // Auto-start timer indicator
-            if (fieldModeAutoStartTimer && sessionTimerStarted && timerStartTime > 0L) {
+        Box(Modifier.fillMaxSize()) {
+            LazyColumn(
+                Modifier.fillMaxSize().padding(padding),
+                contentPadding = PaddingValues(20.dp, 12.dp, 20.dp, 80.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
                 item {
-                    Surface(
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(16.dp),
-                        color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
-                    ) {
-                        Row(
-                            Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    FieldScreenHeader(
+                        "Field mode",
+                        when {
+                            fieldModeAutoStartTimer && sessionTimerStarted ->
+                                "$fieldModeDefaultSession mode · $elapsedFormatted elapsed"
+                            fieldModeDefaultSession != "Quick capture" ->
+                                "$fieldModeDefaultSession mode — one tap logs an observation"
+                            else -> "One tap logs an observation. Add details later."
+                        },
+                        icon = FieldMindIcons.Bolt,
+                        actionIcon = FieldMindIcons.Close,
+                        onAction = onBack
+                    )
+                }
+                // Auto-start timer indicator
+                if (fieldModeAutoStartTimer && sessionTimerStarted && timerStartTime > 0L) {
+                    item {
+                        Surface(
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(16.dp),
+                            color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
                         ) {
-                            Icon(FieldMindIcons.Timer, null, tint = MaterialTheme.colorScheme.onPrimaryContainer, size = 18.dp)
-                            Text("Session timer active — $elapsedFormatted", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onPrimaryContainer)
-                            if (fieldModeObservationSpacing != "None") {
-                                Text("${fieldModeObservationSpacing} spacing", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f))
+                            Row(
+                                Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                            ) {
+                                Icon(FieldMindIcons.Timer, null, tint = MaterialTheme.colorScheme.onPrimaryContainer, size = 18.dp)
+                                Text("Session timer active — $elapsedFormatted", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onPrimaryContainer)
+                                if (fieldModeObservationSpacing != "None") {
+                                    Text("${fieldModeObservationSpacing} spacing", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f))
+                                }
                             }
+                        }
+                    }
+                }
+                if (showFull) {
+                    item { ObservationCaptureCard(viewModel = viewModel, compact = true) { showFull = false } }
+                } else {
+                    item { Text("Tap a type to save instantly", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold) }
+                    item {
+                        Button(onClick = { haptics.light(); showQuickSnapCategory = true }, Modifier.fillMaxWidth(), shape = RoundedCornerShape(18.dp)) {
+                            Icon(icon = FieldMindIcons.Camera, contentDescription = null, size = 18.dp)
+                            Spacer(Modifier.size(8.dp))
+                            Text("Quick snap")
+                        }
+                    }
+                    items(observationCategories.chunked(2)) { row ->
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                            row.forEach { category ->
+                                FieldModeButton(category, Modifier.weight(1f)) {
+                                    // Apply spacing cooldown
+                                    val now = System.currentTimeMillis()
+                                    if (spacingMs > 0L && (now - lastSaveTime) < spacingMs) {
+                                        scope.launch {
+                                            snackbar.showSnackbar("Spacing: wait ${fieldModeObservationSpacing} between saves")
+                                        }
+                                        return@FieldModeButton
+                                    }
+                                    lastSaveTime = now
+                                    haptics.confirm()
+                                    viewModel.addObservation(
+                                        subject = category, category = category,
+                                        facts = "Quick field capture — add details later.",
+                                        confidence = defaultConfidence, manualLocation = "", tags = "",
+                                        evidence = "", context = ""
+                                    ) { savedId ->
+                                        scope.launch {
+                                            val result = snackbar.showSnackbar("Saved $category", actionLabel = "Undo", duration = SnackbarDuration.Short)
+                                            if (result == SnackbarResult.ActionPerformed) viewModel.archiveObservation(savedId)
+                                        }
+                                    }
+                                }
+                            }
+                            if (row.size == 1) Spacer(Modifier.weight(1f))
+                        }
+                    }
+                    item {
+                        OutlinedButton(onClick = { showFull = true }, Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp)) {
+                            Icon(icon = FieldMindIcons.Edit, contentDescription = null, size = 18.dp)
+                            Spacer(Modifier.size(8.dp))
+                            Text("Add full details instead")
                         }
                     }
                 }
             }
-            if (showFull) {
-                item { ObservationCaptureCard(viewModel = viewModel, compact = true) { showFull = false } }
-            } else {
-                item { Text("Tap a type to save instantly", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold) }
-                item {
-                    Button(onClick = { haptics.light(); showQuickSnapCategory = true }, Modifier.fillMaxWidth(), shape = RoundedCornerShape(18.dp)) {
-                        Icon(icon = FieldMindIcons.Camera, contentDescription = null, size = 18.dp)
-                        Spacer(Modifier.size(8.dp))
-                        Text("Quick snap")
-                    }
-                }
-                items(observationCategories.chunked(2)) { row ->
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        row.forEach { category ->
-                            FieldModeButton(category, Modifier.weight(1f)) {
-                                // Apply spacing cooldown
-                                val now = System.currentTimeMillis()
-                                if (spacingMs > 0L && (now - lastSaveTime) < spacingMs) {
-                                    scope.launch {
-                                        snackbar.showSnackbar("Spacing: wait ${fieldModeObservationSpacing} between saves")
-                                    }
-                                    return@FieldModeButton
-                                }
-                                lastSaveTime = now
-                                haptics.confirm()
-                                viewModel.addObservation(
-                                    subject = category, category = category,
-                                    facts = "Quick field capture — add details later.",
-                                    confidence = defaultConfidence, manualLocation = "", tags = "",
-                                    evidence = "", context = ""
-                                ) { savedId ->
-                                    scope.launch {
-                                        val result = snackbar.showSnackbar("Saved $category", actionLabel = "Undo", duration = SnackbarDuration.Short)
-                                        if (result == SnackbarResult.ActionPerformed) viewModel.archiveObservation(savedId)
-                                    }
-                                }
-                            }
-                        }
-                        if (row.size == 1) Spacer(Modifier.weight(1f))
-                    }
-                }
-                item {
-                    OutlinedButton(onClick = { showFull = true }, Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp)) {
-                        Icon(icon = FieldMindIcons.Edit, contentDescription = null, size = 18.dp)
-                        Spacer(Modifier.size(8.dp))
-                        Text("Add full details instead")
-                    }
-                }
-            }
+
+            // ── Top snackbar overlay ──
+            FieldMindSnackbarOverlay(
+                hostState = snackbar,
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .padding(top = 8.dp, start = 16.dp, end = 16.dp)
+            )
         }
-    }
-    // ── Top snackbar overlay ──
-    FieldMindSnackbarOverlay(
-        hostState = snackbar,
-        modifier = Modifier
-            .align(Alignment.TopCenter)
-            .padding(top = 8.dp, start = 16.dp, end = 16.dp)
-    )
     }
     if (showQuickSnapCategory) {
         AlertDialog(

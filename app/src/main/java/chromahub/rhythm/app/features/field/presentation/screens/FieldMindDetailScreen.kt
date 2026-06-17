@@ -97,7 +97,7 @@ fun DetailScreen(
     ) { padding ->
         LazyColumn(
             Modifier.fillMaxSize().padding(padding),
-            contentPadding = PaddingValues(0.dp, 0.dp, 0.dp, 40.dp),
+            contentPadding = PaddingValues(16.dp, 0.dp, 16.dp, 40.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             // ── Back header ──
@@ -106,7 +106,7 @@ fun DetailScreen(
                     Modifier
                         .fillMaxWidth()
                         .background(MaterialTheme.colorScheme.background)
-                        .padding(horizontal = 20.dp, vertical = 8.dp),
+                        .padding(vertical = 8.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
