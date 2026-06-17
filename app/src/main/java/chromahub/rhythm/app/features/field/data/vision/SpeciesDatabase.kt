@@ -39,7 +39,9 @@ data class SpeciesRecord(
     val phylum: String = "",
     val order: String = "",
     val family: String = "",
-    val genus: String = ""
+    val genus: String = "",
+    /** Continents/regions where this species is found (e.g. ["North America", "Europe"]) */
+    val continents: List<String> = emptyList()
 )
 
 /**
@@ -155,8 +157,31 @@ class SpeciesDatabase(private val context: Context) {
      * taxonomic ranks (genus, family, order, phylum, kingdom).
      * When query is blank, returns all species (up to limit) for browsing.
      */
-    suspend fun search(query: String, limit: Int = 30): List<SpeciesRecord> = withContext(Dispatchers.Default) {
-        if (query.isBlank()) return@withContext getCatalog().take(limit)
+    suspend fun search(
+        query: String,
+        limit: Int = 30,
+        continent: String? = null
+    ): List<SpeciesRecord> = withContext(Dispatchers.Default) {
+        var results = if (query.isBlank()) getCatalog() else {
+            val q = query.trim().lowercase()
+            getCatalog().filter { entry ->
+                entry.commonName.lowercase().contains(q) ||
+                entry.scientificName.lowercase().contains(q) ||
+                entry.category.lowercase().contains(q) ||
+                entry.genus.lowercase().contains(q) ||
+                entry.family.lowercase().contains(q) ||
+                entry.order.lowercase().contains(q) ||
+                entry.phylum.lowercase().contains(q) ||
+                entry.kingdom.lowercase().contains(q) ||
+                entry.tags.any { it.lowercase().contains(q) } ||
+                entry.habitat.lowercase().contains(q)
+            }
+        }
+        // Apply continent filter
+        if (continent != null) {
+            results = results.filter { it.continents.any { c -> c.equals(continent, ignoreCase = true) } }
+        }
+        results.take(limit)
         val q = query.trim().lowercase()
         val catalog = getCatalog()
         catalog.filter { entry ->
@@ -428,6 +453,36 @@ class SpeciesDatabase(private val context: Context) {
     }
 
     /**
+     * Get all distinct continents/regions in the catalog.
+     */
+    suspend fun getContinents(): List<String> = withContext(Dispatchers.Default) {
+        getCatalog().flatMap { it.continents }
+            .filter { it.isNotBlank() }
+            .distinct()
+            .sorted()
+    }
+
+    /**
+     * Get species found in a given continent/region.
+     */
+    suspend fun getByContinent(continent: String): List<SpeciesRecord> = withContext(Dispatchers.Default) {
+        getCatalog().filter { record ->
+            record.continents.any { it.equals(continent, ignoreCase = true) }
+        }
+    }
+
+    /**
+     * Get all distinct continents for a specific category.
+     */
+    suspend fun getContinentsForCategory(category: String): List<String> = withContext(Dispatchers.Default) {
+        getCatalog().filter { it.category.equals(category, ignoreCase = true) }
+            .flatMap { it.continents }
+            .filter { it.isNotBlank() }
+            .distinct()
+            .sorted()
+    }
+
+    /**
      * Get species for a given combination of filters.
      * Non-null parameters filter at that level.
      */
@@ -522,9 +577,10 @@ class SpeciesDatabase(private val context: Context) {
         @SerializedName("phylum") val phylum: String = "",
         @SerializedName("order") val order: String = "",
         @SerializedName("family") val family: String = "",
-        @SerializedName("genus") val genus: String = ""
-    ) {
-        fun toRecord() = SpeciesRecord(
+    @SerializedName("genus") val genus: String = "",
+    @SerializedName("continents") val continents: List<String> = emptyList()
+) {
+    fun toRecord() = SpeciesRecord(
             id = id.ifBlank { "species_${commonName.lowercase().replace(" ", "_")}" },
             commonName = commonName,
             scientificName = scientificName,
@@ -542,7 +598,8 @@ class SpeciesDatabase(private val context: Context) {
             phylum = phylum,
             order = order,
             family = family,
-            genus = genus
+            genus = genus,
+            continents = continents
         )
     }
 }

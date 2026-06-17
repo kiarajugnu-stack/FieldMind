@@ -77,7 +77,9 @@ fun SpeciesBrowserScreen(
 
     var searchQuery by remember { mutableStateOf("") }
     var selectedCategory by remember { mutableStateOf<String?>(null) }
+    var selectedContinent by remember { mutableStateOf<String?>(null) }
     var categories by remember { mutableStateOf<List<Pair<String, Int>>>(emptyList()) }
+    var continents by remember { mutableStateOf<List<String>>(emptyList()) }
     var species by remember { mutableStateOf<List<SpeciesRecord>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
     var totalCount by remember { mutableStateOf(0) }
@@ -97,9 +99,10 @@ fun SpeciesBrowserScreen(
     var selectedSort by remember { mutableStateOf(sortOptions[0]) }
     var showSortDropdown by remember { mutableStateOf(false) }
 
-    // Load categories and initial species
+    // Load categories, continents, and initial species
     LaunchedEffect(Unit) {
         categories = database.getCategories()
+        continents = database.getContinents()
         totalCount = database.getTotalSpeciesCount()
         species = database.search("", limit = 200)
         isLoading = false
@@ -121,11 +124,13 @@ fun SpeciesBrowserScreen(
         }
     }
 
-    // Debounced search + sort
-    LaunchedEffect(searchQuery, selectedCategory, selectedSort) {
+    // Debounced search + sort + continent filter
+    LaunchedEffect(searchQuery, selectedCategory, selectedContinent, selectedSort) {
         delay(200) // 200ms debounce
         isLoading = true
-        val results = if (selectedCategory != null) {
+
+        // Get base results (by category or full search)
+        val base = if (selectedCategory != null) {
             val byCategory = database.getByCategory(selectedCategory!!)
             if (searchQuery.isBlank()) byCategory
             else byCategory.filter {
@@ -143,7 +148,15 @@ fun SpeciesBrowserScreen(
         } else {
             database.search(searchQuery, limit = 200)
         }
-        species = results.sortedByOption(selectedSort)
+
+        // Apply continent filter
+        val filtered = if (selectedContinent != null) {
+            base.filter { it.continents.any { c -> c.equals(selectedContinent, ignoreCase = true) } }
+        } else {
+            base
+        }
+
+        species = filtered.sortedByOption(selectedSort)
         isLoading = false
     }
 
@@ -244,6 +257,40 @@ fun SpeciesBrowserScreen(
                                         selectedContainerColor = accent.copy(alpha = 0.12f),
                                         selectedLabelColor = accent
                                     )
+                                )
+                            }
+                        }
+                    }
+
+                    // Continent filter chips
+                    if (continents.isNotEmpty()) {
+                        Row(
+                            Modifier
+                                .fillMaxWidth()
+                                .horizontalScroll(rememberScrollState())
+                                .padding(horizontal = 16.dp, vertical = 2.dp),
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            // "All regions" chip
+                            FilterChip(
+                                selected = selectedContinent == null,
+                                onClick = { selectedContinent = null },
+                                label = { Text("All regions", fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.labelSmall) },
+                                shape = RoundedCornerShape(16.dp),
+                                leadingIcon = if (selectedContinent == null) {{ Icon(FieldMindIcons.Check, null, size = 14.dp) }} else null,
+                                colors = FilterChipDefaults.filterChipColors(
+                                    selectedContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+                                    selectedLabelColor = MaterialTheme.colorScheme.primary
+                                )
+                            )
+                            continents.forEach { c ->
+                                val isSelected = selectedContinent == c
+                                FilterChip(
+                                    selected = isSelected,
+                                    onClick = { selectedContinent = if (isSelected) null else c },
+                                    label = { Text(c, fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal, style = MaterialTheme.typography.labelSmall) },
+                                    shape = RoundedCornerShape(16.dp),
+                                    leadingIcon = if (isSelected) {{ Icon(FieldMindIcons.Check, null, size = 14.dp) }} else null
                                 )
                             }
                         }
