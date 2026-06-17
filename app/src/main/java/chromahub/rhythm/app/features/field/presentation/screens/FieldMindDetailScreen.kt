@@ -176,8 +176,7 @@ fun DetailScreen(
                         }, onOpenDetail) }
                     }
                     "source" -> sources.firstOrNull { it.id == id }?.let { s ->
-                        item { DetailBody(s.title, "source", listOf("Type" to s.type, "Author" to s.author, "Year" to s.dateOrYear, "DOI / ISBN" to s.doiOrIsbn, "Publisher / journal" to s.publisherOrJournal, "Link" to s.link, "Access date" to s.accessDate, "Citation note" to s.citationStyleNote, "Importance" to s.importance, "Reading status" to s.readingStatus, "Project" to (projects.firstOrNull { it.id == s.relatedProjectId }?.title ?: "None"), "Main idea" to s.personalSummary, "Key findings" to s.keyFindings, "Taught me" to s.whatThisSourceTaughtMe, "Paper prompts" to s.paperNotes, "Questions" to s.questionsGenerated)) }
-                        item { SourcePreviewPanel(s, onOpenReader) }
+                        item { SourceDetailContent(s, projects, onOpenReader) }
                         item { SourceActionPanel(s, projects, viewModel, onOpenDetail) }
                         item { BacklinksPanel(buildList {
                             projects.firstOrNull { it.id == s.relatedProjectId }?.let { add(Triple("project", it.title, it.id)) }
@@ -2324,6 +2323,110 @@ private fun deleteEntityByKind(kind: String, id: Long, viewModel: FieldMindViewM
         "data" -> viewModel.deleteDataRecord(id)
         "report" -> viewModel.deleteReport(id)
         "flashcard" -> viewModel.deleteFlashcard(id)
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════════
+//  Source Detail Content — Sectioned layout with proper visual hierarchy
+// ══════════════════════════════════════════════════════════════════════
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun SourceDetailContent(
+    s: SourceEntity,
+    projects: List<ProjectEntity>,
+    onOpenReader: (String, String) -> Unit
+) {
+    val colors = FieldMindTheme.colors
+    Card(
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+            // ── Header ──
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                Box(
+                    Modifier.size(48.dp).clip(RoundedCornerShape(16.dp))
+                        .background(colors.source.copy(alpha = 0.14f)),
+                    contentAlignment = Alignment.Center
+                ) { Icon(FieldMindIcons.Source, null, tint = colors.source, size = 26.dp) }
+                Column(Modifier.weight(1f)) {
+                    Text(s.title.ifBlank { "Untitled source" }, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        InfoChip(s.type, icon = FieldMindIcons.Category)
+                        if (s.readingStatus.isNotBlank()) {
+                            InfoChip(s.readingStatus, icon = FieldMindIcons.Book)
+                        }
+                    }
+                }
+            }
+
+            // ── Source Preview ──
+            SourcePreviewPanel(s, onOpenReader)
+
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
+
+            // ── Identity section ──
+            SectionHeader("Identity", "Bibliographic details")
+            if (s.author.isNotBlank()) DetailRow("Author", s.author)
+            if (s.dateOrYear.isNotBlank()) DetailRow("Year", s.dateOrYear)
+            if (s.doiOrIsbn.isNotBlank()) DetailRow("DOI / ISBN", s.doiOrIsbn)
+            if (s.publisherOrJournal.isNotBlank()) DetailRow("Publisher / Journal", s.publisherOrJournal)
+            if (s.citationStyleNote.isNotBlank()) DetailRow("Citation note", s.citationStyleNote)
+
+            // ── Access section ──
+            if (s.link.isNotBlank() || s.accessDate.isNotBlank()) {
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f))
+                SectionHeader("Access", "Link and retrieval info")
+                if (s.link.isNotBlank()) DetailRow("Link", s.link)
+                if (s.accessDate.isNotBlank()) DetailRow("Access date", s.accessDate)
+            }
+
+            // ── Status section ──
+            val projectTitle = projects.firstOrNull { it.id == s.relatedProjectId }?.title ?: "None"
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f))
+            SectionHeader("Status", "Progress and priority")
+            DetailRow("Importance", s.importance)
+            DetailRow("Reading status", s.readingStatus)
+            DetailRow("Project", projectTitle)
+
+            // ── Reading notes section ──
+            if (s.personalSummary.isNotBlank() || s.keyFindings.isNotBlank() || s.whatThisSourceTaughtMe.isNotBlank() || s.paperNotes.isNotBlank() || s.questionsGenerated.isNotBlank()) {
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f))
+                SectionHeader("Reading notes", "Key takeaways and reflections")
+                if (s.personalSummary.isNotBlank()) {
+                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Text("Main idea", style = MaterialTheme.typography.labelSmall, color = colors.source, fontWeight = FontWeight.SemiBold)
+                        Text(s.personalSummary, style = MaterialTheme.typography.bodyMedium)
+                    }
+                }
+                if (s.keyFindings.isNotBlank()) {
+                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Text("Key findings", style = MaterialTheme.typography.labelSmall, color = colors.source, fontWeight = FontWeight.SemiBold)
+                        Text(s.keyFindings, style = MaterialTheme.typography.bodyMedium)
+                    }
+                }
+                if (s.whatThisSourceTaughtMe.isNotBlank()) {
+                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Text("What it taught me", style = MaterialTheme.typography.labelSmall, color = colors.source, fontWeight = FontWeight.SemiBold)
+                        Text(s.whatThisSourceTaughtMe, style = MaterialTheme.typography.bodyMedium)
+                    }
+                }
+                if (s.paperNotes.isNotBlank()) {
+                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Text("Paper notes", style = MaterialTheme.typography.labelSmall, color = colors.source, fontWeight = FontWeight.SemiBold)
+                        Text(s.paperNotes, style = MaterialTheme.typography.bodyMedium)
+                    }
+                }
+                if (s.questionsGenerated.isNotBlank()) {
+                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Text("Questions", style = MaterialTheme.typography.labelSmall, color = colors.source, fontWeight = FontWeight.SemiBold)
+                        Text(s.questionsGenerated, style = MaterialTheme.typography.bodyMedium)
+                    }
+                }
+            }
+        }
     }
 }
 
