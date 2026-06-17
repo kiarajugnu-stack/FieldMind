@@ -232,14 +232,14 @@ fun InsightsScreen(
     }
 
     Scaffold(
-        snackbarHost = { SnackbarHost(snackbarState) },
         containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
-        LazyColumn(
-            Modifier.fillMaxSize().padding(padding),
-            contentPadding = PaddingValues(16.dp, 16.dp, 16.dp, 96.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
+        Box(Modifier.fillMaxSize()) {
+            LazyColumn(
+                Modifier.fillMaxSize().padding(padding),
+                contentPadding = PaddingValues(16.dp, 16.dp, 16.dp, 96.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
             // ═══════════ SECTION 1: Header & Profile ═══════════
             item {
                 FieldScreenHeader(
@@ -478,6 +478,15 @@ fun InsightsScreen(
 
             item { Spacer(Modifier.height(24.dp)) }
         }
+
+            // ── Top snackbar overlay for achievements ──
+            FieldMindSnackbarOverlay(
+                hostState = snackbarState,
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .padding(top = 8.dp, start = 16.dp, end = 16.dp)
+            )
+        }
     }
 }
 
@@ -646,7 +655,7 @@ private fun CollapsibleAchievements(
         if (unlockedCount > 0) {
             val prefs = context.getSharedPreferences("fieldmind_achievements_v2", 0)
             items.filter { it.unlocked && !prefs.getBoolean(it.title, false) }.forEach { a ->
-                scope.launch { snackbarState.showSnackbar("🏆 ${a.title} unlocked!") }
+                showFastSnackbar(snackbarState, scope, "🏆 ${a.title} unlocked!")
                 prefs.edit().putBoolean(a.title, true).apply()
             }
         }

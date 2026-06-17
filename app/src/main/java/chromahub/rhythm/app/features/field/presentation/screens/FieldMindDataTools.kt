@@ -72,7 +72,7 @@ fun CounterToolScreen(
     Box(Modifier.fillMaxSize()) {
         Scaffold(
             containerColor = MaterialTheme.colorScheme.background,
-            snackbarHost = { SnackbarHost(snackbar) }
+            snackbarHost = {}
         ) { padding ->
             LazyColumn(
                 Modifier.fillMaxSize().padding(padding),
@@ -281,6 +281,13 @@ fun CounterToolScreen(
                 }
             }
         }
+        // Top snackbar overlay
+        FieldMindSnackbarOverlay(
+            hostState = snackbar,
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .padding(top = 8.dp, start = 16.dp, end = 16.dp)
+        )
     }
 }
 
@@ -322,7 +329,7 @@ fun MeasurementToolScreen(
             chartPreference = "Line"
         )
         scope.launch {
-            snackbar.showSnackbar("Measurement saved: $label = $value $unit")
+            showFastSnackbar(snackbar, scope, "Measurement saved: $label = $value $unit")
         }
         label = ""
         value = ""
@@ -333,7 +340,7 @@ fun MeasurementToolScreen(
     Box(Modifier.fillMaxSize()) {
         Scaffold(
             containerColor = MaterialTheme.colorScheme.background,
-            snackbarHost = { SnackbarHost(snackbar) }
+            snackbarHost = {}
         ) { padding ->
             LazyColumn(
                 Modifier.fillMaxSize().padding(padding),
@@ -472,6 +479,13 @@ fun MeasurementToolScreen(
                 }
             }
         }
+        // Top snackbar overlay
+        FieldMindSnackbarOverlay(
+            hostState = snackbar,
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .padding(top = 8.dp, start = 16.dp, end = 16.dp)
+        )
     }
 }
 
@@ -519,7 +533,7 @@ fun WeatherLogToolScreen(
             chartPreference = "Line"
         )
         scope.launch {
-            snackbar.showSnackbar("Weather log saved: $condition")
+            showFastSnackbar(snackbar, scope, "Weather log saved: $condition")
         }
     }
 
@@ -539,7 +553,7 @@ fun WeatherLogToolScreen(
     Box(Modifier.fillMaxSize()) {
         Scaffold(
             containerColor = MaterialTheme.colorScheme.background,
-            snackbarHost = { SnackbarHost(snackbar) }
+            snackbarHost = {}
         ) { padding ->
             LazyColumn(
                 Modifier.fillMaxSize().padding(padding),
@@ -651,6 +665,13 @@ fun WeatherLogToolScreen(
                 }
             }
         }
+        // Top snackbar overlay
+        FieldMindSnackbarOverlay(
+            hostState = snackbar,
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .padding(top = 8.dp, start = 16.dp, end = 16.dp)
+        )
     }
 }
 
@@ -707,7 +728,7 @@ fun SpeciesToolScreen(
             context = "Species quick-capture"
         ) {
             scope.launch {
-                snackbar.showSnackbar("$speciesName logged")
+                showFastSnackbar(snackbar, scope, "$speciesName logged")
             }
             speciesName = ""
             count = "1"
@@ -720,7 +741,7 @@ fun SpeciesToolScreen(
     Box(Modifier.fillMaxSize()) {
         Scaffold(
             containerColor = MaterialTheme.colorScheme.background,
-            snackbarHost = { SnackbarHost(snackbar) }
+            snackbarHost = {}
         ) { padding ->
             LazyColumn(
                 Modifier.fillMaxSize().padding(padding),
@@ -863,5 +884,12 @@ fun SpeciesToolScreen(
                 }
             }
         }
+        // Top snackbar overlay
+        FieldMindSnackbarOverlay(
+            hostState = snackbar,
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .padding(top = 8.dp, start = 16.dp, end = 16.dp)
+        )
     }
 }

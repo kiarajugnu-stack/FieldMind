@@ -361,37 +361,12 @@ fun HomeScreen(
             item { Spacer(Modifier.height(24.dp)) }
         }
 
-        // ── Centered Snackbar for capture confirmation ──
-        SnackbarHost(
+        // ── Top snackbar overlay for capture confirmation
+        FieldMindSnackbarOverlay(
             hostState = captureSnackbarHostState,
-            modifier = Modifier.align(Alignment.Center),
-            snackbar = { data ->
-                Surface(
-                    shape = RoundedCornerShape(20.dp),
-                    color = MaterialTheme.colorScheme.inverseSurface,
-                    tonalElevation = 6.dp,
-                    shadowElevation = 8.dp
-                ) {
-                    Row(
-                        Modifier.padding(horizontal = 24.dp, vertical = 14.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
-                    ) {
-                        Icon(
-                            FieldMindIcons.Check,
-                            null,
-                            tint = MaterialTheme.colorScheme.inverseOnSurface,
-                            size = 22.dp
-                        )
-                        Text(
-                            data.visuals.message,
-                            style = MaterialTheme.typography.bodyMedium,
-                            fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.inverseOnSurface
-                        )
-                    }
-                }
-            }
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .padding(top = 8.dp, start = 16.dp, end = 16.dp)
         )
     }
 
@@ -410,9 +385,11 @@ fun HomeScreen(
                         capturedPhotoUri = uri
                         capturedPhotoMime = mime
                         showCamera = false
-                        scope.launch {
-                            captureSnackbarHostState.showSnackbar("Photo captured")
-                        }
+                        showFastSnackbar(
+                            captureSnackbarHostState,
+                            scope,
+                            "Photo captured"
+                        )
                         // Delay slightly for snackbar visibility, then show category picker
                         scope.launch {
                             delay(600)
@@ -588,9 +565,11 @@ fun HomeScreen(
                                         context = "",
                                         attachments = attachment
                                     )
-                                    scope.launch {
-                                        captureSnackbarHostState.showSnackbar("$effectiveCategory observation saved")
-                                    }
+                                    showFastSnackbar(
+                                        captureSnackbarHostState,
+                                        scope,
+                                        "$effectiveCategory observation saved"
+                                    )
                                 }
                                 showCategoryPicker = false
                                 capturedPhotoUri = null
