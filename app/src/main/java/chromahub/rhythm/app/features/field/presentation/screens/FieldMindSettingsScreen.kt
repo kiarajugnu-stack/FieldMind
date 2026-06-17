@@ -763,7 +763,7 @@ fun WeatherSettingsPage(viewModel: FieldMindViewModel, onBack: () -> Unit) {
     val showPressure by settings.weatherShowPressure.collectAsState()
     val providerSlugs by settings.weatherProviders.collectAsState()
     val apiKey by settings.weatherApiKey.collectAsState()
-    val selectedProviderSet = remember(providerSlugs) { providerSlugs.split(",").map { it.trim() }.filter { it.isNotBlank() }.toSet().ifEmpty { setOf("open-meteo") } }
+    val selectedProviderSet = remember(providerSlugs) { providerSlugs.split(",").map { it.trim() }.filter { it.isNotBlank() }.toSet().ifEmpty { setOf("met-norway") } }
     val keyProvider = remember(selectedProviderSet) { WeatherProviders.selectedProviders(selectedProviderSet.joinToString(",")).firstOrNull { it.requiresApiKey } ?: WeatherProviders.selectedProviders(selectedProviderSet.joinToString(",")).first() }
 
     SettingsSubPage("Weather", icon = FieldMindIcons.Weather, onBack = onBack) {
@@ -844,7 +844,7 @@ fun WeatherSettingsPage(viewModel: FieldMindViewModel, onBack: () -> Unit) {
                             ) {
                                 Icon(FieldMindIcons.Info, null, tint = MaterialTheme.colorScheme.primary, size = 18.dp)
                                 Text(
-                                    "Open-Meteo, IMD India, MET Norway, and NWS are free with no API key. IMD is best inside India; NWS only returns data for U.S. points; paid-key services join the merge when a key is saved.",
+                                    "MET Norway, IMD India, Open-Meteo, and NWS are free with no API key. IMD is best inside India; NWS only returns data for U.S. points; paid-key services join the merge when a key is saved.",
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
