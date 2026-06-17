@@ -107,15 +107,16 @@ private fun DialogWrapper(
         // Handle system back button — placed INSIDE Dialog content for proper composition context
         val dispatcher = LocalOnBackPressedDispatcherOwner.current?.onBackPressedDispatcher
         DisposableEffect(dispatcher, fullScreen) {
-            if (dispatcher != null && fullScreen) {
-                val callback = object : OnBackPressedCallback(true) {
+            val callback = if (dispatcher != null && fullScreen) {
+                val cb = object : OnBackPressedCallback(true) {
                     override fun handleOnBackPressed() {
                         if (isDirty()) showExitConfirm = true else onDismiss()
                     }
                 }
-                dispatcher.addCallback(callback)
-                onDispose { callback.remove() }
-            }
+                dispatcher.addCallback(cb)
+                cb
+            } else null
+            onDispose { callback?.remove() }
         }
         if (fullScreen) {
             Surface(

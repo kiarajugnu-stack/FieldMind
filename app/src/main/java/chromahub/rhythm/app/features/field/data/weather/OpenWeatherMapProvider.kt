@@ -92,7 +92,8 @@ class OpenWeatherMapProvider : WeatherProvider {
             val tMax = temps.maxOrNull() ?: 0.0
             val tMin = temps.minOrNull() ?: 0.0
             val wCode = owmIdToWmo(dominantWeather)
-            val desc = weatherItems.firstOrNull()?.description?.replaceFirstChar { it.uppercase() } ?: ""                    val feelsLikeTemps = items.mapNotNull { it.main?.feelsLike }
+            val desc = weatherItems.firstOrNull()?.description?.replaceFirstChar { it.uppercase() } ?: ""
+                    val feelsLikeTemps = items.mapNotNull { it.main?.feelsLike }
                     val apparentAvg = if (feelsLikeTemps.isNotEmpty()) feelsLikeTemps.average() else null
                     DailyForecast(
                         date = date,
