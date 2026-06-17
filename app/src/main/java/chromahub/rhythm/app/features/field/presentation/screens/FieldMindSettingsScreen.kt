@@ -16,6 +16,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.font.FontWeight
@@ -24,6 +25,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import fieldmind.research.app.features.field.data.database.entity.*
 import fieldmind.research.app.features.field.data.settings.FieldMindSettings
+import fieldmind.research.app.features.field.data.vision.RegionalPack
 import fieldmind.research.app.features.field.data.vision.SpeciesDatabase
 import fieldmind.research.app.features.field.data.weather.WeatherProviders
 import fieldmind.research.app.features.field.presentation.components.*
@@ -1348,13 +1350,15 @@ fun SpeciesPackSettingsPage(onBack: () -> Unit) {
                                     Spacer(Modifier.size(6.dp))
                                     Text("Delete")
                                 }
-                                TextButton(
-                                    onClick = {
-                                        haptics.light()
-                                        snackbar.showSnackbar("Model at: ${database.getPackModelPath(pack.regionId)}")
-                                    },
-                                    modifier = Modifier.weight(1f)
-                                ) {
+                    TextButton(
+                        onClick = {
+                            haptics.light()
+                            scope.launch {
+                                snackbar.showSnackbar("Model at: ${database.getPackModelPath(pack.regionId)}")
+                            }
+                        },
+                        modifier = Modifier.weight(1f)
+                    ) {
                                     Icon(FieldMindIcons.Info, null, size = 18.dp)
                                     Spacer(Modifier.size(6.dp))
                                     Text("Info", maxLines = 1)

@@ -28,6 +28,7 @@ import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbo
 import kotlinx.coroutines.delay
 
 // ── Category accent colors ──
+@Composable
 private fun categoryColor(category: String): androidx.compose.ui.graphics.Color {
     val colors = FieldMindTheme.colors
     return when {
@@ -46,6 +47,7 @@ private fun categoryColor(category: String): androidx.compose.ui.graphics.Color 
     }
 }
 
+@Composable
 private fun categoryIcon(category: String): MaterialSymbolIcon = when {
     category.equals("Bird", ignoreCase = true) -> FieldMindIcons.Bird
     category.equals("Mammal", ignoreCase = true) -> FieldMindIcons.Nature
@@ -232,7 +234,7 @@ fun SpeciesBrowserScreen(
         } else {
             LazyColumn(
                 Modifier.fillMaxSize().padding(padding),
-                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp, bottom = 96.dp),
+                contentPadding = PaddingValues(start = 16.dp, top = 8.dp, end = 16.dp, bottom = 96.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 // Results count
