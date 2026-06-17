@@ -82,6 +82,21 @@ fun SpeciesBrowserScreen(
     var isLoading by remember { mutableStateOf(true) }
     var totalCount by remember { mutableStateOf(0) }
 
+    // ── Sorting state ──
+    val sortOptions = listOf(
+        "Common name (A-Z)",
+        "Common name (Z-A)",
+        "Scientific name (A-Z)",
+        "Scientific name (Z-A)",
+        "Genus (A-Z)",
+        "Family (A-Z)",
+        "Order (A-Z)",
+        "Kingdom (A-Z)",
+        "Category (A-Z)"
+    )
+    var selectedSort by remember { mutableStateOf(sortOptions[0]) }
+    var showSortDropdown by remember { mutableStateOf(false) }
+
     // Load categories and initial species
     LaunchedEffect(Unit) {
         categories = database.getCategories()
@@ -90,17 +105,34 @@ fun SpeciesBrowserScreen(
         isLoading = false
     }
 
-    // Debounced search
-    LaunchedEffect(searchQuery, selectedCategory) {
+    // ── Sort helper ──
+    fun List<SpeciesRecord>.sortedByOption(option: String): List<SpeciesRecord> {
+        return when (option) {
+            "Common name (A-Z)" -> sortedBy { it.commonName.lowercase() }
+            "Common name (Z-A)" -> sortedByDescending { it.commonName.lowercase() }
+            "Scientific name (A-Z)" -> sortedBy { it.scientificName.lowercase() }
+            "Scientific name (Z-A)" -> sortedByDescending { it.scientificName.lowercase() }
+            "Genus (A-Z)" -> sortedBy { it.genus.lowercase() }
+            "Family (A-Z)" -> sortedBy { it.family.lowercase() }
+            "Order (A-Z)" -> sortedBy { it.order.lowercase() }
+            "Kingdom (A-Z)" -> sortedBy { it.kingdom.lowercase() }
+            "Category (A-Z)" -> sortedBy { it.category.lowercase() }
+            else -> this
+        }
+    }
+
+    // Debounced search + sort
+    LaunchedEffect(searchQuery, selectedCategory, selectedSort) {
         delay(200) // 200ms debounce
         isLoading = true
-        species = if (selectedCategory != null) {
+        val results = if (selectedCategory != null) {
             val byCategory = database.getByCategory(selectedCategory!!)
             if (searchQuery.isBlank()) byCategory
             else byCategory.filter { it.commonName.lowercase().contains(searchQuery.lowercase()) || it.scientificName.lowercase().contains(searchQuery.lowercase()) }
         } else {
             database.search(searchQuery, limit = 200)
         }
+        species = results.sortedByOption(selectedSort)
         isLoading = false
     }
 
@@ -237,14 +269,90 @@ fun SpeciesBrowserScreen(
                 contentPadding = PaddingValues(start = 16.dp, top = 8.dp, end = 16.dp, bottom = 96.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                // Results count
+                // Results count + sort
                 item {
-                    Text(
-                        "${species.size} species",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(bottom = 4.dp)
-                    )
+                    Row(
+                        Modifier.fillMaxWidth().padding(bottom = 4.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            "${species.size} species",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        // Sort button
+                        Box {
+                            Surface(
+                                onClick = { showSortDropdown = !showSortDropdown },
+                                shape = RoundedCornerShape(10.dp),
+                                color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                                tonalElevation = 0.dp
+                            ) {
+                                Row(
+                                    Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                ) {
+                                    Icon(
+                                        FieldMindIcons.Category,
+                                        null,
+                                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        size = 14.dp
+                                    )
+                                    Text(
+                                        selectedSort.substringBefore(" ("),
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        fontWeight = FontWeight.SemiBold
+                                    )
+                                    Icon(
+                                        if (showSortDropdown) FieldMindIcons.Up else FieldMindIcons.Down,
+                                        null,
+                                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        size = 14.dp
+                                    )
+                                }
+                            }
+
+                            // Sort dropdown
+                            DropdownMenu(
+                                expanded = showSortDropdown,
+                                onDismissRequest = { showSortDropdown = false },
+                                modifier = Modifier.width(200.dp)
+                            ) {
+                                sortOptions.forEach { option ->
+                                    DropdownMenuItem(
+                                        text = {
+                                            Row(
+                                                Modifier.fillMaxWidth(),
+                                                horizontalArrangement = Arrangement.SpaceBetween,
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                Text(
+                                                    option,
+                                                    style = MaterialTheme.typography.bodySmall,
+                                                    fontWeight = if (option == selectedSort) FontWeight.Bold else FontWeight.Normal
+                                                )
+                                                if (option == selectedSort) {
+                                                    Icon(
+                                                        FieldMindIcons.Check,
+                                                        null,
+                                                        tint = MaterialTheme.colorScheme.primary,
+                                                        size = 16.dp
+                                                    )
+                                                }
+                                            }
+                                        },
+                                        onClick = {
+                                            selectedSort = option
+                                            showSortDropdown = false
+                                        }
+                                    )
+                                }
+                            }
+                        }
+                    }
                 }
 
                 items(species, key = { it.id }) { record ->
