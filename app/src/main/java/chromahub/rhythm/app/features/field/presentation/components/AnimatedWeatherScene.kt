@@ -128,45 +128,118 @@ private fun weatherPalette(temp: Double?, isDay: Boolean, isDarkTheme: Boolean):
     val tempC = temp ?: 20.0
 
     if (isDarkTheme) {
-        // Dark theme: deep, rich, muted backgrounds — colors have substance on dark canvases
-        val (top, bottom) = when {
-            tempC < -5 -> Color(0xFF1A237E) to Color(0xFF303F9F)   // Freezing — deep indigo
-            tempC < 0 -> Color(0xFF0D47A1) to Color(0xFF1565C0)    // Freezing — deep blue
-            tempC < 10 -> Color(0xFF004D40) to Color(0xFF00695C)   // Cold — deep teal
-            tempC < 20 -> Color(0xFF1B3A1B) to Color(0xFF2E5C2E)   // Cool — muted forest
-            tempC < 30 -> Color(0xFF4E342E) to Color(0xFF5D4037)   // Warm — deep brown
-            tempC < 38 -> Color(0xFF4E2A1A) to Color(0xFF6D3A1A)   // Hot — deep rust
-            else -> Color(0xFF4A0000) to Color(0xFF6A1B1B)         // Extreme — deep crimson
+        // ── Dark mode: deep, saturated gradients with atmospheric depth ──
+        // Day: brighter top fading to rich saturated bottom
+        // Night: very dark indigo near-black top to muted tone bottom
+        val (top, bottom, accent) = when {
+            tempC < -5 -> Triple(
+                if (isDay) Color(0xFF283593) else Color(0xFF0F1428),
+                if (isDay) Color(0xFF3949AB) else Color(0xFF1A237E),
+                Color(0xFF90CAF9)
+            )
+            tempC < 0 -> Triple(
+                if (isDay) Color(0xFF1565C0) else Color(0xFF0A1428),
+                if (isDay) Color(0xFF1976D2) else Color(0xFF0D47A1),
+                Color(0xFF64B5F6)
+            )
+            tempC < 10 -> Triple(
+                if (isDay) Color(0xFF00695C) else Color(0xFF081A14),
+                if (isDay) Color(0xFF00796B) else Color(0xFF004D40),
+                Color(0xFF80CBC4)
+            )
+            tempC < 20 -> Triple(
+                if (isDay) Color(0xFF2E5C2E) else Color(0xFF0D1A0D),
+                if (isDay) Color(0xFF3A6E3A) else Color(0xFF1B3A1B),
+                Color(0xFFA5D6A7)
+            )
+            tempC < 30 -> Triple(
+                if (isDay) Color(0xFF5D4037) else Color(0xFF1A100E),
+                if (isDay) Color(0xFF6D4C41) else Color(0xFF3E2723),
+                Color(0xFFFFCC80)
+            )
+            tempC < 38 -> Triple(
+                if (isDay) Color(0xFF6D3A1A) else Color(0xFF1A0D08),
+                if (isDay) Color(0xFF8D4A2A) else Color(0xFF4E2A1A),
+                Color(0xFFFFAB91)
+            )
+            else -> Triple(
+                if (isDay) Color(0xFF6A1B1B) else Color(0xFF1A0505),
+                if (isDay) Color(0xFF8B2A2A) else Color(0xFF4A0000),
+                Color(0xFFEF9A9A)
+            )
         }
-        val bgColors = if (isDay) listOf(top, bottom) else listOf(
-            Color(0xFF0D0D2B),  // Very dark night sky top
-            top.copy(alpha = 0.7f)
-        )
+        val bgColors = if (isDay) {
+            // Day: brighter sky fading to rich ground color
+            listOf(top, bottom)
+        } else {
+            // Night: very dark starry sky top fading to slightly lighter bottom
+            listOf(
+                Color(0xFF070714),  // Near-black with slight blue tint
+                Color(0xFF0F0F2A),  // Deep indigo-black
+                bottom.copy(alpha = 0.85f)
+            )
+        }
         return WeatherPalette(
             primary = top,
             secondary = bottom,
-            accent = Color(0xFFFFCC80),   // Warm amber accent visible on dark
+            accent = accent,
             background = bgColors
         )
     } else {
-        // Light theme: soft, muted, airy backgrounds — pastels with a subtle tint
-        val (top, bottom) = when {
-            tempC < -5 -> Color(0xFFE8EAF6) to Color(0xFFC5CAE9)   // Freezing — soft lavender
-            tempC < 0 -> Color(0xFFE3F2FD) to Color(0xFFBBDEFB)    // Cold — soft sky blue
-            tempC < 10 -> Color(0xFFE0F2F1) to Color(0xFFB2DFDB)   // Cool — soft teal
-            tempC < 20 -> Color(0xFFF1F8E9) to Color(0xFFDCEDC8)   // Mild — soft green
-            tempC < 30 -> Color(0xFFFFF8E1) to Color(0xFFFFECB3)   // Warm — soft amber
-            tempC < 38 -> Color(0xFFFBE9E7) to Color(0xFFFFCCBC)   // Hot — soft coral
-            else -> Color(0xFFFCE4EC) to Color(0xFFF8BBD0)         // Extreme — soft pink
+        // ── Light mode: soft, luminous gradients with airy pastels ──
+        // Day: light pastel top, slightly deeper pastel bottom
+        // Night: deeper/dimmed pastels for a sunset/dusk feel
+        val (top, bottom, accent) = when {
+            tempC < -5 -> Triple(
+                if (isDay) Color(0xFFE8EAF6) else Color(0xFFC5C8E0),
+                if (isDay) Color(0xFFC5CAE9) else Color(0xFFAEB3D4),
+                Color(0xFF7986CB)
+            )
+            tempC < 0 -> Triple(
+                if (isDay) Color(0xFFE3F2FD) else Color(0xFFC8DCF0),
+                if (isDay) Color(0xFFBBDEFB) else Color(0xFF9EC8E8),
+                Color(0xFF64B5F6)
+            )
+            tempC < 10 -> Triple(
+                if (isDay) Color(0xFFE0F2F1) else Color(0xFFC2DFD8),
+                if (isDay) Color(0xFFB2DFDB) else Color(0xFF97C8C0),
+                Color(0xFF4DB6AC)
+            )
+            tempC < 20 -> Triple(
+                if (isDay) Color(0xFFF1F8E9) else Color(0xFFD4E0C0),
+                if (isDay) Color(0xFFDCEDC8) else Color(0xFFB8D4A0),
+                Color(0xFF81C784)
+            )
+            tempC < 30 -> Triple(
+                if (isDay) Color(0xFFFFF8E1) else Color(0xFFE8DFB0),
+                if (isDay) Color(0xFFFFECB3) else Color(0xFFE0D090),
+                Color(0xFFFFB74D)
+            )
+            tempC < 38 -> Triple(
+                if (isDay) Color(0xFFFBE9E7) else Color(0xFFE0C8C0),
+                if (isDay) Color(0xFFFFCCBC) else Color(0xFFE0B0A0),
+                Color(0xFFEF6C00)
+            )
+            else -> Triple(
+                if (isDay) Color(0xFFFCE4EC) else Color(0xFFE0C0C8),
+                if (isDay) Color(0xFFF8BBD0) else Color(0xFFD4A0B4),
+                Color(0xFFE57373)
+            )
         }
-        val bgColors = if (isDay) listOf(top, bottom) else listOf(
-            bottom.copy(red = bottom.red * 0.85f, green = bottom.green * 0.85f, blue = bottom.blue * 0.9f),
-            top.copy(red = top.red * 0.7f, green = top.green * 0.7f, blue = top.blue * 0.8f, alpha = 0.8f)
-        )
+        val bgColors = if (isDay) {
+            // Day: bright airy pastel gradient
+            listOf(top, bottom)
+        } else {
+            // Night/dusk: dimmed warm pastels for a twilight feel
+            listOf(
+                bottom.copy(red = bottom.red * 0.85f, green = bottom.green * 0.82f, blue = bottom.blue * 0.88f),
+                top.copy(red = top.red * 0.7f, green = top.green * 0.68f, blue = top.blue * 0.75f, alpha = 0.85f)
+            )
+        }
         return WeatherPalette(
             primary = top,
             secondary = bottom,
-            accent = Color(0xFFFF8F00),   // Muted amber accent for light theme
+            accent = accent,
             background = bgColors
         )
     }
@@ -318,8 +391,8 @@ private fun DayCloudyScene(
             morph = cloudMorph + 3f
         )
 
-        // Tree line silhouette gently swaying
-        drawTreeLine(morph = cloudMorph * 2f, isDark = isDark)
+        // Tree line silhouette (static — only sky elements should animate)
+        drawTreeLine(isDark = isDark)
 
         // Atmospheric haze
         drawAtmosphericHaze(isDark, hazeAlpha = sunGlow * 0.6f)
@@ -360,11 +433,11 @@ private fun NightSkyScene(
         animationSpec = infiniteRepeatable(tween(15000, easing = FastOutSlowInEasing), RepeatMode.Reverse),
         label = "nightCloudMorph"
     )
-    // Shooting star
+    // Shooting stars — multiple random positions, steeper angle, less frequent
     val shootingStarProgress by infiniteTransition.animateFloat(
         initialValue = 0f,
         targetValue = 1f,
-        animationSpec = infiniteRepeatable(tween(8000, delayMillis = 3000, easing = LinearEasing), RepeatMode.Restart),
+        animationSpec = infiniteRepeatable(tween(14000, delayMillis = 5000, easing = LinearEasing), RepeatMode.Restart),
         label = "shootingStar"
     )
 
@@ -452,14 +525,21 @@ private fun NightSkyScene(
             }
         }
 
-        // Shooting star (visible during first 30% of animation, then reset)
-        if (shootingStarProgress < 0.7f) {
-            val ssProgress = shootingStarProgress / 0.7f
+        // Shooting stars — 3 random positions, 50° angle, visible for only 35% of cycle
+        val nightStarPositions = listOf(
+            Offset(size.width * 0.5f, size.height * 0.08f),
+            Offset(size.width * 0.75f, size.height * 0.15f),
+            Offset(size.width * 0.6f, size.height * 0.05f)
+        )
+        if (shootingStarProgress < 0.35f) {
+            val ssProgress = shootingStarProgress / 0.35f
+            val starIndex = (shootingStarProgress * 6f).toInt().coerceIn(0, 2)
+            val starPos = nightStarPositions[starIndex]
             drawShootingStar(
                 progress = ssProgress,
-                startX = size.width * 0.7f,
-                startY = size.height * 0.1f,
-                angleDeg = -25f + sin(moonGlow * 0.5f) * 5f
+                startX = starPos.x,
+                startY = starPos.y,
+                angleDeg = -50f
             )
         }
 
@@ -521,11 +601,11 @@ private fun ClearSkyScene(
         animationSpec = infiniteRepeatable(tween(5000, easing = FastOutSlowInEasing), RepeatMode.Reverse),
         label = "sunGlow"
     )
-    // Shooting star for night mode
+    // Shooting stars for night mode — less frequent
     val shootingStarProgress by infiniteTransition.animateFloat(
         initialValue = 0f,
         targetValue = 1f,
-        animationSpec = infiniteRepeatable(tween(10000, delayMillis = 2000, easing = LinearEasing), RepeatMode.Restart),
+        animationSpec = infiniteRepeatable(tween(16000, delayMillis = 4000, easing = LinearEasing), RepeatMode.Restart),
         label = "shootingStar"
     )
     // Drifting particles (dust motes / fireflies)
@@ -668,14 +748,21 @@ private fun ClearSkyScene(
                 )
             }
 
-            // Shooting star
-            if (shootingStarProgress < 0.65f) {
-                val ssProgress = shootingStarProgress / 0.65f
+            // Shooting stars — 3 random positions, 55° angle, visible for 30% of cycle
+            val clearStarPositions = listOf(
+                Offset(size.width * 0.55f, size.height * 0.06f),
+                Offset(size.width * 0.78f, size.height * 0.12f),
+                Offset(size.width * 0.65f, size.height * 0.03f)
+            )
+            if (shootingStarProgress < 0.30f) {
+                val ssProgress = shootingStarProgress / 0.30f
+                val starIndex = (shootingStarProgress * 7f).toInt().coerceIn(0, 2)
+                val starPos = clearStarPositions[starIndex]
                 drawShootingStar(
                     progress = ssProgress,
-                    startX = size.width * 0.8f,
-                    startY = size.height * 0.08f,
-                    angleDeg = -20f
+                    startX = starPos.x,
+                    startY = starPos.y,
+                    angleDeg = -55f
                 )
             }
 
@@ -1123,8 +1210,8 @@ private fun RainScene(
 ) {
     val isDark = FieldMindTheme.colors.isDark
     val isHeavy = weatherCode >= 65 || weatherCode in 80..82
-    val streakCount = if (compact) (if (isHeavy) 20 else 10) else (if (isHeavy) 50 else 30)
-    val baseSpeed = if (isHeavy) 700f else 1200f  // Slower continuous fall
+    val streakCount = if (compact) (if (isHeavy) 24 else 14) else (if (isHeavy) 60 else 36)
+    val baseSpeed = if (isHeavy) 600f else 1000f 
 
     val infiniteTransition = rememberInfiniteTransition(label = "rain")
     val rainProgress by infiniteTransition.animateFloat(
@@ -1147,15 +1234,16 @@ private fun RainScene(
         label = "rippleScale"
     )
     // Wind gust effect — now with intensity variation
+    // Subtle wind — reduced tilt for more natural vertical fall
     val windGust by infiniteTransition.animateFloat(
-        initialValue = -1f,
-        targetValue = 1f,
+        initialValue = -0.4f,
+        targetValue = 0.4f,
         animationSpec = infiniteRepeatable(tween(4000, easing = LinearEasing), RepeatMode.Reverse),
         label = "windGust"
     )
     // Rain intensity pulsing for living feel
     val rainIntensity by infiniteTransition.animateFloat(
-        initialValue = 0.6f,
+        initialValue = 0.7f,
         targetValue = 1.0f,
         animationSpec = infiniteRepeatable(tween(2000 + Random.nextInt(2000), easing = FastOutSlowInEasing), RepeatMode.Reverse),
         label = "rainIntensity"
@@ -1170,24 +1258,25 @@ private fun RainScene(
     Canvas(modifier = modifier.fillMaxSize()) {
         val intensityAlpha = rainIntensity.coerceIn(0.4f, 1f)
 
-        // Wind-blown rain streaks with varied intensity — per-drop random phase for continuous random drops
+        // Rain streaks — each drop falls individually with random phase offset (no synchronized lines)
         streaks.forEach { streak ->
             val x = streak.x
             val speed = streak.speed
             val length = streak.length
             val delay = streak.delay
-            val windSway = windGust * 25f * intensityAlpha
-            // Per-drop phase offset so drops fall continuously, not all together
+            // Subtle wind sway — minimal tilt for natural near-vertical fall
+            val windSway = windGust * 10f * intensityAlpha
+            // Per-drop phase offset — each drop has unique timing, no two fall together
             val fallProgress = ((rainProgress + delay) % 1f).let { if (it < 0f) it + 1f else it }
-            val y = (fallProgress * size.height * speed * intensityAlpha + x * size.height * 0.2f) % (size.height + length)
-            val yEnd = y - length * intensityAlpha.coerceIn(0.7f, 1.2f)
-            val xPos = x * size.width + windSway * (1f - y / size.height) * 0.5f
-            val streakAlpha = (0.5f + intensityAlpha * 0.5f) * (0.7f + speed * 0.3f)
+            val y = (fallProgress * size.height * speed * intensityAlpha) % (size.height + length)
+            val yEnd = y - length * intensityAlpha.coerceIn(0.8f, 1.2f)
+            val xPos = x * size.width + windSway * (1f - y / size.height) * 0.3f
+            val streakAlpha = (0.4f + intensityAlpha * 0.5f) * (0.5f + speed * 0.4f)
             drawLine(
                 color = rainColor.copy(alpha = streakAlpha.coerceAtMost(1f)),
                 start = Offset(xPos, y),
-                end = Offset(xPos + windSway * 0.3f, yEnd),
-                strokeWidth = if (isHeavy) 2.5f * intensityAlpha else 1.5f * intensityAlpha
+                end = Offset(xPos + windSway * 0.2f, yEnd),
+                strokeWidth = if (isHeavy) 2f * intensityAlpha else 1.2f * intensityAlpha
             )
         }
 
@@ -1223,21 +1312,8 @@ private fun RainScene(
             }
         }
 
-        // Ground terrain with puddles (handled by drawGround, but we need to render it)
+        // Ground terrain
         drawGround(weatherCode = weatherCode, isDay = true, isDark = isDark, compact = compact)
-
-        // Foreground rain layer (closer, more visible)
-        val fgStreakCount = if (compact) 5 else 12
-        for (i in 0 until fgStreakCount) {
-            val fx = (rainProgress * size.width + i * size.width * 0.08f) % size.width
-            val fy = (rainProgress * size.height * 1.5f + i * size.height * 0.02f) % (size.height + 30f)
-            drawLine(
-                color = rainColor.copy(alpha = 0.6f * intensityAlpha),
-                start = Offset(fx, fy),
-                end = Offset(fx + windGust * 5f, (fy - 30f * intensityAlpha)),
-                strokeWidth = 3f * intensityAlpha
-            )
-        }
     }
 }
 
