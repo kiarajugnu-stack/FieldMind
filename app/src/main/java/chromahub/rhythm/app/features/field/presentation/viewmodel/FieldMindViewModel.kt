@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlin.jvm.JvmName
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -47,6 +48,7 @@ class FieldMindViewModel(application: Application) : AndroidViewModel(applicatio
     val commonTags: StateFlow<List<TagStatistic>> = repository.commonTags.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     /** True while the user has an active capture session timer running on the Observe screen. */
+    @set:JvmName("setCaptureSessionActiveState")
     var captureSessionActive by mutableStateOf(false)
         private set
     fun setCaptureSessionActive(active: Boolean) { captureSessionActive = active }
