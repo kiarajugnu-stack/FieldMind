@@ -280,7 +280,10 @@ fun HomeScreen(
             item { SectionHeader("Research areas", "Quick overview of your work") }
             item { HomeWidgetGrid(observations, notes, questions, sources, projects, reports, data) { onNavigate(it) } }
             item { HomeDataOptionsCard(data, onNavigate) }
-            
+
+            // ── Species Catalog ──
+            item { HomeSpeciesCatalogSection(onNavigate = onNavigate) }
+
             // ── Recent Captures ──
             if (observations.isNotEmpty()) {
                 item { RecentCapturesCard(observations, onOpenDetail) }
