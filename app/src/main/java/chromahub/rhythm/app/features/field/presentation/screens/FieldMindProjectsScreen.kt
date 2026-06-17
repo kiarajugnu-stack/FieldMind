@@ -41,22 +41,23 @@ import kotlin.math.ceil
 
 // ══════════════════════════════════════════════════════════════════════
 //  Research Hub — Full redesign per spec
-//  Features: Start Session, New Project, Templates (18 types + 17 templates),
+//  Features: Start Session, New Project, Templates (19 types + 19 templates),
 //  Emoji picker, Priority/Dates/Tags, 5 tabs (Overview, Observations,
 //  Hypotheses, Data, Reports)
 // ══════════════════════════════════════════════════════════════════════
 
-// ── Project Types (18 from spec) ──
+// ── Project Types (19 — each type has a matching template below) ──
 internal val researchProjectTypes = listOf(
     "Species Survey", "Population Census", "Habitat Assessment",
     "Wildlife Monitoring", "Behavioral Study", "Migration Study",
     "Biodiversity Inventory", "Vegetation Survey", "Conservation Project",
     "Ecological Research", "Camera Trap Study", "Acoustic Monitoring",
     "Pollinator Survey", "Water Quality Study", "Citizen Science Project",
-    "Environmental Impact Study", "Long Term Monitoring", "Species Discovery"
+    "Environmental Impact Study", "Long Term Monitoring", "Species Discovery",
+    "Custom Research Project"
 )
 
-// ── Project Templates (17 from spec) ──
+// ── Project Templates (19 — one per project type) ──
 internal data class ProjectTemplateDef(
     val name: String,
     val type: String,
@@ -86,6 +87,15 @@ internal val projectTemplates = listOf(
     ProjectTemplateDef("Water Quality Check", "Water Quality Study", FieldMindIcons.Water, "Repeatable water observations and measurements for streams/ponds.", "Hydrology", defaultMethods = setOf("Water testing", "Measurement logging", "Photo documentation", "Weather logging"), objective = "Track basic water conditions over repeat visits.", question = "How do clarity, temperature, flow, and visible organisms change after weather events?", background = "Water quality shifts with runoff, temperature, flow, algae, and surrounding land use.", methodPlan = "At fixed points measure temperature, clarity/turbidity, flow class, depth, odor/color, organisms, rainfall context, and photos.", hypothesis = "Recent rainfall will reduce clarity and increase flow at sampling points.", dataPlan = "site ID, water temp C, clarity, flow, depth cm, odor, color, organisms, rainfall, photo URI", analysisPlan = "Plot water measures by date and rainfall; compare upstream/downstream sites.", nextAction = "Choose sampling points and prepare measurement tools.", tags = "water, hydrology, rainfall, quality"),
     ProjectTemplateDef("Acoustic Survey", "Acoustic Monitoring", FieldMindIcons.Mic, "Audio-based detections for birds, frogs, bats, or soundscapes.", "Ecology", defaultMethods = setOf("Audio recording", "Species counting", "Weather logging"), objective = "Use repeat audio samples to detect vocal species and activity timing.", question = "Which species are detected by sound, and when are calling rates highest?", background = "Acoustic monitoring captures species that are hard to see and preserves evidence for review.", methodPlan = "Record fixed-duration clips at marked stations; log time, weather, habitat, device, noise level, and detected calls.", hypothesis = "Calling activity will peak near dawn/dusk and after suitable weather conditions.", dataPlan = "station, start time, duration, species/call, confidence, noise, weather, audio URI", analysisPlan = "Compare detections by station and time window; review uncertain calls.", nextAction = "Test recorder settings and create station IDs.", tags = "acoustic, audio, calls, monitoring"),
     ProjectTemplateDef("Habitat Assessment", "Habitat Assessment", FieldMindIcons.Nature, "Habitat structure, disturbance, vegetation, soil, and photo points.", "Ecology", defaultMethods = setOf("Measurement logging", "Photo documentation", "GPS tracking"), objective = "Describe habitat structure and condition across mapped assessment points.", question = "Which habitat features and disturbance indicators characterize this site?", background = "Habitat assessments connect species observations to vegetation, substrate, water, and human impact.", methodPlan = "At each point record canopy/ground cover, dominant plants, substrate, water presence, disturbance, slope/aspect, and repeat photos.", hypothesis = "Higher structural diversity will correspond with more wildlife observations.", dataPlan = "point ID, canopy %, ground cover %, dominant plants, substrate, disturbance score, GPS, photo URI", analysisPlan = "Map habitat scores and compare with observations by point.", nextAction = "Lay out assessment points and create a scoring rubric.", tags = "habitat, vegetation, disturbance, GPS"),
+    ProjectTemplateDef("Behavioral Observation Log", "Behavioral Study", FieldMindIcons.Trend, "Focal follows and time-budget observations of animal behavior patterns.", "Behavioral Ecology", defaultMethods = setOf("Daily observations", "Behavior logging", "Photo documentation", "Timed observation"), objective = "Quantify behavioral patterns, time budgets, and social interactions of target species.", question = "How do behavioral patterns vary by time of day, season, and social context?", background = "Behavioral observations require systematic sampling to capture representative activity patterns.", methodPlan = "Conduct focal follows or scan samples at regular intervals; log behaviors, durations, social partners, and environmental context.", hypothesis = "Feeding behavior will peak in early morning and late afternoon, with rest during midday.", dataPlan = "subject ID, behavior, start time, duration, social context, habitat, temperature, photo/video URI", analysisPlan = "Calculate time budgets per behavior category and compare across time windows and social contexts.", nextAction = "Define ethogram and practice behavior coding before first full observation session.", tags = "behavior, ethogram, time-budget, social"),
+    ProjectTemplateDef("Migration Route Census", "Migration Study", FieldMindIcons.Track, "Systematic counts of migrating species at fixed points and times.", "Ecology", defaultMethods = setOf("Species counting", "GPS tracking", "Photo documentation", "Daily observations"), objective = "Document migration timing, direction, and species composition at a fixed observation point.", question = "When do target species migrate through this site, and how do counts vary with weather conditions?", background = "Migration monitoring at fixed sites produces consistent data for phenology and population trends.", methodPlan = "Count individuals passing a fixed point at standard times; record species, direction, estimated altitude, group size, and weather.", hypothesis = "Peak migration counts will occur after cold fronts with favorable tailwinds.", dataPlan = "species, count, direction, altitude m, group size, time, wind, visibility, temperature C", analysisPlan = "Plot daily counts against weather variables; compare arrival dates across years.", nextAction = "Select observation point with clear view and begin daily counts at scheduled times.", tags = "migration, phenology, census, birds"),
+    ProjectTemplateDef("Biodiversity Rapid Assessment", "Biodiversity Inventory", FieldMindIcons.Nature, "Multi-taxon rapid inventory of species richness at a site.", "Ecology", defaultMethods = setOf("Species counting", "Photo documentation", "GPS tracking", "Audio recording"), objective = "Survey as many species as possible across taxonomic groups in a defined area and time window.", question = "What is the species richness and composition of this site across major taxonomic groups?", background = "Rapid biodiversity assessments capture a snapshot of species presence under standardized effort.", methodPlan = "Survey all major taxa (birds, mammals, plants, insects, herps) within a defined boundary using timed transects, traps, and visual encounter surveys.", hypothesis = "Sites with greater habitat heterogeneity will support higher species richness.", dataPlan = "species, taxon group, abundance, detection method, GPS, habitat, time, specimen photo URI", analysisPlan = "Compile species list by taxon; calculate richness, Shannon diversity, and compare with habitat variables.", nextAction = "Define survey boundary, prepare species datasheets, and schedule the assessment window.", tags = "biodiversity, inventory, richness, rapid-assessment"),
+    ProjectTemplateDef("Conservation Action Plan", "Conservation Project", FieldMindIcons.Flag, "Threat assessment, intervention planning, and outcome tracking for a conservation target.", "Conservation", "High", setOf("Weekly observations", "Photo documentation", "GPS tracking", "Species counting"), objective = "Identify threats and implement measurable conservation actions for a target species or habitat.", question = "What are the primary threats to the target, and which interventions are most effective?", background = "Conservation projects require baseline data, threat assessment, stakeholder engagement, and measurable outcomes.", methodPlan = "Map threats, establish monitoring transects, implement intervention(s), and track before-after indicators at fixed intervals.", hypothesis = "The selected intervention will reduce threat indicators by at least 20% within one year.", dataPlan = "site, threat type, severity score, indicator species, count, GPS, intervention, date, photo URI", analysisPlan = "Compare before-after indicator values with paired t-test or occupancy models.", nextAction = "Define conservation target, complete threat assessment, and establish baseline monitoring points.", tags = "conservation, threats, intervention, monitoring"),
+    ProjectTemplateDef("Ecosystem Field Study", "Ecological Research", FieldMindIcons.School, "Multi-factor ecological study of species interactions and ecosystem processes.", "Ecology", defaultMethods = setOf("Measurement logging", "Photo documentation", "Behavior logging", "Weather logging"), objective = "Quantify ecological relationships and processes in a defined ecosystem.", question = "How do abiotic factors, species interactions, and disturbance shape ecosystem structure and function?", background = "Ecological research integrates species, environment, and process data across spatial and temporal scales.", methodPlan = "Establish study plots or transects; record species composition, abundance, environmental variables, and interaction observations.", hypothesis = "Nutrient availability and disturbance regime together explain more variation in community composition than either factor alone.", dataPlan = "plot ID, species, abundance, environmental variables, interactions, disturbance, GPS, photo URI", analysisPlan = "Use multivariate analysis (NMDS, PERMANOVA) to relate community composition to environmental gradients.", nextAction = "Select study area, establish plot locations, and begin environmental baseline measurements.", tags = "ecology, ecosystem, community, multivariate"),
+    ProjectTemplateDef("Community Science Campaign", "Citizen Science Project", FieldMindIcons.HumanBehavior, "Engage community volunteers in structured data collection and public science.", "Citizen Science", defaultMethods = setOf("Daily observations", "Photo documentation", "GPS tracking", "Species counting"), objective = "Recruit and train community volunteers to collect standardized scientific data.", question = "Can community-collected data produce results comparable to professional surveys?", background = "Citizen science projects scale data collection across broad areas while building public engagement.", methodPlan = "Develop simple protocols, recruit volunteers, provide training materials, collect and review submitted data, and share results.", hypothesis = "Volunteer-collected data will show the same broad patterns as professional surveys with acceptable error margins.", dataPlan = "observer ID, species/observation, GPS, date, time, photo evidence, confidence, notes", analysisPlan = "Compare volunteer data quality against expert validation subset; summarize spatial coverage and trends.", nextAction = "Design simple protocol, recruit first 10 volunteers, and launch a pilot data collection week.", tags = "citizen-science, community, volunteers, outreach"),
+    ProjectTemplateDef("Environmental Baseline Survey", "Environmental Impact Study", FieldMindIcons.Settings, "Pre-impact environmental assessment with multi-factor baselines and photo points.", "Conservation", "High", setOf("Measurement logging", "Photo documentation", "Water testing", "GPS tracking"), objective = "Establish a comprehensive environmental baseline before a planned development or land-use change.", question = "What are the current environmental conditions, and how will they be affected by the proposed change?", background = "Baseline surveys capture pre-impact conditions for soil, water, vegetation, and wildlife to enable impact assessment.", methodPlan = "Survey soil, water quality, vegetation cover, and wildlife at fixed baseline points using standardized methods and photo documentation.", hypothesis = "Sites closer to the planned development boundary will show different baseline characteristics from reference sites.", dataPlan = "site ID, parameter, value, unit, method, GPS, date, photo URI, disturbance level", analysisPlan = "Compare proposed-impact sites with control/reference sites using multivariate statistics.", nextAction = "Define project boundary, identify control sites, and conduct initial baseline measurements.", tags = "environmental-impact, baseline, EIA, assessment"),
+    ProjectTemplateDef("Long-Term Monitoring Plan", "Long Term Monitoring", FieldMindIcons.Streak, "Repeated standardized measurements at fixed intervals to detect trends and change.", "Ecology", defaultMethods = setOf("Weekly observations", "Measurement logging", "Photo documentation", "Weather logging"), objective = "Establish a repeatable monitoring protocol to detect population or environmental trends over time.", question = "How are target indicators changing over time, and are the changes statistically significant?", background = "Long-term monitoring detects trends that short-term studies miss—requires consistent methods, timing, and record-keeping.", methodPlan = "Define indicators, set fixed monitoring points, schedule repeat visits at consistent intervals, and maintain a metadata log of any method changes.", hypothesis = "Target indicators will show directional change consistent with predicted climate or land-use impacts.", dataPlan = "site ID, date, indicator, value, method, observer, weather, equipment notes, photo URI", analysisPlan = "Analyze trends using linear mixed models or Mann-Kendall tests; flag significant deviations.", nextAction = "Define 3-5 key indicators, set monitoring schedule, and document a standard operating procedure.", tags = "long-term, monitoring, trends, time-series"),
+    ProjectTemplateDef("Novel Species Investigation", "Species Discovery", FieldMindIcons.Sparkle, "Documentation and description of potentially unknown or cryptic species.", "Taxonomy", defaultMethods = setOf("Photo documentation", "Measurement logging", "Audio recording", "Species counting"), objective = "Collect evidence to confirm a species identity or document a potentially new species.", question = "Does this observation represent an undescribed species, a range extension, or a known species?", background = "Species discovery requires thorough documentation, comparison with type specimens, and expert verification.", methodPlan = "Document the specimen/organism with detailed photos, measurements, GPS, habitat, and behavioral notes. Collect samples where permitted. Consult reference collections and experts.", hypothesis = "Morphological and genetic comparison will confirm whether this represents a known, range-extending, or novel species.", dataPlan = "species candidate, GPS, measurements, photos, habitat, behavior, collector, date, expert consulted", analysisPlan = "Compare with taxonomic keys and reference images; submit to expert review or citizen science platform.", nextAction = "Take detailed photos from multiple angles, collect GPS coordinates, and consult a field guide or expert.", tags = "species-discovery, taxonomy, new-species, range-extension"),
     ProjectTemplateDef("Custom Blank Template", "Custom Research Project", FieldMindIcons.Project, "Start from a clean workspace with only core planning fields.", "Other", defaultMethods = emptySet(), objective = "", question = "", background = "", methodPlan = "", hypothesis = "", dataPlan = "", analysisPlan = "", nextAction = "", tags = "")
 )
 
@@ -207,8 +217,6 @@ private fun ResearchHubOverviewTab(
     // Computed metrics
     val totalProjects = projects.size
     val totalObs = observations.size
-    val obsThisWeek = observations.count { it.timestamp > System.currentTimeMillis() - 7 * 24 * 3600_000L }
-    val obsThisMonth = observations.count { it.timestamp > System.currentTimeMillis() - 30 * 24 * 3600_000L }
     val uniqueSites = observations.mapNotNull { it.manualLocation.ifBlank { if (it.latitude != null && it.longitude != null) "${it.latitude},${it.longitude}" else null } }.distinct().size
     val openQuestions = questions.count { it.answer.isBlank() }
     val supportedHypotheses = hypotheses.count { it.resultStatus.equals("Supported", true) }
@@ -216,7 +224,6 @@ private fun ResearchHubOverviewTab(
     val untestedHypotheses = hypotheses.size - supportedHypotheses - refutedHypotheses
     val totalFieldHours = researchSessions.sumOf { it.totalDurationMs } / 3600_000.0
     val totalSessions = researchSessions.size
-    val totalObsInSessions = researchSessions.sumOf { it.observationCount }
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -245,7 +252,7 @@ private fun ResearchHubOverviewTab(
         }
 
         // ── 2. Dashboard Metrics ──
-        item { ResearchHubDashboard(totalObs, obsThisWeek, obsThisMonth, uniqueSites, openQuestions, supportedHypotheses, refutedHypotheses, untestedHypotheses, totalFieldHours, totalSessions, totalObsInSessions) }
+        item { ResearchHubDashboard(totalObs, uniqueSites, openQuestions, supportedHypotheses, refutedHypotheses, untestedHypotheses, totalFieldHours, totalSessions) }
 
         // ── 3. New Project Button + Templates + Types ──
         item {
@@ -280,52 +287,51 @@ private fun ResearchHubOverviewTab(
             }
         }
 
-        // ── 4. Project Types Grid ──
-        if (showTypes) {
+        // ── 7. Projects List ──
+        if (totalProjects == 0) {
             item {
-                Card(shape = RoundedCornerShape(20.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)) {
-                    Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                        Text("Project Types (${researchProjectTypes.size})", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
-                        Text("Select a type to pre-configure your research project.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            items(researchProjectTypes.chunked(6)) { chunk ->
-                                Column(Modifier.width(160.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                                    chunk.forEach { type ->
-                                        Surface(
-                                            onClick = {
-                                                val preset = projectTemplates.firstOrNull { it.type == type }
-                                                projType = type
-                                                projTemplate = preset?.name ?: "Custom Blank Template"
-                                                projTitle = preset?.name ?: type
-                                                projDesc = preset?.objective ?: "Plan a ${type.lowercase()} with a clear question, field method, data plan, and evidence checklist."
-                                                projCategory = preset?.category ?: researchCategories.first()
-                                                projPriority = preset?.priority ?: "Medium"
-                                                projQuestion = preset?.question ?: "What pattern will this ${type.lowercase()} measure or explain?"
-                                                projMethods = preset?.defaultMethods ?: setOf("Daily observations", "Photo documentation")
-                                                projHypothesis = preset?.hypothesis ?: ""
-                                                projTags = preset?.tags ?: type.lowercase().replace(" ", ", ")
-                                                showTypes = false; showNewProject = true
-                                            },
-                                            shape = RoundedCornerShape(12.dp),
-                                            color = if (projType == type) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainerHigh
-                                        ) {
-                                            Row(Modifier.padding(10.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                                Icon(FieldMindIcons.Project, null, tint = if (projType == type) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant, size = 16.dp)
-                                                Text(type, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Medium, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
+                EmptyState("No projects yet", "Start with a name and a question. Use templates or pick a project type to get started.", icon = FieldMindIcons.Project, actionLabel = "Create project") { showNewProject = true }
             }
+        } else {
+            item { SectionHeader("Projects ($totalProjects)", "Tap any project to open the workspace") }
+            items(projects) { project -> ProjectDashboardCardCompact(project, observations, questions, hypotheses, sources, data, reports, researchSessions) { onOpenDetail("project", project.id) } }
         }
-
-        // ── 5. Templates Grid ──
-        if (showTemplates) {
-            item { TemplatesGrid(projectTemplates) { template ->
+    }
+    // Dialogs outside LazyColumn
+    if (showTypes) {
+        OptionPickerDialog(
+            title = "Project Types",
+            subtitle = "Select a type to pre-configure your research project.",
+            options = researchProjectTypes,
+            selected = projType,
+            onSelect = { type ->
+                val preset = projectTemplates.firstOrNull { it.type == type }
+                projType = type
+                projTemplate = preset?.name ?: "Custom Blank Template"
+                projTitle = preset?.name ?: type
+                projDesc = preset?.objective ?: "Plan a ${type.lowercase()} with a clear question, field method, data plan, and evidence checklist."
+                projCategory = preset?.category ?: researchCategories.first()
+                projPriority = preset?.priority ?: "Medium"
+                projQuestion = preset?.question ?: "What pattern will this ${type.lowercase()} measure or explain?"
+                projMethods = preset?.defaultMethods ?: setOf("Daily observations", "Photo documentation")
+                projHypothesis = preset?.hypothesis ?: ""
+                projTags = preset?.tags ?: type.lowercase().replace(" ", ", ")
+                showTypes = false
+                showNewProject = true
+            },
+            onDismiss = { showTypes = false },
+            accentColor = FieldMindTheme.colors.project,
+            iconProvider = { FieldMindIcons.Project }
+        )
+    }
+    if (showTemplates) {
+        OptionPickerDialog(
+            title = "Project Templates",
+            subtitle = "Choose a template to pre-fill your project fields.",
+            options = projectTemplates.map { it.name },
+            selected = projTemplate,
+            onSelect = { templateName ->
+                val template = projectTemplates.firstOrNull { it.name == templateName }!!
                 projTemplate = template.name
                 projType = template.type
                 projTitle = template.name
@@ -338,20 +344,12 @@ private fun ResearchHubOverviewTab(
                 projTags = template.tags
                 showTemplates = false
                 showNewProject = true
-            } }
-        }
-
-        // ── 7. Projects List ──
-        if (totalProjects == 0) {
-            item {
-                EmptyState("No projects yet", "Start with a name and a question. Use templates or pick a project type to get started.", icon = FieldMindIcons.Project, actionLabel = "Create project") { showNewProject = true }
-            }
-        } else {
-            item { SectionHeader("Projects ($totalProjects)", "Tap any project to open the workspace") }
-            items(projects) { project -> ProjectDashboardCardCompact(project, observations, questions, hypotheses, sources, data, reports, researchSessions) { onOpenDetail("project", project.id) } }
-        }
+            },
+            onDismiss = { showTemplates = false },
+            accentColor = FieldMindTheme.colors.project,
+            iconProvider = { name -> projectTemplates.firstOrNull { it.name == name }?.icon }
+        )
     }
-    // Dialog outside LazyColumn
     if (showNewProject) {
         NewProjectDialog(
             viewModel = viewModel,
@@ -379,9 +377,9 @@ private fun ResearchHubOverviewTab(
 
 @Composable
 private fun ResearchHubDashboard(
-    totalObs: Int, obsThisWeek: Int, obsThisMonth: Int, uniqueSites: Int,
+    totalObs: Int, uniqueSites: Int,
     openQuestions: Int, supportedHyp: Int, refutedHyp: Int, untestedHyp: Int,
-    totalFieldHours: Double, totalSessions: Int, totalObsInSessions: Int
+    totalFieldHours: Double, totalSessions: Int
 ) {
     Card(
         shape = RoundedCornerShape(24.dp),
@@ -395,23 +393,19 @@ private fun ResearchHubDashboard(
             }
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
                 DashboardMetric(totalObs.toString(), "Total obs", FieldMindTheme.colors.observation)
-                DashboardMetric(obsThisWeek.toString(), "This week", MaterialTheme.colorScheme.primary)
-                DashboardMetric(obsThisMonth.toString(), "This month", MaterialTheme.colorScheme.secondary)
                 DashboardMetric(uniqueSites.toString(), "Sites", FieldMindTheme.colors.info)
-            }
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
                 DashboardMetric(openQuestions.toString(), "Open Qs", FieldMindTheme.colors.question)
-                DashboardMetric(supportedHyp.toString(), "Supported", FieldMindTheme.colors.positive)
-                DashboardMetric(refutedHyp.toString(), "Refuted", MaterialTheme.colorScheme.error)
-                DashboardMetric(untestedHyp.toString(), "Untested", MaterialTheme.colorScheme.onSurfaceVariant)
-            }
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
                 DashboardMetric("%.1f".format(totalFieldHours), "Field hours", FieldMindTheme.colors.warning)
                 DashboardMetric(totalSessions.toString(), "Sessions", FieldMindTheme.colors.data)
-                DashboardMetric(totalObsInSessions.toString(), "Session obs", FieldMindTheme.colors.observation)
             }
+            Spacer(Modifier.height(4.dp))
+            Text(
+                "Hypotheses: $supportedHyp supported · $refutedHyp refuted · $untestedHyp untested",
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.fillMaxWidth(),
+                textAlign = TextAlign.Center
+            )
         }
     }
 }
@@ -500,7 +494,7 @@ private fun recommendedDatasetFor(methods: Set<String>): String = when {
     methods.any { "Measurement" in it } -> "Measurement Log"
     methods.any { "Weather" in it } -> "Weather Log"
     methods.any { "Comparison" in it } -> "Comparison Table"
-    methods.any { "Camera" in it } -> "Camera Trap Log"
+    methods.any { "Camera" in it } -> "Event Log"
     else -> "Observation Timeline"
 }
 
@@ -747,7 +741,7 @@ private fun TrackingFlowCards() {
         "Count things" to "Creates a Counter dataset with bar charts.",
         "Measure something" to "Creates a Measurement Log with trend charts.",
         "Compare locations" to "Creates a Comparison Table with grouped charts.",
-        "Track changes over time" to "Creates a Time Series with timeline preview.",
+        "Track changes over time" to "Creates a Measurement Log with trend charts.",
         "Record weather" to "Creates a Weather Log linked to observations.",
         "Track species" to "Creates a Species Tracker with evidence requirements."
     )

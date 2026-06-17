@@ -216,6 +216,20 @@ fun HomeScreen(
         homeCurrentWeather?.let { computeFieldworkNudge(it) } ?: ""
     }
 
+    // ── Live session timer (hoisted outside LazyColumn for @Composable context) ──
+    val activeSession = researchSessions.firstOrNull { it.status == "Active" }
+    var liveTimerMs by remember(activeSession?.startedAt) { mutableLongStateOf(0L) }
+    LaunchedEffect(activeSession?.startedAt) {
+        if (activeSession != null) {
+            while (true) {
+                liveTimerMs = System.currentTimeMillis() - activeSession.startedAt
+                delay(1000)
+            }
+        } else {
+            liveTimerMs = 0L
+        }
+    }
+
     Box(Modifier.fillMaxSize()) {
         LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(20.dp, 0.dp, 20.dp, 96.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
             // ── Hero Section ──
@@ -257,8 +271,8 @@ fun HomeScreen(
             // ── Research Session CTA ──
             item { ResearchSessionCtaCard(
                     lastSessionLabel = if (lastSession != null) "Resume your last session" else null,
-                    activeSessionName = researchSessions.firstOrNull { it.status == "Active" }?.name,
-                    timerMs = 0L,
+                    activeSessionName = activeSession?.name,
+                    timerMs = liveTimerMs,
                     onStartSession = { onNavigate(FieldMindScreen.ResearchSession) }
                 ) }
 
@@ -347,37 +361,12 @@ fun HomeScreen(
             item { Spacer(Modifier.height(24.dp)) }
         }
 
-        // ── Centered Snackbar for capture confirmation ──
-        SnackbarHost(
+        // ── Top snackbar overlay for capture confirmation
+        FieldMindSnackbarOverlay(
             hostState = captureSnackbarHostState,
-            modifier = Modifier.align(Alignment.Center),
-            snackbar = { data ->
-                Surface(
-                    shape = RoundedCornerShape(20.dp),
-                    color = MaterialTheme.colorScheme.inverseSurface,
-                    tonalElevation = 6.dp,
-                    shadowElevation = 8.dp
-                ) {
-                    Row(
-                        Modifier.padding(horizontal = 24.dp, vertical = 14.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
-                    ) {
-                        Icon(
-                            FieldMindIcons.Check,
-                            null,
-                            tint = MaterialTheme.colorScheme.inverseOnSurface,
-                            size = 22.dp
-                        )
-                        Text(
-                            data.visuals.message,
-                            style = MaterialTheme.typography.bodyMedium,
-                            fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.inverseOnSurface
-                        )
-                    }
-                }
-            }
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .padding(top = 8.dp, start = 16.dp, end = 16.dp)
         )
     }
 
@@ -396,9 +385,11 @@ fun HomeScreen(
                         capturedPhotoUri = uri
                         capturedPhotoMime = mime
                         showCamera = false
-                        scope.launch {
-                            captureSnackbarHostState.showSnackbar("Photo captured")
-                        }
+                        showFastSnackbar(
+                            captureSnackbarHostState,
+                            scope,
+                            "Photo captured"
+                        )
                         // Delay slightly for snackbar visibility, then show category picker
                         scope.launch {
                             delay(600)
@@ -574,9 +565,11 @@ fun HomeScreen(
                                         context = "",
                                         attachments = attachment
                                     )
-                                    scope.launch {
-                                        captureSnackbarHostState.showSnackbar("$effectiveCategory observation saved")
-                                    }
+                                    showFastSnackbar(
+                                        captureSnackbarHostState,
+                                        scope,
+                                        "$effectiveCategory observation saved"
+                                    )
                                 }
                                 showCategoryPicker = false
                                 capturedPhotoUri = null
@@ -1042,7 +1035,8 @@ private fun LiveWeatherDashboardWidget(
                         temperature = currentWeather!!.temperature,
                         sunrise = currentWeather!!.sunrise,
                         sunset = currentWeather!!.sunset,
-                        compact = false
+                        compact = false,
+                        forceNight = if (developerMode && testIsNight) true else if (developerMode) false else null
                     )
                 }
                 // Glass-morphism scrim for better text readability
@@ -1170,7 +1164,7 @@ private fun LiveWeatherDashboardWidget(
                                 WeatherUnitConverter.formatTemp(w.temperature, tempUnit),
                                 style = MaterialTheme.typography.displaySmall.copy(
                                     fontWeight = FontWeight.Bold,
-                                    brush = weatherGradient
+                                    color = textOnScene
                                 )
                             )
                             Text(
@@ -1771,7 +1765,7 @@ private fun RecentActivityGroupCard(group: List<RecentEntry>, onOpenDetail: (Str
             AnimatedVisibility(expanded) {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     group.drop(1).forEach { entry ->
-                        EntityCard(entry.title, entry.kind, body = entry.sub, meta = listOf(recentRelativeTime(entry.time))) { onOpenDetail(entry.kind, entry.id) }
+                        EntityCard(entry.title, entry.kind, body = entry.sub, meta = listOf(recentRelativeTime(entry.time)), onClick = { onOpenDetail(entry.kind, entry.id) })
                     }
                 }
             }
@@ -1834,12 +1828,12 @@ private fun DailyGoalCard(todayCount: Int, goal: Int, streakDays: Int, deltaLabe
     val percent = (progress.coerceIn(0f, 1f) * 100).toInt()
     val remaining = (goal - todayCount).coerceAtLeast(0)
     val ringGradient = if (complete)
-        listOf(colors.positive, colors.confidenceSure, MaterialTheme.colorScheme.primary, colors.positive)
+        listOf(colors.positive, colors.confidenceSure, colors.positive.copy(green = colors.positive.green * 1.2f), colors.positive)
     else
-        listOf(MaterialTheme.colorScheme.primary, colors.data, colors.hypothesis, MaterialTheme.colorScheme.primary)
+        listOf(colors.observation, colors.data, colors.hypothesis, colors.observation)
     val bg = Brush.linearGradient(
-        if (complete) listOf(MaterialTheme.colorScheme.primaryContainer, colors.confidenceSure.copy(alpha = 0.30f))
-        else listOf(MaterialTheme.colorScheme.surfaceContainerHigh, MaterialTheme.colorScheme.primary.copy(alpha = 0.12f))
+        if (complete) listOf(colors.positive.copy(alpha = 0.12f), colors.confidenceSure.copy(alpha = 0.22f))
+        else listOf(MaterialTheme.colorScheme.surfaceContainerHigh, colors.observation.copy(alpha = 0.08f))
     )
     Box(
         Modifier
@@ -1902,10 +1896,13 @@ private fun ResearchSessionCtaCard(
         }
     }
     
+    val colors = FieldMindTheme.colors
     Card(
         modifier = Modifier.fillMaxWidth().animateContentSize(),
         shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(containerColor = if (isActive) MaterialTheme.colorScheme.tertiaryContainer else MaterialTheme.colorScheme.primaryContainer),
+        colors = CardDefaults.cardColors(
+            containerColor = if (isActive) colors.observation.copy(alpha = 0.14f) else colors.positive.copy(alpha = 0.08f)
+        ),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Row(
@@ -1915,17 +1912,17 @@ private fun ResearchSessionCtaCard(
         ) {
             Box(
                 Modifier.size(48.dp).clip(RoundedCornerShape(16.dp))
-                    .background(MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.12f)),
+                    .background(if (isActive) colors.observation.copy(alpha = 0.16f) else colors.positive.copy(alpha = 0.12f)),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(FieldMindIcons.Timer, null, tint = MaterialTheme.colorScheme.onPrimaryContainer, size = 26.dp)
+                Icon(FieldMindIcons.Timer, null, tint = if (isActive) colors.observation else colors.positive, size = 26.dp)
             }
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(
                     if (isActive) "Live Session Active" else "Research Session",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                    color = if (isActive) colors.observation else colors.positive
                 )
                 Text(
                     when {
@@ -1934,12 +1931,15 @@ private fun ResearchSessionCtaCard(
                         else -> "Structured capture with timer, live feed, and summary"
                     },
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.78f)
+                    color = (if (isActive) colors.observation else colors.positive).copy(alpha = 0.78f)
                 )
             }
             Button(
                 onClick = { haptics.confirm(); onStartSession() },
-                shape = RoundedCornerShape(14.dp)
+                shape = RoundedCornerShape(14.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = if (isActive) colors.observation else colors.positive
+                )
             ) {
                 Icon(if (isActive) FieldMindIcons.Capture else FieldMindIcons.Add, null, size = 18.dp)
                 Spacer(Modifier.size(4.dp))

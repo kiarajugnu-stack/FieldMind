@@ -15,6 +15,7 @@ import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
@@ -29,6 +30,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -56,6 +58,7 @@ import androidx.activity.compose.BackHandler
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import kotlin.math.abs
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.foundation.lazy.LazyRow
@@ -76,19 +79,35 @@ fun KnowledgeLibraryScreen(
     val flashcards by viewModel.flashcards.collectAsState()
     var tab by remember(startTab) { mutableIntStateOf(startTab) }
     val tabs = listOf("Sources", "Notes", "Reading", "Flashcards", "Learn")
+    val haptics = rememberFieldMindHaptics()
+    fun selectTab(next: Int) {
+        val bounded = next.coerceIn(0, tabs.lastIndex)
+        if (bounded != tab) { tab = bounded; haptics.light() }
+    }
     Column(Modifier.fillMaxSize()) {
         Column(Modifier.padding(20.dp, 20.dp, 20.dp, 8.dp)) {
             FieldScreenHeader("Knowledge Hub", "Sources, notes, reading, flashcards, and learning.", icon = FieldMindIcons.Library)
         }
         ScrollableTabRow(selectedTabIndex = tab, edgePadding = 20.dp, containerColor = MaterialTheme.colorScheme.background) {
-            tabs.forEachIndexed { i, label -> Tab(tab == i, { tab = i }, text = { Text(label) }) }
+            tabs.forEachIndexed { i, label -> Tab(tab == i, { selectTab(i) }, text = { Text(label) }) }
         }
-        when (tab) {
-            0 -> SourcePanel(viewModel, sources, onOpenDetail)
-            1 -> NotePanel(viewModel, notes, onOpenDetail)
-            2 -> PaperReadingPanel(sources, onOpenDetail)
-            3 -> FlashcardPanel(viewModel, flashcards, sources, notes, onOpenDetail) { onNavigate(FieldMindScreen.Flashcards) }
-            4 -> LearnPanel(viewModel, onOpenReader)
+        Box(
+            modifier = Modifier.fillMaxSize().pointerInput(tab) {
+                var totalDrag = 0f
+                detectHorizontalDragGestures(
+                    onDragStart = { totalDrag = 0f },
+                    onHorizontalDrag = { _, dragAmount -> totalDrag += dragAmount },
+                    onDragEnd = { if (abs(totalDrag) > 96f) { if (totalDrag < 0) selectTab(tab + 1) else selectTab(tab - 1) } }
+                )
+            }
+        ) {
+            when (tab) {
+                0 -> SourcePanel(viewModel, sources, onOpenDetail)
+                1 -> NotePanel(viewModel, notes, onOpenDetail)
+                2 -> PaperReadingPanel(sources, onOpenDetail)
+                3 -> FlashcardPanel(viewModel, flashcards, sources, notes, onOpenDetail) { onNavigate(FieldMindScreen.Flashcards) }
+                4 -> LearnPanel(viewModel, onOpenReader)
+            }
         }
     }
 }
@@ -112,7 +131,7 @@ private fun SourcePanel(viewModel: FieldMindViewModel, items: List<SourceEntity>
     }
     LazyColumn(contentPadding = panelPadding(), verticalArrangement = Arrangement.spacedBy(14.dp)) {
         if (items.isEmpty()) item { EmptyState("No sources yet", "Save articles, videos, PDFs, books, summaries, citations, and what each source taught you.", icon = FieldMindIcons.Source) }
-        items(items) { EntityCard(it.title, "source", body = it.whatThisSourceTaughtMe.ifBlank { it.personalSummary }, meta = listOf(it.type, it.author.ifBlank { "Unknown author" }, it.readingStatus, it.importance, "reliability ${it.reliabilityScore}/5")) { onOpenDetail("source", it.id) } }
+        items(items) { EntityCard(it.title, "source", body = it.whatThisSourceTaughtMe.ifBlank { it.personalSummary }, meta = listOf(it.type, it.author.ifBlank { "Unknown author" }, it.readingStatus, it.importance, "reliability ${it.reliabilityScore}/5"), onClick = { onOpenDetail("source", it.id) }) }
     }
 }
 
@@ -141,7 +160,7 @@ private fun NotePanel(viewModel: FieldMindViewModel, items: List<NoteEntity>, on
             }
         }
         if (filtered.isEmpty()) item { EmptyState("No notes yet", "Create one from this Notes tab or Capture → Note.", icon = FieldMindIcons.Note) }
-        items(filtered) { EntityCard(it.title, "note", body = it.body.ifBlank { "No body yet." }, meta = listOf(it.category, recentRelativeTime(it.updatedAt), if (it.attachmentUris.isBlank()) "No attachments" else "Attachments")) { onOpenDetail("note", it.id) } }
+        items(filtered) { EntityCard(it.title, "note", body = it.body.ifBlank { "No body yet." }, meta = listOf(it.category, recentRelativeTime(it.updatedAt), if (it.attachmentUris.isBlank()) "No attachments" else "Attachments"), onClick = { onOpenDetail("note", it.id) }) }
     }
 }
 
@@ -206,37 +225,7 @@ private fun PaperReadingPanel(items: List<SourceEntity>, onOpenDetail: (String, 
         if (items.isEmpty()) {
             item { EmptyState("Add a source first", "Paper prompts are saved inside each source note.", icon = FieldMindIcons.Source) }
         }
-        // Structured reading prompts card
-        item {
-            Card(
-                shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
-                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-            ) {
-                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Icon(FieldMindIcons.Question, null, tint = MaterialTheme.colorScheme.primary, size = 20.dp)
-                        Text("Active reading prompts", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
-                    }
-                    Text("For each paper, answer these prompts in the source detail:", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    val prompts = listOf(
-                        "📌 What is the main topic and thesis?",
-                        "🔍 What problem does this address?",
-                        "⚙️ What method or approach is used?",
-                        "📊 What are the key results or findings?",
-                        "❓ What points are unclear or missing?",
-                        "💡 What new question does this raise?",
-                        "✅ What would you verify or replicate?"
-                    )
-                    prompts.forEach { prompt ->
-                        Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.Top) {
-                            Text("•", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
-                            Text(prompt, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurface)
-                        }
-                    }
-                }
-            }
-        }
+
         items(items) { source ->
             val readingColor = when (source.readingStatus) {
                 "Read" -> FieldMindTheme.colors.positive
@@ -252,8 +241,9 @@ private fun PaperReadingPanel(items: List<SourceEntity>, onOpenDetail: (String, 
                 meta = listOf(
                     source.readingStatus.ifBlank { "Not started" },
                     "${source.personalSummary.length.coerceAtMost(2000)} chars"
-                )
-            ) { onOpenDetail("source", source.id) }
+                ),
+                onClick = { onOpenDetail("source", source.id) }
+            )
         }
     }
 }
@@ -433,7 +423,7 @@ private fun LearnPanel(viewModel: FieldMindViewModel, onOpenReader: (String, Str
         if (signals.isBlank()) {
             item { EntityCard("Start with one observation", "observation", body = "Capture one facts-only observation, then return here for a tailored next step.") }
         } else {
-            items(recommendedResources(listOf(signals))) { rec -> EntityCard(rec.resource.title, "learn", body = rec.resource.why, meta = listOf(rec.resource.kind, rec.path)) { onOpenReader(rec.resource.url, rec.resource.title) } }
+            items(recommendedResources(listOf(signals))) { rec -> EntityCard(rec.resource.title, "learn", body = rec.resource.why, meta = listOf(rec.resource.kind, rec.path), onClick = { onOpenReader(rec.resource.url, rec.resource.title) }) }
         }
         item { SectionHeader("Book suggestions", "Free first: OpenStax, Project Gutenberg, BHL, NCBI, and Open Library subject shelves.") }
         items(BookSuggestions.filter { signals.isBlank() || signals.contains(it.category, ignoreCase = true) || signals.contains(it.genre, ignoreCase = true) }.ifEmpty { BookSuggestions.take(6) }) { book ->

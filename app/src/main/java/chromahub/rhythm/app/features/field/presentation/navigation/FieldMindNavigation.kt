@@ -5,6 +5,8 @@ import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.keyframes
 import androidx.compose.animation.fadeIn
 import androidx.compose.ui.Modifier
 import androidx.compose.animation.fadeOut
@@ -44,6 +46,7 @@ import fieldmind.research.app.features.field.presentation.viewmodel.FieldMindVie
 import fieldmind.research.app.shared.data.model.AppSettings
 import fieldmind.research.app.shared.presentation.components.icons.Icon
 import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon
+import fieldmind.research.app.features.field.presentation.components.FieldMindMotion
 
 private fun formatElapsed(startedAt: Long): String {
     val ms = System.currentTimeMillis() - startedAt
@@ -268,29 +271,63 @@ fun FieldMindNavigation(viewModel: FieldMindViewModel, onResetOnboarding: () -> 
 
 @Composable
 private fun AnimatedNavIcon(screen: FieldMindScreen, selected: Boolean) {
-    val scale by animateFloatAsState(if (selected) 1.22f else 0.98f, spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMediumLow), label = "navIconScale")
-    val lift by animateFloatAsState(if (selected) -3.5f else 0f, spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMediumLow), label = "navIconLift")
-    val alpha by animateFloatAsState(if (selected) 1f else 0.72f, tween(180), label = "navIconAlpha")
+    val scale by animateFloatAsState(
+        if (selected) 1.28f else 0.96f,
+        FieldMindMotion.expressiveSpring,
+        label = "navIconScale"
+    )
+    val lift by animateFloatAsState(
+        if (selected) -5f else 0f,
+        FieldMindMotion.expressiveSpring,
+        label = "navIconLift"
+    )
+    // Elastic rotation for a playful wiggle when selected
+    val rotation by animateFloatAsState(
+        if (selected) 0f else 0f,
+        FieldMindMotion.expressiveElastic,
+        label = "navIconRotation"
+    )
+    val alpha by animateFloatAsState(
+        if (selected) 1f else 0.66f,
+        FieldMindMotion.expressiveFloat,
+        label = "navIconAlpha"
+    )
     val tint by animateColorAsState(
-        if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
-        tween(180),
+        targetValue = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+        animationSpec = tween(durationMillis = FieldMindMotion.durationSubtle),
         label = "navIconTint"
     )
     Icon(
         icon = if (selected) screen.icon.filled() else screen.icon,
         contentDescription = screen.label,
         tint = tint,
-        modifier = Modifier.graphicsLayer { scaleX = scale; scaleY = scale; translationY = lift; this.alpha = alpha },
-        size = if (selected) 32.dp else 28.dp,
-        weight = if (selected) 650 else screen.icon.defaultWeight
+        modifier = Modifier.graphicsLayer {
+            scaleX = scale; scaleY = scale
+            translationY = lift
+            this.alpha = alpha
+            rotationZ = rotation
+        },
+        size = if (selected) 34.dp else 26.dp,
+        weight = if (selected) 700 else screen.icon.defaultWeight
     )
 }
 
 @Composable
 private fun AnimatedNavLabel(label: String, selected: Boolean) {
-    val scale by animateFloatAsState(if (selected) 1.04f else 0.98f, tween(220), label = "navLabelScale")
-    val alpha by animateFloatAsState(if (selected) 1f else 0.76f, tween(180), label = "navLabelAlpha")
-    Text(label, modifier = Modifier.graphicsLayer { scaleX = scale; scaleY = scale; this.alpha = alpha })
+    val scale by animateFloatAsState(
+        if (selected) 1.06f else 0.96f,
+        FieldMindMotion.expressiveSoft,
+        label = "navLabelScale"
+    )
+    val alpha by animateFloatAsState(
+        if (selected) 1f else 0.72f,
+        FieldMindMotion.expressiveFloat,
+        label = "navLabelAlpha"
+    )
+    Text(
+        label,
+        modifier = Modifier.graphicsLayer { scaleX = scale; scaleY = scale; this.alpha = alpha }
+    )
 }
 
 private fun primaryTabDirection(fromRoute: String?, toRoute: String?): Int {
@@ -320,19 +357,34 @@ private fun FieldMindNavHost(
         modifier = modifier,
         enterTransition = {
             val direction = primaryTabDirection(initialState.destination.route, targetState.destination.route)
-            if (direction == 0) fadeIn(tween(NavTransitionDurationMillis)) + scaleIn(initialScale = 0.985f, animationSpec = tween(NavTransitionDurationMillis))
-            else slideInHorizontally(tween(NavTransitionDurationMillis)) { direction * it / 4 } + fadeIn(tween(NavTransitionDurationMillis))
+            if (direction == 0) {
+                fadeIn(spring(dampingRatio = 0.75f, stiffness = 400f)) +
+                scaleIn(initialScale = 0.97f, animationSpec = spring(dampingRatio = 0.6f, stiffness = 500f))
+            } else {
+                slideInHorizontally(spring(dampingRatio = 0.7f, stiffness = 400f)) { direction * it / 4 } +
+                fadeIn(spring(dampingRatio = 0.8f, stiffness = 500f))
+            }
         },
         exitTransition = {
             val direction = primaryTabDirection(initialState.destination.route, targetState.destination.route)
-            if (direction == 0) fadeOut(tween(NavTransitionDurationMillis))
-            else slideOutHorizontally(tween(NavTransitionDurationMillis)) { -direction * it / 5 } + fadeOut(tween(NavTransitionDurationMillis))
+            if (direction == 0) {
+                fadeOut(spring(dampingRatio = 0.8f, stiffness = 600f))
+            } else {
+                slideOutHorizontally(spring(dampingRatio = 0.75f, stiffness = 500f)) { -direction * it / 5 } +
+                fadeOut(spring(dampingRatio = 0.8f, stiffness = 600f))
+            }
         },
-        popEnterTransition = { fadeIn(tween(NavTransitionDurationMillis)) + scaleIn(initialScale = 0.985f, animationSpec = tween(NavTransitionDurationMillis)) },
-        popExitTransition = { fadeOut(tween(NavTransitionDurationMillis)) + scaleOut(targetScale = 0.985f, animationSpec = tween(NavTransitionDurationMillis)) }
+        popEnterTransition = {
+            fadeIn(spring(dampingRatio = 0.75f, stiffness = 400f)) +
+            scaleIn(initialScale = 0.97f, animationSpec = spring(dampingRatio = 0.6f, stiffness = 500f))
+        },
+        popExitTransition = {
+            fadeOut(spring(dampingRatio = 0.8f, stiffness = 600f)) +
+            scaleOut(targetScale = 0.97f, animationSpec = spring(dampingRatio = 0.7f, stiffness = 500f))
+        }
     ) {
         composable(FieldMindScreen.Home.route) { HomeScreen(viewModel = viewModel, onOpenSettings = { navController.navigateToDestination(FieldMindScreen.Settings.route) }, onNavigate = { navController.navigateToDestination(it.route) }, onOpenDetail = openDetail, onOpenReader = openReader) }
-        composable(FieldMindScreen.Observe.route) { ObserveScreen(viewModel = viewModel, onOpenDetail = openDetail) }
+        composable(FieldMindScreen.Observe.route) { ObserveScreen(viewModel = viewModel, onBack = { navController.popBackStack() }, onOpenDetail = openDetail) }
         composable(FieldMindScreen.Projects.route) { ProjectsScreen(viewModel = viewModel, onOpenDetail = openDetail, onStartSession = { navController.navigateToDestination(FieldMindScreen.ResearchSession.route) }) }
         composable(FieldMindScreen.Library.route) { KnowledgeLibraryScreen(viewModel = viewModel, onNavigate = { navController.navigateToDestination(it.route) }, onOpenDetail = openDetail, onOpenReader = openReader) }
         composable(FieldMindScreen.Insights.route) { InsightsScreen(viewModel = viewModel, onNavigate = { navController.navigateToDestination(it.route) }, onOpenDetail = openDetail) }

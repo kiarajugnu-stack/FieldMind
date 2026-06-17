@@ -1344,8 +1344,7 @@ fun SpeciesPackSettingsPage(onBack: () -> Unit) {
                                         scope.launch {
                                             val success = database.deletePack(pack.regionId)
                                             refreshPacks()
-                                            snackbar.showSnackbar(
-                                                if (success) "${pack.regionName} pack removed"
+                                            showFastSnackbar(snackbar, scope, if (success) "${pack.regionName} pack removed"
                                                 else "Could not delete pack"
                                             )
                                         }
@@ -1364,7 +1363,7 @@ fun SpeciesPackSettingsPage(onBack: () -> Unit) {
                         onClick = {
                             haptics.light()
                             scope.launch {
-                                snackbar.showSnackbar("Model at: ${database.getPackModelPath(pack.regionId)}")
+                                showFastSnackbar(snackbar, scope, "Model at: ${database.getPackModelPath(pack.regionId)}")
                             }
                         },
                         modifier = Modifier.weight(1f)
@@ -1386,11 +1385,13 @@ fun SpeciesPackSettingsPage(onBack: () -> Unit) {
                                             downloadingId = null
                                             refreshPacks()
                                             if (result.isSuccess) {
-                                                snackbar.showSnackbar("${pack.regionName} pack downloaded")
+                                                showFastSnackbar(snackbar, scope, "${pack.regionName} pack downloaded")
                                             } else {
                                                 val errorMsg = result.exceptionOrNull()?.message
                                                     ?: "Unknown error"
-                                                snackbar.showSnackbar(
+                                                showFastSnackbar(
+                                                    snackbar,
+                                                    scope,
                                                     "Download failed: $errorMsg"
                                                 )
                                             }
@@ -1419,10 +1420,12 @@ fun SpeciesPackSettingsPage(onBack: () -> Unit) {
             }
         }
 
-        // Snackbar overlay
-        SnackbarHost(
+        // Top snackbar overlay
+        FieldMindSnackbarOverlay(
             hostState = snackbar,
-            modifier = Modifier.align(Alignment.BottomCenter).padding(16.dp)
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .padding(top = 8.dp, start = 16.dp, end = 16.dp)
         )
     }
 }

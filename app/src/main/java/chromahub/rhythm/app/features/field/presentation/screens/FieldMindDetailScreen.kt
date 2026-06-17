@@ -91,7 +91,10 @@ fun DetailScreen(
             else -> null
         }.orEmpty()
     }
+    val detailSnackbar = remember { SnackbarHostState() }
+    val detailScope = rememberCoroutineScope()
 
+    Box(Modifier.fillMaxSize()) {
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
@@ -143,7 +146,7 @@ fun DetailScreen(
                         }, onOpenDetail) }
                     }
                     "observation" -> observations.firstOrNull { it.id == id }?.let { o ->
-                        item { ObservationDetailContent(o, viewModel, onOpenReader, onOpenDetail) }
+                        item { ObservationDetailContent(o, viewModel, onOpenReader, onOpenDetail, detailSnackbar, detailScope) }
                         item { BacklinksPanel(buildList {
                             projects.firstOrNull { it.id == o.projectId }?.let { add(Triple("project", it.title, it.id)) }
                             data.filter { it.observationId == o.id }.forEach { add(Triple("data", it.label, it.id)) }
@@ -207,6 +210,7 @@ fun DetailScreen(
         deleteEntityByKind(kind, id, viewModel); showDelete = false; onBack()
     }
 }
+}
 
 // ══════════════════════════════════════════════════════════════════════
 //  Entity-Specific Detail Content
@@ -214,11 +218,13 @@ fun DetailScreen(
 
 @Composable
 @OptIn(ExperimentalLayoutApi::class)
-private fun ObservationDetailContent(
+fun ObservationDetailContent(
     o: ObservationEntity,
     viewModel: FieldMindViewModel,
     onOpenReader: (String, String) -> Unit,
-    onOpenDetail: (String, Long) -> Unit = { _, _ -> }
+    onOpenDetail: (String, Long) -> Unit = { _, _ -> },
+    detailSnackbar: SnackbarHostState,
+    detailScope: kotlinx.coroutines.CoroutineScope
 ) {
     val colors = FieldMindTheme.colors
     val tempUnit by viewModel.fieldSettings.tempUnit.collectAsState()
@@ -226,8 +232,6 @@ private fun ObservationDetailContent(
     val distUnit by viewModel.fieldSettings.distanceUnit.collectAsState()
     val context = LocalContext.current
     val clipboard = LocalClipboardManager.current
-    val scope = rememberCoroutineScope()
-    val snackbar = remember { SnackbarHostState() }
     
     Card(
         shape = RoundedCornerShape(24.dp),
@@ -384,11 +388,11 @@ private fun ObservationDetailContent(
             ObservationAttachmentsPanel(viewModel, o.id, onOpenReader)
 
             // ── 17. Export & Sharing ──
-            ObservationExportSection(o, viewModel, context, clipboard, snackbar, scope)
+            ObservationExportSection(o, viewModel, context, clipboard, detailSnackbar, detailScope)
         }
     }
     
-    // Export menu dialog removed — export is handled inline in ObservationExportSection}
+    // Export menu dialog removed — export is handled inline in ObservationExportSection
 }
 
 @Composable
@@ -1151,7 +1155,7 @@ private fun ObservationExportSection(
                 FilledTonalButton(
                     onClick = {
                         haptics.light()
-                        scope.launch { snackbar.showSnackbar("PDF export coming soon") }
+                        showFastSnackbar(snackbar, scope, "PDF export coming soon")
                     },
                     modifier = Modifier.weight(1f),
                     shape = RoundedCornerShape(14.dp)
@@ -1164,7 +1168,7 @@ private fun ObservationExportSection(
                 FilledTonalButton(
                     onClick = {
                         haptics.light()
-                        scope.launch { snackbar.showSnackbar("CSV export coming soon") }
+                        showFastSnackbar(snackbar, scope, "CSV export coming soon")
                     },
                     modifier = Modifier.weight(1f),
                     shape = RoundedCornerShape(14.dp)
@@ -1177,7 +1181,7 @@ private fun ObservationExportSection(
                 FilledTonalButton(
                     onClick = {
                         haptics.light()
-                        scope.launch { snackbar.showSnackbar("JSON export coming soon") }
+                        showFastSnackbar(snackbar, scope, "JSON export coming soon")
                     },
                     modifier = Modifier.weight(1f),
                     shape = RoundedCornerShape(14.dp)
@@ -1614,7 +1618,7 @@ private fun ProjectDetailContent(
                         projectObs.take(5).forEach { o ->
                             EntityCard(o.subject.ifBlank { "Observation" }, "observation",
                                 body = "${o.category} • ${o.date}",
-                                meta = listOf(o.confidenceLevel)) { }
+                                meta = listOf(o.confidenceLevel))
                         }
                         if (projectObs.size > 5) {
                             Text("+${projectObs.size - 5} more observations", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -1633,7 +1637,7 @@ private fun ProjectDetailContent(
                         Text("No reports for this project.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     } else {
                         projectReports.forEach { r ->
-                            EntityCard(r.title, "report", body = r.conclusion.ifBlank { r.question }, meta = listOf(r.type, r.status)) { }
+                            EntityCard(r.title, "report", body = r.conclusion.ifBlank { r.question }, meta = listOf(r.type, r.status))
                         }
                     }
                 }
@@ -1642,7 +1646,7 @@ private fun ProjectDetailContent(
                         Text("No sources linked to this project.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     } else {
                         projectSrcs.forEach { s ->
-                            EntityCard(s.title, "source", body = s.author, meta = listOf(s.type, s.readingStatus)) { }
+                            EntityCard(s.title, "source", body = s.author, meta = listOf(s.type, s.readingStatus))
                         }
                     }
                 }
@@ -2395,7 +2399,7 @@ private fun SourceActionPanel(source: SourceEntity, projects: List<ProjectEntity
             }
             if (source.relatedProjectId != null) {
                 projects.firstOrNull { it.id == source.relatedProjectId }?.let { project ->
-                    EntityCard(project.title, "project", body = project.objective.ifBlank { project.researchQuestion }, meta = listOf("Linked project")) { onOpenDetail("project", project.id) }
+                    EntityCard(project.title, "project", body = project.objective.ifBlank { project.researchQuestion }, meta = listOf("Linked project"), onClick = { onOpenDetail("project", project.id) })
                 }
             }
         }

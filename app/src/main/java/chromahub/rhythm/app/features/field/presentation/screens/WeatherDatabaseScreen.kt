@@ -915,50 +915,54 @@ private fun WeatherRecordCard(
                     }
                 }
                 
-                // All weather data in a compact row
-                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                // All weather data in a compact row — explicitly left-aligned
+                Row(
+                    Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Start,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     observation.weatherHumidity?.let {
-                        Text("Humidity: $it%", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text("Humidity: $it% ", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Spacer(Modifier.width(12.dp))
                     }
                     observation.weatherWindSpeed?.let { ws ->
-                        Text("Wind: ${WeatherUnitConverter.formatWind(ws, "km/h")}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text("Wind: ${WeatherUnitConverter.formatWind(ws, "km/h")} ", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Spacer(Modifier.width(12.dp))
                     }
                     observation.weatherCloudCover?.let {
                         Text("Cloud: $it%", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
                 
-                // Location + time
+                // Location + time — always left-aligned, location takes precedence
                 Row(
                     Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
+                    horizontalArrangement = Arrangement.Start,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     if (observation.manualLocation.isNotBlank()) {
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(4.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            Icon(
-                                FieldMindIcons.Location,
-                                null,
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                size = 12.dp
-                            )
-                            Text(
-                                observation.manualLocation,
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
-                        }
+                        Icon(
+                            FieldMindIcons.Location,
+                            null,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            size = 12.dp
+                        )
+                        Spacer(Modifier.width(4.dp))
+                        Text(
+                            observation.manualLocation,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.weight(1f, fill = false)
+                        )
+                        Spacer(Modifier.width(8.dp))
                     }
                     Text(
                         SimpleDateFormat("MMM d, h:mm a", Locale.getDefault()).format(Date(observation.timestamp)),
                         style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                        modifier = Modifier.weight(1f, fill = false)
                     )
                 }
             }
