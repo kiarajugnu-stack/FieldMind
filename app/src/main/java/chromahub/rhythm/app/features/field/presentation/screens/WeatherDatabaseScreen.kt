@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -26,8 +27,6 @@ import fieldmind.research.app.features.field.presentation.components.AnimatedWea
 import fieldmind.research.app.features.field.presentation.components.FieldMindIcons
 import fieldmind.research.app.features.field.presentation.components.FieldScreenHeader
 import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon
-import androidx.compose.foundation.horizontalScroll
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.expandVertically
@@ -689,7 +688,7 @@ private fun ForecastDashboard(
     colors: fieldmind.research.app.features.field.presentation.theme.FieldMindColors
 ) {
     var expandedIdx by remember { mutableIntStateOf(-1) }
-    val scrollState = rememberScrollState()
+    val scrollState = rememberLazyListState()
     val allTemps = forecasts.map { it.temperatureMax }
     val globalMax = allTemps.maxOrNull() ?: 30.0
     val globalMin = allTemps.minOrNull() ?: 0.0
