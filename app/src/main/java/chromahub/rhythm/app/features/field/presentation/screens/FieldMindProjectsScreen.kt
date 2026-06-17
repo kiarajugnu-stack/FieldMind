@@ -287,62 +287,6 @@ private fun ResearchHubOverviewTab(
             }
         }
 
-        // ── 4. Project Types Dialog ──
-        if (showTypes) {
-            OptionPickerDialog(
-                title = "Project Types",
-                subtitle = "Select a type to pre-configure your research project.",
-                options = researchProjectTypes,
-                selected = projType,
-                onSelect = { type ->
-                    val preset = projectTemplates.firstOrNull { it.type == type }
-                    projType = type
-                    projTemplate = preset?.name ?: "Custom Blank Template"
-                    projTitle = preset?.name ?: type
-                    projDesc = preset?.objective ?: "Plan a ${type.lowercase()} with a clear question, field method, data plan, and evidence checklist."
-                    projCategory = preset?.category ?: researchCategories.first()
-                    projPriority = preset?.priority ?: "Medium"
-                    projQuestion = preset?.question ?: "What pattern will this ${type.lowercase()} measure or explain?"
-                    projMethods = preset?.defaultMethods ?: setOf("Daily observations", "Photo documentation")
-                    projHypothesis = preset?.hypothesis ?: ""
-                    projTags = preset?.tags ?: type.lowercase().replace(" ", ", ")
-                    showTypes = false
-                    showNewProject = true
-                },
-                onDismiss = { showTypes = false },
-                accentColor = FieldMindTheme.colors.project,
-                iconProvider = { FieldMindIcons.Project }
-            )
-        }
-
-        // ── 5. Templates Dialog ──
-        if (showTemplates) {
-            OptionPickerDialog(
-                title = "Project Templates",
-                subtitle = "Choose a template to pre-fill your project fields.",
-                options = projectTemplates.map { it.name },
-                selected = projTemplate,
-                onSelect = { templateName ->
-                    val template = projectTemplates.firstOrNull { it.name == templateName }!!
-                    projTemplate = template.name
-                    projType = template.type
-                    projTitle = template.name
-                    projDesc = template.objective.ifBlank { template.description }
-                    projCategory = template.category
-                    projPriority = template.priority
-                    projQuestion = template.question
-                    projMethods = template.defaultMethods
-                    projHypothesis = template.hypothesis
-                    projTags = template.tags
-                    showTemplates = false
-                    showNewProject = true
-                },
-                onDismiss = { showTemplates = false },
-                accentColor = FieldMindTheme.colors.project,
-                iconProvider = { name -> projectTemplates.firstOrNull { it.name == name }?.icon }
-            )
-        }
-
         // ── 7. Projects List ──
         if (totalProjects == 0) {
             item {
@@ -353,9 +297,59 @@ private fun ResearchHubOverviewTab(
             items(projects) { project -> ProjectDashboardCardCompact(project, observations, questions, hypotheses, sources, data, reports, researchSessions) { onOpenDetail("project", project.id) } }
         }
     }
-    // Dialog outside LazyColumn
-    if (showNewProject) {
-        NewProjectDialog(
+    // Dialogs outside LazyColumn
+    if (showTypes) {
+        OptionPickerDialog(
+            title = "Project Types",
+            subtitle = "Select a type to pre-configure your research project.",
+            options = researchProjectTypes,
+            selected = projType,
+            onSelect = { type ->
+                val preset = projectTemplates.firstOrNull { it.type == type }
+                projType = type
+                projTemplate = preset?.name ?: "Custom Blank Template"
+                projTitle = preset?.name ?: type
+                projDesc = preset?.objective ?: "Plan a ${type.lowercase()} with a clear question, field method, data plan, and evidence checklist."
+                projCategory = preset?.category ?: researchCategories.first()
+                projPriority = preset?.priority ?: "Medium"
+                projQuestion = preset?.question ?: "What pattern will this ${type.lowercase()} measure or explain?"
+                projMethods = preset?.defaultMethods ?: setOf("Daily observations", "Photo documentation")
+                projHypothesis = preset?.hypothesis ?: ""
+                projTags = preset?.tags ?: type.lowercase().replace(" ", ", ")
+                showTypes = false
+                showNewProject = true
+            },
+            onDismiss = { showTypes = false },
+            accentColor = FieldMindTheme.colors.project,
+            iconProvider = { FieldMindIcons.Project }
+        )
+    }
+    if (showTemplates) {
+        OptionPickerDialog(
+            title = "Project Templates",
+            subtitle = "Choose a template to pre-fill your project fields.",
+            options = projectTemplates.map { it.name },
+            selected = projTemplate,
+            onSelect = { templateName ->
+                val template = projectTemplates.firstOrNull { it.name == templateName }!!
+                projTemplate = template.name
+                projType = template.type
+                projTitle = template.name
+                projDesc = template.objective.ifBlank { template.description }
+                projCategory = template.category
+                projPriority = template.priority
+                projQuestion = template.question
+                projMethods = template.defaultMethods
+                projHypothesis = template.hypothesis
+                projTags = template.tags
+                showTemplates = false
+                showNewProject = true
+            },
+            onDismiss = { showTemplates = false },
+            accentColor = FieldMindTheme.colors.project,
+            iconProvider = { name -> projectTemplates.firstOrNull { it.name == name }?.icon }
+        )
+    }
             viewModel = viewModel,
             initialTitle = projTitle,
             initialTopic = projCategory,

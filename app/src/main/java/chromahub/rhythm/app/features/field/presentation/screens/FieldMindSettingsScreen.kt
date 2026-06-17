@@ -1343,11 +1343,7 @@ fun SpeciesPackSettingsPage(onBack: () -> Unit) {
                                         haptics.light()
                                         scope.launch {
                                             val success = database.deletePack(pack.regionId)
-                                            refreshPacks()
-                                            showFastSnackbar(
-                                                snackbar,
-                                                scopeCoroutine,
-                                                if (success) "${pack.regionName} pack removed"
+                                            refreshPacks()showFastSnackbar(snackbar, scope, if (success) "${pack.regionName} pack removed"
                                                 else "Could not delete pack"
                                             )
                                         }
@@ -1394,7 +1390,7 @@ fun SpeciesPackSettingsPage(onBack: () -> Unit) {
                                                     ?: "Unknown error"
                                                 showFastSnackbar(
                                                     snackbar,
-                                                    scopeCoroutine,
+                                                    scope,
                                                     "Download failed: $errorMsg"
                                                 )
                                             }
