@@ -151,7 +151,8 @@ class SpeciesDatabase(private val context: Context) {
 
     /**
      * Search species by query string.
-     * Searches common name, scientific name, category, and tags.
+     * Searches common name, scientific name, category, tags, habitat, and all
+     * taxonomic ranks (genus, family, order, phylum, kingdom).
      * When query is blank, returns all species (up to limit) for browsing.
      */
     suspend fun search(query: String, limit: Int = 30): List<SpeciesRecord> = withContext(Dispatchers.Default) {
@@ -162,6 +163,11 @@ class SpeciesDatabase(private val context: Context) {
             entry.commonName.lowercase().contains(q) ||
             entry.scientificName.lowercase().contains(q) ||
             entry.category.lowercase().contains(q) ||
+            entry.genus.lowercase().contains(q) ||
+            entry.family.lowercase().contains(q) ||
+            entry.order.lowercase().contains(q) ||
+            entry.phylum.lowercase().contains(q) ||
+            entry.kingdom.lowercase().contains(q) ||
             entry.tags.any { it.lowercase().contains(q) } ||
             entry.habitat.lowercase().contains(q)
         }.take(limit)

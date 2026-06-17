@@ -128,7 +128,18 @@ fun SpeciesBrowserScreen(
         val results = if (selectedCategory != null) {
             val byCategory = database.getByCategory(selectedCategory!!)
             if (searchQuery.isBlank()) byCategory
-            else byCategory.filter { it.commonName.lowercase().contains(searchQuery.lowercase()) || it.scientificName.lowercase().contains(searchQuery.lowercase()) }
+            else byCategory.filter {
+                val q = searchQuery.lowercase()
+                it.commonName.lowercase().contains(q) ||
+                it.scientificName.lowercase().contains(q) ||
+                it.genus.lowercase().contains(q) ||
+                it.family.lowercase().contains(q) ||
+                it.order.lowercase().contains(q) ||
+                it.phylum.lowercase().contains(q) ||
+                it.kingdom.lowercase().contains(q) ||
+                it.tags.any { t -> t.lowercase().contains(q) } ||
+                it.habitat.lowercase().contains(q)
+            }
         } else {
             database.search(searchQuery, limit = 200)
         }
@@ -185,7 +196,7 @@ fun SpeciesBrowserScreen(
                     OutlinedTextField(
                         value = searchQuery,
                         onValueChange = { searchQuery = it },
-                        placeholder = { Text("Search by name, scientific name, or tag…") },
+                        placeholder = { Text("Search by name, scientific name, genus, family, order…") },
                         leadingIcon = { Icon(FieldMindIcons.Search, null, size = 20.dp) },
                         trailingIcon = {
                             if (searchQuery.isNotBlank()) {
