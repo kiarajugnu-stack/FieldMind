@@ -138,20 +138,6 @@ fun FieldMindApp(appSettings: AppSettings, viewModel: FieldMindViewModel) {
         }
 }
 
-/**
- * Switch primary tabs deterministically: a tab tap always lands on that tab's root screen.
- * We intentionally avoid saveState/restoreState because restoring a tab's saved nested back
- * stack could re-open a previously-visited detail page instead of the tab root (the reported
- * "taps open a different page" bug).
- */
-private fun NavHostController.navigateToTab(route: String) {
-    if (currentDestination?.route == route) return
-    navigate(route) {
-        popUpTo(graph.findStartDestination().id) { inclusive = false }
-        launchSingleTop = true
-    }
-}
-
 /** Navigate to a non-tab destination, de-duplicating taps so the page always opens reliably. */
 private fun NavHostController.navigateToDestination(route: String) {
     if (currentDestination?.route == route) return
@@ -173,10 +159,65 @@ fun FieldMindNavigation(viewModel: FieldMindViewModel, onResetOnboarding: () -> 
         currentRoute == FieldMindScreen.ResearchSession.route ||
         currentRoute?.startsWith("field_detail/") == true
 
+    // ── Capture session navigation guard ──
+    var showNavigateConfirm by remember { mutableStateOf(false) }
+    var pendingNavRoute by remember { mutableStateOf<String?>(null) }
+
+    fun navigateToTab(route: String) {
+        // Protect against accidental navigation while a capture session is active
+        if (currentRoute == FieldMindScreen.Observe.route && viewModel.captureSessionActive && route != FieldMindScreen.Observe.route) {
+            pendingNavRoute = route
+            showNavigateConfirm = true
+            return
+        }
+        if (currentDestination?.route == route) return
+        navController.navigate(route) {
+            popUpTo(navController.graph.findStartDestination().id) { inclusive = false }
+            launchSingleTop = true
+        }
+    }
+
     fun isSelected(screen: FieldMindScreen) =
         currentDestination?.hierarchy?.any { it.route == screen.route } == true
 
-
+    // ── Navigation confirmation dialog (for active capture session) ──
+    if (showNavigateConfirm) {
+        AlertDialog(
+            onDismissRequest = {
+                showNavigateConfirm = false
+                pendingNavRoute = null
+            },
+            icon = { Icon(icon = FieldMindIcons.Info, contentDescription = null, size = 28.dp) },
+            title = { Text("Active capture session") },
+            text = {
+                Text(
+                    "You have an active observation session with unsaved data. Navigate away and lose your progress?",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        viewModel.setCaptureSessionActive(false)
+                        showNavigateConfirm = false
+                        pendingNavRoute?.let { navController.navigate(it) {
+                            popUpTo(navController.graph.findStartDestination().id) { inclusive = false }
+                            launchSingleTop = true
+                        } }
+                        pendingNavRoute = null
+                    },
+                    shape = RoundedCornerShape(14.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                ) { Text("Discard & navigate") }
+            },
+            dismissButton = {
+                TextButton(onClick = {
+                    showNavigateConfirm = false
+                    pendingNavRoute = null
+                }) { Text("Stay on Capture") }
+            }
+        )
+    }
 
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val expanded = maxWidth >= 720.dp
@@ -188,7 +229,7 @@ fun FieldMindNavigation(viewModel: FieldMindViewModel, onResetOnboarding: () -> 
                             val selected = isSelected(screen)
                             NavigationRailItem(
                                 selected = selected,
-                                onClick = { haptics.light(); navController.navigateToTab(screen.route) },
+                                onClick = { haptics.light(); navigateToTab(screen.route) },
                                 icon = { AnimatedNavIcon(screen, selected) },
                                 label = { AnimatedNavLabel(screen.label, selected) }
                             )
@@ -207,7 +248,7 @@ fun FieldMindNavigation(viewModel: FieldMindViewModel, onResetOnboarding: () -> 
                                     val selected = isSelected(screen)
                                     NavigationBarItem(
                                         selected = selected,
-                                        onClick = { haptics.light(); navController.navigateToTab(screen.route) },
+                                        onClick = { haptics.light(); navigateToTab(screen.route) },
                                         icon = { AnimatedNavIcon(screen, selected) },
                                         label = { AnimatedNavLabel(screen.label, selected) }
                                     )

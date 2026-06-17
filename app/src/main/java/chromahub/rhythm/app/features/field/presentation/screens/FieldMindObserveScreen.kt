@@ -250,6 +250,7 @@ fun ObserveScreen(
         haptics.light()
         session = session.copy(isActive = true, step = CaptureStep.Evidence)
         showEvidenceForm = true
+        viewModel.setCaptureSessionActive(true)
         // Auto-start timer if not already running
         if (!session.timerRunning && session.timerStartedAt == null) {
             session = session.copy(timerStartedAt = System.currentTimeMillis(), timerRunning = true)
@@ -355,6 +356,9 @@ fun ObserveScreen(
             dismissButton = {
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     TextButton(onClick = {
+                        viewModel.setCaptureSessionActive(false)
+                        session = CaptureSessionState()
+                        showEvidenceForm = false
                         showExitConfirm = false
                         onBack?.invoke()
                     }) {
@@ -384,15 +388,6 @@ fun ObserveScreen(
                     "Capture evidence, time, place, weather, then add facts.",
                     icon = FieldMindIcons.Capture
                 )
-            }
-
-            // ── Observation stats overview (reused from HomeScreen) ──
-            if (observations.isNotEmpty()) {
-                item {
-                    ObservationStatsDashboard(
-                        observations = observations
-                    )
-                }
             }
 
             // ── Live Timer (persistent when active) ──
@@ -434,6 +429,7 @@ fun ObserveScreen(
                         onClose = {
                             session = CaptureSessionState()
                             showEvidenceForm = false
+                            viewModel.setCaptureSessionActive(false)
                         }
                     )
                 }
@@ -449,6 +445,15 @@ fun ObserveScreen(
                         Spacer(Modifier.size(8.dp))
                         Text("Start observation session")
                     }
+                }
+            }
+
+            // ── Observation stats overview (hidden during active session to avoid clutter) ──
+            if (observations.isNotEmpty() && !session.isActive) {
+                item {
+                    ObservationStatsDashboard(
+                        observations = observations
+                    )
                 }
             }
 
