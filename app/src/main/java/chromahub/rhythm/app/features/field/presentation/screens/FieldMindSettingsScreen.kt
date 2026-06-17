@@ -763,7 +763,7 @@ fun WeatherSettingsPage(viewModel: FieldMindViewModel, onBack: () -> Unit) {
     val showPressure by settings.weatherShowPressure.collectAsState()
     val providerSlugs by settings.weatherProviders.collectAsState()
     val apiKey by settings.weatherApiKey.collectAsState()
-    val selectedProviderSet = remember(providerSlugs) { providerSlugs.split(",").map { it.trim() }.filter { it.isNotBlank() }.toSet().ifEmpty { setOf("open-meteo") } }
+    val selectedProviderSet = remember(providerSlugs) { providerSlugs.split(",").map { it.trim() }.filter { it.isNotBlank() }.toSet().ifEmpty { setOf("met-norway") } }
     val keyProvider = remember(selectedProviderSet) { WeatherProviders.selectedProviders(selectedProviderSet.joinToString(",")).firstOrNull { it.requiresApiKey } ?: WeatherProviders.selectedProviders(selectedProviderSet.joinToString(",")).first() }
 
     SettingsSubPage("Weather", icon = FieldMindIcons.Weather, onBack = onBack) {
@@ -844,7 +844,7 @@ fun WeatherSettingsPage(viewModel: FieldMindViewModel, onBack: () -> Unit) {
                             ) {
                                 Icon(FieldMindIcons.Info, null, tint = MaterialTheme.colorScheme.primary, size = 18.dp)
                                 Text(
-                                    "Open-Meteo, IMD India, MET Norway, and NWS are free with no API key. IMD is best inside India; NWS only returns data for U.S. points; paid-key services join the merge when a key is saved.",
+                                    "MET Norway, IMD India, Open-Meteo, and NWS are free with no API key. IMD is best inside India; NWS only returns data for U.S. points; paid-key services join the merge when a key is saved.",
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
@@ -999,6 +999,8 @@ fun DeveloperSettingsPage(viewModel: FieldMindViewModel, onBack: () -> Unit) {
     val settings = viewModel.fieldSettings
     val developerMode by settings.developerMode.collectAsState()
     val debugLogging by settings.debugLogging.collectAsState()
+    var testWeatherCode by remember { mutableStateOf<Int?>(null) }
+    var testIsNight by remember { mutableStateOf(false) }
 
     SettingsSubPage("Developer", icon = FieldMindIcons.Sparkle, onBack = onBack) {
         item {
@@ -1032,6 +1034,14 @@ fun DeveloperSettingsPage(viewModel: FieldMindViewModel, onBack: () -> Unit) {
                         }
                     }
                 }
+            }
+            item {
+                DevWeatherTestPanel(
+                    testCode = testWeatherCode,
+                    testNight = testIsNight,
+                    onCodeChange = { testWeatherCode = it },
+                    onNightChange = { testIsNight = it }
+                )
             }
             item {
                 Card(shape = RoundedCornerShape(22.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)) {
@@ -1370,13 +1380,20 @@ fun SpeciesPackSettingsPage(onBack: () -> Unit) {
                                         downloadingId = pack.regionId
                                         downloadProgress = 0f
                                         scope.launch {
-                                            val success = database.downloadPack(pack.regionId)
+                                            val result = runCatching {
+                                                database.downloadPack(pack.regionId)
+                                            }
                                             downloadingId = null
                                             refreshPacks()
-                                            snackbar.showSnackbar(
-                                                if (success) "${pack.regionName} pack downloaded"
-                                                else "Download failed. Check your connection and try again."
-                                            )
+                                            if (result.isSuccess) {
+                                                snackbar.showSnackbar("${pack.regionName} pack downloaded")
+                                            } else {
+                                                val errorMsg = result.exceptionOrNull()?.message
+                                                    ?: "Unknown error"
+                                                snackbar.showSnackbar(
+                                                    "Download failed: $errorMsg"
+                                                )
+                                            }
                                         }
                                     },
                                     modifier = Modifier.weight(1f),

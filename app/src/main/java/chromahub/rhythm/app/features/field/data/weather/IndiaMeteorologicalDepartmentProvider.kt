@@ -1,5 +1,6 @@
 package fieldmind.research.app.features.field.data.weather
 
+import android.util.Log
 import com.google.gson.Gson
 import com.google.gson.JsonArray
 import com.google.gson.JsonElement
@@ -11,27 +12,46 @@ import okhttp3.Request
 import java.util.concurrent.TimeUnit
 import kotlin.math.*
 
-/** India Meteorological Department public city forecast provider. Free/no key; best inside India. */
+/**
+ * India Meteorological Department public city forecast provider.
+ *
+ * **Important:** The official IMD API gateway at api.imd.gov.in now requires
+ * registration and a JWT token for access. This provider has been updated to
+ * reflect that — you must sign up and provide an API key.
+ *
+ * Sign up: https://api.imd.gov.in/
+ * API reference: https://api.imd.gov.in/public/api_reference.html
+ *
+ * For a free no-key alternative for India, try MET Norway or Open-Meteo
+ * (which includes the GFS/IFS global models covering India).
+ */
 class IndiaMeteorologicalDepartmentProvider : WeatherProvider {
     override val slug = "imd-india"
     override val displayName = "IMD India"
-    override val requiresApiKey = false
-    override val apiKeyLabel = "N/A"
-    override val apiKeyPlaceholder = "IMD public city forecast is free and requires no API key"
+    override val requiresApiKey = true
+    override val apiKeyLabel = "IMD API key"
+    override val apiKeyPlaceholder = "Register at api.imd.gov.in for a free JWT key"
 
     private val client = OkHttpClient.Builder().connectTimeout(10, TimeUnit.SECONDS).readTimeout(15, TimeUnit.SECONDS).build()
     private val gson = Gson()
 
     override suspend fun fetchWeather(latitude: Double, longitude: Double, apiKey: String?): WeatherSnapshot? = withContext(Dispatchers.IO) {
+        val key = apiKey ?: return@withContext null
         try {
+            // Only try inside India's approximate bounding box
             if (latitude !in 6.0..38.8 || longitude !in 68.0..98.5) return@withContext null
+
             val request = Request.Builder()
-                .url("https://api.imd.gov.in/api/v1/cityforecastloc")
+                .url("https://api.imd.gov.in/apiv1/cityforecastloc")
                 .header("User-Agent", "FieldMind/1.0 field research app")
+                .header("Authorization", "Bearer $key")
                 .get()
                 .build()
             val response = client.newCall(request).execute()
-            if (!response.isSuccessful) return@withContext null
+            if (!response.isSuccessful) {
+                Log.w("IMD", "HTTP ${response.code} for $latitude,$longitude")
+                return@withContext null
+            }
             val root = gson.fromJson(response.body?.string() ?: return@withContext null, JsonElement::class.java)
             val rows = when {
                 root.isJsonArray -> root.asJsonArray
@@ -50,7 +70,10 @@ class IndiaMeteorologicalDepartmentProvider : WeatherProvider {
                 windSpeed = nearest.windKph,
                 dailyForecasts = nearest.dailyForecasts
             )
-        } catch (_: Exception) { null }
+        } catch (e: Exception) {
+            Log.e("IMD", "fetchWeather failed", e)
+            null
+        }
     }
 
     private fun JsonObject.toImdForecast(lat: Double, lon: Double): ImdForecast? {

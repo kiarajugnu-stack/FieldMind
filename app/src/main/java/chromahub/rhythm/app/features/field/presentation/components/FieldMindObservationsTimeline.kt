@@ -349,42 +349,75 @@ fun ObservationTimelineCard(
                     }
                 }
 
-                // ── Location, Weather, Time ──
+                // ── Metadata chips: Location, Weather, Time ──
                 Row(
                     Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // Location
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                        Icon(FieldMindIcons.Location, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, size = 14.dp)
-                        Text(
-                            if (obs.latitude != null) "GPS" else obs.manualLocation.ifBlank { "No location" },
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                    }
-                    // Weather
-                    if (obs.weatherTemperature != null) {
-                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                            Icon(FieldMindIcons.Weather, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, size = 14.dp)
+                    // Location chip
+                    Surface(
+                        shape = RoundedCornerShape(10.dp),
+                        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                        tonalElevation = 0.dp
+                    ) {
+                        Row(
+                            Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            Icon(FieldMindIcons.Location, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, size = 13.dp)
                             Text(
-                                "${obs.weatherTemperature?.toInt()}°${if (true) "C" else "F"} ${obs.weatherCondition.take(8)}",
+                                if (obs.latitude != null) "GPS" else obs.manualLocation.ifBlank { "No loc" },
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+                    }
+                    // Weather chip
+                    if (obs.weatherTemperature != null) {
+                        Surface(
+                            shape = RoundedCornerShape(10.dp),
+                            color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                            tonalElevation = 0.dp
+                        ) {
+                            Row(
+                                Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                Icon(FieldMindIcons.Weather, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, size = 13.dp)
+                                Text(
+                                    "${obs.weatherTemperature?.toInt()}°C ${obs.weatherCondition.take(6)}",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            }
+                        }
+                    }
+                    Spacer(Modifier.weight(1f))
+                    // Time chip (right-aligned)
+                    Surface(
+                        shape = RoundedCornerShape(10.dp),
+                        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                        tonalElevation = 0.dp
+                    ) {
+                        Row(
+                            Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            Icon(FieldMindIcons.Timer, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, size = 13.dp)
+                            Text(
+                                obs.time,
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
-                    }
-                    // Time
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                        Icon(FieldMindIcons.Timer, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, size = 14.dp)
-                        Text(
-                            "${obs.time}",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
                     }
                 }
 
@@ -898,7 +931,7 @@ fun ObservationStatsDashboard(
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Icon(FieldMindIcons.Insights, null, tint = MaterialTheme.colorScheme.primary, size = 20.dp)
-                Text("Observation Insights", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                Text("At a glance", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
             }
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
                 StatItem("$totalObs", "Observations", colors.observation)
@@ -908,11 +941,10 @@ fun ObservationStatsDashboard(
                 StatItem("$activeProjects", "Projects", colors.project)
             }
 
-            // Species distribution
-            val speciesDistribution = observations.groupingBy { it.category }.eachCount().entries.sortedByDescending { it.value }.take(6)
+            // Species distribution — simple compact bars
+            val speciesDistribution = observations.groupingBy { it.category }.eachCount().entries.sortedByDescending { it.value }.take(5)
             if (speciesDistribution.isNotEmpty()) {
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f))
-                Text("Species Distribution", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 val maxCount = speciesDistribution.maxOf { it.value }.coerceAtLeast(1)
                 speciesDistribution.forEach { (category, count) ->
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -921,65 +953,6 @@ fun ObservationStatsDashboard(
                             Box(Modifier.fillMaxWidth(count.toFloat() / maxCount).fillMaxHeight().background(colors.categoryColor(category), RoundedCornerShape(99.dp)))
                         }
                         Text(count.toString(), style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
-                    }
-                }
-            }
-
-            // Monthly trends
-            val monthlyTrend = observations.groupingBy { it.date.take(7) }.eachCount().entries.sortedBy { it.key }.takeLast(12)
-            if (monthlyTrend.size >= 2) {
-                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f))
-                Text("Monthly Activity", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                val maxMonthly = monthlyTrend.maxOf { it.value }.coerceAtLeast(1)
-                monthlyTrend.forEach { (month, count) ->
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text(month.takeLast(2) + "/" + month.take(4), modifier = Modifier.width(50.dp), style = MaterialTheme.typography.labelSmall)
-                        Box(Modifier.weight(1f).height(6.dp).clip(RoundedCornerShape(99.dp)).background(MaterialTheme.colorScheme.surfaceContainerHighest)) {
-                            Box(Modifier.fillMaxWidth(count.toFloat() / maxMonthly).fillMaxHeight().background(colors.observation.copy(alpha = 0.6f), RoundedCornerShape(99.dp)))
-                        }
-                        Text(count.toString(), style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
-                    }
-                }
-            }
-
-            // Confidence distribution
-            val confidenceDist = observations.groupingBy { it.confidenceLevel }.eachCount()
-            if (confidenceDist.isNotEmpty()) {
-                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f))
-                Text("Confidence Distribution", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                val maxConf = confidenceDist.values.max().coerceAtLeast(1)
-                confidenceDist.entries.sortedByDescending { it.value }.forEach { (level, count) ->
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text(level, modifier = Modifier.width(90.dp), style = MaterialTheme.typography.labelSmall)
-                        Box(Modifier.weight(1f).height(8.dp).clip(RoundedCornerShape(99.dp)).background(MaterialTheme.colorScheme.surfaceContainerHighest)) {
-                            val confColor = when (level.lowercase()) {
-                                "certain" -> colors.confidenceSure
-                                "likely", "very likely" -> colors.confidenceGuess
-                                else -> colors.confidenceVerify
-                            }
-                            Box(Modifier.fillMaxWidth(count.toFloat() / maxConf).fillMaxHeight().background(confColor, RoundedCornerShape(99.dp)))
-                        }
-                        Text(count.toString(), style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
-                    }
-                }
-            }
-
-            // Habitat breakdown
-            val habitatData = observations.filter { it.factsOnlyNotes.isNotBlank() }
-                .flatMap { it.factsOnlyNotes.split(",").map { s -> s.trim() } }
-                .filter { it.isNotBlank() }
-                .groupingBy { it }.eachCount()
-            if (habitatData.isNotEmpty()) {
-                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f))
-                Text("Common Keywords", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    habitatData.entries.sortedByDescending { it.value }.take(10).forEach { (word, count) ->
-                        Surface(shape = RoundedCornerShape(8.dp), color = MaterialTheme.colorScheme.surfaceContainerHigh) {
-                            Row(Modifier.padding(horizontal = 8.dp, vertical = 4.dp), horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically) {
-                                Text(word, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Medium)
-                                Text("$count", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                            }
-                        }
                     }
                 }
             }

@@ -127,7 +127,7 @@ class FieldMindSettings private constructor(context: Context) {
     val weatherShowPressure: StateFlow<Boolean> = _weatherShowPressure.asStateFlow()
 
     // ── Weather provider selection ──
-    private val _weatherProvider = MutableStateFlow(prefs.getString(KEY_WEATHER_PROVIDER, "open-meteo") ?: "open-meteo")
+    private val _weatherProvider = MutableStateFlow(prefs.getString(KEY_WEATHER_PROVIDER, "met-norway") ?: "met-norway")
     val weatherProvider: StateFlow<String> = _weatherProvider.asStateFlow()
 
     private val _weatherProviders = MutableStateFlow(prefs.getString(KEY_WEATHER_PROVIDERS, _weatherProvider.value) ?: _weatherProvider.value)
@@ -239,13 +239,13 @@ class FieldMindSettings private constructor(context: Context) {
     fun setWeatherProvider(value: String) = edit(KEY_WEATHER_PROVIDER, value) { _weatherProvider.value = value }
     fun setWeatherProviders(value: String) = edit(KEY_WEATHER_PROVIDERS, value) {
         _weatherProviders.value = value
-        _weatherProvider.value = value.split(",").firstOrNull { it.isNotBlank() } ?: "open-meteo"
+        _weatherProvider.value = value.split(",").firstOrNull { it.isNotBlank() } ?: "met-norway"
         prefs.edit().putString(KEY_WEATHER_PROVIDER, _weatherProvider.value).apply()
     }
     fun setWeatherProviderEnabled(slug: String, enabled: Boolean) {
         val current = _weatherProviders.value.split(",").map { it.trim() }.filter { it.isNotBlank() }.toMutableSet()
         if (enabled) current.add(slug) else current.remove(slug)
-        if (current.isEmpty()) current.add("open-meteo")
+        if (current.isEmpty()) current.add("met-norway")
         setWeatherProviders(current.joinToString(","))
     }
     fun setWeatherApiKey(value: String) = edit(KEY_WEATHER_API_KEY, value.trim()) { _weatherApiKey.value = value.trim() }

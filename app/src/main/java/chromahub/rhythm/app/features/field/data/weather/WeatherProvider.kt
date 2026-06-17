@@ -33,13 +33,13 @@ interface WeatherProvider {
 
 /**
  * Registry of available weather providers. The user selects one in settings.
- * Open-Meteo is the default (free, no API key needed).
+ * MET Norway is the default (free, open-data, no API key needed).
  */
 object WeatherProviders {
     val providers: List<WeatherProvider> = listOf(
+        MetNorwayProvider(),
         OpenMeteoProvider(),
         IndiaMeteorologicalDepartmentProvider(),
-        MetNorwayProvider(),
         NationalWeatherServiceProvider(),
         OpenWeatherMapProvider(),
         WeatherApiDotComProvider()
@@ -47,14 +47,14 @@ object WeatherProviders {
 
     private val bySlug: Map<String, WeatherProvider> = providers.associateBy { it.slug }
 
-    fun fromSlug(slug: String): WeatherProvider = bySlug[slug] ?: OpenMeteoProvider()
+    fun fromSlug(slug: String): WeatherProvider = bySlug[slug] ?: MetNorwayProvider()
 
-    /** Returns the provider that best matches the given slug, defaulting to Open-Meteo. */
-    fun getProvider(slug: String?): WeatherProvider = slug?.let { fromSlug(it) } ?: OpenMeteoProvider()
+    /** Returns the provider that best matches the given slug, defaulting to MET Norway. */
+    fun getProvider(slug: String?): WeatherProvider = slug?.let { fromSlug(it) } ?: MetNorwayProvider()
 
     fun selectedProviders(slugsCsv: String?): List<WeatherProvider> {
         val slugs = slugsCsv?.split(",")?.map { it.trim() }?.filter { it.isNotBlank() }.orEmpty()
-        return slugs.map { fromSlug(it) }.distinctBy { it.slug }.ifEmpty { listOf(OpenMeteoProvider()) }
+        return slugs.map { fromSlug(it) }.distinctBy { it.slug }.ifEmpty { listOf(MetNorwayProvider()) }
     }
 
     suspend fun fetchMergedWeather(
