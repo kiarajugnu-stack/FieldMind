@@ -999,6 +999,8 @@ fun DeveloperSettingsPage(viewModel: FieldMindViewModel, onBack: () -> Unit) {
     val settings = viewModel.fieldSettings
     val developerMode by settings.developerMode.collectAsState()
     val debugLogging by settings.debugLogging.collectAsState()
+    var testWeatherCode by remember { mutableStateOf<Int?>(null) }
+    var testIsNight by remember { mutableStateOf(false) }
 
     SettingsSubPage("Developer", icon = FieldMindIcons.Sparkle, onBack = onBack) {
         item {
@@ -1032,6 +1034,14 @@ fun DeveloperSettingsPage(viewModel: FieldMindViewModel, onBack: () -> Unit) {
                         }
                     }
                 }
+            }
+            item {
+                DevWeatherTestPanel(
+                    testCode = testWeatherCode,
+                    testNight = testIsNight,
+                    onCodeChange = { testWeatherCode = it },
+                    onNightChange = { testIsNight = it }
+                )
             }
             item {
                 Card(shape = RoundedCornerShape(22.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)) {
