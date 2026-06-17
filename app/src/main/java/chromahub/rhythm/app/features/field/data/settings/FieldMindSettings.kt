@@ -171,6 +171,15 @@ class FieldMindSettings private constructor(context: Context) {
     private val _dataIntegrityCheckOnLaunch = MutableStateFlow(prefs.getBoolean(KEY_DATA_INTEGRITY_CHECK, false))
     val dataIntegrityCheckOnLaunch: StateFlow<Boolean> = _dataIntegrityCheckOnLaunch.asStateFlow()
 
+    // ── Species identification settings ──
+    private val _speciesIdApiKey = MutableStateFlow(prefs.getString(KEY_SPECIES_ID_API_KEY, "") ?: "")
+    val speciesIdApiKey: StateFlow<String> = _speciesIdApiKey.asStateFlow()
+    private val _speciesIdOfflineFirst = MutableStateFlow(prefs.getBoolean(KEY_SPECIES_ID_OFFLINE_FIRST, true))
+    val speciesIdOfflineFirst: StateFlow<Boolean> = _speciesIdOfflineFirst.asStateFlow()
+    private val _speciesModelBaseUrl = MutableStateFlow(prefs.getString(KEY_SPECIES_MODEL_BASE_URL, "") ?: "")
+    val speciesModelBaseUrl: StateFlow<String> = _speciesModelBaseUrl.asStateFlow()
+
+
     // ── Security settings ──
     private val _lockTimeout = MutableStateFlow(prefs.getString(KEY_LOCK_TIMEOUT, "Immediate") ?: "Immediate")
     val lockTimeout: StateFlow<String> = _lockTimeout.asStateFlow()
@@ -265,6 +274,11 @@ class FieldMindSettings private constructor(context: Context) {
     fun setLockTimeout(value: String) = edit(KEY_LOCK_TIMEOUT, value) { _lockTimeout.value = value }
     fun setAutoLockOnBackground(value: Boolean) = edit(KEY_AUTO_LOCK_BACKGROUND, value) { _autoLockOnBackground.value = value }
 
+    // ── Species identification setters ──
+    fun setSpeciesIdApiKey(value: String) = edit(KEY_SPECIES_ID_API_KEY, value.trim()) { _speciesIdApiKey.value = value.trim() }
+    fun setSpeciesIdOfflineFirst(value: Boolean) = edit(KEY_SPECIES_ID_OFFLINE_FIRST, value) { _speciesIdOfflineFirst.value = value }
+    fun setSpeciesModelBaseUrl(value: String) = edit(KEY_SPECIES_MODEL_BASE_URL, value.trim()) { _speciesModelBaseUrl.value = value.trim() }
+
     private inline fun edit(key: String, value: String, after: () -> Unit) { prefs.edit().putString(key, value).apply(); after() }
     private inline fun edit(key: String, value: Boolean, after: () -> Unit) { prefs.edit().putBoolean(key, value).apply(); after() }
     private inline fun edit(key: String, value: Int, after: () -> Unit) { prefs.edit().putInt(key, value).apply(); after() }
@@ -332,5 +346,9 @@ class FieldMindSettings private constructor(context: Context) {
         private const val KEY_DATA_INTEGRITY_CHECK = "data_integrity_check"
         private const val KEY_LOCK_TIMEOUT = "lock_timeout"
         private const val KEY_AUTO_LOCK_BACKGROUND = "auto_lock_background"
+        // ── Species identification keys ──
+        private const val KEY_SPECIES_ID_API_KEY = "species_id_api_key"
+        private const val KEY_SPECIES_ID_OFFLINE_FIRST = "species_id_offline_first"
+        private const val KEY_SPECIES_MODEL_BASE_URL = "species_model_base_url"
     }
 }

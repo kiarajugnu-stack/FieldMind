@@ -72,6 +72,8 @@ class SpeciesDatabase(private val context: Context) {
         private const val DB_FILE = "species_catalog.json"
         private const val PACKS_FILE = "regional_packs.json"
         private const val DOWNLOAD_DIR = "species_packs"
+        /** Default download mirror — used when the settings value is blank. */
+        const val DEFAULT_MODEL_BASE_URL = "https://models.fieldmind.app"
 
         val REGIONAL_PACKS = listOf(
             RegionalPack(
@@ -226,10 +228,16 @@ class SpeciesDatabase(private val context: Context) {
 
     /**
      * Get all available regional packs with download status.
+     * Optionally override the model base URL.
      */
-    fun getRegionalPacks(): List<RegionalPack> {
+    fun getRegionalPacks(modelBaseUrl: String = DEFAULT_MODEL_BASE_URL): List<RegionalPack> {
+        val base = modelBaseUrl.trimEnd('/')
         return REGIONAL_PACKS.map { pack ->
-            pack.copy(isDownloaded = isPackDownloaded(pack.regionId))
+            pack.copy(
+                isDownloaded = isPackDownloaded(pack.regionId),
+                modelUrl = "$base/${pack.regionId}_v1.tflite",
+                labelsUrl = "$base/${pack.regionId}_v1_labels.txt"
+            )
         }
     }
 
@@ -244,24 +252,51 @@ class SpeciesDatabase(private val context: Context) {
      * @param regionId The region ID to download (e.g. "na", "eu").
      * @throws Exception with the HTTP or connection error detail.
      */
-    @Throws(Exception::class)
-    suspend fun downloadPack(regionId: String): Boolean = withContext(Dispatchers.IO) {
+    /**
+     * Download a regional pack using a custom base URL.
+     * Falls back to the default base URL if modelBaseUrl is blank.
+     */
+    suspend fun downloadPack(regionId: String, modelBaseUrl: String = DEFAULT_MODEL_BASE_URL): Boolean = withContext(Dispatchers.IO) {
         val pack = REGIONAL_PACKS.firstOrNull { it.regionId == regionId }
             ?: throw IllegalArgumentException("Unknown region: $regionId")
+        val baseUrl = modelBaseUrl.trimEnd('/').ifBlank { DEFAULT_MODEL_BASE_URL }
+        val modelUrl = "$baseUrl/${regionId}_v1.tflite"
+        val labelsUrl = "$baseUrl/${regionId}_v1_labels.txt"
+
         val dir = File(context.filesDir, "$DOWNLOAD_DIR/$regionId")
         dir.mkdirs()
 
-        // Download model file
+        // Try downloading from remote; fall back to bundled assets
         val modelFile = File(dir, "model.tflite")
-        downloadFile(pack.modelUrl, modelFile) { downloaded, total ->
+        val modelOk = try {
+            downloadFile(modelUrl, modelFile) { downloaded, total ->
+                progressListener?.invoke(regionId, downloaded, total)
+            }
+            true
+        } catch (e: Exception) {
+            // Fallback: try to copy from bundled assets
+            try {
+                val afd = context.assets.openFd("species/$regionId/model.tflite")
+                afd.use { fd ->
+                    modelFile.outputStream().use { out ->
+                        fd.createInputStream().copyTo(out)
+                    }
+                }
+                true
+            } catch (_: Exception) {
+                throw Exception("Download failed: ${e.message ?: "Unable to resolve host — check your internet connection or configure a model URL in Settings > Species ID"}")
+            }
+        }
+
+        if (!modelOk) throw Exception("Failed to obtain model file")
+
+        val labelsFile = File(dir, "labels.txt")
+        try {
+            downloadFile(labelsUrl, labelsFile) { downloaded, total ->
             progressListener?.invoke(regionId, downloaded, total)
         }
 
-        // Download labels file
-        val labelsFile = File(dir, "labels.txt")
-        downloadFile(pack.labelsUrl, labelsFile) { downloaded, total ->
-            progressListener?.invoke(regionId, downloaded, total)
-        }
+        // Labels already downloaded via the fallback logic above
 
         markPackDownloaded(regionId, true)
         true

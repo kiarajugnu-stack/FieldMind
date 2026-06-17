@@ -32,7 +32,8 @@ data class SpeciesMatch(
  */
 class SpeciesClassifier(
     private val context: Context,
-    private val database: SpeciesDatabase? = null
+    private val database: SpeciesDatabase? = null,
+    private val imageAnalyzer: SpeciesImageAnalyzer? = null
 ) {
 
     companion object {
@@ -700,19 +701,51 @@ class SpeciesClassifier(
     }
 
     /**
-     * Identify species from a photo URI.
+     * Identify species from a photo URI using real image analysis.
      *
      * Inference priority:
-     * 1. Bundled TFLite model asset (if present in assets/)
-     * 2. Downloaded regional pack models (if any are downloaded via SpeciesDatabase)
-     * 3. Keyword-based matching on the bundled species dictionary
+     * 1. **SpeciesImageAnalyzer** — Pure-Kotlin image analysis (color histograms, edge detection,
+     *    texture analysis, perceptual hashing). Works fully offline with no model download needed.
+     * 2. Bundled TFLite model asset (if present in assets/)
+     * 3. Downloaded regional pack TFLite models
+     * 4. Keyword-based fallback (token matching on filename)
      *
      * @param imageUri The content URI or file path of the image.
      * @param topK Number of top results to return.
      * @return List of species matches sorted by confidence descending.
      */
     suspend fun identifyFromImage(imageUri: String, topK: Int = TOP_K): List<SpeciesMatch> = withContext(Dispatchers.Default) {
-        // Priority 1: Bundled TFLite model asset
+        // Priority 1: SpeciesImageAnalyzer — real image analysis, no model needed
+        val analyzer = imageAnalyzer ?: SpeciesImageAnalyzer(context)
+        val features = analyzer.analyzeImage(imageUri)
+        if (features != null) {
+            val catPredictions = analyzer.predictCategory(features)
+            val topCategory = catPredictions.firstOrNull()?.first ?: ""
+
+            // Get candidates: first try matching category, then fallback to all
+            val candidates = if (database != null) {
+                val byCategory = if (topCategory.isNotBlank()) database.getByCategory(topCategory) else emptyList()
+                if (byCategory.isNotEmpty()) byCategory else database.getAll(limit = 100)
+            } else {
+                // Use fallback species from built-in list
+                FALLBACK_SPECIES.map { entry ->
+                    SpeciesRecord(
+                        id = entry.commonName.lowercase().replace(" ", "_"),
+                        commonName = entry.commonName,
+                        scientificName = entry.scientificName,
+                        category = entry.category,
+                        description = entry.description
+                    )
+                }
+            }
+
+            val scored = analyzer.scoreAgainstSpecies(features, candidates, topK)
+            if (scored.isNotEmpty()) {
+                return@withContext scored
+            }
+        }
+
+        // Priority 2: Bundled TFLite model asset
         val bundledModel = loadModelFile(context)
         if (bundledModel != null) {
             try {
@@ -722,7 +755,7 @@ class SpeciesClassifier(
             }
         }
 
-        // Priority 2: Downloaded regional pack models
+        // Priority 3: Downloaded regional pack models
         val db = database
         if (db != null) {
             for (pack in db.getRegionalPacks()) {
@@ -745,7 +778,7 @@ class SpeciesClassifier(
             }
         }
 
-        // Priority 3: Keyword-based fallback
+        // Priority 4: Keyword-based fallback
         return@withContext keywordInference(imageUri, topK)
     }
 
