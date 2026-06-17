@@ -2,7 +2,32 @@
   FIELDMIND "WHAT'S NEW" - COMPLETE REDESIGN IMPLEMENTATION
 ═══════════════════════════════════════════════════════════════════════════════
 
-VERSION 1.2.0 (Latest) - Complete Field Research Redesign
+VERSION 1.5.1 (Latest) - Weather Animation Polish, Crash Fixes & Back Nav
+─────────────────────────────────────────────────────────────────────────────
+
+🌙 Weather Animation Polish
+  ├─ Shooting star fades in gradually (first 25% of flight) instead of appearing suddenly
+  ├─ Moon repositioned to top-right corner, smaller (0.07/0.09), tighter glow rings (2x/3x)
+  ├─ Sun repositioned to top-right corner, smaller, shorter rays (1.3x-1.5x), slower rotation (20s)
+  ├─ Rain streaks reduced ~40%, per-drop random delays for continuous scattered drops
+  ├─ Rain fall speed slowed (400ms→700ms / 700ms→1200ms) for gentle natural look
+  └─ All rain types (drizzle, rain, showers, heavy) benefit from continuous random-drop behavior
+
+🐛 Infinite-Height Scroll Crash Fix
+  ├─ Fixed crash tapping 'Add Species' / 'Add Task' in Project Detail
+  ├─ Reordered modifiers: heightIn before verticalScroll in SpeciesRegistryBuilder & ProjectTasksBuilder
+  └─ Replaced nested LazyRow with FlowRow to eliminate nested scrollable conflict
+
+🔙 Back Navigation & Confirmation Dialogs
+  ├─ BackHandler added to all full-screen editors so device back button works properly
+  ├─ isDirty tracking with Discard/Keep Editing confirmation dialog on back
+  ├─ Dirty detection on all 9 full-screen dialogs (New/Edit Project, Source, Question, Hypothesis, Report)
+  ├─ ObserveScreen BackHandler with Save & Exit / Discard / Keep Editing dialog
+  └─ Fixed sharp edges: rounded Surface back button, HorizontalDivider, proper bottom padding (32dp)
+
+---
+
+VERSION 1.2.0 - Complete Field Research Redesign
 ─────────────────────────────────────────────────────────────────────────────
 
 🎯 TOTAL FEATURES: 80+ new features across 12 phases

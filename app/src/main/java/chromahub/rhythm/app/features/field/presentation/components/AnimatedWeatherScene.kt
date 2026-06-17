@@ -191,13 +191,13 @@ private fun DayCloudyScene(
     val sunRotation by infiniteTransition.animateFloat(
         initialValue = 0f,
         targetValue = 360f,
-        animationSpec = infiniteRepeatable(tween(12000, easing = LinearEasing), RepeatMode.Restart),
+        animationSpec = infiniteRepeatable(tween(20000, easing = LinearEasing), RepeatMode.Restart),
         label = "sunRotate"
     )
     val sunGlow by infiniteTransition.animateFloat(
         initialValue = 0.6f,
         targetValue = 1.0f,
-        animationSpec = infiniteRepeatable(tween(3000, easing = FastOutSlowInEasing), RepeatMode.Reverse),
+        animationSpec = infiniteRepeatable(tween(5000, easing = FastOutSlowInEasing), RepeatMode.Reverse),
         label = "sunGlow"
     )
     val cloudOffset1 by infiniteTransition.animateFloat(
@@ -228,25 +228,25 @@ private fun DayCloudyScene(
     val rayColor = Color(0xFFFFF9C4).copy(alpha = 0.15f * sunGlow)
 
     Canvas(modifier = modifier.fillMaxSize()) {
-        val cx = size.width / 2
-        val cy = size.height * 0.35f
-        val sunRadius = if (compact) size.minDimension * 0.12f else size.minDimension * 0.10f
+        val cx = size.width * 0.85f  // Top-right corner
+        val cy = size.height * 0.12f
+        val sunRadius = if (compact) size.minDimension * 0.09f else size.minDimension * 0.07f
 
-        // Sun glow
+        // Sun glow — smaller, more subtle
         drawCircle(
-            color = palette.accent.copy(alpha = sunGlow * 0.12f),
+            color = palette.accent.copy(alpha = sunGlow * 0.10f),
+            radius = sunRadius * 1.8f,
+            center = Offset(cx, cy)
+        )
+        drawCircle(
+            color = Color.White.copy(alpha = sunGlow * 0.05f),
             radius = sunRadius * 2.5f,
             center = Offset(cx, cy)
         )
-        drawCircle(
-            color = Color.White.copy(alpha = sunGlow * 0.06f),
-            radius = sunRadius * 3.5f,
-            center = Offset(cx, cy)
-        )
 
-        // Sun rays — softer, fewer in dark mode
-        val rayCount = if (compact) 6 else 10
-        val rayLength = sunRadius * 2.0f
+        // Sun rays — shorter, fewer
+        val rayCount = if (compact) 5 else 8
+        val rayLength = sunRadius * 1.5f
         for (i in 0 until rayCount) {
             val angle = sunRotation + (360f / rayCount) * i
             val rad = (angle * PI.toFloat() / 180f)
@@ -258,7 +258,7 @@ private fun DayCloudyScene(
                 color = rayColor,
                 start = Offset(x1, y1),
                 end = Offset(x2, y2),
-                strokeWidth = if (compact) 2f else 3f
+                strokeWidth = if (compact) 1.5f else 2.5f
             )
         }
 
@@ -383,9 +383,9 @@ private fun NightSkyScene(
     }
 
     Canvas(modifier = modifier.fillMaxSize()) {
-        val cx = size.width / 2
-        val cy = size.height * 0.3f
-        val moonRadius = if (compact) size.minDimension * 0.12f else size.minDimension * 0.10f
+        val cx = size.width * 0.85f  // Top-right corner
+        val cy = size.height * 0.18f
+        val moonRadius = if (compact) size.minDimension * 0.09f else size.minDimension * 0.07f
 
         val moonBody = Color(0xFFECEFF1).copy(alpha = 1f)
         val moonGlowColor = if (isDark) Color(0xFFECEFF1) else Color(0xFFFFF9C4)
@@ -393,15 +393,15 @@ private fun NightSkyScene(
         val starWarm = Color(0xFFFFF9C4)    // Warm white
         val nightCloudColor = if (isDark) Color(0xFF37474F).copy(alpha = 0.18f) else Color(0xFF78909C).copy(alpha = 0.12f)
 
-        // Moon glow ring
+        // Moon glow ring — tighter and subtler so it doesn't cover everything
         drawCircle(
-            color = moonGlowColor.copy(alpha = 0.12f * moonGlow),
-            radius = moonRadius * 3.0f,
+            color = moonGlowColor.copy(alpha = 0.08f * moonGlow),
+            radius = moonRadius * 2.0f,
             center = Offset(cx, cy)
         )
         drawCircle(
-            color = moonGlowColor.copy(alpha = 0.04f * moonGlow),
-            radius = moonRadius * 4.5f,
+            color = moonGlowColor.copy(alpha = 0.03f * moonGlow),
+            radius = moonRadius * 3.0f,
             center = Offset(cx, cy)
         )
 
@@ -511,14 +511,14 @@ private fun ClearSkyScene(
     val sunRotation by infiniteTransition.animateFloat(
         initialValue = 0f,
         targetValue = 360f,
-        animationSpec = infiniteRepeatable(tween(10000, easing = LinearEasing), RepeatMode.Restart),
+        animationSpec = infiniteRepeatable(tween(20000, easing = LinearEasing), RepeatMode.Restart),
         label = "sunRotate"
     )
-    // Sun pulse glow
+    // Sun pulse glow — slower
     val sunGlow by infiniteTransition.animateFloat(
         initialValue = 0.6f,
         targetValue = 1.0f,
-        animationSpec = infiniteRepeatable(tween(3000, easing = FastOutSlowInEasing), RepeatMode.Reverse),
+        animationSpec = infiniteRepeatable(tween(5000, easing = FastOutSlowInEasing), RepeatMode.Reverse),
         label = "sunGlow"
     )
     // Shooting star for night mode
@@ -560,37 +560,37 @@ private fun ClearSkyScene(
     }
 
     Canvas(modifier = modifier.fillMaxSize()) {
-        val cx = size.width / 2
-        val cy = size.height / 2
-        val sunRadius = if (compact) size.minDimension * 0.15f else size.minDimension * 0.12f
+        val sunCx = size.width * 0.85f  // Top-right corner
+        val sunCy = size.height * 0.12f
+        val sunRadius = if (compact) size.minDimension * 0.10f else size.minDimension * 0.08f
 
         if (isDay) {
-            // Outer sun glow
+            // Outer sun glow — smaller, subtler
             drawCircle(
-                color = palette.accent.copy(alpha = sunGlow * 0.12f),
-                radius = sunRadius * 2.2f,
-                center = Offset(cx, cy)
+                color = palette.accent.copy(alpha = sunGlow * 0.10f),
+                radius = sunRadius * 1.8f,
+                center = Offset(sunCx, sunCy)
             )
             drawCircle(
-                color = Color.White.copy(alpha = sunGlow * 0.06f),
-                radius = sunRadius * 3.0f,
-                center = Offset(cx, cy)
+                color = Color.White.copy(alpha = sunGlow * 0.05f),
+                radius = sunRadius * 2.5f,
+                center = Offset(sunCx, sunCy)
             )
 
-            // Sun rays
-            val rayLength = sunRadius * 1.8f
+            // Sun rays — shorter
+            val rayLength = sunRadius * 1.3f
             for (i in 0 until rayCount) {
                 val angle = sunRotation + (360f / rayCount) * i
                 val rad = (angle * PI.toFloat() / 180f)
-                val x1 = cx + cos(rad) * sunRadius * 0.8f
-                val y1 = cy + sin(rad) * sunRadius * 0.8f
-                val x2 = cx + cos(rad) * rayLength
-                val y2 = cy + sin(rad) * rayLength
+                val x1 = sunCx + cos(rad) * sunRadius * 0.8f
+                val y1 = sunCy + sin(rad) * sunRadius * 0.8f
+                val x2 = sunCx + cos(rad) * rayLength
+                val y2 = sunCy + sin(rad) * rayLength
                 drawLine(
-                    color = palette.accent.copy(alpha = 0.25f * sunGlow),
+                    color = palette.accent.copy(alpha = 0.20f * sunGlow),
                     start = Offset(x1, y1),
                     end = Offset(x2, y2),
-                    strokeWidth = if (compact) 2f else 3f
+                    strokeWidth = if (compact) 1.5f else 2.5f
                 )
             }
 
@@ -598,12 +598,12 @@ private fun ClearSkyScene(
             drawCircle(
                 color = palette.accent,
                 radius = sunRadius,
-                center = Offset(cx, cy)
+                center = Offset(sunCx, sunCy)
             )
             drawCircle(
                 color = Color.White.copy(alpha = 0.4f),
                 radius = sunRadius * 0.6f,
-                center = Offset(cx, cy)
+                center = Offset(sunCx, sunCy)
             )
 
             // Drifting dust motes (tiny circles)
@@ -625,25 +625,33 @@ private fun ClearSkyScene(
         } else {
             val moonBody = Color(0xFFECEFF1).copy(alpha = 1f)
             val moonGlowColor = if (isDark) Color(0xFFECEFF1) else Color(0xFFFFF9C4)
+            val moonCx = size.width * 0.85f  // Top-right corner
+            val moonCy = size.height * 0.18f
+            val moonR = if (compact) size.minDimension * 0.09f else size.minDimension * 0.07f
 
-            // Moon glow
+            // Moon glow — tighter so it doesn't cover everything
             drawCircle(
-                color = moonGlowColor.copy(alpha = 0.15f),
-                radius = sunRadius * 2.5f,
-                center = Offset(cx, cy)
+                color = moonGlowColor.copy(alpha = 0.10f),
+                radius = moonR * 2.0f,
+                center = Offset(moonCx, moonCy)
+            )
+            drawCircle(
+                color = moonGlowColor.copy(alpha = 0.04f),
+                radius = moonR * 3.0f,
+                center = Offset(moonCx, moonCy)
             )
 
             // Moon
             drawCircle(
                 color = moonBody,
-                radius = sunRadius,
-                center = Offset(cx, cy)
+                radius = moonR,
+                center = Offset(moonCx, moonCy)
             )
             // Moon crescent shadow
             drawCircle(
                 color = palette.background.last().copy(alpha = if (isDark) 0.75f else 0.7f),
-                radius = sunRadius * 0.85f,
-                center = Offset(cx + sunRadius * 0.2f, cy - sunRadius * 0.1f)
+                radius = moonR * 0.85f,
+                center = Offset(moonCx + moonR * 0.2f, moonCy - moonR * 0.1f)
             )
 
             // Stars with independent twinkle
@@ -993,6 +1001,10 @@ private fun DrawScope.drawShootingStar(
 
     if (x < -50f || x > size.width + 50f || y < -50f || y > size.height + 50f) return
 
+    // Gradual fade-in (first 25% of flight) + fade-out (toward end)
+    val fadeIn = (progress / 0.25f).coerceIn(0f, 1f)
+    val alpha = fadeIn * (1f - progress)
+
     // Trail (fading line)
     val trailPath = Path()
     trailPath.moveTo(x, y)
@@ -1002,19 +1014,19 @@ private fun DrawScope.drawShootingStar(
     )
     drawPath(
         path = trailPath,
-        color = Color.White.copy(alpha = (1f - progress) * 0.8f),
+        color = Color.White.copy(alpha = alpha * 0.8f),
         style = Stroke(width = 2f * (1f - progress) + 0.5f)
     )
 
     // Bright head
     drawCircle(
-        color = Color.White.copy(alpha = (1f - progress) * 0.95f),
+        color = Color.White.copy(alpha = alpha * 0.95f),
         radius = 2.5f * (1f - progress) + 0.5f,
         center = Offset(x, y)
     )
     // Head glow
     drawCircle(
-        color = Color(0xFFB3E5FC).copy(alpha = (1f - progress) * 0.3f),
+        color = Color(0xFFB3E5FC).copy(alpha = alpha * 0.3f),
         radius = 5f * (1f - progress) + 1f,
         center = Offset(x, y)
     )
@@ -1111,8 +1123,8 @@ private fun RainScene(
 ) {
     val isDark = FieldMindTheme.colors.isDark
     val isHeavy = weatherCode >= 65 || weatherCode in 80..82
-    val streakCount = if (compact) (if (isHeavy) 30 else 15) else (if (isHeavy) 80 else 50)
-    val baseSpeed = if (isHeavy) 400f else 700f
+    val streakCount = if (compact) (if (isHeavy) 20 else 10) else (if (isHeavy) 50 else 30)
+    val baseSpeed = if (isHeavy) 700f else 1200f  // Slower continuous fall
 
     val infiniteTransition = rememberInfiniteTransition(label = "rain")
     val rainProgress by infiniteTransition.animateFloat(
@@ -1158,10 +1170,16 @@ private fun RainScene(
     Canvas(modifier = modifier.fillMaxSize()) {
         val intensityAlpha = rainIntensity.coerceIn(0.4f, 1f)
 
-        // Wind-blown rain streaks with varied intensity
-        streaks.forEach { (x, speed, length) ->
+        // Wind-blown rain streaks with varied intensity — per-drop random phase for continuous random drops
+        streaks.forEach { streak ->
+            val x = streak.x
+            val speed = streak.speed
+            val length = streak.length
+            val delay = streak.delay
             val windSway = windGust * 25f * intensityAlpha
-            val y = (rainProgress * size.height * speed * intensityAlpha + x * size.height * 0.2f) % (size.height + length)
+            // Per-drop phase offset so drops fall continuously, not all together
+            val fallProgress = ((rainProgress + delay) % 1f).let { if (it < 0f) it + 1f else it }
+            val y = (fallProgress * size.height * speed * intensityAlpha + x * size.height * 0.2f) % (size.height + length)
             val yEnd = y - length * intensityAlpha.coerceIn(0.7f, 1.2f)
             val xPos = x * size.width + windSway * (1f - y / size.height) * 0.5f
             val streakAlpha = (0.5f + intensityAlpha * 0.5f) * (0.7f + speed * 0.3f)
@@ -1223,11 +1241,18 @@ private fun RainScene(
     }
 }
 
-private fun rememberRainStreaks(count: Int): List<Triple<Float, Float, Float>> {
+private data class RainStreak(val x: Float, val speed: Float, val length: Float, val delay: Float)
+
+private fun rememberRainStreaks(count: Int): List<RainStreak> {
     val seed = 123L
     val rng = Random(seed)
     return List(count) {
-        Triple(rng.nextFloat(), 0.5f + rng.nextFloat(), 8f + rng.nextFloat() * 15f)
+        RainStreak(
+            x = rng.nextFloat(),
+            speed = 0.5f + rng.nextFloat(),
+            length = 8f + rng.nextFloat() * 15f,
+            delay = rng.nextFloat() * 0.9f  // Random phase offset for continuous random drops
+        )
     }
 }
 
