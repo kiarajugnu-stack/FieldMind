@@ -747,7 +747,7 @@ private fun showResearchSessionNotification(context: Context, title: String, tex
                 NotificationChannel(RESEARCH_SESSION_CHANNEL_ID, "Research sessions", NotificationManager.IMPORTANCE_LOW)
             )
         }
-        val intent = Intent(context, chromahub.rhythm.app.activities.MainActivity::class.java).apply {
+        val intent = Intent(context, fieldmind.research.app.activities.MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
         }
         val pendingIntent = PendingIntent.getActivity(

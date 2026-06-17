@@ -1834,6 +1834,7 @@ private fun RainScene(
         else -> if (isHeavy) 75 else if (isDrizzle) 55 else 45
     }
     val baseSpeed = if (isHeavy) 600f else if (isDrizzle) 1200f else 1000f
+    val infiniteTransition = rememberInfiniteTransition(label = "rain")
     val rainProgress by infiniteTransition.animateFloat(
         initialValue = 0f,
         targetValue = 1f,
