@@ -308,7 +308,7 @@ fun ObserveScreen(
             timeNote = "Captured via observation session"
         ) {
             session = session.copy(
-                subject = "", facts = "", tags = "", evidence = "",
+                subject = "", speciesName = "", facts = "", tags = "", evidence = "",
                 fieldContext = "", manualLocation = "", attachments = emptyList(),
                 sessionObservationCount = session.sessionObservationCount + 1
             )
@@ -622,6 +622,7 @@ fun ObserveScreen(
                 identifiedSpecies = match
                 session = session.copy(
                     subject = match.commonName,
+                    speciesName = match.commonName,
                     category = match.category,
                     speciesConfidence = when {
                         match.confidence >= 0.8f -> "Certain"
@@ -1505,6 +1506,14 @@ private fun EnhancedObservationForm(
     var showSpeciesSearch by remember { mutableStateOf(false) }
     var selectedSpecies by remember { mutableStateOf<String?>(null) }
 
+    // Reset selectedSpecies when session clears after save
+    LaunchedEffect(session.speciesName) {
+        if (session.speciesName.isBlank()) {
+            selectedSpecies = null
+            showSpeciesSearch = false
+        }
+    }
+
     Card(
         shape = RoundedCornerShape(28.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
@@ -1536,9 +1545,10 @@ private fun EnhancedObservationForm(
 
             // ── Species Search ──
             OutlinedTextField(
-                value = selectedSpecies ?: session.subject,
+                value = selectedSpecies ?: session.speciesName.ifBlank { session.subject },
                 onValueChange = {
                     selectedSpecies = it
+                    onSessionChange(session.copy(speciesName = it))
                     showSpeciesSearch = it.isNotEmpty()
                 },
                 label = { Text("Species") },
