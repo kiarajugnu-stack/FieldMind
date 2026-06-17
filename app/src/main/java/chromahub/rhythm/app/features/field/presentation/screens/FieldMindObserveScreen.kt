@@ -157,7 +157,7 @@ fun ObserveScreen(
     var showInAppCamera by remember { mutableStateOf(false) }
 
     // ── Species identification state ──
-    val speciesClassifier = remember { SpeciesClassifier(context) }
+    val speciesClassifier = remember { SpeciesClassifier(context, speciesDatabase) }
     val speciesDatabase = remember { SpeciesDatabase(context) }
     var showSpeciesId by remember { mutableStateOf(false) }
     var speciesIdImageUri by remember { mutableStateOf<String?>(null) }

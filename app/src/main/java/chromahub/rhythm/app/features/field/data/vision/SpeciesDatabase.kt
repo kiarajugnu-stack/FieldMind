@@ -1,13 +1,18 @@
 package fieldmind.research.app.features.field.data.vision
 
 import android.content.Context
+import android.content.SharedPreferences
 import com.google.gson.Gson
 import com.google.gson.annotations.SerializedName
 import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import okhttp3.OkHttpClient
+import okhttp3.Request
 import java.io.File
+import java.io.FileOutputStream
 import java.io.FileReader
+import java.util.concurrent.TimeUnit
 
 /**
  * Species metadata record with identification details.
@@ -107,8 +112,27 @@ class SpeciesDatabase(private val context: Context) {
     /** In-memory species catalog, loaded lazily from bundled JSON. */
     private var speciesCache: List<SpeciesRecord>? = null
 
+    private val client = OkHttpClient.Builder()
+        .connectTimeout(15, TimeUnit.SECONDS)
+        .readTimeout(120, TimeUnit.SECONDS) // long timeout for large model files
+        .followRedirects(true)
+        .build()
+
+    private val prefs: SharedPreferences =
+        context.getSharedPreferences("species_packs", Context.MODE_PRIVATE)
+
     /** Downloaded pack metadata, loaded from app storage. */
     private val downloadState = mutableMapOf<String, Boolean>()
+
+    /** Progress callback for ongoing downloads. */
+    private var progressListener: ((regionId: String, bytesDownloaded: Long, totalBytes: Long) -> Unit)? = null
+
+    /**
+     * Set a progress listener to track download progress.
+     */
+    fun setProgressListener(listener: ((regionId: String, bytesDownloaded: Long, totalBytes: Long) -> Unit)?) {
+        progressListener = listener
+    }
 
     /**
      * Get all species in the catalog (browsable list).
@@ -180,14 +204,18 @@ class SpeciesDatabase(private val context: Context) {
      * Check if a regional pack is downloaded.
      */
     fun isPackDownloaded(regionId: String): Boolean {
-        return downloadState[regionId] ?: false
+        // Check in-memory first, then SharedPreferences
+        return downloadState.getOrElse(regionId) {
+            prefs.getBoolean("pack_downloaded_$regionId", false)
+        }
     }
 
     /**
-     * Mark a regional pack as downloaded.
+     * Mark a regional pack as downloaded (persisted to SharedPreferences).
      */
     fun markPackDownloaded(regionId: String, downloaded: Boolean) {
         downloadState[regionId] = downloaded
+        prefs.edit().putBoolean("pack_downloaded_$regionId", downloaded).apply()
     }
 
     /**
@@ -196,6 +224,103 @@ class SpeciesDatabase(private val context: Context) {
     fun getRegionalPacks(): List<RegionalPack> {
         return REGIONAL_PACKS.map { pack ->
             pack.copy(isDownloaded = isPackDownloaded(pack.regionId))
+        }
+    }
+
+    /**
+     * Download a regional pack (model + labels) from the configured URLs.
+     * Saves files to the app's internal storage and persists download state.
+     *
+     * @param regionId The region ID to download (e.g. "na", "eu").
+     * @return true if download succeeded, false otherwise.
+     */
+    suspend fun downloadPack(regionId: String): Boolean = withContext(Dispatchers.IO) {
+        val pack = REGIONAL_PACKS.firstOrNull { it.regionId == regionId } ?: return@withContext false
+        val dir = File(context.filesDir, "$DOWNLOAD_DIR/$regionId")
+        dir.mkdirs()
+
+        try {
+            // Download model file
+            val modelFile = File(dir, "model.tflite")
+            downloadFile(pack.modelUrl, modelFile) { downloaded, total ->
+                progressListener?.invoke(regionId, downloaded, total)
+            }
+
+            // Download labels file
+            val labelsFile = File(dir, "labels.txt")
+            downloadFile(pack.labelsUrl, labelsFile) { downloaded, total ->
+                progressListener?.invoke(regionId, downloaded, total)
+            }
+
+            markPackDownloaded(regionId, true)
+            true
+        } catch (e: Exception) {
+            // Clean up partial downloads
+            dir.deleteRecursively()
+            markPackDownloaded(regionId, false)
+            false
+        }
+    }
+
+    /**
+     * Delete a downloaded regional pack from device storage.
+     */
+    suspend fun deletePack(regionId: String): Boolean = withContext(Dispatchers.IO) {
+        val dir = File(context.filesDir, "$DOWNLOAD_DIR/$regionId")
+        val result = dir.deleteRecursively()
+        markPackDownloaded(regionId, false)
+        result
+    }
+
+    /**
+     * Get the local file path for a downloaded pack's model file, or null if not downloaded.
+     */
+    fun getPackModelPath(regionId: String): String? {
+        if (!isPackDownloaded(regionId)) return null
+        val file = File(context.filesDir, "$DOWNLOAD_DIR/$regionId/model.tflite")
+        return if (file.exists()) file.absolutePath else null
+    }
+
+    /**
+     * Get the local file path for a downloaded pack's labels file, or null if not downloaded.
+     */
+    fun getPackLabelsPath(regionId: String): String? {
+        if (!isPackDownloaded(regionId)) return null
+        val file = File(context.filesDir, "$DOWNLOAD_DIR/$regionId/labels.txt")
+        return if (file.exists()) file.absolutePath else null
+    }
+
+    /**
+     * Download a single file from URL to destination, reporting progress.
+     */
+    @Throws(Exception::class)
+    private suspend fun downloadFile(
+        url: String,
+        destination: File,
+        onProgress: (downloaded: Long, total: Long) -> Unit
+    ) = withContext(Dispatchers.IO) {
+        val request = Request.Builder().url(url).get().build()
+        val response = client.newCall(request).execute()
+        if (!response.isSuccessful) throw Exception("Download failed: HTTP ${response.code}")
+
+        val body = response.body ?: throw Exception("Empty response body")
+        val totalBytes = body.contentLength()
+        val inputStream = body.byteStream()
+        val outputStream = FileOutputStream(destination)
+        val buffer = ByteArray(8 * 1024) // 8KB buffer
+        var bytesRead: Int
+        var totalRead = 0L
+
+        inputStream.use { input ->
+            outputStream.use { output ->
+                while (input.read(buffer).also { bytesRead = it } != -1) {
+                    output.write(buffer, 0, bytesRead)
+                    totalRead += bytesRead
+                    if (totalBytes > 0) {
+                        onProgress(totalRead, totalBytes)
+                    }
+                }
+            }
         }
     }
 

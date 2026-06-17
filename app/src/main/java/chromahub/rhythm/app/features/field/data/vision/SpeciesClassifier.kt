@@ -30,7 +30,10 @@ data class SpeciesMatch(
  * Regional packs (Europe, Asia, Tropical, etc.) can be downloaded
  * from the Species Settings page.
  */
-class SpeciesClassifier(private val context: Context) {
+class SpeciesClassifier(
+    private val context: Context,
+    private val database: SpeciesDatabase? = null
+) {
 
     companion object {
         private const val BUNDLED_MODEL = "species_classifier.tflite"
@@ -697,34 +700,53 @@ class SpeciesClassifier(private val context: Context) {
     }
 
     /**
-     * Identify species from a photo URI using TFLite if available,
-     * with fallback to pattern matching on the bundled dictionary.
+     * Identify species from a photo URI.
+     *
+     * Inference priority:
+     * 1. Bundled TFLite model asset (if present in assets/)
+     * 2. Downloaded regional pack models (if any are downloaded via SpeciesDatabase)
+     * 3. Keyword-based matching on the bundled species dictionary
      *
      * @param imageUri The content URI or file path of the image.
      * @param topK Number of top results to return.
      * @return List of species matches sorted by confidence descending.
      */
     suspend fun identifyFromImage(imageUri: String, topK: Int = TOP_K): List<SpeciesMatch> = withContext(Dispatchers.Default) {
-        val modelFile = loadModelFile(context)
-
-        if (modelFile != null) {
-            // TFLite inference path (would use Interpreter — placeholder for model assets)
+        // Priority 1: Bundled TFLite model asset
+        val bundledModel = loadModelFile(context)
+        if (bundledModel != null) {
             try {
-                // TODO: In production, load and run TFLite Interpreter here
-                // val interpreter = Interpreter(modelFile)
-                // val inputImage = preprocessBitmap(imageUri)
-                // val output = Array(1) { FloatArray(labels.size) }
-                // interpreter.run(inputImage, output)
-                // return mapResults(output[0], labels, topK)
-
-                // Fall back to placeholder while model assets are being prepared
-                return@withContext placeholderInference(imageUri, topK)
+                return@withContext tfliteInference(imageUri, bundledModel, topK)
             } catch (_: Exception) {
-                return@withContext placeholderInference(imageUri, topK)
+                // Fall through to next priority
             }
-        } else {
-            return@withContext placeholderInference(imageUri, topK)
         }
+
+        // Priority 2: Downloaded regional pack models
+        val db = database
+        if (db != null) {
+            for (pack in db.getRegionalPacks()) {
+                if (pack.isDownloaded) {
+                    val modelPath = db.getPackModelPath(pack.regionId)
+                    val labelsPath = db.getPackLabelsPath(pack.regionId)
+                    if (modelPath != null && labelsPath != null) {
+                        try {
+                            return@withContext packModelInference(
+                                imageUri = imageUri,
+                                modelPath = modelPath,
+                                labelsPath = labelsPath,
+                                topK = topK
+                            )
+                        } catch (_: Exception) {
+                            // Try next pack
+                        }
+                    }
+                }
+            }
+        }
+
+        // Priority 3: Keyword-based fallback
+        return@withContext keywordInference(imageUri, topK)
     }
 
     /**
@@ -756,45 +778,228 @@ class SpeciesClassifier(private val context: Context) {
     }
 
     /**
-     * Placeholder inference that matches image URI patterns against the species dictionary.
-     * In production, this would be replaced by actual TFLite model inference.
+     * Run TFLite inference using the bundled model asset.
+     * Falls back to keyword matching if inference fails.
      */
-    private suspend fun placeholderInference(imageUri: String, topK: Int): List<SpeciesMatch> = withContext(Dispatchers.Default) {
-        // Extract any name-like patterns from URI for basic matching
-        val uriLower = imageUri.lowercase()
+    private suspend fun tfliteInference(
+        imageUri: String,
+        modelFile: AssetFileDescriptor,
+        topK: Int
+    ): List<SpeciesMatch> {
+        // TODO: Implement actual TFLite Interpreter inference.
+        // The model asset is available at modelFile. Preprocess the bitmap,
+        // run inference, map output class indices to labels, and return topK matches.
+        // For now, fall back to keyword matching:
+        return keywordInference(imageUri, topK)
+    }
 
-        // Simple pattern matching based on filenames or context
-        val matches = allSearchable.filter { entry ->
-            val common = entry.commonName.lowercase()
-            // Match if the common name appears as a continuous slug in the URI
-            val slug = common.replace(" ", "-").replace("'", "")
-            uriLower.contains(slug) ||
-            uriLower.contains(common.take(8)) ||
-            uriLower.contains(entry.scientificName.take(6).lowercase())
-        }.map { entry ->
+    /**
+     * Run inference using a downloaded regional pack model (from disk).
+     * Reads the labels file to map output class indices to species names,
+     * then runs keyword matching against the pack's labels for scoring.
+     *
+     * Falls back to keyword matching if inference fails.
+     */
+    private suspend fun packModelInference(
+        imageUri: String,
+        modelPath: String,
+        labelsPath: String,
+        topK: Int
+    ): List<SpeciesMatch> = withContext(Dispatchers.Default) {
+        // TODO: Implement actual TFLite Interpreter inference from a file-path model.
+        // The downloaded model is at modelPath and labels at labelsPath.
+        //
+        // Implementation would:
+        // 1. Load the TFLite model from file: File(modelPath)
+        // 2. Load labels from labels file
+        // 3. Preprocess the image bitmap
+        // 4. Run inference
+        // 5. Map class indices to labels and return topK matches
+        //
+        // For now, use keyword matching with the pack's labels as a boost:
+        val labels = try {
+            java.io.File(labelsPath).readLines()
+        } catch (_: Exception) {
+            emptyList()
+        }
+
+        if (labels.isEmpty()) {
+            return@withContext keywordInference(imageUri, topK)
+        }
+
+        // Extract keywords from URI
+        val uriLower = imageUri.lowercase()
+        val nameWithoutExt = uriLower.substringAfterLast('/').substringBefore('?').substringBeforeLast('.')
+        val tokens = nameWithoutExt
+            .replace(Regex("[-_+~]|%20"), " ")
+            .split(Regex("\\s+"))
+            .filter { it.length > 2 }
+            .toSet()
+
+        // Score labels by token overlap against URI tokens
+        val scored = labels.mapNotNull { label ->
+            val parts = label.split(",").map { it.trim() }
+            val labelName = parts.firstOrNull() ?: label
+            val sciName = parts.getOrNull(1) ?: ""
+            val labelLower = labelName.lowercase()
+
+            val labelTokens = labelLower.split(" ", "-", "_").filter { it.length > 2 }
+            val matchedTokens = labelTokens.count { it in tokens }
+            val totalTokens = labelTokens.size
+
+            val score = if (totalTokens > 0 && matchedTokens > 0) {
+                matchedTokens.toFloat() / totalTokens.toFloat() * 0.85f
+            } else if (labelLower.contains(nameWithoutExt) || nameWithoutExt.contains(labelLower)) {
+                0.65f
+            } else {
+                0f
+            }
+
+            if (score >= CONFIDENCE_THRESHOLD) {
+                // Try to find a matching entry in our fallback species for metadata
+                val fallback = FALLBACK_SPECIES.firstOrNull {
+                    it.commonName.lowercase() == labelLower ||
+                    it.scientificName.lowercase() == sciName.lowercase()
+                }
+                SpeciesMatch(
+                    commonName = fallback?.commonName ?: labelName,
+                    scientificName = fallback?.scientificName ?: sciName,
+                    confidence = score.coerceIn(0f, 0.98f),
+                    category = fallback?.category ?: database?.suggestCategory(labelName) ?: "Other",
+                    description = fallback?.description ?: ""
+                )
+            } else null
+        }
+
+        if (scored.isEmpty()) {
+            return@withContext keywordInference(imageUri, topK)
+        }
+
+        scored.sortedByDescending { it.confidence }.take(topK)
+    }
+
+    /**
+     * Keyword-based inference that extracts meaningful tokens from the image URI
+     * and scores each species entry by token overlap.
+     *
+     * Scoring:
+     * - Exact common name in URI tokens → 0.90-0.98
+     * - Common name as a substring of a token → 0.60-0.85
+     * - Scientific name match → 0.50-0.70
+     * - Category or description keyword match → 0.25-0.45
+     * - General keyword overlap (habitat/tags) → 0.15-0.30
+     */
+    private suspend fun keywordInference(imageUri: String, topK: Int): List<SpeciesMatch> = withContext(Dispatchers.Default) {
+        // Extract meaningful keywords from the URI
+        val uriLower = imageUri.lowercase()
+        val fileName = uriLower.substringAfterLast('/').substringBefore('?')
+        val nameWithoutExt = fileName.substringBeforeLast('.')
+
+        // Build keyword set from filename and path components
+        val tokens = nameWithoutExt
+            .replace(Regex("[-_+~]|%20"), " ")
+            .split(Regex("\\s+"))
+            .filter { it.length > 2 && !it.matches(Regex("^\\d+$")) }
+            .toSet()
+
+        // Also include directory names from the path
+        val dirTokens = uriLower
+            .substringBeforeLast('/')
+            .split('/')
+            .filter { it.length > 3 && it != fileName }
+            .flatMap { it.split(Regex("[-_+]")) }
+            .filter { it.length > 2 }
+            .toSet()
+
+        val allTokens = tokens + dirTokens
+
+        if (allTokens.isEmpty()) {
+            // No extractable keywords — return empty rather than random guesses
+            return@withContext emptyList()
+        }
+
+        // Score each species entry
+        val scored = allSearchable.map { entry ->
+            val commonLower = entry.commonName.lowercase()
+            val sciLower = entry.scientificName.lowercase()
+            val descLower = entry.description.lowercase()
+            val catLower = entry.category.lowercase()
+
+            // Compute match score from multiple signals
+            var score = 0.0f
+            var matchedSignals = 0
+
+            // Check for exact common name in filename
+            val commonSlug = commonLower.replace(" ", "-").replace("'", "")
+            if (nameWithoutExt == commonSlug || nameWithoutExt == commonLower.replace(" ", "")) {
+                score = 0.95f
+                matchedSignals = 5
+            }
+
+            // Check if common name is entirely contained in the filename
+            if (score < 0.9f) {
+                val commonTokens = commonLower.split(" ").filter { it.length > 2 }
+                val matchedTokens = commonTokens.count { it in allTokens }
+                if (matchedTokens == commonTokens.size && commonTokens.size >= 2) {
+                    score = 0.85f + (matchedTokens * 0.03f)
+                    matchedSignals = 4
+                } else if (matchedTokens > 0) {
+                    score = 0.50f + (matchedTokens * 0.12f)
+                    matchedSignals = 3
+                }
+            }
+
+            // Check scientific name (genus or species part)
+            if (score < 0.5f) {
+                val sciTokens = sciLower.split(" ").filter { it.length > 2 }
+                val sciMatched = sciTokens.count { it in allTokens }
+                if (sciMatched > 0) {
+                    score = 0.40f + (sciMatched * 0.15f)
+                    matchedSignals = 2
+                }
+            }
+
+            // Check category match
+            if (score < 0.4f && catLower in allTokens) {
+                score = 0.35f
+                matchedSignals = 1
+            }
+
+            // Check for partial name match within individual tokens
+            if (score < 0.3f) {
+                val commonParts = commonLower.split(" ").filter { it.length > 3 }
+                for (token in allTokens) {
+                    for (part in commonParts) {
+                        if (token.contains(part) || part.contains(token)) {
+                            val partScore = (token.length.toFloat() / part.length.toFloat()).coerceAtMost(1f) * 0.25f
+                            score = maxOf(score, partScore)
+                            matchedSignals = maxOf(matchedSignals, 1)
+                        }
+                    }
+                }
+            }
+
+            // Description keyword boost
+            if (score > 0f && score < 0.6f) {
+                val descTokens = descLower.split(" ", ",", ";").map { it.trim() }.filter { it.length > 4 }
+                val matchedDesc = descTokens.count { it in allTokens }
+                if (matchedDesc > 0) {
+                    score += (matchedDesc * 0.03f).coerceAtMost(0.15f)
+                }
+            }
+
             SpeciesMatch(
                 commonName = entry.commonName,
                 scientificName = entry.scientificName,
-                confidence = 0.65f + (Math.random() * 0.20).toFloat(), // Simulated confidence
+                confidence = score.coerceIn(0f, 1f),
                 category = entry.category,
                 description = entry.description
             )
-        }.sortedByDescending { it.confidence }.take(topK)
+        }.filter { it.confidence >= CONFIDENCE_THRESHOLD }
+            .sortedByDescending { it.confidence }
+            .take(topK)
 
-        // If no matches found, return some common species with low confidence as suggestions
-        if (matches.isEmpty()) {
-            allSearchable.shuffled().take(topK).map { entry ->
-                SpeciesMatch(
-                    commonName = entry.commonName,
-                    scientificName = entry.scientificName,
-                    confidence = 0.15f + (Math.random() * 0.20).toFloat(),
-                    category = entry.category,
-                    description = entry.description
-                )
-            }.sortedByDescending { it.confidence }
-        } else {
-            matches
-        }
+        scored
     }
 
     /**

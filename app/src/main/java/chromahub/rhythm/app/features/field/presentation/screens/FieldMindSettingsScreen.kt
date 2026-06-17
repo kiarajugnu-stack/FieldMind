@@ -24,6 +24,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import fieldmind.research.app.features.field.data.database.entity.*
 import fieldmind.research.app.features.field.data.settings.FieldMindSettings
+import fieldmind.research.app.features.field.data.vision.SpeciesDatabase
 import fieldmind.research.app.features.field.data.weather.WeatherProviders
 import fieldmind.research.app.features.field.presentation.components.*
 import fieldmind.research.app.features.field.presentation.theme.FieldMindTheme
@@ -33,6 +34,7 @@ import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbo
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.BorderStroke
+import kotlinx.coroutines.launch
 
 // ══════════════════════════════════════════════════════════════════════
 //  Settings Hub
@@ -57,7 +59,8 @@ fun FieldMindSettingsScreen(
     onOpenWeather: (() -> Unit)? = null,
     onOpenMap: (() -> Unit)? = null,
     onOpenDataIntegrity: (() -> Unit)? = null,
-    onOpenDeveloper: (() -> Unit)? = null
+    onOpenDeveloper: (() -> Unit)? = null,
+    onOpenSpeciesPacks: (() -> Unit)? = null
 ) {
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(20.dp, 20.dp, 20.dp, 40.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
         item { FieldScreenHeader("Settings", "Offline-first setup, profile, capture, local AI, export, and privacy.", icon = FieldMindIcons.Settings, actionIcon = FieldMindIcons.Back, onAction = onBack) }
@@ -87,6 +90,7 @@ fun FieldMindSettingsScreen(
         item { SettingsNavCard("Security", "Privacy lock, lock timeout, auto-lock", FieldMindIcons.Lock, FieldMindTheme.colors.confidenceVerify) { onOpenSecurity?.invoke() } }
         item { SettingsNavCard("Data integrity", "Orphaned records, database health", FieldMindIcons.Archive, FieldMindTheme.colors.hypothesis) { onOpenDataIntegrity?.invoke() } }
         item { SettingsNavCard("Developer", "Debug logging, dev tools, version info", FieldMindIcons.Sparkle, FieldMindTheme.colors.flashcard) { onOpenDeveloper?.invoke() } }
+        item { SettingsNavCard("Species packs", "Download regional model packs for species ID", FieldMindIcons.Download, FieldMindTheme.colors.observation) { onOpenSpeciesPacks?.invoke() } }
         item { SettingsNavCard("Export Studio", "Export as PDF, CSV, JSON, HTML, SVG", FieldMindIcons.Export, FieldMindTheme.colors.report) { onOpenExport?.invoke() } }
         item { SettingsNavCard("What’s new", "FieldMind-specific redesign notes and migration changes", FieldMindIcons.Info, FieldMindTheme.colors.info) { onOpenChangelog?.invoke() } }
         item { SettingsNavCard("About", "Credits, acknowledgements, and version", FieldMindIcons.Info, FieldMindTheme.colors.source) { onOpenAbout?.invoke() } }
@@ -1135,5 +1139,284 @@ private fun SettingsTileGroup(title: String, content: @Composable ColumnScope.()
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
             elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
         ) { Column(content = content) }
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════════
+//  Species Pack Management Page
+// ══════════════════════════════════════════════════════════════════════
+
+@Composable
+fun SpeciesPackSettingsPage(onBack: () -> Unit) {
+    val context = LocalContext.current
+    val database = remember { SpeciesDatabase(context) }
+    val scope = rememberCoroutineScope()
+    val haptics = rememberFieldMindHaptics()
+    val snackbar = remember { SnackbarHostState() }
+
+    var packs by remember { mutableStateOf(database.getRegionalPacks()) }
+    var downloadingId by remember { mutableStateOf<String?>(null) }
+    var downloadProgress by remember { mutableFloatStateOf(0f) }
+
+    // Update pack list whenever download state changes
+    fun refreshPacks() {
+        packs = database.getRegionalPacks()
+    }
+
+    // Set up progress listener
+    LaunchedEffect(Unit) {
+        database.setProgressListener { regionId, downloaded, total ->
+            if (total > 0) {
+                downloadProgress = (downloaded.toFloat() / total).coerceIn(0f, 1f)
+            }
+        }
+    }
+
+    // Clean up listener
+    DisposableEffect(Unit) {
+        onDispose {
+            database.setProgressListener(null)
+        }
+    }
+
+    LaunchedEffect(packs) {
+        refreshPacks()
+    }
+
+    Box(Modifier.fillMaxSize()) {
+        LazyColumn(
+            Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(20.dp, 20.dp, 20.dp, 40.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp)
+        ) {
+            item {
+                FieldScreenHeader(
+                    "Species packs",
+                    "Download regional identification model packs.",
+                    icon = FieldMindIcons.Download,
+                    actionIcon = FieldMindIcons.Back,
+                    onAction = onBack
+                )
+            }
+
+            item {
+                Card(
+                    shape = RoundedCornerShape(22.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                ) {
+                    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Icon(FieldMindIcons.Info, null, tint = MaterialTheme.colorScheme.primary, size = 20.dp)
+                            Text(
+                                "Regional packs expand the species identification model beyond the bundled ~500 species.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                }
+            }
+
+            items(packs, key = { it.regionId }) { pack ->
+                val isDownloaded = pack.isDownloaded
+                val isDownloading = downloadingId == pack.regionId
+
+                Card(
+                    shape = RoundedCornerShape(22.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = if (isDownloaded)
+                            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.2f)
+                        else
+                            MaterialTheme.colorScheme.surfaceContainerLow
+                    ),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                ) {
+                    Column(
+                        Modifier.padding(18.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        // Header row
+                        Row(
+                            Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(14.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Box(
+                                Modifier
+                                    .size(48.dp)
+                                    .clip(RoundedCornerShape(14.dp))
+                                    .background(
+                                        FieldMindTheme.colors.observation.copy(alpha = 0.14f)
+                                    ),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    if (isDownloaded) FieldMindIcons.Check else FieldMindIcons.Download,
+                                    null,
+                                    tint = FieldMindTheme.colors.observation,
+                                    size = 24.dp
+                                )
+                            }
+                            Column(Modifier.weight(1f)) {
+                                Text(
+                                    pack.regionName,
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Text(
+                                    pack.description,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    maxLines = 2,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            }
+                            // Status badge
+                            Surface(
+                                shape = RoundedCornerShape(10.dp),
+                                color = if (isDownloaded)
+                                    FieldMindTheme.colors.positive.copy(alpha = 0.14f)
+                                else
+                                    MaterialTheme.colorScheme.surfaceContainerHigh
+                            ) {
+                                Text(
+                                    if (isDownloaded) "Ready" else "${pack.downloadSizeMb} MB",
+                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = if (isDownloaded) FieldMindTheme.colors.positive else MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+
+                        // Stats row
+                        Row(
+                            Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            StatChip("${pack.speciesCount}", "species", FieldMindTheme.colors.observation)
+                            StatChip("${pack.downloadSizeMb} MB", "size", MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+
+                        // Download progress bar
+                        if (isDownloading) {
+                            Column(
+                                verticalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                LinearProgressIndicator(
+                                    progress = { downloadProgress },
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(6.dp)
+                                        .clip(RoundedCornerShape(3.dp)),
+                                    color = FieldMindTheme.colors.observation
+                                )
+                                Text(
+                                    "${(downloadProgress * 100).toInt()}% — Downloading…",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+
+                        // Action buttons
+                        Row(
+                            Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            if (isDownloaded) {
+                                OutlinedButton(
+                                    onClick = {
+                                        haptics.light()
+                                        scope.launch {
+                                            val success = database.deletePack(pack.regionId)
+                                            refreshPacks()
+                                            snackbar.showSnackbar(
+                                                if (success) "${pack.regionName} pack removed"
+                                                else "Could not delete pack"
+                                            )
+                                        }
+                                    },
+                                    modifier = Modifier.weight(1f),
+                                    shape = RoundedCornerShape(14.dp),
+                                    colors = ButtonDefaults.outlinedButtonColors(
+                                        contentColor = MaterialTheme.colorScheme.error
+                                    )
+                                ) {
+                                    Icon(FieldMindIcons.Delete, null, size = 18.dp)
+                                    Spacer(Modifier.size(6.dp))
+                                    Text("Delete")
+                                }
+                                TextButton(
+                                    onClick = {
+                                        haptics.light()
+                                        snackbar.showSnackbar("Model at: ${database.getPackModelPath(pack.regionId)}")
+                                    },
+                                    modifier = Modifier.weight(1f)
+                                ) {
+                                    Icon(FieldMindIcons.Info, null, size = 18.dp)
+                                    Spacer(Modifier.size(6.dp))
+                                    Text("Info", maxLines = 1)
+                                }
+                            } else {
+                                Button(
+                                    onClick = {
+                                        haptics.confirm()
+                                        downloadingId = pack.regionId
+                                        downloadProgress = 0f
+                                        scope.launch {
+                                            val success = database.downloadPack(pack.regionId)
+                                            downloadingId = null
+                                            refreshPacks()
+                                            snackbar.showSnackbar(
+                                                if (success) "${pack.regionName} pack downloaded"
+                                                else "Download failed. Check your connection and try again."
+                                            )
+                                        }
+                                    },
+                                    modifier = Modifier.weight(1f),
+                                    shape = RoundedCornerShape(14.dp),
+                                    enabled = !isDownloading
+                                ) {
+                                    if (isDownloading) {
+                                        CircularProgressIndicator(
+                                            modifier = Modifier.size(18.dp),
+                                            strokeWidth = 2.dp,
+                                            color = MaterialTheme.colorScheme.onPrimary
+                                        )
+                                    } else {
+                                        Icon(FieldMindIcons.Download, null, size = 18.dp)
+                                    }
+                                    Spacer(Modifier.size(6.dp))
+                                    Text(if (isDownloading) "Downloading…" else "Download")
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Snackbar overlay
+        SnackbarHost(
+            hostState = snackbar,
+            modifier = Modifier.align(Alignment.BottomCenter).padding(16.dp)
+        )
+    }
+}
+
+@Composable
+private fun StatChip(value: String, label: String, color: Color) {
+    Row(
+        Modifier
+            .clip(RoundedCornerShape(99.dp))
+            .background(color.copy(alpha = 0.1f))
+            .padding(horizontal = 10.dp, vertical = 5.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        Text(value, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, color = color)
+        Text(label, style = MaterialTheme.typography.labelSmall, color = color.copy(alpha = 0.7f))
     }
 }

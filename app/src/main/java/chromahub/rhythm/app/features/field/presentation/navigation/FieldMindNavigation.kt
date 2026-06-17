@@ -97,6 +97,7 @@ sealed class FieldMindScreen(val route: String, val label: String, val icon: Mat
     data object SettingsMap : FieldMindScreen("field_settings_map", "Map", FieldMindIcons.Map)
     data object SettingsDataIntegrity : FieldMindScreen("field_settings_data_integrity", "Data Integrity", FieldMindIcons.Archive)
     data object SettingsDeveloper : FieldMindScreen("field_settings_developer", "Developer", FieldMindIcons.Sparkle)
+    data object SettingsSpeciesPacks : FieldMindScreen("field_settings_species_packs", "Species Packs", FieldMindIcons.Download)
 
     // Group 1: Interactive Data Tools
     data object CounterTool : FieldMindScreen("field_counter_tool", "Counter", FieldMindIcons.Add)
@@ -326,7 +327,8 @@ composable(FieldMindScreen.Reports.route) { ProjectsScreen(viewModel = viewModel
                 onOpenUnits = { navController.navigateToDestination(FieldMindScreen.SettingsUnits.route) },
                 onOpenMap = { navController.navigateToDestination(FieldMindScreen.SettingsMap.route) },
                 onOpenDataIntegrity = { navController.navigateToDestination(FieldMindScreen.SettingsDataIntegrity.route) },
-                onOpenDeveloper = { navController.navigateToDestination(FieldMindScreen.SettingsDeveloper.route) }
+                onOpenDeveloper = { navController.navigateToDestination(FieldMindScreen.SettingsDeveloper.route) },
+                onOpenSpeciesPacks = { navController.navigateToDestination(FieldMindScreen.SettingsSpeciesPacks.route) }
             )
         }
         composable(FieldMindScreen.SettingsProfile.route) { ProfileSettingsPage(viewModel = viewModel, onBack = { navController.popBackStack() }) }
@@ -342,6 +344,7 @@ composable(FieldMindScreen.Reports.route) { ProjectsScreen(viewModel = viewModel
         composable(FieldMindScreen.SettingsMap.route) { MapSettingsPage(viewModel = viewModel, onBack = { navController.popBackStack() }) }
         composable(FieldMindScreen.SettingsDataIntegrity.route) { DataIntegritySettingsPage(viewModel = viewModel, onBack = { navController.popBackStack() }) }
         composable(FieldMindScreen.SettingsDeveloper.route) { DeveloperSettingsPage(viewModel = viewModel, onBack = { navController.popBackStack() }) }
+        composable(FieldMindScreen.SettingsSpeciesPacks.route) { SpeciesPackSettingsPage(onBack = { navController.popBackStack() }) }
         composable(FieldMindScreen.CounterTool.route) { CounterToolScreen(viewModel = viewModel, onBack = { navController.popBackStack() }) }
         composable(FieldMindScreen.MeasurementTool.route) { MeasurementToolScreen(viewModel = viewModel, onBack = { navController.popBackStack() }) }
         composable(FieldMindScreen.WeatherLogTool.route) { WeatherLogToolScreen(viewModel = viewModel, onBack = { navController.popBackStack() }) }
