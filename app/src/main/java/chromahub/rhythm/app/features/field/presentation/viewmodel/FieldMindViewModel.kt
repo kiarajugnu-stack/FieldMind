@@ -9,6 +9,9 @@ import fieldmind.research.app.features.field.data.repository.FieldMindRepository
 import fieldmind.research.app.features.field.data.export.FieldMindExport
 import fieldmind.research.app.features.field.data.settings.FieldMindSettings
 import fieldmind.research.app.features.field.data.weather.WeatherSnapshot
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
@@ -42,6 +45,11 @@ class FieldMindViewModel(application: Application) : AndroidViewModel(applicatio
     val flashcards: StateFlow<List<FlashcardEntity>> = repository.flashcards.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
     val tags: StateFlow<List<TagEntity>> = repository.tags.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
     val commonTags: StateFlow<List<TagStatistic>> = repository.commonTags.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    /** True while the user has an active capture session timer running on the Observe screen. */
+    var captureSessionActive by mutableStateOf(false)
+        private set
+    fun setCaptureSessionActive(active: Boolean) { captureSessionActive = active }
 
     fun addObservation(
         subject: String,
