@@ -1,7 +1,6 @@
 package fieldmind.research.app.features.field.presentation.screens
 
 import android.Manifest
-import android.content.Context
 import android.content.pm.PackageManager
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -9,7 +8,6 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -341,44 +339,6 @@ private fun PageIndicator(current: Int, total: Int, modifier: Modifier = Modifie
 }
 
 // ══════════════════════════════════════════════════════════════════════
-//  Shared component: Animated selection card
-// ══════════════════════════════════════════════════════════════════════
-
-@Composable
-private fun SelectionCard(
-    selected: Boolean,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-    accentColor: Color = MaterialTheme.colorScheme.primary,
-    content: @Composable ColumnScope.() -> Unit
-) {
-    val scale by animateFloatAsState(
-        targetValue = if (selected) 1f else 0.97f,
-        animationSpec = FieldMindMotion.expressiveSpring,
-        label = "cardScale"
-    )
-    val elevation by animateDpAsState(
-        targetValue = if (selected) 4.dp else 0.dp,
-        animationSpec = FieldMindMotion.expressiveFloat,
-        label = "cardElevation"
-    )
-    Card(
-        modifier = modifier
-            .graphicsLayer { scaleX = scale; scaleY = scale }
-            .clickable(onClick = onClick),
-        shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = if (selected) accentColor.copy(alpha = if (MaterialTheme.colorScheme.background.luminance() > 0.5f) 0.12f else 0.22f)
-            else MaterialTheme.colorScheme.surfaceContainerHigh
-        ),
-        border = if (selected) androidx.compose.foundation.BorderStroke(1.5.dp, accentColor.copy(alpha = 0.5f)) else null,
-        elevation = CardDefaults.cardElevation(defaultElevation = elevation)
-    ) {
-        Column(Modifier.padding(14.dp), content = content)
-    }
-}
-
-// ══════════════════════════════════════════════════════════════════════
 //  Screen 1: Welcome & Identity
 // ══════════════════════════════════════════════════════════════════════
 
@@ -483,7 +443,7 @@ private fun OnboardingWelcomePage(
                             capitalization = KeyboardCapitalization.Words,
                             imeAction = ImeAction.Next
                         ),
-                        leadingIcon = { Icon(icon = FieldMindIcons.Profile, contentDescription = null, size = 20.dp) }
+                        leadingIcon = { Icon(icon = FieldMindIcons.User, contentDescription = null, size = 20.dp) }
                     )
                 }
 
@@ -616,8 +576,8 @@ private fun OnboardingInterestsPage(
                         Text("Other fields", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         val otherFields = listOf(
                             Triple("Ecology & Environment", FieldMindIcons.Weather, Color(0xFFFB8C00)),
-                            Triple("Astronomy", FieldMindIcons.Star, Color(0xFF7B1FA2)),
-                            Triple("Geology", FieldMindIcons.Terrain, Color(0xFF6D4C41))
+                            Triple("Astronomy", FieldMindIcons.MoonFull, Color(0xFF7B1FA2)),
+                            Triple("Geology", FieldMindIcons.Rock, Color(0xFF6D4C41))
                         )
                         otherFields.forEach { (label, icon, accent) ->
                             val isSelected = when (label) {
@@ -808,8 +768,7 @@ private fun OnboardingPermissionsPage(
                 val permissions = listOf(
                     PermissionItem("Camera", "Take photos of your observations for visual evidence.", FieldMindIcons.Camera, Color(0xFF5C6BC0), cameraGranted, onRequestCamera),
                     PermissionItem("Location", "Auto-tag GPS coordinates and fetch live weather for your field site.", FieldMindIcons.Location, Color(0xFF26A69A), locationGranted, onRequestLocation),
-                    PermissionItem("Microphone", "Record audio field notes — ideal for hands-free observation logging.", FieldMindIcons.Mic, Color(0xFFEF5350), audioGranted, onRequestAudio),
-                    PermissionItem("Notifications", "Optional daily reminders, streak updates, and backup notifications.", FieldMindIcons.Bell, Color(0xFFFFA726), notificationGranted, onRequestNotification)
+                    PermissionItem("Microphone", "Record audio field notes — ideal for hands-free observation logging.", FieldMindIcons.Mic, Color(0xFFEF5350), audioGranted, onRequestAudio),                        PermissionItem("Notifications", "Optional daily reminders, streak updates, and backup notifications.", FieldMindIcons.Notifications, Color(0xFFFFA726), notificationGranted, onRequestNotification)
                 )
 
                 permissions.forEach { perm ->
@@ -963,7 +922,7 @@ private fun OnboardingThemePage(
                                             when (theme) {
                                                 "System" -> FieldMindIcons.Settings
                                                 "Light" -> FieldMindIcons.Weather
-                                                "Dark" -> FieldMindIcons.Moon
+                                                "Dark" -> FieldMindIcons.MoonFull
                                                 else -> FieldMindIcons.Settings
                                             },
                                             null,
