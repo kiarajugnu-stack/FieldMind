@@ -148,6 +148,15 @@ fun ObserveScreen(
 
     // GPS location & accuracy
     val locationProvider = remember { FieldLocationProvider(context) }
+
+    // Sync captureSessionActive with local session state on navigation to Observe screen.
+    // This prevents the nav bar from hiding when navigating to Observe without an active
+    // session — handles stale captureSessionActive state from incomplete cleanup paths.
+    LaunchedEffect(Unit) {
+        if (!session.isActive) {
+            viewModel.setCaptureSessionActive(false)
+        }
+    }
     var capturedLocation by remember { mutableStateOf<CapturedLocation?>(null) }
 
     // Core session state
