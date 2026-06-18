@@ -3115,7 +3115,7 @@ private val _autoCheckForUpdates = MutableStateFlow(prefs.getBoolean(KEY_AUTO_CH
         prefs.edit().putInt(KEY_UPDATE_CHECK_INTERVAL_HOURS, hours).apply()
         _updateCheckIntervalHours.value = hours
 
-        if (/* shouldRunUpdateNotificationWorker removed */) {
+        // shouldRunUpdateNotificationWorker removed
             /* scheduleUpdateNotificationWorker removed */
         }
     }

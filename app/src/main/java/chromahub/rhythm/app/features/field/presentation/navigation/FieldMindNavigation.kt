@@ -293,13 +293,11 @@ fun FieldMindNavigation(viewModel: FieldMindViewModel, onResetOnboarding: () -> 
                                 visibleTabs.forEach { screen ->
                                     val selected = isSelected(screen)
                                     val itemInteractionSource = remember { MutableInteractionSource() }
-                                    AnimatedNavBarItem(
+                                    NavigationBarItem(
                                         selected = selected,
                                         onClick = { haptics.light(); navigateToTab(screen.route) },
                                         icon = { AnimatedNavIcon(screen, selected) },
-                                        label = { AnimatedNavLabel(screen.label, selected) },
-                                        interactionSource = itemInteractionSource,
-                                        modifier = Modifier.weight(1f)
+                                        label = { AnimatedNavLabel(screen.label, selected) }
                                     )
                                 }
                             }
@@ -344,7 +342,7 @@ private fun AnimatedNavIcon(screen: FieldMindScreen, selected: Boolean) {
         label = "navIconTint"
     )
     Icon(
-        icon = if (selected) screen.icon.filled() else screen.icon,
+        icon = if (selected) screen.icon.copy(filled = true) else screen.icon,
         contentDescription = screen.label,
         tint = tint,
         modifier = Modifier.graphicsLayer {
@@ -353,8 +351,7 @@ private fun AnimatedNavIcon(screen: FieldMindScreen, selected: Boolean) {
             this.alpha = alpha
             rotationZ = rotation
         },
-        size = if (selected) 34.dp else 26.dp,
-        weight = if (selected) 700 else screen.icon.defaultWeight
+        size = if (selected) 34.dp else 26.dp
     )
 }
 
@@ -493,8 +490,8 @@ private fun FieldMindNavHost(
         popEnterTransition = {
             // Smooth, consistent slide + fade for back navigation — no bounce, just gentle motion
             val direction = primaryTabDirection(targetState.destination.route, initialState.destination.route)
-            val slideSpec = tween(250, easing = FastOutSlowInEasing)
-            val fadeSpec = tween(200, easing = FastOutSlowInEasing)
+            val slideSpec = tween<Int>(250, easing = FastOutSlowInEasing)
+            val fadeSpec = tween<Float>(200, easing = FastOutSlowInEasing)
             if (direction == 0) {
                 slideInHorizontally(
                     animationSpec = slideSpec,
@@ -509,8 +506,8 @@ private fun FieldMindNavHost(
         },
         popExitTransition = {
             val direction = primaryTabDirection(targetState.destination.route, initialState.destination.route)
-            val slideSpec = tween(200, easing = FastOutSlowInEasing)
-            val fadeSpec = tween(150, easing = FastOutSlowInEasing)
+            val slideSpec = tween<Int>(200, easing = FastOutSlowInEasing)
+            val fadeSpec = tween<Float>(150, easing = FastOutSlowInEasing)
             if (direction == 0) {
                 slideOutHorizontally(
                     animationSpec = slideSpec,

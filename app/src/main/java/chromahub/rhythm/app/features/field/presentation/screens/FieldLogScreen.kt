@@ -20,6 +20,7 @@ import fieldmind.research.app.features.field.presentation.components.*
 import fieldmind.research.app.features.field.presentation.theme.FieldMindTheme
 import fieldmind.research.app.features.field.presentation.viewmodel.FieldMindViewModel
 import fieldmind.research.app.shared.presentation.components.icons.Icon
+import androidx.compose.runtime.saveable.rememberSaveable
 
 /**
  * Full-screen dedicated Field Log — a chronological field journal of all observations.
@@ -297,7 +298,47 @@ fun FieldLogScreen(
                 onDismiss = { showFilterSheet = false },
                 onReset = { filterState = ObservationFilterState() },
                 projects = emptyList()
-            )
-        }
+        )
     }
+}
+
+/** Filter state for the Field Log screen. */
+data class ObservationFilterState(
+    val query: String = "",
+    val category: String = "",
+    val confidence: String = "",
+    val tags: String = "",
+    val projectId: Long? = null,
+    val draftsOnly: Boolean = false,
+    val sortBy: String = "Date (newest)"
+)
+
+/** Saver for ObservationFilterState to survive configuration changes. */
+val ObservationFilterStateSaver = androidx.compose.runtime.saveable.Saver<ObservationFilterState, List<String?>>(
+    save = { state ->
+        listOf(
+            state.query,
+            state.category,
+            state.confidence,
+            state.tags,
+            state.projectId?.toString(),
+            state.draftsOnly.toString(),
+            state.sortBy
+        )
+    },
+    restore = { list ->
+        ObservationFilterState(
+            query = list.getOrElse(0) { "" } ?: "",
+            category = list.getOrElse(1) { "" } ?: "",
+            confidence = list.getOrElse(2) { "" } ?: "",
+            tags = list.getOrElse(3) { "" } ?: "",
+            projectId = list.getOrElse(4) { null }?.toLongOrNull(),
+            draftsOnly = list.getOrElse(5) { "false" }?.toBoolean() ?: false,
+            sortBy = list.getOrElse(6) { "Date (newest)" } ?: "Date (newest)"
+        )
+    }
+)
+
+/** View modes for the timeline. */
+enum class TimelineViewMode { List, Gallery }
 }

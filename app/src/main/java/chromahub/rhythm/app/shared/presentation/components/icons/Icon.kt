@@ -15,7 +15,6 @@ import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Done
 import androidx.compose.material.icons.filled.Email
-import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.ExitToApp
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
@@ -24,7 +23,6 @@ import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.Mail
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Notifications
@@ -77,9 +75,8 @@ private fun iconNameToImageVector(name: String, filled: Boolean): ImageVector = 
     "create", "edit", "note_add" -> Icons.Filled.Create
     "date_range", "calendar_today", "calendar_month" -> Icons.Filled.DateRange
     "delete" -> Icons.Filled.Delete
-    "done" -> Icons.Filled.Done
-    "email", "mail", "message" -> Icons.Filled.Email
-    "error", "warning" -> if (filled) Icons.Filled.Warning else Icons.Filled.Error
+    "email", "mail", "message" -> Icons.Filled.Share
+    "error", "warning", "warning_amber" -> if (filled) Icons.Filled.Warning else Icons.Filled.Info
     "exit_to_app", "logout", "exit" -> Icons.Filled.ExitToApp
     "favorite", "favorite_filled" -> Icons.Filled.Favorite
     "favorite_border", "favorite_outline" -> Icons.Filled.FavoriteBorder
@@ -88,7 +85,6 @@ private fun iconNameToImageVector(name: String, filled: Boolean): ImageVector = 
     "list", "menu", "more_horiz" -> Icons.Filled.List
     "location_on", "place", "pin_drop", "location_searching" -> Icons.Filled.LocationOn
     "lock", "lock_outline" -> Icons.Filled.Lock
-    "mail", "email" -> Icons.Filled.Mail
     "menu" -> Icons.Filled.Menu
     "more_vert", "more" -> Icons.Filled.MoreVert
     "notifications", "notification" -> Icons.Filled.Notifications
@@ -104,9 +100,7 @@ private fun iconNameToImageVector(name: String, filled: Boolean): ImageVector = 
     "shopping_cart", "cart" -> Icons.Filled.ShoppingCart
     "star", "star_filled" -> Icons.Filled.Star
     "thumb_up", "like" -> Icons.Filled.ThumbUp
-    "warning", "error_outline" -> Icons.Filled.Warning
     "bug_report" -> Icons.Filled.Build
-    "search" -> Icons.Filled.Search
     "arrow_upward", "expand_less", "up" -> Icons.Filled.ArrowBack
     "arrow_downward", "expand_more", "down" -> Icons.Filled.ArrowForward
     "photo_camera", "camera", "camera_alt" -> Icons.Filled.Add
@@ -125,15 +119,12 @@ private fun iconNameToImageVector(name: String, filled: Boolean): ImageVector = 
     "sort", "sort_by" -> Icons.Filled.List
     "check_box", "check_box_outline" -> Icons.Filled.Check
     "chevron_right", "forward_arrow" -> Icons.Filled.ArrowForward
-    "expand_less", "arrow_up" -> Icons.Filled.ArrowBack
-    "expand_more", "arrow_down" -> Icons.Filled.ArrowForward
     "attach_file", "file", "attachment" -> Icons.Filled.Email
     "mic", "microphone" -> Icons.Filled.Phone
     "stop", "stop_circle" -> Icons.Filled.Clear
-    "location_on", "pin" -> Icons.Filled.LocationOn
     "map", "map_full" -> Icons.Filled.Place
     "hub", "graph", "pivot" -> Icons.Filled.Build
-    "link", "chain", "open_in_new" -> Icons.Filled.Mail
+    "link", "chain", "open_in_new" -> Icons.Filled.Share
     "ios_share", "export", "file_download" -> Icons.Filled.Share
     "local_fire_department", "fire", "streak" -> Icons.Filled.Star
     "palette", "color" -> Icons.Filled.Settings
@@ -144,11 +135,9 @@ private fun iconNameToImageVector(name: String, filled: Boolean): ImageVector = 
     "auto_awesome", "sparkle" -> Icons.Filled.Star
     "pause" -> Icons.Filled.Clear
     "fiber_manual_record", "record" -> Icons.Filled.Check
-    "open_in_new" -> Icons.Filled.Mail
-    "lock", "security" -> Icons.Filled.Lock
     "download", "file_download" -> Icons.Filled.Share
     "done", "complete" -> Icons.Filled.Done
-    "forum", "chat", "question_answer" -> Icons.Filled.Email
+    "forum", "chat", "question_answer" -> Icons.Filled.Share
     "timer", "clock" -> Icons.Filled.DateRange
     "route", "path", "track" -> Icons.Filled.Place
     "radio_button_checked", "circle" -> Icons.Filled.Check
@@ -171,7 +160,6 @@ private fun iconNameToImageVector(name: String, filled: Boolean): ImageVector = 
     "photo", "camera" -> Icons.Filled.Add
     "grid_on", "grid" -> Icons.Filled.List
     "table_rows", "table", "data" -> Icons.Filled.List
-    "file_download", "download" -> Icons.Filled.Share
     "functions", "function" -> Icons.Filled.Build
     "pivot_table_chart", "chart" -> Icons.Filled.List
     "emoji_events", "trophy", "achievement" -> Icons.Filled.Star
@@ -183,11 +171,7 @@ private fun iconNameToImageVector(name: String, filled: Boolean): ImageVector = 
     "raven", "bird" -> Icons.Filled.Person
     "flash_auto" -> Icons.Filled.Refresh
     "flash_off" -> Icons.Filled.Clear
-    "info" -> Icons.Filled.Info
-    "grid_on" -> Icons.Filled.List
-    "check_circle" -> Icons.Filled.CheckCircle
-    "warning" -> Icons.Filled.Warning
-    "error" -> Icons.Filled.Error
+    "save" -> Icons.Filled.Done
     else -> Icons.Filled.Info
 }
 

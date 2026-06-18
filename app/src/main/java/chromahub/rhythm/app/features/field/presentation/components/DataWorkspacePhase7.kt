@@ -73,7 +73,7 @@ private fun QuestionCard(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(
-                imageVector = FieldMindIcons.Forward,
+                icon = FieldMindIcons.Forward,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.size(24.dp)

@@ -200,7 +200,7 @@ fun ViewModeToggle(
     ) {
         IconButton(onClick = { onToggle("list") }, modifier = Modifier.size(36.dp)) {
             Icon(
-                icon = if (currentMode == "list") FieldMindIcons.List.filled() else FieldMindIcons.List,
+                icon = if (currentMode == "list") FieldMindIcons.List.copy(filled = true) else FieldMindIcons.List,
                 contentDescription = "List view",
                 tint = if (currentMode == "list") MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
                 size = 20.dp
@@ -208,7 +208,7 @@ fun ViewModeToggle(
         }
         IconButton(onClick = { onToggle("grid") }, modifier = Modifier.size(36.dp)) {
             Icon(
-                icon = if (currentMode == "grid") FieldMindIcons.Gallery.filled() else FieldMindIcons.Gallery,
+                icon = if (currentMode == "grid") FieldMindIcons.Gallery.copy(filled = true) else FieldMindIcons.Gallery,
                 contentDescription = "Grid view",
                 tint = if (currentMode == "grid") MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
                 size = 20.dp

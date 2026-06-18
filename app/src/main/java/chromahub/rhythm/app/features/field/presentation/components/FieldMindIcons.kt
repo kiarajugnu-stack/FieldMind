@@ -127,6 +127,7 @@ object FieldMindIcons {
     val Category = MaterialSymbolIcon("category")
     val User = MaterialSymbolIcon("person")
     val Photo = MaterialSymbolIcon("photo")
+    val Save = MaterialSymbolIcon("save")
     val Image = Photo
 
     /** Icon for an observation category (case-insensitive). Falls back to the observation icon. */

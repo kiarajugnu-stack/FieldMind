@@ -40,6 +40,8 @@ import java.util.Locale
 //  Data Tools Hub — Main hub showing all 8 data tools as clickable cards
 // ══════════════════════════════════════════════════════════════════════
 
+private data class DataComparisonRow(val label: String, val items: List<String>)
+
 private data class ToolCardInfo(
     val name: String,
     val description: String,
@@ -54,16 +56,17 @@ fun DataToolsHubScreen(
     onBack: () -> Unit,
     onNavigate: (FieldMindScreen) -> Unit
 ) {
+    val accentColor = FieldMindTheme.colors.data
     val tools = remember {
         listOf(
-            ToolCardInfo("Counter", "Tally with live count", FieldMindIcons.Add, FieldMindTheme.colors.data, FieldMindScreen.CounterTool),
-            ToolCardInfo("Measurement", "Log with units", FieldMindIcons.Graph, FieldMindTheme.colors.data, FieldMindScreen.MeasurementTool),
-            ToolCardInfo("Weather Log", "Conditions record", FieldMindIcons.Weather, FieldMindTheme.colors.data, FieldMindScreen.WeatherLogTool),
-            ToolCardInfo("Species", "Quick observation", FieldMindIcons.Nature, FieldMindTheme.colors.data, FieldMindScreen.SpeciesTool),
-            ToolCardInfo("Checklist", "Track items", FieldMindIcons.Check, FieldMindTheme.colors.data, FieldMindScreen.ChecklistTool),
-            ToolCardInfo("Event Log", "Record events", FieldMindIcons.List, FieldMindTheme.colors.data, FieldMindScreen.EventLogTool),
-            ToolCardInfo("Site Log", "Visit conditions", FieldMindIcons.Map, FieldMindTheme.colors.data, FieldMindScreen.SiteLogTool),
-            ToolCardInfo("Comparison", "Species/samples", FieldMindIcons.Data, FieldMindTheme.colors.data, FieldMindScreen.ComparisonTable)
+            ToolCardInfo("Counter", "Tally with live count", FieldMindIcons.Add, accentColor, FieldMindScreen.CounterTool),
+            ToolCardInfo("Measurement", "Log with units", FieldMindIcons.Graph, accentColor, FieldMindScreen.MeasurementTool),
+            ToolCardInfo("Weather Log", "Conditions record", FieldMindIcons.Weather, accentColor, FieldMindScreen.WeatherLogTool),
+            ToolCardInfo("Species", "Quick observation", FieldMindIcons.Nature, accentColor, FieldMindScreen.SpeciesTool),
+            ToolCardInfo("Checklist", "Track items", FieldMindIcons.Check, accentColor, FieldMindScreen.ChecklistTool),
+            ToolCardInfo("Event Log", "Record events", FieldMindIcons.List, accentColor, FieldMindScreen.EventLogTool),
+            ToolCardInfo("Site Log", "Visit conditions", FieldMindIcons.Map, accentColor, FieldMindScreen.SiteLogTool),
+            ToolCardInfo("Comparison", "Species/samples", FieldMindIcons.Data, accentColor, FieldMindScreen.ComparisonTable)
         )
     }
 
@@ -351,7 +354,7 @@ fun CounterToolScreen(
                                 shape = RoundedCornerShape(16.dp),
                                 enabled = count > 0
                             ) {
-                                Icon(FieldMindIcons.Save, null, size = 18.dp)
+                                Icon(FieldMindIcons.Check, null, size = 18.dp)
                                 Spacer(Modifier.size(8.dp))
                                 Text("Save current count ($count)")
                             }
@@ -1190,7 +1193,7 @@ fun ChecklistToolScreen(
                             modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(16.dp)
                         ) {
-                            Icon(FieldMindIcons.Save, null, size = 18.dp)
+                            Icon(FieldMindIcons.Check, null, size = 18.dp)
                             Spacer(Modifier.size(8.dp))
                             Text("Save checklist (${items.count { it.second }}/${items.size})")
                         }
@@ -1352,7 +1355,7 @@ fun SiteLogToolScreen(
                             FieldTextField(siteName, { siteName = it }, "Site name", required = true, supportingText = "e.g. North Meadow, Creek Bend")
                             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                                 FieldTextField(duration, { duration = it }, "Duration", modifier = Modifier.weight(1f), supportingText = "e.g. 2 hours")
-                                OptionPickerField(label = "Purpose", selected = purpose, options = purposes, onSelected = { purpose = it }, icon = FieldMindIcons.Info, containerModifier = Modifier.weight(1f))
+                                OptionPickerField(label = "Purpose", selected = purpose, options = purposes, onSelected = { purpose = it }, icon = FieldMindIcons.Info, modifier = Modifier.weight(1f))
                             }
                             FieldTextField(conditions, { conditions = it }, "Conditions", supportingText = "Weather, terrain, accessibility notes")
                             FieldTextField(findings, { findings = it }, "Key findings", minLines = 2, supportingText = "What did you observe or collect?")
@@ -1384,20 +1387,19 @@ fun ComparisonTableScreen(
     val haptics = rememberFieldMindHaptics()
 
     var tableName by remember { mutableStateOf("") }
-    data class ComparisonRow(val label: String, val items: MutableList<String>)
     var columnCount by remember { mutableIntStateOf(2) }
-    var rows by remember { mutableStateOf(listOf<ComparisonRow>()) }
+    var rows by remember { mutableStateOf(listOf<DataComparisonRow>()) }
     var newRowLabel by remember { mutableStateOf("") }
-    var newRowValues by remember { mutableStateOf(columnCount) { "" } }
+    var newRowValues by remember { mutableStateOf(List(2) { "" }) }
 
     fun addRow() {
         val label = newRowLabel.trim()
         if (label.isBlank()) return
         haptics.light()
-        val values = (0 until columnCount).map { newRowValues[it].ifBlank { "—" } }.toMutableList()
-        rows = rows + ComparisonRow(label, values)
+        val values = newRowValues.map { it.ifBlank { "—" } }
+        rows = rows + DataComparisonRow(label, values)
         newRowLabel = ""
-        newRowValues = (0 until columnCount).map { "" }.toMutableList()
+        newRowValues = List(columnCount) { "" }
     }
 
     fun saveComparison() {
@@ -1437,11 +1439,11 @@ fun ComparisonTableScreen(
                             FieldTextField(tableName, { tableName = it }, "Table name", required = true, supportingText = "e.g. Bird species comparison")
                             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                                 Text("Columns:", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
-                                FilledTonalIconButton(onClick = { if (columnCount > 1) { columnCount--; newRowValues = newRowValues.dropLast(1).toMutableList() } }, modifier = Modifier.size(36.dp)) {
+                                FilledTonalIconButton(onClick = { if (columnCount > 1) { columnCount-- } }, modifier = Modifier.size(36.dp)) {
                                     Text("−", fontWeight = FontWeight.Bold)
                                 }
                                 Text("$columnCount", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                                FilledTonalIconButton(onClick = { if (columnCount < 5) { columnCount++; newRowValues = newRowValues + "" } }, modifier = Modifier.size(36.dp)) {
+                                FilledTonalIconButton(onClick = { if (columnCount < 5) { columnCount++ } }, modifier = Modifier.size(36.dp)) {
                                     Text("+", fontWeight = FontWeight.Bold)
                                 }
                             }
@@ -1457,11 +1459,10 @@ fun ComparisonTableScreen(
                             FieldTextField(newRowLabel, { newRowLabel = it }, "Row label (e.g. species name)")
                             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                                 (0 until columnCount).forEach { col ->
-                                    val key = remember(col) { "col_$col" }
                                     OutlinedTextField(
-                                        value = newRowValues.getOrElse(col) { "" },
+                                        value = if (col < newRowValues.size) newRowValues[col] else "",
                                         onValueChange = { v ->
-                                            newRowValues = newRowValues.toMutableList().also { if (col < it.size) it[col] = v }
+                                            newRowValues = newRowValues.toMutableList().also { while (it.size <= col) it.add(""); it[col] = v }
                                         },
                                         modifier = Modifier.weight(1f),
                                         singleLine = true,
@@ -1494,7 +1495,7 @@ fun ComparisonTableScreen(
                                 }
                                 Spacer(Modifier.size(8.dp))
                                 Button(onClick = ::saveComparison, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp), enabled = tableName.isNotBlank() && rows.isNotEmpty()) {
-                                    Icon(FieldMindIcons.Save, null, size = 18.dp)
+                                    Icon(FieldMindIcons.Check, null, size = 18.dp)
                                     Spacer(Modifier.size(8.dp))
                                     Text("Save comparison table")
                                 }
