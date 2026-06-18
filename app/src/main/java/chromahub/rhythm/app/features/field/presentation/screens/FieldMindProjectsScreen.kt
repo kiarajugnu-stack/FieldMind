@@ -607,7 +607,7 @@ private fun ObservationsTab(
     onOpenDetail: (String, Long) -> Unit
 ) {
     var selectedProjectId by remember { mutableStateOf<Long?>(null) }
-    var sortOption by remember { mutableStateOf("Date (newest)") }
+    var sortOption by rememberSaveable { mutableStateOf("Date (newest)") }
     var selectedIds by remember { mutableStateOf<Set<Long>>(emptySet()) }
     var selectMode by remember { mutableStateOf(false) }
     var showDeleteConfirm by remember { mutableStateOf(false) }

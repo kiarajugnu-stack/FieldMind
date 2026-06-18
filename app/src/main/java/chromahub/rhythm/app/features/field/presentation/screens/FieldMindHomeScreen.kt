@@ -103,13 +103,30 @@ fun HomeScreen(
     onOpenDetail: (String, Long) -> Unit = { _, _ -> },
     onOpenReader: (String, String) -> Unit = { _, _ -> }
 ) {
+    // ── Interest-aware configuration (must be early for defaultCategory) ──
+    val userInterests by viewModel.fieldSettings.userInterests.collectAsState()
+    val defaultCategory = remember(userInterests) {
+        when {
+            userInterests.zoology.contains(ZoologySubfield.Birds) -> "Bird"
+            userInterests.zoology.contains(ZoologySubfield.Mammals) -> "Mammal"
+            userInterests.zoology.contains(ZoologySubfield.Insects) -> "Insect"
+            userInterests.zoology.contains(ZoologySubfield.Herps) -> "Animal"
+            userInterests.zoology.contains(ZoologySubfield.Marine) -> "Water"
+            userInterests.botany.isNotEmpty() -> "Plant"
+            userInterests.ecologyEnvironment -> "Weather"
+            userInterests.geology -> "Other"
+            userInterests.astronomy -> "Weather"
+            else -> "Bird"
+        }
+    }
+
     // ── Camera-first capture state ──
     var showCamera by remember { mutableStateOf(false) }
     var capturedPhotoUri by remember { mutableStateOf<String?>(null) }
     var capturedPhotoMime by remember { mutableStateOf<String?>(null) }
     var showCategoryPicker by remember { mutableStateOf(false) }
     var selectedCaptureCategory by remember { mutableStateOf(defaultCategory) }
-    
+
     // ── Note creation dialog state ──
     var showNoteDialog by remember { mutableStateOf(false) }
     
@@ -152,25 +169,6 @@ fun HomeScreen(
     val tempUnit by viewModel.fieldSettings.tempUnit.collectAsState()
     val windSpeedUnit by viewModel.fieldSettings.windSpeedUnit.collectAsState()
     val developerMode by viewModel.fieldSettings.developerMode.collectAsState()
-
-    // ── Interest-aware configuration ──
-    val userInterests by viewModel.fieldSettings.userInterests.collectAsState()
-    val defaultCategory = remember(userInterests) {
-        when {
-            userInterests.zoology.contains(ZoologySubfield.Birds) -> "Bird"
-            userInterests.zoology.contains(ZoologySubfield.Mammals) -> "Mammal"
-            userInterests.zoology.contains(ZoologySubfield.Insects) -> "Insect"
-            userInterests.zoology.contains(ZoologySubfield.Herps) -> "Animal"
-            userInterests.zoology.contains(ZoologySubfield.Marine) -> "Water"
-            userInterests.botany.contains(BotanySubfield.Wildflowers) || userInterests.botany.contains(BotanySubfield.Trees) -> "Plant"
-            userInterests.botany.contains(BotanySubfield.Fungi) -> "Plant"
-            userInterests.botany.contains(BotanySubfield.Mosses) -> "Plant"
-            userInterests.ecologyEnvironment -> "Weather"
-            userInterests.geology -> "Other"
-            userInterests.astronomy -> "Weather"
-            else -> "Bird"
-        }
-    }
 
     // ── Weather state (hoisted outside LazyColumn so it persists across scroll) ──
     var homeCurrentWeather by remember { mutableStateOf<WeatherSnapshot?>(null) }

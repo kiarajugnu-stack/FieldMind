@@ -98,7 +98,7 @@ fun SpeciesBrowserScreen(
         "Kingdom (A-Z)",
         "Category (A-Z)"
     )
-    var selectedSort by remember { mutableStateOf(sortOptions[0]) }
+    var selectedSort by rememberSaveable { mutableStateOf(sortOptions[0]) }
     var showSortDropdown by remember { mutableStateOf(false) }
 
     // Load categories, continents, and initial species

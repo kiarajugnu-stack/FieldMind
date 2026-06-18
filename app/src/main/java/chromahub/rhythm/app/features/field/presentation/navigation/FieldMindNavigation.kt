@@ -293,7 +293,8 @@ fun FieldMindNavigation(viewModel: FieldMindViewModel, onResetOnboarding: () -> 
                                         onClick = { haptics.light(); navigateToTab(screen.route) },
                                         icon = { AnimatedNavIcon(screen, selected) },
                                         label = { AnimatedNavLabel(screen.label, selected) },
-                                        interactionSource = itemInteractionSource
+                                        interactionSource = itemInteractionSource,
+                                        modifier = Modifier.weight(1f)
                                     )
                                 }
                             }
@@ -358,7 +359,8 @@ private fun AnimatedNavBarItem(
     onClick: () -> Unit,
     icon: @Composable () -> Unit,
     label: @Composable () -> Unit,
-    interactionSource: MutableInteractionSource
+    interactionSource: MutableInteractionSource,
+    modifier: Modifier = Modifier
 ) {
     val isPressed by interactionSource.collectIsPressedAsState()
 
@@ -377,8 +379,7 @@ private fun AnimatedNavBarItem(
     )
 
     Column(
-        modifier = Modifier
-            .fillMaxWidth()
+        modifier = modifier
             .graphicsLayer {
                 scaleX = pressScale
                 scaleY = pressScale
@@ -388,21 +389,19 @@ private fun AnimatedNavBarItem(
                 indication = null,
                 onClick = onClick
             )
-            .padding(vertical = 4.dp),
+            .padding(vertical = 2.dp, horizontal = 2.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
         Box(
-            modifier = Modifier
-                .height(36.dp)
-                .width(56.dp),
+            modifier = Modifier.size(48.dp),
             contentAlignment = Alignment.Center
         ) {
             // Pill indicator with bouncy entrance animation
             if (pillScale > 0.01f) {
                 Box(
                     modifier = Modifier
-                        .size(width = 52.dp, height = 36.dp)
+                        .size(44.dp)
                         .graphicsLayer {
                             scaleX = pillScale
                             scaleY = pillScale
@@ -487,32 +486,36 @@ private fun FieldMindNavHost(
             }
         },
         popEnterTransition = {
-            // Previous screen slides in from the left with a bouncy spring — expressive like the nav bar
+            // Smooth, consistent slide + fade for back navigation — no bounce, just gentle motion
             val direction = primaryTabDirection(targetState.destination.route, initialState.destination.route)
+            val slideSpec = tween(250, easing = FastOutSlowInEasing)
+            val fadeSpec = tween(200, easing = FastOutSlowInEasing)
             if (direction == 0) {
                 slideInHorizontally(
-                    animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMedium),
-                    initialOffsetX = { -it / 4 }
-                ) + fadeIn(spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = Spring.StiffnessMediumLow))
+                    animationSpec = slideSpec,
+                    initialOffsetX = { -it / 5 }
+                ) + fadeIn(animationSpec = fadeSpec)
             } else {
                 slideInHorizontally(
-                    animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMedium),
-                    initialOffsetX = { direction * it / 4 }
-                ) + fadeIn(spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = Spring.StiffnessMediumLow))
+                    animationSpec = slideSpec,
+                    initialOffsetX = { direction * it / 5 }
+                ) + fadeIn(animationSpec = fadeSpec)
             }
         },
         popExitTransition = {
             val direction = primaryTabDirection(targetState.destination.route, initialState.destination.route)
+            val slideSpec = tween(200, easing = FastOutSlowInEasing)
+            val fadeSpec = tween(150, easing = FastOutSlowInEasing)
             if (direction == 0) {
                 slideOutHorizontally(
-                    animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMedium),
-                    targetOffsetX = { it / 3 }
-                ) + fadeOut(spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = Spring.StiffnessMediumLow))
+                    animationSpec = slideSpec,
+                    targetOffsetX = { it / 4 }
+                ) + fadeOut(animationSpec = fadeSpec)
             } else {
                 slideOutHorizontally(
-                    animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMedium),
-                    targetOffsetX = { -direction * it / 3 }
-                ) + fadeOut(spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = Spring.StiffnessMediumLow))
+                    animationSpec = slideSpec,
+                    targetOffsetX = { -direction * it / 4 }
+                ) + fadeOut(animationSpec = fadeSpec)
             }
         }
     ) {

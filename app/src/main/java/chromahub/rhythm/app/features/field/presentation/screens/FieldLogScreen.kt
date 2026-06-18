@@ -45,7 +45,7 @@ fun FieldLogScreen(
     var viewMode by remember { mutableStateOf(TimelineViewMode.List) }
     var showSearch by remember { mutableStateOf(false) }
     var showFilterSheet by remember { mutableStateOf(false) }
-    var filterState by remember { mutableStateOf(ObservationFilterState()) }
+    var filterState by rememberSaveable(stateSaver = ObservationFilterStateSaver) { mutableStateOf(ObservationFilterState()) }
 
     // Filter & sort
     val filteredObservations = remember(observations, filterState) {

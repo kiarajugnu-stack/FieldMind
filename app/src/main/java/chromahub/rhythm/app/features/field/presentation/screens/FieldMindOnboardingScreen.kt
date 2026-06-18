@@ -32,6 +32,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
+import kotlin.math.roundToInt
 import fieldmind.research.app.features.field.data.settings.*
 import fieldmind.research.app.features.field.presentation.components.FieldMindIcons
 import fieldmind.research.app.features.field.presentation.components.FieldMindMotion
@@ -147,14 +148,14 @@ fun FieldMindOnboardingScreen(
             transitionSpec = {
                 val direction = if (targetState > initialState) 1 else -1
                 (slideInHorizontally(
-                    animationSpec = FieldMindMotion.expressiveSpring,
+                    animationSpec = tween(400, easing = FastOutSlowInEasing),
                     initialOffsetX = { direction * it / 3 }
-                ) + fadeIn(FieldMindMotion.expressiveFloat))
+                ) + fadeIn(tween(300)))
                     .togetherWith(
                         slideOutHorizontally(
-                            animationSpec = FieldMindMotion.expressiveFloat,
+                            animationSpec = tween(300),
                             targetOffsetX = { -direction * it / 4 }
-                        ) + fadeOut(FieldMindMotion.expressiveFloat)
+                        ) + fadeOut(tween(200))
                     )
             },
             label = "onboardingPage"
@@ -391,7 +392,7 @@ private fun OnboardingWelcomePage(
                 Modifier.weight(1f).padding(top = 32.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                AnimatedVisibility(visible = showContent, enter = fadeIn(FieldMindMotion.expressiveSpring) + scaleIn(initialScale = 0.8f)) {
+                AnimatedVisibility(visible = showContent, enter = fadeIn(tween(400, easing = FastOutSlowInEasing)) + scaleIn(initialScale = 0.8f, animationSpec = tween(400, easing = FastOutSlowInEasing))) {
                     Box(
                         Modifier.size(72.dp).background(
                             Brush.linearGradient(listOf(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.tertiary)),
@@ -1370,7 +1371,7 @@ private fun OnboardingBackupPage(
                 }
                 listOf(
                     Triple("Auto-backup", "Schedule automatic backups of all your observations, projects, and settings. Configurable frequency.", FieldMindIcons.Export),
-                    Triple("Daily reminders", "Gentle nudges if you haven't logged an observation. Helps maintain your research streak.", FieldMindIcons.Bell),
+                    Triple("Daily reminders", "Gentle nudges if you haven't logged an observation. Helps maintain your research streak.", FieldMindIcons.Notifications),
                     Triple("Research streaks", "Track your daily observation streak for motivation. Visual streak cards on the home screen.", FieldMindIcons.Streak)
                 ).forEach { (title, desc, icon) ->
                     AnimatedVisibility(visible = showContent, enter = fadeIn(FieldMindMotion.expressiveFloat)) {
@@ -1453,13 +1454,14 @@ private fun OnboardingDataToolsPage(
                 }
 
                 val tools = listOf(
-                    Triple("Counter", "Track frequencies — bird calls, insect encounters, plant counts", FieldMindIcons.Add, Color(0xFF43A047)),
-                    Triple("Measure", "Log transect distances, plot sizes, and GPS waypoints", FieldMindIcons.Graph, Color(0xFF5C6BC0)),
-                    Triple("Weather Log", "Record temperature, humidity, wind, and pressure at your field site", FieldMindIcons.Weather, Color(0xFF26A69A)),
-                    Triple("Species Survey", "Log species sightings with abundance estimates and habitat notes", FieldMindIcons.Nature, Color(0xFFFFA726))
+                    Pair(Triple("Counter", "Track frequencies — bird calls, insect encounters, plant counts", FieldMindIcons.Add), Color(0xFF43A047)),
+                    Pair(Triple("Measure", "Log transect distances, plot sizes, and GPS waypoints", FieldMindIcons.Graph), Color(0xFF5C6BC0)),
+                    Pair(Triple("Weather Log", "Record temperature, humidity, wind, and pressure at your field site", FieldMindIcons.Weather), Color(0xFF26A69A)),
+                    Pair(Triple("Species Survey", "Log species sightings with abundance estimates and habitat notes", FieldMindIcons.Nature), Color(0xFFFFA726))
                 )
 
-                tools.forEach { (title, desc, icon, accent) ->
+                tools.forEach { (info, accent) ->
+                    val (title, desc, icon) = info
                     AnimatedVisibility(visible = showContent, enter = fadeIn(FieldMindMotion.expressiveFloat)) {
                         Card(
                             shape = RoundedCornerShape(20.dp),

@@ -27,6 +27,10 @@ android {
         versionCode = Version.getVersionCode(project)
         versionName = Version.getVersionName(project)
 
+        // Only include English locale resources — saves ~5-8 MB of APK size
+        // The app's music-player origins shipped 26+ locale files
+        resConfigs "en"
+
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -200,15 +204,6 @@ dependencies {
     implementation(libs.androidx.material3.window.size)
     implementation(libs.com.google.android.material)
 
-    // Media3 dependencies
-    implementation(libs.androidx.media3.exoplayer)
-    implementation(libs.androidx.media3.exoplayer.dash)
-    implementation(libs.androidx.media3.exoplayer.hls)
-    implementation(libs.androidx.media3.ui)
-    implementation(libs.androidx.media3.session)
-    implementation(libs.androidx.media3.exoplayer.midi)
-    implementation(libs.org.jellyfin.media3.ffmpeg.decoder)
-    
     // Icons - Material Symbols variable font (res/font/material_symbols_outlined.ttf)
     // Replaces the deprecated material-icons-extended library for faster build times
     implementation(libs.androidx.palette.ktx)
@@ -232,14 +227,12 @@ dependencies {
     // Fragment
     implementation(libs.androidx.fragment.ktx)
     
-    // MediaRouter for Android media output switching
-    implementation(libs.androidx.mediarouter)
+    // (mediarouter removed — legacy music player code stripped)
     
     // Coil for image loading
     implementation(libs.io.coil.kt.coil.compose)
     
-    // Audio metadata editing
-    implementation(libs.net.jthink.jaudiotagger)
+    // (jaudiotagger removed — legacy music player code stripped)
     
     // Network
     implementation(libs.com.squareup.retrofit2.retrofit)
