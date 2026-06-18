@@ -1,352 +1,293 @@
 package fieldmind.research.app.shared.presentation.components.icons
 
+import android.content.Context
+import android.graphics.Typeface
+import android.os.Build
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
-import androidx.compose.material.icons.Icons
-// ── Filled icons (used for `filled = true` variants) ──
-import androidx.compose.material.icons.filled.Add as FilledAdd
-import androidx.compose.material.icons.filled.ArrowBack as FilledArrowBack
-import androidx.compose.material.icons.filled.ArrowForward as FilledArrowForward
-import androidx.compose.material.icons.filled.Build as FilledBuild
-import androidx.compose.material.icons.filled.Check as FilledCheck
-import androidx.compose.material.icons.filled.CheckCircle as FilledCheckCircle
-import androidx.compose.material.icons.filled.Close as FilledClose
-import androidx.compose.material.icons.filled.Create as FilledCreate
-import androidx.compose.material.icons.filled.Delete as FilledDelete
-import androidx.compose.material.icons.filled.Done as FilledDone
-import androidx.compose.material.icons.filled.Email as FilledEmail
-import androidx.compose.material.icons.filled.Favorite as FilledFavorite
-import androidx.compose.material.icons.filled.FavoriteBorder as FilledFavoriteBorder
-import androidx.compose.material.icons.filled.Home as FilledHome
-import androidx.compose.material.icons.filled.Info as FilledInfo
-import androidx.compose.material.icons.filled.Notifications as FilledNotifications
-import androidx.compose.material.icons.filled.Person as FilledPerson
-import androidx.compose.material.icons.filled.PlayArrow as FilledPlayArrow
-import androidx.compose.material.icons.filled.Refresh as FilledRefresh
-import androidx.compose.material.icons.filled.Search as FilledSearch
-import androidx.compose.material.icons.filled.Send as FilledSend
-import androidx.compose.material.icons.filled.Settings as FilledSettings
-import androidx.compose.material.icons.filled.Share as FilledShare
-import androidx.compose.material.icons.filled.Star as FilledStar
-import androidx.compose.material.icons.filled.Warning as FilledWarning
-
-// ── Outlined icons (default/unfilled variants) ──
-import androidx.compose.material.icons.outlined.AcUnit
-import androidx.compose.material.icons.outlined.Add
-import androidx.compose.material.icons.outlined.Air
-import androidx.compose.material.icons.outlined.ArrowBack
-import androidx.compose.material.icons.outlined.ArrowForward
-import androidx.compose.material.icons.outlined.Article
-import androidx.compose.material.icons.outlined.AttachFile
-import androidx.compose.material.icons.outlined.AutoAwesome
-import androidx.compose.material.icons.outlined.AutoGraph
-import androidx.compose.material.icons.outlined.AutoStories
-import androidx.compose.material.icons.outlined.BarChart
-import androidx.compose.material.icons.outlined.Bedtime
-import androidx.compose.material.icons.outlined.Biotech
-import androidx.compose.material.icons.outlined.Bolt
-import androidx.compose.material.icons.outlined.BookmarkBorder
-import androidx.compose.material.icons.outlined.BugReport
-import androidx.compose.material.icons.outlined.CalendarMonth
-import androidx.compose.material.icons.outlined.Call
-import androidx.compose.material.icons.outlined.CameraAlt
-import androidx.compose.material.icons.outlined.Category
-import androidx.compose.material.icons.outlined.ChatBubbleOutline
-import androidx.compose.material.icons.outlined.Check
-import androidx.compose.material.icons.outlined.CheckBox
-import androidx.compose.material.icons.outlined.CheckCircleOutline
-import androidx.compose.material.icons.outlined.ChevronRight
-import androidx.compose.material.icons.outlined.Close
-import androidx.compose.material.icons.outlined.Cloud
-import androidx.compose.material.icons.outlined.Cloudy
-import androidx.compose.material.icons.outlined.ContentCopy
-import androidx.compose.material.icons.outlined.Crow
-import androidx.compose.material.icons.outlined.Cyclone
-import androidx.compose.material.icons.outlined.DarkMode
-import androidx.compose.material.icons.outlined.DateRange
-import androidx.compose.material.icons.outlined.Delete
-import androidx.compose.material.icons.outlined.Description
-import androidx.compose.material.icons.outlined.Download
-import androidx.compose.material.icons.outlined.Eco
-import androidx.compose.material.icons.outlined.Edit
-import androidx.compose.material.icons.outlined.Email
-import androidx.compose.material.icons.outlined.EmojiEvents
-import androidx.compose.material.icons.outlined.ExpandLess
-import androidx.compose.material.icons.outlined.ExpandMore
-import androidx.compose.material.icons.outlined.Favorite
-import androidx.compose.material.icons.outlined.FavoriteBorder
-import androidx.compose.material.icons.outlined.FiberManualRecord
-import androidx.compose.material.icons.outlined.FilterList
-import androidx.compose.material.icons.outlined.Flag
-import androidx.compose.material.icons.outlined.FlashOn
-import androidx.compose.material.icons.outlined.Flight
-import androidx.compose.material.icons.outlined.FlipCameraAndroid
-import androidx.compose.material.icons.outlined.Foggy
-import androidx.compose.material.icons.outlined.Forum
-import androidx.compose.material.icons.outlined.Functions
-import androidx.compose.material.icons.outlined.Groups
-import androidx.compose.material.icons.outlined.HelpOutline
-import androidx.compose.material.icons.outlined.Hexagon
-import androidx.compose.material.icons.outlined.Home
-import androidx.compose.material.icons.outlined.Hub
-import androidx.compose.material.icons.outlined.Image
-import androidx.compose.material.icons.outlined.Info
-import androidx.compose.material.icons.outlined.Inventory2
-import androidx.compose.material.icons.outlined.IosShare
-import androidx.compose.material.icons.outlined.Landscape
-import androidx.compose.material.icons.outlined.Lightbulb
-import androidx.compose.material.icons.outlined.LightMode
-import androidx.compose.material.icons.outlined.Link
-import androidx.compose.material.icons.outlined.LocalFireDepartment
-import androidx.compose.material.icons.outlined.LocalFlorist
-import androidx.compose.material.icons.outlined.LocationOn
-import androidx.compose.material.icons.outlined.Lock
-import androidx.compose.material.icons.outlined.MenuBook
-import androidx.compose.material.icons.outlined.Mic
-import androidx.compose.material.icons.outlined.Nature
-import androidx.compose.material.icons.outlined.NightsStay
-import androidx.compose.material.icons.outlined.NoteAlt
-import androidx.compose.material.icons.outlined.Notifications
-import androidx.compose.material.icons.outlined.OpenInNew
-import androidx.compose.material.icons.outlined.Palette
-import androidx.compose.material.icons.outlined.Pause
-import androidx.compose.material.icons.outlined.Person
-import androidx.compose.material.icons.outlined.Pets
-import androidx.compose.material.icons.outlined.Photo
-import androidx.compose.material.icons.outlined.PhotoCamera
-import androidx.compose.material.icons.outlined.PlayArrow
-import androidx.compose.material.icons.outlined.QuestionAnswer
-import androidx.compose.material.icons.outlined.RadioButtonChecked
-import androidx.compose.material.icons.outlined.Refresh
-import androidx.compose.material.icons.outlined.Route
-import androidx.compose.material.icons.outlined.Save
-import androidx.compose.material.icons.outlined.School
-import androidx.compose.material.icons.outlined.Science
-import androidx.compose.material.icons.outlined.Search
-import androidx.compose.material.icons.outlined.Sell
-import androidx.compose.material.icons.outlined.Send
-import androidx.compose.material.icons.outlined.Settings
-import androidx.compose.material.icons.outlined.Share
-import androidx.compose.material.icons.outlined.ShowChart
-import androidx.compose.material.icons.outlined.Sort
-import androidx.compose.material.icons.outlined.Speed
-import androidx.compose.material.icons.outlined.Star
-import androidx.compose.material.icons.outlined.Stop
-import androidx.compose.material.icons.outlined.StopCircle
-import androidx.compose.material.icons.outlined.Style
-import androidx.compose.material.icons.outlined.Thermostat
-import androidx.compose.material.icons.outlined.Thunderstorm
-import androidx.compose.material.icons.outlined.Timer
-import androidx.compose.material.icons.outlined.Today
-import androidx.compose.material.icons.outlined.TrendingUp
-import androidx.compose.material.icons.outlined.Visibility
-import androidx.compose.material.icons.outlined.VisibilityOff
-import androidx.compose.material.icons.outlined.Warning
-import androidx.compose.material.icons.outlined.Water
-import androidx.compose.material.icons.outlined.WaterDrop
-import androidx.compose.material.icons.outlined.WbCloudy
-import androidx.compose.material.icons.outlined.WbSunny
-
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.PlatformTextStyle
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontVariation
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-
-// Referenced via qualified access to avoid naming clash with kotlin.collections.List/Map
-private val OutlinedList: ImageVector get() = Icons.Outlined.List
-private val OutlinedMap: ImageVector get() = Icons.Outlined.Map
-
-/**
- * Data class representing a Material Symbols icon by name.
- */
-data class MaterialSymbolIcon(
-    val name: String,
-    val filled: Boolean = false,
-    val defaultWeight: Int = 400
-) {
-    override fun toString(): String = name
-}
+import androidx.compose.ui.unit.sp
+import androidx.core.content.res.ResourcesCompat
+import fieldmind.research.app.R
+import java.util.concurrent.ConcurrentHashMap
 
 /**
- * Maps Material Symbol icon names to proper Material Icons from the extended library.
- * Uses Outlined variants by default and Filled variants when [filled] is true.
+ * Scale factor applied to Material Symbols glyph text size relative to the icon container.
+ * The variable font's optical-size axis (opsz) produces the cleanest strokes at the specified
+ * point size. 0.875× of the container dp gives a small inset that avoids ascender clipping.
  */
-private fun iconNameToImageVector(name: String, filled: Boolean): ImageVector {
-    fun pick(outlinedIcon: ImageVector, filledIcon: ImageVector): ImageVector =
-        if (filled) filledIcon else outlinedIcon
+private const val MaterialSymbolGlyphScale = 0.875f
 
-    return when (name) {
-        // ── Navigation & Core ──
-        "today" -> pick(Today, CalendarMonth)
-        "photo_camera", "camera", "camera_alt" -> pick(PhotoCamera, CameraAlt)
-        "science", "biotech" -> pick(Science, Biotech)
-        "menu_book", "library_books", "source" -> MenuBook
-        "insights", "auto_graph" -> AutoGraph
-        "arrow_back" -> pick(ArrowBack, FilledArrowBack)
-        "arrow_forward" -> pick(ArrowForward, FilledArrowForward)
-        "chevron_right" -> ChevronRight
-        "expand_less", "up" -> ExpandLess
-        "expand_more", "down" -> ExpandMore
+/**
+ * Thread-safe cache and fallback provider for Material Symbols variable-font [FontFamily] instances.
+ *
+ * Caches [FontFamily] objects keyed by the four variable-font axes so the TTF is not re-parsed
+ * on every recomposition. Falls back to a statically loaded [Typeface] on older SDK versions
+ * or on devices where `FontVariation` is known to be unreliable (e.g. Xiaomi/Redmi/Poco).
+ */
+private object FieldMindIconFontCache {
+    private val cache = ConcurrentHashMap<String, FontFamily>()
+    private var fallbackFontFamily: FontFamily? = null
+    private val lock = Any()
 
-        // ── Entity Types ──
-        "visibility", "visibility_on" -> Visibility
-        "help", "help_outline" -> HelpOutline
-        "lightbulb", "idea" -> Lightbulb
-        "bar_chart", "chart", "show_chart" -> BarChart
-        "description", "article", "note", "note_alt" -> Description
-        "style", "flashcard", "card" -> Style
-        "sell", "tag", "price" -> Sell
+    fun getFallbackFontFamily(context: Context): FontFamily {
+        fallbackFontFamily?.let { return it }
+        synchronized(lock) {
+            fallbackFontFamily?.let { return it }
+            val tf = try {
+                ResourcesCompat.getFont(context, R.font.material_symbols_outlined)
+            } catch (_: Throwable) {
+                null
+            }
+            val ff = if (tf != null) {
+                FontFamily(tf)
+            } else {
+                FontFamily(Font(R.font.material_symbols_outlined))
+            }
+            fallbackFontFamily = ff
+            return ff
+        }
+    }
 
-        // ── Actions ──
-        "add" -> pick(Add, FilledAdd)
-        "bolt", "flash_on", "flash" -> pick(Bolt, FlashOn)
-        "settings" -> pick(Settings, FilledSettings)
-        "search", "find_replace" -> pick(Search, FilledSearch)
-        "filter_list", "filter" -> FilterList
-        "sort", "sort_by" -> Sort
-        "check_box", "check_box_outline" -> CheckBox
-        "check_circle" -> pick(CheckCircleOutline, FilledCheckCircle)
-        "check", "done", "complete" -> pick(Check, FilledCheck)
-        "save" -> pick(Save, FilledDone)
-        "close", "clear" -> pick(Close, FilledClose)
-        "delete" -> pick(Delete, FilledDelete)
-        "edit", "create", "note_add" -> pick(Edit, FilledCreate)
-        "send", "forward" -> pick(Send, FilledSend)
-        "share" -> pick(Share, FilledShare)
-        "refresh", "sync", "update" -> pick(Refresh, FilledRefresh)
-        "download", "file_download" -> Download
-        "ios_share", "export" -> IosShare
-        "content_copy" -> ContentCopy
+    fun getOrCreate(
+        context: Context,
+        filled: Boolean,
+        weight: Int,
+        grade: Float,
+        opticalSize: Float
+    ): FontFamily {
+        val manufacturer = Build.MANUFACTURER.lowercase(java.util.Locale.US)
+        val isXiaomiDevice = manufacturer.contains("xiaomi") ||
+            manufacturer.contains("redmi") ||
+            manufacturer.contains("poco")
 
-        // ── Navigation (location) ──
-        "location_on", "place", "pin_drop", "location_searching" -> LocationOn
-        "map", "map_full" -> OutlinedMap
-        "home" -> pick(Home, FilledHome)
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O || isXiaomiDevice) {
+            return getFallbackFontFamily(context)
+        }
 
-        // ── Communication ──
-        "email", "mail", "message" -> pick(Email, FilledEmail)
-        "forum", "chat", "question_answer" -> Forum
-        "link", "chain", "open_in_new" -> Link
-        "notifications", "notification" -> pick(Notifications, FilledNotifications)
-        "call", "phone" -> Call
-
-        // ── Media ──
-        "play_arrow", "play" -> pick(PlayArrow, FilledPlayArrow)
-        "pause" -> Pause
-        "stop", "stop_circle" -> pick(StopCircle, Stop)
-        "mic", "microphone" -> Mic
-        "image", "photo", "photo_library" -> Image
-        "gallery" -> Image
-        "attach_file", "file", "attachment" -> AttachFile
-
-        // ── People ──
-        "person", "people", "user", "account_circle" -> pick(Person, FilledPerson)
-        "groups", "group" -> Groups
-
-        // ── Objects & Status ──
-        "lock", "lock_outline" -> Lock
-        "favorite", "favorite_filled" -> pick(Favorite, FilledFavorite)
-        "favorite_border", "favorite_outline" -> FavoriteBorder
-        "star", "star_filled" -> pick(Star, FilledStar)
-        "info", "info_outline" -> pick(Info, FilledInfo)
-        "warning", "warning_amber", "error" -> pick(Warning, FilledWarning)
-        "exit_to_app", "logout", "exit" -> Share
-        "list", "menu" -> OutlinedList
-        "more_vert", "more" -> OutlinedList
-        "more_horiz" -> OutlinedList
-        "date_range", "calendar_today", "calendar_month" -> DateRange
-        "build", "tools", "fix" -> pick(Settings, FilledBuild)
-        "thumb_up", "like" -> Star
-        "bug_report", "bug" -> BugReport
-
-        // ── Nature & Wildlife ──
-        "raven", "crow", "bird" -> Crow
-        "pets", "animal" -> Pets
-        "insect" -> BugReport
-        "local_florist", "plant", "flower" -> LocalFlorist
-        "eco", "nature", "leaf" -> Eco
-        "landscape", "rock", "terrain", "mountain" -> Landscape
-        "terrain_map" -> OutlinedMap
-
-        // ── Weather ──
-        "partly_cloudy_day", "weather" -> WbCloudy
-        "cloud", "cloudy" -> Cloudy
-        "rainy", "rain", "water_drop" -> WaterDrop
-        "water_drop", "water" -> Water
-        "weather_snowy", "snowy" -> AcUnit
-        "foggy", "fog" -> Foggy
-        "thunderstorm", "storm" -> Thunderstorm
-        "air", "wind", "airwave" -> Air
-        "cyclone", "gale", "hurricane" -> Cyclone
-        "speed", "compress", "fast" -> Speed
-        "sunny", "wb_sunny", "sun", "light_mode", "brightness" -> WbSunny
-        "clear_night" -> NightsStay
-        "night", "dark_mode" -> DarkMode
-        "bedtime", "sleep" -> Bedtime
-        "nights_stay" -> NightsStay
-
-        // ── Moon phases ──
-        "moon_new" -> DarkMode
-        "moon_full" -> NightsStay
-        "moon_crescent" -> Bedtime
-        "moon_quarter" -> NightsStay
-
-        // ── Tools & Data ──
-        "hub", "graph", "pivot" -> Hub
-        "category", "collection" -> Category
-        "grid_on", "grid" -> Category
-        "table_rows", "table", "data" -> OutlinedList
-        "functions", "function" -> Functions
-        "pivot_table_chart" -> BarChart
-        "hexagon", "shape" -> Hexagon
-        "local_fire_department", "fire", "streak" -> LocalFireDepartment
-        "trending_up", "trend" -> TrendingUp
-        "school", "education", "learn" -> School
-        "emoji_events", "trophy", "achievement" -> EmojiEvents
-
-        // ── Misc ──
-        "palette", "color" -> Palette
-        "flip", "flip_camera_android" -> FlipCameraAndroid
-        "auto_stories", "book" -> AutoStories
-        "auto_awesome", "sparkle" -> AutoAwesome
-        "fiber_manual_record", "record" -> FiberManualRecord
-        "radio_button_checked", "circle" -> RadioButtonChecked
-        "timer", "clock" -> Timer
-        "route", "path", "track" -> Route
-        "flag", "outlined_flag" -> Flag
-        "thermostat", "temperature" -> Thermostat
-        "open_in_new" -> OpenInNew
-        "inventory_2", "archive", "inventory" -> Inventory2
-        "bookmark" -> BookmarkBorder
-        "chat_bubble" -> ChatBubbleOutline
-        "question_answer" -> QuestionAnswer
-        "flash_auto" -> Bolt
-        "flash_off" -> Close
-        "photo" -> Photo
-        "flight" -> Flight
-
-        else -> Info
+        val key = "$filled-$weight-$grade-$opticalSize"
+        return cache.getOrPut(key) {
+            try {
+                FontFamily(
+                    Font(
+                        resId = R.font.material_symbols_outlined,
+                        variationSettings = FontVariation.Settings(
+                            FontVariation.weight(weight),
+                            FontVariation.Setting("FILL", if (filled) 1f else 0f),
+                            FontVariation.Setting("GRAD", grade),
+                            FontVariation.Setting("opsz", opticalSize)
+                        )
+                    )
+                )
+            } catch (_: Throwable) {
+                getFallbackFontFamily(context)
+            }
+        }
     }
 }
 
 /**
- * Custom Icon composable that renders a MaterialSymbolIcon.
- * Uses the full Material Icons library (core + extended) for proper icon mappings.
+ * Representation of a Material Symbols icon.
+ *
+ * Material Symbols use variable-font technology supporting four dynamic axes:
+ * - **FILL**: 0 (outlined) to 1 (filled)
+ * - **wght** (Weight): 100 to 700
+ * - **GRAD** (Grade): -25 to 200
+ * - **opsz** (Optical Size): 20 to 48
+ *
+ * Icons are rendered using the bundled `material_symbols_outlined.ttf` variable font
+ * via OpenType ligatures — the [name] field is the ligature name (e.g. `"play_arrow"`).
+ */
+data class MaterialSymbolIcon(
+    /** The ligature name of the icon (e.g. `"play_arrow"`, `"settings"`). */
+    val name: String,
+    /** Whether the icon renders in filled style (FILL axis = 1). */
+    val filled: Boolean = false,
+    /** Default font weight for this icon (100–700, overridable at render time). */
+    val defaultWeight: Int = 400
+) {
+    override fun toString(): String = name
+
+    /** Returns a copy of this icon with `filled = true`. */
+    fun filled(): MaterialSymbolIcon = copy(filled = true)
+
+    /** Returns a copy of this icon with `filled = false`. */
+    fun outlined(): MaterialSymbolIcon = copy(filled = false)
+}
+
+/**
+ * Creates a cached [FontFamily] for Material Symbols with the given variable-axis settings.
+ *
+ * Results are cached so the TTF is re-parsed only when one of the axis values changes.
+ */
+@Composable
+fun rememberSymbolsFontFamily(
+    filled: Boolean = false,
+    weight: Int = 400,
+    grade: Float = 0f,
+    opticalSize: Float = 24f
+): FontFamily {
+    val context = LocalContext.current
+    return remember(filled, weight, grade, opticalSize) {
+        FieldMindIconFontCache.getOrCreate(context, filled, weight, grade, opticalSize)
+    }
+}
+
+/**
+ * Renders a [MaterialSymbolIcon] using the Material Symbols variable font.
+ *
+ * This composable replaces `androidx.compose.material3.Icon` for Material Symbols,
+ * rendering icon names as text glyphs via OpenType ligatures with full variable-axis
+ * control (FILL, weight, grade, optical size).
+ *
+ * @param icon The [MaterialSymbolIcon] to render.
+ * @param contentDescription Accessibility description for the icon.
+ * @param modifier Standard [Modifier] applied to the icon container.
+ * @param tint Color applied to the icon glyph.
+ * @param size The display size of the icon (also sets the optical-size axis).
+ * @param weight Font weight for the icon (100–700). Defaults to [MaterialSymbolIcon.defaultWeight].
+ * @param grade Font grade for fine-tuning stroke weight (-25 to 200).
  */
 @Composable
 fun Icon(
     icon: MaterialSymbolIcon,
     contentDescription: String?,
     modifier: Modifier = Modifier,
-    tint: Color = Color.Unspecified,
-    size: Dp = 24.dp
+    tint: Color = LocalContentColor.current,
+    size: Dp = 24.dp,
+    weight: Int = icon.defaultWeight,
+    grade: Float = 0f
 ) {
-    val imageVector = iconNameToImageVector(icon.name, icon.filled)
+    val fontFamily = rememberSymbolsFontFamily(
+        filled = icon.filled,
+        weight = weight,
+        grade = grade,
+        opticalSize = size.value * MaterialSymbolGlyphScale
+    )
+
+    Box(
+        modifier = modifier
+            .size(size)
+            .semantics(mergeDescendants = true) {
+                if (contentDescription != null) {
+                    this.contentDescription = contentDescription
+                }
+                this.role = Role.Image
+            },
+        contentAlignment = Alignment.Center
+    ) {
+        val glyphSize = size * MaterialSymbolGlyphScale
+        androidx.compose.material3.Text(
+            text = icon.name,
+            fontFamily = fontFamily,
+            fontSize = glyphSize.value.sp,
+            color = tint,
+            textAlign = TextAlign.Center,
+            maxLines = 1,
+            softWrap = false,
+            overflow = TextOverflow.Clip,
+            style = TextStyle(
+                lineHeight = glyphSize.value.sp,
+                platformStyle = PlatformTextStyle(includeFontPadding = false)
+            )
+        )
+    }
+}
+
+// ──────────────────────────────────────────────────────
+// Compatibility overloads
+// ──────────────────────────────────────────────────────
+// These allow call sites using standard Compose icon signatures to coexist with
+// our custom MaterialSymbolIcon-based icon composable.
+
+/**
+ * Overload accepting [MaterialSymbolIcon] via the `imageVector` parameter name.
+ * Preserves compatibility with existing code like:
+ * ```kotlin
+ * Icon(imageVector = FieldMindIcons.Play, contentDescription = "Play")
+ * ```
+ */
+@Composable
+fun Icon(
+    imageVector: MaterialSymbolIcon,
+    contentDescription: String?,
+    modifier: Modifier = Modifier,
+    tint: Color = LocalContentColor.current
+) {
+    Icon(
+        icon = imageVector,
+        contentDescription = contentDescription,
+        modifier = modifier,
+        tint = tint
+    )
+}
+
+/** Delegates standard [ImageVector]-based icons to Material 3. */
+@Composable
+fun Icon(
+    imageVector: ImageVector,
+    contentDescription: String?,
+    modifier: Modifier = Modifier,
+    tint: Color = LocalContentColor.current
+) {
     androidx.compose.material3.Icon(
         imageVector = imageVector,
         contentDescription = contentDescription,
-        modifier = modifier.size(size),
+        modifier = modifier,
+        tint = tint
+    )
+}
+
+/** Delegates [Painter]-based icons to Material 3. */
+@Composable
+fun Icon(
+    painter: Painter,
+    contentDescription: String?,
+    modifier: Modifier = Modifier,
+    tint: Color = LocalContentColor.current
+) {
+    androidx.compose.material3.Icon(
+        painter = painter,
+        contentDescription = contentDescription,
+        modifier = modifier,
+        tint = tint
+    )
+}
+
+/** Delegates [ImageBitmap]-based icons to Material 3. */
+@Composable
+fun Icon(
+    bitmap: ImageBitmap,
+    contentDescription: String?,
+    modifier: Modifier = Modifier,
+    tint: Color = LocalContentColor.current
+) {
+    androidx.compose.material3.Icon(
+        bitmap = bitmap,
+        contentDescription = contentDescription,
+        modifier = modifier,
         tint = tint
     )
 }

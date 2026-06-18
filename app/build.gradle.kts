@@ -205,9 +205,9 @@ dependencies {
     implementation(libs.androidx.material3.window.size)
     implementation(libs.com.google.android.material)
 
-    // Icons - core + extended Material Icons for proper icon display
+    // Icons - core Material Icons for compatibility overloads; extended icons not needed
+    // (FieldMind uses a bundled material_symbols_outlined.ttf variable font instead)
     implementation(libs.androidx.compose.material.icons.core)
-    implementation(libs.androidx.compose.material.icons.extended)
     implementation(libs.androidx.palette.ktx)
     
     // Glance for modern widgets
