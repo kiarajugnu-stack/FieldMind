@@ -95,7 +95,7 @@ object FieldMindIcons {
     val Record = MaterialSymbolIcon("radio_button_checked")
 
     // Observation category icons
-    val Bird = MaterialSymbolIcon("raven")
+    val Bird = MaterialSymbolIcon("crow")
     val Animal = MaterialSymbolIcon("pets")
     val Insect = MaterialSymbolIcon("bug_report")
     val Plant = MaterialSymbolIcon("local_florist")
@@ -115,11 +115,11 @@ object FieldMindIcons {
     val Compress = MaterialSymbolIcon("speed")
     val Water = MaterialSymbolIcon("water_drop")
     val Sunrise = MaterialSymbolIcon("sunny")
-    val Sunset = MaterialSymbolIcon("clear_night")
+    val Sunset = MaterialSymbolIcon("wb_sunny")
     val MoonNew = MaterialSymbolIcon("dark_mode")
-    val MoonFull = MaterialSymbolIcon("light_mode")
+    val MoonFull = MaterialSymbolIcon("nights_stay")
     val MoonCrescent = MaterialSymbolIcon("bedtime")
-    val MoonQuarter = MaterialSymbolIcon("sleep")
+    val MoonQuarter = MaterialSymbolIcon("bedtime")
     val MoonGibbous = MaterialSymbolIcon("nights_stay")
     val HumanBehavior = MaterialSymbolIcon("groups")
     val Temperature = MaterialSymbolIcon("thermostat")

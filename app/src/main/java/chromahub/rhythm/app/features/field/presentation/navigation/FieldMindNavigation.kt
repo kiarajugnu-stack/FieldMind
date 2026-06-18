@@ -7,11 +7,9 @@ import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.animation.core.keyframes
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
-import androidx.compose.animation.scaleOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.background
@@ -156,9 +154,8 @@ fun FieldMindApp(appSettings: AppSettings, viewModel: FieldMindViewModel) {
     }
 }
 
-/** Navigate to a non-tab destination, de-duplicating taps so the page always opens reliably. */
+/** Navigate to a non-tab destination, always allowing re-navigation to refresh content. */
 private fun NavHostController.navigateToDestination(route: String) {
-    if (currentDestination?.route == route) return
     navigate(route) {
         launchSingleTop = true
         restoreState = true
@@ -352,7 +349,7 @@ private fun AnimatedNavIcon(screen: FieldMindScreen, selected: Boolean) {
             this.alpha = alpha
             rotationZ = rotation
         },
-        size = if (selected) 34.dp else 26.dp
+        size = if (selected) 28.dp else 24.dp
     )
 }
 
@@ -472,20 +469,20 @@ private fun FieldMindNavHost(
         enterTransition = {
             val direction = primaryTabDirection(initialState.destination.route, targetState.destination.route)
             if (direction == 0) {
-                fadeIn(spring(dampingRatio = 0.75f, stiffness = 400f)) +
-                scaleIn(initialScale = 0.97f, animationSpec = spring(dampingRatio = 0.6f, stiffness = 500f))
+                fadeIn(animationSpec = tween(durationMillis = 180, easing = FastOutSlowInEasing)) +
+                scaleIn(initialScale = 0.97f, animationSpec = tween(durationMillis = 180, easing = FastOutSlowInEasing))
             } else {
-                slideInHorizontally(spring(dampingRatio = 0.7f, stiffness = 400f)) { direction * it / 4 } +
-                fadeIn(spring(dampingRatio = 0.8f, stiffness = 500f))
+                slideInHorizontally(tween(durationMillis = 200, easing = FastOutSlowInEasing)) { direction * it / 4 } +
+                fadeIn(tween(durationMillis = 160, easing = FastOutSlowInEasing))
             }
         },
         exitTransition = {
             val direction = primaryTabDirection(initialState.destination.route, targetState.destination.route)
             if (direction == 0) {
-                fadeOut(spring(dampingRatio = 0.8f, stiffness = 600f))
+                fadeOut(tween(durationMillis = 140, easing = FastOutSlowInEasing))
             } else {
-                slideOutHorizontally(spring(dampingRatio = 0.75f, stiffness = 500f)) { -direction * it / 5 } +
-                fadeOut(spring(dampingRatio = 0.8f, stiffness = 600f))
+                slideOutHorizontally(tween(durationMillis = 180, easing = FastOutSlowInEasing)) { -direction * it / 5 } +
+                fadeOut(tween(durationMillis = 120, easing = FastOutSlowInEasing))
             }
         },
         popEnterTransition = {

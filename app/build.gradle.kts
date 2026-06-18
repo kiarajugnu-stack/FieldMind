@@ -205,10 +205,9 @@ dependencies {
     implementation(libs.androidx.material3.window.size)
     implementation(libs.com.google.android.material)
 
-    // Icons - core Material Icons set (needed for Icon composable compatibility)
+    // Icons - core + extended Material Icons for proper icon display
     implementation(libs.androidx.compose.material.icons.core)
-    // Material Symbols variable font (res/font/material_symbols_outlined.ttf)
-    // Replaces the deprecated material-icons-extended library for faster build times
+    implementation(libs.androidx.compose.material.icons.extended)
     implementation(libs.androidx.palette.ktx)
     
     // Glance for modern widgets
