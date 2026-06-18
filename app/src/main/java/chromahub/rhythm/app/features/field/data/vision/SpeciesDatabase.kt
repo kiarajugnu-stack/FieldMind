@@ -182,20 +182,6 @@ class SpeciesDatabase(private val context: Context) {
             results = results.filter { it.continents.any { c -> c.equals(continent, ignoreCase = true) } }
         }
         results.take(limit)
-        val q = query.trim().lowercase()
-        val catalog = getCatalog()
-        catalog.filter { entry ->
-            entry.commonName.lowercase().contains(q) ||
-            entry.scientificName.lowercase().contains(q) ||
-            entry.category.lowercase().contains(q) ||
-            entry.genus.lowercase().contains(q) ||
-            entry.family.lowercase().contains(q) ||
-            entry.order.lowercase().contains(q) ||
-            entry.phylum.lowercase().contains(q) ||
-            entry.kingdom.lowercase().contains(q) ||
-            entry.tags.any { it.lowercase().contains(q) } ||
-            entry.habitat.lowercase().contains(q)
-        }.take(limit)
     }
 
     /**
@@ -324,10 +310,11 @@ class SpeciesDatabase(private val context: Context) {
         val labelsFile = File(dir, "labels.txt")
         try {
             downloadFile(labelsUrl, labelsFile) { downloaded, total ->
-            progressListener?.invoke(regionId, downloaded, total)
+                progressListener?.invoke(regionId, downloaded, total)
+            }
+        } catch (_: Exception) {
+            // Labels file is not critical; pack model is the primary asset
         }
-
-        // Labels already downloaded via the fallback logic above
 
         markPackDownloaded(regionId, true)
         true
