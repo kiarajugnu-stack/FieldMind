@@ -29,7 +29,8 @@ android {
 
         // Only include English locale — saves ~5-8 MB of APK size
         // The app's music-player origins shipped 26+ locale files
-        androidResources.localeFilters = listOf("en")
+        androidResources.localeFilters.clear()
+        androidResources.localeFilters.add("en")
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
