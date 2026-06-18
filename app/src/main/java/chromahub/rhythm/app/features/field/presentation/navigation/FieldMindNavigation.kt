@@ -19,6 +19,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
@@ -344,7 +345,6 @@ private fun FloatingNavTabItem(
     selected: Boolean,
     onClick: () -> Unit
 ) {
-    val haptics = rememberFieldMindHaptics()
     var isPressed by remember { mutableStateOf(false) }
     
     val pillAlpha by animateFloatAsState(
@@ -377,7 +377,7 @@ private fun FloatingNavTabItem(
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null,
-                onClick = { haptics.light(); onClick() }
+                onClick = { onClick() }
             )
             .defaultMinSize(minWidth = 60.dp, minHeight = 56.dp)
             .graphicsLayer {
