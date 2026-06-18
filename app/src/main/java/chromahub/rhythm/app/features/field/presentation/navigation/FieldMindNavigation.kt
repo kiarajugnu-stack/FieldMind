@@ -178,8 +178,12 @@ fun FieldMindNavigation(viewModel: FieldMindViewModel, onResetOnboarding: () -> 
         }
         if (currentDestination?.route == route) return
         navController.navigate(route) {
-            popUpTo(navController.graph.findStartDestination().id) { inclusive = false }
+            popUpTo(navController.graph.findStartDestination().id) {
+                inclusive = false
+                saveState = true
+            }
             launchSingleTop = true
+            restoreState = true
         }
     }
 
@@ -207,8 +211,12 @@ fun FieldMindNavigation(viewModel: FieldMindViewModel, onResetOnboarding: () -> 
                         viewModel.setCaptureSessionActive(false)
                         showNavigateConfirm = false
                         pendingNavRoute?.let { navController.navigate(it) {
-                            popUpTo(navController.graph.findStartDestination().id) { inclusive = false }
+                            popUpTo(navController.graph.findStartDestination().id) {
+                                inclusive = false
+                                saveState = true
+                            }
                             launchSingleTop = true
+                            restoreState = true
                         } }
                         pendingNavRoute = null
                     },
