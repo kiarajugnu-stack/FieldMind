@@ -1,10 +1,9 @@
 package fieldmind.research.app.activities
 
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.BugReport
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.ArrowForward
-import androidx.compose.material.icons.filled.Favorite
 
 import android.content.ClipData
 import android.content.ClipboardManager
@@ -142,12 +141,11 @@ class CrashActivity : ComponentActivity() {
                                 .padding(bottom = 32.dp),
                             contentAlignment = Alignment.Center
                         ) {
-                            Icon(
-                                imageVector = Icons.Filled.BugReport,
-                                contentDescription = stringResource(R.string.crash_bug_report),
-                                tint = MaterialTheme.colorScheme.error,
-                                modifier = Modifier.size(56.dp)
-                            )
+                            Icon(imageVector = Icons.Filled.Warning,
+                contentDescription = stringResource(R.string.crash_bug_report),
+                tint = MaterialTheme.colorScheme.error,
+                modifier = Modifier.size(56.dp)
+            )
                         }
                     }
 
