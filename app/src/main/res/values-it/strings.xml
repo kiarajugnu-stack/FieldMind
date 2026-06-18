@@ -3347,11 +3347,7 @@
     <string name="crashactivity_dont_fret_our_app">Non preoccuparti! La nostra app ha appena avuto un piccolo \"oopsie\". Per favore condividi i dettagli dell\'arresto anomalo qui sotto: è come un messaggio segreto per i nostri sviluppatori per sistemare le cose! Allora proviamoci di nuovo, ok?</string>
     <string name="crashactivity_secret_crash_scrolls">Pergamene segrete di Crash</string>
     <string name="crashactivity_share">Condividi</string>
-    <string name="externalplaybackactivity_unable_to_open_audio">Impossibile aprire il file audio</string>
-    <string name="externalplaybackactivity_unsupported_or_unreadable_audio">File audio non supportato o illeggibile</string>
-    <string name="externalplaybackactivity_failed_to_play_audio">Impossibile riprodurre il file audio</string>
-    <string name="externalplaybackactivity_open_rhythm">Apri Rhythm</string>
-    <string name="mainactivity_error_opening_file">Errore durante l\'apertura del file</string>
+                    <string name="mainactivity_error_opening_file">Errore durante l\'apertura del file</string>
     <string name="mainactivity_unsupported_file_format">Formato file non supportato</string>
     <string name="mainactivity_failed_to_initialize_media">Impossibile inizializzare il lettore multimediale</string>
     <string name="mainactivity_unable_to_play_audio">Impossibile riprodurre il file audio</string>

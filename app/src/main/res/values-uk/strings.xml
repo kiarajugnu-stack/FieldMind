@@ -3347,11 +3347,7 @@
     <string name="crashactivity_dont_fret_our_app">Не хвилюйтеся! У нашому додатку просто виникла невелика помилка. Будь ласка, поділіться інформацією про збій нижче – це як секретне повідомлення для наших розробників, щоб виправити речі! Тоді давайте спробуємо це ще раз, добре?</string>
     <string name="crashactivity_secret_crash_scrolls">Secret Crash Scrolls</string>
     <string name="crashactivity_share">Поділитися</string>
-    <string name="externalplaybackactivity_unable_to_open_audio">Неможливо відкрити аудіофайл</string>
-    <string name="externalplaybackactivity_unsupported_or_unreadable_audio">Непідтримуваний або нечитабельний аудіофайл</string>
-    <string name="externalplaybackactivity_failed_to_play_audio">Не вдалося відтворити аудіофайл</string>
-    <string name="externalplaybackactivity_open_rhythm">Відкрити Rhythm</string>
-    <string name="mainactivity_error_opening_file">Помилка відкриття файлу</string>
+                    <string name="mainactivity_error_opening_file">Помилка відкриття файлу</string>
     <string name="mainactivity_unsupported_file_format">Непідтримуваний формат файлу</string>
     <string name="mainactivity_failed_to_initialize_media">Не вдалося ініціалізувати медіаплеєр</string>
     <string name="mainactivity_unable_to_play_audio">Неможливо відтворити аудіофайл</string>

@@ -3347,11 +3347,7 @@
     <string name="crashactivity_dont_fret_our_app">Não se preocupe! Nosso aplicativo acabou de dar um pequeno \'oopsie\'. Por favor, compartilhe os detalhes da falha abaixo – é como uma mensagem secreta para nossos desenvolvedores consertarem as coisas! Então, vamos tentar de novo, certo?</string>
     <string name="crashactivity_secret_crash_scrolls">Pergaminhos Secretos de Crash</string>
     <string name="crashactivity_share">Compartilhe</string>
-    <string name="externalplaybackactivity_unable_to_open_audio">Não foi possível abrir o arquivo de áudio</string>
-    <string name="externalplaybackactivity_unsupported_or_unreadable_audio">Arquivo de áudio incompatível ou ilegível</string>
-    <string name="externalplaybackactivity_failed_to_play_audio">Falha ao reproduzir arquivo de áudio</string>
-    <string name="externalplaybackactivity_open_rhythm">Abra Rhythm</string>
-    <string name="mainactivity_error_opening_file">Erro ao abrir arquivo</string>
+                    <string name="mainactivity_error_opening_file">Erro ao abrir arquivo</string>
     <string name="mainactivity_unsupported_file_format">Formato de arquivo não suportado</string>
     <string name="mainactivity_failed_to_initialize_media">Falha ao inicializar o reprodutor de mídia</string>
     <string name="mainactivity_unable_to_play_audio">Não foi possível reproduzir o arquivo de áudio</string>

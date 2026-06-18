@@ -18,9 +18,6 @@ import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
-import fieldmind.research.app.utils.FontLoader
-import fieldmind.research.app.util.ColorExtractor
-import fieldmind.research.app.util.ExtractedColors
 import com.google.android.material.color.utilities.Hct
 import com.google.android.material.color.utilities.SchemeTonalSpot
 import com.google.android.material.color.utilities.SchemeVibrant
@@ -1061,22 +1058,68 @@ fun parseCustomColorScheme(schemeName: String, darkTheme: Boolean): androidx.com
         val secondary = Color(("FF$secondaryHex").toLong(16))
         val tertiary = Color(("FF$tertiaryHex").toLong(16))
         
-        // Create a basic color scheme using the custom colors
-        // For simplicity, we'll use a similar structure to the default schemes
+        // Generate proper container tints instead of using raw colors directly.
+        // For light mode: container = color mixed with white (lighter tint)
+        // For dark mode: container = color mixed with black (darker shade)
+        val isPrimaryLight = primary.luminance() > 0.5f
+        val isSecondaryLight = secondary.luminance() > 0.5f
+        val isTertiaryLight = tertiary.luminance() > 0.5f
+        
+        val primaryContainer = if (darkTheme) {
+            // Dark mode: darken the color for container
+            if (isPrimaryLight) {
+                val mix = 0.3f
+                Color(
+                    primary.red * mix + Color.Black.red * (1 - mix),
+                    primary.green * mix + Color.Black.green * (1 - mix),
+                    primary.blue * mix + Color.Black.blue * (1 - mix),
+                    primary.alpha
+                )
+            } else {
+                // Already dark, use muted version
+                val mix = 0.5f
+                Color(
+                    primary.red * mix + Color(0xFF333333).red * (1 - mix),
+                    primary.green * mix + Color(0xFF333333).green * (1 - mix),
+                    primary.blue * mix + Color(0xFF333333).blue * (1 - mix),
+                    primary.alpha
+                )
+            }
+        } else {
+            // Light mode: lighten the color for container
+            val mix = if (isPrimaryLight) 0.4f else 0.25f
+            Color(
+                primary.red * mix + Color.White.red * (1 - mix),
+                primary.green * mix + Color.White.green * (1 - mix),
+                primary.blue * mix + Color.White.blue * (1 - mix),
+                primary.alpha
+            )
+        }
+        
         return if (darkTheme) {
             darkColorScheme(
                 primary = primary,
-                onPrimary = if (primary.luminance() > 0.5f) Color.Black else Color.White,
-                primaryContainer = primary,
-                onPrimaryContainer = if (primary.luminance() > 0.5f) Color.Black else Color.White,
+                onPrimary = if (isPrimaryLight) Color(0xFF1C1B1F) else Color.White,
+                primaryContainer = primaryContainer,
+                onPrimaryContainer = if (primaryContainer.luminance() > 0.5f) Color(0xFF1C1B1F) else Color.White,
                 secondary = secondary,
-                onSecondary = if (secondary.luminance() > 0.5f) Color.Black else Color.White,
-                secondaryContainer = secondary,
-                onSecondaryContainer = if (secondary.luminance() > 0.5f) Color.Black else Color.White,
+                onSecondary = if (isSecondaryLight) Color(0xFF1C1B1F) else Color.White,
+                secondaryContainer = Color(
+                    secondary.red * 0.3f + Color.Black.red * 0.7f,
+                    secondary.green * 0.3f + Color.Black.green * 0.7f,
+                    secondary.blue * 0.3f + Color.Black.blue * 0.7f,
+                    secondary.alpha
+                ),
+                onSecondaryContainer = Color.White,
                 tertiary = tertiary,
-                onTertiary = if (tertiary.luminance() > 0.5f) Color.Black else Color.White,
-                tertiaryContainer = tertiary,
-                onTertiaryContainer = if (tertiary.luminance() > 0.5f) Color.Black else Color.White,
+                onTertiary = if (isTertiaryLight) Color(0xFF1C1B1F) else Color.White,
+                tertiaryContainer = Color(
+                    tertiary.red * 0.3f + Color.Black.red * 0.7f,
+                    tertiary.green * 0.3f + Color.Black.green * 0.7f,
+                    tertiary.blue * 0.3f + Color.Black.blue * 0.7f,
+                    tertiary.alpha
+                ),
+                onTertiaryContainer = Color.White,
                 error = ErrorDark,
                 onError = OnErrorDark,
                 errorContainer = ErrorContainerDark,
@@ -1104,17 +1147,27 @@ fun parseCustomColorScheme(schemeName: String, darkTheme: Boolean): androidx.com
         } else {
             lightColorScheme(
                 primary = primary,
-                onPrimary = if (primary.luminance() > 0.5f) Color.Black else Color.White,
-                primaryContainer = primary,
-                onPrimaryContainer = if (primary.luminance() > 0.5f) Color.Black else Color.White,
+                onPrimary = if (isPrimaryLight) Color(0xFF1C1B1F) else Color.White,
+                primaryContainer = primaryContainer,
+                onPrimaryContainer = if (primaryContainer.luminance() > 0.5f) Color(0xFF1C1B1F) else Color.White,
                 secondary = secondary,
-                onSecondary = if (secondary.luminance() > 0.5f) Color.Black else Color.White,
-                secondaryContainer = secondary,
-                onSecondaryContainer = if (secondary.luminance() > 0.5f) Color.Black else Color.White,
+                onSecondary = if (isSecondaryLight) Color(0xFF1C1B1F) else Color.White,
+                secondaryContainer = Color(
+                    secondary.red * 0.25f + Color.White.red * 0.75f,
+                    secondary.green * 0.25f + Color.White.green * 0.75f,
+                    secondary.blue * 0.25f + Color.White.blue * 0.75f,
+                    secondary.alpha
+                ),
+                onSecondaryContainer = if (isSecondaryLight) Color(0xFF1C1B1F) else Color.White,
                 tertiary = tertiary,
-                onTertiary = if (tertiary.luminance() > 0.5f) Color.Black else Color.White,
-                tertiaryContainer = tertiary,
-                onTertiaryContainer = if (tertiary.luminance() > 0.5f) Color.Black else Color.White,
+                onTertiary = if (isTertiaryLight) Color(0xFF1C1B1F) else Color.White,
+                tertiaryContainer = Color(
+                    tertiary.red * 0.25f + Color.White.red * 0.75f,
+                    tertiary.green * 0.25f + Color.White.green * 0.75f,
+                    tertiary.blue * 0.25f + Color.White.blue * 0.75f,
+                    tertiary.alpha
+                ),
+                onTertiaryContainer = if (isTertiaryLight) Color(0xFF1C1B1F) else Color.White,
                 error = ErrorLight,
                 onError = OnErrorLight,
                 errorContainer = ErrorContainerLight,
@@ -1150,101 +1203,9 @@ fun parseCustomColorScheme(schemeName: String, darkTheme: Boolean): androidx.com
  * Create a color scheme from extracted album art colors
  */
 fun getAlbumArtColorScheme(colorsJson: String, darkTheme: Boolean): androidx.compose.material3.ColorScheme {
-    val extractedColors = fieldmind.research.app.util.ColorExtractor.jsonToColors(colorsJson)
-    
-    // Fallback to default if parsing fails
-    if (extractedColors == null) {
-        return if (darkTheme) DarkColorScheme else LightColorScheme
-    }
-    
-    // Use the extracted colors directly - they are already properly generated by Material Color Utilities
-    return if (darkTheme) {
-        // For dark theme, use dark theme colors
-        darkColorScheme(
-            primary = Color(extractedColors.darkPrimary).copy(alpha = 1f),
-            onPrimary = Color(extractedColors.darkOnPrimary).copy(alpha = 1f),
-            primaryContainer = Color(extractedColors.darkPrimaryContainer).copy(alpha = 1f),
-            onPrimaryContainer = Color(extractedColors.darkOnPrimaryContainer).copy(alpha = 1f),
-            
-            secondary = Color(extractedColors.darkSecondary).copy(alpha = 1f),
-            onSecondary = Color(extractedColors.darkOnSecondary).copy(alpha = 1f),
-            secondaryContainer = Color(extractedColors.darkSecondaryContainer).copy(alpha = 1f),
-            onSecondaryContainer = Color(extractedColors.darkOnSecondaryContainer).copy(alpha = 1f),
-            
-            tertiary = Color(extractedColors.darkTertiary).copy(alpha = 1f),
-            onTertiary = Color(extractedColors.darkOnTertiary).copy(alpha = 1f),
-            tertiaryContainer = Color(extractedColors.darkTertiaryContainer).copy(alpha = 1f),
-            onTertiaryContainer = Color(extractedColors.darkOnTertiaryContainer).copy(alpha = 1f),
-            
-            // Use app's standard dark background and surfaces for consistency
-            background = BackgroundDark,
-            onBackground = OnBackgroundDark,
-            surface = SurfaceDark,
-            onSurface = OnSurfaceDark,
-            surfaceVariant = SurfaceVariantDark,
-            onSurfaceVariant = OnSurfaceVariantDark,
-            surfaceContainerLowest = SurfaceContainerLowestDark,
-            surfaceContainerLow = SurfaceContainerLowDark,
-            surfaceContainer = SurfaceContainerDark,
-            surfaceContainerHigh = SurfaceContainerHighDark,
-            surfaceContainerHighest = SurfaceContainerHighestDark,
-            
-            error = ErrorDark,
-            onError = OnErrorDark,
-            errorContainer = ErrorContainerDark,
-            onErrorContainer = OnErrorContainerDark,
-            
-            outline = OutlineDark,
-            outlineVariant = OutlineVariantDark,
-            scrim = Color.Black,
-            inverseSurface = InverseSurfaceDark,
-            inverseOnSurface = InverseOnSurfaceDark,
-            inversePrimary = InversePrimaryDark
-        )
-    } else {
-        // For light theme, use light theme colors
-        lightColorScheme(
-            primary = Color(extractedColors.primary).copy(alpha = 1f),
-            onPrimary = Color(extractedColors.onPrimary).copy(alpha = 1f),
-            primaryContainer = Color(extractedColors.primaryContainer).copy(alpha = 1f),
-            onPrimaryContainer = Color(extractedColors.onPrimaryContainer).copy(alpha = 1f),
-            
-            secondary = Color(extractedColors.secondary).copy(alpha = 1f),
-            onSecondary = Color(extractedColors.onSecondary).copy(alpha = 1f),
-            secondaryContainer = Color(extractedColors.secondaryContainer).copy(alpha = 1f),
-            onSecondaryContainer = Color(extractedColors.onSecondaryContainer).copy(alpha = 1f),
-            
-            tertiary = Color(extractedColors.tertiary).copy(alpha = 1f),
-            onTertiary = Color(extractedColors.onTertiary).copy(alpha = 1f),
-            tertiaryContainer = Color(extractedColors.tertiaryContainer).copy(alpha = 1f),
-            onTertiaryContainer = Color(extractedColors.onTertiaryContainer).copy(alpha = 1f),
-            
-            // Use standard light theme surfaces for better readability
-            background = BackgroundLight,
-            onBackground = OnBackgroundLight,
-            surface = SurfaceLight,
-            onSurface = OnSurfaceLight,
-            surfaceVariant = SurfaceVariantLight,
-            onSurfaceVariant = OnSurfaceVariantLight,
-            surfaceContainerLowest = SurfaceContainerLowestLight,
-            surfaceContainerLow = SurfaceContainerLowLight,
-            surfaceContainer = SurfaceContainerLight,
-            surfaceContainerHigh = SurfaceContainerHighLight,
-            surfaceContainerHighest = SurfaceContainerHighestLight,
-            
-            error = ErrorLight,
-            onError = OnErrorLight,
-            errorContainer = ErrorContainerLight,
-            onErrorContainer = OnErrorContainerLight,
-            
-            outline = OutlineLight,
-            outlineVariant = OutlineVariantLight,
-            scrim = Color.Black,
-            inverseSurface = InverseSurfaceLight,
-            inverseOnSurface = InverseOnSurfaceLight,
-            inversePrimary = InversePrimaryLight
-        )
-    }
+    // ColorExtractor was part of the deleted music-player code
+    // Return default color scheme
+    return if (darkTheme) DarkColorScheme else LightColorScheme
 }
 
 /**
@@ -1300,22 +1261,8 @@ fun RhythmTheme(
     }
     
     // Load typography based on font source
-    val typography = when (fontSource) {
-        "CUSTOM" -> {
-            // Try to load custom font
-            val customFontFamily = FontLoader.loadCustomFont(context, customFontPath)
-            if (customFontFamily != null) {
-                getTypographyWithCustomFont(customFontFamily)
-            } else {
-                // Fall back to system font if custom font fails to load
-                getTypographyForFont(customFont)
-            }
-        }
-        else -> {
-            // Use system fonts
-            getTypographyForFont(customFont)
-        }
-    }
+    // FontLoader was part of the deleted music-player code; always use system fonts
+    val typography = getTypographyForFont(customFont)
     
     val view = LocalView.current
     if (!view.isInEditMode) {

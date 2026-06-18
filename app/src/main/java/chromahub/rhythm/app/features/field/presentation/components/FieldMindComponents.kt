@@ -8,6 +8,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -66,6 +67,7 @@ import fieldmind.research.app.features.field.presentation.theme.FieldMindTheme
 import fieldmind.research.app.shared.presentation.components.icons.Icon
 import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon
 import kotlinx.coroutines.delay
+// FieldMindIcons is in the same package (components.FieldMindIcons)
 // FieldMindIcons is in the same package (components.FieldMindIcons)
 
 
@@ -406,7 +408,9 @@ fun OptionPickerField(
 //  Headers
 // ──────────────────────────────────────────────────────────────────────
 
-/** Large screen header with optional leading icon and a trailing icon action. */
+/** Large screen header with optional leading icon and a trailing icon action.
+ * Revamped to match the StandardScreenHeader style with a rounded Surface,
+ * proper padding (prevents back button clipping), and consistent typography. */
 @Composable
 fun FieldScreenHeader(
     title: String,
@@ -416,29 +420,42 @@ fun FieldScreenHeader(
     onAction: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
-    Row(modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-        if (icon != null) {
-            Box(
-                Modifier
-                    .size(44.dp)
-                    .background(MaterialTheme.colorScheme.primaryContainer, RoundedCornerShape(14.dp)),
-                contentAlignment = Alignment.Center
-            ) { Icon(icon = icon, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimaryContainer, size = 24.dp) }
-            Spacer(Modifier.size(12.dp))
-        }
-        Column(Modifier.weight(1f)) {
-            Text(title, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
-            if (!subtitle.isNullOrBlank()) {
-                Text(subtitle, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    Surface(
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(20.dp),
+        color = MaterialTheme.colorScheme.surfaceContainerLow.copy(alpha = 0.6f),
+        tonalElevation = 0.dp
+    ) {
+        Row(
+            Modifier.padding(horizontal = 16.dp, vertical = 14.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            if (icon != null) {
+                Box(
+                    Modifier
+                        .size(42.dp)
+                        .background(MaterialTheme.colorScheme.primaryContainer, RoundedCornerShape(12.dp)),
+                    contentAlignment = Alignment.Center
+                ) { Icon(icon = icon, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimaryContainer, size = 22.dp) }
             }
-        }
-        if (actionIcon != null && onAction != null) {
-            Surface(
-                onClick = onAction,
-                shape = RoundedCornerShape(14.dp),
-                color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                modifier = Modifier.size(44.dp)
-            ) { Box(contentAlignment = Alignment.Center) { Icon(icon = actionIcon, contentDescription = title, size = 22.dp) } }
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text(title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                if (!subtitle.isNullOrBlank()) {
+                    Text(subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                }
+            }
+            if (actionIcon != null && onAction != null) {
+                Surface(
+                    onClick = onAction,
+                    shape = RoundedCornerShape(14.dp),
+                    color = MaterialTheme.colorScheme.surfaceContainerHigh
+                ) {
+                    Box(Modifier.size(40.dp), contentAlignment = Alignment.Center) {
+                        Icon(icon = actionIcon, contentDescription = title, size = 22.dp)
+                    }
+                }
+            }
         }
     }
 }
@@ -633,6 +650,8 @@ fun EntityCard(
     meta: List<String> = emptyList(),
     confidence: String? = null,
     onClick: (() -> Unit)? = null,
+    selected: Boolean = false,
+    onSelect: (() -> Unit)? = null,
     index: Int = 0,
     animate: Boolean = false
 ) {
@@ -670,8 +689,14 @@ fun EntityCard(
                     if (onClick != null) Modifier.expressiveCardPress(liftDp = 1.5f, scaleDown = 0.985f)
                     else Modifier
                 )
-                .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier),
-            shape = RoundedCornerShape(24.dp),
+            .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
+            .then(
+                if (selected) Modifier
+                    .border(1.5.dp, accent.copy(alpha = 0.6f), RoundedCornerShape(24.dp))
+                    .background(accent.copy(alpha = 0.06f), RoundedCornerShape(24.dp))
+                else Modifier
+            ),
+        shape = RoundedCornerShape(24.dp),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
             elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
         ) {

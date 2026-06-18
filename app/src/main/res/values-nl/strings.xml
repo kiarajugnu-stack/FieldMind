@@ -3347,11 +3347,7 @@
     <string name="crashactivity_dont_fret_our_app">Maak je geen zorgen! Onze app had net een kleine \'oopsie\'. Deel de details van de crash hieronder. Het is als een geheime boodschap voor onze ontwikkelaars om dingen op te lossen! Laten we dat dan nog eens proberen, oké?</string>
     <string name="crashactivity_secret_crash_scrolls">Geheime crash-scrolls</string>
     <string name="crashactivity_share">Deel</string>
-    <string name="externalplaybackactivity_unable_to_open_audio">Kan audiobestand</string>
-    <string name="externalplaybackactivity_unsupported_or_unreadable_audio">niet openen Niet-ondersteund of onleesbaar audiobestand</string>
-    <string name="externalplaybackactivity_failed_to_play_audio">Kan audiobestand</string>
-    <string name="externalplaybackactivity_open_rhythm">niet afspelen Open Rhythm</string>
-    <string name="mainactivity_error_opening_file">Fout bij openen van bestand</string>
+                    <string name="mainactivity_error_opening_file">Fout bij openen van bestand</string>
     <string name="mainactivity_unsupported_file_format">Niet-ondersteunde bestandsindeling</string>
     <string name="mainactivity_failed_to_initialize_media">Kan mediaspeler</string>
     <string name="mainactivity_unable_to_play_audio">niet initialiseren Kan audiobestand</string>

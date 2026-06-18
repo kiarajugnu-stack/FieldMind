@@ -1,8 +1,10 @@
 package fieldmind.research.app.features.field.presentation.viewmodel
 
 import android.app.Application
+import android.os.Parcelable
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.parcelize.Parcelize
 import fieldmind.research.app.features.field.data.database.FieldMindDatabase
 import fieldmind.research.app.features.field.data.database.entity.*
 import fieldmind.research.app.features.field.data.repository.FieldMindRepository
@@ -16,11 +18,14 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlin.coroutines.resume
 import kotlin.jvm.JvmName
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
+@Parcelize
 data class DraftEvidenceAttachment(
     val type: String,
     val uri: String,
@@ -28,7 +33,7 @@ data class DraftEvidenceAttachment(
     val localPath: String? = null,
     val mimeType: String? = null,
     val createdAt: Long = System.currentTimeMillis()
-)
+) : Parcelable
 
 class FieldMindViewModel(application: Application) : AndroidViewModel(application) {
     private val repository = FieldMindRepository(FieldMindDatabase.getInstance(application).fieldMindDao())
@@ -238,6 +243,31 @@ class FieldMindViewModel(application: Application) : AndroidViewModel(applicatio
             )
         }
         return snapshot
+    }
+
+    /**
+     * Saves an already-fetched WeatherSnapshot to the offline weather catalog.
+     * This is used by observe and research session screens that have already fetched weather.
+     */
+    suspend fun saveWeatherSnapshot(snapshot: WeatherSnapshot, latitude: Double, longitude: Double, placeName: String = "") {
+        repository.addWeatherCatalog(
+            WeatherCatalogEntity(
+                latitude = latitude,
+                longitude = longitude,
+                temperature = snapshot.temperature,
+                weatherCode = snapshot.weatherCode,
+                weatherDescription = snapshot.weatherDescription,
+                humidity = snapshot.humidity,
+                windSpeed = snapshot.windSpeed,
+                windDirection = snapshot.windDirection,
+                cloudCover = snapshot.cloudCover,
+                pressure = snapshot.pressure,
+                sunrise = snapshot.sunrise,
+                sunset = snapshot.sunset,
+                placeName = placeName,
+                fetchedAt = snapshot.fetchedAt
+            )
+        )
     }
 
     /**

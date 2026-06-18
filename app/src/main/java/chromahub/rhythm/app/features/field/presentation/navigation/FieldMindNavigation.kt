@@ -3,19 +3,21 @@ package fieldmind.research.app.features.field.presentation.navigation
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.keyframes
 import androidx.compose.animation.fadeIn
-import androidx.compose.ui.Modifier
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -23,6 +25,7 @@ import androidx.compose.material3.*
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
@@ -39,6 +42,7 @@ import androidx.navigation.compose.rememberNavController
 import fieldmind.research.app.features.field.presentation.components.FieldMindSnackbarProvider
 import fieldmind.research.app.features.field.presentation.components.FieldMindIcons
 import fieldmind.research.app.features.field.presentation.components.rememberFieldMindHaptics
+import fieldmind.research.app.features.field.presentation.components.FieldMindHaptics
 import fieldmind.research.app.features.field.presentation.screens.*
 import fieldmind.research.app.features.field.presentation.theme.FieldMindTheme
 import fieldmind.research.app.features.field.data.database.entity.ResearchSessionEntity
@@ -101,14 +105,20 @@ sealed class FieldMindScreen(val route: String, val label: String, val icon: Mat
     data object SettingsDataIntegrity : FieldMindScreen("field_settings_data_integrity", "Data Integrity", FieldMindIcons.Archive)
     data object SettingsDeveloper : FieldMindScreen("field_settings_developer", "Developer", FieldMindIcons.Sparkle)
     data object SettingsSpeciesPacks : FieldMindScreen("field_settings_species_packs", "Species Packs", FieldMindIcons.Download)
+    data object SettingsSpeciesId : FieldMindScreen("field_settings_species_id", "Species ID", FieldMindIcons.Nature)
 
     // Group 1: Interactive Data Tools
     data object CounterTool : FieldMindScreen("field_counter_tool", "Counter", FieldMindIcons.Add)
     data object MeasurementTool : FieldMindScreen("field_measurement_tool", "Measure", FieldMindIcons.Graph)
     data object WeatherLogTool : FieldMindScreen("field_weather_log_tool", "Weather", FieldMindIcons.Weather)
     data object SpeciesTool : FieldMindScreen("field_species_tool", "Species", FieldMindIcons.Nature)
+    data object ChecklistTool : FieldMindScreen("field_checklist_tool", "Checklist", FieldMindIcons.Check)
+    data object EventLogTool : FieldMindScreen("field_event_log_tool", "Event Log", FieldMindIcons.List)
+    data object SiteLogTool : FieldMindScreen("field_site_log_tool", "Site Log", FieldMindIcons.Map)
+    data object ComparisonTable : FieldMindScreen("field_comparison_table", "Comparison", FieldMindIcons.Data)
     data object SpeciesBrowser : FieldMindScreen("field_species_browser", "Species Browser", FieldMindIcons.Nature)
     data object TaxonomicBrowser : FieldMindScreen("field_taxonomic_browser", "Taxonomic Browser", FieldMindIcons.Category)
+    data object FieldLog : FieldMindScreen("field_log", "Field Log", FieldMindIcons.List)
 }
 
 private const val NavTransitionDurationMillis = 180
@@ -128,23 +138,30 @@ fun FieldMindApp(appSettings: AppSettings, viewModel: FieldMindViewModel) {
     val privacyEnabled by viewModel.fieldSettings.privacyLockEnabled.collectAsState()
     LaunchedEffect(privacyEnabled) { if (!privacyEnabled) appUnlocked = true }
     if (!onboardingCompleted) {
-        FieldMindOnboardingScreen(onFinish = { appSettings.setOnboardingCompleted(true) })        } else {
-            FieldMindAppLock(
-                settings = viewModel.fieldSettings,
-                isUnlocked = appUnlocked,
-                onUnlock = { appUnlocked = true }
-            ) {
-                FieldMindSnackbarProvider { _ ->
-                    FieldMindNavigation(viewModel = viewModel, onResetOnboarding = { appSettings.setOnboardingCompleted(false); appUnlocked = false })
-                }
+        FieldMindOnboardingScreen(
+            settings = viewModel.fieldSettings,
+            onFinish = { appSettings.setOnboardingCompleted(true) }
+        )
+    } else {
+        FieldMindAppLock(
+            settings = viewModel.fieldSettings,
+            isUnlocked = appUnlocked,
+            onUnlock = { appUnlocked = true }
+        ) {
+            FieldMindSnackbarProvider { _ ->
+                FieldMindNavigation(viewModel = viewModel, onResetOnboarding = { appSettings.setOnboardingCompleted(false); appUnlocked = false })
             }
         }
+    }
 }
 
 /** Navigate to a non-tab destination, de-duplicating taps so the page always opens reliably. */
 private fun NavHostController.navigateToDestination(route: String) {
     if (currentDestination?.route == route) return
-    navigate(route) { launchSingleTop = true }
+    navigate(route) {
+        launchSingleTop = true
+        restoreState = true
+    }
 }
 
 @Composable
@@ -174,10 +191,13 @@ fun FieldMindNavigation(viewModel: FieldMindViewModel, onResetOnboarding: () -> 
             showNavigateConfirm = true
             return
         }
-        if (currentDestination?.route == route) return
         navController.navigate(route) {
-            popUpTo(navController.graph.findStartDestination().id) { inclusive = false }
+            popUpTo(navController.graph.findStartDestination().id) {
+                inclusive = false
+                saveState = true
+            }
             launchSingleTop = true
+            restoreState = true
         }
     }
 
@@ -205,8 +225,12 @@ fun FieldMindNavigation(viewModel: FieldMindViewModel, onResetOnboarding: () -> 
                         viewModel.setCaptureSessionActive(false)
                         showNavigateConfirm = false
                         pendingNavRoute?.let { navController.navigate(it) {
-                            popUpTo(navController.graph.findStartDestination().id) { inclusive = false }
+                            popUpTo(navController.graph.findStartDestination().id) {
+                                inclusive = false
+                                saveState = true
+                            }
                             launchSingleTop = true
+                            restoreState = true
                         } }
                         pendingNavRoute = null
                     },
@@ -223,19 +247,37 @@ fun FieldMindNavigation(viewModel: FieldMindViewModel, onResetOnboarding: () -> 
         )
     }
 
+    // Observe screen visibility settings so nav bar reflects user customizations
+    val screenVisibility by viewModel.fieldSettings.screenVisibility.collectAsState()
+
+    // Filter bottom tabs based on user's screen visibility preferences
+    val visibleTabs = remember(bottomTabs, screenVisibility) {
+        bottomTabs.filter { tab ->
+            when (tab.route) {
+                FieldMindScreen.Observe.route -> screenVisibility.showCapture
+                FieldMindScreen.Projects.route -> screenVisibility.showProjects
+                FieldMindScreen.Insights.route -> screenVisibility.showInsights
+                FieldMindScreen.Library.route -> screenVisibility.showLibrary
+                else -> true // Home always visible
+            }
+        }
+    }
+
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val expanded = maxWidth >= 720.dp
         if (expanded) {
             Row(Modifier.fillMaxSize()) {
                 if (!hideChrome) {
                     NavigationRail {
-                        bottomTabs.forEach { screen ->
+                        visibleTabs.forEach { screen ->
                             val selected = isSelected(screen)
-                            NavigationRailItem(
+                            val itemInteractionSource = remember { MutableInteractionSource() }
+                            AnimatedNavBarItem(
                                 selected = selected,
                                 onClick = { haptics.light(); navigateToTab(screen.route) },
                                 icon = { AnimatedNavIcon(screen, selected) },
-                                label = { AnimatedNavLabel(screen.label, selected) }
+                                label = { AnimatedNavLabel(screen.label, selected) },
+                                interactionSource = itemInteractionSource
                             )
                         }
                     }
@@ -248,13 +290,16 @@ fun FieldMindNavigation(viewModel: FieldMindViewModel, onResetOnboarding: () -> 
                 bottomBar = {
                     if (!hideChrome) {
                             NavigationBar {
-                                bottomTabs.forEach { screen ->
+                                visibleTabs.forEach { screen ->
                                     val selected = isSelected(screen)
-                                    NavigationBarItem(
+                                    val itemInteractionSource = remember { MutableInteractionSource() }
+                                    AnimatedNavBarItem(
                                         selected = selected,
                                         onClick = { haptics.light(); navigateToTab(screen.route) },
                                         icon = { AnimatedNavIcon(screen, selected) },
-                                        label = { AnimatedNavLabel(screen.label, selected) }
+                                        label = { AnimatedNavLabel(screen.label, selected) },
+                                        interactionSource = itemInteractionSource,
+                                        modifier = Modifier.weight(1f)
                                     )
                                 }
                             }
@@ -282,8 +327,9 @@ private fun AnimatedNavIcon(screen: FieldMindScreen, selected: Boolean) {
         label = "navIconLift"
     )
     // Elastic rotation for a playful wiggle when selected
+    // Expressive wobble — icon tilts slightly when selected, then overshoots back playfully
     val rotation by animateFloatAsState(
-        if (selected) 0f else 0f,
+        if (selected) 12f else 0f,
         FieldMindMotion.expressiveElastic,
         label = "navIconRotation"
     )
@@ -310,6 +356,76 @@ private fun AnimatedNavIcon(screen: FieldMindScreen, selected: Boolean) {
         size = if (selected) 34.dp else 26.dp,
         weight = if (selected) 700 else screen.icon.defaultWeight
     )
+}
+
+@Composable
+private fun AnimatedNavBarItem(
+    selected: Boolean,
+    onClick: () -> Unit,
+    icon: @Composable () -> Unit,
+    label: @Composable () -> Unit,
+    interactionSource: MutableInteractionSource,
+    modifier: Modifier = Modifier
+) {
+    val isPressed by interactionSource.collectIsPressedAsState()
+
+    // Bouncy press scale — tiny squish on tap, springs back with overshoot
+    val pressScale by animateFloatAsState(
+        targetValue = if (isPressed) 0.88f else 1f,
+        animationSpec = FieldMindMotion.expressiveSnap,
+        label = "navBarPress"
+    )
+
+    // Pill indicator bouncy entrance — elastic overshoot when tab becomes active
+    val pillScale by animateFloatAsState(
+        targetValue = if (selected) 1f else 0f,
+        animationSpec = FieldMindMotion.expressiveSpring,
+        label = "navBarPill"
+    )
+
+    Column(
+        modifier = modifier
+            .graphicsLayer {
+                scaleX = pressScale
+                scaleY = pressScale
+            }
+            .clickable(
+                interactionSource = interactionSource,
+                indication = null,
+                onClick = onClick
+            )
+            .padding(vertical = 2.dp, horizontal = 2.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Box(
+            modifier = Modifier.size(48.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            // Pill indicator with bouncy entrance animation
+            if (pillScale > 0.01f) {
+                Box(
+                    modifier = Modifier
+                        .size(44.dp)
+                        .graphicsLayer {
+                            scaleX = pillScale
+                            scaleY = pillScale
+                            alpha = pillScale
+                        }
+                        .background(
+                            color = MaterialTheme.colorScheme.secondaryContainer,
+                            shape = CircleShape
+                        )
+                )
+            }
+
+            // Icon (with its own bouncy spring animation built into AnimatedNavIcon)
+            icon()
+        }
+
+        // Label below
+        label()
+    }
 }
 
 @Composable
@@ -375,12 +491,37 @@ private fun FieldMindNavHost(
             }
         },
         popEnterTransition = {
-            fadeIn(spring(dampingRatio = 0.75f, stiffness = 400f)) +
-            scaleIn(initialScale = 0.97f, animationSpec = spring(dampingRatio = 0.6f, stiffness = 500f))
+            // Smooth, consistent slide + fade for back navigation — no bounce, just gentle motion
+            val direction = primaryTabDirection(targetState.destination.route, initialState.destination.route)
+            val slideSpec = tween(250, easing = FastOutSlowInEasing)
+            val fadeSpec = tween(200, easing = FastOutSlowInEasing)
+            if (direction == 0) {
+                slideInHorizontally(
+                    animationSpec = slideSpec,
+                    initialOffsetX = { -it / 5 }
+                ) + fadeIn(animationSpec = fadeSpec)
+            } else {
+                slideInHorizontally(
+                    animationSpec = slideSpec,
+                    initialOffsetX = { direction * it / 5 }
+                ) + fadeIn(animationSpec = fadeSpec)
+            }
         },
         popExitTransition = {
-            fadeOut(spring(dampingRatio = 0.8f, stiffness = 600f)) +
-            scaleOut(targetScale = 0.97f, animationSpec = spring(dampingRatio = 0.7f, stiffness = 500f))
+            val direction = primaryTabDirection(targetState.destination.route, initialState.destination.route)
+            val slideSpec = tween(200, easing = FastOutSlowInEasing)
+            val fadeSpec = tween(150, easing = FastOutSlowInEasing)
+            if (direction == 0) {
+                slideOutHorizontally(
+                    animationSpec = slideSpec,
+                    targetOffsetX = { it / 4 }
+                ) + fadeOut(animationSpec = fadeSpec)
+            } else {
+                slideOutHorizontally(
+                    animationSpec = slideSpec,
+                    targetOffsetX = { -direction * it / 4 }
+                ) + fadeOut(animationSpec = fadeSpec)
+            }
         }
     ) {
         composable(FieldMindScreen.Home.route) { HomeScreen(viewModel = viewModel, onOpenSettings = { navController.navigateToDestination(FieldMindScreen.Settings.route) }, onNavigate = { navController.navigateToDestination(it.route) }, onOpenDetail = openDetail, onOpenReader = openReader) }
@@ -393,7 +534,7 @@ private fun FieldMindNavHost(
         composable(FieldMindScreen.FieldMode.route) { ObserveScreen(viewModel = viewModel, compactFieldMode = true, onBack = { navController.popBackStack() }, onOpenDetail = openDetail) }
         composable(FieldMindScreen.Questions.route) { QuestionsScreen(viewModel = viewModel, onOpenDetail = openDetail) }
 composable(FieldMindScreen.Hypotheses.route) { ProjectsScreen(viewModel = viewModel, startTab = 2, onOpenDetail = openDetail) }
-composable(FieldMindScreen.DataTools.route) { ProjectsScreen(viewModel = viewModel, startTab = 3, onOpenDetail = openDetail) }
+composable(FieldMindScreen.DataTools.route) { DataToolsHubScreen(viewModel = viewModel, onBack = { navController.popBackStack() }, onNavigate = { navController.navigateToDestination(it.route) }) }
 composable(FieldMindScreen.Analysis.route) { ProjectsScreen(viewModel = viewModel, startTab = 0, onOpenDetail = openDetail) }
 composable(FieldMindScreen.Reports.route) { ProjectsScreen(viewModel = viewModel, startTab = 4, onOpenDetail = openDetail) }
         composable(FieldMindScreen.Search.route) { ArchiveScreen(viewModel = viewModel, onOpenDetail = openDetail, onOpenReader = openReader) }
@@ -424,7 +565,8 @@ composable(FieldMindScreen.Reports.route) { ProjectsScreen(viewModel = viewModel
                 onOpenMap = { navController.navigateToDestination(FieldMindScreen.SettingsMap.route) },
                 onOpenDataIntegrity = { navController.navigateToDestination(FieldMindScreen.SettingsDataIntegrity.route) },
                 onOpenDeveloper = { navController.navigateToDestination(FieldMindScreen.SettingsDeveloper.route) },
-                onOpenSpeciesPacks = { navController.navigateToDestination(FieldMindScreen.SettingsSpeciesPacks.route) }
+                onOpenSpeciesPacks = { navController.navigateToDestination(FieldMindScreen.SettingsSpeciesPacks.route) },
+                onOpenSpeciesId = { navController.navigateToDestination(FieldMindScreen.SettingsSpeciesId.route) }
             )
         }
         composable(FieldMindScreen.SettingsProfile.route) { ProfileSettingsPage(viewModel = viewModel, onBack = { navController.popBackStack() }) }
@@ -447,10 +589,16 @@ composable(FieldMindScreen.Reports.route) { ProjectsScreen(viewModel = viewModel
             SpeciesDetailScreen(speciesId = speciesId, onBack = { navController.popBackStack() })
         }
         composable(FieldMindScreen.SettingsSpeciesPacks.route) { SpeciesPackSettingsPage(onBack = { navController.popBackStack() }) }
+        composable(FieldMindScreen.SettingsSpeciesId.route) { SpeciesIdentificationSettingsPage(viewModel = viewModel, onBack = { navController.popBackStack() }) }
         composable(FieldMindScreen.CounterTool.route) { CounterToolScreen(viewModel = viewModel, onBack = { navController.popBackStack() }) }
         composable(FieldMindScreen.MeasurementTool.route) { MeasurementToolScreen(viewModel = viewModel, onBack = { navController.popBackStack() }) }
         composable(FieldMindScreen.WeatherLogTool.route) { WeatherLogToolScreen(viewModel = viewModel, onBack = { navController.popBackStack() }) }
         composable(FieldMindScreen.SpeciesTool.route) { SpeciesToolScreen(viewModel = viewModel, onBack = { navController.popBackStack() }, onOpenBrowser = { navController.navigateToDestination(FieldMindScreen.SpeciesBrowser.route) }, onOpenTaxonomicBrowser = { navController.navigateToDestination(FieldMindScreen.TaxonomicBrowser.route) }) }
+        composable(FieldMindScreen.ChecklistTool.route) { ChecklistToolScreen(viewModel = viewModel, onBack = { navController.popBackStack() }) }
+        composable(FieldMindScreen.EventLogTool.route) { EventLogToolScreen(viewModel = viewModel, onBack = { navController.popBackStack() }) }
+        composable(FieldMindScreen.SiteLogTool.route) { SiteLogToolScreen(viewModel = viewModel, onBack = { navController.popBackStack() }) }
+        composable(FieldMindScreen.ComparisonTable.route) { ComparisonTableScreen(viewModel = viewModel, onBack = { navController.popBackStack() }) }
+        composable(FieldMindScreen.FieldLog.route) { FieldLogScreen(viewModel = viewModel, onBack = { navController.popBackStack() }, onOpenDetail = openDetail) }
         composable("field_detail/{kind}/{id}") { entry ->
             val kind = entry.arguments?.getString("kind") ?: "observation"
             val id = entry.arguments?.getString("id")?.toLongOrNull() ?: 0L

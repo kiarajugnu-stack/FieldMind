@@ -39,6 +39,8 @@ import fieldmind.research.app.features.field.data.ai.AiProvider
 import fieldmind.research.app.features.field.data.ai.AssistantTask
 import fieldmind.research.app.features.field.data.ai.GeminiResearchAssistant
 import fieldmind.research.app.features.field.data.database.entity.*
+import fieldmind.research.app.features.field.data.vision.SpeciesDatabase
+import fieldmind.research.app.features.field.data.vision.SpeciesRecord
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import fieldmind.research.app.features.field.data.export.FieldMindExport
@@ -455,7 +457,7 @@ private fun ReObservationLink(
 }
 
 // ══════════════════════════════════════════════════════════════════════
-//  Species Information Section — Scientific name, taxonomy, conservation
+//  Species Information Section — Interactive card with SpeciesDetailSheet
 // ══════════════════════════════════════════════════════════════════════
 
 @Composable
@@ -465,7 +467,24 @@ private fun ObservationSpeciesInfoSection(
     viewModel: FieldMindViewModel
 ) {
     val colors = FieldMindTheme.colors
-    // Parse structured details JSON for species info if available
+    val context = LocalContext.current
+    val speciesDatabase = remember { SpeciesDatabase(context) }
+
+    // ── Species record lookup state ──
+    var selectedSpeciesRecord by remember { mutableStateOf<SpeciesRecord?>(null) }
+    var showTaxonomy by remember { mutableStateOf(false) }
+    var showSpeciesDetail by remember { mutableStateOf(false) }
+
+    // Extract the species name from structured details JSON
+    val speciesName = remember(o.structuredDetailsJson) {
+        if (o.structuredDetailsJson.isNotBlank()) {
+            try {
+                org.json.JSONObject(o.structuredDetailsJson).optString("speciesName", "")
+            } catch (_: Exception) { "" }
+        } else ""
+    }
+
+    // Parse static species info from JSON for fallback display
     val speciesInfo = remember(o.structuredDetailsJson) {
         if (o.structuredDetailsJson.isNotBlank()) {
             try {
@@ -478,10 +497,21 @@ private fun ObservationSpeciesInfoSection(
             } catch (_: Exception) { null }
         } else null
     }
-    
-    val hasAnyInfo = speciesInfo != null || o.category.isNotBlank()
+
+    // Look up full species record from database
+    LaunchedEffect(speciesName) {
+        if (speciesName.isNotBlank()) {
+            val results = speciesDatabase.search(speciesName, limit = 5)
+            selectedSpeciesRecord = results.firstOrNull {
+                it.commonName.equals(speciesName, ignoreCase = true) ||
+                it.scientificName.equals(speciesName, ignoreCase = true)
+            }
+        }
+    }
+
+    val hasAnyInfo = speciesInfo != null || o.category.isNotBlank() || speciesName.isNotBlank()
     if (!hasAnyInfo) return
-    
+
     Card(
         shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(containerColor = colors.observation.copy(alpha = 0.06f)),
@@ -492,51 +522,80 @@ private fun ObservationSpeciesInfoSection(
                 Icon(FieldMindIcons.Nature, null, tint = colors.observation, size = 20.dp)
                 Text("Species information", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = colors.observation)
             }
-            
-            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                if (speciesInfo?.scientificName?.isNotBlank() == true) {
-                    InfoRow("Scientific name", speciesInfo.scientificName)
-                }
-                if (speciesInfo?.taxonomy?.isNotBlank() == true) {
-                    InfoRow("Taxonomy", speciesInfo.taxonomy)
-                }
-                if (speciesInfo?.conservationStatus?.isNotBlank() == true) {
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        val statusColor = when {
-                            speciesInfo.conservationStatus.contains("Endangered") || speciesInfo.conservationStatus.contains("Critically") -> MaterialTheme.colorScheme.error
-                            speciesInfo.conservationStatus.contains("Vulnerable") || speciesInfo.conservationStatus.contains("Near") -> colors.warning
-                            else -> colors.positive
-                        }
-                        Text("Conservation", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        Box(
-                            Modifier.clip(RoundedCornerShape(8.dp))
-                                .background(statusColor.copy(alpha = 0.15f))
-                                .padding(horizontal = 8.dp, vertical = 4.dp)
+
+            // Show SpeciesInfoCard if we found a full record
+            val record = selectedSpeciesRecord
+            if (record != null) {
+                SpeciesInfoCard(
+                    record = record,
+                    showTaxonomy = showTaxonomy,
+                    onToggleTaxonomy = { showTaxonomy = !showTaxonomy },
+                    onOpenDetail = { showSpeciesDetail = true }
+                )
+            } else {
+                // Fallback to static JSON data if no full record found
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    if (speciesName.isNotBlank()) {
+                        Row(
+                            Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text(
-                                speciesInfo.conservationStatus,
-                                style = MaterialTheme.typography.labelSmall,
-                                fontWeight = FontWeight.Bold,
-                                color = statusColor
-                            )
+                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                Text("Species", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Text(speciesName, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Medium)
+                            }
+                            Icon(FieldMindIcons.Info, null, tint = colors.observation.copy(alpha = 0.4f), size = 16.dp)
                         }
                     }
-                }
-                if (speciesInfo?.description?.isNotBlank() == true) {
-                    Text(
-                        speciesInfo.description,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-                if (speciesInfo == null && o.subject.isNotBlank()) {
-                    Text(
-                        "Category: ${o.category}",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                    if (speciesInfo?.scientificName?.isNotBlank() == true) {
+                        InfoRow("Scientific name", speciesInfo.scientificName)
+                    }
+                    if (speciesInfo?.taxonomy?.isNotBlank() == true) {
+                        InfoRow("Taxonomy", speciesInfo.taxonomy)
+                    }
+                    if (speciesInfo?.conservationStatus?.isNotBlank() == true) {
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            val statusColor = when {
+                                speciesInfo.conservationStatus.contains("Endangered") || speciesInfo.conservationStatus.contains("Critically") -> MaterialTheme.colorScheme.error
+                                speciesInfo.conservationStatus.contains("Vulnerable") || speciesInfo.conservationStatus.contains("Near") -> colors.warning
+                                else -> colors.positive
+                            }
+                            Text("Conservation", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Box(
+                                Modifier.clip(RoundedCornerShape(8.dp))
+                                    .background(statusColor.copy(alpha = 0.15f))
+                                    .padding(horizontal = 8.dp, vertical = 4.dp)
+                            ) {
+                                Text(
+                                    speciesInfo.conservationStatus,
+                                    style = MaterialTheme.typography.labelSmall,
+                                    fontWeight = FontWeight.Bold,
+                                    color = statusColor
+                                )
+                            }
+                        }
+                    }
+                    if (speciesInfo?.description?.isNotBlank() == true) {
+                        Text(
+                            speciesInfo.description,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 }
             }
+        }
+    }
+
+    // ── Species Detail Sheet dialog ──
+    if (showSpeciesDetail) {
+        val detailRecord = selectedSpeciesRecord
+        if (detailRecord != null) {
+            SpeciesDetailSheet(
+                record = detailRecord,
+                onDismiss = { showSpeciesDetail = false }
+            )
         }
     }
 }
@@ -948,8 +1007,8 @@ private fun ObservationWeatherLocationSection(
             
             // Weather details
             if (hasWeather) {
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                         if (o.weatherTemperature != null) {
                             WeatherDetailRow("Temperature", WeatherUnitConverter.formatTemp(o.weatherTemperature, tempUnit))
                         }
@@ -960,7 +1019,7 @@ private fun ObservationWeatherLocationSection(
                             WeatherDetailRow("Wind", WeatherUnitConverter.formatWind(o.weatherWindSpeed, windSpeedUnit))
                         }
                     }
-                    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                         if (o.weatherCloudCover != null) {
                             WeatherDetailRow("Cloud cover", "${o.weatherCloudCover}%")
                         }
@@ -1149,59 +1208,61 @@ private fun ObservationExportSection(
                 Text("Export & sharing", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
             }
             
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                // PDF Export
-                FilledTonalButton(
-                    onClick = {
-                        haptics.light()
-                        showFastSnackbar(snackbar, scope, "PDF export coming soon")
-                    },
-                    modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(14.dp)
-                ) {
-                    Icon(FieldMindIcons.Article, null, size = 16.dp)
-                    Spacer(Modifier.size(4.dp))
-                    Text("PDF", style = MaterialTheme.typography.labelSmall)
+            Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                // Row 1: PDF + CSV
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    FilledTonalButton(
+                        onClick = {
+                            haptics.light()
+                            showFastSnackbar(snackbar, scope, "PDF export coming soon")
+                        },
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(14.dp)
+                    ) {
+                        Icon(FieldMindIcons.Article, null, size = 16.dp)
+                        Spacer(Modifier.size(4.dp))
+                        Text("PDF", style = MaterialTheme.typography.labelSmall)
+                    }
+                    FilledTonalButton(
+                        onClick = {
+                            haptics.light()
+                            showFastSnackbar(snackbar, scope, "CSV export coming soon")
+                        },
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(14.dp)
+                    ) {
+                        Icon(FieldMindIcons.Data, null, size = 16.dp)
+                        Spacer(Modifier.size(4.dp))
+                        Text("CSV", style = MaterialTheme.typography.labelSmall)
+                    }
                 }
-                // CSV Export
-                FilledTonalButton(
-                    onClick = {
-                        haptics.light()
-                        showFastSnackbar(snackbar, scope, "CSV export coming soon")
-                    },
-                    modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(14.dp)
-                ) {
-                    Icon(FieldMindIcons.Data, null, size = 16.dp)
-                    Spacer(Modifier.size(4.dp))
-                    Text("CSV", style = MaterialTheme.typography.labelSmall)
-                }
-                // JSON Export
-                FilledTonalButton(
-                    onClick = {
-                        haptics.light()
-                        showFastSnackbar(snackbar, scope, "JSON export coming soon")
-                    },
-                    modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(14.dp)
-                ) {
-                    Icon(FieldMindIcons.Data, null, size = 16.dp)
-                    Spacer(Modifier.size(4.dp))
-                    Text("JSON", style = MaterialTheme.typography.labelSmall)
-                }
-                // Share
-                FilledTonalButton(
-                    onClick = {
-                        haptics.confirm()
-                        clipboard.setText(AnnotatedString(exportText))
-                        sharePlainText(context, exportText)
-                    },
-                    modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(14.dp)
-                ) {
-                    Icon(FieldMindIcons.Export, null, size = 16.dp)
-                    Spacer(Modifier.size(4.dp))
-                    Text("Share", style = MaterialTheme.typography.labelSmall)
+                // Row 2: JSON + Share
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    FilledTonalButton(
+                        onClick = {
+                            haptics.light()
+                            showFastSnackbar(snackbar, scope, "JSON export coming soon")
+                        },
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(14.dp)
+                    ) {
+                        Icon(FieldMindIcons.Data, null, size = 16.dp)
+                        Spacer(Modifier.size(4.dp))
+                        Text("JSON", style = MaterialTheme.typography.labelSmall)
+                    }
+                    FilledTonalButton(
+                        onClick = {
+                            haptics.confirm()
+                            clipboard.setText(AnnotatedString(exportText))
+                            sharePlainText(context, exportText)
+                        },
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(14.dp)
+                    ) {
+                        Icon(FieldMindIcons.Export, null, size = 16.dp)
+                        Spacer(Modifier.size(4.dp))
+                        Text("Share", style = MaterialTheme.typography.labelSmall)
+                    }
                 }
             }
         }

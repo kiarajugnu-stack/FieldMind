@@ -42,7 +42,7 @@ import fieldmind.research.app.features.field.data.database.entity.*
         SpeciesQuestionCrossRef::class,
         EvidenceReportCrossRef::class
     ],
-    version = 11,
+    version = 12,
     exportSchema = false
 )
 abstract class FieldMindDatabase : RoomDatabase() {

@@ -13,9 +13,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
-import fieldmind.research.app.worker.BackupWorker
-import fieldmind.research.app.worker.RhythmPulseNotificationWorker
-import fieldmind.research.app.worker.UpdateNotificationWorker
 import fieldmind.research.app.BuildConfig
 import java.io.File
 import java.util.Date // Import Date for timestamp
@@ -1788,25 +1785,7 @@ private val _autoCheckForUpdates = MutableStateFlow(prefs.getBoolean(KEY_AUTO_CH
         migrateLegacyArtworkPreferenceIfNeeded()
         normalizeArtworkPreferenceStateIfNeeded()
 
-        // Schedule auto-backup if enabled
-        if (prefs.getBoolean(KEY_AUTO_BACKUP_ENABLED, false)) {
-            scheduleAutoBackup()
-        }
-        
-        // Schedule update notification worker if enabled
-        if (prefs.getBoolean(KEY_UPDATES_ENABLED, false) &&
-            prefs.getBoolean(KEY_AUTO_CHECK_FOR_UPDATES, false) &&
-            (
-                prefs.getBoolean(KEY_UPDATE_NOTIFICATIONS_ENABLED, false) ||
-                    prefs.getBoolean(KEY_UPDATE_STATUS_NOTIFICATIONS_ENABLED, false)
-                ) &&
-            prefs.getBoolean(KEY_USE_SMART_UPDATE_POLLING, false)) {
-            scheduleUpdateNotificationWorker()
-        }
 
-        if (prefs.getBoolean(KEY_RHYTHM_PULSE_NOTIFICATIONS_ENABLED, false)) {
-            scheduleRhythmPulseNotificationWorker()
-        }
     }
 
     private fun migrateLegacyArtworkPreferenceIfNeeded() {
@@ -3070,11 +3049,7 @@ private val _autoCheckForUpdates = MutableStateFlow(prefs.getBoolean(KEY_AUTO_CH
         prefs.edit().putBoolean(KEY_AUTO_CHECK_FOR_UPDATES, enable).apply()
         _autoCheckForUpdates.value = enable
 
-        if (shouldRunUpdateNotificationWorker()) {
-            scheduleUpdateNotificationWorker()
-        } else {
-            cancelUpdateNotificationWorker()
-        }
+        // Update notification worker scheduling removed with music-player code
     }
 
     fun setUpdateChannel(channel: String) {
@@ -3092,11 +3067,7 @@ private val _autoCheckForUpdates = MutableStateFlow(prefs.getBoolean(KEY_AUTO_CH
         _updatesEnabled.value = enable
         
         // Update WorkManager scheduling based on new state
-        if (shouldRunUpdateNotificationWorker()) {
-            scheduleUpdateNotificationWorker()
-        } else {
-            cancelUpdateNotificationWorker()
-        }
+        // Update notification worker scheduling removed with music-player code
     }
 
     fun setUpdateNotificationsEnabled(enable: Boolean) {
@@ -3104,22 +3075,14 @@ private val _autoCheckForUpdates = MutableStateFlow(prefs.getBoolean(KEY_AUTO_CH
         _updateNotificationsEnabled.value = enable
         
         // Update WorkManager scheduling
-        if (shouldRunUpdateNotificationWorker()) {
-            scheduleUpdateNotificationWorker()
-        } else {
-            cancelUpdateNotificationWorker()
-        }
+        // Update notification worker scheduling removed with music-player code
     }
 
     fun setUpdateStatusNotificationsEnabled(enable: Boolean) {
         prefs.edit().putBoolean(KEY_UPDATE_STATUS_NOTIFICATIONS_ENABLED, enable).apply()
         _updateStatusNotificationsEnabled.value = enable
 
-        if (shouldRunUpdateNotificationWorker()) {
-            scheduleUpdateNotificationWorker()
-        } else {
-            cancelUpdateNotificationWorker()
-        }
+        // Update notification worker scheduling removed with music-player code
     }
 
     fun setUseSmartUpdatePolling(enable: Boolean) {
@@ -3127,11 +3090,7 @@ private val _autoCheckForUpdates = MutableStateFlow(prefs.getBoolean(KEY_AUTO_CH
         _useSmartUpdatePolling.value = enable
         
         // Update WorkManager scheduling
-        if (shouldRunUpdateNotificationWorker()) {
-            scheduleUpdateNotificationWorker()
-        } else {
-            cancelUpdateNotificationWorker()
-        }
+        // Update notification worker scheduling removed with music-player code
     }
 
     fun setMediaScanMode(mode: String) {
@@ -3156,8 +3115,8 @@ private val _autoCheckForUpdates = MutableStateFlow(prefs.getBoolean(KEY_AUTO_CH
         prefs.edit().putInt(KEY_UPDATE_CHECK_INTERVAL_HOURS, hours).apply()
         _updateCheckIntervalHours.value = hours
 
-        if (shouldRunUpdateNotificationWorker()) {
-            scheduleUpdateNotificationWorker()
+        if (/* shouldRunUpdateNotificationWorker removed */) {
+            /* scheduleUpdateNotificationWorker removed */
         }
     }
 
@@ -3230,9 +3189,9 @@ private val _autoCheckForUpdates = MutableStateFlow(prefs.getBoolean(KEY_AUTO_CH
         _rhythmPulseNotificationsEnabled.value = enabled
 
         if (enabled) {
-            scheduleRhythmPulseNotificationWorker()
+            /* scheduleRhythmPulseNotificationWorker removed */
         } else {
-            cancelRhythmPulseNotificationWorker()
+            /* cancelRhythmPulseNotificationWorker removed */
         }
     }
 
@@ -3242,7 +3201,7 @@ private val _autoCheckForUpdates = MutableStateFlow(prefs.getBoolean(KEY_AUTO_CH
         _rhythmPulseNotificationIntervalHours.value = safeHours
 
         if (_rhythmPulseNotificationsEnabled.value) {
-            scheduleRhythmPulseNotificationWorker()
+            /* scheduleRhythmPulseNotificationWorker removed */
         }
     }
     
@@ -3716,12 +3675,12 @@ private val _autoCheckForUpdates = MutableStateFlow(prefs.getBoolean(KEY_AUTO_CH
         
         // Schedule or cancel auto-backup worker
         if (enabled) {
-            scheduleAutoBackup()
+            /* scheduleAutoBackup removed */
             // Trigger an immediate backup when enabling auto-backup
-            triggerImmediateBackup()
+            /* triggerImmediateBackup removed */
             Log.d("AppSettings", "Auto-backup enabled: triggering immediate backup")
         } else {
-            cancelAutoBackup()
+            /* cancelAutoBackup removed */
         }
     }
     
@@ -3769,144 +3728,30 @@ private val _autoCheckForUpdates = MutableStateFlow(prefs.getBoolean(KEY_AUTO_CH
     /**
      * Schedule weekly automatic backups using WorkManager
      */
-    private fun scheduleAutoBackup() {
-        try {
-            val workRequest = PeriodicWorkRequestBuilder<BackupWorker>(
-                7, TimeUnit.DAYS, // Repeat every 7 days
-                1, TimeUnit.HOURS  // Flex interval of 1 hour
-            ).build()
-            
-            WorkManager.getInstance(context).enqueueUniquePeriodicWork(
-                BackupWorker.WORK_NAME,
-                ExistingPeriodicWorkPolicy.KEEP, // Keep existing schedule if already running
-                workRequest
-            )
-            
-            Log.d("AppSettings", "Auto-backup scheduled: weekly backups enabled")
-            Log.d("AppSettings", "Next backup will occur within the next 7 days")
-        } catch (e: Exception) {
-            Log.e("AppSettings", "Failed to schedule auto-backup", e)
-        }
-    }
     
     /**
      * Trigger an immediate one-time backup (useful for testing)
      */
-    fun triggerImmediateBackup() {
-        try {
-            val workRequest = OneTimeWorkRequestBuilder<BackupWorker>()
-                .build()
-            
-            WorkManager.getInstance(context).enqueue(workRequest)
-            Log.d("AppSettings", "Immediate backup triggered")
-        } catch (e: Exception) {
-            Log.e("AppSettings", "Failed to trigger immediate backup", e)
-        }
-    }
     
     /**
      * Cancel automatic backups
      */
-    private fun cancelAutoBackup() {
-        try {
-            WorkManager.getInstance(context).cancelUniqueWork(BackupWorker.WORK_NAME)
-            Log.d("AppSettings", "Auto-backup cancelled")
-        } catch (e: Exception) {
-            Log.e("AppSettings", "Failed to cancel auto-backup", e)
-        }
-    }
     
     /**
      * Schedule periodic update notification checks using WorkManager
      * This implements a webhook-style system using smart polling
      */
-    private fun shouldRunUpdateNotificationWorker(): Boolean {
-        return _updatesEnabled.value &&
-            _autoCheckForUpdates.value &&
-            _useSmartUpdatePolling.value &&
-            (_updateNotificationsEnabled.value || _updateStatusNotificationsEnabled.value)
-    }
 
-    private fun scheduleUpdateNotificationWorker() {
-        try {
-            // Get the check interval from settings (default 6 hours)
-            val intervalHours = _updateCheckIntervalHours.value.toLong()
-            
-            val workRequest = PeriodicWorkRequestBuilder<fieldmind.research.app.worker.UpdateNotificationWorker>(
-                intervalHours, TimeUnit.HOURS,
-                30, TimeUnit.MINUTES // Flex interval
-            ).build()
-            
-            WorkManager.getInstance(context).enqueueUniquePeriodicWork(
-                fieldmind.research.app.worker.UpdateNotificationWorker.WORK_NAME,
-                ExistingPeriodicWorkPolicy.UPDATE, // Update if interval changes
-                workRequest
-            )
-            
-            Log.d("AppSettings", "Update notification worker scheduled: checks every $intervalHours hours")
-        } catch (e: Exception) {
-            Log.e("AppSettings", "Failed to schedule update notification worker", e)
-        }
-    }
 
-    private fun scheduleRhythmPulseNotificationWorker() {
-        try {
-            val intervalHours = _rhythmPulseNotificationIntervalHours.value.toLong().coerceIn(6L, 72L)
 
-            val workRequest = PeriodicWorkRequestBuilder<RhythmPulseNotificationWorker>(
-                intervalHours, TimeUnit.HOURS,
-                1, TimeUnit.HOURS
-            ).build()
-
-            WorkManager.getInstance(context).enqueueUniquePeriodicWork(
-                RhythmPulseNotificationWorker.WORK_NAME,
-                ExistingPeriodicWorkPolicy.UPDATE,
-                workRequest
-            )
-
-            Log.d("AppSettings", "Rhythm tips worker scheduled: every $intervalHours hours")
-        } catch (e: Exception) {
-            Log.e("AppSettings", "Failed to schedule Rhythm tips worker", e)
-        }
-    }
-
-    private fun cancelRhythmPulseNotificationWorker() {
-        try {
-            WorkManager.getInstance(context).cancelUniqueWork(RhythmPulseNotificationWorker.WORK_NAME)
-            Log.d("AppSettings", "Rhythm tips worker cancelled")
-        } catch (e: Exception) {
-            Log.e("AppSettings", "Failed to cancel Rhythm tips worker", e)
-        }
-    }
     
     /**
      * Cancel update notification checks
      */
-    private fun cancelUpdateNotificationWorker() {
-        try {
-            WorkManager.getInstance(context).cancelUniqueWork(
-                fieldmind.research.app.worker.UpdateNotificationWorker.WORK_NAME
-            )
-            Log.d("AppSettings", "Update notification worker cancelled")
-        } catch (e: Exception) {
-            Log.e("AppSettings", "Failed to cancel update notification worker", e)
-        }
-    }
     
     /**
      * Trigger an immediate update check (useful for testing)
      */
-    fun triggerImmediateUpdateCheck() {
-        try {
-            val workRequest = OneTimeWorkRequestBuilder<fieldmind.research.app.worker.UpdateNotificationWorker>()
-                .build()
-            
-            WorkManager.getInstance(context).enqueue(workRequest)
-            Log.d("AppSettings", "Immediate update check triggered")
-        } catch (e: Exception) {
-            Log.e("AppSettings", "Failed to trigger immediate update check", e)
-        }
-    }
     
     fun setBackupLocation(location: String?) {
         if (location == null) {
@@ -4447,7 +4292,7 @@ private val _autoCheckForUpdates = MutableStateFlow(prefs.getBoolean(KEY_AUTO_CH
                 Log.d("AppSettings", "Performing cache cleanup on app exit...")
                 
                 // Clear file system caches
-                fieldmind.research.app.util.CacheManager.clearAllCache(context)
+                /* CacheManager.clearAllCache removed */
                 
                 // Clear in-memory caches from MusicRepository
                 if (musicRepository != null && musicRepository::class.simpleName == "MusicRepository") {
@@ -4640,11 +4485,7 @@ private val _autoCheckForUpdates = MutableStateFlow(prefs.getBoolean(KEY_AUTO_CH
         _updateCheckIntervalHours.value = prefs.getInt(KEY_UPDATE_CHECK_INTERVAL_HOURS, 6)
         
         // Re-schedule update notification worker if settings changed
-        if (shouldRunUpdateNotificationWorker()) {
-            scheduleUpdateNotificationWorker()
-        } else {
-            cancelUpdateNotificationWorker()
-        }
+        // Update notification worker scheduling removed with music-player code
         
         // Beta Program
         _hasShownBetaPopup.value = prefs.getBoolean(KEY_HAS_SHOWN_BETA_POPUP, false)
@@ -4670,9 +4511,9 @@ private val _autoCheckForUpdates = MutableStateFlow(prefs.getBoolean(KEY_AUTO_CH
         _genreDetectionCompleted.value = prefs.getBoolean(KEY_GENRE_DETECTION_COMPLETED, false)
 
         if (_rhythmPulseNotificationsEnabled.value) {
-            scheduleRhythmPulseNotificationWorker()
+            /* scheduleRhythmPulseNotificationWorker removed */
         } else {
-            cancelRhythmPulseNotificationWorker()
+            /* cancelRhythmPulseNotificationWorker removed */
         }
         
         // Blacklisted items
@@ -4693,7 +4534,7 @@ private val _autoCheckForUpdates = MutableStateFlow(prefs.getBoolean(KEY_AUTO_CH
         
         // Ensure auto-backup is scheduled if enabled
         if (_autoBackupEnabled.value) {
-            scheduleAutoBackup()
+            /* scheduleAutoBackup removed */
         }
         
         // Sleep Timer settings

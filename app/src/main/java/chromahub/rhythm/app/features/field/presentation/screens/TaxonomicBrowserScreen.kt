@@ -18,6 +18,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.activity.compose.BackHandler
 import fieldmind.research.app.features.field.data.vision.SpeciesDatabase
 import fieldmind.research.app.features.field.data.vision.SpeciesRecord
 import kotlinx.coroutines.launch
@@ -73,6 +74,20 @@ fun TaxonomicBrowserScreen(
     var speciesList by remember { mutableStateOf<List<SpeciesRecord>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
     val scope = rememberCoroutineScope()
+
+    // ── Go up one level ──
+    fun goUp() {
+        if (breadcrumbs.isEmpty()) {
+            onBack()
+            return
+        }
+        val last = breadcrumbs.last()
+        breadcrumbs = breadcrumbs.dropLast(1)
+        val prevLevel = last.level
+        currentLevel = prevLevel
+    }
+
+    BackHandler(enabled = true) { goUp() }
 
     // ── Load the current level's items ──
     fun loadLevel() {
@@ -151,18 +166,6 @@ fun TaxonomicBrowserScreen(
         breadcrumbs = breadcrumbs + Breadcrumb(currentLevel, value)
         val nextLevel = TaxoLevel.values()[currentLevel.ordinal + 1]
         currentLevel = nextLevel
-    }
-
-    // ── Go up one level ──
-    fun goUp() {
-        if (breadcrumbs.isEmpty()) {
-            onBack()
-            return
-        }
-        val last = breadcrumbs.last()
-        breadcrumbs = breadcrumbs.dropLast(1)
-        val prevLevel = last.level
-        currentLevel = prevLevel
     }
 
     // ── Jump back to a specific breadcrumb ──

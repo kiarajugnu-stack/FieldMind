@@ -87,7 +87,6 @@ fun AnimatedWeatherScene(
     val timeOfDay = forcedTimeOfDay
     val isDarkTheme = FieldMindTheme.colors.isDark
     val palette = weatherPalette(temperature, timeOfDay, isDarkTheme)
-    val isDay = timeOfDay != TimeOfDay.Night && timeOfDay != TimeOfDay.Twilight
 
     // In preview/inspection mode, show a static frame
     if (LocalInspectionMode.current) {
@@ -106,11 +105,11 @@ fun AnimatedWeatherScene(
 
         // Specific weather effects
         // weatherCode -1 = day cloudy, -2 = night sky (used by weather widget for enhanced display)
+        // All scenes use the same animation style regardless of day/night — palette provides the colors
         when {
-            weatherCode == -1 -> DayCloudyScene(palette, compact, timeOfDay, modifier)
+            weatherCode == -1 || weatherCode in 0..1 -> DayCloudyScene(palette, compact, timeOfDay, modifier)
             weatherCode == -2 -> NightSkyScene(palette, compact, timeOfDay, modifier)
-            weatherCode in 0..1 -> if (isDay) DayCloudyScene(palette, compact, timeOfDay, modifier) else NightSkyScene(palette, compact, timeOfDay, modifier)
-            weatherCode in 2..3 -> if (isDay) CloudyScene(palette, compact, timeOfDay, modifier) else NightCloudyScene(palette, compact, timeOfDay, modifier)
+            weatherCode in 2..3 -> CloudyScene(palette, compact, timeOfDay, modifier)
             weatherCode in 45..48 -> FogScene(weatherCode, palette, compact, timeOfDay, modifier)
             weatherCode in 51..67 || weatherCode in 80..82 -> RainScene(weatherCode, palette, compact, timeOfDay, modifier)
             weatherCode in 71..77 || weatherCode in 85..86 -> SnowScene(weatherCode, palette, compact, timeOfDay, modifier)
@@ -230,15 +229,15 @@ private fun weatherPalette(temp: Double?, timeOfDay: TimeOfDay, isDarkTheme: Boo
             hazeCol = Color(0xFFE3F2FD)
         )
         TimeOfDay.Afternoon -> TimeOfDayColors(
-            skyTop = Color(0xFF5BA3D9),
-            skyBottom = Color(0xFF9AC8E0),
-            skyAccent = Color(0xFF64B5F6),
+            skyTop = Color(0xFF4A90C8),
+            skyBottom = Color(0xFFF5CFA0),
+            skyAccent = Color(0xFFFFB74D),
             sunCol = Color(0xFFFFF176),
             sunGlowCol = Color(0xFFFFF9C4),
             moonCol = Color(0xFFD0D8E0),
             moonGlowCol = Color(0xFFE0E8F0),
-            cloudCol = Color(0xFFFFF8E1),
-            hazeCol = Color(0xFFFFF3E0)
+            cloudCol = Color(0xFFFFF0D0),
+            hazeCol = Color(0xFFFFE0B0)
         )
         TimeOfDay.Sunset -> TimeOfDayColors(
             skyTop = Color(0xFFFF6B35),
@@ -314,20 +313,21 @@ private fun weatherPalette(temp: Double?, timeOfDay: TimeOfDay, isDarkTheme: Boo
     val isNighttime = timeOfDay == TimeOfDay.Night || timeOfDay == TimeOfDay.Twilight
 
     if (isDarkTheme) {
-        // Dark mode: deeper, more saturated versions
-        val dayTopMul = 0.42f
-        val dayTopMulG = 0.38f
-        val dayTopMulB = 0.50f
-        val dayBotMul = 0.35f
-        val dayBotMulG = 0.28f
-        val dayBotMulB = 0.40f
+        // Dark mode: rich, vibrant dark colors — preserve the same beautiful look as light mode
+        // but with deeper, more saturated tones instead of heavy desaturation
+        val dayTopMul = 0.72f
+        val dayTopMulG = 0.68f
+        val dayTopMulB = 0.78f
+        val dayBotMul = 0.65f
+        val dayBotMulG = 0.58f
+        val dayBotMulB = 0.70f
 
-        val nightTopMul = 0.28f
-        val nightTopMulG = 0.25f
-        val nightTopMulB = 0.35f
-        val nightBotMul = 0.18f
-        val nightBotMulG = 0.15f
-        val nightBotMulB = 0.22f
+        val nightTopMul = 0.52f
+        val nightTopMulG = 0.48f
+        val nightTopMulB = 0.58f
+        val nightBotMul = 0.42f
+        val nightBotMulG = 0.38f
+        val nightBotMulB = 0.48f
 
         val topMulR = if (isNighttime) nightTopMul else dayTopMul
         val topMulG = if (isNighttime) nightTopMulG else dayTopMulG
@@ -337,20 +337,20 @@ private fun weatherPalette(temp: Double?, timeOfDay: TimeOfDay, isDarkTheme: Boo
         val botMulB = if (isNighttime) nightBotMulB else dayBotMulB
 
         val darkTop = modulatedTop.copy(
-            red = (modulatedTop.red * topMulR).coerceAtMost(0.55f),
-            green = (modulatedTop.green * topMulG).coerceAtMost(0.45f),
-            blue = (modulatedTop.blue * topMulB).coerceAtMost(0.65f)
+            red = (modulatedTop.red * topMulR).coerceAtMost(0.75f),
+            green = (modulatedTop.green * topMulG).coerceAtMost(0.70f),
+            blue = (modulatedTop.blue * topMulB).coerceAtMost(0.80f)
         )
         val darkBottom = skyBottom.copy(
-            red = (skyBottom.red * botMulR).coerceAtMost(0.40f),
-            green = (skyBottom.green * botMulG).coerceAtMost(0.35f),
-            blue = (skyBottom.blue * botMulB).coerceAtMost(0.50f)
+            red = (skyBottom.red * botMulR).coerceAtMost(0.65f),
+            green = (skyBottom.green * botMulG).coerceAtMost(0.60f),
+            blue = (skyBottom.blue * botMulB).coerceAtMost(0.70f)
         )
         val bgColors = when (timeOfDay) {
             TimeOfDay.Night, TimeOfDay.Twilight -> listOf(
-                Color(0xFF050510),
-                Color(0xFF0A0A20),
-                darkBottom.copy(alpha = 0.85f)
+                Color(0xFF080818),
+                Color(0xFF121235),
+                darkBottom.copy(alpha = 0.88f)
             )
             TimeOfDay.Sunrise, TimeOfDay.Morning, TimeOfDay.Midday, TimeOfDay.Afternoon -> listOf(
                 darkTop.copy(alpha = 0.92f),
@@ -358,23 +358,23 @@ private fun weatherPalette(temp: Double?, timeOfDay: TimeOfDay, isDarkTheme: Boo
             )
             TimeOfDay.Sunset, TimeOfDay.Dawn -> listOf(
                 darkTop,
-                darkBottom.copy(red = darkBottom.red * 1.2f, green = darkBottom.green * 0.8f, blue = darkBottom.blue * 1.3f)
+                darkBottom.copy(red = darkBottom.red * 1.15f, green = darkBottom.green * 0.85f, blue = darkBottom.blue * 1.2f)
             )
         }
 
-        val cloudAlpha = if (isNighttime) 0.18f else 0.35f
+        val cloudAlpha = if (isNighttime) 0.28f else 0.48f
 
         return WeatherPalette(
             primary = darkTop,
             secondary = darkBottom,
-            accent = skyAccent.copy(alpha = if (isNighttime) 0.5f else 0.8f),
+            accent = skyAccent.copy(alpha = if (isNighttime) 0.7f else 0.9f),
             background = bgColors,
-            sunColor = sunCol.copy(alpha = if (isNighttime) 0.6f else 0.9f),
-            sunGlowColor = sunGlowCol.copy(alpha = if (isNighttime) 0.2f else 0.4f),
+            sunColor = sunCol.copy(alpha = if (isNighttime) 0.7f else 0.95f),
+            sunGlowColor = sunGlowCol.copy(alpha = if (isNighttime) 0.35f else 0.55f),
             moonColor = moonCol,
-            moonGlowColor = moonGlowCol.copy(alpha = if (isNighttime) 0.5f else 0.3f),
+            moonGlowColor = moonGlowCol.copy(alpha = if (isNighttime) 0.6f else 0.4f),
             cloudBaseColor = cloudCol.copy(alpha = cloudAlpha),
-            hazeColor = hazeCol.copy(alpha = if (isNighttime) 0.04f else 0.08f)
+            hazeColor = hazeCol.copy(alpha = if (isNighttime) 0.06f else 0.12f)
         )
     } else {
         // Light mode: use true theme-respecting colors
@@ -1242,15 +1242,21 @@ private fun CloudyScene(
                 center = Offset(sunCx, sunCy)
             )
 
-            // Sun body — partially visible through clouds
+            // Sun body — bright and visible through clouds (keep sun bright in cloudy weather)
             drawCircle(
-                color = palette.sunColor.copy(alpha = sunGlow * 0.35f),
+                color = palette.sunColor.copy(alpha = (0.55f + sunGlow * 0.35f).coerceAtMost(0.9f)),
                 radius = sunRadius,
                 center = Offset(sunCx, sunCy)
             )
             drawCircle(
-                color = palette.sunGlowColor.copy(alpha = sunGlow * 0.20f),
+                color = palette.sunGlowColor.copy(alpha = (0.30f + sunGlow * 0.30f).coerceAtMost(0.6f)),
                 radius = sunRadius * 0.55f,
+                center = Offset(sunCx, sunCy)
+            )
+            // Extra sun glow ring for visibility
+            drawCircle(
+                color = palette.sunGlowColor.copy(alpha = sunGlow * 0.06f),
+                radius = sunRadius * 1.5f,
                 center = Offset(sunCx, sunCy)
             )
         }
@@ -1295,10 +1301,21 @@ private fun DrawScope.drawCloud(
 ) {
     val x = (baseX + offset * size.width) % (size.width + scale) - scale * 0.5f
 
+    // Fade-in/out at screen edges for smooth transitions — no sudden popping
+    val fadeMargin = scale * 0.8f
+    val fadeAlpha = when {
+        x < -fadeMargin -> 0f
+        x < 0f -> ((x + fadeMargin) / fadeMargin).coerceIn(0f, 1f)
+        x > size.width -> 0f
+        x > size.width - fadeMargin -> ((size.width - x) / fadeMargin).coerceIn(0f, 1f)
+        else -> 1f
+    }
+    val fadedColor = color.copy(alpha = color.alpha * fadeAlpha)
+
     when (cloudType) {
-        CloudType.Cumulus -> drawCumulus(x, baseY, scale, color, morph)
-        CloudType.Stratus -> drawStratus(x, baseY, scale, color, morph)
-        CloudType.Cirrus -> drawCirrus(x, baseY, scale, color, morph)
+        CloudType.Cumulus -> drawCumulus(x, baseY, scale, fadedColor, morph)
+        CloudType.Stratus -> drawStratus(x, baseY, scale, fadedColor, morph)
+        CloudType.Cirrus -> drawCirrus(x, baseY, scale, fadedColor, morph)
     }
 }
 
@@ -1361,9 +1378,12 @@ private fun DrawScope.drawCirrus(
 }
 
 /**
- * Draw a landscape treeline silhouette with varied tree heights, properly anchored
- * to the ground curve. Trees get smaller toward the edges for a natural look.
- * The baseY aligns with the ground drawn by drawGround/drawMountainRange.
+ * Draw a landscape treeline silhouette with varied tree heights across multiple elevation levels,
+ * placed over each mountain layer according to the elevation level.
+ * - Far mountain trees: high elevation, small, faint
+ * - Mid mountain trees: middle elevation, medium size
+ * - Near mountain trees: low elevation, largest, most detailed
+ * Trees get smaller toward the edges for a natural look.
  */
 private fun DrawScope.drawTreeLine(morph: Float = 0f, isDark: Boolean = false) {
     val baseColor = if (isDark) Color(0xFF07120B).copy(alpha = 0.72f) else Color(0xFF315331).copy(alpha = 0.30f)
@@ -1376,11 +1396,26 @@ private fun DrawScope.drawTreeLine(morph: Float = 0f, isDark: Boolean = false) {
         return groundY - hills * size.height
     }
 
-    // Undulating treeline silhouette (fills gaps between trees)
+    // ── Three elevation levels of trees, one per mountain layer ──
+    data class TreeLevel(
+        val elevationPct: Float,   // height on screen (0.0-1.0)
+        val sizeMul: Float,        // size multiplier
+        val alphaMul: Float,       // opacity multiplier
+        val count: Int             // number of trees
+    )
+    val treeLevels = listOf(
+        // Far mountain trees — high elevation, small, faint (scale with size.height * 0.73-0.78)
+        TreeLevel(elevationPct = 0.74f, sizeMul = 0.35f, alphaMul = 0.35f, count = 12),
+        // Mid mountain trees — middle elevation, medium
+        TreeLevel(elevationPct = 0.80f, sizeMul = 0.60f, alphaMul = 0.60f, count = 18),
+        // Near/valley trees — low elevation, largest, most visible
+        TreeLevel(elevationPct = 0.86f, sizeMul = 1.0f, alphaMul = 1.0f, count = 24)
+    )
+
+    // Undulating treeline silhouette (fills gaps between trees at lowest level)
     val path = Path()
     path.moveTo(-10f, size.height + 10f)
     path.lineTo(-10f, groundY)
-
     val segments = 40
     for (i in 0..segments) {
         val t = i.toFloat() / segments
@@ -1397,63 +1432,54 @@ private fun DrawScope.drawTreeLine(morph: Float = 0f, isDark: Boolean = false) {
     path.close()
     drawPath(path = path, color = baseColor, style = Fill)
 
-    // Individual trees — properly anchored to ground curve with size variation.
-    // Trees cluster more densely in the center, taper off at edges.
-    val treePositions = 24
-    for (i in 0 until treePositions) {
-        val t = (i.toFloat() + 0.5f) / treePositions
-        val edgeWeight = sin(t * PI.toFloat()).coerceIn(0.3f, 1f) // smaller at edges
-        val peakNoise = sin(t * 12f + morph * 0.3f + i * 0.7f) * 0.35f + 0.5f
-        if (peakNoise > 0.45f) {
-            val px = t * size.width
-            // Ground height at this x position — same formula as drawGround uses
-            val gh = groundHeight(t)
-            
-            // Tree size varies with position — larger toward center, smaller at edges
-            val sizeFactor = edgeWeight * (0.5f + peakNoise * 0.5f)
-            val treeH = size.height * (0.025f + sizeFactor * 0.05f)
-            val treeW = treeH * (0.18f + sizeFactor * 0.12f)
-            
-            // Tree base sits on the ground curve
-            val treeBaseY = gh
-            
-            // Trunk
-            val trunkH = treeH * 0.25f
-            drawRoundRect(
-                color = detailColor.copy(alpha = detailColor.alpha * 0.65f),
-                topLeft = Offset(px - treeW * 0.2f, treeBaseY - trunkH),
-                size = Size(treeW * 0.4f, trunkH),
-                cornerRadius = androidx.compose.ui.geometry.CornerRadius(treeW * 0.15f, treeW * 0.15f)
-            )
-            
-            // Canopy layers (3-4 triangular tiers)
-            val canopyLayers = 3 + (i % 2)
-            for (layer in 0 until canopyLayers) {
-                val layerT = layer.toFloat() / canopyLayers
-                val cy = treeBaseY - trunkH - treeH * (0.15f + layerT * 0.45f)
-                val halfW = treeW * (0.5f + (canopyLayers - layer) * (0.15f + sizeFactor * 0.1f))
-                val canopyH = treeH * (0.18f + (1f - layerT) * 0.12f)
-                val canopyPath = Path().apply {
-                    moveTo(px - halfW, cy + canopyH * 0.3f)
-                    quadraticTo(px, cy - canopyH * 0.6f, px + halfW, cy + canopyH * 0.3f)
-                    close()
+    // Draw trees at each elevation level
+    treeLevels.forEach { level ->
+        val lAlphaMul = level.alphaMul
+        val lSizeMul = level.sizeMul
+        val lBaseY = size.height * level.elevationPct
+        val treePositions = level.count
+        
+        for (i in 0 until treePositions) {
+            val t = (i.toFloat() + 0.5f) / treePositions
+            val edgeWeight = sin(t * PI.toFloat()).coerceIn(0.2f, 1f)
+            val peakNoise = sin(t * 14f + morph * 0.4f + i * 0.9f + level.elevationPct * 10f) * 0.35f + 0.5f
+            if (peakNoise > 0.48f) {
+                val px = t * size.width
+                // Gentle undulation at this elevation level
+                val baseHills = sin(t * 5f + level.elevationPct * 3f) * 0.03f + sin(t * 11f + level.elevationPct * 5f) * 0.02f
+                val gh = lBaseY - baseHills * size.height
+                
+                val sizeFactor = edgeWeight * (0.4f + peakNoise * 0.6f)
+                val treeH = size.height * (0.020f + sizeFactor * 0.045f) * lSizeMul
+                val treeW = treeH * (0.18f + sizeFactor * 0.12f) * lSizeMul
+                val treeBaseY = gh
+                
+                // Trunk
+                val trunkH = treeH * 0.25f
+                drawRoundRect(
+                    color = detailColor.copy(alpha = detailColor.alpha * 0.65f * lAlphaMul),
+                    topLeft = Offset(px - treeW * 0.2f, treeBaseY - trunkH),
+                    size = Size(treeW * 0.4f, trunkH),
+                    cornerRadius = androidx.compose.ui.geometry.CornerRadius(treeW * 0.15f, treeW * 0.15f)
+                )
+                
+                // Canopy layers (2-3 triangular tiers, fewer for distant trees)
+                val canopyLayers = if (lSizeMul < 0.5f) 2 else 3
+                for (layer in 0 until canopyLayers) {
+                    val layerT = layer.toFloat() / canopyLayers
+                    val cy = treeBaseY - trunkH - treeH * (0.15f + layerT * 0.45f)
+                    val halfW = treeW * (0.5f + (canopyLayers - layer) * (0.15f + sizeFactor * 0.1f))
+                    val canopyH = treeH * (0.18f + (1f - layerT) * 0.12f)
+                    val canopyPath = Path().apply {
+                        moveTo(px - halfW, cy + canopyH * 0.3f)
+                        quadraticTo(px, cy - canopyH * 0.6f, px + halfW, cy + canopyH * 0.3f)
+                        close()
+                    }
+                    drawPath(canopyPath, detailColor.copy(alpha = detailColor.alpha * lAlphaMul), style = Fill)
                 }
-                drawPath(canopyPath, detailColor, style = Fill)
-            }
-            
-            // Snow on treetop for cold scenes (always subtle white cap)
-            if (!isDark && morph < 3f) {
-                val snowPath = Path().apply {
-                    moveTo(px - treeW * 0.25f, treeBaseY - trunkH - treeH * 0.55f)
-                    quadraticTo(px, treeBaseY - trunkH - treeH * 0.65f, px + treeW * 0.25f, treeBaseY - trunkH - treeH * 0.55f)
-                    close()
-                }
-                drawPath(snowPath, Color.White.copy(alpha = 0.12f), style = Fill)
             }
         }
     }
-    
-
 }
 
 /**
@@ -2117,6 +2143,20 @@ private fun RainScene(
     val streaks = rememberRainStreaks(streakCount, isDrizzle)
 
     Canvas(modifier = modifier.fillMaxSize()) {
+        // ── Rain sky darkening: in light mode, darken the background so rain is visible ──
+        if (!isDark) {
+            val darkOverlayAlpha = if (isHeavy) 0.55f else if (isDrizzle) 0.25f else 0.35f
+            drawRect(
+                brush = Brush.verticalGradient(
+                    colors = listOf(
+                        Color(0xFF1A2A3A).copy(alpha = darkOverlayAlpha * 0.6f),
+                        Color(0xFF0D1520).copy(alpha = darkOverlayAlpha * 0.8f),
+                        Color(0xFF0A1018).copy(alpha = darkOverlayAlpha)
+                    )
+                ),
+                size = size
+            )
+        }
         val intensityAlpha = rainIntensity.coerceIn(0.4f, 1f)
 
         // Rain streaks — each drop falls individually with random phase offset (no synchronized lines)
