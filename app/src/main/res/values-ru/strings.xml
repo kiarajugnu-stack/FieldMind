@@ -3347,11 +3347,7 @@
     <string name="crashactivity_dont_fret_our_app">Не волнуйтесь! В нашем приложении случилась небольшая «упс». Пожалуйста, поделитесь подробностями сбоя ниже — это как секретное сообщение для наших разработчиков, чтобы они исправили ситуацию! Тогда давай попробуем еще раз, ладно?</string>
     <string name="crashactivity_secret_crash_scrolls">Секретные свитки аварийного крушения</string>
     <string name="crashactivity_share">Поделиться</string>
-    <string name="externalplaybackactivity_unable_to_open_audio">Невозможно открыть аудиофайл</string>
-    <string name="externalplaybackactivity_unsupported_or_unreadable_audio">Неподдерживаемый или нечитаемый аудиофайл</string>
-    <string name="externalplaybackactivity_failed_to_play_audio">Не удалось воспроизвести аудиофайл</string>
-    <string name="externalplaybackactivity_open_rhythm">Открыть Rhythm</string>
-    <string name="mainactivity_error_opening_file">Ошибка открытия файла</string>
+                    <string name="mainactivity_error_opening_file">Ошибка открытия файла</string>
     <string name="mainactivity_unsupported_file_format">Неподдерживаемый формат файла</string>
     <string name="mainactivity_failed_to_initialize_media">Не удалось инициализировать медиаплеер</string>
     <string name="mainactivity_unable_to_play_audio">Невозможно воспроизвести аудиофайл</string>

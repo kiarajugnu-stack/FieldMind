@@ -3347,11 +3347,7 @@
     <string name="crashactivity_dont_fret_our_app">걱정하지 마세요! 우리 앱에는 약간의 \'죄송합니다\'가 있었습니다. 아래에 충돌 세부 정보를 공유해 주세요. 이는 개발자가 문제를 해결하라는 비밀 메시지와 같습니다! 그럼, 다시 한번 시도해 볼까요?</string>
     <string name="crashactivity_secret_crash_scrolls">비밀 충돌 스크롤</string>
     <string name="crashactivity_share">공유하다</string>
-    <string name="externalplaybackactivity_unable_to_open_audio">오디오 파일을 열 수 없습니다</string>
-    <string name="externalplaybackactivity_unsupported_or_unreadable_audio">지원되지 않거나 읽을 수 없는 오디오 파일</string>
-    <string name="externalplaybackactivity_failed_to_play_audio">오디오 파일을 재생하지 못했습니다.</string>
-    <string name="externalplaybackactivity_open_rhythm">Rhythm 열기</string>
-    <string name="mainactivity_error_opening_file">파일을 여는 중 오류가 발생했습니다.</string>
+                    <string name="mainactivity_error_opening_file">파일을 여는 중 오류가 발생했습니다.</string>
     <string name="mainactivity_unsupported_file_format">지원되지 않는 파일 형식</string>
     <string name="mainactivity_failed_to_initialize_media">미디어 플레이어를 초기화하지 못했습니다.</string>
     <string name="mainactivity_unable_to_play_audio">오디오 파일을 재생할 수 없습니다</string>

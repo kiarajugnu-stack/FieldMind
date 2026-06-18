@@ -3347,11 +3347,7 @@
     <string name="crashactivity_dont_fret_our_app">心配しないでください。私たちのアプリにはちょっとした「おっとり」がありました。以下のクラッシュの詳細を共有してください。これは開発者に対する問題を修正するための秘密のメッセージのようなものです。じゃあ、もう一度やってみましょうか？</string>
     <string name="crashactivity_secret_crash_scrolls">秘密のクラッシュ スクロール</string>
     <string name="crashactivity_share">シェア</string>
-    <string name="externalplaybackactivity_unable_to_open_audio">オーディオ ファイルを開けません</string>
-    <string name="externalplaybackactivity_unsupported_or_unreadable_audio">サポートされていない、または読み取れないオーディオ ファイル</string>
-    <string name="externalplaybackactivity_failed_to_play_audio">オーディオ ファイルの再生に失敗しました</string>
-    <string name="externalplaybackactivity_open_rhythm">Rhythm を開く</string>
-    <string name="mainactivity_error_opening_file">ファイルを開くときにエラーが発生しました</string>
+                    <string name="mainactivity_error_opening_file">ファイルを開くときにエラーが発生しました</string>
     <string name="mainactivity_unsupported_file_format">サポートされていないファイル形式です</string>
     <string name="mainactivity_failed_to_initialize_media">メディア プレーヤーの初期化に失敗しました</string>
     <string name="mainactivity_unable_to_play_audio">オーディオ ファイルを再生できません</string>

@@ -1,10 +1,87 @@
 package fieldmind.research.app.features.field.data.settings
 
 import android.content.Context
+import com.google.gson.Gson
 import fieldmind.research.app.features.field.data.background.FieldMindBackgroundScheduler
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+
+// ── Onboarding data models ──
+
+enum class ZoologySubfield(val displayName: String) {
+    Birds("Birds"), Mammals("Mammals"), Herps("Herps"), Insects("Insects"), Marine("Marine");
+    companion object { fun all() = values().toSet() }
+}
+
+enum class BotanySubfield(val displayName: String) {
+    Wildflowers("Wildflowers"), Trees("Trees"), Fungi("Fungi"), Mosses("Mosses");
+    companion object { fun all() = values().toSet() }
+}
+
+/** Which scientific domains the user is interested in. Auto-configures UI. */
+data class UserInterests(
+    val zoology: Set<ZoologySubfield> = emptySet(),
+    val botany: Set<BotanySubfield> = emptySet(),
+    val ecologyEnvironment: Boolean = false,
+    val astronomy: Boolean = false,
+    val geology: Boolean = false,
+    val customInterests: List<String> = emptyList()
+) {
+    val hasWildlife: Boolean get() = zoology.isNotEmpty() || botany.isNotEmpty() || ecologyEnvironment
+    val hasAny: Boolean get() = hasWildlife || astronomy || geology || customInterests.isNotEmpty()
+
+    companion object {
+        private val gson = Gson()
+        fun toJson(interests: UserInterests): String = gson.toJson(interests)
+        fun fromJson(json: String?): UserInterests {
+            if (json.isNullOrBlank()) return UserInterests()
+            return try { gson.fromJson(json, UserInterests::class.java) } catch (_: Exception) { UserInterests() }
+        }
+    }
+}
+
+/** Which screens are visible in the navigation bar and app. Hidden screens accessible via Settings. */
+data class ScreenVisibility(
+    val showCapture: Boolean = true,
+    val showProjects: Boolean = true,
+    val showInsights: Boolean = true,
+    val showLibrary: Boolean = true,
+    val showMap: Boolean = true,
+    val showExport: Boolean = false,
+    val showWeather: Boolean = true,
+    val showSpeciesBrowser: Boolean = true,
+    val showFlashcards: Boolean = false,
+    val showFieldMode: Boolean = false
+) {
+    companion object {
+        private val gson = Gson()
+        fun toJson(vis: ScreenVisibility): String = gson.toJson(vis)
+        fun fromJson(json: String?): ScreenVisibility {
+            if (json.isNullOrBlank()) return ScreenVisibility()
+            return try { gson.fromJson(json, ScreenVisibility::class.java) } catch (_: Exception) { ScreenVisibility() }
+        }
+
+        /** Derive a default visibility from a user's interests. */
+        fun fromInterests(interests: UserInterests): ScreenVisibility {
+            val hasZoology = interests.zoology.isNotEmpty()
+            val hasBotany = interests.botany.isNotEmpty()
+            val hasWildlife = hasZoology || hasBotany || interests.ecologyEnvironment
+            return ScreenVisibility(
+                showCapture = true,
+                showProjects = true,
+                showInsights = true,
+                showLibrary = true,
+                showMap = hasWildlife || interests.geology,
+                showExport = false,
+                showWeather = interests.hasAny,
+                showSpeciesBrowser = hasZoology || hasBotany,
+                showFlashcards = hasWildlife,
+                showFieldMode = hasWildlife
+            )
+        }
+    }
+}
 
 class FieldMindSettings private constructor(context: Context) {
     private val appContext = context.applicationContext
@@ -274,6 +351,37 @@ class FieldMindSettings private constructor(context: Context) {
     fun setLockTimeout(value: String) = edit(KEY_LOCK_TIMEOUT, value) { _lockTimeout.value = value }
     fun setAutoLockOnBackground(value: Boolean) = edit(KEY_AUTO_LOCK_BACKGROUND, value) { _autoLockOnBackground.value = value }
 
+    // ── Onboarding / interests ──
+    private val _userInterests = MutableStateFlow(UserInterests.fromJson(prefs.getString(KEY_USER_INTERESTS, null)))
+    val userInterests: StateFlow<UserInterests> = _userInterests.asStateFlow()
+
+    private val _screenVisibility = MutableStateFlow(ScreenVisibility.fromJson(prefs.getString(KEY_SCREEN_VISIBILITY, null)))
+    val screenVisibility: StateFlow<ScreenVisibility> = _screenVisibility.asStateFlow()
+
+    private val _onboardingExtendedTourCompleted = MutableStateFlow(prefs.getBoolean(KEY_EXTENDED_TOUR_DONE, false))
+    val onboardingExtendedTourCompleted: StateFlow<Boolean> = _onboardingExtendedTourCompleted.asStateFlow()
+
+    fun setUserInterests(value: UserInterests) {
+        val json = UserInterests.toJson(value)
+        prefs.edit().putString(KEY_USER_INTERESTS, json).apply()
+        _userInterests.value = value
+        // Auto-configure screen visibility from interests if user hasn't explicitly set it
+        if (!prefs.contains(KEY_SCREEN_VISIBILITY)) {
+            val derived = ScreenVisibility.fromInterests(value)
+            val visJson = ScreenVisibility.toJson(derived)
+            prefs.edit().putString(KEY_SCREEN_VISIBILITY, visJson).apply()
+            _screenVisibility.value = derived
+        }
+    }
+
+    fun setScreenVisibility(value: ScreenVisibility) {
+        val json = ScreenVisibility.toJson(value)
+        prefs.edit().putString(KEY_SCREEN_VISIBILITY, json).apply()
+        _screenVisibility.value = value
+    }
+
+    fun setOnboardingExtendedTourCompleted(value: Boolean) = edit(KEY_EXTENDED_TOUR_DONE, value) { _onboardingExtendedTourCompleted.value = value }
+
     // ── Species identification setters ──
     fun setSpeciesIdApiKey(value: String) = edit(KEY_SPECIES_ID_API_KEY, value.trim()) { _speciesIdApiKey.value = value.trim() }
     fun setSpeciesIdOfflineFirst(value: Boolean) = edit(KEY_SPECIES_ID_OFFLINE_FIRST, value) { _speciesIdOfflineFirst.value = value }
@@ -350,5 +458,9 @@ class FieldMindSettings private constructor(context: Context) {
         private const val KEY_SPECIES_ID_API_KEY = "species_id_api_key"
         private const val KEY_SPECIES_ID_OFFLINE_FIRST = "species_id_offline_first"
         private const val KEY_SPECIES_MODEL_BASE_URL = "species_model_base_url"
+        // ── Onboarding keys ──
+        private const val KEY_USER_INTERESTS = "user_interests"
+        private const val KEY_SCREEN_VISIBILITY = "screen_visibility"
+        private const val KEY_EXTENDED_TOUR_DONE = "onboarding_extended_tour_done"
     }
 }

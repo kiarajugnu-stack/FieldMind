@@ -1,7 +1,9 @@
 package fieldmind.research.app.activities
 
-import fieldmind.research.app.shared.presentation.components.icons.RhythmIcons
-import fieldmind.research.app.shared.presentation.components.icons.Icon
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.ArrowForward
 
 import android.content.ClipData
 import android.content.ClipboardManager
@@ -139,12 +141,11 @@ class CrashActivity : ComponentActivity() {
                                 .padding(bottom = 32.dp),
                             contentAlignment = Alignment.Center
                         ) {
-                            Icon(
-                                imageVector = RhythmIcons.BugReport,
-                                contentDescription = stringResource(R.string.crash_bug_report),
-                                tint = MaterialTheme.colorScheme.error,
-                                modifier = Modifier.size(56.dp)
-                            )
+                            Icon(imageVector = Icons.Filled.Warning,
+                contentDescription = stringResource(R.string.crash_bug_report),
+                tint = MaterialTheme.colorScheme.error,
+                modifier = Modifier.size(56.dp)
+            )
                         }
                     }
 
@@ -284,7 +285,7 @@ class CrashActivity : ComponentActivity() {
                             shape = RoundedCornerShape(32.dp)
                         ) {
                             Icon(
-                                imageVector = RhythmIcons.Share,
+                                imageVector = Icons.Filled.Share,
                                 contentDescription = null,
                                 modifier = Modifier.size(20.dp)
                             )
@@ -320,7 +321,7 @@ class CrashActivity : ComponentActivity() {
                             Text(stringResource(R.string.crash_restart_app), style = MaterialTheme.typography.labelLarge)
                             Spacer(modifier = Modifier.width(8.dp))
                             Icon(
-                                imageVector = RhythmIcons.Forward,
+                                imageVector = Icons.Filled.ArrowForward,
                                 contentDescription = null,
                                 modifier = Modifier.size(20.dp)
                             )

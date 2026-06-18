@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.sp
 import fieldmind.research.app.features.field.data.database.entity.DataRecordEntity
 import fieldmind.research.app.features.field.presentation.components.*
 import fieldmind.research.app.features.field.presentation.theme.FieldMindTheme
+import fieldmind.research.app.features.field.presentation.navigation.FieldMindScreen
 import fieldmind.research.app.features.field.presentation.viewmodel.FieldMindViewModel
 import fieldmind.research.app.shared.presentation.components.icons.Icon
 import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon
@@ -36,12 +37,151 @@ import java.util.Date
 import java.util.Locale
 
 // ══════════════════════════════════════════════════════════════════════
+//  Data Tools Hub — Main hub showing all 8 data tools as clickable cards
+// ══════════════════════════════════════════════════════════════════════
+
+private data class ToolCardInfo(
+    val name: String,
+    val description: String,
+    val icon: MaterialSymbolIcon,
+    val accentColor: androidx.compose.ui.graphics.Color,
+    val screen: FieldMindScreen
+)
+
+@Composable
+fun DataToolsHubScreen(
+    viewModel: FieldMindViewModel,
+    onBack: () -> Unit,
+    onNavigate: (FieldMindScreen) -> Unit
+) {
+    val tools = remember {
+        listOf(
+            ToolCardInfo("Counter", "Tally with live count", FieldMindIcons.Add, FieldMindTheme.colors.data, FieldMindScreen.CounterTool),
+            ToolCardInfo("Measurement", "Log with units", FieldMindIcons.Graph, FieldMindTheme.colors.data, FieldMindScreen.MeasurementTool),
+            ToolCardInfo("Weather Log", "Conditions record", FieldMindIcons.Weather, FieldMindTheme.colors.data, FieldMindScreen.WeatherLogTool),
+            ToolCardInfo("Species", "Quick observation", FieldMindIcons.Nature, FieldMindTheme.colors.data, FieldMindScreen.SpeciesTool),
+            ToolCardInfo("Checklist", "Track items", FieldMindIcons.Check, FieldMindTheme.colors.data, FieldMindScreen.ChecklistTool),
+            ToolCardInfo("Event Log", "Record events", FieldMindIcons.List, FieldMindTheme.colors.data, FieldMindScreen.EventLogTool),
+            ToolCardInfo("Site Log", "Visit conditions", FieldMindIcons.Map, FieldMindTheme.colors.data, FieldMindScreen.SiteLogTool),
+            ToolCardInfo("Comparison", "Species/samples", FieldMindIcons.Data, FieldMindTheme.colors.data, FieldMindScreen.ComparisonTable)
+        )
+    }
+
+    Box(Modifier.fillMaxSize()) {
+        LazyColumn(
+            Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(20.dp, 20.dp, 20.dp, 96.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            item {
+                FieldScreenHeader(
+                    "Data tools",
+                    "Interactive tools for field data collection.",
+                    icon = FieldMindIcons.Data,
+                    actionIcon = FieldMindIcons.Back,
+                    onAction = onBack
+                )
+            }
+
+            // Tools in a 2-column grid
+            tools.chunked(2).forEach { rowTools ->
+                item {
+                    Row(
+                        Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        rowTools.forEach { tool ->
+                            ToolCardItem(
+                                tool = tool,
+                                modifier = Modifier.weight(1f),
+                                onClick = { onNavigate(tool.screen) }
+                            )
+                        }
+                        // Fill remaining space if odd number
+                        if (rowTools.size < 2) {
+                            Spacer(Modifier.weight(1f))
+                        }
+                    }
+                }
+            }
+
+            // Summary of saved data records
+            item {
+                val dataRecords by viewModel.dataRecords.collectAsState()
+                val counterCount = dataRecords.count { it.toolType == "Counter" }
+                val measurementCount = dataRecords.count { it.toolType == "Measurement Log" }
+                val weatherCount = dataRecords.count { it.toolType == "Weather Log" }
+
+                Card(
+                    shape = RoundedCornerShape(24.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                ) {
+                    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text("Saved records", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
+                            RecordStat("Counter", counterCount, FieldMindIcons.Add)
+                            RecordStat("Measure", measurementCount, FieldMindIcons.Graph)
+                            RecordStat("Weather", weatherCount, FieldMindIcons.Weather)
+                        }
+                        Text(
+                            "Total: ${dataRecords.size} records",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ToolCardItem(tool: ToolCardInfo, modifier: Modifier = Modifier, onClick: () -> Unit) {
+    Card(
+        onClick = onClick,
+        modifier = modifier.height(140.dp),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Column(
+            Modifier.fillMaxSize().padding(16.dp),
+            verticalArrangement = Arrangement.SpaceBetween
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(tool.accentColor.copy(alpha = 0.15f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(tool.icon, null, tint = tool.accentColor, size = 22.dp)
+            }
+            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text(tool.name, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, maxLines = 1)
+                Text(tool.description, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            }
+        }
+    }
+}
+
+@Composable
+private fun RecordStat(label: String, count: Int, icon: MaterialSymbolIcon) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Icon(icon, null, tint = FieldMindTheme.colors.data, size = 18.dp)
+        Text(count.toString(), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+        Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════════
 //  Group 1: Interactive Data Tools — Dedicated mini-tool UIs
 //  Each tool has a full-screen layout with its own save-to-datastore flow.
 // ══════════════════════════════════════════════════════════════════════
 
 // ══════════════════════════════════════════════════════════════════════
-//  1. Counter Tool — Dedicated tally counter with +/-/reset, history
+//  1. Counter Tool — Local tally with explicit save (no auto-save per tap)
 // ══════════════════════════════════════════════════════════════════════
 
 @Composable
@@ -69,6 +209,16 @@ fun CounterToolScreen(
         label = "counterScale"
     )
 
+    fun saveCurrentCount() {
+        if (count <= 0) return
+        haptics.confirm()
+        val labelToUse = label.ifBlank { "Counter tally" }
+        viewModel.addCounter(labelToUse, count, "Manual save at $count")
+        scope.launch {
+            showFastSnackbar(snackbar, scope, "Saved count: $count")
+        }
+    }
+
     Box(Modifier.fillMaxSize()) {
         Scaffold(
             containerColor = MaterialTheme.colorScheme.background,
@@ -82,7 +232,7 @@ fun CounterToolScreen(
                 item {
                     FieldScreenHeader(
                         "Counter",
-                        "Quick tally — each increment auto-saves a data record.",
+                        "Tap +/− to tally. Tap Save to persist your count.",
                         icon = FieldMindIcons.Add,
                         actionIcon = FieldMindIcons.Back,
                         onAction = onBack
@@ -122,7 +272,7 @@ fun CounterToolScreen(
                                 }
                             )
 
-                            // Stepper buttons - large, prominent
+                            // Stepper buttons — local only, no save
                             Row(
                                 Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -145,9 +295,6 @@ fun CounterToolScreen(
                                     onClick = {
                                         haptics.confirm()
                                         count++
-                                        // Auto-save each increment
-                                        val labelToUse = label.ifBlank { "Counter tally" }
-                                        viewModel.addCounter(labelToUse, count, "Auto-saved at $count")
                                     },
                                     modifier = Modifier
                                         .weight(1f)
@@ -175,7 +322,7 @@ fun CounterToolScreen(
                     }
                 }
 
-                // ── Label input ──
+                // ── Label + Save row ──
                 item {
                     Card(
                         shape = RoundedCornerShape(24.dp),
@@ -184,7 +331,7 @@ fun CounterToolScreen(
                         ),
                         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
                     ) {
-                        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                             Text(
                                 "Counter label",
                                 style = MaterialTheme.typography.labelLarge,
@@ -196,8 +343,21 @@ fun CounterToolScreen(
                                 label = "What are you counting?",
                                 supportingText = "e.g. Birds seen, Trees sampled, Steps taken"
                             )
+
+                            // Save button — only persists when tapped
+                            Button(
+                                onClick = ::saveCurrentCount,
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(16.dp),
+                                enabled = count > 0
+                            ) {
+                                Icon(FieldMindIcons.Save, null, size = 18.dp)
+                                Spacer(Modifier.size(8.dp))
+                                Text("Save current count ($count)")
+                            }
+
                             Text(
-                                "Each +1 tap auto-saves a data record with the current count.",
+                                "Count is local until you tap Save. Each save creates one data record with the final count.",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -228,7 +388,7 @@ fun CounterToolScreen(
                                     Icon(FieldMindIcons.Data, null, tint = FieldMindTheme.colors.data, size = 20.dp)
                                     Column(Modifier.weight(1f)) {
                                         Text(
-                                            "Recent tallies",
+                                            "Saved tallies",
                                             style = MaterialTheme.typography.titleSmall,
                                             fontWeight = FontWeight.Bold
                                         )
@@ -891,5 +1051,459 @@ fun SpeciesToolScreen(
                 .align(Alignment.TopCenter)
                 .padding(top = 8.dp, start = 16.dp, end = 16.dp)
         )
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════════
+//  5. Checklist Tool — Simple checklist with add/check/delete
+// ══════════════════════════════════════════════════════════════════════
+
+@Composable
+fun ChecklistToolScreen(
+    viewModel: FieldMindViewModel,
+    onBack: () -> Unit
+) {
+    val snackbar = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
+    val haptics = rememberFieldMindHaptics()
+
+    var items by remember { mutableStateOf(listOf<Pair<String, Boolean>>()) }
+    var newItemText by remember { mutableStateOf("") }
+
+    fun addItem() {
+        val text = newItemText.trim()
+        if (text.isBlank()) return
+        haptics.light()
+        items = items + (text to false)
+        newItemText = ""
+    }
+
+    fun toggleItem(index: Int) {
+        haptics.light()
+        items = items.toMutableList().also { it[index] = it[index].first to !it[index].second }
+    }
+
+    fun removeItem(index: Int) {
+        haptics.confirm()
+        items = items.toMutableList().also { it.removeAt(index) }
+    }
+
+    fun saveChecklist() {
+        if (items.isEmpty()) return
+        haptics.confirm()
+        val checkedCount = items.count { it.second }
+        val summary = items.joinToString("; ") { (name, checked) -> "${if (checked) "✓" else "○"} $name" }
+        viewModel.addDataRecord(
+            toolType = "Checklist",
+            label = "Checklist (${checkedCount}/${items.size} checked)",
+            value = summary,
+            unit = "",
+            notes = "",
+            datasetKind = "Checklists",
+            chartPreference = "Bar"
+        )
+        scope.launch {
+            showFastSnackbar(snackbar, scope, "Checklist saved (${checkedCount}/${items.size})")
+        }
+    }
+
+    Box(Modifier.fillMaxSize()) {
+        Scaffold(
+            containerColor = MaterialTheme.colorScheme.background,
+            snackbarHost = {}
+        ) { padding ->
+            LazyColumn(
+                Modifier.fillMaxSize().padding(padding),
+                contentPadding = PaddingValues(20.dp, 20.dp, 20.dp, 96.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                item {
+                    FieldScreenHeader(
+                        "Checklist",
+                        "Add items, check them off, and save as a data record.",
+                        icon = FieldMindIcons.Check,
+                        actionIcon = FieldMindIcons.Back,
+                        onAction = onBack
+                    )
+                }
+
+                // ── Add item input ──
+                item {
+                    Card(
+                        shape = RoundedCornerShape(24.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                    ) {
+                        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                            Text("Add item", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                                FieldTextField(
+                                    value = newItemText,
+                                    onValueChange = { newItemText = it },
+                                    label = "Item name",
+                                    modifier = Modifier.weight(1f)
+                                )
+                                FilledTonalButton(
+                                    onClick = ::addItem,
+                                    modifier = Modifier.height(56.dp),
+                                    enabled = newItemText.isNotBlank(),
+                                    shape = RoundedCornerShape(18.dp)
+                                ) {
+                                    Text("Add", fontWeight = FontWeight.Bold)
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // ── Checklist items ──
+                if (items.isNotEmpty()) {
+                    item {
+                        Card(
+                            shape = RoundedCornerShape(24.dp),
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+                            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                        ) {
+                            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Text("Items (${items.count { it.second }}/${items.size})", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                                items.forEachIndexed { index, (text, checked) ->
+                                    Row(
+                                        Modifier.fillMaxWidth(),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                    ) {
+                                        Checkbox(checked = checked, onCheckedChange = { toggleItem(index) })
+                                        Text(text, modifier = Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium,
+                                            textDecoration = if (checked) androidx.compose.ui.text.style.TextDecoration.LineThrough else null)
+                                        IconButton(onClick = { removeItem(index) }, modifier = Modifier.size(36.dp)) {
+                                            Icon(FieldMindIcons.Close, null, tint = MaterialTheme.colorScheme.error, size = 18.dp)
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    item {
+                        Button(
+                            onClick = ::saveChecklist,
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(16.dp)
+                        ) {
+                            Icon(FieldMindIcons.Save, null, size = 18.dp)
+                            Spacer(Modifier.size(8.dp))
+                            Text("Save checklist (${items.count { it.second }}/${items.size})")
+                        }
+                    }
+                } else {
+                    item {
+                        Box(Modifier.fillMaxWidth().padding(32.dp), contentAlignment = Alignment.Center) {
+                            Text("Add items above to build your checklist.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                    }
+                }
+            }
+        }
+        FieldMindSnackbarOverlay(hostState = snackbar, modifier = Modifier.align(Alignment.TopCenter).padding(top = 8.dp, start = 16.dp, end = 16.dp))
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════════
+//  6. Event Log Tool — Record notable events with date/category/notes
+// ══════════════════════════════════════════════════════════════════════
+
+@Composable
+fun EventLogToolScreen(
+    viewModel: FieldMindViewModel,
+    onBack: () -> Unit
+) {
+    val snackbar = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
+    val haptics = rememberFieldMindHaptics()
+
+    var title by remember { mutableStateOf("") }
+    var category by remember { mutableStateOf("Sighting") }
+    var description by remember { mutableStateOf("") }
+    var date by remember { mutableStateOf(SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())) }
+    var showCategoryPicker by remember { mutableStateOf(false) }
+
+    val categories = listOf("Sighting", "Discovery", "Change", "Visit", "Weather Event", "Other")
+
+    fun saveEvent() {
+        if (title.isBlank()) return
+        haptics.confirm()
+        viewModel.addDataRecord(
+            toolType = "Event Log",
+            label = title.trim(),
+            value = "$category | $date",
+            unit = "",
+            notes = "$description\nDate: $date",
+            datasetKind = "Events",
+            chartPreference = "Bar"
+        )
+        scope.launch {
+            showFastSnackbar(snackbar, scope, "Event saved: $title")
+        }
+        title = ""
+        description = ""
+    }
+
+    Box(Modifier.fillMaxSize()) {
+        Scaffold(containerColor = MaterialTheme.colorScheme.background, snackbarHost = {}) { padding ->
+            LazyColumn(
+                Modifier.fillMaxSize().padding(padding),
+                contentPadding = PaddingValues(20.dp, 20.dp, 20.dp, 96.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                item {
+                    FieldScreenHeader("Event log", "Record a notable event with category and notes.", icon = FieldMindIcons.List, actionIcon = FieldMindIcons.Back, onAction = onBack)
+                }
+                item {
+                    Card(shape = RoundedCornerShape(24.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)) {
+                        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                            Text("Event details", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                            FieldTextField(title, { title = it }, "Event title", required = true, supportingText = "e.g. First monarch sighting of season")
+                            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                                FieldTextField(date, { date = it }, "Date", modifier = Modifier.weight(1f))
+                                Box {
+                                    OutlinedButton(onClick = { showCategoryPicker = true }, modifier = Modifier.height(56.dp), shape = RoundedCornerShape(18.dp)) {
+                                        Text(category, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Medium)
+                                        Spacer(Modifier.size(4.dp))
+                                        Icon(FieldMindIcons.Down, null, size = 14.dp)
+                                    }
+                                    DropdownMenu(expanded = showCategoryPicker, onDismissRequest = { showCategoryPicker = false }) {
+                                        categories.forEach { cat ->
+                                            DropdownMenuItem(text = { Text(cat) }, onClick = { category = cat; showCategoryPicker = false })
+                                        }
+                                    }
+                                }
+                            }
+                            FieldTextField(description, { description = it }, "Description", minLines = 3, supportingText = "What happened, where, and any notable details")
+                            Button(onClick = ::saveEvent, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp), enabled = title.isNotBlank()) {
+                                Icon(FieldMindIcons.Check, null, size = 18.dp)
+                                Spacer(Modifier.size(8.dp))
+                                Text("Save event")
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        FieldMindSnackbarOverlay(hostState = snackbar, modifier = Modifier.align(Alignment.TopCenter).padding(top = 8.dp, start = 16.dp, end = 16.dp))
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════════
+//  7. Site Log Tool — Log site visits with conditions and purpose
+// ══════════════════════════════════════════════════════════════════════
+
+@Composable
+fun SiteLogToolScreen(
+    viewModel: FieldMindViewModel,
+    onBack: () -> Unit
+) {
+    val snackbar = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
+    val haptics = rememberFieldMindHaptics()
+
+    var siteName by remember { mutableStateOf("") }
+    var purpose by remember { mutableStateOf("Survey") }
+    var conditions by remember { mutableStateOf("") }
+    var findings by remember { mutableStateOf("") }
+    var duration by remember { mutableStateOf("") }
+
+    val purposes = listOf("Survey", "Monitoring", "Collection", "Observation", "Maintenance", "Exploration")
+
+    fun saveSiteLog() {
+        if (siteName.isBlank()) return
+        haptics.confirm()
+        viewModel.addDataRecord(
+            toolType = "Site Log",
+            label = siteName.trim(),
+            value = "$purpose | Duration: ${duration.ifBlank { "N/A" }}",
+            unit = "",
+            notes = "Conditions: $conditions\nFindings: $findings",
+            datasetKind = "Site visits",
+            chartPreference = "Bar"
+        )
+        scope.launch {
+            showFastSnackbar(snackbar, scope, "Site log saved: $siteName")
+        }
+        siteName = ""
+        conditions = ""
+        findings = ""
+        duration = ""
+    }
+
+    Box(Modifier.fillMaxSize()) {
+        Scaffold(containerColor = MaterialTheme.colorScheme.background, snackbarHost = {}) { padding ->
+            LazyColumn(
+                Modifier.fillMaxSize().padding(padding),
+                contentPadding = PaddingValues(20.dp, 20.dp, 20.dp, 96.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                item {
+                    FieldScreenHeader("Site log", "Record a site visit with purpose, conditions, and findings.", icon = FieldMindIcons.Map, actionIcon = FieldMindIcons.Back, onAction = onBack)
+                }
+                item {
+                    Card(shape = RoundedCornerShape(24.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)) {
+                        Column(Modifier.fillMaxWidth().padding(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                            Text("Site visit details", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onPrimaryContainer)
+                            FieldTextField(siteName, { siteName = it }, "Site name", required = true, supportingText = "e.g. North Meadow, Creek Bend")
+                            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                                FieldTextField(duration, { duration = it }, "Duration", modifier = Modifier.weight(1f), supportingText = "e.g. 2 hours")
+                                OptionPickerField(label = "Purpose", selected = purpose, options = purposes, onSelected = { purpose = it }, icon = FieldMindIcons.Info, containerModifier = Modifier.weight(1f))
+                            }
+                            FieldTextField(conditions, { conditions = it }, "Conditions", supportingText = "Weather, terrain, accessibility notes")
+                            FieldTextField(findings, { findings = it }, "Key findings", minLines = 2, supportingText = "What did you observe or collect?")
+                            Button(onClick = ::saveSiteLog, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp), enabled = siteName.isNotBlank()) {
+                                Icon(FieldMindIcons.Check, null, size = 18.dp)
+                                Spacer(Modifier.size(8.dp))
+                                Text("Save site log")
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        FieldMindSnackbarOverlay(hostState = snackbar, modifier = Modifier.align(Alignment.TopCenter).padding(top = 8.dp, start = 16.dp, end = 16.dp))
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════════
+//  8. Comparison Table — Compare multiple items side by side
+// ══════════════════════════════════════════════════════════════════════
+
+@Composable
+fun ComparisonTableScreen(
+    viewModel: FieldMindViewModel,
+    onBack: () -> Unit
+) {
+    val snackbar = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
+    val haptics = rememberFieldMindHaptics()
+
+    var tableName by remember { mutableStateOf("") }
+    data class ComparisonRow(val label: String, val items: MutableList<String>)
+    var columnCount by remember { mutableIntStateOf(2) }
+    var rows by remember { mutableStateOf(listOf<ComparisonRow>()) }
+    var newRowLabel by remember { mutableStateOf("") }
+    var newRowValues by remember { mutableStateOf(columnCount) { "" } }
+
+    fun addRow() {
+        val label = newRowLabel.trim()
+        if (label.isBlank()) return
+        haptics.light()
+        val values = (0 until columnCount).map { newRowValues[it].ifBlank { "—" } }.toMutableList()
+        rows = rows + ComparisonRow(label, values)
+        newRowLabel = ""
+        newRowValues = (0 until columnCount).map { "" }.toMutableList()
+    }
+
+    fun saveComparison() {
+        if (rows.isEmpty() || tableName.isBlank()) return
+        haptics.confirm()
+        val summary = rows.joinToString("; ") { row ->
+            "${row.label}: ${row.items.joinToString(" vs ")}"
+        }
+        viewModel.addDataRecord(
+            toolType = "Comparison Table",
+            label = tableName.trim(),
+            value = summary,
+            unit = "",
+            notes = "$columnCount columns, ${rows.size} rows",
+            datasetKind = "Comparisons",
+            chartPreference = "Bar"
+        )
+        scope.launch {
+            showFastSnackbar(snackbar, scope, "Table saved: $tableName")
+        }
+    }
+
+    Box(Modifier.fillMaxSize()) {
+        Scaffold(containerColor = MaterialTheme.colorScheme.background, snackbarHost = {}) { padding ->
+            LazyColumn(
+                Modifier.fillMaxSize().padding(padding),
+                contentPadding = PaddingValues(20.dp, 20.dp, 20.dp, 96.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                item {
+                    FieldScreenHeader("Comparison table", "Compare species, samples, or sites side by side.", icon = FieldMindIcons.Data, actionIcon = FieldMindIcons.Back, onAction = onBack)
+                }
+                item {
+                    Card(shape = RoundedCornerShape(24.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)) {
+                        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                            Text("Table setup", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                            FieldTextField(tableName, { tableName = it }, "Table name", required = true, supportingText = "e.g. Bird species comparison")
+                            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                                Text("Columns:", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
+                                FilledTonalIconButton(onClick = { if (columnCount > 1) { columnCount--; newRowValues = newRowValues.dropLast(1).toMutableList() } }, modifier = Modifier.size(36.dp)) {
+                                    Text("−", fontWeight = FontWeight.Bold)
+                                }
+                                Text("$columnCount", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                                FilledTonalIconButton(onClick = { if (columnCount < 5) { columnCount++; newRowValues = newRowValues + "" } }, modifier = Modifier.size(36.dp)) {
+                                    Text("+", fontWeight = FontWeight.Bold)
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // ── Add row ──
+                item {
+                    Card(shape = RoundedCornerShape(24.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)) {
+                        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                            Text("Add row", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                            FieldTextField(newRowLabel, { newRowLabel = it }, "Row label (e.g. species name)")
+                            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                (0 until columnCount).forEach { col ->
+                                    val key = remember(col) { "col_$col" }
+                                    OutlinedTextField(
+                                        value = newRowValues.getOrElse(col) { "" },
+                                        onValueChange = { v ->
+                                            newRowValues = newRowValues.toMutableList().also { if (col < it.size) it[col] = v }
+                                        },
+                                        modifier = Modifier.weight(1f),
+                                        singleLine = true,
+                                        textStyle = MaterialTheme.typography.bodySmall,
+                                        placeholder = { Text("Item ${col + 1}", style = MaterialTheme.typography.bodySmall) }
+                                    )
+                                }
+                            }
+                            FilledTonalButton(onClick = ::addRow, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp), enabled = newRowLabel.isNotBlank()) {
+                                Text("Add row", fontWeight = FontWeight.Bold)
+                            }
+                        }
+                    }
+                }
+
+                // ── Table preview ──
+                if (rows.isNotEmpty()) {
+                    item {
+                        Card(shape = RoundedCornerShape(24.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)) {
+                            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Text("Table (${rows.size} rows)", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                                rows.forEach { row ->
+                                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
+                                        Text(row.label, modifier = Modifier.weight(1f), style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                        row.items.forEach { item ->
+                                            Text(item, modifier = Modifier.weight(1f), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                        }
+                                    }
+                                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
+                                }
+                                Spacer(Modifier.size(8.dp))
+                                Button(onClick = ::saveComparison, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp), enabled = tableName.isNotBlank() && rows.isNotEmpty()) {
+                                    Icon(FieldMindIcons.Save, null, size = 18.dp)
+                                    Spacer(Modifier.size(8.dp))
+                                    Text("Save comparison table")
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        FieldMindSnackbarOverlay(hostState = snackbar, modifier = Modifier.align(Alignment.TopCenter).padding(top = 8.dp, start = 16.dp, end = 16.dp))
     }
 }
