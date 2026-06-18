@@ -1838,17 +1838,10 @@ private fun EnhancedObservationForm(
                 }
             }
 
-            // ── Subject Name — also fills species ──
+            // ── Subject Name (independent from species) ──
             FieldTextField(
                 session.subject,
-                {
-                    val updated = session.copy(subject = it)
-                    if (it.isNotBlank() && session.speciesName.isBlank()) {
-                        onSessionChange(updated.copy(speciesName = it))
-                    } else {
-                        onSessionChange(updated)
-                    }
-                },
+                { onSessionChange(session.copy(subject = it)) },
                 "Subject name",
                 supportingText = "e.g. House Crow carrying twig"
             )
