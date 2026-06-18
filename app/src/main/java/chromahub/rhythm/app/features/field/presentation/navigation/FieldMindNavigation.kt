@@ -133,17 +133,21 @@ fun FieldMindApp(appSettings: AppSettings, viewModel: FieldMindViewModel) {
     val privacyEnabled by viewModel.fieldSettings.privacyLockEnabled.collectAsState()
     LaunchedEffect(privacyEnabled) { if (!privacyEnabled) appUnlocked = true }
     if (!onboardingCompleted) {
-        FieldMindOnboardingScreen(onFinish = { appSettings.setOnboardingCompleted(true) })        } else {
-            FieldMindAppLock(
-                settings = viewModel.fieldSettings,
-                isUnlocked = appUnlocked,
-                onUnlock = { appUnlocked = true }
-            ) {
-                FieldMindSnackbarProvider { _ ->
-                    FieldMindNavigation(viewModel = viewModel, onResetOnboarding = { appSettings.setOnboardingCompleted(false); appUnlocked = false })
-                }
+        FieldMindOnboardingScreen(
+            settings = viewModel.fieldSettings,
+            onFinish = { appSettings.setOnboardingCompleted(true) }
+        )
+    } else {
+        FieldMindAppLock(
+            settings = viewModel.fieldSettings,
+            isUnlocked = appUnlocked,
+            onUnlock = { appUnlocked = true }
+        ) {
+            FieldMindSnackbarProvider { _ ->
+                FieldMindNavigation(viewModel = viewModel, onResetOnboarding = { appSettings.setOnboardingCompleted(false); appUnlocked = false })
             }
         }
+    }
 }
 
 /** Navigate to a non-tab destination, de-duplicating taps so the page always opens reliably. */
@@ -238,13 +242,29 @@ fun FieldMindNavigation(viewModel: FieldMindViewModel, onResetOnboarding: () -> 
         )
     }
 
+    // Observe screen visibility settings so nav bar reflects user customizations
+    val screenVisibility by viewModel.fieldSettings.screenVisibility.collectAsState()
+
+    // Filter bottom tabs based on user's screen visibility preferences
+    val visibleTabs = remember(bottomTabs, screenVisibility) {
+        bottomTabs.filter { tab ->
+            when (tab.route) {
+                FieldMindScreen.Observe.route -> screenVisibility.showCapture
+                FieldMindScreen.Projects.route -> screenVisibility.showProjects
+                FieldMindScreen.Insights.route -> screenVisibility.showInsights
+                FieldMindScreen.Library.route -> screenVisibility.showLibrary
+                else -> true // Home always visible
+            }
+        }
+    }
+
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val expanded = maxWidth >= 720.dp
         if (expanded) {
             Row(Modifier.fillMaxSize()) {
                 if (!hideChrome) {
                     NavigationRail {
-                        bottomTabs.forEach { screen ->
+                        visibleTabs.forEach { screen ->
                             val selected = isSelected(screen)
                             val itemInteractionSource = remember { MutableInteractionSource() }
                             AnimatedNavBarItem(
@@ -265,7 +285,7 @@ fun FieldMindNavigation(viewModel: FieldMindViewModel, onResetOnboarding: () -> 
                 bottomBar = {
                     if (!hideChrome) {
                             NavigationBar {
-                                bottomTabs.forEach { screen ->
+                                visibleTabs.forEach { screen ->
                                     val selected = isSelected(screen)
                                     val itemInteractionSource = remember { MutableInteractionSource() }
                                     AnimatedNavBarItem(
