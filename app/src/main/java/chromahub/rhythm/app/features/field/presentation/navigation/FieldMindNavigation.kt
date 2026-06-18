@@ -176,7 +176,6 @@ fun FieldMindNavigation(viewModel: FieldMindViewModel, onResetOnboarding: () -> 
             showNavigateConfirm = true
             return
         }
-        if (currentDestination?.route == route) return
         navController.navigate(route) {
             popUpTo(navController.graph.findStartDestination().id) {
                 inclusive = false
