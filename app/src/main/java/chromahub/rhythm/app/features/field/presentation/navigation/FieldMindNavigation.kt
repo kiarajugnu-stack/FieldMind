@@ -8,14 +8,15 @@ import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.keyframes
 import androidx.compose.animation.fadeIn
-import androidx.compose.ui.Modifier
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -23,6 +24,7 @@ import androidx.compose.material3.*
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
@@ -39,6 +41,7 @@ import androidx.navigation.compose.rememberNavController
 import fieldmind.research.app.features.field.presentation.components.FieldMindSnackbarProvider
 import fieldmind.research.app.features.field.presentation.components.FieldMindIcons
 import fieldmind.research.app.features.field.presentation.components.rememberFieldMindHaptics
+import fieldmind.research.app.features.field.presentation.components.FieldMindHaptics
 import fieldmind.research.app.features.field.presentation.screens.*
 import fieldmind.research.app.features.field.presentation.theme.FieldMindTheme
 import fieldmind.research.app.features.field.data.database.entity.ResearchSessionEntity
@@ -146,7 +149,10 @@ fun FieldMindApp(appSettings: AppSettings, viewModel: FieldMindViewModel) {
 /** Navigate to a non-tab destination, de-duplicating taps so the page always opens reliably. */
 private fun NavHostController.navigateToDestination(route: String) {
     if (currentDestination?.route == route) return
-    navigate(route) { launchSingleTop = true }
+    navigate(route) {
+        launchSingleTop = true
+        restoreState = true
+    }
 }
 
 @Composable
@@ -240,11 +246,13 @@ fun FieldMindNavigation(viewModel: FieldMindViewModel, onResetOnboarding: () -> 
                     NavigationRail {
                         bottomTabs.forEach { screen ->
                             val selected = isSelected(screen)
-                            NavigationRailItem(
+                            val itemInteractionSource = remember { MutableInteractionSource() }
+                            AnimatedNavBarItem(
                                 selected = selected,
                                 onClick = { haptics.light(); navigateToTab(screen.route) },
                                 icon = { AnimatedNavIcon(screen, selected) },
-                                label = { AnimatedNavLabel(screen.label, selected) }
+                                label = { AnimatedNavLabel(screen.label, selected) },
+                                interactionSource = itemInteractionSource
                             )
                         }
                     }
@@ -259,11 +267,13 @@ fun FieldMindNavigation(viewModel: FieldMindViewModel, onResetOnboarding: () -> 
                             NavigationBar {
                                 bottomTabs.forEach { screen ->
                                     val selected = isSelected(screen)
-                                    NavigationBarItem(
+                                    val itemInteractionSource = remember { MutableInteractionSource() }
+                                    AnimatedNavBarItem(
                                         selected = selected,
                                         onClick = { haptics.light(); navigateToTab(screen.route) },
                                         icon = { AnimatedNavIcon(screen, selected) },
-                                        label = { AnimatedNavLabel(screen.label, selected) }
+                                        label = { AnimatedNavLabel(screen.label, selected) },
+                                        interactionSource = itemInteractionSource
                                     )
                                 }
                             }
@@ -291,8 +301,9 @@ private fun AnimatedNavIcon(screen: FieldMindScreen, selected: Boolean) {
         label = "navIconLift"
     )
     // Elastic rotation for a playful wiggle when selected
+    // Expressive wobble — icon tilts slightly when selected, then overshoots back playfully
     val rotation by animateFloatAsState(
-        if (selected) 0f else 0f,
+        if (selected) 12f else 0f,
         FieldMindMotion.expressiveElastic,
         label = "navIconRotation"
     )
@@ -319,6 +330,78 @@ private fun AnimatedNavIcon(screen: FieldMindScreen, selected: Boolean) {
         size = if (selected) 34.dp else 26.dp,
         weight = if (selected) 700 else screen.icon.defaultWeight
     )
+}
+
+@Composable
+private fun AnimatedNavBarItem(
+    selected: Boolean,
+    onClick: () -> Unit,
+    icon: @Composable () -> Unit,
+    label: @Composable () -> Unit,
+    interactionSource: MutableInteractionSource
+) {
+    val isPressed by interactionSource.collectIsPressedAsState()
+
+    // Bouncy press scale — tiny squish on tap, springs back with overshoot
+    val pressScale by animateFloatAsState(
+        targetValue = if (isPressed) 0.88f else 1f,
+        animationSpec = FieldMindMotion.expressiveSnap,
+        label = "navBarPress"
+    )
+
+    // Pill indicator bouncy entrance — elastic overshoot when tab becomes active
+    val pillScale by animateFloatAsState(
+        targetValue = if (selected) 1f else 0f,
+        animationSpec = FieldMindMotion.expressiveSpring,
+        label = "navBarPill"
+    )
+
+    Column(
+        modifier = Modifier
+            .weight(1f)
+            .graphicsLayer {
+                scaleX = pressScale
+                scaleY = pressScale
+            }
+            .clickable(
+                interactionSource = interactionSource,
+                indication = null,
+                onClick = onClick
+            )
+            .padding(vertical = 4.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Box(
+            modifier = Modifier
+                .height(36.dp)
+                .width(56.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            // Pill indicator with bouncy entrance animation
+            if (pillScale > 0.01f) {
+                Box(
+                    modifier = Modifier
+                        .size(width = 52.dp, height = 36.dp)
+                        .graphicsLayer {
+                            scaleX = pillScale
+                            scaleY = pillScale
+                            alpha = pillScale
+                        }
+                        .background(
+                            color = MaterialTheme.colorScheme.secondaryContainer,
+                            shape = CircleShape
+                        )
+                )
+            }
+
+            // Icon (with its own bouncy spring animation built into AnimatedNavIcon)
+            icon()
+        }
+
+        // Label below
+        label()
+    }
 }
 
 @Composable
