@@ -61,6 +61,7 @@ object FieldMindIcons {
     val Palette = MaterialSymbolIcon("palette")
     val Flip = MaterialSymbolIcon("flip")
     val Nature = MaterialSymbolIcon("eco")
+    val Leaf = MaterialSymbolIcon("eco")
     val Visibility = MaterialSymbolIcon("visibility")
     val VisibilityOff = MaterialSymbolIcon("visibility_off")
     val Book = MaterialSymbolIcon("auto_stories")
@@ -115,11 +116,11 @@ object FieldMindIcons {
     val Compress = MaterialSymbolIcon("speed")
     val Water = MaterialSymbolIcon("water_drop")
     val Sunrise = MaterialSymbolIcon("sunny")
-    val Sunset = MaterialSymbolIcon("clear_night")
+    val Sunset = MaterialSymbolIcon("wb_sunny")
     val MoonNew = MaterialSymbolIcon("dark_mode")
-    val MoonFull = MaterialSymbolIcon("light_mode")
+    val MoonFull = MaterialSymbolIcon("nights_stay")
     val MoonCrescent = MaterialSymbolIcon("bedtime")
-    val MoonQuarter = MaterialSymbolIcon("sleep")
+    val MoonQuarter = MaterialSymbolIcon("bedtime")
     val MoonGibbous = MaterialSymbolIcon("nights_stay")
     val HumanBehavior = MaterialSymbolIcon("groups")
     val Temperature = MaterialSymbolIcon("thermostat")
@@ -127,6 +128,7 @@ object FieldMindIcons {
     val Category = MaterialSymbolIcon("category")
     val User = MaterialSymbolIcon("person")
     val Photo = MaterialSymbolIcon("photo")
+    val Save = MaterialSymbolIcon("save")
     val Image = Photo
 
     /** Icon for an observation category (case-insensitive). Falls back to the observation icon. */

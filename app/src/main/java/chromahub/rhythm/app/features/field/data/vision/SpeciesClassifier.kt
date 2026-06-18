@@ -34,7 +34,8 @@ class SpeciesClassifier(
     private val context: Context,
     private val database: SpeciesDatabase? = null,
     private val imageAnalyzer: SpeciesImageAnalyzer? = null,
-    private val phashDatabase: PhashDatabase? = null
+    private val phashDatabase: PhashDatabase? = null,
+    private val perenualApiKey: String? = null
 ) {
 
     companion object {
@@ -692,6 +693,11 @@ class SpeciesClassifier(
         val description: String = ""
     )
 
+    /** Lazy Perenual provider for cloud species enrichment (plant data). */
+    private val perenualProviderInstance: PerenualSpeciesProvider? by lazy {
+        perenualApiKey?.takeIf { it.isNotBlank() }?.let { PerenualSpeciesProvider(it) }
+    }
+
     private val fallbackMap: Map<String, List<SpeciesEntry>> by lazy {
         FALLBACK_SPECIES.groupBy { it.category }
     }
@@ -1079,4 +1085,65 @@ class SpeciesClassifier(
     fun hasBundledModel(): Boolean {
         return loadModelFile(context) != null
     }
+
+    /**
+     * Get the Perenual species provider, or null if no API key is configured.
+     * Used by the SpeciesIdentificationSheet to look up plant descriptions.
+     */
+    fun getPerenualProvider(): PerenualSpeciesProvider? = perenualProviderInstance
+
+    /**
+     * Enrich species identification matches with Perenual cloud data
+     * (descriptions, taxonomy, care info, images).
+     *
+     * Runs as a best-effort enrichment — failures are silently ignored.
+     *
+     * @param matches The list of matches from the on-device analyzer.
+     * @return Enriched matches with additional description and image data where available.
+     */
+    suspend fun enrichWithPerenual(matches: List<SpeciesMatch>): List<SpeciesMatch> = withContext(Dispatchers.Default) {
+        val provider = perenualProviderInstance ?: return@withContext matches
+        if (!provider.isAvailable) return@withContext matches
+
+        matches.map { match ->
+            try {
+                provider.enrichMatch(match) ?: match
+            } catch (_: Exception) {
+                match // Silently fall back to original match
+            }
+        }
+    }
+
+    /**
+     * Search species using Perenual API as a fallback source.
+     * Returns SpeciesEntry results from the cloud provider.
+     */
+    suspend fun searchPerenual(query: String): List<SpeciesEntry> = withContext(Dispatchers.Default) {
+        val provider = perenualProviderInstance ?: return@withContext emptyList()
+        if (query.isBlank() || !provider.isAvailable) return@withContext emptyList()
+
+        val records = provider.searchAsRecords(query)
+        records.map { it.toSpeciesEntry() }
+    }
+
+    /**
+     * Enrich a single species match with Perenual data.
+     */
+    suspend fun enrichSingleMatch(match: SpeciesMatch): SpeciesMatch = withContext(Dispatchers.Default) {
+        val provider = perenualProviderInstance ?: return@withContext match
+        if (!provider.isAvailable) return@withContext match
+        try {
+            provider.enrichMatch(match) ?: match
+        } catch (_: Exception) {
+            match
+        }
+    }
 }
+
+/** Convert a Perenual SpeciesRecord back to a SpeciesEntry for local search. */
+private fun SpeciesRecord.toSpeciesEntry() = SpeciesClassifier.SpeciesEntry(
+    commonName = commonName,
+    scientificName = scientificName,
+    category = category,
+    description = description
+)

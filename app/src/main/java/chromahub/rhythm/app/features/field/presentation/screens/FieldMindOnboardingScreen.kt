@@ -25,6 +25,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
@@ -36,6 +37,8 @@ import kotlin.math.roundToInt
 import fieldmind.research.app.features.field.data.settings.*
 import fieldmind.research.app.features.field.presentation.components.FieldMindIcons
 import fieldmind.research.app.features.field.presentation.components.FieldMindMotion
+import fieldmind.research.app.features.field.presentation.components.expressivePress
+import fieldmind.research.app.features.field.presentation.theme.FieldMindTheme
 import fieldmind.research.app.shared.presentation.components.icons.Icon
 import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon
 
@@ -141,6 +144,15 @@ fun FieldMindOnboardingScreen(
         currentPage--
     }
 
+    // Derive dark theme from current selection so the UI reflects changes immediately
+    val systemDark = isSystemInDarkTheme()
+    val isDarkTheme = when (selectedTheme) {
+        "Dark" -> true
+        "Light" -> false
+        else -> systemDark
+    }
+
+    FieldMindTheme(darkTheme = isDarkTheme, dynamicColor = useDynamicColors) {
     BoxWithConstraints(Modifier.fillMaxSize()) {
         // Animated page content with sliding transitions
         AnimatedContent(
@@ -220,7 +232,7 @@ fun FieldMindOnboardingScreen(
                     onBack = { currentPage = 3 },
                     onEditPage = { currentPage = it }
                 )
-                // Extended tour pages (6-9)
+                // Extended tour pages (6-10)
                 5 -> if (showExtendedTour) OnboardingScreenVisibilityPage(
                     visibility = ScreenVisibility.fromInterests(interests),
                     interests = interests,
@@ -240,8 +252,17 @@ fun FieldMindOnboardingScreen(
                     onBack = { currentPage = 6 }
                 )
                 8 -> OnboardingDataToolsPage(
-                    onFinish = { finishOnboarding() },
+                    onFinish = { currentPage = 9 },
                     onBack = { currentPage = 7 }
+                )
+                9 -> OnboardingSpeciesIdPage(
+                    onNext = { currentPage = 10 },
+                    onBack = { currentPage = 8 },
+                    onFinish = { finishOnboarding() }
+                )
+                10 -> OnboardingFinalPage(
+                    onFinish = { finishOnboarding() },
+                    onBack = { currentPage = 9 }
                 )
             }
         }
@@ -274,12 +295,12 @@ fun FieldMindOnboardingScreen(
                             fontWeight = FontWeight.SemiBold
                         )
                         val laterItems = listOf(
-                            "📲 Screen visibility — show/hide any screen",
-                            "🤖 AI Assistant — Gemini or OpenAI integration",
-                            "💾 Backup & auto-backup schedules",
-                            "🔒 Privacy lock with biometrics",
-                            "🔔 Reminders and daily streak settings",
-                            "📐 Units, date format, map preferences"
+                            "Screen visibility — show/hide any screen",
+                            "AI Assistant — Gemini or OpenAI integration",
+                            "Backup and auto-backup schedules",
+                            "Privacy lock with biometrics",
+                            "Reminders and daily streak settings",
+                            "Units, date format, map preferences"
                         )
                         laterItems.forEach { item ->
                             Row(verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -295,14 +316,19 @@ fun FieldMindOnboardingScreen(
                         shape = RoundedCornerShape(16.dp)
                     ) { Text("Start exploring") }
                 },
-                dismissButton = {
-                    TextButton(onClick = { showFinishDialog = false }) {
-                        Text("Continue tour")
-                    }
+                dismissButton = {                        TextButton(onClick = {
+                            showFinishDialog = false
+                            showExtendedTour = true
+                        }) {
+                            Text("Continue tour")
+                        }
                 }
             )
         }
     }
+
+    }
+    // END FieldMindTheme wrapper
 
     // Navigate to extended tour from review page
     LaunchedEffect(showExtendedTour, showContinueTour) {
@@ -490,7 +516,7 @@ private fun OnboardingWelcomePage(
                 PageIndicator(current = 0, total = 5)
                 Button(
                     onClick = onNext,
-                    modifier = Modifier.fillMaxWidth().height(54.dp),
+                    modifier = Modifier.fillMaxWidth().height(54.dp).expressivePress(scaleDown = 0.96f),
                     shape = RoundedCornerShape(18.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.primary
@@ -672,13 +698,14 @@ private fun OnboardingInterestsPage(
             ) {
                 OutlinedButton(
                     onClick = onBack,
-                    shape = RoundedCornerShape(16.dp)
+                    shape = RoundedCornerShape(16.dp),
+                    modifier = Modifier.expressivePress(scaleDown = 0.96f)
                 ) { Text("Back") }
                 PageIndicator(current = 1, total = 5, modifier = Modifier.weight(1f))
                 Button(
                     onClick = onNext,
                     shape = RoundedCornerShape(16.dp),
-                    modifier = Modifier.height(48.dp)
+                    modifier = Modifier.height(48.dp).expressivePress(scaleDown = 0.96f)
                 ) { Text("Continue") }
             }
         }
@@ -1167,7 +1194,7 @@ private fun OnboardingReviewPage(
                     }
                     Button(
                         onClick = onFinish,
-                        modifier = Modifier.fillMaxWidth().height(54.dp),
+                        modifier = Modifier.fillMaxWidth().height(54.dp).expressivePress(scaleDown = 0.96f),
                         shape = RoundedCornerShape(18.dp)
                     ) {
                         Text("Finish tour", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
@@ -1498,6 +1525,252 @@ private fun OnboardingDataToolsPage(
                     }
                     Text(
                         "Everything can be customized from Settings.",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+                        modifier = Modifier.align(Alignment.CenterHorizontally)
+                    )
+                }
+            }
+        }
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════════
+//  Extended Tour — Screen 10: Species Identification
+// ══════════════════════════════════════════════════════════════════════
+
+@Composable
+private fun OnboardingSpeciesIdPage(
+    onNext: () -> Unit,
+    onBack: () -> Unit,
+    onFinish: () -> Unit
+) {
+    var showContent by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) { showContent = true }
+
+    Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
+        // Decorative orb
+        Box(
+            Modifier.size(180.dp).offset(x = 80.dp, y = (-60).dp)
+                .graphicsLayer { alpha = 0.05f }
+                .background(Brush.radialGradient(listOf(MaterialTheme.colorScheme.tertiary, Color.Transparent)), CircleShape)
+        )
+
+        Column(
+            Modifier.fillMaxSize().padding(24.dp),
+            verticalArrangement = Arrangement.SpaceBetween
+        ) {
+            Column(
+                Modifier.weight(1f).verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                Spacer(Modifier.height(16.dp))
+                AnimatedVisibility(visible = showContent, enter = fadeIn() + scaleIn(initialScale = 0.92f)) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
+                        Box(
+                            Modifier.size(72.dp).background(
+                                Brush.linearGradient(listOf(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.tertiary)),
+                                RoundedCornerShape(24.dp)
+                            ),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(FieldMindIcons.Nature, null, tint = MaterialTheme.colorScheme.onPrimary, size = 38.dp)
+                        }
+                        Spacer(Modifier.height(12.dp))
+                        Text("Species identification", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.ExtraBold, textAlign = TextAlign.Center)
+                        Text("Identify plants and animals from photos — no internet needed.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
+                    }
+                }
+
+                // Offline identification card
+                AnimatedVisibility(visible = showContent, enter = fadeIn(FieldMindMotion.expressiveFloat)) {
+                    Card(
+                        shape = RoundedCornerShape(20.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                    ) {
+                        Row(Modifier.padding(16.dp), verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+                            Box(Modifier.size(40.dp).clip(RoundedCornerShape(12.dp)).background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)), contentAlignment = Alignment.Center) {
+                                Icon(FieldMindIcons.Nature, null, tint = MaterialTheme.colorScheme.primary, size = 22.dp)
+                            }
+                            Column(Modifier.weight(1f)) {
+                                Text("Offline image analysis", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                                Text("FieldMind analyzes color, texture, and edges from your photos — all on your device. No AI servers, no internet, no data sent anywhere.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
+                        }
+                    }
+                }
+
+                // Built-in species catalog
+                AnimatedVisibility(visible = showContent, enter = fadeIn(FieldMindMotion.expressiveFloat)) {
+                    Card(
+                        shape = RoundedCornerShape(20.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                    ) {
+                        Row(Modifier.padding(16.dp), verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+                            Box(Modifier.size(40.dp).clip(RoundedCornerShape(12.dp)).background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)), contentAlignment = Alignment.Center) {
+                                Icon(FieldMindIcons.Book, null, tint = MaterialTheme.colorScheme.primary, size = 22.dp)
+                            }
+                            Column(Modifier.weight(1f)) {
+                                Text("Built-in species catalog", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                                Text("~500 species included out of the box — birds, mammals, insects, plants, fungi, reptiles, and more. Expandable via Species Packs (Settings > Species packs).", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
+                        }
+                    }
+                }
+
+                // Confirmation learning
+                AnimatedVisibility(visible = showContent, enter = fadeIn(FieldMindMotion.expressiveFloat)) {
+                    Card(
+                        shape = RoundedCornerShape(20.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                    ) {
+                        Row(Modifier.padding(16.dp), verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+                            Box(Modifier.size(40.dp).clip(RoundedCornerShape(12.dp)).background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)), contentAlignment = Alignment.Center) {
+                                Icon(FieldMindIcons.Streak, null, tint = MaterialTheme.colorScheme.primary, size = 22.dp)
+                            }
+                            Column(Modifier.weight(1f)) {
+                                Text("Learns from your confirmations", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                                Text("The more you confirm or correct identifications, the smarter FieldMind gets. Your confirmed species are stored locally and used to boost future matches.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Bottom actions
+            AnimatedVisibility(visible = showContent, enter = fadeIn(FieldMindMotion.expressiveFloat)) {
+                Row(
+                    Modifier.fillMaxWidth().padding(bottom = 16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    OutlinedButton(onClick = onBack, shape = RoundedCornerShape(16.dp), modifier = Modifier.weight(1f)) { Text("Back") }
+                    Button(onClick = onNext, modifier = Modifier.weight(1f), shape = RoundedCornerShape(16.dp)) { Text("Continue") }
+                }
+            }
+        }
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════════
+//  Extended Tour — Screen 11: Getting Started Final Page
+// ══════════════════════════════════════════════════════════════════════
+
+@Composable
+private fun OnboardingFinalPage(
+    onFinish: () -> Unit,
+    onBack: () -> Unit
+) {
+    var showContent by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) { showContent = true }
+
+    Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
+        Box(
+            Modifier.size(240.dp).offset(x = (-60).dp, y = 300.dp)
+                .graphicsLayer { alpha = 0.04f }
+                .background(Brush.radialGradient(listOf(MaterialTheme.colorScheme.primary, Color.Transparent)), CircleShape)
+        )
+
+        Column(
+            Modifier.fillMaxSize().padding(24.dp),
+            verticalArrangement = Arrangement.SpaceBetween
+        ) {
+            Column(
+                Modifier.weight(1f).verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                Spacer(Modifier.height(16.dp))
+                AnimatedVisibility(visible = showContent, enter = fadeIn() + scaleIn(initialScale = 0.9f)) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
+                        Box(
+                            Modifier.size(80.dp).background(
+                                Brush.linearGradient(listOf(Color(0xFF43A047), Color(0xFF66BB6A))),
+                                RoundedCornerShape(28.dp)
+                            ),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(FieldMindIcons.Check, null, tint = Color.White, size = 44.dp)
+                        }
+                        Spacer(Modifier.height(12.dp))
+                        Text("You're ready!", style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.ExtraBold, textAlign = TextAlign.Center)
+                        Text(
+                            "Here's a quick summary of what to do first:",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                }
+
+                // Quick start cards
+                AnimatedVisibility(visible = showContent, enter = fadeIn(FieldMindMotion.expressiveFloat) + slideInVertically { it / 4 }) {
+                    Card(
+                        shape = RoundedCornerShape(24.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                    ) {
+                        Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                            Text("Quick start guide", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+
+                            listOf(
+                                "1. Tap Capture to start an observation session",
+                                "2. Take a photo, record audio, or add notes",
+                                "3. Try Species Identification from the evidence panel",
+                                "4. Browse the species catalog to learn about local wildlife",
+                                "5. Export your research anytime from Settings > Export Studio"
+                            ).forEach { step ->
+                                Row(verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                                    Icon(FieldMindIcons.Check, null, tint = MaterialTheme.colorScheme.primary, size = 16.dp, modifier = Modifier.padding(top = 2.dp))
+                                    Text(step, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                }
+                            }
+                        }
+                    }
+                }
+
+                AnimatedVisibility(visible = showContent, enter = fadeIn(FieldMindMotion.expressiveFloat) + slideInVertically { it / 5 }) {
+                    Card(
+                        shape = RoundedCornerShape(24.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                    ) {
+                        Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                                Box(Modifier.size(36.dp).clip(RoundedCornerShape(10.dp)).background(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)), contentAlignment = Alignment.Center) {
+                                    Icon(FieldMindIcons.Info, null, tint = MaterialTheme.colorScheme.primary, size = 20.dp)
+                                }
+                                Text("Your data stays on this device", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                            }
+                            Text(
+                                "FieldMind has no cloud servers. All observations, photos, and settings are stored locally. Use Export Studio for backups.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                }
+            }
+
+            // Bottom action
+            AnimatedVisibility(visible = showContent, enter = fadeIn(FieldMindMotion.expressiveFloat)) {
+                Column(
+                    Modifier.fillMaxWidth().padding(bottom = 16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Button(
+                        onClick = onFinish,
+                        modifier = Modifier.fillMaxWidth().height(54.dp),
+                        shape = RoundedCornerShape(18.dp)
+                    ) {
+                        Text("Start exploring!", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
+                    }
+                    TextButton(onClick = onBack, modifier = Modifier.align(Alignment.CenterHorizontally)) {
+                        Text("Back")
+                    }
+                    Text(
+                        "You can always change these settings later.",
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
                         modifier = Modifier.align(Alignment.CenterHorizontally)

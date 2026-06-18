@@ -206,7 +206,7 @@ fun AutoGenerateReportOption(
                 Text("Generate draft report", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.primary)
                 Text("Auto-create from your observations, data, and hypotheses", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
-            Icon(imageVector = FieldMindIcons.Info, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+            Icon(icon = FieldMindIcons.Info, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
         }
     }
 }
