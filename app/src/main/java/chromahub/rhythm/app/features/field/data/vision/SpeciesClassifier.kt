@@ -694,7 +694,7 @@ class SpeciesClassifier(
     )
 
     /** Lazy Perenual provider for cloud species enrichment (plant data). */
-    private val perenualProvider: PerenualSpeciesProvider? by lazy {
+    private val perenualProviderInstance: PerenualSpeciesProvider? by lazy {
         perenualApiKey?.takeIf { it.isNotBlank() }?.let { PerenualSpeciesProvider(it) }
     }
 
@@ -1090,7 +1090,7 @@ class SpeciesClassifier(
      * Get the Perenual species provider, or null if no API key is configured.
      * Used by the SpeciesIdentificationSheet to look up plant descriptions.
      */
-    fun getPerenualProvider(): PerenualSpeciesProvider? = perenualProvider
+    fun getPerenualProvider(): PerenualSpeciesProvider? = perenualProviderInstance
 
     /**
      * Enrich species identification matches with Perenual cloud data
@@ -1102,7 +1102,7 @@ class SpeciesClassifier(
      * @return Enriched matches with additional description and image data where available.
      */
     suspend fun enrichWithPerenual(matches: List<SpeciesMatch>): List<SpeciesMatch> = withContext(Dispatchers.Default) {
-        val provider = perenualProvider ?: return@withContext matches
+        val provider = perenualProviderInstance ?: return@withContext matches
         if (!provider.isAvailable) return@withContext matches
 
         matches.map { match ->
@@ -1119,7 +1119,7 @@ class SpeciesClassifier(
      * Returns SpeciesEntry results from the cloud provider.
      */
     suspend fun searchPerenual(query: String): List<SpeciesEntry> = withContext(Dispatchers.Default) {
-        val provider = perenualProvider ?: return@withContext emptyList()
+        val provider = perenualProviderInstance ?: return@withContext emptyList()
         if (query.isBlank() || !provider.isAvailable) return@withContext emptyList()
 
         val records = provider.searchAsRecords(query)
@@ -1130,7 +1130,7 @@ class SpeciesClassifier(
      * Enrich a single species match with Perenual data.
      */
     suspend fun enrichSingleMatch(match: SpeciesMatch): SpeciesMatch = withContext(Dispatchers.Default) {
-        val provider = perenualProvider ?: return@withContext match
+        val provider = perenualProviderInstance ?: return@withContext match
         if (!provider.isAvailable) return@withContext match
         try {
             provider.enrichMatch(match) ?: match

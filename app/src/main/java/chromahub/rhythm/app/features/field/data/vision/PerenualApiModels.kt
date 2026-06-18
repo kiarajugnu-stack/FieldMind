@@ -47,7 +47,6 @@ data class PerenualSpeciesDetail(
     val sunlight: List<String>? = null,
     val description: String? = null,
     @SerializedName("care_level") val careLevel: String? = null,
-    @SerializedName("care_level") val careLevel: String? = null,
     @SerializedName("growth_rate") val growthRate: String? = null,
     val maintenance: String? = null,
     val medicinal: Boolean? = null,
