@@ -111,6 +111,10 @@ sealed class FieldMindScreen(val route: String, val label: String, val icon: Mat
     data object MeasurementTool : FieldMindScreen("field_measurement_tool", "Measure", FieldMindIcons.Graph)
     data object WeatherLogTool : FieldMindScreen("field_weather_log_tool", "Weather", FieldMindIcons.Weather)
     data object SpeciesTool : FieldMindScreen("field_species_tool", "Species", FieldMindIcons.Nature)
+    data object ChecklistTool : FieldMindScreen("field_checklist_tool", "Checklist", FieldMindIcons.Check)
+    data object EventLogTool : FieldMindScreen("field_event_log_tool", "Event Log", FieldMindIcons.List)
+    data object SiteLogTool : FieldMindScreen("field_site_log_tool", "Site Log", FieldMindIcons.Map)
+    data object ComparisonTable : FieldMindScreen("field_comparison_table", "Comparison", FieldMindIcons.Data)
     data object SpeciesBrowser : FieldMindScreen("field_species_browser", "Species Browser", FieldMindIcons.Nature)
     data object TaxonomicBrowser : FieldMindScreen("field_taxonomic_browser", "Taxonomic Browser", FieldMindIcons.Category)
     data object FieldLog : FieldMindScreen("field_log", "Field Log", FieldMindIcons.List)
@@ -529,7 +533,7 @@ private fun FieldMindNavHost(
         composable(FieldMindScreen.FieldMode.route) { ObserveScreen(viewModel = viewModel, compactFieldMode = true, onBack = { navController.popBackStack() }, onOpenDetail = openDetail) }
         composable(FieldMindScreen.Questions.route) { QuestionsScreen(viewModel = viewModel, onOpenDetail = openDetail) }
 composable(FieldMindScreen.Hypotheses.route) { ProjectsScreen(viewModel = viewModel, startTab = 2, onOpenDetail = openDetail) }
-composable(FieldMindScreen.DataTools.route) { ProjectsScreen(viewModel = viewModel, startTab = 3, onOpenDetail = openDetail) }
+composable(FieldMindScreen.DataTools.route) { DataToolsHubScreen(viewModel = viewModel, onBack = { navController.popBackStack() }, onNavigate = { navController.navigateToDestination(it.route) }) }
 composable(FieldMindScreen.Analysis.route) { ProjectsScreen(viewModel = viewModel, startTab = 0, onOpenDetail = openDetail) }
 composable(FieldMindScreen.Reports.route) { ProjectsScreen(viewModel = viewModel, startTab = 4, onOpenDetail = openDetail) }
         composable(FieldMindScreen.Search.route) { ArchiveScreen(viewModel = viewModel, onOpenDetail = openDetail, onOpenReader = openReader) }
@@ -589,6 +593,10 @@ composable(FieldMindScreen.Reports.route) { ProjectsScreen(viewModel = viewModel
         composable(FieldMindScreen.MeasurementTool.route) { MeasurementToolScreen(viewModel = viewModel, onBack = { navController.popBackStack() }) }
         composable(FieldMindScreen.WeatherLogTool.route) { WeatherLogToolScreen(viewModel = viewModel, onBack = { navController.popBackStack() }) }
         composable(FieldMindScreen.SpeciesTool.route) { SpeciesToolScreen(viewModel = viewModel, onBack = { navController.popBackStack() }, onOpenBrowser = { navController.navigateToDestination(FieldMindScreen.SpeciesBrowser.route) }, onOpenTaxonomicBrowser = { navController.navigateToDestination(FieldMindScreen.TaxonomicBrowser.route) }) }
+        composable(FieldMindScreen.ChecklistTool.route) { ChecklistToolScreen(viewModel = viewModel, onBack = { navController.popBackStack() }) }
+        composable(FieldMindScreen.EventLogTool.route) { EventLogToolScreen(viewModel = viewModel, onBack = { navController.popBackStack() }) }
+        composable(FieldMindScreen.SiteLogTool.route) { SiteLogToolScreen(viewModel = viewModel, onBack = { navController.popBackStack() }) }
+        composable(FieldMindScreen.ComparisonTable.route) { ComparisonTableScreen(viewModel = viewModel, onBack = { navController.popBackStack() }) }
         composable(FieldMindScreen.FieldLog.route) { FieldLogScreen(viewModel = viewModel, onBack = { navController.popBackStack() }, onOpenDetail = openDetail) }
         composable("field_detail/{kind}/{id}") { entry ->
             val kind = entry.arguments?.getString("kind") ?: "observation"
