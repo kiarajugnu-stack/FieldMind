@@ -2,6 +2,7 @@ package fieldmind.research.app.shared.presentation.components.icons
 
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
+// ── Filled icons (used for `filled = true` variants) ──
 import androidx.compose.material.icons.filled.Add as FilledAdd
 import androidx.compose.material.icons.filled.ArrowBack as FilledArrowBack
 import androidx.compose.material.icons.filled.ArrowForward as FilledArrowForward
@@ -28,7 +29,7 @@ import androidx.compose.material.icons.filled.Share as FilledShare
 import androidx.compose.material.icons.filled.Star as FilledStar
 import androidx.compose.material.icons.filled.Warning as FilledWarning
 
-import androidx.compose.material.icons.outlined.AcUnit
+// ── Outlined icons (default/unfilled variants) ──
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Air
 import androidx.compose.material.icons.outlined.ArrowBack
@@ -94,12 +95,13 @@ import androidx.compose.material.icons.outlined.Landscape
 import androidx.compose.material.icons.outlined.Lightbulb
 import androidx.compose.material.icons.outlined.LightMode
 import androidx.compose.material.icons.outlined.Link
-import androidx.compose.material.icons.outlined.List
+// ⚠️ List/MAP are aliased to avoid clash with Kotlin stdlib types ⚠️
+import androidx.compose.material.icons.outlined.List as OutlinedList
 import androidx.compose.material.icons.outlined.LocalFireDepartment
 import androidx.compose.material.icons.outlined.LocalFlorist
 import androidx.compose.material.icons.outlined.LocationOn
 import androidx.compose.material.icons.outlined.Lock
-import androidx.compose.material.icons.outlined.Map
+import androidx.compose.material.icons.outlined.Map as OutlinedMap
 import androidx.compose.material.icons.outlined.MenuBook
 import androidx.compose.material.icons.outlined.Mic
 import androidx.compose.material.icons.outlined.Nature
@@ -146,6 +148,8 @@ import androidx.compose.material.icons.outlined.WaterDrop
 import androidx.compose.material.icons.outlined.WbCloudy
 import androidx.compose.material.icons.outlined.WbSunny
 
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.IconDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -217,7 +221,7 @@ private fun iconNameToImageVector(name: String, filled: Boolean): ImageVector {
 
         // ── Navigation (location) ──
         "location_on", "place", "pin_drop", "location_searching" -> LocationOn
-        "map", "map_full" -> Map
+        "map", "map_full" -> OutlinedMap
         "home" -> pick(Home, FilledHome)
 
         // ── Communication ──
@@ -248,9 +252,9 @@ private fun iconNameToImageVector(name: String, filled: Boolean): ImageVector {
         "info", "info_outline" -> pick(Info, FilledInfo)
         "warning", "warning_amber", "error" -> pick(Warning, FilledWarning)
         "exit_to_app", "logout", "exit" -> Share
-        "list", "menu" -> List
-        "more_vert", "more" -> List
-        "more_horiz" -> List
+        "list", "menu" -> OutlinedList
+        "more_vert", "more" -> OutlinedList
+        "more_horiz" -> OutlinedList
         "date_range", "calendar_today", "calendar_month" -> DateRange
         "build", "tools", "fix" -> pick(Settings, FilledBuild)
         "thumb_up", "like" -> Star
@@ -263,7 +267,7 @@ private fun iconNameToImageVector(name: String, filled: Boolean): ImageVector {
         "local_florist", "plant", "flower" -> LocalFlorist
         "eco", "nature", "leaf" -> Eco
         "landscape", "rock", "terrain", "mountain" -> Landscape
-        "terrain_map" -> Map
+        "terrain_map" -> OutlinedMap
 
         // ── Weather ──
         "partly_cloudy_day", "weather" -> WbCloudy
@@ -292,7 +296,7 @@ private fun iconNameToImageVector(name: String, filled: Boolean): ImageVector {
         "hub", "graph", "pivot" -> Hub
         "category", "collection" -> Category
         "grid_on", "grid" -> Category
-        "table_rows", "table", "data" -> List
+        "table_rows", "table", "data" -> OutlinedList
         "functions", "function" -> Functions
         "pivot_table_chart" -> BarChart
         "hexagon", "shape" -> Hexagon
@@ -328,8 +332,14 @@ private fun iconNameToImageVector(name: String, filled: Boolean): ImageVector {
 
 /**
  * Custom Icon composable that renders a MaterialSymbolIcon.
- * Uses the full Material Icons library (core + extended) for proper icon mappings.
+ * Uses the full Material Icons library (core + extended) for proper icon mappings,
+ * with the Material 3 Expressive API for variable font support (fill, weight, grade).
+ *
+ * The [fill] parameter on the underlying Material 3 Icon composable lets us toggle
+ * between outlined (0f) and filled (1f) states without switching ImageVectors.
+ * This is the Android 17 / Material 3 Expressive approach.
  */
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun Icon(
     icon: MaterialSymbolIcon,
@@ -343,6 +353,7 @@ fun Icon(
         imageVector = imageVector,
         contentDescription = contentDescription,
         modifier = modifier.size(size),
-        tint = tint
+        tint = tint,
+        fill = if (icon.filled) 1f else IconDefaults.fill
     )
 }

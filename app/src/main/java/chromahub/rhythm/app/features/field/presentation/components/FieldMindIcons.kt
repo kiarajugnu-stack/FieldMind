@@ -61,6 +61,7 @@ object FieldMindIcons {
     val Palette = MaterialSymbolIcon("palette")
     val Flip = MaterialSymbolIcon("flip")
     val Nature = MaterialSymbolIcon("eco")
+    val Leaf = MaterialSymbolIcon("eco")
     val Visibility = MaterialSymbolIcon("visibility")
     val VisibilityOff = MaterialSymbolIcon("visibility_off")
     val Book = MaterialSymbolIcon("auto_stories")
