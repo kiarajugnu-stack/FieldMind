@@ -90,15 +90,15 @@ fun FestiveOverlayFromSettings(
     val festiveEnabled by appSettings.festiveThemeEnabled.collectAsState()
     val festiveType by appSettings.festiveThemeType.collectAsState()
     val festiveIntensity by appSettings.festiveThemeIntensity.collectAsState()
-    val festiveAutoDetect by appSettings.festiveThemeAutoDetect.collectAsState()
-    val snowflakeSize by appSettings.festiveSnowflakeSize.collectAsState()
-    val snowflakeArea by appSettings.festiveSnowflakeArea.collectAsState()
+    val festiveAutoDetect = false
+    val snowflakeSize = 1.0f
+    val snowflakeArea = "FULL_SCREEN"
     
     // Decoration position settings
-    val showTopLights by appSettings.festiveShowTopLights.collectAsState()
-    val showSideGarland by appSettings.festiveShowSideGarland.collectAsState()
-    val showBottomSnow by appSettings.festiveShowBottomSnow.collectAsState()
-    val showSnowfall by appSettings.festiveShowSnowfall.collectAsState()
+    val showTopLights = true
+    val showSideGarland = true
+    val showBottomSnow = true
+    val showSnowfall = true
     
     // Safe parse of festive theme type with fallback to NONE if invalid
     val themType = try {

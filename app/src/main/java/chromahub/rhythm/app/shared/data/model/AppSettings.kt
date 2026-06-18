@@ -113,12 +113,16 @@ class AppSettings private constructor(context: Context) {
     val lastCrashLog: StateFlow<String?> = _lastCrashLog.asStateFlow()
 
     private val _crashLogHistory = MutableStateFlow<List<CrashLogEntry>>(
-        runCatching {
+        try {
             val json = prefs.getString(KEY_CRASH_LOG_HISTORY, null)
             if (json != null) {
                 Gson().fromJson(json, object : TypeToken<List<CrashLogEntry>>() {}.type)
-            } else emptyList()
-        }.getOrDefault(emptyList())
+            } else {
+                emptyList()
+            }
+        } catch (e: Exception) {
+            emptyList()
+        }
     )
     val crashLogHistory: StateFlow<List<CrashLogEntry>> = _crashLogHistory.asStateFlow()
 
