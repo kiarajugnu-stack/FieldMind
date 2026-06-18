@@ -277,9 +277,7 @@ class MaplibreOfflineManager(private val context: Context) {
 
     // ── Storage helpers ──
 
-    private val regionsPrefs by lazy {
-        context.getSharedPreferences("maplibre_offline_regions", Context.MODE_PRIVATE)
-    }
+    private val regionsPrefs = context.getSharedPreferences("maplibre_offline_regions", Context.MODE_PRIVATE)
 
     private fun saveRegionToStorage(region: MaplibreTileRegion) {
         regionsPrefs.edit().apply {
