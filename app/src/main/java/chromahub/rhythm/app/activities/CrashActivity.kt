@@ -4,6 +4,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.BugReport
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.ArrowForward
+import androidx.compose.material.icons.filled.Favorite
 
 import android.content.ClipData
 import android.content.ClipboardManager
@@ -142,7 +143,7 @@ class CrashActivity : ComponentActivity() {
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(
-                                imageVector = Icons.Default.BugReport,
+                                imageVector = Icons.Filled.BugReport,
                                 contentDescription = stringResource(R.string.crash_bug_report),
                                 tint = MaterialTheme.colorScheme.error,
                                 modifier = Modifier.size(56.dp)
@@ -286,7 +287,7 @@ class CrashActivity : ComponentActivity() {
                             shape = RoundedCornerShape(32.dp)
                         ) {
                             Icon(
-                                imageVector = Icons.Default.Share,
+                                imageVector = Icons.Filled.Share,
                                 contentDescription = null,
                                 modifier = Modifier.size(20.dp)
                             )
@@ -322,7 +323,7 @@ class CrashActivity : ComponentActivity() {
                             Text(stringResource(R.string.crash_restart_app), style = MaterialTheme.typography.labelLarge)
                             Spacer(modifier = Modifier.width(8.dp))
                             Icon(
-                                imageVector = Icons.Default.ArrowForward,
+                                imageVector = Icons.Filled.ArrowForward,
                                 contentDescription = null,
                                 modifier = Modifier.size(20.dp)
                             )
