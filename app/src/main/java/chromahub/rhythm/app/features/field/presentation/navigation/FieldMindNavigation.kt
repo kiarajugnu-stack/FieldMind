@@ -467,12 +467,33 @@ private fun FieldMindNavHost(
             }
         },
         popEnterTransition = {
-            fadeIn(spring(dampingRatio = 0.75f, stiffness = 400f)) +
-            scaleIn(initialScale = 0.97f, animationSpec = spring(dampingRatio = 0.6f, stiffness = 500f))
+            // Previous screen slides in from the left with a bouncy spring — expressive like the nav bar
+            val direction = primaryTabDirection(targetState.destination.route, initialState.destination.route)
+            if (direction == 0) {
+                slideInHorizontally(
+                    animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMedium),
+                    initialOffsetX = { -it / 4 }
+                ) + fadeIn(spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = Spring.StiffnessMediumLow))
+            } else {
+                slideInHorizontally(
+                    animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMedium),
+                    initialOffsetX = { direction * it / 4 }
+                ) + fadeIn(spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = Spring.StiffnessMediumLow))
+            }
         },
         popExitTransition = {
-            fadeOut(spring(dampingRatio = 0.8f, stiffness = 600f)) +
-            scaleOut(targetScale = 0.97f, animationSpec = spring(dampingRatio = 0.7f, stiffness = 500f))
+            val direction = primaryTabDirection(targetState.destination.route, initialState.destination.route)
+            if (direction == 0) {
+                slideOutHorizontally(
+                    animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMedium),
+                    targetOffsetX = { it / 3 }
+                ) + fadeOut(spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = Spring.StiffnessMediumLow))
+            } else {
+                slideOutHorizontally(
+                    animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMedium),
+                    targetOffsetX = { -direction * it / 3 }
+                ) + fadeOut(spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = Spring.StiffnessMediumLow))
+            }
         }
     ) {
         composable(FieldMindScreen.Home.route) { HomeScreen(viewModel = viewModel, onOpenSettings = { navController.navigateToDestination(FieldMindScreen.Settings.route) }, onNavigate = { navController.navigateToDestination(it.route) }, onOpenDetail = openDetail, onOpenReader = openReader) }
