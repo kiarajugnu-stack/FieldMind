@@ -30,6 +30,7 @@ import androidx.compose.material.icons.filled.Star as FilledStar
 import androidx.compose.material.icons.filled.Warning as FilledWarning
 
 // ── Outlined icons (default/unfilled variants) ──
+import androidx.compose.material.icons.outlined.AcUnit
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Air
 import androidx.compose.material.icons.outlined.ArrowBack
@@ -95,13 +96,10 @@ import androidx.compose.material.icons.outlined.Landscape
 import androidx.compose.material.icons.outlined.Lightbulb
 import androidx.compose.material.icons.outlined.LightMode
 import androidx.compose.material.icons.outlined.Link
-// ⚠️ List/MAP are aliased to avoid clash with Kotlin stdlib types ⚠️
-import androidx.compose.material.icons.outlined.List as OutlinedList
 import androidx.compose.material.icons.outlined.LocalFireDepartment
 import androidx.compose.material.icons.outlined.LocalFlorist
 import androidx.compose.material.icons.outlined.LocationOn
 import androidx.compose.material.icons.outlined.Lock
-import androidx.compose.material.icons.outlined.Map as OutlinedMap
 import androidx.compose.material.icons.outlined.MenuBook
 import androidx.compose.material.icons.outlined.Mic
 import androidx.compose.material.icons.outlined.Nature
@@ -148,14 +146,16 @@ import androidx.compose.material.icons.outlined.WaterDrop
 import androidx.compose.material.icons.outlined.WbCloudy
 import androidx.compose.material.icons.outlined.WbSunny
 
-import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
-import androidx.compose.material3.IconDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+
+// Referenced via qualified access to avoid naming clash with kotlin.collections.List/Map
+private val OutlinedList: ImageVector get() = Icons.Outlined.List
+private val OutlinedMap: ImageVector get() = Icons.Outlined.Map
 
 /**
  * Data class representing a Material Symbols icon by name.
@@ -332,14 +332,8 @@ private fun iconNameToImageVector(name: String, filled: Boolean): ImageVector {
 
 /**
  * Custom Icon composable that renders a MaterialSymbolIcon.
- * Uses the full Material Icons library (core + extended) for proper icon mappings,
- * with the Material 3 Expressive API for variable font support (fill, weight, grade).
- *
- * The [fill] parameter on the underlying Material 3 Icon composable lets us toggle
- * between outlined (0f) and filled (1f) states without switching ImageVectors.
- * This is the Android 17 / Material 3 Expressive approach.
+ * Uses the full Material Icons library (core + extended) for proper icon mappings.
  */
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun Icon(
     icon: MaterialSymbolIcon,
@@ -353,7 +347,6 @@ fun Icon(
         imageVector = imageVector,
         contentDescription = contentDescription,
         modifier = modifier.size(size),
-        tint = tint,
-        fill = if (icon.filled) 1f else IconDefaults.fill
+        tint = tint
     )
 }

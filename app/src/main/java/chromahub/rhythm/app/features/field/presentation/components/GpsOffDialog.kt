@@ -1,6 +1,8 @@
 package fieldmind.research.app.features.field.presentation.components
 
 import android.content.Intent
+import android.provider.Settings
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -25,13 +27,17 @@ import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbo
 @Composable
 fun GpsOffDialog(
     onDismiss: () -> Unit,
-    onOpenSettings: () -> Unit = {
-        val context = LocalContext.current
-        context.startActivity(Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS).apply {
-            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        })
-    }
+    /** null = opens system Location Settings automatically */
+    onOpenSettings: (() -> Unit)? = null,
 ) {
+    val context = LocalContext.current
+    val effectiveOnOpenSettings = remember(context) {
+        onOpenSettings ?: {
+            context.startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS).apply {
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            })
+        }
+    }
     AlertDialog(
         onDismissRequest = onDismiss,
         shape = RoundedCornerShape(28.dp),
@@ -78,7 +84,7 @@ fun GpsOffDialog(
         confirmButton = {
             Button(
                 onClick = {
-                    onOpenSettings()
+                    effectiveOnOpenSettings()
                     onDismiss()
                 },
                 shape = RoundedCornerShape(16.dp),
@@ -102,3 +108,4 @@ fun GpsOffDialog(
         }
     )
 }
+
