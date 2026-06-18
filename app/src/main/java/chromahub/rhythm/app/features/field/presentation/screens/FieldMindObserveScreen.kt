@@ -178,7 +178,8 @@ fun ObserveScreen(
     val speciesDatabase = remember { SpeciesDatabase(context) }
     val speciesImageAnalyzer = remember { SpeciesImageAnalyzer(context) }
     val speciesPhashDb = remember { PhashDatabase(context) }
-    val speciesClassifier = remember { SpeciesClassifier(context, speciesDatabase, speciesImageAnalyzer, speciesPhashDb) }
+    val perenualKey by viewModel.fieldSettings.perenualApiKey.collectAsState()
+    val speciesClassifier = remember { SpeciesClassifier(context, speciesDatabase, speciesImageAnalyzer, speciesPhashDb, perenualKey.ifBlank { null }) }
     var showSpeciesId by remember { mutableStateOf(false) }
     var speciesIdImageUri by remember { mutableStateOf<String?>(null) }
     var identifiedSpecies by remember { mutableStateOf<SpeciesMatch?>(null) }
