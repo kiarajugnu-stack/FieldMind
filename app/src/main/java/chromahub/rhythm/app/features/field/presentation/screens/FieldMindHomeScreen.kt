@@ -40,6 +40,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.window.SecureFlagPolicy
 import fieldmind.research.app.features.field.data.database.entity.*
+import fieldmind.research.app.features.field.data.settings.*
 import fieldmind.research.app.features.field.data.location.FieldLocationProvider
 import fieldmind.research.app.features.field.data.weather.WeatherSnapshot
 import fieldmind.research.app.features.field.data.weather.WeatherUnitConverter
@@ -107,7 +108,7 @@ fun HomeScreen(
     var capturedPhotoUri by remember { mutableStateOf<String?>(null) }
     var capturedPhotoMime by remember { mutableStateOf<String?>(null) }
     var showCategoryPicker by remember { mutableStateOf(false) }
-    var selectedCaptureCategory by remember { mutableStateOf("Bird") }
+    var selectedCaptureCategory by remember { mutableStateOf(defaultCategory) }
     
     // ── Note creation dialog state ──
     var showNoteDialog by remember { mutableStateOf(false) }
@@ -151,6 +152,25 @@ fun HomeScreen(
     val tempUnit by viewModel.fieldSettings.tempUnit.collectAsState()
     val windSpeedUnit by viewModel.fieldSettings.windSpeedUnit.collectAsState()
     val developerMode by viewModel.fieldSettings.developerMode.collectAsState()
+
+    // ── Interest-aware configuration ──
+    val userInterests by viewModel.fieldSettings.userInterests.collectAsState()
+    val defaultCategory = remember(userInterests) {
+        when {
+            userInterests.zoology.contains(ZoologySubfield.Birds) -> "Bird"
+            userInterests.zoology.contains(ZoologySubfield.Mammals) -> "Mammal"
+            userInterests.zoology.contains(ZoologySubfield.Insects) -> "Insect"
+            userInterests.zoology.contains(ZoologySubfield.Herps) -> "Animal"
+            userInterests.zoology.contains(ZoologySubfield.Marine) -> "Water"
+            userInterests.botany.contains(BotanySubfield.Wildflowers) || userInterests.botany.contains(BotanySubfield.Trees) -> "Plant"
+            userInterests.botany.contains(BotanySubfield.Fungi) -> "Plant"
+            userInterests.botany.contains(BotanySubfield.Mosses) -> "Plant"
+            userInterests.ecologyEnvironment -> "Weather"
+            userInterests.geology -> "Other"
+            userInterests.astronomy -> "Weather"
+            else -> "Bird"
+        }
+    }
 
     // ── Weather state (hoisted outside LazyColumn so it persists across scroll) ──
     var homeCurrentWeather by remember { mutableStateOf<WeatherSnapshot?>(null) }
@@ -275,13 +295,13 @@ fun HomeScreen(
                     onStartSession = { onNavigate(FieldMindScreen.ResearchSession) }
                 ) }
 
-            // ── Widget Grid ──
+            // ── Widget Grid — interest-prioritized ──
             item { SectionHeader("Research areas", "Quick overview of your work") }
-            item { HomeWidgetGrid(observations, notes, questions, sources, projects, reports, data) { onNavigate(it) } }
-            item { HomeDataOptionsCard(data, onNavigate) }
+            item { HomeWidgetGrid(observations, notes, questions, sources, projects, reports, data, userInterests) { onNavigate(it) } }
+            item { HomeDataOptionsCard(data, onNavigate, userInterests) }
 
-            // ── Species Catalog ──
-            item { HomeSpeciesCatalogSection(onNavigate = onNavigate) }
+            // ── Species Catalog — shown prominently for wildlife/ecology users ──
+            item { HomeSpeciesCatalogSection(onNavigate = onNavigate, userInterests = userInterests) }
 
             // ── Recent Captures ──
             if (observations.isNotEmpty()) {
@@ -1994,16 +2014,26 @@ fun HomeWidgetGrid(
     projects: List<ProjectEntity>,
     reports: List<ReportEntity>,
     data: List<DataRecordEntity>,
+    userInterests: UserInterests = UserInterests(),
     onNavigate: (FieldMindScreen) -> Unit
 ) {
-    val widgets = listOf(
-        HomeWidget("Observations", "${observations.size} captured", FieldMindIcons.Observation, FieldMindTheme.colors.observation, FieldMindScreen.Insights),
-        HomeWidget("Questions", "${questions.count { it.status != "Answered" }} open", FieldMindIcons.Question, FieldMindTheme.colors.question, FieldMindScreen.Questions),
-        HomeWidget("Sources", "${sources.count { it.readingStatus == "Read" }}/${sources.size} read", FieldMindIcons.Source, FieldMindTheme.colors.source, FieldMindScreen.Library),
-        HomeWidget("Projects", "${projects.count { it.status == "Active" }} active", FieldMindIcons.Project, FieldMindTheme.colors.project, FieldMindScreen.Projects),
-        HomeWidget("Data", "${data.size} records", FieldMindIcons.Data, FieldMindTheme.colors.data, FieldMindScreen.DataTools),
-        HomeWidget("Reports", "${reports.size} drafts", FieldMindIcons.Report, FieldMindTheme.colors.report, FieldMindScreen.Reports)
-    )
+    val hasWildlife = userInterests.zoology.isNotEmpty() || userInterests.botany.isNotEmpty()
+    val hasEcology = userInterests.ecologyEnvironment || userInterests.geology || userInterests.astronomy
+
+    val widgets = buildList {
+        add(HomeWidget("Observations", "${observations.size} captured", FieldMindIcons.Observation, FieldMindTheme.colors.observation, FieldMindScreen.Insights))
+        if (hasWildlife) {
+            add(HomeWidget("Species", "Catalog • identify & learn", FieldMindIcons.Nature, FieldMindTheme.colors.observation.copy(green = 0.8f), FieldMindScreen.SpeciesBrowser))
+        }
+        add(HomeWidget("Questions", "${questions.count { it.status != "Answered" }} open", FieldMindIcons.Question, FieldMindTheme.colors.question, FieldMindScreen.Questions))
+        add(HomeWidget("Sources", "${sources.count { it.readingStatus == "Read" }}/${sources.size} read", FieldMindIcons.Source, FieldMindTheme.colors.source, FieldMindScreen.Library))
+        add(HomeWidget("Projects", "${projects.count { it.status == "Active" }} active", FieldMindIcons.Project, FieldMindTheme.colors.project, FieldMindScreen.Projects))
+        if (hasEcology) {
+            add(HomeWidget("Weather", "Conditions at your site", FieldMindIcons.Weather, FieldMindTheme.colors.data, FieldMindScreen.WeatherDatabase))
+        }
+        add(HomeWidget("Data", "${data.size} records", FieldMindIcons.Data, FieldMindTheme.colors.data, FieldMindScreen.DataTools))
+        add(HomeWidget("Reports", "${reports.size} drafts", FieldMindIcons.Report, FieldMindTheme.colors.report, FieldMindScreen.Reports))
+    }
     FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalArrangement = Arrangement.spacedBy(12.dp), maxItemsInEachRow = 2) {
         widgets.forEach { widget -> HomeWidgetCard(widget, Modifier.weight(1f)) { onNavigate(widget.screen) } }
     }
@@ -2012,13 +2042,30 @@ fun HomeWidgetGrid(
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun HomeDataOptionsCard(data: List<DataRecordEntity>, onNavigate: (FieldMindScreen) -> Unit) {
-    val toolScreens = listOf(
-        Pair(Triple("Count", "Track totals", FieldMindIcons.Add), FieldMindScreen.CounterTool),
-        Pair(Triple("Measure", "Log values", FieldMindIcons.Graph), FieldMindScreen.MeasurementTool),
-        Pair(Triple("Weather", "Conditions", FieldMindIcons.Weather), FieldMindScreen.WeatherLogTool),
-        Pair(Triple("Species", "Survey data", FieldMindIcons.Nature), FieldMindScreen.SpeciesTool)
-    )
+private fun HomeDataOptionsCard(data: List<DataRecordEntity>, onNavigate: (FieldMindScreen) -> Unit, userInterests: UserInterests = UserInterests()) {
+    val hasWildlife = userInterests.zoology.isNotEmpty() || userInterests.botany.isNotEmpty()
+    val hasEcology = userInterests.ecologyEnvironment || userInterests.geology || userInterests.astronomy
+
+    val toolScreens = buildList {
+        val anyInterest = hasWildlife || hasEcology
+        if (anyInterest) {
+            // Interest-based ordering: promote relevant tools first
+            if (hasWildlife) {
+                add(Pair(Triple("Species", "Survey data", FieldMindIcons.Nature), FieldMindScreen.SpeciesTool))
+            }
+            add(Pair(Triple("Count", "Track totals", FieldMindIcons.Add), FieldMindScreen.CounterTool))
+            add(Pair(Triple("Measure", "Log values", FieldMindIcons.Graph), FieldMindScreen.MeasurementTool))
+            if (hasEcology) {
+                add(Pair(Triple("Weather", "Conditions", FieldMindIcons.Weather), FieldMindScreen.WeatherLogTool))
+            }
+        } else {
+            // No specific interests: show all tools in default order
+            add(Pair(Triple("Count", "Track totals", FieldMindIcons.Add), FieldMindScreen.CounterTool))
+            add(Pair(Triple("Measure", "Log values", FieldMindIcons.Graph), FieldMindScreen.MeasurementTool))
+            add(Pair(Triple("Weather", "Conditions", FieldMindIcons.Weather), FieldMindScreen.WeatherLogTool))
+            add(Pair(Triple("Species", "Survey data", FieldMindIcons.Nature), FieldMindScreen.SpeciesTool))
+        }
+    }
     Card(shape = RoundedCornerShape(24.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp), modifier = Modifier.fillMaxWidth()) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {

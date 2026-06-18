@@ -11,6 +11,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import fieldmind.research.app.features.field.data.settings.*
 import fieldmind.research.app.features.field.data.vision.SpeciesDatabase
 import fieldmind.research.app.features.field.presentation.navigation.FieldMindScreen
 import fieldmind.research.app.features.field.presentation.theme.FieldMindTheme
@@ -23,7 +24,8 @@ import kotlinx.coroutines.delay
 
 @Composable
 fun HomeSpeciesCatalogSection(
-    onNavigate: (FieldMindScreen) -> Unit
+    onNavigate: (FieldMindScreen) -> Unit,
+    userInterests: UserInterests = UserInterests()
 ) {
     val context = LocalContext.current
     val database = remember { SpeciesDatabase(context) }
@@ -38,6 +40,31 @@ fun HomeSpeciesCatalogSection(
 
     val colors = FieldMindTheme.colors
     val accentColor = colors.observation
+
+    // Interest-aware subtitle
+    val subtitle = remember(userInterests) {
+        buildString {
+            append("Browse species by name, category, and taxonomy")
+            val focusAreas = buildList {
+                if (userInterests.zoology.contains(ZoologySubfield.Birds)) add("ornithology")
+                if (userInterests.zoology.contains(ZoologySubfield.Mammals)) add("mammalogy")
+                if (userInterests.zoology.contains(ZoologySubfield.Herps)) add("herpetology")
+                if (userInterests.zoology.contains(ZoologySubfield.Insects)) add("entomology")
+                if (userInterests.zoology.contains(ZoologySubfield.Marine)) add("marine biology")
+                if (userInterests.botany.contains(BotanySubfield.Wildflowers)) add("wildflowers")
+                if (userInterests.botany.contains(BotanySubfield.Trees)) add("trees")
+                if (userInterests.botany.contains(BotanySubfield.Fungi)) add("fungi")
+                if (userInterests.botany.contains(BotanySubfield.Mosses)) add("bryophytes")
+                if (userInterests.ecologyEnvironment) add("ecology")
+                if (userInterests.astronomy) add("astronomy")
+                if (userInterests.geology) add("geology")
+            }
+            if (focusAreas.isNotEmpty()) {
+                append(" \u2022 Focus: ")
+                append(focusAreas.joinToString(", "))
+            }
+        }
+    }
 
     Card(
         shape = RoundedCornerShape(24.dp),
@@ -82,7 +109,7 @@ fun HomeSpeciesCatalogSection(
                     }
                 }
                 Text(
-                    "Browse species by name, category, and taxonomy",
+                    subtitle,
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
