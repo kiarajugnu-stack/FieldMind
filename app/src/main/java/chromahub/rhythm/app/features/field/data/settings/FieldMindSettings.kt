@@ -255,6 +255,9 @@ class FieldMindSettings private constructor(context: Context) {
     val speciesIdOfflineFirst: StateFlow<Boolean> = _speciesIdOfflineFirst.asStateFlow()
     private val _speciesModelBaseUrl = MutableStateFlow(prefs.getString(KEY_SPECIES_MODEL_BASE_URL, "") ?: "")
     val speciesModelBaseUrl: StateFlow<String> = _speciesModelBaseUrl.asStateFlow()
+    // ── Perenual API settings ──
+    private val _perenualApiKey = MutableStateFlow(prefs.getString(KEY_PERENUAL_API_KEY, "") ?: "")
+    val perenualApiKey: StateFlow<String> = _perenualApiKey.asStateFlow()
 
 
     // ── Security settings ──
@@ -386,6 +389,8 @@ class FieldMindSettings private constructor(context: Context) {
     fun setSpeciesIdApiKey(value: String) = edit(KEY_SPECIES_ID_API_KEY, value.trim()) { _speciesIdApiKey.value = value.trim() }
     fun setSpeciesIdOfflineFirst(value: Boolean) = edit(KEY_SPECIES_ID_OFFLINE_FIRST, value) { _speciesIdOfflineFirst.value = value }
     fun setSpeciesModelBaseUrl(value: String) = edit(KEY_SPECIES_MODEL_BASE_URL, value.trim()) { _speciesModelBaseUrl.value = value.trim() }
+    // ── Perenual API ──
+    fun setPerenualApiKey(value: String) = edit(KEY_PERENUAL_API_KEY, value.trim()) { _perenualApiKey.value = value.trim() }
 
     private inline fun edit(key: String, value: String, after: () -> Unit) { prefs.edit().putString(key, value).apply(); after() }
     private inline fun edit(key: String, value: Boolean, after: () -> Unit) { prefs.edit().putBoolean(key, value).apply(); after() }
@@ -458,6 +463,8 @@ class FieldMindSettings private constructor(context: Context) {
         private const val KEY_SPECIES_ID_API_KEY = "species_id_api_key"
         private const val KEY_SPECIES_ID_OFFLINE_FIRST = "species_id_offline_first"
         private const val KEY_SPECIES_MODEL_BASE_URL = "species_model_base_url"
+        // ── Perenual API keys ──
+        private const val KEY_PERENUAL_API_KEY = "perenual_api_key"
         // ── Onboarding keys ──
         private const val KEY_USER_INTERESTS = "user_interests"
         private const val KEY_SCREEN_VISIBILITY = "screen_visibility"

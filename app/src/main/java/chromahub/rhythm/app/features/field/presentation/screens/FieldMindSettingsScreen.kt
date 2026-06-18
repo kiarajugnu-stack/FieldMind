@@ -316,59 +316,79 @@ fun AiAssistantSettingsPage(viewModel: FieldMindViewModel, onBack: () -> Unit) {
 
 @Composable
 fun LocalModelSettingsPage(viewModel: FieldMindViewModel, onBack: () -> Unit) {
-    val context = LocalContext.current
     val settings = viewModel.fieldSettings
     val localModelEnabled by settings.localModelEnabled.collectAsState()
     val localModelOption by settings.localModelOption.collectAsState()
-    val localModelDownloaded by settings.localModelDownloaded.collectAsState()
     val localModelUseForStudy by settings.localModelUseForStudy.collectAsState()
 
-    SettingsSubPage("Local model", icon = FieldMindIcons.Download, onBack = onBack) {
+    SettingsSubPage("Study profiles", icon = FieldMindIcons.Sparkle, onBack = onBack) {
+        item {
+            Card(shape = RoundedCornerShape(22.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)) {
+                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Box(Modifier.size(32.dp).clip(RoundedCornerShape(10.dp)).background(FieldMindTheme.colors.flashcard.copy(alpha = 0.14f)), contentAlignment = Alignment.Center) {
+                            Icon(FieldMindIcons.Sparkle, null, tint = FieldMindTheme.colors.flashcard, size = 18.dp)
+                        }
+                        Text("On-device study generation", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                    }
+                    Text(
+                        "This is not a web download — FieldMind generates study content and flashcards directly on your device using your existing observations and sources. The \"profile\" you select controls how much detail the on-device generator aims for.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        "No internet connection, no external server, no model files to download. Everything stays on your device.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+        }
         item {
             SettingsGroupCard {
-                ToggleItem("Use local model", "Runs study generation on-device after the model is downloaded.", localModelEnabled, settings::setLocalModelEnabled, FieldMindIcons.Sparkle)
-                HorizontalDivider(Modifier.padding(start = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
-                val sizes = listOf("FieldLite 500 MB", "FieldCore 1 GB", "FieldPro 2 GB")
-                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("Model size", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    sizes.forEach { size ->
-                        val selected = localModelOption == size
-                        Surface(
-                            onClick = { if (localModelEnabled) settings.setLocalModelOption(size) },
-                            shape = RoundedCornerShape(14.dp),
-                            color = if (selected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainerHigh,
-                            contentColor = if (selected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface
-                        ) {
-                            Row(Modifier.fillMaxWidth().padding(14.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                                Column(Modifier.weight(1f)) {
-                                    Text(size, fontWeight = FontWeight.SemiBold)
-                                    val spec = when (size) {
-                                        "FieldLite 500 MB" -> "Fast, basic study generation"
-                                        "FieldCore 1 GB" -> "Balanced speed and quality"
-                                        else -> "Best quality, slower generation"
+                ToggleItem("Enable study generator", "Generates flashcards and review content from your observations and sources using on-device logic.", localModelEnabled, settings::setLocalModelEnabled, FieldMindIcons.Sparkle)
+                if (localModelEnabled) {
+                    HorizontalDivider(Modifier.padding(start = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+                    val profiles = listOf("FieldLite — Quick cards", "FieldCore — Balanced detail", "FieldPro — Deep study")
+                    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text("Generation profile", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        profiles.forEach { profile ->
+                            val selected = localModelOption == profile
+                            Surface(
+                                onClick = { settings.setLocalModelOption(profile) },
+                                shape = RoundedCornerShape(14.dp),
+                                color = if (selected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainerHigh
+                            ) {
+                                Row(Modifier.fillMaxWidth().padding(14.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                                    Column(Modifier.weight(1f)) {
+                                        Text(profile, fontWeight = FontWeight.SemiBold)
+                                        val spec = when (profile) {
+                                            "FieldLite — Quick cards" -> "Fast, concise flashcard generation"
+                                            "FieldCore — Balanced detail" -> "Balanced speed and depth"
+                                            else -> "Most detailed, thorough study content"
+                                        }
+                                        Text(spec, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                     }
-                                    Text(spec, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                    if (selected) Icon(FieldMindIcons.Check, null, tint = MaterialTheme.colorScheme.primary, size = 20.dp)
                                 }
-                                if (selected) Icon(FieldMindIcons.Check, null, tint = MaterialTheme.colorScheme.primary, size = 20.dp)
                             }
+                            Spacer(Modifier.height(4.dp))
                         }
-                        Spacer(Modifier.height(4.dp))
                     }
+                    HorizontalDivider(Modifier.padding(start = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+                    ToggleItem("Use for flashcards/reviews", "Use generated content for flashcard review sessions.", localModelUseForStudy, settings::setLocalModelUseForStudy, FieldMindIcons.Flashcard)
                 }
-                HorizontalDivider(Modifier.padding(start = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
-                ToggleItem("Use for flashcards/reviews", "Prefer the downloaded local model for automatic cards.", localModelUseForStudy, settings::setLocalModelUseForStudy, FieldMindIcons.Flashcard)
             }
         }
         item {
             Card(shape = RoundedCornerShape(22.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)) {
-                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Text(if (localModelDownloaded) "$localModelOption is ready" else "Choose a size and download into app storage.", style = MaterialTheme.typography.bodyMedium)
-                    Button(
-                        onClick = { settings.setLocalModelDownloaded(true) },
-                        enabled = localModelEnabled,
-                        shape = RoundedCornerShape(16.dp),
-                        modifier = Modifier.fillMaxWidth()
-                    ) { Text(if (localModelDownloaded) "Re-download / verify model" else "Download inside app") }
+                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("How it works", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.primary)
+                    Text(
+                        "FieldMind's study generator creates flashcards by scanning your saved observations, sources, and notes for key concepts, terms, and facts. It then builds question-answer pairs — all on your device, with no data leaving your phone.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 }
             }
         }
@@ -1448,6 +1468,7 @@ fun SpeciesIdentificationSettingsPage(
     val apiKey by settings.speciesIdApiKey.collectAsState()
     val offlineFirst by settings.speciesIdOfflineFirst.collectAsState()
     val modelBaseUrl by settings.speciesModelBaseUrl.collectAsState()
+    val perenualKey by settings.perenualApiKey.collectAsState()
     val uriHandler = LocalUriHandler.current
 
     SettingsSubPage("Species identification", icon = FieldMindIcons.Nature, onBack = onBack) {
@@ -1466,10 +1487,15 @@ fun SpeciesIdentificationSettingsPage(
                         ) {
                             Icon(FieldMindIcons.Nature, null, tint = FieldMindTheme.colors.observation, size = 18.dp)
                         }
-                        Text("Offline-first image analysis", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                        Text("How identification works", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
                     }
                     Text(
-                        "FieldMind uses a pure-Kotlin image analysis engine (color histograms, edge detection, texture analysis, perceptual hashing) to identify species — no AI or network required. Results improve as you confirm IDs. Regional model packs expand coverage.",
+                        "FieldMind uses a pure-Kotlin image analysis engine — color histograms, edge detection, texture analysis, and perceptual hashing — to identify species from photos. No AI, no internet, no server needed.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        "Predictions improve as you confirm IDs. Regional species packs (Settings > Species packs) can expand the built-in ~500 species database.",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -1477,12 +1503,12 @@ fun SpeciesIdentificationSettingsPage(
             }
         }
 
-        // ── Offline-first toggle ──
+        // ── Offline-first mode ──
         item {
             SettingsGroupCard {
                 ToggleItem(
-                    "Offline-first mode",
-                    "Prefer the on-device image analyzer over cloud APIs for species identification. Turn off to use cloud API when a key is provided.",
+                    "Offline-first mode (recommended)",
+                    "Use the on-device image analyzer. No internet required. Turn off to allow cloud reference lookups if you add an API key below.",
                     offlineFirst,
                     settings::setSpeciesIdOfflineFirst,
                     FieldMindIcons.Nature
@@ -1490,82 +1516,116 @@ fun SpeciesIdentificationSettingsPage(
             }
         }
 
-        // ── API key for cloud fallback ──
-        item {
-            SettingsGroupCard {
-                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                        Box(
-                            Modifier.size(40.dp).clip(RoundedCornerShape(12.dp)).background(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(FieldMindIcons.Sparkle, null, tint = MaterialTheme.colorScheme.primary, size = 22.dp)
-                        }
-                        Column(Modifier.weight(1f)) {
-                            Text("Cloud API key (optional)", fontWeight = FontWeight.SemiBold)
-                            Text(
-                                "Used when offline-first is off. Supports any species identification API (e.g. iNaturalist, PlantNet, custom endpoint).",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                    }
-
-                    Spacer(Modifier.height(4.dp))
-
-                    OutlinedTextField(
-                        value = apiKey,
-                        onValueChange = settings::setSpeciesIdApiKey,
-                        label = { Text("Species ID API key") },
-                        placeholder = { Text("Paste your API key here") },
-                        visualTransformation = PasswordVisualTransformation(),
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(18.dp),
-                        singleLine = true,
-                        supportingText = {
-                            Text(
-                                if (apiKey.isBlank()) "No key saved. Get one from your provider's website."
-                                else "Key saved locally on this device."
-                            )
-                        }
-                    )
-
-                    OutlinedButton(
-                        onClick = {
-                            runCatching {
-                                uriHandler.openUri("https://www.inaturalist.org/pages/api+reference")
+        // ── Cloud API section (Perenual + generic) ──
+        if (!offlineFirst) {
+            item {
+                SettingsGroupCard {
+                    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                            Box(
+                                Modifier.size(40.dp).clip(RoundedCornerShape(12.dp)).background(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(FieldMindIcons.Sparkle, null, tint = MaterialTheme.colorScheme.primary, size = 22.dp)
                             }
-                        },
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(14.dp)
-                    ) {
-                        Icon(FieldMindIcons.OpenLink, null, size = 18.dp)
-                        Spacer(Modifier.size(8.dp))
-                        Text("Get API key (iNaturalist)")
-                    }
+                            Column(Modifier.weight(1f)) {
+                                Text("Cloud species reference", fontWeight = FontWeight.SemiBold)
+                                Text(
+                                    "Optional cloud APIs help look up species details and images. The offline analyzer still runs first.",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
 
-                    Surface(
-                        shape = RoundedCornerShape(14.dp),
-                        color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
-                    ) {
-                        Row(
-                            Modifier.padding(12.dp).fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            verticalAlignment = Alignment.CenterVertically
+                        Spacer(Modifier.height(4.dp))
+
+                        // ── Perenual API key ──
+                        Text("Perenual API (plant & botany data)", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.primary)
+                        Text(
+                            "Free tier: 100 requests/day, 3,000+ species. Get a key at perenual.com (free signup). Used to fetch plant details, care guides, and images.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        OutlinedTextField(
+                            value = perenualKey,
+                            onValueChange = settings::setPerenualApiKey,
+                            label = { Text("Perenual API key") },
+                            placeholder = { Text("Paste your Perenual API key") },
+                            visualTransformation = PasswordVisualTransformation(),
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(18.dp),
+                            singleLine = true,
+                            supportingText = {
+                                Text(
+                                    if (perenualKey.isBlank()) "No key saved. Sign up free at perenual.com"
+                                    else "Perenual key saved locally."
+                                )
+                            }
+                        )
+                        OutlinedButton(
+                            onClick = {
+                                runCatching {
+                                    uriHandler.openUri("https://perenual.com/")
+                                }
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(14.dp)
                         ) {
-                            Icon(FieldMindIcons.Info, null, tint = MaterialTheme.colorScheme.primary, size = 18.dp)
-                            Text(
-                                "Your API key is stored only on this device and is never sent to FieldMind servers.",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
+                            Icon(FieldMindIcons.OpenLink, null, size = 18.dp)
+                            Spacer(Modifier.size(8.dp))
+                            Text("Get Perenual API key (free)")
+                        }
+
+                        HorizontalDivider(Modifier.padding(vertical = 4.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
+
+                        // ── Generic species API key ──
+                        Text("Other species API (optional)", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(
+                            "For custom or alternative species data APIs. iNaturalist API is free and open — no key required (just use the public endpoint).",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        OutlinedTextField(
+                            value = apiKey,
+                            onValueChange = settings::setSpeciesIdApiKey,
+                            label = { Text("Custom API key (optional)") },
+                            placeholder = { Text("Leave blank if using iNaturalist") },
+                            visualTransformation = PasswordVisualTransformation(),
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(18.dp),
+                            singleLine = true,
+                            supportingText = {
+                                Text(
+                                    if (apiKey.isBlank()) "No key — iNaturalist API is free without a key. Just paste the URL: api.inaturalist.org"
+                                    else "Custom key saved locally."
+                                )
+                            }
+                        )
+
+                        Surface(
+                            shape = RoundedCornerShape(14.dp),
+                            color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
+                        ) {
+                            Row(
+                                Modifier.padding(12.dp).fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(FieldMindIcons.Info, null, tint = MaterialTheme.colorScheme.primary, size = 18.dp)
+                                Text(
+                                    "All API keys are stored only on this device. iNaturalist does not require an API key for basic read-only access.",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
                         }
                     }
                 }
             }
         }
 
-        // ── Model download URL ──
+        // ── Regional pack URL ──
         item {
             SettingsGroupCard {
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -1577,9 +1637,9 @@ fun SpeciesIdentificationSettingsPage(
                             Icon(FieldMindIcons.Download, null, tint = MaterialTheme.colorScheme.primary, size = 22.dp)
                         }
                         Column(Modifier.weight(1f)) {
-                            Text("Model download URL", fontWeight = FontWeight.SemiBold)
+                            Text("Species pack URL (advanced)", fontWeight = FontWeight.SemiBold)
                             Text(
-                                "Base URL for regional species pack downloads. Leave blank to use the default.",
+                                "Custom URL for regional species pack downloads. Only needed if hosting your own pack server.",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -1589,45 +1649,17 @@ fun SpeciesIdentificationSettingsPage(
                     OutlinedTextField(
                         value = modelBaseUrl,
                         onValueChange = settings::setSpeciesModelBaseUrl,
-                        label = { Text("Model base URL") },
-                        placeholder = { Text("https://models.example.com") },
+                        label = { Text("Pack base URL") },
+                        placeholder = { Text("https://...") },
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(18.dp),
                         singleLine = true,
                         supportingText = {
                             Text(
-                                if (modelBaseUrl.isBlank()) "Default: https://models.fieldmind.app"
-                                else "Custom URL set. Packs will download from: $modelBaseUrl"
+                                if (modelBaseUrl.isBlank()) "Default URL — packs list species, not models"
+                                else "Using: $modelBaseUrl"
                             )
                         }
-                    )
-                }
-            }
-        }
-
-        // ── Info card ──
-        item {
-            Card(
-                shape = RoundedCornerShape(22.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
-                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-            ) {
-                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("About species identification", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
-                    Text(
-                        "FieldMind identifies species by analyzing the actual image content — color distribution, edge density, and texture patterns — not by guessing from the filename. This works completely offline with no AI model required.",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Text(
-                        "For higher accuracy, download regional species packs (Settings > Species packs) which contain specialized models with thousands of species per region.",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Text(
-                        "Predictions improve over time as you confirm identifications, adding reference images to the database.",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
