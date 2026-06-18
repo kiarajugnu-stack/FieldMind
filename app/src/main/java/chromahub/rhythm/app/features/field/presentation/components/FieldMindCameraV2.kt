@@ -9,6 +9,7 @@ import android.provider.MediaStore
 import android.view.ViewGroup
 import android.view.WindowManager
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.core.Camera
 import androidx.camera.core.CameraSelector
@@ -100,7 +101,8 @@ fun FieldMindCameraV2(
     onAddToObservation: ((uri: String, mimeType: String) -> Unit)? = null,
     onAddQuestion: ((uri: String, mimeType: String) -> Unit)? = null,
     onDismiss: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    multiCaptureMode: Boolean = false
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -188,6 +190,18 @@ fun FieldMindCameraV2(
     var speciesCategory by remember { mutableStateOf("Other") }
     var speciesConfidence by remember { mutableIntStateOf(80) }
     var speciesNotes by remember { mutableStateOf("") }
+
+    // ── Gallery picker ──
+    val galleryLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.PickVisualMedia()
+    ) { uri ->
+        if (uri != null) {
+            capturedUri = uri.toString()
+            capturedMime = getMimeTypeForUri(context, uri) ?: "image/jpeg"
+            lastCaptureUri = uri.toString()
+            showSpeciesPanel = true
+        }
+    }
 
     // ── Permission ──
     val permissionLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
@@ -638,7 +652,8 @@ fun FieldMindCameraV2(
                             // Gallery thumbnail (last capture)
                             Box(
                                 Modifier.size(44.dp).clip(RoundedCornerShape(12.dp))
-                                    .background(Color.White.copy(alpha = 0.12f)),
+                                    .background(Color.White.copy(alpha = 0.12f))
+                                    .clickable { galleryLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) },
                                 contentAlignment = Alignment.Center
                             ) {
                                 if (lastCaptureUri != null) {
@@ -1242,3 +1257,14 @@ private fun CropGuideOverlay(aspectRatio: Float) {
         drawLine(lineColor, Offset(left + guideWidth, top + guideHeight), Offset(left + guideWidth, top + guideHeight - cornerLen), strokeWidth = 3f)
     }
 }
+
+/**
+ * Resolve MIME type from a content URI using ContentResolver.
+ * Falls back to image/jpeg if the type cannot be determined.
+ */
+private fun getMimeTypeForUri(context: android.content.Context, uri: android.net.Uri): String? {
+    return runCatching {
+        context.contentResolver.getType(uri)
+    }.getOrNull()?.takeIf { it.isNotBlank() }
+}
+
