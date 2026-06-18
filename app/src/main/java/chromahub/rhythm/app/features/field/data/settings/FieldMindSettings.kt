@@ -2,7 +2,6 @@ package fieldmind.research.app.features.field.data.settings
 
 import android.content.Context
 import com.google.gson.Gson
-import com.google.gson.reflect.TypeToken
 import fieldmind.research.app.features.field.data.background.FieldMindBackgroundScheduler
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -75,7 +74,7 @@ data class ScreenVisibility(
                 showLibrary = true,
                 showMap = hasWildlife || interests.geology,
                 showExport = false,
-                showWeather = interests.ecologyEnvironment || interests.astronomy,
+                showWeather = interests.hasAny,
                 showSpeciesBrowser = hasZoology || hasBotany,
                 showFlashcards = hasWildlife,
                 showFieldMode = hasWildlife
@@ -87,7 +86,6 @@ data class ScreenVisibility(
 class FieldMindSettings private constructor(context: Context) {
     private val appContext = context.applicationContext
     private val prefs = appContext.getSharedPreferences("fieldmind_settings", Context.MODE_PRIVATE)
-    private val gson = Gson()
 
     private val _dailyObservationGoal = MutableStateFlow(prefs.getInt(KEY_DAILY_GOAL, 1))
     val dailyObservationGoal: StateFlow<Int> = _dailyObservationGoal.asStateFlow()
