@@ -178,8 +178,7 @@ fun ObserveScreen(
     val speciesDatabase = remember { SpeciesDatabase(context) }
     val speciesImageAnalyzer = remember { SpeciesImageAnalyzer(context) }
     val speciesPhashDb = remember { PhashDatabase(context) }
-    val perenualKey by viewModel.fieldSettings.perenualApiKey.collectAsState()
-    val speciesClassifier = remember { SpeciesClassifier(context, speciesDatabase, speciesImageAnalyzer, speciesPhashDb, perenualKey.ifBlank { null }) }
+    val speciesClassifier = remember { SpeciesClassifier(context, speciesDatabase, speciesImageAnalyzer, speciesPhashDb) }
     var showSpeciesId by remember { mutableStateOf(false) }
     var speciesIdImageUri by remember { mutableStateOf<String?>(null) }
     var identifiedSpecies by remember { mutableStateOf<SpeciesMatch?>(null) }
@@ -1839,17 +1838,10 @@ private fun EnhancedObservationForm(
                 }
             }
 
-            // ── Subject Name — also fills species ──
+            // ── Subject Name (independent from species) ──
             FieldTextField(
                 session.subject,
-                {
-                    val updated = session.copy(subject = it)
-                    if (it.isNotBlank() && session.speciesName.isBlank()) {
-                        onSessionChange(updated.copy(speciesName = it))
-                    } else {
-                        onSessionChange(updated)
-                    }
-                },
+                { onSessionChange(session.copy(subject = it)) },
                 "Subject name",
                 supportingText = "e.g. House Crow carrying twig"
             )
