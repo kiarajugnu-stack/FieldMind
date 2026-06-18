@@ -3049,11 +3049,7 @@ private val _autoCheckForUpdates = MutableStateFlow(prefs.getBoolean(KEY_AUTO_CH
         prefs.edit().putBoolean(KEY_AUTO_CHECK_FOR_UPDATES, enable).apply()
         _autoCheckForUpdates.value = enable
 
-        if (/* shouldRunUpdateNotificationWorker removed */) {
-            /* scheduleUpdateNotificationWorker removed */
-        } else {
-            /* cancelUpdateNotificationWorker removed */
-        }
+        // Update notification worker scheduling removed with music-player code
     }
 
     fun setUpdateChannel(channel: String) {
@@ -3071,11 +3067,7 @@ private val _autoCheckForUpdates = MutableStateFlow(prefs.getBoolean(KEY_AUTO_CH
         _updatesEnabled.value = enable
         
         // Update WorkManager scheduling based on new state
-        if (/* shouldRunUpdateNotificationWorker removed */) {
-            /* scheduleUpdateNotificationWorker removed */
-        } else {
-            /* cancelUpdateNotificationWorker removed */
-        }
+        // Update notification worker scheduling removed with music-player code
     }
 
     fun setUpdateNotificationsEnabled(enable: Boolean) {
@@ -3083,22 +3075,14 @@ private val _autoCheckForUpdates = MutableStateFlow(prefs.getBoolean(KEY_AUTO_CH
         _updateNotificationsEnabled.value = enable
         
         // Update WorkManager scheduling
-        if (/* shouldRunUpdateNotificationWorker removed */) {
-            /* scheduleUpdateNotificationWorker removed */
-        } else {
-            /* cancelUpdateNotificationWorker removed */
-        }
+        // Update notification worker scheduling removed with music-player code
     }
 
     fun setUpdateStatusNotificationsEnabled(enable: Boolean) {
         prefs.edit().putBoolean(KEY_UPDATE_STATUS_NOTIFICATIONS_ENABLED, enable).apply()
         _updateStatusNotificationsEnabled.value = enable
 
-        if (/* shouldRunUpdateNotificationWorker removed */) {
-            /* scheduleUpdateNotificationWorker removed */
-        } else {
-            /* cancelUpdateNotificationWorker removed */
-        }
+        // Update notification worker scheduling removed with music-player code
     }
 
     fun setUseSmartUpdatePolling(enable: Boolean) {
@@ -3106,11 +3090,7 @@ private val _autoCheckForUpdates = MutableStateFlow(prefs.getBoolean(KEY_AUTO_CH
         _useSmartUpdatePolling.value = enable
         
         // Update WorkManager scheduling
-        if (/* shouldRunUpdateNotificationWorker removed */) {
-            /* scheduleUpdateNotificationWorker removed */
-        } else {
-            /* cancelUpdateNotificationWorker removed */
-        }
+        // Update notification worker scheduling removed with music-player code
     }
 
     fun setMediaScanMode(mode: String) {
@@ -4505,11 +4485,7 @@ private val _autoCheckForUpdates = MutableStateFlow(prefs.getBoolean(KEY_AUTO_CH
         _updateCheckIntervalHours.value = prefs.getInt(KEY_UPDATE_CHECK_INTERVAL_HOURS, 6)
         
         // Re-schedule update notification worker if settings changed
-        if (/* shouldRunUpdateNotificationWorker removed */) {
-            /* scheduleUpdateNotificationWorker removed */
-        } else {
-            /* cancelUpdateNotificationWorker removed */
-        }
+        // Update notification worker scheduling removed with music-player code
         
         // Beta Program
         _hasShownBetaPopup.value = prefs.getBoolean(KEY_HAS_SHOWN_BETA_POPUP, false)
