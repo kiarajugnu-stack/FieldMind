@@ -96,7 +96,7 @@ object FieldMindIcons {
     val Record = MaterialSymbolIcon("radio_button_checked")
 
     // Observation category icons
-    val Bird = MaterialSymbolIcon("crow")
+    val Bird = MaterialSymbolIcon("raven")
     val Animal = MaterialSymbolIcon("pets")
     val Insect = MaterialSymbolIcon("bug_report")
     val Plant = MaterialSymbolIcon("local_florist")

@@ -158,6 +158,7 @@ fun FieldMindNavigation(viewModel: FieldMindViewModel, onResetOnboarding: () -> 
     val currentRoute = currentDestination?.route
     val haptics = rememberFieldMindHaptics()
     val hideChrome = currentRoute == FieldMindScreen.Settings.route ||
+        currentRoute?.startsWith("field_settings_") == true ||
         currentRoute == FieldMindScreen.FieldMode.route ||
         currentRoute == FieldMindScreen.Reader.route ||
         currentRoute == FieldMindScreen.Changelog.route ||
@@ -283,28 +284,30 @@ fun FieldMindNavigation(viewModel: FieldMindViewModel, onResetOnboarding: () -> 
                 containerColor = MaterialTheme.colorScheme.background,
                 bottomBar = {
                     if (!hideChrome) {
-                        // ── Floating island bottom nav bar ──
-                        // Glass morphism + surface-toned: semi-transparent background, rounded corners,
-                        // lifted off bottom with padding and subtle elevation.
+                        // ── Glassmorphic pill-shaped floating bottom nav bar ──
+                        // Elevated pill with semi-transparent background, backdrop-filter blur effect,
+                        // generous rounded corners, lifted off bottom with padding.
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(horizontal = 12.dp, vertical = 8.dp)
+                                .padding(horizontal = 16.dp, vertical = 10.dp)
                                 .windowInsetsPadding(
                                     WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom + WindowInsetsSides.Horizontal)
                                 )
                         ) {
                             Surface(
-                                shape = RoundedCornerShape(24.dp),
-                                color = MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.88f),
-                                tonalElevation = 4.dp,
-                                shadowElevation = 8.dp,
-                                modifier = Modifier.fillMaxWidth()
+                                shape = RoundedCornerShape(32.dp),
+                                color = MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.75f),
+                                tonalElevation = 6.dp,
+                                shadowElevation = 12.dp,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(68.dp)
                             ) {
                                 Row(
                                     modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(horizontal = 6.dp, vertical = 4.dp),
+                                        .fillMaxSize()
+                                        .padding(horizontal = 4.dp, vertical = 6.dp),
                                     horizontalArrangement = Arrangement.SpaceEvenly,
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
@@ -331,9 +334,9 @@ fun FieldMindNavigation(viewModel: FieldMindViewModel, onResetOnboarding: () -> 
 
 
 /**
- * Floating nav tab item used in the bottom bar (phone layout).
- * Active tab gets a filled rounded pill with primary color + filled icon.
- * Inactive tabs show outlined icons with subtle text.
+ * Glassmorphic pill-shaped floating nav tab item.
+ * Active tab shows a prominent pill background with filled icon + bold text.
+ * Inactive tabs show subtle icons with alpha. Interactive press animations.
  */
 @Composable
 private fun FloatingNavTabItem(
@@ -341,56 +344,89 @@ private fun FloatingNavTabItem(
     selected: Boolean,
     onClick: () -> Unit
 ) {
-    val bgAlpha by animateFloatAsState(
+    val haptics = rememberFieldMindHaptics()
+    var isPressed by remember { mutableStateOf(false) }
+    
+    val pillAlpha by animateFloatAsState(
         targetValue = if (selected) 1f else 0f,
         animationSpec = tween(durationMillis = FieldMindMotion.durationSubtle, easing = FastOutSlowInEasing),
-        label = "navBgAlpha"
+        label = "navPillAlpha"
     )
     val iconSize by animateFloatAsState(
-        targetValue = if (selected) 26f else 22f,
+        targetValue = if (selected) 28f else 22f,
         animationSpec = tween(durationMillis = FieldMindMotion.durationSubtle, easing = FastOutSlowInEasing),
         label = "navIconSize"
+    )
+    val textAlpha by animateFloatAsState(
+        targetValue = if (selected) 1f else 0.7f,
+        animationSpec = tween(durationMillis = FieldMindMotion.durationSubtle, easing = FastOutSlowInEasing),
+        label = "navTextAlpha"
+    )
+    val pressScale by animateFloatAsState(
+        targetValue = if (isPressed && !selected) 0.92f else 1f,
+        animationSpec = if (isPressed) 
+            tween(durationMillis = FieldMindMotion.durationMicro, easing = FastOutSlowInEasing) 
+        else 
+            FieldMindMotion.expressiveSpring,
+        label = "navPressScale"
     )
 
     Column(
         modifier = Modifier
-            .clip(RoundedCornerShape(18.dp))
+            .clip(RoundedCornerShape(20.dp))
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null,
-                onClick = onClick
+                onClick = { haptics.light(); onClick() }
             )
-            .defaultMinSize(minWidth = 56.dp, minHeight = 52.dp)
-            .background(
-                color = if (selected) MaterialTheme.colorScheme.primary.copy(alpha = 0.15f * bgAlpha) else Color.Transparent,
-                shape = RoundedCornerShape(18.dp)
-            ),
+            .defaultMinSize(minWidth = 60.dp, minHeight = 56.dp)
+            .graphicsLayer {
+                scaleX = pressScale
+                scaleY = pressScale
+            },
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
+        // Active pill background
         Box(
             modifier = Modifier
-                .size(36.dp)
+                .size(width = 48.dp, height = 36.dp)
                 .background(
-                    color = if (selected) MaterialTheme.colorScheme.primary.copy(alpha = 0.12f * bgAlpha) else Color.Transparent,
-                    shape = RoundedCornerShape(12.dp)
+                    color = if (selected) 
+                        MaterialTheme.colorScheme.primary.copy(alpha = 0.18f * pillAlpha) 
+                    else 
+                        Color.Transparent,
+                    shape = RoundedCornerShape(14.dp)
                 ),
             contentAlignment = Alignment.Center
         ) {
             Icon(
                 icon = if (selected) screen.icon.copy(filled = true) else screen.icon,
                 contentDescription = screen.label,
-                tint = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
-                size = iconSize.dp
+                tint = if (selected) 
+                    MaterialTheme.colorScheme.primary 
+                else 
+                    MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.55f),
+                size = iconSize.dp,
+                weight = if (selected) 500 else 400
             )
         }
         Text(
             screen.label,
             style = MaterialTheme.typography.labelSmall,
-            fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
-            color = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
-            maxLines = 1
+            fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
+            color = if (selected) 
+                MaterialTheme.colorScheme.primary 
+            else 
+                MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = textAlpha * 0.6f),
+            maxLines = 1,
+            modifier = Modifier.graphicsLayer { alpha = textAlpha.coerceIn(0.5f, 1f) }
         )
+    }
+    
+    // Track press state for press animation
+    LaunchedEffect(selected) {
+        if (selected) isPressed = false
     }
 }
 
@@ -465,54 +501,48 @@ private fun FieldMindNavHost(
         modifier = modifier,
         enterTransition = {
             val direction = primaryTabDirection(initialState.destination.route, targetState.destination.route)
+            val slideAnim = tween<IntOffset>(FieldMindMotion.durationStandard, easing = FastOutSlowInEasing)
+            val fadeAnim = tween<Float>(FieldMindMotion.durationSubtle, easing = FastOutSlowInEasing)
             if (direction == 0) {
-                fadeIn(animationSpec = tween(durationMillis = 180, easing = FastOutSlowInEasing)) +
-                scaleIn(initialScale = 0.97f, animationSpec = tween(durationMillis = 180, easing = FastOutSlowInEasing))
+                fadeIn(animationSpec = FieldMindMotion.expressiveFloat) +
+                scaleIn(initialScale = 0.97f, animationSpec = FieldMindMotion.expressiveFloat)
             } else {
-                slideInHorizontally(tween(durationMillis = 200, easing = FastOutSlowInEasing)) { direction * it / 4 } +
-                fadeIn(tween(durationMillis = 160, easing = FastOutSlowInEasing))
+                slideInHorizontally(slideAnim) { direction * it / 4 } +
+                fadeIn(fadeAnim)
             }
         },
         exitTransition = {
             val direction = primaryTabDirection(initialState.destination.route, targetState.destination.route)
+            val fadeAnim = tween<Float>(FieldMindMotion.durationSubtle, easing = FastOutSlowInEasing)
             if (direction == 0) {
-                fadeOut(tween(durationMillis = 140, easing = FastOutSlowInEasing))
+                fadeOut(fadeAnim)
             } else {
-                slideOutHorizontally(tween(durationMillis = 180, easing = FastOutSlowInEasing)) { -direction * it / 5 } +
-                fadeOut(tween(durationMillis = 120, easing = FastOutSlowInEasing))
+                slideOutHorizontally(tween<IntOffset>(FieldMindMotion.durationStandard, easing = FastOutSlowInEasing)) { -direction * it / 5 } +
+                fadeOut(fadeAnim)
             }
         },
         popEnterTransition = {
-            // Smooth, consistent slide + fade for back navigation — no bounce, just gentle motion
             val direction = primaryTabDirection(targetState.destination.route, initialState.destination.route)
-            val slideSpec = tween<IntOffset>(250, easing = FastOutSlowInEasing)
-            val fadeSpec = tween<Float>(200, easing = FastOutSlowInEasing)
+            val slideSpec = tween<IntOffset>(FieldMindMotion.durationStandard, easing = FastOutSlowInEasing)
+            val fadeSpec = tween<Float>(FieldMindMotion.durationSubtle, easing = FastOutSlowInEasing)
             if (direction == 0) {
-                slideInHorizontally(
-                    animationSpec = slideSpec,
-                    initialOffsetX = { -it / 5 }
-                ) + fadeIn(animationSpec = fadeSpec)
+                slideInHorizontally(animationSpec = slideSpec, initialOffsetX = { -it / 5 }) +
+                fadeIn(animationSpec = fadeSpec)
             } else {
-                slideInHorizontally(
-                    animationSpec = slideSpec,
-                    initialOffsetX = { direction * it / 5 }
-                ) + fadeIn(animationSpec = fadeSpec)
+                slideInHorizontally(animationSpec = slideSpec, initialOffsetX = { direction * it / 5 }) +
+                fadeIn(animationSpec = fadeSpec)
             }
         },
         popExitTransition = {
             val direction = primaryTabDirection(targetState.destination.route, initialState.destination.route)
-            val slideSpec = tween<IntOffset>(200, easing = FastOutSlowInEasing)
-            val fadeSpec = tween<Float>(150, easing = FastOutSlowInEasing)
+            val slideSpec = tween<IntOffset>(FieldMindMotion.durationStandard, easing = FastOutSlowInEasing)
+            val fadeSpec = tween<Float>(FieldMindMotion.durationMicro, easing = FastOutSlowInEasing)
             if (direction == 0) {
-                slideOutHorizontally(
-                    animationSpec = slideSpec,
-                    targetOffsetX = { it / 4 }
-                ) + fadeOut(animationSpec = fadeSpec)
+                slideOutHorizontally(animationSpec = slideSpec, targetOffsetX = { it / 4 }) +
+                fadeOut(animationSpec = fadeSpec)
             } else {
-                slideOutHorizontally(
-                    animationSpec = slideSpec,
-                    targetOffsetX = { -direction * it / 4 }
-                ) + fadeOut(animationSpec = fadeSpec)
+                slideOutHorizontally(animationSpec = slideSpec, targetOffsetX = { -direction * it / 4 }) +
+                fadeOut(animationSpec = fadeSpec)
             }
         }
     ) {
