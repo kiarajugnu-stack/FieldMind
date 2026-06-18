@@ -7,6 +7,8 @@ import android.content.pm.PackageManager
 import android.media.MediaRecorder
 import android.net.Uri
 import android.os.Build
+import android.os.Parcelable
+import kotlinx.parcelize.Parcelize
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
@@ -28,6 +30,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -85,6 +88,7 @@ import androidx.compose.ui.text.input.KeyboardType
  */
 
 // ── Capture state ──
+@Parcelize
 private data class CaptureSessionState(
     val isActive: Boolean = false,
     val step: CaptureStep = CaptureStep.Evidence,
@@ -125,9 +129,10 @@ private data class CaptureSessionState(
     val timerAccumulatedMs: Long = 0L,
     val timerRunning: Boolean = false,
     val sessionObservationCount: Int = 0
-)
+) : Parcelable
 
-private enum class CaptureStep { Evidence, Details, Complete }
+@Parcelize
+private enum class CaptureStep : Parcelable { Evidence, Details, Complete }
 
 @Composable
 fun ObserveScreen(
@@ -159,8 +164,8 @@ fun ObserveScreen(
     }
     var capturedLocation by remember { mutableStateOf<CapturedLocation?>(null) }
 
-    // Core session state
-    var session by remember { mutableStateOf(CaptureSessionState()) }
+    // Core session state — uses rememberSaveable to survive configuration changes
+    var session by rememberSaveable { mutableStateOf(CaptureSessionState()) }
     var showEvidenceForm by remember { mutableStateOf(false) }
     var showCategoryPicker by remember { mutableStateOf(false) }
     var selectedCategories by remember { mutableStateOf(setOf("Other")) }
