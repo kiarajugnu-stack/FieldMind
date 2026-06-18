@@ -1,12 +1,8 @@
 package fieldmind.research.app.features.field.presentation.navigation
 
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.spring
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
@@ -15,20 +11,15 @@ import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
-import androidx.compose.material3.Surface
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavDestination.Companion.hierarchy
@@ -41,7 +32,6 @@ import androidx.navigation.compose.rememberNavController
 import fieldmind.research.app.features.field.presentation.components.FieldMindSnackbarProvider
 import fieldmind.research.app.features.field.presentation.components.FieldMindIcons
 import fieldmind.research.app.features.field.presentation.components.rememberFieldMindHaptics
-import fieldmind.research.app.features.field.presentation.components.FieldMindHaptics
 import fieldmind.research.app.features.field.presentation.screens.*
 import fieldmind.research.app.features.field.presentation.theme.FieldMindTheme
 import fieldmind.research.app.features.field.data.database.entity.ResearchSessionEntity
@@ -119,8 +109,6 @@ sealed class FieldMindScreen(val route: String, val label: String, val icon: Mat
     data object TaxonomicBrowser : FieldMindScreen("field_taxonomic_browser", "Taxonomic Browser", FieldMindIcons.Category)
     data object FieldLog : FieldMindScreen("field_log", "Field Log", FieldMindIcons.List)
 }
-
-private const val NavTransitionDurationMillis = 180
 
 private val bottomTabs = listOf(
     FieldMindScreen.Home,
@@ -266,17 +254,25 @@ fun FieldMindNavigation(viewModel: FieldMindViewModel, onResetOnboarding: () -> 
         if (expanded) {
             Row(Modifier.fillMaxSize()) {
                 if (!hideChrome) {
-                    NavigationRail {
-                        visibleTabs.forEach { screen ->
-                            val selected = isSelected(screen)
-                            val itemInteractionSource = remember { MutableInteractionSource() }
-                            AnimatedNavBarItem(
-                                selected = selected,
-                                onClick = { haptics.light(); navigateToTab(screen.route) },
-                                icon = { AnimatedNavIcon(screen, selected) },
-                                label = { AnimatedNavLabel(screen.label, selected) },
-                                interactionSource = itemInteractionSource
-                            )
+                    Surface(
+                        shape = RoundedCornerShape(topEnd = 24.dp, bottomEnd = 24.dp),
+                        color = MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.88f),
+                        tonalElevation = 2.dp,
+                        modifier = Modifier.padding(6.dp)
+                    ) {
+                        NavigationRail(
+                            header = {
+                                Spacer(Modifier.height(8.dp))
+                            }
+                        ) {
+                            visibleTabs.forEach { screen ->
+                                val selected = isSelected(screen)
+                                RailNavTabItem(
+                                    screen = screen,
+                                    selected = selected,
+                                    onClick = { haptics.light(); navigateToTab(screen.route) }
+                                )
+                            }
                         }
                     }
                 }
@@ -287,18 +283,42 @@ fun FieldMindNavigation(viewModel: FieldMindViewModel, onResetOnboarding: () -> 
                 containerColor = MaterialTheme.colorScheme.background,
                 bottomBar = {
                     if (!hideChrome) {
-                            NavigationBar {
-                                visibleTabs.forEach { screen ->
-                                    val selected = isSelected(screen)
-                                    val itemInteractionSource = remember { MutableInteractionSource() }
-                                    NavigationBarItem(
-                                        selected = selected,
-                                        onClick = { haptics.light(); navigateToTab(screen.route) },
-                                        icon = { AnimatedNavIcon(screen, selected) },
-                                        label = { AnimatedNavLabel(screen.label, selected) }
-                                    )
+                        // ── Floating island bottom nav bar ──
+                        // Glass morphism + surface-toned: semi-transparent background, rounded corners,
+                        // lifted off bottom with padding and subtle elevation.
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 12.dp, vertical = 8.dp)
+                                .windowInsetsPadding(
+                                    WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom + WindowInsetsSides.Horizontal)
+                                )
+                        ) {
+                            Surface(
+                                shape = RoundedCornerShape(24.dp),
+                                color = MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.88f),
+                                tonalElevation = 4.dp,
+                                shadowElevation = 8.dp,
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 6.dp, vertical = 4.dp),
+                                    horizontalArrangement = Arrangement.SpaceEvenly,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    visibleTabs.forEach { screen ->
+                                        val selected = isSelected(screen)
+                                        FloatingNavTabItem(
+                                            screen = screen,
+                                            selected = selected,
+                                            onClick = { haptics.light(); navigateToTab(screen.route) }
+                                        )
+                                    }
                                 }
                             }
+                        }
                     }
                 }
             ) { innerPadding ->
@@ -310,135 +330,112 @@ fun FieldMindNavigation(viewModel: FieldMindViewModel, onResetOnboarding: () -> 
 
 
 
+/**
+ * Floating nav tab item used in the bottom bar (phone layout).
+ * Active tab gets a filled rounded pill with primary color + filled icon.
+ * Inactive tabs show outlined icons with subtle text.
+ */
 @Composable
-private fun AnimatedNavIcon(screen: FieldMindScreen, selected: Boolean) {
-    val scale by animateFloatAsState(
-        if (selected) 1.28f else 0.96f,
-        FieldMindMotion.expressiveSpring,
-        label = "navIconScale"
-    )
-    val lift by animateFloatAsState(
-        if (selected) -5f else 0f,
-        FieldMindMotion.expressiveSpring,
-        label = "navIconLift"
-    )
-    // Elastic rotation for a playful wiggle when selected
-    // Expressive wobble — icon tilts slightly when selected, then overshoots back playfully
-    val rotation by animateFloatAsState(
-        if (selected) 12f else 0f,
-        FieldMindMotion.expressiveElastic,
-        label = "navIconRotation"
-    )
-    val alpha by animateFloatAsState(
-        if (selected) 1f else 0.66f,
-        FieldMindMotion.expressiveFloat,
-        label = "navIconAlpha"
-    )
-    val tint by animateColorAsState(
-        targetValue = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
-        animationSpec = tween(durationMillis = FieldMindMotion.durationSubtle),
-        label = "navIconTint"
-    )
-    Icon(
-        icon = if (selected) screen.icon.copy(filled = true) else screen.icon,
-        contentDescription = screen.label,
-        tint = tint,
-        modifier = Modifier.graphicsLayer {
-            scaleX = scale; scaleY = scale
-            translationY = lift
-            this.alpha = alpha
-            rotationZ = rotation
-        },
-        size = if (selected) 28.dp else 24.dp
-    )
-}
-
-@Composable
-private fun AnimatedNavBarItem(
+private fun FloatingNavTabItem(
+    screen: FieldMindScreen,
     selected: Boolean,
-    onClick: () -> Unit,
-    icon: @Composable () -> Unit,
-    label: @Composable () -> Unit,
-    interactionSource: MutableInteractionSource,
-    modifier: Modifier = Modifier
+    onClick: () -> Unit
 ) {
-    val isPressed by interactionSource.collectIsPressedAsState()
-
-    // Bouncy press scale — tiny squish on tap, springs back with overshoot
-    val pressScale by animateFloatAsState(
-        targetValue = if (isPressed) 0.88f else 1f,
-        animationSpec = FieldMindMotion.expressiveSnap,
-        label = "navBarPress"
-    )
-
-    // Pill indicator bouncy entrance — elastic overshoot when tab becomes active
-    val pillScale by animateFloatAsState(
+    val bgAlpha by animateFloatAsState(
         targetValue = if (selected) 1f else 0f,
-        animationSpec = FieldMindMotion.expressiveSpring,
-        label = "navBarPill"
+        animationSpec = tween(durationMillis = FieldMindMotion.durationSubtle, easing = FastOutSlowInEasing),
+        label = "navBgAlpha"
+    )
+    val iconSize by animateFloatAsState(
+        targetValue = if (selected) 26f else 22f,
+        animationSpec = tween(durationMillis = FieldMindMotion.durationSubtle, easing = FastOutSlowInEasing),
+        label = "navIconSize"
     )
 
     Column(
-        modifier = modifier
-            .graphicsLayer {
-                scaleX = pressScale
-                scaleY = pressScale
-            }
+        modifier = Modifier
+            .clip(RoundedCornerShape(18.dp))
             .clickable(
-                interactionSource = interactionSource,
+                interactionSource = remember { MutableInteractionSource() },
                 indication = null,
                 onClick = onClick
             )
-            .padding(vertical = 2.dp, horizontal = 2.dp),
+            .defaultMinSize(minWidth = 56.dp, minHeight = 52.dp)
+            .background(
+                color = if (selected) MaterialTheme.colorScheme.primary.copy(alpha = 0.15f * bgAlpha) else Color.Transparent,
+                shape = RoundedCornerShape(18.dp)
+            ),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
         Box(
-            modifier = Modifier.size(48.dp),
+            modifier = Modifier
+                .size(36.dp)
+                .background(
+                    color = if (selected) MaterialTheme.colorScheme.primary.copy(alpha = 0.12f * bgAlpha) else Color.Transparent,
+                    shape = RoundedCornerShape(12.dp)
+                ),
             contentAlignment = Alignment.Center
         ) {
-            // Pill indicator with bouncy entrance animation
-            if (pillScale > 0.01f) {
-                Box(
-                    modifier = Modifier
-                        .size(44.dp)
-                        .graphicsLayer {
-                            scaleX = pillScale
-                            scaleY = pillScale
-                            alpha = pillScale
-                        }
-                        .background(
-                            color = MaterialTheme.colorScheme.secondaryContainer,
-                            shape = CircleShape
-                        )
-                )
-            }
-
-            // Icon (with its own bouncy spring animation built into AnimatedNavIcon)
-            icon()
+            Icon(
+                icon = if (selected) screen.icon.copy(filled = true) else screen.icon,
+                contentDescription = screen.label,
+                tint = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                size = iconSize.dp
+            )
         }
-
-        // Label below
-        label()
+        Text(
+            screen.label,
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
+            color = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+            maxLines = 1
+        )
     }
 }
 
+/**
+ * Rail nav tab item used in the side rail (tablet layout).
+ * Mirrors the floating island style: filled rounded background for active tab.
+ */
 @Composable
-private fun AnimatedNavLabel(label: String, selected: Boolean) {
-    val scale by animateFloatAsState(
-        if (selected) 1.06f else 0.96f,
-        FieldMindMotion.expressiveSoft,
-        label = "navLabelScale"
-    )
-    val alpha by animateFloatAsState(
-        if (selected) 1f else 0.72f,
-        FieldMindMotion.expressiveFloat,
-        label = "navLabelAlpha"
-    )
-    Text(
-        label,
-        modifier = Modifier.graphicsLayer { scaleX = scale; scaleY = scale; this.alpha = alpha }
-    )
+private fun RailNavTabItem(
+    screen: FieldMindScreen,
+    selected: Boolean,
+    onClick: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
+                onClick = onClick
+            )
+            .defaultMinSize(minHeight = 48.dp)
+            .background(
+                color = if (selected) MaterialTheme.colorScheme.primary.copy(alpha = 0.12f) else Color.Transparent,
+                shape = RoundedCornerShape(16.dp)
+            )
+            .padding(vertical = 8.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(2.dp)
+    ) {
+        Icon(
+            icon = if (selected) screen.icon.copy(filled = true) else screen.icon,
+            contentDescription = screen.label,
+            tint = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+            size = if (selected) 26.dp else 22.dp
+        )
+        Text(
+            screen.label,
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
+            color = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+            maxLines = 1
+        )
+    }
 }
 
 private fun primaryTabDirection(fromRoute: String?, toRoute: String?): Int {

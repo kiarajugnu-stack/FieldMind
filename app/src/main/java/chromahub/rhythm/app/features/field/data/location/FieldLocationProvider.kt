@@ -98,6 +98,24 @@ class FieldLocationProvider(private val context: Context) {
         }, timeoutMs)
     }
 
+    /**
+     * Checks whether the device's GPS (or any location provider) is currently enabled.
+     * Returns false when GPS is turned off in system settings, even if location
+     * permission has been granted.
+     */
+    fun isGpsEnabled(): Boolean {
+        val manager = context.getSystemService(Context.LOCATION_SERVICE) as? LocationManager ?: return false
+        return runCatching { manager.isProviderEnabled(LocationManager.GPS_PROVIDER) }.getOrDefault(false) ||
+            runCatching { manager.isProviderEnabled(LocationManager.NETWORK_PROVIDER) }.getOrDefault(false)
+    }
+
+    /**
+     * Creates an Intent that opens the system Location Settings page so the user
+     * can enable GPS / location services.
+     */
+    fun openLocationSettingsIntent(): android.content.Intent =
+        android.content.Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS)
+
     private fun Location.toCaptured(): CapturedLocation =
         CapturedLocation(latitude, longitude, accuracy.takeIf { it > 0f }, provider ?: "device")
 
