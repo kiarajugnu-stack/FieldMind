@@ -3368,11 +3368,7 @@
     <string name="crashactivity_dont_fret_our_app">Don\'t fret! Our app just had a little \'oopsie\'. Please share the crash details below – it\'s like a secret message for our developers to fix things! Then, let\'s try that again, shall we?</string>
     <string name="crashactivity_secret_crash_scrolls">Secret Crash Scrolls</string>
     <string name="crashactivity_share">Share</string>
-    <string name="externalplaybackactivity_unable_to_open_audio">Unable to open audio file</string>
-    <string name="externalplaybackactivity_unsupported_or_unreadable_audio">Unsupported or unreadable audio file</string>
-    <string name="externalplaybackactivity_failed_to_play_audio">Failed to play audio file</string>
-    <string name="externalplaybackactivity_open_rhythm">Open Rhythm</string>
-    <string name="mainactivity_error_opening_file">Error opening file</string>
+                    <string name="mainactivity_error_opening_file">Error opening file</string>
     <string name="mainactivity_unsupported_file_format">Unsupported file format</string>
     <string name="mainactivity_failed_to_initialize_media">Failed to initialize media player</string>
     <string name="mainactivity_unable_to_play_audio">Unable to play audio file</string>

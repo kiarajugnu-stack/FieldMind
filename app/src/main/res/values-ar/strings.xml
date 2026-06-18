@@ -3347,11 +3347,7 @@
     <string name="crashactivity_dont_fret_our_app">لا تقلق! كان تطبيقنا يحتوي على القليل من \"oopsie\". يرجى مشاركة تفاصيل الأعطال أدناه - فهي بمثابة رسالة سرية للمطورين لدينا لإصلاح الأمور! ثم، دعونا نحاول ذلك مرة أخرى، أليس كذلك؟</string>
     <string name="crashactivity_secret_crash_scrolls">مخطوطات الأعطال السرية</string>
     <string name="crashactivity_share">شارك</string>
-    <string name="externalplaybackactivity_unable_to_open_audio">غير قادر على فتح الملف الصوتي</string>
-    <string name="externalplaybackactivity_unsupported_or_unreadable_audio">ملف صوتي غير مدعوم أو غير قابل للقراءة</string>
-    <string name="externalplaybackactivity_failed_to_play_audio">فشل تشغيل الملف الصوتي</string>
-    <string name="externalplaybackactivity_open_rhythm">افتح Rhythm</string>
-    <string name="mainactivity_error_opening_file">خطأ في فتح الملف</string>
+                    <string name="mainactivity_error_opening_file">خطأ في فتح الملف</string>
     <string name="mainactivity_unsupported_file_format">تنسيق الملف غير مدعوم</string>
     <string name="mainactivity_failed_to_initialize_media">فشل في تهيئة مشغل الوسائط</string>
     <string name="mainactivity_unable_to_play_audio">غير قادر على تشغيل الملف الصوتي</string>

@@ -3413,11 +3413,7 @@ __KW0__ மற்றும் பலவற்றிலிருந்து</str
     <string name="crashactivity_dont_fret_our_app">கவலைப்படாதே! எங்கள் பயன்பாட்டில் கொஞ்சம் \'ஓப்ஸி\' இருந்தது. கீழே உள்ள செயலிழப்பு விவரங்களைப் பகிரவும் – இது எங்கள் டெவலப்பர்கள் விஷயங்களைச் சரிசெய்வதற்கான ரகசியச் செய்தியைப் போன்றது! பிறகு, அதை மீண்டும் முயற்சிப்போம், இல்லையா?</string>
     <string name="crashactivity_secret_crash_scrolls">சீக்ரெட் கிராஷ் ஸ்க்ரோல்கள்</string>
     <string name="crashactivity_share">பகிர்வு</string>
-    <string name="externalplaybackactivity_unable_to_open_audio">ஆடியோ கோப்பைத் திறக்க முடியவில்லை</string>
-    <string name="externalplaybackactivity_unsupported_or_unreadable_audio">ஆதரிக்கப்படாத அல்லது படிக்க முடியாத ஆடியோ கோப்பு</string>
-    <string name="externalplaybackactivity_failed_to_play_audio">ஆடியோ கோப்பை இயக்குவதில் தோல்வி</string>
-    <string name="externalplaybackactivity_open_rhythm">திறந்த Rhythm</string>
-    <string name="mainactivity_error_opening_file">கோப்பை திறப்பதில் பிழை</string>
+                    <string name="mainactivity_error_opening_file">கோப்பை திறப்பதில் பிழை</string>
     <string name="mainactivity_unsupported_file_format">ஆதரிக்கப்படாத கோப்பு வடிவம்</string>
     <string name="mainactivity_failed_to_initialize_media">மீடியா பிளேயரை துவக்க முடியவில்லை</string>
     <string name="mainactivity_unable_to_play_audio">ஆடியோ கோப்பை இயக்க முடியவில்லை</string>

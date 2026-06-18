@@ -3347,11 +3347,7 @@
     <string name="crashactivity_dont_fret_our_app">Jangan khawatir! Aplikasi kami baru saja mengalami sedikit \'oopsie\'. Silakan bagikan detail kerusakan di bawah – ini seperti pesan rahasia bagi pengembang kami untuk memperbaikinya! Kalau begitu, mari kita coba lagi, ya?</string>
     <string name="crashactivity_secret_crash_scrolls">Gulungan Kecelakaan Rahasia</string>
     <string name="crashactivity_share">Bagikan</string>
-    <string name="externalplaybackactivity_unable_to_open_audio">Tidak dapat membuka file audio</string>
-    <string name="externalplaybackactivity_unsupported_or_unreadable_audio">File audio tidak didukung atau tidak dapat dibaca</string>
-    <string name="externalplaybackactivity_failed_to_play_audio">Gagal memutar file audio</string>
-    <string name="externalplaybackactivity_open_rhythm">Buka Rhythm</string>
-    <string name="mainactivity_error_opening_file">Kesalahan saat membuka file</string>
+                    <string name="mainactivity_error_opening_file">Kesalahan saat membuka file</string>
     <string name="mainactivity_unsupported_file_format">Format file tidak didukung</string>
     <string name="mainactivity_failed_to_initialize_media">Gagal menginisialisasi pemutar media</string>
     <string name="mainactivity_unable_to_play_audio">Tidak dapat memutar file audio</string>

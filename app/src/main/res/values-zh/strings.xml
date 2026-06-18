@@ -3347,11 +3347,7 @@
     <string name="crashactivity_dont_fret_our_app">别担心！我们的应用程序只是有一点“哎呀”。请分享下面的崩溃详细信息 - 这就像我们的开发人员修复问题的秘密消息！那么，让我们再试一次，好吗？</string>
     <string name="crashactivity_secret_crash_scrolls">秘密崩溃卷轴</string>
     <string name="crashactivity_share">分享</string>
-    <string name="externalplaybackactivity_unable_to_open_audio">无法打开音频文件</string>
-    <string name="externalplaybackactivity_unsupported_or_unreadable_audio">不受支持或无法读取的音频文件</string>
-    <string name="externalplaybackactivity_failed_to_play_audio">音频文件播放失败</string>
-    <string name="externalplaybackactivity_open_rhythm">打开 Rhythm</string>
-    <string name="mainactivity_error_opening_file">打开文件时出错</string>
+                    <string name="mainactivity_error_opening_file">打开文件时出错</string>
     <string name="mainactivity_unsupported_file_format">不支持的文件格式</string>
     <string name="mainactivity_failed_to_initialize_media">无法初始化媒体播放器</string>
     <string name="mainactivity_unable_to_play_audio">无法播放音频文件</string>

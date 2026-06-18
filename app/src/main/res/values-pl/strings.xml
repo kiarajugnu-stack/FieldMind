@@ -3347,11 +3347,7 @@
     <string name="crashactivity_dont_fret_our_app">Nie martw się! W naszej aplikacji właśnie pojawiło się małe „oopsie”. Udostępnij poniżej szczegóły awarii – to jak tajna wiadomość dla naszych programistów, aby coś naprawili! W takim razie spróbujmy jeszcze raz, dobrze?</string>
     <string name="crashactivity_secret_crash_scrolls">Tajne zwoje katastrofy</string>
     <string name="crashactivity_share">Udostępnij</string>
-    <string name="externalplaybackactivity_unable_to_open_audio">Nie można otworzyć pliku audio</string>
-    <string name="externalplaybackactivity_unsupported_or_unreadable_audio">Nieobsługiwany lub nieczytelny plik audio</string>
-    <string name="externalplaybackactivity_failed_to_play_audio">Nie udało się odtworzyć pliku audio</string>
-    <string name="externalplaybackactivity_open_rhythm">Otwórz Rhythm</string>
-    <string name="mainactivity_error_opening_file">Błąd podczas otwierania pliku</string>
+                    <string name="mainactivity_error_opening_file">Błąd podczas otwierania pliku</string>
     <string name="mainactivity_unsupported_file_format">Nieobsługiwany format pliku</string>
     <string name="mainactivity_failed_to_initialize_media">Nie udało się zainicjować odtwarzacza multimedialnego</string>
     <string name="mainactivity_unable_to_play_audio">Nie można odtworzyć pliku audio</string>

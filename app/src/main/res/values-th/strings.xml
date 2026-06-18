@@ -3347,11 +3347,7 @@
     <string name="crashactivity_dont_fret_our_app">อย่ากังวลไป! แอปของเรามี \'อุ๊ย\' เล็กน้อย โปรดแชร์รายละเอียดข้อขัดข้องด้านล่าง เหมือนกับเป็นข้อความลับให้นักพัฒนาของเราแก้ไขสิ่งต่างๆ! งั้นเรามาลองกันใหม่มั้ย?</string>
     <string name="crashactivity_secret_crash_scrolls">คัมภีร์ข้อขัดข้องลับ</string>
     <string name="crashactivity_share">แบ่งปัน</string>
-    <string name="externalplaybackactivity_unable_to_open_audio">ไม่สามารถเปิดไฟล์เสียง</string>
-    <string name="externalplaybackactivity_unsupported_or_unreadable_audio">ไฟล์เสียงที่ไม่รองรับหรืออ่านไม่ได้</string>
-    <string name="externalplaybackactivity_failed_to_play_audio">ไม่สามารถเล่นไฟล์เสียง</string>
-    <string name="externalplaybackactivity_open_rhythm">เปิด Rhythm</string>
-    <string name="mainactivity_error_opening_file">เกิดข้อผิดพลาดในการเปิดไฟล์</string>
+                    <string name="mainactivity_error_opening_file">เกิดข้อผิดพลาดในการเปิดไฟล์</string>
     <string name="mainactivity_unsupported_file_format">รูปแบบไฟล์ที่ไม่รองรับ</string>
     <string name="mainactivity_failed_to_initialize_media">ไม่สามารถเริ่มต้นเครื่องเล่นสื่อ</string>
     <string name="mainactivity_unable_to_play_audio">ไม่สามารถเล่นไฟล์เสียง</string>

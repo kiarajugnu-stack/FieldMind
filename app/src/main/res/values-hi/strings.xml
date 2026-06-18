@@ -3347,11 +3347,7 @@
     <string name="crashactivity_dont_fret_our_app">चिंता मत करो! हमारे ऐप में बस थोड़ा सा \'उफ़्सी\' था। कृपया नीचे क्रैश विवरण साझा करें - यह हमारे डेवलपर्स के लिए चीजों को ठीक करने के लिए एक गुप्त संदेश की तरह है! तो फिर, आइए फिर से कोशिश करें, है ना?</string>
     <string name="crashactivity_secret_crash_scrolls">गुप्त क्रैश स्क्रॉल</string>
     <string name="crashactivity_share">साझा करें</string>
-    <string name="externalplaybackactivity_unable_to_open_audio">ऑडियो फ़ाइल खोलने में असमर्थ</string>
-    <string name="externalplaybackactivity_unsupported_or_unreadable_audio">असमर्थित या अपठनीय ऑडियो फ़ाइल</string>
-    <string name="externalplaybackactivity_failed_to_play_audio">ऑडियो फ़ाइल चलाने में विफल</string>
-    <string name="externalplaybackactivity_open_rhythm">Rhythm</string>
-    <string name="mainactivity_error_opening_file">खोलें फ़ाइल खोलने में त्रुटि</string>
+                    <string name="mainactivity_error_opening_file">खोलें फ़ाइल खोलने में त्रुटि</string>
     <string name="mainactivity_unsupported_file_format">असमर्थित फ़ाइल स्वरूप</string>
     <string name="mainactivity_failed_to_initialize_media">मीडिया प्लेयर प्रारंभ करने में विफल</string>
     <string name="mainactivity_unable_to_play_audio">ऑडियो फ़ाइल चलाने में असमर्थ</string>

@@ -3347,11 +3347,7 @@
     <string name="crashactivity_dont_fret_our_app">Endişelenme! Uygulamamızda biraz \'ayyy\' vardı. Lütfen kilitlenme ayrıntılarını aşağıda paylaşın; bu, geliştiricilerimizin sorunları düzeltmesi için gizli bir mesaj gibidir! O halde tekrar deneyelim, olur mu?</string>
     <string name="crashactivity_secret_crash_scrolls">Gizli Crash Scroll\'lar</string>
     <string name="crashactivity_share">Paylaşmak</string>
-    <string name="externalplaybackactivity_unable_to_open_audio">Ses dosyası açılamıyor</string>
-    <string name="externalplaybackactivity_unsupported_or_unreadable_audio">Desteklenmeyen veya okunamayan ses dosyası</string>
-    <string name="externalplaybackactivity_failed_to_play_audio">Ses dosyası oynatılamadı</string>
-    <string name="externalplaybackactivity_open_rhythm">Rhythm\'ı açın</string>
-    <string name="mainactivity_error_opening_file">Dosya açılırken hata oluştu</string>
+                    <string name="mainactivity_error_opening_file">Dosya açılırken hata oluştu</string>
     <string name="mainactivity_unsupported_file_format">Desteklenmeyen dosya biçimi</string>
     <string name="mainactivity_failed_to_initialize_media">Medya oynatıcı başlatılamadı</string>
     <string name="mainactivity_unable_to_play_audio">Ses dosyası çalınamıyor</string>

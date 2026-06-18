@@ -3347,11 +3347,7 @@
     <string name="crashactivity_dont_fret_our_app">Đừng lo lắng! Ứng dụng của chúng tôi vừa có một chút \'oopsie\'. Vui lòng chia sẻ chi tiết sự cố bên dưới - nó giống như một thông điệp bí mật dành cho các nhà phát triển của chúng tôi để khắc phục sự cố! Vậy chúng ta hãy thử lại lần nữa nhé?</string>
     <string name="crashactivity_secret_crash_scrolls">Cuộn giấy bí mật</string>
     <string name="crashactivity_share">Chia sẻ</string>
-    <string name="externalplaybackactivity_unable_to_open_audio">Không thể mở tệp âm thanh</string>
-    <string name="externalplaybackactivity_unsupported_or_unreadable_audio">Tệp âm thanh không được hỗ trợ hoặc không thể đọc được</string>
-    <string name="externalplaybackactivity_failed_to_play_audio">Không phát được tệp âm thanh</string>
-    <string name="externalplaybackactivity_open_rhythm">Mở Rhythm</string>
-    <string name="mainactivity_error_opening_file">Lỗi mở tập tin</string>
+                    <string name="mainactivity_error_opening_file">Lỗi mở tập tin</string>
     <string name="mainactivity_unsupported_file_format">Định dạng tệp không được hỗ trợ</string>
     <string name="mainactivity_failed_to_initialize_media">Không khởi chạy được trình phát đa phương tiện</string>
     <string name="mainactivity_unable_to_play_audio">Không thể phát tệp âm thanh</string>

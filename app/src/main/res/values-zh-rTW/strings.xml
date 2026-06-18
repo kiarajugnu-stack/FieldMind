@@ -3362,11 +3362,7 @@
     <string name="crashactivity_dont_fret_our_app">別擔心！我們的應用程式只是有一點“哎呀”。請分享下面的崩潰詳細資訊 - 這就像我們的開發人員修復問題的秘密訊息！那麼，讓我們再試一次，好嗎？</string>
     <string name="crashactivity_secret_crash_scrolls">秘密崩潰捲軸</string>
     <string name="crashactivity_share">分享</string>
-    <string name="externalplaybackactivity_unable_to_open_audio">無法開啟音訊檔案</string>
-    <string name="externalplaybackactivity_unsupported_or_unreadable_audio">不支援或無法讀取的音訊文件</string>
-    <string name="externalplaybackactivity_failed_to_play_audio">音訊檔案播放失敗</string>
-    <string name="externalplaybackactivity_open_rhythm">開啟 Rhythm</string>
-    <string name="mainactivity_error_opening_file">開啟檔案時發生錯誤</string>
+                    <string name="mainactivity_error_opening_file">開啟檔案時發生錯誤</string>
     <string name="mainactivity_unsupported_file_format">不支援的檔案格式</string>
     <string name="mainactivity_failed_to_initialize_media">無法初始化媒體播放器</string>
     <string name="mainactivity_unable_to_play_audio">無法播放音訊檔案</string>

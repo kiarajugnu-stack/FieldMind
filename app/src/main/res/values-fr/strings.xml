@@ -3364,11 +3364,7 @@ Paramètres des paroles</string>
     <string name="crashactivity_dont_fret_our_app">Ne vous inquiétez pas ! Notre application vient d\'avoir un petit \"oopsie\". Veuillez partager les détails du crash ci-dessous – c\'est comme un message secret pour que nos développeurs corrigent le problème ! Alors, essayons à nouveau, d\'accord ?</string>
     <string name="crashactivity_secret_crash_scrolls">Parchemins de crash secrets</string>
     <string name="crashactivity_share">Partager</string>
-    <string name="externalplaybackactivity_unable_to_open_audio">Impossible d\'ouvrir le fichier audio</string>
-    <string name="externalplaybackactivity_unsupported_or_unreadable_audio">Fichier audio non pris en charge ou illisible</string>
-    <string name="externalplaybackactivity_failed_to_play_audio">Échec de la lecture du fichier audio</string>
-    <string name="externalplaybackactivity_open_rhythm">Ouvrir Rhythm</string>
-    <string name="mainactivity_error_opening_file">Erreur lors de l\'ouverture du fichier</string>
+                    <string name="mainactivity_error_opening_file">Erreur lors de l\'ouverture du fichier</string>
     <string name="mainactivity_unsupported_file_format">Format de fichier non pris en charge</string>
     <string name="mainactivity_failed_to_initialize_media">Échec de l\'initialisation du lecteur multimédia</string>
     <string name="mainactivity_unable_to_play_audio">Impossible de lire le fichier audio</string>

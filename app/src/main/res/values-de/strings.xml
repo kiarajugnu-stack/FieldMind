@@ -3347,11 +3347,7 @@
     <string name="crashactivity_dont_fret_our_app">Mach dir keine Sorgen! Unsere App hatte gerade ein kleines „Oopsie“. Bitte teilen Sie die Absturzdetails unten mit – es ist wie eine geheime Nachricht an unsere Entwickler, um das Problem zu beheben! Dann versuchen wir es noch einmal, ja?</string>
     <string name="crashactivity_secret_crash_scrolls">Geheime Crash-Schriftrollen</string>
     <string name="crashactivity_share">Teilen</string>
-    <string name="externalplaybackactivity_unable_to_open_audio">Die Audiodatei</string>
-    <string name="externalplaybackactivity_unsupported_or_unreadable_audio">kann nicht geöffnet werden Nicht unterstützte oder nicht lesbare Audiodatei</string>
-    <string name="externalplaybackactivity_failed_to_play_audio">Die Audiodatei konnte nicht abgespielt werden</string>
-    <string name="externalplaybackactivity_open_rhythm">Öffnen Sie Rhythm</string>
-    <string name="mainactivity_error_opening_file">Fehler beim Öffnen der Datei</string>
+                    <string name="mainactivity_error_opening_file">Fehler beim Öffnen der Datei</string>
     <string name="mainactivity_unsupported_file_format">Nicht unterstütztes Dateiformat</string>
     <string name="mainactivity_failed_to_initialize_media">Der Mediaplayer konnte nicht initialisiert werden</string>
     <string name="mainactivity_unable_to_play_audio">Die Audiodatei</string>

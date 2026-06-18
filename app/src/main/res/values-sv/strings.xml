@@ -3347,11 +3347,7 @@
     <string name="crashactivity_dont_fret_our_app">Oroa dig inte! Vår app hade precis en liten \"oopsie\". Vänligen dela kraschinformationen nedan – det är som ett hemligt meddelande för våra utvecklare att fixa saker! Då ska vi försöka igen, eller hur?</string>
     <string name="crashactivity_secret_crash_scrolls">Secret Crash Scrolls</string>
     <string name="crashactivity_share">Dela</string>
-    <string name="externalplaybackactivity_unable_to_open_audio">Kan inte öppna ljudfilen</string>
-    <string name="externalplaybackactivity_unsupported_or_unreadable_audio">Ostödd eller oläsbar ljudfil</string>
-    <string name="externalplaybackactivity_failed_to_play_audio">Det gick inte att spela upp ljudfilen</string>
-    <string name="externalplaybackactivity_open_rhythm">Öppna Rhythm</string>
-    <string name="mainactivity_error_opening_file">Fel vid öppning av filen</string>
+                    <string name="mainactivity_error_opening_file">Fel vid öppning av filen</string>
     <string name="mainactivity_unsupported_file_format">Filformat som inte stöds</string>
     <string name="mainactivity_failed_to_initialize_media">Det gick inte att initiera mediaspelaren</string>
     <string name="mainactivity_unable_to_play_audio">Kan inte spela ljudfil</string>

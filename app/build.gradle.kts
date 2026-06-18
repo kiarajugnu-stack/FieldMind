@@ -27,9 +27,9 @@ android {
         versionCode = Version.getVersionCode(project)
         versionName = Version.getVersionName(project)
 
-        // Only include English locale resources — saves ~5-8 MB of APK size
+        // Only include English locale — saves ~5-8 MB of APK size
         // The app's music-player origins shipped 26+ locale files
-        resConfigs("en")
+        androidResources.localeFilters = listOf("en")
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }

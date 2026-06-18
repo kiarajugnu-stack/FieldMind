@@ -3373,11 +3373,7 @@ Error</string>
     <string name="crashactivity_dont_fret_our_app">¡No te preocupes! Nuestra aplicación acaba de tener un pequeño \"oopsie\". Comparta los detalles del fallo a continuación: ¡es como un mensaje secreto para que nuestros desarrolladores arreglen las cosas! Entonces, intentémoslo de nuevo, ¿de acuerdo?</string>
     <string name="crashactivity_secret_crash_scrolls">Pergaminos secretos de choque</string>
     <string name="crashactivity_share">Compartir</string>
-    <string name="externalplaybackactivity_unable_to_open_audio">No se puede abrir el archivo de audio</string>
-    <string name="externalplaybackactivity_unsupported_or_unreadable_audio">Archivo de audio no compatible o ilegible</string>
-    <string name="externalplaybackactivity_failed_to_play_audio">No se pudo reproducir el archivo de audio</string>
-    <string name="externalplaybackactivity_open_rhythm">Abrir Rhythm</string>
-    <string name="mainactivity_error_opening_file">Error al abrir el archivo</string>
+                    <string name="mainactivity_error_opening_file">Error al abrir el archivo</string>
     <string name="mainactivity_unsupported_file_format">Formato de archivo no compatible</string>
     <string name="mainactivity_failed_to_initialize_media">No se pudo inicializar el reproductor multimedia</string>
     <string name="mainactivity_unable_to_play_audio">No se puede reproducir el archivo de audio</string>
