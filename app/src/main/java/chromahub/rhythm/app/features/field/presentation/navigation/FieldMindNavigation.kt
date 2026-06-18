@@ -358,7 +358,7 @@ private fun AnimatedNavBarItem(
 
     Column(
         modifier = Modifier
-            .weight(1f)
+            .fillMaxWidth()
             .graphicsLayer {
                 scaleX = pressScale
                 scaleY = pressScale

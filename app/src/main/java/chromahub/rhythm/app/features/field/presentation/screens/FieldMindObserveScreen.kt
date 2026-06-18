@@ -154,6 +154,10 @@ fun ObserveScreen(
     // GPS location & accuracy
     val locationProvider = remember { FieldLocationProvider(context) }
 
+    // Core session state — uses rememberSaveable to survive configuration changes
+    var session by rememberSaveable { mutableStateOf(CaptureSessionState()) }
+    var capturedLocation by remember { mutableStateOf<CapturedLocation?>(null) }
+
     // Sync captureSessionActive with local session state on navigation to Observe screen.
     // This prevents the nav bar from hiding when navigating to Observe without an active
     // session — handles stale captureSessionActive state from incomplete cleanup paths.
@@ -162,10 +166,7 @@ fun ObserveScreen(
             viewModel.setCaptureSessionActive(false)
         }
     }
-    var capturedLocation by remember { mutableStateOf<CapturedLocation?>(null) }
 
-    // Core session state — uses rememberSaveable to survive configuration changes
-    var session by rememberSaveable { mutableStateOf(CaptureSessionState()) }
     var showEvidenceForm by remember { mutableStateOf(false) }
     var showCategoryPicker by remember { mutableStateOf(false) }
     var selectedCategories by remember { mutableStateOf(setOf("Other")) }
