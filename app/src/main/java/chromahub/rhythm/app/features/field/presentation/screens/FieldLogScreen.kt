@@ -5,7 +5,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -20,7 +19,6 @@ import fieldmind.research.app.features.field.presentation.components.*
 import fieldmind.research.app.features.field.presentation.theme.FieldMindTheme
 import fieldmind.research.app.features.field.presentation.viewmodel.FieldMindViewModel
 import fieldmind.research.app.shared.presentation.components.icons.Icon
-import kotlinx.coroutines.launch
 
 /**
  * Full-screen dedicated Field Log — a chronological field journal of all observations.
@@ -40,9 +38,7 @@ fun FieldLogScreen(
     onBack: () -> Unit,
     onOpenDetail: (String, Long) -> Unit = { _, _ -> }
 ) {
-    val scope = rememberCoroutineScope()
     val observations by viewModel.observations.collectAsState()
-    val notes by viewModel.notes.collectAsState()
 
     var viewMode by remember { mutableStateOf(TimelineViewMode.List) }
     var showSearch by remember { mutableStateOf(false) }
