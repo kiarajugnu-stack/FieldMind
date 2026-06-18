@@ -63,7 +63,6 @@ fun FieldMindOnboardingScreen(
 
     var profileName by remember { mutableStateOf("") }
     var profileRole by remember { mutableStateOf("Field learner") }
-
     var interests by remember { mutableStateOf(UserInterests()) }
 
     // Permission states
@@ -81,6 +80,7 @@ fun FieldMindOnboardingScreen(
 
     var showFinishDialog by remember { mutableStateOf(false) }
     var showContinueTour by remember { mutableStateOf(false) }
+    var showExtendedTour by remember { mutableStateOf(false) }
 
     val context = LocalContext.current
 
@@ -216,13 +216,13 @@ fun FieldMindOnboardingScreen(
                     audioGranted = audioGranted,
                     selectedTheme = selectedTheme,
                     dailyGoal = dailyGoal,
-                    onFinish = { finishOnboarding() },
-                    onContinueTour = { showContinueTour = true },
+                    onFinish = { showFinishDialog = true },
+                    onContinueTour = { showExtendedTour = true },
                     onBack = { currentPage = 3 },
                     onEditPage = { currentPage = it }
                 )
                 // Extended tour pages (6-9)
-                5 -> OnboardingScreenVisibilityPage(
+                5 -> if (showExtendedTour) OnboardingScreenVisibilityPage(
                     visibility = ScreenVisibility.fromInterests(interests),
                     interests = interests,
                     onApply = { vis ->
@@ -305,12 +305,13 @@ fun FieldMindOnboardingScreen(
         }
     }
 
-    // Trigger finish dialog from review screen
-    LaunchedEffect(showContinueTour) {
-        if (!showContinueTour) return@LaunchedEffect
-        showContinueTour = false
-        // If user tapped "Continue Tour" from review, they want to go to page 5
-        currentPage = 5
+    // Navigate to extended tour from review page
+    LaunchedEffect(showExtendedTour, showContinueTour) {
+        if (showExtendedTour) {
+            showExtendedTour = false
+            showContinueTour = false
+            currentPage = 5
+        }
     }
 }
 
