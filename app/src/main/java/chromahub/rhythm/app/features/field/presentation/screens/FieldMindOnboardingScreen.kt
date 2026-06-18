@@ -25,6 +25,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
@@ -36,6 +37,8 @@ import kotlin.math.roundToInt
 import fieldmind.research.app.features.field.data.settings.*
 import fieldmind.research.app.features.field.presentation.components.FieldMindIcons
 import fieldmind.research.app.features.field.presentation.components.FieldMindMotion
+import fieldmind.research.app.features.field.presentation.components.expressivePress
+import fieldmind.research.app.features.field.presentation.theme.FieldMindTheme
 import fieldmind.research.app.shared.presentation.components.icons.Icon
 import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon
 
@@ -141,6 +144,15 @@ fun FieldMindOnboardingScreen(
         currentPage--
     }
 
+    // Derive dark theme from current selection so the UI reflects changes immediately
+    val systemDark = isSystemInDarkTheme()
+    val isDarkTheme = when (selectedTheme) {
+        "Dark" -> true
+        "Light" -> false
+        else -> systemDark
+    }
+
+    FieldMindTheme(darkTheme = isDarkTheme, dynamicColor = useDynamicColors) {
     BoxWithConstraints(Modifier.fillMaxSize()) {
         // Animated page content with sliding transitions
         AnimatedContent(
@@ -274,12 +286,12 @@ fun FieldMindOnboardingScreen(
                             fontWeight = FontWeight.SemiBold
                         )
                         val laterItems = listOf(
-                            "📲 Screen visibility — show/hide any screen",
-                            "🤖 AI Assistant — Gemini or OpenAI integration",
-                            "💾 Backup & auto-backup schedules",
-                            "🔒 Privacy lock with biometrics",
-                            "🔔 Reminders and daily streak settings",
-                            "📐 Units, date format, map preferences"
+                            "Screen visibility — show/hide any screen",
+                            "AI Assistant — Gemini or OpenAI integration",
+                            "Backup and auto-backup schedules",
+                            "Privacy lock with biometrics",
+                            "Reminders and daily streak settings",
+                            "Units, date format, map preferences"
                         )
                         laterItems.forEach { item ->
                             Row(verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -295,14 +307,19 @@ fun FieldMindOnboardingScreen(
                         shape = RoundedCornerShape(16.dp)
                     ) { Text("Start exploring") }
                 },
-                dismissButton = {
-                    TextButton(onClick = { showFinishDialog = false }) {
-                        Text("Continue tour")
-                    }
+                dismissButton = {                        TextButton(onClick = {
+                            showFinishDialog = false
+                            showExtendedTour = true
+                        }) {
+                            Text("Continue tour")
+                        }
                 }
             )
         }
     }
+
+    }
+    // END FieldMindTheme wrapper
 
     // Navigate to extended tour from review page
     LaunchedEffect(showExtendedTour, showContinueTour) {
@@ -490,7 +507,7 @@ private fun OnboardingWelcomePage(
                 PageIndicator(current = 0, total = 5)
                 Button(
                     onClick = onNext,
-                    modifier = Modifier.fillMaxWidth().height(54.dp),
+                    modifier = Modifier.fillMaxWidth().height(54.dp).expressivePress(scaleDown = 0.96f),
                     shape = RoundedCornerShape(18.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.primary
@@ -672,13 +689,14 @@ private fun OnboardingInterestsPage(
             ) {
                 OutlinedButton(
                     onClick = onBack,
-                    shape = RoundedCornerShape(16.dp)
+                    shape = RoundedCornerShape(16.dp),
+                    modifier = Modifier.expressivePress(scaleDown = 0.96f)
                 ) { Text("Back") }
                 PageIndicator(current = 1, total = 5, modifier = Modifier.weight(1f))
                 Button(
                     onClick = onNext,
                     shape = RoundedCornerShape(16.dp),
-                    modifier = Modifier.height(48.dp)
+                    modifier = Modifier.height(48.dp).expressivePress(scaleDown = 0.96f)
                 ) { Text("Continue") }
             }
         }
@@ -1167,7 +1185,7 @@ private fun OnboardingReviewPage(
                     }
                     Button(
                         onClick = onFinish,
-                        modifier = Modifier.fillMaxWidth().height(54.dp),
+                        modifier = Modifier.fillMaxWidth().height(54.dp).expressivePress(scaleDown = 0.96f),
                         shape = RoundedCornerShape(18.dp)
                     ) {
                         Text("Finish tour", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
