@@ -285,30 +285,41 @@ fun FieldMindNavigation(viewModel: FieldMindViewModel, onResetOnboarding: () -> 
                 containerColor = MaterialTheme.colorScheme.background,
                 bottomBar = {
                     if (!hideChrome) {
-                        // ── Glassmorphic pill-shaped floating bottom nav bar ──
-                        // Elevated pill with semi-transparent background, backdrop-filter blur effect,
-                        // generous rounded corners, lifted off bottom with padding.
+                        // ── True glassmorphic pill-shaped floating bottom nav bar ──
+                        // Frosted-glass effect: semi-transparent surface with visible blur,
+                        // subtle border to define the edge in light themes, generous rounded
+                        // corners, lifted off bottom with safe-area-aware padding.
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(horizontal = 16.dp, vertical = 10.dp)
+                                .padding(horizontal = 12.dp, vertical = 8.dp)
                                 .windowInsetsPadding(
-                                    WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom + WindowInsetsSides.Horizontal)
+                                    WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal)
                                 )
+                                .navigationBarsPadding()
                         ) {
                             Surface(
-                                shape = RoundedCornerShape(32.dp),
-                                color = MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.75f),
-                                tonalElevation = 6.dp,
-                                shadowElevation = 12.dp,
+                                shape = RoundedCornerShape(34.dp),
+                                color = MaterialTheme.colorScheme.surfaceContainer.copy(
+                                    alpha = if (isSystemInDarkTheme()) 0.50f else 0.40f
+                                ),
+                                tonalElevation = 3.dp,
+                                shadowElevation = 8.dp,
+                                border = androidx.compose.foundation.BorderStroke(
+                                    width = 0.5.dp,
+                                    color = if (isSystemInDarkTheme())
+                                        MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.08f)
+                                    else
+                                        MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f)
+                                ),
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .height(68.dp)
+                                    .height(64.dp)
                             ) {
                                 Row(
                                     modifier = Modifier
                                         .fillMaxSize()
-                                        .padding(horizontal = 4.dp, vertical = 6.dp),
+                                        .padding(horizontal = 2.dp, vertical = 4.dp),
                                     horizontalArrangement = Arrangement.SpaceEvenly,
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
@@ -406,7 +417,7 @@ private fun FloatingNavTabItem(
                 tint = if (selected) 
                     MaterialTheme.colorScheme.primary 
                 else 
-                    MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.55f),
+                    MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.72f),
                 size = iconSize.dp,
                 weight = if (selected) 500 else 400
             )
@@ -418,7 +429,7 @@ private fun FloatingNavTabItem(
             color = if (selected) 
                 MaterialTheme.colorScheme.primary 
             else 
-                MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = textAlpha * 0.6f),
+                MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = textAlpha * 0.78f),
             maxLines = 1,
             modifier = Modifier.graphicsLayer { alpha = textAlpha.coerceIn(0.5f, 1f) }
         )
