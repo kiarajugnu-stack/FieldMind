@@ -881,7 +881,7 @@ fun ResearchSessionScreen(
         )
     }
 
-    // ── In-app CameraX overlay ──
+    // ── In-app CameraX overlay with multi-capture mode ──
     if (showInAppCamera) {
         Dialog(
             onDismissRequest = { showInAppCamera = false },
@@ -889,13 +889,14 @@ fun ResearchSessionScreen(
         ) {
             FieldMindCameraV2(
                 onPhotoCaptured = { uri, mimeType ->
+                    // Add to session attachments, keep camera open for more captures
                     addSessionAttachment(
                         DraftEvidenceAttachment("Photo", uri, "Camera photo", mimeType = mimeType)
                     )
-                    showInAppCamera = false
                 },
                 onDismiss = { showInAppCamera = false },
-                modifier = Modifier.fillMaxSize()
+                modifier = Modifier.fillMaxSize(),
+                multiCaptureMode = true
             )
         }
     }

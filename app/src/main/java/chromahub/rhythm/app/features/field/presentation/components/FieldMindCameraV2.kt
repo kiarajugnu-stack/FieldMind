@@ -9,6 +9,7 @@ import android.provider.MediaStore
 import android.view.ViewGroup
 import android.view.WindowManager
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.core.Camera
 import androidx.camera.core.CameraSelector
@@ -93,7 +94,8 @@ private const val FLASH_AUTO = ImageCapture.FLASH_MODE_AUTO
  * - Grid overlay (rule-of-thirds)
  * - Capture timer (3s/5s/10s)
  * - Aspect ratio toggle (4:3 / 16:9 / 1:1)
- * - Post-capture bottom sheet: "Add to Observation" / "Add Question" / "Just Save"
+ * - Gallery picker button
+ * - Post-capture sheet: "Save & continue" / "Retake" / "Done"
  * - Auto GPS + timestamp metadata on capture
  */
 @Composable
@@ -102,7 +104,8 @@ fun FieldMindCameraV2(
     onAddToObservation: ((uri: String, mimeType: String) -> Unit)? = null,
     onAddQuestion: ((uri: String, mimeType: String) -> Unit)? = null,
     onDismiss: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    multiCaptureMode: Boolean = false
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -181,6 +184,17 @@ fun FieldMindCameraV2(
     var capturedUri by remember { mutableStateOf<String?>(null) }
     var capturedMime by remember { mutableStateOf<String?>(null) }
     var showPostCapture by remember { mutableStateOf(false) }
+
+    // Gallery picker
+    val galleryLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.PickVisualMedia()
+    ) { uri ->
+        if (uri != null) {
+            capturedUri = uri.toString()
+            capturedMime = getMimeTypeForUri(context, uri) ?: "image/jpeg"
+            showPostCapture = true
+        }
+    }
 
     // Permission
     val permissionLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
@@ -411,6 +425,10 @@ fun FieldMindCameraV2(
 
                 // Center controls
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    // Gallery button
+                    IconButton(onClick = { galleryLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageAndVideo)) }, modifier = Modifier.size(44.dp).background(Color.Black.copy(alpha = 0.35f), CircleShape)) {
+                        Icon(icon = FieldMindIcons.Gallery, contentDescription = "Gallery", tint = Color.White, size = 22.dp)
+                    }
                     // Grid toggle
                     IconButton(onClick = { showGrid = !showGrid }, modifier = Modifier.size(44.dp).background(Color.Black.copy(alpha = 0.35f), CircleShape)) {
                         Icon(icon = MaterialSymbolIcon("grid_on"), contentDescription = "Grid", tint = if (showGrid) Color(0xFFFFCC80) else Color.White, size = 22.dp)
@@ -580,24 +598,53 @@ fun FieldMindCameraV2(
                         Text("What would you like to do?", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    onAddToObservation?.let { action ->
-                        Button(onClick = { showPostCapture = false; action(capturedUri ?: "", capturedMime ?: "image/jpeg") }, modifier = Modifier.weight(1f), shape = RoundedCornerShape(14.dp)) {
-                            Icon(FieldMindIcons.Observation, null, size = 18.dp); Spacer(Modifier.size(6.dp)); Text("Observation")
+                if (multiCaptureMode) {
+                    // Multi-capture mode: Save, Retake, Done
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Button(onClick = { showPostCapture = false; onPhotoCaptured(capturedUri ?: "", capturedMime ?: "image/jpeg") }, modifier = Modifier.weight(1f), shape = RoundedCornerShape(14.dp)) {
+                            Icon(FieldMindIcons.Observation, null, size = 18.dp); Spacer(Modifier.size(6.dp)); Text("Save & continue")
+                        }
+                        OutlinedButton(onClick = { showPostCapture = false }, modifier = Modifier.weight(1f), shape = RoundedCornerShape(14.dp)) {
+                            Icon(FieldMindIcons.Close, null, size = 18.dp); Spacer(Modifier.size(6.dp)); Text("Retake")
+                        }
+                        FilledTonalButton(onClick = {
+                            showPostCapture = false
+                            onPhotoCaptured(capturedUri ?: "", capturedMime ?: "image/jpeg")
+                            onDismiss()
+                        }, modifier = Modifier.weight(1f), shape = RoundedCornerShape(14.dp)) {
+                            Icon(FieldMindIcons.Check, null, size = 18.dp); Spacer(Modifier.size(6.dp)); Text("Done")
                         }
                     }
-                    onAddQuestion?.let { action ->
-                        OutlinedButton(onClick = { showPostCapture = false; action(capturedUri ?: "", capturedMime ?: "image/jpeg") }, modifier = Modifier.weight(1f), shape = RoundedCornerShape(14.dp)) {
-                            Icon(FieldMindIcons.Question, null, size = 18.dp); Spacer(Modifier.size(6.dp)); Text("Question")
+                } else {
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        onAddToObservation?.let { action ->
+                            Button(onClick = { showPostCapture = false; action(capturedUri ?: "", capturedMime ?: "image/jpeg") }, modifier = Modifier.weight(1f), shape = RoundedCornerShape(14.dp)) {
+                                Icon(FieldMindIcons.Observation, null, size = 18.dp); Spacer(Modifier.size(6.dp)); Text("Observation")
+                            }
                         }
-                    }
-                    FilledTonalButton(onClick = { showPostCapture = false; onPhotoCaptured(capturedUri ?: "", capturedMime ?: "image/jpeg") }, modifier = Modifier.weight(1f), shape = RoundedCornerShape(14.dp)) {
-                        Text("Just save")
+                        onAddQuestion?.let { action ->
+                            OutlinedButton(onClick = { showPostCapture = false; action(capturedUri ?: "", capturedMime ?: "image/jpeg") }, modifier = Modifier.weight(1f), shape = RoundedCornerShape(14.dp)) {
+                                Icon(FieldMindIcons.Question, null, size = 18.dp); Spacer(Modifier.size(6.dp)); Text("Question")
+                            }
+                        }
+                        FilledTonalButton(onClick = { showPostCapture = false; onPhotoCaptured(capturedUri ?: "", capturedMime ?: "image/jpeg") }, modifier = Modifier.weight(1f), shape = RoundedCornerShape(14.dp)) {
+                            Text("Just save")
+                        }
                     }
                 }
             }
         }
     }
+}
+
+/**
+ * Resolve MIME type from a content URI using ContentResolver.
+ * Falls back to image/jpeg if the type cannot be determined.
+ */
+private fun getMimeTypeForUri(context: android.content.Context, uri: android.net.Uri): String? {
+    return runCatching {
+        context.contentResolver.getType(uri)
+    }.getOrNull()?.takeIf { it.isNotBlank() }
 }
 
 /**
