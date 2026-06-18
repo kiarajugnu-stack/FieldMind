@@ -101,7 +101,8 @@ fun FieldMindCameraV2(
     onAddToObservation: ((uri: String, mimeType: String) -> Unit)? = null,
     onAddQuestion: ((uri: String, mimeType: String) -> Unit)? = null,
     onDismiss: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    multiCaptureMode: Boolean = false
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -1266,3 +1267,4 @@ private fun getMimeTypeForUri(context: android.content.Context, uri: android.net
         context.contentResolver.getType(uri)
     }.getOrNull()?.takeIf { it.isNotBlank() }
 }
+
