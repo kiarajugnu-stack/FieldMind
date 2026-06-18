@@ -22,6 +22,8 @@ import fieldmind.research.app.features.field.presentation.viewmodel.FieldMindVie
 import fieldmind.research.app.shared.presentation.components.icons.Icon
 import androidx.compose.runtime.saveable.rememberSaveable
 
+private enum class TimelineViewMode { List, Gallery }
+
 /**
  * Full-screen dedicated Field Log — a chronological field journal of all observations.
  *
@@ -338,7 +340,4 @@ val ObservationFilterStateSaver = androidx.compose.runtime.saveable.Saver<Observ
         )
     }
 )
-
-/** View modes for the timeline. */
-enum class TimelineViewMode { List, Gallery }
 }

@@ -490,7 +490,7 @@ private fun FieldMindNavHost(
         popEnterTransition = {
             // Smooth, consistent slide + fade for back navigation — no bounce, just gentle motion
             val direction = primaryTabDirection(targetState.destination.route, initialState.destination.route)
-            val slideSpec = tween<Int>(250, easing = FastOutSlowInEasing)
+            val slideSpec = tween<IntOffset>(250, easing = FastOutSlowInEasing)
             val fadeSpec = tween<Float>(200, easing = FastOutSlowInEasing)
             if (direction == 0) {
                 slideInHorizontally(
@@ -506,7 +506,7 @@ private fun FieldMindNavHost(
         },
         popExitTransition = {
             val direction = primaryTabDirection(targetState.destination.route, initialState.destination.route)
-            val slideSpec = tween<Int>(200, easing = FastOutSlowInEasing)
+            val slideSpec = tween<IntOffset>(200, easing = FastOutSlowInEasing)
             val fadeSpec = tween<Float>(150, easing = FastOutSlowInEasing)
             if (direction == 0) {
                 slideOutHorizontally(
