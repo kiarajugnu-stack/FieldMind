@@ -18,6 +18,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.activity.compose.BackHandler
 import fieldmind.research.app.features.field.data.vision.SpeciesDatabase
 import fieldmind.research.app.features.field.data.vision.SpeciesRecord
 import kotlinx.coroutines.launch
@@ -64,6 +65,7 @@ fun TaxonomicBrowserScreen(
     onBack: () -> Unit,
     onOpenDetail: (String) -> Unit
 ) {
+    BackHandler(enabled = true) { goUp() }
     val context = LocalContext.current
     val database = remember { SpeciesDatabase(context) }
 

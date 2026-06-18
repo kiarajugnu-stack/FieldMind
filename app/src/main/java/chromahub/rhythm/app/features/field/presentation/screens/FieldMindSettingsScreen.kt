@@ -1074,6 +1074,7 @@ fun DeveloperSettingsPage(viewModel: FieldMindViewModel, onBack: () -> Unit) {
 /** Wraps a sub-page with consistent header and scrollable content. */
 @Composable
 private fun SettingsSubPage(title: String, icon: MaterialSymbolIcon, onBack: () -> Unit, content: LazyListScope.() -> Unit) {
+    BackHandler(enabled = true) { onBack() }
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(20.dp, 20.dp, 20.dp, 40.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
         item { FieldScreenHeader(title, icon = icon, actionIcon = FieldMindIcons.Back, onAction = onBack) }
         content()

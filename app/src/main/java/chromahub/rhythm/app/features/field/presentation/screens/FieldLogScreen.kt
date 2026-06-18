@@ -14,6 +14,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.activity.compose.BackHandler
 import fieldmind.research.app.features.field.data.database.entity.ObservationEntity
 import fieldmind.research.app.features.field.presentation.components.*
 import fieldmind.research.app.features.field.presentation.theme.FieldMindTheme
@@ -38,6 +39,7 @@ fun FieldLogScreen(
     onBack: () -> Unit,
     onOpenDetail: (String, Long) -> Unit = { _, _ -> }
 ) {
+    BackHandler(enabled = true) { onBack() }
     val observations by viewModel.observations.collectAsState()
 
     var viewMode by remember { mutableStateOf(TimelineViewMode.List) }

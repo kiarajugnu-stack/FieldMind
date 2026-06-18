@@ -20,6 +20,7 @@ import android.content.Context
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import fieldmind.research.app.features.field.data.database.entity.*
+import androidx.activity.compose.BackHandler
 import fieldmind.research.app.features.field.data.location.*
 import fieldmind.research.app.features.field.presentation.components.*
 import fieldmind.research.app.features.field.presentation.navigation.FieldMindScreen
@@ -43,6 +44,7 @@ fun MapFieldScreen(
     onNavigate: (FieldMindScreen) -> Unit = {},
     onOpenDetail: (String, Long) -> Unit = { _, _ -> }
 ) {
+    BackHandler(enabled = true) { onNavigate(FieldMindScreen.Home) }
     val context = LocalContext.current
     val observations by viewModel.observations.collectAsState()
     val points = observations.mapNotNull { o ->

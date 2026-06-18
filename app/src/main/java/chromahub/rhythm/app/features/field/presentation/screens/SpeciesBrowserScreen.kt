@@ -19,6 +19,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.activity.compose.BackHandler
 import fieldmind.research.app.features.field.data.vision.SpeciesDatabase
 import fieldmind.research.app.features.field.data.vision.SpeciesRecord
 import fieldmind.research.app.features.field.presentation.components.FieldMindIcons
@@ -72,6 +73,7 @@ fun SpeciesBrowserScreen(
     onBack: () -> Unit,
     onOpenDetail: (String) -> Unit
 ) {
+    BackHandler(enabled = true) { onBack() }
     val context = LocalContext.current
     val database = remember { SpeciesDatabase(context) }
 
@@ -547,6 +549,7 @@ fun SpeciesDetailScreen(
     speciesId: String,
     onBack: () -> Unit
 ) {
+    BackHandler(enabled = true) { onBack() }
     val context = LocalContext.current
     val database = remember { SpeciesDatabase(context) }
 
