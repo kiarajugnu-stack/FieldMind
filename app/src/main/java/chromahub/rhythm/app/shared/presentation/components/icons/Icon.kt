@@ -41,7 +41,7 @@ import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.ThumbUp
 import androidx.compose.material.icons.filled.Warning
-import androidx.compose.material3.Icon
+
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -208,7 +208,7 @@ fun Icon(
     size: Dp = 24.dp
 ) {
     val imageVector = iconNameToImageVector(icon.name, icon.filled)
-    Icon(
+    androidx.compose.material3.Icon(
         imageVector = imageVector,
         contentDescription = contentDescription,
         modifier = modifier.size(size),
