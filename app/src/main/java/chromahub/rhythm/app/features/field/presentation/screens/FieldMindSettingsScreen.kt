@@ -65,7 +65,8 @@ fun FieldMindSettingsScreen(
     onOpenDataIntegrity: (() -> Unit)? = null,
     onOpenDeveloper: (() -> Unit)? = null,
     onOpenSpeciesPacks: (() -> Unit)? = null,
-    onOpenSpeciesId: (() -> Unit)? = null
+    onOpenSpeciesId: (() -> Unit)? = null,
+    onOpenAutoGen: (() -> Unit)? = null
 ) {
     BackHandler(enabled = true) { onBack() }
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(20.dp, 20.dp, 20.dp, 40.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
@@ -107,6 +108,7 @@ fun FieldMindSettingsScreen(
         item { SettingsNavCard("Developer", "Debug logging, dev tools, version info", FieldMindIcons.Sparkle, FieldMindTheme.colors.flashcard) { onOpenDeveloper?.invoke() } }
         item { SettingsNavCard("Species packs", "Download regional model packs for species ID", FieldMindIcons.Download, FieldMindTheme.colors.observation) { onOpenSpeciesPacks?.invoke() } }
         item { SettingsNavCard("Species identification", "Image analysis, API key, and model URL configuration", FieldMindIcons.Nature, FieldMindTheme.colors.observation) { onOpenSpeciesId?.invoke() } }
+        item { SettingsNavCard("Auto generation", "Automatic flashcards & questions from observations", FieldMindIcons.Sparkle, FieldMindTheme.colors.flashcard) { onOpenAutoGen?.invoke() } }
         item { SettingsNavCard("Export Studio", "Export as PDF, CSV, JSON, HTML, SVG", FieldMindIcons.Export, FieldMindTheme.colors.report) { onOpenExport?.invoke() } }
         item { SettingsNavCard("What’s new", "FieldMind-specific redesign notes and migration changes", FieldMindIcons.Info, FieldMindTheme.colors.info) { onOpenChangelog?.invoke() } }
         item { SettingsNavCard("About", "Credits, acknowledgements, and version", FieldMindIcons.Info, FieldMindTheme.colors.source) { onOpenAbout?.invoke() } }
@@ -1701,4 +1703,75 @@ private fun StatChip(value: String, label: String, color: Color) {
         Text(value, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, color = color)
         Text(label, style = MaterialTheme.typography.labelSmall, color = color.copy(alpha = 0.7f))
     }
+// ══════════════════════════════════════════════════════════════════════
+//  Auto Generation Settings Page
+// ══════════════════════════════════════════════════════════════════════
+
+@Composable
+fun AutoGenerationSettingsPage(
+    viewModel: FieldMindViewModel,
+    onBack: () -> Unit
+) {
+    val settings = viewModel.fieldSettings
+    val autoFlashcards by settings.autoFlashcardsEnabled.collectAsState()
+    val autoQuestions by settings.autoQuestionsEnabled.collectAsState()
+
+    SettingsSubPage("Auto generation", icon = FieldMindIcons.Sparkle, onBack = onBack) {
+        item {
+            SettingsGroupCard {
+                ToggleItem(
+                    "Generate flashcards from observations",
+                    "When enabled, new flashcards are automatically created from your observation data, notes, and sources as they come in.",
+                    autoFlashcards,
+                    settings::setAutoFlashcardsEnabled,
+                    FieldMindIcons.Flashcard
+                )
+            }
+        }
+        item {
+            SettingsGroupCard {
+                ToggleItem(
+                    "Generate questions from observations",
+                    "When enabled, research questions are automatically derived from your observation patterns and data.",
+                    autoQuestions,
+                    settings::setAutoQuestionsEnabled,
+                    FieldMindIcons.Question
+                )
+            }
+        }
+        item {
+            Card(shape = RoundedCornerShape(22.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)) {
+                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Box(Modifier.size(32.dp).clip(RoundedCornerShape(10.dp)).background(FieldMindTheme.colors.info.copy(alpha = 0.14f)), contentAlignment = Alignment.Center) {
+                            Icon(FieldMindIcons.Info, null, tint = FieldMindTheme.colors.info, size = 18.dp)
+                        }
+                        Text("Daily generation cap", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                    }
+                    Text(
+                        "FieldMind limits auto-generation to 20 items (flashcards + questions combined) per day.
+                        This prevents duplicate content loops and keeps your study queue manageable.
+                        The counter resets automatically each day.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+        }
+        item {
+            Card(shape = RoundedCornerShape(22.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)) {
+                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("How it works", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.primary)
+                    Text(
+                        "When enabled, auto-generation runs in the background after you add new observations.
+                        It scans your data for key concepts, patterns, and facts, then builds flashcards and questions — all on your device, with no data leaving your phone.
+                        You can always manually create flashcards and questions from the Library tab regardless of these settings.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+        }
+    }
+}
 }
