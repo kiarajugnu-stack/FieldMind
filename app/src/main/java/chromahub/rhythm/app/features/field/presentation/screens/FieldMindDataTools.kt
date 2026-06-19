@@ -54,7 +54,8 @@ private data class ToolCardInfo(
 fun DataToolsHubScreen(
     viewModel: FieldMindViewModel,
     onBack: () -> Unit,
-    onNavigate: (FieldMindScreen) -> Unit
+    onNavigate: (FieldMindScreen) -> Unit,
+    onOpenDetail: (String, Long) -> Unit = { _, _ -> }
 ) {
     val accentColor = FieldMindTheme.colors.data
     val tools = remember {
@@ -68,6 +69,63 @@ fun DataToolsHubScreen(
             ToolCardInfo("Site Log", "Visit conditions", FieldMindIcons.Map, accentColor, FieldMindScreen.SiteLogTool),
             ToolCardInfo("Comparison", "Species/samples", FieldMindIcons.Data, accentColor, FieldMindScreen.ComparisonTable)
         )
+    }
+
+    val dataRecords by viewModel.dataRecords.collectAsState()
+    var showAllRecords by remember { mutableStateOf(false) }
+
+    // Quick-entry: DataCollectionQuestion → save appropriate data record directly
+    val quickEntryHaptics = rememberFieldMindHaptics()
+    val quickEntrySnackbar = remember { SnackbarHostState() }
+    val quickEntryScope = rememberCoroutineScope()
+
+    fun saveFromQuestion(question: DataCollectionQuestion) {
+        quickEntryHaptics.confirm()
+        when (question) {
+            DataCollectionQuestion.COUNT_THINGS ->
+                viewModel.addDataRecord("Counter", "Count: ${question.displayText}", "1", "count",
+                    datasetKind = "Quick entry", onResult = { success ->
+                        showFastSnackbar(quickEntrySnackbar, quickEntryScope,
+                            if (success) "Counter record saved" else "Failed to save")
+                    })
+            DataCollectionQuestion.MEASURE_SOMETHING ->
+                viewModel.addDataRecord("Measurement Log", "Measure: ${question.displayText}", "0", "cm",
+                    notes = "Quick measurement entry. Update value and unit in detail.",
+                    datasetKind = "Quick entry", onResult = { success ->
+                        showFastSnackbar(quickEntrySnackbar, quickEntryScope,
+                            if (success) "Measurement record saved" else "Failed to save")
+                    })
+            DataCollectionQuestion.COMPARE_LOCATIONS ->
+                viewModel.addDataRecord("Comparison Table", "Compare: ${question.displayText}", "", "",
+                    notes = "Quick comparison entry. Open detail to add items.",
+                    datasetKind = "Quick entry", chartPreference = "Comparison",
+                    onResult = { success ->
+                        showFastSnackbar(quickEntrySnackbar, quickEntryScope,
+                            if (success) "Comparison record saved" else "Failed to save")
+                    })
+            DataCollectionQuestion.TRACK_CHANGES ->
+                viewModel.addDataRecord("Measurement Log", "Track: ${question.displayText}", "0", "",
+                    notes = "Quick tracking entry. Update value over time.",
+                    datasetKind = "Quick entry", chartPreference = "Line",
+                    onResult = { success ->
+                        showFastSnackbar(quickEntrySnackbar, quickEntryScope,
+                            if (success) "Tracking record saved" else "Failed to save")
+                    })
+            DataCollectionQuestion.RECORD_WEATHER ->
+                viewModel.addDataRecord("Weather Log", "Weather: ${question.displayText}", "Clear", "",
+                    notes = "Quick weather entry. Update conditions in detail.",
+                    datasetKind = "Quick entry", onResult = { success ->
+                        showFastSnackbar(quickEntrySnackbar, quickEntryScope,
+                            if (success) "Weather record saved" else "Failed to save")
+                    })
+            DataCollectionQuestion.TRACK_SPECIES ->
+                viewModel.addDataRecord("Counter", "Species: ${question.displayText}", "1", "count",
+                    notes = "Quick species entry. Update species and count in detail.",
+                    datasetKind = "Quick entry", onResult = { success ->
+                        showFastSnackbar(quickEntrySnackbar, quickEntryScope,
+                            if (success) "Species record saved" else "Failed to save")
+                    })
+        }
     }
 
     Box(Modifier.fillMaxSize()) {
@@ -108,9 +166,60 @@ fun DataToolsHubScreen(
                 }
             }
 
-            // Summary of saved data records
+            // ── Quick-entry: DataCollectionQuestionSelector ──
             item {
-                val dataRecords by viewModel.dataRecords.collectAsState()
+                Card(
+                    shape = RoundedCornerShape(24.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                ) {
+                    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Icon(FieldMindIcons.Add, null, tint = accentColor, size = 20.dp)
+                            Text("Quick data entry", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                        }
+                        Text(
+                            "Tap a question to save a pre-structured data record:",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        DataCollectionQuestion.entries.forEach { question ->
+                            Surface(
+                                onClick = { saveFromQuestion(question) },
+                                shape = RoundedCornerShape(14.dp),
+                                color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.25f)
+                            ) {
+                                Row(
+                                    Modifier.fillMaxWidth().padding(12.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                                ) {
+                                    Box(
+                                        Modifier.size(32.dp)
+                                            .clip(RoundedCornerShape(10.dp))
+                                            .background(accentColor.copy(alpha = 0.12f)),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(FieldMindIcons.Forward, null, tint = accentColor, size = 16.dp)
+                                    }
+                                    Column(Modifier.weight(1f)) {
+                                        Text(question.displayText, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
+                                        Text(
+                                            question.suggestedFields.take(3).joinToString(", "),
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                    Icon(FieldMindIcons.Add, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, size = 16.dp)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Summary of saved data records + View All
+            item {
                 val counterCount = dataRecords.count { it.toolType == "Counter" }
                 val measurementCount = dataRecords.count { it.toolType == "Measurement Log" }
                 val weatherCount = dataRecords.count { it.toolType == "Weather Log" }
@@ -118,10 +227,22 @@ fun DataToolsHubScreen(
                 Card(
                     shape = RoundedCornerShape(24.dp),
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+                    modifier = Modifier.animateContentSize()
                 ) {
                     Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text("Saved records", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                        Row(
+                            Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text("Saved records", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                            if (dataRecords.isNotEmpty()) {
+                                TextButton(onClick = { showAllRecords = !showAllRecords }) {
+                                    Text(if (showAllRecords) "Hide" else "View all (${dataRecords.size})")
+                                }
+                            }
+                        }
                         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
                             RecordStat("Counter", counterCount, FieldMindIcons.Add)
                             RecordStat("Measure", measurementCount, FieldMindIcons.Graph)
@@ -132,10 +253,66 @@ fun DataToolsHubScreen(
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
+
+                        // Expandable records list
+                        if (showAllRecords && dataRecords.isNotEmpty()) {
+                            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
+                            dataRecords.take(50).forEach { record ->
+                                Row(
+                                    Modifier
+                                        .fillMaxWidth()
+                                        .clip(RoundedCornerShape(12.dp))
+                                        .clickable { onOpenDetail("data", record.id) }
+                                        .padding(vertical = 6.dp, horizontal = 4.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Column(Modifier.weight(1f)) {
+                                        Text(
+                                            record.label,
+                                            style = MaterialTheme.typography.bodySmall,
+                                            fontWeight = FontWeight.Medium,
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis
+                                        )
+                                        Text(
+                                            "${record.toolType} • ${record.value.take(20)}",
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis
+                                        )
+                                    }
+                                    Text(
+                                        record.value,
+                                        style = MaterialTheme.typography.titleSmall,
+                                        fontWeight = FontWeight.Bold,
+                                        color = accentColor
+                                    )
+                                    Icon(FieldMindIcons.Forward, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, size = 16.dp)
+                                }
+                            }
+                            if (dataRecords.size > 50) {
+                                Text(
+                                    "+ ${dataRecords.size - 50} more records",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
                     }
                 }
             }
+            // Snackbar for quick-entry feedback
+            item { Spacer(Modifier.height(4.dp)) }
         }
+        // Quick-entry snackbar overlay
+        FieldMindSnackbarOverlay(
+            hostState = quickEntrySnackbar,
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .padding(top = 8.dp, start = 16.dp, end = 16.dp)
+        )
     }
 }
 
@@ -216,9 +393,8 @@ fun CounterToolScreen(
         if (count <= 0) return
         haptics.confirm()
         val labelToUse = label.ifBlank { "Counter tally" }
-        viewModel.addCounter(labelToUse, count, "Manual save at $count")
-        scope.launch {
-            showFastSnackbar(snackbar, scope, "Saved count: $count")
+        viewModel.addCounter(labelToUse, count, "Manual save at $count") { success ->
+            showFastSnackbar(snackbar, scope, if (success) "Saved count: $count" else "Failed to save — try again")
         }
     }
 
@@ -247,7 +423,7 @@ fun CounterToolScreen(
                     Card(
                         shape = RoundedCornerShape(32.dp),
                         colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.primaryContainer
+                            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
                         ),
                         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
                     ) {
@@ -259,7 +435,7 @@ fun CounterToolScreen(
                             Text(
                                 "Current count",
                                 style = MaterialTheme.typography.labelLarge,
-                                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f),
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
                                 fontWeight = FontWeight.SemiBold
                             )
                             Text(
@@ -268,7 +444,7 @@ fun CounterToolScreen(
                                     fontWeight = FontWeight.ExtraBold,
                                     fontSize = 72.sp
                                 ),
-                                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                color = FieldMindTheme.colors.data,
                                 modifier = Modifier.graphicsLayer {
                                     scaleX = if (count > 0) pulseScale else 1f
                                     scaleY = if (count > 0) pulseScale else 1f
@@ -318,7 +494,7 @@ fun CounterToolScreen(
                             ) {
                                 Text(
                                     "Reset to zero",
-                                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.6f)
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                                 )
                             }
                         }
@@ -481,19 +657,22 @@ fun MeasurementToolScreen(
     fun saveMeasurement() {
         if (!canSave) return
         haptics.confirm()
+        val savedLabel = label.trim()
+        val savedValue = value.trim()
+        val savedUnit = unit.trim()
         viewModel.addDataRecord(
             toolType = "Measurement Log",
-            label = label.trim(),
-            value = value.trim(),
-            unit = unit.trim(),
+            label = savedLabel,
+            value = savedValue,
+            unit = savedUnit,
             notes = notes.trim(),
             location = location.trim(),
             datasetKind = "Measurements",
-            chartPreference = "Line"
+            chartPreference = "Line",
+            onResult = { success ->
+                showFastSnackbar(snackbar, scope, if (success) "Measurement saved: $savedLabel = $savedValue $savedUnit" else "Failed to save measurement — try again")
+            }
         )
-        scope.launch {
-            showFastSnackbar(snackbar, scope, "Measurement saved: $label = $value $unit")
-        }
         label = ""
         value = ""
         notes = ""
@@ -525,7 +704,7 @@ fun MeasurementToolScreen(
                     Card(
                         shape = RoundedCornerShape(24.dp),
                         colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.primaryContainer
+                            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
                         ),
                         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
                     ) {
@@ -537,7 +716,7 @@ fun MeasurementToolScreen(
                                 "Enter measurement",
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onPrimaryContainer
+                                color = MaterialTheme.colorScheme.onSurface
                             )
 
                             // Large value display
@@ -547,7 +726,7 @@ fun MeasurementToolScreen(
                                     fontWeight = FontWeight.Bold,
                                     fontSize = 36.sp
                                 ),
-                                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                color = FieldMindTheme.colors.data,
                                 modifier = Modifier.fillMaxWidth(),
                                 textAlign = TextAlign.Center
                             )
@@ -685,6 +864,7 @@ fun WeatherLogToolScreen(
             humidity.takeIf { it.isNotBlank() }?.let { append(" | ${it}% humidity") }
             windSpeed.takeIf { it.isNotBlank() }?.let { append(" | ${it} km/h wind") }
         }
+        val savedCondition = condition
         viewModel.addDataRecord(
             toolType = "Weather Log",
             label = "Weather: $condition",
@@ -693,11 +873,11 @@ fun WeatherLogToolScreen(
             notes = notes.trim(),
             location = location.trim(),
             datasetKind = "Weather logs",
-            chartPreference = "Line"
+            chartPreference = "Line",
+            onResult = { success ->
+                showFastSnackbar(snackbar, scope, if (success) "Weather log saved: $savedCondition" else "Failed to save weather log — try again")
+            }
         )
-        scope.launch {
-            showFastSnackbar(snackbar, scope, "Weather log saved: $condition")
-        }
     }
 
     fun fetchLocation() {
@@ -1095,19 +1275,20 @@ fun ChecklistToolScreen(
         if (items.isEmpty()) return
         haptics.confirm()
         val checkedCount = items.count { it.second }
+        val itemCount = items.size
         val summary = items.joinToString("; ") { (name, checked) -> "${if (checked) "✓" else "○"} $name" }
         viewModel.addDataRecord(
             toolType = "Checklist",
-            label = "Checklist (${checkedCount}/${items.size} checked)",
+            label = "Checklist (${checkedCount}/${itemCount} checked)",
             value = summary,
             unit = "",
             notes = "",
             datasetKind = "Checklists",
-            chartPreference = "Bar"
+            chartPreference = "Bar",
+            onResult = { success ->
+                showFastSnackbar(snackbar, scope, if (success) "Checklist saved (${checkedCount}/${itemCount})" else "Failed to save checklist — try again")
+            }
         )
-        scope.launch {
-            showFastSnackbar(snackbar, scope, "Checklist saved (${checkedCount}/${items.size})")
-        }
     }
 
     Box(Modifier.fillMaxSize()) {
@@ -1235,18 +1416,19 @@ fun EventLogToolScreen(
     fun saveEvent() {
         if (title.isBlank()) return
         haptics.confirm()
+        val savedTitle = title.trim()
         viewModel.addDataRecord(
             toolType = "Event Log",
-            label = title.trim(),
+            label = savedTitle,
             value = "$category | $date",
             unit = "",
             notes = "$description\nDate: $date",
             datasetKind = "Events",
-            chartPreference = "Bar"
+            chartPreference = "Bar",
+            onResult = { success ->
+                showFastSnackbar(snackbar, scope, if (success) "Event saved: $savedTitle" else "Failed to save event — try again")
+            }
         )
-        scope.launch {
-            showFastSnackbar(snackbar, scope, "Event saved: $title")
-        }
         title = ""
         description = ""
     }
@@ -1320,18 +1502,19 @@ fun SiteLogToolScreen(
     fun saveSiteLog() {
         if (siteName.isBlank()) return
         haptics.confirm()
+        val savedName = siteName.trim()
         viewModel.addDataRecord(
             toolType = "Site Log",
-            label = siteName.trim(),
+            label = savedName,
             value = "$purpose | Duration: ${duration.ifBlank { "N/A" }}",
             unit = "",
             notes = "Conditions: $conditions\nFindings: $findings",
             datasetKind = "Site visits",
-            chartPreference = "Bar"
+            chartPreference = "Bar",
+            onResult = { success ->
+                showFastSnackbar(snackbar, scope, if (success) "Site log saved: $savedName" else "Failed to save site log — try again")
+            }
         )
-        scope.launch {
-            showFastSnackbar(snackbar, scope, "Site log saved: $siteName")
-        }
         siteName = ""
         conditions = ""
         findings = ""
@@ -1349,9 +1532,9 @@ fun SiteLogToolScreen(
                     FieldScreenHeader("Site log", "Record a site visit with purpose, conditions, and findings.", icon = FieldMindIcons.Map, actionIcon = FieldMindIcons.Back, onAction = onBack)
                 }
                 item {
-                    Card(shape = RoundedCornerShape(24.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)) {
+                    Card(shape = RoundedCornerShape(24.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)) {
                         Column(Modifier.fillMaxWidth().padding(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-                            Text("Site visit details", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onPrimaryContainer)
+                            Text("Site visit details", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
                             FieldTextField(siteName, { siteName = it }, "Site name", required = true, supportingText = "e.g. North Meadow, Creek Bend")
                             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                                 FieldTextField(duration, { duration = it }, "Duration", modifier = Modifier.weight(1f), supportingText = "e.g. 2 hours")
@@ -1405,21 +1588,22 @@ fun ComparisonTableScreen(
     fun saveComparison() {
         if (rows.isEmpty() || tableName.isBlank()) return
         haptics.confirm()
+        val savedName = tableName.trim()
         val summary = rows.joinToString("; ") { row ->
             "${row.label}: ${row.items.joinToString(" vs ")}"
         }
         viewModel.addDataRecord(
             toolType = "Comparison Table",
-            label = tableName.trim(),
+            label = savedName,
             value = summary,
             unit = "",
             notes = "$columnCount columns, ${rows.size} rows",
             datasetKind = "Comparisons",
-            chartPreference = "Bar"
+            chartPreference = "Bar",
+            onResult = { success ->
+                showFastSnackbar(snackbar, scope, if (success) "Table saved: $savedName" else "Failed to save table — try again")
+            }
         )
-        scope.launch {
-            showFastSnackbar(snackbar, scope, "Table saved: $tableName")
-        }
     }
 
     Box(Modifier.fillMaxSize()) {

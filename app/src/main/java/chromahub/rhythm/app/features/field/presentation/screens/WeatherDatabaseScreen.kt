@@ -25,6 +25,7 @@ import fieldmind.research.app.features.field.data.weather.WeatherSnapshot
 import fieldmind.research.app.features.field.data.weather.WeatherUnitConverter
 import fieldmind.research.app.features.field.presentation.components.AnimatedWeatherScene
 import fieldmind.research.app.features.field.presentation.components.FieldMindIcons
+import fieldmind.research.app.features.field.presentation.components.GpsOffDialog
 import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
@@ -53,16 +54,22 @@ fun WeatherDatabaseScreen(
     val colors = FieldMindTheme.colors
     val tempUnit by viewModel.fieldSettings.tempUnit.collectAsState()
     val windSpeedUnit by viewModel.fieldSettings.windSpeedUnit.collectAsState()
+    val showCloudAnimation by viewModel.fieldSettings.weatherShowCloudAnimation.collectAsState()
 
     // Weather Database always shows all data (display prefs only affect the home widget)
 
     // ── Live current weather with auto-refresh ──
-    var currentWeather by remember { mutableStateOf<WeatherSnapshot?>(null) }
+    // Initialize from ViewModel cache to avoid flash on re-composition
+    var currentWeather by remember { mutableStateOf(viewModel.lastWeatherSnapshot) }
     var weatherError by remember { mutableStateOf(false) }
     var isRefreshing by remember { mutableStateOf(false) }
     var dashboardPlaceName by remember { mutableStateOf<String?>(null) }
+    var showGpsDialog by remember { mutableStateOf(false) }
     val ctx = LocalContext.current
 
+    // ── GPS check helper ──
+    val locProvider = remember { runCatching { FieldLocationProvider(ctx) }.getOrNull() }
+    
     // ── Track last refresh time for "Updated just now" fix ──
     var lastRefreshTime by remember { mutableStateOf(System.currentTimeMillis()) }
     var refreshTimestampText by remember { mutableStateOf("Initializing…") }
@@ -88,12 +95,19 @@ fun WeatherDatabaseScreen(
         }
         
         // Resolve place name for display
-        val locProvider = runCatching { FieldLocationProvider(ctx) }.getOrNull()
         if (locProvider != null && locProvider.hasAnyLocationPermission()) {
             locProvider.lastKnownLocation()?.let { loc ->
                 locProvider.resolvePlaceName(loc.latitude, loc.longitude) { place ->
                     dashboardPlaceName = place
                 }
+            }
+        }
+        
+        // Check GPS before refresh
+        if (locProvider != null && !locProvider.isGpsEnabled()) {
+            // Don't bother fetching - show error instead
+            if (currentWeather == null) {
+                weatherError = true
             }
         }
     }
@@ -158,12 +172,21 @@ fun WeatherDatabaseScreen(
         } else null
     }
     val formattedDate = remember(selectedDate) {
-        selectedDate?.let {
+        selectedDate?.let { dateStr ->
             try {
-                SimpleDateFormat("MMM d, yyyy", Locale.getDefault()).format(
-                    SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).parse(it) ?: Date()
-                )
-            } catch (_: Exception) { it }
+                val todayStr = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
+                if (dateStr == todayStr) "Today"
+                else {
+                    val yesterdayCal = java.util.Calendar.getInstance().apply { add(java.util.Calendar.DAY_OF_YEAR, -1) }
+                    val yesterdayStr = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(yesterdayCal.time)
+                    if (dateStr == yesterdayStr) "Yesterday"
+                    else {
+                        SimpleDateFormat("MMM d, yyyy", Locale.getDefault()).format(
+                            SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).parse(dateStr) ?: Date()
+                        )
+                    }
+                }
+            } catch (_: Exception) { dateStr }
         } ?: "All time"
     }
 
@@ -415,6 +438,11 @@ fun WeatherDatabaseScreen(
             }
         }
     }
+    
+    // ── GpsOffDialog ──
+    if (showGpsDialog) {
+        GpsOffDialog(onDismiss = { showGpsDialog = false })
+    }
 }
 }
 
@@ -426,7 +454,8 @@ private fun LiveCurrentWeatherCard(
     placeName: String? = null,
     refreshTimestampText: String = "Updated just now",
     tempUnit: String = "Celsius",
-    windSpeedUnit: String = "km/h"
+    windSpeedUnit: String = "km/h",
+    showCloudAnimation: Boolean = true
 ) {
     val colors = FieldMindTheme.colors
     val isDarkTheme = colors.isDark
@@ -476,14 +505,13 @@ private fun LiveCurrentWeatherCard(
                     modifier = Modifier
                         .matchParentSize()
                         .clip(RoundedCornerShape(28.dp))
-                ) {
-                    AnimatedWeatherScene(
-                        weatherCode = weather.weatherCode,
-                        temperature = weather.temperature,
-                        sunrise = weather.sunrise,
-                        sunset = weather.sunset,
-                        compact = false
-                    )
+                ) {AnimatedWeatherScene(
+        weatherCode = weather.weatherCode,
+        temperature = weather.temperature,
+        sunrise = weather.sunrise,
+        sunset = weather.sunset,
+        compact = false,                    showCloudAnimation = showCloudAnimation
+                )
                 }
             }
 

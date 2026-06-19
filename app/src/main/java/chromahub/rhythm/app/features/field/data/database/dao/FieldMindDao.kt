@@ -36,7 +36,7 @@ interface FieldMindDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun insertHypothesis(entity: HypothesisEntity): Long
     @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun insertProject(entity: ProjectEntity): Long
     @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun insertSource(entity: SourceEntity): Long
-    @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun insertDataRecord(entity: DataRecordEntity): Long
+    @Insert suspend fun insertDataRecord(entity: DataRecordEntity): Long
     @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun insertReport(entity: ReportEntity): Long
     @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun insertFlashcard(entity: FlashcardEntity): Long
     @Insert(onConflict = OnConflictStrategy.IGNORE) suspend fun insertTag(entity: TagEntity): Long
@@ -116,6 +116,8 @@ interface FieldMindDao {
     suspend fun linkSessionObservation(ref: SessionObservationCrossRef)
     @Query("SELECT o.* FROM field_observations o INNER JOIN field_session_observations x ON x.observationId = o.id WHERE x.sessionId = :sessionId AND o.deletedAt IS NULL ORDER BY o.timestamp DESC")
     fun observeObservationsForSession(sessionId: Long): Flow<List<ObservationEntity>>
+    @Query("SELECT * FROM field_session_observations")
+    fun observeAllSessionObservationCrossRefs(): Flow<List<SessionObservationCrossRef>>
 
     // ── Species Registry ──
     @Query("SELECT * FROM field_species WHERE deletedAt IS NULL ORDER BY commonName ASC")

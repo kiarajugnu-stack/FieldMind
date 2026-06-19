@@ -11,11 +11,17 @@ import fieldmind.research.app.features.field.data.repository.FieldMindRepository
 import fieldmind.research.app.features.field.data.export.FieldMindExport
 import fieldmind.research.app.features.field.data.settings.FieldMindSettings
 import fieldmind.research.app.features.field.data.weather.WeatherSnapshot
+import fieldmind.research.app.features.field.data.analysis.DetectedPattern
+import fieldmind.research.app.features.field.data.analysis.PatternDetectionEngine
+import fieldmind.research.app.features.field.data.flashcard.SmartFlashcardGenerator
+import fieldmind.research.app.features.field.data.question.QuestionGenerator
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -38,7 +44,10 @@ data class DraftEvidenceAttachment(
 class FieldMindViewModel(application: Application) : AndroidViewModel(application) {
     private val repository = FieldMindRepository(FieldMindDatabase.getInstance(application).fieldMindDao())
     val fieldSettings: FieldMindSettings = FieldMindSettings.getInstance(application)
-    init { fieldSettings.initializeBackgroundWork() }
+    init {
+        fieldSettings.initializeBackgroundWork()
+        startAutoGeneration()
+    }
 
     val observations: StateFlow<List<ObservationEntity>> = repository.observations.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
     val notes: StateFlow<List<NoteEntity>> = repository.notes.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
@@ -46,17 +55,28 @@ class FieldMindViewModel(application: Application) : AndroidViewModel(applicatio
     val hypotheses: StateFlow<List<HypothesisEntity>> = repository.hypotheses.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
     val projects: StateFlow<List<ProjectEntity>> = repository.projects.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
     val sources: StateFlow<List<SourceEntity>> = repository.sources.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
-    val dataRecords: StateFlow<List<DataRecordEntity>> = repository.dataRecords.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+    val dataRecords: StateFlow<List<DataRecordEntity>> = repository.dataRecords.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
     val reports: StateFlow<List<ReportEntity>> = repository.reports.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
     val flashcards: StateFlow<List<FlashcardEntity>> = repository.flashcards.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
     val tags: StateFlow<List<TagEntity>> = repository.tags.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
     val commonTags: StateFlow<List<TagStatistic>> = repository.commonTags.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    // ── Pattern detection (reactive, computed from observations) ──
+    val detectedPatterns: StateFlow<List<DetectedPattern>>
 
     /** True while the user has an active capture session timer running on the Observe screen. */
     @set:JvmName("setCaptureSessionActiveState")
     var captureSessionActive by mutableStateOf(false)
         private set
     fun setCaptureSessionActive(active: Boolean) { captureSessionActive = active }
+
+    init {
+        detectedPatterns = combine(
+            observations, fieldSettings.autoPatternDetectionEnabled
+        ) { obs, enabled ->
+            if (enabled && obs.isNotEmpty()) PatternDetectionEngine.detectAll(obs) else emptyList()
+        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+    }
 
     fun addObservation(
         subject: String,
@@ -416,11 +436,17 @@ class FieldMindViewModel(application: Application) : AndroidViewModel(applicatio
         repository.addHypothesis(HypothesisEntity(linkedQuestionId = questionId, prediction = prediction.trim(), reasoning = reasoning.trim(), evidenceNeeded = evidenceNeeded.trim(), supportCriteria = supportCriteria.trim(), weakeningCriteria = weakeningCriteria.trim(), testMethod = testMethod.trim(), confidencePercent = confidence, resultStatus = resultStatus))
     }
 
-    fun addDataRecord(toolType: String, label: String, value: String, unit: String = "", notes: String = "", location: String = "", projectId: Long? = null, observationId: Long? = null, datasetKind: String = "Manual", chartPreference: String = "Line") = viewModelScope.launch {
-        repository.addDataRecord(DataRecordEntity(toolType = toolType, label = label.trim(), value = value.trim(), unit = unit.trim(), notes = notes.trim(), location = location.trim(), projectId = projectId, observationId = observationId, datasetKind = datasetKind, chartPreference = chartPreference))
+    fun addDataRecord(toolType: String, label: String, value: String, unit: String = "", notes: String = "", location: String = "", projectId: Long? = null, observationId: Long? = null, datasetKind: String = "Manual", chartPreference: String = "Line", onResult: ((Boolean) -> Unit)? = null) = viewModelScope.launch {
+        try {
+            repository.addDataRecord(DataRecordEntity(toolType = toolType, label = label.trim(), value = value.trim(), unit = unit.trim(), notes = notes.trim(), location = location.trim(), projectId = projectId, observationId = observationId, datasetKind = datasetKind, chartPreference = chartPreference))
+            onResult?.invoke(true)
+        } catch (e: Exception) {
+            android.util.Log.e("FieldMindVM", "Failed to save data record", e)
+            onResult?.invoke(false)
+        }
     }
 
-    fun addCounter(label: String, count: Int, notes: String) = addDataRecord("Counter", label, count.toString(), "count", notes)
+    fun addCounter(label: String, count: Int, notes: String, onResult: ((Boolean) -> Unit)? = null) = addDataRecord("Counter", label, count.toString(), "count", notes, onResult = onResult)
 
     fun addReport(type: String, title: String, background: String, question: String, methods: String, observations: String, results: String, interpretation: String, conclusion: String, limitations: String, nextSteps: String, projectId: Long? = null) = viewModelScope.launch {
         val markdown = buildMarkdown(type, title, background, question, methods, observations, results, interpretation, conclusion, limitations, nextSteps)
@@ -441,6 +467,7 @@ class FieldMindViewModel(application: Application) : AndroidViewModel(applicatio
         repository.linkSessionObservation(sessionId, observationId)
     }
     val researchSessions: StateFlow<List<ResearchSessionEntity>> = repository.researchSessions.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+    val sessionObservationCrossRefs: StateFlow<List<SessionObservationCrossRef>> = repository.sessionObservationCrossRefs.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     // ── Weather (multi-provider) ──
     private fun getWeatherProvider(): fieldmind.research.app.features.field.data.weather.WeatherProvider {
@@ -596,7 +623,8 @@ class FieldMindViewModel(application: Application) : AndroidViewModel(applicatio
     val tasks: StateFlow<List<TaskEntity>> = repository.tasks.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
     fun observeTasksForProject(projectId: Long) = repository.observeTasksForProject(projectId)
 
-    fun addFlashcard(front: String, back: String, type: String, sourceId: Long? = null, projectId: Long? = null, deckMode: String = "basic") = viewModelScope.launch {
+    fun addFlashcard(front: String, back: String, type: String, sourceId: Long? = null, projectId: Long? = null, deckMode: String = "basic", dedupKey: String = "") = viewModelScope.launch {
+        val key = dedupKey.ifBlank { "${front.lowercase().trim()}:${back.lowercase().trim()}".hashCode().toLong().let { if (it == Long.MIN_VALUE) Long.MAX_VALUE else kotlin.math.abs(it) }.toString(36) }
         repository.addFlashcard(FlashcardEntity(front = front.trim(), back = back.trim(), type = type, sourceId = sourceId, projectId = projectId, deckMode = deckMode))
     }
 
@@ -616,6 +644,115 @@ class FieldMindViewModel(application: Application) : AndroidViewModel(applicatio
             "Next Steps" to nextSteps
         ).forEach { (heading, body) -> appendLine("\n## $heading\n${body.trim()}") }
     }
+
+    // ── Auto-generation: flashcards & questions (runs in background, no button press) ──
+
+    /**
+     * Launches a background collector that watches observations, notes, sources, and flashcards.
+     * On data changes, debounces 5 seconds, then auto-generates:
+     * 1. Flashcards from observations, notes, and sources (if autoFlashcardsEnabled)
+     * 2. Questions from observations (if autoQuestionsEnabled)
+     *
+     * Deduplication ensures we never create the same flashcard/question twice.
+     */
+    private fun startAutoGeneration() {
+        viewModelScope.launch {
+            combine(
+                observations,
+                notes,
+                sources,
+                flashcards,
+                questions,
+                fieldSettings.autoFlashcardsEnabled,
+                fieldSettings.autoQuestionsEnabled
+            ) { a: Array<*> ->
+                val obs = a[0] as? List<ObservationEntity> ?: emptyList()
+                val nts = a[1] as? List<NoteEntity> ?: emptyList()
+                val srcs = a[2] as? List<SourceEntity> ?: emptyList()
+                val cards = a[3] as? List<FlashcardEntity> ?: emptyList()
+                val quests = a[4] as? List<QuestionEntity> ?: emptyList()
+                val genFlash = a[5] as? Boolean ?: false
+                val genQuest = a[6] as? Boolean ?: false
+                GenerationTrigger(
+                    observations = obs,
+                    notes = nts,
+                    sources = srcs,
+                    existingFlashcards = cards,
+                    existingQuestions = quests,
+                    autoFlashcards = genFlash,
+                    autoQuestions = genQuest
+                )
+            }.debounce(5_000)
+                .collect { trigger ->
+                    // ── Auto-flashcards ──
+                    if (trigger.autoFlashcards && trigger.observations.isNotEmpty()) {
+                        runCatching {
+                            val generated = SmartFlashcardGenerator.generateAll(
+                                observations = trigger.observations,
+                                notes = trigger.notes,
+                                sources = trigger.sources,
+                                existing = trigger.existingFlashcards
+                            )
+                            if (generated.isNotEmpty()) {
+                                android.util.Log.d("FieldMindVM", "Auto-generating ${generated.size} flashcards from data")
+                                generated.forEach { card ->
+                                    addFlashcard(
+                                        front = card.front,
+                                        back = card.back,
+                                        type = card.type,
+                                        sourceId = if (card.type == "observation") card.sourceId else null,
+                                        projectId = card.projectId,
+                                        deckMode = "sm2",
+                                        dedupKey = card.dedupKey
+                                    )
+                                }
+                            }
+                        }.onFailure { e ->
+                            android.util.Log.e("FieldMindVM", "Auto-flashcard generation failed", e)
+                        }
+                    }
+
+                    // ── Auto-questions ──
+                    if (trigger.autoQuestions && trigger.observations.isNotEmpty()) {
+                        runCatching {
+                            val generated = QuestionGenerator.generateAll(
+                                observations = trigger.observations,
+                                sources = trigger.sources,
+                                existing = trigger.existingQuestions
+                            )
+                            if (generated.isNotEmpty()) {
+                                android.util.Log.d("FieldMindVM", "Auto-generating ${generated.size} questions from observations")
+                                generated.forEach { q ->
+                                    addQuestion(
+                                        question = q.questionText,
+                                        category = q.category,
+                                        sourceType = q.sourceType,
+                                        status = "Open",
+                                        priority = q.priority,
+                                        observationId = q.observationId
+                                    )
+                                }
+                            }
+                        }.onFailure { e ->
+                            android.util.Log.e("FieldMindVM", "Auto-question generation failed", e)
+                        }
+                    }
+                }
+        }
+    }
+
+    /**
+     * Internal data holder for the auto-generation combine flow.
+     */
+    private data class GenerationTrigger(
+        val observations: List<ObservationEntity>,
+        val notes: List<NoteEntity>,
+        val sources: List<SourceEntity>,
+        val existingFlashcards: List<FlashcardEntity>,
+        val existingQuestions: List<QuestionEntity>,
+        val autoFlashcards: Boolean,
+        val autoQuestions: Boolean
+    )
 
     companion object {
         private val dateFormatter = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())

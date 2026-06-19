@@ -166,6 +166,7 @@ fun HomeScreen(
     val weatherShowWind by viewModel.fieldSettings.weatherShowWind.collectAsState()
     val weatherShowCloud by viewModel.fieldSettings.weatherShowCloudCover.collectAsState()
     val weatherShowPressure by viewModel.fieldSettings.weatherShowPressure.collectAsState()
+    val weatherShowCloudAnimation by viewModel.fieldSettings.weatherShowCloudAnimation.collectAsState()
     val tempUnit by viewModel.fieldSettings.tempUnit.collectAsState()
     val windSpeedUnit by viewModel.fieldSettings.windSpeedUnit.collectAsState()
     val developerMode by viewModel.fieldSettings.developerMode.collectAsState()
@@ -175,11 +176,16 @@ fun HomeScreen(
     var homeWeatherLoading by remember { mutableStateOf(false) }
     var homeWeatherError by remember { mutableStateOf(false) }
     var homePlaceName by remember { mutableStateOf<String?>(null) }
+    var showGpsDialog by remember { mutableStateOf(false) }
+    var showWeatherLoadingDialog by remember { mutableStateOf(false) }
     val context = LocalContext.current
 
     // Initial fetch on first composition + auto-refresh at configured interval
     // Uses cooldown in ViewModel so navigating away and back doesn't re-fetch
     LaunchedEffect(Unit) {
+        // Show loading dialog during initial fetch
+        showWeatherLoadingDialog = true
+
         // First fetch on fresh app open (forceRefresh = true only once)
         val cached = viewModel.lastWeatherSnapshot
         if (cached == null) {
@@ -187,9 +193,11 @@ fun HomeScreen(
             homeCurrentWeather = viewModel.refreshWeatherFromLocation(forceRefresh = true)
             homeWeatherError = homeCurrentWeather == null
             homeWeatherLoading = false
+            showWeatherLoadingDialog = false
         } else {
             homeCurrentWeather = cached
             homeWeatherError = false
+            showWeatherLoadingDialog = false
         }
 
         val locProvider = runCatching { FieldLocationProvider(context) }.getOrNull()
@@ -275,11 +283,11 @@ fun HomeScreen(
                     tempUnit = tempUnit,
                     windSpeedUnit = windSpeedUnit,
                     moonPhase = moonPhase,
-                    conditionsNudge = conditionsNudge,
-                    sunrise = homeCurrentWeather?.sunrise,
-                    sunset = homeCurrentWeather?.sunset,
-                    developerMode = developerMode
-                )
+                    conditionsNudge = conditionsNudge,    sunrise = homeCurrentWeather?.sunrise,
+    sunset = homeCurrentWeather?.sunset,
+    developerMode = developerMode,
+    showCloudAnimation = weatherShowCloudAnimation
+)
             }
 
             // ── Daily Goal with delta ──
@@ -408,6 +416,56 @@ fun HomeScreen(
         )
     }
 
+    // ── Weather loading dialog (shown during initial fetch) ──
+    if (showWeatherLoadingDialog) {
+        Dialog(
+            onDismissRequest = { },
+            properties = DialogProperties(
+                usePlatformDefaultWidth = false,
+                dismissOnBackPress = false,
+                dismissOnClickOutside = false
+            )
+        ) {
+            Box(
+                Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.5f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Card(
+                    shape = RoundedCornerShape(28.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+                    modifier = Modifier.widthIn(max = 300.dp)
+                ) {
+                    Column(
+                        Modifier.padding(32.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(40.dp),
+                            strokeWidth = 3.dp
+                        )
+                        Text(
+                            "Fetching weather…",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            "Getting your current conditions",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    // ── GpsOffDialog ──
+    if (showGpsDialog) {
+        GpsOffDialog(onDismiss = { showGpsDialog = false })
+    }
+
     // ── Camera Dialog (full-screen, opens immediately) ──
     if (showCamera) {
         Dialog(
@@ -426,12 +484,48 @@ fun HomeScreen(
                         showFastSnackbar(
                             captureSnackbarHostState,
                             scope,
-                            "Photo captured"
+                            "Photo saved"
                         )
-                        // Delay slightly for snackbar visibility, then show category picker
+                        // Save photo as a basic observation immediately
+                        scope.launch {
+                            val attachment = listOf(DraftEvidenceAttachment("Photo", uri, "Camera capture", mimeType = mime))
+                            viewModel.addObservation(
+                                subject = "Photo observation",
+                                category = "Other",
+                                facts = "Auto-captured photo observation.",
+                                confidence = "Unsure",
+                                manualLocation = "",
+                                tags = "camera, photo",
+                                evidence = "Photo evidence",
+                                context = "",
+                                attachments = attachment
+                            )
+                        }
+                    },
+                    onSpeciesCaptured = { uri, mime, speciesName, category, confidence, notes ->
+                        capturedPhotoUri = uri
+                        capturedPhotoMime = mime
+                        showFastSnackbar(
+                            captureSnackbarHostState,
+                            scope,
+                            "$speciesName observation saved"
+                        )
+                        // Don't close camera here - "Save & Continue" keeps it open
+                        // "Save & Exit" triggers onDismiss() which closes it
                         scope.launch {
                             delay(600)
-                            showCategoryPicker = true
+                            val attachment = listOf(DraftEvidenceAttachment("Photo", uri, "Camera capture", mimeType = mime))
+                            viewModel.addObservation(
+                                subject = speciesName.ifBlank { "$category observation" },
+                                category = category,
+                                facts = notes.ifBlank { "Auto-captured $category observation from camera." },
+                                confidence = confidence,
+                                manualLocation = "",
+                                tags = "camera, $category, $speciesName",
+                                evidence = "Photo evidence captured via camera",
+                                context = "",
+                                attachments = attachment
+                            )
                         }
                     },
                     onDismiss = {
@@ -977,7 +1071,8 @@ private fun LiveWeatherDashboardWidget(
     conditionsNudge: String = "",
     sunrise: String? = null,
     sunset: String? = null,
-    developerMode: Boolean = false
+    developerMode: Boolean = false,
+    showCloudAnimation: Boolean = true
 ) {
     val colors = FieldMindTheme.colors
     var testWeatherCode by remember { mutableStateOf<Int?>(null) }
@@ -1067,15 +1162,15 @@ private fun LiveWeatherDashboardWidget(
                         .then(
                             Modifier.clip(RoundedCornerShape(28.dp))
                         )
-                ) {
-                    AnimatedWeatherScene(
-                        weatherCode = displayWeatherCode,
-                        temperature = currentWeather!!.temperature,
-                        sunrise = currentWeather!!.sunrise,
-                        sunset = currentWeather!!.sunset,
-                        compact = false,
-                        forceNight = if (developerMode && testIsNight) true else if (developerMode) false else null
-                    )
+                ) {AnimatedWeatherScene(
+        weatherCode = displayWeatherCode,
+        temperature = currentWeather!!.temperature,
+        sunrise = currentWeather!!.sunrise,
+        sunset = currentWeather!!.sunset,
+        compact = false,
+        forceNight = if (developerMode && testIsNight) true else if (developerMode) false else null,
+        showCloudAnimation = showCloudAnimation
+                )
                 }
                 // Glass-morphism scrim for better text readability
                 Box(

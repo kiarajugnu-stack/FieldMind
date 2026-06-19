@@ -274,8 +274,14 @@ fun ObserveScreen(
     var metadataAutoFetching by remember { mutableStateOf(false) }
     var metadataStatus by remember { mutableStateOf("Ready") }
     var gpsFetching by remember { mutableStateOf(false) }
+    var showGpsDialog by remember { mutableStateOf(false) }
 
     fun performAutoFetch() {
+        if (!locationProvider.isGpsEnabled()) {
+            showGpsDialog = true
+            metadataAutoFetching = false
+            return
+        }
         metadataAutoFetching = true
         metadataStatus = "Acquiring GPS…"
         if (locationProvider.hasAnyLocationPermission()) {
@@ -627,7 +633,9 @@ fun ObserveScreen(
                             gpsFetching = gpsFetching,
                             statusText = metadataStatus,
                             onFetchGps = {
-                                if (locationProvider.hasAnyLocationPermission()) {
+                                if (!locationProvider.isGpsEnabled()) {
+                                    showGpsDialog = true
+                                } else if (locationProvider.hasAnyLocationPermission()) {
                                     gpsFetching = true
                                     metadataStatus = "Acquiring GPS…"
                                     locationProvider.requestCurrentLocation { loc ->
@@ -789,7 +797,7 @@ fun ObserveScreen(
         ) {
             FieldMindCameraV2(
                 onPhotoCaptured = { uri, mimeType ->
-                    // Add to session attachments, keep camera open for more captures
+                    // Add to session attachments; camera may stay open via post-capture dialog
                     addAttachment(
                         DraftEvidenceAttachment("Photo", uri, "Camera photo", mimeType = mimeType)
                     )
@@ -799,6 +807,11 @@ fun ObserveScreen(
                 multiCaptureMode = true
             )
         }
+    }
+
+    // ── GpsOffDialog ──
+    if (showGpsDialog) {
+        GpsOffDialog(onDismiss = { showGpsDialog = false })
     }
 }
 
@@ -985,6 +998,7 @@ private fun LiveObservationTimer(
             }
         }
     }
+    
 }
 
 private fun formatDurationCompact(ms: Long): String {

@@ -183,6 +183,15 @@ class FieldMindSettings private constructor(context: Context) {
     private val _autoWeatherEnabled = MutableStateFlow(prefs.getBoolean(KEY_AUTO_WEATHER, false))
     val autoWeatherEnabled: StateFlow<Boolean> = _autoWeatherEnabled.asStateFlow()
 
+    private val _autoFlashcardsEnabled = MutableStateFlow(prefs.getBoolean(KEY_AUTO_FLASHCARDS, true))
+    val autoFlashcardsEnabled: StateFlow<Boolean> = _autoFlashcardsEnabled.asStateFlow()
+
+    private val _autoPatternDetectionEnabled = MutableStateFlow(prefs.getBoolean(KEY_AUTO_PATTERNS, true))
+    val autoPatternDetectionEnabled: StateFlow<Boolean> = _autoPatternDetectionEnabled.asStateFlow()
+
+    private val _autoQuestionsEnabled = MutableStateFlow(prefs.getBoolean(KEY_AUTO_QUESTIONS, true))
+    val autoQuestionsEnabled: StateFlow<Boolean> = _autoQuestionsEnabled.asStateFlow()
+
     private val _tempUnit = MutableStateFlow(prefs.getString(KEY_TEMP_UNIT, "Celsius") ?: "Celsius")
     val tempUnit: StateFlow<String> = _tempUnit.asStateFlow()
 
@@ -202,6 +211,8 @@ class FieldMindSettings private constructor(context: Context) {
     val weatherShowCloudCover: StateFlow<Boolean> = _weatherShowCloudCover.asStateFlow()
     private val _weatherShowPressure = MutableStateFlow(prefs.getBoolean(KEY_WEATHER_SHOW_PRESSURE, false))
     val weatherShowPressure: StateFlow<Boolean> = _weatherShowPressure.asStateFlow()
+    private val _weatherShowCloudAnimation = MutableStateFlow(prefs.getBoolean(KEY_WEATHER_SHOW_CLOUD_ANIMATION, true))
+    val weatherShowCloudAnimation: StateFlow<Boolean> = _weatherShowCloudAnimation.asStateFlow()
 
     // ── Weather provider selection ──
     private val _weatherProvider = MutableStateFlow(prefs.getString(KEY_WEATHER_PROVIDER, "met-norway") ?: "met-norway")
@@ -317,6 +328,9 @@ class FieldMindSettings private constructor(context: Context) {
         FieldMindBackgroundScheduler.scheduleAutoBackup(appContext, _autoBackupEnabled.value, value)
     }
     fun setAutoWeatherEnabled(value: Boolean) = edit(KEY_AUTO_WEATHER, value) { _autoWeatherEnabled.value = value }
+    fun setAutoFlashcardsEnabled(value: Boolean) = edit(KEY_AUTO_FLASHCARDS, value) { _autoFlashcardsEnabled.value = value }
+    fun setAutoPatternDetectionEnabled(value: Boolean) = edit(KEY_AUTO_PATTERNS, value) { _autoPatternDetectionEnabled.value = value }
+    fun setAutoQuestionsEnabled(value: Boolean) = edit(KEY_AUTO_QUESTIONS, value) { _autoQuestionsEnabled.value = value }
     fun setTempUnit(value: String) = edit(KEY_TEMP_UNIT, value) { _tempUnit.value = value }
     fun setWeatherRefreshInterval(value: String) = edit(KEY_WEATHER_REFRESH, value) { _weatherRefreshInterval.value = value }
     fun setWeatherShowTemperature(value: Boolean) = edit(KEY_WEATHER_SHOW_TEMP, value) { _weatherShowTemperature.value = value }
@@ -325,6 +339,7 @@ class FieldMindSettings private constructor(context: Context) {
     fun setWeatherShowWind(value: Boolean) = edit(KEY_WEATHER_SHOW_WIND, value) { _weatherShowWind.value = value }
     fun setWeatherShowCloudCover(value: Boolean) = edit(KEY_WEATHER_SHOW_CLOUD, value) { _weatherShowCloudCover.value = value }
     fun setWeatherShowPressure(value: Boolean) = edit(KEY_WEATHER_SHOW_PRESSURE, value) { _weatherShowPressure.value = value }
+    fun setWeatherShowCloudAnimation(value: Boolean) = edit(KEY_WEATHER_SHOW_CLOUD_ANIMATION, value) { _weatherShowCloudAnimation.value = value }
     fun setWeatherProvider(value: String) = edit(KEY_WEATHER_PROVIDER, value) { _weatherProvider.value = value }
     fun setWeatherProviders(value: String) = edit(KEY_WEATHER_PROVIDERS, value) {
         _weatherProviders.value = value
@@ -433,6 +448,9 @@ class FieldMindSettings private constructor(context: Context) {
         private const val KEY_AUTO_BACKUP_ENABLED = "auto_backup_enabled"
         private const val KEY_AUTO_BACKUP_INTERVAL = "auto_backup_interval"
         private const val KEY_AUTO_WEATHER = "auto_weather"
+        private const val KEY_AUTO_FLASHCARDS = "auto_flashcards"
+        private const val KEY_AUTO_PATTERNS = "auto_patterns"
+        private const val KEY_AUTO_QUESTIONS = "auto_questions"
         private const val KEY_TEMP_UNIT = "temp_unit"
         private const val KEY_WEATHER_REFRESH = "weather_refresh"
         private const val KEY_WEATHER_SHOW_TEMP = "weather_show_temp"
@@ -441,6 +459,7 @@ class FieldMindSettings private constructor(context: Context) {
         private const val KEY_WEATHER_SHOW_WIND = "weather_show_wind"
         private const val KEY_WEATHER_SHOW_CLOUD = "weather_show_cloud"
         private const val KEY_WEATHER_SHOW_PRESSURE = "weather_show_pressure"
+        private const val KEY_WEATHER_SHOW_CLOUD_ANIMATION = "weather_show_cloud_animation"
         private const val KEY_WEATHER_PROVIDER = "weather_provider"
         private const val KEY_WEATHER_PROVIDERS = "weather_providers"
         private const val KEY_WEATHER_API_KEY = "weather_api_key"

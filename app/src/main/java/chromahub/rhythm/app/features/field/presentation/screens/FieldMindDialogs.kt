@@ -64,7 +64,7 @@ import kotlinx.coroutines.delay
  * @param isDirty When true and back is pressed, shows a confirmation dialog to prevent data loss.
  */
 @Composable
-private fun DialogWrapper(
+internal fun DialogWrapper(
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
     fullScreen: Boolean = false,
@@ -175,7 +175,7 @@ private fun DialogWrapper(
  * Polished dialog header with icon, title, subtitle, and accent color.
  */
 @Composable
-private fun DialogHeader(
+internal fun DialogHeader(
     icon: MaterialSymbolIcon,
     title: String,
     subtitle: String,
@@ -218,7 +218,7 @@ private fun DialogDividerSection(
  * Standardized action buttons row (Cancel + Save).
  */
 @Composable
-private fun DialogActions(
+internal fun DialogActions(
     onCancel: () -> Unit,
     onSave: () -> Unit,
     saveEnabled: Boolean = true,
@@ -342,6 +342,7 @@ internal fun NewQuestionDialog(viewModel: FieldMindViewModel, onDismiss: () -> U
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 internal fun NewProjectDialog(
     viewModel: FieldMindViewModel,
@@ -360,11 +361,13 @@ internal fun NewProjectDialog(
     initialSelectedMethods: String = initialMethods,
     initialConnectionMap: String = "",
     initialTags: String = "",
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    templateGuide: ProjectTemplateDef? = null
 ) {
     var title by remember(initialTitle) { mutableStateOf(initialTitle) }; var topic by remember(initialTopic) { mutableStateOf(initialTopic.ifBlank { "Biology" }) }; var objective by remember(initialObjective) { mutableStateOf(initialObjective) }; var question by remember(initialQuestion) { mutableStateOf(initialQuestion) }
     var background by remember(initialBackground) { mutableStateOf(initialBackground) }; var methods by remember(initialMethods) { mutableStateOf(initialMethods) }; var hypothesis by remember(initialHypothesis) { mutableStateOf(initialHypothesis) }; var dataPlan by remember(initialDataPlan) { mutableStateOf(initialDataPlan) }; var analysis by remember(initialAnalysis) { mutableStateOf(initialAnalysis) }; var conclusion by remember(initialConclusion) { mutableStateOf(initialConclusion) }; var nextAction by remember(initialNextAction) { mutableStateOf(initialNextAction) }
     var projectType by remember(initialProjectType) { mutableStateOf(initialProjectType.ifBlank { "Observation" }) }; var selectedMethods by remember(initialSelectedMethods) { mutableStateOf(initialSelectedMethods) }; var connectionMap by remember(initialConnectionMap) { mutableStateOf(initialConnectionMap) }; var tags by remember(initialTags) { mutableStateOf(initialTags) }; var showAdvanced by remember { mutableStateOf(initialProjectType.isNotBlank() || initialSelectedMethods.isNotBlank() || initialTags.isNotBlank()) }
+    var showGuide by remember { mutableStateOf(templateGuide != null) }
 
     fun save() {
         if (title.isNotBlank()) {
@@ -375,6 +378,58 @@ internal fun NewProjectDialog(
 
     DialogWrapper(onDismiss = onDismiss, fullScreen = true, isDirty = { title.isNotBlank() || objective.isNotBlank() || question.isNotBlank() || methods.isNotBlank() }) {
         DialogHeader(FieldMindIcons.Project, "New Project", "Define the question, evidence plan, data fields, and report direction.", accent = FieldMindTheme.colors.project)
+        
+        // Template Guide — shows guidance from selected template without auto-filling fields
+        if (templateGuide != null) {
+            Card(
+                shape = RoundedCornerShape(18.dp),
+                colors = CardDefaults.cardColors(containerColor = FieldMindTheme.colors.project.copy(alpha = 0.08f)),
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+            ) {
+                Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Icon(templateGuide.icon, null, tint = FieldMindTheme.colors.project, size = 22.dp)
+                        Column(Modifier.weight(1f)) {
+                            Text(templateGuide.name, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                            Text(templateGuide.description, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                        Surface(
+                            onClick = { showGuide = !showGuide },
+                            shape = RoundedCornerShape(10.dp),
+                            color = FieldMindTheme.colors.project.copy(alpha = 0.12f)
+                        ) {
+                            Row(Modifier.padding(horizontal = 8.dp, vertical = 4.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                                Text(if (showGuide) "Hide" else "Guide", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, color = FieldMindTheme.colors.project)
+                                Icon(if (showGuide) FieldMindIcons.Up else FieldMindIcons.Down, null, tint = FieldMindTheme.colors.project, size = 14.dp)
+                            }
+                        }
+                    }
+                    AnimatedVisibility(visible = showGuide, enter = expandVertically(), exit = shrinkVertically()) {
+                        Column(Modifier.padding(top = 4.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                            HorizontalDivider(color = FieldMindTheme.colors.project.copy(alpha = 0.12f))
+                            GuideRow("Question", templateGuide.question)
+                            GuideRow("Background", templateGuide.background)
+                            GuideRow("Method", templateGuide.methodPlan)
+                            GuideRow("Hypothesis", templateGuide.hypothesis)
+                            GuideRow("Data fields", templateGuide.dataPlan)
+                            GuideRow("Analysis", templateGuide.analysisPlan)
+                            GuideRow("Next action", templateGuide.nextAction)
+                            if (templateGuide.defaultMethods.isNotEmpty()) {
+                                Text("Recommended methods", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, color = FieldMindTheme.colors.project)
+                                FlowRow(horizontalArrangement = Arrangement.spacedBy(4.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                    templateGuide.defaultMethods.forEach { m ->
+                                        Surface(shape = RoundedCornerShape(8.dp), color = FieldMindTheme.colors.project.copy(alpha = 0.1f)) {
+                                            Text(m, style = MaterialTheme.typography.labelSmall, modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp), color = FieldMindTheme.colors.project, fontWeight = FontWeight.Medium)
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
         DialogDividerSection("Topic & title", FieldMindIcons.Category, FieldMindTheme.colors.project)
         FieldTextField(title, { title = it }, "Project title")
         ChoiceChipsField("Topic", listOf("Biology", "Geology", "Wildlife", "Ecology", "Plant Study", "Weather", "Human Pattern", "Other"), topic) { topic = it }
@@ -398,6 +453,16 @@ internal fun NewProjectDialog(
             FieldTextField(tags, { tags = it }, "Template tags", supportingText = "Comma-separated tags copied from the selected template")
         }
         DialogActions(onCancel = onDismiss, onSave = { save() }, saveEnabled = title.isNotBlank())
+    }
+}
+
+@Composable
+private fun GuideRow(label: String, value: String) {
+    if (value.isNotBlank()) {
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.Top) {
+            Text("$label:", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, color = FieldMindTheme.colors.project.copy(alpha = 0.8f), modifier = Modifier.width(80.dp))
+            Text(value, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 3, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
+        }
     }
 }
 @Composable

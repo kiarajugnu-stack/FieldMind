@@ -94,6 +94,8 @@ object FieldMindIcons {
     val Shape = MaterialSymbolIcon("hexagon")
     val Track = MaterialSymbolIcon("route")
     val Record = MaterialSymbolIcon("radio_button_checked")
+    val Copy = MaterialSymbolIcon("content_copy")
+    val RadioUnchecked = MaterialSymbolIcon("radio_button_unchecked")
 
     // Observation category icons
     val Bird = MaterialSymbolIcon("raven")

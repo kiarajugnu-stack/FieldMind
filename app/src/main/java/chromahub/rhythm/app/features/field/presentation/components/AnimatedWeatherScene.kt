@@ -78,7 +78,8 @@ fun AnimatedWeatherScene(
     sunset: String? = null,
     modifier: Modifier = Modifier,
     compact: Boolean = false,
-    forceNight: Boolean? = null
+    forceNight: Boolean? = null,
+    showCloudAnimation: Boolean = true
 ) {
     val computedTimeOfDay = computeTimeOfDay(sunrise, sunset)
     val forcedTimeOfDay = when (forceNight) {
@@ -109,9 +110,15 @@ fun AnimatedWeatherScene(
         // weatherCode -1 = day cloudy, -2 = night sky (used by weather widget for enhanced display)
         // All scenes use the same animation style regardless of day/night — palette provides the colors
         when {
-            weatherCode == -1 || weatherCode in 0..1 -> DayCloudyScene(palette, compact, timeOfDay, modifier)
+            weatherCode == -1 || weatherCode in 0..1 -> {
+                if (showCloudAnimation) DayCloudyScene(palette, compact, timeOfDay, modifier)
+                else ClearSkyScene(palette, timeOfDay, compact, modifier)
+            }
             weatherCode == -2 -> NightSkyScene(palette, compact, timeOfDay, modifier)
-            weatherCode in 2..3 -> CloudyScene(palette, compact, timeOfDay, modifier)
+            weatherCode in 2..3 -> {
+                if (showCloudAnimation) CloudyScene(palette, compact, timeOfDay, modifier)
+                else ClearSkyScene(palette, timeOfDay, compact, modifier)
+            }
             weatherCode in 45..48 -> FogScene(weatherCode, palette, compact, timeOfDay, modifier)
             weatherCode in 51..67 || weatherCode in 80..82 -> RainScene(weatherCode, palette, compact, timeOfDay, modifier)
             weatherCode in 71..77 || weatherCode in 85..86 -> SnowScene(weatherCode, palette, compact, timeOfDay, modifier)
@@ -1454,6 +1461,35 @@ private fun CloudyScene(
         drawCloud(offset = frontDrift, baseX = size.width * 0.6f, baseY = size.height * 0.55f, scale = cloudScale * 0.7f, color = cloudColor.copy(alpha = 0.5f), morph = cloudMorph + 5f)
         drawCloud(offset = frontDrift - 1f, baseX = size.width * 0.6f, baseY = size.height * 0.55f, scale = cloudScale * 0.7f, color = cloudColor.copy(alpha = 0.5f), morph = cloudMorph + 5f)
 
+        // Night mode — moon visible through clouds
+        if (!isDaytime) {
+            val cx = size.width * 0.85f
+            val cy = moonVerticalY(timeOfDay, size.height)
+            val moonRadius = if (compact) size.minDimension * 0.09f else size.minDimension * 0.07f
+
+            drawCircle(
+                color = palette.moonGlowColor.copy(alpha = 0.10f),
+                radius = moonRadius * 2.5f,
+                center = Offset(cx, cy)
+            )
+            drawCircle(
+                color = palette.moonGlowColor.copy(alpha = 0.04f),
+                radius = moonRadius * 4.0f,
+                center = Offset(cx, cy)
+            )
+
+            val moonPhase = getMoonPhaseValue()
+            drawMoonPhase(
+                phaseValue = moonPhase,
+                cx = cx,
+                cy = cy,
+                radius = moonRadius,
+                litColor = palette.moonColor.copy(alpha = 1f),
+                shadowColor = palette.background.last().copy(alpha = if (isDark) 0.75f else 0.65f),
+                glowColor = palette.moonGlowColor
+            )
+        }
+
         // Flying birds during daytime
         drawBirds(birdProgress, timeOfDay, isDark)
 
@@ -1615,52 +1651,54 @@ private fun DrawScope.drawTreeLine(morph: Float = 0f, isDark: Boolean = false, i
             val t = (i.toFloat() + 0.5f) / treePositions
             val edgeWeight = sin(t * PI.toFloat()).coerceIn(0.2f, 1f)
             val peakNoise = sin(t * 14f + morph * 0.4f + i * 0.9f + level.elevationPct * 10f) * 0.35f + 0.5f
-            if (peakNoise > 0.48f) {
-                val px = t * size.width
-                // Gentle undulation at this elevation level
-                val baseHills = sin(t * 5f + level.elevationPct * 3f) * 0.03f + sin(t * 11f + level.elevationPct * 5f) * 0.02f
-                val gh = lBaseY - baseHills * size.height
-                
-                val sizeFactor = edgeWeight * (0.4f + peakNoise * 0.6f)
-                val treeH = size.height * (0.020f + sizeFactor * 0.045f) * lSizeMul
-                val treeW = treeH * (0.18f + sizeFactor * 0.12f) * lSizeMul
-                val treeBaseY = gh
-                
-                // Trunk
-                val trunkH = treeH * 0.25f
-                drawRoundRect(
-                    color = detailColor.copy(alpha = detailColor.alpha * 0.65f * lAlphaMul),
-                    topLeft = Offset(px - treeW * 0.2f, treeBaseY - trunkH),
-                    size = Size(treeW * 0.4f, trunkH),
-                    cornerRadius = androidx.compose.ui.geometry.CornerRadius(treeW * 0.15f, treeW * 0.15f)
-                )
-                
-                // Canopy layers (2-3 triangular tiers, fewer for distant trees)
-                val canopyLayers = if (lSizeMul < 0.5f) 2 else 3
-                for (layer in 0 until canopyLayers) {
-                    val layerT = layer.toFloat() / canopyLayers
-                    val cy = treeBaseY - trunkH - treeH * (0.15f + layerT * 0.45f)
-                    val halfW = treeW * (0.5f + (canopyLayers - layer) * (0.15f + sizeFactor * 0.1f))
-                    val canopyH = treeH * (0.18f + (1f - layerT) * 0.12f)
-                    val canopyPath = Path().apply {
-                        moveTo(px - halfW, cy + canopyH * 0.3f)
-                        quadraticTo(px, cy - canopyH * 0.6f, px + halfW, cy + canopyH * 0.3f)
+            // Always draw trees — vary size smoothly instead of popping
+            val px = t * size.width
+            // Gentle undulation at this elevation level
+            val baseHills = sin(t * 5f + level.elevationPct * 3f) * 0.03f + sin(t * 11f + level.elevationPct * 5f) * 0.02f
+            val gh = lBaseY - baseHills * size.height
+            
+            val sizeFactor = edgeWeight * (0.15f + peakNoise * 0.85f).coerceAtLeast(0.05f)
+            val treeH = size.height * (0.004f + sizeFactor * 0.030f) * lSizeMul
+            val treeW = treeH * (0.12f + sizeFactor * 0.15f) * lSizeMul
+            val treeBaseY = gh
+            
+            // Skip trees that would be invisibly small
+            if (treeH < 1.5f) continue
+            
+            // Trunk
+            val trunkH = treeH * 0.25f
+            drawRoundRect(
+                color = detailColor.copy(alpha = detailColor.alpha * 0.65f * lAlphaMul),
+                topLeft = Offset(px - treeW * 0.2f, treeBaseY - trunkH),
+                size = Size(treeW * 0.4f, trunkH),
+                cornerRadius = androidx.compose.ui.geometry.CornerRadius(treeW * 0.15f, treeW * 0.15f)
+            )
+            
+            // Canopy layers (2-3 triangular tiers, fewer for distant trees)
+            val canopyLayers = if (lSizeMul < 0.5f) 2 else 3
+            for (layer in 0 until canopyLayers) {
+                val layerT = layer.toFloat() / canopyLayers
+                val cy = treeBaseY - trunkH - treeH * (0.15f + layerT * 0.45f)
+                val halfW = treeW * (0.5f + (canopyLayers - layer) * (0.15f + sizeFactor * 0.1f))
+                val canopyH = treeH * (0.18f + (1f - layerT) * 0.12f)
+                val canopyPath = Path().apply {
+                    moveTo(px - halfW, cy + canopyH * 0.3f)
+                    quadraticTo(px, cy - canopyH * 0.6f, px + halfW, cy + canopyH * 0.3f)
+                    close()
+                }
+                drawPath(canopyPath, detailColor.copy(alpha = detailColor.alpha * lAlphaMul), style = Fill)
+
+                // Snow cap on canopy (white crescent on top)
+                if (isSnow) {
+                    val snowColor = Color(0xCCF5F5F5)
+                    val snowH = canopyH * 0.15f
+                    val snowW = halfW * 0.6f
+                    val snowPath = Path().apply {
+                        moveTo(px - snowW, cy + canopyH * 0.1f)
+                        quadraticTo(px, cy - canopyH * 0.5f - snowH * 0.2f, px + snowW, cy + canopyH * 0.1f)
                         close()
                     }
-                    drawPath(canopyPath, detailColor.copy(alpha = detailColor.alpha * lAlphaMul), style = Fill)
-
-                    // Snow cap on canopy (white crescent on top)
-                    if (isSnow) {
-                        val snowColor = Color(0xCCF5F5F5)
-                        val snowH = canopyH * 0.15f
-                        val snowW = halfW * 0.6f
-                        val snowPath = Path().apply {
-                            moveTo(px - snowW, cy + canopyH * 0.1f)
-                            quadraticTo(px, cy - canopyH * 0.5f - snowH * 0.2f, px + snowW, cy + canopyH * 0.1f)
-                            close()
-                        }
-                        drawPath(snowPath, snowColor.copy(alpha = snowColor.alpha * lAlphaMul), style = Fill)
-                    }
+                    drawPath(snowPath, snowColor.copy(alpha = snowColor.alpha * lAlphaMul), style = Fill)
                 }
             }
         }
@@ -1737,6 +1775,24 @@ private fun DrawScope.drawGround(
 
     // Draw mountain range in background — taller during thunderstorms
     drawMountainRange(isDark = isDark, isSnow = isSnow, isDay = isDay, isThunder = isThunder)
+
+    // ── Sea/ocean visible at the horizon during clear daytime conditions ──
+    val isSeaScene = isDay && !isSnow && !isThunder
+    if (isSeaScene) {
+        val seaY = size.height * 0.82f
+        val seaColor = Color(0xFF4A8AC8).copy(alpha = if (isDark) 0.18f else 0.10f)
+        val seaDeep = Color(0xFF1A3A6A).copy(alpha = if (isDark) 0.22f else 0.14f)
+        // Gradient water body at the horizon — sits behind the coastline
+        drawRect(
+            brush = Brush.verticalGradient(
+                colors = listOf(seaColor, seaDeep),
+                startY = seaY,
+                endY = size.height
+            ),
+            topLeft = Offset(0f, seaY),
+            size = Size(size.width, size.height - seaY)
+        )
+    }
 
     // Main rolling ground silhouette
     val groundPath = Path()
@@ -1832,12 +1888,15 @@ private fun DrawScope.drawMountainRange(isDark: Boolean, isSnow: Boolean, isDay:
         val undulationFreq: Float  // controls how many rolling hills
     )
 
+    val isClearDay = isDay && !isSnow && !isThunder
+
     val layers = listOf(
         // Far layer — blueish, hazy, low contrast, gentle rolling hills
         MountainLayer(
             baseY = 0.62f + thunderBaseShift * 0.3f,
             heightFactor = 0.08f * thunderScale,
-            color = if (isDark) Color(0xFF1A2A50).copy(alpha = 0.25f) else Color(0xFF90A8C4).copy(alpha = 0.12f),
+            color = if (isDark) Color(0xFF1A2A50).copy(alpha = 0.25f)
+                    else Color(0xFF90A8C4).copy(alpha = if (isClearDay) 0.20f else 0.12f),
             snowColor = if (isDark) Color(0xFFC8D8E8).copy(alpha = 0.05f) else Color.White.copy(alpha = 0.10f),
             undulationFreq = 2.5f
         ),
@@ -1845,7 +1904,8 @@ private fun DrawScope.drawMountainRange(isDark: Boolean, isSnow: Boolean, isDay:
         MountainLayer(
             baseY = 0.68f + thunderBaseShift * 0.5f,
             heightFactor = 0.10f * thunderScale,
-            color = if (isDark) Color(0xFF0F1A3A).copy(alpha = 0.40f) else Color(0xFF6A8A9A).copy(alpha = 0.18f),
+            color = if (isDark) Color(0xFF0F1A3A).copy(alpha = 0.40f)
+                    else Color(0xFF6A8A9A).copy(alpha = if (isClearDay) 0.30f else 0.18f),
             snowColor = if (isDark) Color(0xFFB0C8E0).copy(alpha = 0.08f) else Color.White.copy(alpha = 0.15f),
             undulationFreq = 3.2f
         ),
@@ -1853,7 +1913,8 @@ private fun DrawScope.drawMountainRange(isDark: Boolean, isSnow: Boolean, isDay:
         MountainLayer(
             baseY = 0.72f + thunderBaseShift,
             heightFactor = 0.12f * thunderScale,
-            color = if (isDark) Color(0xFF081428).copy(alpha = 0.52f) else Color(0xFF4A6A5A).copy(alpha = 0.24f),
+            color = if (isDark) Color(0xFF081428).copy(alpha = 0.52f)
+                    else Color(0xFF4A6A5A).copy(alpha = if (isClearDay) 0.38f else 0.24f),
             snowColor = if (isDark) Color(0xFF90B0C8).copy(alpha = 0.10f) else Color.White.copy(alpha = 0.20f),
             undulationFreq = 4.0f
         )
@@ -2351,10 +2412,7 @@ private fun DrawScope.drawShootingStar(
     )
 }
 
-/**
- * Draws a rainbow arc on the left side of the sky when rain falls during sunny conditions
- * (weather codes 51-82 during Morning, Sunrise, or Midday).
- */
+
 private fun DrawScope.drawRainbow(
     timeOfDay: TimeOfDay,
     weatherCode: Int,
@@ -2708,8 +2766,6 @@ private fun RainScene(
         }
         val intensityAlpha = rainIntensity.coerceIn(0.4f, 1f)
 
-        // Rainbow during sunny rain conditions
-        drawRainbow(timeOfDay = timeOfDay, weatherCode = weatherCode, isDarkTheme = isDark, compact = compact)
 
         // Rain streaks — each drop falls individually with random phase offset (no synchronized lines)
         streaks.forEach { streak ->
@@ -3204,51 +3260,7 @@ private fun ThunderstormScene(
             )
         }
 
-        // Hail particles for weather codes 96 and 99 — larger icy particles + distinct streaks
-        val isHail = weatherCode == 96 || weatherCode == 99
-        if (isHail) {
-            val isSevere = weatherCode == 99
-            val hailCount = if (isSevere) 28 else 16
-            // Hail streaks — thick white falling lines
-            for (i in 0 until (hailCount / 2)) {
-                val sx = size.width * (0.05f + i.toFloat() / (hailCount / 2) * 0.9f) + sin(i * 1.3f) * size.width * 0.04f
-                val fallPhase = (cloudOffset1 + i * 0.13f) % 1f
-                val sy = fallPhase * size.height * 1.2f - size.height * 0.1f
-                val streakLen = if (isSevere) size.height * 0.06f else size.height * 0.04f
-                drawLine(
-                    color = Color(0xAAE8EAF6),
-                    start = Offset(sx, sy),
-                    end = Offset(sx, sy + streakLen),
-                    strokeWidth = if (isSevere) 3f else 2f
-                )
-            }
-            // Hailstones — bouncing icy circles
-            for (i in 0 until hailCount) {
-                val hailX = size.width * (0.03f + i.toFloat() / hailCount * 0.94f) + sin(i * 1.7f) * size.width * 0.05f
-                val baseHailY = size.height * (0.20f + (i.toFloat() / hailCount) * 0.72f)
-                val hailPhase = (cloudOffset1 + i * 0.07f) % 1f
-                val bounceY = baseHailY + abs(sin(hailPhase * PI.toFloat() * 5f)) * size.height * 0.15f
-                val hailSize = if (isSevere) 4.5f + sin(i * 2.3f) * 2f else 3f + sin(i * 1.7f) * 1.5f
-                // Outer icy glow
-                drawCircle(
-                    color = Color(0x99B3E5FC),
-                    radius = (hailSize * 1.5f).coerceAtLeast(2f),
-                    center = Offset(hailX, bounceY)
-                )
-                // Main icy body
-                drawCircle(
-                    color = Color(0xDDE8EAF6),
-                    radius = hailSize.coerceAtLeast(1.5f),
-                    center = Offset(hailX, bounceY)
-                )
-                // Bright core for icy look
-                drawCircle(
-                    color = Color.White.copy(alpha = 0.7f),
-                    radius = hailSize * 0.35f,
-                    center = Offset(hailX, bounceY)
-                )
-            }
-        }
+
 
         // Ground terrain already rendered by RainScene composable above
     }
@@ -3331,6 +3343,7 @@ fun CompactWeatherIcon(
         weatherCode = weatherCode,
         temperature = temperature,
         modifier = modifier,
-        compact = true
+        compact = true,
+        showCloudAnimation = true
     )
 }

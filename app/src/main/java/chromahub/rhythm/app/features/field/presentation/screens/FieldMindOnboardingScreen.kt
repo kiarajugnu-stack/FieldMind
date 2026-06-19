@@ -233,7 +233,7 @@ fun FieldMindOnboardingScreen(
                     onEditPage = { currentPage = it }
                 )
                 // Extended tour pages (6-10)
-                5 -> if (showExtendedTour) OnboardingScreenVisibilityPage(
+                5 -> OnboardingScreenVisibilityPage(
                     visibility = ScreenVisibility.fromInterests(interests),
                     interests = interests,
                     onApply = { vis ->
@@ -331,10 +331,9 @@ fun FieldMindOnboardingScreen(
     // END FieldMindTheme wrapper
 
     // Navigate to extended tour from review page
-    LaunchedEffect(showExtendedTour, showContinueTour) {
+    LaunchedEffect(showExtendedTour) {
         if (showExtendedTour) {
             showExtendedTour = false
-            showContinueTour = false
             currentPage = 5
         }
     }

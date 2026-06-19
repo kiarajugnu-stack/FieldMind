@@ -34,7 +34,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -65,6 +67,9 @@ import kotlin.math.abs
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.foundation.lazy.LazyRow
+import kotlinx.coroutines.delay
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 // ══════════════════════════════════════════════════════════════════════
 //  Library (Sources / Reading / Flashcards / Learn)
 // ══════════════════════════════════════════════════════════════════════
@@ -115,21 +120,701 @@ fun KnowledgeLibraryScreen(
     }
 }
 
+// ══════════════════════════════════════════════════════════════════════
+//  REDESIGNED SOURCE PANEL — Search, category grouping, quick import
+// ══════════════════════════════════════════════════════════════════════
+
 @Composable
 private fun SourcePanel(viewModel: FieldMindViewModel, items: List<SourceEntity>, onOpenDetail: (String, Long) -> Unit) {
-    var show by remember { mutableStateOf(false) }
-    val projects by viewModel.projects.collectAsState()
-    LazyColumn(contentPadding = panelPadding(), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-        item { AddButton("Add source") { show = true } }
-        if (items.isEmpty()) {
-            item { EmptyState("No sources yet", "Save articles, videos, PDFs, books, summaries, citations, and what each source taught you.", icon = FieldMindIcons.Source) }
+    val haptics = rememberFieldMindHaptics()
+    val clipboard = LocalClipboardManager.current
+    var showAdvancedDialog by remember { mutableStateOf(false) }
+    var showQuickImport by remember { mutableStateOf(false) }
+    var showBulkImport by remember { mutableStateOf(false) }
+    var showReadingTimer by remember { mutableStateOf(false) }
+    var searchQuery by remember { mutableStateOf("") }
+    var selectedTypeFilter by remember { mutableStateOf("All") }
+    var expandedCategories by remember { mutableStateOf(setOf<String>()) }
+
+    // All unique types from items
+    val allTypes = remember(items) { listOf("All") + items.map { it.type }.distinct().sorted() }
+
+    // Filtered + searched items
+    val filteredItems = remember(items, searchQuery, selectedTypeFilter) {
+        val q = searchQuery.lowercase().trim()
+        items.filter { item ->
+            val matchesSearch = q.isBlank() ||
+                item.title.lowercase().contains(q) ||
+                item.author.lowercase().contains(q) ||
+                item.publisherOrJournal.lowercase().contains(q) ||
+                item.personalSummary.lowercase().contains(q) ||
+                item.keyFindings.lowercase().contains(q)
+            val matchesType = selectedTypeFilter == "All" || item.type == selectedTypeFilter
+            matchesSearch && matchesType
         }
-        items(items) { EntityCard(it.title, "source", body = it.whatThisSourceTaughtMe.ifBlank { it.personalSummary }, meta = listOf(it.type, it.author.ifBlank { "Unknown author" }, it.readingStatus, it.importance, "reliability ${it.reliabilityScore}/5"), onClick = { onOpenDetail("source", it.id) }) }
     }
-    if (show) {
-        NewSourceDialog(viewModel, onDismiss = { show = false })
+
+    // Group by type
+    val groupedItems = remember(filteredItems) {
+        filteredItems.groupBy { it.type }.entries.sortedBy { it.key }
+    }
+
+    // Stats
+    val readCount = items.count { it.readingStatus == "Read" }
+    val importantCount = items.count { it.importance in listOf("Important", "Critical") }
+    val totalCount = items.size
+
+    LazyColumn(contentPadding = libraryPanelPadding(), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+        // ── Stats summary card ──
+        if (items.isNotEmpty()) {
+            item {
+                Card(
+                    shape = RoundedCornerShape(22.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                ) {
+                    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                            Icon(FieldMindIcons.Source, null, tint = FieldMindTheme.colors.source, size = 22.dp)
+                            Text("Source library", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+                            Spacer(Modifier.weight(1f))
+                            Text("$totalCount total", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
+                            StatPill("$totalCount", "Total", FieldMindIcons.Library)
+                            StatPill("$readCount", "Read", FieldMindIcons.Done)
+                            StatPill("$importantCount", "Important", FieldMindIcons.Streak)
+                            StatPill("${totalCount - readCount}", "Unread", FieldMindIcons.Timer)
+                        }
+                    }
+                }
+            }
+        }
+
+        // ── Quick-import hero cards ──
+        item {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                // Import from URL
+                Surface(
+                    onClick = { haptics.light(); showQuickImport = true },
+                    shape = RoundedCornerShape(20.dp),
+                    color = MaterialTheme.colorScheme.surfaceContainerLow,
+                    tonalElevation = 0.dp,
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Box(
+                            Modifier.size(38.dp).clip(RoundedCornerShape(12.dp)).background(FieldMindTheme.colors.source.copy(alpha = 0.14f)),
+                            contentAlignment = Alignment.Center
+                        ) { Icon(FieldMindIcons.OpenLink, null, tint = FieldMindTheme.colors.source, size = 20.dp) }
+                        Column {
+                            Text("Import URL", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                            Text("Paste a link", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                    }
+                }
+                // Import evidence (file / image)
+                Surface(
+                    onClick = { haptics.light(); showQuickImport = true },
+                    shape = RoundedCornerShape(20.dp),
+                    color = MaterialTheme.colorScheme.surfaceContainerLow,
+                    tonalElevation = 0.dp,
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Box(
+                            Modifier.size(38.dp).clip(RoundedCornerShape(12.dp)).background(FieldMindTheme.colors.source.copy(alpha = 0.14f)),
+                            contentAlignment = Alignment.Center
+                        ) { Icon(FieldMindIcons.File, null, tint = FieldMindTheme.colors.source, size = 20.dp) }
+                        Column {
+                            Text("Add evidence", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                            Text("File or photo", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                    }
+                }
+            }
+        }
+
+        // ── Action row: bulk import, reading timer, advanced ──
+        item {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedButton(
+                    onClick = { showBulkImport = true },
+                    shape = RoundedCornerShape(14.dp),
+                    modifier = Modifier.weight(1f)
+                ) { Icon(FieldMindIcons.List, null, size = 16.dp); Spacer(Modifier.size(4.dp)); Text("Bulk") }
+                OutlinedButton(
+                    onClick = { showReadingTimer = true },
+                    shape = RoundedCornerShape(14.dp),
+                    modifier = Modifier.weight(1f)
+                ) { Icon(FieldMindIcons.Timer, null, size = 16.dp); Spacer(Modifier.size(4.dp)); Text("Timer") }
+                OutlinedButton(
+                    onClick = { showAdvancedDialog = true },
+                    shape = RoundedCornerShape(14.dp),
+                    modifier = Modifier.weight(1f)
+                ) { Icon(FieldMindIcons.Add, null, size = 16.dp); Spacer(Modifier.size(4.dp)); Text("Full form") }
+            }
+        }
+
+        // ── Search bar ──
+        if (items.isNotEmpty()) {
+            item {
+                OutlinedTextField(
+                    value = searchQuery,
+                    onValueChange = { searchQuery = it },
+                    placeholder = { Text("Search sources…") },
+                    leadingIcon = { Icon(FieldMindIcons.Search, null, size = 20.dp) },
+                    trailingIcon = {
+                        if (searchQuery.isNotBlank()) IconButton(onClick = { searchQuery = "" }) {
+                            Icon(FieldMindIcons.Close, null, size = 18.dp)
+                        }
+                    },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(18.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                    )
+                )
+            }
+
+            // ── Type filter chips ──
+            item {
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    items(allTypes) { type ->
+                        FilterChip(
+                            selected = selectedTypeFilter == type,
+                            onClick = { selectedTypeFilter = type; haptics.light() },
+                            label = { Text(type, maxLines = 1, overflow = TextOverflow.Ellipsis) }
+                        )
+                    }
+                }
+            }
+        }
+
+        // ── Empty state ──
+        if (filteredItems.isEmpty() && items.isEmpty()) {
+            item { EmptyState("No sources yet", "Import a URL, add evidence from a file, or use the full form to add articles, books, videos, and more.", icon = FieldMindIcons.Source, actionLabel = "Quick import", onAction = { showQuickImport = true }) }
+        } else if (filteredItems.isEmpty() && items.isNotEmpty()) {
+            item { EmptyState("No sources match \"$searchQuery\"", "Try a different search term or clear the filter.", icon = FieldMindIcons.Search) }
+        }
+
+        // ── Category-grouped sources ──
+        groupedItems.forEach { (type, sources) ->
+            val isExpanded = expandedCategories.contains(type)
+            item {
+                Card(
+                    modifier = Modifier.fillMaxWidth().animateContentSize(),
+                    shape = RoundedCornerShape(20.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                ) {
+                    Column(Modifier.padding(4.dp)) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    expandedCategories = if (isExpanded) expandedCategories - type
+                                    else expandedCategories + type
+                                    haptics.light()
+                                }
+                                .padding(horizontal = 14.dp, vertical = 10.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            Box(
+                                Modifier.size(36.dp).clip(RoundedCornerShape(11.dp))
+                                    .background(FieldMindTheme.colors.source.copy(alpha = 0.14f)),
+                                contentAlignment = Alignment.Center
+                            ) { Icon(FieldMindIcons.iconFor(type), null, tint = FieldMindTheme.colors.source, size = 18.dp) }
+                            Text(type, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
+                            InfoChip("${sources.size}")
+                            Icon(
+                                if (isExpanded) FieldMindIcons.Up else FieldMindIcons.Down,
+                                null, tint = MaterialTheme.colorScheme.onSurfaceVariant, size = 18.dp
+                            )
+                        }
+                    }
+                }
+            }
+            if (isExpanded) {
+                items(sources) { source ->
+                    SourceCardWithCitations(
+                        source = source,
+                        clipboard = clipboard,
+                        onClick = { onOpenDetail("source", source.id) },
+                        onToggleRead = {
+                            viewModel.updateSourceEntity(source.copy(
+                                readingStatus = if (source.readingStatus == "Read") "In progress" else "Read"
+                            ))
+                        }
+                    )
+                }
+            }
+        }
+    }
+
+    // ── Dialogs ──
+    if (showAdvancedDialog) {
+        NewSourceDialog(viewModel, onDismiss = { showAdvancedDialog = false })
+    }
+    if (showQuickImport) {
+        QuickImportDialog(viewModel, onDismiss = { showQuickImport = false })
+    }
+    if (showBulkImport) {
+        BulkImportDialog(viewModel, onDismiss = { showBulkImport = false })
+    }
+    if (showReadingTimer) {
+        ReadingTimerDialog(onDismiss = { showReadingTimer = false })
     }
 }
+
+// ══════════════════════════════════════════════════════════════════════
+//  SOURCE CARD WITH CITATION EXPORT
+// ══════════════════════════════════════════════════════════════════════
+
+@Composable
+private fun SourceCardWithCitations(
+    source: SourceEntity,
+    clipboard: androidx.compose.ui.platform.ClipboardManager,
+    onClick: () -> Unit,
+    onToggleRead: () -> Unit
+) {
+    val haptics = rememberFieldMindHaptics()
+    var showCitationMenu by remember { mutableStateOf(false) }
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            // Main content row
+            Row(
+                Modifier.fillMaxWidth().clickable(onClick = onClick),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Box(
+                    Modifier.size(40.dp).clip(RoundedCornerShape(12.dp))
+                        .background(FieldMindTheme.colors.source.copy(alpha = 0.14f)),
+                    contentAlignment = Alignment.Center
+                ) { Icon(FieldMindIcons.iconFor(source.type), null, tint = FieldMindTheme.colors.source, size = 20.dp) }
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    Text(source.title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        if (source.author.isNotBlank()) {
+                            Text(source.author, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        }
+                        Text("•", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f))
+                        Text("${source.reliabilityScore}/5", style = MaterialTheme.typography.labelSmall, color = FieldMindTheme.colors.source)
+                    }
+                }
+                Icon(FieldMindIcons.Forward, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, size = 20.dp)
+            }
+
+            // Meta chips
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                val readColor = when (source.readingStatus) {
+                    "Read" -> FieldMindTheme.colors.positive
+                    "In progress" -> FieldMindTheme.colors.flashcard
+                    else -> MaterialTheme.colorScheme.onSurfaceVariant
+                }
+                InfoChip(source.readingStatus.ifBlank { "Not started" }, color = readColor)
+                InfoChip(source.importance, icon = FieldMindIcons.Streak)
+                if (source.link.isNotBlank()) InfoChip("Link", icon = FieldMindIcons.OpenLink)
+                if (source.fileUri.isNotBlank()) InfoChip("File", icon = FieldMindIcons.File)
+            }
+
+            // Action row: citation + mark read
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                // Citation button
+                Surface(
+                    onClick = { haptics.light(); showCitationMenu = !showCitationMenu },
+                    shape = RoundedCornerShape(12.dp),
+                    color = MaterialTheme.colorScheme.surfaceContainerHigh
+                ) {
+                    Row(Modifier.padding(horizontal = 10.dp, vertical = 6.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Icon(FieldMindIcons.Article, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, size = 14.dp)
+                        Text("Cite", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                }
+                // Mark read/unread
+                Surface(
+                    onClick = { haptics.light(); onToggleRead() },
+                    shape = RoundedCornerShape(12.dp),
+                    color = MaterialTheme.colorScheme.surfaceContainerHigh
+                ) {
+                    Row(Modifier.padding(horizontal = 10.dp, vertical = 6.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Icon(
+                            if (source.readingStatus == "Read") FieldMindIcons.Done else FieldMindIcons.RadioUnchecked,
+                            null, tint = MaterialTheme.colorScheme.onSurfaceVariant, size = 14.dp
+                        )
+                        Text(if (source.readingStatus == "Read") "Mark unread" else "Mark read", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                }
+            }
+
+            // Citation format picker
+            AnimatedVisibility(showCitationMenu) {
+                Card(
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                ) {
+                    Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Text("Copy citation as…", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        listOf("APA", "MLA", "Chicago").forEach { style ->
+                            Surface(
+                                onClick = {
+                                    haptics.light()
+                                    val citation = generateCitation(source, style)
+                                    clipboard.setText(AnnotatedString(citation))
+                                    showCitationMenu = false
+                                },
+                                shape = RoundedCornerShape(12.dp),
+                                color = MaterialTheme.colorScheme.surface
+                            ) {
+                                Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    Icon(FieldMindIcons.Article, null, tint = FieldMindTheme.colors.source, size = 16.dp)
+                                    Text("$style style", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Medium)
+                                    Spacer(Modifier.weight(1f))
+                                    Icon(FieldMindIcons.Copy, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, size = 16.dp)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Preview if link available
+            if (source.link.isNotBlank()) {
+                Row(
+                    Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).clickable(onClick = onClick).background(MaterialTheme.colorScheme.surfaceContainerHigh).padding(horizontal = 10.dp, vertical = 6.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    Icon(FieldMindIcons.OpenLink, null, tint = MaterialTheme.colorScheme.primary, size = 14.dp)
+                    Text(source.link, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
+                }
+            }
+        }
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════════
+//  CITATION HELPERS
+// ══════════════════════════════════════════════════════════════════════
+
+private fun generateCitation(source: SourceEntity, style: String): String {
+    val year = source.dateOrYear.ifBlank { "n.d." }
+    val author = source.author.ifBlank { "Unknown" }
+    val title = source.title
+    val publisher = source.publisherOrJournal.ifBlank { "" }
+    val url = source.link.ifBlank { "" }
+    return when (style.lowercase()) {
+        "apa" -> buildString {
+            append("$author ($year). *$title*.")
+            if (publisher.isNotBlank()) append(" $publisher.")
+            if (url.isNotBlank()) append(" $url")
+        }
+        "mla" -> buildString {
+            append("$author. \"$title.\"")
+            if (publisher.isNotBlank()) append(" $publisher,")
+            append(" $year.")
+            if (url.isNotBlank()) append(" $url.")
+        }
+        "chicago" -> buildString {
+            append("$author. \"$title.\"")
+            if (publisher.isNotBlank()) append(" $publisher,")
+            append(" $year.")
+            if (url.isNotBlank()) append(" $url.")
+        }
+        else -> "$author ($year). $title."
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════════
+//  QUICK IMPORT DIALOG — URL + Evidence file
+// ══════════════════════════════════════════════════════════════════════
+
+@Composable
+private fun QuickImportDialog(viewModel: FieldMindViewModel, onDismiss: () -> Unit) {
+    val context = LocalContext.current
+    val haptics = rememberFieldMindHaptics()
+    var mode by remember { mutableStateOf("url") } // "url" or "file"
+    var url by remember { mutableStateOf("") }
+    var title by remember { mutableStateOf("") }
+    var type by remember { mutableStateOf("Article") }
+    var fileUri by remember { mutableStateOf("") }
+
+    val filePicker = rememberLauncherForActivityResult(androidx.activity.result.contract.ActivityResultContracts.OpenDocument()) { uri ->
+        if (uri != null) {
+            runCatching { context.contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION) }
+            fileUri = uri.toString()
+            mode = "file"
+            // Auto-detect type from MIME
+            val mime = context.contentResolver.getType(uri) ?: ""
+            type = when {
+                mime.startsWith("image/") -> "Image"
+                mime == "application/pdf" -> "PDF"
+                mime.startsWith("video/") -> "Video"
+                else -> "Local document"
+            }
+            haptics.light()
+        }
+    }
+
+    fun save() {
+        val link = if (mode == "url") url.trim() else ""
+        val uri = if (mode == "file") fileUri.trim() else ""
+        if (title.isNotBlank() || link.isNotBlank() || uri.isNotBlank()) {
+            viewModel.addSource(
+                type = type,
+                title = title.ifBlank {
+                    if (link.isNotBlank()) link.substringAfterLast("/").substringBefore("?").ifBlank { "Imported source" }
+                    else uri.substringAfterLast("/").substringBefore("?").ifBlank { "Imported evidence" }
+                },
+                author = "",
+                link = link,
+                summary = "",
+                taught = "",
+                reliability = 3,
+                fileUri = uri,
+                readingStatus = "In progress"
+            )
+            onDismiss()
+        }
+    }
+
+    DialogWrapper(onDismiss = onDismiss) {
+        DialogHeader(FieldMindIcons.Source, "Quick Import", "Import a source by pasting a URL or selecting a file.", accent = FieldMindTheme.colors.source)
+
+        // Mode toggle
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            FilterChip(selected = mode == "url", onClick = { mode = "url"; haptics.light() }, label = { Text("Import URL") }, leadingIcon = { Icon(FieldMindIcons.OpenLink, null, size = 16.dp) })
+            FilterChip(selected = mode == "file", onClick = { mode = "file"; haptics.light() }, label = { Text("Import evidence") }, leadingIcon = { Icon(FieldMindIcons.File, null, size = 16.dp) })
+        }
+
+        if (mode == "url") {
+            FieldTextField(url, { url = it }, "Paste a URL", supportingText = "Auto-detects articles, videos, papers")
+
+            // Auto-fill type from URL
+            LaunchedEffect(url) {
+                if (url.isNotBlank() && type == "Article") {
+                    val u = url.lowercase()
+                    type = when {
+                        u.contains("youtube") || u.contains("youtu.be") || u.contains("vimeo") -> "Video"
+                        u.contains("doi.org") || u.contains("arxiv") || u.contains("pubmed") || u.contains("scholar") -> "Paper"
+                        u.contains("amazon") || u.contains("goodreads") || u.contains("openlibrary") -> "Book"
+                        u.contains(".pdf") -> "PDF"
+                        else -> "Article"
+                    }
+                }
+            }
+        } else {
+            if (fileUri.isNotBlank()) {
+                Text("Selected file: ${fileUri.substringAfterLast("/")}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            OutlinedButton(
+                onClick = { filePicker.launch(arrayOf("*/*")) },
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(14.dp)
+            ) {
+                Icon(FieldMindIcons.File, null, size = 18.dp)
+                Spacer(Modifier.size(6.dp))
+                Text(if (fileUri.isNotBlank()) "Change file" else "Choose file")
+            }
+        }
+
+        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
+
+        FieldTextField(title, { title = it }, "Title (optional)", supportingText = "Auto-filled from URL or file name if left blank")
+        ChoiceChips(listOf("Article", "Video", "Book", "PDF", "Image", "Website", "Paper"), type) { type = it }
+
+        DialogActions(onCancel = onDismiss, onSave = { save() }, saveEnabled = title.isNotBlank() || url.isNotBlank() || fileUri.isNotBlank())
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════════
+//  BULK IMPORT DIALOG — Paste multiple URLs
+// ══════════════════════════════════════════════════════════════════════
+
+@Composable
+private fun BulkImportDialog(viewModel: FieldMindViewModel, onDismiss: () -> Unit) {
+    val haptics = rememberFieldMindHaptics()
+    var bulkText by remember { mutableStateOf("") }
+    var type by remember { mutableStateOf("Article") }
+
+    fun save() {
+        val urls = bulkText.lines()
+            .map { it.trim() }
+            .filter { it.isNotBlank() }
+        if (urls.isNotEmpty()) {
+            urls.forEach { link ->
+                val guessType = when {
+                    link.lowercase().contains("youtube") || link.lowercase().contains("youtu.be") -> "Video"
+                    link.lowercase().contains(".pdf") -> "PDF"
+                    else -> type
+                }
+                viewModel.addSource(
+                    type = guessType,
+                    title = link.substringAfterLast("/").substringBefore("?").ifBlank { "Imported source" },
+                    author = "",
+                    link = link,
+                    summary = "",
+                    taught = "",
+                    reliability = 3,
+                    readingStatus = "In progress"
+                )
+            }
+            onDismiss()
+        }
+    }
+
+    DialogWrapper(onDismiss = onDismiss, fullScreen = true) {
+        DialogHeader(FieldMindIcons.List, "Bulk Import", "Paste multiple URLs — one per line. Each becomes a new source.", accent = FieldMindTheme.colors.source)
+        ChoiceChips(listOf("Article", "Video", "Paper", "Website"), type) { type = it }
+        OutlinedTextField(
+            value = bulkText,
+            onValueChange = { bulkText = it },
+            modifier = Modifier.fillMaxWidth().height(200.dp),
+            minLines = 6,
+            placeholder = { Text("https://example.com/article1\nhttps://youtube.com/watch?v=...\nhttps://doi.org/...") },
+            shape = RoundedCornerShape(18.dp)
+        )
+        if (bulkText.isNotBlank()) {
+            val count = bulkText.lines().count { it.trim().isNotBlank() }
+            InfoChip("$count URLs detected", icon = FieldMindIcons.List)
+        }
+        DialogActions(onCancel = onDismiss, onSave = { save() }, saveEnabled = bulkText.isNotBlank(), saveLabel = "Import all")
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════════
+//  READING TIMER / FOCUS MODE
+// ══════════════════════════════════════════════════════════════════════
+
+@Composable
+private fun ReadingTimerDialog(onDismiss: () -> Unit) {
+    val haptics = rememberFieldMindHaptics()
+    var isRunning by remember { mutableStateOf(false) }
+    var elapsedSeconds by remember { mutableIntStateOf(0) }
+    var targetMinutes by remember { mutableIntStateOf(25) } // Pomodoro default
+
+    LaunchedEffect(isRunning) {
+        if (isRunning) {
+            while (true) {
+                delay(1000)
+                if (!isRunning) break
+                elapsedSeconds++
+            }
+        }
+    }
+
+    val hours = elapsedSeconds / 3600
+    val minutes = (elapsedSeconds % 3600) / 60
+    val seconds = elapsedSeconds % 60
+    val timeStr = if (hours > 0) "%d:%02d:%02d".format(hours, minutes, seconds)
+    else "%02d:%02d".format(minutes, seconds)
+
+    DialogWrapper(onDismiss = onDismiss) {
+        DialogHeader(FieldMindIcons.Timer, "Reading Timer", "Focus on your source without distractions.", accent = FieldMindTheme.colors.source)
+
+        // Timer display
+        Box(
+            Modifier.fillMaxWidth().padding(vertical = 16.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(timeStr, style = MaterialTheme.typography.displaySmall, fontWeight = FontWeight.ExtraBold, color = FieldMindTheme.colors.source)
+        }
+
+        // Progress bar
+        if (targetMinutes > 0) {
+            val targetSeconds = targetMinutes * 60
+            val progress = (elapsedSeconds.toFloat() / targetSeconds).coerceAtMost(1f)
+            LinearProgressIndicator(
+                progress = progress,
+                modifier = Modifier.fillMaxWidth().height(6.dp).clip(RoundedCornerShape(3.dp)),
+                color = FieldMindTheme.colors.source,
+                trackColor = MaterialTheme.colorScheme.surfaceContainerHighest
+            )
+            Text("${(progress * 100).toInt()}% of ${targetMinutes}min goal", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 4.dp))
+        }
+
+        // Target selector
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+            Text("Goal:", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            listOf(10, 15, 20, 25, 30, 45, 60).forEach { mins ->
+                FilterChip(
+                    selected = targetMinutes == mins,
+                    onClick = { if (!isRunning) { targetMinutes = mins; haptics.light() } },
+                    label = { Text("${mins}m") }
+                )
+            }
+        }
+
+        // Controls
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            if (isRunning) {
+                Button(
+                    onClick = { isRunning = false; haptics.confirm() },
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(14.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.errorContainer, contentColor = MaterialTheme.colorScheme.onErrorContainer)
+                ) {
+                    Icon(FieldMindIcons.Pause, null, size = 18.dp); Spacer(Modifier.size(6.dp)); Text("Pause")
+                }
+            } else {
+                Button(
+                    onClick = {
+                        if (elapsedSeconds == 0) isRunning = true
+                        else elapsedSeconds = 0
+                        haptics.confirm()
+                    },
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(14.dp)
+                ) {
+                    Icon(if (elapsedSeconds == 0) FieldMindIcons.Play else FieldMindIcons.Stop, null, size = 18.dp)
+                    Spacer(Modifier.size(6.dp))
+                    Text(if (elapsedSeconds == 0) "Start" else "Reset")
+                }
+            }
+            OutlinedButton(
+                onClick = { isRunning = false; elapsedSeconds = 0; haptics.light() },
+                modifier = Modifier.weight(1f),
+                shape = RoundedCornerShape(14.dp)
+            ) {
+                Icon(FieldMindIcons.Close, null, size = 18.dp); Spacer(Modifier.size(6.dp)); Text("Stop")
+            }
+        }
+
+        // Session summary
+        if (elapsedSeconds > 0 && !isRunning) {
+            val readMin = elapsedSeconds / 60
+            Card(
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+            ) {
+                Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text("Session summary", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("You read for ${readMin} minute${if (readMin != 1) "s" else ""}.", style = MaterialTheme.typography.bodyMedium)
+                    if (targetMinutes > 0 && readMin >= targetMinutes) {
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            Icon(FieldMindIcons.Done, null, tint = FieldMindTheme.colors.positive, size = 16.dp)
+                            Text("Goal reached!", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold, color = FieldMindTheme.colors.positive)
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════════
+//  ORIGINAL PANELS — Notes, Reading, Flashcards, Learn (unchanged)
+// ══════════════════════════════════════════════════════════════════════
 
 @Composable
 private fun NotePanel(viewModel: FieldMindViewModel, items: List<NoteEntity>, onOpenDetail: (String, Long) -> Unit) {
@@ -138,9 +823,9 @@ private fun NotePanel(viewModel: FieldMindViewModel, items: List<NoteEntity>, on
     var selectedCategory by remember { mutableStateOf("All") }
     val categories = remember(items) { listOf("All") + items.map { it.category.ifBlank { "Other" } }.distinct().sorted() }
     val filtered = remember(items, selectedCategory) { if (selectedCategory == "All") items else items.filter { it.category == selectedCategory } }
-    LazyColumn(contentPadding = panelPadding(), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+    LazyColumn(contentPadding = libraryPanelPadding(), verticalArrangement = Arrangement.spacedBy(14.dp)) {
         item { SectionHeader("Notes", "Add quick notes here. Categories stay collapsed until you need filtering.") }
-        item { AddButton(if (showAdd) "Close note composer" else "Add note") { showAdd = !showAdd } }
+        item { LibraryAddButton(if (showAdd) "Close note composer" else "Add note") { showAdd = !showAdd } }
         if (showAdd) item { NoteCaptureCard(viewModel = viewModel, initialCategory = selectedCategory.takeIf { it != "All" } ?: observationCategories.last()) { showAdd = false } }
         item {
             Card(shape = RoundedCornerShape(20.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)) {
@@ -182,7 +867,7 @@ private fun PaperReadingPanel(items: List<SourceEntity>, onOpenDetail: (String, 
     val total = items.size.coerceAtLeast(1)
     val progressFraction = readCount.toFloat() / total
 
-    LazyColumn(contentPadding = panelPadding(), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+    LazyColumn(contentPadding = libraryPanelPadding(), verticalArrangement = Arrangement.spacedBy(14.dp)) {
         item {
             SectionHeader("Paper reading mode", "Track your reading progress across saved sources.")
         }
@@ -268,7 +953,7 @@ private fun FlashcardPanel(
     val localDownloaded by viewModel.fieldSettings.localModelDownloaded.collectAsState()
     val localModel by viewModel.fieldSettings.localModelOption.collectAsState()
     var type by remember { mutableStateOf("concept") }; var front by remember { mutableStateOf("") }; var back by remember { mutableStateOf("") }; var useSm2 by remember { mutableStateOf(false) }
-    LazyColumn(contentPadding = panelPadding(), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+    LazyColumn(contentPadding = libraryPanelPadding(), verticalArrangement = Arrangement.spacedBy(14.dp)) {
         item {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 Button(onClick = onStartReview, Modifier.weight(1f), shape = RoundedCornerShape(16.dp), enabled = items.isNotEmpty()) {
@@ -411,7 +1096,7 @@ private fun LearnPanel(viewModel: FieldMindViewModel, onOpenReader: (String, Str
             else -> beginnerResearchMilestones[4]
         }
     }
-    LazyColumn(contentPadding = panelPadding(), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+    LazyColumn(contentPadding = libraryPanelPadding(), verticalArrangement = Arrangement.spacedBy(16.dp)) {
         item { ResearchJourneyHero(next, signals, onOpenReader) }
         item { SectionHeader("Beginner researcher path", "A guided path from observation to evidence-based communication.") }
         items(beginnerResearchMilestones) { milestone -> ResearchMilestoneCard(milestone, onOpenReader) }
@@ -1021,6 +1706,30 @@ private fun ReaderFallbackCard(message: String, url: String, onPrimary: () -> Un
                 FilledTonalButton(onClick = onPrimary, shape = RoundedCornerShape(14.dp)) { Text("Retry") }
                 Button(onClick = { runCatching { uriHandler.openUri(url) } }, shape = RoundedCornerShape(14.dp)) { Text("Open externally") }
             }
+        }
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════════
+//  HELPERS
+// ══════════════════════════════════════════════════════════════════════
+
+private fun libraryPanelPadding() = PaddingValues(horizontal = 20.dp, vertical = 12.dp)
+
+@Composable
+private fun LibraryAddButton(text: String, onClick: () -> Unit) {
+    Surface(
+        onClick = onClick,
+        shape = RoundedCornerShape(18.dp),
+        color = MaterialTheme.colorScheme.surfaceContainerLow
+    ) {
+        Row(
+            Modifier.fillMaxWidth().padding(14.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            Icon(FieldMindIcons.Add, null, tint = MaterialTheme.colorScheme.primary, size = 20.dp)
+            Text(text, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.primary)
         }
     }
 }
