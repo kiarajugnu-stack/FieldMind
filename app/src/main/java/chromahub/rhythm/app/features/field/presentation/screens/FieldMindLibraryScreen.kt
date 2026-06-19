@@ -164,7 +164,7 @@ private fun SourcePanel(viewModel: FieldMindViewModel, items: List<SourceEntity>
     val importantCount = items.count { it.importance in listOf("Important", "Critical") }
     val totalCount = items.size
 
-    LazyColumn(contentPadding = panelPadding(), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+    LazyColumn(contentPadding = libraryPanelPadding(), verticalArrangement = Arrangement.spacedBy(14.dp)) {
         // ── Stats summary card ──
         if (items.isNotEmpty()) {
             item {
@@ -823,9 +823,9 @@ private fun NotePanel(viewModel: FieldMindViewModel, items: List<NoteEntity>, on
     var selectedCategory by remember { mutableStateOf("All") }
     val categories = remember(items) { listOf("All") + items.map { it.category.ifBlank { "Other" } }.distinct().sorted() }
     val filtered = remember(items, selectedCategory) { if (selectedCategory == "All") items else items.filter { it.category == selectedCategory } }
-    LazyColumn(contentPadding = panelPadding(), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+    LazyColumn(contentPadding = libraryPanelPadding(), verticalArrangement = Arrangement.spacedBy(14.dp)) {
         item { SectionHeader("Notes", "Add quick notes here. Categories stay collapsed until you need filtering.") }
-        item { AddButton(if (showAdd) "Close note composer" else "Add note") { showAdd = !showAdd } }
+        item { LibraryAddButton(if (showAdd) "Close note composer" else "Add note") { showAdd = !showAdd } }
         if (showAdd) item { NoteCaptureCard(viewModel = viewModel, initialCategory = selectedCategory.takeIf { it != "All" } ?: observationCategories.last()) { showAdd = false } }
         item {
             Card(shape = RoundedCornerShape(20.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)) {
@@ -867,7 +867,7 @@ private fun PaperReadingPanel(items: List<SourceEntity>, onOpenDetail: (String, 
     val total = items.size.coerceAtLeast(1)
     val progressFraction = readCount.toFloat() / total
 
-    LazyColumn(contentPadding = panelPadding(), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+    LazyColumn(contentPadding = libraryPanelPadding(), verticalArrangement = Arrangement.spacedBy(14.dp)) {
         item {
             SectionHeader("Paper reading mode", "Track your reading progress across saved sources.")
         }
@@ -953,7 +953,7 @@ private fun FlashcardPanel(
     val localDownloaded by viewModel.fieldSettings.localModelDownloaded.collectAsState()
     val localModel by viewModel.fieldSettings.localModelOption.collectAsState()
     var type by remember { mutableStateOf("concept") }; var front by remember { mutableStateOf("") }; var back by remember { mutableStateOf("") }; var useSm2 by remember { mutableStateOf(false) }
-    LazyColumn(contentPadding = panelPadding(), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+    LazyColumn(contentPadding = libraryPanelPadding(), verticalArrangement = Arrangement.spacedBy(14.dp)) {
         item {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 Button(onClick = onStartReview, Modifier.weight(1f), shape = RoundedCornerShape(16.dp), enabled = items.isNotEmpty()) {
@@ -1096,7 +1096,7 @@ private fun LearnPanel(viewModel: FieldMindViewModel, onOpenReader: (String, Str
             else -> beginnerResearchMilestones[4]
         }
     }
-    LazyColumn(contentPadding = panelPadding(), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+    LazyColumn(contentPadding = libraryPanelPadding(), verticalArrangement = Arrangement.spacedBy(16.dp)) {
         item { ResearchJourneyHero(next, signals, onOpenReader) }
         item { SectionHeader("Beginner researcher path", "A guided path from observation to evidence-based communication.") }
         items(beginnerResearchMilestones) { milestone -> ResearchMilestoneCard(milestone, onOpenReader) }
@@ -1714,10 +1714,10 @@ private fun ReaderFallbackCard(message: String, url: String, onPrimary: () -> Un
 //  HELPERS
 // ══════════════════════════════════════════════════════════════════════
 
-private fun panelPadding() = PaddingValues(horizontal = 20.dp, vertical = 12.dp)
+private fun libraryPanelPadding() = PaddingValues(horizontal = 20.dp, vertical = 12.dp)
 
 @Composable
-private fun AddButton(text: String, onClick: () -> Unit) {
+private fun LibraryAddButton(text: String, onClick: () -> Unit) {
     Surface(
         onClick = onClick,
         shape = RoundedCornerShape(18.dp),

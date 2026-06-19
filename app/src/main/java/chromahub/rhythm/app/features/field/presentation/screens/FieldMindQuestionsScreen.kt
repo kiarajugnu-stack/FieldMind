@@ -18,6 +18,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import fieldmind.research.app.features.field.data.database.entity.QuestionEntity
+import fieldmind.research.app.features.field.data.question.QuestionGenerator
+import fieldmind.research.app.features.field.data.question.GeneratedQuestion
 import fieldmind.research.app.features.field.presentation.components.*
 import fieldmind.research.app.features.field.presentation.navigation.FieldMindScreen
 import fieldmind.research.app.features.field.presentation.theme.FieldMindTheme
@@ -56,6 +58,18 @@ fun QuestionsScreen(
     var autoContext by remember { mutableStateOf("") }
     var suggestedCauses by remember { mutableStateOf(listOf<String>()) }
     var suggestedPredictions by remember { mutableStateOf(listOf<String>()) }
+    var suggestedCategory by remember { mutableStateOf("Other") }
+    var suggestedSourceType by remember { mutableStateOf("Thought") }
+    var suggestedPriority by remember { mutableStateOf("Medium") }
+
+    // Generated questions from observations (shown as suggestions)
+    val suggestedQuestions = remember(observations, sources, questions) {
+        if (observations.isNotEmpty()) {
+            QuestionGenerator.generateAll(observations, sources, questions).filter { generated ->
+                !questions.any { q -> q.questionText.lowercase().trim() == generated.questionText.lowercase().trim() }
+            }
+        } else emptyList()
+    }
 
     // Filter
     var filterStatus by remember { mutableStateOf("All") }
@@ -122,52 +136,85 @@ fun QuestionsScreen(
                     }
                     AnimatedVisibility(showAuto) {
                         Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                            // Step 1: Enter topic or let it detect from recent observations
-                            FieldTextField(autoQuestion, { autoQuestion = it }, "What are you curious about? (e.g., \"bird activity at dawn\")", minLines = 2)
-
-                            if (autoQuestion.isNotBlank()) {
-                                // Step 2: Auto-suggested causes based on text
-                                suggestedCauses = listOf(
-                                    "Time of day / seasonality",
-                                    "Environmental conditions",
-                                    "Presence of food/water sources",
-                                    "Human activity / disturbance"
-                                )
-                                suggestedPredictions = listOf(
-                                    "It changes with temperature",
-                                    "It varies by location type",
-                                    "It correlates with specific conditions",
-                                    "Pattern repeats at regular intervals"
-                                )
-
-                                Text("Possible causes to investigate:", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.primary)
-                                SuggestionChips(suggestedCauses) { cause ->
-                                    if (!autoContext.contains(cause)) {
-                                        autoContext = if (autoContext.isBlank()) cause else "$autoContext, $cause"
+                            // ── Suggested questions from observations ──
+                            if (suggestedQuestions.isNotEmpty()) {
+                                Text("Suggested from observations:", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.primary)
+                                suggestedQuestions.take(6).forEach { sq ->
+                                    Card(
+                                        modifier = Modifier.fillMaxWidth().clickable {
+                                            autoQuestion = sq.questionText
+                                            autoContext = sq.context
+                                            suggestedCategory = sq.category
+                                            suggestedSourceType = sq.sourceType
+                                            suggestedPriority = sq.priority
+                                        },
+                                        shape = RoundedCornerShape(14.dp),
+                                        colors = CardDefaults.cardColors(
+                                            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                                        ),
+                                        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                                    ) {
+                                        Row(
+                                            Modifier.padding(12.dp).fillMaxWidth(),
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                                        ) {
+                                            Column(Modifier.weight(1f)) {
+                                                Text(sq.questionText, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Medium, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                                                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                                    InfoChip(sq.category, icon = FieldMindIcons.Category)
+                                                    InfoChip(sq.sourceType)
+                                                    InfoChip(sq.priority, icon = FieldMindIcons.Alert)
+                                                }
+                                            }
+                                            Icon(FieldMindIcons.Add, null, tint = MaterialTheme.colorScheme.primary, size = 20.dp)
+                                        }
                                     }
                                 }
-
-                                Text("Testable predictions:", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.primary)
-                                SuggestionChips(suggestedPredictions) { prediction ->
-                                    sourceNotes = prediction
-                                }
+                                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f), modifier = Modifier.padding(vertical = 4.dp))
                             }
 
+                            // ── Or enter a custom topic ──
+                            Text("Or write your own:", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            FieldTextField(autoQuestion, { autoQuestion = it }, "What are you curious about? (e.g., \"bird activity at dawn\")", minLines = 2)
+
+                            // Context field
                             FieldTextField(autoContext, { autoContext = it }, "Context / observations that led to this question", minLines = 2)
                             FieldTextField(sourceNotes, { sourceNotes = it }, "Testable prediction or hypothesis", minLines = 1)
 
+                            // More parameters
+                            val allCategories = remember(questions) { listOf("Other", "Bird", "Mammal", "Insect", "Plant", "Fungi", "Amphibian", "Reptile", "Fish", "Marine", "Weather", "Geology", "Astronomy", "Ecology", "Behavior", "Phenology", "General") + questions.map { it.category }.distinct().filterNot { it.isBlank() }.sorted() }
+                            Text("Question parameters", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                ChoiceChips(listOf("Thought", "Observation", "Reading", "Data gap", "Discussion"), selectedSourceType) { selectedSourceType = it }
+                                ChoiceChips(allCategories, suggestedCategory.ifBlank { category }) { suggestedCategory = it }
+                            }
+                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                ChoiceChips(listOf("Thought", "Observation", "Reading", "Data gap", "Discussion", "Method", "Prediction", "Comparison"), suggestedSourceType.ifBlank { selectedSourceType }) { suggestedSourceType = it }
+                            }
+                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                ChoiceChips(listOf("Low", "Medium", "High"), suggestedPriority.ifBlank { priority }) { suggestedPriority = it }
                             }
 
                             Button(
                                 onClick = {
                                     haptics.confirm()
-                                    val question = autoQuestion.ifBlank { "Investigate: ${autoContext.take(80)}" }
-                                    viewModel.addQuestion(question, category, selectedSourceType, "Open", priority)
+                                    val finalQuestion = autoQuestion.ifBlank { "Investigate: ${autoContext.take(80)}" }
+                                    val finalCategory = suggestedCategory.ifBlank { category }
+                                    val finalSourceType = suggestedSourceType.ifBlank { selectedSourceType }
+                                    val finalPriority = suggestedPriority.ifBlank { priority }
+                                    viewModel.addQuestion(
+                                        question = finalQuestion,
+                                        category = finalCategory,
+                                        sourceType = finalSourceType,
+                                        status = "Open",
+                                        priority = finalPriority
+                                    )
                                     autoQuestion = ""
                                     autoContext = ""
                                     sourceNotes = ""
+                                    suggestedCategory = ""
+                                    suggestedSourceType = ""
+                                    suggestedPriority = ""
                                     showAuto = false
                                 },
                                 modifier = Modifier.fillMaxWidth(),

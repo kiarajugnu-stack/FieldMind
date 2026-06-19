@@ -218,7 +218,7 @@ private fun DialogDividerSection(
  * Standardized action buttons row (Cancel + Save).
  */
 @Composable
-private fun DialogActions(
+internal fun DialogActions(
     onCancel: () -> Unit,
     onSave: () -> Unit,
     saveEnabled: Boolean = true,
