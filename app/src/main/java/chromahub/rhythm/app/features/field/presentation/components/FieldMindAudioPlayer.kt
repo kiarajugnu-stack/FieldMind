@@ -1,5 +1,8 @@
 package fieldmind.research.app.features.field.presentation.components
 
+import android.media.MediaCodec
+import android.media.MediaExtractor
+import android.media.MediaFormat
 import android.media.MediaPlayer
 import android.net.Uri
 import androidx.compose.foundation.Canvas
@@ -31,12 +34,13 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import fieldmind.research.app.shared.presentation.components.icons.Icon
 import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
-import kotlin.math.PI
+import kotlinx.coroutines.withContext
+import java.nio.ByteBuffer
+import java.nio.ByteOrder
 import kotlin.math.abs
-import kotlin.math.sin
-import kotlin.random.Random
-import java.util.concurrent.TimeUnit
+import kotlin.math.sqrt
 
 // ── Waveform constants ──
 private const val WAVEFORM_BAR_COUNT = 80
@@ -44,7 +48,7 @@ private val WaveformBarGap = 0.18f // fraction of bar width used as gap
 
 /**
  * Full-screen dialog for playing audio files in-app.
- * Features waveform visualization, playback controls, and seek.
+ * Features real PCM waveform visualization, playback controls, and seek.
  */
 @Composable
 fun AudioPlayerDialog(
@@ -58,6 +62,8 @@ fun AudioPlayerDialog(
     var duration by remember { mutableIntStateOf(0) }
     var isPrepared by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf(false) }
+    var waveformBars by remember { mutableStateOf<FloatArray?>(null) }
+    var waveformLoading by remember { mutableStateOf(true) }
 
     // ── MediaPlayer lifecycle ──
     val mediaPlayer = remember(uri) {
@@ -78,6 +84,14 @@ fun AudioPlayerDialog(
                 error = true
             }
         }
+    }
+
+    // ── Extract real PCM waveform data on a background thread ──
+    LaunchedEffect(uri) {
+        waveformLoading = true
+        val bars = extractWaveformPcm(context, uri, WAVEFORM_BAR_COUNT)
+        waveformBars = bars
+        waveformLoading = false
     }
 
     // Cleanup on dismiss
@@ -122,17 +136,12 @@ fun AudioPlayerDialog(
     }
 
     fun formatTime(ms: Int): String {
-        val minutes = TimeUnit.MILLISECONDS.toMinutes(ms.toLong())
-        val seconds = TimeUnit.MILLISECONDS.toSeconds(ms.toLong()) % 60
+        val minutes = java.util.concurrent.TimeUnit.MILLISECONDS.toMinutes(ms.toLong())
+        val seconds = java.util.concurrent.TimeUnit.MILLISECONDS.toSeconds(ms.toLong()) % 60
         return "%02d:%02d".format(minutes, seconds)
     }
 
     val progress = if (duration > 0) currentPosition.toFloat() / duration else 0f
-
-    // ── Generate realistic waveform data ──
-    val waveformBars = remember(duration) {
-        generateWaveformBars(WAVEFORM_BAR_COUNT, seed = uri.hashCode())
-    }
 
     Dialog(
         onDismissRequest = {
@@ -188,7 +197,7 @@ fun AudioPlayerDialog(
                             color = Color.White.copy(alpha = 0.6f)
                         )
                     }
-                    !isPrepared -> {
+                    !isPrepared || waveformLoading -> {
                         Spacer(Modifier.height(48.dp))
                         CircularProgressIndicator(
                             color = Color.White,
@@ -197,7 +206,7 @@ fun AudioPlayerDialog(
                         )
                         Spacer(Modifier.height(12.dp))
                         Text(
-                            "Loading…",
+                            if (waveformLoading) "Generating waveform…" else "Loading…",
                             style = MaterialTheme.typography.bodySmall,
                             color = Color.White.copy(alpha = 0.5f)
                         )
@@ -215,20 +224,37 @@ fun AudioPlayerDialog(
                         )
 
                         // ── Waveform visualization ──
-                        WaveformCanvas(
-                            bars = waveformBars,
-                            progress = progress,
-                            isPlaying = isPlaying,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(140.dp)
-                                .pointerInput(Unit) {
-                                    detectTapGestures { offset ->
-                                        val tapProgress = (offset.x / size.width).coerceIn(0f, 1f)
-                                        seekTo((tapProgress * duration).toInt())
+                        val bars = waveformBars
+                        if (bars != null) {
+                            WaveformCanvas(
+                                bars = bars,
+                                progress = progress,
+                                isPlaying = isPlaying,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(140.dp)
+                                    .pointerInput(Unit) {
+                                        detectTapGestures { offset ->
+                                            val tapProgress = (offset.x / size.width).coerceIn(0f, 1f)
+                                            seekTo((tapProgress * duration).toInt())
+                                        }
                                     }
-                                }
-                        )
+                            )
+                        } else {
+                            // Fallback: simplified generated waveform
+                            GeneratedWaveformPlaceholder(
+                                progress = progress,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(140.dp)
+                                    .pointerInput(Unit) {
+                                        detectTapGestures { offset ->
+                                            val tapProgress = (offset.x / size.width).coerceIn(0f, 1f)
+                                            seekTo((tapProgress * duration).toInt())
+                                        }
+                                    }
+                            )
+                        }
 
                         // ── Time labels ──
                         Row(
@@ -290,47 +316,200 @@ fun AudioPlayerDialog(
 }
 
 // ══════════════════════════════════════════════════════════════════════
-//  Waveform data generation
+//  Real PCM Waveform Extraction via MediaExtractor + MediaCodec
 // ══════════════════════════════════════════════════════════════════════
 
 /**
- * Generates a realistic-looking waveform as an array of normalised bar heights
- * (0f…1f). Uses the hash of the URI as a seed so the same file always gets
- * the same pattern.
+ * Decodes an audio file using [MediaExtractor] + [MediaCodec] and extracts
+ * the RMS amplitude envelope, downsampled to [targetBars] values (0f…1f).
  *
- * The algorithm blends:
- *  - a sine-based envelope (louder at the middle, quieter at ends)
- *  - a low-frequency modulation (creates "sections")
- *  - high-frequency noise for micro-detail
+ * Runs synchronously — call from a background [Dispatchers.IO] coroutine.
+ *
+ * Returns `null` if decoding fails (caller falls back to generated waveform).
  */
-private fun generateWaveformBars(
-    count: Int,
-    seed: Int = 42,
-    envelopeStrength: Float = 0.5f,
-    noiseStrength: Float = 0.5f
-): FloatArray {
-    val rng = Random(seed)
-    val bars = FloatArray(count)
-    for (i in 0 until count) {
-        val t = i.toDouble() / count
-        // Envelope: quiet at ends, loud in the middle (sine window)
-        val envelope = (sin(t * PI) * envelopeStrength + (1.0 - envelopeStrength)).toFloat()
-        // Low-frequency modulation for "sections"
-        val lfMod = (sin(t * 4.0 * PI) * 0.3 + sin(t * 7.0 * PI + 1.0) * 0.2).coerceIn(-0.5, 0.5).toFloat()
-        // Noise for organic micro-variation
-        val noise = (rng.nextFloat() - 0.5f) * 2f * noiseStrength
-        // Combine, clamp, and apply a floor so no bar is totally flat
-        bars[i] = ((envelope + lfMod + noise) / 2f).coerceIn(0.08f, 1f)
+private suspend fun extractWaveformPcm(
+    context: android.content.Context,
+    uri: String,
+    targetBars: Int
+): FloatArray? = withContext(Dispatchers.IO) {
+    var extractor: MediaExtractor? = null
+    var decoder: MediaCodec? = null
+    try {
+        extractor = MediaExtractor()
+        extractor.setDataSource(context, Uri.parse(uri), null)
+
+        // ── Select the first audio track ──
+        var audioTrackIndex = -1
+        var trackFormat: MediaFormat? = null
+        for (i in 0 until extractor.trackCount) {
+            val fmt = extractor.getTrackFormat(i)
+            if (fmt.getString(MediaFormat.KEY_MIME)?.startsWith("audio/") == true) {
+                audioTrackIndex = i
+                trackFormat = fmt
+                break
+            }
+        }
+        if (audioTrackIndex < 0 || trackFormat == null) return null
+        extractor.selectTrack(audioTrackIndex)
+
+        // ── Configure decoder ──
+        val mime = trackFormat.getString(MediaFormat.KEY_MIME) ?: return null
+        decoder = MediaCodec.createDecoderByType(mime)
+        decoder.configure(trackFormat, null, null, 0)
+        decoder.start()
+
+        val inputBuffers = decoder.inputBuffers
+        val outputBuffers = decoder.outputBuffers
+        val bufferInfo = MediaCodec.BufferInfo()
+
+        // ── Collect RMS values per decoded frame ──
+        val rmsValues = mutableListOf<Float>()
+        var inputDone = false
+        var outputDone = false
+        val timeoutUs = 10_000L
+        var frameCount = 0
+        val maxFrames = 500_000 // safety cap (~10 min at 44.1kHz/1000 frames/sec)
+
+        while (!outputDone && frameCount < maxFrames) {
+            // Feed input
+            if (!inputDone) {
+                val inputIndex = try {
+                    decoder.dequeueInputBuffer(timeoutUs)
+                } catch (_: Exception) { -1 }
+                if (inputIndex >= 0) {
+                    val inputBuf = inputBuffers[inputIndex] ?: continue
+                    val sampleSize = extractor.readSampleData(inputBuf, 0)
+                    if (sampleSize < 0) {
+                        decoder.queueInputBuffer(
+                            inputIndex, 0, 0, 0,
+                            MediaCodec.BUFFER_FLAG_END_OF_STREAM
+                        )
+                        inputDone = true
+                    } else {
+                        val flags = if ((extractor.sampleFlags and MediaExtractor.SAMPLE_FLAG_SYNC) != 0)
+                            MediaCodec.BUFFER_FLAG_KEY_FRAME else 0
+                        decoder.queueInputBuffer(
+                            inputIndex, 0, sampleSize,
+                            extractor.sampleTime,
+                            flags
+                        )
+                        extractor.advance()
+                    }
+                }
+            }
+
+            // Drain output
+            val outputIndex = try {
+                decoder.dequeueOutputBuffer(bufferInfo, timeoutUs)
+            } catch (_: Exception) { -1 }
+
+            when {
+                outputIndex == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED -> {
+                    // Format changed — continue
+                }
+                outputIndex == MediaCodec.INFO_TRY_AGAIN_LATER -> {
+                    if (inputDone) outputDone = true
+                }
+                outputIndex >= 0 -> {
+                    frameCount++
+                    val isEos = (bufferInfo.flags and MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0
+                    if (isEos) outputDone = true
+                    if (bufferInfo.size > 0) {
+                        val outputBuf = outputBuffers[outputIndex] ?: continue
+                        outputBuf.position(bufferInfo.offset)
+                        outputBuf.limit(bufferInfo.offset + bufferInfo.size)
+
+                        // Compute RMS for this frame
+                        val rms = computeRms(outputBuf, bufferInfo.size)
+                        rmsValues.add(rms)
+
+                        decoder.releaseOutputBuffer(outputIndex, false)
+                    } else {
+                        decoder.releaseOutputBuffer(outputIndex, false)
+                    }
+                }
+            }
+        }
+
+        // ── Downsample collected RMS values to targetBars ──
+        if (rmsValues.isEmpty()) return null
+
+        val result = FloatArray(targetBars)
+        for (i in 0 until targetBars) {
+            val startIdx = (i.toLong() * rmsValues.size / targetBars).toInt()
+            val endIdx = (((i + 1).toLong() * rmsValues.size / targetBars).toInt())
+                .coerceAtMost(rmsValues.size)
+            if (endIdx > startIdx) {
+                var sum = 0f
+                for (j in startIdx until endIdx) {
+                    sum += rmsValues[j]
+                }
+                result[i] = (sum / (endIdx - startIdx)).coerceIn(0.03f, 1f)
+            } else {
+                result[i] = 0.1f
+            }
+        }
+
+        return@withContext result
+    } catch (_: Exception) {
+        return@withContext null
+    } finally {
+        runCatching { decoder?.stop() }
+        runCatching { decoder?.release() }
+        runCatching { extractor?.release() }
     }
-    return bars
 }
+
+/**
+ * Computes the Root-Mean-Square amplitude of a [ByteBuffer] containing
+ * 16-bit signed little-endian PCM audio data.
+ *
+ * Returns a normalised value in 0f…1f range.
+ */
+private fun computeRms(buffer: ByteBuffer, size: Int): Float {
+    if (size < 2) return 0f
+    val sampleCount = size / 2
+    val shortBuf = buffer.order(ByteOrder.LITTLE_ENDIAN).asShortBuffer()
+    val shorts = ShortArray(sampleCount)
+    shortBuf.get(shorts, 0, sampleCount.coerceAtMost(shorts.size))
+
+    var sumSquares = 0.0
+    for (s in shorts) {
+        sumSquares += (s.toDouble() / 32767.0) * (s.toDouble() / 32767.0)
+    }
+    val rms = sqrt(sumSquares / sampleCount)
+    // Normalize: scale RMS (0.0-1.0) so it fills the visual range nicely
+    val normalized = (rms * 2.5).coerceIn(0.0, 1.0)
+    return normalized.toFloat().coerceIn(0.03f, 1f)
+}
+
+// ══════════════════════════════════════════════════════════════════════
+//  Fallback generated waveform (when real extraction fails)
+// ══════════════════════════════════════════════════════════════════════
+
+private val generatedBars by lazy {
+    FloatArray(WAVEFORM_BAR_COUNT) { i ->
+        val t = i.toDouble() / WAVEFORM_BAR_COUNT
+        val envelope = kotlin.math.sin(t * kotlin.math.PI).toFloat() * 0.6f + 0.4f
+        val detail = (0.2f * abs((i % 7) - 3) / 3f) + 0.08f
+        envelope * detail
+    }
+}
+
+private val barColors = Brush.horizontalGradient(
+    colors = listOf(
+        Color(0xFF7C4DFF),
+        Color(0xFF448AFF),
+        Color(0xFF03DAC6)
+    )
+)
 
 // ══════════════════════════════════════════════════════════════════════
 //  Waveform Canvas composable
 // ══════════════════════════════════════════════════════════════════════
 
 /**
- * Renders the waveform bars using Compose [Canvas].
+ * Renders the real PCM waveform bars using Compose [Canvas].
  *
  * - **Played** portion (left of progress) is a vibrant gradient
  * - **Unplayed** portion is dim white
@@ -345,13 +524,6 @@ private fun WaveformCanvas(
     isPlaying: Boolean,
     modifier: Modifier = Modifier
 ) {
-    val playedGradient = Brush.horizontalGradient(
-        colors = listOf(
-            Color(0xFF7C4DFF), // purple
-            Color(0xFF448AFF), // blue
-            Color(0xFF03DAC6)  // teal
-        )
-    )
     val whiteDim = Color.White.copy(alpha = 0.25f)
     val indicatorColor = Color.White
     val glowColor = Color(0xFF7C4DFF).copy(alpha = 0.25f)
@@ -398,7 +570,7 @@ private fun WaveformCanvas(
 
             // ── Main bar ──
             drawRoundRect(
-                brush = if (isPlayed) playedGradient else SolidColor(whiteDim),
+                brush = if (isPlayed) barColors else SolidColor(whiteDim),
                 topLeft = Offset(x, halfHeight - barHeight),
                 size = Size(barWidth, barHeight * 2f),
                 cornerRadius = CornerRadius(barWidth / 2f)
@@ -415,4 +587,20 @@ private fun WaveformCanvas(
             pathEffect = PathEffect.dashPathEffect(floatArrayOf(6f, 4f))
         )
     }
+}
+
+/**
+ * Simplified fallback waveform shown when PCM extraction fails.
+ */
+@Composable
+private fun GeneratedWaveformPlaceholder(
+    progress: Float,
+    modifier: Modifier = Modifier
+) {
+    WaveformCanvas(
+        bars = generatedBars,
+        progress = progress,
+        isPlaying = false,
+        modifier = modifier
+    )
 }

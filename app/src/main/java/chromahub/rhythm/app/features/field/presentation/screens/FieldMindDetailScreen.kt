@@ -2962,18 +2962,21 @@ private fun ObservationAttachmentsPanel(viewModel: FieldMindViewModel, observati
             }
         }
     }
-}
-
-
-
-
 
     // In-app viewers
     if (showImageViewer) {
-        ImageViewerDialog(uri = viewerUri, caption = viewerCaption, onDismiss = { showImageViewer = false })
+        ImageViewerDialog(
+            uri = viewerUri,
+            caption = viewerCaption,
+            onDismiss = { showImageViewer = false }
+        )
     }
     if (showAudioPlayer) {
-        AudioPlayerDialog(uri = viewerUri, title = viewerCaption, onDismiss = { showAudioPlayer = false })
+        AudioPlayerDialog(
+            uri = viewerUri,
+            title = viewerCaption,
+            onDismiss = { showAudioPlayer = false }
+        )
     }
 }
 @Composable
