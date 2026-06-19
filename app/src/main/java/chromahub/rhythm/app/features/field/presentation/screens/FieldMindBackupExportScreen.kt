@@ -20,8 +20,10 @@ import fieldmind.research.app.features.field.presentation.theme.FieldMindTheme
 import fieldmind.research.app.features.field.presentation.viewmodel.FieldMindViewModel
 import fieldmind.research.app.shared.presentation.components.icons.Icon
 import kotlinx.coroutines.launch
+import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
+import java.util.Locale
 
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -182,6 +184,13 @@ fun FieldMindPrivacyGate(enabled: Boolean, title: String, body: String): Boolean
         }
     }
     return false
+}
+
+private fun backupDirectory(context: Context): File = File(context.filesDir, "fieldmind/backups").apply { mkdirs() }
+
+private fun lastBackupSummary(context: Context): String {
+    val latest = backupDirectory(context).listFiles { file -> file.isFile && file.extension == "json" }?.maxByOrNull { it.lastModified() }
+    return latest?.let { SimpleDateFormat("MMM d, yyyy • h:mm a", Locale.getDefault()).format(Date(it.lastModified())) } ?: "Never"
 }
 
 @Composable

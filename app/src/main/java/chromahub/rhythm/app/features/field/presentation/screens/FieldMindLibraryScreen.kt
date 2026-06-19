@@ -1658,7 +1658,7 @@ fun LearnReaderScreen(url: String, title: String, onBack: () -> Unit) {
                 )
 
                 // ── PDF — open in system viewer ──
-                uriLooksPdf(url) -> PdfOpenCard(url, uriHandler, context)
+                uriLooksPdf(url) -> PdfOpenCard(url, uriHandler, context, title)
 
                 // ── Local files (non-image/non-audio/non-video) — open externally ──
                 isLocalFile && !isWebUrl -> OpenExternallyCard(url, uriHandler, context)
@@ -1836,7 +1836,7 @@ private fun NativeVideoPlayer(uri: Uri, modifier: Modifier = Modifier) {
  * Card prompting the user to open a PDF in the system viewer.
  */
 @Composable
-private fun PdfOpenCard(url: String, uriHandler: androidx.compose.ui.platform.UriHandler, context: android.content.Context) {
+private fun PdfOpenCard(url: String, uriHandler: androidx.compose.ui.platform.UriHandler, context: android.content.Context, displayTitle: String = "PDF Document") {
     Card(
         Modifier.fillMaxSize().padding(32.dp),
         shape = RoundedCornerShape(28.dp),
@@ -1860,7 +1860,7 @@ private fun PdfOpenCard(url: String, uriHandler: androidx.compose.ui.platform.Ur
                 Text("View in reader")
             }
             if (showPdfViewer) {
-                PdfViewerDialog(uri = url, title = title, onDismiss = { showPdfViewer = false })
+                PdfViewerDialog(uri = url, title = displayTitle, onDismiss = { showPdfViewer = false })
             }
         }
     }
@@ -1875,9 +1875,9 @@ private fun OpenExternallyCard(url: String, uriHandler: androidx.compose.ui.plat
     var showPdfViewer by remember { mutableStateOf(false) }
     var showImageViewer by remember { mutableStateOf(false) }
     var showAudioPlayer by remember { mutableStateOf(false) }
-    val isPdf = Regex("\.(pdf)", RegexOption.IGNORE_CASE).containsMatchIn(url)
-    val isImage = Regex("\.(jpg|jpeg|png|webp|gif|heic|bmp)", RegexOption.IGNORE_CASE).containsMatchIn(url)
-    val isAudio = Regex("\.(mp3|wav|ogg|m4a|aac|flac|wma)", RegexOption.IGNORE_CASE).containsMatchIn(url)
+    val isPdf = Regex("""\.(pdf)""", RegexOption.IGNORE_CASE).containsMatchIn(url)
+    val isImage = Regex("""\.(jpg|jpeg|png|webp|gif|heic|bmp)""", RegexOption.IGNORE_CASE).containsMatchIn(url)
+    val isAudio = Regex("""\.(mp3|wav|ogg|m4a|aac|flac|wma)""", RegexOption.IGNORE_CASE).containsMatchIn(url)
     Card(shape = RoundedCornerShape(22.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp), modifier = Modifier.fillMaxWidth()) {
         Column(Modifier.padding(20.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(14.dp)) {
             Icon(FieldMindIcons.File, null, tint = MaterialTheme.colorScheme.primary, size = 36.dp)

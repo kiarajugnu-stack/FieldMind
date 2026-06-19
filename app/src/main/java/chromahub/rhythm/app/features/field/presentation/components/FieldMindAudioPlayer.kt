@@ -314,9 +314,10 @@ private fun generateWaveformBars(
     for (i in 0 until count) {
         val t = i.toFloat() / count
         // Envelope: quiet at ends, loud in the middle (sine window)
-        val envelope = sin(t * PI).toFloat() * envelopeStrength + (1f - envelopeStrength)
+        val td = t.toDouble()
+        val envelope = sin(td * PI).toFloat() * envelopeStrength + (1f - envelopeStrength)
         // Low-frequency modulation for "sections"
-        val lfMod = (sin(t * 4 * PI) * 0.3f + sin(t * 7 * PI + 1f) * 0.2f).coerceIn(-0.5f, 0.5f)
+        val lfMod = (sin(td * 4.0 * PI) * 0.3f + sin(td * 7.0 * PI + 1.0) * 0.2f).coerceIn(-0.5f, 0.5f)
         // Noise for organic micro-variation
         val noise = (rng.nextFloat() - 0.5f) * 2f * noiseStrength
         // Combine, clamp, and apply a floor so no bar is totally flat
@@ -368,7 +369,7 @@ private fun WaveformCanvas(
             pulseAnim.snapTo(1f)
         }
     }
-    val pulse by pulseAnim
+    val pulse = pulseAnim.value
 
     Canvas(modifier = modifier) {
         val barCount = bars.size
