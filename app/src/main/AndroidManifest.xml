@@ -96,6 +96,12 @@
                 <data android:mimeType="application/octet-stream" />
             </intent-filter>
         </activity>
+
+        <!-- Foreground timer service for reading & research session timers -->
+        <service
+            android:name="fieldmind.research.app.features.field.background.FieldMindTimerService"
+            android:exported="false"
+            android:foregroundServiceType="dataSync" />
     </application>
 
 </manifest>
