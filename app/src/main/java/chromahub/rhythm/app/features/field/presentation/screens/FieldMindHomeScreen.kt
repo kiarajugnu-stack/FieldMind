@@ -801,21 +801,6 @@ private fun HomeHeroSection(
 
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 HeroActionChip(
-                    icon = FieldMindIcons.Project,
-                    label = "Projects",
-                    accent = colors.project,
-                    modifier = Modifier.weight(1f)
-                ) { onNavigate(FieldMindScreen.Projects) }
-                HeroActionChip(
-                    icon = FieldMindIcons.Timer,
-                    label = "Timer",
-                    accent = colors.flashcard,
-                    modifier = Modifier.weight(1f)
-                ) { onNavigate(FieldMindScreen.ResearchSession) }
-            }
-
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                HeroActionChip(
                     icon = FieldMindIcons.Camera,
                     label = "Capture",
                     accent = colors.observation,
@@ -827,6 +812,21 @@ private fun HomeHeroSection(
                     accent = colors.source,
                     modifier = Modifier.weight(1f)
                 ) { onNewNote() }
+            }
+
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                HeroActionChip(
+                    icon = FieldMindIcons.Project,
+                    label = "Projects",
+                    accent = colors.project,
+                    modifier = Modifier.weight(1f)
+                ) { onNavigate(FieldMindScreen.Projects) }
+                HeroActionChip(
+                    icon = FieldMindIcons.Timer,
+                    label = "Timer",
+                    accent = colors.flashcard,
+                    modifier = Modifier.weight(1f)
+                ) { onNavigate(FieldMindScreen.ResearchSession) }
             }
         }
     }
@@ -1053,7 +1053,8 @@ private fun timeOfDay(): String {
     return when (hour) {
         in 5..11 -> "morning"
         in 12..16 -> "afternoon"
-        else -> "evening"
+        17 -> "evening"
+        else -> "night"
     }
 }
 
@@ -1095,7 +1096,7 @@ private fun LiveWeatherDashboardWidget(
     val timeOfDay = when (currentHour) {
         in 5..11 -> "morning"
         in 12..16 -> "afternoon"
-        in 17..20 -> "evening"
+        17 -> "evening"
         else -> "night"
     }
     val isNight = timeOfDay == "night"

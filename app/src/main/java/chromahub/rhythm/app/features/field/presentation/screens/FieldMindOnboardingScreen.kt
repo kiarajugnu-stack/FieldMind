@@ -74,7 +74,7 @@ fun FieldMindOnboardingScreen(
     var notificationGranted by remember { mutableStateOf(false) }
 
     var selectedTheme by remember { mutableStateOf("System") }
-    var useDynamicColors by remember { mutableStateOf(true) }
+    var useDynamicColors by remember { mutableStateOf(false) }
     var tempUnit by remember { mutableStateOf("Celsius") }
     var distanceUnit by remember { mutableStateOf("km") }
     var timeFormat by remember { mutableStateOf("24h") }
