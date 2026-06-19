@@ -1651,52 +1651,54 @@ private fun DrawScope.drawTreeLine(morph: Float = 0f, isDark: Boolean = false, i
             val t = (i.toFloat() + 0.5f) / treePositions
             val edgeWeight = sin(t * PI.toFloat()).coerceIn(0.2f, 1f)
             val peakNoise = sin(t * 14f + morph * 0.4f + i * 0.9f + level.elevationPct * 10f) * 0.35f + 0.5f
-            if (peakNoise > 0.48f) {
-                val px = t * size.width
-                // Gentle undulation at this elevation level
-                val baseHills = sin(t * 5f + level.elevationPct * 3f) * 0.03f + sin(t * 11f + level.elevationPct * 5f) * 0.02f
-                val gh = lBaseY - baseHills * size.height
-                
-                val sizeFactor = edgeWeight * (0.4f + peakNoise * 0.6f)
-                val treeH = size.height * (0.020f + sizeFactor * 0.045f) * lSizeMul
-                val treeW = treeH * (0.18f + sizeFactor * 0.12f) * lSizeMul
-                val treeBaseY = gh
-                
-                // Trunk
-                val trunkH = treeH * 0.25f
-                drawRoundRect(
-                    color = detailColor.copy(alpha = detailColor.alpha * 0.65f * lAlphaMul),
-                    topLeft = Offset(px - treeW * 0.2f, treeBaseY - trunkH),
-                    size = Size(treeW * 0.4f, trunkH),
-                    cornerRadius = androidx.compose.ui.geometry.CornerRadius(treeW * 0.15f, treeW * 0.15f)
-                )
-                
-                // Canopy layers (2-3 triangular tiers, fewer for distant trees)
-                val canopyLayers = if (lSizeMul < 0.5f) 2 else 3
-                for (layer in 0 until canopyLayers) {
-                    val layerT = layer.toFloat() / canopyLayers
-                    val cy = treeBaseY - trunkH - treeH * (0.15f + layerT * 0.45f)
-                    val halfW = treeW * (0.5f + (canopyLayers - layer) * (0.15f + sizeFactor * 0.1f))
-                    val canopyH = treeH * (0.18f + (1f - layerT) * 0.12f)
-                    val canopyPath = Path().apply {
-                        moveTo(px - halfW, cy + canopyH * 0.3f)
-                        quadraticTo(px, cy - canopyH * 0.6f, px + halfW, cy + canopyH * 0.3f)
+            // Always draw trees — vary size smoothly instead of popping
+            val px = t * size.width
+            // Gentle undulation at this elevation level
+            val baseHills = sin(t * 5f + level.elevationPct * 3f) * 0.03f + sin(t * 11f + level.elevationPct * 5f) * 0.02f
+            val gh = lBaseY - baseHills * size.height
+            
+            val sizeFactor = edgeWeight * (0.15f + peakNoise * 0.85f).coerceAtLeast(0.05f)
+            val treeH = size.height * (0.004f + sizeFactor * 0.030f) * lSizeMul
+            val treeW = treeH * (0.12f + sizeFactor * 0.15f) * lSizeMul
+            val treeBaseY = gh
+            
+            // Skip trees that would be invisibly small
+            if (treeH < 1.5f) continue
+            
+            // Trunk
+            val trunkH = treeH * 0.25f
+            drawRoundRect(
+                color = detailColor.copy(alpha = detailColor.alpha * 0.65f * lAlphaMul),
+                topLeft = Offset(px - treeW * 0.2f, treeBaseY - trunkH),
+                size = Size(treeW * 0.4f, trunkH),
+                cornerRadius = androidx.compose.ui.geometry.CornerRadius(treeW * 0.15f, treeW * 0.15f)
+            )
+            
+            // Canopy layers (2-3 triangular tiers, fewer for distant trees)
+            val canopyLayers = if (lSizeMul < 0.5f) 2 else 3
+            for (layer in 0 until canopyLayers) {
+                val layerT = layer.toFloat() / canopyLayers
+                val cy = treeBaseY - trunkH - treeH * (0.15f + layerT * 0.45f)
+                val halfW = treeW * (0.5f + (canopyLayers - layer) * (0.15f + sizeFactor * 0.1f))
+                val canopyH = treeH * (0.18f + (1f - layerT) * 0.12f)
+                val canopyPath = Path().apply {
+                    moveTo(px - halfW, cy + canopyH * 0.3f)
+                    quadraticTo(px, cy - canopyH * 0.6f, px + halfW, cy + canopyH * 0.3f)
+                    close()
+                }
+                drawPath(canopyPath, detailColor.copy(alpha = detailColor.alpha * lAlphaMul), style = Fill)
+
+                // Snow cap on canopy (white crescent on top)
+                if (isSnow) {
+                    val snowColor = Color(0xCCF5F5F5)
+                    val snowH = canopyH * 0.15f
+                    val snowW = halfW * 0.6f
+                    val snowPath = Path().apply {
+                        moveTo(px - snowW, cy + canopyH * 0.1f)
+                        quadraticTo(px, cy - canopyH * 0.5f - snowH * 0.2f, px + snowW, cy + canopyH * 0.1f)
                         close()
                     }
-                    drawPath(canopyPath, detailColor.copy(alpha = detailColor.alpha * lAlphaMul), style = Fill)
-
-                    // Snow cap on canopy (white crescent on top)
-                    if (isSnow) {
-                        val snowColor = Color(0xCCF5F5F5)
-                        val snowH = canopyH * 0.15f
-                        val snowW = halfW * 0.6f
-                        val snowPath = Path().apply {
-                            moveTo(px - snowW, cy + canopyH * 0.1f)
-                            quadraticTo(px, cy - canopyH * 0.5f - snowH * 0.2f, px + snowW, cy + canopyH * 0.1f)
-                            close()
-                        }
-                        drawPath(snowPath, snowColor.copy(alpha = snowColor.alpha * lAlphaMul), style = Fill)
-                    }
+                    drawPath(snowPath, snowColor.copy(alpha = snowColor.alpha * lAlphaMul), style = Fill)
                 }
             }
         }
@@ -1773,6 +1775,24 @@ private fun DrawScope.drawGround(
 
     // Draw mountain range in background — taller during thunderstorms
     drawMountainRange(isDark = isDark, isSnow = isSnow, isDay = isDay, isThunder = isThunder)
+
+    // ── Sea/ocean visible at the horizon during clear daytime conditions ──
+    val isSeaScene = isDay && !isSnow && !isThunder
+    if (isSeaScene) {
+        val seaY = size.height * 0.82f
+        val seaColor = Color(0xFF4A8AC8).copy(alpha = if (isDark) 0.18f else 0.10f)
+        val seaDeep = Color(0xFF1A3A6A).copy(alpha = if (isDark) 0.22f else 0.14f)
+        // Gradient water body at the horizon — sits behind the coastline
+        drawRect(
+            brush = Brush.verticalGradient(
+                colors = listOf(seaColor, seaDeep),
+                startY = seaY,
+                endY = size.height
+            ),
+            topLeft = Offset(0f, seaY),
+            size = Size(size.width, size.height - seaY)
+        )
+    }
 
     // Main rolling ground silhouette
     val groundPath = Path()
@@ -1868,12 +1888,15 @@ private fun DrawScope.drawMountainRange(isDark: Boolean, isSnow: Boolean, isDay:
         val undulationFreq: Float  // controls how many rolling hills
     )
 
+    val isClearDay = isDay && !isSnow && !isThunder
+
     val layers = listOf(
         // Far layer — blueish, hazy, low contrast, gentle rolling hills
         MountainLayer(
             baseY = 0.62f + thunderBaseShift * 0.3f,
             heightFactor = 0.08f * thunderScale,
-            color = if (isDark) Color(0xFF1A2A50).copy(alpha = 0.25f) else Color(0xFF90A8C4).copy(alpha = 0.12f),
+            color = if (isDark) Color(0xFF1A2A50).copy(alpha = 0.25f)
+                    else Color(0xFF90A8C4).copy(alpha = if (isClearDay) 0.20f else 0.12f),
             snowColor = if (isDark) Color(0xFFC8D8E8).copy(alpha = 0.05f) else Color.White.copy(alpha = 0.10f),
             undulationFreq = 2.5f
         ),
@@ -1881,7 +1904,8 @@ private fun DrawScope.drawMountainRange(isDark: Boolean, isSnow: Boolean, isDay:
         MountainLayer(
             baseY = 0.68f + thunderBaseShift * 0.5f,
             heightFactor = 0.10f * thunderScale,
-            color = if (isDark) Color(0xFF0F1A3A).copy(alpha = 0.40f) else Color(0xFF6A8A9A).copy(alpha = 0.18f),
+            color = if (isDark) Color(0xFF0F1A3A).copy(alpha = 0.40f)
+                    else Color(0xFF6A8A9A).copy(alpha = if (isClearDay) 0.30f else 0.18f),
             snowColor = if (isDark) Color(0xFFB0C8E0).copy(alpha = 0.08f) else Color.White.copy(alpha = 0.15f),
             undulationFreq = 3.2f
         ),
@@ -1889,7 +1913,8 @@ private fun DrawScope.drawMountainRange(isDark: Boolean, isSnow: Boolean, isDay:
         MountainLayer(
             baseY = 0.72f + thunderBaseShift,
             heightFactor = 0.12f * thunderScale,
-            color = if (isDark) Color(0xFF081428).copy(alpha = 0.52f) else Color(0xFF4A6A5A).copy(alpha = 0.24f),
+            color = if (isDark) Color(0xFF081428).copy(alpha = 0.52f)
+                    else Color(0xFF4A6A5A).copy(alpha = if (isClearDay) 0.38f else 0.24f),
             snowColor = if (isDark) Color(0xFF90B0C8).copy(alpha = 0.10f) else Color.White.copy(alpha = 0.20f),
             undulationFreq = 4.0f
         )
