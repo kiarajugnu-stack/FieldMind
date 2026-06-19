@@ -2110,7 +2110,6 @@ fun GoalStatChip(icon: MaterialSymbolIcon, label: String, tint: androidx.compose
 }
 
 @OptIn(ExperimentalLayoutApi::class)
-@Composable
 // ══════════════════════════════════════════════════════════════════════
 //  Session Observations — Grouped by research session
 // ══════════════════════════════════════════════════════════════════════

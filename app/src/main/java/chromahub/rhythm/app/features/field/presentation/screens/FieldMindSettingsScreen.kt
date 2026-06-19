@@ -1749,9 +1749,9 @@ fun AutoGenerationSettingsPage(
                         Text("Daily generation cap", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
                     }
                     Text(
-                        "FieldMind limits auto-generation to 20 items (flashcards + questions combined) per day.
+                        """FieldMind limits auto-generation to 20 items (flashcards + questions combined) per day.
                         This prevents duplicate content loops and keeps your study queue manageable.
-                        The counter resets automatically each day.",
+                        The counter resets automatically each day.""".trimIndent(),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -1763,9 +1763,9 @@ fun AutoGenerationSettingsPage(
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text("How it works", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.primary)
                     Text(
-                        "When enabled, auto-generation runs in the background after you add new observations.
+                        """When enabled, auto-generation runs in the background after you add new observations.
                         It scans your data for key concepts, patterns, and facts, then builds flashcards and questions — all on your device, with no data leaving your phone.
-                        You can always manually create flashcards and questions from the Library tab regardless of these settings.",
+                        You can always manually create flashcards and questions from the Library tab regardless of these settings.""".trimIndent(),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
