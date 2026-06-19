@@ -216,6 +216,7 @@ object QuestionGenerator {
             .filter { it.value.size >= 3 }
             .entries
             .sortedByDescending { it.value.size }
+            .toList()
             .take(2)
 
         for ((subject, obsList) in repeatedSubjects) {
@@ -264,7 +265,7 @@ object QuestionGenerator {
             .groupBy { it.category }
 
         // Find underexplored categories
-        val underexplored = categories.filter { it.value.size == 1 }
+        val underexplored = categories.filter { it.value.size == 1 }.toList()
         for ((cat, obsList) in underexplored.take(2)) {
             val q = "What more can we learn about \"$cat\" — currently only ${obsList.size} observation?"
             if (q.lowercase() !in existing) {
@@ -285,6 +286,7 @@ object QuestionGenerator {
             .filter { it.manualLocation.isNotBlank() }
             .groupBy { it.manualLocation }
             .filter { it.value.size == 1 }
+            .entries.toList()
             .take(1)
 
         for ((loc, _) in singleVisitLocations) {
