@@ -114,7 +114,10 @@ fun AnimatedWeatherScene(
                 if (showCloudAnimation) DayCloudyScene(palette, compact, timeOfDay, modifier)
                 else ClearSkyScene(palette, timeOfDay, compact, modifier)
             }
-            weatherCode == -2 -> NightSkyScene(palette, compact, timeOfDay, modifier)
+            weatherCode == -2 -> {
+                if (showCloudAnimation) NightCloudyScene(palette, compact, timeOfDay, modifier)
+                else NightSkyScene(palette, compact, timeOfDay, modifier)
+            }
             weatherCode in 2..3 -> {
                 if (showCloudAnimation) CloudyScene(palette, compact, timeOfDay, modifier)
                 else ClearSkyScene(palette, timeOfDay, compact, modifier)
