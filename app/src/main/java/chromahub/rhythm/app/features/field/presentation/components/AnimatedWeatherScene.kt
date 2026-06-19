@@ -1557,7 +1557,7 @@ private fun DrawScope.drawCirrus(
  * - Near mountain trees: low elevation, largest, most detailed
  * Trees get smaller toward the edges for a natural look.
  */
-private fun DrawScope.drawTreeLine(morph: Float = 0f, isDark: Boolean = false) {
+private fun DrawScope.drawTreeLine(morph: Float = 0f, isDark: Boolean = false, isSnow: Boolean = false) {
     val baseColor = if (isDark) Color(0xFF07120B).copy(alpha = 0.72f) else Color(0xFF315331).copy(alpha = 0.30f)
     val detailColor = if (isDark) Color(0xFF020704).copy(alpha = 0.66f) else Color(0xFF173219).copy(alpha = 0.24f)
     val groundY = size.height * 0.88f
@@ -1648,6 +1648,19 @@ private fun DrawScope.drawTreeLine(morph: Float = 0f, isDark: Boolean = false) {
                         close()
                     }
                     drawPath(canopyPath, detailColor.copy(alpha = detailColor.alpha * lAlphaMul), style = Fill)
+
+                    // Snow cap on canopy (white crescent on top)
+                    if (isSnow) {
+                        val snowColor = Color(0xCCF5F5F5)
+                        val snowH = canopyH * 0.15f
+                        val snowW = halfW * 0.6f
+                        val snowPath = Path().apply {
+                            moveTo(px - snowW, cy + canopyH * 0.1f)
+                            quadraticTo(px, cy - canopyH * 0.5f - snowH * 0.2f, px + snowW, cy + canopyH * 0.1f)
+                            close()
+                        }
+                        drawPath(snowPath, snowColor.copy(alpha = snowColor.alpha * lAlphaMul), style = Fill)
+                    }
                 }
             }
         }
@@ -1720,7 +1733,7 @@ private fun DrawScope.drawGround(
     }
 
     // Tree line with wind-driven sway (scenes with animation pass their sway value)
-    drawTreeLine(morph = treeMorph, isDark = isDark)
+    drawTreeLine(morph = treeMorph, isDark = isDark, isSnow = weatherCode in 71..77 || weatherCode in 85..86)
 
     // Draw mountain range in background — taller during thunderstorms
     drawMountainRange(isDark = isDark, isSnow = isSnow, isDay = isDay, isThunder = isThunder)
