@@ -853,6 +853,9 @@ private fun NightSkyScene(
             morph = cloudMorph + 2f
         )
 
+        // Firefly particles near ground
+        drawFireflies(progress = moonGlow, isDarkTheme = true, compact = compact)
+
         // Atmospheric haze
         drawAtmosphericHaze(hazeColor = palette.hazeColor, isDark = true, hazeAlpha = moonGlow)
     }
@@ -1069,6 +1072,9 @@ private fun NightCloudyScene(
 
         // Ground terrain with wind-affected trees
         drawGround(weatherCode = 3, isDay = false, isDark = isDark, compact = compact, treeMorph = treeSway)
+
+        // Firefly particles near ground
+        drawFireflies(progress = moonGlow, isDarkTheme = true, compact = compact)
 
         // Atmospheric haze
         drawAtmosphericHaze(hazeColor = palette.hazeColor, isDark = true, hazeAlpha = moonGlow * 0.5f)
@@ -2378,6 +2384,66 @@ private fun DrawScope.drawRainbow(
             path = arcPath,
             color = rainbowColors[i],
             style = Stroke(width = bandWidth * 0.7f, cap = StrokeCap.Round)
+        )
+    }
+}
+
+/**
+ * Draws subtle glowing firefly/bioluminescence particles near the ground.
+ * Particles float upward with slow drift and pulse with a warm yellow-green glow.
+ */
+private fun DrawScope.drawFireflies(
+    progress: Float,
+    isDarkTheme: Boolean,
+    compact: Boolean
+) {
+    if (!isDarkTheme) return
+
+    val fireflyCount = if (compact) 8 else 15
+    val baseColors = listOf(
+        Color(0xCCD4FF66),  // Yellow-green
+        Color(0xCCAAFF44),  // Lime
+        Color(0xCC88FF55),  // Green-tinted
+        Color(0xCCFFDD44),  // Warm yellow
+        Color(0xCCBBFF66)   // Pale green
+    )
+
+    for (i in 0 until fireflyCount) {
+        // Unique offset per firefly using golden ratio hashing
+        val seed = i * 1.618f
+        val drift = sin(progress * 1.7f + seed * 2.3f) * 0.4f
+        val pulse = (sin(progress * 2.3f + seed * 1.1f) * 0.5f + 0.5f).coerceIn(0.15f, 1f)
+
+        // Position: concentrated near ground (0.6-0.9h), scattered horizontally
+        val baseX = size.width * (0.05f + (i.toFloat() / fireflyCount) * 0.9f) + sin(i * 1.3f) * size.width * 0.06f
+        val baseY = size.height * (0.65f + (i.toFloat() / fireflyCount) * 0.25f)
+
+        // Floating drift
+        val x = baseX + drift * size.width * 0.04f
+        val y = baseY - (sin(progress * 0.8f + seed * 0.7f) * 0.5f + 0.5f) * size.height * 0.08f
+
+        val sizeFactor = if (compact) 0.7f else 1f
+        val color = baseColors[i % baseColors.size]
+        val glowAlpha = pulse * 0.6f
+        val dotRadius = (1.5f + pulse * 2f) * sizeFactor
+
+        // Outer glow
+        drawCircle(
+            color = color.copy(alpha = glowAlpha * 0.15f),
+            radius = dotRadius * 3f,
+            center = Offset(x, y)
+        )
+        // Inner glow
+        drawCircle(
+            color = color.copy(alpha = glowAlpha * 0.35f),
+            radius = dotRadius * 1.5f,
+            center = Offset(x, y)
+        )
+        // Bright core
+        drawCircle(
+            color = Color(0xCCFFFFFF).copy(alpha = glowAlpha * 0.8f),
+            radius = dotRadius * 0.5f,
+            center = Offset(x, y)
         )
     }
 }
