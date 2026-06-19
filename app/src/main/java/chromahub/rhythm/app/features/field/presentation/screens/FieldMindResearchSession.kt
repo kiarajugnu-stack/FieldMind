@@ -167,6 +167,7 @@ fun ResearchSessionScreen(
     var audioFile by remember { mutableStateOf<File?>(null) }
     var recording by remember { mutableStateOf(false) }
     var recordSeconds by remember { mutableIntStateOf(0) }
+    var showGpsDialog by remember { mutableStateOf(false) }
 
     fun addSessionAttachment(attachment: DraftEvidenceAttachment) {
         quickAttachments = quickAttachments + attachment
@@ -219,6 +220,10 @@ fun ResearchSessionScreen(
     }
 
     fun fetchSessionLocation(fetchWeather: Boolean = false) {
+        if (!locationProvider.isGpsEnabled()) {
+            showGpsDialog = true
+            return
+        }
         captureStatus = "Fetching GPS…"
         locationProvider.requestCurrentLocation { captured ->
             quickLocation = captured
@@ -287,6 +292,11 @@ fun ResearchSessionScreen(
     }
 
     fun performAutoFetch() {
+        if (!locationProvider.isGpsEnabled()) {
+            showGpsDialog = true
+            metadataAutoFetching = false
+            return
+        }
         metadataAutoFetching = true
         metadataStatus = "Acquiring GPS…"
         locationProvider.requestCurrentLocation { captured ->
@@ -883,6 +893,10 @@ fun ResearchSessionScreen(
     }
 
     // ── In-app CameraX overlay with multi-capture mode ──
+    if (showGpsDialog) {
+        GpsOffDialog(onDismiss = { showGpsDialog = false })
+    }
+
     if (showInAppCamera) {
         Dialog(
             onDismissRequest = { showInAppCamera = false },

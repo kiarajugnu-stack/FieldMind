@@ -175,11 +175,16 @@ fun HomeScreen(
     var homeWeatherLoading by remember { mutableStateOf(false) }
     var homeWeatherError by remember { mutableStateOf(false) }
     var homePlaceName by remember { mutableStateOf<String?>(null) }
+    var showGpsDialog by remember { mutableStateOf(false) }
+    var showWeatherLoadingDialog by remember { mutableStateOf(false) }
     val context = LocalContext.current
 
     // Initial fetch on first composition + auto-refresh at configured interval
     // Uses cooldown in ViewModel so navigating away and back doesn't re-fetch
     LaunchedEffect(Unit) {
+        // Show loading dialog during initial fetch
+        showWeatherLoadingDialog = true
+
         // First fetch on fresh app open (forceRefresh = true only once)
         val cached = viewModel.lastWeatherSnapshot
         if (cached == null) {
@@ -187,9 +192,11 @@ fun HomeScreen(
             homeCurrentWeather = viewModel.refreshWeatherFromLocation(forceRefresh = true)
             homeWeatherError = homeCurrentWeather == null
             homeWeatherLoading = false
+            showWeatherLoadingDialog = false
         } else {
             homeCurrentWeather = cached
             homeWeatherError = false
+            showWeatherLoadingDialog = false
         }
 
         val locProvider = runCatching { FieldLocationProvider(context) }.getOrNull()
@@ -406,6 +413,56 @@ fun HomeScreen(
                 .align(Alignment.TopCenter)
                 .padding(top = 8.dp, start = 16.dp, end = 16.dp)
         )
+    }
+
+    // ── Weather loading dialog (shown during initial fetch) ──
+    if (showWeatherLoadingDialog) {
+        Dialog(
+            onDismissRequest = { },
+            properties = DialogProperties(
+                usePlatformDefaultWidth = false,
+                dismissOnBackPress = false,
+                dismissOnClickOutside = false
+            )
+        ) {
+            Box(
+                Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.5f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Card(
+                    shape = RoundedCornerShape(28.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+                    modifier = Modifier.widthIn(max = 300.dp)
+                ) {
+                    Column(
+                        Modifier.padding(32.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(40.dp),
+                            strokeWidth = 3.dp
+                        )
+                        Text(
+                            "Fetching weather…",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            "Getting your current conditions",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    // ── GpsOffDialog ──
+    if (showGpsDialog) {
+        GpsOffDialog(onDismiss = { showGpsDialog = false })
     }
 
     // ── Camera Dialog (full-screen, opens immediately) ──
