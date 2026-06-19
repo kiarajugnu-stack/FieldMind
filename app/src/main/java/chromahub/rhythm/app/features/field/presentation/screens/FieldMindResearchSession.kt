@@ -258,11 +258,9 @@ fun ResearchSessionScreen(
                 sessionStartedAt = System.currentTimeMillis()
                 // Send session start notification
                 val title = sessionName.ifBlank { "Research Session" }
-                val text = "Session started"
                 FieldMindTimerManager.startSessionTimer(
                     context = context,
-                    sessionName = title,
-                    text = text
+                    sessionName = title
                 )
             }
             val baseStart = sessionStartedAt
