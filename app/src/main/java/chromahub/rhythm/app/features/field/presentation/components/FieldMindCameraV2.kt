@@ -203,7 +203,12 @@ fun FieldMindCameraV2(
         hasCameraPermission = granted
         if (!granted) onDismiss()
     }
-    LaunchedEffect(Unit) { if (!hasCameraPermission) permissionLauncher.launch(Manifest.permission.CAMERA) }
+    // Request permission only when camera is actually about to be used
+    LaunchedEffect(previewViewRef) { 
+        if (previewViewRef != null && !hasCameraPermission) {
+            permissionLauncher.launch(Manifest.permission.CAMERA)
+        }
+    }
     DisposableEffect(Unit) { onDispose { cameraExecutor.shutdown() } }
 
     // ── Bind camera ──

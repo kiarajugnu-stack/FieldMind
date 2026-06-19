@@ -256,6 +256,14 @@ fun ResearchSessionScreen(
         if (sessionActive && !sessionPaused) {
             if (sessionStartedAt == 0L) {
                 sessionStartedAt = System.currentTimeMillis()
+                // Send session start notification
+                val title = sessionName.ifBlank { "Research Session" }
+                val text = "Session started"
+                FieldMindTimerManager.startSessionTimer(
+                    context = context,
+                    sessionName = title,
+                    text = text
+                )
             }
             val baseStart = sessionStartedAt
             while (sessionActive && !sessionPaused) {
@@ -982,7 +990,7 @@ private fun SessionMetadataConfirmCard(
     }
 }
 
-// ══════════════════════════════════════════════════════════════════════
+// ════���═════════════════════════════════════════════════════════════════
 //  Session Meta Chip — Compact metadata status chip
 // ══════════════════════════════════════════════════════════════════════
 
