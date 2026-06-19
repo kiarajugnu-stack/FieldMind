@@ -447,6 +447,7 @@ class FieldMindViewModel(application: Application) : AndroidViewModel(applicatio
         repository.linkSessionObservation(sessionId, observationId)
     }
     val researchSessions: StateFlow<List<ResearchSessionEntity>> = repository.researchSessions.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+    val sessionObservationCrossRefs: StateFlow<List<SessionObservationCrossRef>> = repository.sessionObservationCrossRefs.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     // ── Weather (multi-provider) ──
     private fun getWeatherProvider(): fieldmind.research.app.features.field.data.weather.WeatherProvider {

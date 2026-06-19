@@ -112,6 +112,7 @@ class FieldMindRepository(private val dao: FieldMindDao) {
     suspend fun deleteResearchSession(id: Long) = dao.softDeleteResearchSession(id, System.currentTimeMillis())
     suspend fun linkSessionObservation(sessionId: Long, observationId: Long) = dao.linkSessionObservation(SessionObservationCrossRef(sessionId, observationId))
     fun observeObservationsForSession(sessionId: Long) = dao.observeObservationsForSession(sessionId)
+    val sessionObservationCrossRefs: Flow<List<SessionObservationCrossRef>> = dao.observeAllSessionObservationCrossRefs()
 
     // ── Species Registry ──
     val species: Flow<List<SpeciesEntity>> = dao.observeSpecies()

@@ -2,9 +2,11 @@ package fieldmind.research.app.features.field.presentation.screens
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -15,7 +17,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.activity.compose.BackHandler
-import fieldmind.research.app.features.field.data.database.entity.ObservationEntity
+import fieldmind.research.app.features.field.data.database.entity.*
 import fieldmind.research.app.features.field.presentation.components.*
 import fieldmind.research.app.features.field.presentation.theme.FieldMindTheme
 import fieldmind.research.app.features.field.presentation.viewmodel.FieldMindViewModel
@@ -44,11 +46,35 @@ fun FieldLogScreen(
 ) {
     BackHandler(enabled = true) { onBack() }
     val observations by viewModel.observations.collectAsState()
+    val researchSessions by viewModel.researchSessions.collectAsState()
+    val sessionCrossRefs by viewModel.sessionObservationCrossRefs.collectAsState()
 
     var viewMode by remember { mutableStateOf(TimelineViewMode.List) }
     var showSearch by remember { mutableStateOf(false) }
     var showFilterSheet by remember { mutableStateOf(false) }
     var filterState by rememberSaveable(stateSaver = ObservationFilterStateSaver) { mutableStateOf(ObservationFilterState()) }
+    var showSessionGroups by remember { mutableStateOf(true) }
+    var expandedSessions by remember { mutableStateOf(setOf<Long>()) }
+
+    // Build session → observation mapping
+    val sessionObsMap = remember(observations, sessionCrossRefs, researchSessions) {
+        val obsIdToObs = observations.associateBy { it.id }
+        val sessionIdToName = researchSessions.associate { it.id to it.name.ifBlank { "Session #${it.id}" } }
+        val map = mutableMapOf<Long, MutableList<ObservationEntity>>()
+        sessionCrossRefs.forEach { ref ->
+            obsIdToObs[ref.observationId]?.let { obs ->
+                map.getOrPut(ref.sessionId) { mutableListOf() }.add(obs)
+            }
+        }
+        // Sort each session's observations newest first
+        map.forEach { (_, obsList) -> obsList.sortByDescending { it.timestamp } }
+        map
+    }
+
+    // Track which observations belong to a session
+    val sessionObsIds = remember(sessionCrossRefs) {
+        sessionCrossRefs.mapTo(hashSetOf()) { it.observationId }
+    }
 
     // Filter & sort
     val filteredObservations = remember(observations, filterState) {
@@ -77,6 +103,53 @@ fun FieldLogScreen(
             "Confidence" -> filtered.sortedByDescending { it.confidenceLevel }
             "Category" -> filtered.sortedBy { it.category }
             else -> filtered.sortedByDescending { it.timestamp }
+        }
+    }
+
+    // Build session-grouped display items
+    data class DisplayItem(val type: String, val sessionId: Long = 0L, val sessionName: String = "", val obsCount: Int = 0, val observation: ObservationEntity? = null)
+
+    val displayItems = remember(filteredObservations, sessionObsMap, sessionObsIds, showSessionGroups, expandedSessions, researchSessions) {
+        if (!showSessionGroups) {
+            filteredObservations.map { DisplayItem("obs", observation = it) }
+        } else {
+            val sessionIdToName = researchSessions.associate { it.id to it.name.ifBlank { "Session #${it.id}" } }
+            val items = mutableListOf<DisplayItem>()
+            val usedObsIds = mutableSetOf<Long>()
+
+            // Sort sessions by most recent observation
+            val sortedSessions = sessionObsMap.entries
+                .filter { (_, obsList) -> obsList.any { it.id in filteredObservations.map { f -> f.id }.toSet() } }
+                .sortedByDescending { (_, obsList) -> obsList.maxOfOrNull { it.timestamp } ?: 0L }
+
+            for ((sessionId, obsList) in sortedSessions) {
+                val sessionObs = obsList.filter { it.id in filteredObservations.map { f -> f.id }.toSet() }
+                if (sessionObs.isEmpty()) continue
+                val name = sessionIdToName[sessionId] ?: "Session #$sessionId"
+                items.add(DisplayItem("sessionHeader", sessionId = sessionId, sessionName = name, obsCount = sessionObs.size))
+                if (expandedSessions.contains(sessionId)) {
+                    sessionObs.forEach { obs ->
+                        items.add(DisplayItem("obs", observation = obs))
+                        usedObsIds.add(obs.id)
+                    }
+                } else {
+                    // Show just the first observation as preview
+                    items.add(DisplayItem("obs", observation = sessionObs.first()))
+                    usedObsIds.add(sessionObs.first().id)
+                    if (sessionObs.size > 1) {
+                        items.add(DisplayItem("sessionExpand", sessionId = sessionId, obsCount = sessionObs.size - 1))
+                    }
+                }
+            }
+
+            // Ungrouped observations
+            val ungrouped = filteredObservations.filter { it.id !in usedObsIds && it.id !in sessionObsIds }
+            if (ungrouped.isNotEmpty()) {
+                items.add(DisplayItem("ungroupedHeader", obsCount = ungrouped.size))
+                ungrouped.forEach { items.add(DisplayItem("obs", observation = it)) }
+            }
+
+            items
         }
     }
 
@@ -220,6 +293,19 @@ fun FieldLogScreen(
                             }
                         }
                     }
+
+                    // Session group toggle
+                    IconButton(
+                        onClick = { showSessionGroups = !showSessionGroups },
+                        modifier = Modifier.size(32.dp)
+                    ) {
+                        Icon(
+                            FieldMindIcons.Session,
+                            null,
+                            tint = if (showSessionGroups) FieldMindTheme.colors.positive else MaterialTheme.colorScheme.onSurfaceVariant,
+                            size = 20.dp
+                        )
+                    }
                 }
             }
 
@@ -257,11 +343,88 @@ fun FieldLogScreen(
                             EmptyState("No observations found", "Adjust your filters or capture something new.",
                                 icon = FieldMindIcons.Observation)
                         }
-                    } else {
-                        item {
-                            Box(Modifier.fillMaxWidth().heightIn(max = 800.dp)) {
-                                ObservationListView(filteredObservations, viewModel, onOpenDetail)
+                    } else if (showSessionGroups && displayItems.isNotEmpty()) {
+                        // Session-grouped list with headers
+                        items(displayItems) { item ->
+                            when (item.type) {
+                                "sessionHeader" -> {
+                                    Row(
+                                        Modifier
+                                            .fillMaxWidth()
+                                            .clickable {
+                                                expandedSessions = if (expandedSessions.contains(item.sessionId))
+                                                    expandedSessions - item.sessionId
+                                                else
+                                                    expandedSessions + item.sessionId
+                                            }
+                                            .padding(vertical = 4.dp),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                    ) {
+                                        Box(
+                                            Modifier.size(32.dp)
+                                                .clip(RoundedCornerShape(10.dp))
+                                                .background(FieldMindTheme.colors.observation.copy(alpha = 0.14f)),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Icon(FieldMindIcons.Session, null, tint = FieldMindTheme.colors.observation, size = 18.dp)
+                                        }
+                                        Column(Modifier.weight(1f)) {
+                                            Text(item.sessionName, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
+                                            Text("${item.obsCount} observation${if (item.obsCount != 1) "s" else ""}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                        }
+                                        Icon(
+                                            if (expandedSessions.contains(item.sessionId)) FieldMindIcons.Up else FieldMindIcons.Down,
+                                            null,
+                                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            size = 18.dp
+                                        )
+                                    }
+                                }
+                                "sessionExpand" -> {
+                                    TextButton(
+                                        onClick = {
+                                            expandedSessions = expandedSessions + item.sessionId
+                                        },
+                                        modifier = Modifier.padding(start = 40.dp)
+                                    ) {
+                                        Text("+${item.obsCount} more from this session", style = MaterialTheme.typography.labelSmall)
+                                    }
+                                }
+                                "ungroupedHeader" -> {
+                                    Row(
+                                        Modifier.padding(vertical = 4.dp),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                    ) {
+                                        HorizontalDivider(Modifier.weight(1f))
+                                        Text("Other observations (${item.obsCount})", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                        HorizontalDivider(Modifier.weight(1f))
+                                    }
+                                }
+                                "obs" -> {
+                                    item.observation?.let { obs ->
+                                        EntityCard(
+                                            title = obs.subject.ifBlank { "Observation" },
+                                            kind = "observation",
+                                            body = "${obs.category} • ${obs.date}",
+                                            meta = listOf(obs.confidenceLevel),
+                                            onClick = { onOpenDetail("observation", obs.id) }
+                                        )
+                                    }
+                                }
                             }
+                        }
+                    } else {
+                        // Flat list without session grouping
+                        items(filteredObservations) { obs ->
+                            EntityCard(
+                                title = obs.subject.ifBlank { "Observation" },
+                                kind = "observation",
+                                body = "${obs.category} • ${obs.date}",
+                                meta = listOf(obs.confidenceLevel),
+                                onClick = { onOpenDetail("observation", obs.id) }
+                            )
                         }
                     }
                 }

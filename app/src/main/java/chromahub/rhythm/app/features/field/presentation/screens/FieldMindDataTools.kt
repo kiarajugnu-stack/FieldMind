@@ -54,7 +54,8 @@ private data class ToolCardInfo(
 fun DataToolsHubScreen(
     viewModel: FieldMindViewModel,
     onBack: () -> Unit,
-    onNavigate: (FieldMindScreen) -> Unit
+    onNavigate: (FieldMindScreen) -> Unit,
+    onOpenDetail: (String, Long) -> Unit = { _, _ -> }
 ) {
     val accentColor = FieldMindTheme.colors.data
     val tools = remember {
@@ -68,6 +69,63 @@ fun DataToolsHubScreen(
             ToolCardInfo("Site Log", "Visit conditions", FieldMindIcons.Map, accentColor, FieldMindScreen.SiteLogTool),
             ToolCardInfo("Comparison", "Species/samples", FieldMindIcons.Data, accentColor, FieldMindScreen.ComparisonTable)
         )
+    }
+
+    val dataRecords by viewModel.dataRecords.collectAsState()
+    var showAllRecords by remember { mutableStateOf(false) }
+
+    // Quick-entry: DataCollectionQuestion → save appropriate data record directly
+    val quickEntryHaptics = rememberFieldMindHaptics()
+    val quickEntrySnackbar = remember { SnackbarHostState() }
+    val quickEntryScope = rememberCoroutineScope()
+
+    fun saveFromQuestion(question: DataCollectionQuestion) {
+        quickEntryHaptics.confirm()
+        when (question) {
+            DataCollectionQuestion.COUNT_THINGS ->
+                viewModel.addDataRecord("Counter", "Count: ${question.displayText}", "1", "count",
+                    datasetKind = "Quick entry", onResult = { success ->
+                        showFastSnackbar(quickEntrySnackbar, quickEntryScope,
+                            if (success) "Counter record saved" else "Failed to save")
+                    })
+            DataCollectionQuestion.MEASURE_SOMETHING ->
+                viewModel.addDataRecord("Measurement Log", "Measure: ${question.displayText}", "0", "cm",
+                    notes = "Quick measurement entry. Update value and unit in detail.",
+                    datasetKind = "Quick entry", onResult = { success ->
+                        showFastSnackbar(quickEntrySnackbar, quickEntryScope,
+                            if (success) "Measurement record saved" else "Failed to save")
+                    })
+            DataCollectionQuestion.COMPARE_LOCATIONS ->
+                viewModel.addDataRecord("Comparison Table", "Compare: ${question.displayText}", "", "",
+                    notes = "Quick comparison entry. Open detail to add items.",
+                    datasetKind = "Quick entry", chartPreference = "Comparison",
+                    onResult = { success ->
+                        showFastSnackbar(quickEntrySnackbar, quickEntryScope,
+                            if (success) "Comparison record saved" else "Failed to save")
+                    })
+            DataCollectionQuestion.TRACK_CHANGES ->
+                viewModel.addDataRecord("Measurement Log", "Track: ${question.displayText}", "0", "",
+                    notes = "Quick tracking entry. Update value over time.",
+                    datasetKind = "Quick entry", chartPreference = "Line",
+                    onResult = { success ->
+                        showFastSnackbar(quickEntrySnackbar, quickEntryScope,
+                            if (success) "Tracking record saved" else "Failed to save")
+                    })
+            DataCollectionQuestion.RECORD_WEATHER ->
+                viewModel.addDataRecord("Weather Log", "Weather: ${question.displayText}", "Clear", "",
+                    notes = "Quick weather entry. Update conditions in detail.",
+                    datasetKind = "Quick entry", onResult = { success ->
+                        showFastSnackbar(quickEntrySnackbar, quickEntryScope,
+                            if (success) "Weather record saved" else "Failed to save")
+                    })
+            DataCollectionQuestion.TRACK_SPECIES ->
+                viewModel.addDataRecord("Counter", "Species: ${question.displayText}", "1", "count",
+                    notes = "Quick species entry. Update species and count in detail.",
+                    datasetKind = "Quick entry", onResult = { success ->
+                        showFastSnackbar(quickEntrySnackbar, quickEntryScope,
+                            if (success) "Species record saved" else "Failed to save")
+                    })
+        }
     }
 
     Box(Modifier.fillMaxSize()) {
@@ -108,9 +166,60 @@ fun DataToolsHubScreen(
                 }
             }
 
-            // Summary of saved data records
+            // ── Quick-entry: DataCollectionQuestionSelector ──
             item {
-                val dataRecords by viewModel.dataRecords.collectAsState()
+                Card(
+                    shape = RoundedCornerShape(24.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                ) {
+                    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Icon(FieldMindIcons.Add, null, tint = accentColor, size = 20.dp)
+                            Text("Quick data entry", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                        }
+                        Text(
+                            "Tap a question to save a pre-structured data record:",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        DataCollectionQuestion.entries.forEach { question ->
+                            Surface(
+                                onClick = { saveFromQuestion(question) },
+                                shape = RoundedCornerShape(14.dp),
+                                color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.25f)
+                            ) {
+                                Row(
+                                    Modifier.fillMaxWidth().padding(12.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                                ) {
+                                    Box(
+                                        Modifier.size(32.dp)
+                                            .clip(RoundedCornerShape(10.dp))
+                                            .background(accentColor.copy(alpha = 0.12f)),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(FieldMindIcons.Forward, null, tint = accentColor, size = 16.dp)
+                                    }
+                                    Column(Modifier.weight(1f)) {
+                                        Text(question.displayText, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
+                                        Text(
+                                            question.suggestedFields.take(3).joinToString(", "),
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                    Icon(FieldMindIcons.Add, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, size = 16.dp)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Summary of saved data records + View All
+            item {
                 val counterCount = dataRecords.count { it.toolType == "Counter" }
                 val measurementCount = dataRecords.count { it.toolType == "Measurement Log" }
                 val weatherCount = dataRecords.count { it.toolType == "Weather Log" }
@@ -118,10 +227,22 @@ fun DataToolsHubScreen(
                 Card(
                     shape = RoundedCornerShape(24.dp),
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+                    modifier = Modifier.animateContentSize()
                 ) {
                     Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text("Saved records", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                        Row(
+                            Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text("Saved records", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                            if (dataRecords.isNotEmpty()) {
+                                TextButton(onClick = { showAllRecords = !showAllRecords }) {
+                                    Text(if (showAllRecords) "Hide" else "View all (${dataRecords.size})")
+                                }
+                            }
+                        }
                         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
                             RecordStat("Counter", counterCount, FieldMindIcons.Add)
                             RecordStat("Measure", measurementCount, FieldMindIcons.Graph)
@@ -132,11 +253,67 @@ fun DataToolsHubScreen(
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
+
+                        // Expandable records list
+                        if (showAllRecords && dataRecords.isNotEmpty()) {
+                            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
+                            dataRecords.take(50).forEach { record ->
+                                Row(
+                                    Modifier
+                                        .fillMaxWidth()
+                                        .clip(RoundedCornerShape(12.dp))
+                                        .clickable { onOpenDetail("data", record.id) }
+                                        .padding(vertical = 6.dp, horizontal = 4.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Column(Modifier.weight(1f)) {
+                                        Text(
+                                            record.label,
+                                            style = MaterialTheme.typography.bodySmall,
+                                            fontWeight = FontWeight.Medium,
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis
+                                        )
+                                        Text(
+                                            "${record.toolType} • ${record.value.take(20)}",
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis
+                                        )
+                                    }
+                                    Text(
+                                        record.value,
+                                        style = MaterialTheme.typography.titleSmall,
+                                        fontWeight = FontWeight.Bold,
+                                        color = accentColor
+                                    )
+                                    Icon(FieldMindIcons.Forward, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, size = 16.dp)
+                                }
+                            }
+                            if (dataRecords.size > 50) {
+                                Text(
+                                    "+ ${dataRecords.size - 50} more records",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
                     }
                 }
             }
+            // Snackbar for quick-entry feedback
+            item { Spacer(Modifier.height(4.dp)) }
         }
     }
+    // Quick-entry snackbar overlay
+    FieldMindSnackbarOverlay(
+        hostState = quickEntrySnackbar,
+        modifier = Modifier
+            .align(Alignment.TopCenter)
+            .padding(top = 8.dp, start = 16.dp, end = 16.dp)
+    )
 }
 
 @Composable

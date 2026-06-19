@@ -116,6 +116,8 @@ interface FieldMindDao {
     suspend fun linkSessionObservation(ref: SessionObservationCrossRef)
     @Query("SELECT o.* FROM field_observations o INNER JOIN field_session_observations x ON x.observationId = o.id WHERE x.sessionId = :sessionId AND o.deletedAt IS NULL ORDER BY o.timestamp DESC")
     fun observeObservationsForSession(sessionId: Long): Flow<List<ObservationEntity>>
+    @Query("SELECT * FROM field_session_observations")
+    fun observeAllSessionObservationCrossRefs(): Flow<List<SessionObservationCrossRef>>
 
     // ── Species Registry ──
     @Query("SELECT * FROM field_species WHERE deletedAt IS NULL ORDER BY commonName ASC")
