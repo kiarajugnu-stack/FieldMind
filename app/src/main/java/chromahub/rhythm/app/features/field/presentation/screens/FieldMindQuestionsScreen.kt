@@ -55,6 +55,18 @@ fun QuestionsScreen(
     // hypothesisId -> list of observation ids and whether they are supporting (true) or refuting (false)
     val hypothesisEvidence = remember { mutableStateMapOf<Long, MutableList<Pair<Long, Boolean>>>() }
 
+    // ── Load persisted evidence from database on screen open ──
+    LaunchedEffect(Unit) {
+        viewModel.hypothesisEvidenceCrossRefs.collect { crossRefs ->
+            hypothesisEvidence.clear()
+            crossRefs.forEach { ref ->
+                val list = hypothesisEvidence.getOrPut(ref.hypothesisId) { mutableListOf() }
+                list.add(ref.observationId to true) // default to supporting (cross-ref has no isSupporting column)
+                hypothesisEvidence[ref.hypothesisId] = list
+            }
+        }
+    }
+
     // ── Dialogs state ──
     var showQuestionBuilder by remember { mutableStateOf(false) }
     var createHypothesisFor by remember { mutableStateOf<QuestionEntity?>(null) }

@@ -49,6 +49,8 @@ interface FieldMindDao {
     @Insert(onConflict = OnConflictStrategy.IGNORE) suspend fun linkReportSource(ref: ReportSourceCrossRef)
     @Insert(onConflict = OnConflictStrategy.IGNORE) suspend fun linkProjectDataRecord(ref: ProjectDataRecordCrossRef)
     @Insert(onConflict = OnConflictStrategy.IGNORE) suspend fun linkHypothesisEvidence(ref: HypothesisEvidenceCrossRef)
+    @Query("SELECT * FROM field_hypothesis_evidence")
+    fun observeAllHypothesisEvidence(): Flow<List<HypothesisEvidenceCrossRef>>
 
     @Update suspend fun updateObservation(entity: ObservationEntity)
     @Update suspend fun updateNote(entity: NoteEntity)
