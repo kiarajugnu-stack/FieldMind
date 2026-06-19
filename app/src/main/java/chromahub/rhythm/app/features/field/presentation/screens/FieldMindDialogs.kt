@@ -124,32 +124,37 @@ internal fun DialogWrapper(
                 color = MaterialTheme.colorScheme.background
             ) {
                 Column(Modifier.fillMaxSize()) {
-                    // Full-screen header with back button + smooth divider
-                    Row(
-                        Modifier
-                            .fillMaxWidth()
-                            .background(MaterialTheme.colorScheme.background)
-                            .padding(horizontal = 20.dp, vertical = 10.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.Start
+                    // Standardized full-screen header with back button
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(20.dp),
+                        color = MaterialTheme.colorScheme.surfaceContainerLow.copy(alpha = 0.4f),
+                        tonalElevation = 0.dp
                     ) {
-                        Surface(
-                            onClick = { if (isDirty()) showExitConfirm = true else onDismiss() },
-                            shape = RoundedCornerShape(14.dp),
-                            color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                            modifier = Modifier.size(44.dp)
+                        Row(
+                            Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 12.dp, vertical = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Box(contentAlignment = Alignment.Center) {
-                                Icon(FieldMindIcons.Back, null, tint = MaterialTheme.colorScheme.onSurface, size = 22.dp)
+                            Surface(
+                                onClick = { if (isDirty()) showExitConfirm = true else onDismiss() },
+                                shape = RoundedCornerShape(14.dp),
+                                color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                                modifier = Modifier.size(44.dp)
+                            ) {
+                                Box(contentAlignment = Alignment.Center) {
+                                    Icon(FieldMindIcons.Back, null, tint = MaterialTheme.colorScheme.onSurface, size = 22.dp)
+                                }
                             }
                         }
                     }
-                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
                     Column(
                         Modifier
                             .fillMaxSize()
                             .verticalScroll(rememberScrollState())
-                            .padding(horizontal = 24.dp, vertical = 14.dp)
+                            .padding(horizontal = 20.dp, vertical = 12.dp)
                             .padding(bottom = 40.dp),
                         verticalArrangement = verticalArrangement
                     ) { content() }
@@ -172,7 +177,8 @@ internal fun DialogWrapper(
 }
 
 /**
- * Polished dialog header with icon, title, subtitle, and accent color.
+ * Polished dialog header matching StandardScreenHeader visual style.
+ * Icon with hero-color background, title (headlineSmall), and subtitle.
  */
 @Composable
 internal fun DialogHeader(
@@ -183,17 +189,18 @@ internal fun DialogHeader(
 ) {
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
         Box(
-            Modifier.size(48.dp).clip(RoundedCornerShape(16.dp))
-                .background(accent.copy(alpha = 0.12f)),
+            Modifier.size(46.dp).clip(RoundedCornerShape(14.dp))
+                .background(accent.copy(alpha = if (FieldMindTheme.colors.isDark) 0.28f else 0.14f)),
             contentAlignment = Alignment.Center
         ) {
             Icon(icon, null, tint = accent, size = 24.dp)
         }
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            Text(title, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+            Text(title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
             Text(subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
+    Spacer(Modifier.height(8.dp))
 }
 
 /**
