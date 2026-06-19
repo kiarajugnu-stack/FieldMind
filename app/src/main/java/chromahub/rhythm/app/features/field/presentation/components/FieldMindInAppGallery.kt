@@ -374,6 +374,6 @@ private fun loadFieldMindImages(context: android.content.Context): List<GalleryI
                 }
         }
 
-        images
+        return images
     }
 }

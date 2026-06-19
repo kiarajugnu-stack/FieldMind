@@ -137,7 +137,12 @@ private enum class CaptureStep : Parcelable { Evidence, Details, Complete }
 @Composable
 fun ObserveScreen(
     viewModel: FieldMindViewModel,
-    onOpenDetail: (String, Long) -> Unit = { _, _ -> },
+    onOpenDetail: (String, Long) -> Unit = { _, _ -> 
+    // ── GpsOffDialog ──
+    if (showGpsDialog) {
+        GpsOffDialog(onDismiss = { showGpsDialog = false })
+    }
+},
     compactFieldMode: Boolean = false,
     onBack: (() -> Unit)? = null
 ) {
@@ -809,11 +814,6 @@ fun ObserveScreen(
         }        }
     }
 
-    // ── GpsOffDialog ──
-    if (showGpsDialog) {
-        GpsOffDialog(onDismiss = { showGpsDialog = false })
-    }
-}
 
 // ══════════════════════════════════════════════════════════════════════
 //  Live Observation Timer — persistent header component

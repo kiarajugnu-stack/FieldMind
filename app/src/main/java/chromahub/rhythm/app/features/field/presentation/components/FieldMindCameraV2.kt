@@ -593,17 +593,16 @@ fun FieldMindCameraV2(
                     colors = CardDefaults.cardColors(
                         containerColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.97f)
                     ),
-                    shadowElevation = 16.dp,
+                    elevation = CardDefaults.cardElevation(defaultElevation = 16.dp),
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(24.dp)
                 ) {
-                    Column(
-                        Modifier.padding(24.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(20.dp)
-                    ) {
+            Column(
+                Modifier.padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(20.dp)
+            ) {
                         // Photo thumbnail
                         if (pendingCaptureUri != null) {
                             Box(
