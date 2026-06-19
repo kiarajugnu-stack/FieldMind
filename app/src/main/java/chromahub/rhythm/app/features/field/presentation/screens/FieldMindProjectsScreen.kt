@@ -33,6 +33,7 @@ import androidx.compose.ui.unit.dp
 import fieldmind.research.app.features.field.data.database.entity.*
 import fieldmind.research.app.features.field.data.export.FieldReportTemplates
 import fieldmind.research.app.features.field.presentation.components.*
+import fieldmind.research.app.features.field.presentation.navigation.FieldMindScreen
 import fieldmind.research.app.features.field.presentation.theme.FieldMindTheme
 import fieldmind.research.app.features.field.presentation.viewmodel.FieldMindViewModel
 import fieldmind.research.app.shared.presentation.components.icons.Icon
@@ -114,7 +115,8 @@ fun ProjectsScreen(
     viewModel: FieldMindViewModel,
     onOpenDetail: (String, Long) -> Unit = { _, _ -> },
     startTab: Int = 0,
-    onStartSession: (() -> Unit)? = null
+    onStartSession: (() -> Unit)? = null,
+    onNavigate: ((FieldMindScreen) -> Unit)? = null
 ) {
     val questions by viewModel.questions.collectAsState()
     val hypotheses by viewModel.hypotheses.collectAsState()
@@ -158,11 +160,11 @@ fun ProjectsScreen(
                 }
             ) {
                 when (tab) {
-                    0 -> ResearchHubOverviewTab(viewModel, projects, observations, questions, hypotheses, sources, data, reports, researchSessions, onOpenDetail, onStartSession)
+                    0 -> ResearchHubOverviewTab(viewModel, projects, observations, questions, hypotheses, sources, data, reports, researchSessions, onOpenDetail, onStartSession, onNavigate)
                     1 -> ObservationsTab(viewModel, observations, projects, onOpenDetail)
-                    2 -> HypothesesTab(viewModel, hypotheses, questions, observations, onOpenDetail)
-                    3 -> DataTab(viewModel, data, reports, observations, projects, onOpenDetail)
-                    4 -> ReportsTab(viewModel, reports, projects, onOpenDetail)
+                    2 -> HypothesesTab(viewModel, hypotheses, questions, observations, onOpenDetail, onNavigate)
+                    3 -> DataTab(viewModel, data, reports, observations, projects, onOpenDetail, onNavigate)
+                    4 -> ReportsTab(viewModel, reports, projects, onOpenDetail, onNavigate)
                 }
             }
         }
@@ -184,7 +186,8 @@ private fun ResearchHubOverviewTab(
     reports: List<ReportEntity>,
     researchSessions: List<ResearchSessionEntity>,
     onOpenDetail: (String, Long) -> Unit,
-    onStartSession: (() -> Unit)? = null
+    onStartSession: (() -> Unit)? = null,
+    onNavigate: ((FieldMindScreen) -> Unit)? = null
 ) {
     var showNewProject by remember { mutableStateOf(false) }
     var showTemplates by remember { mutableStateOf(false) }
@@ -252,7 +255,7 @@ private fun ResearchHubOverviewTab(
         item {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 Button(
-                    onClick = { showNewProject = !showNewProject; if (!showNewProject) { projTitle = ""; projDesc = ""; projQuestion = "" } },
+                    onClick = { onNavigate?.invoke(FieldMindScreen.NewProject) ?: run { showNewProject = !showNewProject; if (!showNewProject) { projTitle = ""; projDesc = ""; projQuestion = "" } } },
                     modifier = Modifier.weight(1f).height(56.dp),
                     shape = RoundedCornerShape(16.dp),
                     contentPadding = PaddingValues(horizontal = 8.dp)
@@ -287,7 +290,7 @@ private fun ResearchHubOverviewTab(
         // ── 7. Projects List ──
         if (totalProjects == 0) {
             item {
-                EmptyState("No projects yet", "Start with a name and a question. Use templates or pick a project type to get started.", icon = FieldMindIcons.Project, actionLabel = "Create project") { showNewProject = true }
+                EmptyState("No projects yet", "Start with a name and a question. Use templates or pick a project type to get started.", icon = FieldMindIcons.Project, actionLabel = "Create project") { onNavigate?.invoke(FieldMindScreen.NewProject) ?: run { showNewProject = true } }
             }
         } else {
             item { SectionHeader("Projects ($totalProjects)", "Tap any project to open the workspace") }
@@ -847,16 +850,16 @@ private fun HypothesesTab(
     hypotheses: List<HypothesisEntity>,
     questions: List<QuestionEntity>,
     observations: List<ObservationEntity>,
-    onOpenDetail: (String, Long) -> Unit
+    onOpenDetail: (String, Long) -> Unit,
+    onNavigate: ((FieldMindScreen) -> Unit)? = null
 ) {
-    var showForm by remember { mutableStateOf(false) }
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = panelPadding(),
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
         item { SectionHeader("Hypotheses", "${hypotheses.size} predictions • ${hypotheses.count { it.resultStatus == "Supported" }} supported, ${hypotheses.count { it.resultStatus == "Refuted" }} refuted") }
-        item { AddButton(if (showForm) "Cancel" else "New hypothesis") { showForm = !showForm } }
+        item { AddButton("New hypothesis") { onNavigate?.invoke(FieldMindScreen.NewHypothesis) } }
         if (hypotheses.isEmpty()) item { EmptyState("No hypotheses yet", "Predict what evidence would show, then test it.", icon = FieldMindIcons.Hypothesis) }
         items(hypotheses.sortedByDescending { it.createdAt }) { h ->
             val supportColor = when (h.resultStatus.lowercase()) {
@@ -866,10 +869,6 @@ private fun HypothesesTab(
             }
             EntityCard(h.prediction, "hypothesis", body = h.reasoning.take(120), meta = listOf("${h.confidencePercent}%", h.resultStatus), onClick = { onOpenDetail("hypothesis", h.id) })
         }
-    }
-    // Screen for new hypothesis
-    if (showForm) {
-        NewHypothesisScreen(viewModel = viewModel, onBack = { showForm = false })
     }
 }
 
@@ -882,9 +881,9 @@ private fun DataTab(
     reports: List<ReportEntity>,
     observations: List<ObservationEntity>,
     projects: List<ProjectEntity>,
-    onOpenDetail: (String, Long) -> Unit
+    onOpenDetail: (String, Long) -> Unit,
+    onNavigate: ((FieldMindScreen) -> Unit)? = null
 ) {
-    var showForm by remember { mutableStateOf(false) }
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = panelPadding(),
@@ -892,13 +891,9 @@ private fun DataTab(
     ) {
         item { SectionHeader("Data Records", "${data.size} records across ${data.map { it.datasetKind }.distinct().size} datasets") }
         item { TrackingFlowCards() }
-        item { AddButton(if (showForm) "Cancel" else "Add data record") { showForm = !showForm } }
+        item { AddButton("Add data record") { onNavigate?.invoke(FieldMindScreen.NewDataRecord) } }
         if (data.isEmpty()) item { EmptyState("No data records yet", "Measure, count, compare, or log with offline tools.", icon = FieldMindIcons.Data) }
         items(data.sortedByDescending { it.timestamp }) { d -> EntityCard(d.label, "data", body = "${d.value} ${d.unit}", meta = listOf(d.toolType, d.datasetKind), onClick = { onOpenDetail("data", d.id) }) }
-    }
-    // Screen for new data record
-    if (showForm) {
-        NewDataRecordScreen(viewModel = viewModel, onBack = { showForm = false })
     }
 }
 
@@ -909,22 +904,18 @@ private fun ReportsTab(
     viewModel: FieldMindViewModel,
     reports: List<ReportEntity>,
     projects: List<ProjectEntity>,
-    onOpenDetail: (String, Long) -> Unit
+    onOpenDetail: (String, Long) -> Unit,
+    onNavigate: ((FieldMindScreen) -> Unit)? = null
 ) {
-    var showForm by remember { mutableStateOf(false) }
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = panelPadding(),
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
         item { SectionHeader("Reports", "${reports.size} reports • ${reports.count { it.status == "Published" }} published") }
-        item { AddButton(if (showForm) "Cancel" else "Build report") { showForm = !showForm } }
+        item { AddButton("Build report") { onNavigate?.invoke(FieldMindScreen.NewReport) } }
         if (reports.isEmpty()) item { EmptyState("No reports yet", "Write up your findings with background, methods, results, and conclusions.", icon = FieldMindIcons.Report) }
         items(reports.sortedByDescending { it.createdAt }) { r -> EntityCard(r.title, "report", body = r.conclusion.ifBlank { r.question }, meta = listOf(r.type, r.status), onClick = { onOpenDetail("report", r.id) }) }
-    }
-    // Screen for new report
-    if (showForm) {
-        NewReportScreen(viewModel = viewModel, onBack = { showForm = false })
     }
 }
 
