@@ -1,10 +1,7 @@
 package fieldmind.research.app.features.field.presentation.screens
 
 import android.Manifest
-import android.app.NotificationChannel
-import android.app.NotificationManager
 import android.content.Context
-import android.app.PendingIntent
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.media.MediaRecorder
@@ -14,8 +11,6 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.core.app.NotificationCompat
-import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
@@ -63,6 +58,8 @@ import fieldmind.research.app.features.field.presentation.screens.species.Specie
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.io.File
+import fieldmind.research.app.features.field.background.FieldMindTimerManager
+import fieldmind.research.app.features.field.background.FieldMindTimerService
 
 // ══════════════════════════════════════════════════════════════════════
 //  Research Session — Timer-based multi-observation mode
@@ -254,7 +251,7 @@ fun ResearchSessionScreen(
         else "%d:%02d".format(minutes, seconds)
     }
 
-    // Timer with pause/resume support
+    // Timer with pause/resume support — updates foreground service notification
     LaunchedEffect(sessionActive, sessionPaused) {
         if (sessionActive && !sessionPaused) {
             if (sessionStartedAt == 0L) {
@@ -265,7 +262,15 @@ fun ResearchSessionScreen(
                 delay(1000)
                 sessionElapsedMs = pausedAccumulatedMs + (System.currentTimeMillis() - baseStart)
                 val label = if (sessionPaused) "Paused" else "Running"
-                showResearchSessionNotification(context, sessionName.ifBlank { "Research Session" }, "$label • ${formatTime(sessionElapsedMs)} • $observationCount obs")
+                val title = sessionName.ifBlank { "Research Session" }
+                val text = "$label • ${formatTime(sessionElapsedMs)} • $observationCount obs"
+                FieldMindTimerManager.updateTimerNotification(
+                    context = context,
+                    title = title,
+                    text = text,
+                    elapsedMs = sessionElapsedMs,
+                    timerType = FieldMindTimerService.TYPE_SESSION
+                )
             }
         }
     }
@@ -339,7 +344,8 @@ fun ResearchSessionScreen(
             sessionActive = true
             sessionCreating = false
         }
-        showResearchSessionNotification(context, name, "Research session is running")
+        // Use foreground service for persistent timer notification
+        FieldMindTimerManager.startSessionTimer(context, name)
         haptics.confirm()
         // Show metadata auto-fetch confirmation
         showMetadataConfirm = true
@@ -351,7 +357,7 @@ fun ResearchSessionScreen(
         if (sessionId != null) {
             viewModel.endResearchSession(sessionId, observationCount, sessionElapsedMs)
         }
-        cancelResearchSessionNotification(context)
+        FieldMindTimerManager.stopSessionTimer(context)
         showSummary = true
         haptics.confirm()
     }
@@ -439,7 +445,7 @@ fun ResearchSessionScreen(
                     TextButton(onClick = {
                         sessionActive = false
                         activeSessionId?.let { viewModel.endResearchSession(it, observationCount, sessionElapsedMs) }
-                        cancelResearchSessionNotification(context)
+                        FieldMindTimerManager.stopSessionTimer(context)
                         showExitConfirm = false
                         onBack()
                     }) {
@@ -1021,43 +1027,6 @@ private fun SessionMetaChip(
             )
         }
     }
-}
-
-private const val RESEARCH_SESSION_CHANNEL_ID = "fieldmind_research_session"
-private const val RESEARCH_SESSION_NOTIFICATION_ID = 4107
-
-private fun showResearchSessionNotification(context: Context, title: String, text: String) {
-    runCatching {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-            manager.createNotificationChannel(
-                NotificationChannel(RESEARCH_SESSION_CHANNEL_ID, "Research sessions", NotificationManager.IMPORTANCE_LOW)
-            )
-        }
-        val intent = Intent(context, fieldmind.research.app.activities.MainActivity::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
-        }
-        val pendingIntent = PendingIntent.getActivity(
-            context,
-            0,
-            intent,
-            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
-        )
-        val notification = NotificationCompat.Builder(context, RESEARCH_SESSION_CHANNEL_ID)
-            .setSmallIcon(android.R.drawable.ic_menu_compass)
-            .setContentTitle(title)
-            .setContentText(text)
-            .setContentIntent(pendingIntent)
-            .setOngoing(true)
-            .setCategory(NotificationCompat.CATEGORY_STATUS)
-            .setPriority(NotificationCompat.PRIORITY_LOW)
-            .build()
-        NotificationManagerCompat.from(context).notify(RESEARCH_SESSION_NOTIFICATION_ID, notification)
-    }
-}
-
-private fun cancelResearchSessionNotification(context: Context) {
-    runCatching { NotificationManagerCompat.from(context).cancel(RESEARCH_SESSION_NOTIFICATION_ID) }
 }
 
 // ══════════════════════════════════════════════════════════════════════

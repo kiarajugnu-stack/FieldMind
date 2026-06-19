@@ -26,7 +26,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.tooling.preview.Preview
-import fieldmind.research.app.ui.theme.RhythmTheme
+import fieldmind.research.app.features.field.presentation.theme.FieldMindTheme
 import kotlin.system.exitProcess
 import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.shape.CircleShape
@@ -64,7 +64,7 @@ class CrashActivity : ComponentActivity() {
         val crashLog = intent.getStringExtra(EXTRA_CRASH_LOG)
 
         setContent {
-            RhythmTheme {
+            FieldMindTheme(darkTheme = true, dynamicColor = false) {
                 CrashScreen(crashLog = crashLog)
             }
         }
@@ -241,7 +241,7 @@ class CrashActivity : ComponentActivity() {
                             ) + fadeIn(animationSpec = tween(800, delayMillis = 200))
                         ) {
                             Text(
-                                text = stringResource(R.string.cd_rhythm_splash),
+                                text = "FieldMind",
                                 style = MaterialTheme.typography.displaySmall,
                                 color = MaterialTheme.colorScheme.onBackground,
                                 fontWeight = FontWeight.Bold
@@ -270,7 +270,7 @@ class CrashActivity : ComponentActivity() {
                                 }
                                 val shareIntent = Intent().apply {
                                     action = Intent.ACTION_SEND
-                                    putExtra(Intent.EXTRA_TEXT, "Rhythm App Crash Log:\n\n$crashLog")
+                                    putExtra(Intent.EXTRA_TEXT, "FieldMind App Crash Log:\n\n$crashLog")
                                     type = "text/plain"
                                 }
                                 context.startActivity(Intent.createChooser(shareIntent, "Share Crash Log"))
@@ -348,7 +348,7 @@ class CrashActivity : ComponentActivity() {
     @Preview(showBackground = true)
     @Composable
     fun PreviewCrashScreen() {
-        RhythmTheme {
+        FieldMindTheme(darkTheme = true, dynamicColor = false) {
             CrashScreen(crashLog = "Sample crash log details here.\nAnother line of log.")
         }
     }

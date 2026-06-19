@@ -157,7 +157,7 @@ class AppSettings private constructor(context: Context) {
     val amoledTheme: StateFlow<Boolean> = _amoledTheme.asStateFlow()
 
     private val _useDynamicColors =
-        MutableStateFlow(prefs.getBoolean(KEY_USE_DYNAMIC_COLORS, true))
+        MutableStateFlow(prefs.getBoolean(KEY_USE_DYNAMIC_COLORS, false))
     val useDynamicColors: StateFlow<Boolean> = _useDynamicColors.asStateFlow()
 
     private val _customColorScheme =

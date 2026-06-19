@@ -634,11 +634,11 @@ private fun LiveCurrentWeatherCard(
                         }
                     }
 
-                    // ── 7-Day Forecast ──
+                    // ── 4-Day Forecast ──
                     if (w.dailyForecasts.isNotEmpty()) {
                         Spacer(Modifier.height(4.dp))
                         ForecastDashboard(
-                            forecasts = w.dailyForecasts.take(7),
+                            forecasts = w.dailyForecasts.take(4),
                             textOnScene = textOnScene,
                             colors = colors
                         )
@@ -785,7 +785,7 @@ private fun ForecastDashboard(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                "7-Day Forecast",
+                "4-Day Forecast",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = textOnScene
@@ -805,8 +805,7 @@ private fun ForecastDashboard(
             state = scrollState,
             horizontalArrangement = Arrangement.spacedBy(10.dp),
             modifier = Modifier.fillMaxWidth()
-        ) {
-            items(forecasts.take(7), key = { it.date }) { day ->
+        ) {                        items(forecasts.take(4), key = { it.date }) { day ->
                 val isExpanded = expandedIdx == forecasts.indexOf(day)
                 val dayTemp = day.temperatureMax
                 val normalizedPos = ((dayTemp - globalMin) / tempRange).coerceIn(0.0, 1.0)

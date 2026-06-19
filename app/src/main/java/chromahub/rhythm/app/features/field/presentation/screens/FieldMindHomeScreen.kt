@@ -260,6 +260,14 @@ fun HomeScreen(
             // ── Hero Section ──
             item { HomeHeroSection(todayCount, goal, currentStreak, observations.size, questions.size, onOpenSettings, onNavigate, onCapture = { showCamera = true }, onNewNote = { showNoteDialog = true }) }
 
+            // ── Research Session CTA ──
+            item { ResearchSessionCtaCard(
+                    lastSessionLabel = if (lastSession != null) "Resume your last session" else null,
+                    activeSessionName = activeSession?.name,
+                    timerMs = liveTimerMs,
+                    onStartSession = { onNavigate(FieldMindScreen.ResearchSession) }
+                ) }
+
             // ── Weather as animated centerpiece ──
             item {
                 LiveWeatherDashboardWidget(
@@ -293,18 +301,7 @@ fun HomeScreen(
             // ── Daily Goal with delta ──
             item { DailyGoalCard(todayCount, goal, currentStreak, deltaLabel) { onNavigate(FieldMindScreen.Observe) } }
 
-            // ── Research Session CTA ──
-            item { ResearchSessionCtaCard(
-                    lastSessionLabel = if (lastSession != null) "Resume your last session" else null,
-                    activeSessionName = activeSession?.name,
-                    timerMs = liveTimerMs,
-                    onStartSession = { onNavigate(FieldMindScreen.ResearchSession) }
-                ) }
 
-            // ── Widget Grid — interest-prioritized ──
-            item { SectionHeader("Research areas", "Quick overview of your work") }
-            item { HomeWidgetGrid(observations, notes, questions, sources, projects, reports, data, userInterests) { onNavigate(it) } }
-            item { HomeDataOptionsCard(data, onNavigate, userInterests) }
 
             // ── Species Catalog — shown prominently for wildlife/ecology users ──
             item { HomeSpeciesCatalogSection(onNavigate = onNavigate, userInterests = userInterests) }
@@ -801,6 +798,21 @@ private fun HomeHeroSection(
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
+
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                HeroActionChip(
+                    icon = FieldMindIcons.Project,
+                    label = "Projects",
+                    accent = colors.project,
+                    modifier = Modifier.weight(1f)
+                ) { onNavigate(FieldMindScreen.Projects) }
+                HeroActionChip(
+                    icon = FieldMindIcons.Timer,
+                    label = "Timer",
+                    accent = colors.flashcard,
+                    modifier = Modifier.weight(1f)
+                ) { onNavigate(FieldMindScreen.ResearchSession) }
+            }
 
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 HeroActionChip(
@@ -2098,108 +2110,6 @@ fun GoalStatChip(icon: MaterialSymbolIcon, label: String, tint: androidx.compose
 }
 
 @OptIn(ExperimentalLayoutApi::class)
-@Composable
-fun HomeWidgetGrid(
-    observations: List<ObservationEntity>,
-    notes: List<NoteEntity>,
-    questions: List<QuestionEntity>,
-    sources: List<SourceEntity>,
-    projects: List<ProjectEntity>,
-    reports: List<ReportEntity>,
-    data: List<DataRecordEntity>,
-    userInterests: UserInterests = UserInterests(),
-    onNavigate: (FieldMindScreen) -> Unit
-) {
-    val hasWildlife = userInterests.zoology.isNotEmpty() || userInterests.botany.isNotEmpty()
-    val hasEcology = userInterests.ecologyEnvironment || userInterests.geology || userInterests.astronomy
-
-    val widgets = buildList {
-        add(HomeWidget("Observations", "${observations.size} captured", FieldMindIcons.Observation, FieldMindTheme.colors.observation, FieldMindScreen.Insights))
-        if (hasWildlife) {
-            add(HomeWidget("Species", "Catalog • identify & learn", FieldMindIcons.Nature, FieldMindTheme.colors.observation.copy(green = 0.8f), FieldMindScreen.SpeciesBrowser))
-        }
-        add(HomeWidget("Questions", "${questions.count { it.status != "Answered" }} open", FieldMindIcons.Question, FieldMindTheme.colors.question, FieldMindScreen.Questions))
-        add(HomeWidget("Sources", "${sources.count { it.readingStatus == "Read" }}/${sources.size} read", FieldMindIcons.Source, FieldMindTheme.colors.source, FieldMindScreen.Library))
-        add(HomeWidget("Projects", "${projects.count { it.status == "Active" }} active", FieldMindIcons.Project, FieldMindTheme.colors.project, FieldMindScreen.Projects))
-        if (hasEcology) {
-            add(HomeWidget("Weather", "Conditions at your site", FieldMindIcons.Weather, FieldMindTheme.colors.data, FieldMindScreen.WeatherDatabase))
-        }
-        add(HomeWidget("Data", "${data.size} records", FieldMindIcons.Data, FieldMindTheme.colors.data, FieldMindScreen.DataTools))
-        add(HomeWidget("Reports", "${reports.size} drafts", FieldMindIcons.Report, FieldMindTheme.colors.report, FieldMindScreen.Reports))
-    }
-    FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalArrangement = Arrangement.spacedBy(12.dp), maxItemsInEachRow = 2) {
-        widgets.forEach { widget -> HomeWidgetCard(widget, Modifier.weight(1f)) { onNavigate(widget.screen) } }
-    }
-}
-
-
-@OptIn(ExperimentalLayoutApi::class)
-@Composable
-private fun HomeDataOptionsCard(data: List<DataRecordEntity>, onNavigate: (FieldMindScreen) -> Unit, userInterests: UserInterests = UserInterests()) {
-    val hasWildlife = userInterests.zoology.isNotEmpty() || userInterests.botany.isNotEmpty()
-    val hasEcology = userInterests.ecologyEnvironment || userInterests.geology || userInterests.astronomy
-
-    val toolScreens = buildList {
-        val anyInterest = hasWildlife || hasEcology
-        if (anyInterest) {
-            // Interest-based ordering: promote relevant tools first
-            if (hasWildlife) {
-                add(Pair(Triple("Species", "Survey data", FieldMindIcons.Nature), FieldMindScreen.SpeciesTool))
-            }
-            add(Pair(Triple("Count", "Track totals", FieldMindIcons.Add), FieldMindScreen.CounterTool))
-            add(Pair(Triple("Measure", "Log values", FieldMindIcons.Graph), FieldMindScreen.MeasurementTool))
-            if (hasEcology) {
-                add(Pair(Triple("Weather", "Conditions", FieldMindIcons.Weather), FieldMindScreen.WeatherLogTool))
-            }
-        } else {
-            // No specific interests: show all tools in default order
-            add(Pair(Triple("Count", "Track totals", FieldMindIcons.Add), FieldMindScreen.CounterTool))
-            add(Pair(Triple("Measure", "Log values", FieldMindIcons.Graph), FieldMindScreen.MeasurementTool))
-            add(Pair(Triple("Weather", "Conditions", FieldMindIcons.Weather), FieldMindScreen.WeatherLogTool))
-            add(Pair(Triple("Species", "Survey data", FieldMindIcons.Nature), FieldMindScreen.SpeciesTool))
-        }
-    }
-    Card(shape = RoundedCornerShape(24.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp), modifier = Modifier.fillMaxWidth()) {
-        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                Icon(FieldMindIcons.Data, null, tint = FieldMindTheme.colors.data, size = 22.dp)
-                Column(Modifier.weight(1f)) {
-                    Text("Data tools", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                    Text("${data.size} records • choose what you are tracking", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-                TextButton(onClick = { onNavigate(FieldMindScreen.DataTools) }) { Text("Open all") }
-            }
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp), maxItemsInEachRow = 2) {
-                toolScreens.forEach { (info, screen) ->
-                    val (title, body, icon) = info
-                    Surface(onClick = { onNavigate(screen) }, modifier = Modifier.weight(1f), shape = RoundedCornerShape(18.dp), color = MaterialTheme.colorScheme.surfaceContainerHigh) {
-                        Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                            Icon(icon, null, tint = FieldMindTheme.colors.data, size = 20.dp)
-                            Column { Text(title, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold); Text(body, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-private data class HomeWidget(val title: String, val value: String, val icon: MaterialSymbolIcon, val color: androidx.compose.ui.graphics.Color, val screen: FieldMindScreen)
-
-@Composable
-private fun HomeWidgetCard(widget: HomeWidget, modifier: Modifier = Modifier, onClick: () -> Unit) {
-    val haptics = rememberFieldMindHaptics()
-    Card(modifier = modifier.height(112.dp).clickable { haptics.light(); onClick() }, shape = RoundedCornerShape(24.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)) {
-        Column(Modifier.fillMaxSize().padding(16.dp, 14.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            Icon(widget.icon, null, tint = widget.color, size = 40.dp)
-            Column(verticalArrangement = Arrangement.spacedBy(1.dp)) {
-                Text(widget.title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
-                Text(widget.value, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            }
-        }
-    }
-}
-
 // ══════════════════════════════════════════════════════════════════════
 //  Session Observations — Grouped by research session
 // ══════════════════════════════════════════════════════════════════════

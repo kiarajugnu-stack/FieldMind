@@ -148,7 +148,7 @@ class FieldMindSettings private constructor(context: Context) {
     /** When true, use Material You wallpaper colors instead of the FieldMind brand palette. */
     val dynamicColorEnabled: StateFlow<Boolean> = _dynamicColorEnabled.asStateFlow()
 
-    private val _themeMode = MutableStateFlow(prefs.getString(KEY_THEME_MODE, "System") ?: "System")
+    private val _themeMode = MutableStateFlow(prefs.getString(KEY_THEME_MODE, "Dark") ?: "Dark")
     /** System, Light, or Dark. MainActivity observes this so Settings has an immediate theme toggle. */
     val themeMode: StateFlow<String> = _themeMode.asStateFlow()
 
@@ -183,13 +183,13 @@ class FieldMindSettings private constructor(context: Context) {
     private val _autoWeatherEnabled = MutableStateFlow(prefs.getBoolean(KEY_AUTO_WEATHER, false))
     val autoWeatherEnabled: StateFlow<Boolean> = _autoWeatherEnabled.asStateFlow()
 
-    private val _autoFlashcardsEnabled = MutableStateFlow(prefs.getBoolean(KEY_AUTO_FLASHCARDS, true))
+    private val _autoFlashcardsEnabled = MutableStateFlow(prefs.getBoolean(KEY_AUTO_FLASHCARDS, false))
     val autoFlashcardsEnabled: StateFlow<Boolean> = _autoFlashcardsEnabled.asStateFlow()
 
     private val _autoPatternDetectionEnabled = MutableStateFlow(prefs.getBoolean(KEY_AUTO_PATTERNS, true))
     val autoPatternDetectionEnabled: StateFlow<Boolean> = _autoPatternDetectionEnabled.asStateFlow()
 
-    private val _autoQuestionsEnabled = MutableStateFlow(prefs.getBoolean(KEY_AUTO_QUESTIONS, true))
+    private val _autoQuestionsEnabled = MutableStateFlow(prefs.getBoolean(KEY_AUTO_QUESTIONS, false))
     val autoQuestionsEnabled: StateFlow<Boolean> = _autoQuestionsEnabled.asStateFlow()
 
     private val _tempUnit = MutableStateFlow(prefs.getString(KEY_TEMP_UNIT, "Celsius") ?: "Celsius")

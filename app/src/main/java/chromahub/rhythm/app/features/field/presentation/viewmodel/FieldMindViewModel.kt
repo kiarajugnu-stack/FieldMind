@@ -204,6 +204,9 @@ class FieldMindViewModel(application: Application) : AndroidViewModel(applicatio
     fun deleteObservation(id: Long) = viewModelScope.launch { repository.deleteObservation(id) }
     fun deleteNote(id: Long) = viewModelScope.launch { repository.deleteNote(id) }
     fun deleteQuestion(id: Long) = viewModelScope.launch { repository.deleteQuestion(id) }
+    fun linkHypothesisEvidence(hypothesisId: Long, observationId: Long) = viewModelScope.launch {
+        repository.linkHypothesisEvidence(hypothesisId, observationId)
+    }
     fun deleteHypothesis(id: Long) = viewModelScope.launch { repository.deleteHypothesis(id) }
     fun deleteProject(id: Long) = viewModelScope.launch { repository.deleteProject(id) }
     fun deleteSource(id: Long) = viewModelScope.launch { repository.deleteSource(id) }
@@ -465,6 +468,7 @@ class FieldMindViewModel(application: Application) : AndroidViewModel(applicatio
     }
     val researchSessions: StateFlow<List<ResearchSessionEntity>> = repository.researchSessions.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
     val sessionObservationCrossRefs: StateFlow<List<SessionObservationCrossRef>> = repository.sessionObservationCrossRefs.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+    val hypothesisEvidenceCrossRefs: StateFlow<List<HypothesisEvidenceCrossRef>> = repository.hypothesisEvidenceCrossRefs.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     // ── Weather (multi-provider) ──
     private fun getWeatherProvider(): fieldmind.research.app.features.field.data.weather.WeatherProvider {
@@ -645,54 +649,62 @@ class FieldMindViewModel(application: Application) : AndroidViewModel(applicatio
     // ── Auto-generation: flashcards & questions (runs in background, no button press) ──
 
     /**
-     * Launches a background collector that watches observations, notes, sources, and flashcards.
+     * Launches a background collector that watches observations, notes, and sources.
      * On data changes, debounces 5 seconds, then auto-generates:
      * 1. Flashcards from observations, notes, and sources (if autoFlashcardsEnabled)
      * 2. Questions from observations (if autoQuestionsEnabled)
      *
      * Deduplication ensures we never create the same flashcard/question twice.
+     * A daily cap (AUTO_GEN_DAILY_CAP) prevents unlimited generation.
+     *
+     * IMPORTANT: Only input flows (observations, notes, sources, settings) are in the combine.
+     * The output flows (flashcards, questions) are excluded to prevent an infinite regeneration
+     * loop — generating new content would update those flows, triggering another round.
+     * The current snapshot of flashcards/questions is captured via .value at trigger time for dedup.
      */
     private fun startAutoGeneration() {
+        val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+        var todayDate = dateFormat.format(Date(System.currentTimeMillis()))
+        var todayGenCount = 0
+
         viewModelScope.launch {
             combine(
                 observations,
                 notes,
                 sources,
-                flashcards,
-                questions,
                 fieldSettings.autoFlashcardsEnabled,
                 fieldSettings.autoQuestionsEnabled
-            ) { a: Array<*> ->
-                val obs = a[0] as? List<ObservationEntity> ?: emptyList()
-                val nts = a[1] as? List<NoteEntity> ?: emptyList()
-                val srcs = a[2] as? List<SourceEntity> ?: emptyList()
-                val cards = a[3] as? List<FlashcardEntity> ?: emptyList()
-                val quests = a[4] as? List<QuestionEntity> ?: emptyList()
-                val genFlash = a[5] as? Boolean ?: false
-                val genQuest = a[6] as? Boolean ?: false
-                GenerationTrigger(
-                    observations = obs,
-                    notes = nts,
-                    sources = srcs,
-                    existingFlashcards = cards,
-                    existingQuestions = quests,
-                    autoFlashcards = genFlash,
-                    autoQuestions = genQuest
-                )
+            ) { obs, nts, srcs, genFlash, genQuest ->
+                Triple(obs, nts, srcs) to (genFlash to genQuest)
             }.debounce(5_000)
-                .collect { trigger ->
-                    // ── Auto-flashcards ──
-                    if (trigger.autoFlashcards && trigger.observations.isNotEmpty()) {
+                .collect { (inputs, settings) ->
+                    val (obs, nts, srcs) = inputs
+                    val (autoFlash, autoQuest) = settings
+
+                    // Reset daily counter if date changed
+                    val nowDate = dateFormat.format(Date(System.currentTimeMillis()))
+                    if (nowDate != todayDate) {
+                        todayDate = nowDate
+                        todayGenCount = 0
+                    }
+
+                    // Check cap before generating
+                    if (todayGenCount >= AUTO_GEN_DAILY_CAP) return@collect
+
+                    // ── Auto-flashcards (snapshot current flashcards for dedup) ──
+                    if (autoFlash && obs.isNotEmpty() && todayGenCount < AUTO_GEN_DAILY_CAP) {
+                        val existingCards = flashcards.value
                         runCatching {
                             val generated = SmartFlashcardGenerator.generateAll(
-                                observations = trigger.observations,
-                                notes = trigger.notes,
-                                sources = trigger.sources,
-                                existing = trigger.existingFlashcards
+                                observations = obs,
+                                notes = nts,
+                                sources = srcs,
+                                existing = existingCards
                             )
-                            if (generated.isNotEmpty()) {
-                                android.util.Log.d("FieldMindVM", "Auto-generating ${generated.size} flashcards from data")
-                                generated.forEach { card ->
+                            val capped = generated.take(AUTO_GEN_DAILY_CAP - todayGenCount)
+                            if (capped.isNotEmpty()) {
+                                android.util.Log.d("FieldMindVM", "Auto-generating ${capped.size} flashcards from data")
+                                capped.forEach { card ->
                                     addFlashcard(
                                         front = card.front,
                                         back = card.back,
@@ -703,23 +715,26 @@ class FieldMindViewModel(application: Application) : AndroidViewModel(applicatio
                                         dedupKey = card.dedupKey
                                     )
                                 }
+                                todayGenCount += capped.size
                             }
                         }.onFailure { e ->
                             android.util.Log.e("FieldMindVM", "Auto-flashcard generation failed", e)
                         }
                     }
 
-                    // ── Auto-questions ──
-                    if (trigger.autoQuestions && trigger.observations.isNotEmpty()) {
+                    // ── Auto-questions (snapshot current questions for dedup) ──
+                    if (autoQuest && obs.isNotEmpty() && todayGenCount < AUTO_GEN_DAILY_CAP) {
+                        val existingQuestions = questions.value
                         runCatching {
                             val generated = QuestionGenerator.generateAll(
-                                observations = trigger.observations,
-                                sources = trigger.sources,
-                                existing = trigger.existingQuestions
+                                observations = obs,
+                                sources = srcs,
+                                existing = existingQuestions
                             )
-                            if (generated.isNotEmpty()) {
-                                android.util.Log.d("FieldMindVM", "Auto-generating ${generated.size} questions from observations")
-                                generated.forEach { q ->
+                            val capped = generated.take(AUTO_GEN_DAILY_CAP - todayGenCount)
+                            if (capped.isNotEmpty()) {
+                                android.util.Log.d("FieldMindVM", "Auto-generating ${capped.size} questions from observations")
+                                capped.forEach { q ->
                                     addQuestion(
                                         question = q.questionText,
                                         category = q.category,
@@ -729,29 +744,23 @@ class FieldMindViewModel(application: Application) : AndroidViewModel(applicatio
                                         observationId = q.observationId
                                     )
                                 }
+                                todayGenCount += capped.size
                             }
                         }.onFailure { e ->
                             android.util.Log.e("FieldMindVM", "Auto-question generation failed", e)
                         }
                     }
+
+                    if (todayGenCount >= AUTO_GEN_DAILY_CAP) {
+                        android.util.Log.d("FieldMindVM", "Daily auto-generation cap ($AUTO_GEN_DAILY_CAP) reached — pausing until tomorrow")
+                    }
                 }
         }
     }
 
-    /**
-     * Internal data holder for the auto-generation combine flow.
-     */
-    private data class GenerationTrigger(
-        val observations: List<ObservationEntity>,
-        val notes: List<NoteEntity>,
-        val sources: List<SourceEntity>,
-        val existingFlashcards: List<FlashcardEntity>,
-        val existingQuestions: List<QuestionEntity>,
-        val autoFlashcards: Boolean,
-        val autoQuestions: Boolean
-    )
-
     companion object {
+        /** Max auto-generated items (flashcards + questions combined) per day. */
+        private const val AUTO_GEN_DAILY_CAP = 20
         private val dateFormatter = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
         private val timeFormatter = SimpleDateFormat("HH:mm", Locale.getDefault())
     }
