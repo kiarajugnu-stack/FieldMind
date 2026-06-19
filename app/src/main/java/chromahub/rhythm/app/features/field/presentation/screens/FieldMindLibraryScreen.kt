@@ -94,7 +94,11 @@ fun KnowledgeLibraryScreen(
     }
     Column(Modifier.fillMaxSize()) {
         Column(Modifier.padding(20.dp, 20.dp, 20.dp, 8.dp)) {
-            FieldScreenHeader("Knowledge Hub", "Sources, notes, reading, flashcards, and learning.", icon = FieldMindIcons.Library)
+            StandardScreenHeader(
+                title = "Knowledge Hub",
+                subtitle = "Sources, notes, reading, flashcards, and learning.",
+                icon = FieldMindIcons.Library
+            )
         }
         ScrollableTabRow(selectedTabIndex = tab, edgePadding = 20.dp, containerColor = MaterialTheme.colorScheme.background) {
             tabs.forEachIndexed { i, label -> Tab(tab == i, { selectTab(i) }, text = { Text(label) }) }

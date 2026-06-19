@@ -52,6 +52,7 @@ import fieldmind.research.app.features.field.data.database.entity.FlashcardEntit
 import fieldmind.research.app.features.field.data.flashcard.SM2Engine
 import fieldmind.research.app.features.field.presentation.components.EmptyState
 import fieldmind.research.app.features.field.presentation.components.FieldMindIcons
+import fieldmind.research.app.features.field.presentation.components.StandardScreenHeader
 import fieldmind.research.app.features.field.presentation.components.FieldScreenHeader
 import fieldmind.research.app.features.field.presentation.components.InfoChip
 import fieldmind.research.app.features.field.presentation.theme.FieldMindTheme
