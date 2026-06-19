@@ -40,7 +40,7 @@ object SmartFlashcardGenerator {
         observations: List<ObservationEntity>,
         existing: List<FlashcardEntity>
     ): List<GeneratedFlashcard> {
-        val existingKeys = existing.map { flashcardKey(it.front, it.back) }.toSet()
+        val existingKeys = existing.map { flashcardKey(it.front, it.back) }.toMutableSet()
         val results = mutableListOf<GeneratedFlashcard>()
 
         for (obs in observations) {
@@ -116,7 +116,7 @@ object SmartFlashcardGenerator {
         notes: List<NoteEntity>,
         existing: List<FlashcardEntity>
     ): List<GeneratedFlashcard> {
-        val existingKeys = existing.map { flashcardKey(it.front, it.back) }.toSet()
+        val existingKeys = existing.map { flashcardKey(it.front, it.back) }.toMutableSet()
         val results = mutableListOf<GeneratedFlashcard>()
 
         for (note in notes) {
@@ -170,7 +170,7 @@ object SmartFlashcardGenerator {
         sources: List<SourceEntity>,
         existing: List<FlashcardEntity>
     ): List<GeneratedFlashcard> {
-        val existingKeys = existing.map { flashcardKey(it.front, it.back) }.toSet()
+        val existingKeys = existing.map { flashcardKey(it.front, it.back) }.toMutableSet()
         val results = mutableListOf<GeneratedFlashcard>()
 
         for (source in sources) {
