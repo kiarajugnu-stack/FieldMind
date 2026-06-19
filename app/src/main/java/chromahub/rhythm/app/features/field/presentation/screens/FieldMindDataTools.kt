@@ -306,14 +306,14 @@ fun DataToolsHubScreen(
             // Snackbar for quick-entry feedback
             item { Spacer(Modifier.height(4.dp)) }
         }
+        // Quick-entry snackbar overlay
+        FieldMindSnackbarOverlay(
+            hostState = quickEntrySnackbar,
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .padding(top = 8.dp, start = 16.dp, end = 16.dp)
+        )
     }
-    // Quick-entry snackbar overlay
-    FieldMindSnackbarOverlay(
-        hostState = quickEntrySnackbar,
-        modifier = Modifier
-            .align(Alignment.TopCenter)
-            .padding(top = 8.dp, start = 16.dp, end = 16.dp)
-    )
 }
 
 @Composable

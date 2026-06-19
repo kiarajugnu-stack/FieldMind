@@ -64,7 +64,7 @@ import kotlinx.coroutines.delay
  * @param isDirty When true and back is pressed, shows a confirmation dialog to prevent data loss.
  */
 @Composable
-private fun DialogWrapper(
+internal fun DialogWrapper(
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
     fullScreen: Boolean = false,
@@ -175,7 +175,7 @@ private fun DialogWrapper(
  * Polished dialog header with icon, title, subtitle, and accent color.
  */
 @Composable
-private fun DialogHeader(
+internal fun DialogHeader(
     icon: MaterialSymbolIcon,
     title: String,
     subtitle: String,
