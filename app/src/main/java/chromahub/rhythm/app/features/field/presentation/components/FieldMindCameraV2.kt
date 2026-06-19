@@ -9,7 +9,6 @@ import android.provider.MediaStore
 import android.view.ViewGroup
 import android.view.WindowManager
 import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.core.Camera
 import androidx.camera.core.CameraSelector
@@ -68,6 +67,7 @@ import java.util.Locale
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import kotlin.math.roundToInt
+
 
 // ══════════════════════════════════════════════════════════════════════
 //  FieldMind Camera V2 — Redesigned with glassmorphic controls,
@@ -191,17 +191,12 @@ fun FieldMindCameraV2(
     var speciesConfidence by remember { mutableIntStateOf(80) }
     var speciesNotes by remember { mutableStateOf("") }
 
-    // ── Gallery picker ──
-    val galleryLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.PickVisualMedia()
-    ) { uri ->
-        if (uri != null) {
-            capturedUri = uri.toString()
-            capturedMime = getMimeTypeForUri(context, uri) ?: "image/jpeg"
-            lastCaptureUri = uri.toString()
-            showSpeciesPanel = true
-        }
-    }
+    // ── Session capture post-capture dialog ──
+    var showCaptureDialog by remember { mutableStateOf(false) }
+    var pendingCaptureUri by remember { mutableStateOf<String?>(null) }
+    var pendingCaptureMime by remember { mutableStateOf<String?>(null) }
+    var capturedCount by remember { mutableIntStateOf(0) }
+    var showInAppGallery by remember { mutableStateOf(false) }
 
     // ── Permission ──
     val permissionLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
@@ -268,12 +263,21 @@ fun FieldMindCameraV2(
                             context.contentResolver.openOutputStream(uri)?.use { os -> photoFile.inputStream().use { it.copyTo(os) } }
                         }
                     }
+                    // Apply timestamp watermark
+                    FieldMindWatermark.applyWatermark(context, photoFile.absolutePath)
                     isCapturing = false
                     val uri = photoFile.toURI().toString()
                     capturedUri = uri
                     capturedMime = "image/jpeg"
                     lastCaptureUri = uri
-                    showSpeciesPanel = true // Show species field mode by default on capture
+                    if (multiCaptureMode) {
+                        pendingCaptureUri = uri
+                        pendingCaptureMime = "image/jpeg"
+                        capturedCount++
+                        showCaptureDialog = true
+                    } else {
+                        showSpeciesPanel = true
+                    }
                 }
                 override fun onError(exception: ImageCaptureException) {
                     isCapturing = false
@@ -281,7 +285,14 @@ fun FieldMindCameraV2(
                     capturedUri = uri
                     capturedMime = "image/jpeg"
                     lastCaptureUri = uri
-                    showSpeciesPanel = true
+                    if (multiCaptureMode) {
+                        pendingCaptureUri = uri
+                        pendingCaptureMime = "image/jpeg"
+                        capturedCount++
+                        showCaptureDialog = true
+                    } else {
+                        showSpeciesPanel = true
+                    }
                 }
             })
         }
@@ -568,8 +579,118 @@ fun FieldMindCameraV2(
             )
         }
 
+        // ── Session post-capture dialog ──
+        if (showCaptureDialog && multiCaptureMode) {
+            Box(
+                Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.5f))
+                    .clickable(enabled = false) {},
+                contentAlignment = Alignment.Center
+            ) {
+                Card(
+                    shape = RoundedCornerShape(28.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.97f)
+                    ),
+                    shadowElevation = 16.dp,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(24.dp)
+                ) {
+                    Column(
+                        Modifier.padding(24.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(20.dp)
+                    ) {
+                        // Photo thumbnail
+                        if (pendingCaptureUri != null) {
+                            Box(
+                                Modifier
+                                    .size(120.dp)
+                                    .clip(RoundedCornerShape(16.dp))
+                                    .background(MaterialTheme.colorScheme.surfaceContainerHigh)
+                            ) {
+                                AsyncImage(
+                                    model = pendingCaptureUri,
+                                    contentDescription = "Last capture",
+                                    modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(16.dp)),
+                                    contentScale = ContentScale.Crop
+                                )
+                            }
+                        }
+
+                        // Text
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            Text(
+                                "Photo $capturedCount captured",
+                                style = MaterialTheme.typography.titleLarge,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Text(
+                                "Captured at ${SimpleDateFormat("HH:mm:ss", Locale.US).format(Date())}",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+
+                        // Action buttons
+                        Row(
+                            Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            // Add more - saves and keeps camera open
+                            OutlinedButton(
+                                onClick = {
+                                    val uri = pendingCaptureUri
+                                    val mime = pendingCaptureMime
+                                    if (uri != null) {
+                                        onPhotoCaptured(uri, mime ?: "image/jpeg")
+                                    }
+                                    pendingCaptureUri = null
+                                    pendingCaptureMime = null
+                                    showCaptureDialog = false
+                                },
+                                modifier = Modifier.weight(1f),
+                                shape = RoundedCornerShape(16.dp)
+                            ) {
+                                Icon(MaterialSymbolIcon("add_a_photo"), null, size = 18.dp)
+                                Spacer(Modifier.size(6.dp))
+                                Text("Add more", maxLines = 1)
+                            }
+
+                            // Save & Exit - saves and closes camera
+                            Button(
+                                onClick = {
+                                    val uri = pendingCaptureUri
+                                    val mime = pendingCaptureMime
+                                    if (uri != null) {
+                                        onPhotoCaptured(uri, mime ?: "image/jpeg")
+                                    }
+                                    pendingCaptureUri = null
+                                    pendingCaptureMime = null
+                                    showCaptureDialog = false
+                                    onDismiss()
+                                },
+                                modifier = Modifier.weight(1f),
+                                shape = RoundedCornerShape(16.dp)
+                            ) {
+                                Icon(FieldMindIcons.Archive, null, size = 18.dp)
+                                Spacer(Modifier.size(6.dp))
+                                Text("Save & Exit", maxLines = 1)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         // ── Pro controls drawer ──
-        Box(Modifier.fillMaxSize()) {
+        Box(Modifier.fillMaxSize()) { 
             AnimatedVisibility(
                 visible = showProDrawer && !showSpeciesPanel,
                 enter = slideInVertically(initialOffsetY = { it }, animationSpec = tween(280, easing = FastOutSlowInEasing)) + fadeIn(tween(200)),
@@ -649,11 +770,11 @@ fun FieldMindCameraV2(
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            // Gallery thumbnail (last capture)
+                            // Gallery thumbnail (in-app FieldMind gallery)
                             Box(
                                 Modifier.size(44.dp).clip(RoundedCornerShape(12.dp))
                                     .background(Color.White.copy(alpha = 0.12f))
-                                    .clickable { galleryLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) },
+                                    .clickable { showInAppGallery = true },
                                 contentAlignment = Alignment.Center
                             ) {
                                 if (lastCaptureUri != null) {
@@ -725,6 +846,20 @@ fun FieldMindCameraV2(
                 Modifier.align(Alignment.Center).size(32.dp),
                 color = Color.White,
                 strokeWidth = 3.dp
+            )
+        }
+
+        // ── In-app gallery overlay ──
+        if (showInAppGallery) {
+            FieldMindInAppGallery(
+                onDismiss = { showInAppGallery = false },
+                onSelectImage = { attachments ->
+                    attachments.forEach { attachment ->
+                        onPhotoCaptured(attachment.uri, attachment.mimeType ?: "image/jpeg")
+                    }
+                    showInAppGallery = false
+                },
+                title = "FieldMind Captures"
             )
         }
     }

@@ -483,12 +483,48 @@ fun HomeScreen(
                         showFastSnackbar(
                             captureSnackbarHostState,
                             scope,
-                            "Photo captured"
+                            "Photo saved"
                         )
-                        // Delay slightly for snackbar visibility, then show category picker
+                        // Save photo as a basic observation immediately
+                        scope.launch {
+                            val attachment = listOf(DraftEvidenceAttachment("Photo", uri, "Camera capture", mimeType = mime))
+                            viewModel.addObservation(
+                                subject = "Photo observation",
+                                category = "Other",
+                                facts = "Auto-captured photo observation.",
+                                confidence = "Unsure",
+                                manualLocation = "",
+                                tags = "camera, photo",
+                                evidence = "Photo evidence",
+                                context = "",
+                                attachments = attachment
+                            )
+                        }
+                    },
+                    onSpeciesCaptured = { uri, mime, speciesName, category, confidence, notes ->
+                        capturedPhotoUri = uri
+                        capturedPhotoMime = mime
+                        showFastSnackbar(
+                            captureSnackbarHostState,
+                            scope,
+                            "$speciesName observation saved"
+                        )
+                        // Don't close camera here - "Save & Continue" keeps it open
+                        // "Save & Exit" triggers onDismiss() which closes it
                         scope.launch {
                             delay(600)
-                            showCategoryPicker = true
+                            val attachment = listOf(DraftEvidenceAttachment("Photo", uri, "Camera capture", mimeType = mime))
+                            viewModel.addObservation(
+                                subject = speciesName.ifBlank { "$category observation" },
+                                category = category,
+                                facts = notes.ifBlank { "Auto-captured $category observation from camera." },
+                                confidence = confidence,
+                                manualLocation = "",
+                                tags = "camera, $category, $speciesName",
+                                evidence = "Photo evidence captured via camera",
+                                context = "",
+                                attachments = attachment
+                            )
                         }
                     },
                     onDismiss = {

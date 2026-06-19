@@ -797,7 +797,7 @@ fun ObserveScreen(
         ) {
             FieldMindCameraV2(
                 onPhotoCaptured = { uri, mimeType ->
-                    // Add to session attachments, keep camera open for more captures
+                    // Add to session attachments; camera may stay open via post-capture dialog
                     addAttachment(
                         DraftEvidenceAttachment("Photo", uri, "Camera photo", mimeType = mimeType)
                     )
