@@ -148,7 +148,7 @@ class FieldMindSettings private constructor(context: Context) {
     /** When true, use Material You wallpaper colors instead of the FieldMind brand palette. */
     val dynamicColorEnabled: StateFlow<Boolean> = _dynamicColorEnabled.asStateFlow()
 
-    private val _themeMode = MutableStateFlow(prefs.getString(KEY_THEME_MODE, "System") ?: "System")
+    private val _themeMode = MutableStateFlow(prefs.getString(KEY_THEME_MODE, "Dark") ?: "Dark")
     /** System, Light, or Dark. MainActivity observes this so Settings has an immediate theme toggle. */
     val themeMode: StateFlow<String> = _themeMode.asStateFlow()
 
