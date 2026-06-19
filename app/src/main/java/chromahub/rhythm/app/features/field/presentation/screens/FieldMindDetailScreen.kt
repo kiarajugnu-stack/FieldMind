@@ -2838,16 +2838,22 @@ private fun SourceActionPanel(source: SourceEntity, projects: List<ProjectEntity
                         fileMime.contains("pdf") -> "pdf"
                         fileMime.contains("image") -> "image"
                         fileMime.contains("audio") -> "audio"
-                        source.fileUri.matches(Regex("\.(pdf)(\?.*)?$", RegexOption.IGNORE_CASE)) -> "pdf"
-                        source.fileUri.matches(Regex("\.(jpg|jpeg|png|webp|gif|heic|bmp)(\?.*)?$", RegexOption.IGNORE_CASE)) -> "image"
-                        source.fileUri.matches(Regex("\.(mp3|wav|ogg|m4a|aac|flac|wma)(\?.*)?$", RegexOption.IGNORE_CASE)) -> "audio"
+                        source.fileUri?.let { uri ->
+                            uri.matches(Regex("""\.(pdf)(\?.*)?$""", RegexOption.IGNORE_CASE))
+                        } ?: false -> "pdf"
+                        source.fileUri?.let { uri ->
+                            uri.matches(Regex("""\.(jpg|jpeg|png|webp|gif|heic|bmp)(\?.*)?$""", RegexOption.IGNORE_CASE))
+                        } ?: false -> "image"
+                        source.fileUri?.let { uri ->
+                            uri.matches(Regex("""\.(mp3|wav|ogg|m4a|aac|flac|wma)(\?.*)?$""", RegexOption.IGNORE_CASE))
+                        } ?: false -> "audio"
                         else -> "external"
                     }
                     when (fileType) {
                         "pdf" -> showPdfViewer = true
                         "image" -> showImageViewer = true
                         "audio" -> showAudioPlayer = true
-                        else -> runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(source.fileUri)).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)) }
+                        else -> runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(source.fileUri.orEmpty())).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)) }
                     }
                 }, enabled = source.fileUri.isNotBlank(), modifier = Modifier.weight(1f), shape = RoundedCornerShape(14.dp)) {
                     Icon(FieldMindIcons.File, null, size = 18.dp); Spacer(Modifier.size(6.dp)); Text("Open file")
