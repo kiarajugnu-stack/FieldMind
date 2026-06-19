@@ -1169,8 +1169,8 @@ private fun LiveWeatherDashboardWidget(
         sunset = currentWeather!!.sunset,
         compact = false,
         forceNight = if (developerMode && testIsNight) true else if (developerMode) false else null,
-        showCloudAnimation = weatherShowCloudAnimation
-    )
+        showCloudAnimation = showCloudAnimation
+                )
                 }
                 // Glass-morphism scrim for better text readability
                 Box(
