@@ -37,6 +37,7 @@ import fieldmind.research.app.features.field.presentation.theme.FieldMindTheme
 import fieldmind.research.app.features.field.presentation.viewmodel.FieldMindViewModel
 import fieldmind.research.app.shared.presentation.components.icons.Icon
 import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon
+import kotlinx.coroutines.launch
 import kotlin.math.abs
 import kotlin.math.ceil
 
@@ -630,6 +631,10 @@ private fun ObservationsTab(
         }
     }
 
+    // ── New observation dialog state ──
+    var showNewObservation by remember { mutableStateOf(false) }
+    val obsHaptics = rememberFieldMindHaptics()
+
     // If selectMode exits, deselect all
     if (!selectMode && selectedIds.isNotEmpty()) {
         selectedIds = emptySet()
@@ -641,6 +646,35 @@ private fun ObservationsTab(
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
         item { SectionHeader("Observations", "${filtered.size} of ${observations.size} total") }
+        
+        // ── Add observation button ──
+        item {
+            Card(
+                modifier = Modifier.fillMaxWidth().clickable { obsHaptics.light(); showNewObservation = true },
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(containerColor = FieldMindTheme.colors.observation.copy(alpha = 0.1f)),
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+            ) {
+                Row(
+                    Modifier.fillMaxWidth().padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Box(
+                        Modifier.size(40.dp).clip(RoundedCornerShape(12.dp))
+                            .background(FieldMindTheme.colors.observation.copy(alpha = 0.18f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(FieldMindIcons.Add, null, tint = FieldMindTheme.colors.observation, size = 22.dp)
+                    }
+                    Column(Modifier.weight(1f)) {
+                        Text("Add observation", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+                        Text("Quick-capture a new observation", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                    Icon(FieldMindIcons.Forward, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, size = 20.dp)
+                }
+            }
+        }
         
         // ── Toolbar: Filter, Sort, Select, Delete ──
         item {
@@ -767,6 +801,65 @@ private fun ObservationsTab(
                 TextButton(onClick = { showDeleteConfirm = false }) { Text("Cancel") }
             }
         )
+    }
+
+    // ── New observation dialog ──
+    if (showNewObservation) {
+        NewQuickObservationDialog(
+            viewModel = viewModel,
+            projectId = selectedProjectId,
+            onDismiss = { showNewObservation = false }
+        )
+    }
+}
+
+@Composable
+private fun NewQuickObservationDialog(
+    viewModel: FieldMindViewModel,
+    projectId: Long?,
+    onDismiss: () -> Unit
+) {
+    var subject by remember { mutableStateOf("") }
+    var category by remember { mutableStateOf("") }
+    var facts by remember { mutableStateOf("") }
+    var confidence by remember { mutableStateOf("Sure") }
+    val haptics = rememberFieldMindHaptics()
+
+    fun save() {
+        if (subject.isBlank()) return
+        haptics.confirm()
+        viewModel.addObservation(
+            subject = subject,
+            category = category.ifBlank { "Other" },
+            facts = facts,
+            confidence = confidence,
+            manualLocation = "",
+            tags = "",
+            evidence = "",
+            context = "",
+            projectId = projectId
+        ) {
+            onDismiss()
+        }
+    }
+
+    DialogWrapper(onDismiss = onDismiss) {
+        DialogHeader(FieldMindIcons.Observation, "Quick Observation", "Capture a fact from the field.", accent = FieldMindTheme.colors.observation)
+        FieldTextField(subject, { subject = it }, "Subject", required = true, supportingText = "e.g. Red-tailed hawk, Maple leaf color change, Creek water level")
+        FieldTextField(category, { category = it }, "Category", supportingText = "e.g. Bird, Plant, Weather, Water, Insect, Mammal, Other")
+        FieldTextField(facts, { facts = it }, "Facts / notes", minLines = 3, supportingText = "What did you observe? Describe factually.")
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+            Text("Confidence", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            ChoiceChips(listOf("Unsure", "Likely", "Sure"), confidence) { confidence = it }
+        }
+        if (projectId != null) {
+            InfoChip("Linked to project", icon = FieldMindIcons.Project)
+        }
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            TextButton(onClick = onDismiss) { Text("Cancel") }
+            Spacer(Modifier.weight(1f))
+            Button(onClick = ::save, shape = RoundedCornerShape(16.dp), enabled = subject.isNotBlank()) { Text("Save") }
+        }
     }
 }
 

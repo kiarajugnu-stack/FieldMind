@@ -1,5 +1,6 @@
 package fieldmind.research.app.features.field.presentation.screens
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -384,7 +385,10 @@ fun QuestionsScreen(
                     category = category,
                     facts = facts.ifBlank { "Observation linked to hypothesis #${hypothesis.id}" },
                     confidence = "Likely",
-                    tags = "hypothesis:${hypothesis.id}"
+                    manualLocation = "",
+                    tags = "hypothesis:${hypothesis.id}",
+                    evidence = "",
+                    context = ""
                 ) { observationId ->
                     // Link observation to hypothesis in VM
                     viewModel.linkHypothesisEvidence(hypothesis.id, observationId)

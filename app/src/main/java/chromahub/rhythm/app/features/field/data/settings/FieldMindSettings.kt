@@ -183,13 +183,13 @@ class FieldMindSettings private constructor(context: Context) {
     private val _autoWeatherEnabled = MutableStateFlow(prefs.getBoolean(KEY_AUTO_WEATHER, false))
     val autoWeatherEnabled: StateFlow<Boolean> = _autoWeatherEnabled.asStateFlow()
 
-    private val _autoFlashcardsEnabled = MutableStateFlow(prefs.getBoolean(KEY_AUTO_FLASHCARDS, true))
+    private val _autoFlashcardsEnabled = MutableStateFlow(prefs.getBoolean(KEY_AUTO_FLASHCARDS, false))
     val autoFlashcardsEnabled: StateFlow<Boolean> = _autoFlashcardsEnabled.asStateFlow()
 
     private val _autoPatternDetectionEnabled = MutableStateFlow(prefs.getBoolean(KEY_AUTO_PATTERNS, true))
     val autoPatternDetectionEnabled: StateFlow<Boolean> = _autoPatternDetectionEnabled.asStateFlow()
 
-    private val _autoQuestionsEnabled = MutableStateFlow(prefs.getBoolean(KEY_AUTO_QUESTIONS, true))
+    private val _autoQuestionsEnabled = MutableStateFlow(prefs.getBoolean(KEY_AUTO_QUESTIONS, false))
     val autoQuestionsEnabled: StateFlow<Boolean> = _autoQuestionsEnabled.asStateFlow()
 
     private val _tempUnit = MutableStateFlow(prefs.getString(KEY_TEMP_UNIT, "Celsius") ?: "Celsius")
