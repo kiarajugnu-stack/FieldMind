@@ -463,7 +463,7 @@ private fun LiveCurrentWeatherCard(
     val timeOfDay = when (currentHour) {
         in 5..11 -> "morning"
         in 12..16 -> "afternoon"
-        in 17..20 -> "evening"
+        17 -> "evening"
         else -> "night"
     }
     val timeGreeting = when (timeOfDay) {
