@@ -46,7 +46,7 @@ class FieldMindViewModel(application: Application) : AndroidViewModel(applicatio
     val hypotheses: StateFlow<List<HypothesisEntity>> = repository.hypotheses.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
     val projects: StateFlow<List<ProjectEntity>> = repository.projects.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
     val sources: StateFlow<List<SourceEntity>> = repository.sources.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
-    val dataRecords: StateFlow<List<DataRecordEntity>> = repository.dataRecords.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+    val dataRecords: StateFlow<List<DataRecordEntity>> = repository.dataRecords.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
     val reports: StateFlow<List<ReportEntity>> = repository.reports.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
     val flashcards: StateFlow<List<FlashcardEntity>> = repository.flashcards.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
     val tags: StateFlow<List<TagEntity>> = repository.tags.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
@@ -416,11 +416,17 @@ class FieldMindViewModel(application: Application) : AndroidViewModel(applicatio
         repository.addHypothesis(HypothesisEntity(linkedQuestionId = questionId, prediction = prediction.trim(), reasoning = reasoning.trim(), evidenceNeeded = evidenceNeeded.trim(), supportCriteria = supportCriteria.trim(), weakeningCriteria = weakeningCriteria.trim(), testMethod = testMethod.trim(), confidencePercent = confidence, resultStatus = resultStatus))
     }
 
-    fun addDataRecord(toolType: String, label: String, value: String, unit: String = "", notes: String = "", location: String = "", projectId: Long? = null, observationId: Long? = null, datasetKind: String = "Manual", chartPreference: String = "Line") = viewModelScope.launch {
-        repository.addDataRecord(DataRecordEntity(toolType = toolType, label = label.trim(), value = value.trim(), unit = unit.trim(), notes = notes.trim(), location = location.trim(), projectId = projectId, observationId = observationId, datasetKind = datasetKind, chartPreference = chartPreference))
+    fun addDataRecord(toolType: String, label: String, value: String, unit: String = "", notes: String = "", location: String = "", projectId: Long? = null, observationId: Long? = null, datasetKind: String = "Manual", chartPreference: String = "Line", onResult: ((Boolean) -> Unit)? = null) = viewModelScope.launch {
+        try {
+            repository.addDataRecord(DataRecordEntity(toolType = toolType, label = label.trim(), value = value.trim(), unit = unit.trim(), notes = notes.trim(), location = location.trim(), projectId = projectId, observationId = observationId, datasetKind = datasetKind, chartPreference = chartPreference))
+            onResult?.invoke(true)
+        } catch (e: Exception) {
+            android.util.Log.e("FieldMindVM", "Failed to save data record", e)
+            onResult?.invoke(false)
+        }
     }
 
-    fun addCounter(label: String, count: Int, notes: String) = addDataRecord("Counter", label, count.toString(), "count", notes)
+    fun addCounter(label: String, count: Int, notes: String, onResult: ((Boolean) -> Unit)? = null) = addDataRecord("Counter", label, count.toString(), "count", notes, onResult = onResult)
 
     fun addReport(type: String, title: String, background: String, question: String, methods: String, observations: String, results: String, interpretation: String, conclusion: String, limitations: String, nextSteps: String, projectId: Long? = null) = viewModelScope.launch {
         val markdown = buildMarkdown(type, title, background, question, methods, observations, results, interpretation, conclusion, limitations, nextSteps)

@@ -435,9 +435,9 @@ fun FieldScreenHeader(
                 Box(
                     Modifier
                         .size(42.dp)
-                        .background(MaterialTheme.colorScheme.primaryContainer, RoundedCornerShape(12.dp)),
+                        .background(MaterialTheme.colorScheme.surfaceContainerHigh, RoundedCornerShape(12.dp)),
                     contentAlignment = Alignment.Center
-                ) { Icon(icon = icon, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimaryContainer, size = 22.dp) }
+                ) { Icon(icon = icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary, size = 22.dp) }
             }
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Text(title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)

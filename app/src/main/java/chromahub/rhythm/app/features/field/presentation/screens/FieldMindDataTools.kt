@@ -216,9 +216,8 @@ fun CounterToolScreen(
         if (count <= 0) return
         haptics.confirm()
         val labelToUse = label.ifBlank { "Counter tally" }
-        viewModel.addCounter(labelToUse, count, "Manual save at $count")
-        scope.launch {
-            showFastSnackbar(snackbar, scope, "Saved count: $count")
+        viewModel.addCounter(labelToUse, count, "Manual save at $count") { success ->
+            showFastSnackbar(snackbar, scope, if (success) "Saved count: $count" else "Failed to save — try again")
         }
     }
 
@@ -247,7 +246,7 @@ fun CounterToolScreen(
                     Card(
                         shape = RoundedCornerShape(32.dp),
                         colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.primaryContainer
+                            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
                         ),
                         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
                     ) {
@@ -259,7 +258,7 @@ fun CounterToolScreen(
                             Text(
                                 "Current count",
                                 style = MaterialTheme.typography.labelLarge,
-                                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f),
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
                                 fontWeight = FontWeight.SemiBold
                             )
                             Text(
@@ -268,7 +267,7 @@ fun CounterToolScreen(
                                     fontWeight = FontWeight.ExtraBold,
                                     fontSize = 72.sp
                                 ),
-                                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                color = FieldMindTheme.colors.data,
                                 modifier = Modifier.graphicsLayer {
                                     scaleX = if (count > 0) pulseScale else 1f
                                     scaleY = if (count > 0) pulseScale else 1f
@@ -318,7 +317,7 @@ fun CounterToolScreen(
                             ) {
                                 Text(
                                     "Reset to zero",
-                                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.6f)
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                                 )
                             }
                         }
@@ -481,19 +480,22 @@ fun MeasurementToolScreen(
     fun saveMeasurement() {
         if (!canSave) return
         haptics.confirm()
+        val savedLabel = label.trim()
+        val savedValue = value.trim()
+        val savedUnit = unit.trim()
         viewModel.addDataRecord(
             toolType = "Measurement Log",
-            label = label.trim(),
-            value = value.trim(),
-            unit = unit.trim(),
+            label = savedLabel,
+            value = savedValue,
+            unit = savedUnit,
             notes = notes.trim(),
             location = location.trim(),
             datasetKind = "Measurements",
-            chartPreference = "Line"
+            chartPreference = "Line",
+            onResult = { success ->
+                showFastSnackbar(snackbar, scope, if (success) "Measurement saved: $savedLabel = $savedValue $savedUnit" else "Failed to save measurement — try again")
+            }
         )
-        scope.launch {
-            showFastSnackbar(snackbar, scope, "Measurement saved: $label = $value $unit")
-        }
         label = ""
         value = ""
         notes = ""
@@ -525,7 +527,7 @@ fun MeasurementToolScreen(
                     Card(
                         shape = RoundedCornerShape(24.dp),
                         colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.primaryContainer
+                            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
                         ),
                         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
                     ) {
@@ -537,7 +539,7 @@ fun MeasurementToolScreen(
                                 "Enter measurement",
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onPrimaryContainer
+                                color = MaterialTheme.colorScheme.onSurface
                             )
 
                             // Large value display
@@ -547,7 +549,7 @@ fun MeasurementToolScreen(
                                     fontWeight = FontWeight.Bold,
                                     fontSize = 36.sp
                                 ),
-                                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                color = FieldMindTheme.colors.data,
                                 modifier = Modifier.fillMaxWidth(),
                                 textAlign = TextAlign.Center
                             )
@@ -685,6 +687,7 @@ fun WeatherLogToolScreen(
             humidity.takeIf { it.isNotBlank() }?.let { append(" | ${it}% humidity") }
             windSpeed.takeIf { it.isNotBlank() }?.let { append(" | ${it} km/h wind") }
         }
+        val savedCondition = condition
         viewModel.addDataRecord(
             toolType = "Weather Log",
             label = "Weather: $condition",
@@ -693,11 +696,11 @@ fun WeatherLogToolScreen(
             notes = notes.trim(),
             location = location.trim(),
             datasetKind = "Weather logs",
-            chartPreference = "Line"
+            chartPreference = "Line",
+            onResult = { success ->
+                showFastSnackbar(snackbar, scope, if (success) "Weather log saved: $savedCondition" else "Failed to save weather log — try again")
+            }
         )
-        scope.launch {
-            showFastSnackbar(snackbar, scope, "Weather log saved: $condition")
-        }
     }
 
     fun fetchLocation() {
@@ -1095,19 +1098,20 @@ fun ChecklistToolScreen(
         if (items.isEmpty()) return
         haptics.confirm()
         val checkedCount = items.count { it.second }
+        val itemCount = items.size
         val summary = items.joinToString("; ") { (name, checked) -> "${if (checked) "✓" else "○"} $name" }
         viewModel.addDataRecord(
             toolType = "Checklist",
-            label = "Checklist (${checkedCount}/${items.size} checked)",
+            label = "Checklist (${checkedCount}/${itemCount} checked)",
             value = summary,
             unit = "",
             notes = "",
             datasetKind = "Checklists",
-            chartPreference = "Bar"
+            chartPreference = "Bar",
+            onResult = { success ->
+                showFastSnackbar(snackbar, scope, if (success) "Checklist saved (${checkedCount}/${itemCount})" else "Failed to save checklist — try again")
+            }
         )
-        scope.launch {
-            showFastSnackbar(snackbar, scope, "Checklist saved (${checkedCount}/${items.size})")
-        }
     }
 
     Box(Modifier.fillMaxSize()) {
@@ -1235,18 +1239,19 @@ fun EventLogToolScreen(
     fun saveEvent() {
         if (title.isBlank()) return
         haptics.confirm()
+        val savedTitle = title.trim()
         viewModel.addDataRecord(
             toolType = "Event Log",
-            label = title.trim(),
+            label = savedTitle,
             value = "$category | $date",
             unit = "",
             notes = "$description\nDate: $date",
             datasetKind = "Events",
-            chartPreference = "Bar"
+            chartPreference = "Bar",
+            onResult = { success ->
+                showFastSnackbar(snackbar, scope, if (success) "Event saved: $savedTitle" else "Failed to save event — try again")
+            }
         )
-        scope.launch {
-            showFastSnackbar(snackbar, scope, "Event saved: $title")
-        }
         title = ""
         description = ""
     }
@@ -1320,18 +1325,19 @@ fun SiteLogToolScreen(
     fun saveSiteLog() {
         if (siteName.isBlank()) return
         haptics.confirm()
+        val savedName = siteName.trim()
         viewModel.addDataRecord(
             toolType = "Site Log",
-            label = siteName.trim(),
+            label = savedName,
             value = "$purpose | Duration: ${duration.ifBlank { "N/A" }}",
             unit = "",
             notes = "Conditions: $conditions\nFindings: $findings",
             datasetKind = "Site visits",
-            chartPreference = "Bar"
+            chartPreference = "Bar",
+            onResult = { success ->
+                showFastSnackbar(snackbar, scope, if (success) "Site log saved: $savedName" else "Failed to save site log — try again")
+            }
         )
-        scope.launch {
-            showFastSnackbar(snackbar, scope, "Site log saved: $siteName")
-        }
         siteName = ""
         conditions = ""
         findings = ""
@@ -1349,9 +1355,9 @@ fun SiteLogToolScreen(
                     FieldScreenHeader("Site log", "Record a site visit with purpose, conditions, and findings.", icon = FieldMindIcons.Map, actionIcon = FieldMindIcons.Back, onAction = onBack)
                 }
                 item {
-                    Card(shape = RoundedCornerShape(24.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)) {
+                    Card(shape = RoundedCornerShape(24.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)) {
                         Column(Modifier.fillMaxWidth().padding(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-                            Text("Site visit details", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onPrimaryContainer)
+                            Text("Site visit details", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
                             FieldTextField(siteName, { siteName = it }, "Site name", required = true, supportingText = "e.g. North Meadow, Creek Bend")
                             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                                 FieldTextField(duration, { duration = it }, "Duration", modifier = Modifier.weight(1f), supportingText = "e.g. 2 hours")
@@ -1405,21 +1411,22 @@ fun ComparisonTableScreen(
     fun saveComparison() {
         if (rows.isEmpty() || tableName.isBlank()) return
         haptics.confirm()
+        val savedName = tableName.trim()
         val summary = rows.joinToString("; ") { row ->
             "${row.label}: ${row.items.joinToString(" vs ")}"
         }
         viewModel.addDataRecord(
             toolType = "Comparison Table",
-            label = tableName.trim(),
+            label = savedName,
             value = summary,
             unit = "",
             notes = "$columnCount columns, ${rows.size} rows",
             datasetKind = "Comparisons",
-            chartPreference = "Bar"
+            chartPreference = "Bar",
+            onResult = { success ->
+                showFastSnackbar(snackbar, scope, if (success) "Table saved: $savedName" else "Failed to save table — try again")
+            }
         )
-        scope.launch {
-            showFastSnackbar(snackbar, scope, "Table saved: $tableName")
-        }
     }
 
     Box(Modifier.fillMaxSize()) {

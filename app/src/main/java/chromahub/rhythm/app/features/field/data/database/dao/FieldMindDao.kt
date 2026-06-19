@@ -36,7 +36,7 @@ interface FieldMindDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun insertHypothesis(entity: HypothesisEntity): Long
     @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun insertProject(entity: ProjectEntity): Long
     @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun insertSource(entity: SourceEntity): Long
-    @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun insertDataRecord(entity: DataRecordEntity): Long
+    @Insert suspend fun insertDataRecord(entity: DataRecordEntity): Long
     @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun insertReport(entity: ReportEntity): Long
     @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun insertFlashcard(entity: FlashcardEntity): Long
     @Insert(onConflict = OnConflictStrategy.IGNORE) suspend fun insertTag(entity: TagEntity): Long
