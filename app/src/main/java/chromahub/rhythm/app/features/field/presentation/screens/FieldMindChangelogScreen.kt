@@ -18,6 +18,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -26,8 +27,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import fieldmind.research.app.features.field.presentation.components.FieldMindIcons
-import fieldmind.research.app.features.field.presentation.components.FieldScreenHeader
+import fieldmind.research.app.features.field.presentation.components.BackButton
+import fieldmind.research.app.features.field.presentation.components.StandardScreenHeader
 import fieldmind.research.app.features.field.presentation.components.InfoChip
+import fieldmind.research.app.features.field.presentation.theme.FieldMindTheme
 import fieldmind.research.app.shared.presentation.components.icons.Icon
 
 internal data class FieldMindChangelogEntry(
@@ -418,13 +421,14 @@ fun FieldMindChangelogScreen(onBack: () -> Unit) {
         contentPadding = PaddingValues(20.dp, 20.dp, 20.dp, 40.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        item { 
-            FieldScreenHeader(
-                "What's new",
-                "Complete field research redesign with 12 phases of new features",
+        item {
+            StandardScreenHeader(
+                title = "What's New",
+                subtitle = "Complete field research redesign with 12 phases of new features",
                 icon = FieldMindIcons.Info,
-                actionIcon = FieldMindIcons.Back,
-                onAction = onBack
+                trailing = {
+                    BackButton(onClick = onBack)
+                }
             )
         }
         

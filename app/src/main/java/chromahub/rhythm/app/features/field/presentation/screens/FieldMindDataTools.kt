@@ -135,12 +135,13 @@ fun DataToolsHubScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             item {
-                FieldScreenHeader(
-                    "Data tools",
-                    "Interactive tools for field data collection.",
+                StandardScreenHeader(
+                    title = "Data tools",
+                    subtitle = "Interactive tools for field data collection.",
                     icon = FieldMindIcons.Data,
-                    actionIcon = FieldMindIcons.Back,
-                    onAction = onBack
+                    trailing = {
+                    BackButton(onClick = onBack)
+                }
                 )
             }
 
@@ -409,12 +410,13 @@ fun CounterToolScreen(
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 item {
-                    FieldScreenHeader(
-                        "Counter",
-                        "Tap +/− to tally. Tap Save to persist your count.",
+                    StandardScreenHeader(
+                        title = "Counter",
+                        subtitle = "Tap +/− to tally. Tap Save to persist your count.",
                         icon = FieldMindIcons.Add,
-                        actionIcon = FieldMindIcons.Back,
-                        onAction = onBack
+                        trailing = {
+                    BackButton(onClick = onBack)
+                }
                     )
                 }
 
@@ -690,12 +692,13 @@ fun MeasurementToolScreen(
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 item {
-                    FieldScreenHeader(
-                        "Measurement",
-                        "Log a structured measurement with units and notes.",
+                    StandardScreenHeader(
+                        title = "Measurement",
+                        subtitle = "Log a structured measurement with units and notes.",
                         icon = FieldMindIcons.Graph,
-                        actionIcon = FieldMindIcons.Back,
-                        onAction = onBack
+                        trailing = {
+                    BackButton(onClick = onBack)
+                }
                     )
                 }
 
@@ -904,12 +907,13 @@ fun WeatherLogToolScreen(
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 item {
-                    FieldScreenHeader(
-                        "Weather log",
-                        "Record current conditions at your location.",
+                    StandardScreenHeader(
+                        title = "Weather log",
+                        subtitle = "Record current conditions at your location.",
                         icon = FieldMindIcons.Weather,
-                        actionIcon = FieldMindIcons.Back,
-                        onAction = onBack
+                        trailing = {
+                    BackButton(onClick = onBack)
+                }
                     )
                 }
 
@@ -1092,12 +1096,13 @@ fun SpeciesToolScreen(
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 item {
-                    FieldScreenHeader(
-                        "Species log",
-                        "Quick-capture a species observation with facts.",
+                    StandardScreenHeader(
+                        title = "Species log",
+                        subtitle = "Quick-capture a species observation with facts.",
                         icon = FieldMindIcons.Nature,
-                        actionIcon = FieldMindIcons.Back,
-                        onAction = onBack
+                        trailing = {
+                    BackButton(onClick = onBack)
+                }
                     )
                 }
 
@@ -1302,12 +1307,13 @@ fun ChecklistToolScreen(
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 item {
-                    FieldScreenHeader(
-                        "Checklist",
-                        "Add items, check them off, and save as a data record.",
+                    StandardScreenHeader(
+                        title = "Checklist",
+                        subtitle = "Add items, check them off, and save as a data record.",
                         icon = FieldMindIcons.Check,
-                        actionIcon = FieldMindIcons.Back,
-                        onAction = onBack
+                        trailing = {
+                    BackButton(onClick = onBack)
+                }
                     )
                 }
 
@@ -1441,7 +1447,14 @@ fun EventLogToolScreen(
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 item {
-                    FieldScreenHeader("Event log", "Record a notable event with category and notes.", icon = FieldMindIcons.List, actionIcon = FieldMindIcons.Back, onAction = onBack)
+                    StandardScreenHeader(
+                    title = "Event log",
+                    subtitle = "Record a notable event with category and notes.",
+                    icon = FieldMindIcons.List,
+                    trailing = {
+                        BackButton(onClick = onBack)
+                    }
+                )
                 }
                 item {
                     Card(shape = RoundedCornerShape(24.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)) {
@@ -1529,7 +1542,14 @@ fun SiteLogToolScreen(
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 item {
-                    FieldScreenHeader("Site log", "Record a site visit with purpose, conditions, and findings.", icon = FieldMindIcons.Map, actionIcon = FieldMindIcons.Back, onAction = onBack)
+                    StandardScreenHeader(
+                    title = "Site log",
+                    subtitle = "Record a site visit with purpose, conditions, and findings.",
+                    icon = FieldMindIcons.Map,
+                    trailing = {
+                        BackButton(onClick = onBack)
+                    }
+                )
                 }
                 item {
                     Card(shape = RoundedCornerShape(24.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)) {
@@ -1614,7 +1634,14 @@ fun ComparisonTableScreen(
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 item {
-                    FieldScreenHeader("Comparison table", "Compare species, samples, or sites side by side.", icon = FieldMindIcons.Data, actionIcon = FieldMindIcons.Back, onAction = onBack)
+                    StandardScreenHeader(
+                    title = "Comparison table",
+                    subtitle = "Compare species, samples, or sites side by side.",
+                    icon = FieldMindIcons.Data,
+                    trailing = {
+                        BackButton(onClick = onBack)
+                    }
+                )
                 }
                 item {
                     Card(shape = RoundedCornerShape(24.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)) {

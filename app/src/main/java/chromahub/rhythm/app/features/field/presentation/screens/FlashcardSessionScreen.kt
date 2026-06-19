@@ -52,6 +52,8 @@ import fieldmind.research.app.features.field.data.database.entity.FlashcardEntit
 import fieldmind.research.app.features.field.data.flashcard.SM2Engine
 import fieldmind.research.app.features.field.presentation.components.EmptyState
 import fieldmind.research.app.features.field.presentation.components.FieldMindIcons
+import fieldmind.research.app.features.field.presentation.components.BackButton
+import fieldmind.research.app.features.field.presentation.components.StandardScreenHeader
 import fieldmind.research.app.features.field.presentation.components.FieldScreenHeader
 import fieldmind.research.app.features.field.presentation.components.InfoChip
 import fieldmind.research.app.features.field.presentation.theme.FieldMindTheme
@@ -84,7 +86,15 @@ fun FlashcardSessionScreen(viewModel: FieldMindViewModel, onBack: () -> Unit) {
 
     if (flashcards.isEmpty()) {
         Column(Modifier.fillMaxSize().padding(20.dp), verticalArrangement = Arrangement.spacedBy(20.dp)) {
-            FieldScreenHeader("Review", "Spaced repetition", icon = FieldMindIcons.Flashcard, actionIcon = FieldMindIcons.Close, onAction = onBack)
+            StandardScreenHeader(
+                title = "Review",
+                subtitle = "Spaced repetition",
+                icon = FieldMindIcons.Flashcard,
+                heroColor = FieldMindTheme.colors.flashcard,
+                trailing = {
+                    BackButton(onClick = onBack, icon = FieldMindIcons.Close, contentDescription = "Close")
+                }
+            )
             EmptyState("No cards to review", "Create flashcards in the Library to start a review session.", icon = FieldMindIcons.Flashcard)
         }
         return
@@ -105,7 +115,7 @@ fun FlashcardSessionScreen(viewModel: FieldMindViewModel, onBack: () -> Unit) {
             )
         }
 
-        FieldScreenHeader(
+        StandardScreenHeader(
             title = if (finished) "Session complete" else "Card ${index + 1} of ${queue.size}",
             subtitle = buildString {
                 append("$reviewed reviewed")
@@ -117,8 +127,10 @@ fun FlashcardSessionScreen(viewModel: FieldMindViewModel, onBack: () -> Unit) {
                 }
             },
             icon = FieldMindIcons.Flashcard,
-            actionIcon = FieldMindIcons.Close,
-            onAction = onBack
+            heroColor = FieldMindTheme.colors.flashcard,
+            trailing = {
+                BackButton(onClick = onBack, icon = FieldMindIcons.Close, contentDescription = "Close")
+            }
         )
 
         if (finished) {

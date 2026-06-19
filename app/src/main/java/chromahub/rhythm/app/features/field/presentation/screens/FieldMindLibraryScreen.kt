@@ -88,13 +88,23 @@ fun KnowledgeLibraryScreen(
     var tab by remember(startTab) { mutableIntStateOf(startTab) }
     val tabs = listOf("Sources", "Notes", "Reading", "Flashcards", "Learn")
     val haptics = rememberFieldMindHaptics()
-    fun selectTab(next: Int) {
-        val bounded = next.coerceIn(0, tabs.lastIndex)
-        if (bounded != tab) { tab = bounded; haptics.light() }
+    fun selectTab(next: Int) {                val bounded = next.coerceIn(0, tabs.lastIndex)
+        if (bounded != tab) { 
+            if (bounded == 4) {
+                // Navigate to standalone Learn screen
+                onNavigate(FieldMindScreen.Learn)
+                return@selectTab
+            }
+            tab = bounded; haptics.light() 
+        }
     }
     Column(Modifier.fillMaxSize()) {
         Column(Modifier.padding(20.dp, 20.dp, 20.dp, 8.dp)) {
-            FieldScreenHeader("Knowledge Hub", "Sources, notes, reading, flashcards, and learning.", icon = FieldMindIcons.Library)
+            StandardScreenHeader(
+                title = "Knowledge Hub",
+                subtitle = "Sources, notes, reading, flashcards, and learning.",
+                icon = FieldMindIcons.Library
+            )
         }
         ScrollableTabRow(selectedTabIndex = tab, edgePadding = 20.dp, containerColor = MaterialTheme.colorScheme.background) {
             tabs.forEachIndexed { i, label -> Tab(tab == i, { selectTab(i) }, text = { Text(label) }) }
@@ -114,7 +124,7 @@ fun KnowledgeLibraryScreen(
                 1 -> NotePanel(viewModel, notes, onOpenDetail)
                 2 -> PaperReadingPanel(sources, onOpenDetail)
                 3 -> FlashcardPanel(viewModel, flashcards, sources, notes, onOpenDetail) { onNavigate(FieldMindScreen.Flashcards) }
-                4 -> LearnPanel(viewModel, onOpenReader)
+                4 -> LearnScreenRedirect(onOpenReader = onOpenReader, onOpenLearn = { onNavigate(FieldMindScreen.Learn) })
             }
         }
     }
@@ -1060,7 +1070,54 @@ private fun LibraryFlashcard(card: FlashcardEntity, modifier: Modifier = Modifie
     }
 }
 
-private data class ResearchMilestone(val title: String, val body: String, val icon: MaterialSymbolIcon, val resource: LearnResource)
+@Composable
+private fun LearnScreenRedirect(onOpenReader: (String, String) -> Unit, onOpenLearn: () -> Unit) {
+    Card(
+        modifier = Modifier.fillMaxSize().padding(20.dp),
+        shape = RoundedCornerShape(28.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Column(
+            Modifier.fillMaxSize().padding(32.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Icon(
+                icon = FieldMindIcons.School,
+                contentDescription = null,
+                tint = FieldMindTheme.colors.source,
+                size = 56.dp,
+                modifier = Modifier.size(80.dp).clip(RoundedCornerShape(24.dp)).background(FieldMindTheme.colors.source.copy(alpha = 0.12f)).padding(12.dp)
+            )
+            Spacer(Modifier.height(20.dp))
+            Text(
+                "Learning Hub",
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold
+            )
+            Spacer(Modifier.height(8.dp))
+            Text(
+                "Discover resources matched to your research journey. Browse categories, get personalized recommendations, and track your progress.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center
+            )
+            Spacer(Modifier.height(24.dp))
+            Button(
+                onClick = onOpenLearn,
+                shape = RoundedCornerShape(16.dp),
+                modifier = Modifier.fillMaxWidth(0.7f)
+            ) {
+                Icon(icon = FieldMindIcons.School, contentDescription = null, size = 18.dp)
+                Spacer(Modifier.size(8.dp))
+                Text("Open Learning Hub")
+                Spacer(Modifier.size(4.dp))
+                Icon(icon = FieldMindIcons.Forward, contentDescription = null, size = 18.dp)
+            }
+        }
+    }
+}
 
 private val beginnerResearchMilestones = listOf(
     ResearchMilestone("Observe carefully", "Separate facts from interpretation, then document time, place, context, and evidence.", FieldMindIcons.Observation, LearnResource("Understanding Science", "Guide", "https://undsci.berkeley.edu/", "Science starts with careful observation and honest uncertainty.")),

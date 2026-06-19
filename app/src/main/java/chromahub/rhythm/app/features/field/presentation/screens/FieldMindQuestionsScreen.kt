@@ -94,7 +94,14 @@ fun QuestionsScreen(
         contentPadding = PaddingValues(20.dp, 20.dp, 20.dp, 96.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
-        item { FieldScreenHeader("Questions", "All research questions, auto-generated from observations, and your evidence tracking.", icon = FieldMindIcons.Question) }
+        item {
+            StandardScreenHeader(
+                title = "Questions",
+                subtitle = "All research questions, auto-generated from observations, and your evidence tracking.",
+                icon = FieldMindIcons.Question,
+                heroColor = FieldMindTheme.colors.question
+            )
+        }
 
         // Stats row
         if (totalCount > 0) {

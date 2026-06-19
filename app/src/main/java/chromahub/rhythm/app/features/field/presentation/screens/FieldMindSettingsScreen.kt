@@ -69,7 +69,16 @@ fun FieldMindSettingsScreen(
 ) {
     BackHandler(enabled = true) { onBack() }
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(20.dp, 20.dp, 20.dp, 40.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        item { FieldScreenHeader("Settings", "Offline-first setup, profile, capture, local AI, export, and privacy.", icon = FieldMindIcons.Settings, actionIcon = FieldMindIcons.Back, onAction = onBack) }
+        item {
+            StandardScreenHeader(
+                title = "Settings",
+                subtitle = "Offline-first setup, profile, capture, local AI, export, and privacy.",
+                icon = FieldMindIcons.Settings,
+                trailing = {
+                    BackButton(onClick = onBack)
+                }
+            )
+        }
 
         item {
             SettingsTileGroup("Quick settings") {
@@ -1096,12 +1105,20 @@ fun DeveloperSettingsPage(viewModel: FieldMindViewModel, onBack: () -> Unit) {
 //  Shared helpers
 // ══════════════════════════════════════════════════════════════════════
 
-/** Wraps a sub-page with consistent header and scrollable content. */
+/** Wraps a sub-page with consistent StandardScreenHeader and scrollable content. */
 @Composable
 private fun SettingsSubPage(title: String, icon: MaterialSymbolIcon, onBack: () -> Unit, content: LazyListScope.() -> Unit) {
     BackHandler(enabled = true) { onBack() }
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(20.dp, 20.dp, 20.dp, 40.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-        item { FieldScreenHeader(title, icon = icon, actionIcon = FieldMindIcons.Back, onAction = onBack) }
+        item {
+            StandardScreenHeader(
+                title = title,
+                icon = icon,
+                trailing = {
+                    BackButton(onClick = onBack)
+                }
+            )
+        }
         content()
     }
 }
@@ -1230,12 +1247,13 @@ fun SpeciesPackSettingsPage(onBack: () -> Unit) {
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             item {
-                FieldScreenHeader(
-                    "Species packs",
-                    "Download regional identification model packs.",
+                StandardScreenHeader(
+                    title = "Species packs",
+                    subtitle = "Download regional identification model packs.",
                     icon = FieldMindIcons.Download,
-                    actionIcon = FieldMindIcons.Back,
-                    onAction = onBack
+                    trailing = {
+                        BackButton(onClick = onBack)
+                    }
                 )
             }
 

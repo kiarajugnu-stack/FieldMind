@@ -31,7 +31,13 @@ fun ArchiveScreen(viewModel: FieldMindViewModel, onOpenDetail: (String, Long) ->
     val flashcards by viewModel.flashcards.collectAsState()
     var query by remember { mutableStateOf("") }
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(20.dp, 20.dp, 20.dp, 96.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-        item { FieldScreenHeader("Search archive", "Search forever by topic, date, place, source, project, and keyword.", icon = FieldMindIcons.Search) }
+        item {
+            StandardScreenHeader(
+                title = "Search Archive",
+                subtitle = "Search forever by topic, date, place, source, project, and keyword.",
+                icon = FieldMindIcons.Search
+            )
+        }
         item {
             OutlinedTextField(query, { query = it }, label = { Text("Search") }, leadingIcon = { Icon(icon = FieldMindIcons.Search, contentDescription = null, size = 20.dp) }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(18.dp), singleLine = true)
         }

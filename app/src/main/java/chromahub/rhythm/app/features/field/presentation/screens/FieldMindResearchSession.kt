@@ -462,18 +462,17 @@ fun ResearchSessionScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             item {
-                FieldScreenHeader(
-                    "Research Session",
-                    "Capture multiple observations with a running timer.",
+                StandardScreenHeader(
+                    title = "Research Session",
+                    subtitle = "Capture multiple observations with a running timer.",
                     icon = FieldMindIcons.Bolt,
-                    actionIcon = FieldMindIcons.Back,
-                    onAction = {
+                    trailing = { BackButton(onClick = {
                         if (sessionActive) {
                             showExitConfirm = true
                         } else {
                             onBack()
                         }
-                    }
+                    }, contentDescription = "Back") }
                 )
             }
 

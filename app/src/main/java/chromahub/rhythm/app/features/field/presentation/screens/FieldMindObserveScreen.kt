@@ -501,11 +501,11 @@ fun ObserveScreen(
             ) {
                 // ── Header ──
                 item {
-                    FieldScreenHeader(
-                        "Observation",
-                        "Capture evidence, time, place, weather, then add facts.",
-                        icon = FieldMindIcons.Capture
-                    )
+                    StandardScreenHeader(
+                    title = "Observation",
+                    subtitle = "Capture evidence, time, place, weather, then add facts.",
+                    icon = FieldMindIcons.Capture
+                )
                 }
 
                 // ── Live Timer (persistent when active) ──
@@ -2302,19 +2302,20 @@ private fun FieldModeScreen(viewModel: FieldMindViewModel, onBack: () -> Unit) {
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 item {
-                    FieldScreenHeader(
-                        "Field mode",
-                        when {
-                            fieldModeAutoStartTimer && sessionTimerStarted ->
-                                "$fieldModeDefaultSession mode · $elapsedFormatted elapsed"
-                            fieldModeDefaultSession != "Quick capture" ->
-                                "$fieldModeDefaultSession mode — one tap logs an observation"
-                            else -> "One tap logs an observation. Add details later."
-                        },
-                        icon = FieldMindIcons.Bolt,
-                        actionIcon = FieldMindIcons.Close,
-                        onAction = onBack
-                    )
+                    StandardScreenHeader(
+                    title = "Field mode",
+                    subtitle = when {
+                        fieldModeAutoStartTimer && sessionTimerStarted ->
+                            "$fieldModeDefaultSession mode · $elapsedFormatted elapsed"
+                        fieldModeDefaultSession != "Quick capture" ->
+                            "$fieldModeDefaultSession mode — one tap logs an observation"
+                        else -> "One tap logs an observation. Add details later."
+                    },
+                    icon = FieldMindIcons.Bolt,
+                    trailing = {
+                        BackButton(onClick = onBack, icon = FieldMindIcons.Close, contentDescription = "Close")
+                    }
+                )
                 }
                 // Auto-start timer indicator
                 if (fieldModeAutoStartTimer && sessionTimerStarted && timerStartTime > 0L) {

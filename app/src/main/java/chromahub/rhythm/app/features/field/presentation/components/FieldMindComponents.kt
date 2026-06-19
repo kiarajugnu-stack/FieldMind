@@ -541,6 +541,39 @@ fun StandardScreenHeader(
     }
 }
 
+/**
+ * Reusable back/action button for the trailing slot of StandardScreenHeader.
+ * Replaces the verbose inline Surface/Box/Icon pattern to reduce boilerplate
+ * and prevent import issues.
+ *
+ * Defaults to a standard back button. Customize [icon], [onClick], [shape],
+ * and [containerColor] for other actions (e.g., close, search).
+ */
+@Composable
+fun BackButton(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    icon: MaterialSymbolIcon = FieldMindIcons.Back,
+    contentDescription: String? = null,
+    shape: androidx.compose.ui.graphics.Shape = RoundedCornerShape(14.dp),
+    containerColor: Color = MaterialTheme.colorScheme.surfaceContainerHigh
+) {
+    Surface(
+        onClick = onClick,
+        shape = shape,
+        color = containerColor,
+        modifier = modifier.size(40.dp)
+    ) {
+        Box(contentAlignment = Alignment.Center) {
+            Icon(
+                icon = icon,
+                contentDescription = contentDescription,
+                size = 22.dp
+            )
+        }
+    }
+}
+
 // ──────────────────────────────────────────────────────────────────────
 //  Badges & chips
 // ──────────────────────────────────────────────────────────────────────
