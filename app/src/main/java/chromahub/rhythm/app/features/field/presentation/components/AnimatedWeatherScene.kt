@@ -254,17 +254,6 @@ private fun weatherPalette(temp: Double?, timeOfDay: TimeOfDay, isDarkTheme: Boo
             skyTop = Color(0xFF283593),
             skyBottom = Color(0xFF4A148C),
             skyAccent = Color(0xFF7C4DFF),
-            sunCol = Color(0xFFFFF176),
-            sunGlowCol = Color(0xFFFFF9C4),
-            moonCol = Color(0xFFB0BEC5),
-            moonGlowCol = Color(0xFF90A4AE),
-            cloudCol = Color(0xFF546E7A),
-            hazeCol = Color(0xFF7E57C2)
-        )
-        TimeOfDay.Twilight -> TimeOfDayColors(
-            skyTop = Color(0xFF283593),
-            skyBottom = Color(0xFF4A148C),
-            skyAccent = Color(0xFF7C4DFF),
             sunCol = Color(0xFFFFCC80),
             sunGlowCol = Color(0xFFFFAB91),
             moonCol = Color(0xFFB0BEC5),
@@ -2334,6 +2323,13 @@ private fun FogScene(
         animationSpec = infiniteRepeatable(tween(3000, easing = LinearEasing), RepeatMode.Reverse),
         label = "iceSparkle"
     )
+    // Tree sway in wind for fog scenes
+    val treeSway by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(tween(5500, easing = FastOutSlowInEasing), RepeatMode.Reverse),
+        label = "fogTreeSway"
+    )
 
     val fogBaseColor = palette.cloudBaseColor.copy(alpha = if (isDark) 0.5f else 0.65f)
     val fogDarkColor = palette.primary.copy(alpha = if (isDark) 0.4f else 0.55f)
@@ -2387,7 +2383,7 @@ private fun FogScene(
         }
 
         // Ground terrain with mountains (drawn behind fog for depth)
-        drawGround(weatherCode = 45, isDay = true, isDark = isDark, compact = compact)
+        drawGround(weatherCode = weatherCode, isDay = timeOfDay != TimeOfDay.Night && timeOfDay != TimeOfDay.Twilight, isDark = isDark, compact = compact, treeMorph = treeSway)
 
         // Rime fog (code 48): add ice crystal sparkles
         if (weatherCode == 48) {
@@ -2490,6 +2486,13 @@ private fun RainScene(
         animationSpec = infiniteRepeatable(tween(2000 + Random.nextInt(2000), easing = FastOutSlowInEasing), RepeatMode.Reverse),
         label = "rainIntensity"
     )
+    // Tree sway in wind for rain scenes
+    val treeSway by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(tween(5000, easing = FastOutSlowInEasing), RepeatMode.Reverse),
+        label = "rainTreeSway"
+    )
 
     // Rain color: vivid sky-blue for maximum visibility against any background
     // Brighter in dark mode, subtly deeper in light mode for contrast
@@ -2586,7 +2589,7 @@ private fun RainScene(
         }
 
         // Ground terrain
-        drawGround(weatherCode = weatherCode, isDay = true, isDark = isDark, compact = compact)
+        drawGround(weatherCode = weatherCode, isDay = true, isDark = isDark, compact = compact, treeMorph = treeSway)
     }
 }
 
@@ -2647,6 +2650,13 @@ private fun SnowScene(
         animationSpec = infiniteRepeatable(tween(1200, easing = LinearEasing), RepeatMode.Reverse),
         label = "flakeTumble"
     )
+    // Tree sway in wind for snow scenes
+    val treeSway by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(tween(6000, easing = FastOutSlowInEasing), RepeatMode.Reverse),
+        label = "snowTreeSway"
+    )
 
     val flakes = rememberSnowflakes(flakeCount)
     val snowColor = Color.White.copy(alpha = if (isHeavy) 0.75f else 0.55f)
@@ -2684,8 +2694,8 @@ private fun SnowScene(
             }
         }
 
-        // Ground terrain with snow cover
-        drawGround(weatherCode = weatherCode, isDay = true, isDark = isDark, compact = compact)
+        // Ground terrain with snow cover (with wind-affected trees)
+        drawGround(weatherCode = weatherCode, isDay = true, isDark = isDark, compact = compact, treeMorph = treeSway)
 
         // Occasional sparkling particle floating in the air
         if (!compact && isHeavy) {
@@ -2752,11 +2762,6 @@ private fun ThunderstormScene(
         initialValue = 0f, targetValue = 8f,
         animationSpec = infiniteRepeatable(tween(12000, easing = FastOutSlowInEasing), RepeatMode.Reverse),
         label = "tsCloudMorph"
-    )
-    val treeSway by tsTransition.animateFloat(
-        initialValue = 0f, targetValue = 1f,
-        animationSpec = infiniteRepeatable(tween(4000, easing = FastOutSlowInEasing), RepeatMode.Reverse),
-        label = "tsTreeSway"
     )
     val tsCloudTypes = remember { listOf(CloudType.Cumulus, CloudType.Stratus, CloudType.Cumulus, CloudType.Stratus, CloudType.Cumulus) }
 
