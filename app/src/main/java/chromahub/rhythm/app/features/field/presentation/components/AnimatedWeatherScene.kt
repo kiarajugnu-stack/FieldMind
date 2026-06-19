@@ -1316,6 +1316,9 @@ private fun ClearSkyScene(
             // Ground terrain (with wind-affected trees)
             drawGround(weatherCode = -2, isDay = false, isDark = isDark, compact = compact, treeMorph = treeSway)
 
+            // Firefly particles near ground
+            drawFireflies(progress = sunGlow, isDarkTheme = true, compact = compact)
+
             // Atmospheric haze
             drawAtmosphericHaze(isDark = true, hazeAlpha = 0.6f, hazeColor = palette.hazeColor)
         }
