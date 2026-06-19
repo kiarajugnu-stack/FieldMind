@@ -44,11 +44,6 @@ data class DraftEvidenceAttachment(
 class FieldMindViewModel(application: Application) : AndroidViewModel(application) {
     private val repository = FieldMindRepository(FieldMindDatabase.getInstance(application).fieldMindDao())
     val fieldSettings: FieldMindSettings = FieldMindSettings.getInstance(application)
-    init {
-        fieldSettings.initializeBackgroundWork()
-        startAutoGeneration()
-    }
-
     val observations: StateFlow<List<ObservationEntity>> = repository.observations.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
     val notes: StateFlow<List<NoteEntity>> = repository.notes.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
     val questions: StateFlow<List<QuestionEntity>> = repository.questions.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
@@ -71,11 +66,13 @@ class FieldMindViewModel(application: Application) : AndroidViewModel(applicatio
     fun setCaptureSessionActive(active: Boolean) { captureSessionActive = active }
 
     init {
+        fieldSettings.initializeBackgroundWork()
         detectedPatterns = combine(
             observations, fieldSettings.autoPatternDetectionEnabled
         ) { obs, enabled ->
             if (enabled && obs.isNotEmpty()) PatternDetectionEngine.detectAll(obs) else emptyList()
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+        startAutoGeneration()
     }
 
     fun addObservation(
