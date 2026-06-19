@@ -649,12 +649,17 @@ class FieldMindViewModel(application: Application) : AndroidViewModel(applicatio
     // ── Auto-generation: flashcards & questions (runs in background, no button press) ──
 
     /**
-     * Launches a background collector that watches observations, notes, sources, and flashcards.
+     * Launches a background collector that watches observations, notes, and sources.
      * On data changes, debounces 5 seconds, then auto-generates:
      * 1. Flashcards from observations, notes, and sources (if autoFlashcardsEnabled)
      * 2. Questions from observations (if autoQuestionsEnabled)
      *
      * Deduplication ensures we never create the same flashcard/question twice.
+     *
+     * IMPORTANT: Only input flows (observations, notes, sources, settings) are in the combine.
+     * The output flows (flashcards, questions) are excluded to prevent an infinite regeneration
+     * loop — generating new content would update those flows, triggering another round.
+     * The current snapshot of flashcards/questions is captured via .value at trigger time for dedup.
      */
     private fun startAutoGeneration() {
         viewModelScope.launch {
@@ -662,37 +667,24 @@ class FieldMindViewModel(application: Application) : AndroidViewModel(applicatio
                 observations,
                 notes,
                 sources,
-                flashcards,
-                questions,
                 fieldSettings.autoFlashcardsEnabled,
                 fieldSettings.autoQuestionsEnabled
-            ) { a: Array<*> ->
-                val obs = a[0] as? List<ObservationEntity> ?: emptyList()
-                val nts = a[1] as? List<NoteEntity> ?: emptyList()
-                val srcs = a[2] as? List<SourceEntity> ?: emptyList()
-                val cards = a[3] as? List<FlashcardEntity> ?: emptyList()
-                val quests = a[4] as? List<QuestionEntity> ?: emptyList()
-                val genFlash = a[5] as? Boolean ?: false
-                val genQuest = a[6] as? Boolean ?: false
-                GenerationTrigger(
-                    observations = obs,
-                    notes = nts,
-                    sources = srcs,
-                    existingFlashcards = cards,
-                    existingQuestions = quests,
-                    autoFlashcards = genFlash,
-                    autoQuestions = genQuest
-                )
+            ) { obs, nts, srcs, genFlash, genQuest ->
+                Triple(obs, nts, srcs) to (genFlash to genQuest)
             }.debounce(5_000)
-                .collect { trigger ->
-                    // ── Auto-flashcards ──
-                    if (trigger.autoFlashcards && trigger.observations.isNotEmpty()) {
+                .collect { (inputs, settings) ->
+                    val (obs, nts, srcs) = inputs
+                    val (autoFlash, autoQuest) = settings
+
+                    // ── Auto-flashcards (snapshot current flashcards for dedup) ──
+                    if (autoFlash && obs.isNotEmpty()) {
+                        val existingCards = flashcards.value
                         runCatching {
                             val generated = SmartFlashcardGenerator.generateAll(
-                                observations = trigger.observations,
-                                notes = trigger.notes,
-                                sources = trigger.sources,
-                                existing = trigger.existingFlashcards
+                                observations = obs,
+                                notes = nts,
+                                sources = srcs,
+                                existing = existingCards
                             )
                             if (generated.isNotEmpty()) {
                                 android.util.Log.d("FieldMindVM", "Auto-generating ${generated.size} flashcards from data")
@@ -713,13 +705,14 @@ class FieldMindViewModel(application: Application) : AndroidViewModel(applicatio
                         }
                     }
 
-                    // ── Auto-questions ──
-                    if (trigger.autoQuestions && trigger.observations.isNotEmpty()) {
+                    // ── Auto-questions (snapshot current questions for dedup) ──
+                    if (autoQuest && obs.isNotEmpty()) {
+                        val existingQuestions = questions.value
                         runCatching {
                             val generated = QuestionGenerator.generateAll(
-                                observations = trigger.observations,
-                                sources = trigger.sources,
-                                existing = trigger.existingQuestions
+                                observations = obs,
+                                sources = srcs,
+                                existing = existingQuestions
                             )
                             if (generated.isNotEmpty()) {
                                 android.util.Log.d("FieldMindVM", "Auto-generating ${generated.size} questions from observations")
@@ -741,19 +734,6 @@ class FieldMindViewModel(application: Application) : AndroidViewModel(applicatio
                 }
         }
     }
-
-    /**
-     * Internal data holder for the auto-generation combine flow.
-     */
-    private data class GenerationTrigger(
-        val observations: List<ObservationEntity>,
-        val notes: List<NoteEntity>,
-        val sources: List<SourceEntity>,
-        val existingFlashcards: List<FlashcardEntity>,
-        val existingQuestions: List<QuestionEntity>,
-        val autoFlashcards: Boolean,
-        val autoQuestions: Boolean
-    )
 
     companion object {
         private val dateFormatter = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
