@@ -2749,7 +2749,7 @@ private fun RainScene(
         }
 
         // Ground terrain
-        drawGround(weatherCode = weatherCode, isDay = true, isDark = isDark, compact = compact, treeMorph = treeSway)
+        drawGround(weatherCode = weatherCode, isDay = timeOfDay != TimeOfDay.Night && timeOfDay != TimeOfDay.Twilight, isDark = isDark, compact = compact, treeMorph = treeSway)
     }
 }
 
@@ -2855,7 +2855,7 @@ private fun SnowScene(
         }
 
         // Ground terrain with snow cover (with wind-affected trees)
-        drawGround(weatherCode = weatherCode, isDay = true, isDark = isDark, compact = compact, treeMorph = treeSway)
+        drawGround(weatherCode = weatherCode, isDay = timeOfDay != TimeOfDay.Night && timeOfDay != TimeOfDay.Twilight, isDark = isDark, compact = compact, treeMorph = treeSway)
 
         // Occasional sparkling particle floating in the air
         if (!compact && isHeavy) {
