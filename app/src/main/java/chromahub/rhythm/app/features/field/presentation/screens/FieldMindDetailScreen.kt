@@ -1314,6 +1314,9 @@ private fun ObservationHeroCarousel(viewModel: FieldMindViewModel, observationId
     val media = attachments.filter { it.type.equals("Photo", true) || it.type.equals("Gallery", true) || uriLooksImage(it.uri) || uriLooksImage(it.localPath.orEmpty()) }
     if (media.isEmpty()) return
     val pagerState = rememberPagerState(pageCount = { media.size })
+    var showImageViewer by remember { mutableStateOf(false) }
+    var imageViewerUri by remember { mutableStateOf("") }
+    var imageViewerCaption by remember { mutableStateOf("") }
 
     Box(modifier = Modifier.fillMaxWidth().height(280.dp)) {
         HorizontalPager(
@@ -1330,7 +1333,11 @@ private fun ObservationHeroCarousel(viewModel: FieldMindViewModel, observationId
                     .fillMaxSize()
                     .clip(RoundedCornerShape(28.dp))
                     .background(MaterialTheme.colorScheme.surfaceContainerHighest)
-                    .clickable { onOpenReader(displayUri, item.caption.ifBlank { "Observation media" }) }
+                    .clickable {
+                        imageViewerUri = displayUri
+                        imageViewerCaption = item.caption.ifBlank { "Observation media" }
+                        showImageViewer = true
+                    }
             )
         }
 
@@ -1368,6 +1375,15 @@ private fun ObservationHeroCarousel(viewModel: FieldMindViewModel, observationId
                 )
             }
         }
+    }
+
+    // In-app image viewer
+    if (showImageViewer) {
+        ImageViewerDialog(
+            uri = imageViewerUri,
+            caption = imageViewerCaption,
+            onDismiss = { showImageViewer = false }
+        )
     }}
 
 @Composable
@@ -2885,6 +2901,10 @@ private fun ObservationAttachmentsPanel(viewModel: FieldMindViewModel, observati
     if (attachments.isEmpty()) return
     val images = attachments.filter { it.type.equals("Photo", true) || it.type.equals("Gallery", true) || it.uri.contains(Regex("\\.(jpg|jpeg|png|webp|gif|heic|bmp)", RegexOption.IGNORE_CASE)) }
     val others = attachments - images.toSet()
+    var showImageViewer by remember { mutableStateOf(false) }
+    var showAudioPlayer by remember { mutableStateOf(false) }
+    var viewerUri by remember { mutableStateOf("") }
+    var viewerCaption by remember { mutableStateOf("") }
     Card(shape = RoundedCornerShape(24.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)) {
         Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -2900,7 +2920,11 @@ private fun ObservationAttachmentsPanel(viewModel: FieldMindViewModel, observati
                                 model = displayUri,
                                 contentDescription = img.caption.ifBlank { "Observation photo" },
                                 contentScale = ContentScale.Crop,
-                                modifier = Modifier.fillMaxWidth().height(140.dp).clip(RoundedCornerShape(16.dp)).background(MaterialTheme.colorScheme.surfaceContainerHighest).clickable { onOpenReader(displayUri, img.caption.ifBlank { "Observation image" }) }
+                                modifier = Modifier.fillMaxWidth().height(140.dp).clip(RoundedCornerShape(16.dp)).background(MaterialTheme.colorScheme.surfaceContainerHighest).clickable {
+                                    viewerUri = displayUri
+                                    viewerCaption = img.caption.ifBlank { "Observation image" }
+                                    showImageViewer = true
+                                }
                             )
                             if (img.caption.isNotBlank()) Text(img.caption, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2, overflow = TextOverflow.Ellipsis)
                         }
@@ -2909,7 +2933,19 @@ private fun ObservationAttachmentsPanel(viewModel: FieldMindViewModel, observati
             }
             others.forEach { att ->
                 val displayUri = att.localPath ?: att.uri
-                Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).clickable { onOpenReader(displayUri, att.caption.ifBlank { att.type }) }.padding(4.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).clickable {
+                    if (att.type.equals("Audio", true)) {
+                        viewerUri = displayUri
+                        viewerCaption = att.caption.ifBlank { "Audio evidence" }
+                        showAudioPlayer = true
+                    } else if (uriLooksImage(displayUri)) {
+                        viewerUri = displayUri
+                        viewerCaption = att.caption.ifBlank { "File evidence" }
+                        showImageViewer = true
+                    } else {
+                        onOpenReader(displayUri, att.caption.ifBlank { att.type })
+                    }
+                }.padding(4.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     Box(Modifier.size(38.dp).clip(RoundedCornerShape(12.dp)).background(MaterialTheme.colorScheme.surfaceContainerHighest), contentAlignment = Alignment.Center) {
                         Icon(icon = if (att.type.equals("Audio", true)) FieldMindIcons.Mic else FieldMindIcons.File, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, size = 20.dp)
                     }
@@ -2922,19 +2958,29 @@ private fun ObservationAttachmentsPanel(viewModel: FieldMindViewModel, observati
         }
     }
 }
-
+    if (showImageViewer) {
+        ImageViewerDialog(uri = viewerUri, caption = viewerCaption, onDismiss = { showImageViewer = false })
+    }
+    if (showAudioPlayer) {
+        AudioPlayerDialog(uri = viewerUri, title = viewerCaption, onDismiss = { showAudioPlayer = false })
+    }
+}
 @Composable
 private fun SourcePreviewPanel(source: SourceEntity, onOpenReader: (String, String) -> Unit) {
     val target = source.fileUri.ifBlank { source.link }
     if (target.isBlank()) return
+    var showImageViewer by remember { mutableStateOf(false) }
     Card(shape = RoundedCornerShape(24.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)) {
         Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Text("Source preview", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
             if (source.type.equals("Image", true) || uriLooksImage(target)) {
-                AsyncImage(model = target, contentDescription = source.title, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxWidth().height(220.dp).clip(RoundedCornerShape(18.dp)).background(MaterialTheme.colorScheme.surfaceContainerHighest).clickable { onOpenReader(target, source.title) })
+                AsyncImage(model = target, contentDescription = source.title, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxWidth().height(220.dp).clip(RoundedCornerShape(18.dp)).background(MaterialTheme.colorScheme.surfaceContainerHighest).clickable { showImageViewer = true })
             }
             AttachmentOpenRow(target, source.title, source.type, onOpenReader)
         }
+    }
+    if (showImageViewer) {
+        ImageViewerDialog(uri = target, caption = source.title, onDismiss = { showImageViewer = false })
     }
 }
 
