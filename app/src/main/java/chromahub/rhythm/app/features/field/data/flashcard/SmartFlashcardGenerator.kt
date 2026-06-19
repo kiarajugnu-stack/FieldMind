@@ -57,7 +57,7 @@ object SmartFlashcardGenerator {
             if (answer1.length >= MIN_OBSERVATION_LENGTH) {
                 val key = dedupKey("obs:what", label1, answer1)
                 if (key !in existingKeys) {
-                    results += GeneratedFlashcard(
+                    results.add(GeneratedFlashcard(
                         front = "What did you observe about $subject?",
                         back = answer1,
                         type = "observation",
@@ -65,7 +65,7 @@ object SmartFlashcardGenerator {
                         projectId = obs.projectId,
                         dedupKey = key
                     ))
-                    existingKeys += key
+                    existingKeys.add(key)
                 }
             }
 
@@ -75,7 +75,7 @@ object SmartFlashcardGenerator {
                 val answer2 = obs.category
                 val key = dedupKey("obs:cat", label2, answer2)
                 if (key !in existingKeys) {
-                    results += GeneratedFlashcard(
+                    results.add(GeneratedFlashcard(
                         front = "What category is \"$subject\" under?",
                         back = "$subject → ${obs.category}",
                         type = "observation",
@@ -83,7 +83,7 @@ object SmartFlashcardGenerator {
                         projectId = obs.projectId,
                         dedupKey = key
                     ))
-                    existingKeys += key
+                    existingKeys.add(key)
                 }
             }
 
@@ -93,7 +93,7 @@ object SmartFlashcardGenerator {
                 val answer3 = obs.manualLocation
                 val key = dedupKey("obs:loc", label3, answer3)
                 if (key !in existingKeys) {
-                    results += GeneratedFlashcard(
+                    results.add(GeneratedFlashcard(
                         front = "Where did you observe \"$subject\"?",
                         back = "$subject was observed at ${obs.manualLocation}",
                         type = "observation",
@@ -101,7 +101,7 @@ object SmartFlashcardGenerator {
                         projectId = obs.projectId,
                         dedupKey = key
                     ))
-                    existingKeys += key
+                    existingKeys.add(key)
                 }
             }
         }
@@ -131,7 +131,7 @@ object SmartFlashcardGenerator {
             if (bodySummary.length >= MIN_NOTE_LENGTH || body.isBlank()) {
                 val key = dedupKey("note:body", title, bodySummary.take(100))
                 if (key !in existingKeys) {
-                    results += GeneratedFlashcard(
+                    results.add(GeneratedFlashcard(
                         front = "Notes: $title",
                         back = if (body.isNotBlank()) bodySummary else "See full note for \"$title\"",
                         type = "note",
@@ -139,7 +139,7 @@ object SmartFlashcardGenerator {
                         projectId = note.projectId,
                         dedupKey = key
                     ))
-                    existingKeys += key
+                    existingKeys.add(key)
                 }
             }
 
@@ -147,7 +147,7 @@ object SmartFlashcardGenerator {
             if (note.category.isNotBlank() && !note.category.equals("Other", ignoreCase = true)) {
                 val key = dedupKey("note:cat", title, note.category)
                 if (key !in existingKeys) {
-                    results += GeneratedFlashcard(
+                    results.add(GeneratedFlashcard(
                         front = "Which note relates to \"${note.category}\"?",
                         back = "\"$title\" (${note.category})",
                         type = "note",
@@ -155,7 +155,7 @@ object SmartFlashcardGenerator {
                         projectId = note.projectId,
                         dedupKey = key
                     ))
-                    existingKeys += key
+                    existingKeys.add(key)
                 }
             }
         }
@@ -186,7 +186,7 @@ object SmartFlashcardGenerator {
             if (summary.length >= MIN_SOURCE_LENGTH) {
                 val key = dedupKey("src:summary", title, summary.take(100))
                 if (key !in existingKeys) {
-                    results += GeneratedFlashcard(
+                    results.add(GeneratedFlashcard(
                         front = "Key takeaway from \"$title\"",
                         back = summary,
                         type = "source",
@@ -194,7 +194,7 @@ object SmartFlashcardGenerator {
                         projectId = source.relatedProjectId,
                         dedupKey = key
                     ))
-                    existingKeys += key
+                    existingKeys.add(key)
                 }
             }
 
@@ -202,7 +202,7 @@ object SmartFlashcardGenerator {
             if (source.author.isNotBlank()) {
                 val key = dedupKey("src:author", title, source.author)
                 if (key !in existingKeys) {
-                    results += GeneratedFlashcard(
+                    results.add(GeneratedFlashcard(
                         front = "Who wrote \"$title\"?",
                         back = source.author,
                         type = "source",
@@ -210,7 +210,7 @@ object SmartFlashcardGenerator {
                         projectId = source.relatedProjectId,
                         dedupKey = key
                     ))
-                    existingKeys += key
+                    existingKeys.add(key)
                 }
             }
 
@@ -219,7 +219,7 @@ object SmartFlashcardGenerator {
             if (findings.length >= MIN_SOURCE_LENGTH && findings != summary) {
                 val key = dedupKey("src:findings", title, findings.take(100))
                 if (key !in existingKeys) {
-                    results += GeneratedFlashcard(
+                    results.add(GeneratedFlashcard(
                         front = "What findings did \"$title\" present?",
                         back = findings,
                         type = "source",
@@ -227,7 +227,7 @@ object SmartFlashcardGenerator {
                         projectId = source.relatedProjectId,
                         dedupKey = key
                     ))
-                    existingKeys += key
+                    existingKeys.add(key)
                 }
             }
         }
