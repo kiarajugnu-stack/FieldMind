@@ -144,11 +144,14 @@ fun FieldMindApp(appSettings: AppSettings, viewModel: FieldMindViewModel) {
     }
 }
 
-/** Navigate to a non-tab destination, always allowing re-navigation to refresh content. */
+/** Navigate to a non-tab destination. Does NOT use restoreState to avoid the
+ * "NavBackStackEntry destroyed" crash that occurs when the navigation library
+ * tries to access a destroyed entry's ViewModelStore during state restoration. */
 private fun NavHostController.navigateToDestination(route: String) {
     navigate(route) {
         launchSingleTop = true
-        restoreState = true
+        // Intentionally no restoreState — prevents crash when navigating back
+        // to a destination whose NavBackStackEntry ViewModel was already disposed.
     }
 }
 
@@ -159,15 +162,17 @@ fun FieldMindNavigation(viewModel: FieldMindViewModel, onResetOnboarding: () -> 
     val currentDestination = backStackEntry?.destination
     val currentRoute = currentDestination?.route
     val haptics = rememberFieldMindHaptics()
-    val hideChrome = currentRoute == FieldMindScreen.Settings.route ||
-        currentRoute?.startsWith("field_settings_") == true ||
-        currentRoute == FieldMindScreen.FieldMode.route ||
-        currentRoute == FieldMindScreen.Reader.route ||
-        currentRoute == FieldMindScreen.Changelog.route ||
-        currentRoute == FieldMindScreen.Flashcards.route ||
-        currentRoute == FieldMindScreen.ResearchSession.route ||
-        (currentRoute == FieldMindScreen.Observe.route && viewModel.captureSessionActive) ||
-        currentRoute?.startsWith("field_detail/") == true
+    // Positive-list approach: only show bottom nav on the 5 main tab routes.
+    // Hide on everything else (settings, tools, detail screens, etc.) to avoid
+    // bottom nav appearing on screens where it doesn't belong.
+    val showChrome = currentRoute in listOf(
+        FieldMindScreen.Home.route,
+        FieldMindScreen.Observe.route,
+        FieldMindScreen.Projects.route,
+        FieldMindScreen.Insights.route,
+        FieldMindScreen.Library.route
+    ) && !(currentRoute == FieldMindScreen.Observe.route && viewModel.captureSessionActive)
+    val hideChrome = !showChrome
 
     // ── Capture session navigation guard ──
     var showNavigateConfirm by remember { mutableStateOf(false) }
