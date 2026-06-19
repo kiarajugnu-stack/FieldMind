@@ -114,7 +114,10 @@ fun AnimatedWeatherScene(
                 if (showCloudAnimation) DayCloudyScene(palette, compact, timeOfDay, modifier)
                 else ClearSkyScene(palette, timeOfDay, compact, modifier)
             }
-            weatherCode == -2 -> NightSkyScene(palette, compact, timeOfDay, modifier)
+            weatherCode == -2 -> {
+                if (showCloudAnimation) NightCloudyScene(palette, compact, timeOfDay, modifier)
+                else NightSkyScene(palette, compact, timeOfDay, modifier)
+            }
             weatherCode in 2..3 -> {
                 if (showCloudAnimation) CloudyScene(palette, compact, timeOfDay, modifier)
                 else ClearSkyScene(palette, timeOfDay, compact, modifier)
@@ -598,39 +601,23 @@ private fun DayCloudyScene(
             center = Offset(cx, cy)
         )
 
-        // Back layer clouds (slow drift, behind sun)
+        // Back layer clouds (slow drift, behind sun) - reduced to 1 for partial cloudy effect
         drawCloud(
             offset = cloudOffset1,
             baseX = size.width * 0.1f,
             baseY = size.height * 0.15f,
             scale = size.width * 0.45f,
-            color = cloudColor.copy(alpha = 0.3f),
+            color = cloudColor.copy(alpha = 0.2f),
             morph = cloudMorph
         )
-        drawCloud(
-            offset = cloudOffset1,
-            baseX = size.width * 0.55f,
-            baseY = size.height * 0.12f,
-            scale = size.width * 0.35f,
-            color = cloudColor.copy(alpha = 0.25f),
-            morph = cloudMorph + 2f
-        )
 
-        // Front layer clouds
-        drawCloud(
-            offset = cloudOffset2,
-            baseX = size.width * 0.25f,
-            baseY = size.height * 0.55f,
-            scale = size.width * 0.5f,
-            color = cloudColorDark.copy(alpha = 0.35f),
-            morph = cloudMorph + 4f
-        )
+        // Front layer clouds - reduced to 2 for partial cloudy effect
         drawCloud(
             offset = cloudOffset2,
             baseX = size.width * 0.65f,
             baseY = size.height * 0.5f,
             scale = size.width * 0.4f,
-            color = cloudColorDark.copy(alpha = 0.3f),
+            color = cloudColorDark.copy(alpha = 0.22f),
             morph = cloudMorph + 1f
         )
         drawCloud(
@@ -638,7 +625,7 @@ private fun DayCloudyScene(
             baseX = size.width * 0.8f,
             baseY = size.height * 0.7f,
             scale = size.width * 0.3f,
-            color = cloudColor.copy(alpha = 0.25f),
+            color = cloudColor.copy(alpha = 0.18f),
             morph = cloudMorph + 3f
         )
 
@@ -2204,7 +2191,7 @@ private fun DrawScope.drawBirds(
     }
 }
 
-// ══════════════════════════════════════════════════════════════════════
+// ══════════��═══════════════════════════════════════════════════════════
 //  Aurora Borealis — Wavy glowing bands across the night sky
 // ══════════════════════════════════════════════════════════════════════
 
@@ -2953,7 +2940,7 @@ private fun rememberSnowflakes(count: Int): List<Triple<Float, Float, Float>> {
     }
 }
 
-// ══════════════════════════════════════════════════════════════════════
+// ════════════════════════════════════��═════════════════════════════════
 //  Thunderstorm — Rain + random lightning flashes + screen-edge glow
 //  Uses unpredictable timing (2-6s apart) and random bolt positions
 //  to avoid the constant-flashing headache of a fixed animation.
@@ -3331,7 +3318,7 @@ private fun StaticWeatherFrame(
 
 // ══════════════════════════════════════════════════════════════════════
 //  Compact animated weather icon for detail screen chips
-// ══════════════════════════════════════════════════════════════════════
+// ══���═══════════════════════════════════════════════════════════════════
 
 @Composable
 fun CompactWeatherIcon(
