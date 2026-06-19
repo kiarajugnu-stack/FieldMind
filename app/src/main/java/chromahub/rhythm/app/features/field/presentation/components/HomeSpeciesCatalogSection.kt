@@ -41,30 +41,8 @@ fun HomeSpeciesCatalogSection(
     val colors = FieldMindTheme.colors
     val accentColor = colors.observation
 
-    // Interest-aware subtitle
-    val subtitle = remember(userInterests) {
-        buildString {
-            append("Browse species by name, category, and taxonomy")
-            val focusAreas = buildList {
-                if (userInterests.zoology.contains(ZoologySubfield.Birds)) add("ornithology")
-                if (userInterests.zoology.contains(ZoologySubfield.Mammals)) add("mammalogy")
-                if (userInterests.zoology.contains(ZoologySubfield.Herps)) add("herpetology")
-                if (userInterests.zoology.contains(ZoologySubfield.Insects)) add("entomology")
-                if (userInterests.zoology.contains(ZoologySubfield.Marine)) add("marine biology")
-                if (userInterests.botany.contains(BotanySubfield.Wildflowers)) add("wildflowers")
-                if (userInterests.botany.contains(BotanySubfield.Trees)) add("trees")
-                if (userInterests.botany.contains(BotanySubfield.Fungi)) add("fungi")
-                if (userInterests.botany.contains(BotanySubfield.Mosses)) add("bryophytes")
-                if (userInterests.ecologyEnvironment) add("ecology")
-                if (userInterests.astronomy) add("astronomy")
-                if (userInterests.geology) add("geology")
-            }
-            if (focusAreas.isNotEmpty()) {
-                append(" \u2022 Focus: ")
-                append(focusAreas.joinToString(", "))
-            }
-        }
-    }
+    val subtitle = "Explore species details."
+
 
     Card(
         shape = RoundedCornerShape(24.dp),

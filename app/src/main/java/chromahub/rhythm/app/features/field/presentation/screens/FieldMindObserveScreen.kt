@@ -2404,11 +2404,18 @@ private fun FieldModeScreen(viewModel: FieldMindViewModel, onBack: () -> Unit) {
             onDismissRequest = { showQuickSnapCategory = false },
             icon = { Icon(icon = FieldMindIcons.Camera, contentDescription = null) },
             title = { Text("Choose quick snap category") },
-            text = { OptionPickerField(label = "Category", selected = quickSnapCategory, options = observationCategories, onSelected = { quickSnapCategory = it }, icon = FieldMindIcons.Category) },
+            text = {
+                QuickSnapCategoryPicker(
+                    selectedCategory = quickSnapCategory,
+                    onCategorySelected = { quickSnapCategory = it }
+                )
+            },
             confirmButton = { Button(onClick = { showQuickSnapCategory = false; showQuickSnapCamera = true }) { Text("Open in-app camera") } },
             dismissButton = { TextButton(onClick = { showQuickSnapCategory = false }) { Text("Cancel") } }
         )
     }
+
+
     if (showQuickSnapCamera) {
         Dialog(
             onDismissRequest = { showQuickSnapCamera = false },
@@ -2467,6 +2474,58 @@ private fun FieldModeScreen(viewModel: FieldMindViewModel, onBack: () -> Unit) {
             text = { Text("$quickSnapCategory • $status") },
             confirmButton = { TextButton(onClick = { quickSnapStatus = null }) { Text("Done") } }
         )
+    }
+}
+@Composable
+private fun QuickSnapCategoryPicker(
+    selectedCategory: String,
+    onCategorySelected: (String) -> Unit
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Text(
+            "Pick the observation type for this photo.",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        observationCategories.chunked(2).forEach { row ->
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                row.forEach { category ->
+                    val selected = selectedCategory == category
+                    val accent = FieldMindTheme.colors.accentFor(category)
+                    Surface(
+                        onClick = { onCategorySelected(category) },
+                        shape = RoundedCornerShape(16.dp),
+                        color = if (selected) accent.copy(alpha = 0.16f) else MaterialTheme.colorScheme.surfaceContainerHigh,
+                        border = androidx.compose.foundation.BorderStroke(
+                            width = if (selected) 1.5.dp else 1.dp,
+                            color = if (selected) accent else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f)
+                        ),
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Row(
+                            Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 10.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Icon(
+                                icon = FieldMindIcons.iconForCategory(category),
+                                contentDescription = null,
+                                tint = accent,
+                                size = 18.dp
+                            )
+                            Text(
+                                category,
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = if (selected) FontWeight.Bold else FontWeight.SemiBold,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+                    }
+                }
+                if (row.size == 1) Spacer(Modifier.weight(1f))
+            }
+        }
     }
 }
 

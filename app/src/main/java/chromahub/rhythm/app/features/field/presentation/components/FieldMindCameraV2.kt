@@ -92,7 +92,7 @@ private const val FLASH_AUTO = ImageCapture.FLASH_MODE_AUTO
  * - **Capture timer** (3s/5s/10s)
  * - **Aspect ratio crop guide** (4:3 / 16:9 / 1:1)
  * - **Species field mode**: inline panel after capture with species autocomplete,
- *   category, confidence, notes — "Save & Continue" or "Save & Exit"
+ *   category, confidence, notes — "Save" or " Save & Exit"
  */
 @Composable
 fun FieldMindCameraV2(
@@ -203,7 +203,12 @@ fun FieldMindCameraV2(
         hasCameraPermission = granted
         if (!granted) onDismiss()
     }
-    LaunchedEffect(Unit) { if (!hasCameraPermission) permissionLauncher.launch(Manifest.permission.CAMERA) }
+    // Request permission only when camera is actually about to be used
+    LaunchedEffect(previewViewRef) { 
+        if (previewViewRef != null && !hasCameraPermission) {
+            permissionLauncher.launch(Manifest.permission.CAMERA)
+        }
+    }
     DisposableEffect(Unit) { onDispose { cameraExecutor.shutdown() } }
 
     // ── Bind camera ──
@@ -659,7 +664,7 @@ fun FieldMindCameraV2(
                             ) {
                                 Icon(MaterialSymbolIcon("add_a_photo"), null, size = 18.dp)
                                 Spacer(Modifier.size(6.dp))
-                                Text("Add more", maxLines = 1)
+                                Text("Add", maxLines = 1)
                             }
 
                             // Save & Exit - saves and closes camera
@@ -1123,7 +1128,7 @@ private fun SpeciesFieldPanel(
                     ) {
                         Icon(FieldMindIcons.Camera, null, size = 16.dp)
                         Spacer(Modifier.size(6.dp))
-                        Text("Save & Continue", maxLines = 1)
+                        Text("Add", maxLines = 1)
                     }
                 }
             }

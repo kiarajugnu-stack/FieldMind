@@ -349,11 +349,11 @@ private suspend fun extractWaveformPcm(
                 break
             }
         }
-        if (audioTrackIndex < 0 || trackFormat == null) return null
+        if (audioTrackIndex < 0 || trackFormat == null) return@withContext null
         extractor.selectTrack(audioTrackIndex)
 
         // ── Configure decoder ──
-        val mime = trackFormat.getString(MediaFormat.KEY_MIME) ?: return null
+        val mime = trackFormat.getString(MediaFormat.KEY_MIME) ?: return@withContext null
         decoder = MediaCodec.createDecoderByType(mime)
         decoder.configure(trackFormat, null, null, 0)
         decoder.start()
@@ -432,7 +432,7 @@ private suspend fun extractWaveformPcm(
         }
 
         // ── Downsample collected RMS values to targetBars ──
-        if (rmsValues.isEmpty()) return null
+        if (rmsValues.isEmpty()) return@withContext null
 
         val result = FloatArray(targetBars)
         for (i in 0 until targetBars) {
