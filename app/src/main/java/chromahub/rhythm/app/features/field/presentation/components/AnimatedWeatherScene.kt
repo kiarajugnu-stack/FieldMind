@@ -26,6 +26,7 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.platform.LocalInspectionMode
 import kotlin.math.cos
@@ -2327,6 +2328,60 @@ private fun DrawScope.drawShootingStar(
     )
 }
 
+/**
+ * Draws a rainbow arc on the left side of the sky when rain falls during sunny conditions
+ * (weather codes 51-82 during Morning, Sunrise, or Midday).
+ */
+private fun DrawScope.drawRainbow(
+    timeOfDay: TimeOfDay,
+    weatherCode: Int,
+    isDarkTheme: Boolean,
+    compact: Boolean
+) {
+    // Only show during sunny rain conditions
+    val isRainy = weatherCode in 51..82
+    val isSunnyDay = timeOfDay in listOf(TimeOfDay.Morning, TimeOfDay.Sunrise, TimeOfDay.Midday)
+    if (!isRainy || !isSunnyDay || isDarkTheme) return
+
+    val rainbowColors = listOf(
+        Color(0xBBFF0000),  // Red
+        Color(0xBBFF7F00),  // Orange
+        Color(0xBBFFFF00),  // Yellow
+        Color(0xBB00FF00),  // Green
+        Color(0xBB0000FF),  // Blue
+        Color(0xBB4B0082),  // Indigo
+        Color(0xBB9400D3)   // Violet
+    )
+
+    val centerX = size.width * 0.30f  // Left side (opposite sun on right)
+    val horizonY = size.height * 0.82f
+    val maxRadius = if (compact) size.width * 0.20f else size.width * 0.28f
+    val bandWidth = maxRadius / rainbowColors.size * 0.15f
+
+    for (i in rainbowColors.indices) {
+        val radius = maxRadius - i * bandWidth
+        val arcPath = Path().apply {
+            // Semi-circle arc from left to right above the horizon
+            arcTo(
+                rect = Rect(
+                    left = centerX - radius,
+                    top = horizonY - radius * 1.1f,
+                    right = centerX + radius,
+                    bottom = horizonY
+                ),
+                startAngleDegrees = 0f,
+                sweepAngleDegrees = 180f,
+                forceMoveTo = false
+            )
+        }
+        drawPath(
+            path = arcPath,
+            color = rainbowColors[i],
+            style = Stroke(width = bandWidth * 0.7f, cap = StrokeCap.Round)
+        )
+    }
+}
+
 // ══════════════════════════════════════════════════════════════════════
 //  Fog — Translucent drifting fog bands
 // ══════════════════════════════════════════════════════════════════════
@@ -2569,6 +2624,9 @@ private fun RainScene(
             )
         }
         val intensityAlpha = rainIntensity.coerceIn(0.4f, 1f)
+
+        // Rainbow during sunny rain conditions
+        drawRainbow(timeOfDay = timeOfDay, weatherCode = weatherCode, isDarkTheme = isDark, compact = compact)
 
         // Rain streaks — each drop falls individually with random phase offset (no synchronized lines)
         streaks.forEach { streak ->
@@ -3024,6 +3082,31 @@ private fun ThunderstormScene(
                 ),
                 size = size
             )
+        }
+
+        // Hail particles for weather codes 96 and 99
+        val isHail = weatherCode == 96 || weatherCode == 99
+        if (isHail) {
+            val hailCount = if (weatherCode == 99) 25 else 14
+            for (i in 0 until hailCount) {
+                val hailX = size.width * (0.05f + i.toFloat() / hailCount * 0.9f)
+                val baseHailY = size.height * (0.15f + (i.toFloat() / hailCount) * 0.75f)
+                // Bounce phase — each particle has unique phase offset
+                val hailPhase = (cloudOffset1 + i * 0.07f) % 1f
+                val bounceY = baseHailY + abs(sin(hailPhase * PI.toFloat() * 4f)) * size.height * 0.12f
+                val hailSize = if (weatherCode == 99) 3f + sin(i * 2.3f) * 1.5f else 2f + sin(i * 1.7f) * 1f
+                drawCircle(
+                    color = Color(0xDDE8EAF6),
+                    radius = hailSize.coerceAtLeast(1.5f),
+                    center = Offset(hailX, bounceY)
+                )
+                // Small bright core for icy look
+                drawCircle(
+                    color = Color.White.copy(alpha = 0.6f),
+                    radius = hailSize * 0.3f,
+                    center = Offset(hailX, bounceY)
+                )
+            }
         }
 
         // Ground terrain already rendered by RainScene composable above
