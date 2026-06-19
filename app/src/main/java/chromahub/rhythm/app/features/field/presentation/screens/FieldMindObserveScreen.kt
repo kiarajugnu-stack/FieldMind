@@ -806,9 +806,14 @@ fun ObserveScreen(
                 modifier = Modifier.fillMaxSize(),
                 multiCaptureMode = true
             )
-        }        }
+        }
     }
 
+    // ── GpsOffDialog ──
+    if (showGpsDialog) {
+        GpsOffDialog(onDismiss = { showGpsDialog = false })
+    }
+}
 
 // ══════════════════════════════════════════════════════════════════════
 //  Live Observation Timer — persistent header component

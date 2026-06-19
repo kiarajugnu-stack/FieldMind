@@ -454,7 +454,8 @@ private fun LiveCurrentWeatherCard(
     placeName: String? = null,
     refreshTimestampText: String = "Updated just now",
     tempUnit: String = "Celsius",
-    windSpeedUnit: String = "km/h"
+    windSpeedUnit: String = "km/h",
+    showCloudAnimation: Boolean = true
 ) {
     val colors = FieldMindTheme.colors
     val isDarkTheme = colors.isDark
@@ -509,9 +510,8 @@ private fun LiveCurrentWeatherCard(
         temperature = weather.temperature,
         sunrise = weather.sunrise,
         sunset = weather.sunset,
-        compact = false,
-        showCloudAnimation = showCloudAnimation
-    )
+        compact = false,                    showCloudAnimation = showCloudAnimation
+                )
                 }
             }
 

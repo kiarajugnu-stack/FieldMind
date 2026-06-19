@@ -283,11 +283,11 @@ fun HomeScreen(
                     tempUnit = tempUnit,
                     windSpeedUnit = windSpeedUnit,
                     moonPhase = moonPhase,
-                    conditionsNudge = conditionsNudge,
-                    sunrise = homeCurrentWeather?.sunrise,
-                    sunset = homeCurrentWeather?.sunset,
-                    developerMode = developerMode
-                )
+                    conditionsNudge = conditionsNudge,    sunrise = homeCurrentWeather?.sunrise,
+    sunset = homeCurrentWeather?.sunset,
+    developerMode = developerMode,
+    showCloudAnimation = weatherShowCloudAnimation
+)
             }
 
             // ── Daily Goal with delta ──
@@ -1071,7 +1071,8 @@ private fun LiveWeatherDashboardWidget(
     conditionsNudge: String = "",
     sunrise: String? = null,
     sunset: String? = null,
-    developerMode: Boolean = false
+    developerMode: Boolean = false,
+    showCloudAnimation: Boolean = true
 ) {
     val colors = FieldMindTheme.colors
     var testWeatherCode by remember { mutableStateOf<Int?>(null) }
