@@ -680,7 +680,7 @@ fun FieldMindCameraV2(
                             ) {
                                 Icon(FieldMindIcons.Archive, null, size = 18.dp)
                                 Spacer(Modifier.size(6.dp))
-                                Text("Save & Exit", maxLines = 1)
+                                Text("Save", maxLines = 1)
                             }
                         }
                     }
@@ -1114,7 +1114,7 @@ private fun SpeciesFieldPanel(
                     ) {
                         Icon(FieldMindIcons.Archive, null, size = 16.dp)
                         Spacer(Modifier.size(6.dp))
-                        Text("Save & Exit", maxLines = 1)
+                        Text("Save", maxLines = 1)
                     }
                     Button(
                         onClick = onSaveContinue,

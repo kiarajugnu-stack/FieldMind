@@ -1053,7 +1053,8 @@ private fun timeOfDay(): String {
     return when (hour) {
         in 5..11 -> "morning"
         in 12..16 -> "afternoon"
-        else -> "evening"
+        17 -> "evening"
+        else -> "night"
     }
 }
 
@@ -1095,7 +1096,7 @@ private fun LiveWeatherDashboardWidget(
     val timeOfDay = when (currentHour) {
         in 5..11 -> "morning"
         in 12..16 -> "afternoon"
-        in 17..20 -> "evening"
+        17 -> "evening"
         else -> "night"
     }
     val isNight = timeOfDay == "night"
