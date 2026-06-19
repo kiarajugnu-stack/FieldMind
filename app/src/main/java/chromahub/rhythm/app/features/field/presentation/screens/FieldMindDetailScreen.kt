@@ -1957,6 +1957,7 @@ private fun SpeciesRegistryBuilder(projectId: Long, viewModel: FieldMindViewMode
                         TaxonTextField("Genus", genus, { genus = it }, modifier = Modifier.weight(1f), supportingText = "e.g. Corvus")
                     }
                     // Genus autocomplete from database
+                    val searchScope = rememberCoroutineScope()
                     var showGenusSuggestions by remember { mutableStateOf(false) }
                     var speciesSearchQuery by remember { mutableStateOf("") }
                     var speciesSuggestions by remember { mutableStateOf<List<SpeciesRecord>>(emptyList()) }
@@ -1966,9 +1967,11 @@ private fun SpeciesRegistryBuilder(projectId: Long, viewModel: FieldMindViewMode
                         onValueChange = { query ->
                             speciesSearchQuery = query
                             if (query.length >= 2) {
-                                val results = speciesDatabase.search(query, limit = 8)
-                                speciesSuggestions = results
-                                showGenusSuggestions = results.isNotEmpty()
+                                searchScope.launch {
+                                    val results = speciesDatabase.search(query, limit = 8)
+                                    speciesSuggestions = results
+                                    showGenusSuggestions = results.isNotEmpty()
+                                }
                             } else {
                                 speciesSuggestions = emptyList()
                                 showGenusSuggestions = false
@@ -2005,7 +2008,6 @@ private fun SpeciesRegistryBuilder(projectId: Long, viewModel: FieldMindViewMode
                                             scientificName = record.scientificName
                                             kingdom = record.kingdom
                                             phylum = record.phylum
-                                            classs = record.classs
                                             order = record.order
                                             family = record.family
                                             conservationStatus = record.conservationStatus.ifBlank { "Not Evaluated" }
