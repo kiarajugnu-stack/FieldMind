@@ -3,9 +3,12 @@ package fieldmind.research.app.features.field.presentation.screens
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.content.res.Configuration
+import android.media.MediaPlayer
 import android.net.Uri
 import android.graphics.Bitmap
 import android.view.ViewGroup
+import android.widget.MediaController
+import android.widget.VideoView
 import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
@@ -684,32 +687,35 @@ private fun GuidedPathCard(path: GuidedPath, onOpenReader: (String, String) -> U
 }
 
 /**
- * In-app reader for a Learn resource. Loads the page in a WebView so users can read without
- * leaving FieldMind, with a top-bar action to open it in their browser for further reading.
+ * In-app reader for any file type (URL, image, audio, video, PDF) using native viewers.
+ * Uses AsyncImage for images, MediaPlayer for audio, VideoView for video,
+ * external Intent for PDFs, and WebView only for http/https URLs.
  */
 @SuppressLint("SetJavaScriptEnabled")
 @Composable
 fun LearnReaderScreen(url: String, title: String, onBack: () -> Unit) {
     val uriHandler = LocalUriHandler.current
+    val context = LocalContext.current
     val readerUrl = remember(url) {
         if (uriLooksPdf(url) && url.startsWith("http", ignoreCase = true)) {
             "https://docs.google.com/gview?embedded=1&url=${Uri.encode(url)}"
         } else url
     }
-    var loading by remember(readerUrl) { mutableStateOf(!uriLooksImage(url)) }
+    var loading by remember(readerUrl) { mutableStateOf(!uriLooksImage(url) && !uriLooksAudio(url) && !uriLooksVideo(url)) }
     var errorMessage by remember(readerUrl) { mutableStateOf<String?>(null) }
     var retryKey by remember(readerUrl) { mutableIntStateOf(0) }
     var showReaderFallback by remember(readerUrl) { mutableStateOf(true) }
     var webView by remember { mutableStateOf<WebView?>(null) }
     val background = MaterialTheme.colorScheme.background
-    LaunchedEffect(readerUrl, retryKey) {
-        if (!uriLooksImage(url)) {
-            loading = true
-            errorMessage = null
-            kotlinx.coroutines.delay(10_000)
-            if (loading) { errorMessage = "Still loading. This file may block embedded readers."; showReaderFallback = true }
-        }
+
+    // Determine if this is a local file or a web URL
+    val isLocalFile = remember(url) {
+        url.startsWith("content://") || url.startsWith("file://") || url.startsWith("/")
     }
+    val isWebUrl = remember(url) {
+        url.startsWith("http://") || url.startsWith("https://")
+    }
+
     BackHandler(enabled = true) {
         val wv = webView
         when {
@@ -724,32 +730,36 @@ fun LearnReaderScreen(url: String, title: String, onBack: () -> Unit) {
             Text(title.ifBlank { "Reader" }, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
             IconButton(onClick = { runCatching { uriHandler.openUri(url) } }) { Icon(icon = FieldMindIcons.OpenLink, contentDescription = "Open externally", size = 22.dp) }
         }
-        if (loading) LinearProgressIndicator(Modifier.fillMaxWidth())
         Box(Modifier.fillMaxSize()) {
             when {
-                uriLooksImage(url) -> AsyncImage(model = url, contentDescription = title, contentScale = ContentScale.Fit, modifier = Modifier.fillMaxSize().padding(16.dp).clip(RoundedCornerShape(24.dp)).background(MaterialTheme.colorScheme.surfaceContainerLow))
-                uriLooksPdf(url) -> {
-                    val context = LocalContext.current
-                    ReaderFallbackCard(
-                        if (url.startsWith("content://")) "Local PDF file. WebView cannot render content:// PDFs directly." else "PDF documents open best in the system viewer.",
-                        url,
-                        {
-                            runCatching {
-                                val intent = Intent(Intent.ACTION_VIEW).apply {
-                                    setDataAndType(Uri.parse(url), "application/pdf")
-                                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NEW_TASK)
-                                }
-                                if (intent.resolveActivity(context.packageManager) != null) {
-                                    context.startActivity(intent)
-                                } else {
-                                    uriHandler.openUri(url)
-                                }
-                            }
-                        },
-                        Modifier.align(Alignment.TopCenter),
-                        onDismiss = { showReaderFallback = false }
-                    )
-                }
+                // ── Image viewer ──
+                uriLooksImage(url) -> AsyncImage(
+                    model = url,
+                    contentDescription = title,
+                    contentScale = ContentScale.Fit,
+                    modifier = Modifier.fillMaxSize().padding(16.dp).clip(RoundedCornerShape(24.dp)).background(MaterialTheme.colorScheme.surfaceContainerLow)
+                )
+
+                // ── Audio player ──
+                uriLooksAudio(url) -> NativeAudioPlayer(
+                    uri = Uri.parse(url),
+                    title = title,
+                    modifier = Modifier.fillMaxSize().padding(24.dp)
+                )
+
+                // ── Video player ──
+                uriLooksVideo(url) -> NativeVideoPlayer(
+                    uri = Uri.parse(url),
+                    modifier = Modifier.fillMaxSize()
+                )
+
+                // ── PDF — open in system viewer ──
+                uriLooksPdf(url) -> PdfOpenCard(url, uriHandler, context)
+
+                // ── Local files (non-image/non-audio/non-video) — open externally ──
+                isLocalFile && !isWebUrl -> OpenExternallyCard(url, uriHandler, context)
+
+                // ── Web URLs — WebView ──
                 else -> {
                     AndroidView(
                         modifier = Modifier.fillMaxSize(),
@@ -760,7 +770,7 @@ fun LearnReaderScreen(url: String, title: String, onBack: () -> Unit) {
                                     override fun onPageStarted(view: WebView?, startedUrl: String?, favicon: android.graphics.Bitmap?) { loading = true; errorMessage = null; showReaderFallback = true }
                                     override fun onPageFinished(view: WebView?, finishedUrl: String?) { loading = false }
                                     override fun onReceivedError(view: WebView?, request: WebResourceRequest?, error: WebResourceError?) {
-                                        if (request?.isForMainFrame != false) { loading = false; errorMessage = error?.description?.toString() ?: "Could not load this file inside FieldMind." }
+                                        if (request?.isForMainFrame != false) { loading = false; errorMessage = error?.description?.toString() ?: "Could not load this page." }
                                     }
                                 }
                                 settings.javaScriptEnabled = true
@@ -773,9 +783,224 @@ fun LearnReaderScreen(url: String, title: String, onBack: () -> Unit) {
                         },
                         update = { if (it.url != readerUrl) it.loadUrl(readerUrl) }
                     )
-                    if (showReaderFallback) errorMessage?.let { message -> ReaderFallbackCard(message, url, { retryKey++; webView?.reload() }, Modifier.align(Alignment.TopCenter), onDismiss = { showReaderFallback = false }) }
+                    if (loading) LinearProgressIndicator(Modifier.fillMaxWidth().align(Alignment.TopCenter))
+                    if (showReaderFallback) errorMessage?.let { message ->
+                        ReaderFallbackCard(message, url, { retryKey++; webView?.reload() }, Modifier.align(Alignment.TopCenter), onDismiss = { showReaderFallback = false })
+                    }
                 }
             }
+        }
+    }
+}
+
+/**
+ * Native audio player using Android MediaPlayer with play/pause controls.
+ */
+@Composable
+private fun NativeAudioPlayer(uri: Uri, title: String, modifier: Modifier = Modifier) {
+    var isPlaying by remember { mutableStateOf(false) }
+    var isPrepared by remember { mutableStateOf(false) }
+    var errorMsg by remember { mutableStateOf<String?>(null) }
+    val context = LocalContext.current
+    val mediaPlayer = remember {
+        MediaPlayer().apply {
+            try {
+                setDataSource(context, uri)
+                setOnPreparedListener { isPrepared = true; isPlaying = false }
+                setOnErrorListener { _, _, _ -> errorMsg = "Could not play this audio file."; true }
+                setOnCompletionListener { isPlaying = false }
+                prepareAsync()
+            } catch (e: Exception) {
+                errorMsg = "Could not load audio: ${e.message}"
+            }
+        }
+    }
+    DisposableEffect(Unit) {
+        onDispose {
+            runCatching { mediaPlayer.release() }
+        }
+    }
+    Card(
+        shape = RoundedCornerShape(28.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
+        modifier = modifier
+    ) {
+        Column(
+            Modifier.fillMaxSize().padding(32.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Icon(
+                icon = FieldMindIcons.Mic,
+                contentDescription = null,
+                tint = FieldMindTheme.colors.source,
+                size = 64.dp,
+                modifier = Modifier.size(96.dp).clip(RoundedCornerShape(32.dp)).background(FieldMindTheme.colors.source.copy(alpha = 0.12f)).padding(16.dp)
+            )
+            Spacer(Modifier.size(24.dp))
+            Text(
+                title.ifBlank { "Audio Playback" },
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center
+            )
+            Spacer(Modifier.size(8.dp))
+
+            if (errorMsg != null) {
+                Text(errorMsg!!, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.error)
+            } else if (!isPrepared) {
+                LinearProgressIndicator(Modifier.fillMaxWidth(0.6f))
+                Spacer(Modifier.size(8.dp))
+                Text("Loading audio...", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            } else {
+                Spacer(Modifier.size(16.dp))
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(24.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    FilledIconButton(
+                        onClick = {
+                            if (isPlaying) {
+                                runCatching { mediaPlayer.pause() }; isPlaying = false
+                            } else {
+                                runCatching { mediaPlayer.start() }; isPlaying = true
+                            }
+                        },
+                        modifier = Modifier.size(64.dp),
+                        shape = CircleShape
+                    ) {
+                        Icon(
+                            icon = if (isPlaying) FieldMindIcons.Pause else FieldMindIcons.Play,
+                            contentDescription = if (isPlaying) "Pause" else "Play",
+                            size = 32.dp
+                        )
+                    }
+                }
+                Spacer(Modifier.size(12.dp))
+                Text(
+                    if (isPlaying) "Playing..." else "Paused",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+    }
+}
+
+/**
+ * Native video player using Android VideoView with built-in MediaController controls.
+ */
+@Composable
+private fun NativeVideoPlayer(uri: Uri, modifier: Modifier = Modifier) {
+    var errorMsg by remember { mutableStateOf<String?>(null) }
+    Box(modifier = modifier.background(Color.Black)) {
+        AndroidView(
+            modifier = Modifier.fillMaxSize(),
+            factory = { ctx ->
+                VideoView(ctx).apply {
+                    setVideoURI(uri)
+                    val controller = MediaController(ctx)
+                    controller.setAnchorView(this)
+                    setMediaController(controller)
+                    setOnErrorListener { _, _, _ ->
+                        errorMsg = "Could not play this video."
+                        true
+                    }
+                    requestFocus()
+                    start()
+                }
+            },
+            update = { }
+        )
+        if (errorMsg != null) {
+            Box(
+                Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.7f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    errorMsg!!,
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = Color.White,
+                    textAlign = TextAlign.Center
+                )
+            }
+        }
+    }
+}
+
+/**
+ * Card prompting the user to open a PDF in the system viewer.
+ */
+@Composable
+private fun PdfOpenCard(url: String, uriHandler: androidx.compose.ui.platform.UriHandler, context: android.content.Context) {
+    Card(
+        Modifier.fillMaxSize().padding(32.dp),
+        shape = RoundedCornerShape(28.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh)
+    ) {
+        Column(
+            Modifier.fillMaxSize().padding(32.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Icon(FieldMindIcons.Article, null, tint = MaterialTheme.colorScheme.primary, size = 64.dp)
+            Spacer(Modifier.size(24.dp))
+            Text("PDF Document", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+            Spacer(Modifier.size(8.dp))
+            Text("Open this PDF in your device's PDF viewer for the best reading experience.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
+            Spacer(Modifier.size(24.dp))
+            Button(onClick = {
+                runCatching {
+                    val intent = Intent(Intent.ACTION_VIEW).apply {
+                        setDataAndType(Uri.parse(url), "application/pdf")
+                        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NEW_TASK)
+                    }
+                    if (intent.resolveActivity(context.packageManager) != null) {
+                        context.startActivity(intent)
+                    } else {
+                        uriHandler.openUri(url)
+                    }
+                }
+            }, shape = RoundedCornerShape(16.dp)) { Text("Open PDF"); Spacer(Modifier.size(8.dp)); Icon(FieldMindIcons.OpenLink, null, size = 18.dp) }
+        }
+    }
+}
+
+/**
+ * Card for files that cannot be rendered in-app — opens externally.
+ */
+@Composable
+private fun OpenExternallyCard(url: String, uriHandler: androidx.compose.ui.platform.UriHandler, context: android.content.Context) {
+    val fileName = url.substringAfterLast("/").substringBefore("?").ifBlank { "File" }
+    Card(
+        Modifier.fillMaxSize().padding(32.dp),
+        shape = RoundedCornerShape(28.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh)
+    ) {
+        Column(
+            Modifier.fillMaxSize().padding(32.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Icon(FieldMindIcons.File, null, tint = MaterialTheme.colorScheme.primary, size = 64.dp)
+            Spacer(Modifier.size(24.dp))
+            Text(fileName, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center, maxLines = 2, overflow = TextOverflow.Ellipsis)
+            Spacer(Modifier.size(8.dp))
+            Text("This file type cannot be displayed inside FieldMind. Open it with an external app.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
+            Spacer(Modifier.size(24.dp))
+            Button(onClick = {
+                runCatching {
+                    val intent = Intent(Intent.ACTION_VIEW).apply {
+                        setDataAndType(Uri.parse(url), "*/*")
+                        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NEW_TASK)
+                    }
+                    if (intent.resolveActivity(context.packageManager) != null) {
+                        context.startActivity(intent)
+                    } else {
+                        uriHandler.openUri(url)
+                    }
+                }
+            }, shape = RoundedCornerShape(16.dp)) { Text("Open externally"); Spacer(Modifier.size(8.dp)); Icon(FieldMindIcons.OpenLink, null, size = 18.dp) }
         }
     }
 }
