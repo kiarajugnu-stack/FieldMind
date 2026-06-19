@@ -1378,13 +1378,18 @@ private fun ObservationHeroCarousel(viewModel: FieldMindViewModel, observationId
     }
 
     // In-app image viewer
+    // In-app image viewer
+
+
+    // In-app image viewer
     if (showImageViewer) {
         ImageViewerDialog(
             uri = imageViewerUri,
             caption = imageViewerCaption,
             onDismiss = { showImageViewer = false }
         )
-    }}
+    }
+}
 
 @Composable
 private fun ObsStatItem(value: String, label: String, icon: MaterialSymbolIcon) {
@@ -2826,7 +2831,7 @@ private fun SourceActionPanel(source: SourceEntity, projects: List<ProjectEntity
                 var showImageViewer by remember { mutableStateOf(false) }
                 var showAudioPlayer by remember { mutableStateOf(false) }
                 var fileType by remember { mutableStateOf("") }
-                val fileMime = runCatching { context.contentResolver.getType(Uri.parse(source.fileUri)) }.getOrDefault("")
+                val fileMime = runCatching { context.contentResolver?.getType(Uri.parse(source.fileUri.orEmpty())) }.getOrDefault("")
                 FilledTonalButton(onClick = {
                     haptics.light()
                     fileType = when {
@@ -2958,6 +2963,12 @@ private fun ObservationAttachmentsPanel(viewModel: FieldMindViewModel, observati
         }
     }
 }
+
+
+
+
+
+    // In-app viewers
     if (showImageViewer) {
         ImageViewerDialog(uri = viewerUri, caption = viewerCaption, onDismiss = { showImageViewer = false })
     }
@@ -2979,8 +2990,15 @@ private fun SourcePreviewPanel(source: SourceEntity, onOpenReader: (String, Stri
             AttachmentOpenRow(target, source.title, source.type, onOpenReader)
         }
     }
+
+
+
     if (showImageViewer) {
-        ImageViewerDialog(uri = target, caption = source.title, onDismiss = { showImageViewer = false })
+        ImageViewerDialog(
+            uri = target,
+            caption = source.title,
+            onDismiss = { showImageViewer = false }
+        )
     }
 }
 

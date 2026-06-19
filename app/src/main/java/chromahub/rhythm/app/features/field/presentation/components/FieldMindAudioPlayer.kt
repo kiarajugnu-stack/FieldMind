@@ -312,12 +312,11 @@ private fun generateWaveformBars(
     val rng = Random(seed)
     val bars = FloatArray(count)
     for (i in 0 until count) {
-        val t = i.toFloat() / count
+        val t = i.toDouble() / count
         // Envelope: quiet at ends, loud in the middle (sine window)
-        val td = t.toDouble()
-        val envelope = sin(td * PI).toFloat() * envelopeStrength + (1f - envelopeStrength)
+        val envelope = (sin(t * PI) * envelopeStrength + (1.0 - envelopeStrength)).toFloat()
         // Low-frequency modulation for "sections"
-        val lfMod = (sin(td * 4.0 * PI) * 0.3f + sin(td * 7.0 * PI + 1.0) * 0.2f).coerceIn(-0.5f, 0.5f)
+        val lfMod = (sin(t * 4.0 * PI) * 0.3 + sin(t * 7.0 * PI + 1.0) * 0.2).coerceIn(-0.5, 0.5).toFloat()
         // Noise for organic micro-variation
         val noise = (rng.nextFloat() - 0.5f) * 2f * noiseStrength
         // Combine, clamp, and apply a floor so no bar is totally flat

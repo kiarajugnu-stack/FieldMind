@@ -60,7 +60,7 @@ fun ExportStudioContent(
     var pendingRestorePreview by remember { mutableStateOf<FieldMindExport.ArchivePreview?>(null) }
     var restoring by remember { mutableStateOf(false) }
     var lastBackupRefresh by remember { mutableIntStateOf(0) }
-    val lastBackupLabel = remember(lastBackupRefresh) { lastBackupSummary(context) }
+    val lastBackupLabel: String = remember(lastBackupRefresh) { lastBackupSummary(context) }
 
     fun scopedProjects() = if (exportScope in listOf("All", "Projects")) projects else emptyList()
     fun scopedObservations() = if (exportScope in listOf("All", "Observations")) observations else emptyList()

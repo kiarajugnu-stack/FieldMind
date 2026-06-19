@@ -67,7 +67,7 @@ fun PdfViewerDialog(
 
     // Count pages
     LaunchedEffect(renderer) {
-        totalPages = renderer?.let { it.getCount() } ?: 0
+        totalPages = runCatching { renderer?.let { it.count } ?: 0 }.getOrDefault(0)
         if (totalPages == 0) loadError = true
     }
 
@@ -80,7 +80,7 @@ fun PdfViewerDialog(
         currentBitmap?.recycle()
         val bitmap = try {
             renderer?.let { r ->
-                if (currentPage in 0 until r.getCount()) {
+                if (currentPage in 0 until r.count) {
                     val page = r.openPage(currentPage)
                     val width = page.width
                     val height = page.height
