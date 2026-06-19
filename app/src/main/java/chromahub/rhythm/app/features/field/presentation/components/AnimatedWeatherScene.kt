@@ -2466,7 +2466,7 @@ private fun FogScene(
     val fogOffset by infiniteTransition.animateFloat(
         initialValue = 0f,
         targetValue = 1f,
-        animationSpec = infiniteRepeatable(tween(20000, easing = LinearEasing), RepeatMode.Restart),
+        animationSpec = infiniteRepeatable(tween(20000, easing = LinearEasing), RepeatMode.Reverse),
         label = "fogDrift"
     )
     val fogAlpha by infiniteTransition.animateFloat(
@@ -2499,7 +2499,7 @@ private fun FogScene(
         for (layer in 0 until layerCount) {
             val layerAlpha = fogAlpha * (0.15f + layer * 0.12f).coerceAtMost(0.7f)
             val layerColor = if (layer % 2 == 0) fogBaseColor.copy(alpha = layerAlpha) else fogDarkColor.copy(alpha = layerAlpha * 0.8f)
-            val yBase = size.height * (0.1f + layer * 0.13f) - fogOffset * size.height * 0.04f
+            val yBase = size.height * (0.1f + layer * 0.13f) - sin(fogOffset * PI.toFloat()) * size.height * 0.06f
 
             // Each layer has multiple wispy blobs that drift at slightly different speeds
             val blobCount = if (compact) 2 else 3
