@@ -781,7 +781,7 @@ fun ObserveScreen(
         )
     }
 
-    // ── In-app camera overlay ──
+    // ── In-app camera overlay with multi-capture mode ──
     if (showInAppCamera) {
         Dialog(
             onDismissRequest = { showInAppCamera = false },
@@ -789,13 +789,14 @@ fun ObserveScreen(
         ) {
             FieldMindCameraV2(
                 onPhotoCaptured = { uri, mimeType ->
+                    // Add to session attachments, keep camera open for more captures
                     addAttachment(
                         DraftEvidenceAttachment("Photo", uri, "Camera photo", mimeType = mimeType)
                     )
-                    showInAppCamera = false
                 },
                 onDismiss = { showInAppCamera = false },
-                modifier = Modifier.fillMaxSize()
+                modifier = Modifier.fillMaxSize(),
+                multiCaptureMode = true
             )
         }
     }
@@ -1838,17 +1839,10 @@ private fun EnhancedObservationForm(
                 }
             }
 
-            // ── Subject Name — also fills species ──
+            // ── Subject Name (independent from species) ──
             FieldTextField(
                 session.subject,
-                {
-                    val updated = session.copy(subject = it)
-                    if (it.isNotBlank() && session.speciesName.isBlank()) {
-                        onSessionChange(updated.copy(speciesName = it))
-                    } else {
-                        onSessionChange(updated)
-                    }
-                },
+                { onSessionChange(session.copy(subject = it)) },
                 "Subject name",
                 supportingText = "e.g. House Crow carrying twig"
             )

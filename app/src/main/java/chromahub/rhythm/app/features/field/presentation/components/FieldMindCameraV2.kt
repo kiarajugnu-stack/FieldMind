@@ -9,26 +9,19 @@ import android.provider.MediaStore
 import android.view.ViewGroup
 import android.view.WindowManager
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.core.Camera
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.FocusMeteringAction
 import androidx.camera.core.ImageCapture
 import androidx.camera.core.ImageCaptureException
-import androidx.camera.core.MeteringPointFactory
 import androidx.camera.core.Preview
 import androidx.camera.core.SurfaceOrientedMeteringPointFactory
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
+import androidx.compose.animation.*
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -40,7 +33,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -49,10 +41,13 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -60,6 +55,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
+import coil.compose.AsyncImage
 import fieldmind.research.app.features.field.presentation.theme.FieldMindTheme
 import fieldmind.research.app.shared.presentation.components.icons.Icon
 import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon
@@ -71,12 +67,11 @@ import java.util.Date
 import java.util.Locale
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
-import kotlin.math.abs
 import kotlin.math.roundToInt
-import kotlin.math.sqrt
 
 // ══════════════════════════════════════════════════════════════════════
-//  FieldMind Camera V2 — Full redesigned CameraX
+//  FieldMind Camera V2 — Redesigned with glassmorphic controls,
+//  pro drawer, improved focus, species field mode
 // ══════════════════════════════════════════════════════════════════════
 
 private const val FLASH_OFF = ImageCapture.FLASH_MODE_OFF
@@ -84,25 +79,30 @@ private const val FLASH_ON = ImageCapture.FLASH_MODE_ON
 private const val FLASH_AUTO = ImageCapture.FLASH_MODE_AUTO
 
 /**
- * Full-screen CameraX with:
- * - Immersive mode (no system bars)
- * - Pinch-to-zoom with on-screen slider
- * - Tap-to-focus with animated ring
- * - Flash toggle (Off/On/Auto)
- * - Front/rear switch
- * - Grid overlay (rule-of-thirds)
- * - Capture timer (3s/5s/10s)
- * - Aspect ratio toggle (4:3 / 16:9 / 1:1)
- * - Post-capture bottom sheet: "Add to Observation" / "Add Question" / "Just Save"
- * - Auto GPS + timestamp metadata on capture
+ * Full-screen CameraX with redesigned controls:
+ *
+ * - **Glassmorphic pill bottom bar**: zoom strip, gallery thumbnail, capture button,
+ *   flip camera, pro toggle — all in one floating pill
+ * - **Pinch-to-zoom + strip slider** inside the pill
+ * - **Tap-to-focus** with animated ring + AE/AF lock indicator
+ * - **Slide-up pro drawer**: ISO, EV, WB, manual focus with large touch targets
+ * - **Flash toggle** (Off/On/Auto)
+ * - **Front/rear switch**
+ * - **Grid overlay** (rule-of-thirds)
+ * - **Capture timer** (3s/5s/10s)
+ * - **Aspect ratio crop guide** (4:3 / 16:9 / 1:1)
+ * - **Species field mode**: inline panel after capture with species autocomplete,
+ *   category, confidence, notes — "Save & Continue" or "Save & Exit"
  */
 @Composable
 fun FieldMindCameraV2(
     onPhotoCaptured: (uri: String, mimeType: String) -> Unit,
+    onSpeciesCaptured: (uri: String, mimeType: String, speciesName: String, category: String, confidence: String, notes: String) -> Unit = { _, _, _, _, _, _ -> },
     onAddToObservation: ((uri: String, mimeType: String) -> Unit)? = null,
     onAddQuestion: ((uri: String, mimeType: String) -> Unit)? = null,
     onDismiss: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    multiCaptureMode: Boolean = false
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -110,6 +110,7 @@ fun FieldMindCameraV2(
     val scope = rememberCoroutineScope()
     val view = LocalView.current
 
+    // ── Immersive mode ──
     DisposableEffect(view) {
         val window = (context as? Activity)?.window
         val previousDecorFits = window?.let { WindowCompat.getInsetsController(it, view).systemBarsBehavior }
@@ -134,6 +135,7 @@ fun FieldMindCameraV2(
         }
     }
 
+    // ── Camera state ──
     var lensFacing by remember { mutableIntStateOf(CameraSelector.LENS_FACING_BACK) }
     var flashMode by remember { mutableIntStateOf(FLASH_OFF) }
     var imageCapture by remember { mutableStateOf<ImageCapture?>(null) }
@@ -146,52 +148,70 @@ fun FieldMindCameraV2(
         )
     }
 
-    // Zoom state
+    // ── Zoom ──
     var zoomRatio by remember { mutableFloatStateOf(1f) }
     var maxZoom by remember { mutableFloatStateOf(1f) }
-    val animatedZoom by animateFloatAsState(zoomRatio, tween(200), label = "zoom")
 
-    // Focus ring state
+    // ── Focus ──
     var focusPoint by remember { mutableStateOf<Offset?>(null) }
     var focusRingVisible by remember { mutableStateOf(false) }
-    val infiniteTransition = rememberInfiniteTransition(label = "focus")
-    val focusRingScale by infiniteTransition.animateFloat(
-        initialValue = 0.8f, targetValue = 1.2f,
-        animationSpec = infiniteRepeatable(tween(500), RepeatMode.Reverse), label = "focusRing"
+    var focusLocked by remember { mutableStateOf(false) }
+    val focusRingAnim = rememberInfiniteTransition(label = "focusRing")
+    val focusRingScale by focusRingAnim.animateFloat(
+        0.8f, 1.2f,
+        infiniteRepeatable(tween(500), RepeatMode.Reverse), label = "focusScale"
     )
-    val focusRingAlpha by infiniteTransition.animateFloat(
-        initialValue = 1f, targetValue = 0.4f,
-        animationSpec = infiniteRepeatable(tween(500), RepeatMode.Reverse), label = "focusRingAlpha"
+    val focusRingAlpha by focusRingAnim.animateFloat(
+        1f, 0.4f,
+        infiniteRepeatable(tween(500), RepeatMode.Reverse), label = "focusAlpha"
     )
 
-    // Grid overlay
+    // ── UI toggles ──
     var showGrid by remember { mutableStateOf(false) }
-
-    // Timer
-    var timerSeconds by remember { mutableIntStateOf(0) } // 0 = no timer
+    var timerSeconds by remember { mutableIntStateOf(0) }
     var countdown by remember { mutableIntStateOf(0) }
     var isCountingDown by remember { mutableStateOf(false) }
-
-    // Aspect ratio
-    var aspectRatio by remember { mutableFloatStateOf(3f / 4f) } // 4:3 default
+    var aspectRatio by remember { mutableFloatStateOf(3f / 4f) }
     val aspectRatios = listOf("4:3" to (3f / 4f), "16:9" to (9f / 16f), "1:1" to 1f)
     var aspectLabel by remember { mutableStateOf("4:3") }
 
-    // Post-capture state
+    // ── Pro drawer ──
+    var showProDrawer by remember { mutableStateOf(false) }
+
+    // ── Post-capture state ──
     var capturedUri by remember { mutableStateOf<String?>(null) }
     var capturedMime by remember { mutableStateOf<String?>(null) }
+    var lastCaptureUri by remember { mutableStateOf<String?>(null) }
     var showPostCapture by remember { mutableStateOf(false) }
 
-    // Permission
+    // ── Species field mode ──
+    var showSpeciesPanel by remember { mutableStateOf(false) }
+    var speciesName by remember { mutableStateOf("") }
+    var speciesCategory by remember { mutableStateOf("Other") }
+    var speciesConfidence by remember { mutableIntStateOf(80) }
+    var speciesNotes by remember { mutableStateOf("") }
+
+    // ── Gallery picker ──
+    val galleryLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.PickVisualMedia()
+    ) { uri ->
+        if (uri != null) {
+            capturedUri = uri.toString()
+            capturedMime = getMimeTypeForUri(context, uri) ?: "image/jpeg"
+            lastCaptureUri = uri.toString()
+            showSpeciesPanel = true
+        }
+    }
+
+    // ── Permission ──
     val permissionLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
         hasCameraPermission = granted
         if (!granted) onDismiss()
     }
     LaunchedEffect(Unit) { if (!hasCameraPermission) permissionLauncher.launch(Manifest.permission.CAMERA) }
-
     DisposableEffect(Unit) { onDispose { cameraExecutor.shutdown() } }
 
-    // Bind camera
+    // ── Bind camera ──
     LaunchedEffect(previewViewRef, lensFacing) {
         val previewView = previewViewRef ?: return@LaunchedEffect
         if (!hasCameraPermission) return@LaunchedEffect
@@ -224,10 +244,9 @@ fun FieldMindCameraV2(
             }
         }
     }
-
     LaunchedEffect(flashMode) { imageCapture?.flashMode = flashMode }
 
-    // Local capture function
+    // ── Capture function ──
     val doCapture = remember(imageCapture) {
         {
             val capture = imageCapture ?: return@remember
@@ -250,21 +269,25 @@ fun FieldMindCameraV2(
                         }
                     }
                     isCapturing = false
-                    capturedUri = photoFile.toURI().toString()
+                    val uri = photoFile.toURI().toString()
+                    capturedUri = uri
                     capturedMime = "image/jpeg"
-                    showPostCapture = true
+                    lastCaptureUri = uri
+                    showSpeciesPanel = true // Show species field mode by default on capture
                 }
                 override fun onError(exception: ImageCaptureException) {
                     isCapturing = false
-                    capturedUri = photoFile.toURI().toString()
+                    val uri = photoFile.toURI().toString()
+                    capturedUri = uri
                     capturedMime = "image/jpeg"
-                    showPostCapture = true
+                    lastCaptureUri = uri
+                    showSpeciesPanel = true
                 }
             })
         }
     }
 
-    // Countdown timer
+    // ── Countdown timer ──
     LaunchedEffect(isCountingDown, countdown) {
         if (isCountingDown && countdown > 0) {
             delay(1000)
@@ -276,20 +299,25 @@ fun FieldMindCameraV2(
         }
     }
 
+    // ── Permission denied state ──
     if (!hasCameraPermission) {
-        Box(modifier.fillMaxWidth().aspectRatio(3f / 4f).clip(RoundedCornerShape(28.dp)).background(MaterialTheme.colorScheme.surfaceContainerHigh), contentAlignment = Alignment.Center) {
+        Box(modifier.fillMaxSize().background(Color.Black), contentAlignment = Alignment.Center) {
             Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Icon(icon = FieldMindIcons.Camera, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, size = 48.dp)
-                Text("Camera permission required", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                Icon(icon = FieldMindIcons.Camera, contentDescription = null, tint = Color.White.copy(alpha = 0.6f), size = 48.dp)
+                Text("Camera permission required", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, color = Color.White)
                 Button(onClick = { permissionLauncher.launch(Manifest.permission.CAMERA) }, shape = RoundedCornerShape(16.dp)) { Text("Grant permission") }
-                TextButton(onClick = onDismiss) { Text("Cancel") }
+                TextButton(onClick = onDismiss) { Text("Cancel", color = Color.White.copy(alpha = 0.7f)) }
             }
         }
         return
     }
 
+    // ══════════════════════════════════════════════════════════════
+    //  Main camera layout
+    // ══════════════════════════════════════════════════════════════
     Box(modifier.fillMaxSize().background(Color.Black)) {
-        // Camera preview
+
+        // ── Camera preview ──
         AndroidView(
             modifier = Modifier
                 .fillMaxSize()
@@ -302,20 +330,31 @@ fun FieldMindCameraV2(
                 }
                 .pointerInput(Unit) {
                     detectTapGestures { offset ->
-                        // Tap to focus
-                        val previewView = previewViewRef ?: return@detectTapGestures
-                        val factory = SurfaceOrientedMeteringPointFactory(previewView.width.toFloat(), previewView.height.toFloat())
+                        val pv = previewViewRef ?: return@detectTapGestures
+                        val factory = SurfaceOrientedMeteringPointFactory(
+                            pv.width.toFloat(), pv.height.toFloat()
+                        )
                         val point = factory.createPoint(offset.x, offset.y)
                         val action = FocusMeteringAction.Builder(point).build()
                         camera?.cameraControl?.startFocusAndMetering(action)
                         focusPoint = offset
                         focusRingVisible = true
-                        scope.launch { delay(1500); focusRingVisible = false }
+                        focusLocked = false
+                        scope.launch {
+                            delay(800)
+                            focusLocked = true
+                            delay(1200)
+                            focusRingVisible = false
+                            focusLocked = false
+                        }
                     }
                 },
             factory = { ctx ->
                 PreviewView(ctx).apply {
-                    layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
+                    layoutParams = ViewGroup.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT,
+                        ViewGroup.LayoutParams.MATCH_PARENT
+                    )
                     scaleType = PreviewView.ScaleType.FILL_CENTER
                     implementationMode = PreviewView.ImplementationMode.COMPATIBLE
                     previewViewRef = this
@@ -324,16 +363,11 @@ fun FieldMindCameraV2(
             update = { previewViewRef = it }
         )
 
-        // Grid overlay
+        // ── Grid overlay ──
         if (showGrid) {
-            Canvas(
-                Modifier
-                    .fillMaxSize()
-            ) {
-                val w = size.width
-                val h = size.height
-                val lineColor = Color.White.copy(alpha = 0.5f)
-                // Rule of thirds
+            Canvas(Modifier.fillMaxSize()) {
+                val w = size.width; val h = size.height
+                val lineColor = Color.White.copy(alpha = 0.45f)
                 drawLine(lineColor, Offset(w / 3, 0f), Offset(w / 3, h), strokeWidth = 1.5f)
                 drawLine(lineColor, Offset(2 * w / 3, 0f), Offset(2 * w / 3, h), strokeWidth = 1.5f)
                 drawLine(lineColor, Offset(0f, h / 3), Offset(w, h / 3), strokeWidth = 1.5f)
@@ -341,258 +375,621 @@ fun FieldMindCameraV2(
             }
         }
 
+        // ── Crop guide ──
         if (aspectLabel != "Full") {
             CropGuideOverlay(aspectRatio)
         }
 
-        // Focus ring
+        // ── Countdown ──
+        if (isCountingDown && countdown > 0) {
+            val countScale by rememberInfiniteTransition(label = "countScale").animateFloat(
+                0.8f, 1.2f,
+                infiniteRepeatable(tween(600), RepeatMode.Reverse), label = "countScaleAnim"
+            )
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Text(
+                    "$countdown",
+                    style = MaterialTheme.typography.displayLarge.copy(fontSize = 120.sp),
+                    color = Color.White, fontWeight = FontWeight.Bold,
+                    modifier = Modifier.graphicsLayer { scaleX = countScale; scaleY = countScale; alpha = 0.9f }
+                )
+            }
+        }
+
+        // ── Top controls bar (glassmorphic) ──
+        Box(
+            Modifier
+                .fillMaxWidth()
+                .align(Alignment.TopCenter)
+                .padding(horizontal = 16.dp, vertical = 8.dp)
+                .safeDrawingPadding()
+        ) {
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .background(Color.Black.copy(alpha = 0.45f), RoundedCornerShape(28.dp))
+                    .padding(horizontal = 12.dp, vertical = 6.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Flash toggle
+                val flashIcon = when (flashMode) {
+                    FLASH_ON -> FieldMindIcons.FlashOn
+                    FLASH_AUTO -> FieldMindIcons.FlashAuto
+                    else -> FieldMindIcons.FlashOff
+                }
+                CameraTopIcon(icon = flashIcon, active = flashMode != FLASH_OFF) {
+                    flashMode = when (flashMode) {
+                        FLASH_OFF -> FLASH_ON
+                        FLASH_ON -> FLASH_AUTO
+                        else -> FLASH_OFF
+                    }
+                }
+
+                Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    // Grid toggle
+                    CameraTopIcon(
+                        icon = MaterialSymbolIcon("grid_on"),
+                        active = showGrid,
+                        onClick = { showGrid = !showGrid }
+                    )
+                    // Timer toggle
+                    CameraTopIcon(
+                        label = if (timerSeconds == 0) "⏱" else "${timerSeconds}s",
+                        active = timerSeconds > 0,
+                        onClick = {
+                            timerSeconds = when (timerSeconds) {
+                                0 -> 3; 3 -> 5; 5 -> 10; else -> 0
+                            }
+                        }
+                    )
+                    // Aspect ratio
+                    CameraTopIcon(
+                        label = aspectLabel,
+                        active = false,
+                        onClick = {
+                            val idx = aspectRatios.indexOfFirst { it.first == aspectLabel }
+                            val next = (idx + 1) % aspectRatios.size
+                            aspectLabel = aspectRatios[next].first
+                            aspectRatio = aspectRatios[next].second
+                        }
+                    )
+                }
+
+                // Close
+                CameraTopIcon(icon = FieldMindIcons.Close, active = false, onClick = onDismiss)
+            }
+        }
+
+        // ── Focus ring ──
         focusPoint?.let { pt ->
             if (focusRingVisible) {
                 Box(
                     Modifier
                         .offset(x = pt.x.dp - 24.dp, y = pt.y.dp - 24.dp)
                         .size(48.dp)
-                        .graphicsLayer { scaleX = focusRingScale; scaleY = focusRingScale; alpha = focusRingAlpha }
-                        .border(2.dp, Color.White, CircleShape)
-                )
+                        .graphicsLayer {
+                            scaleX = focusRingScale
+                            scaleY = focusRingScale
+                            alpha = focusRingAlpha
+                        }
+                        .border(2.dp, if (focusLocked) Color(0xFF4CAF50) else Color.White, CircleShape)
+                ) {
+                    if (focusLocked) {
+                        Box(
+                            Modifier
+                                .size(16.dp)
+                                .align(Alignment.Center)
+                                .background(Color(0xFF4CAF50).copy(alpha = 0.3f), CircleShape)
+                                .border(1.5f.dp, Color(0xFF4CAF50), CircleShape)
+                        )
+                    }
+                }
             }
         }
 
-        // Pro controls toggle
-        var showProControls by remember { mutableStateOf(false) }
-
-        // Zoom slider (moved ABOVE capture button — between controls and preview)
-        if (maxZoom > 1f) {
-            Slider(
-                value = zoomRatio,
-                onValueChange = { zoomRatio = it; camera?.cameraControl?.setZoomRatio(it) },
-                valueRange = 1f..maxZoom,
+        // ── AE/AF lock indicator ──
+        if (focusLocked) {
+            Surface(
                 modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(horizontal = 60.dp, vertical = 4.dp)
-                    .height(32.dp)
-                    .padding(bottom = 80.dp), // Push above capture button
-                colors = SliderDefaults.colors(
-                    thumbColor = Color.White,
-                    activeTrackColor = Color.White,
-                    inactiveTrackColor = Color.White.copy(alpha = 0.3f)
-                )
+                    .align(Alignment.TopCenter)
+                    .padding(top = 60.dp),
+                shape = RoundedCornerShape(12.dp),
+                color = Color(0xFF4CAF50).copy(alpha = 0.85f)
+            ) {
+                Row(
+                    Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    Text("🔒", style = MaterialTheme.typography.labelSmall)
+                    Text(
+                        "AE/AF LOCK",
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White,
+                        letterSpacing = 1.sp
+                    )
+                }
+            }
+        }
+
+        // ── Dim overlay when species panel or pro drawer is open ──
+        if (showSpeciesPanel) {
+            Box(
+                Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.5f))
+                    .clickable(enabled = false) {} // block touches behind panel
             )
         }
 
-        // Countdown overlay
-        if (isCountingDown && countdown > 0) {
-            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text(
-                    "$countdown",
-                    style = MaterialTheme.typography.displayLarge.copy(fontSize = 96.sp),
-                    color = Color.White,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.graphicsLayer { scaleX = focusRingScale; scaleY = focusRingScale }
-                )
+        // ── Species field panel (slides up) ──
+        AnimatedVisibility(
+            visible = showSpeciesPanel,
+            enter = slideInVertically(initialOffsetY = { it }, animationSpec = tween(300, easing = FastOutSlowInEasing)) + fadeIn(tween(200)),
+            exit = slideOutVertically(targetOffsetY = { it }, animationSpec = tween(250)) + fadeOut(tween(150))
+        ) {
+            SpeciesFieldPanel(
+                capturedUri = capturedUri,
+                speciesName = speciesName,
+                onSpeciesNameChange = { speciesName = it },
+                speciesCategory = speciesCategory,
+                onSpeciesCategoryChange = { speciesCategory = it },
+                speciesConfidence = speciesConfidence,
+                onSpeciesConfidenceChange = { speciesConfidence = it },
+                speciesNotes = speciesNotes,
+                onSpeciesNotesChange = { speciesNotes = it },
+                onSaveContinue = {
+                    val uri = capturedUri ?: return@SpeciesFieldPanel
+                    val mime = capturedMime ?: "image/jpeg"
+                    onSpeciesCaptured(uri, mime, speciesName, speciesCategory, speciesConfidence.toString(), speciesNotes)
+                    // Reset for next capture
+                    speciesName = ""
+                    speciesCategory = "Other"
+                    speciesConfidence = 80
+                    speciesNotes = ""
+                    showSpeciesPanel = false
+                },
+                onSaveExit = {
+                    val uri = capturedUri ?: return@SpeciesFieldPanel
+                    val mime = capturedMime ?: "image/jpeg"
+                    onSpeciesCaptured(uri, mime, speciesName, speciesCategory, speciesConfidence.toString(), speciesNotes)
+                    showSpeciesPanel = false
+                    onDismiss()
+                },
+                onDismissPanel = {
+                    // Just save without species data
+                    capturedUri?.let { uri ->
+                        onPhotoCaptured(uri, capturedMime ?: "image/jpeg")
+                    }
+                    showSpeciesPanel = false
+                }
+            )
+        }
+
+        // ── Pro controls drawer ──
+        Box(Modifier.fillMaxSize()) {
+            AnimatedVisibility(
+                visible = showProDrawer && !showSpeciesPanel,
+                enter = slideInVertically(initialOffsetY = { it }, animationSpec = tween(280, easing = FastOutSlowInEasing)) + fadeIn(tween(200)),
+                exit = slideOutVertically(targetOffsetY = { it }, animationSpec = tween(220)) + fadeOut(tween(150))
+            ) {
+                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.BottomCenter) {
+                    ProControlsDrawer(
+                        camera = camera,
+                        maxZoom = maxZoom,
+                        onClose = { showProDrawer = false }
+                    )
+                }
             }
         }
 
-        // Controls overlay
-        Box(
-            Modifier
-                .fillMaxSize()
-                .safeDrawingPadding()
-                .padding(16.dp),
-            contentAlignment = Alignment.BottomCenter
-        ) {
-            // Top controls
-            Row(Modifier.fillMaxWidth().align(Alignment.TopCenter), horizontalArrangement = Arrangement.SpaceBetween) {
-                // Flash toggle
-                val flashIcon = when (flashMode) { FLASH_ON -> FieldMindIcons.FlashOn; FLASH_AUTO -> FieldMindIcons.FlashAuto; else -> FieldMindIcons.FlashOff }
-                IconButton(onClick = { flashMode = when (flashMode) { FLASH_OFF -> FLASH_ON; FLASH_ON -> FLASH_AUTO; FLASH_AUTO -> FLASH_OFF; else -> FLASH_OFF } }, modifier = Modifier.size(44.dp).background(Color.Black.copy(alpha = 0.35f), CircleShape)) {
-                    Icon(icon = flashIcon, contentDescription = "Flash", tint = Color.White, size = 22.dp)
-                }
-
-                // Center controls
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    // Grid toggle
-                    IconButton(onClick = { showGrid = !showGrid }, modifier = Modifier.size(44.dp).background(Color.Black.copy(alpha = 0.35f), CircleShape)) {
-                        Icon(icon = MaterialSymbolIcon("grid_on"), contentDescription = "Grid", tint = if (showGrid) Color(0xFFFFCC80) else Color.White, size = 22.dp)
-                    }
-                    // Timer toggle
-                    IconButton(onClick = { timerSeconds = when (timerSeconds) { 0 -> 3; 3 -> 5; 5 -> 10; else -> 0 } }, modifier = Modifier.size(44.dp).background(Color.Black.copy(alpha = 0.35f), CircleShape)) {
-                        Text(if (timerSeconds == 0) "⏱" else "${timerSeconds}s", color = if (timerSeconds > 0) Color(0xFFFFCC80) else Color.White, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
-                    }
-                    // Crop guide only: the preview remains immersive and full-screen.
-                    IconButton(onClick = {
-                        val idx = aspectRatios.indexOfFirst { it.first == aspectLabel }
-                        val next = (idx + 1) % aspectRatios.size
-                        aspectLabel = aspectRatios[next].first
-                        aspectRatio = aspectRatios[next].second
-                    }, modifier = Modifier.size(44.dp).background(Color.Black.copy(alpha = 0.35f), CircleShape)) {
-                        Text(aspectLabel, color = Color.White, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
-                    }
-                }
-
-                // Dismiss
-                IconButton(onClick = onDismiss, modifier = Modifier.size(44.dp).background(Color.Black.copy(alpha = 0.35f), CircleShape)) {
-                    Icon(icon = FieldMindIcons.Close, contentDescription = "Close", tint = Color.White, size = 22.dp)
-                }
-            }
-
-            // Bottom controls
-            Row(Modifier.fillMaxWidth().align(Alignment.BottomCenter), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                // Pro toggle
-                IconButton(onClick = { showProControls = !showProControls }, modifier = Modifier.size(44.dp).background(Color.Black.copy(alpha = 0.35f), CircleShape)) {
-                    Text("P", color = if (showProControls) Color(0xFFFFCC80) else Color.White, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
-                }
-
-                // Capture button
-                Box(
-                    Modifier.size(72.dp).clip(CircleShape).background(Color.White.copy(alpha = 0.9f))
-                        .clickable(enabled = !isCapturing && !isCountingDown) {
-                            if (timerSeconds > 0) {
-                                countdown = timerSeconds
-                                isCountingDown = true
-                            } else {
-                                doCapture()
+        // ── Glassmorphic pill bottom bar ──
+        if (!showSpeciesPanel) {
+            Box(
+                Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(horizontal = 16.dp, vertical = 12.dp)
+                    .safeDrawingPadding()
+            ) {
+                Surface(
+                    shape = RoundedCornerShape(36.dp),
+                    color = Color.Black.copy(alpha = 0.55f),
+                    tonalElevation = 0.dp,
+                    shadowElevation = 12.dp,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(Modifier.padding(horizontal = 12.dp, vertical = 4.dp)) {
+                        // ── Zoom strip (inside the pill) ──
+                        if (maxZoom > 1f) {
+                            Row(
+                                Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 4.dp, vertical = 2.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Text(
+                                    "W",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = Color.White.copy(alpha = 0.5f),
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 10.sp
+                                )
+                                Slider(
+                                    value = zoomRatio,
+                                    onValueChange = {
+                                        zoomRatio = it
+                                        camera?.cameraControl?.setZoomRatio(it)
+                                    },
+                                    valueRange = 1f..maxZoom,
+                                    modifier = Modifier.weight(1f).height(24.dp),
+                                    colors = SliderDefaults.colors(
+                                        thumbColor = Color.White,
+                                        activeTrackColor = Color.White,
+                                        inactiveTrackColor = Color.White.copy(alpha = 0.25f)
+                                    )
+                                )
+                                Text(
+                                    "${zoomRatio.roundToInt()}x",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = Color.White,
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 11.sp,
+                                    modifier = Modifier.width(28.dp),
+                                    textAlign = TextAlign.End
+                                )
                             }
                         }
-                        .padding(6.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Box(Modifier.fillMaxSize().clip(CircleShape).background(if (isCapturing) Color.Gray else Color.White))
-                }
 
-                // Switch camera
-                IconButton(onClick = { lensFacing = if (lensFacing == CameraSelector.LENS_FACING_BACK) CameraSelector.LENS_FACING_FRONT else CameraSelector.LENS_FACING_BACK }, modifier = Modifier.size(44.dp).background(Color.Black.copy(alpha = 0.35f), CircleShape)) {
-                    Icon(icon = FieldMindIcons.FlipCamera, contentDescription = "Switch", tint = Color.White, size = 22.dp)
-                }
-            }
-
-            // Pro controls panel (slides up from bottom)
-            if (showProControls) {
-                Card(
-                    modifier = Modifier
-                        .align(Alignment.BottomCenter)
-                        .padding(bottom = 80.dp)
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp),
-                    shape = RoundedCornerShape(20.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.Black.copy(alpha = 0.85f))
-                ) {
-                    Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                        var evValue by remember { mutableFloatStateOf(0f) }
-                        var isoMode by remember { mutableIntStateOf(0) } // 0=Auto, 1=100, 2=200, 3=400, 4=800
-                        var wbMode by remember { mutableIntStateOf(0) } // 0=Auto, 1=Sunny, 2=Cloudy, 3=Tungsten, 4=Fluorescent
-                        val isoLabels = listOf("Auto", "100", "200", "400", "800")
-                        val wbLabels = listOf("Auto", "☀️", "☁️", "💡", "🏠")
-
-                        // Exposure compensation
-                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Text("EV", style = MaterialTheme.typography.labelMedium, color = Color.White, fontWeight = FontWeight.Bold, modifier = Modifier.width(24.dp))
-                            Slider(
-                                value = evValue,
-                                onValueChange = { evValue = it.roundToInt().toFloat()
-                                    // Apply via Camera2Interop (requires CameraX 1.4+)
-                                    camera?.cameraInfo?.exposureState?.let { exposureState ->
-                                        val index = evValue.toInt().coerceIn(
-                                            exposureState.exposureCompensationRange.lower,
-                                            exposureState.exposureCompensationRange.upper
-                                        )
-                                        camera?.cameraControl?.setExposureCompensationIndex(index)
-                                    }
-                                },
-                                valueRange = -2f..2f,
-                                modifier = Modifier.weight(1f),
-                                colors = SliderDefaults.colors(thumbColor = Color.White, activeTrackColor = Color(0xFFFFCC80), inactiveTrackColor = Color.White.copy(alpha = 0.3f))
-                            )
-                            Text("${evValue.toInt()}${if (evValue > 0) "+" else ""}", style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.7f))
-                        }
-                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            // ISO selector
-                            Column(Modifier.weight(1f)) {
-                                Text("ISO", style = MaterialTheme.typography.labelMedium, color = Color.White.copy(alpha = 0.7f), fontSize = 9.sp)
-                                Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                                    isoLabels.forEachIndexed { i, label ->
-                                        Text(
-                                            label,
-                                            modifier = Modifier.clickable {
-                                                isoMode = i
-                                                // ISO is tracked for UI feedback; CameraX keeps auto exposure active here.
-                                            },
-                                            style = MaterialTheme.typography.labelSmall,
-                                            fontWeight = if (isoMode == i) FontWeight.Bold else FontWeight.Normal,
-                                            color = if (isoMode == i) Color(0xFFFFCC80) else Color.White,
-                                            fontSize = 9.sp
-                                        )
-                                        if (i < isoLabels.lastIndex) Spacer(Modifier.width(2.dp))
-                                    }
+                        // ── Bottom controls row ──
+                        Row(
+                            Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            // Gallery thumbnail (last capture)
+                            Box(
+                                Modifier.size(44.dp).clip(RoundedCornerShape(12.dp))
+                                    .background(Color.White.copy(alpha = 0.12f))
+                                    .clickable { galleryLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) },
+                                contentAlignment = Alignment.Center
+                            ) {
+                                if (lastCaptureUri != null) {
+                                    AsyncImage(
+                                        model = lastCaptureUri,
+                                        contentDescription = "Last photo",
+                                        modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(12.dp)),
+                                        contentScale = ContentScale.Crop
+                                    )
+                                } else {
+                                    Icon(
+                                        MaterialSymbolIcon("photo_library"),
+                                        null,
+                                        tint = Color.White.copy(alpha = 0.5f),
+                                        size = 20.dp
+                                    )
                                 }
                             }
-                            // WB selector
-                            Column(Modifier.weight(1f)) {
-                                Text("WB", style = MaterialTheme.typography.labelMedium, color = Color.White.copy(alpha = 0.7f), fontSize = 9.sp)
-                                Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                                    wbLabels.forEachIndexed { i, label ->
-                                        Text(
-                                            label,
-                                            modifier = Modifier.clickable {
-                                                wbMode = i
-                                                // White-balance selection is UI-only until a supported Camera2 pipeline is configured.
-                                            },
-                                            style = MaterialTheme.typography.labelSmall,
-                                            fontWeight = if (wbMode == i) FontWeight.Bold else FontWeight.Normal,
-                                            color = if (wbMode == i) Color(0xFFFFCC80) else Color.White,
-                                            fontSize = 9.sp
-                                        )
-                                        if (i < wbLabels.lastIndex) Spacer(Modifier.width(2.dp))
+
+                            // Capture button
+                            Box(
+                                Modifier.size(72.dp).clip(CircleShape)
+                                    .background(Color.White.copy(alpha = 0.9f))
+                                    .clickable(enabled = !isCapturing && !isCountingDown) {
+                                        if (timerSeconds > 0) {
+                                            countdown = timerSeconds
+                                            isCountingDown = true
+                                        } else {
+                                            doCapture()
+                                        }
                                     }
-                                }
+                                    .padding(5.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Box(
+                                    Modifier.fillMaxSize().clip(CircleShape)
+                                        .background(if (isCapturing) Color.Gray else Color.White)
+                                )
                             }
-                            // Focus mode
-                            Column(Modifier.weight(1f)) {
-                                Text("Focus", style = MaterialTheme.typography.labelMedium, color = Color.White.copy(alpha = 0.7f), fontSize = 9.sp)
-                                Text("AF", style = MaterialTheme.typography.labelMedium, color = Color.White, fontWeight = FontWeight.Bold)
+
+                            // Right side: flip + pro toggle
+                            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                // Flip camera
+                                PillIconButton(
+                                    icon = FieldMindIcons.FlipCamera,
+                                    onClick = {
+                                        lensFacing = if (lensFacing == CameraSelector.LENS_FACING_BACK)
+                                            CameraSelector.LENS_FACING_FRONT
+                                        else
+                                            CameraSelector.LENS_FACING_BACK
+                                    }
+                                )
+                                // Pro toggle
+                                PillIconButton(
+                                    label = "P",
+                                    active = showProDrawer,
+                                    onClick = { showProDrawer = !showProDrawer }
+                                )
                             }
                         }
                     }
                 }
             }
+        }
 
-            if (isCapturing) {
-                CircularProgressIndicator(Modifier.align(Alignment.Center).size(32.dp), color = Color.White, strokeWidth = 3.dp)
-            }
+        // ── Capturing indicator ──
+        if (isCapturing) {
+            CircularProgressIndicator(
+                Modifier.align(Alignment.Center).size(32.dp),
+                color = Color.White,
+                strokeWidth = 3.dp
+            )
         }
     }
+}
 
-    // Post-capture bottom sheet
-    AnimatedVisibility(visible = showPostCapture, enter = fadeIn(tween(200)), exit = fadeOut(tween(200))) {
-        Card(
-            modifier = Modifier.fillMaxWidth().padding(16.dp),
-            shape = RoundedCornerShape(24.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
-            elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+// ══════════════════════════════════════════════════════════════════════
+//  Sub-components
+// ══════════════════════════════════════════════════════════════════════
+
+/**
+ * Small icon button for the top controls bar.
+ */
+@Composable
+private fun CameraTopIcon(
+    icon: MaterialSymbolIcon? = null,
+    label: String? = null,
+    active: Boolean,
+    onClick: () -> Unit
+) {
+    val tint = if (active) Color(0xFFFFCC80) else Color.White.copy(alpha = 0.85f)
+    Box(
+        Modifier.size(38.dp).clip(CircleShape)
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center
+    ) {
+        if (icon != null) {
+            Icon(icon = icon, contentDescription = null, tint = tint, size = 20.dp)
+        } else if (label != null) {
+            Text(label, color = tint, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
+        }
+    }
+}
+
+/**
+ * Icon button for the glassmorphic pill bottom bar.
+ */
+@Composable
+private fun PillIconButton(
+    icon: MaterialSymbolIcon? = null,
+    label: String? = null,
+    active: Boolean = false,
+    onClick: () -> Unit
+) {
+    val bg = if (active) Color.White.copy(alpha = 0.2f) else Color.White.copy(alpha = 0.1f)
+    val tint = if (active) Color(0xFFFFCC80) else Color.White
+    Box(
+        Modifier.size(44.dp).clip(CircleShape).background(bg).clickable(onClick = onClick),
+        contentAlignment = Alignment.Center
+    ) {
+        if (icon != null) {
+            Icon(icon = icon, contentDescription = null, tint = tint, size = 20.dp)
+        } else if (label != null) {
+            Text(label, color = tint, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
+        }
+    }
+}
+
+/**
+ * Species field mode inline panel — slides up after capture.
+ * Lets the user tag the photo with species details and optionally continue shooting.
+ */
+@Composable
+private fun SpeciesFieldPanel(
+    capturedUri: String?,
+    speciesName: String,
+    onSpeciesNameChange: (String) -> Unit,
+    speciesCategory: String,
+    onSpeciesCategoryChange: (String) -> Unit,
+    speciesConfidence: Int,
+    onSpeciesConfidenceChange: (Int) -> Unit,
+    speciesNotes: String,
+    onSpeciesNotesChange: (String) -> Unit,
+    onSaveContinue: () -> Unit,
+    onSaveExit: () -> Unit,
+    onDismissPanel: () -> Unit
+) {
+    val categories = listOf(
+        "Bird", "Mammal", "Insect", "Plant", "Fungi",
+        "Reptile", "Amphibian", "Fish", "Mollusk", "Other"
+    )
+    val confidenceLabels = listOf("50%", "60%", "70%", "80%", "90%", "95%", "99%")
+    val confidenceValues = listOf(50, 60, 70, 80, 90, 95, 99)
+
+    Box(
+        Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 12.dp)
+            .safeDrawingPadding()
+    ) {
+        Surface(
+            shape = RoundedCornerShape(28.dp),
+            color = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.97f),
+            shadowElevation = 16.dp,
+            modifier = Modifier.fillMaxWidth()
         ) {
-            Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Box(Modifier.size(48.dp).clip(RoundedCornerShape(14.dp)).background(FieldMindTheme.colors.positive.copy(alpha = 0.14f)), contentAlignment = Alignment.Center) {
-                        Icon(icon = FieldMindIcons.Check, contentDescription = null, tint = FieldMindTheme.colors.positive, size = 24.dp)
+            Column(
+                Modifier.padding(20.dp),
+                verticalArrangement = Arrangement.spacedBy(14.dp)
+            ) {
+                // Header with photo thumbnail
+                Row(
+                    Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    // Photo thumbnail
+                    Box(
+                        Modifier.size(56.dp).clip(RoundedCornerShape(14.dp))
+                            .background(MaterialTheme.colorScheme.surfaceContainerHigh)
+                    ) {
+                        if (capturedUri != null) {
+                            AsyncImage(
+                                model = capturedUri,
+                                contentDescription = "Captured photo",
+                                modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(14.dp)),
+                                contentScale = ContentScale.Crop
+                            )
+                        }
                     }
                     Column(Modifier.weight(1f)) {
-                        Text("Photo saved", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                        Text("What would you like to do?", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(
+                            "Tag species",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            "Add details and continue shooting",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    // Dismiss (just save photo without species data)
+                    IconButton(onClick = onDismissPanel, modifier = Modifier.size(36.dp)) {
+                        Icon(FieldMindIcons.Close, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, size = 18.dp)
                     }
                 }
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    onAddToObservation?.let { action ->
-                        Button(onClick = { showPostCapture = false; action(capturedUri ?: "", capturedMime ?: "image/jpeg") }, modifier = Modifier.weight(1f), shape = RoundedCornerShape(14.dp)) {
-                            Icon(FieldMindIcons.Observation, null, size = 18.dp); Spacer(Modifier.size(6.dp)); Text("Observation")
+
+                // Species name
+                OutlinedTextField(
+                    value = speciesName,
+                    onValueChange = onSpeciesNameChange,
+                    label = { Text("Species name") },
+                    placeholder = { Text("e.g. Red-tailed Hawk") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp)
+                )
+
+                // Category chips
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text(
+                        "Category",
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Row(
+                        Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        categories.chunked(5).forEach { row ->
+                            row.forEach { cat ->
+                                val selected = speciesCategory == cat
+                                Surface(
+                                    onClick = { onSpeciesCategoryChange(cat) },
+                                    shape = RoundedCornerShape(12.dp),
+                                    color = if (selected) MaterialTheme.colorScheme.primary
+                                    else MaterialTheme.colorScheme.surfaceContainerHigh,
+                                    tonalElevation = 0.dp
+                                ) {
+                                    Text(
+                                        cat,
+                                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                                        style = MaterialTheme.typography.labelSmall,
+                                        fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
+                                        color = if (selected) MaterialTheme.colorScheme.onPrimary
+                                        else MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
                         }
                     }
-                    onAddQuestion?.let { action ->
-                        OutlinedButton(onClick = { showPostCapture = false; action(capturedUri ?: "", capturedMime ?: "image/jpeg") }, modifier = Modifier.weight(1f), shape = RoundedCornerShape(14.dp)) {
-                            Icon(FieldMindIcons.Question, null, size = 18.dp); Spacer(Modifier.size(6.dp)); Text("Question")
+                }
+
+                // Confidence slider
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Row(
+                        Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            "Confidence",
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Text(
+                            "${speciesConfidence}%",
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                    Row(
+                        Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        confidenceValues.forEach { value ->
+                            val selected = speciesConfidence == value
+                            Surface(
+                                onClick = { onSpeciesConfidenceChange(value) },
+                                shape = RoundedCornerShape(10.dp),
+                                color = if (selected) MaterialTheme.colorScheme.primaryContainer
+                                else MaterialTheme.colorScheme.surfaceContainerHigh,
+                                tonalElevation = 0.dp,
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Text(
+                                    "$value%",
+                                    modifier = Modifier.padding(vertical = 6.dp).fillMaxWidth(),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
+                                    color = if (selected) MaterialTheme.colorScheme.onPrimaryContainer
+                                    else MaterialTheme.colorScheme.onSurfaceVariant,
+                                    textAlign = TextAlign.Center
+                                )
+                            }
                         }
                     }
-                    FilledTonalButton(onClick = { showPostCapture = false; onPhotoCaptured(capturedUri ?: "", capturedMime ?: "image/jpeg") }, modifier = Modifier.weight(1f), shape = RoundedCornerShape(14.dp)) {
-                        Text("Just save")
+                }
+
+                // Notes
+                OutlinedTextField(
+                    value = speciesNotes,
+                    onValueChange = onSpeciesNotesChange,
+                    label = { Text("Quick notes (optional)") },
+                    placeholder = { Text("Behavior, habitat, etc.") },
+                    minLines = 1,
+                    maxLines = 2,
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp)
+                )
+
+                // Action buttons
+                Row(
+                    Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    OutlinedButton(
+                        onClick = onSaveExit,
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(16.dp)
+                    ) {
+                        Icon(FieldMindIcons.Archive, null, size = 16.dp)
+                        Spacer(Modifier.size(6.dp))
+                        Text("Save & Exit", maxLines = 1)
+                    }
+                    Button(
+                        onClick = onSaveContinue,
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(16.dp)
+                    ) {
+                        Icon(FieldMindIcons.Camera, null, size = 16.dp)
+                        Spacer(Modifier.size(6.dp))
+                        Text("Save & Continue", maxLines = 1)
                     }
                 }
             }
@@ -601,10 +998,239 @@ fun FieldMindCameraV2(
 }
 
 /**
- * Overlays a centered crop guide rectangle matching the selected aspect ratio.
- * Draws white semi-transparent corners (L-shapes) at each corner of the guide,
- * and dims the surrounding area so the framed region is visually prominent.
+ * Slide-up pro controls drawer with ISO, EV, WB, and manual focus.
  */
+@Composable
+private fun ProControlsDrawer(
+    camera: Camera?,
+    maxZoom: Float,
+    onClose: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    var evValue by remember { mutableFloatStateOf(0f) }
+    var isoMode by remember { mutableIntStateOf(0) }
+    var wbMode by remember { mutableIntStateOf(0) }
+    var manualFocus by remember { mutableFloatStateOf(0f) }
+
+    val isoLabels = listOf("Auto", "100", "200", "400", "800")
+    val wbLabels = listOf("Auto", "☀️Sun", "☁️Cloud", "💡Tung", "🏠Fluor")
+
+    Surface(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 12.dp)
+            .safeDrawingPadding(),
+        shape = RoundedCornerShape(28.dp),
+        color = Color.Black.copy(alpha = 0.82f),
+        shadowElevation = 16.dp
+    ) {
+        Column(
+            Modifier.padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            // Header
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    "Pro Controls",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
+                )
+                Surface(
+                    onClick = onClose,
+                    shape = RoundedCornerShape(12.dp),
+                    color = Color.White.copy(alpha = 0.12f)
+                ) {
+                    Box(Modifier.padding(horizontal = 16.dp, vertical = 6.dp)) {
+                        Text("Done", color = Color(0xFFFFCC80), fontWeight = FontWeight.Bold)
+                    }
+                }
+            }
+
+            // EV compensation
+            ProControlRow(
+                label = "EV",
+                value = "${evValue.toInt()}${if (evValue > 0) "+" else ""}",
+                accent = evValue != 0f
+            ) {
+                Slider(
+                    value = evValue,
+                    onValueChange = {
+                        evValue = it.roundToInt().toFloat()
+                        camera?.cameraInfo?.exposureState?.let { state ->
+                            val idx = it.toInt().coerceIn(
+                                state.exposureCompensationRange.lower,
+                                state.exposureCompensationRange.upper
+                            )
+                            camera.cameraControl?.setExposureCompensationIndex(idx)
+                        }
+                    },
+                    valueRange = -2f..2f,
+                    modifier = Modifier.weight(1f),
+                    colors = SliderDefaults.colors(
+                        thumbColor = Color.White,
+                        activeTrackColor = Color(0xFFFFCC80),
+                        inactiveTrackColor = Color.White.copy(alpha = 0.2f)
+                    )
+                )
+            }
+
+            // ISO selector
+            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Text(
+                    "ISO",
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Color.White.copy(alpha = 0.6f)
+                )
+                Row(
+                    Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    isoLabels.forEachIndexed { i, label ->
+                        val selected = isoMode == i
+                        Surface(
+                            onClick = { isoMode = i },
+                            shape = RoundedCornerShape(14.dp),
+                            color = if (selected) Color(0xFFFFCC80).copy(alpha = 0.25f)
+                            else Color.White.copy(alpha = 0.08f),
+                            border = if (selected) androidx.compose.foundation.BorderStroke(
+                                1.dp, Color(0xFFFFCC80).copy(alpha = 0.5f)
+                            ) else null,
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text(
+                                label,
+                                modifier = Modifier.padding(vertical = 10.dp).fillMaxWidth(),
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
+                                color = if (selected) Color(0xFFFFCC80) else Color.White.copy(alpha = 0.8f),
+                                textAlign = TextAlign.Center
+                            )
+                        }
+                    }
+                }
+            }
+
+            // WB selector
+            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Text(
+                    "White Balance",
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Color.White.copy(alpha = 0.6f)
+                )
+                Row(
+                    Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    wbLabels.forEachIndexed { i, label ->
+                        val selected = wbMode == i
+                        Surface(
+                            onClick = { wbMode = i },
+                            shape = RoundedCornerShape(14.dp),
+                            color = if (selected) Color(0xFFFFCC80).copy(alpha = 0.25f)
+                            else Color.White.copy(alpha = 0.08f),
+                            border = if (selected) androidx.compose.foundation.BorderStroke(
+                                1.dp, Color(0xFFFFCC80).copy(alpha = 0.5f)
+                            ) else null,
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text(
+                                label,
+                                modifier = Modifier.padding(vertical = 10.dp).fillMaxWidth(),
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
+                                color = if (selected) Color(0xFFFFCC80) else Color.White.copy(alpha = 0.8f),
+                                textAlign = TextAlign.Center
+                            )
+                        }
+                    }
+                }
+            }
+
+            // Manual focus slider
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(
+                    "Focus",
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Color.White.copy(alpha = 0.6f)
+                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        "AF",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = if (manualFocus == 0f) Color(0xFFFFCC80) else Color.White.copy(alpha = 0.5f),
+                        fontWeight = FontWeight.Bold
+                    )
+                    Slider(
+                        value = manualFocus,
+                        onValueChange = { manualFocus = it },
+                        valueRange = 0f..1f,
+                        modifier = Modifier.weight(1f),
+                        colors = SliderDefaults.colors(
+                            thumbColor = Color.White,
+                            activeTrackColor = Color(0xFFFFCC80),
+                            inactiveTrackColor = Color.White.copy(alpha = 0.2f)
+                        )
+                    )
+                    Text(
+                        "MF",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = if (manualFocus > 0f) Color(0xFFFFCC80) else Color.White.copy(alpha = 0.5f),
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Row label + value for pro control sliders.
+ */
+@Composable
+private fun ProControlRow(
+    label: String,
+    value: String,
+    accent: Boolean = false,
+    content: @Composable RowScope.() -> Unit
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        Text(
+            label,
+            style = MaterialTheme.typography.labelMedium,
+            fontWeight = FontWeight.Bold,
+            color = Color.White.copy(alpha = 0.6f),
+            modifier = Modifier.width(28.dp)
+        )
+        Row(Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically, content = content)
+        Text(
+            value,
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = if (accent) FontWeight.Bold else FontWeight.Normal,
+            color = if (accent) Color(0xFFFFCC80) else Color.White.copy(alpha = 0.6f),
+            modifier = Modifier.width(28.dp),
+            textAlign = TextAlign.End
+        )
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════════
+//  Crop Guide Overlay (unchanged from original)
+// ══════════════════════════════════════════════════════════════════════
+
 @Composable
 private fun CropGuideOverlay(aspectRatio: Float) {
     Canvas(Modifier.fillMaxSize()) {
@@ -616,24 +1242,29 @@ private fun CropGuideOverlay(aspectRatio: Float) {
         val lineColor = Color.White.copy(alpha = 0.72f)
         val dimColor = Color.Black.copy(alpha = 0.32f)
 
-        // Dim the surrounding area
         drawRect(dimColor, topLeft = Offset(0f, 0f), size = Size(size.width, top))
         drawRect(dimColor, topLeft = Offset(0f, top + guideHeight), size = Size(size.width, size.height - top - guideHeight))
         drawRect(dimColor, topLeft = Offset(0f, top), size = Size(left, guideHeight))
         drawRect(dimColor, topLeft = Offset(left + guideWidth, top), size = Size(size.width - left - guideWidth, guideHeight))
 
-        // ── Corner marks (L-shapes) ──
-        // Top-left:
         drawLine(lineColor, Offset(left, top), Offset(left + cornerLen, top), strokeWidth = 3f)
         drawLine(lineColor, Offset(left, top), Offset(left, top + cornerLen), strokeWidth = 3f)
-        // Top-right:
         drawLine(lineColor, Offset(left + guideWidth, top), Offset(left + guideWidth - cornerLen, top), strokeWidth = 3f)
         drawLine(lineColor, Offset(left + guideWidth, top), Offset(left + guideWidth, top + cornerLen), strokeWidth = 3f)
-        // Bottom-left:
         drawLine(lineColor, Offset(left, top + guideHeight), Offset(left + cornerLen, top + guideHeight), strokeWidth = 3f)
         drawLine(lineColor, Offset(left, top + guideHeight), Offset(left, top + guideHeight - cornerLen), strokeWidth = 3f)
-        // Bottom-right:
         drawLine(lineColor, Offset(left + guideWidth, top + guideHeight), Offset(left + guideWidth - cornerLen, top + guideHeight), strokeWidth = 3f)
         drawLine(lineColor, Offset(left + guideWidth, top + guideHeight), Offset(left + guideWidth, top + guideHeight - cornerLen), strokeWidth = 3f)
     }
 }
+
+/**
+ * Resolve MIME type from a content URI using ContentResolver.
+ * Falls back to image/jpeg if the type cannot be determined.
+ */
+private fun getMimeTypeForUri(context: android.content.Context, uri: android.net.Uri): String? {
+    return runCatching {
+        context.contentResolver.getType(uri)
+    }.getOrNull()?.takeIf { it.isNotBlank() }
+}
+

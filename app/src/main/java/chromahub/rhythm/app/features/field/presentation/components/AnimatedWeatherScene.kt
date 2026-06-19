@@ -243,12 +243,23 @@ private fun weatherPalette(temp: Double?, timeOfDay: TimeOfDay, isDarkTheme: Boo
             skyTop = Color(0xFFFF6B35),
             skyBottom = Color(0xFF9C27B0),
             skyAccent = Color(0xFFFF5252),
-            sunCol = Color(0xFFFF8A65),
-            sunGlowCol = Color(0xFFFF6B35),
+            sunCol = Color(0xFFFFF176),
+            sunGlowCol = Color(0xFFFFF9C4),
             moonCol = Color(0xFFC8A0C0),
             moonGlowCol = Color(0xFFE0B0D0),
             cloudCol = Color(0xFFF0D0C0),
             hazeCol = Color(0xFFFFAB91)
+        )
+        TimeOfDay.Twilight -> TimeOfDayColors(
+            skyTop = Color(0xFF283593),
+            skyBottom = Color(0xFF4A148C),
+            skyAccent = Color(0xFF7C4DFF),
+            sunCol = Color(0xFFFFF176),
+            sunGlowCol = Color(0xFFFFF9C4),
+            moonCol = Color(0xFFB0BEC5),
+            moonGlowCol = Color(0xFF90A4AE),
+            cloudCol = Color(0xFF546E7A),
+            hazeCol = Color(0xFF7E57C2)
         )
         TimeOfDay.Twilight -> TimeOfDayColors(
             skyTop = Color(0xFF283593),

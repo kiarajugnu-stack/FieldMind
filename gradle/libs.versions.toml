@@ -92,6 +92,7 @@ androidx-room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = 
 androidx-room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "roomKtx" }
 androidx-room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "roomKtx" }
 androidx-compose-material-icons-core = { group = "androidx.compose.material", name = "material-icons-core" }
+androidx-compose-material-icons-extended = { group = "androidx.compose.material", name = "material-icons-extended" }
 androidx-compose-ui-unit = { group = "androidx.compose.ui", name = "ui-unit", version.ref = "uiUnit" }
 maplibre-gl-android-sdk = { group = "org.maplibre.gl", name = "android-sdk", version = "13.3.0" }
 

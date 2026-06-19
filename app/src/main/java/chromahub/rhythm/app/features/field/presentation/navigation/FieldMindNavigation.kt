@@ -1,28 +1,20 @@
 package fieldmind.research.app.features.field.presentation.navigation
 
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.spring
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.animation.core.keyframes
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
-import androidx.compose.animation.scaleOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
-import androidx.compose.material3.Surface
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -30,7 +22,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
@@ -42,7 +34,6 @@ import androidx.navigation.compose.rememberNavController
 import fieldmind.research.app.features.field.presentation.components.FieldMindSnackbarProvider
 import fieldmind.research.app.features.field.presentation.components.FieldMindIcons
 import fieldmind.research.app.features.field.presentation.components.rememberFieldMindHaptics
-import fieldmind.research.app.features.field.presentation.components.FieldMindHaptics
 import fieldmind.research.app.features.field.presentation.screens.*
 import fieldmind.research.app.features.field.presentation.theme.FieldMindTheme
 import fieldmind.research.app.features.field.data.database.entity.ResearchSessionEntity
@@ -121,8 +112,6 @@ sealed class FieldMindScreen(val route: String, val label: String, val icon: Mat
     data object FieldLog : FieldMindScreen("field_log", "Field Log", FieldMindIcons.List)
 }
 
-private const val NavTransitionDurationMillis = 180
-
 private val bottomTabs = listOf(
     FieldMindScreen.Home,
     FieldMindScreen.Observe,
@@ -155,9 +144,8 @@ fun FieldMindApp(appSettings: AppSettings, viewModel: FieldMindViewModel) {
     }
 }
 
-/** Navigate to a non-tab destination, de-duplicating taps so the page always opens reliably. */
+/** Navigate to a non-tab destination, always allowing re-navigation to refresh content. */
 private fun NavHostController.navigateToDestination(route: String) {
-    if (currentDestination?.route == route) return
     navigate(route) {
         launchSingleTop = true
         restoreState = true
@@ -172,6 +160,7 @@ fun FieldMindNavigation(viewModel: FieldMindViewModel, onResetOnboarding: () -> 
     val currentRoute = currentDestination?.route
     val haptics = rememberFieldMindHaptics()
     val hideChrome = currentRoute == FieldMindScreen.Settings.route ||
+        currentRoute?.startsWith("field_settings_") == true ||
         currentRoute == FieldMindScreen.FieldMode.route ||
         currentRoute == FieldMindScreen.Reader.route ||
         currentRoute == FieldMindScreen.Changelog.route ||
@@ -268,17 +257,25 @@ fun FieldMindNavigation(viewModel: FieldMindViewModel, onResetOnboarding: () -> 
         if (expanded) {
             Row(Modifier.fillMaxSize()) {
                 if (!hideChrome) {
-                    NavigationRail {
-                        visibleTabs.forEach { screen ->
-                            val selected = isSelected(screen)
-                            val itemInteractionSource = remember { MutableInteractionSource() }
-                            AnimatedNavBarItem(
-                                selected = selected,
-                                onClick = { haptics.light(); navigateToTab(screen.route) },
-                                icon = { AnimatedNavIcon(screen, selected) },
-                                label = { AnimatedNavLabel(screen.label, selected) },
-                                interactionSource = itemInteractionSource
-                            )
+                    Surface(
+                        shape = RoundedCornerShape(topEnd = 24.dp, bottomEnd = 24.dp),
+                        color = MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.88f),
+                        tonalElevation = 2.dp,
+                        modifier = Modifier.padding(6.dp)
+                    ) {
+                        NavigationRail(
+                            header = {
+                                Spacer(Modifier.height(8.dp))
+                            }
+                        ) {
+                            visibleTabs.forEach { screen ->
+                                val selected = isSelected(screen)
+                                RailNavTabItem(
+                                    screen = screen,
+                                    selected = selected,
+                                    onClick = { haptics.light(); navigateToTab(screen.route) }
+                                )
+                            }
                         }
                     }
                 }
@@ -289,20 +286,55 @@ fun FieldMindNavigation(viewModel: FieldMindViewModel, onResetOnboarding: () -> 
                 containerColor = MaterialTheme.colorScheme.background,
                 bottomBar = {
                     if (!hideChrome) {
-                            NavigationBar {
-                                visibleTabs.forEach { screen ->
-                                    val selected = isSelected(screen)
-                                    val itemInteractionSource = remember { MutableInteractionSource() }
-                                    AnimatedNavBarItem(
-                                        selected = selected,
-                                        onClick = { haptics.light(); navigateToTab(screen.route) },
-                                        icon = { AnimatedNavIcon(screen, selected) },
-                                        label = { AnimatedNavLabel(screen.label, selected) },
-                                        interactionSource = itemInteractionSource,
-                                        modifier = Modifier.weight(1f)
-                                    )
+                        // ── True glassmorphic pill-shaped floating bottom nav bar ──
+                        // Frosted-glass effect: semi-transparent surface with visible blur,
+                        // subtle border to define the edge in light themes, generous rounded
+                        // corners, lifted off bottom with safe-area-aware padding.
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 12.dp, vertical = 8.dp)
+                                .windowInsetsPadding(
+                                    WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal)
+                                )
+                                .navigationBarsPadding()
+                        ) {
+                            Surface(
+                                shape = RoundedCornerShape(34.dp),
+                                color = MaterialTheme.colorScheme.surfaceContainer.copy(
+                                    alpha = if (isSystemInDarkTheme()) 0.50f else 0.40f
+                                ),
+                                tonalElevation = 3.dp,
+                                shadowElevation = 8.dp,
+                                border = androidx.compose.foundation.BorderStroke(
+                                    width = 0.5.dp,
+                                    color = if (isSystemInDarkTheme())
+                                        MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.08f)
+                                    else
+                                        MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f)
+                                ),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(64.dp)
+                            ) {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .padding(horizontal = 2.dp, vertical = 4.dp),
+                                    horizontalArrangement = Arrangement.SpaceEvenly,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    visibleTabs.forEach { screen ->
+                                        val selected = isSelected(screen)
+                                        FloatingNavTabItem(
+                                            screen = screen,
+                                            selected = selected,
+                                            onClick = { haptics.light(); navigateToTab(screen.route) }
+                                        )
+                                    }
                                 }
                             }
+                        }
                     }
                 }
             ) { innerPadding ->
@@ -314,136 +346,144 @@ fun FieldMindNavigation(viewModel: FieldMindViewModel, onResetOnboarding: () -> 
 
 
 
+/**
+ * Glassmorphic pill-shaped floating nav tab item.
+ * Active tab shows a prominent pill background with filled icon + bold text.
+ * Inactive tabs show subtle icons with alpha. Interactive press animations.
+ */
 @Composable
-private fun AnimatedNavIcon(screen: FieldMindScreen, selected: Boolean) {
-    val scale by animateFloatAsState(
-        if (selected) 1.28f else 0.96f,
-        FieldMindMotion.expressiveSpring,
-        label = "navIconScale"
-    )
-    val lift by animateFloatAsState(
-        if (selected) -5f else 0f,
-        FieldMindMotion.expressiveSpring,
-        label = "navIconLift"
-    )
-    // Elastic rotation for a playful wiggle when selected
-    // Expressive wobble — icon tilts slightly when selected, then overshoots back playfully
-    val rotation by animateFloatAsState(
-        if (selected) 12f else 0f,
-        FieldMindMotion.expressiveElastic,
-        label = "navIconRotation"
-    )
-    val alpha by animateFloatAsState(
-        if (selected) 1f else 0.66f,
-        FieldMindMotion.expressiveFloat,
-        label = "navIconAlpha"
-    )
-    val tint by animateColorAsState(
-        targetValue = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
-        animationSpec = tween(durationMillis = FieldMindMotion.durationSubtle),
-        label = "navIconTint"
-    )
-    Icon(
-        icon = if (selected) screen.icon.filled() else screen.icon,
-        contentDescription = screen.label,
-        tint = tint,
-        modifier = Modifier.graphicsLayer {
-            scaleX = scale; scaleY = scale
-            translationY = lift
-            this.alpha = alpha
-            rotationZ = rotation
-        },
-        size = if (selected) 34.dp else 26.dp,
-        weight = if (selected) 700 else screen.icon.defaultWeight
-    )
-}
-
-@Composable
-private fun AnimatedNavBarItem(
+private fun FloatingNavTabItem(
+    screen: FieldMindScreen,
     selected: Boolean,
-    onClick: () -> Unit,
-    icon: @Composable () -> Unit,
-    label: @Composable () -> Unit,
-    interactionSource: MutableInteractionSource,
-    modifier: Modifier = Modifier
+    onClick: () -> Unit
 ) {
-    val isPressed by interactionSource.collectIsPressedAsState()
-
-    // Bouncy press scale — tiny squish on tap, springs back with overshoot
-    val pressScale by animateFloatAsState(
-        targetValue = if (isPressed) 0.88f else 1f,
-        animationSpec = FieldMindMotion.expressiveSnap,
-        label = "navBarPress"
-    )
-
-    // Pill indicator bouncy entrance — elastic overshoot when tab becomes active
-    val pillScale by animateFloatAsState(
+    var isPressed by remember { mutableStateOf(false) }
+    
+    val pillAlpha by animateFloatAsState(
         targetValue = if (selected) 1f else 0f,
-        animationSpec = FieldMindMotion.expressiveSpring,
-        label = "navBarPill"
+        animationSpec = tween(durationMillis = FieldMindMotion.durationSubtle, easing = FastOutSlowInEasing),
+        label = "navPillAlpha"
+    )
+    val iconSize by animateFloatAsState(
+        targetValue = if (selected) 28f else 22f,
+        animationSpec = tween(durationMillis = FieldMindMotion.durationSubtle, easing = FastOutSlowInEasing),
+        label = "navIconSize"
+    )
+    val textAlpha by animateFloatAsState(
+        targetValue = if (selected) 1f else 0.7f,
+        animationSpec = tween(durationMillis = FieldMindMotion.durationSubtle, easing = FastOutSlowInEasing),
+        label = "navTextAlpha"
+    )
+    val pressScale by animateFloatAsState(
+        targetValue = if (isPressed && !selected) 0.92f else 1f,
+        animationSpec = if (isPressed) 
+            tween(durationMillis = FieldMindMotion.durationMicro, easing = FastOutSlowInEasing) 
+        else 
+            FieldMindMotion.expressiveSpring,
+        label = "navPressScale"
     )
 
     Column(
-        modifier = modifier
+        modifier = Modifier
+            .clip(RoundedCornerShape(20.dp))
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
+                onClick = { onClick() }
+            )
+            .defaultMinSize(minWidth = 60.dp, minHeight = 56.dp)
             .graphicsLayer {
                 scaleX = pressScale
                 scaleY = pressScale
-            }
-            .clickable(
-                interactionSource = interactionSource,
-                indication = null,
-                onClick = onClick
-            )
-            .padding(vertical = 2.dp, horizontal = 2.dp),
+            },
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
+        // Active pill background
         Box(
-            modifier = Modifier.size(48.dp),
+            modifier = Modifier
+                .size(width = 48.dp, height = 36.dp)
+                .background(
+                    color = if (selected) 
+                        MaterialTheme.colorScheme.primary.copy(alpha = 0.18f * pillAlpha) 
+                    else 
+                        Color.Transparent,
+                    shape = RoundedCornerShape(14.dp)
+                ),
             contentAlignment = Alignment.Center
         ) {
-            // Pill indicator with bouncy entrance animation
-            if (pillScale > 0.01f) {
-                Box(
-                    modifier = Modifier
-                        .size(44.dp)
-                        .graphicsLayer {
-                            scaleX = pillScale
-                            scaleY = pillScale
-                            alpha = pillScale
-                        }
-                        .background(
-                            color = MaterialTheme.colorScheme.secondaryContainer,
-                            shape = CircleShape
-                        )
-                )
-            }
-
-            // Icon (with its own bouncy spring animation built into AnimatedNavIcon)
-            icon()
+            Icon(
+                icon = if (selected) screen.icon.copy(filled = true) else screen.icon,
+                contentDescription = screen.label,
+                tint = if (selected) 
+                    MaterialTheme.colorScheme.primary 
+                else 
+                    MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.72f),
+                size = iconSize.dp,
+                weight = if (selected) 500 else 400
+            )
         }
-
-        // Label below
-        label()
+        Text(
+            screen.label,
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
+            color = if (selected) 
+                MaterialTheme.colorScheme.primary 
+            else 
+                MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = textAlpha * 0.78f),
+            maxLines = 1,
+            modifier = Modifier.graphicsLayer { alpha = textAlpha.coerceIn(0.5f, 1f) }
+        )
+    }
+    
+    // Track press state for press animation
+    LaunchedEffect(selected) {
+        if (selected) isPressed = false
     }
 }
 
+/**
+ * Rail nav tab item used in the side rail (tablet layout).
+ * Mirrors the floating island style: filled rounded background for active tab.
+ */
 @Composable
-private fun AnimatedNavLabel(label: String, selected: Boolean) {
-    val scale by animateFloatAsState(
-        if (selected) 1.06f else 0.96f,
-        FieldMindMotion.expressiveSoft,
-        label = "navLabelScale"
-    )
-    val alpha by animateFloatAsState(
-        if (selected) 1f else 0.72f,
-        FieldMindMotion.expressiveFloat,
-        label = "navLabelAlpha"
-    )
-    Text(
-        label,
-        modifier = Modifier.graphicsLayer { scaleX = scale; scaleY = scale; this.alpha = alpha }
-    )
+private fun RailNavTabItem(
+    screen: FieldMindScreen,
+    selected: Boolean,
+    onClick: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
+                onClick = onClick
+            )
+            .defaultMinSize(minHeight = 48.dp)
+            .background(
+                color = if (selected) MaterialTheme.colorScheme.primary.copy(alpha = 0.12f) else Color.Transparent,
+                shape = RoundedCornerShape(16.dp)
+            )
+            .padding(vertical = 8.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(2.dp)
+    ) {
+        Icon(
+            icon = if (selected) screen.icon.copy(filled = true) else screen.icon,
+            contentDescription = screen.label,
+            tint = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+            size = if (selected) 26.dp else 22.dp
+        )
+        Text(
+            screen.label,
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
+            color = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+            maxLines = 1
+        )
+    }
 }
 
 private fun primaryTabDirection(fromRoute: String?, toRoute: String?): Int {
@@ -473,54 +513,48 @@ private fun FieldMindNavHost(
         modifier = modifier,
         enterTransition = {
             val direction = primaryTabDirection(initialState.destination.route, targetState.destination.route)
+            val slideAnim = tween<IntOffset>(FieldMindMotion.durationStandard, easing = FastOutSlowInEasing)
+            val fadeAnim = tween<Float>(FieldMindMotion.durationSubtle, easing = FastOutSlowInEasing)
             if (direction == 0) {
-                fadeIn(spring(dampingRatio = 0.75f, stiffness = 400f)) +
-                scaleIn(initialScale = 0.97f, animationSpec = spring(dampingRatio = 0.6f, stiffness = 500f))
+                fadeIn(animationSpec = FieldMindMotion.expressiveFloat) +
+                scaleIn(initialScale = 0.97f, animationSpec = FieldMindMotion.expressiveFloat)
             } else {
-                slideInHorizontally(spring(dampingRatio = 0.7f, stiffness = 400f)) { direction * it / 4 } +
-                fadeIn(spring(dampingRatio = 0.8f, stiffness = 500f))
+                slideInHorizontally(slideAnim) { direction * it / 4 } +
+                fadeIn(fadeAnim)
             }
         },
         exitTransition = {
             val direction = primaryTabDirection(initialState.destination.route, targetState.destination.route)
+            val fadeAnim = tween<Float>(FieldMindMotion.durationSubtle, easing = FastOutSlowInEasing)
             if (direction == 0) {
-                fadeOut(spring(dampingRatio = 0.8f, stiffness = 600f))
+                fadeOut(fadeAnim)
             } else {
-                slideOutHorizontally(spring(dampingRatio = 0.75f, stiffness = 500f)) { -direction * it / 5 } +
-                fadeOut(spring(dampingRatio = 0.8f, stiffness = 600f))
+                slideOutHorizontally(tween<IntOffset>(FieldMindMotion.durationStandard, easing = FastOutSlowInEasing)) { -direction * it / 5 } +
+                fadeOut(fadeAnim)
             }
         },
         popEnterTransition = {
-            // Smooth, consistent slide + fade for back navigation — no bounce, just gentle motion
             val direction = primaryTabDirection(targetState.destination.route, initialState.destination.route)
-            val slideSpec = tween(250, easing = FastOutSlowInEasing)
-            val fadeSpec = tween(200, easing = FastOutSlowInEasing)
+            val slideSpec = tween<IntOffset>(FieldMindMotion.durationStandard, easing = FastOutSlowInEasing)
+            val fadeSpec = tween<Float>(FieldMindMotion.durationSubtle, easing = FastOutSlowInEasing)
             if (direction == 0) {
-                slideInHorizontally(
-                    animationSpec = slideSpec,
-                    initialOffsetX = { -it / 5 }
-                ) + fadeIn(animationSpec = fadeSpec)
+                slideInHorizontally(animationSpec = slideSpec, initialOffsetX = { -it / 5 }) +
+                fadeIn(animationSpec = fadeSpec)
             } else {
-                slideInHorizontally(
-                    animationSpec = slideSpec,
-                    initialOffsetX = { direction * it / 5 }
-                ) + fadeIn(animationSpec = fadeSpec)
+                slideInHorizontally(animationSpec = slideSpec, initialOffsetX = { direction * it / 5 }) +
+                fadeIn(animationSpec = fadeSpec)
             }
         },
         popExitTransition = {
             val direction = primaryTabDirection(targetState.destination.route, initialState.destination.route)
-            val slideSpec = tween(200, easing = FastOutSlowInEasing)
-            val fadeSpec = tween(150, easing = FastOutSlowInEasing)
+            val slideSpec = tween<IntOffset>(FieldMindMotion.durationStandard, easing = FastOutSlowInEasing)
+            val fadeSpec = tween<Float>(FieldMindMotion.durationMicro, easing = FastOutSlowInEasing)
             if (direction == 0) {
-                slideOutHorizontally(
-                    animationSpec = slideSpec,
-                    targetOffsetX = { it / 4 }
-                ) + fadeOut(animationSpec = fadeSpec)
+                slideOutHorizontally(animationSpec = slideSpec, targetOffsetX = { it / 4 }) +
+                fadeOut(animationSpec = fadeSpec)
             } else {
-                slideOutHorizontally(
-                    animationSpec = slideSpec,
-                    targetOffsetX = { -direction * it / 4 }
-                ) + fadeOut(animationSpec = fadeSpec)
+                slideOutHorizontally(animationSpec = slideSpec, targetOffsetX = { -direction * it / 4 }) +
+                fadeOut(animationSpec = fadeSpec)
             }
         }
     ) {
