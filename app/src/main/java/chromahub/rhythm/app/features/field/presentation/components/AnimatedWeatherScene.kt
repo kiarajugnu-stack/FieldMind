@@ -3046,7 +3046,7 @@ private fun ThunderstormScene(
             val drawRng = Random(boltSeed)
             val boltX = flashPosition.value.x * size.width
             val startY = flashPosition.value.y * size.height
-            val endY = size.height * 0.55f + drawRng.nextFloat() * size.height * 0.25f
+            val endY = size.height * if (drawRng.nextFloat() < 0.3f) 0.85f + drawRng.nextFloat() * 0.05f else 0.55f + drawRng.nextFloat() * 0.25f
 
             // Glow aura around bolt
             drawPath(
