@@ -105,7 +105,13 @@ fun ExportStudioContent(
     }
 
     LazyColumn(modifier.fillMaxSize(), contentPadding = contentPadding, verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        if (showHeader) item { FieldScreenHeader("Export Studio", "Choose a scope, backup option, and portable research format.", icon = FieldMindIcons.Export) }
+        if (showHeader) item {
+            StandardScreenHeader(
+                title = "Export Studio",
+                subtitle = "Choose a scope, backup option, and portable research format.",
+                icon = FieldMindIcons.Export
+            )
+        }
         item {
             ExportStudioHero(
                 scope = exportScope,

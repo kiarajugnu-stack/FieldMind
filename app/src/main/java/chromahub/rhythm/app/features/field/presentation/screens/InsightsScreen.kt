@@ -242,12 +242,22 @@ fun InsightsScreen(
             ) {
             // ═══════════ SECTION 1: Header & Profile ═══════════
             item {
-                FieldScreenHeader(
-                    "Research Dashboard",
-                    "Your research at a glance — ${if (observations.isEmpty()) "start capturing to see analytics" else "${observations.size} observations analyzed"}",
+                StandardScreenHeader(
+                    title = "Research Dashboard",
+                    subtitle = "Your research at a glance — ${if (observations.isEmpty()) "start capturing to see analytics" else "${observations.size} observations analyzed"}",
                     icon = FieldMindIcons.Insights,
-                    actionIcon = FieldMindIcons.Search,
-                    onAction = { onNavigate(FieldMindScreen.Search) }
+                    trailing = {
+                        Surface(
+                            onClick = { onNavigate(FieldMindScreen.Search) },
+                            shape = RoundedCornerShape(14.dp),
+                            color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                            modifier = Modifier.size(40.dp)
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Icon(FieldMindIcons.Search, null, size = 22.dp)
+                            }
+                        }
+                    }
                 )
             }
 

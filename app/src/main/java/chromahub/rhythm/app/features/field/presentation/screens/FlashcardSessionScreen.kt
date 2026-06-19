@@ -85,7 +85,24 @@ fun FlashcardSessionScreen(viewModel: FieldMindViewModel, onBack: () -> Unit) {
 
     if (flashcards.isEmpty()) {
         Column(Modifier.fillMaxSize().padding(20.dp), verticalArrangement = Arrangement.spacedBy(20.dp)) {
-            FieldScreenHeader("Review", "Spaced repetition", icon = FieldMindIcons.Flashcard, actionIcon = FieldMindIcons.Close, onAction = onBack)
+            StandardScreenHeader(
+                title = "Review",
+                subtitle = "Spaced repetition",
+                icon = FieldMindIcons.Flashcard,
+                heroColor = FieldMindTheme.colors.flashcard,
+                trailing = {
+                    Surface(
+                        onClick = onBack,
+                        shape = RoundedCornerShape(14.dp),
+                        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                        modifier = Modifier.size(40.dp)
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Icon(FieldMindIcons.Close, null, size = 22.dp)
+                        }
+                    }
+                }
+            )
             EmptyState("No cards to review", "Create flashcards in the Library to start a review session.", icon = FieldMindIcons.Flashcard)
         }
         return
@@ -106,7 +123,7 @@ fun FlashcardSessionScreen(viewModel: FieldMindViewModel, onBack: () -> Unit) {
             )
         }
 
-        FieldScreenHeader(
+        StandardScreenHeader(
             title = if (finished) "Session complete" else "Card ${index + 1} of ${queue.size}",
             subtitle = buildString {
                 append("$reviewed reviewed")
@@ -118,8 +135,19 @@ fun FlashcardSessionScreen(viewModel: FieldMindViewModel, onBack: () -> Unit) {
                 }
             },
             icon = FieldMindIcons.Flashcard,
-            actionIcon = FieldMindIcons.Close,
-            onAction = onBack
+            heroColor = FieldMindTheme.colors.flashcard,
+            trailing = {
+                Surface(
+                    onClick = onBack,
+                    shape = RoundedCornerShape(14.dp),
+                    color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                    modifier = Modifier.size(40.dp)
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(FieldMindIcons.Close, null, size = 22.dp)
+                    }
+                }
+            }
         )
 
         if (finished) {

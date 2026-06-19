@@ -1265,12 +1265,22 @@ fun SpeciesPackSettingsPage(onBack: () -> Unit) {
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             item {
-                FieldScreenHeader(
-                    "Species packs",
-                    "Download regional identification model packs.",
+                StandardScreenHeader(
+                    title = "Species packs",
+                    subtitle = "Download regional identification model packs.",
                     icon = FieldMindIcons.Download,
-                    actionIcon = FieldMindIcons.Back,
-                    onAction = onBack
+                    trailing = {
+                        Surface(
+                            onClick = onBack,
+                            shape = RoundedCornerShape(14.dp),
+                            color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                            modifier = Modifier.size(40.dp)
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Icon(FieldMindIcons.Back, null, size = 22.dp)
+                            }
+                        }
+                    }
                 )
             }
 

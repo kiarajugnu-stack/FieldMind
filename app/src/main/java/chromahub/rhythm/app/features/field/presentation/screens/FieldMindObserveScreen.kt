@@ -501,11 +501,11 @@ fun ObserveScreen(
             ) {
                 // ── Header ──
                 item {
-                    FieldScreenHeader(
-                        "Observation",
-                        "Capture evidence, time, place, weather, then add facts.",
-                        icon = FieldMindIcons.Capture
-                    )
+                    StandardScreenHeader(
+                    title = "Observation",
+                    subtitle = "Capture evidence, time, place, weather, then add facts.",
+                    icon = FieldMindIcons.Capture
+                )
                 }
 
                 // ── Live Timer (persistent when active) ──
