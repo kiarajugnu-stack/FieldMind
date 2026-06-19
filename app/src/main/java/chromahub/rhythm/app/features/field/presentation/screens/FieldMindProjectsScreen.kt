@@ -302,21 +302,22 @@ private fun ResearchHubOverviewTab(
     if (showTypes) {
         OptionPickerDialog(
             title = "Project Types",
-            subtitle = "Select a type to pre-configure your research project.",
+            subtitle = "Select a type to set the project category and field suggestions.",
             options = researchProjectTypes,
             selected = projType,
             onSelect = { type ->
                 val preset = projectTemplates.firstOrNull { it.type == type }
                 projType = type
                 projTemplate = preset?.name ?: "Custom Blank Template"
-                projTitle = preset?.name ?: type
-                projDesc = preset?.objective ?: "Plan a ${type.lowercase()} with a clear question, field method, data plan, and evidence checklist."
+                projTitle = ""
+                // Only pre-fill category — keep all fields blank for user to fill
                 projCategory = preset?.category ?: researchCategories.first()
-                projPriority = preset?.priority ?: "Medium"
-                projQuestion = preset?.question ?: "What pattern will this ${type.lowercase()} measure or explain?"
-                projMethods = preset?.defaultMethods ?: setOf("Daily observations", "Photo documentation")
-                projHypothesis = preset?.hypothesis ?: ""
-                projTags = preset?.tags ?: type.lowercase().replace(" ", ", ")
+                projDesc = ""
+                projQuestion = ""
+                projHypothesis = ""
+                projTags = ""
+                projPriority = "Medium"
+                projMethods = setOf()
                 showTypes = false
                 showNewProject = true
             },
@@ -328,21 +329,20 @@ private fun ResearchHubOverviewTab(
     if (showTemplates) {
         OptionPickerDialog(
             title = "Project Templates",
-            subtitle = "Choose a template to pre-fill your project fields.",
+            subtitle = "Choose a template to use as a research guide for your project.",
             options = projectTemplates.map { it.name },
             selected = projTemplate,
             onSelect = { templateName ->
                 val template = projectTemplates.firstOrNull { it.name == templateName }!!
                 projTemplate = template.name
                 projType = template.type
-                projTitle = template.name
-                projDesc = template.objective.ifBlank { template.description }
+                projTitle = ""
                 projCategory = template.category
-                projPriority = template.priority
-                projQuestion = template.question
-                projMethods = template.defaultMethods
-                projHypothesis = template.hypothesis
-                projTags = template.tags
+                projDesc = ""
+                projQuestion = ""
+                projHypothesis = ""
+                projTags = ""
+                projMethods = setOf()
                 showTemplates = false
                 showNewProject = true
             },
@@ -352,22 +352,25 @@ private fun ResearchHubOverviewTab(
         )
     }
     if (showNewProject) {
+        // Get the selected template for guidance display
+        val selectedTemplate = projectTemplates.firstOrNull { it.name == projTemplate }
         NewProjectDialog(
             viewModel = viewModel,
             initialTitle = projTitle,
             initialTopic = projCategory,
             initialObjective = projDesc,
             initialQuestion = projQuestion,
-            initialBackground = projectTemplates.firstOrNull { it.name == projTemplate }?.background ?: "",
+            initialBackground = selectedTemplate?.background ?: "",
             initialProjectType = projType,
-            initialMethods = projectTemplates.firstOrNull { it.name == projTemplate }?.methodPlan ?: projMethods.joinToString(", "),
-            initialSelectedMethods = projMethods.joinToString(", "),
+            initialMethods = projDesc, // method plan from type selection as starting hint
+            initialSelectedMethods = "",
             initialHypothesis = projHypothesis,
-            initialDataPlan = projectTemplates.firstOrNull { it.name == projTemplate }?.dataPlan ?: "",
-            initialAnalysis = projectTemplates.firstOrNull { it.name == projTemplate }?.analysisPlan ?: "",
-            initialNextAction = projectTemplates.firstOrNull { it.name == projTemplate }?.nextAction ?: "",
+            initialDataPlan = selectedTemplate?.dataPlan ?: "",
+            initialAnalysis = selectedTemplate?.analysisPlan ?: "",
+            initialNextAction = selectedTemplate?.nextAction ?: "",
             initialTags = projTags,
-            onDismiss = { showNewProject = false }
+            onDismiss = { showNewProject = false },
+            templateGuide = selectedTemplate  // pass template for guidance display
         )
     }
 }
