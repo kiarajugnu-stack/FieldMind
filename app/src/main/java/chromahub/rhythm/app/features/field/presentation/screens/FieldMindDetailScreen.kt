@@ -2022,8 +2022,35 @@ private fun ProjectTasksBuilder(projectId: Long, viewModel: FieldMindViewModel) 
                                 }
                             }
                         }
-                        if (task.dueDate.isNotBlank()) {
-                            Text(task.dueDate, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            if (task.dueDate.isNotBlank()) {
+                                Text(task.dueDate, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
+                            FilledTonalButton(
+                                onClick = {
+                                    haptics.confirm()
+                                    viewModel.updateTaskEntity(task.copy(
+                                        status = if (task.status == "Completed") "Pending" else "Completed"
+                                    ))
+                                },
+                                shape = RoundedCornerShape(10.dp),
+                                contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
+                                colors = if (task.status != "Completed") ButtonDefaults.filledTonalButtonColors(
+                                    containerColor = colors.positive.copy(alpha = 0.15f),
+                                    contentColor = colors.positive
+                                ) else ButtonDefaults.filledTonalButtonColors()
+                            ) {
+                                Icon(
+                                    if (task.status == "Completed") FieldMindIcons.Refresh else FieldMindIcons.Check,
+                                    null,
+                                    size = 14.dp
+                                )
+                                Spacer(Modifier.size(4.dp))
+                                Text(
+                                    if (task.status == "Completed") "Open" else "Complete",
+                                    style = MaterialTheme.typography.labelSmall
+                                )
+                            }
                         }
                     }
                 }
