@@ -665,7 +665,14 @@ class FieldMindViewModel(application: Application) : AndroidViewModel(applicatio
                 questions,
                 fieldSettings.autoFlashcardsEnabled,
                 fieldSettings.autoQuestionsEnabled
-            ) { obs, nts, srcs, cards, quests, genFlash, genQuest ->
+            ) { a: Array<*> ->
+                val obs = a[0] as? List<ObservationEntity> ?: emptyList()
+                val nts = a[1] as? List<NoteEntity> ?: emptyList()
+                val srcs = a[2] as? List<SourceEntity> ?: emptyList()
+                val cards = a[3] as? List<FlashcardEntity> ?: emptyList()
+                val quests = a[4] as? List<QuestionEntity> ?: emptyList()
+                val genFlash = a[5] as? Boolean ?: false
+                val genQuest = a[6] as? Boolean ?: false
                 GenerationTrigger(
                     observations = obs,
                     notes = nts,
