@@ -260,6 +260,14 @@ fun HomeScreen(
             // ── Hero Section ──
             item { HomeHeroSection(todayCount, goal, currentStreak, observations.size, questions.size, onOpenSettings, onNavigate, onCapture = { showCamera = true }, onNewNote = { showNoteDialog = true }) }
 
+            // ── Research Session CTA ──
+            item { ResearchSessionCtaCard(
+                    lastSessionLabel = if (lastSession != null) "Resume your last session" else null,
+                    activeSessionName = activeSession?.name,
+                    timerMs = liveTimerMs,
+                    onStartSession = { onNavigate(FieldMindScreen.ResearchSession) }
+                ) }
+
             // ── Weather as animated centerpiece ──
             item {
                 LiveWeatherDashboardWidget(
@@ -292,14 +300,6 @@ fun HomeScreen(
 
             // ── Daily Goal with delta ──
             item { DailyGoalCard(todayCount, goal, currentStreak, deltaLabel) { onNavigate(FieldMindScreen.Observe) } }
-
-            // ── Research Session CTA ──
-            item { ResearchSessionCtaCard(
-                    lastSessionLabel = if (lastSession != null) "Resume your last session" else null,
-                    activeSessionName = activeSession?.name,
-                    timerMs = liveTimerMs,
-                    onStartSession = { onNavigate(FieldMindScreen.ResearchSession) }
-                ) }
 
 
 
