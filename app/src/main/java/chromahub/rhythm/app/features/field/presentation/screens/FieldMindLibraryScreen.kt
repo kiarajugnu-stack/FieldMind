@@ -1852,20 +1852,16 @@ private fun PdfOpenCard(url: String, uriHandler: androidx.compose.ui.platform.Ur
             Text("PDF Document", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
             Spacer(Modifier.size(8.dp))
             Text("Open this PDF in your device's PDF viewer for the best reading experience.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
-            Spacer(Modifier.size(24.dp))
-            Button(onClick = {
-                runCatching {
-                    val intent = Intent(Intent.ACTION_VIEW).apply {
-                        setDataAndType(Uri.parse(url), "application/pdf")
-                        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NEW_TASK)
-                    }
-                    if (intent.resolveActivity(context.packageManager) != null) {
-                        context.startActivity(intent)
-                    } else {
-                        uriHandler.openUri(url)
-                    }
-                }
-            }, shape = RoundedCornerShape(16.dp)) { Text("Open PDF"); Spacer(Modifier.size(8.dp)); Icon(FieldMindIcons.OpenLink, null, size = 18.dp) }
+            Spacer(Modifier.size(8.dp))
+            var showPdfViewer by remember { mutableStateOf(false) }
+            Button(onClick = { showPdfViewer = true }, shape = RoundedCornerShape(16.dp)) {
+                Icon(FieldMindIcons.File, null, size = 18.dp)
+                Spacer(Modifier.size(8.dp))
+                Text("View in reader")
+            }
+            if (showPdfViewer) {
+                PdfViewerDialog(uri = url, title = title, onDismiss = { showPdfViewer = false })
+            }
         }
     }
 }
@@ -1875,40 +1871,61 @@ private fun PdfOpenCard(url: String, uriHandler: androidx.compose.ui.platform.Ur
  */
 @Composable
 private fun OpenExternallyCard(url: String, uriHandler: androidx.compose.ui.platform.UriHandler, context: android.content.Context) {
-    val fileName = url.substringAfterLast("/").substringBefore("?").ifBlank { "File" }
-    Card(
-        Modifier.fillMaxSize().padding(32.dp),
-        shape = RoundedCornerShape(28.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh)
-    ) {
-        Column(
-            Modifier.fillMaxSize().padding(32.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
-            Icon(FieldMindIcons.File, null, tint = MaterialTheme.colorScheme.primary, size = 64.dp)
-            Spacer(Modifier.size(24.dp))
-            Text(fileName, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center, maxLines = 2, overflow = TextOverflow.Ellipsis)
-            Spacer(Modifier.size(8.dp))
-            Text("This file type cannot be displayed inside FieldMind. Open it with an external app.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
-            Spacer(Modifier.size(24.dp))
-            Button(onClick = {
-                runCatching {
-                    val intent = Intent(Intent.ACTION_VIEW).apply {
-                        setDataAndType(Uri.parse(url), "*/*")
-                        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NEW_TASK)
-                    }
-                    if (intent.resolveActivity(context.packageManager) != null) {
-                        context.startActivity(intent)
-                    } else {
-                        uriHandler.openUri(url)
+    val fileName = url.substringAfterLast("/").substringBefore("?").ifBlank { "Local file" }
+    var showPdfViewer by remember { mutableStateOf(false) }
+    var showImageViewer by remember { mutableStateOf(false) }
+    var showAudioPlayer by remember { mutableStateOf(false) }
+    val isPdf = Regex("\.(pdf)", RegexOption.IGNORE_CASE).containsMatchIn(url)
+    val isImage = Regex("\.(jpg|jpeg|png|webp|gif|heic|bmp)", RegexOption.IGNORE_CASE).containsMatchIn(url)
+    val isAudio = Regex("\.(mp3|wav|ogg|m4a|aac|flac|wma)", RegexOption.IGNORE_CASE).containsMatchIn(url)
+    Card(shape = RoundedCornerShape(22.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp), modifier = Modifier.fillMaxWidth()) {
+        Column(Modifier.padding(20.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(14.dp)) {
+            Icon(FieldMindIcons.File, null, tint = MaterialTheme.colorScheme.primary, size = 36.dp)
+            Text("Local file", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Text(fileName, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2, overflow = TextOverflow.Ellipsis)
+            Text("This file cannot be previewed in the built-in reader. Open it externally to view its contents.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                if (isPdf || isImage || isAudio) {
+                    Button(onClick = {
+                        when {
+                            isPdf -> showPdfViewer = true
+                            isImage -> showImageViewer = true
+                            isAudio -> showAudioPlayer = true
+                        }
+                    }, shape = RoundedCornerShape(16.dp), modifier = Modifier.weight(1f)) {
+                        Icon(FieldMindIcons.File, null, size = 18.dp)
+                        Spacer(Modifier.size(8.dp))
+                        Text("View in app")
                     }
                 }
-            }, shape = RoundedCornerShape(16.dp)) { Text("Open externally"); Spacer(Modifier.size(8.dp)); Icon(FieldMindIcons.OpenLink, null, size = 18.dp) }
+                Button(onClick = {
+                    runCatching {
+                        val intent = Intent(Intent.ACTION_VIEW).apply {
+                            setDataAndType(Uri.parse(url), "*/*")
+                            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NEW_TASK)
+                        }
+                        if (intent.resolveActivity(context.packageManager) != null) {
+                            context.startActivity(intent)
+                        } else {
+                            uriHandler.openUri(url)
+                        }
+                    }
+                }, shape = RoundedCornerShape(16.dp), modifier = if (isPdf || isImage || isAudio) Modifier else Modifier.fillMaxWidth()) {
+                    Text("Open externally"); Spacer(Modifier.size(8.dp)); Icon(FieldMindIcons.OpenLink, null, size = 18.dp)
+                }
+            }
         }
     }
+    if (showPdfViewer) {
+        PdfViewerDialog(uri = url, title = fileName, onDismiss = { showPdfViewer = false })
+    }
+    if (showImageViewer) {
+        ImageViewerDialog(uri = url, caption = fileName, onDismiss = { showImageViewer = false })
+    }
+    if (showAudioPlayer) {
+        AudioPlayerDialog(uri = url, title = fileName, onDismiss = { showAudioPlayer = false })
+    }
 }
-
 @Composable
 private fun ReaderFallbackCard(message: String, url: String, onPrimary: () -> Unit, modifier: Modifier = Modifier, onDismiss: () -> Unit = {}) {
     val uriHandler = LocalUriHandler.current

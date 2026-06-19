@@ -2806,11 +2806,39 @@ private fun SourceActionPanel(source: SourceEntity, projects: List<ProjectEntity
                 FilledTonalButton(onClick = { haptics.light(); runCatching { uriHandler.openUri(source.link) } }, enabled = source.link.isNotBlank(), modifier = Modifier.weight(1f), shape = RoundedCornerShape(14.dp)) {
                     Icon(FieldMindIcons.OpenLink, null, size = 18.dp); Spacer(Modifier.size(6.dp)); Text("Open link")
                 }
+                var showPdfViewer by remember { mutableStateOf(false) }
+                var showImageViewer by remember { mutableStateOf(false) }
+                var showAudioPlayer by remember { mutableStateOf(false) }
+                var fileType by remember { mutableStateOf("") }
+                val fileMime = runCatching { context.contentResolver.getType(Uri.parse(source.fileUri)) }.getOrDefault("")
                 FilledTonalButton(onClick = {
                     haptics.light()
-                    runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(source.fileUri)).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)) }
+                    fileType = when {
+                        fileMime.contains("pdf") -> "pdf"
+                        fileMime.contains("image") -> "image"
+                        fileMime.contains("audio") -> "audio"
+                        source.fileUri.matches(Regex("\.(pdf)(\?.*)?$", RegexOption.IGNORE_CASE)) -> "pdf"
+                        source.fileUri.matches(Regex("\.(jpg|jpeg|png|webp|gif|heic|bmp)(\?.*)?$", RegexOption.IGNORE_CASE)) -> "image"
+                        source.fileUri.matches(Regex("\.(mp3|wav|ogg|m4a|aac|flac|wma)(\?.*)?$", RegexOption.IGNORE_CASE)) -> "audio"
+                        else -> "external"
+                    }
+                    when (fileType) {
+                        "pdf" -> showPdfViewer = true
+                        "image" -> showImageViewer = true
+                        "audio" -> showAudioPlayer = true
+                        else -> runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(source.fileUri)).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)) }
+                    }
                 }, enabled = source.fileUri.isNotBlank(), modifier = Modifier.weight(1f), shape = RoundedCornerShape(14.dp)) {
                     Icon(FieldMindIcons.File, null, size = 18.dp); Spacer(Modifier.size(6.dp)); Text("Open file")
+                }
+                if (showPdfViewer) {
+                    PdfViewerDialog(uri = source.fileUri, title = source.title, onDismiss = { showPdfViewer = false })
+                }
+                if (showImageViewer) {
+                    ImageViewerDialog(uri = source.fileUri, caption = source.title, onDismiss = { showImageViewer = false })
+                }
+                if (showAudioPlayer) {
+                    AudioPlayerDialog(uri = source.fileUri, title = source.title, onDismiss = { showAudioPlayer = false })
                 }
             }
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
