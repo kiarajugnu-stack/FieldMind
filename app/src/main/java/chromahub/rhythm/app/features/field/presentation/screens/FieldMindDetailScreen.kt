@@ -865,7 +865,7 @@ private data class StructuredDetailsData(
 
 // ══════════════════════════════════════════════════════════════════════
 //  Quality Score Card
-// ══════════════════════════════════════════════════════════════════════
+// ══════��═══════════════════════════════════════════════════════════════
 
 @Composable
 private fun QualityScoreCard(score: Int) {
@@ -1183,7 +1183,7 @@ private data class AiAnalysisData(
 
 // ══════════════════════════════════════════════════════════════════════
 //  Export & Sharing Section
-// ══════════════════════════════════════════════════════════════════════
+// ══════════════���═══════════════════════════════════════════════════════
 
 @Composable
 private fun ObservationExportSection(
@@ -2835,9 +2835,9 @@ private fun SourceActionPanel(source: SourceEntity, projects: List<ProjectEntity
                 FilledTonalButton(onClick = {
                     haptics.light()
                     fileType = when {
-                        fileMime.contains("pdf") -> "pdf"
-                        fileMime.contains("image") -> "image"
-                        fileMime.contains("audio") -> "audio"
+                        fileMime?.contains("pdf") == true -> "pdf"
+                        fileMime?.contains("image") == true -> "image"
+                        fileMime?.contains("audio") == true -> "audio"
                         source.fileUri?.let { uri ->
                             uri.matches(Regex("""\.(pdf)(\?.*)?$""", RegexOption.IGNORE_CASE))
                         } ?: false -> "pdf"
