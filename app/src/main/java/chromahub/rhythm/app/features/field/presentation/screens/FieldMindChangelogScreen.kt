@@ -426,16 +426,7 @@ fun FieldMindChangelogScreen(onBack: () -> Unit) {
                 subtitle = "Complete field research redesign with 12 phases of new features",
                 icon = FieldMindIcons.Info,
                 trailing = {
-                    Surface(
-                        onClick = onBack,
-                        shape = RoundedCornerShape(14.dp),
-                        color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                        modifier = Modifier.size(40.dp)
-                    ) {
-                        Box(contentAlignment = Alignment.Center) {
-                            Icon(FieldMindIcons.Back, null, size = 22.dp)
-                        }
-                    }
+                    BackButton(onClick = onBack)
                 }
             )
         }

@@ -91,16 +91,7 @@ fun FlashcardSessionScreen(viewModel: FieldMindViewModel, onBack: () -> Unit) {
                 icon = FieldMindIcons.Flashcard,
                 heroColor = FieldMindTheme.colors.flashcard,
                 trailing = {
-                    Surface(
-                        onClick = onBack,
-                        shape = RoundedCornerShape(14.dp),
-                        color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                        modifier = Modifier.size(40.dp)
-                    ) {
-                        Box(contentAlignment = Alignment.Center) {
-                            Icon(FieldMindIcons.Close, null, size = 22.dp)
-                        }
-                    }
+                    BackButton(onClick = onBack, icon = FieldMindIcons.Close, contentDescription = "Close")
                 }
             )
             EmptyState("No cards to review", "Create flashcards in the Library to start a review session.", icon = FieldMindIcons.Flashcard)
@@ -137,16 +128,7 @@ fun FlashcardSessionScreen(viewModel: FieldMindViewModel, onBack: () -> Unit) {
             icon = FieldMindIcons.Flashcard,
             heroColor = FieldMindTheme.colors.flashcard,
             trailing = {
-                Surface(
-                    onClick = onBack,
-                    shape = RoundedCornerShape(14.dp),
-                    color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                    modifier = Modifier.size(40.dp)
-                ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Icon(FieldMindIcons.Close, null, size = 22.dp)
-                    }
-                }
+                BackButton(onClick = onBack, icon = FieldMindIcons.Close, contentDescription = "Close")
             }
         )
 

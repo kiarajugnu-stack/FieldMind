@@ -2313,16 +2313,7 @@ private fun FieldModeScreen(viewModel: FieldMindViewModel, onBack: () -> Unit) {
                     },
                     icon = FieldMindIcons.Bolt,
                     trailing = {
-                        Surface(
-                            onClick = onBack,
-                            shape = RoundedCornerShape(14.dp),
-                            color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                            modifier = Modifier.size(40.dp)
-                        ) {
-                            Box(contentAlignment = Alignment.Center) {
-                                Icon(FieldMindIcons.Close, null, size = 22.dp)
-                            }
-                        }
+                        BackButton(onClick = onBack, icon = FieldMindIcons.Close, contentDescription = "Close")
                     }
                 )
                 }

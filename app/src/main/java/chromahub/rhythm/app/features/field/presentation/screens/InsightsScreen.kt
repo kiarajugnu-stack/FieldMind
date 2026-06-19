@@ -247,16 +247,7 @@ fun InsightsScreen(
                     subtitle = "Your research at a glance — ${if (observations.isEmpty()) "start capturing to see analytics" else "${observations.size} observations analyzed"}",
                     icon = FieldMindIcons.Insights,
                     trailing = {
-                        Surface(
-                            onClick = { onNavigate(FieldMindScreen.Search) },
-                            shape = RoundedCornerShape(14.dp),
-                            color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                            modifier = Modifier.size(40.dp)
-                        ) {
-                            Box(contentAlignment = Alignment.Center) {
-                                Icon(FieldMindIcons.Search, null, size = 22.dp)
-                            }
-                        }
+                        BackButton(onClick = { onNavigate(FieldMindScreen.Search) }, icon = FieldMindIcons.Search, contentDescription = "Search")
                     }
                 )
             }

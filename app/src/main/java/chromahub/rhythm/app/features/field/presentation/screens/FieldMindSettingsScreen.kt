@@ -75,16 +75,7 @@ fun FieldMindSettingsScreen(
                 subtitle = "Offline-first setup, profile, capture, local AI, export, and privacy.",
                 icon = FieldMindIcons.Settings,
                 trailing = {
-                    Surface(
-                        onClick = onBack,
-                        shape = RoundedCornerShape(14.dp),
-                        color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                        modifier = Modifier.size(40.dp)
-                    ) {
-                        Box(contentAlignment = Alignment.Center) {
-                            Icon(FieldMindIcons.Back, null, size = 22.dp)
-                        }
-                    }
+                    BackButton(onClick = onBack)
                 }
             )
         }
@@ -1124,16 +1115,7 @@ private fun SettingsSubPage(title: String, icon: MaterialSymbolIcon, onBack: () 
                 title = title,
                 icon = icon,
                 trailing = {
-                    Surface(
-                        onClick = onBack,
-                        shape = RoundedCornerShape(14.dp),
-                        color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                        modifier = Modifier.size(40.dp)
-                    ) {
-                        Box(contentAlignment = Alignment.Center) {
-                            Icon(FieldMindIcons.Back, null, size = 22.dp)
-                        }
-                    }
+                    BackButton(onClick = onBack)
                 }
             )
         }
@@ -1270,16 +1252,7 @@ fun SpeciesPackSettingsPage(onBack: () -> Unit) {
                     subtitle = "Download regional identification model packs.",
                     icon = FieldMindIcons.Download,
                     trailing = {
-                        Surface(
-                            onClick = onBack,
-                            shape = RoundedCornerShape(14.dp),
-                            color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                            modifier = Modifier.size(40.dp)
-                        ) {
-                            Box(contentAlignment = Alignment.Center) {
-                                Icon(FieldMindIcons.Back, null, size = 22.dp)
-                            }
-                        }
+                        BackButton(onClick = onBack)
                     }
                 )
             }

@@ -466,17 +466,13 @@ fun ResearchSessionScreen(
                     title = "Research Session",
                     subtitle = "Capture multiple observations with a running timer.",
                     icon = FieldMindIcons.Bolt,
-                    trailing = {
-                        Surface(
-                            onClick = {
+                    trailing = { BackButton(onClick = {
                         if (sessionActive) {
                             showExitConfirm = true
                         } else {
                             onBack()
                         }
-                    }
-                )
-            }
+                    }, contentDescription = "Back") }
 
             if (showSummary) {
                 // Session summary

@@ -102,15 +102,7 @@ fun FieldMindLearnScreen(
                 subtitle = "Discover resources matched to your research journey.",
                 icon = FieldMindIcons.School,
                 trailing = {
-                    Surface(
-                        onClick = onBack,
-                        shape = RoundedCornerShape(12.dp),
-                        color = MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.6f)
-                    ) {
-                        Box(Modifier.size(40.dp), contentAlignment = Alignment.Center) {
-                            Icon(icon = FieldMindIcons.Back, contentDescription = "Back", size = 22.dp)
-                        }
-                    }
+                    BackButton(onClick = onBack, shape = RoundedCornerShape(12.dp), containerColor = MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.6f), contentDescription = "Back")
                 }
             )
         }

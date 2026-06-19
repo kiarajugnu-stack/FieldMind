@@ -140,16 +140,7 @@ fun DataToolsHubScreen(
                     subtitle = "Interactive tools for field data collection.",
                     icon = FieldMindIcons.Data,
                     trailing = {
-                    Surface(
-                        onClick = onBack,
-                        shape = RoundedCornerShape(14.dp),
-                        color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                        modifier = Modifier.size(40.dp)
-                    ) {
-                        Box(contentAlignment = Alignment.Center) {
-                            Icon(FieldMindIcons.Back, null, size = 22.dp)
-                        }
-                    }
+                    BackButton(onClick = onBack)
                 }
                 )
             }
@@ -424,16 +415,7 @@ fun CounterToolScreen(
                         subtitle = "Tap +/− to tally. Tap Save to persist your count.",
                         icon = FieldMindIcons.Add,
                         trailing = {
-                    Surface(
-                        onClick = onBack,
-                        shape = RoundedCornerShape(14.dp),
-                        color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                        modifier = Modifier.size(40.dp)
-                    ) {
-                        Box(contentAlignment = Alignment.Center) {
-                            Icon(FieldMindIcons.Back, null, size = 22.dp)
-                        }
-                    }
+                    BackButton(onClick = onBack)
                 }
                     )
                 }
@@ -715,16 +697,7 @@ fun MeasurementToolScreen(
                         subtitle = "Log a structured measurement with units and notes.",
                         icon = FieldMindIcons.Graph,
                         trailing = {
-                    Surface(
-                        onClick = onBack,
-                        shape = RoundedCornerShape(14.dp),
-                        color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                        modifier = Modifier.size(40.dp)
-                    ) {
-                        Box(contentAlignment = Alignment.Center) {
-                            Icon(FieldMindIcons.Back, null, size = 22.dp)
-                        }
-                    }
+                    BackButton(onClick = onBack)
                 }
                     )
                 }
@@ -939,16 +912,7 @@ fun WeatherLogToolScreen(
                         subtitle = "Record current conditions at your location.",
                         icon = FieldMindIcons.Weather,
                         trailing = {
-                    Surface(
-                        onClick = onBack,
-                        shape = RoundedCornerShape(14.dp),
-                        color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                        modifier = Modifier.size(40.dp)
-                    ) {
-                        Box(contentAlignment = Alignment.Center) {
-                            Icon(FieldMindIcons.Back, null, size = 22.dp)
-                        }
-                    }
+                    BackButton(onClick = onBack)
                 }
                     )
                 }
@@ -1137,16 +1101,7 @@ fun SpeciesToolScreen(
                         subtitle = "Quick-capture a species observation with facts.",
                         icon = FieldMindIcons.Nature,
                         trailing = {
-                    Surface(
-                        onClick = onBack,
-                        shape = RoundedCornerShape(14.dp),
-                        color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                        modifier = Modifier.size(40.dp)
-                    ) {
-                        Box(contentAlignment = Alignment.Center) {
-                            Icon(FieldMindIcons.Back, null, size = 22.dp)
-                        }
-                    }
+                    BackButton(onClick = onBack)
                 }
                     )
                 }
@@ -1357,16 +1312,7 @@ fun ChecklistToolScreen(
                         subtitle = "Add items, check them off, and save as a data record.",
                         icon = FieldMindIcons.Check,
                         trailing = {
-                    Surface(
-                        onClick = onBack,
-                        shape = RoundedCornerShape(14.dp),
-                        color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                        modifier = Modifier.size(40.dp)
-                    ) {
-                        Box(contentAlignment = Alignment.Center) {
-                            Icon(FieldMindIcons.Back, null, size = 22.dp)
-                        }
-                    }
+                    BackButton(onClick = onBack)
                 }
                     )
                 }
@@ -1506,16 +1452,7 @@ fun EventLogToolScreen(
                     subtitle = "Record a notable event with category and notes.",
                     icon = FieldMindIcons.List,
                     trailing = {
-                        Surface(
-                            onClick = onBack,
-                            shape = RoundedCornerShape(14.dp),
-                            color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                            modifier = Modifier.size(40.dp)
-                        ) {
-                            Box(contentAlignment = Alignment.Center) {
-                                Icon(FieldMindIcons.Back, null, size = 22.dp)
-                            }
-                        }
+                        BackButton(onClick = onBack)
                     }
                 )
                 }
@@ -1610,16 +1547,7 @@ fun SiteLogToolScreen(
                     subtitle = "Record a site visit with purpose, conditions, and findings.",
                     icon = FieldMindIcons.Map,
                     trailing = {
-                        Surface(
-                            onClick = onBack,
-                            shape = RoundedCornerShape(14.dp),
-                            color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                            modifier = Modifier.size(40.dp)
-                        ) {
-                            Box(contentAlignment = Alignment.Center) {
-                                Icon(FieldMindIcons.Back, null, size = 22.dp)
-                            }
-                        }
+                        BackButton(onClick = onBack)
                     }
                 )
                 }
@@ -1711,16 +1639,7 @@ fun ComparisonTableScreen(
                     subtitle = "Compare species, samples, or sites side by side.",
                     icon = FieldMindIcons.Data,
                     trailing = {
-                        Surface(
-                            onClick = onBack,
-                            shape = RoundedCornerShape(14.dp),
-                            color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                            modifier = Modifier.size(40.dp)
-                        ) {
-                            Box(contentAlignment = Alignment.Center) {
-                                Icon(FieldMindIcons.Back, null, size = 22.dp)
-                            }
-                        }
+                        BackButton(onClick = onBack)
                     }
                 )
                 }
