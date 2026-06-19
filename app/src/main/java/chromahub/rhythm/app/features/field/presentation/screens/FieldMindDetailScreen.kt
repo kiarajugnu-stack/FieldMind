@@ -2041,7 +2041,7 @@ private fun ProjectTasksBuilder(projectId: Long, viewModel: FieldMindViewModel) 
                                 ) else ButtonDefaults.filledTonalButtonColors()
                             ) {
                                 Icon(
-                                    if (task.status == "Completed") FieldMindIcons.Refresh else FieldMindIcons.Check,
+                                    if (task.status == "Completed") FieldMindIcons.Forward else FieldMindIcons.Check,
                                     null,
                                     size = 14.dp
                                 )
