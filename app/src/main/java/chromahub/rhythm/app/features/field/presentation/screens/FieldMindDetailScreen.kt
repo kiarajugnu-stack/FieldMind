@@ -1596,6 +1596,12 @@ private fun ProjectDetailContent(
     val projectReports = reports.filter { it.projectId == p.id }
     val projectData = dataRecords.filter { it.projectId == p.id }
 
+    // Quick-add dialog state
+    var showNewQuestion by remember { mutableStateOf(false) }
+    var showNewObservation by remember { mutableStateOf(false) }
+    var showNewSource by remember { mutableStateOf(false) }
+    var showNewReport by remember { mutableStateOf(false) }
+
     Card(
         shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
@@ -1670,6 +1676,16 @@ private fun ProjectDetailContent(
                             }
                         }
                     }
+                    Spacer(Modifier.height(8.dp))
+                    OutlinedButton(
+                        onClick = { showNewQuestion = true },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(14.dp)
+                    ) {
+                        Icon(FieldMindIcons.Add, null, size = 18.dp)
+                        Spacer(Modifier.size(6.dp))
+                        Text("Add Question")
+                    }
                 }
                 2 -> { // Observations
                     if (projectObs.isEmpty()) {
@@ -1683,6 +1699,16 @@ private fun ProjectDetailContent(
                         if (projectObs.size > 5) {
                             Text("+${projectObs.size - 5} more observations", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
+                    }
+                    Spacer(Modifier.height(8.dp))
+                    OutlinedButton(
+                        onClick = { showNewObservation = true },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(14.dp)
+                    ) {
+                        Icon(FieldMindIcons.Add, null, size = 18.dp)
+                        Spacer(Modifier.size(6.dp))
+                        Text("Add Observation")
                     }
                 }
                 3 -> { // Evidence
@@ -1700,6 +1726,16 @@ private fun ProjectDetailContent(
                             EntityCard(r.title, "report", body = r.conclusion.ifBlank { r.question }, meta = listOf(r.type, r.status))
                         }
                     }
+                    Spacer(Modifier.height(8.dp))
+                    OutlinedButton(
+                        onClick = { showNewReport = true },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(14.dp)
+                    ) {
+                        Icon(FieldMindIcons.Add, null, size = 18.dp)
+                        Spacer(Modifier.size(6.dp))
+                        Text("Add Report")
+                    }
                 }
                 5 -> { // Sources
                     if (projectSrcs.isEmpty()) {
@@ -1708,6 +1744,16 @@ private fun ProjectDetailContent(
                         projectSrcs.forEach { s ->
                             EntityCard(s.title, "source", body = s.author, meta = listOf(s.type, s.readingStatus))
                         }
+                    }
+                    Spacer(Modifier.height(8.dp))
+                    OutlinedButton(
+                        onClick = { showNewSource = true },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(14.dp)
+                    ) {
+                        Icon(FieldMindIcons.Add, null, size = 18.dp)
+                        Spacer(Modifier.size(6.dp))
+                        Text("Add Source")
                     }
                 }
                 6 -> { // Species Registry Builder
@@ -1719,6 +1765,132 @@ private fun ProjectDetailContent(
             }
         }
     }
+}
+
+// ── Quick-add dialogs for project tabs ──
+@Composable
+private fun ProjectQuickAddDialogs(
+    projectId: Long,
+    showQuestion: Boolean,
+    showObservation: Boolean,
+    showSource: Boolean,
+    showReport: Boolean,
+    onDismissQuestion: () -> Unit,
+    onDismissObservation: () -> Unit,
+    onDismissSource: () -> Unit,
+    onDismissReport: () -> Unit,
+    viewModel: FieldMindViewModel
+) {
+    if (showQuestion) {
+        NewQuestionDialog(viewModel, onDismiss = onDismissQuestion)
+    }
+    if (showObservation) {
+        ObservationQuickAddDialog(
+            projectId = projectId,
+            viewModel = viewModel,
+            onDismiss = onDismissObservation
+        )
+    }
+    if (showSource) {
+        NewSourceDialog(viewModel, onDismiss = onDismissSource)
+    }
+    if (showReport) {
+        NewReportDialog(viewModel, onDismiss = onDismissReport)
+    }
+}
+
+// ── Quick-add dialog for creating observations linked to the current project ──
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ObservationQuickAddDialog(
+    projectId: Long,
+    viewModel: FieldMindViewModel,
+    onDismiss: () -> Unit
+) {
+    val colors = FieldMindTheme.colors
+    val haptics = rememberFieldMindHaptics()
+    var subject by remember { mutableStateOf("") }
+    var category by remember { mutableStateOf("General") }
+    var facts by remember { mutableStateOf("") }
+    val categories = listOf("General", "Flora", "Fauna", "Fungi", "Geology", "Weather", "Habitat", "Behavior", "Other")
+    var showCategoryMenu by remember { mutableStateOf(false) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Quick Observation", fontWeight = FontWeight.Bold) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
+                OutlinedTextField(
+                    value = subject,
+                    onValueChange = { subject = it },
+                    label = { Text("Subject *") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(14.dp)
+                )
+                ExposedDropdownMenuBox(
+                    expanded = showCategoryMenu,
+                    onExpandedChange = { showCategoryMenu = it }
+                ) {
+                    OutlinedTextField(
+                        value = category,
+                        onValueChange = {},
+                        label = { Text("Category") },
+                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = showCategoryMenu) },
+                        modifier = Modifier.fillMaxWidth().menuAnchor(),
+                        readOnly = true,
+                        shape = RoundedCornerShape(14.dp)
+                    )
+                    ExposedDropdownMenu(expanded = showCategoryMenu, onDismissRequest = { showCategoryMenu = false }) {
+                        categories.forEach { cat ->
+                            DropdownMenuItem(
+                                text = { Text(cat) },
+                                onClick = { category = cat; showCategoryMenu = false }
+                            )
+                        }
+                    }
+                }
+                OutlinedTextField(
+                    value = facts,
+                    onValueChange = { facts = it },
+                    label = { Text("Notes (optional)") },
+                    modifier = Modifier.fillMaxWidth(),
+                    minLines = 2,
+                    maxLines = 4,
+                    shape = RoundedCornerShape(14.dp)
+                )
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    haptics.confirm()
+                    viewModel.addObservation(
+                        subject = subject.ifBlank { "Quick observation" },
+                        category = category,
+                        facts = facts,
+                        confidence = "Medium",
+                        manualLocation = "",
+                        tags = "",
+                        evidence = "",
+                        context = "",
+                        projectId = projectId
+                    )
+                    onDismiss()
+                },
+                enabled = subject.isNotBlank(),
+                shape = RoundedCornerShape(14.dp)
+            ) {
+                Text("Save")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        },
+        shape = RoundedCornerShape(24.dp)
+    )
 }
 
 // ══════════════════════════════════════════════════════════════════════
@@ -1745,6 +1917,8 @@ private fun SpeciesRegistryBuilder(projectId: Long, viewModel: FieldMindViewMode
     var conservationStatus by remember { mutableStateOf("Not Evaluated") }
     var targetCount by remember { mutableStateOf("") }
     var autoCount by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+    val speciesDatabase = remember { SpeciesDatabase(context) }
 
     // Live species list for this project
     val allSpecies by viewModel.speciesRegistry.collectAsState()
@@ -1781,6 +1955,84 @@ private fun SpeciesRegistryBuilder(projectId: Long, viewModel: FieldMindViewMode
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         TaxonomyPickerField("Family", family, "family", order, onValueChange = { family = it }, modifier = Modifier.weight(1f))
                         TaxonTextField("Genus", genus, { genus = it }, modifier = Modifier.weight(1f), supportingText = "e.g. Corvus")
+                    }
+                    // Genus autocomplete from database
+                    var showGenusSuggestions by remember { mutableStateOf(false) }
+                    var speciesSearchQuery by remember { mutableStateOf("") }
+                    var speciesSuggestions by remember { mutableStateOf<List<SpeciesRecord>>(emptyList()) }
+                    
+                    OutlinedTextField(
+                        value = speciesSearchQuery,
+                        onValueChange = { query ->
+                            speciesSearchQuery = query
+                            if (query.length >= 2) {
+                                val results = speciesDatabase.search(query, limit = 8)
+                                speciesSuggestions = results
+                                showGenusSuggestions = results.isNotEmpty()
+                            } else {
+                                speciesSuggestions = emptyList()
+                                showGenusSuggestions = false
+                            }
+                        },
+                        label = { Text("Search genus / species from catalog") },
+                        placeholder = { Text("Start typing genus or species name…") },
+                        leadingIcon = { Icon(FieldMindIcons.Search, null, size = 20.dp) },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp),
+                        trailingIcon = {
+                            if (speciesSearchQuery.isNotBlank()) {
+                                IconButton(onClick = { speciesSearchQuery = ""; speciesSuggestions = emptyList(); showGenusSuggestions = false }) {
+                                    Icon(FieldMindIcons.Close, null, size = 18.dp)
+                                }
+                            }
+                        }
+                    )
+                    if (showGenusSuggestions && speciesSuggestions.isNotEmpty()) {
+                        Card(
+                            shape = RoundedCornerShape(16.dp),
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
+                            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                        ) {
+                            Column(Modifier.heightIn(max = 200.dp).verticalScroll(rememberScrollState())) {
+                                speciesSuggestions.forEach { record ->
+                                    Surface(
+                                        onClick = {
+                                            // Auto-fill all taxonomy fields
+                                            genus = record.genus
+                                            speciesName = record.scientificName.substringAfterLast(" ").takeIf { it != record.scientificName } ?: ""
+                                            commonName = record.commonName
+                                            scientificName = record.scientificName
+                                            kingdom = record.kingdom
+                                            phylum = record.phylum
+                                            classs = record.classs
+                                            order = record.order
+                                            family = record.family
+                                            conservationStatus = record.conservationStatus.ifBlank { "Not Evaluated" }
+                                            speciesSearchQuery = ""
+                                            speciesSuggestions = emptyList()
+                                            showGenusSuggestions = false
+                                            haptics.confirm()
+                                        },
+                                        shape = RoundedCornerShape(8.dp),
+                                        color = MaterialTheme.colorScheme.surfaceContainerLow
+                                    ) {
+                                        Row(Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 10.dp),
+                                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                            verticalAlignment = Alignment.CenterVertically) {
+                                            Column(Modifier.weight(1f)) {
+                                                Text(record.commonName, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
+                                                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                                    if (record.genus.isNotBlank()) Text(record.genus, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                                    if (record.scientificName.isNotBlank()) Text(record.scientificName, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                                }
+                                            }
+                                            Icon(FieldMindIcons.Add, null, tint = colors.observation, size = 18.dp)
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
                     FieldTextField(speciesName, { speciesName = it }, "Species", supportingText = "Specific epithet")
                     Text("Conservation Status", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
