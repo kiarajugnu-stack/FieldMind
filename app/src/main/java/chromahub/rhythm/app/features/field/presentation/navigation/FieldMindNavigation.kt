@@ -568,7 +568,7 @@ private fun FieldMindNavHost(
         composable(FieldMindScreen.Projects.route) { ProjectsScreen(viewModel = viewModel, onOpenDetail = openDetail, onStartSession = { navController.navigateToDestination(FieldMindScreen.ResearchSession.route) }) }
         composable(FieldMindScreen.Library.route) { KnowledgeLibraryScreen(viewModel = viewModel, onNavigate = { navController.navigateToDestination(it.route) }, onOpenDetail = openDetail, onOpenReader = openReader) }
         composable(FieldMindScreen.Insights.route) { InsightsScreen(viewModel = viewModel, onNavigate = { navController.navigateToDestination(it.route) }, onOpenDetail = openDetail) }
-        composable(FieldMindScreen.Learn.route) { KnowledgeLibraryScreen(viewModel = viewModel, startTab = 3, onNavigate = { navController.navigateToDestination(it.route) }, onOpenDetail = openDetail, onOpenReader = openReader) }
+        composable(FieldMindScreen.Learn.route) { FieldMindLearnScreen(viewModel = viewModel, onBack = { navController.popBackStack() }, onOpenReader = openReader) }
         composable(FieldMindScreen.Reader.route) { LearnReaderScreen(url = readerTarget.first, title = readerTarget.second, onBack = { navController.popBackStack() }) }
         composable(FieldMindScreen.FieldMode.route) { ObserveScreen(viewModel = viewModel, compactFieldMode = true, onBack = { navController.popBackStack() }, onOpenDetail = openDetail) }
         composable(FieldMindScreen.Questions.route) { QuestionsScreen(viewModel = viewModel, onOpenDetail = openDetail) }
