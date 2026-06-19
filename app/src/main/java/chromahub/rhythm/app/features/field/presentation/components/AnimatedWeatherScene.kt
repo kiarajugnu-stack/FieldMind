@@ -815,8 +815,8 @@ private fun NightSkyScene(
             Offset(size.width * 0.75f, size.height * 0.15f),
             Offset(size.width * 0.6f, size.height * 0.05f)
         )
-        if (shootingStarProgress < 0.35f) {
-            val ssProgress = shootingStarProgress / 0.35f
+        if (shootingStarProgress < 0.50f) {
+            val ssProgress = shootingStarProgress / 0.50f
             val starIndex = (shootingStarProgress * 6f).toInt().coerceIn(0, 2)
             val starPos = nightStarPositions[starIndex]
             drawShootingStar(
@@ -1032,8 +1032,8 @@ private fun NightCloudyScene(
             Offset(size.width * 0.75f, size.height * 0.15f),
             Offset(size.width * 0.6f, size.height * 0.05f)
         )
-        if (shootingStarProgress < 0.30f) {
-            val ssProgress = shootingStarProgress / 0.30f
+        if (shootingStarProgress < 0.50f) {
+            val ssProgress = shootingStarProgress / 0.50f
             val starIndex = (shootingStarProgress * 7f).toInt().coerceIn(0, 2)
             drawShootingStar(
                 progress = ssProgress,
@@ -1285,8 +1285,8 @@ private fun ClearSkyScene(
                 Offset(size.width * 0.78f, size.height * 0.12f),
                 Offset(size.width * 0.65f, size.height * 0.03f)
             )
-            if (shootingStarProgress < 0.30f) {
-                val ssProgress = shootingStarProgress / 0.30f
+            if (shootingStarProgress < 0.50f) {
+                val ssProgress = shootingStarProgress / 0.50f
                 val starIndex = (shootingStarProgress * 7f).toInt().coerceIn(0, 2)
                 val starPos = clearStarPositions[starIndex]
                 drawShootingStar(
@@ -2499,7 +2499,7 @@ private fun FogScene(
         for (layer in 0 until layerCount) {
             val layerAlpha = fogAlpha * (0.15f + layer * 0.12f).coerceAtMost(0.7f)
             val layerColor = if (layer % 2 == 0) fogBaseColor.copy(alpha = layerAlpha) else fogDarkColor.copy(alpha = layerAlpha * 0.8f)
-            val yBase = size.height * (0.1f + layer * 0.13f)
+            val yBase = size.height * (0.1f + layer * 0.13f) - fogOffset * size.height * 0.04f
 
             // Each layer has multiple wispy blobs that drift at slightly different speeds
             val blobCount = if (compact) 2 else 3
@@ -3088,6 +3088,42 @@ private fun ThunderstormScene(
                 style = Stroke(width = 4f + flashIntensity * 6f)
             )
 
+            // Lightning reflection on wet ground / puddles
+            val groundY = size.height * 0.82f
+            val refCenterX = flashPosition.value.x * size.width
+            val reflectAlpha = flashAlpha * 0.3f * flashIntensity
+            if (reflectAlpha > 0.05f) {
+                // Golden-white glow on wet ground
+                drawCircle(
+                    color = Color(0xFFFFF9C4).copy(alpha = reflectAlpha * 0.3f),
+                    radius = size.width * 0.08f,
+                    center = Offset(refCenterX, groundY)
+                )
+                drawCircle(
+                    color = Color.White.copy(alpha = reflectAlpha * 0.15f),
+                    radius = size.width * 0.12f,
+                    center = Offset(refCenterX, groundY)
+                )
+                // Bright horizontal streak on water surface
+                drawLine(
+                    color = Color(0xFFFFF9C4).copy(alpha = reflectAlpha * 0.5f),
+                    start = Offset(refCenterX - size.width * 0.06f, groundY),
+                    end = Offset(refCenterX + size.width * 0.06f, groundY),
+                    strokeWidth = 2f
+                )
+                // Secondary radiating reflection lines
+                for (ri in 0..4) {
+                    val rOff = (ri - 2) * size.width * 0.025f
+                    val rAlpha = reflectAlpha * 0.2f * (1f - abs(ri - 2) / 2f)
+                    drawLine(
+                        color = Color.White.copy(alpha = rAlpha),
+                        start = Offset(refCenterX + rOff, groundY - size.height * 0.01f),
+                        end = Offset(refCenterX + rOff * 0.7f, groundY + size.height * 0.02f),
+                        strokeWidth = 1.5f
+                    )
+                }
+            }
+
             // Secondary branches
             val branchCount = 2 + drawRng.nextInt(3)
             for (b in 0 until branchCount) {
@@ -3152,26 +3188,47 @@ private fun ThunderstormScene(
             )
         }
 
-        // Hail particles for weather codes 96 and 99
+        // Hail particles for weather codes 96 and 99 — larger icy particles + distinct streaks
         val isHail = weatherCode == 96 || weatherCode == 99
         if (isHail) {
-            val hailCount = if (weatherCode == 99) 25 else 14
+            val isSevere = weatherCode == 99
+            val hailCount = if (isSevere) 28 else 16
+            // Hail streaks — thick white falling lines
+            for (i in 0 until (hailCount / 2)) {
+                val sx = size.width * (0.05f + i.toFloat() / (hailCount / 2) * 0.9f) + sin(i * 1.3f) * size.width * 0.04f
+                val fallPhase = (cloudOffset1 + i * 0.13f) % 1f
+                val sy = fallPhase * size.height * 1.2f - size.height * 0.1f
+                val streakLen = if (isSevere) size.height * 0.06f else size.height * 0.04f
+                drawLine(
+                    color = Color(0xAAE8EAF6),
+                    start = Offset(sx, sy),
+                    end = Offset(sx, sy + streakLen),
+                    strokeWidth = if (isSevere) 3f else 2f
+                )
+            }
+            // Hailstones — bouncing icy circles
             for (i in 0 until hailCount) {
-                val hailX = size.width * (0.05f + i.toFloat() / hailCount * 0.9f)
-                val baseHailY = size.height * (0.15f + (i.toFloat() / hailCount) * 0.75f)
-                // Bounce phase — each particle has unique phase offset
+                val hailX = size.width * (0.03f + i.toFloat() / hailCount * 0.94f) + sin(i * 1.7f) * size.width * 0.05f
+                val baseHailY = size.height * (0.20f + (i.toFloat() / hailCount) * 0.72f)
                 val hailPhase = (cloudOffset1 + i * 0.07f) % 1f
-                val bounceY = baseHailY + abs(sin(hailPhase * PI.toFloat() * 4f)) * size.height * 0.12f
-                val hailSize = if (weatherCode == 99) 3f + sin(i * 2.3f) * 1.5f else 2f + sin(i * 1.7f) * 1f
+                val bounceY = baseHailY + abs(sin(hailPhase * PI.toFloat() * 5f)) * size.height * 0.15f
+                val hailSize = if (isSevere) 4.5f + sin(i * 2.3f) * 2f else 3f + sin(i * 1.7f) * 1.5f
+                // Outer icy glow
+                drawCircle(
+                    color = Color(0x99B3E5FC),
+                    radius = (hailSize * 1.5f).coerceAtLeast(2f),
+                    center = Offset(hailX, bounceY)
+                )
+                // Main icy body
                 drawCircle(
                     color = Color(0xDDE8EAF6),
                     radius = hailSize.coerceAtLeast(1.5f),
                     center = Offset(hailX, bounceY)
                 )
-                // Small bright core for icy look
+                // Bright core for icy look
                 drawCircle(
-                    color = Color.White.copy(alpha = 0.6f),
-                    radius = hailSize * 0.3f,
+                    color = Color.White.copy(alpha = 0.7f),
+                    radius = hailSize * 0.35f,
                     center = Offset(hailX, bounceY)
                 )
             }
