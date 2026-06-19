@@ -19,6 +19,7 @@ import androidx.compose.runtime.setValue
 import kotlinx.coroutines.delay
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -114,7 +115,7 @@ fun AnimatedWeatherScene(
             weatherCode in 45..48 -> FogScene(weatherCode, palette, compact, timeOfDay, modifier)
             weatherCode in 51..67 || weatherCode in 80..82 -> RainScene(weatherCode, palette, compact, timeOfDay, modifier)
             weatherCode in 71..77 || weatherCode in 85..86 -> SnowScene(weatherCode, palette, compact, timeOfDay, modifier)
-            weatherCode >= 95 -> ThunderstormScene(palette, compact, timeOfDay, modifier)
+            weatherCode >= 95 -> ThunderstormScene(weatherCode, palette, compact, timeOfDay, modifier)
             else -> ClearSkyScene(palette, timeOfDay, compact, modifier)
         }
     }
@@ -2888,6 +2889,7 @@ private fun rememberSnowflakes(count: Int): List<Triple<Float, Float, Float>> {
 
 @Composable
 private fun ThunderstormScene(
+    weatherCode: Int,
     palette: WeatherPalette,
     compact: Boolean,
     timeOfDay: TimeOfDay,
