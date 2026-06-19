@@ -349,9 +349,9 @@ fun QuestionsScreen(
     //  DIALOGS
     // ════════════════════════════════════════════════════════════
 
-    // Question builder dialog
+    // Question builder screen
     if (showQuestionBuilder) {
-        NewQuestionDialog(viewModel, onDismiss = { showQuestionBuilder = false })
+        NewQuestionScreen(viewModel = viewModel, onBack = { showQuestionBuilder = false })
     }
 
     // Hypothesis creation dialog

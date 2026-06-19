@@ -71,16 +71,21 @@ import fieldmind.research.app.shared.presentation.components.icons.Icon
 fun FlashcardSessionScreen(viewModel: FieldMindViewModel, onBack: () -> Unit) {
     BackHandler(enabled = true) { onBack() }
     val flashcards by viewModel.flashcards.collectAsState()
-    var queue by remember(flashcards) { mutableStateOf(flashcards) }
-    var index by remember(flashcards) { mutableIntStateOf(0) }
+    // ═══ FIX: Don't key remember() on flashcards StateFlow ═══
+    // The flashcards StateFlow re-emits after every updateFlashcardEntity() call.
+    // If we key state on it, index/queue/reviewed reset on every rating, bouncing
+    // the user back to the first card. We initialize from flashcards once and then
+    // track session state independently.
+    var queue by remember { mutableStateOf(flashcards) }
+    var index by remember { mutableIntStateOf(0) }
     var flipped by remember { mutableStateOf(false) }
-    var reviewed by remember(flashcards) { mutableIntStateOf(0) }
-    var againCount by remember(flashcards) { mutableIntStateOf(0) }
-    var goodCount by remember(flashcards) { mutableIntStateOf(0) }
-    var easyCount by remember(flashcards) { mutableIntStateOf(0) }
+    var reviewed by remember { mutableIntStateOf(0) }
+    var againCount by remember { mutableIntStateOf(0) }
+    var goodCount by remember { mutableIntStateOf(0) }
+    var easyCount by remember { mutableIntStateOf(0) }
 
-    // Determine deck mode from first card
-    val isSm2Mode = remember(flashcards) {
+    // Determine deck mode from first card (only on initial mount)
+    val isSm2Mode = remember(flashcards.firstOrNull()?.deckMode) {
         flashcards.firstOrNull()?.deckMode == "sm2"
     }
 

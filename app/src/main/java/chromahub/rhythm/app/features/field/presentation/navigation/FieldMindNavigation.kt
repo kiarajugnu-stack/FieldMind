@@ -98,6 +98,13 @@ sealed class FieldMindScreen(val route: String, val label: String, val icon: Mat
     data object SettingsSpeciesPacks : FieldMindScreen("field_settings_species_packs", "Species Packs", FieldMindIcons.Download)
     data object SettingsSpeciesId : FieldMindScreen("field_settings_species_id", "Species ID", FieldMindIcons.Nature)
 
+    // ── Creation screens (converted from dialogs) ──
+    data object NewProject : FieldMindScreen("field_new_project", "New Project", FieldMindIcons.Project)
+    data object NewQuestion : FieldMindScreen("field_new_question", "New Question", FieldMindIcons.Question)
+    data object NewHypothesis : FieldMindScreen("field_new_hypothesis", "New Hypothesis", FieldMindIcons.Hypothesis)
+    data object NewDataRecord : FieldMindScreen("field_new_data_record", "New Data Record", FieldMindIcons.Data)
+    data object NewReport : FieldMindScreen("field_new_report", "New Report", FieldMindIcons.Report)
+
     // Group 1: Interactive Data Tools
     data object CounterTool : FieldMindScreen("field_counter_tool", "Counter", FieldMindIcons.Add)
     data object MeasurementTool : FieldMindScreen("field_measurement_tool", "Measure", FieldMindIcons.Graph)
@@ -632,7 +639,12 @@ composable(FieldMindScreen.Reports.route) { ProjectsScreen(viewModel = viewModel
         composable(FieldMindScreen.CounterTool.route) { CounterToolScreen(viewModel = viewModel, onBack = { navController.popBackStack() }) }
         composable(FieldMindScreen.MeasurementTool.route) { MeasurementToolScreen(viewModel = viewModel, onBack = { navController.popBackStack() }) }
         composable(FieldMindScreen.WeatherLogTool.route) { WeatherLogToolScreen(viewModel = viewModel, onBack = { navController.popBackStack() }) }
-        composable(FieldMindScreen.SpeciesTool.route) { SpeciesToolScreen(viewModel = viewModel, onBack = { navController.popBackStack() }, onOpenBrowser = { navController.navigateToDestination(FieldMindScreen.SpeciesBrowser.route) }, onOpenTaxonomicBrowser = { navController.navigateToDestination(FieldMindScreen.TaxonomicBrowser.route) }) }
+                composable(FieldMindScreen.NewProject.route) { NewProjectScreen(viewModel = viewModel, onBack = { navController.popBackStack() }) }
+        composable(FieldMindScreen.NewQuestion.route) { NewQuestionScreen(viewModel = viewModel, onBack = { navController.popBackStack() }) }
+        composable(FieldMindScreen.NewHypothesis.route) { NewHypothesisScreen(viewModel = viewModel, onBack = { navController.popBackStack() }) }
+        composable(FieldMindScreen.NewDataRecord.route) { NewDataRecordScreen(viewModel = viewModel, onBack = { navController.popBackStack() }) }
+        composable(FieldMindScreen.NewReport.route) { NewReportScreen(viewModel = viewModel, onBack = { navController.popBackStack() }) }
+composable(FieldMindScreen.SpeciesTool.route) { SpeciesToolScreen(viewModel = viewModel, onBack = { navController.popBackStack() }, onOpenBrowser = { navController.navigateToDestination(FieldMindScreen.SpeciesBrowser.route) }, onOpenTaxonomicBrowser = { navController.navigateToDestination(FieldMindScreen.TaxonomicBrowser.route) }) }
         composable(FieldMindScreen.ChecklistTool.route) { ChecklistToolScreen(viewModel = viewModel, onBack = { navController.popBackStack() }) }
         composable(FieldMindScreen.EventLogTool.route) { EventLogToolScreen(viewModel = viewModel, onBack = { navController.popBackStack() }) }
         composable(FieldMindScreen.SiteLogTool.route) { SiteLogToolScreen(viewModel = viewModel, onBack = { navController.popBackStack() }) }

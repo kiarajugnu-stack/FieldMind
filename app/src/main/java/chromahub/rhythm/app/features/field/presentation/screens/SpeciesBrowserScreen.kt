@@ -23,6 +23,7 @@ import androidx.compose.ui.unit.dp
 import androidx.activity.compose.BackHandler
 import fieldmind.research.app.features.field.data.vision.SpeciesDatabase
 import fieldmind.research.app.features.field.data.vision.SpeciesRecord
+import fieldmind.research.app.features.field.presentation.components.*
 import fieldmind.research.app.features.field.presentation.components.FieldMindIcons
 import fieldmind.research.app.features.field.presentation.theme.FieldMindTheme
 import fieldmind.research.app.shared.presentation.components.icons.Icon
@@ -171,34 +172,37 @@ fun SpeciesBrowserScreen(
                 shadowElevation = 0.dp
             ) {
                 Column(Modifier.fillMaxWidth()) {
-                    // Header row with back button and title
+                    // ── Species Browser Header (expanded) ──
                     Row(
                         Modifier
                             .fillMaxWidth()
-                            .padding(start = 8.dp, end = 20.dp, top = 8.dp, bottom = 4.dp),
+                            .padding(start = 16.dp, end = 20.dp, top = 12.dp, bottom = 8.dp),
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        horizontalArrangement = Arrangement.spacedBy(14.dp)
                     ) {
-                        Surface(
-                            onClick = onBack,
-                            shape = RoundedCornerShape(14.dp),
-                            color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                            modifier = Modifier.size(44.dp)
+                        BackButton(onClick = onBack)
+                        
+                        // Icon badge
+                        Box(
+                            Modifier
+                                .size(48.dp)
+                                .clip(RoundedCornerShape(16.dp))
+                                .background(FieldMindTheme.colors.info.copy(alpha = 0.14f)),
+                            contentAlignment = Alignment.Center
                         ) {
-                            Box(contentAlignment = Alignment.Center) {
-                                Icon(FieldMindIcons.Back, null, tint = MaterialTheme.colorScheme.onSurface, size = 22.dp)
-                            }
+                            Icon(FieldMindIcons.Nature, null, tint = FieldMindTheme.colors.info, size = 28.dp)
                         }
+                        
                         Column(Modifier.weight(1f)) {
                             Text(
                                 "Species Browser",
-                                style = MaterialTheme.typography.titleLarge,
+                                style = MaterialTheme.typography.headlineSmall,
                                 fontWeight = FontWeight.Bold
                             )
                             if (totalCount > 0) {
                                 Text(
                                     "$totalCount species in catalog",
-                                    style = MaterialTheme.typography.bodySmall,
+                                    style = MaterialTheme.typography.bodyMedium,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }

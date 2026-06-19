@@ -135,22 +135,14 @@ fun ProjectsScreen(
     }
 
     Column(Modifier.fillMaxSize()) {
-        // ── Research Hub Header ──
-        Column(Modifier.padding(20.dp, 20.dp, 20.dp, 8.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                Box(
-                    Modifier.size(48.dp).clip(RoundedCornerShape(16.dp))
-                        .background(FieldMindTheme.colors.project.copy(alpha = 0.14f)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(FieldMindIcons.Projects, null, tint = FieldMindTheme.colors.project, size = 28.dp)
-                }
-                Column(Modifier.weight(1f)) {
-                    Text("Research Hub", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.ExtraBold)
-                    Text("Manage projects, templates, and research workflow", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-            }
-        }
+        // ── Research Hub Header (expanded) ──
+        StandardScreenHeader(
+            title = "Research Hub",
+            subtitle = "Manage projects, templates, and research workflow",
+            icon = FieldMindIcons.Projects,
+            heroColor = FieldMindTheme.colors.project,
+            modifier = Modifier.padding(bottom = 4.dp)
+        )
         ScrollableTabRow(selectedTabIndex = tab, edgePadding = 20.dp, containerColor = MaterialTheme.colorScheme.background) {
             tabs.forEachIndexed { i, label -> Tab(tab == i, { selectTab(i) }, text = { Text(label) }) }
         }
@@ -353,26 +345,7 @@ private fun ResearchHubOverviewTab(
         )
     }
     if (showNewProject) {
-        // Get the selected template for guidance display
-        val selectedTemplate = projectTemplates.firstOrNull { it.name == projTemplate }
-        NewProjectDialog(
-            viewModel = viewModel,
-            initialTitle = projTitle,
-            initialTopic = projCategory,
-            initialObjective = projDesc,
-            initialQuestion = projQuestion,
-            initialBackground = selectedTemplate?.background ?: "",
-            initialProjectType = projType,
-            initialMethods = projDesc, // method plan from type selection as starting hint
-            initialSelectedMethods = "",
-            initialHypothesis = projHypothesis,
-            initialDataPlan = selectedTemplate?.dataPlan ?: "",
-            initialAnalysis = selectedTemplate?.analysisPlan ?: "",
-            initialNextAction = selectedTemplate?.nextAction ?: "",
-            initialTags = projTags,
-            onDismiss = { showNewProject = false },
-            templateGuide = selectedTemplate  // pass template for guidance display
-        )
+        NewProjectScreen(viewModel = viewModel, onBack = { showNewProject = false })
     }
 }
 
@@ -891,9 +864,9 @@ private fun HypothesesTab(
             EntityCard(h.prediction, "hypothesis", body = h.reasoning.take(120), meta = listOf("${h.confidencePercent}%", h.resultStatus), onClick = { onOpenDetail("hypothesis", h.id) })
         }
     }
-    // Dialog for new hypothesis
+    // Screen for new hypothesis
     if (showForm) {
-        NewHypothesisDialog(viewModel, viewModel.questions.value, onDismiss = { showForm = false })
+        NewHypothesisScreen(viewModel = viewModel, onBack = { showForm = false })
     }
 }
 
@@ -920,9 +893,9 @@ private fun DataTab(
         if (data.isEmpty()) item { EmptyState("No data records yet", "Measure, count, compare, or log with offline tools.", icon = FieldMindIcons.Data) }
         items(data.sortedByDescending { it.timestamp }) { d -> EntityCard(d.label, "data", body = "${d.value} ${d.unit}", meta = listOf(d.toolType, d.datasetKind), onClick = { onOpenDetail("data", d.id) }) }
     }
-    // Dialog for new data record
+    // Screen for new data record
     if (showForm) {
-        NewDataRecordDialog(viewModel, onDismiss = { showForm = false })
+        NewDataRecordScreen(viewModel = viewModel, onBack = { showForm = false })
     }
 }
 
@@ -946,9 +919,9 @@ private fun ReportsTab(
         if (reports.isEmpty()) item { EmptyState("No reports yet", "Write up your findings with background, methods, results, and conclusions.", icon = FieldMindIcons.Report) }
         items(reports.sortedByDescending { it.createdAt }) { r -> EntityCard(r.title, "report", body = r.conclusion.ifBlank { r.question }, meta = listOf(r.type, r.status), onClick = { onOpenDetail("report", r.id) }) }
     }
-    // Dialog for new report
+    // Screen for new report
     if (showForm) {
-        NewReportDialog(viewModel, onDismiss = { showForm = false })
+        NewReportScreen(viewModel = viewModel, onBack = { showForm = false })
     }
 }
 

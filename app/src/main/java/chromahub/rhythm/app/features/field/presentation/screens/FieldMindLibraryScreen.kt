@@ -963,6 +963,13 @@ private fun FlashcardPanel(
     val localDownloaded by viewModel.fieldSettings.localModelDownloaded.collectAsState()
     val localModel by viewModel.fieldSettings.localModelOption.collectAsState()
     var type by remember { mutableStateOf("concept") }; var front by remember { mutableStateOf("") }; var back by remember { mutableStateOf("") }; var useSm2 by remember { mutableStateOf(false) }
+    val haptics = rememberFieldMindHaptics()
+    
+    // ── Bulk select / delete state ──
+    var selectMode by remember { mutableStateOf(false) }
+    var selectedIds by remember { mutableStateOf<Set<Long>>(emptySet()) }
+    var showDeleteConfirm by remember { mutableStateOf(false) }
+    
     LazyColumn(contentPadding = libraryPanelPadding(), verticalArrangement = Arrangement.spacedBy(14.dp)) {
         item {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -971,6 +978,77 @@ private fun FlashcardPanel(
                 }
                 OutlinedButton(onClick = { show = !show; if (!show) { front = ""; back = "" } }, Modifier.weight(1f), shape = RoundedCornerShape(16.dp)) {
                     Icon(icon = if (show) FieldMindIcons.Close else FieldMindIcons.Add, contentDescription = null, size = 18.dp); Spacer(Modifier.size(8.dp)); Text(if (show) "Cancel" else "New card")
+                }
+            }
+        }
+        // ── Bulk select / delete toolbar ──
+        if (items.isNotEmpty()) {
+            item {
+                Card(
+                    shape = RoundedCornerShape(20.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                ) {
+                    Row(
+                        Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 10.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        // Select mode toggle
+                        FilledTonalButton(
+                            onClick = {
+                                selectMode = !selectMode
+                                if (!selectMode) selectedIds = emptySet()
+                                haptics.light()
+                            },
+                            shape = RoundedCornerShape(12.dp),
+                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
+                            colors = if (selectMode) ButtonDefaults.filledTonalButtonColors(
+                                containerColor = FieldMindTheme.colors.flashcard.copy(alpha = 0.18f)
+                            ) else ButtonDefaults.filledTonalButtonColors(),
+                            modifier = Modifier.height(36.dp)
+                        ) {
+                            Icon(FieldMindIcons.Select, null, size = 16.dp)
+                            Spacer(Modifier.size(4.dp))
+                            Text(if (selectMode) "Cancel (${selectedIds.size})" else "Select", style = MaterialTheme.typography.labelSmall)
+                        }
+
+                        Spacer(Modifier.weight(1f))
+
+                        // Delete selected (only visible when items are selected)
+                        if (selectMode && selectedIds.isNotEmpty()) {
+                            FilledTonalButton(
+                                onClick = { showDeleteConfirm = true },
+                                shape = RoundedCornerShape(12.dp),
+                                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
+                                colors = ButtonDefaults.filledTonalButtonColors(
+                                    containerColor = MaterialTheme.colorScheme.errorContainer
+                                ),
+                                modifier = Modifier.height(36.dp)
+                            ) {
+                                Icon(FieldMindIcons.Delete, null, size = 16.dp, tint = MaterialTheme.colorScheme.onErrorContainer)
+                                Spacer(Modifier.size(4.dp))
+                                Text("Delete (${selectedIds.size})", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onErrorContainer)
+                            }
+                        }
+                        
+                        // Select all / deselect all
+                        if (selectMode && items.isNotEmpty()) {
+                            TextButton(
+                                onClick = {
+                                    selectedIds = if (selectedIds.size == items.size) emptySet() else items.map { it.id }.toSet()
+                                    haptics.light()
+                                },
+                                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
+                                modifier = Modifier.height(36.dp)
+                            ) {
+                                Text(
+                                    if (selectedIds.size == items.size) "Deselect all" else "Select all",
+                                    style = MaterialTheme.typography.labelSmall
+                                )
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -988,7 +1066,22 @@ private fun FlashcardPanel(
                     items.chunked(2).forEach { row ->
                         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                             row.forEach { card ->
-                                LibraryFlashcard(card, Modifier.weight(1f)) { onOpenDetail("flashcard", card.id) }
+                                LibraryFlashcard(
+                                    card = card,
+                                    modifier = Modifier.weight(1f),
+                                    selected = selectMode && card.id in selectedIds,
+                                    onSelect = if (selectMode) {{
+                                        selectedIds = if (card.id in selectedIds) selectedIds - card.id else selectedIds + card.id
+                                        haptics.light()
+                                    }} else null,
+                                    onClick = {
+                                        if (selectMode) {
+                                            selectedIds = if (card.id in selectedIds) selectedIds - card.id else selectedIds + card.id
+                                        } else {
+                                            onOpenDetail("flashcard", card.id)
+                                        }
+                                    }
+                                )
                             }
                             if (row.size == 1) Spacer(Modifier.weight(1f))
                         }
@@ -999,6 +1092,37 @@ private fun FlashcardPanel(
     }
     if (show) {
         NewFlashcardDialog(viewModel, onDismiss = { show = false })
+    }
+    
+    // ═══ Bulk delete confirmation dialog ═══
+    if (showDeleteConfirm) {
+        AlertDialog(
+            onDismissRequest = { showDeleteConfirm = false },
+            icon = { Icon(icon = FieldMindIcons.Delete, contentDescription = null, size = 28.dp) },
+            title = { Text("Delete flashcards?") },
+            text = {
+                Text(
+                    "This will permanently delete ${selectedIds.size} flashcard${if (selectedIds.size != 1) "s" else ""}. This action cannot be undone.",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        selectedIds.forEach { viewModel.deleteFlashcard(it) }
+                        selectedIds = emptySet()
+                        selectMode = false
+                        showDeleteConfirm = false
+                        haptics.confirm()
+                    },
+                    shape = RoundedCornerShape(14.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                ) { Text("Delete ${selectedIds.size}") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteConfirm = false }) { Text("Cancel") }
+            }
+        )
     }
     }
 
@@ -1033,22 +1157,57 @@ private fun autoFlashcardsFromLibrary(sources: List<SourceEntity>, notes: List<N
 
 /** A single library flashcard: shows the prompt; the answer stays hidden until tapped. */
 @Composable
-private fun LibraryFlashcard(card: FlashcardEntity, modifier: Modifier = Modifier, onOpenDetail: () -> Unit) {
+private fun LibraryFlashcard(
+    card: FlashcardEntity,
+    modifier: Modifier = Modifier,
+    selected: Boolean = false,
+    onSelect: (() -> Unit)? = null,
+    onClick: () -> Unit = {}
+) {
     var revealed by remember(card.id) { mutableStateOf(false) }
     val accent = FieldMindTheme.colors.flashcard
     val rotation by androidx.compose.animation.core.animateFloatAsState(if (revealed) 180f else 0f, animationSpec = tween(360), label = "libraryCardFlip")
     Card(
-        modifier = modifier.fillMaxWidth().animateContentSize().graphicsLayer { rotationY = rotation; cameraDistance = 28f }.clickable { revealed = !revealed },
+        modifier = modifier
+            .fillMaxWidth()
+            .animateContentSize()
+            .graphicsLayer { rotationY = rotation; cameraDistance = 28f }
+            .clickable {
+                if (onSelect != null) onSelect()
+                else if (!revealed) revealed = !revealed
+                else onClick()
+            },
         shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+        colors = CardDefaults.cardColors(
+            containerColor = if (selected) FieldMindTheme.colors.flashcard.copy(alpha = 0.12f)
+                           else MaterialTheme.colorScheme.surfaceContainerLow
+        ),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
-        Column(Modifier.fillMaxWidth().graphicsLayer { if (rotation > 90f) rotationY = 180f }.padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Column(
+            Modifier
+                .fillMaxWidth()
+                .graphicsLayer { if (rotation > 90f) rotationY = 180f }
+                .padding(18.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                // Selection checkbox in select mode
+                if (onSelect != null) {
+                    Checkbox(
+                        checked = selected,
+                        onCheckedChange = { onSelect() },
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
                 Box(
-                    Modifier.size(34.dp).clip(RoundedCornerShape(11.dp)).background(accent.copy(alpha = if (FieldMindTheme.colors.isDark) 0.22f else 0.14f)),
+                    Modifier.size(34.dp).clip(RoundedCornerShape(11.dp))
+                        .background(
+                            if (selected) accent.copy(alpha = 0.3f)
+                            else accent.copy(alpha = if (FieldMindTheme.colors.isDark) 0.22f else 0.14f)
+                        ),
                     contentAlignment = Alignment.Center
-                ) { Icon(icon = FieldMindIcons.Flashcard, contentDescription = null, tint = accent, size = 18.dp) }
+                ) { Icon(icon = FieldMindIcons.Flashcard, contentDescription = null, tint = if (selected) accent else accent, size = 18.dp) }
                 Text(card.type, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Spacer(Modifier.weight(1f))
                 Icon(
@@ -1060,10 +1219,12 @@ private fun LibraryFlashcard(card: FlashcardEntity, modifier: Modifier = Modifie
             if (revealed) {
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
                 Text(card.back, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface)
-                TextButton(onClick = onOpenDetail, contentPadding = PaddingValues(horizontal = 0.dp)) {
-                    Text("Open card"); Spacer(Modifier.size(4.dp)); Icon(icon = FieldMindIcons.Forward, contentDescription = null, size = 16.dp)
+                if (onSelect == null) {
+                    TextButton(onClick = onClick, contentPadding = PaddingValues(horizontal = 0.dp)) {
+                        Text("Open card"); Spacer(Modifier.size(4.dp)); Icon(icon = FieldMindIcons.Forward, contentDescription = null, size = 16.dp)
+                    }
                 }
-            } else {
+            } else if (onSelect == null) {
                 Text("Tap to reveal answer", style = MaterialTheme.typography.labelMedium, color = accent)
             }
         }
