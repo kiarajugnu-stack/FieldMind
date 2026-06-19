@@ -141,7 +141,7 @@ fun ProjectsScreen(
             subtitle = "Manage projects, templates, and research workflow",
             icon = FieldMindIcons.Projects,
             heroColor = FieldMindTheme.colors.project,
-            modifier = Modifier.padding(bottom = 4.dp)
+            modifier = Modifier.padding(horizontal = 20.dp, vertical = 16.dp)
         )
         ScrollableTabRow(selectedTabIndex = tab, edgePadding = 20.dp, containerColor = MaterialTheme.colorScheme.background) {
             tabs.forEachIndexed { i, label -> Tab(tab == i, { selectTab(i) }, text = { Text(label) }) }
@@ -221,7 +221,7 @@ private fun ResearchHubOverviewTab(
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(20.dp, 4.dp, 20.dp, 96.dp),
+        contentPadding = PaddingValues(20.dp, 14.dp, 20.dp, 96.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
         // ── 1. Start Research Session ──
@@ -253,30 +253,33 @@ private fun ResearchHubOverviewTab(
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 Button(
                     onClick = { showNewProject = !showNewProject; if (!showNewProject) { projTitle = ""; projDesc = ""; projQuestion = "" } },
-                    modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(16.dp)
+                    modifier = Modifier.weight(1f).height(56.dp),
+                    shape = RoundedCornerShape(16.dp),
+                    contentPadding = PaddingValues(horizontal = 8.dp)
                 ) {
                     Icon(FieldMindIcons.Add, null, size = 18.dp)
                     Spacer(Modifier.size(6.dp))
-                    Text(if (showNewProject) "Cancel" else "New Project")
+                    Text(if (showNewProject) "Cancel" else "Project", maxLines = 1, overflow = TextOverflow.Ellipsis)
                 }
                 OutlinedButton(
                     onClick = { showTemplates = !showTemplates; if (showTemplates) showTypes = false },
-                    modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(16.dp)
+                    modifier = Modifier.weight(1f).height(56.dp),
+                    shape = RoundedCornerShape(16.dp),
+                    contentPadding = PaddingValues(horizontal = 8.dp)
                 ) {
                     Icon(FieldMindIcons.Project, null, size = 18.dp)
                     Spacer(Modifier.size(6.dp))
-                    Text(if (showTemplates) "Hide templates" else "Templates")
+                    Text(if (showTemplates) "Hide" else "Templates", maxLines = 1, overflow = TextOverflow.Ellipsis)
                 }
                 OutlinedButton(
                     onClick = { showTypes = !showTypes; if (showTypes) showTemplates = false },
-                    modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(16.dp)
+                    modifier = Modifier.weight(1f).height(56.dp),
+                    shape = RoundedCornerShape(16.dp),
+                    contentPadding = PaddingValues(horizontal = 8.dp)
                 ) {
                     Icon(FieldMindIcons.Category, null, size = 18.dp)
                     Spacer(Modifier.size(6.dp))
-                    Text(if (showTypes) "Hide types" else "Types")
+                    Text(if (showTypes) "Hide" else "Types", maxLines = 1, overflow = TextOverflow.Ellipsis)
                 }
             }
         }

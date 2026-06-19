@@ -801,21 +801,6 @@ private fun HomeHeroSection(
 
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 HeroActionChip(
-                    icon = FieldMindIcons.Project,
-                    label = "Projects",
-                    accent = colors.project,
-                    modifier = Modifier.weight(1f)
-                ) { onNavigate(FieldMindScreen.Projects) }
-                HeroActionChip(
-                    icon = FieldMindIcons.Timer,
-                    label = "Timer",
-                    accent = colors.flashcard,
-                    modifier = Modifier.weight(1f)
-                ) { onNavigate(FieldMindScreen.ResearchSession) }
-            }
-
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                HeroActionChip(
                     icon = FieldMindIcons.Camera,
                     label = "Capture",
                     accent = colors.observation,
@@ -827,6 +812,21 @@ private fun HomeHeroSection(
                     accent = colors.source,
                     modifier = Modifier.weight(1f)
                 ) { onNewNote() }
+            }
+
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                HeroActionChip(
+                    icon = FieldMindIcons.Project,
+                    label = "Projects",
+                    accent = colors.project,
+                    modifier = Modifier.weight(1f)
+                ) { onNavigate(FieldMindScreen.Projects) }
+                HeroActionChip(
+                    icon = FieldMindIcons.Timer,
+                    label = "Timer",
+                    accent = colors.flashcard,
+                    modifier = Modifier.weight(1f)
+                ) { onNavigate(FieldMindScreen.ResearchSession) }
             }
         }
     }

@@ -62,7 +62,8 @@ fun NewProjectScreen(viewModel: FieldMindViewModel, onBack: () -> Unit) {
             subtitle = "Define the question, evidence plan, data fields, and report direction.",
             icon = FieldMindIcons.Project,
             heroColor = FieldMindTheme.colors.project,
-            trailing = { BackButton(onClick = onBack) }
+            trailing = { BackButton(onClick = onBack) },
+            modifier = Modifier.padding(horizontal = 20.dp, vertical = 16.dp)
         )
         Column(
             Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp, vertical = 12.dp).padding(bottom = 40.dp),
@@ -176,7 +177,8 @@ fun NewHypothesisScreen(viewModel: FieldMindViewModel, onBack: () -> Unit) {
             subtitle = "State the prediction, what would support it, and what would weaken it.",
             icon = FieldMindIcons.Hypothesis,
             heroColor = FieldMindTheme.colors.hypothesis,
-            trailing = { BackButton(onClick = onBack) }
+            trailing = { BackButton(onClick = onBack) },
+            modifier = Modifier.padding(horizontal = 20.dp, vertical = 16.dp)
         )
         Column(
             Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp, vertical = 12.dp).padding(bottom = 40.dp),
@@ -239,7 +241,8 @@ fun NewDataRecordScreen(viewModel: FieldMindViewModel, onBack: () -> Unit) {
             subtitle = "Choose a preset so units and labels match the kind of thing you measured.",
             icon = FieldMindIcons.Data,
             heroColor = FieldMindTheme.colors.data,
-            trailing = { BackButton(onClick = onBack) }
+            trailing = { BackButton(onClick = onBack) },
+            modifier = Modifier.padding(horizontal = 20.dp, vertical = 16.dp)
         )
         Column(
             Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp, vertical = 12.dp).padding(bottom = 40.dp),
@@ -302,7 +305,8 @@ fun NewReportScreen(viewModel: FieldMindViewModel, onBack: () -> Unit) {
             subtitle = "Create a clean local draft: claim, evidence, reasoning, limitations, and next steps.",
             icon = FieldMindIcons.Report,
             heroColor = FieldMindTheme.colors.report,
-            trailing = { BackButton(onClick = onBack) }
+            trailing = { BackButton(onClick = onBack) },
+            modifier = Modifier.padding(horizontal = 20.dp, vertical = 16.dp)
         )
         Column(
             Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp, vertical = 12.dp).padding(bottom = 40.dp),
