@@ -204,6 +204,9 @@ class FieldMindViewModel(application: Application) : AndroidViewModel(applicatio
     fun deleteObservation(id: Long) = viewModelScope.launch { repository.deleteObservation(id) }
     fun deleteNote(id: Long) = viewModelScope.launch { repository.deleteNote(id) }
     fun deleteQuestion(id: Long) = viewModelScope.launch { repository.deleteQuestion(id) }
+    fun linkHypothesisEvidence(hypothesisId: Long, observationId: Long) = viewModelScope.launch {
+        repository.linkHypothesisEvidence(hypothesisId, observationId)
+    }
     fun deleteHypothesis(id: Long) = viewModelScope.launch { repository.deleteHypothesis(id) }
     fun deleteProject(id: Long) = viewModelScope.launch { repository.deleteProject(id) }
     fun deleteSource(id: Long) = viewModelScope.launch { repository.deleteSource(id) }
