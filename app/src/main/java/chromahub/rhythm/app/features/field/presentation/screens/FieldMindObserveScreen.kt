@@ -137,12 +137,7 @@ private enum class CaptureStep : Parcelable { Evidence, Details, Complete }
 @Composable
 fun ObserveScreen(
     viewModel: FieldMindViewModel,
-    onOpenDetail: (String, Long) -> Unit = { _, _ -> 
-    // ── GpsOffDialog ──
-    if (showGpsDialog) {
-        GpsOffDialog(onDismiss = { showGpsDialog = false })
-    }
-},
+    onOpenDetail: (String, Long) -> Unit = { _, _ -> },
     compactFieldMode: Boolean = false,
     onBack: (() -> Unit)? = null
 ) {
