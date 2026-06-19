@@ -54,6 +54,7 @@ fun WeatherDatabaseScreen(
     val colors = FieldMindTheme.colors
     val tempUnit by viewModel.fieldSettings.tempUnit.collectAsState()
     val windSpeedUnit by viewModel.fieldSettings.windSpeedUnit.collectAsState()
+    val showCloudAnimation by viewModel.fieldSettings.weatherShowCloudAnimation.collectAsState()
 
     // Weather Database always shows all data (display prefs only affect the home widget)
 
@@ -503,14 +504,14 @@ private fun LiveCurrentWeatherCard(
                     modifier = Modifier
                         .matchParentSize()
                         .clip(RoundedCornerShape(28.dp))
-                ) {
-                    AnimatedWeatherScene(
-                        weatherCode = weather.weatherCode,
-                        temperature = weather.temperature,
-                        sunrise = weather.sunrise,
-                        sunset = weather.sunset,
-                        compact = false
-                    )
+                ) {AnimatedWeatherScene(
+        weatherCode = weather.weatherCode,
+        temperature = weather.temperature,
+        sunrise = weather.sunrise,
+        sunset = weather.sunset,
+        compact = false,
+        showCloudAnimation = showCloudAnimation
+    )
                 }
             }
 

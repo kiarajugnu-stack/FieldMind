@@ -78,7 +78,8 @@ fun AnimatedWeatherScene(
     sunset: String? = null,
     modifier: Modifier = Modifier,
     compact: Boolean = false,
-    forceNight: Boolean? = null
+    forceNight: Boolean? = null,
+    showCloudAnimation: Boolean = true
 ) {
     val computedTimeOfDay = computeTimeOfDay(sunrise, sunset)
     val forcedTimeOfDay = when (forceNight) {
@@ -109,9 +110,15 @@ fun AnimatedWeatherScene(
         // weatherCode -1 = day cloudy, -2 = night sky (used by weather widget for enhanced display)
         // All scenes use the same animation style regardless of day/night — palette provides the colors
         when {
-            weatherCode == -1 || weatherCode in 0..1 -> DayCloudyScene(palette, compact, timeOfDay, modifier)
+            weatherCode == -1 || weatherCode in 0..1 -> {
+                if (showCloudAnimation) DayCloudyScene(palette, compact, timeOfDay, modifier)
+                else ClearSkyScene(palette, timeOfDay, compact, modifier)
+            }
             weatherCode == -2 -> NightSkyScene(palette, compact, timeOfDay, modifier)
-            weatherCode in 2..3 -> CloudyScene(palette, compact, timeOfDay, modifier)
+            weatherCode in 2..3 -> {
+                if (showCloudAnimation) CloudyScene(palette, compact, timeOfDay, modifier)
+                else ClearSkyScene(palette, timeOfDay, compact, modifier)
+            }
             weatherCode in 45..48 -> FogScene(weatherCode, palette, compact, timeOfDay, modifier)
             weatherCode in 51..67 || weatherCode in 80..82 -> RainScene(weatherCode, palette, compact, timeOfDay, modifier)
             weatherCode in 71..77 || weatherCode in 85..86 -> SnowScene(weatherCode, palette, compact, timeOfDay, modifier)
@@ -1454,6 +1461,35 @@ private fun CloudyScene(
         drawCloud(offset = frontDrift, baseX = size.width * 0.6f, baseY = size.height * 0.55f, scale = cloudScale * 0.7f, color = cloudColor.copy(alpha = 0.5f), morph = cloudMorph + 5f)
         drawCloud(offset = frontDrift - 1f, baseX = size.width * 0.6f, baseY = size.height * 0.55f, scale = cloudScale * 0.7f, color = cloudColor.copy(alpha = 0.5f), morph = cloudMorph + 5f)
 
+        // Night mode — moon visible through clouds
+        if (!isDaytime) {
+            val cx = size.width * 0.85f
+            val cy = moonVerticalY(timeOfDay, size.height)
+            val moonRadius = if (compact) size.minDimension * 0.09f else size.minDimension * 0.07f
+
+            drawCircle(
+                color = palette.moonGlowColor.copy(alpha = 0.10f),
+                radius = moonRadius * 2.5f,
+                center = Offset(cx, cy)
+            )
+            drawCircle(
+                color = palette.moonGlowColor.copy(alpha = 0.04f),
+                radius = moonRadius * 4.0f,
+                center = Offset(cx, cy)
+            )
+
+            val moonPhase = getMoonPhaseValue()
+            drawMoonPhase(
+                phaseValue = moonPhase,
+                cx = cx,
+                cy = cy,
+                radius = moonRadius,
+                litColor = palette.moonColor.copy(alpha = 1f),
+                shadowColor = palette.background.last().copy(alpha = if (isDark) 0.75f else 0.65f),
+                glowColor = palette.moonGlowColor
+            )
+        }
+
         // Flying birds during daytime
         drawBirds(birdProgress, timeOfDay, isDark)
 
@@ -2351,10 +2387,7 @@ private fun DrawScope.drawShootingStar(
     )
 }
 
-/**
- * Draws a rainbow arc on the left side of the sky when rain falls during sunny conditions
- * (weather codes 51-82 during Morning, Sunrise, or Midday).
- */
+
 private fun DrawScope.drawRainbow(
     timeOfDay: TimeOfDay,
     weatherCode: Int,
@@ -2708,8 +2741,6 @@ private fun RainScene(
         }
         val intensityAlpha = rainIntensity.coerceIn(0.4f, 1f)
 
-        // Rainbow during sunny rain conditions
-        drawRainbow(timeOfDay = timeOfDay, weatherCode = weatherCode, isDarkTheme = isDark, compact = compact)
 
         // Rain streaks — each drop falls individually with random phase offset (no synchronized lines)
         streaks.forEach { streak ->
@@ -3204,51 +3235,7 @@ private fun ThunderstormScene(
             )
         }
 
-        // Hail particles for weather codes 96 and 99 — larger icy particles + distinct streaks
-        val isHail = weatherCode == 96 || weatherCode == 99
-        if (isHail) {
-            val isSevere = weatherCode == 99
-            val hailCount = if (isSevere) 28 else 16
-            // Hail streaks — thick white falling lines
-            for (i in 0 until (hailCount / 2)) {
-                val sx = size.width * (0.05f + i.toFloat() / (hailCount / 2) * 0.9f) + sin(i * 1.3f) * size.width * 0.04f
-                val fallPhase = (cloudOffset1 + i * 0.13f) % 1f
-                val sy = fallPhase * size.height * 1.2f - size.height * 0.1f
-                val streakLen = if (isSevere) size.height * 0.06f else size.height * 0.04f
-                drawLine(
-                    color = Color(0xAAE8EAF6),
-                    start = Offset(sx, sy),
-                    end = Offset(sx, sy + streakLen),
-                    strokeWidth = if (isSevere) 3f else 2f
-                )
-            }
-            // Hailstones — bouncing icy circles
-            for (i in 0 until hailCount) {
-                val hailX = size.width * (0.03f + i.toFloat() / hailCount * 0.94f) + sin(i * 1.7f) * size.width * 0.05f
-                val baseHailY = size.height * (0.20f + (i.toFloat() / hailCount) * 0.72f)
-                val hailPhase = (cloudOffset1 + i * 0.07f) % 1f
-                val bounceY = baseHailY + abs(sin(hailPhase * PI.toFloat() * 5f)) * size.height * 0.15f
-                val hailSize = if (isSevere) 4.5f + sin(i * 2.3f) * 2f else 3f + sin(i * 1.7f) * 1.5f
-                // Outer icy glow
-                drawCircle(
-                    color = Color(0x99B3E5FC),
-                    radius = (hailSize * 1.5f).coerceAtLeast(2f),
-                    center = Offset(hailX, bounceY)
-                )
-                // Main icy body
-                drawCircle(
-                    color = Color(0xDDE8EAF6),
-                    radius = hailSize.coerceAtLeast(1.5f),
-                    center = Offset(hailX, bounceY)
-                )
-                // Bright core for icy look
-                drawCircle(
-                    color = Color.White.copy(alpha = 0.7f),
-                    radius = hailSize * 0.35f,
-                    center = Offset(hailX, bounceY)
-                )
-            }
-        }
+
 
         // Ground terrain already rendered by RainScene composable above
     }
@@ -3331,6 +3318,7 @@ fun CompactWeatherIcon(
         weatherCode = weatherCode,
         temperature = temperature,
         modifier = modifier,
-        compact = true
+        compact = true,
+        showCloudAnimation = true
     )
 }

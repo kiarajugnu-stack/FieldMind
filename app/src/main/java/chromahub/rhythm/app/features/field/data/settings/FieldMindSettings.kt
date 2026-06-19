@@ -202,6 +202,8 @@ class FieldMindSettings private constructor(context: Context) {
     val weatherShowCloudCover: StateFlow<Boolean> = _weatherShowCloudCover.asStateFlow()
     private val _weatherShowPressure = MutableStateFlow(prefs.getBoolean(KEY_WEATHER_SHOW_PRESSURE, false))
     val weatherShowPressure: StateFlow<Boolean> = _weatherShowPressure.asStateFlow()
+    private val _weatherShowCloudAnimation = MutableStateFlow(prefs.getBoolean(KEY_WEATHER_SHOW_CLOUD_ANIMATION, true))
+    val weatherShowCloudAnimation: StateFlow<Boolean> = _weatherShowCloudAnimation.asStateFlow()
 
     // ── Weather provider selection ──
     private val _weatherProvider = MutableStateFlow(prefs.getString(KEY_WEATHER_PROVIDER, "met-norway") ?: "met-norway")
@@ -325,6 +327,7 @@ class FieldMindSettings private constructor(context: Context) {
     fun setWeatherShowWind(value: Boolean) = edit(KEY_WEATHER_SHOW_WIND, value) { _weatherShowWind.value = value }
     fun setWeatherShowCloudCover(value: Boolean) = edit(KEY_WEATHER_SHOW_CLOUD, value) { _weatherShowCloudCover.value = value }
     fun setWeatherShowPressure(value: Boolean) = edit(KEY_WEATHER_SHOW_PRESSURE, value) { _weatherShowPressure.value = value }
+    fun setWeatherShowCloudAnimation(value: Boolean) = edit(KEY_WEATHER_SHOW_CLOUD_ANIMATION, value) { _weatherShowCloudAnimation.value = value }
     fun setWeatherProvider(value: String) = edit(KEY_WEATHER_PROVIDER, value) { _weatherProvider.value = value }
     fun setWeatherProviders(value: String) = edit(KEY_WEATHER_PROVIDERS, value) {
         _weatherProviders.value = value
@@ -441,6 +444,7 @@ class FieldMindSettings private constructor(context: Context) {
         private const val KEY_WEATHER_SHOW_WIND = "weather_show_wind"
         private const val KEY_WEATHER_SHOW_CLOUD = "weather_show_cloud"
         private const val KEY_WEATHER_SHOW_PRESSURE = "weather_show_pressure"
+        private const val KEY_WEATHER_SHOW_CLOUD_ANIMATION = "weather_show_cloud_animation"
         private const val KEY_WEATHER_PROVIDER = "weather_provider"
         private const val KEY_WEATHER_PROVIDERS = "weather_providers"
         private const val KEY_WEATHER_API_KEY = "weather_api_key"

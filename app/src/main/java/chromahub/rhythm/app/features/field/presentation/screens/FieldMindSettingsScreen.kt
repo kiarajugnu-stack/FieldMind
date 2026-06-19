@@ -785,6 +785,7 @@ fun WeatherSettingsPage(viewModel: FieldMindViewModel, onBack: () -> Unit) {
     val showWind by settings.weatherShowWind.collectAsState()
     val showCloud by settings.weatherShowCloudCover.collectAsState()
     val showPressure by settings.weatherShowPressure.collectAsState()
+    val showCloudAnimation by settings.weatherShowCloudAnimation.collectAsState()
     val providerSlugs by settings.weatherProviders.collectAsState()
     val apiKey by settings.weatherApiKey.collectAsState()
     val selectedProviderSet = remember(providerSlugs) { providerSlugs.split(",").map { it.trim() }.filter { it.isNotBlank() }.toSet().ifEmpty { setOf("met-norway") } }
@@ -893,8 +894,10 @@ fun WeatherSettingsPage(viewModel: FieldMindViewModel, onBack: () -> Unit) {
                 HorizontalDivider(Modifier.padding(start = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
                 ToggleItem("Show cloud cover", "Cloud cover percentage.", showCloud, settings::setWeatherShowCloudCover, FieldMindIcons.Cloud)
                 HorizontalDivider(Modifier.padding(start = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
-                ToggleItem("Show pressure", "Atmospheric pressure in hPa.", showPressure, settings::setWeatherShowPressure, FieldMindIcons.Compress)
-            }
+            ToggleItem("Show pressure", "Atmospheric pressure in hPa.", showPressure, settings::setWeatherShowPressure, FieldMindIcons.Compress)
+                    HorizontalDivider(Modifier.padding(start = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+                    ToggleItem("Cloud animations", "Animated clouds and partly-cloudy sky effects.", showCloudAnimation, settings::setWeatherShowCloudAnimation, FieldMindIcons.Cloud)
+        }
         }
     }
 }

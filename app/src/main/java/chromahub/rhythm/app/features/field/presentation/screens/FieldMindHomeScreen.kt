@@ -166,6 +166,7 @@ fun HomeScreen(
     val weatherShowWind by viewModel.fieldSettings.weatherShowWind.collectAsState()
     val weatherShowCloud by viewModel.fieldSettings.weatherShowCloudCover.collectAsState()
     val weatherShowPressure by viewModel.fieldSettings.weatherShowPressure.collectAsState()
+    val weatherShowCloudAnimation by viewModel.fieldSettings.weatherShowCloudAnimation.collectAsState()
     val tempUnit by viewModel.fieldSettings.tempUnit.collectAsState()
     val windSpeedUnit by viewModel.fieldSettings.windSpeedUnit.collectAsState()
     val developerMode by viewModel.fieldSettings.developerMode.collectAsState()
@@ -1160,15 +1161,15 @@ private fun LiveWeatherDashboardWidget(
                         .then(
                             Modifier.clip(RoundedCornerShape(28.dp))
                         )
-                ) {
-                    AnimatedWeatherScene(
-                        weatherCode = displayWeatherCode,
-                        temperature = currentWeather!!.temperature,
-                        sunrise = currentWeather!!.sunrise,
-                        sunset = currentWeather!!.sunset,
-                        compact = false,
-                        forceNight = if (developerMode && testIsNight) true else if (developerMode) false else null
-                    )
+                ) {AnimatedWeatherScene(
+        weatherCode = displayWeatherCode,
+        temperature = currentWeather!!.temperature,
+        sunrise = currentWeather!!.sunrise,
+        sunset = currentWeather!!.sunset,
+        compact = false,
+        forceNight = if (developerMode && testIsNight) true else if (developerMode) false else null,
+        showCloudAnimation = weatherShowCloudAnimation
+    )
                 }
                 // Glass-morphism scrim for better text readability
                 Box(
