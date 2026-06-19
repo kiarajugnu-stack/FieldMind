@@ -438,6 +438,42 @@ private fun weatherPalette(temp: Double?, timeOfDay: TimeOfDay, isDarkTheme: Boo
 //  Enhanced Day Scene — Sun + drifting clouds + weather condition
 // ══════════════════════════════════════════════════════════════════════
 
+
+/**
+ * Computes the vertical Y position (in pixels) of the sun based on time of day.
+ * Sun rises from behind mountains at Sunrise (~0.58h), climbs to zenith at Midday (0.12h),
+ * and sets behind mountains at Sunset (~0.58h). At Night the sun is off-screen.
+ */
+private fun sunVerticalY(timeOfDay: TimeOfDay, height: Float): Float {
+    return height * when (timeOfDay) {
+        TimeOfDay.Dawn -> 0.65f
+        TimeOfDay.Sunrise -> 0.50f
+        TimeOfDay.Morning -> 0.28f
+        TimeOfDay.Midday -> 0.12f
+        TimeOfDay.Afternoon -> 0.28f
+        TimeOfDay.Sunset -> 0.50f
+        TimeOfDay.Twilight -> 0.75f
+        TimeOfDay.Night -> 1.20f
+    }
+}
+
+/**
+ * Computes the vertical Y position (in pixels) of the moon based on time of day.
+ * Moon is high in the night sky (0.15h), lower during twilight (0.42h),
+ * and off-screen during daylight hours.
+ */
+private fun moonVerticalY(timeOfDay: TimeOfDay, height: Float): Float {
+    return height * when (timeOfDay) {
+        TimeOfDay.Dawn -> 0.78f
+        TimeOfDay.Sunrise -> 1.20f
+        TimeOfDay.Morning -> 1.20f
+        TimeOfDay.Midday -> 1.20f
+        TimeOfDay.Afternoon -> 1.20f
+        TimeOfDay.Sunset -> 0.72f
+        TimeOfDay.Twilight -> 0.42f
+        TimeOfDay.Night -> 0.15f
+    }
+}
 /**
  * Day scene with sun, drifting clouds, and subtle weather condition overlay.
  * Used by the weather widget as the default day background.
@@ -508,7 +544,7 @@ private fun DayCloudyScene(
 
     Canvas(modifier = modifier.fillMaxSize()) {
         val cx = size.width * 0.85f  // Top-right corner
-        val cy = size.height * 0.12f
+        val cy = sunVerticalY(timeOfDay, size.height)
         val sunRadius = if (compact) size.minDimension * 0.09f else size.minDimension * 0.07f
 
         // Sun glow — smaller, more subtle
@@ -603,7 +639,7 @@ private fun DayCloudyScene(
         // Sun reflection on water during sunrise/sunset
         drawSunReflection(
             sunHorizontalPos = 0.85f,
-            sunVerticalPos = 0.12f,
+            sunVerticalPos = sunVerticalY(timeOfDay, size.height) / size.height,
             sunColor = palette.sunColor,
             isDarkTheme = isDark,
             timeOfDay = timeOfDay
@@ -700,7 +736,7 @@ private fun NightSkyScene(
 
     Canvas(modifier = modifier.fillMaxSize()) {
         val cx = size.width * 0.85f  // Top-right corner
-        val cy = size.height * 0.18f
+        val cy = moonVerticalY(timeOfDay, size.height)
         val moonRadius = if (compact) size.minDimension * 0.09f else size.minDimension * 0.07f
 
         val moonBody = palette.moonColor.copy(alpha = 1f)
@@ -934,7 +970,7 @@ private fun NightCloudyScene(
 
     Canvas(modifier = modifier.fillMaxSize()) {
         val cx = size.width * 0.85f
-        val cy = size.height * 0.18f
+        val cy = moonVerticalY(timeOfDay, size.height)
         val moonRadius = if (compact) size.minDimension * 0.09f else size.minDimension * 0.07f
 
         val moonBody = palette.moonColor.copy(alpha = 1f)
@@ -1117,7 +1153,7 @@ private fun ClearSkyScene(
 
     Canvas(modifier = modifier.fillMaxSize()) {
         val sunCx = size.width * 0.85f  // Top-right corner
-        val sunCy = size.height * 0.12f
+        val sunCy = sunVerticalY(timeOfDay, size.height)
         val sunRadius = if (compact) size.minDimension * 0.10f else size.minDimension * 0.08f
 
         if (isDay) {
@@ -1182,7 +1218,7 @@ private fun ClearSkyScene(
             // Sun reflection on water during sunrise/sunset
             drawSunReflection(
                 sunHorizontalPos = 0.85f,
-                sunVerticalPos = 0.12f,
+                sunVerticalPos = sunVerticalY(timeOfDay, size.height) / size.height,
                 sunColor = palette.accent,
                 isDarkTheme = isDark,
                 timeOfDay = timeOfDay
@@ -1194,7 +1230,7 @@ private fun ClearSkyScene(
             val moonBody = palette.moonColor.copy(alpha = 1f)
             val moonGlowColor = palette.moonGlowColor
             val moonCx = size.width * 0.85f  // Top-right corner
-            val moonCy = size.height * 0.18f
+            val moonCy = moonVerticalY(timeOfDay, size.height)
             val moonR = if (compact) size.minDimension * 0.09f else size.minDimension * 0.07f
 
             // Moon glow — tighter so it doesn't cover everything
