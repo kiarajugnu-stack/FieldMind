@@ -27,6 +27,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import fieldmind.research.app.features.field.presentation.components.FieldMindIcons
+import fieldmind.research.app.features.field.presentation.components.BackButton
 import fieldmind.research.app.features.field.presentation.components.StandardScreenHeader
 import fieldmind.research.app.features.field.presentation.components.InfoChip
 import fieldmind.research.app.features.field.presentation.theme.FieldMindTheme

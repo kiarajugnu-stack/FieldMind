@@ -473,6 +473,8 @@ fun ResearchSessionScreen(
                             onBack()
                         }
                     }, contentDescription = "Back") }
+                )
+            }
 
             if (showSummary) {
                 // Session summary
