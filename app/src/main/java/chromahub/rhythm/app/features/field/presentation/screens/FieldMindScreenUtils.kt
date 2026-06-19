@@ -230,6 +230,8 @@ internal fun CaptureStep(title: String, subtitle: String, icon: MaterialSymbolIc
 
 internal fun uriLooksImage(uri: String): Boolean = uri.contains(Regex("\\.(jpg|jpeg|png|webp|gif|heic|bmp)(\\?.*)?$", RegexOption.IGNORE_CASE))
 internal fun uriLooksPdf(uri: String): Boolean = uri.contains(Regex("\\.pdf(\\?.*)?$", RegexOption.IGNORE_CASE))
+internal fun uriLooksAudio(uri: String): Boolean = uri.contains(Regex("\\.(mp3|m4a|wav|ogg|aac|flac|wma|opus)(\\?.*)?$", RegexOption.IGNORE_CASE))
+internal fun uriLooksVideo(uri: String): Boolean = uri.contains(Regex("\\.(mp4|mov|avi|mkv|webm|3gp|m4v)(\\?.*)?$", RegexOption.IGNORE_CASE))
 
 internal fun durableEvidenceAttachment(context: android.content.Context, type: String, uri: android.net.Uri, caption: String): fieldmind.research.app.features.field.presentation.viewmodel.DraftEvidenceAttachment {
     val input = context.contentResolver.openInputStream(uri)
