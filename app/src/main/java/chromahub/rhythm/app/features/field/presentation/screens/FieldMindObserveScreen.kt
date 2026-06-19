@@ -2302,19 +2302,29 @@ private fun FieldModeScreen(viewModel: FieldMindViewModel, onBack: () -> Unit) {
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 item {
-                    FieldScreenHeader(
-                        "Field mode",
-                        when {
-                            fieldModeAutoStartTimer && sessionTimerStarted ->
-                                "$fieldModeDefaultSession mode · $elapsedFormatted elapsed"
-                            fieldModeDefaultSession != "Quick capture" ->
-                                "$fieldModeDefaultSession mode — one tap logs an observation"
-                            else -> "One tap logs an observation. Add details later."
-                        },
-                        icon = FieldMindIcons.Bolt,
-                        actionIcon = FieldMindIcons.Close,
-                        onAction = onBack
-                    )
+                    StandardScreenHeader(
+                    title = "Field mode",
+                    subtitle = when {
+                        fieldModeAutoStartTimer && sessionTimerStarted ->
+                            "$fieldModeDefaultSession mode · $elapsedFormatted elapsed"
+                        fieldModeDefaultSession != "Quick capture" ->
+                            "$fieldModeDefaultSession mode — one tap logs an observation"
+                        else -> "One tap logs an observation. Add details later."
+                    },
+                    icon = FieldMindIcons.Bolt,
+                    trailing = {
+                        Surface(
+                            onClick = onBack,
+                            shape = RoundedCornerShape(14.dp),
+                            color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                            modifier = Modifier.size(40.dp)
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Icon(FieldMindIcons.Close, null, size = 22.dp)
+                            }
+                        }
+                    }
+                )
                 }
                 // Auto-start timer indicator
                 if (fieldModeAutoStartTimer && sessionTimerStarted && timerStartTime > 0L) {
