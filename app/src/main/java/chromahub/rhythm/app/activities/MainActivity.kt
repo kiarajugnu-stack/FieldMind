@@ -12,10 +12,12 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.fragment.app.FragmentActivity
+import fieldmind.research.app.features.field.presentation.components.applyScreenCaptureProtection
 import fieldmind.research.app.features.field.presentation.navigation.FieldMindApp
 import fieldmind.research.app.features.field.presentation.theme.FieldMindTheme
 import fieldmind.research.app.features.field.presentation.viewmodel.FieldMindViewModel
@@ -71,6 +73,12 @@ class MainActivity : FragmentActivity() {
             // FieldMind owns the active surface: apply FieldMind's brand palette directly
             // without wrapping in RhythmTheme to avoid color conflicts
             val fieldDynamicColor by fieldMindViewModel.fieldSettings.dynamicColorEnabled.collectAsState()
+            val screenCaptureProtection by fieldMindViewModel.fieldSettings.screenCaptureProtectionEnabled.collectAsState()
+
+            LaunchedEffect(screenCaptureProtection) {
+                applyScreenCaptureProtection(window, screenCaptureProtection)
+            }
+
             FieldMindTheme(darkTheme = isDarkTheme, dynamicColor = fieldDynamicColor) {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
