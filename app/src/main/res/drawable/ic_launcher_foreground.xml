@@ -2,5 +2,5 @@
 <scale xmlns:android="http://schemas.android.com/apk/res/android"
     android:drawable="@drawable/fieldmind_logo"
     android:scaleGravity="center"
-    android:scaleHeight="5%"
-    android:scaleWidth="5%" />
+    android:scaleHeight="8%"
+    android:scaleWidth="8%" />

@@ -1,10 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <scale xmlns:android="http://schemas.android.com/apk/res/android"
-    android:drawable="@drawable/fieldmind_logo"
     android:scaleGravity="center"
-    android:scaleHeight="5%"
-    android:scaleWidth="5%">
-    <!-- Tint for monochrome themed icon rendering (Android 13+) -->
+    android:scaleHeight="8%"
+    android:scaleWidth="8%">
+    <!-- Tinted bitmap for monochrome themed icon rendering (Android 13+) -->
     <bitmap
         android:src="@drawable/fieldmind_logo"
         android:tint="@android:color/white"
