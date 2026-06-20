@@ -1,9 +1,11 @@
-package chromahub.rhythm.app.features.field.presentation.components
+package fieldmind.research.app.features.field.presentation.components
 
+import android.app.Activity
+import android.content.ContextWrapper
 import android.view.WindowManager
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.platform.LocalContext
 
 /**
  * Composable that applies FLAG_SECURE to the current window to prevent
@@ -23,32 +25,24 @@ import androidx.compose.ui.platform.LocalView
  */
 @Composable
 fun ScreenCaptureProtection(enabled: Boolean = true, onDispose: (() -> Unit)? = null) {
-    val view = LocalView.current
-    
-    DisposableEffect(enabled) {
-        val window = view.rootView.windowToken?.let { token ->
-            view.rootView as? android.view.Window
-        } ?: (view.rootView as? android.app.Activity)?.window
-        
-        if (window != null) {
-            if (enabled) {
-                window.setFlags(
-                    WindowManager.LayoutParams.FLAG_SECURE,
-                    WindowManager.LayoutParams.FLAG_SECURE
-                )
-            } else {
-                window.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
-            }
-        }
-        
+    val window = LocalContext.current.findActivity()?.window
+
+    DisposableEffect(window, enabled) {
+        window?.let { applyScreenCaptureProtection(it, enabled) }
+
         onDispose {
-            // Cleanup: remove FLAG_SECURE when composable is disposed or disabled
-            if (window != null && enabled) {
-                window.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
+            if (enabled) {
+                window?.let { applyScreenCaptureProtection(it, false) }
             }
             onDispose?.invoke()
         }
     }
+}
+
+private tailrec fun android.content.Context.findActivity(): Activity? = when (this) {
+    is Activity -> this
+    is ContextWrapper -> baseContext.findActivity()
+    else -> null
 }
 
 /**

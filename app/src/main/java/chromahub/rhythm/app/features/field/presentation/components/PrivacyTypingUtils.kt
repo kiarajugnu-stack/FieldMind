@@ -44,12 +44,37 @@ val LocalPrivacyTypingEnabled = compositionLocalOf { false }
  */
 fun KeyboardOptions.withPrivacyTyping(enabled: Boolean): KeyboardOptions {
     if (!enabled) return this
+
+    val existingOptions = platformImeOptions?.privateImeOptions
+        ?.split(PRIVATE_IME_OPTION_SEPARATOR)
+        ?.map { it.trim() }
+        ?.filter { it.isNotEmpty() }
+        .orEmpty()
+
+    val mergedOptions = (existingOptions + PRIVACY_IME_OPTIONS)
+        .distinct()
+        .joinToString(PRIVATE_IME_OPTION_SEPARATOR)
+
     return copy(
-        platformImeOptions = PlatformImeOptions(
-            privateImeOptions = "nm,noPersonalizedLearning"  // "nm" for Gboard, "noPersonalizedLearning" for SwiftKey & others
-        )
+        autoCorrectEnabled = false,
+        platformImeOptions = PlatformImeOptions(privateImeOptions = mergedOptions)
     )
 }
+
+private const val PRIVATE_IME_OPTION_SEPARATOR = ","
+
+private val PRIVACY_IME_OPTIONS = listOf(
+    // AOSP/LatinIME and keyboards that mirror the platform no-learning hint.
+    "noPersonalizedLearning",
+    "com.android.inputmethod.latin.noPersonalizedLearning",
+    // Gboard private options. The short "nm" value is what shows Gboard's incognito badge.
+    "nm",
+    "com.google.android.inputmethod.latin.noPersonalizedLearning",
+    // Microsoft SwiftKey production/beta builds have historically checked these vendor keys.
+    "com.touchtype.swiftkey.noPersonalizedLearning",
+    "com.microsoft.swiftkey.noPersonalizedLearning",
+    "com.microsoft.inputmethod.noPersonalizedLearning"
+)
 
 /**
  * Subtle lock icon shown inside text fields when privacy typing is active,
