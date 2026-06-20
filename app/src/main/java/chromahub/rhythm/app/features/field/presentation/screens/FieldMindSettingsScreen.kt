@@ -780,7 +780,7 @@ fun UnitsFormatSettingsPage(viewModel: FieldMindViewModel, onBack: () -> Unit) {
     }
 }
 
-// ══════════════════════════════════════════════════════════════════════
+// ═════════��════════════════════════════════════════════════════════════
 //  Weather Settings Page (separate from Capture defaults)
 // ══════════════════════════════════════════════════════════════════════
 
@@ -1703,6 +1703,8 @@ private fun StatChip(value: String, label: String, color: Color) {
         Text(value, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, color = color)
         Text(label, style = MaterialTheme.typography.labelSmall, color = color.copy(alpha = 0.7f))
     }
+}
+
 // ══════════════════════════════════════════════════════════════════════
 //  Auto Generation Settings Page
 // ══════════════════════════════════════════════════════════════════════
@@ -1715,6 +1717,29 @@ fun AutoGenerationSettingsPage(
     val settings = viewModel.fieldSettings
     val autoFlashcards by settings.autoFlashcardsEnabled.collectAsState()
     val autoQuestions by settings.autoQuestionsEnabled.collectAsState()
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+    var showErrorDialog by remember { mutableStateOf(false) }
+
+    // Error dialog
+    if (showErrorDialog && errorMessage != null) {
+        AlertDialog(
+            onDismissRequest = { 
+                showErrorDialog = false
+                errorMessage = null
+            },
+            title = { Text("Error") },
+            text = { Text(errorMessage ?: "An unknown error occurred") },
+            confirmButton = {
+                Button(
+                    onClick = { 
+                        showErrorDialog = false
+                        errorMessage = null
+                    },
+                    shape = RoundedCornerShape(14.dp)
+                ) { Text("OK") }
+            }
+        )
+    }
 
     SettingsSubPage("Auto generation", icon = FieldMindIcons.Sparkle, onBack = onBack) {
         item {
@@ -1723,7 +1748,14 @@ fun AutoGenerationSettingsPage(
                     "Generate flashcards from observations",
                     "When enabled, new flashcards are automatically created from your observation data, notes, and sources as they come in.",
                     autoFlashcards,
-                    settings::setAutoFlashcardsEnabled,
+                    { enabled ->
+                        try {
+                            settings.setAutoFlashcardsEnabled(enabled)
+                        } catch (e: Exception) {
+                            errorMessage = "Failed to toggle flashcard generation: ${e.message ?: "Unknown error"}"
+                            showErrorDialog = true
+                        }
+                    },
                     FieldMindIcons.Flashcard
                 )
             }
@@ -1734,7 +1766,14 @@ fun AutoGenerationSettingsPage(
                     "Generate questions from observations",
                     "When enabled, research questions are automatically derived from your observation patterns and data.",
                     autoQuestions,
-                    settings::setAutoQuestionsEnabled,
+                    { enabled ->
+                        try {
+                            settings.setAutoQuestionsEnabled(enabled)
+                        } catch (e: Exception) {
+                            errorMessage = "Failed to toggle question generation: ${e.message ?: "Unknown error"}"
+                            showErrorDialog = true
+                        }
+                    },
                     FieldMindIcons.Question
                 )
             }
@@ -1773,5 +1812,4 @@ fun AutoGenerationSettingsPage(
             }
         }
     }
-}
 }
