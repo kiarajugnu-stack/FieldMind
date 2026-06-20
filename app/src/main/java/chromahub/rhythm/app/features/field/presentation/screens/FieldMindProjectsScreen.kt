@@ -130,7 +130,7 @@ fun ProjectsScreen(
     var tab by remember(startTab) { mutableIntStateOf(startTab.coerceIn(0, 4)) }
     val haptics = rememberFieldMindHaptics()
     val workspaceSubNavTabs = listOf(
-        SubNavTab("Overview", FieldMindIcons.Home),
+        SubNavTab("Overview", FieldMindIcons.Today),
         SubNavTab("Observations", FieldMindIcons.Observation),
         SubNavTab("Hypotheses", FieldMindIcons.Hypothesis),
         SubNavTab("Data", FieldMindIcons.Data),
