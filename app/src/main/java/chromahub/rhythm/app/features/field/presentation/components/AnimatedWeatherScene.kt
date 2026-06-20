@@ -2725,7 +2725,6 @@ private fun DrawScope.drawAurora(auroraProgress: Float, auroraBrightness: Float,
         size = size
     )
 }
- */
 private fun DrawScope.drawShootingStar(
     progress: Float,
     startX: Float,
