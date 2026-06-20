@@ -13,7 +13,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import fieldmind.research.app.features.field.presentation.theme.FieldMindTheme
-import fieldmind.research.app.ui.theme.RhythmColors
 
 /**
  * Phase 9: Insights Dashboard Redesign
@@ -85,7 +84,7 @@ fun ResearchHealthCard(
 private fun HealthIssueBadge(issue: ResearchHealthIssue) {
     val severityColor = when (issue.severity) {
         "Critical" -> MaterialTheme.colorScheme.error
-        "Warning" -> RhythmColors.warning
+        "Warning" -> MaterialTheme.colorScheme.tertiary
         else -> MaterialTheme.colorScheme.primary
     }
 
