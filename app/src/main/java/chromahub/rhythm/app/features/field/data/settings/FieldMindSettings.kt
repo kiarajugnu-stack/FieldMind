@@ -284,6 +284,22 @@ class FieldMindSettings private constructor(context: Context) {
     private val _autoLockOnBackground = MutableStateFlow(prefs.getBoolean(KEY_AUTO_LOCK_BACKGROUND, true))
     val autoLockOnBackground: StateFlow<Boolean> = _autoLockOnBackground.asStateFlow()
 
+    // ── Privacy & screen protection settings ──
+    private val _screenCaptureProtectionEnabled = MutableStateFlow(prefs.getBoolean(KEY_SCREEN_CAPTURE_PROTECTION, false))
+    val screenCaptureProtectionEnabled: StateFlow<Boolean> = _screenCaptureProtectionEnabled.asStateFlow()
+
+    private val _alwaysOnScreenEnabled = MutableStateFlow(prefs.getBoolean(KEY_ALWAYS_ON_SCREEN, false))
+    val alwaysOnScreenEnabled: StateFlow<Boolean> = _alwaysOnScreenEnabled.asStateFlow()
+
+    private val _alwaysOnScreenDuration = MutableStateFlow(prefs.getString(KEY_ALWAYS_ON_SCREEN_DURATION, "15 min") ?: "15 min")
+    val alwaysOnScreenDuration: StateFlow<String> = _alwaysOnScreenDuration.asStateFlow()
+
+    private val _clipboardAutoCleanupEnabled = MutableStateFlow(prefs.getBoolean(KEY_CLIPBOARD_CLEANUP, true))
+    val clipboardAutoCleanupEnabled: StateFlow<Boolean> = _clipboardAutoCleanupEnabled.asStateFlow()
+
+    private val _clipboardCleanupDelay = MutableStateFlow(prefs.getString(KEY_CLIPBOARD_CLEANUP_DELAY, "30 sec") ?: "30 sec")
+    val clipboardCleanupDelay: StateFlow<String> = _clipboardCleanupDelay.asStateFlow()
+
     /** Call explicitly after initialization — avoids scheduling jobs on every getInstance(). */
     fun initializeBackgroundWork() {
         FieldMindBackgroundScheduler.syncAll(
@@ -347,6 +363,11 @@ class FieldMindSettings private constructor(context: Context) {
     fun setWeatherShowWind(value: Boolean) = edit(KEY_WEATHER_SHOW_WIND, value) { _weatherShowWind.value = value }
     fun setWeatherShowCloudCover(value: Boolean) = edit(KEY_WEATHER_SHOW_CLOUD, value) { _weatherShowCloudCover.value = value }
     fun setWeatherShowPressure(value: Boolean) = edit(KEY_WEATHER_SHOW_PRESSURE, value) { _weatherShowPressure.value = value }
+    fun setScreenCaptureProtectionEnabled(value: Boolean) = edit(KEY_SCREEN_CAPTURE_PROTECTION, value) { _screenCaptureProtectionEnabled.value = value }
+    fun setAlwaysOnScreenEnabled(value: Boolean) = edit(KEY_ALWAYS_ON_SCREEN, value) { _alwaysOnScreenEnabled.value = value }
+    fun setAlwaysOnScreenDuration(value: String) = edit(KEY_ALWAYS_ON_SCREEN_DURATION, value) { _alwaysOnScreenDuration.value = value }
+    fun setClipboardAutoCleanupEnabled(value: Boolean) = edit(KEY_CLIPBOARD_CLEANUP, value) { _clipboardAutoCleanupEnabled.value = value }
+    fun setClipboardCleanupDelay(value: String) = edit(KEY_CLIPBOARD_CLEANUP_DELAY, value) { _clipboardCleanupDelay.value = value }
     fun setWeatherShowCloudAnimation(value: Boolean) = edit(KEY_WEATHER_SHOW_CLOUD_ANIMATION, value) { _weatherShowCloudAnimation.value = value }
     fun setWeatherProvider(value: String) = edit(KEY_WEATHER_PROVIDER, value) { _weatherProvider.value = value }
     fun setWeatherProviders(value: String) = edit(KEY_WEATHER_PROVIDERS, value) {
@@ -374,8 +395,6 @@ class FieldMindSettings private constructor(context: Context) {
     fun setDeveloperMode(value: Boolean) = edit(KEY_DEVELOPER_MODE, value) { _developerMode.value = value }
     fun setDebugLogging(value: Boolean) = edit(KEY_DEBUG_LOGGING, value) { _debugLogging.value = value }
     fun setDataIntegrityCheckOnLaunch(value: Boolean) = edit(KEY_DATA_INTEGRITY_CHECK, value) { _dataIntegrityCheckOnLaunch.value = value }
-    fun setLockTimeout(value: String) = edit(KEY_LOCK_TIMEOUT, value) { _lockTimeout.value = value }
-    fun setAutoLockOnBackground(value: Boolean) = edit(KEY_AUTO_LOCK_BACKGROUND, value) { _autoLockOnBackground.value = value }
 
     // ── Onboarding / interests ──
     private val _userInterests = MutableStateFlow(UserInterests.fromJson(prefs.getString(KEY_USER_INTERESTS, null)))
@@ -527,6 +546,11 @@ class FieldMindSettings private constructor(context: Context) {
         private const val KEY_APP_PIN_HASH = "app_pin_hash"
         private const val KEY_USER_INTERESTS = "user_interests"
         private const val KEY_SCREEN_VISIBILITY = "screen_visibility"
-        private const val KEY_EXTENDED_TOUR_DONE = "onboarding_extended_tour_done"
+        // ── Privacy & screen protection ──
+        private const val KEY_SCREEN_CAPTURE_PROTECTION = "screen_capture_protection"
+        private const val KEY_ALWAYS_ON_SCREEN = "always_on_screen"
+        private const val KEY_ALWAYS_ON_SCREEN_DURATION = "always_on_screen_duration"
+        private const val KEY_CLIPBOARD_CLEANUP = "clipboard_cleanup"
+        private const val KEY_CLIPBOARD_CLEANUP_DELAY = "clipboard_cleanup_delay"
     }
 }

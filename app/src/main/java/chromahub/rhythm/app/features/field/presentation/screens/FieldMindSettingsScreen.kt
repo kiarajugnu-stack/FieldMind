@@ -646,7 +646,41 @@ fun SecuritySettingsPage(viewModel: FieldMindViewModel, onBack: () -> Unit) {
             }
         }
 
-        // ── Info cards ──
+        // ── Screen capture protection ──
+        item {
+            val screenCaptureProtection by settings.screenCaptureProtectionEnabled.collectAsState()
+            SettingsGroupCard {
+                ToggleItem("Screen capture protection", "Prevent screenshots and screen recordings of sensitive research data.", screenCaptureProtection, settings::setScreenCaptureProtectionEnabled, FieldMindIcons.Lock)
+            }
+        }
+
+        // ── Always-on screen ──
+        item {
+            val alwaysOnScreenEnabled by settings.alwaysOnScreenEnabled.collectAsState()
+            val alwaysOnDuration by settings.alwaysOnScreenDuration.collectAsState()
+            SettingsGroupCard {
+                ToggleItem("Always-on screen", "Keep display on during field research sessions.", alwaysOnScreenEnabled, settings::setAlwaysOnScreenEnabled, FieldMindIcons.Timer)
+                if (alwaysOnScreenEnabled) {
+                    HorizontalDivider(Modifier.padding(start = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+                    ChoiceItemForm("Duration", listOf("5 min", "10 min", "15 min", "30 min", "Unlimited"), alwaysOnDuration, FieldMindIcons.Timer, settings::setAlwaysOnScreenDuration)
+                }
+            }
+        }
+
+        // ── Clipboard auto-cleanup ──
+        item {
+            val clipboardCleanup by settings.clipboardAutoCleanupEnabled.collectAsState()
+            val cleanupDelay by settings.clipboardCleanupDelay.collectAsState()
+            SettingsGroupCard {
+                ToggleItem("Clipboard auto-clear", "Automatically clear sensitive copied data from clipboard.", clipboardCleanup, settings::setClipboardAutoCleanupEnabled, FieldMindIcons.Lock)
+                if (clipboardCleanup) {
+                    HorizontalDivider(Modifier.padding(start = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+                    ChoiceItemForm("Clear after", listOf("10 sec", "30 sec", "1 min", "2 min"), cleanupDelay, FieldMindIcons.Timer, settings::setClipboardCleanupDelay)
+                }
+            }
+        }
+
+        // ─�� Info cards ──
         item {
             Card(shape = RoundedCornerShape(22.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)) {
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -654,6 +688,9 @@ fun SecuritySettingsPage(viewModel: FieldMindViewModel, onBack: () -> Unit) {
                     Text("• Device biometric lock — uses Android's built-in security (fingerprint, face, PIN)", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Text("• App PIN lock — self-contained 4-6 digit PIN, works even if device has no lock set", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Text("• Privacy typing — tells keyboards not to learn from what you type in FieldMind", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("• Screen capture protection — prevents screenshots and recordings", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("• Always-on screen — keep display active during field work", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("• Clipboard auto-clear — automatically clears sensitive copied data", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Text("• Data encryption — encrypted backups with password protection", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Text("Your data stays on this device. No data is sent to any server.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }

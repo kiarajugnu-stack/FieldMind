@@ -179,8 +179,8 @@ fun BackupAndRestoreScreen(
     var shareDialogFormat by remember { mutableStateOf("Markdown") }
     var includeMedia by remember { mutableStateOf(false) }
 
-    // Backup folder URI from settings
-    var backupFolderUri by remember { mutableStateOf(settings.backupFolderUri.value) }
+    // Backup folder URI from settings (reactive)
+    val backupFolderUri by settings.backupFolderUri.collectAsState()
 
     // Folder picker launcher (export folder)
     val folderPickerLauncher = rememberLauncherForActivityResult(
@@ -202,7 +202,7 @@ fun BackupAndRestoreScreen(
             val takeFlags = android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION or
                 android.content.Intent.FLAG_GRANT_WRITE_URI_PERMISSION
             context.contentResolver.takePersistableUriPermission(uri, takeFlags)
-            backupFolderUri = uri.toString()
+            // Persist the folder URI - will update backupFolderUri via Flow
             settings.setBackupFolderUri(uri.toString())
         }
     }
@@ -349,7 +349,10 @@ fun BackupAndRestoreScreen(
                                                 flashcards = flashcards
                                             )
                                             val dateStamp = SimpleDateFormat("yyyy-MM-dd_HHmm", Locale.getDefault()).format(Date())
-                                            val ext = format.lowercase().replace("markdown", "md")
+                                            val ext = when (format) {
+                                                "Markdown" -> "md"
+                                                else -> format.lowercase()
+                                            }
                                             val fileName = "fieldmind-export-$dateStamp.$ext"
                                             val exportDir = File(context.cacheDir, "exports").apply { mkdirs() }
                                             val exportFile = File(exportDir, fileName)
@@ -359,10 +362,7 @@ fun BackupAndRestoreScreen(
                                                 "Markdown" -> exportFile.writeText(
                                                     observations.joinToString("\n\n---\n\n") { FieldMindExport.singleObservationMarkdown(it) }
                                                 )
-                                                "PDF" -> {
-                                                    val bodyText = observations.joinToString("\n") { FieldMindExport.singleObservationMarkdown(it) }
-                                                    exportFile.writeBytes(FieldMindExport.simplePdfBytes("FieldMind Export", bodyText))
-                                                }
+                                                "JSON" -> exportFile.writeText(json)
                                             }
 
                                             exportProgress = 0.8f
@@ -382,39 +382,46 @@ fun BackupAndRestoreScreen(
                                                 context.startActivity(Intent.createChooser(shareIntent, "Share FieldMind Export"))
                                             } else {
                                                 val destUri = exportDestinationUri
-                                                if (destUri != null) {
-                                                    val mimeType = if (format == "PDF") "application/pdf" else "text/markdown"
-                                                    try {
-                                                        val createdDoc = android.provider.DocumentsContract.createDocument(
-                                                            context.contentResolver, destUri, mimeType, fileName
-                                                        )
-                                                        if (createdDoc != null) {
-                                                            val outStream = context.contentResolver.openOutputStream(createdDoc)
-                                                            if (outStream != null) {
-                                                                outStream.use { out ->
-                                                                    out.write(exportFile.readBytes())
+                                                if (destUri == null) {
+                                                    throw java.io.IOException("Please select a destination folder first")
+                                                }
+                                                val mimeType = when (format) {
+                                                    "PDF" -> "application/pdf"
+                                                    ".fieldmind" -> "application/zip"
+                                                    "JSON" -> "application/json"
+                                                    "CSV" -> "text/csv"
+                                                    else -> "text/plain"
+                                                }
+                                                try {
+                                                    val createdDoc = android.provider.DocumentsContract.createDocument(
+                                                        context.contentResolver, destUri, mimeType, fileName
+                                                    )
+                                                    if (createdDoc != null) {
+                                                        val outStream = context.contentResolver.openOutputStream(createdDoc)
+                                                        if (outStream != null) {
+                                                            outStream.use { out ->
+                                                                out.write(exportFile.readBytes())
+                                                            }
+                                                            // Verify the file was actually written
+                                                            val fileSizeCursor = context.contentResolver.query(createdDoc, null, null, null, null)
+                                                            var verified = false
+                                                            fileSizeCursor?.use { cursor ->
+                                                                if (cursor.moveToFirst()) {
+                                                                    val sizeIndex = cursor.getColumnIndex(android.provider.OpenableColumns.SIZE)
+                                                                    if (sizeIndex >= 0 && cursor.getLong(sizeIndex) > 0) verified = true
                                                                 }
-                                                                // Verify the file was actually written
-                                                                val fileSizeCursor = context.contentResolver.query(createdDoc, null, null, null, null)
-                                                                var verified = false
-                                                                fileSizeCursor?.use { cursor ->
-                                                                    if (cursor.moveToFirst()) {
-                                                                        val sizeIndex = cursor.getColumnIndex(android.provider.OpenableColumns.SIZE)
-                                                                        if (sizeIndex >= 0 && cursor.getLong(sizeIndex) > 0) verified = true
-                                                                    }
-                                                                }
-                                                                if (!verified) {
-                                                                    throw java.io.IOException("File created but could not verify content was written")
-                                                                }
-                                                            } else {
-                                                                throw java.io.IOException("Could not open output stream - check folder permissions")
+                                                            }
+                                                            if (!verified) {
+                                                                throw java.io.IOException("File created but could not verify content was written")
                                                             }
                                                         } else {
-                                                            throw java.io.IOException("Could not create document in the selected folder. The folder may not have write permission.")
+                                                            throw java.io.IOException("Could not open output stream - check folder permissions")
                                                         }
-                                                    } catch (e: Exception) {
-                                                        throw java.io.IOException("Save failed: ${e.localizedMessage}")
+                                                    } else {
+                                                        throw java.io.IOException("Could not create document in the selected folder. Ensure the folder has write permission and is not read-only.")
                                                     }
+                                                } catch (e: Exception) {
+                                                    throw java.io.IOException("Save failed: ${e.localizedMessage}")
                                                 }
                                             }
                                         }
@@ -1807,7 +1814,7 @@ private fun ExportHistoryItem(record: ExportRecord) {
     }
 }
 
-// ══════════════════════════════════════════════════════════════════════
+// ═════════════════════════════════════════════════════════════════════��
 //  Utility functions
 // ══════════════════════════════════════════════════════════════════════
 
