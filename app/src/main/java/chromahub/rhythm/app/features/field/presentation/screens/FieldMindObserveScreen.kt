@@ -739,8 +739,8 @@ fun ObserveScreen(
                     }
                 }
 
-                // ── Empty state (only when no form is open) ──
-                if (!showEvidenceForm && !session.isActive) {
+                // ── Empty state (only when no form is open AND no saved observations) ──
+                if (!showEvidenceForm && !session.isActive && observations.isEmpty()) {
                     item {
                         EmptyState(
                             "No observations yet",
@@ -801,6 +801,19 @@ fun ObserveScreen(
                     addAttachment(
                         DraftEvidenceAttachment("Photo", uri, "Camera photo", mimeType = mimeType)
                     )
+                },
+                onSpeciesCaptured = { uri, mimeType, speciesName, category, confidence, notes ->
+                    // Add photo as attachment and pre-fill species details
+                    addAttachment(
+                        DraftEvidenceAttachment("Photo", uri, speciesName.ifBlank { "Camera photo" }, mimeType = mimeType)
+                    )
+                    if (speciesName.isNotBlank()) {
+                        session = session.copy(
+                            speciesName = speciesName,
+                            category = if (category != "Other") category else session.category,
+                            subject = if (session.subject.isBlank()) speciesName else session.subject
+                        )
+                    }
                 },
                 onDismiss = { showInAppCamera = false },
                 modifier = Modifier.fillMaxSize(),

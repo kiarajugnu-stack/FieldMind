@@ -16,6 +16,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -46,22 +47,22 @@ fun TimerToolScreen(
     val context = LocalContext.current
     val colors = FieldMindTheme.colors
 
-    // Timer state
-    var timerMode by remember { mutableStateOf(TimerMode.STOPWATCH) }
-    var isRunning by remember { mutableStateOf(false) }
-    var isPaused by remember { mutableStateOf(false) }
-    var elapsedMs by remember { mutableLongStateOf(0L) }
+    // Timer state — uses rememberSaveable so it survives navigation away
+    var timerMode by rememberSaveable { mutableStateOf(TimerMode.STOPWATCH) }
+    var isRunning by rememberSaveable { mutableStateOf(false) }
+    var isPaused by rememberSaveable { mutableStateOf(false) }
+    var elapsedMs by rememberSaveable { mutableLongStateOf(0L) }
     // accumulatedElapsedMs tracks total elapsed time regardless of mode
-    var accumulatedElapsedMs by remember { mutableLongStateOf(0L) }
-    var baseStart by remember { mutableLongStateOf(0L) }
-    var pausedAccumulated by remember { mutableLongStateOf(0L) }
-    var laps by remember { mutableStateOf(listOf<Long>()) }
+    var accumulatedElapsedMs by rememberSaveable { mutableLongStateOf(0L) }
+    var baseStart by rememberSaveable { mutableLongStateOf(0L) }
+    var pausedAccumulated by rememberSaveable { mutableLongStateOf(0L) }
+    var laps by rememberSaveable { mutableStateOf(listOf<Long>()) }
 
     // Countdown timer mode
-    var countdownMinutes by remember { mutableIntStateOf(5) }
-    var countdownSeconds by remember { mutableIntStateOf(0) }
-    var countdownTotalMs by remember { mutableLongStateOf(0L) }
-    var countdownFinished by remember { mutableStateOf(false) }
+    var countdownMinutes by rememberSaveable { mutableIntStateOf(5) }
+    var countdownSeconds by rememberSaveable { mutableIntStateOf(0) }
+    var countdownTotalMs by rememberSaveable { mutableLongStateOf(0L) }
+    var countdownFinished by rememberSaveable { mutableStateOf(false) }
 
     fun formatTime(ms: Long): String {
         val totalSec = ms / 1000
