@@ -8,6 +8,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
@@ -427,18 +428,18 @@ fun BackupAndRestoreScreen(
                                                 }
                                             }
 
+                                            // Capture export record data before leaving IO scope
+                                            val recordFileName = "fieldmind-export-$dateStamp.$ext"
+                                            val recordFileSize = File(File(context.cacheDir, "exports"), recordFileName).length()
+                                            val recordFormat = selectedFormat
+                                            val recordDest = if (exportDestinationUri != null) "Saved to folder" else "Cached"
+                                            val recordEntityCounts = mapOf(
+                                                "observations" to observations.size,
+                                                "projects" to projects.size
+                                            )
+
                                             exportProgress = 1f
                                         }
-
-                                        // Record in history
-                                        val recordFileName = "fieldmind-export-$dateStamp.$ext"
-                                        val recordFileSize = File(File(context.cacheDir, "exports"), recordFileName).length()
-                                        val recordFormat = selectedFormat
-                                        val recordDest = if (exportDestinationUri != null) "Saved to folder" else "Cached"
-                                        val recordEntityCounts = mapOf(
-                                            "observations" to observations.size,
-                                            "projects" to projects.size
-                                        )
 
                                         exportHistory = listOf(
                                             ExportRecord(
