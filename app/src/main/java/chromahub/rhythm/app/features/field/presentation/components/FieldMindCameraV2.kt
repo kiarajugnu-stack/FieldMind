@@ -560,6 +560,9 @@ fun FieldMindCameraV2(
                 onSaveContinue = {
                     val uri = capturedUri ?: return@SpeciesFieldPanel
                     val mime = capturedMime ?: "image/jpeg"
+                    // Always call onPhotoCaptured first so all callers get the photo
+                    onPhotoCaptured(uri, mime)
+                    // Also call onSpeciesCaptured for callers that want metadata (defaults to no-op)
                     onSpeciesCaptured(uri, mime, speciesName, speciesCategory, speciesConfidence.toString(), speciesNotes)
                     // Reset for next capture
                     speciesName = ""
@@ -571,6 +574,9 @@ fun FieldMindCameraV2(
                 onSaveExit = {
                     val uri = capturedUri ?: return@SpeciesFieldPanel
                     val mime = capturedMime ?: "image/jpeg"
+                    // Always call onPhotoCaptured first so all callers get the photo
+                    onPhotoCaptured(uri, mime)
+                    // Also call onSpeciesCaptured for callers that want metadata (defaults to no-op)
                     onSpeciesCaptured(uri, mime, speciesName, speciesCategory, speciesConfidence.toString(), speciesNotes)
                     showSpeciesPanel = false
                     onDismiss()
