@@ -41,6 +41,18 @@ import androidx.compose.foundation.BorderStroke
 import kotlinx.coroutines.launch
 
 // ══════════════════════════════════════════════════════════════════════
+//  Data Classes
+// ══════════════════════════════════════════════════════════════════════
+
+private data class ScreenVisibilityItem(
+    val title: String,
+    val description: String,
+    val isEnabled: Boolean,
+    val icon: MaterialSymbolIcon,
+    val accentColor: Color
+)
+
+// ══════════════════════════════════════════════════════════════════════
 //  Settings Hub
 // ══════════════════════════════════════════════════════════════════════
 
@@ -117,7 +129,7 @@ fun FieldMindSettingsScreen(
 
         // ╔════════════════════════════════════════════╗
         // ║  TOOLS                                     ║
-        // ╚════════════════════════════════════════════╝
+        // ╚══���═════════════════════════════════════════╝
         item { SectionHeader("Tools", "Maps, navigation, and automation") }
         item { SettingsNavCard("Map settings", "Map type, default zoom, location marker", FieldMindIcons.Map, FieldMindTheme.colors.data) { onOpenMap?.invoke() } }
         item { SettingsNavCard("Screen visibility", "Show/hide navigation tabs", FieldMindIcons.Visibility, FieldMindTheme.colors.info) { onOpenScreenVisibility?.invoke() } }
@@ -1310,16 +1322,16 @@ fun ScreenVisibilitySettingsPage(viewModel: FieldMindViewModel, onBack: () -> Un
     val colors = FieldMindTheme.colors
 
     val visibilityToggles = listOf(
-        Triple("Capture / Observe", "Observation capture screen in bottom nav", screenVis.showCapture, FieldMindIcons.Capture, colors.observation),
-        Triple("Projects", "Project workspace and management", screenVis.showProjects, FieldMindIcons.Project, colors.project),
-        Triple("Insights", "Research insights, health scores, graphs", screenVis.showInsights, FieldMindIcons.Graph, colors.info),
-        Triple("Library", "Sources, notes, flashcards, reading", screenVis.showLibrary, FieldMindIcons.Book, colors.source),
-        Triple("Map", "Offline map with drawing tools", screenVis.showMap, FieldMindIcons.Map, colors.data),
-        Triple("Weather database", "Historical weather data screen", screenVis.showWeather, FieldMindIcons.Weather, colors.info),
-        Triple("Species browser", "Taxonomic browser and species catalog", screenVis.showSpeciesBrowser, FieldMindIcons.Nature, colors.observation),
-        Triple("Flashcards", "Flashcard review sessions", screenVis.showFlashcards, FieldMindIcons.Flashcard, colors.flashcard),
-        Triple("Export studio", "Data export and report builder", screenVis.showExport, FieldMindIcons.Export, colors.data),
-        Triple("Field mode", "Dedicated field research mode", screenVis.showFieldMode, FieldMindIcons.Nature, colors.observation)
+        ScreenVisibilityItem("Capture / Observe", "Observation capture screen in bottom nav", screenVis.showCapture, FieldMindIcons.Capture, colors.observation),
+        ScreenVisibilityItem("Projects", "Project workspace and management", screenVis.showProjects, FieldMindIcons.Project, colors.project),
+        ScreenVisibilityItem("Insights", "Research insights, health scores, graphs", screenVis.showInsights, FieldMindIcons.Graph, colors.info),
+        ScreenVisibilityItem("Library", "Sources, notes, flashcards, reading", screenVis.showLibrary, FieldMindIcons.Book, colors.source),
+        ScreenVisibilityItem("Map", "Offline map with drawing tools", screenVis.showMap, FieldMindIcons.Map, colors.data),
+        ScreenVisibilityItem("Weather database", "Historical weather data screen", screenVis.showWeather, FieldMindIcons.Weather, colors.info),
+        ScreenVisibilityItem("Species browser", "Taxonomic browser and species catalog", screenVis.showSpeciesBrowser, FieldMindIcons.Nature, colors.observation),
+        ScreenVisibilityItem("Flashcards", "Flashcard review sessions", screenVis.showFlashcards, FieldMindIcons.Flashcard, colors.flashcard),
+        ScreenVisibilityItem("Export studio", "Data export and report builder", screenVis.showExport, FieldMindIcons.Export, colors.data),
+        ScreenVisibilityItem("Field mode", "Dedicated field research mode", screenVis.showFieldMode, FieldMindIcons.Nature, colors.observation)
     )
 
     SettingsSubPage("Screen visibility", icon = FieldMindIcons.Visibility, onBack = onBack) {
@@ -1339,23 +1351,23 @@ fun ScreenVisibilitySettingsPage(viewModel: FieldMindViewModel, onBack: () -> Un
         }
         item {
             SettingsGroupCard {
-                visibilityToggles.forEach { (title, desc, checked, icon, accent) ->
+                visibilityToggles.forEach { item ->
                     Row(
                         Modifier.fillMaxWidth().clickable {
                             val cur = screenVis
-                            val updated = when (icon) {
-                                FieldMindIcons.Capture -> cur.copy(showCapture = !checked)
-                                FieldMindIcons.Project -> cur.copy(showProjects = !checked)
-                                FieldMindIcons.Graph -> cur.copy(showInsights = !checked)
-                                FieldMindIcons.Book -> cur.copy(showLibrary = !checked)
-                                FieldMindIcons.Map -> cur.copy(showMap = !checked)
-                                FieldMindIcons.Weather -> cur.copy(showWeather = !checked)
+                            val updated = when (item.icon) {
+                                FieldMindIcons.Capture -> cur.copy(showCapture = !item.isEnabled)
+                                FieldMindIcons.Project -> cur.copy(showProjects = !item.isEnabled)
+                                FieldMindIcons.Graph -> cur.copy(showInsights = !item.isEnabled)
+                                FieldMindIcons.Book -> cur.copy(showLibrary = !item.isEnabled)
+                                FieldMindIcons.Map -> cur.copy(showMap = !item.isEnabled)
+                                FieldMindIcons.Weather -> cur.copy(showWeather = !item.isEnabled)
                                 FieldMindIcons.Nature -> {
-                                    if (title.startsWith("Species")) cur.copy(showSpeciesBrowser = !checked)
-                                    else cur.copy(showFieldMode = !checked)
+                                    if (item.title.startsWith("Species")) cur.copy(showSpeciesBrowser = !item.isEnabled)
+                                    else cur.copy(showFieldMode = !item.isEnabled)
                                 }
-                                FieldMindIcons.Flashcard -> cur.copy(showFlashcards = !checked)
-                                FieldMindIcons.Export -> cur.copy(showExport = !checked)
+                                FieldMindIcons.Flashcard -> cur.copy(showFlashcards = !item.isEnabled)
+                                FieldMindIcons.Export -> cur.copy(showExport = !item.isEnabled)
                                 else -> cur
                             }
                             settings.setScreenVisibility(updated)
@@ -1363,16 +1375,16 @@ fun ScreenVisibilitySettingsPage(viewModel: FieldMindViewModel, onBack: () -> Un
                         horizontalArrangement = Arrangement.spacedBy(14.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Box(Modifier.size(40.dp).clip(RoundedCornerShape(12.dp)).background(accent.copy(alpha = 0.14f)), contentAlignment = Alignment.Center) {
-                            Icon(icon = icon, contentDescription = null, tint = accent, size = 22.dp)
+                        Box(Modifier.size(40.dp).clip(RoundedCornerShape(12.dp)).background(item.accentColor.copy(alpha = 0.14f)), contentAlignment = Alignment.Center) {
+                            Icon(icon = item.icon, contentDescription = null, tint = item.accentColor, size = 22.dp)
                         }
                         Column(Modifier.weight(1f)) {
-                            Text(title, fontWeight = FontWeight.SemiBold)
-                            Text(desc, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text(item.title, fontWeight = FontWeight.SemiBold)
+                            Text(item.description, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
-                        Switch(checked = checked, onCheckedChange = {
+                        Switch(checked = item.isEnabled, onCheckedChange = {
                             val cur = screenVis
-                            val updated = when (icon) {
+                            val updated = when (item.icon) {
                                 FieldMindIcons.Capture -> cur.copy(showCapture = it)
                                 FieldMindIcons.Project -> cur.copy(showProjects = it)
                                 FieldMindIcons.Graph -> cur.copy(showInsights = it)
@@ -1380,7 +1392,7 @@ fun ScreenVisibilitySettingsPage(viewModel: FieldMindViewModel, onBack: () -> Un
                                 FieldMindIcons.Map -> cur.copy(showMap = it)
                                 FieldMindIcons.Weather -> cur.copy(showWeather = it)
                                 FieldMindIcons.Nature -> {
-                                    if (title.startsWith("Species")) cur.copy(showSpeciesBrowser = it)
+                                    if (item.title.startsWith("Species")) cur.copy(showSpeciesBrowser = it)
                                     else cur.copy(showFieldMode = it)
                                 }
                                 FieldMindIcons.Flashcard -> cur.copy(showFlashcards = it)

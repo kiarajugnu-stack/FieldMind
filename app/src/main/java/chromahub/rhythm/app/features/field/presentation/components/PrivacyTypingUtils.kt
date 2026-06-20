@@ -37,7 +37,7 @@ fun KeyboardOptions.withPrivacyTyping(enabled: Boolean): KeyboardOptions {
     if (!enabled) return this
     return copy(
         platformImeOptions = PlatformImeOptions(
-            privateImeOptions = mapOf("nm" to "1")
+            privateImeOptions = "nm"
         )
     )
 }
