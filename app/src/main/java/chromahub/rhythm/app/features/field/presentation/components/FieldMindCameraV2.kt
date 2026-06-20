@@ -249,7 +249,7 @@ fun FieldMindCameraV2(
     LaunchedEffect(flashMode) { imageCapture?.flashMode = flashMode }
 
     // ── Capture function ──
-    val doCapture = remember(imageCapture) {
+    val doCapture = remember(imageCapture, onPhotoCaptured) {
         {
             val capture = imageCapture ?: return@remember
             isCapturing = true
@@ -281,7 +281,8 @@ fun FieldMindCameraV2(
                         pendingCaptureUri = uri
                         pendingCaptureMime = "image/jpeg"
                         capturedCount++
-                        showCaptureDialog = true
+                        // Session mode: save directly without category dialog
+                        onPhotoCaptured(uri, "image/jpeg")
                     } else {
                         showSpeciesPanel = true
                     }
@@ -296,7 +297,8 @@ fun FieldMindCameraV2(
                         pendingCaptureUri = uri
                         pendingCaptureMime = "image/jpeg"
                         capturedCount++
-                        showCaptureDialog = true
+                        // Session mode: save directly without category dialog
+                        onPhotoCaptured(uri, "image/jpeg")
                     } else {
                         showSpeciesPanel = true
                     }

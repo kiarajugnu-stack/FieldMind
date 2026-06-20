@@ -560,6 +560,58 @@ fun ResearchSessionScreen(
                         }
                     }
                 }
+
+                // ── Past research sessions ──
+                val completedSessions = researchSessions.filter { it.status == "Completed" }.sortedByDescending { it.endedAt }
+                if (completedSessions.isNotEmpty()) {
+                    item {
+                        SectionHeader("Past sessions", "${completedSessions.size} completed")
+                    }
+                    items(completedSessions.take(10)) { session ->
+                        Card(
+                            shape = RoundedCornerShape(20.dp),
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+                            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+                            modifier = Modifier.fillMaxWidth().clickable { onOpenDetail("research_session", session.id) }
+                        ) {
+                            Row(
+                                Modifier.fillMaxWidth().padding(16.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                Box(
+                                    Modifier.size(44.dp).clip(RoundedCornerShape(14.dp))
+                                        .background(FieldMindTheme.colors.positive.copy(alpha = 0.12f)),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(FieldMindIcons.Bolt, null, tint = FieldMindTheme.colors.positive, size = 22.dp)
+                                }
+                                Column(Modifier.weight(1f)) {
+                                    Text(
+                                        session.name,
+                                        style = MaterialTheme.typography.titleSmall,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                    val elapsedStr = if (session.durationMs > 0) {
+                                        formatTime(session.durationMs)
+                                    } else ""
+                                    val obsStr = "${session.observationCount} obs"
+                                    val dateStr = java.text.SimpleDateFormat("MMM d, yyyy", java.util.Locale.getDefault()).format(java.util.Date(session.startedAt))
+                                    Text(
+                                        listOfNotNull(elapsedStr.takeIf { it.isNotBlank() }, obsStr, dateStr).joinToString(" • "),
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                                Icon(
+                                    FieldMindIcons.Forward, null,
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    size = 20.dp
+                                )
+                            }
+                        }
+                    }
+                }
             } else {
                 // Active session — timer card with pause/end
                 item {

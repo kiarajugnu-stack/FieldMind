@@ -1596,7 +1596,7 @@ private fun EveningScene(
         }
 
         // ── Fireflies near ground ──
-        drawFireflies(progress = fireflyProgress, isDarkTheme = isDark, compact = compact)
+        drawFireflies(progress = fireflyProgress, isDarkTheme = true, compact = compact)
 
         // ── Atmospheric haze ──
         val hazeAlpha = if (isDawn) sunGlow * 0.5f else moonGlow * 0.4f
@@ -2221,6 +2221,43 @@ private fun DrawScope.drawMountainRange(
     )
 
     val seedOffset = 137
+
+    // ── Opaque base silhouette — prevents rainbow/background from showing through
+    // the semi-transparent atmospheric mountain layers. Uses the near layer's
+    // shape parameters for the widest silhouette.
+    val baseSilhouette = Path()
+    baseSilhouette.moveTo(-20f, ridgeBase + size.height * 0.02f)
+    var basePrevX = -20f
+    var basePrevY = ridgeBase
+    val baseSegs = 80
+    for (i in 0..baseSegs) {
+        val t = i.toFloat() / baseSegs
+        val px = t * (size.width + 40f) - 20f
+        val undulation =
+            sin(t * 4.5f * PI.toFloat() + 274f) * 0.6f +
+            sin(t * 4.5f * 1.8f + 274f * 1.3f) * 0.25f +
+            sin(t * 4.5f * 3.5f + 274f * 0.7f) * 0.1f +
+            sin(t * 4.5f * 7f + 274f * 2.1f) * 0.05f
+        val centerBias = sin(t * PI.toFloat()).pow(0.8f)
+        val height = 0.13f * thunderScale *
+            (0.4f + 0.6f * (undulation * 0.5f + 0.5f)) *
+            (0.7f + 0.3f * centerBias)
+        val py = size.height * (0.60f + thunderBaseShift - height)
+        val midX = (basePrevX + px) / 2f
+        val midY = (basePrevY + py) / 2f - size.height * 0.005f
+        baseSilhouette.cubicTo(
+            basePrevX + (midX - basePrevX) * 0.7f, basePrevY,
+            midX, midY,
+            px, py
+        )
+        basePrevX = px
+        basePrevY = py
+    }
+    baseSilhouette.lineTo(size.width + 20f, ridgeBase + size.height * 0.02f)
+    baseSilhouette.lineTo(size.width + 20f, size.height)
+    baseSilhouette.lineTo(-20f, size.height)
+    baseSilhouette.close()
+    drawPath(baseSilhouette, nearPalette.copy(alpha = 1f), style = Fill)
 
     layers.forEachIndexed { layerIdx, layer ->
         val path = Path()
