@@ -372,11 +372,14 @@ ${report.nextSteps}
         sources: List<SourceEntity>,
         dataRecords: List<DataRecordEntity>,
         reports: List<ReportEntity>,
-        flashcards: List<FlashcardEntity>
+        flashcards: List<FlashcardEntity>,
+        mediaManifest: String? = null  // Optional: JSON array of media entries for .fieldmind package
     ): String = buildString {
         appendLine("{")
         appendLine("  \"format\": \"fieldmind-archive-v2\",")
         appendLine("  \"exportedAt\": ${System.currentTimeMillis()},")
+        appendLine("  \"appName\": \"FieldMind\",")
+        appendLine("  \"appVersion\": \"4.3.0\",")
         appendLine("  \"counts\": {\"observations\": ${observations.size}, \"notes\": ${notes.size}, \"questions\": ${questions.size}, \"hypotheses\": ${hypotheses.size}, \"projects\": ${projects.size}, \"sources\": ${sources.size}, \"dataRecords\": ${dataRecords.size}, \"reports\": ${reports.size}, \"flashcards\": ${flashcards.size}},")
         appendJsonArray("observations", observations) { o -> "{\"id\":${o.id},\"date\":\"${json(o.date)}\",\"time\":\"${json(o.time)}\",\"subject\":\"${json(o.subject)}\",\"category\":\"${json(o.category)}\",\"factsOnlyNotes\":\"${json(o.factsOnlyNotes)}\",\"evidenceSummary\":\"${json(o.evidenceSummary)}\",\"tags\":\"${json(o.tags)}\",\"projectId\":${o.projectId ?: "null"}}" }
         appendLine(",")
@@ -395,6 +398,10 @@ ${report.nextSteps}
         appendJsonArray("reports", reports) { r -> "{\"id\":${r.id},\"type\":\"${json(r.type)}\",\"title\":\"${json(r.title)}\",\"status\":\"${json(r.status)}\",\"markdownDraft\":\"${json(FieldMindExport.buildMarkdownReport(r))}\"}" }
         appendLine(",")
         appendJsonArray("flashcards", flashcards) { f -> "{\"id\":${f.id},\"front\":\"${json(f.front)}\",\"back\":\"${json(f.back)}\",\"type\":\"${json(f.type)}\"}" }
+        if (mediaManifest != null) {
+            appendLine(",")
+            appendLine("  \"mediaManifest\": $mediaManifest")
+        }
         appendLine()
         appendLine("}")
     }

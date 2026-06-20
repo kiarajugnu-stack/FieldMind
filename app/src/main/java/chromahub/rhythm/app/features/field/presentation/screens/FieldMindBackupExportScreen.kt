@@ -44,6 +44,7 @@ import androidx.compose.ui.unit.sp
 import androidx.core.content.FileProvider
 import fieldmind.research.app.features.field.data.database.entity.*
 import fieldmind.research.app.features.field.data.export.FieldMindExport
+import fieldmind.research.app.features.field.data.export.FieldMindExportMediaPacker
 import fieldmind.research.app.features.field.presentation.components.*
 import fieldmind.research.app.features.field.presentation.theme.FieldMindTheme
 import fieldmind.research.app.features.field.presentation.viewmodel.FieldMindViewModel
@@ -149,6 +150,7 @@ fun BackupAndRestoreScreen(
     var importPreview by remember { mutableStateOf<FieldMindExport.ArchivePreview?>(null) }
     var importMode by remember { mutableStateOf("Merge") }
     var isImporting by remember { mutableStateOf(false) }
+    var importedPackage by remember { mutableStateOf<FieldMindExportMediaPacker.ExtractedPackage?>(null) }
 
     // Backup tab state
     var backupIncludeMedia by remember { mutableStateOf(true) }
@@ -345,10 +347,20 @@ fun BackupAndRestoreScreen(
                                                     val svg = FieldMindExport.dashboardSvg(observations, sources, projects, notes)
                                                     exportFile.writeText(svg)
                                                 }
-                                                ".fieldmind" -> {
-                                                    // Simple package: JSON + media info
-                                                    exportFile.writeText(json)
-                                                }
+                                                "                                                        .fieldmind" -> {
+                                                    exportStepText = "Packing media attachments…"
+                                                    val result = FieldMindExportMediaPacker.buildPackage(
+                                                        context = context,
+                                                        archiveJson = json,
+                                                        observations = observations,
+                                                        notes = notes,
+                                                        projects = projects,
+                                                        sources = sources,
+                                                        attachments = emptyMap(),
+                                                        outputDir = exportDir
+                                                    )
+                                                    // Rename package file to expected export filename
+                                                    result.packageFile.renameTo(exportFile)
                                             }
 
                                             exportProgress = 0.8f
@@ -415,7 +427,18 @@ fun BackupAndRestoreScreen(
                                                 "PDF" -> exportFile.writeBytes(FieldMindExport.simplePdfBytes("FieldMind Export", observations.joinToString("\n") { FieldMindExport.singleObservationMarkdown(it) }))
                                                 "PNG" -> exportFile.writeBytes(FieldMindExport.dashboardPngBytes(observations, sources, projects, notes))
                                                 "SVG" -> exportFile.writeText(FieldMindExport.dashboardSvg(observations, sources, projects, notes))
-                                                ".fieldmind" -> exportFile.writeText(json)
+                                                ".fieldmind" -> {
+                                                    val result = FieldMindExportMediaPacker.buildPackage(
+                                                        context = context,
+                                                        archiveJson = json,
+                                                        observations = observations,
+                                                        notes = notes,
+                                                        projects = projects,
+                                                        sources = sources,
+                                                        attachments = emptyMap(),
+                                                        outputDir = exportDir
+                                                    )
+                                                    result.packageFile.renameTo(exportFile)
                                             }
                                         }
 
@@ -457,7 +480,7 @@ fun BackupAndRestoreScreen(
                             importMode = importMode,
                             onModeChange = { importMode = it },
                             isImporting = isImporting,
-                            onPickFile = { filePickerLauncher.launch(arrayOf("application/json", "application/octet-stream", "*/*")) },
+                            onPickFile = { filePickerLauncher.launch(arrayOf("application/json", "application/octet-stream", "application/zip", "*/*")) },
                             onClearFile = {
                                 importFileUri = null
                                 importFileName = ""
@@ -465,27 +488,43 @@ fun BackupAndRestoreScreen(
                             },
                             onImport = {
                                 scope.launch {
-                                    if (importFileUri == null || importPreview == null) return@launch
+                                    if (importFileUri == null) return@launch
                                     isImporting = true
                                     try {
                                         val raw = withContext(Dispatchers.IO) {
-                                            context.contentResolver.openInputStream(importFileUri!!)?.bufferedReader()?.readText() ?: ""
-                                        }
-                                        val bundle = FieldMindExport.parseArchiveJson(raw)
-                                        viewModel.restoreArchiveJson(raw) { result ->
-                                            isImporting = false
-                                            result.onSuccess { restored ->
-                                                showFastSnackbar(snackbar, scope, "Restored ${restored.total} records from backup.")
-                                                importFileUri = null
-                                                importFileName = ""
-                                                importPreview = null
-                                            }.onFailure { e ->
-                                                showFastSnackbar(snackbar, scope, "Restore failed: ${e.localizedMessage}")
+                                            val isFieldMind = importFileName.endsWith(".fieldmind")
+                                            if (isFieldMind) {
+                                                val extracted = FieldMindExportMediaPacker.extractPackage(context, importFileUri!!)
+                                                importedPackage = extracted
+                                                extracted?.archiveJson ?: run {
+                                                    context.contentResolver.openInputStream(importFileUri!!)?.bufferedReader()?.readText() ?: ""
+                                                }
+                                            } else {
+                                                context.contentResolver.openInputStream(importFileUri!!)?.bufferedReader()?.readText() ?: ""
                                             }
+                                        }
+                                        if (raw.isNotBlank()) {
+                                            viewModel.restoreArchiveJson(raw) { result ->
+                                                isImporting = false
+                                                result.onSuccess { restored ->
+                                                    showFastSnackbar(snackbar, scope, "Restored ${restored.total} records from backup.")
+                                                    importFileUri = null
+                                                    importFileName = ""
+                                                    importPreview = null
+                                                }.onFailure { e ->
+                                                    showFastSnackbar(snackbar, scope, "Restore failed: ${e.localizedMessage}")
+                                                }
+                                            }
+                                        } else {
+                                            isImporting = false
+                                            showFastSnackbar(snackbar, scope, "Could not read archive file.")
                                         }
                                     } catch (e: Exception) {
                                         isImporting = false
                                         showFastSnackbar(snackbar, scope, "Import failed: ${e.localizedMessage}")
+                                    } finally {
+                                        importedPackage?.let { FieldMindExportMediaPacker.cleanupExtractedPackage(it) }
+                                        importedPackage = null
                                     }
                                 }
                             }
@@ -1074,9 +1113,7 @@ private fun ImportTabContent(
     isImporting: Boolean,
     onPickFile: () -> Unit,
     onClearFile: () -> Unit,
-    onImport: () -> Unit
-) {
-    val colors = FieldMindTheme.colors
+    onImport: () -> Unit    ) {
     val pulsateTransition = rememberInfiniteTransition(label = "pulsate")
     val dashAlpha by pulsateTransition.animateFloat(
         1f, 0.4f,
