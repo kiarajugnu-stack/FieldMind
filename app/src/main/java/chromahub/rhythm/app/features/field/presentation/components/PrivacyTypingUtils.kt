@@ -46,8 +46,7 @@ fun KeyboardOptions.withPrivacyTyping(enabled: Boolean): KeyboardOptions {
     if (!enabled) return this
     return copy(
         platformImeOptions = PlatformImeOptions(
-            privateImeOptions = "nm,noPersonalizedLearning",  // "nm" for Gboard, "noPersonalizedLearning" for SwiftKey & others
-            imeAction = null  // Let IME choose appropriate action
+            privateImeOptions = "nm,noPersonalizedLearning"  // "nm" for Gboard, "noPersonalizedLearning" for SwiftKey & others
         )
     )
 }

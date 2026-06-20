@@ -363,52 +363,19 @@ fun BackupAndRestoreScreen(
                                                 "Markdown" -> exportFile.writeText(
                                                     observations.joinToString("\n\n---\n\n") { FieldMindExport.singleObservationMarkdown(it) }
                                                 )
-                                                "PDF" -> {
-                                                    val bodyText = observations.joinToString("\n") { FieldMindExport.singleObservationMarkdown(it) }
-                                                    exportFile.writeBytes(FieldMindExport.simplePdfBytes("FieldMind Export", bodyText))
-                                                }
                                                 ".fieldmind" -> {
                                                     // Pack with encryption if enabled
                                                     val packed = if (backupEncrypt) {
-                                                        FieldMindExportMediaPacker.createPackageEncrypted(
+                                                        FieldMindExportMediaPacker.buildPackageEncrypted(
                                                             json = json,
-                                                            password = backupPassword.ifBlank { "default" },
-                                                            fileName = fileName
+                                                            password = backupPassword.ifBlank { "default" }
                                                         )
                                                     } else {
-                                                        FieldMindExportMediaPacker.createPackage(
-                                                            json = json,
-                                                            fileName = fileName
-                                                        )
+                                                        FieldMindExportMediaPacker.buildPackage(json = json)
                                                     }
                                                     exportFile.writeBytes(packed)
                                                 }
                                                 "JSON" -> exportFile.writeText(json)
-                                                "CSV" -> {
-                                                    val csv = FieldMindExport.archiveCsv(
-                                                        observations = observations, notes = notes,
-                                                        questions = questions, hypotheses = hypotheses,
-                                                        projects = projects, sources = sources,
-                                                        dataRecords = dataRecords, reports = reports,
-                                                        flashcards = flashcards
-                                                    )
-                                                    exportFile.writeText(csv)
-                                                }
-                                                "HTML" -> {
-                                                    val html = FieldMindExport.archiveHtml(
-                                                        observations = observations, notes = notes,
-                                                        questions = questions, hypotheses = hypotheses,
-                                                        projects = projects, sources = sources,
-                                                        dataRecords = dataRecords, reports = reports,
-                                                        flashcards = flashcards
-                                                    )
-                                                    exportFile.writeText(html)
-                                                }
-                                                "PNG", "SVG" -> {
-                                                    // Image exports handled separately
-                                                    val imageBytes = FieldMindExport.archiveSnapshot(format)
-                                                    exportFile.writeBytes(imageBytes)
-                                                }
                                             }
 
                                             exportProgress = 0.8f
@@ -1860,7 +1827,7 @@ private fun ExportHistoryItem(record: ExportRecord) {
     }
 }
 
-// ══════════════════════════════════════════════════════════════════════
+// ═════════════════════════════════════════════════════════════════════��
 //  Utility functions
 // ══════════════════════════════════════════════════════════════════════
 
