@@ -75,9 +75,11 @@ class FieldMindAutoBackupWorker(context: Context, params: WorkerParameters) : Co
                 val folderUri = Uri.parse(folderUriStr)
                 val fileName = result.packageFile.name
                 val mimeType = "application/octet-stream"
+                val treeDocumentId = android.provider.DocumentsContract.getTreeDocumentId(folderUri)
+                val parentDocumentUri = android.provider.DocumentsContract.buildDocumentUriUsingTree(folderUri, treeDocumentId)
                 val createdDoc = android.provider.DocumentsContract.createDocument(
                     applicationContext.contentResolver,
-                    folderUri,
+                    parentDocumentUri,
                     mimeType,
                     fileName
                 )

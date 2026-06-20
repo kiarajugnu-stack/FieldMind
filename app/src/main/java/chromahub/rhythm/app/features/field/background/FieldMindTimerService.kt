@@ -33,6 +33,7 @@ class FieldMindTimerService : Service() {
         const val ACTION_START_SESSION = "fieldmind.action.START_SESSION"
         const val ACTION_STOP_SESSION = "fieldmind.action.STOP_SESSION"
         const val ACTION_UPDATE_TIMER = "fieldmind.action.UPDATE_TIMER"
+        const val ACTION_PAUSE_RESUME = "fieldmind.action.PAUSE_RESUME"
 
         const val EXTRA_TIMER_TYPE = "timer_type"
         const val EXTRA_TIMER_MS = "timer_ms"
@@ -48,6 +49,8 @@ class FieldMindTimerService : Service() {
         private const val PREFS_NAME = "fieldmind_timer_prefs"
         private const val KEY_ACTIVE_TYPE = "active_timer_type"
         private const val KEY_ELAPSED_MS = "elapsed_ms"
+        private const val KEY_STARTED_AT = "started_at"
+        private const val KEY_PAUSED = "paused"
         private const val KEY_SESSION_NAME = "session_name"
 
         fun isTimerActive(context: Context): Boolean {
@@ -58,9 +61,12 @@ class FieldMindTimerService : Service() {
         fun getSavedTimerState(context: Context): TimerState? {
             val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
             val type = prefs.getString(KEY_ACTIVE_TYPE, null) ?: return null
-            val elapsedMs = prefs.getLong(KEY_ELAPSED_MS, 0L)
+            val storedElapsed = prefs.getLong(KEY_ELAPSED_MS, 0L)
+            val startedAt = prefs.getLong(KEY_STARTED_AT, 0L)
+            val paused = prefs.getBoolean(KEY_PAUSED, false)
+            val elapsedMs = if (!paused && startedAt > 0L) storedElapsed + (System.currentTimeMillis() - startedAt) else storedElapsed
             val name = prefs.getString(KEY_SESSION_NAME, "")
-            return TimerState(type, elapsedMs, name ?: "")
+            return TimerState(type, elapsedMs.coerceAtLeast(0L), name ?: "", startedAt, paused)
         }
 
         fun clearSavedTimerState(context: Context) {
@@ -69,6 +75,8 @@ class FieldMindTimerService : Service() {
                 .remove(KEY_ACTIVE_TYPE)
                 .remove(KEY_ELAPSED_MS)
                 .remove(KEY_SESSION_NAME)
+                .remove(KEY_STARTED_AT)
+                .remove(KEY_PAUSED)
                 .apply()
         }
 
@@ -78,6 +86,8 @@ class FieldMindTimerService : Service() {
                 .putString(KEY_ACTIVE_TYPE, state.type)
                 .putLong(KEY_ELAPSED_MS, state.elapsedMs)
                 .putString(KEY_SESSION_NAME, state.name)
+                .putLong(KEY_STARTED_AT, state.startedAt)
+                .putBoolean(KEY_PAUSED, state.paused)
                 .apply()
         }
     }
@@ -85,7 +95,9 @@ class FieldMindTimerService : Service() {
     data class TimerState(
         val type: String,
         val elapsedMs: Long = 0L,
-        val name: String = ""
+        val name: String = "",
+        val startedAt: Long = System.currentTimeMillis(),
+        val paused: Boolean = false
     )
 
     override fun onBind(intent: Intent?): IBinder? = null
@@ -101,8 +113,9 @@ class FieldMindTimerService : Service() {
                 val title = intent.getStringExtra(EXTRA_TITLE) ?: "Reading"
                 val text = intent.getStringExtra(EXTRA_TEXT) ?: "Focus timer running"
                 elapsedMs = 0L
-                startForeground(NOTIFICATION_ID, buildNotification(title, text))
-                saveTimerState(this, TimerState(TYPE_READING, 0L, title))
+                startedAt = System.currentTimeMillis()
+                startForeground(NOTIFICATION_ID, buildNotification(title, text, TYPE_READING))
+                saveTimerState(this, TimerState(TYPE_READING, 0L, title, startedAt))
                 startTimerTick()
             }
             ACTION_STOP_READING -> {
@@ -115,8 +128,9 @@ class FieldMindTimerService : Service() {
                 val name = intent.getStringExtra(EXTRA_SESSION_NAME) ?: "Research Session"
                 val text = intent.getStringExtra(EXTRA_TEXT) ?: "Field session in progress"
                 elapsedMs = 0L
-                startForeground(NOTIFICATION_ID, buildNotification(name, text))
-                saveTimerState(this, TimerState(TYPE_SESSION, 0L, name))
+                startedAt = System.currentTimeMillis()
+                startForeground(NOTIFICATION_ID, buildNotification(name, text, TYPE_SESSION))
+                saveTimerState(this, TimerState(TYPE_SESSION, 0L, name, startedAt))
                 startTimerTick()
             }
             ACTION_STOP_SESSION -> {
@@ -130,21 +144,42 @@ class FieldMindTimerService : Service() {
                 val text = intent.getStringExtra(EXTRA_TEXT) ?: "Running"
                 elapsedMs = intent.getLongExtra(EXTRA_TIMER_MS, 0L)
                 val type = intent.getStringExtra(EXTRA_TIMER_TYPE) ?: TYPE_READING
+                startedAt = System.currentTimeMillis()
                 updateNotification(title, text)
 
                 // Persist elapsed time for recovery
                 val currentState = getSavedTimerState(this)
                 if (currentState != null) {
-                    saveTimerState(this, currentState.copy(elapsedMs = elapsedMs))
+                    saveTimerState(this, currentState.copy(elapsedMs = elapsedMs, startedAt = startedAt, paused = false))
                 } else {
-                    saveTimerState(this, TimerState(type, elapsedMs, title))
+                    saveTimerState(this, TimerState(type, elapsedMs, title, startedAt))
                 }
+            }
+            ACTION_PAUSE_RESUME -> getSavedTimerState(this)?.let { state ->
+                if (state.paused) {
+                    elapsedMs = state.elapsedMs
+                    startedAt = System.currentTimeMillis()
+                    saveTimerState(this, state.copy(startedAt = startedAt, paused = false))
+                    startTimerTick()
+                } else {
+                    elapsedMs = state.elapsedMs
+                    saveTimerState(this, state.copy(elapsedMs = elapsedMs, paused = true))
+                    stopTimerTick()
+                }
+                updateNotification(state.name.ifBlank { "FieldMind Timer" }, if (state.paused) "Running" else "Paused")
+            }
+            null -> getSavedTimerState(this)?.let { state ->
+                elapsedMs = state.elapsedMs
+                startedAt = if (state.paused) 0L else state.startedAt.takeIf { it > 0L } ?: System.currentTimeMillis()
+                startForeground(NOTIFICATION_ID, buildNotification(state.name.ifBlank { "FieldMind Timer" }, "Restored timer", state.type))
+                if (!state.paused) startTimerTick()
             }
         }
         return START_STICKY
     }
 
     private var elapsedMs: Long = 0L
+    private var startedAt: Long = 0L
     private var currentTitle: String = "Timer"
     private var currentText: String = "Running"
     private var timerTickJob: kotlinx.coroutines.Job? = null
@@ -159,7 +194,10 @@ class FieldMindTimerService : Service() {
         timerTickJob = kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Default + kotlinx.coroutines.SupervisorJob()).launch {
             while (isActive) {
                 kotlinx.coroutines.delay(1000)
-                elapsedMs += 1000
+                val saved = getSavedTimerState(this@FieldMindTimerService)
+                elapsedMs = saved?.elapsedMs ?: (System.currentTimeMillis() - startedAt)
+                saved?.let { saveTimerState(this@FieldMindTimerService, it.copy(elapsedMs = elapsedMs, startedAt = System.currentTimeMillis())) }
+                startedAt = System.currentTimeMillis()
                 updateNotification(currentTitle, currentText)
             }
         }
@@ -174,7 +212,7 @@ class FieldMindTimerService : Service() {
         currentTitle = title
         currentText = text
         val displayText = "${FieldMindTimerManager.formatTime(elapsedMs)} • $text"
-        val notification = buildNotification(title, displayText)
+        val notification = buildNotification(title, displayText, getSavedTimerState(this)?.type ?: TYPE_READING)
         val manager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
         manager.notify(NOTIFICATION_ID, notification)
     }
@@ -194,9 +232,11 @@ class FieldMindTimerService : Service() {
         }
     }
 
-    private fun buildNotification(title: String, text: String): android.app.Notification {
+    private fun buildNotification(title: String, text: String, type: String = TYPE_READING): android.app.Notification {
         val intent = Intent(this, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            putExtra(MainActivity.EXTRA_FIELDMIND_DESTINATION, if (type == TYPE_SESSION) "field_mode" else "field_timer")
+            putExtra(EXTRA_TIMER_TYPE, type)
         }
         val pendingIntent = PendingIntent.getActivity(
             this,
@@ -211,6 +251,8 @@ class FieldMindTimerService : Service() {
             .setContentText(text)
             .setContentIntent(pendingIntent)
             .setOngoing(true)
+            .addAction(android.R.drawable.ic_media_play, "Open Field Mode", pendingIntent)
+            .addAction(android.R.drawable.ic_media_pause, "Pause/Resume", PendingIntent.getService(this, 1, Intent(this, FieldMindTimerService::class.java).setAction(ACTION_PAUSE_RESUME), PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT))
             .setCategory(NotificationCompat.CATEGORY_SERVICE)
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .setSilent(true)

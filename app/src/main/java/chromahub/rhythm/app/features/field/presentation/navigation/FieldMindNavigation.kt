@@ -128,12 +128,13 @@ private val bottomTabs = listOf(
     FieldMindScreen.Home,
     FieldMindScreen.Observe,
     FieldMindScreen.Projects,
+    FieldMindScreen.FieldMode,
     FieldMindScreen.Insights,
     FieldMindScreen.Library
 )
 
 @Composable
-fun FieldMindApp(appSettings: AppSettings, viewModel: FieldMindViewModel) {
+fun FieldMindApp(appSettings: AppSettings, viewModel: FieldMindViewModel, requestedDestination: String? = null) {
     val onboardingCompleted by appSettings.onboardingCompleted.collectAsState()
     var appUnlocked by remember { mutableStateOf(!viewModel.fieldSettings.privacyLockEnabled.value) }
     val privacyEnabled by viewModel.fieldSettings.privacyLockEnabled.collectAsState()
@@ -152,7 +153,7 @@ fun FieldMindApp(appSettings: AppSettings, viewModel: FieldMindViewModel) {
             val privacyTyping by viewModel.fieldSettings.privacyTypingEnabled.collectAsState()
             CompositionLocalProvider(LocalPrivacyTypingEnabled provides privacyTyping) {
                 FieldMindSnackbarProvider { _ ->
-                    FieldMindNavigation(viewModel = viewModel, onResetOnboarding = { appSettings.setOnboardingCompleted(false); appUnlocked = false })
+                    FieldMindNavigation(viewModel = viewModel, requestedDestination = requestedDestination, onResetOnboarding = { appSettings.setOnboardingCompleted(false); appUnlocked = false })
                 }
             }
         }
@@ -171,7 +172,7 @@ private fun NavHostController.navigateToDestination(route: String) {
 }
 
 @Composable
-fun FieldMindNavigation(viewModel: FieldMindViewModel, onResetOnboarding: () -> Unit) {
+fun FieldMindNavigation(viewModel: FieldMindViewModel, requestedDestination: String? = null, onResetOnboarding: () -> Unit) {
     val navController = rememberNavController()
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = backStackEntry?.destination
@@ -207,6 +208,13 @@ fun FieldMindNavigation(viewModel: FieldMindViewModel, onResetOnboarding: () -> 
             }
             launchSingleTop = true
             restoreState = true
+        }
+    }
+
+    LaunchedEffect(requestedDestination) {
+        when (requestedDestination) {
+            FieldMindScreen.FieldMode.route, "field_mode" -> navController.navigateToDestination(FieldMindScreen.FieldMode.route)
+            "field_timer" -> navController.navigateToDestination(FieldMindScreen.ResearchSession.route)
         }
     }
 
@@ -265,6 +273,7 @@ fun FieldMindNavigation(viewModel: FieldMindViewModel, onResetOnboarding: () -> 
             when (tab.route) {
                 FieldMindScreen.Observe.route -> screenVisibility.showCapture
                 FieldMindScreen.Projects.route -> screenVisibility.showProjects
+                FieldMindScreen.FieldMode.route -> true
                 FieldMindScreen.Insights.route -> screenVisibility.showInsights
                 FieldMindScreen.Library.route -> screenVisibility.showLibrary
                 else -> true // Home always visible
@@ -428,7 +437,7 @@ private fun FloatingNavTabItem(
                         MaterialTheme.colorScheme.primary.copy(alpha = 0.18f * pillAlpha) 
                     else 
                         Color.Transparent,
-                    shape = RoundedCornerShape(14.dp)
+                    shape = RoundedCornerShape(18.dp)
                 ),
             contentAlignment = Alignment.Center
         ) {

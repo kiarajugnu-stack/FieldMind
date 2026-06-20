@@ -1,10 +1,16 @@
 package fieldmind.research.app.features.field.presentation.components
 
+import android.os.Build
+import android.text.InputType
+import android.view.inputmethod.EditorInfo
+import android.view.View
+import android.widget.EditText
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.text.input.PlatformImeOptions
 import androidx.compose.ui.unit.dp
 import fieldmind.research.app.shared.presentation.components.icons.Icon
@@ -94,4 +100,63 @@ fun PrivacyTypingIndicator(modifier: Modifier = Modifier) {
         size = 16.dp,
         modifier = modifier
     )
+}
+
+
+/** Strong native text field for highly sensitive input. Compose KeyboardOptions can only
+ * pass private IME options; this AndroidView-backed field also sets the raw platform
+ * no-personalized-learning IME flag and disables autofill/content-capture where possible.
+ * Android keyboards may not show an incognito badge, but supported keyboards should not
+ * personalize from this text. */
+@Composable
+fun FieldMindPrivateTextField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    modifier: Modifier = Modifier,
+    hint: String = "",
+    singleLine: Boolean = true,
+    sensitive: Boolean = true
+) {
+    AndroidView(
+        modifier = modifier,
+        factory = { context ->
+            EditText(context).apply {
+                configureFieldMindPrivacy(sensitive = sensitive, singleLine = singleLine)
+                setHint(hint)
+                setText(value)
+                setSelection(text?.length ?: 0)
+                addTextChangedListener(object : android.text.TextWatcher {
+                    override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) = Unit
+                    override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) { onValueChange(s?.toString().orEmpty()) }
+                    override fun afterTextChanged(s: android.text.Editable?) = Unit
+                })
+            }
+        },
+        update = { view ->
+            if (view.text.toString() != value) {
+                view.setText(value)
+                view.setSelection(view.text?.length ?: 0)
+            }
+            view.hint = hint
+            view.configureFieldMindPrivacy(sensitive = sensitive, singleLine = singleLine)
+        }
+    )
+}
+
+fun EditText.configureFieldMindPrivacy(sensitive: Boolean = true, singleLine: Boolean = true) {
+    imeOptions = imeOptions or EditorInfo.IME_FLAG_NO_PERSONALIZED_LEARNING
+    privateImeOptions = (privateImeOptions.orEmpty().split(PRIVATE_IME_OPTION_SEPARATOR).filter { it.isNotBlank() } + PRIVACY_IME_OPTIONS)
+        .distinct().joinToString(PRIVATE_IME_OPTION_SEPARATOR)
+    inputType = if (sensitive) {
+        InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD or InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS
+    } else {
+        inputType or InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS
+    }
+    setSingleLine(singleLine)
+    importantForAutofill = View.IMPORTANT_FOR_AUTOFILL_NO_EXCLUDE_DESCENDANTS
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) setAutofillHints(null)
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+        importantForContentCapture = View.IMPORTANT_FOR_CONTENT_CAPTURE_NO_EXCLUDE_DESCENDANTS
+    }
+    setTextIsSelectable(!sensitive)
 }
