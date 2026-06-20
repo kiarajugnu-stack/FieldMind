@@ -491,6 +491,8 @@ fun SecuritySettingsPage(viewModel: FieldMindViewModel, onBack: () -> Unit) {
     val settings = viewModel.fieldSettings
     val privacy by settings.privacyLockEnabled.collectAsState()
     val privacyTyping by settings.privacyTypingEnabled.collectAsState()
+    val lockTimeout by settings.lockTimeout.collectAsState()
+    val autoLockOnBackground by settings.autoLockOnBackground.collectAsState()
     val appPinEnabled by settings.appPinEnabled.collectAsState()
     val appPinHash by settings.appPinHash.collectAsState()
     var showPinSetup by remember { mutableStateOf(false) }
@@ -630,6 +632,19 @@ fun SecuritySettingsPage(viewModel: FieldMindViewModel, onBack: () -> Unit) {
         item {
             SettingsGroupCard {
                 ToggleItem("Privacy typing", "Prevents keyboards from learning your typing patterns. Gboard shows an incognito indicator when active.", privacyTyping, settings::setPrivacyTypingEnabled, FieldMindIcons.Lock)
+            }
+        }
+
+        // ── Lock timeout ──
+        item {
+            SettingsGroupCard {
+                ChoiceItemForm("Lock timeout", listOf("Immediate", "1 minute", "5 minutes", "15 minutes", "When screen off"), lockTimeout, FieldMindIcons.Timer) { newValue ->
+                    settings.setLockTimeout(newValue)
+                }
+                HorizontalDivider(Modifier.padding(start = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+                ToggleItem("Auto-lock on background", "Lock the app when it goes to background.", autoLockOnBackground, { newValue ->
+                    settings.setAutoLockOnBackground(newValue)
+                }, FieldMindIcons.Lock)
             }
         }
 
