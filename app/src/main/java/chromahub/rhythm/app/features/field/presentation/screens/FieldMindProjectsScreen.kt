@@ -129,10 +129,16 @@ fun ProjectsScreen(
     val researchSessions by viewModel.researchSessions.collectAsState()
     var tab by remember(startTab) { mutableIntStateOf(startTab.coerceIn(0, 4)) }
     val haptics = rememberFieldMindHaptics()
-    val tabs = listOf("Overview", "Observations", "Hypotheses", "Data", "Reports")
+    val workspaceSubNavTabs = listOf(
+        SubNavTab("Overview", FieldMindIcons.Home),
+        SubNavTab("Observations", FieldMindIcons.Observation),
+        SubNavTab("Hypotheses", FieldMindIcons.Hypothesis),
+        SubNavTab("Data", FieldMindIcons.Data),
+        SubNavTab("Reports", FieldMindIcons.Report)
+    )
 
     fun selectTab(next: Int) {
-        val bounded = next.coerceIn(0, tabs.lastIndex)
+        val bounded = next.coerceIn(0, workspaceSubNavTabs.lastIndex)
         if (bounded != tab) { tab = bounded; haptics.light() }
     }
 
@@ -145,9 +151,12 @@ fun ProjectsScreen(
             heroColor = FieldMindTheme.colors.project,
             modifier = Modifier.padding(horizontal = 20.dp, vertical = 16.dp)
         )
-        ScrollableTabRow(selectedTabIndex = tab, edgePadding = 20.dp, containerColor = MaterialTheme.colorScheme.background) {
-            tabs.forEachIndexed { i, label -> Tab(tab == i, { selectTab(i) }, text = { Text(label) }) }
-        }
+        FieldMindSubNavBar(
+            tabs = workspaceSubNavTabs,
+            selectedIndex = tab,
+            onTabSelected = { selectTab(it) },
+            modifier = Modifier.padding(bottom = 8.dp)
+        )
         // Static tab content (no AnimatedContent to avoid infinite-height crash with LazyColumn)
         Box(
             modifier = Modifier.fillMaxSize().pointerInput(tab) {
@@ -355,7 +364,7 @@ private fun ResearchHubOverviewTab(
     }
 }
 
-// ══════════════════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════��═════
 //  Research Hub Dashboard
 // ══════════════════════════════════════════════════════════════════════
 
