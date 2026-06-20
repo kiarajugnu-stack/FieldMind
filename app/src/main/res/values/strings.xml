@@ -10,6 +10,7 @@
     <!-- Media3 notification configuration -->
 
     <!-- Widget strings -->
+    <string name="widget_description_glance">FieldMind Research - Control Review with 9 responsive layouts, Material 3 design, and real-time state updates</string>
 
     <!-- FieldMind Glance Widget strings -->
     <string name="widget_fieldmind_quick_capture">Quick Capture</string>
@@ -189,6 +190,13 @@
     <!-- MiniPlayer Swipe Hints -->
 
     <!-- Festive Greetings -->
+    <string name="festivesplashgreeting_merry_christmas">Merry Christmas!</string>
+    <string name="festivesplashgreeting_seasons_greetings">🎅 Season\'s Greetings 🎁</string>
+    <string name="festivesplashgreeting_happy_new_year">Happy New Year!</string>
+    <string name="festivesplashgreeting_happy_halloween">Happy Halloween!</string>
+    <string name="festivesplashgreeting_spooky_season">👻 Spooky Season 🦇</string>
+    <string name="festivesplashgreeting_happy_valentines">Happy Valentine\'s!</string>
+    <string name="festivesplashgreeting_love_is_in_the">💖 Love is in the Air 💗</string>
 
     <!-- Settings -->
 
@@ -548,6 +556,13 @@
     <string name="service_init_failed">Rhythm could not start. Please reopen the app.</string>
 
     <!-- Crash Activity -->
+    <string name="crash_bug_report">Bug Report</string>
+    <string name="crash_restart_app">Restart App</string>
+    <string name="crashactivity_uh_oh_looks_like">Uh oh! Looks like FieldMind hit a sour note!</string>
+    <string name="crashactivity_dont_fret_our_app">Don\'t fret! Our app just had a little \'oopsie\'. Please share the crash details below – it\'s like a secret message for our developers to fix things! Then, let\'s try that again, shall we?</string>
+    <string name="crashactivity_secret_crash_scrolls">Secret Crash Scrolls</string>
+    <string name="crashactivity_share">Share</string>
+    <string name="updates_rhythm_logo_cd">FieldMind Logo</string>
 
     <!-- Genre Detection -->
     <string name="genre_hip_hop">Hip Hop</string>
