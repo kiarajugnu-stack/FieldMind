@@ -13,7 +13,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import fieldmind.research.app.features.field.data.database.entity.HypothesisEntity
 import fieldmind.research.app.features.field.presentation.theme.FieldMindTheme
-import fieldmind.research.app.ui.theme.RhythmColors
 
 /**
  * Phase 8: Hypotheses Redesign
@@ -40,7 +39,7 @@ fun HypothesisCard(
     val statusColor = when (statusEnum) {
         HypothesisStatus.SUPPORTED -> MaterialTheme.colorScheme.primary
         HypothesisStatus.CONTRADICTED -> MaterialTheme.colorScheme.error
-        HypothesisStatus.INCONCLUSIVE -> RhythmColors.warning
+        HypothesisStatus.INCONCLUSIVE -> MaterialTheme.colorScheme.tertiary
         HypothesisStatus.UNTESTED -> MaterialTheme.colorScheme.surfaceVariant
     }
 

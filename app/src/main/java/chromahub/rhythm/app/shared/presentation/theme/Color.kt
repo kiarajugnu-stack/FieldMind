@@ -100,30 +100,6 @@ val InverseSurfaceDark = Color(0xFFE6E1E5) // Light surface for dark theme
 val InverseOnSurfaceDark = Color(0xFF313033) // Dark text on inverse surface
 val InversePrimaryDark = Color(0xFF6750A4) // Dark primary on light surface (= logo color)
 
-// Legacy music-specific colors (for backward compatibility)
-val MusicPrimaryLight = PrimaryLight
-val MusicPrimaryVariantLight = PrimaryContainerLight
-val MusicSecondaryLight = TertiaryLight
-
-val MusicPrimaryDark = PrimaryDark
-val MusicPrimaryVariantDark = PrimaryContainerDark
-val MusicSecondaryDark = TertiaryDark
-
-// UI Specific Colors for player components
-val PlayerButtonColor = PrimaryLight
-val PlayerButtonColorDark = PrimaryDark
-val PlayerProgressColor = TertiaryLight
-val PlayerProgressBackgroundLight = SurfaceContainerLight
-val PlayerProgressBackgroundDark = SurfaceContainerDark
-val PlayerBackgroundLight = BackgroundLight
-val PlayerBackgroundDark = BackgroundDark
-
-// Status colors for notifications, errors, etc.
-val SuccessLight = Color(0xFF2E7D32) // Material green
-val SuccessDark = Color(0xFF66BB6A) // Light green for dark theme
-val WarningLight = Color(0xFFEF6C00) // Material orange
-val WarningDark = Color(0xFFFFB74D) // Light orange for dark theme
-
 // ============================================
 // Custom Color Scheme Presets
 // ============================================

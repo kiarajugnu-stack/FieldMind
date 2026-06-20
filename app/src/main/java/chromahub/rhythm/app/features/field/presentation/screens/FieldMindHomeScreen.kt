@@ -826,7 +826,7 @@ private fun HomeHeroSection(
                     label = "Timer",
                     accent = colors.flashcard,
                     modifier = Modifier.weight(1f)
-                ) { onNavigate(FieldMindScreen.ResearchSession) }
+                ) { onNavigate(FieldMindScreen.TimerTool) }
             }
         }
     }

@@ -17,7 +17,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import fieldmind.research.app.shared.data.model.AppSettings // Import AppSettings
-import fieldmind.research.app.activities.CrashActivity // Import CrashActivity
+import fieldmind.research.app.activities.FieldMindCrashActivity
 import kotlin.system.exitProcess
 
 object CrashReporter {
@@ -37,7 +37,7 @@ object CrashReporter {
             val crashLog = Log.getStackTraceString(throwable)
             Log.e(TAG, "Uncaught exception on thread ${thread.name}: $crashLog")
             appSettings.addCrashLogEntry(crashLog) // Add to crash log history
-            CrashActivity.start(application.applicationContext, crashLog) // Start CrashActivity
+            FieldMindCrashActivity.start(application.applicationContext, crashLog)
             // Terminate the crashed process to ensure a clean restart
             android.os.Process.killProcess(android.os.Process.myPid())
             System.exit(1)

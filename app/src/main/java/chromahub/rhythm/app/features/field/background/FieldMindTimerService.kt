@@ -10,6 +10,7 @@ import android.os.Build
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
 import fieldmind.research.app.activities.MainActivity
+import kotlinx.coroutines.*
 
 /**
  * Foreground service that keeps timers running in the background.
@@ -99,10 +100,13 @@ class FieldMindTimerService : Service() {
             ACTION_START_READING -> {
                 val title = intent.getStringExtra(EXTRA_TITLE) ?: "Reading"
                 val text = intent.getStringExtra(EXTRA_TEXT) ?: "Focus timer running"
+                elapsedMs = 0L
                 startForeground(NOTIFICATION_ID, buildNotification(title, text))
                 saveTimerState(this, TimerState(TYPE_READING, 0L, title))
+                startTimerTick()
             }
             ACTION_STOP_READING -> {
+                stopTimerTick()
                 clearSavedTimerState(this)
                 stopSelf()
                 return START_NOT_STICKY
@@ -110,10 +114,13 @@ class FieldMindTimerService : Service() {
             ACTION_START_SESSION -> {
                 val name = intent.getStringExtra(EXTRA_SESSION_NAME) ?: "Research Session"
                 val text = intent.getStringExtra(EXTRA_TEXT) ?: "Field session in progress"
+                elapsedMs = 0L
                 startForeground(NOTIFICATION_ID, buildNotification(name, text))
                 saveTimerState(this, TimerState(TYPE_SESSION, 0L, name))
+                startTimerTick()
             }
             ACTION_STOP_SESSION -> {
+                stopTimerTick()
                 clearSavedTimerState(this)
                 stopSelf()
                 return START_NOT_STICKY
@@ -121,11 +128,9 @@ class FieldMindTimerService : Service() {
             ACTION_UPDATE_TIMER -> {
                 val title = intent.getStringExtra(EXTRA_TITLE) ?: "Timer"
                 val text = intent.getStringExtra(EXTRA_TEXT) ?: "Running"
-                val elapsedMs = intent.getLongExtra(EXTRA_TIMER_MS, 0L)
+                elapsedMs = intent.getLongExtra(EXTRA_TIMER_MS, 0L)
                 val type = intent.getStringExtra(EXTRA_TIMER_TYPE) ?: TYPE_READING
-                val notification = buildNotification(title, text)
-                val manager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
-                manager.notify(NOTIFICATION_ID, notification)
+                updateNotification(title, text)
 
                 // Persist elapsed time for recovery
                 val currentState = getSavedTimerState(this)
@@ -137,6 +142,41 @@ class FieldMindTimerService : Service() {
             }
         }
         return START_STICKY
+    }
+
+    private var elapsedMs: Long = 0L
+    private var currentTitle: String = "Timer"
+    private var currentText: String = "Running"
+    private var timerTickJob: kotlinx.coroutines.Job? = null
+
+    override fun onDestroy() {
+        stopTimerTick()
+        super.onDestroy()
+    }
+
+    private fun startTimerTick() {
+        stopTimerTick()
+        timerTickJob = kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Default + kotlinx.coroutines.SupervisorJob()).launch {
+            while (isActive) {
+                kotlinx.coroutines.delay(1000)
+                elapsedMs += 1000
+                updateNotification(currentTitle, currentText)
+            }
+        }
+    }
+
+    private fun stopTimerTick() {
+        timerTickJob?.cancel()
+        timerTickJob = null
+    }
+
+    private fun updateNotification(title: String, text: String) {
+        currentTitle = title
+        currentText = text
+        val displayText = "${FieldMindTimerManager.formatTime(elapsedMs)} • $text"
+        val notification = buildNotification(title, displayText)
+        val manager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+        manager.notify(NOTIFICATION_ID, notification)
     }
 
     private fun createNotificationChannel() {

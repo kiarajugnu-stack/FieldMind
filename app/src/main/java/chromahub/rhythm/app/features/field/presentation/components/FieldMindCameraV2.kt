@@ -94,6 +94,7 @@ private const val FLASH_AUTO = ImageCapture.FLASH_MODE_AUTO
  * - **Species field mode**: inline panel after capture with species autocomplete,
  *   category, confidence, notes — "Save" or " Save & Exit"
  */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun FieldMindCameraV2(
     onPhotoCaptured: (uri: String, mimeType: String) -> Unit,
@@ -559,6 +560,9 @@ fun FieldMindCameraV2(
                 onSaveContinue = {
                     val uri = capturedUri ?: return@SpeciesFieldPanel
                     val mime = capturedMime ?: "image/jpeg"
+                    // Always call onPhotoCaptured first so all callers get the photo
+                    onPhotoCaptured(uri, mime)
+                    // Also call onSpeciesCaptured for callers that want metadata (defaults to no-op)
                     onSpeciesCaptured(uri, mime, speciesName, speciesCategory, speciesConfidence.toString(), speciesNotes)
                     // Reset for next capture
                     speciesName = ""
@@ -570,6 +574,9 @@ fun FieldMindCameraV2(
                 onSaveExit = {
                     val uri = capturedUri ?: return@SpeciesFieldPanel
                     val mime = capturedMime ?: "image/jpeg"
+                    // Always call onPhotoCaptured first so all callers get the photo
+                    onPhotoCaptured(uri, mime)
+                    // Also call onSpeciesCaptured for callers that want metadata (defaults to no-op)
                     onSpeciesCaptured(uri, mime, speciesName, speciesCategory, speciesConfidence.toString(), speciesNotes)
                     showSpeciesPanel = false
                     onDismiss()
@@ -584,96 +591,262 @@ fun FieldMindCameraV2(
             )
         }
 
-        // ── Session post-capture dialog ──
+        // ── Session post-capture dialog (redesigned with categories) ──
         if (showCaptureDialog && multiCaptureMode) {
+            // Post-capture category/confidence state
+            var postCategory by remember { mutableStateOf("Other") }
+            var postConfidence by remember { mutableIntStateOf(80) }
+            var postNotes by remember { mutableStateOf("") }
+            var postSpeciesName by remember { mutableStateOf("") }
+
             Box(
                 Modifier
                     .fillMaxSize()
-                    .background(Color.Black.copy(alpha = 0.5f))
+                    .background(Color.Black.copy(alpha = 0.55f))
                     .clickable(enabled = false) {},
-                contentAlignment = Alignment.Center
+                contentAlignment = Alignment.BottomCenter
             ) {
-                Card(
-                    shape = RoundedCornerShape(28.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.97f)
-                    ),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 16.dp),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(24.dp)
+                Surface(
+                    shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
+                    color = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.98f),
+                    shadowElevation = 16.dp,
+                    modifier = Modifier.fillMaxWidth()
                 ) {
-            Column(
-                Modifier.padding(24.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(20.dp)
-            ) {
-                        // Photo thumbnail
-                        if (pendingCaptureUri != null) {
-                            Box(
-                                Modifier
-                                    .size(120.dp)
-                                    .clip(RoundedCornerShape(16.dp))
-                                    .background(MaterialTheme.colorScheme.surfaceContainerHigh)
-                            ) {
-                                AsyncImage(
-                                    model = pendingCaptureUri,
-                                    contentDescription = "Last capture",
-                                    modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(16.dp)),
-                                    contentScale = ContentScale.Crop
+                    Column(
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(24.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        // ── Header with thumbnail + count ──
+                        Row(
+                            Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(14.dp)
+                        ) {
+                            // Photo thumbnail
+                            if (pendingCaptureUri != null) {
+                                Box(
+                                    Modifier
+                                        .size(64.dp)
+                                        .clip(RoundedCornerShape(14.dp))
+                                        .background(MaterialTheme.colorScheme.surfaceContainerHigh)
+                                ) {
+                                    AsyncImage(
+                                        model = pendingCaptureUri,
+                                        contentDescription = "Last capture",
+                                        modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(14.dp)),
+                                        contentScale = ContentScale.Crop
+                                    )
+                                }
+                            }
+                            Column(Modifier.weight(1f)) {
+                                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    Text(
+                                        "Photo $capturedCount",
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                    Surface(
+                                        shape = RoundedCornerShape(99.dp),
+                                        color = MaterialTheme.colorScheme.primaryContainer
+                                    ) {
+                                        Text(
+                                            "#$capturedCount",
+                                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
+                                            style = MaterialTheme.typography.labelSmall,
+                                            fontWeight = FontWeight.Bold,
+                                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                                        )
+                                    }
+                                }
+                                Text(
+                                    "Captured at ${SimpleDateFormat("HH:mm", Locale.US).format(Date())}",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
+                            }
+                            // Close button (save photo without metadata, then close dialog)
+                            IconButton(onClick = {
+                                val uri = pendingCaptureUri
+                                val mime = pendingCaptureMime
+                                if (uri != null) {
+                                    onPhotoCaptured(uri, mime ?: "image/jpeg")
+                                }
+                                pendingCaptureUri = null
+                                pendingCaptureMime = null
+                                showCaptureDialog = false
+                            }, modifier = Modifier.size(36.dp)) {
+                                Icon(FieldMindIcons.Close, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, size = 20.dp)
                             }
                         }
 
-                        // Text
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.spacedBy(4.dp)
-                        ) {
+                        // ── Species name field ──
+                        OutlinedTextField(
+                            value = postSpeciesName,
+                            onValueChange = { postSpeciesName = it },
+                            label = { Text("Species name (optional)") },
+                            placeholder = { Text("e.g. Red-tailed Hawk") },
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(16.dp)
+                        )
+
+                        // ── Category chips (2 rows) ──
+                        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                             Text(
-                                "Photo $capturedCount captured",
-                                style = MaterialTheme.typography.titleLarge,
-                                fontWeight = FontWeight.Bold
+                                "Category",
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(start = 4.dp)
                             )
-                            Text(
-                                "Captured at ${SimpleDateFormat("HH:mm:ss", Locale.US).format(Date())}",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            val captureCategories = listOf(
+                                "Bird", "Mammal", "Insect", "Plant", "Fungi",
+                                "Reptile", "Amphibian", "Fish", "Mollusk", "Habitat", "Other"
                             )
+                            FlowRow(
+                                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                verticalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                captureCategories.forEach { cat ->
+                                    val selected = postCategory == cat
+                                    Surface(
+                                        onClick = { postCategory = cat },
+                                        shape = RoundedCornerShape(12.dp),
+                                        color = if (selected) MaterialTheme.colorScheme.primary
+                                        else MaterialTheme.colorScheme.surfaceContainerHigh,
+                                        border = if (!selected) androidx.compose.foundation.BorderStroke(
+                                            1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)
+                                        ) else null,
+                                        tonalElevation = 0.dp
+                                    ) {
+                                        Row(
+                                            Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                        ) {
+                                            if (selected) {
+                                                Icon(
+                                                    FieldMindIcons.Check, null,
+                                                    tint = MaterialTheme.colorScheme.onPrimary,
+                                                    size = 14.dp
+                                                )
+                                            }
+                                            Text(
+                                                cat,
+                                                style = MaterialTheme.typography.labelSmall,
+                                                fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
+                                                color = if (selected) MaterialTheme.colorScheme.onPrimary
+                                                else MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+                                        }
+                                    }
+                                }
+                            }
                         }
 
-                        // Action buttons
+                        // ── Confidence slider ──
+                        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Row(
+                                Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text(
+                                    "Confidence",
+                                    style = MaterialTheme.typography.labelMedium,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.padding(start = 4.dp)
+                                )
+                                Text(
+                                    "${postConfidence}%",
+                                    style = MaterialTheme.typography.labelMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                            }
+                            Slider(
+                                value = postConfidence.toFloat(),
+                                onValueChange = { postConfidence = it.roundToInt() },
+                                valueRange = 50f..99f,
+                                steps = 4,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                            Row(
+                                Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text("50%", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f))
+                                Text("99%", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f))
+                            }
+                        }
+
+                        // ── Notes field ──
+                        OutlinedTextField(
+                            value = postNotes,
+                            onValueChange = { postNotes = it },
+                            label = { Text("Quick notes (optional)") },
+                            placeholder = { Text("Behavior, location details, etc.") },
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(16.dp)
+                        )
+
+                        // ── Action buttons ──
+                        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
                         Row(
                             Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
-                            // Add more - saves and keeps camera open
+                            // Keep Shooting — saves photo (via onPhotoCaptured) + optional metadata (via onSpeciesCaptured), stays in camera
                             OutlinedButton(
                                 onClick = {
                                     val uri = pendingCaptureUri
                                     val mime = pendingCaptureMime
                                     if (uri != null) {
+                                        // ALWAYS call onPhotoCaptured so all callers get the photo
                                         onPhotoCaptured(uri, mime ?: "image/jpeg")
+                                        // Also call onSpeciesCaptured for callers that want metadata (defaults to no-op)
+                                        onSpeciesCaptured(
+                                            uri, mime ?: "image/jpeg",
+                                            postSpeciesName, postCategory, postConfidence.toString(), postNotes
+                                        )
                                     }
+                                    // Reset dialog for next capture
                                     pendingCaptureUri = null
                                     pendingCaptureMime = null
+                                    postSpeciesName = ""
+                                    postCategory = "Other"
+                                    postConfidence = 80
+                                    postNotes = ""
                                     showCaptureDialog = false
                                 },
                                 modifier = Modifier.weight(1f),
-                                shape = RoundedCornerShape(16.dp)
+                                shape = RoundedCornerShape(16.dp),
+                                colors = ButtonDefaults.outlinedButtonColors(
+                                    contentColor = MaterialTheme.colorScheme.primary
+                                )
                             ) {
-                                Icon(MaterialSymbolIcon("add_a_photo"), null, size = 18.dp)
+                                Icon(FieldMindIcons.Camera, null, size = 18.dp)
                                 Spacer(Modifier.size(6.dp))
-                                Text("Add", maxLines = 1)
+                                Text("Keep shooting", maxLines = 1)
                             }
 
-                            // Save & Exit - saves and closes camera
+                            // Done — saves photo, closes camera
                             Button(
                                 onClick = {
                                     val uri = pendingCaptureUri
                                     val mime = pendingCaptureMime
                                     if (uri != null) {
+                                        // ALWAYS call onPhotoCaptured so all callers get the photo
                                         onPhotoCaptured(uri, mime ?: "image/jpeg")
+                                        // Also call onSpeciesCaptured for callers that want metadata (defaults to no-op)
+                                        onSpeciesCaptured(
+                                            uri, mime ?: "image/jpeg",
+                                            postSpeciesName, postCategory, postConfidence.toString(), postNotes
+                                        )
                                     }
                                     pendingCaptureUri = null
                                     pendingCaptureMime = null
@@ -685,7 +858,7 @@ fun FieldMindCameraV2(
                             ) {
                                 Icon(FieldMindIcons.Archive, null, size = 18.dp)
                                 Spacer(Modifier.size(6.dp))
-                                Text("Save & Exit", maxLines = 1)
+                                Text("Done", maxLines = 1)
                             }
                         }
                     }
