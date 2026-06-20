@@ -109,18 +109,24 @@ fun AnimatedWeatherScene(
         // Specific weather effects
         // weatherCode -1 = day cloudy, -2 = night sky (used by weather widget for enhanced display)
         // All scenes use the same animation style regardless of day/night — palette provides the colors
+        // Cloudy conditions (code 2-3) now use DayCloudyScene/NightCloudyScene with high cloudIntensity
+        // instead of the separate CloudyScene, so the time-of-day background, birds, aurora, ground
+        // terrain, and atmospheric effects are preserved with clouds layered on top.
+        val isDaytime = timeOfDay != TimeOfDay.Night && timeOfDay != TimeOfDay.Twilight
         when {
             weatherCode == -1 || weatherCode in 0..1 -> {
-                if (showCloudAnimation) DayCloudyScene(palette, compact, timeOfDay, modifier)
+                if (showCloudAnimation) DayCloudyScene(palette, compact, timeOfDay, modifier, cloudIntensity = 0.25f)
                 else ClearSkyScene(palette, timeOfDay, compact, modifier)
             }
             weatherCode == -2 -> {
-                if (showCloudAnimation) NightCloudyScene(palette, compact, timeOfDay, modifier)
+                if (showCloudAnimation) NightCloudyScene(palette, compact, timeOfDay, modifier, cloudIntensity = 0.25f)
                 else NightSkyScene(palette, compact, timeOfDay, modifier)
             }
             weatherCode in 2..3 -> {
-                if (showCloudAnimation) CloudyScene(palette, compact, timeOfDay, modifier)
-                else ClearSkyScene(palette, timeOfDay, compact, modifier)
+                if (showCloudAnimation) {
+                    if (isDaytime) DayCloudyScene(palette, compact, timeOfDay, modifier, cloudIntensity = 0.85f)
+                    else NightCloudyScene(palette, compact, timeOfDay, modifier, cloudIntensity = 0.85f)
+                } else ClearSkyScene(palette, timeOfDay, compact, modifier)
             }
             weatherCode in 45..48 -> FogScene(weatherCode, palette, compact, timeOfDay, modifier)
             weatherCode in 51..67 || weatherCode in 80..82 -> RainScene(weatherCode, palette, compact, timeOfDay, modifier)
@@ -278,7 +284,7 @@ private fun weatherPalette(temp: Double?, timeOfDay: TimeOfDay, isDarkTheme: Boo
             skyBottom = Color(0xFF1A1A3E),
             skyAccent = Color(0xFF5C6BC0),
             sunCol = Color(0xFFECEFF1),
-            sunGlowCol = Color(0xFFB0BEC5),
+            sunGlowCol = Color(0xFFCFD8DC), // Neutral warm grey (was BlueGrey 0xFFB0BEC5 — caused blue-tinted glow)
             moonCol = Color(0xFFECEFF1),
             moonGlowCol = Color(0xFFB3E5FC),
             cloudCol = Color(0xFF37474F),
@@ -495,7 +501,8 @@ private fun DayCloudyScene(
     palette: WeatherPalette,
     compact: Boolean,
     timeOfDay: TimeOfDay,
-    modifier: Modifier
+    modifier: Modifier,
+    cloudIntensity: Float = 0.5f  // 0.0 = clear, 0.5 = partly cloudy, 1.0 = overcast
 ) {
     val isDark = FieldMindTheme.colors.isDark
     val infiniteTransition = rememberInfiniteTransition(label = "dayClouds")
@@ -547,12 +554,15 @@ private fun DayCloudyScene(
         label = "treeSway"
     )
 
-    // Sky and cloud colors derived from palette and time of day
-    val cloudColor = palette.cloudBaseColor.copy(alpha = if (isDark) 0.30f else 0.42f)
-    val cloudColorDark = palette.primary.copy(alpha = if (isDark) 0.20f else 0.28f)
-    val sunBody = palette.sunColor.copy(alpha = 0.95f)
-    val sunInner = palette.sunGlowColor.copy(alpha = 0.85f)
-    val rayColor = palette.sunGlowColor.copy(alpha = 0.15f * sunGlow)
+    // Sky and cloud colors derived from palette, time of day, and cloud intensity
+    // cloudIntensity scales cloud opacity and darkens the sun
+    val cloudAlphaMul = 0.2f + 0.8f * cloudIntensity  // 0.2 at clear, 1.0 at overcast
+    val sunDim = 1f - cloudIntensity * 0.55f  // 1.0 at clear, 0.45 at overcast (dim but visible)
+    val cloudColor = palette.cloudBaseColor.copy(alpha = if (isDark) 0.30f else 0.42f * cloudAlphaMul)
+    val cloudColorDark = palette.primary.copy(alpha = if (isDark) 0.20f else 0.28f * cloudAlphaMul)
+    val sunBody = palette.sunColor.copy(alpha = 0.95f * sunDim)
+    val sunInner = palette.sunGlowColor.copy(alpha = 0.85f * sunDim)
+    val rayColor = palette.sunGlowColor.copy(alpha = 0.15f * sunGlow * sunDim)
 
     Canvas(modifier = modifier.fillMaxSize()) {
         val cx = size.width * 0.85f  // Top-right corner
@@ -601,23 +611,47 @@ private fun DayCloudyScene(
             center = Offset(cx, cy)
         )
 
-        // Back layer clouds (slow drift, behind sun) - reduced to 1 for partial cloudy effect
+        // Back layer clouds (slow drift, behind sun) - scales with cloudIntensity
+        // At low intensity (0.25): 1 faint cloud. At high intensity (0.85): 3 thick clouds
+        val extraClouds = (cloudIntensity * 3f).toInt().coerceIn(1, 3)  // 1-3 additional cloud pairs
         drawCloud(
             offset = cloudOffset1,
             baseX = size.width * 0.1f,
             baseY = size.height * 0.15f,
             scale = size.width * 0.45f,
-            color = cloudColor.copy(alpha = 0.2f),
+            color = cloudColor.copy(alpha = 0.12f + cloudIntensity * 0.15f),
             morph = cloudMorph
         )
 
-        // Front layer clouds - reduced to 2 for partial cloudy effect
+        // Extra back layer clouds at higher intensity
+        if (extraClouds >= 2) {
+            drawCloud(
+                offset = cloudOffset1 * 0.7f,
+                baseX = size.width * 0.5f,
+                baseY = size.height * 0.1f,
+                scale = size.width * 0.4f,
+                color = cloudColor.copy(alpha = 0.08f + cloudIntensity * 0.12f),
+                morph = cloudMorph + 0.5f
+            )
+        }
+        if (extraClouds >= 3) {
+            drawCloud(
+                offset = cloudOffset1 * 1.3f,
+                baseX = size.width * 0.2f,
+                baseY = size.height * 0.25f,
+                scale = size.width * 0.35f,
+                color = cloudColor.copy(alpha = 0.06f + cloudIntensity * 0.10f),
+                morph = cloudMorph + 1.5f
+            )
+        }
+
+        // Front layer clouds - scales with cloudIntensity
         drawCloud(
             offset = cloudOffset2,
             baseX = size.width * 0.65f,
             baseY = size.height * 0.5f,
             scale = size.width * 0.4f,
-            color = cloudColorDark.copy(alpha = 0.22f),
+            color = cloudColorDark.copy(alpha = 0.12f + cloudIntensity * 0.20f),
             morph = cloudMorph + 1f
         )
         drawCloud(
@@ -625,9 +659,31 @@ private fun DayCloudyScene(
             baseX = size.width * 0.8f,
             baseY = size.height * 0.7f,
             scale = size.width * 0.3f,
-            color = cloudColor.copy(alpha = 0.18f),
+            color = cloudColor.copy(alpha = 0.10f + cloudIntensity * 0.15f),
             morph = cloudMorph + 3f
         )
+
+        // Additional front clouds for overcast conditions
+        if (extraClouds >= 2) {
+            drawCloud(
+                offset = cloudOffset2 * 0.8f,
+                baseX = size.width * 0.3f,
+                baseY = size.height * 0.55f,
+                scale = size.width * 0.35f,
+                color = cloudColorDark.copy(alpha = 0.08f + cloudIntensity * 0.18f),
+                morph = cloudMorph + 2f
+            )
+        }
+        if (extraClouds >= 3) {
+            drawCloud(
+                offset = cloudOffset2 * 1.2f,
+                baseX = size.width * 0.1f,
+                baseY = size.height * 0.6f,
+                scale = size.width * 0.38f,
+                color = cloudColor.copy(alpha = 0.06f + cloudIntensity * 0.14f),
+                morph = cloudMorph + 4f
+            )
+        }
 
         // Flying birds during morning/evening
         drawBirds(birdProgress, timeOfDay, isDark)
@@ -885,7 +941,8 @@ private fun NightCloudyScene(
     palette: WeatherPalette,
     compact: Boolean,
     timeOfDay: TimeOfDay,
-    modifier: Modifier
+    modifier: Modifier,
+    cloudIntensity: Float = 0.5f  // 0.0 = clear, 0.5 = partly cloudy, 1.0 = overcast
 ) {
     val isDark = FieldMindTheme.colors.isDark
     val infiniteTransition = rememberInfiniteTransition(label = "nightCloudy")
@@ -1037,33 +1094,48 @@ private fun NightCloudyScene(
             )
         }
 
-        // Layered clouds with varied types — moon and stars show through (more translucent)
-        // Back layer clouds (slow, behind moon, faint — reduced opacity for star visibility)
+        // Layered clouds with varied types — moon and stars show through
+        // Opacity scales with cloudIntensity: clear (0.25) = thin veil, overcast (0.85) = thick cover
+        // Stars and moon remain partially visible even at max intensity
+        val nightCloudAlpha = 0.08f + cloudIntensity * 0.22f  // 0.14 at low, 0.27 at high (back layer)
+        val nightMidAlpha = 0.12f + cloudIntensity * 0.30f    // 0.20 at low, 0.38 at high (middle layer)
+        val nightFrontAlpha = 0.15f + cloudIntensity * 0.38f  // 0.25 at low, 0.47 at high (front layer)
+        val extraLayers = (cloudIntensity * 3f).toInt().coerceIn(0, 2)  // 0-2 extra cloud pairs
+
+        // Back layer clouds (slow, behind moon, faint)
         val backDrift = cloudOffset1 % 1f
         drawCloud(backDrift, size.width * 0.1f, size.height * 0.2f, size.width * 0.5f,
-            nightCloudColor.copy(alpha = 0.18f), cloudMorph, cloudTypes[0 % cloudTypes.size])
+            nightCloudColor.copy(alpha = nightCloudAlpha), cloudMorph, cloudTypes[0 % cloudTypes.size])
         drawCloud(backDrift - 1f, size.width * 0.1f, size.height * 0.2f, size.width * 0.5f,
-            nightCloudColor.copy(alpha = 0.18f), cloudMorph, cloudTypes[1 % cloudTypes.size])
+            nightCloudColor.copy(alpha = nightCloudAlpha), cloudMorph, cloudTypes[1 % cloudTypes.size])
         drawCloud(backDrift, size.width * 0.55f, size.height * 0.15f, size.width * 0.4f,
-            nightCloudColor.copy(alpha = 0.14f), cloudMorph + 1f, cloudTypes[2 % cloudTypes.size])
+            nightCloudColor.copy(alpha = nightCloudAlpha * 0.8f), cloudMorph + 1f, cloudTypes[2 % cloudTypes.size])
 
-        // Middle layer clouds (semi-transparent, moon glow illuminates — reduced opacity)
+        // Middle layer clouds (semi-transparent)
         val midDrift = cloudOffset2 % 1f
         drawCloud(midDrift, size.width * 0.3f, size.height * 0.4f, size.width * 0.45f,
-            nightCloudDark.copy(alpha = 0.22f), cloudMorph + 2f, cloudTypes[3 % cloudTypes.size])
+            nightCloudDark.copy(alpha = nightMidAlpha), cloudMorph + 2f, cloudTypes[3 % cloudTypes.size])
         drawCloud(midDrift - 1f, size.width * 0.3f, size.height * 0.4f, size.width * 0.45f,
-            nightCloudDark.copy(alpha = 0.22f), cloudMorph + 2f, cloudTypes[4 % cloudTypes.size])
+            nightCloudDark.copy(alpha = nightMidAlpha), cloudMorph + 2f, cloudTypes[4 % cloudTypes.size])
         drawCloud(midDrift, size.width * 0.7f, size.height * 0.35f, size.width * 0.35f,
-            nightCloudColor.copy(alpha = 0.18f), cloudMorph + 3f, cloudTypes[5 % cloudTypes.size])
+            nightCloudColor.copy(alpha = nightMidAlpha * 0.8f), cloudMorph + 3f, cloudTypes[5 % cloudTypes.size])
+        if (extraLayers >= 1) {
+            drawCloud(midDrift * 0.6f, size.width * 0.1f, size.height * 0.42f, size.width * 0.3f,
+                nightCloudColor.copy(alpha = nightMidAlpha * 0.6f), cloudMorph + 6f, cloudTypes[9 % cloudTypes.size])
+        }
 
         // Front layer clouds (darker, more opaque but still see-through)
         val frontDrift = (cloudOffset1 * 0.6f) % 1f
         drawCloud(frontDrift, size.width * 0.15f, size.height * 0.6f, size.width * 0.5f,
-            nightCloudDark.copy(alpha = 0.30f), cloudMorph + 4f, cloudTypes[6 % cloudTypes.size])
+            nightCloudDark.copy(alpha = nightFrontAlpha), cloudMorph + 4f, cloudTypes[6 % cloudTypes.size])
         drawCloud(frontDrift - 1f, size.width * 0.15f, size.height * 0.6f, size.width * 0.5f,
-            nightCloudDark.copy(alpha = 0.30f), cloudMorph + 4f, cloudTypes[7 % cloudTypes.size])
+            nightCloudDark.copy(alpha = nightFrontAlpha), cloudMorph + 4f, cloudTypes[7 % cloudTypes.size])
         drawCloud(frontDrift, size.width * 0.6f, size.height * 0.55f, size.width * 0.4f,
-            nightCloudColor.copy(alpha = 0.25f), cloudMorph + 5f, cloudTypes[8 % cloudTypes.size])
+            nightCloudColor.copy(alpha = nightFrontAlpha * 0.85f), cloudMorph + 5f, cloudTypes[8 % cloudTypes.size])
+        if (extraLayers >= 2) {
+            drawCloud(frontDrift * 0.5f, size.width * 0.5f, size.height * 0.65f, size.width * 0.35f,
+                nightCloudDark.copy(alpha = nightFrontAlpha * 0.7f), cloudMorph + 7f, cloudTypes[10 % cloudTypes.size])
+        }
 
         // Ground terrain with wind-affected trees
         drawGround(weatherCode = 3, isDay = false, isDark = isDark, compact = compact, treeMorph = treeSway)
