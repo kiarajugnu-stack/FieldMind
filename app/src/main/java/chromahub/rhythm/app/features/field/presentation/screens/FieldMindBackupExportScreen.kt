@@ -417,14 +417,14 @@ fun BackupAndRestoreScreen(
                                             val destUri = exportDestinationUri
                                             if (destUri != null) {
                                                 val mimeType = when (selectedFormat) {
-                                                                                                    "JSON" to "application/json",
-                                                "CSV" to "text/csv",
-                                                "Markdown" to "text/markdown",
-                                                "HTML" to "text/html",
-                                                "PDF" to "application/pdf",
-                                                "PNG" to "image/png",
-                                                "SVG" to "image/svg+xml",
-                                                ".fieldmind" to "application/octet-stream"
+                                                    "JSON" -> "application/json"
+                                                    "CSV" -> "text/csv"
+                                                    "Markdown" -> "text/markdown"
+                                                    "HTML" -> "text/html"
+                                                    "PDF" -> "application/pdf"
+                                                    "PNG" -> "image/png"
+                                                    "SVG" -> "image/svg+xml"
+                                                    ".fieldmind" -> "application/octet-stream"
                                                     else -> "application/octet-stream"
                                                 }
                                                 try {
