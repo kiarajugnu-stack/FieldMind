@@ -68,27 +68,15 @@ class MainActivity : FragmentActivity() {
                 else -> if (useSystemTheme) isSystemInDarkTheme() else darkMode
             }
 
-            RhythmTheme(
-                darkTheme = isDarkTheme,
-                amoledTheme = amoledTheme && isDarkTheme,
-                dynamicColor = useDynamicColors && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S,
-                customColorScheme = customColorScheme,
-                customFont = customFont,
-                fontSource = fontSource,
-                customFontPath = customFontPath,
-                colorSource = colorSource,
-                extractedAlbumColorsJson = extractedAlbumColors
-            ) {
-                // FieldMind owns the active surface: apply the brand palette (or Material You
-                // when the user opts in) on top of the inherited Rhythm typography/shapes.
-                val fieldDynamicColor by fieldMindViewModel.fieldSettings.dynamicColorEnabled.collectAsState()
-                FieldMindTheme(darkTheme = isDarkTheme, dynamicColor = fieldDynamicColor) {
-                    Surface(
-                        modifier = Modifier.fillMaxSize(),
-                        color = MaterialTheme.colorScheme.background
-                    ) {
-                        FieldMindApp(appSettings = appSettings, viewModel = fieldMindViewModel)
-                    }
+            // FieldMind owns the active surface: apply FieldMind's brand palette directly
+            // without wrapping in RhythmTheme to avoid color conflicts
+            val fieldDynamicColor by fieldMindViewModel.fieldSettings.dynamicColorEnabled.collectAsState()
+            FieldMindTheme(darkTheme = isDarkTheme, dynamicColor = fieldDynamicColor) {
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colorScheme.background
+                ) {
+                    FieldMindApp(appSettings = appSettings, viewModel = fieldMindViewModel)
                 }
             }
         }
