@@ -129,7 +129,7 @@ fun FieldMindReportScreen(
 
                 val shareUri = FileProvider.getUriForFile(
                     context,
-                    "${context.packageName}.fileprovider",
+                    "${context.packageName}.provider",
                     exportFile
                 )
                 val mimeType = when (reportFormat) {

@@ -268,7 +268,7 @@ fun BackupAndRestoreScreen(
             Modifier
                 .fillMaxSize()
                 .padding(padding),
-            contentPadding = PaddingValues(20.dp, 20.dp, 20.dp, 40.dp),
+            contentPadding = PaddingValues(20.dp, 20.dp, 20.dp, 24.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             // ── Header ──
@@ -368,7 +368,7 @@ fun BackupAndRestoreScreen(
                                             if (action == "share") {
                                                 val shareUri = FileProvider.getUriForFile(
                                                     context,
-                                                    "${context.packageName}.fileprovider",
+                                                    "${context.packageName}.provider",
                                                     exportFile
                                                 )
                                                 val mimeType = if (format == "PDF") "application/pdf" else "text/markdown"
@@ -388,14 +388,31 @@ fun BackupAndRestoreScreen(
                                                             context.contentResolver, destUri, mimeType, fileName
                                                         )
                                                         if (createdDoc != null) {
-                                                            context.contentResolver.openOutputStream(createdDoc)?.use { out ->
-                                                                out.write(exportFile.readBytes())
+                                                            val outStream = context.contentResolver.openOutputStream(createdDoc)
+                                                            if (outStream != null) {
+                                                                outStream.use { out ->
+                                                                    out.write(exportFile.readBytes())
+                                                                }
+                                                                // Verify the file was actually written
+                                                                val fileSizeCursor = context.contentResolver.query(createdDoc, null, null, null, null)
+                                                                var verified = false
+                                                                fileSizeCursor?.use { cursor ->
+                                                                    if (cursor.moveToFirst()) {
+                                                                        val sizeIndex = cursor.getColumnIndex(android.provider.OpenableColumns.SIZE)
+                                                                        if (sizeIndex >= 0 && cursor.getLong(sizeIndex) > 0) verified = true
+                                                                    }
+                                                                }
+                                                                if (!verified) {
+                                                                    throw java.io.IOException("File created but could not verify content was written")
+                                                                }
+                                                            } else {
+                                                                throw java.io.IOException("Could not open output stream - check folder permissions")
                                                             }
+                                                        } else {
+                                                            throw java.io.IOException("Could not create document in the selected folder. The folder may not have write permission.")
                                                         }
                                                     } catch (e: Exception) {
-                                                        kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
-                                                            showFastSnackbar(snackbar, scope, "Save failed: ${e.localizedMessage}")
-                                                        }
+                                                        throw java.io.IOException("Save failed: ${e.localizedMessage}")
                                                     }
                                                 }
                                             }
@@ -829,7 +846,7 @@ fun BackupAndRestoreScreen(
 
                             val shareUri = FileProvider.getUriForFile(
                                 context,
-                                "${context.packageName}.fileprovider",
+                                "${context.packageName}.provider",
                                 exportFile
                             )
                             val shareIntent = Intent(Intent.ACTION_SEND).apply {
@@ -1133,7 +1150,13 @@ private fun ExportTabContent(
                 }
                 Column(Modifier.weight(1f)) {
                     Text("Save folder", fontWeight = FontWeight.SemiBold)
-                    Text(destinationUri?.lastPathSegment ?: "Tap to select destination", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    val folderName = remember(destinationUri) {
+                        destinationUri?.let { uri ->
+                            val docId = try { android.provider.DocumentsContract.getTreeDocumentId(uri) } catch (_: Exception) { uri.lastPathSegment ?: "" }
+                            docId.substringAfter(":").ifBlank { uri.lastPathSegment }
+                        }
+                    }
+                    Text(folderName ?: "Tap to select destination", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 }
                 Icon(FieldMindIcons.Forward, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, size = 20.dp)
             }
