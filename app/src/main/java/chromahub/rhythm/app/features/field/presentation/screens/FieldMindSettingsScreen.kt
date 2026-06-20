@@ -780,7 +780,7 @@ fun UnitsFormatSettingsPage(viewModel: FieldMindViewModel, onBack: () -> Unit) {
     }
 }
 
-// ══════════════════════════════════════════════════════════════════════
+// ═════════��════════════════════════════════════════════════════════════
 //  Weather Settings Page (separate from Capture defaults)
 // ══════════════════════════════════════════════════════════════════════
 
@@ -1754,7 +1754,6 @@ fun AutoGenerationSettingsPage(
                         } catch (e: Exception) {
                             errorMessage = "Failed to toggle flashcard generation: ${e.message ?: "Unknown error"}"
                             showErrorDialog = true
-                            console.log("[v0] AutoGen error: ${e.stackTraceToString()}")
                         }
                     },
                     FieldMindIcons.Flashcard
@@ -1773,7 +1772,6 @@ fun AutoGenerationSettingsPage(
                         } catch (e: Exception) {
                             errorMessage = "Failed to toggle question generation: ${e.message ?: "Unknown error"}"
                             showErrorDialog = true
-                            console.log("[v0] AutoGen error: ${e.stackTraceToString()}")
                         }
                     },
                     FieldMindIcons.Question
