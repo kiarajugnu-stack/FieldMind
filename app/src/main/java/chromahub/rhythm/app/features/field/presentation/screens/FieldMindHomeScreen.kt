@@ -477,27 +477,13 @@ fun HomeScreen(
                     onPhotoCaptured = { uri, mime ->
                         capturedPhotoUri = uri
                         capturedPhotoMime = mime
-                        showCamera = false
                         showFastSnackbar(
                             captureSnackbarHostState,
                             scope,
-                            "Photo saved"
+                            "Photo saved — tag species to create observation"
                         )
-                        // Save photo as a basic observation immediately
-                        scope.launch {
-                            val attachment = listOf(DraftEvidenceAttachment("Photo", uri, "Camera capture", mimeType = mime))
-                            viewModel.addObservation(
-                                subject = "Photo observation",
-                                category = "Other",
-                                facts = "Auto-captured photo observation.",
-                                confidence = "Unsure",
-                                manualLocation = "",
-                                tags = "camera, photo",
-                                evidence = "Photo evidence",
-                                context = "",
-                                attachments = attachment
-                            )
-                        }
+                        // Observation is created by onSpeciesCaptured (from species panel)
+                        // or by the category picker dialog — never both to avoid duplicates
                     },
                     onSpeciesCaptured = { uri, mime, speciesName, category, confidence, notes ->
                         capturedPhotoUri = uri

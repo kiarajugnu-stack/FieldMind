@@ -144,6 +144,9 @@ class FieldMindSettings private constructor(context: Context) {
     private val _privacyLockEnabled = MutableStateFlow(prefs.getBoolean(KEY_PRIVACY_LOCK, false))
     val privacyLockEnabled: StateFlow<Boolean> = _privacyLockEnabled.asStateFlow()
 
+    private val _privacyTypingEnabled = MutableStateFlow(prefs.getBoolean(KEY_PRIVACY_TYPING, false))
+    val privacyTypingEnabled: StateFlow<Boolean> = _privacyTypingEnabled.asStateFlow()
+
     private val _dynamicColorEnabled = MutableStateFlow(prefs.getBoolean(KEY_DYNAMIC_COLOR, false))
     /** When true, use Material You wallpaper colors instead of the FieldMind brand palette. */
     val dynamicColorEnabled: StateFlow<Boolean> = _dynamicColorEnabled.asStateFlow()
@@ -178,6 +181,9 @@ class FieldMindSettings private constructor(context: Context) {
 
     private val _autoBackupInterval = MutableStateFlow(prefs.getString(KEY_AUTO_BACKUP_INTERVAL, "Weekly") ?: "Weekly")
     val autoBackupInterval: StateFlow<String> = _autoBackupInterval.asStateFlow()
+
+    private val _backupFolderUri = MutableStateFlow(prefs.getString(KEY_BACKUP_FOLDER_URI, "") ?: "")
+    val backupFolderUri: StateFlow<String> = _backupFolderUri.asStateFlow()
 
     // ── Weather & GPS settings ──
     private val _autoWeatherEnabled = MutableStateFlow(prefs.getBoolean(KEY_AUTO_WEATHER, false))
@@ -310,6 +316,7 @@ class FieldMindSettings private constructor(context: Context) {
     fun setStreaksEnabled(value: Boolean) = edit(KEY_STREAKS, value) { _streaksEnabled.value = value }
     fun setDefaultExportFormat(value: String) = edit(KEY_EXPORT_FORMAT, value) { _defaultExportFormat.value = value }
     fun setPrivacyLockEnabled(value: Boolean) = edit(KEY_PRIVACY_LOCK, value) { _privacyLockEnabled.value = value }
+    fun setPrivacyTypingEnabled(value: Boolean) = edit(KEY_PRIVACY_TYPING, value) { _privacyTypingEnabled.value = value }
     fun setDynamicColorEnabled(value: Boolean) = edit(KEY_DYNAMIC_COLOR, value) { _dynamicColorEnabled.value = value }
     fun setThemeMode(value: String) = edit(KEY_THEME_MODE, value) { _themeMode.value = value }
     fun setProfileName(value: String) = edit(KEY_PROFILE_NAME, value.trim()) { _profileName.value = value.trim() }
@@ -327,6 +334,7 @@ class FieldMindSettings private constructor(context: Context) {
         _autoBackupInterval.value = value
         FieldMindBackgroundScheduler.scheduleAutoBackup(appContext, _autoBackupEnabled.value, value)
     }
+    fun setBackupFolderUri(value: String) = edit(KEY_BACKUP_FOLDER_URI, value) { _backupFolderUri.value = value }
     fun setAutoWeatherEnabled(value: Boolean) = edit(KEY_AUTO_WEATHER, value) { _autoWeatherEnabled.value = value }
     fun setAutoFlashcardsEnabled(value: Boolean) = edit(KEY_AUTO_FLASHCARDS, value) { _autoFlashcardsEnabled.value = value }
     fun setAutoPatternDetectionEnabled(value: Boolean) = edit(KEY_AUTO_PATTERNS, value) { _autoPatternDetectionEnabled.value = value }
@@ -398,6 +406,34 @@ class FieldMindSettings private constructor(context: Context) {
         _screenVisibility.value = value
     }
 
+    // ── In-app PIN/password lock ──
+    private val _appPinEnabled = MutableStateFlow(prefs.getBoolean(KEY_APP_PIN_ENABLED, false))
+    val appPinEnabled: StateFlow<Boolean> = _appPinEnabled.asStateFlow()
+
+    private val _appPinHash = MutableStateFlow(prefs.getString(KEY_APP_PIN_HASH, "") ?: "")
+    val appPinHash: StateFlow<String> = _appPinHash.asStateFlow()
+
+    fun setAppPinEnabled(value: Boolean) = edit(KEY_APP_PIN_ENABLED, value) { _appPinEnabled.value = value }
+
+    fun setAppPinHash(value: String) = edit(KEY_APP_PIN_HASH, value) { _appPinHash.value = value }
+
+    fun verifyAppPin(input: String): Boolean {
+        val hash = _appPinHash.value
+        if (hash.isBlank() || input.isBlank()) return false
+        val inputHash = android.util.Base64.encodeToString(
+            java.security.MessageDigest.getInstance("SHA-256").digest(input.toByteArray()),
+            android.util.Base64.NO_WRAP
+        )
+        return inputHash == hash
+    }
+
+    fun hashAppPin(input: String): String {
+        return android.util.Base64.encodeToString(
+            java.security.MessageDigest.getInstance("SHA-256").digest(input.toByteArray()),
+            android.util.Base64.NO_WRAP
+        )
+    }
+
     fun setOnboardingExtendedTourCompleted(value: Boolean) = edit(KEY_EXTENDED_TOUR_DONE, value) { _onboardingExtendedTourCompleted.value = value }
 
     // ── Species identification setters ──
@@ -436,6 +472,7 @@ class FieldMindSettings private constructor(context: Context) {
         private const val KEY_STREAKS = "streaks"
         private const val KEY_EXPORT_FORMAT = "export_format"
         private const val KEY_PRIVACY_LOCK = "privacy_lock"
+        private const val KEY_PRIVACY_TYPING = "privacy_typing"
         private const val KEY_DYNAMIC_COLOR = "dynamic_color"
         private const val KEY_THEME_MODE = "theme_mode"
         private const val KEY_PROFILE_NAME = "profile_name"
@@ -447,6 +484,7 @@ class FieldMindSettings private constructor(context: Context) {
         private const val KEY_LOCAL_MODEL_USE_STUDY = "local_model_use_study"
         private const val KEY_AUTO_BACKUP_ENABLED = "auto_backup_enabled"
         private const val KEY_AUTO_BACKUP_INTERVAL = "auto_backup_interval"
+        private const val KEY_BACKUP_FOLDER_URI = "backup_folder_uri"
         private const val KEY_AUTO_WEATHER = "auto_weather"
         private const val KEY_AUTO_FLASHCARDS = "auto_flashcards"
         private const val KEY_AUTO_PATTERNS = "auto_patterns"
@@ -485,6 +523,8 @@ class FieldMindSettings private constructor(context: Context) {
         // ── Perenual API keys ──
         private const val KEY_PERENUAL_API_KEY = "perenual_api_key"
         // ── Onboarding keys ──
+        private const val KEY_APP_PIN_ENABLED = "app_pin_enabled"
+        private const val KEY_APP_PIN_HASH = "app_pin_hash"
         private const val KEY_USER_INTERESTS = "user_interests"
         private const val KEY_SCREEN_VISIBILITY = "screen_visibility"
         private const val KEY_EXTENDED_TOUR_DONE = "onboarding_extended_tour_done"

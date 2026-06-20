@@ -219,7 +219,7 @@ fun TimerToolScreen(
                         selected = timerMode == TimerMode.STOPWATCH,
                         onClick = { if (!isRunning) { timerMode = TimerMode.STOPWATCH; resetTimer() } },
                         label = { Text("Stopwatch") },
-                        leadingIcon = { Icon(MaterialSymbolIcon("timer"), null, size = 16.dp) },
+                        leadingIcon = { Icon(FieldMindIcons.Timer, null, size = 16.dp) },
                         modifier = Modifier.weight(1f),
                         shape = RoundedCornerShape(14.dp)
                     )
@@ -417,7 +417,7 @@ fun TimerToolScreen(
                                     )
                                 ) {
                                     Icon(
-                                        MaterialSymbolIcon("play_arrow"),
+                                        FieldMindIcons.Play,
                                         "Start",
                                         tint = colors.positive,
                                         size = 32.dp
@@ -434,7 +434,7 @@ fun TimerToolScreen(
                                     )
                                 ) {
                                     Icon(
-                                        MaterialSymbolIcon("pause"),
+                                        FieldMindIcons.Pause,
                                         "Pause",
                                         tint = colors.warning,
                                         size = 32.dp
@@ -475,7 +475,7 @@ fun TimerToolScreen(
                                 )
                             ) {
                                 Icon(
-                                    MaterialSymbolIcon("flag"),
+                                    FieldMindIcons.Flag,
                                     "Lap",
                                     tint = colors.info,
                                     size = 24.dp

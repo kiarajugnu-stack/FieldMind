@@ -884,7 +884,7 @@
     <string name="delimiter_ampersand">Ampersand</string>
 
     <!-- About Screen (additional strings) -->
-    <string name="about_app_description">A modern, feature-rich music player for Android</string>
+    <string name="about_app_description">Offline-first field research notebook for naturalists, researchers, and citizen scientists</string>
     <string name="about_arch_value">ARM64 &amp; ARM32</string>
     <string name="about_lead_dev">Lead Developer &amp; Project Architect</string>
     <string name="about_izzy_role">Manages updates on IzzyOnDroid</string>

@@ -160,7 +160,7 @@ internal fun createFieldMindFile(context: android.content.Context, prefix: Strin
 
 internal fun createFieldMindFileUri(context: android.content.Context, prefix: String, suffix: String): android.net.Uri {
     val file = createFieldMindFile(context, prefix, suffix)
-    return androidx.core.content.FileProvider.getUriForFile(context, "${context.packageName}.fieldmind.fileprovider", file)
+    return androidx.core.content.FileProvider.getUriForFile(context, "${context.packageName}.provider", file)
 }
 
 

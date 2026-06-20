@@ -42,7 +42,8 @@ private enum class TimelineViewMode { List, Gallery }
 fun FieldLogScreen(
     viewModel: FieldMindViewModel,
     onBack: () -> Unit,
-    onOpenDetail: (String, Long) -> Unit = { _, _ -> }
+    onOpenDetail: (String, Long) -> Unit = { _, _ -> },
+    onOpenExport: () -> Unit = {}
 ) {
     BackHandler(enabled = true) { onBack() }
     val observations by viewModel.observations.collectAsState()
@@ -303,6 +304,19 @@ fun FieldLogScreen(
                             FieldMindIcons.Session,
                             null,
                             tint = if (showSessionGroups) FieldMindTheme.colors.positive else MaterialTheme.colorScheme.onSurfaceVariant,
+                            size = 20.dp
+                        )
+                    }
+
+                    // Export button
+                    IconButton(
+                        onClick = onOpenExport,
+                        modifier = Modifier.size(32.dp)
+                    ) {
+                        Icon(
+                            FieldMindIcons.Export,
+                            null,
+                            tint = FieldMindTheme.colors.observation,
                             size = 20.dp
                         )
                     }

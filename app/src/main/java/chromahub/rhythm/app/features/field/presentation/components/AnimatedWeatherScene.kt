@@ -140,8 +140,12 @@ fun AnimatedWeatherScene(
         when {
             useEveningScene -> EveningScene(palette, compact, timeOfDay, modifier)
             weatherCode == -1 || weatherCode in 0..1 -> {
-                if (showCloudAnimation) DayCloudyScene(palette, compact, timeOfDay, modifier, cloudIntensity = 0.25f)
-                else ClearSkyScene(palette, timeOfDay, compact, modifier)
+                if (isDaytime) {
+                    if (showCloudAnimation) DayCloudyScene(palette, compact, timeOfDay, modifier, cloudIntensity = 0.25f)
+                    else ClearSkyScene(palette, timeOfDay, compact, modifier)
+                } else {
+                    ClearSkyScene(palette, timeOfDay, compact, modifier)
+                }
             }
             weatherCode == -2 -> {
                 if (showCloudAnimation) NightCloudyScene(palette, compact, timeOfDay, modifier, cloudIntensity = 0.25f)
@@ -820,6 +824,9 @@ private fun DayCloudyScene(
                 morph = cloudMorph + 4f
             )
         }
+
+        // Ground terrain with mountains, trees, and rolling hills
+        drawGround(palette, weatherCode = 0, isDay = true, isDark = isDark, compact = compact, treeMorph = treeSway)
 
         // Flying birds during morning/evening
         drawBirds(birdProgress, timeOfDay, isDark)
@@ -1589,7 +1596,7 @@ private fun EveningScene(
         }
 
         // ── Fireflies near ground ──
-        drawFireflies(progress = fireflyProgress, isDarkTheme = isDark, compact = compact)
+        drawFireflies(progress = fireflyProgress, isDarkTheme = true, compact = compact)
 
         // ── Atmospheric haze ──
         val hazeAlpha = if (isDawn) sunGlow * 0.5f else moonGlow * 0.4f
@@ -1999,14 +2006,21 @@ private fun DrawScope.drawGround(
         val seaColor = palette.tertiary.copy(
             red = palette.tertiary.red * 0.6f,
             green = palette.tertiary.green * 0.7f + 0.15f,
-            blue = palette.tertiary.blue * 0.8f + 0.2f,
-            alpha = 0.12f
+            blue = palette.tertiary.blue * 0.8f + 0.3f,  // More blue for deeper water
+            alpha = 0.18f  // Higher alpha for richer color
         )
         val seaDeep = palette.primary.copy(
-            red = palette.primary.red * 0.4f,
-            green = palette.primary.green * 0.5f,
-            blue = palette.primary.blue * 0.6f + 0.1f,
-            alpha = 0.18f
+            red = palette.primary.red * 0.3f,
+            green = palette.primary.green * 0.4f,
+            blue = palette.primary.blue * 0.7f + 0.2f,  // Darker, more blue
+            alpha = 0.25f  // More visible
+        )
+        val seaBorder = Color.White.copy(alpha = 0.35f)  // Thin white horizon line
+        drawLine(
+            color = seaBorder,
+            start = Offset(0f, groundY - size.height * 0.02f),
+            end = Offset(size.width, groundY - size.height * 0.02f),
+            strokeWidth = 1.5f
         )
         drawRect(
             brush = Brush.verticalGradient(
@@ -2017,6 +2031,22 @@ private fun DrawScope.drawGround(
             topLeft = Offset(0f, groundY - size.height * 0.02f),
             size = Size(size.width, size.height - groundY + size.height * 0.02f)
         )
+        // Subtle sun reflection on water
+        if (isDay) {
+            val reflectColor = palette.accent.copy(alpha = 0.08f)
+            for (i in 0..4) {
+                val rx = size.width * (0.35f + i * 0.08f)
+                val ry = groundY + size.height * (0.01f + i * 0.015f)
+                val rw = size.width * 0.03f
+                val reflectAlpha = (1f - i * 0.15f).coerceAtLeast(0.2f)
+                drawLine(
+                    color = reflectColor.copy(alpha = reflectAlpha * 0.15f),
+                    start = Offset(rx, ry),
+                    end = Offset(rx + rw, ry),
+                    strokeWidth = 1.5f
+                )
+            }
+        }
     }
 
     // ── Mid-distance terrain (primary rolling hills) ──
@@ -2191,6 +2221,43 @@ private fun DrawScope.drawMountainRange(
     )
 
     val seedOffset = 137
+
+    // ── Opaque base silhouette — prevents rainbow/background from showing through
+    // the semi-transparent atmospheric mountain layers. Uses the near layer's
+    // shape parameters for the widest silhouette.
+    val baseSilhouette = Path()
+    baseSilhouette.moveTo(-20f, ridgeBase + size.height * 0.02f)
+    var basePrevX = -20f
+    var basePrevY = ridgeBase
+    val baseSegs = 80
+    for (i in 0..baseSegs) {
+        val t = i.toFloat() / baseSegs
+        val px = t * (size.width + 40f) - 20f
+        val undulation =
+            sin(t * 4.5f * PI.toFloat() + 274f) * 0.6f +
+            sin(t * 4.5f * 1.8f + 274f * 1.3f) * 0.25f +
+            sin(t * 4.5f * 3.5f + 274f * 0.7f) * 0.1f +
+            sin(t * 4.5f * 7f + 274f * 2.1f) * 0.05f
+        val centerBias = sin(t * PI.toFloat()).pow(0.8f)
+        val height = 0.13f * thunderScale *
+            (0.4f + 0.6f * (undulation * 0.5f + 0.5f)) *
+            (0.7f + 0.3f * centerBias)
+        val py = size.height * (0.60f + thunderBaseShift - height)
+        val midX = (basePrevX + px) / 2f
+        val midY = (basePrevY + py) / 2f - size.height * 0.005f
+        baseSilhouette.cubicTo(
+            basePrevX + (midX - basePrevX) * 0.7f, basePrevY,
+            midX, midY,
+            px, py
+        )
+        basePrevX = px
+        basePrevY = py
+    }
+    baseSilhouette.lineTo(size.width + 20f, ridgeBase + size.height * 0.02f)
+    baseSilhouette.lineTo(size.width + 20f, size.height)
+    baseSilhouette.lineTo(-20f, size.height)
+    baseSilhouette.close()
+    drawPath(baseSilhouette, nearPalette.copy(alpha = 1f), style = Fill)
 
     layers.forEachIndexed { layerIdx, layer ->
         val path = Path()
@@ -3255,7 +3322,7 @@ private fun RainScene(
         else -> if (isHeavy) 120 else if (isDrizzle) 40 else 80
     }
     val rainSpeed = if (isHeavy) 1.3f else 0.8f
-    val rainAlpha = if (isHeavy) 0.6f else 0.35f
+    val rainAlpha = if (isHeavy) 0.7f else 0.55f
 
     val infiniteTransition = rememberInfiniteTransition(label = "rain")
     val rainProgress by infiniteTransition.animateFloat(
@@ -3299,13 +3366,57 @@ private fun RainScene(
     }
 
     // Rain color — blue-grey that blends with palette
-    val rainColor = if (isDark) Color(0xFF6A8AAA).copy(alpha = 0.40f * rainAlpha * intensity)
-        else Color(0xFF7A9ABA).copy(alpha = 0.35f * rainAlpha * intensity)
+    val rainColor = if (isDark) Color(0xFF8ABADA).copy(alpha = 0.55f * (0.6f + rainAlpha * 0.4f) * intensity)
+        else Color(0xFF8ABADA).copy(alpha = 0.50f * (0.6f + rainAlpha * 0.4f) * intensity)
 
     // Light mode: darken background so rain is visible
     val overlayAlpha = if (!isDark) 0.12f else 0f
 
+    // Night rain: moon glow animation
+    val moonGlow by infiniteTransition.animateFloat(
+        initialValue = 0.6f,
+        targetValue = 1.0f,
+        animationSpec = infiniteRepeatable(tween(4000, easing = FastOutSlowInEasing), RepeatMode.Reverse),
+        label = "rainNightMoonGlow"
+    )
+
     Canvas(modifier = modifier.fillMaxSize()) {
+        // ── Moon and stars visible through rain clouds at night ──
+        val isNightRain = timeOfDay == TimeOfDay.Night || timeOfDay == TimeOfDay.Twilight
+        if (isNightRain) {
+            drawMoon(palette, timeOfDay, moonGlow, compact)
+            for (i in 0..24) {
+                val x = (i * 0.039f + 0.021f * (i % 7)) % 1f
+                val y = (i * 0.027f + 0.013f * (i % 5)) % 0.5f
+                val twinkle = (sin(moonGlow * (1.8f + i * 0.7f) + i * 1.7f) * 0.5f + 0.5f).coerceIn(0.08f, 0.55f)
+                val starColor = if (twinkle > 0.35f) Color(0xFFB3E5FC) else Color(0xFFFFF9C4)
+                drawCircle(
+                    color = starColor.copy(alpha = twinkle * 0.6f),
+                    radius = 0.7f + twinkle * 1.2f,
+                    center = Offset(x * size.width, y * size.height * 0.55f)
+                )
+            }
+        }
+
+        // ── Overhead clouds for drizzle/rain ──
+        // Draw clouds so rain scenes have visible cloud cover overhead
+        val cloudDrift = (rainProgress * 0.2f) % 1f
+        val cloudScale = size.width * 0.5f
+        val cloudColor = palette.cloudBaseColor.copy(alpha = if (isDark) 0.25f else 0.18f)
+        val cloudDark = Color(0xFF4A5A6A).copy(alpha = if (isDark) 0.30f else 0.15f)
+        // Back layer — high stratus clouds
+        drawCloud(cloudDrift, size.width * 0.1f, size.height * 0.05f, cloudScale * 0.45f,
+            cloudColor.copy(alpha = cloudColor.alpha * 0.6f), cloudDrift * 3f, CloudType.Stratus)
+        drawCloud(cloudDrift * 0.7f, size.width * 0.4f, size.height * 0.08f, cloudScale * 0.4f,
+            cloudColor.copy(alpha = cloudColor.alpha * 0.7f), cloudDrift * 4f, CloudType.Stratus)
+        drawCloud(cloudDrift * 1.2f, size.width * 0.7f, size.height * 0.06f, cloudScale * 0.35f,
+            cloudColor.copy(alpha = cloudColor.alpha * 0.5f), cloudDrift * 5f, CloudType.Stratus)
+        // Mid layer — darker cumulus clouds
+        drawCloud(cloudDrift * 0.5f, size.width * 0.2f, size.height * 0.2f, cloudScale * 0.3f,
+            cloudDark.copy(alpha = cloudDark.alpha * 0.5f), cloudDrift * 2f, CloudType.Cumulus)
+        drawCloud(cloudDrift * 0.9f - 1f, size.width * 0.5f, size.height * 0.22f, cloudScale * 0.28f,
+            cloudDark.copy(alpha = cloudDark.alpha * 0.4f), cloudDrift * 3f, CloudType.Cumulus)
+
         // ── Dark overlay for light mode (makes rain visible) ──
         if (overlayAlpha > 0f) {
             drawRect(color = Color(0xFF1A1A2E).copy(alpha = overlayAlpha * intensity), size = size)
@@ -3327,7 +3438,7 @@ private fun RainScene(
             // Perspective: streaks near bottom are slightly wider
             val depthFactor = 0.6f + (py / size.height).coerceIn(0f, 1f) * 0.4f
             val streakLen = (6f + streak.length * 14f) * depthFactor
-            val streakWidth = 0.8f + depthFactor * 0.7f
+            val streakWidth = 1.6f + depthFactor * 1.4f
 
             // Alpha modulated by intensity
             val alpha = rainColor.alpha * (0.5f + intensity * 0.5f) * depthFactor
@@ -3669,9 +3780,10 @@ private fun ThunderstormScene(
         val drift = (cloudDrift * 0.3f) % 1f
 
         // ── Towering cumulonimbus clouds (rear layer) ──
-        for ((i, cloudPos) in cloudPositions.withIndex()) {
-            val (cloudCx, cy) = cloudPos
-            val baseX = ((cloudCx + drift * 0.2f + i * 0.1f) % 1f) * size.width
+        for (entry in cloudPositions.withIndex()) {
+            val i = entry.index
+            val (cloudCx, cy) = entry.value
+            val baseX = ((cloudCx + drift * 0.8f + i * 0.15f) % 1f) * size.width
             val scaleMul = 0.8f + i * 0.15f
             val isLit = cloudGlowIndex == i && cloudGlowIntensity > 0f
 

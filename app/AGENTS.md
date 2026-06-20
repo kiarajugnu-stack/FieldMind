@@ -4,9 +4,6 @@
 
 The `app/` module is a single-module Android application written in Kotlin that ships two integrated products:
 1. **FieldMind** — a field research tool for scientists and citizen scientists (observations, species ID, hypotheses, evidence, maps, data collection)
-2. **Rhythm** — a music player with local file playback and streaming (Subsonic/Jellyfin) support
-
-Both products share the same APK and are toggled at runtime via `AppMode`.
 
 ## Ownership
 
