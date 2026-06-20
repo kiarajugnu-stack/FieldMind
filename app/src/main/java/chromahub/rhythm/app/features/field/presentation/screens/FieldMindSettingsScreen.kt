@@ -36,6 +36,9 @@ import fieldmind.research.app.features.field.presentation.viewmodel.FieldMindVie
 import fieldmind.research.app.shared.presentation.components.icons.Icon
 import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.BorderStroke
 import kotlinx.coroutines.launch
