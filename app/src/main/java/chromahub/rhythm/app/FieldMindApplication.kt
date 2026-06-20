@@ -50,10 +50,7 @@ class FieldMindApplication : Application() {
         CrashReporter.init(this)
         Log.d(TAG, "✓ CrashReporter initialized")
         
-        fieldmind.research.app.network.NetworkClient.initialize(
-            AppSettings.getInstance(applicationContext)
-        )
-        Log.d(TAG, "✓ NetworkClient initialized")
+        // NetworkClient initialization removed — music-player network layer deleted
         
         if (BuildConfig.DEBUG) {
             configureLeakCanary()

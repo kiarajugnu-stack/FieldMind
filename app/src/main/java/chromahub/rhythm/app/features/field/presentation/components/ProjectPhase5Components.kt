@@ -12,7 +12,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import fieldmind.research.app.ui.theme.RhythmColors
 
 /**
  * Project Types for Phase 5 classification
@@ -62,14 +61,14 @@ fun ProjectTypeBadge(
         ProjectType.INVESTIGATION -> MaterialTheme.colorScheme.secondary.copy(alpha = 0.15f)
         ProjectType.SURVEY -> MaterialTheme.colorScheme.tertiary.copy(alpha = 0.15f)
         ProjectType.EXPERIMENT -> MaterialTheme.colorScheme.error.copy(alpha = 0.15f)
-        ProjectType.MONITORING -> RhythmColors.warning.copy(alpha = 0.15f)
+        ProjectType.MONITORING -> MaterialTheme.colorScheme.tertiary.copy(alpha = 0.15f)
     }
     val textColor = when (type) {
         ProjectType.OBSERVATION -> MaterialTheme.colorScheme.primary
         ProjectType.INVESTIGATION -> MaterialTheme.colorScheme.secondary
         ProjectType.SURVEY -> MaterialTheme.colorScheme.tertiary
         ProjectType.EXPERIMENT -> MaterialTheme.colorScheme.error
-        ProjectType.MONITORING -> RhythmColors.warning
+        ProjectType.MONITORING -> MaterialTheme.colorScheme.tertiary
     }
 
     Surface(
@@ -274,9 +273,9 @@ fun ProjectStatusBadge(
         status.equals("Active", ignoreCase = true) -> 
             MaterialTheme.colorScheme.primary.copy(alpha = 0.15f) to MaterialTheme.colorScheme.primary
         status.equals("Paused", ignoreCase = true) -> 
-            RhythmColors.warning.copy(alpha = 0.15f) to RhythmColors.warning
+            MaterialTheme.colorScheme.tertiary.copy(alpha = 0.15f) to MaterialTheme.colorScheme.tertiary
         status.equals("Completed", ignoreCase = true) -> 
-            RhythmColors.success.copy(alpha = 0.15f) to RhythmColors.success
+            MaterialTheme.colorScheme.primary.copy(alpha = 0.15f) to MaterialTheme.colorScheme.primary
         else -> MaterialTheme.colorScheme.surfaceVariant to MaterialTheme.colorScheme.onSurfaceVariant
     }
 

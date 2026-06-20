@@ -221,7 +221,7 @@ class CrashActivity : ComponentActivity() {
                                 contentAlignment = Alignment.Center
                             ) {
                                 Image(
-                                    painter = painterResource(id = R.drawable.rhythm_splash_logo),
+                                    painter = painterResource(id = R.drawable.ic_launcher_foreground),
                                     contentDescription = stringResource(R.string.updates_rhythm_logo_cd),
                                     modifier = Modifier.size(80.dp)
                                 )

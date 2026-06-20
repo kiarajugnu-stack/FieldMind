@@ -1200,15 +1200,6 @@ fun parseCustomColorScheme(schemeName: String, darkTheme: Boolean): androidx.com
 }
 
 /**
- * Create a color scheme from extracted album art colors
- */
-fun getAlbumArtColorScheme(colorsJson: String, darkTheme: Boolean): androidx.compose.material3.ColorScheme {
-    // ColorExtractor was part of the deleted music-player code
-    // Return default color scheme
-    return if (darkTheme) DarkColorScheme else LightColorScheme
-}
-
-/**
  * Create a dynamic color scheme from HCT color
  */
 
@@ -1229,10 +1220,6 @@ fun RhythmTheme(
     val context = LocalContext.current
     
     val colorScheme = when {
-        // Album art colors take highest priority when available
-        colorSource == "ALBUM_ART" && extractedAlbumColorsJson != null -> {
-            getAlbumArtColorScheme(extractedAlbumColorsJson, darkTheme)
-        }
         // Dynamic Material You colors
         dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
             if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
