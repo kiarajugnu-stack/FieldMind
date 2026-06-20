@@ -128,7 +128,6 @@ private val bottomTabs = listOf(
     FieldMindScreen.Home,
     FieldMindScreen.Observe,
     FieldMindScreen.Projects,
-    FieldMindScreen.FieldMode,
     FieldMindScreen.Insights,
     FieldMindScreen.Library
 )
