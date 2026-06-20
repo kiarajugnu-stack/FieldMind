@@ -54,6 +54,7 @@ import fieldmind.research.app.features.field.presentation.viewmodel.FieldMindVie
 import fieldmind.research.app.shared.presentation.components.icons.Icon
 import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -140,11 +141,7 @@ fun BackupAndRestoreScreen(
     val defaultExportFormat by settings.defaultExportFormat.collectAsState()
 
     // Export state
-    var exportScope by remember { mutableStateOf<ExportScopeType>(ExportScopeType.ALL) }
-    var selectedFormat by remember { mutableStateOf(defaultExportFormat.ifBlank { "JSON" }) }
-    var includeMedia by remember { mutableStateOf(false) }
     var exportDestinationUri by remember { mutableStateOf<Uri?>(null) }
-    var exportHistory by remember { mutableStateOf<List<ExportRecord>>(emptyList()) }
     var isExporting by remember { mutableStateOf(false) }
     var exportProgress by remember { mutableFloatStateOf(0f) }
     var exportStepText by remember { mutableStateOf("") }
@@ -166,28 +163,44 @@ fun BackupAndRestoreScreen(
     var showPasswordPrompt by remember { mutableStateOf(false) }
 
     // Backup tab state
-    var backupIncludeMedia by remember { mutableStateOf(true) }
-    var backupEncrypt by remember { mutableStateOf(false) }
+    val privacyLockEnabled by settings.privacyLockEnabled.collectAsState()
+    var backupEncrypt by remember { mutableStateOf(privacyLockEnabled) }
+    // Sync encrypt with privacy lock changes
+    LaunchedEffect(privacyLockEnabled) { if (privacyLockEnabled && !backupEncrypt) backupEncrypt = true }
     var backupPassword by remember { mutableStateOf("") }
     var backupScheduleEnabled by remember { mutableStateOf(autoBackupEnabled) }
     var backupInterval by remember { mutableStateOf(autoBackupInterval) }
     var backupPasswordConfirm by remember { mutableStateOf("") }
     var passwordsMatch by remember { mutableStateOf(true) }
 
-    // Share dialog state
-    var showShareDialog by remember { mutableStateOf(false) }
-    var shareDialogFormat by remember { mutableStateOf(selectedFormat) }
+    // Format state for export
+    var shareDialogFormat by remember { mutableStateOf("Markdown") }
 
-    // Folder picker launcher
+    // Backup folder URI from settings
+    var backupFolderUri by remember { mutableStateOf(settings.backupFolderUri.value) }
+
+    // Folder picker launcher (export folder)
     val folderPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocumentTree()
     ) { uri: Uri? ->
         exportDestinationUri = uri
         if (uri != null) {
-            // Persist permission
             val takeFlags = android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION or
                 android.content.Intent.FLAG_GRANT_WRITE_URI_PERMISSION
             context.contentResolver.takePersistableUriPermission(uri, takeFlags)
+        }
+    }
+
+    // Folder picker launcher (backup folder - persisted)
+    val backupFolderPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocumentTree()
+    ) { uri: Uri? ->
+        if (uri != null) {
+            val takeFlags = android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION or
+                android.content.Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+            context.contentResolver.takePersistableUriPermission(uri, takeFlags)
+            backupFolderUri = uri.toString()
+            settings.setBackupFolderUri(uri.toString())
         }
     }
 
@@ -302,13 +315,6 @@ fun BackupAndRestoreScreen(
                 ) { tab ->
                     when (tab) {
                         BackupTab.EXPORT -> ExportTabContent(
-                            scope = exportScope,
-                            onScopeChange = { exportScope = it },
-                            selectedFormat = selectedFormat,
-                            onFormatChange = { selectedFormat = it; settings.setDefaultExportFormat(it) },
-                            includeMedia = includeMedia,
-                            onIncludeMediaChange = { includeMedia = it },
-                            destinationUri = exportDestinationUri,
                             entityCounts = mapOf(
                                 "Observations" to observations.size,
                                 "Notes" to notes.size,
@@ -320,171 +326,79 @@ fun BackupAndRestoreScreen(
                                 "Reports" to reports.size,
                                 "Flashcards" to flashcards.size
                             ),
-                            formatDescription = exportFormats.find { it.name == selectedFormat }?.desc ?: "",
+                            context = context,
                             isExporting = isExporting,
                             exportProgress = exportProgress,
                             exportStepText = exportStepText,
-                            onChooseFolder = { folderPickerLauncher.launch(null) },
-                            onExport = {
+                            onExport = { format, action ->
                                 scope.launch {
                                     isExporting = true
                                     exportProgress = 0f
-                                    exportStepText = "Collecting data…"
+                                    exportStepText = "Building $format…"
                                     try {
-                                        exportProgress = 0.1f
                                         withContext(Dispatchers.IO) {
-                                            exportStepText = "Building ${selectedFormat} export…"
+                                            exportProgress = 0.3f
                                             val json = FieldMindExport.archiveJson(
-                                                observations = if (exportScope == ExportScopeType.ALL || exportScope == ExportScopeType.OBSERVATIONS) observations else emptyList(),
-                                                notes = notes,
-                                                questions = questions,
-                                                hypotheses = hypotheses,
-                                                projects = if (exportScope == ExportScopeType.ALL || exportScope == ExportScopeType.PROJECTS) projects else emptyList(),
-                                                sources = if (exportScope == ExportScopeType.ALL || exportScope == ExportScopeType.SOURCES) sources else emptyList(),
-                                                dataRecords = dataRecords,
-                                                reports = if (exportScope == ExportScopeType.ALL || exportScope == ExportScopeType.REPORTS) reports else emptyList(),
+                                                observations = observations, notes = notes,
+                                                questions = questions, hypotheses = hypotheses,
+                                                projects = projects, sources = sources,
+                                                dataRecords = dataRecords, reports = reports,
                                                 flashcards = flashcards
                                             )
-
-                                            exportProgress = 0.5f
-                                            exportStepText = "Writing file…"
-
                                             val dateStamp = SimpleDateFormat("yyyy-MM-dd_HHmm", Locale.getDefault()).format(Date())
-                                            val ext = selectedFormat.lowercase().replace("markdown", "md").replace(" ", "")
+                                            val ext = format.lowercase().replace("markdown", "md")
                                             val fileName = "fieldmind-export-$dateStamp.$ext"
                                             val exportDir = File(context.cacheDir, "exports").apply { mkdirs() }
                                             val exportFile = File(exportDir, fileName)
 
-                                            when (selectedFormat) {
-                                                "JSON" -> exportFile.writeText(json)
-                                                "CSV" -> exportFile.writeText(FieldMindExport.observationsCsv(observations))
-                                                "Markdown" -> exportFile.writeText(observations.joinToString("\n\n---\n\n") { FieldMindExport.singleObservationMarkdown(it) })
-                                                "HTML" -> {
-                                                    if (includeMedia) {
-                                                        val mediaBundle = withContext(Dispatchers.IO) {
-                                                            FieldMindExport.ExportMediaBundle.collect(
-                                                                context = context,
-                                                                observations = observations,
-                                                                notes = notes,
-                                                                projects = projects,
-                                                                sources = sources
-                                                            )
-                                                        }
-                                                        exportFile.writeText(FieldMindExport.pdfReadyHtml(projects, observations, sources, reports, notes = notes, media = mediaBundle))
-                                                    } else {
-                                                        exportFile.writeText(FieldMindExport.pdfReadyHtml(projects, observations, sources, reports, notes = notes))
-                                                    }
-                                                }
+                                            exportProgress = 0.5f
+                                            when (format) {
+                                                "Markdown" -> exportFile.writeText(
+                                                    observations.joinToString("\n\n---\n\n") { FieldMindExport.singleObservationMarkdown(it) }
+                                                )
                                                 "PDF" -> {
                                                     val bodyText = observations.joinToString("\n") { FieldMindExport.singleObservationMarkdown(it) }
-                                                    if (includeMedia) {
-                                                        val mediaBundle = withContext(Dispatchers.IO) {
-                                                            FieldMindExport.ExportMediaBundle.collect(
-                                                                context = context,
-                                                                observations = observations,
-                                                                notes = notes,
-                                                                projects = projects,
-                                                                sources = sources
-                                                            )
-                                                        }
-                                                        // PDF with embedded images (draw first media image as bitmap)
-                                                        val imageBytes = mediaBundle.observationImages.values.firstOrNull()
-                                                            ?.firstOrNull()?.second
-                                                        val imgBytesArray = imageBytes?.let { decodeBase64FromDataUri(it) }
-                                                        exportFile.writeBytes(FieldMindExport.simplePdfBytes("FieldMind Export", bodyText, embeddedImageBytes = imgBytesArray))
-                                                    } else {
-                                                        exportFile.writeBytes(FieldMindExport.simplePdfBytes("FieldMind Export", bodyText))
-                                                    }
-                                                }
-                                                "PNG" -> exportFile.writeBytes(FieldMindExport.dashboardPngBytes(observations, sources, projects, notes))
-                                                "SVG" -> exportFile.writeText(FieldMindExport.dashboardSvg(observations, sources, projects, notes))
-                                                ".fieldmind" -> {
-                                                    exportStepText = "Packing media attachments…"
-                                                    val result = FieldMindExportMediaPacker.buildPackage(
-                                                        context = context, archiveJson = json,
-                                                        observations = observations, notes = notes,
-                                                        projects = projects, sources = sources,
-                                                        attachments = emptyMap(), outputDir = exportDir
-                                                    )
-                                                    result.packageFile.renameTo(exportFile)
+                                                    exportFile.writeBytes(FieldMindExport.simplePdfBytes("FieldMind Export", bodyText))
                                                 }
                                             }
 
                                             exportProgress = 0.8f
-                                            exportStepText = "Saving…"
-
-                                            // If user chose a folder, save there with proper MIME type
-                                            val destUri = exportDestinationUri
-                                            if (destUri != null) {
-                                                val mimeType = when (selectedFormat) {
-                                                    "JSON" -> "application/json"
-                                                    "CSV" -> "text/csv"
-                                                    "Markdown" -> "text/markdown"
-                                                    "HTML" -> "text/html"
-                                                    "PDF" -> "application/pdf"
-                                                    "PNG" -> "image/png"
-                                                    "SVG" -> "image/svg+xml"
-                                                    ".fieldmind" -> "application/octet-stream"
-                                                    else -> "application/octet-stream"
+                                            if (action == "share") {
+                                                val shareUri = FileProvider.getUriForFile(
+                                                    context,
+                                                    "${context.packageName}.fileprovider",
+                                                    exportFile
+                                                )
+                                                val mimeType = if (format == "PDF") "application/pdf" else "text/markdown"
+                                                val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                                                    type = mimeType
+                                                    putExtra(Intent.EXTRA_STREAM, shareUri)
+                                                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                                                 }
-                                                try {
-                                                    val createdDoc = android.provider.DocumentsContract.createDocument(
-                                                        context.contentResolver,
-                                                        destUri,
-                                                        mimeType,
-                                                        fileName
-                                                    )
-                                                    if (createdDoc != null) {
-                                                        context.contentResolver.openOutputStream(createdDoc)?.use { out ->
-                                                            out.write(exportFile.readBytes())
-                                                        } ?: run {
-                                                            throw java.io.IOException("Failed to open output stream for $fileName")
+                                                context.startActivity(Intent.createChooser(shareIntent, "Share FieldMind Export"))
+                                            } else {
+                                                val destUri = exportDestinationUri
+                                                if (destUri != null) {
+                                                    val mimeType = if (format == "PDF") "application/pdf" else "text/markdown"
+                                                    try {
+                                                        val createdDoc = android.provider.DocumentsContract.createDocument(
+                                                            context.contentResolver, destUri, mimeType, fileName
+                                                        )
+                                                        if (createdDoc != null) {
+                                                            context.contentResolver.openOutputStream(createdDoc)?.use { out ->
+                                                                out.write(exportFile.readBytes())
+                                                            }
                                                         }
-                                                    } else {
-                                                        throw java.io.IOException("Failed to create document $fileName in selected folder")
-                                                    }
-                                                } catch (e: Exception) {
-                                                    // Store error for snackbar
-                                                    val saveError = "Folder save failed: ${e.localizedMessage ?: "Unknown error"}"
-                                                    // Fall back to cache - file was written to cache/exports already
-                                                    kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
-                                                        showFastSnackbar(snackbar, scope, saveError)
+                                                    } catch (e: Exception) {
+                                                        kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
+                                                            showFastSnackbar(snackbar, scope, "Save failed: ${e.localizedMessage}")
+                                                        }
                                                     }
                                                 }
-                                            }
-
-                                            // Build export record before leaving IO scope
-                                            val recordFileName = "fieldmind-export-$dateStamp.$ext"
-                                            val recordFileSize = File(File(context.cacheDir, "exports"), recordFileName).length()
-                                            val recordFormat = selectedFormat
-                                            val recordDest = if (exportDestinationUri != null) "Saved to folder" else "Cached"
-                                            val recordEntityCounts = mapOf(
-                                                "observations" to observations.size,
-                                                "projects" to projects.size
-                                            )
-
-                                            val newRecord = ExportRecord(
-                                                format = recordFormat,
-                                                fileName = recordFileName,
-                                                fileSizeBytes = recordFileSize,
-                                                entityCounts = recordEntityCounts,
-                                                destination = recordDest
-                                            )
-
-                                            exportProgress = 1f
-
-                                            // Update export history from IO scope
-                                            // (runOnUiThread not needed since we're just setting state from coroutine)
-                                            kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
-                                                exportHistory = listOf(newRecord) + exportHistory.take(19)
-                                            }
-
-                                            // Capture the file name for the snackbar (shown after withContext completes)
-                                            val exportFileName = recordFileName
-                                            kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
-                                                showFastSnackbar(snackbar, scope, "Export complete — $exportFileName")
                                             }
                                         }
+                                        showFastSnackbar(snackbar, scope, "Export complete")
                                     } catch (e: Exception) {
                                         showFastSnackbar(snackbar, scope, "Export failed: ${e.localizedMessage}")
                                     } finally {
@@ -493,11 +407,8 @@ fun BackupAndRestoreScreen(
                                     }
                                 }
                             },
-                            onShare = {
-                                shareDialogFormat = selectedFormat
-                                showShareDialog = true
-                            },
-                            history = exportHistory
+                            onChooseFolder = { folderPickerLauncher.launch(null) },
+                            destinationUri = exportDestinationUri
                         )
 
                         BackupTab.IMPORT -> ImportTabContent(
@@ -588,8 +499,8 @@ fun BackupAndRestoreScreen(
                         )
 
                         BackupTab.BACKUP -> BackupTabContent(
-                            includeMedia = backupIncludeMedia,
-                            onIncludeMediaChange = { backupIncludeMedia = it },
+                            backupFolderUri = backupFolderUri,
+                            onChooseBackupFolder = { backupFolderPickerLauncher.launch(null) },
                             encrypt = backupEncrypt,
                             onEncryptChange = { backupEncrypt = it },
                             password = backupPassword,
@@ -619,22 +530,61 @@ fun BackupAndRestoreScreen(
                                             val json = FieldMindExport.archiveJson(observations, notes, questions, hypotheses, projects, sources, dataRecords, reports, flashcards)
                                             val dateStamp = SimpleDateFormat("yyyy-MM-dd_HHmmss", Locale.getDefault()).format(Date())
                                             val backupDir = backupDirectory(context)
-                                            val baseFile = File(backupDir, "fieldmind-backup-$dateStamp")
+                                            val baseName = "fieldmind-backup-$dateStamp"
+                                            
+                                            // Build .fieldmind package with media attachments
+                                            val allAttachments = mutableMapOf<Long, List<EvidenceAttachmentEntity>>()
+                                            observations.forEach { obs ->
+                                                val atts = viewModel.attachmentsForObservation(obs.id).first()
+                                                if (atts.isNotEmpty()) allAttachments[obs.id] = atts
+                                            }
+                                            val packResult = FieldMindExportMediaPacker.buildPackage(
+                                                context = context,
+                                                archiveJson = json,
+                                                observations = observations,
+                                                notes = notes,
+                                                projects = projects,
+                                                sources = sources,
+                                                attachments = allAttachments,
+                                                outputDir = backupDir
+                                            )
+                                            val fieldmindFile = packResult.packageFile
                                             
                                             if (backupEncrypt && backupPassword.isNotBlank()) {
-                                                // Write JSON, then encrypt
-                                                val jsonFile = File(backupDir, "${baseFile.name}.json")
-                                                jsonFile.writeText(json)
-                                                val encryptedFile = FieldMindExportEncryption.encryptFile(jsonFile, backupPassword)
-                                                jsonFile.delete() // Remove unencrypted copy
-                                                encryptedFile.renameTo(File(backupDir, "${baseFile.name}.encrypted"))
-                                            } else {
-                                                val backupFile = File(backupDir, "${baseFile.name}.json")
-                                                backupFile.writeText(json)
+                                                val encryptedFile = FieldMindExportEncryption.encryptFile(fieldmindFile, backupPassword)
+                                                fieldmindFile.delete()
+                                                encryptedFile.renameTo(File(backupDir, "$baseName.encrypted"))
+                                            }
+                                            
+                                            // Try to save to the user's chosen folder
+                                            val bkpUriStr = backupFolderUri
+                                            if (bkpUriStr.isNotBlank()) {
+                                                try {
+                                                    val bkpUri = android.net.Uri.parse(bkpUriStr)
+                                                    val srcFile = if (backupEncrypt && backupPassword.isNotBlank())
+                                                        File(backupDir, "$baseName.encrypted")
+                                                    else
+                                                        fieldmindFile
+                                                    val docName = if (backupEncrypt && backupPassword.isNotBlank())
+                                                        "$baseName.encrypted"
+                                                    else
+                                                        "$baseName.fieldmind"
+                                                    val createdDoc = android.provider.DocumentsContract.createDocument(
+                                                        context.contentResolver,
+                                                        bkpUri,
+                                                        "application/octet-stream",
+                                                        docName
+                                                    )
+                                                    if (createdDoc != null) {
+                                                        context.contentResolver.openOutputStream(createdDoc)?.use { out ->
+                                                            out.write(srcFile.readBytes())
+                                                        }
+                                                    }
+                                                } catch (_: Exception) { }
                                             }
                                         }
                                         lastBackupRefresh++
-                                        showFastSnackbar(snackbar, scope, "Backup saved to device storage")
+                                        showFastSnackbar(snackbar, scope, "Backup saved")
                                     } catch (e: Exception) {
                                         showFastSnackbar(snackbar, scope, "Backup failed: ${e.localizedMessage}")
                                     } finally {
@@ -1093,111 +1043,78 @@ private fun TabPillSelector(
 
 @Composable
 private fun ExportTabContent(
-    scope: ExportScopeType,
-    onScopeChange: (ExportScopeType) -> Unit,
-    selectedFormat: String,
-    onFormatChange: (String) -> Unit,
-    includeMedia: Boolean,
-    onIncludeMediaChange: (Boolean) -> Unit,
-    destinationUri: Uri?,
     entityCounts: Map<String, Int>,
-    formatDescription: String,
+    context: android.content.Context,
     isExporting: Boolean,
     exportProgress: Float,
     exportStepText: String,
+    onExport: (format: String, action: String) -> Unit,
     onChooseFolder: () -> Unit,
-    onExport: () -> Unit,
-    onShare: () -> Unit,
-    history: List<ExportRecord>
+    destinationUri: Uri?
 ) {
-    val colors = FieldMindTheme.colors
     val totalEntities = entityCounts.values.sum()
+    val colors = FieldMindTheme.colors
+    var selectedExportFormat by remember { mutableStateOf("Markdown") }
 
     Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
-        // ── Scope selector ──
-        ScopeSelectorCard(
-            scope = scope,
-            onScopeChange = onScopeChange,
-            entityCounts = entityCounts
-        )
-
-        // ── Include media toggle ──
+        // ── Export formats (PDF + Markdown only) ──
         Card(
             shape = RoundedCornerShape(24.dp),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
             elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
         ) {
-            Row(
-                Modifier
-                    .fillMaxWidth()
-                    .clickable { onIncludeMediaChange(!includeMedia) }
-                    .padding(16.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(14.dp)
-            ) {
-                Icon(
-                    FieldMindIcons.Image,
-                    null,
-                    tint = if (includeMedia) colors.observation else MaterialTheme.colorScheme.onSurfaceVariant,
-                    size = 22.dp
-                )
-                Column(Modifier.weight(1f)) {
-                    Text("Include media attachments", fontWeight = FontWeight.SemiBold)
-                    Text(
-                        "Bundle photos and evidence files with export",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-                Switch(checked = includeMedia, onCheckedChange = onIncludeMediaChange)
-            }
-        }
-
-        // ── Format grid ──
-        FormatGrid(
-            formats = exportFormats,
-            selectedFormat = selectedFormat,
-            onFormatSelected = onFormatChange
-        )
-
-        // ── Preview card ──
-        Card(
-            shape = RoundedCornerShape(24.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
-            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-        ) {
-            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Icon(FieldMindIcons.Info, null, tint = MaterialTheme.colorScheme.primary, size = 20.dp)
-                    Text("Export preview", fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.titleSmall)
+                    Icon(FieldMindIcons.Article, null, tint = MaterialTheme.colorScheme.primary, size = 20.dp)
+                    Text("Export format", fontWeight = FontWeight.SemiBold)
                 }
-                Row(
-                    Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceEvenly
-                ) {
-                    entityCounts.entries.filter { it.value > 0 }.take(4).forEach { (key, value) ->
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text(
-                                value.toString(),
-                                style = MaterialTheme.typography.titleLarge,
-                                fontWeight = FontWeight.ExtraBold,
-                                color = MaterialTheme.colorScheme.primary
-                            )
-                            Text(
-                                key,
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    // PDF option
+                    Surface(
+                        onClick = { selectedExportFormat = "PDF" },
+                        shape = RoundedCornerShape(16.dp),
+                        color = if (selectedExportFormat == "PDF") Color(0xFF6A1B9A).copy(alpha = 0.14f)
+                            else MaterialTheme.colorScheme.surfaceContainerHigh,
+                        border = if (selectedExportFormat == "PDF") BorderStroke(1.5.dp, Color(0xFF6A1B9A)) else null,
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Column(Modifier.padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                            Icon(FieldMindIcons.Report, null, tint = if (selectedExportFormat == "PDF") Color(0xFF6A1B9A) else MaterialTheme.colorScheme.onSurfaceVariant, size = 28.dp)
+                            Text("PDF", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = if (selectedExportFormat == "PDF") Color(0xFF6A1B9A) else MaterialTheme.colorScheme.onSurface)
+                            Text("Portable document format", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                    }
+                    // Markdown option
+                    Surface(
+                        onClick = { selectedExportFormat = "Markdown" },
+                        shape = RoundedCornerShape(16.dp),
+                        color = if (selectedExportFormat == "Markdown") Color(0xFF558B2F).copy(alpha = 0.14f)
+                            else MaterialTheme.colorScheme.surfaceContainerHigh,
+                        border = if (selectedExportFormat == "Markdown") BorderStroke(1.5.dp, Color(0xFF558B2F)) else null,
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Column(Modifier.padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                            Icon(FieldMindIcons.Article, null, tint = if (selectedExportFormat == "Markdown") Color(0xFF558B2F) else MaterialTheme.colorScheme.onSurfaceVariant, size = 28.dp)
+                            Text("Markdown", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = if (selectedExportFormat == "Markdown") Color(0xFF558B2F) else MaterialTheme.colorScheme.onSurface)
+                            Text("Readable text for docs", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     }
                 }
-                Text(
-                    "$totalEntities total • $selectedFormat • ${formatDescription.lowercase()}",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.fillMaxWidth()
-                )
+            }
+        }
+
+        // ── Entity summary ──
+        Card(
+            shape = RoundedCornerShape(24.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+        ) {
+            Row(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Icon(FieldMindIcons.Info, null, tint = MaterialTheme.colorScheme.primary, size = 20.dp)
+                Column {
+                    Text("$totalEntities total records", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
+                    Text("All data included", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
             }
         }
 
@@ -1208,27 +1125,13 @@ private fun ExportTabContent(
             elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
             modifier = Modifier.clickable { onChooseFolder() }
         ) {
-            Row(
-                Modifier.fillMaxWidth().padding(16.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(14.dp)
-            ) {
-                Box(
-                    Modifier.size(40.dp).clip(RoundedCornerShape(12.dp))
-                        .background(FieldMindTheme.colors.data.copy(alpha = 0.14f)),
-                    contentAlignment = Alignment.Center
-                ) {
+            Row(Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+                Box(Modifier.size(40.dp).clip(RoundedCornerShape(12.dp)).background(FieldMindTheme.colors.data.copy(alpha = 0.14f)), contentAlignment = Alignment.Center) {
                     Icon(MaterialSymbolIcon("folder"), null, tint = FieldMindTheme.colors.data, size = 22.dp)
                 }
                 Column(Modifier.weight(1f)) {
-                    Text("Choose folder", fontWeight = FontWeight.SemiBold)
-                    Text(
-                        destinationUri?.lastPathSegment ?: "Tap to select export destination",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
+                    Text("Save folder", fontWeight = FontWeight.SemiBold)
+                    Text(destinationUri?.lastPathSegment ?: "Tap to select destination", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 }
                 Icon(FieldMindIcons.Forward, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, size = 20.dp)
             }
@@ -1236,191 +1139,29 @@ private fun ExportTabContent(
 
         // ── Export progress ──
         AnimatedVisibility(visible = isExporting) {
-            Card(
-                shape = RoundedCornerShape(24.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f)),
-                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-            ) {
+            Card(shape = RoundedCornerShape(24.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f)), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)) {
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(20.dp),
-                            strokeWidth = 2.dp
-                        )
+                        CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
                         Text(exportStepText, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
                     }
-                    LinearProgressIndicator(
-                        progress = { exportProgress },
-                        modifier = Modifier.fillMaxWidth().height(4.dp).clip(RoundedCornerShape(2.dp)),
-                        color = MaterialTheme.colorScheme.primary,
-                        trackColor = MaterialTheme.colorScheme.surfaceContainerHighest
-                    )
+                    LinearProgressIndicator(progress = { exportProgress }, modifier = Modifier.fillMaxWidth().height(4.dp).clip(RoundedCornerShape(2.dp)))
                 }
             }
         }
 
         // ── Action buttons ──
-        Row(
-            Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             OutlinedButton(
-                onClick = onShare,
-                modifier = Modifier.weight(1f),
-                shape = RoundedCornerShape(16.dp),
+                onClick = { onExport(selectedExportFormat, "share") },
+                modifier = Modifier.weight(1f), shape = RoundedCornerShape(16.dp),
                 enabled = !isExporting && totalEntities > 0
-            ) {
-                Icon(FieldMindIcons.Export, null, size = 18.dp)
-                Spacer(Modifier.width(6.dp))
-                Text("Share")
-            }
+            ) { Icon(FieldMindIcons.Export, null, size = 18.dp); Spacer(Modifier.width(6.dp)); Text("Share") }
             Button(
-                onClick = onExport,
-                modifier = Modifier.weight(1f),
-                shape = RoundedCornerShape(16.dp),
+                onClick = { onExport(selectedExportFormat, "save") },
+                modifier = Modifier.weight(1f), shape = RoundedCornerShape(16.dp),
                 enabled = !isExporting && totalEntities > 0
-            ) {
-                Icon(FieldMindIcons.Save, null, size = 18.dp)
-                Spacer(Modifier.width(6.dp))
-                Text("Export & Save")
-            }
-        }
-
-        // ── Export history ──
-        if (history.isNotEmpty()) {
-            SectionHeader("Recent exports", "")
-            history.take(3).forEach { record ->
-                ExportHistoryItem(record)
-            }
-        }
-    }
-}
-
-// ══════════════════════════════════════════════════════════════════════
-//  Scope Selector Card
-// ══════════════════════════════════════════════════════════════════════
-
-@Composable
-private fun ScopeSelectorCard(
-    scope: ExportScopeType,
-    onScopeChange: (ExportScopeType) -> Unit,
-    entityCounts: Map<String, Int>
-) {
-    val colors = FieldMindTheme.colors
-    val scopes = listOf(
-        ExportScopeType.ALL to "All",
-        ExportScopeType.PROJECTS to "Projects",
-        ExportScopeType.OBSERVATIONS to "Observations",
-        ExportScopeType.SOURCES to "Sources",
-        ExportScopeType.REPORTS to "Reports"
-    )
-
-    Card(
-        shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-    ) {
-        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                Icon(FieldMindIcons.Filter, null, tint = MaterialTheme.colorScheme.primary, size = 20.dp)
-                Text("Export scope", fontWeight = FontWeight.SemiBold)
-            }
-            Row(
-                Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(6.dp)
-            ) {
-                scopes.forEach { (scopeType, label) ->
-                    val selected = scope == scopeType
-                    Surface(
-                        onClick = { onScopeChange(scopeType) },
-                        shape = RoundedCornerShape(14.dp),
-                        color = if (selected) MaterialTheme.colorScheme.primaryContainer
-                        else MaterialTheme.colorScheme.surfaceContainerHigh,
-                        border = if (selected) BorderStroke(1.dp, MaterialTheme.colorScheme.primary) else null
-                    ) {
-                        Text(
-                            label,
-                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-                            style = MaterialTheme.typography.labelMedium,
-                            fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
-                            color = if (selected) MaterialTheme.colorScheme.onPrimaryContainer
-                            else MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
-            }
-        }
-    }
-}
-
-// ══════════════════════════════════════════════════════════════════════
-//  Format Grid
-// ══════════════════════════════════════════════════════════════════════
-
-@OptIn(ExperimentalLayoutApi::class)
-@Composable
-private fun FormatGrid(
-    formats: List<FormatOption>,
-    selectedFormat: String,
-    onFormatSelected: (String) -> Unit
-) {
-    Card(
-        shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-    ) {
-        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                Icon(FieldMindIcons.Article, null, tint = MaterialTheme.colorScheme.primary, size = 20.dp)
-                Text("Export format", fontWeight = FontWeight.SemiBold)
-            }
-            FlowRow(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                formats.forEach { format ->
-                    val isSelected = selectedFormat == format.name
-                    Surface(
-                        onClick = { onFormatSelected(format.name) },
-                        shape = RoundedCornerShape(16.dp),
-                        color = if (isSelected) format.color.copy(alpha = 0.14f)
-                        else MaterialTheme.colorScheme.surfaceContainerHigh,
-                        border = if (isSelected) BorderStroke(1.5.dp, format.color) else null,
-                        modifier = Modifier.width(90.dp)
-                    ) {
-                        Column(
-                            Modifier.padding(vertical = 12.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.spacedBy(4.dp)
-                        ) {
-                            Box(
-                                Modifier.size(36.dp).clip(RoundedCornerShape(10.dp))
-                                    .background(if (isSelected) format.color.copy(alpha = 0.18f) else Color.Transparent),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(
-                                    format.icon, null,
-                                    tint = if (isSelected) format.color else MaterialTheme.colorScheme.onSurfaceVariant,
-                                    size = 22.dp
-                                )
-                            }
-                            Text(
-                                format.name,
-                                style = MaterialTheme.typography.labelSmall,
-                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                                color = if (isSelected) format.color else MaterialTheme.colorScheme.onSurfaceVariant,
-                                maxLines = 1
-                            )
-                            if (isSelected) {
-                                Icon(
-                                    FieldMindIcons.Check, null,
-                                    tint = format.color, size = 14.dp
-                                )
-                            }
-                        }
-                    }
-                }
-            }
+            ) { Icon(FieldMindIcons.Save, null, size = 18.dp); Spacer(Modifier.width(6.dp)); Text("Save") }
         }
     }
 }
@@ -1648,8 +1389,8 @@ private fun ImportTabContent(
 
 @Composable
 private fun BackupTabContent(
-    includeMedia: Boolean,
-    onIncludeMediaChange: (Boolean) -> Unit,
+    backupFolderUri: String,
+    onChooseBackupFolder: () -> Unit,
     encrypt: Boolean,
     onEncryptChange: (Boolean) -> Unit,
     password: String,
@@ -1665,6 +1406,47 @@ private fun BackupTabContent(
     val colors = FieldMindTheme.colors
 
     Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+        // ── Folder picker (always .fieldmind format) ──
+        Card(
+            shape = RoundedCornerShape(24.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+            modifier = Modifier.clickable { onChooseBackupFolder() }
+        ) {
+            Row(Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+                Box(Modifier.size(40.dp).clip(RoundedCornerShape(12.dp)).background(FieldMindTheme.colors.data.copy(alpha = 0.14f)), contentAlignment = Alignment.Center) {
+                    Icon(MaterialSymbolIcon("folder"), null, tint = FieldMindTheme.colors.data, size = 22.dp)
+                }
+                Column(Modifier.weight(1f)) {
+                    Text("Backup folder", fontWeight = FontWeight.SemiBold)
+                    val folderName = remember(backupFolderUri) {
+                        try { android.net.Uri.parse(backupFolderUri).lastPathSegment } catch (_: Exception) { null }
+                    }
+                    Text(
+                        folderName ?: "Tap to choose a folder for backups",
+                        style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1, overflow = TextOverflow.Ellipsis
+                    )
+                }
+                Icon(FieldMindIcons.Forward, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, size = 20.dp)
+            }
+        }
+
+        // ── Format info card ──
+        Card(
+            shape = RoundedCornerShape(24.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.25f)),
+            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+        ) {
+            Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                Icon(FieldMindIcons.Archive, null, tint = MaterialTheme.colorScheme.onPrimaryContainer, size = 22.dp)
+                Column {
+                    Text(".fieldmind format", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onPrimaryContainer)
+                    Text("All data + media attachments in a single portable package", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.72f))
+                }
+            }
+        }
+
         // ── Backup options ──
         Card(
             shape = RoundedCornerShape(24.dp),
@@ -1672,22 +1454,6 @@ private fun BackupTabContent(
             elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(0.dp)) {
-                // Include media
-                Row(
-                    Modifier.fillMaxWidth().clickable { onIncludeMediaChange(!includeMedia) }.padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(14.dp)
-                ) {
-                    Icon(FieldMindIcons.Image, null, tint = if (includeMedia) colors.observation else MaterialTheme.colorScheme.onSurfaceVariant, size = 22.dp)
-                    Column(Modifier.weight(1f)) {
-                        Text("Include media attachments", fontWeight = FontWeight.SemiBold)
-                        Text("Bundle photos and evidence files", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
-                    Switch(checked = includeMedia, onCheckedChange = onIncludeMediaChange)
-                }
-
-                HorizontalDivider(Modifier.padding(start = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
-
                 // Encrypt
                 Row(
                     Modifier.fillMaxWidth().clickable { onEncryptChange(!encrypt) }.padding(16.dp),
@@ -1712,7 +1478,6 @@ private fun BackupTabContent(
                         shape = RoundedCornerShape(18.dp),
                         singleLine = true
                     )
-                    // Password strength indicator
                     val strength = remember(password) { FieldMindExportEncryption.PasswordStrength.evaluate(password) }
                     if (password.isNotBlank()) {
                         Row(
@@ -1726,12 +1491,7 @@ private fun BackupTabContent(
                                 color = Color(strength.color),
                                 trackColor = MaterialTheme.colorScheme.surfaceContainerHighest
                             )
-                            Text(
-                                strength.label,
-                                style = MaterialTheme.typography.labelSmall,
-                                fontWeight = FontWeight.SemiBold,
-                                color = Color(strength.color)
-                            )
+                            Text(strength.label, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, color = Color(strength.color))
                         }
                     }
                     Spacer(Modifier.height(8.dp))
@@ -1748,7 +1508,7 @@ private fun BackupTabContent(
                     Icon(FieldMindIcons.Today, null, tint = if (scheduleEnabled) colors.info else MaterialTheme.colorScheme.onSurfaceVariant, size = 22.dp)
                     Column(Modifier.weight(1f)) {
                         Text("Schedule backups", fontWeight = FontWeight.SemiBold)
-                        Text("Automatically create backups", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text("Automatically create .fieldmind packages", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                     Switch(checked = scheduleEnabled, onCheckedChange = onScheduleChange)
                 }
@@ -1767,14 +1527,11 @@ private fun BackupTabContent(
                                 color = if (selected) MaterialTheme.colorScheme.primaryContainer
                                 else MaterialTheme.colorScheme.surfaceContainerHigh
                             ) {
-                                Text(
-                                    interval,
-                                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                                Text(interval, modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
                                     style = MaterialTheme.typography.labelMedium,
                                     fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
                                     color = if (selected) MaterialTheme.colorScheme.onPrimaryContainer
-                                    else MaterialTheme.colorScheme.onSurfaceVariant
-                                )
+                                    else MaterialTheme.colorScheme.onSurfaceVariant)
                             }
                         }
                     }
@@ -1782,29 +1539,20 @@ private fun BackupTabContent(
             }
         }
 
-        // ── Backup history ──
+        // ── Last backup info ──
         Card(
             shape = RoundedCornerShape(24.dp),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
             elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
         ) {
-            Row(
-                Modifier.fillMaxWidth().padding(16.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(14.dp)
-            ) {
+            Row(Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
                 Icon(FieldMindIcons.Archive, null, tint = MaterialTheme.colorScheme.primary, size = 22.dp)
                 Column(Modifier.weight(1f)) {
                     Text("Last backup", fontWeight = FontWeight.SemiBold)
                     Text(lastBackupLabel, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
                 if (entityCounts.isNotEmpty()) {
-                    Text(
-                        "${entityCounts.values.sum()} records",
-                        style = MaterialTheme.typography.labelMedium,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.primary
-                    )
+                    Text("${entityCounts.values.sum()} records", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.primary)
                 }
             }
         }
@@ -1812,13 +1560,13 @@ private fun BackupTabContent(
         // ── Create backup button ──
         Button(
             onClick = onCreateBackup,
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth().height(56.dp),
             shape = RoundedCornerShape(16.dp),
             colors = ButtonDefaults.buttonColors(containerColor = FieldMindTheme.colors.observation)
         ) {
-            Icon(FieldMindIcons.Archive, null, size = 18.dp)
+            Icon(FieldMindIcons.Archive, null, size = 20.dp)
             Spacer(Modifier.width(8.dp))
-            Text("Create backup now")
+            Text("Backup now", fontWeight = FontWeight.Bold)
         }
     }
 }
@@ -1900,7 +1648,7 @@ private fun formatFileSize(bytes: Long): String = when {
 private fun backupDirectory(context: Context): File = File(context.filesDir, "fieldmind/backups").apply { mkdirs() }
 
 private fun lastBackupSummary(context: Context): String {
-    val latest = backupDirectory(context).listFiles { file -> file.isFile && (file.extension == "json" || file.extension == "encrypted") }
+    val latest = backupDirectory(context).listFiles { file -> file.isFile && (file.extension == "json" || file.extension == "encrypted" || file.extension == "fieldmind") }
         ?.maxByOrNull { it.lastModified() }
     return latest?.let {
         SimpleDateFormat("MMM d, yyyy • h:mm a", Locale.getDefault()).format(Date(it.lastModified()))
