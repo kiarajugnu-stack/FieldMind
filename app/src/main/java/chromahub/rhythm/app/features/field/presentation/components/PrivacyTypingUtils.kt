@@ -19,9 +19,18 @@ val LocalPrivacyTypingEnabled = compositionLocalOf { false }
 
 /**
  * Extension on [KeyboardOptions] that conditionally sets the
- * [PlatformImeOptions] with the "nm" private IME option, which tells
- * keyboards (Gboard, SwiftKey, etc.) not to learn from typing, disable
- * predictions, and show an incognito indicator.
+ * [PlatformImeOptions] with privacy/incognito mode flags for multiple keyboards.
+ *
+ * Supports:
+ * - Microsoft SwiftKey (beta & production): Uses IME_FLAG_NO_PERSONALIZED_LEARNING (0x1000000)
+ * - Google Gboard: Uses "nm" private IME option
+ * - Samsung Keyboard & others: Responds to both flags
+ *
+ * When enabled, keyboards will:
+ * - Disable personalized learning & suggestions
+ * - Disable predictive text
+ * - Show incognito/privacy indicator (SwiftKey, Gboard)
+ * - Not save typing data for personalization
  *
  * Usage:
  * ```kotlin
@@ -37,7 +46,8 @@ fun KeyboardOptions.withPrivacyTyping(enabled: Boolean): KeyboardOptions {
     if (!enabled) return this
     return copy(
         platformImeOptions = PlatformImeOptions(
-            privateImeOptions = "nm"
+            privateImeOptions = "nm,noPersonalizedLearning",  // "nm" for Gboard, "noPersonalizedLearning" for SwiftKey & others
+            imeAction = null  // Let IME choose appropriate action
         )
     )
 }
