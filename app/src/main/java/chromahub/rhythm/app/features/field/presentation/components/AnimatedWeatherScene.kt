@@ -182,7 +182,7 @@ private fun StaticWeatherFrame(
             brush = Brush.verticalGradient(palette.background),
             size = size
         )
-        drawGround(weatherCode = weatherCode, isDay = true, isDark = isDark, compact = false)
+        drawGround(palette, weatherCode = weatherCode, isDay = true, isDark = isDark, compact = false)
         val cx = size.width / 2
         val cy = size.height * 0.35f
         val r = size.minDimension * 0.12f
@@ -1645,9 +1645,9 @@ private fun CloudyScene(
 
     val cloudColor = palette.cloudBaseColor.copy(alpha = if (isDark) 0.35f else 0.52f)
     val cloudColorDark = palette.primary.copy(alpha = if (isDark) 0.25f else 0.35f)
-    val cloudScale = size.width * 0.5f
 
     Canvas(modifier = modifier.fillMaxSize()) {
+        val cloudScale = size.width * 0.5f
         // Partially visible sun behind clouds (daytime only)
         if (isDaytime) {
             val sunCx = size.width * 0.82f
@@ -2424,7 +2424,6 @@ private fun DrawScope.drawMoon(
     val phase = getMoonPhaseValue()
     val isFull = phase in 0.48f..0.52f
     val gm = if (isFull) 0.8f else 1.3f  // Tighter glow at full moon
-    val isDark = FieldMindTheme.colors.isDark
 
     drawCircle(color = palette.moonGlowColor.copy(alpha = 0.08f * moonGlow),
         radius = moonR * 2.0f * gm, center = Offset(cx, cy))
@@ -2727,7 +2726,6 @@ private fun DrawScope.drawAurora(auroraProgress: Float, auroraBrightness: Float,
     )
 }
  */
-private fun DrawScope.drawShootingStar(
     progress: Float,
     startX: Float,
     startY: Float,
@@ -3403,6 +3401,7 @@ private fun RainScene(
 /**
  * Pre-computed rain streak data for deterministic random distribution.
  */
+/**
  * Snow scene with layered snowfall, gentle drifting, sparkling crystals,
  * and depth-based snowflake sizing. Heavy snow (code 71-77, 85-86) adds
  * accumulation tint and denser flake coverage.
@@ -3670,8 +3669,8 @@ private fun ThunderstormScene(
         val drift = (cloudDrift * 0.3f) % 1f
 
         // ── Towering cumulonimbus clouds (rear layer) ──
-        for ((i, (cx, cy)) in cloudPositions.withIndex()) {
-            val baseX = ((cx + drift * 0.2f + i * 0.1f) % 1f) * size.width
+        for ((i, (cloudCx, cloudCy)) in cloudPositions.withIndex()) {
+            val baseX = ((cloudCx + drift * 0.2f + i * 0.1f) % 1f) * size.width
             val scaleMul = 0.8f + i * 0.15f
             val isLit = cloudGlowIndex == i && cloudGlowIntensity > 0f
 
