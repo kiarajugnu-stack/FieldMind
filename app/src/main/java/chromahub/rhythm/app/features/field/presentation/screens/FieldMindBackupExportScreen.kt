@@ -35,6 +35,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
@@ -141,6 +143,14 @@ fun BackupAndRestoreScreen(
     val autoBackupInterval by settings.autoBackupInterval.collectAsState()
     val defaultExportFormat by settings.defaultExportFormat.collectAsState()
 
+    // Export privacy settings
+    val clearClipboardAfterExport by settings.clearClipboardAfterExport.collectAsState()
+    val exportGpsPrivacy by settings.exportGpsPrivacy.collectAsState()
+    val exportExcludeMedia by settings.exportExcludeMedia.collectAsState()
+
+    // Backup folder URI from settings (reactive) — must be declared before exportDestinationUri
+    val backupFolderUri by settings.backupFolderUri.collectAsState()
+
     // Export state
     var exportDestinationUri by remember(backupFolderUri) { mutableStateOf<Uri?>(backupFolderUri.takeIf { it.isNotBlank() }?.let(Uri::parse)) }
     var isExporting by remember { mutableStateOf(false) }
@@ -178,9 +188,6 @@ fun BackupAndRestoreScreen(
     var showShareDialog by remember { mutableStateOf(false) }
     var shareDialogFormat by remember { mutableStateOf(".fieldmind") }
     var includeMedia by remember { mutableStateOf(false) }
-
-    // Backup folder URI from settings (reactive)
-    val backupFolderUri by settings.backupFolderUri.collectAsState()
 
     // Folder picker launcher (export folder)
     val folderPickerLauncher = rememberLauncherForActivityResult(
@@ -338,6 +345,12 @@ fun BackupAndRestoreScreen(
                             isExporting = isExporting,
                             exportProgress = exportProgress,
                             exportStepText = exportStepText,
+                            gpsPrivacy = exportGpsPrivacy,
+                            onGpsPrivacyChange = { settings.setExportGpsPrivacy(it) },
+                            excludeMedia = exportExcludeMedia,
+                            onExcludeMediaChange = { settings.setExportExcludeMedia(it) },
+                            clearClipboard = clearClipboardAfterExport,
+                            onClearClipboardChange = { settings.setClearClipboardAfterExport(it) },
                             onExport = { format, action ->
                                 scope.launch {
                                     isExporting = true
@@ -346,8 +359,11 @@ fun BackupAndRestoreScreen(
                                     try {
                                         withContext(Dispatchers.IO) {
                                             exportProgress = 0.3f
+                                            // Apply export privacy transforms before building the archive
+                                            val exportObs = FieldMindExport.applyGpsPrivacy(observations, exportGpsPrivacy)
+                                            val exportNotes = if (exportExcludeMedia) FieldMindExport.applyMediaExclusion(notes) else notes
                                             val json = FieldMindExport.archiveJson(
-                                                observations = observations, notes = notes,
+                                                observations = exportObs, notes = exportNotes,
                                                 questions = questions, hypotheses = hypotheses,
                                                 projects = projects, sources = sources,
                                                 dataRecords = dataRecords, reports = reports,
@@ -378,13 +394,15 @@ fun BackupAndRestoreScreen(
                                                 )
                                                 ".fieldmind", ".zip" -> {
                                                     val allAttachments = mutableMapOf<Long, List<EvidenceAttachmentEntity>>()
-                                                    observations.forEach { obs ->
-                                                        val atts = viewModel.attachmentsForObservation(obs.id).first()
-                                                        if (atts.isNotEmpty()) allAttachments[obs.id] = atts
+                                                    if (!exportExcludeMedia) {
+                                                        exportObs.forEach { obs ->
+                                                            val atts = viewModel.attachmentsForObservation(obs.id).first()
+                                                            if (atts.isNotEmpty()) allAttachments[obs.id] = atts
+                                                        }
                                                     }
                                                     val result = FieldMindExportMediaPacker.buildPackage(
                                                         context = context, archiveJson = json,
-                                                        observations = observations, notes = notes, projects = projects, sources = sources,
+                                                        observations = exportObs, notes = exportNotes, projects = projects, sources = sources,
                                                         attachments = allAttachments, outputDir = exportDir
                                                     )
                                                     result.packageFile.copyTo(exportFile, overwrite = true)
@@ -576,27 +594,36 @@ fun BackupAndRestoreScreen(
                                 "Projects" to projects.size,
                                 "Sources" to sources.size
                             ),
+                            gpsPrivacy = exportGpsPrivacy,
+                            onGpsPrivacyChange = { settings.setExportGpsPrivacy(it) },
+                            excludeMedia = exportExcludeMedia,
+                            onExcludeMediaChange = { settings.setExportExcludeMedia(it) },
                             onCreateBackup = {
                                 scope.launch {
                                     isExporting = true
                                     try {
                                         withContext(Dispatchers.IO) {
-                                            val json = FieldMindExport.archiveJson(observations, notes, questions, hypotheses, projects, sources, dataRecords, reports, flashcards)
+                                            // Apply export privacy transforms to backup data
+                                            val backupObs = FieldMindExport.applyGpsPrivacy(observations, exportGpsPrivacy)
+                                            val backupNotes = if (exportExcludeMedia) FieldMindExport.applyMediaExclusion(notes) else notes
+                                            val json = FieldMindExport.archiveJson(backupObs, backupNotes, questions, hypotheses, projects, sources, dataRecords, reports, flashcards)
                                             val dateStamp = SimpleDateFormat("yyyy-MM-dd_HHmmss", Locale.getDefault()).format(Date())
                                             val backupDir = backupDirectory(context)
                                             val baseName = "fieldmind-backup-$dateStamp"
                                             
-                                            // Build .fieldmind package with media attachments
+                                            // Build .fieldmind package — skip media when exclusion is on
                                             val allAttachments = mutableMapOf<Long, List<EvidenceAttachmentEntity>>()
-                                            observations.forEach { obs ->
-                                                val atts = viewModel.attachmentsForObservation(obs.id).first()
-                                                if (atts.isNotEmpty()) allAttachments[obs.id] = atts
+                                            if (!exportExcludeMedia) {
+                                                backupObs.forEach { obs ->
+                                                    val atts = viewModel.attachmentsForObservation(obs.id).first()
+                                                    if (atts.isNotEmpty()) allAttachments[obs.id] = atts
+                                                }
                                             }
                                             val packResult = FieldMindExportMediaPacker.buildPackage(
                                                 context = context,
                                                 archiveJson = json,
-                                                observations = observations,
-                                                notes = notes,
+                                                observations = backupObs,
+                                                notes = backupNotes,
                                                 projects = projects,
                                                 sources = sources,
                                                 attachments = allAttachments,
@@ -1107,7 +1134,13 @@ private fun ExportTabContent(
     onExport: (format: String, action: String) -> Unit,
     onChooseFolder: () -> Unit,
     destinationUri: Uri?,
-    onSwitchToImport: (() -> Unit)? = null
+    onSwitchToImport: (() -> Unit)? = null,
+    gpsPrivacy: String = "Exact",
+    onGpsPrivacyChange: (String) -> Unit = {},
+    excludeMedia: Boolean = false,
+    onExcludeMediaChange: (Boolean) -> Unit = {},
+    clearClipboard: Boolean = true,
+    onClearClipboardChange: (Boolean) -> Unit = {}
 ) {
     val totalEntities = entityCounts.values.sum()
     val colors = FieldMindTheme.colors
@@ -1180,6 +1213,17 @@ private fun ExportTabContent(
                 Icon(FieldMindIcons.Forward, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, size = 20.dp)
             }
         }
+
+        // ── Privacy options ──
+        ExportPrivacyOptionsCard(
+            gpsPrivacy = gpsPrivacy,
+            onGpsPrivacyChange = onGpsPrivacyChange,
+            excludeMedia = excludeMedia,
+            onExcludeMediaChange = onExcludeMediaChange,
+            clearClipboard = clearClipboard,
+            onClearClipboardChange = onClearClipboardChange,
+            showClearClipboard = true
+        )
 
         // ── Export progress ──
         AnimatedVisibility(visible = isExporting) {
@@ -1287,6 +1331,135 @@ private fun ExportFormatChip(format: String, desc: String, selected: Boolean, on
         Column(Modifier.widthIn(min = 140.dp, max = 220.dp).padding(14.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Text(format, fontWeight = FontWeight.Bold, color = if (selected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface)
             Text(desc, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+    }
+}
+
+// ── Privacy options card shared by Export and Backup tabs ──
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun ExportPrivacyOptionsCard(
+    gpsPrivacy: String,
+    onGpsPrivacyChange: (String) -> Unit,
+    excludeMedia: Boolean,
+    onExcludeMediaChange: (Boolean) -> Unit,
+    clearClipboard: Boolean,
+    onClearClipboardChange: (Boolean) -> Unit,
+    showClearClipboard: Boolean
+) {
+    val gpsModes = listOf(
+        Triple("Exact", "Full coordinates", "Include precise latitude and longitude"),
+        Triple("Approximate", "~1 km precision", "Round to 2 decimal places"),
+        Triple("Remove", "No location", "Strip all GPS and location text")
+    )
+
+    Card(
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            // Header
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                Icon(FieldMindIcons.Lock, null, tint = MaterialTheme.colorScheme.primary, size = 20.dp)
+                Text("Privacy options", fontWeight = FontWeight.SemiBold)
+            }
+
+            // GPS precision selector
+            Text(
+                "GPS precision in export",
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                fontWeight = FontWeight.Medium
+            )
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                gpsModes.forEach { (mode, label, desc) ->
+                    val selected = gpsPrivacy == mode
+                    Surface(
+                        onClick = { onGpsPrivacyChange(mode) },
+                        shape = RoundedCornerShape(14.dp),
+                        color = if (selected) MaterialTheme.colorScheme.primaryContainer
+                                else MaterialTheme.colorScheme.surfaceContainerHigh,
+                        border = if (selected) BorderStroke(1.5.dp, MaterialTheme.colorScheme.primary) else null,
+                        modifier = Modifier.semantics(mergeDescendants = true) {
+                            contentDescription = "$label: $desc. ${if (selected) "Selected" else "Not selected"}"
+                        }
+                    ) {
+                        Column(
+                            Modifier.widthIn(min = 100.dp).padding(horizontal = 14.dp, vertical = 10.dp),
+                            verticalArrangement = Arrangement.spacedBy(2.dp)
+                        ) {
+                            Text(
+                                label,
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
+                                color = if (selected) MaterialTheme.colorScheme.onPrimaryContainer
+                                        else MaterialTheme.colorScheme.onSurface
+                            )
+                            Text(
+                                desc,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                }
+            }
+
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+
+            // Exclude media toggle
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .clickable { onExcludeMediaChange(!excludeMedia) }
+                    .semantics(mergeDescendants = true) {
+                        contentDescription = "Exclude media: ${if (excludeMedia) "enabled" else "disabled"}"
+                    },
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Column(Modifier.weight(1f)) {
+                    Text("Exclude media attachments", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
+                    Text(
+                        "Photos, audio, and files are not included in the export",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                Switch(checked = excludeMedia, onCheckedChange = onExcludeMediaChange)
+            }
+
+            // Clear clipboard toggle — only shown on Export tab
+            if (showClearClipboard) {
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+                Row(
+                    Modifier
+                        .fillMaxWidth()
+                        .clickable { onClearClipboardChange(!clearClipboard) }
+                        .semantics(mergeDescendants = true) {
+                            contentDescription = "Clear clipboard after copy: ${if (clearClipboard) "enabled" else "disabled"}"
+                        },
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Column(Modifier.weight(1f)) {
+                        Text("Clear clipboard after copy", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
+                        Text(
+                            "Clears exported text from the clipboard after 60 seconds",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    Switch(checked = clearClipboard, onCheckedChange = onClearClipboardChange)
+                }
+            }
         }
     }
 }
@@ -1534,7 +1707,11 @@ private fun BackupTabContent(
     onScheduleIntervalChange: (String) -> Unit,
     lastBackupLabel: String,
     entityCounts: Map<String, Int>,
-    onCreateBackup: () -> Unit
+    onCreateBackup: () -> Unit,
+    gpsPrivacy: String = "Exact",
+    onGpsPrivacyChange: (String) -> Unit = {},
+    excludeMedia: Boolean = false,
+    onExcludeMediaChange: (Boolean) -> Unit = {}
 ) {
     val context = LocalContext.current
     val colors = FieldMindTheme.colors
@@ -1580,6 +1757,17 @@ private fun BackupTabContent(
                 }
             }
         }
+
+        // ── Privacy options ──
+        ExportPrivacyOptionsCard(
+            gpsPrivacy = gpsPrivacy,
+            onGpsPrivacyChange = onGpsPrivacyChange,
+            excludeMedia = excludeMedia,
+            onExcludeMediaChange = onExcludeMediaChange,
+            clearClipboard = false,
+            onClearClipboardChange = {},
+            showClearClipboard = false
+        )
 
         // ── Backup options ──
         Card(

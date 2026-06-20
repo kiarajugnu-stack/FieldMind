@@ -800,6 +800,53 @@ ${report.nextSteps}
 
     private fun JSONObject.optNullableLong(name: String): Long? = if (isNull(name) || !has(name)) null else optLong(name).takeIf { it > 0L }
 
+    // ══════════════════════════════════════════════════════════════════════
+    //  Export privacy utilities
+    // ══════════════════════════════════════════════════════════════════════
+
+    /**
+     * Apply GPS privacy mode to a list of observations before export.
+     *
+     * @param observations  The raw observations from the database.
+     * @param gpsPrivacy    One of "Exact", "Approximate", or "Remove".
+     *                      "Exact"       – pass through unchanged.
+     *                      "Approximate" – round lat/lon to 2 decimal places (~1 km) and
+     *                                      replace manualLocation with a generic locality
+     *                                      marker so no street-level detail leaks.
+     *                      "Remove"      – null out lat/lon and blank manualLocation.
+     */
+    fun applyGpsPrivacy(
+        observations: List<ObservationEntity>,
+        gpsPrivacy: String
+    ): List<ObservationEntity> = when (gpsPrivacy) {
+        "Approximate" -> observations.map { obs ->
+            obs.copy(
+                latitude = obs.latitude?.let { kotlin.math.round(it * 100.0) / 100.0 },
+                longitude = obs.longitude?.let { kotlin.math.round(it * 100.0) / 100.0 },
+                // Replace any manually-entered street-level address with a cleared field
+                // to avoid leaking precise location via the text field while approximate
+                // coordinates are still present.
+                manualLocation = if (obs.manualLocation.isNotBlank()) "" else ""
+            )
+        }
+        "Remove" -> observations.map { obs ->
+            obs.copy(
+                latitude = null,
+                longitude = null,
+                manualLocation = ""
+            )
+        }
+        else -> observations // "Exact" or unknown — no change
+    }
+
+    /**
+     * Strip media attachment URIs from notes before export.
+     * EvidenceAttachment rows are handled separately by passing an empty list
+     * to the export path; this covers the attachmentUris field on NoteEntity.
+     */
+    fun applyMediaExclusion(notes: List<NoteEntity>): List<NoteEntity> =
+        notes.map { it.copy(attachmentUris = "") }
+
     private fun html(value: String): String = value.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\n", "<br>")
 
     private fun renderAttachmentThumbs(images: List<Pair<String, String>>, maxInline: Int = 3): String {
