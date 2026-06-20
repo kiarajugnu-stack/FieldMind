@@ -16,7 +16,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import delay
+import kotlinx.coroutines.delay
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
@@ -158,6 +158,52 @@ fun AnimatedWeatherScene(
             weatherCode in 71..77 || weatherCode in 85..86 -> SnowScene(weatherCode, palette, compact, timeOfDay, modifier)
             weatherCode >= 95 -> ThunderstormScene(weatherCode, palette, compact, timeOfDay, modifier)
             else -> ClearSkyScene(palette, timeOfDay, compact, modifier)
+        }
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════════
+//  Static preview frame
+// ══════════════════════════════════════════════════════════════════════
+
+/**
+ * Static weather frame used in preview/inspection mode.
+ * Renders a simplified weather scene without animations.
+ */
+private fun StaticWeatherFrame(
+    weatherCode: Int,
+    palette: WeatherPalette,
+    modifier: Modifier
+) {
+    val isDark = FieldMindTheme.colors.isDark
+    Canvas(modifier = modifier.fillMaxSize()) {
+        drawRect(
+            brush = Brush.verticalGradient(palette.background),
+            size = size
+        )
+        drawGround(weatherCode = weatherCode, isDay = true, isDark = isDark, compact = false)
+        val cx = size.width / 2
+        val cy = size.height * 0.35f
+        val r = size.minDimension * 0.12f
+        when {
+            weatherCode <= 1 -> {
+                drawCircle(color = palette.accent, radius = r, center = Offset(cx, cy))
+                drawCircle(color = Color.White.copy(alpha = 0.3f), radius = r * 0.6f, center = Offset(cx, cy))
+            }
+            weatherCode in 2..3 -> {
+                val cloudColor = if (isDark) Color(0xFF90A4AE).copy(alpha = 0.45f) else Color(0xFFB0BEC5).copy(alpha = 0.40f)
+                drawCloud(0f, cx - r, cy, r * 2f, cloudColor)
+            }
+            weatherCode in 71..77 || weatherCode in 85..86 -> {
+                for (i in 0..5) {
+                    val sx = cx + sin(i * 1.05f) * r * 0.6f
+                    val sy = cy + cos(i * 1.05f) * r * 0.6f
+                    drawCircle(color = Color.White.copy(alpha = 0.7f), radius = r * 0.15f, center = Offset(sx, sy))
+                }
+            }
+            else -> {
+                drawCircle(color = palette.accent.copy(alpha = 0.5f), radius = r, center = Offset(cx, cy))
+            }
         }
     }
 }
