@@ -57,6 +57,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
+import java.io.IOException
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -412,18 +413,42 @@ fun BackupAndRestoreScreen(
                                             exportProgress = 0.8f
                                             exportStepText = "Saving…"
 
-                                            // If user chose a folder, copy there
+                                            // If user chose a folder, save there with proper MIME type
                                             val destUri = exportDestinationUri
                                             if (destUri != null) {
-                                                val docFile = android.provider.DocumentsContract.createDocument(
-                                                    context.contentResolver,
-                                                    destUri,
-                                                    "application/octet-stream",
-                                                    fileName
-                                                )
-                                                docFile?.let { outUri ->
-                                                    context.contentResolver.openOutputStream(outUri)?.use { out ->
-                                                        out.write(exportFile.readBytes())
+                                                val mimeType = when (selectedFormat) {
+                                                                                                    "JSON" to "application/json",
+                                                "CSV" to "text/csv",
+                                                "Markdown" to "text/markdown",
+                                                "HTML" to "text/html",
+                                                "PDF" to "application/pdf",
+                                                "PNG" to "image/png",
+                                                "SVG" to "image/svg+xml",
+                                                ".fieldmind" to "application/octet-stream"
+                                                    else -> "application/octet-stream"
+                                                }
+                                                try {
+                                                    val createdDoc = android.provider.DocumentsContract.createDocument(
+                                                        context.contentResolver,
+                                                        destUri,
+                                                        mimeType,
+                                                        fileName
+                                                    )
+                                                    if (createdDoc != null) {
+                                                        context.contentResolver.openOutputStream(createdDoc)?.use { out ->
+                                                            out.write(exportFile.readBytes())
+                                                        } ?: run {
+                                                            throw java.io.IOException("Failed to open output stream for $fileName")
+                                                        }
+                                                    } else {
+                                                        throw java.io.IOException("Failed to create document $fileName in selected folder")
+                                                    }
+                                                } catch (e: Exception) {
+                                                    // Store error for snackbar
+                                                    val saveError = "Folder save failed: ${e.localizedMessage ?: "Unknown error"}"
+                                                    // Fall back to cache - file was written to cache/exports already
+                                                    kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
+                                                        showFastSnackbar(snackbar, scope, saveError)
                                                     }
                                                 }
                                             }

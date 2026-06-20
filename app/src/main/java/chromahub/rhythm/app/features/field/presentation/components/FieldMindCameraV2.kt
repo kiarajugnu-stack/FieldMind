@@ -66,6 +66,7 @@ import java.util.Date
 import java.util.Locale
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
+import kotlin.math.abs
 import kotlin.math.roundToInt
 
 
@@ -1365,9 +1366,8 @@ private fun SpeciesFieldPanel(
                                 onClick = { onSpeciesConfidenceChange(value) },
                                 shape = RoundedCornerShape(12.dp),
                                 color = if (isSelected) MaterialTheme.colorScheme.primary
-                                else MaterialTheme.colorScheme.surfaceContainerHigh,
-                                border = if (!isSelected) BorderStroke(
-                                    1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)
+                                else MaterialTheme.colorScheme.surfaceContainerHigh,                                 border = if (!isSelected) androidx.compose.foundation.BorderStroke(
+                                     1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)
                                 ) else null,
                                 tonalElevation = 0.dp,
                                 modifier = Modifier.weight(1f)

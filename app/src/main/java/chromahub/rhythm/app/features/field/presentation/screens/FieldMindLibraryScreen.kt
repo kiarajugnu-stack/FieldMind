@@ -15,6 +15,9 @@ import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -718,6 +721,14 @@ private fun ReadingTimerDialog(onDismiss: () -> Unit) {
     // Track whether service notification has been started
     var notificationStarted by rememberSaveable { mutableStateOf(false) }
 
+    fun formatTimerTime(secs: Int): String {
+        val h = secs / 3600
+        val m = (secs % 3600) / 60
+        val s = secs % 60
+        return if (h > 0) "%d:%02d:%02d".format(h, m, s)
+        else "%02d:%02d".format(m, s)
+    }
+
     // Restore state from saved timer if service was running
     LaunchedEffect(Unit) {
         val savedState = FieldMindTimerManager.getSavedTimerState(context)
@@ -793,14 +804,6 @@ private fun ReadingTimerDialog(onDismiss: () -> Unit) {
     val seconds = elapsedSeconds % 60
     val timeStr = if (hours > 0) "%d:%02d:%02d".format(hours, minutes, seconds)
     else "%02d:%02d".format(minutes, seconds)
-
-    fun formatTimerTime(secs: Int): String {
-        val h = secs / 3600
-        val m = (secs % 3600) / 60
-        val s = secs % 60
-        return if (h > 0) "%d:%02d:%02d".format(h, m, s)
-        else "%02d:%02d".format(m, s)
-    }
 
     DialogWrapper(onDismiss = {
         if (!isRunning) {

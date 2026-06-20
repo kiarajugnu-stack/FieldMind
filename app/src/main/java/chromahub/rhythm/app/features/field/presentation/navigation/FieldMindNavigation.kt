@@ -653,7 +653,12 @@ composable(FieldMindScreen.SpeciesTool.route) { SpeciesToolScreen(viewModel = vi
         composable(FieldMindScreen.SiteLogTool.route) { SiteLogToolScreen(viewModel = viewModel, onBack = { navController.popBackStack() }) }
         composable(FieldMindScreen.ComparisonTable.route) { ComparisonTableScreen(viewModel = viewModel, onBack = { navController.popBackStack() }) }
         composable(FieldMindScreen.TimerTool.route) { TimerToolScreen(onBack = { navController.popBackStack() }) }
-        composable(FieldMindScreen.FieldLog.route) { FieldLogScreen(viewModel = viewModel, onBack = { navController.popBackStack() }, onOpenDetail = openDetail) }
+        composable(FieldMindScreen.FieldLog.route) { FieldLogScreen(
+                        viewModel = viewModel,
+                        onBack = { navController.popBackStack() },
+                        onOpenDetail = openDetail,
+                        onOpenExport = { navController.navigateToDestination(FieldMindScreen.ExportStudio.route) }
+                    ) }
         composable("field_detail/{kind}/{id}") { entry ->
             val kind = entry.arguments?.getString("kind") ?: "observation"
             val id = entry.arguments?.getString("id")?.toLongOrNull() ?: 0L
