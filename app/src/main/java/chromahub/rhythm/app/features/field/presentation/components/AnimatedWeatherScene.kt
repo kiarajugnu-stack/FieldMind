@@ -3285,7 +3285,7 @@ private fun RainScene(
         else -> if (isHeavy) 120 else if (isDrizzle) 40 else 80
     }
     val rainSpeed = if (isHeavy) 1.3f else 0.8f
-    val rainAlpha = if (isHeavy) 0.6f else 0.35f
+    val rainAlpha = if (isHeavy) 0.7f else 0.55f
 
     val infiniteTransition = rememberInfiniteTransition(label = "rain")
     val rainProgress by infiniteTransition.animateFloat(
@@ -3329,13 +3329,38 @@ private fun RainScene(
     }
 
     // Rain color — blue-grey that blends with palette
-    val rainColor = if (isDark) Color(0xFF6A8AAA).copy(alpha = 0.40f * rainAlpha * intensity)
-        else Color(0xFF7A9ABA).copy(alpha = 0.35f * rainAlpha * intensity)
+    val rainColor = if (isDark) Color(0xFF8ABADA).copy(alpha = 0.55f * (0.6f + rainAlpha * 0.4f) * intensity)
+        else Color(0xFF8ABADA).copy(alpha = 0.50f * (0.6f + rainAlpha * 0.4f) * intensity)
 
     // Light mode: darken background so rain is visible
     val overlayAlpha = if (!isDark) 0.12f else 0f
 
+    // Night rain: moon glow animation
+    val moonGlow by infiniteTransition.animateFloat(
+        initialValue = 0.6f,
+        targetValue = 1.0f,
+        animationSpec = infiniteRepeatable(tween(4000, easing = FastOutSlowInEasing), RepeatMode.Reverse),
+        label = "rainNightMoonGlow"
+    )
+
     Canvas(modifier = modifier.fillMaxSize()) {
+        // ── Moon and stars visible through rain clouds at night ──
+        val isNightRain = timeOfDay == TimeOfDay.Night || timeOfDay == TimeOfDay.Twilight
+        if (isNightRain) {
+            drawMoon(palette, timeOfDay, moonGlow, compact)
+            for (i in 0..24) {
+                val x = (i * 0.039f + 0.021f * (i % 7)) % 1f
+                val y = (i * 0.027f + 0.013f * (i % 5)) % 0.5f
+                val twinkle = (sin(moonGlow * (1.8f + i * 0.7f) + i * 1.7f) * 0.5f + 0.5f).coerceIn(0.08f, 0.55f)
+                val starColor = if (twinkle > 0.35f) Color(0xFFB3E5FC) else Color(0xFFFFF9C4)
+                drawCircle(
+                    color = starColor.copy(alpha = twinkle * 0.6f),
+                    radius = 0.7f + twinkle * 1.2f,
+                    center = Offset(x * size.width, y * size.height * 0.55f)
+                )
+            }
+        }
+
         // ── Overhead clouds for drizzle/rain ──
         // Draw clouds so rain scenes have visible cloud cover overhead
         val cloudDrift = (rainProgress * 0.2f) % 1f
@@ -3376,7 +3401,7 @@ private fun RainScene(
             // Perspective: streaks near bottom are slightly wider
             val depthFactor = 0.6f + (py / size.height).coerceIn(0f, 1f) * 0.4f
             val streakLen = (6f + streak.length * 14f) * depthFactor
-            val streakWidth = 0.8f + depthFactor * 0.7f
+            val streakWidth = 1.6f + depthFactor * 1.4f
 
             // Alpha modulated by intensity
             val alpha = rainColor.alpha * (0.5f + intensity * 0.5f) * depthFactor
