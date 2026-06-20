@@ -77,14 +77,14 @@ data class FormatOption(
 )
 
 private val exportFormats = listOf(
-    FormatOption("JSON", "Structured archive for migration", FieldMindIcons.Archive, FieldMindTheme.colors.hypothesis, "data"),
-    FormatOption("CSV", "Tabular data for spreadsheets", FieldMindIcons.Data, FieldMindTheme.colors.data, "data"),
-    FormatOption("Markdown", "Readable text for docs & notes", FieldMindIcons.Article, FieldMindTheme.colors.source, "document"),
-    FormatOption("HTML", "Print-ready web layout", FieldMindIcons.Article, FieldMindTheme.colors.question, "document"),
-    FormatOption("PDF", "Portable document format", FieldMindIcons.Report, FieldMindTheme.colors.report, "document"),
-    FormatOption("PNG", "Dashboard snapshot image", FieldMindIcons.Graph, FieldMindTheme.colors.observation, "image"),
-    FormatOption("SVG", "Scalable vector graphic", FieldMindIcons.Graph, FieldMindTheme.colors.flashcard, "image"),
-    FormatOption(".fieldmind", "Package with images & encryption", FieldMindIcons.Archive, FieldMindTheme.colors.positive, "package")
+    FormatOption("JSON", "Structured archive for migration", FieldMindIcons.Archive, androidx.compose.ui.graphics.Color(0xFF7B1FA2), "data"),
+    FormatOption("CSV", "Tabular data for spreadsheets", FieldMindIcons.Data, androidx.compose.ui.graphics.Color(0xFF1565C0), "data"),
+    FormatOption("Markdown", "Readable text for docs & notes", FieldMindIcons.Article, androidx.compose.ui.graphics.Color(0xFF558B2F), "document"),
+    FormatOption("HTML", "Print-ready web layout", FieldMindIcons.Article, androidx.compose.ui.graphics.Color(0xFFE65100), "document"),
+    FormatOption("PDF", "Portable document format", FieldMindIcons.Report, androidx.compose.ui.graphics.Color(0xFF6A1B9A), "document"),
+    FormatOption("PNG", "Dashboard snapshot image", FieldMindIcons.Graph, androidx.compose.ui.graphics.Color(0xFF2E7D32), "image"),
+    FormatOption("SVG", "Scalable vector graphic", FieldMindIcons.Graph, androidx.compose.ui.graphics.Color(0xFF00838F), "image"),
+    FormatOption(".fieldmind", "Package with images & encryption", FieldMindIcons.Archive, androidx.compose.ui.graphics.Color(0xFF1B5E20), "package")
 )
 
 data class ExportRecord(
@@ -204,8 +204,8 @@ fun BackupAndRestoreScreen(
                 }
             }
             // Read file size
-            val cursor = context.contentResolver.query(uri, null, null, null, null)
-            cursor?.use {
+            val sizeCursor = context.contentResolver.query(uri, null, null, null, null)
+            sizeCursor?.use {
                 if (it.moveToFirst()) {
                     val sizeIndex = it.getColumnIndex(android.provider.OpenableColumns.SIZE)
                     if (sizeIndex >= 0) {
@@ -431,19 +431,26 @@ fun BackupAndRestoreScreen(
                                         }
 
                                         // Record in history
-                                        val record = ExportRecord(
-                                            format = selectedFormat,
-                                            fileName = "fieldmind-export-$dateStamp.$ext",
-                                            fileSizeBytes = File(File(context.cacheDir, "exports"), "fieldmind-export-$dateStamp.$ext").length(),
-                                            entityCounts = mapOf(
-                                                "observations" to observations.size,
-                                                "projects" to projects.size
-                                            ),
-                                            destination = if (exportDestinationUri != null) "Saved to folder" else "Cached"
+                                        val recordFileName = "fieldmind-export-$dateStamp.$ext"
+                                        val recordFileSize = File(File(context.cacheDir, "exports"), recordFileName).length()
+                                        val recordFormat = selectedFormat
+                                        val recordDest = if (exportDestinationUri != null) "Saved to folder" else "Cached"
+                                        val recordEntityCounts = mapOf(
+                                            "observations" to observations.size,
+                                            "projects" to projects.size
                                         )
-                                        exportHistory = listOf(record) + exportHistory.take(19)
 
-                                        showFastSnackbar(snackbar, scope, "Export complete — ${record.fileName}")
+                                        exportHistory = listOf(
+                                            ExportRecord(
+                                                format = recordFormat,
+                                                fileName = recordFileName,
+                                                fileSizeBytes = recordFileSize,
+                                                entityCounts = recordEntityCounts,
+                                                destination = recordDest
+                                            )
+                                        ) + exportHistory.take(19)
+
+                                        showFastSnackbar(snackbar, scope, "Export complete — $recordFileName")
                                     } catch (e: Exception) {
                                         showFastSnackbar(snackbar, scope, "Export failed: ${e.localizedMessage}")
                                     } finally {
@@ -1896,9 +1903,10 @@ private fun ShareDialogContent(
 ) {
     val totalEntities = entityCounts.values.sum()
     val pulsateTransition = rememberInfiniteTransition(label = "sharePulse")
-    val glowAlpha by pulsateTransition.animateFloat(
-        0.6f, 1f,
-        infiniteRepeatable(tween(800), RepeatMode.Reverse),
+    val glowAlpha: Float by pulsateTransition.animateFloat(
+        initialValue = 0.6f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(tween(800), RepeatMode.Reverse),
         label = "shareGlow"
     )
 

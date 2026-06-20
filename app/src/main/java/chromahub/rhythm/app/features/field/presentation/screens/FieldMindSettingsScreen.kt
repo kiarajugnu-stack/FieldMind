@@ -606,7 +606,6 @@ fun ExportFormatSelector(selected: String, onSelect: (String) -> Unit) {
     }
 }
 
-private data class FormatOption(val name: String, val desc: String, val icon: MaterialSymbolIcon, val color: androidx.compose.ui.graphics.Color)
 
 // ══════════════════════════════════════════════════════════════════════
 //  Observation Reading UI (Redesigned)

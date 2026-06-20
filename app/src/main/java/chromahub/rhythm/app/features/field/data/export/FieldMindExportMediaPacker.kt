@@ -186,6 +186,9 @@ object FieldMindExportMediaPacker {
         val mediaEntries = collectMediaEntries(context, observations, notes, projects, sources, attachments)
         val digest = MessageDigest.getInstance("SHA-256")
 
+        var checksum: String = ""
+        var manifest: String = ""
+
         ZipOutputStream(FileOutputStream(packageFile)).use { zos ->
 
             // ── 1. Write archive.json ──
@@ -229,8 +232,8 @@ object FieldMindExportMediaPacker {
 
             // ── 3. Build and write manifest.json ──
             // Compute checksum of all content written so far (archive + media)
-            val checksum = digest.digest().joinToString("") { "%02x".format(it) }
-            val manifest = buildManifestJson(
+            checksum = digest.digest().joinToString("") { "%02x".format(it) }
+            manifest = buildManifestJson(
                 jsonSize = jsonBytes.size.toLong(),
                 mediaCount = mediaCopied,
                 totalMediaSize = packageFile.length(),
