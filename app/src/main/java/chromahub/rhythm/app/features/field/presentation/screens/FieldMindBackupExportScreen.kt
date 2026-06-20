@@ -13,6 +13,7 @@ import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideInVertically
@@ -101,6 +102,7 @@ data class ExportRecord(
 //  Backup & Restore Screen
 // ══════════════════════════════════════════════════════════════════════
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BackupAndRestoreScreen(
     viewModel: FieldMindViewModel,
@@ -169,6 +171,10 @@ fun BackupAndRestoreScreen(
     var backupInterval by remember { mutableStateOf(autoBackupInterval) }
     var backupPasswordConfirm by remember { mutableStateOf("") }
     var passwordsMatch by remember { mutableStateOf(true) }
+
+    // Share dialog state
+    var showShareDialog by remember { mutableStateOf(false) }
+    var shareDialogFormat by remember { mutableStateOf(selectedFormat) }
 
     // Folder picker launcher
     val folderPickerLauncher = rememberLauncherForActivityResult(
@@ -412,68 +418,8 @@ fun BackupAndRestoreScreen(
                                 }
                             },
                             onShare = {
-                                scope.launch {
-                                    isExporting = true
-                                    try {
-                                        val dateStamp = SimpleDateFormat("yyyy-MM-dd_HHmm", Locale.getDefault()).format(Date())
-                                        val ext = selectedFormat.lowercase().replace("markdown", "md").replace(" ", "")
-                                        val fileName = "fieldmind-export-$dateStamp.$ext"
-                                        val exportDir = File(context.cacheDir, "exports").apply { mkdirs() }
-                                        val exportFile = File(exportDir, fileName)
-
-                                        withContext(Dispatchers.IO) {
-                                            val json = FieldMindExport.archiveJson(observations, notes, questions, hypotheses, projects, sources, dataRecords, reports, flashcards)
-                                            when (selectedFormat) {
-                                                "JSON" -> exportFile.writeText(json)
-                                                "CSV" -> exportFile.writeText(FieldMindExport.observationsCsv(observations))
-                                                "Markdown" -> exportFile.writeText(observations.joinToString("\n\n---\n\n") { FieldMindExport.singleObservationMarkdown(it) })
-                                                "HTML" -> exportFile.writeText(FieldMindExport.pdfReadyHtml(projects, observations, sources, reports))
-                                                "PDF" -> exportFile.writeBytes(FieldMindExport.simplePdfBytes("FieldMind Export", observations.joinToString("\n") { FieldMindExport.singleObservationMarkdown(it) }))
-                                                "PNG" -> exportFile.writeBytes(FieldMindExport.dashboardPngBytes(observations, sources, projects, notes))
-                                                "SVG" -> exportFile.writeText(FieldMindExport.dashboardSvg(observations, sources, projects, notes))
-                                                ".fieldmind" -> {
-                                                    val result = FieldMindExportMediaPacker.buildPackage(
-                                                        context = context,
-                                                        archiveJson = json,
-                                                        observations = observations,
-                                                        notes = notes,
-                                                        projects = projects,
-                                                        sources = sources,
-                                                        attachments = emptyMap(),
-                                                        outputDir = exportDir
-                                                    )
-                                                    result.packageFile.renameTo(exportFile)
-                                                }
-                                            }
-                                        }
-
-                                        val shareUri = FileProvider.getUriForFile(
-                                            context,
-                                            "${context.packageName}.fileprovider",
-                                            exportFile
-                                        )
-                                        val shareIntent = Intent(Intent.ACTION_SEND).apply {
-                                            type = when (selectedFormat) {
-                                                "PDF" -> "application/pdf"
-                                                "PNG" -> "image/png"
-                                                "SVG" -> "image/svg+xml"
-                                                "CSV" -> "text/csv"
-                                                "HTML" -> "text/html"
-                                                "Markdown" -> "text/markdown"
-                                                ".fieldmind" -> "application/octet-stream"
-                                                else -> "application/json"
-                                            }
-                                            putExtra(Intent.EXTRA_STREAM, shareUri)
-                                            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                                            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                                        }
-                                        context.startActivity(Intent.createChooser(shareIntent, "Share FieldMind Export"))
-                                    } catch (e: Exception) {
-                                        showFastSnackbar(snackbar, scope, "Share failed: ${e.localizedMessage}")
-                                    } finally {
-                                        isExporting = false
-                                    }
-                                }
+                                shareDialogFormat = selectedFormat
+                                showShareDialog = true
                             },
                             history = exportHistory
                         )
@@ -761,6 +707,96 @@ fun BackupAndRestoreScreen(
                 }) { Text("Done") }
             }
         )
+    }
+
+    // ── Share dialog (bottom sheet) ──
+    if (showShareDialog) {
+        ModalBottomSheet(
+            onDismissRequest = { showShareDialog = false },
+            shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
+            containerColor = MaterialTheme.colorScheme.surface,
+            tonalElevation = 2.dp
+        ) {
+            ShareDialogContent(
+                format = shareDialogFormat,
+                onFormatChange = { shareDialogFormat = it },
+                entityCounts = mapOf(
+                    "Observations" to observations.size,
+                    "Notes" to notes.size,
+                    "Questions" to questions.size,
+                    "Hypotheses" to hypotheses.size,
+                    "Projects" to projects.size,
+                    "Sources" to sources.size,
+                    "Data Records" to dataRecords.size,
+                    "Reports" to reports.size,
+                    "Flashcards" to flashcards.size
+                ),
+                formatDescription = exportFormats.find { it.name == shareDialogFormat }?.desc ?: "",
+                formatColor = exportFormats.find { it.name == shareDialogFormat }?.color ?: MaterialTheme.colorScheme.primary,
+                onShare = {
+                    showShareDialog = false
+                    scope.launch {
+                        isExporting = true
+                        try {
+                            val dateStamp = SimpleDateFormat("yyyy-MM-dd_HHmm", Locale.getDefault()).format(Date())
+                            val ext = shareDialogFormat.lowercase().replace("markdown", "md").replace(" ", "")
+                            val fileName = "fieldmind-export-$dateStamp.$ext"
+                            val exportDir = File(context.cacheDir, "exports").apply { mkdirs() }
+                            val exportFile = File(exportDir, fileName)
+
+                            withContext(Dispatchers.IO) {
+                                val json = FieldMindExport.archiveJson(observations, notes, questions, hypotheses, projects, sources, dataRecords, reports, flashcards)
+                                when (shareDialogFormat) {
+                                    "JSON" -> exportFile.writeText(json)
+                                    "CSV" -> exportFile.writeText(FieldMindExport.observationsCsv(observations))
+                                    "Markdown" -> exportFile.writeText(observations.joinToString("\n\n---\n\n") { FieldMindExport.singleObservationMarkdown(it) })
+                                    "HTML" -> exportFile.writeText(FieldMindExport.pdfReadyHtml(projects, observations, sources, reports))
+                                    "PDF" -> exportFile.writeBytes(FieldMindExport.simplePdfBytes("FieldMind Export", observations.joinToString("\n") { FieldMindExport.singleObservationMarkdown(it) }))
+                                    "PNG" -> exportFile.writeBytes(FieldMindExport.dashboardPngBytes(observations, sources, projects, notes))
+                                    "SVG" -> exportFile.writeText(FieldMindExport.dashboardSvg(observations, sources, projects, notes))
+                                    ".fieldmind" -> {
+                                        val result = FieldMindExportMediaPacker.buildPackage(
+                                            context = context, archiveJson = json,
+                                            observations = observations, notes = notes,
+                                            projects = projects, sources = sources,
+                                            attachments = emptyMap(), outputDir = exportDir
+                                        )
+                                        result.packageFile.renameTo(exportFile)
+                                    }
+                                }
+                            }
+
+                            val shareUri = FileProvider.getUriForFile(
+                                context,
+                                "${context.packageName}.fileprovider",
+                                exportFile
+                            )
+                            val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                                type = when (shareDialogFormat) {
+                                    "PDF" -> "application/pdf"
+                                    "PNG" -> "image/png"
+                                    "SVG" -> "image/svg+xml"
+                                    "CSV" -> "text/csv"
+                                    "HTML" -> "text/html"
+                                    "Markdown" -> "text/markdown"
+                                    ".fieldmind" -> "application/octet-stream"
+                                    else -> "application/json"
+                                }
+                                putExtra(Intent.EXTRA_STREAM, shareUri)
+                                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                            }
+                            context.startActivity(Intent.createChooser(shareIntent, "Share FieldMind Export"))
+                        } catch (e: Exception) {
+                            showFastSnackbar(snackbar, scope, "Share failed: ${e.localizedMessage}")
+                        } finally {
+                            isExporting = false
+                        }
+                    }
+                },
+                onDismiss = { showShareDialog = false }
+            )
+        }
     }
 }
 
@@ -1760,6 +1796,220 @@ private fun lastBackupSummary(context: Context): String {
     return latest?.let {
         SimpleDateFormat("MMM d, yyyy • h:mm a", Locale.getDefault()).format(Date(it.lastModified()))
     } ?: "Never"
+}
+
+// ══════════════════════════════════════════════════════════════════════
+//  Share Dialog Content
+// ══════════════════════════════════════════════════════════════════════
+
+@Composable
+private fun ShareDialogContent(
+    format: String,
+    onFormatChange: (String) -> Unit,
+    entityCounts: Map<String, Int>,
+    formatDescription: String,
+    formatColor: Color,
+    onShare: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    val totalEntities = entityCounts.values.sum()
+    val pulsateTransition = rememberInfiniteTransition(label = "sharePulse")
+    val glowAlpha by pulsateTransition.animateFloat(
+        0.6f, 1f,
+        infiniteRepeatable(tween(800), RepeatMode.Reverse),
+        label = "shareGlow"
+    )
+
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 24.dp, vertical = 8.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        // ── Handle bar ──
+        Box(
+            Modifier.fillMaxWidth().padding(bottom = 4.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Box(
+                Modifier
+                    .width(40.dp).height(4.dp)
+                    .clip(RoundedCornerShape(2.dp))
+                    .background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f))
+            )
+        }
+
+        // ── Header ──
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(14.dp)
+        ) {
+            Box(
+                Modifier
+                    .size(48.dp)
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(formatColor.copy(alpha = 0.14f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    exportFormats.find { it.name == format }?.icon ?: FieldMindIcons.File,
+                    null,
+                    tint = formatColor,
+                    size = 26.dp
+                )
+            }
+            Column {
+                Text("Share as $format", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                Text(
+                    "$totalEntities records",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+
+        // ── Format quick-picker row ──
+        Text("Format", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold)
+        Row(
+            Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            exportFormats.take(6).forEach { fmt ->
+                val isSelected = format == fmt.name
+                Surface(
+                    onClick = { onFormatChange(fmt.name) },
+                    shape = RoundedCornerShape(12.dp),
+                    color = if (isSelected) fmt.color.copy(alpha = 0.14f)
+                    else MaterialTheme.colorScheme.surfaceContainerHigh,
+                    border = if (isSelected) BorderStroke(1.5.dp, fmt.color) else null,
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Column(
+                        Modifier.padding(vertical = 8.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(2.dp)
+                    ) {
+                        Icon(
+                            fmt.icon, null,
+                            tint = if (isSelected) fmt.color else MaterialTheme.colorScheme.onSurfaceVariant,
+                            size = 20.dp
+                        )
+                        Text(
+                            fmt.name,
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                            color = if (isSelected) fmt.color else MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 1
+                        )
+                    }
+                }
+            }
+        }
+        // Remaining formats in a second row
+        if (exportFormats.size > 6) {
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                exportFormats.drop(6).forEach { fmt ->
+                    val isSelected = format == fmt.name
+                    Surface(
+                        onClick = { onFormatChange(fmt.name) },
+                        shape = RoundedCornerShape(12.dp),
+                        color = if (isSelected) fmt.color.copy(alpha = 0.14f)
+                        else MaterialTheme.colorScheme.surfaceContainerHigh,
+                        border = if (isSelected) BorderStroke(1.5.dp, fmt.color) else null,
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Column(
+                            Modifier.padding(vertical = 8.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(2.dp)
+                        ) {
+                            Icon(
+                                fmt.icon, null,
+                                tint = if (isSelected) fmt.color else MaterialTheme.colorScheme.onSurfaceVariant,
+                                size = 20.dp
+                            )
+                            Text(
+                                fmt.name,
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                color = if (isSelected) fmt.color else MaterialTheme.colorScheme.onSurfaceVariant,
+                                maxLines = 1
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
+        // ── Preview card ──
+        Card(
+            shape = RoundedCornerShape(20.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+        ) {
+            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Icon(FieldMindIcons.Info, null, tint = formatColor.copy(alpha = glowAlpha), size = 18.dp)
+                    Text("Preview", fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.titleSmall)
+                }
+                Row(
+                    Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceEvenly
+                ) {
+                    entityCounts.entries.filter { it.value > 0 }.take(4).forEach { (key, value) ->
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text(
+                                value.toString(),
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = formatColor
+                            )
+                            Text(
+                                key,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                maxLines = 1
+                            )
+                        }
+                    }
+                }
+                Text(
+                    "$totalEntities total • ${formatDescription.lowercase()}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        }
+
+        // ── Action buttons ──
+        Row(
+            Modifier.fillMaxWidth().padding(bottom = 16.dp),
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            OutlinedButton(
+                onClick = onDismiss,
+                modifier = Modifier.weight(1f),
+                shape = RoundedCornerShape(16.dp)
+            ) {
+                Text("Cancel")
+            }
+            Button(
+                onClick = onShare,
+                modifier = Modifier.weight(1f),
+                shape = RoundedCornerShape(16.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = formatColor)
+            ) {
+                Icon(FieldMindIcons.Export, null, size = 18.dp)
+                Spacer(Modifier.width(6.dp))
+                Text("Share $format")
+            }
+        }
+    }
 }
 
 // ══════════════════════════════════════════════════════════════════════
