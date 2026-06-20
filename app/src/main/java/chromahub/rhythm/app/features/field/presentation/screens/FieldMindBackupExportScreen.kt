@@ -174,7 +174,9 @@ fun BackupAndRestoreScreen(
     var passwordsMatch by remember { mutableStateOf(true) }
 
     // Format state for export
+    var showShareDialog by remember { mutableStateOf(false) }
     var shareDialogFormat by remember { mutableStateOf("Markdown") }
+    var includeMedia by remember { mutableStateOf(false) }
 
     // Backup folder URI from settings
     var backupFolderUri by remember { mutableStateOf(settings.backupFolderUri.value) }
@@ -1109,7 +1111,7 @@ private fun ExportTabContent(
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
             elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
         ) {
-            Row(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 Icon(FieldMindIcons.Info, null, tint = MaterialTheme.colorScheme.primary, size = 20.dp)
                 Column {
                     Text("$totalEntities total records", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
