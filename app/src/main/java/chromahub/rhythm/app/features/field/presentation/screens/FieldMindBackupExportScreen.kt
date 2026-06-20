@@ -357,8 +357,43 @@ fun BackupAndRestoreScreen(
                                                 "JSON" -> exportFile.writeText(json)
                                                 "CSV" -> exportFile.writeText(FieldMindExport.observationsCsv(observations))
                                                 "Markdown" -> exportFile.writeText(observations.joinToString("\n\n---\n\n") { FieldMindExport.singleObservationMarkdown(it) })
-                                                "HTML" -> exportFile.writeText(FieldMindExport.pdfReadyHtml(projects, observations, sources, reports))
-                                                "PDF" -> exportFile.writeBytes(FieldMindExport.simplePdfBytes("FieldMind Export", observations.joinToString("\n") { FieldMindExport.singleObservationMarkdown(it) }))
+                                                "HTML" -> {
+                                                    if (includeMedia) {
+                                                        val mediaBundle = withContext(Dispatchers.IO) {
+                                                            FieldMindExport.ExportMediaBundle.collect(
+                                                                context = context,
+                                                                observations = observations,
+                                                                notes = notes,
+                                                                projects = projects,
+                                                                sources = sources
+                                                            )
+                                                        }
+                                                        exportFile.writeText(FieldMindExport.pdfReadyHtml(projects, observations, sources, reports, notes = notes, media = mediaBundle))
+                                                    } else {
+                                                        exportFile.writeText(FieldMindExport.pdfReadyHtml(projects, observations, sources, reports, notes = notes))
+                                                    }
+                                                }
+                                                "PDF" -> {
+                                                    val bodyText = observations.joinToString("\n") { FieldMindExport.singleObservationMarkdown(it) }
+                                                    if (includeMedia) {
+                                                        val mediaBundle = withContext(Dispatchers.IO) {
+                                                            FieldMindExport.ExportMediaBundle.collect(
+                                                                context = context,
+                                                                observations = observations,
+                                                                notes = notes,
+                                                                projects = projects,
+                                                                sources = sources
+                                                            )
+                                                        }
+                                                        // PDF with embedded images (draw first media image as bitmap)
+                                                        val imageBytes = mediaBundle.observationImages.values.firstOrNull()
+                                                            ?.firstOrNull()?.second
+                                                        val imgBytesArray = imageBytes?.let { decodeBase64FromDataUri(it) }
+                                                        exportFile.writeBytes(FieldMindExport.simplePdfBytes("FieldMind Export", bodyText, embeddedImageBytes = imgBytesArray))
+                                                    } else {
+                                                        exportFile.writeBytes(FieldMindExport.simplePdfBytes("FieldMind Export", bodyText))
+                                                    }
+                                                }
                                                 "PNG" -> exportFile.writeBytes(FieldMindExport.dashboardPngBytes(observations, sources, projects, notes))
                                                 "SVG" -> exportFile.writeText(FieldMindExport.dashboardSvg(observations, sources, projects, notes))
                                                 ".fieldmind" -> {
@@ -750,8 +785,41 @@ fun BackupAndRestoreScreen(
                                     "JSON" -> exportFile.writeText(json)
                                     "CSV" -> exportFile.writeText(FieldMindExport.observationsCsv(observations))
                                     "Markdown" -> exportFile.writeText(observations.joinToString("\n\n---\n\n") { FieldMindExport.singleObservationMarkdown(it) })
-                                    "HTML" -> exportFile.writeText(FieldMindExport.pdfReadyHtml(projects, observations, sources, reports))
-                                    "PDF" -> exportFile.writeBytes(FieldMindExport.simplePdfBytes("FieldMind Export", observations.joinToString("\n") { FieldMindExport.singleObservationMarkdown(it) }))
+                                    "HTML" -> {
+                                        if (includeMedia) {
+                                            val mediaBundle = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                                                FieldMindExport.ExportMediaBundle.collect(
+                                                    context = context,
+                                                    observations = observations,
+                                                    notes = notes,
+                                                    projects = projects,
+                                                    sources = sources
+                                                )
+                                            }
+                                            exportFile.writeText(FieldMindExport.pdfReadyHtml(projects, observations, sources, reports, notes = notes, media = mediaBundle))
+                                        } else {
+                                            exportFile.writeText(FieldMindExport.pdfReadyHtml(projects, observations, sources, reports, notes = notes))
+                                        }
+                                    }
+                                    "PDF" -> {
+                                        val bodyText = observations.joinToString("\n") { FieldMindExport.singleObservationMarkdown(it) }
+                                        if (includeMedia) {
+                                            val mediaBundle = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                                                FieldMindExport.ExportMediaBundle.collect(
+                                                    context = context,
+                                                    observations = observations,
+                                                    notes = notes,
+                                                    projects = projects,
+                                                    sources = sources
+                                                )
+                                            }
+                                            val imgBytesArray = mediaBundle.observationImages.values.firstOrNull()
+                                                ?.firstOrNull()?.second?.let { decodeBase64FromDataUri(it) }
+                                            exportFile.writeBytes(FieldMindExport.simplePdfBytes("FieldMind Export", bodyText, embeddedImageBytes = imgBytesArray))
+                                        } else {
+                                            exportFile.writeBytes(FieldMindExport.simplePdfBytes("FieldMind Export", bodyText))
+                                        }
+                                    }
                                     "PNG" -> exportFile.writeBytes(FieldMindExport.dashboardPngBytes(observations, sources, projects, notes))
                                     "SVG" -> exportFile.writeText(FieldMindExport.dashboardSvg(observations, sources, projects, notes))
                                     ".fieldmind" -> {
@@ -1796,6 +1864,20 @@ private fun lastBackupSummary(context: Context): String {
     return latest?.let {
         SimpleDateFormat("MMM d, yyyy • h:mm a", Locale.getDefault()).format(Date(it.lastModified()))
     } ?: "Never"
+}
+
+/**
+ * Decode a base64 data URI (e.g., "data:image/jpeg;base64,/9j...") back to raw bytes.
+ * Used for embedding images in PDF exports where we need to decode the base64
+ * that was produced by ExportMediaBundle.collect().
+ */
+private fun decodeBase64FromDataUri(dataUri: String): ByteArray? {
+    return try {
+        val commaIdx = dataUri.indexOf(',')
+        if (commaIdx < 0) return null
+        val base64 = dataUri.substring(commaIdx + 1)
+        android.util.Base64.decode(base64, android.util.Base64.NO_WRAP)
+    } catch (e: Exception) { null }
 }
 
 // ══════════════════════════════════════════════════════════════════════
