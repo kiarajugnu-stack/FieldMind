@@ -104,11 +104,22 @@ class FieldMindAutoBackupWorker(context: Context, params: WorkerParameters) : Co
     }.getOrElse { Result.retry() }
 
     private fun pruneOldBackups(context: Context) {
+        val settings = FieldMindSettings.getInstance(context)
+        val intervalLabel = settings.autoBackupInterval.value
+        // Keep more backups for shorter intervals, fewer for longer ones
+        val keepCount = when (intervalLabel) {
+            "Every 6 hours" -> 30
+            "Every 12 hours" -> 30
+            "Daily" -> 14
+            "Weekly" -> 8
+            "Monthly" -> 6
+            else -> 8
+        }
         val backupDir = File(context.filesDir, "fieldmind/backups")
         if (!backupDir.exists()) return
         backupDir.listFiles { file -> file.isFile && file.extension == "fieldmind" }
             ?.sortedByDescending { it.lastModified() }
-            ?.drop(8)
+            ?.drop(keepCount)
             ?.forEach { it.delete() }
     }
 }

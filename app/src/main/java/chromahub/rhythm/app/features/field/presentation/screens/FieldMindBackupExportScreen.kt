@@ -1495,6 +1495,7 @@ private fun BackupTabContent(
     entityCounts: Map<String, Int>,
     onCreateBackup: () -> Unit
 ) {
+    val context = LocalContext.current
     val colors = FieldMindTheme.colors
 
     Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
@@ -1617,7 +1618,7 @@ private fun BackupTabContent(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        listOf("Daily", "Weekly", "Monthly").forEach { interval ->
+                        listOf("Every 6 hours", "Every 12 hours", "Daily", "Weekly", "Monthly").forEach { interval ->
                             val selected = scheduleInterval == interval
                             Surface(
                                 onClick = { onScheduleIntervalChange(interval) },
@@ -1631,6 +1632,91 @@ private fun BackupTabContent(
                                     color = if (selected) MaterialTheme.colorScheme.onPrimaryContainer
                                     else MaterialTheme.colorScheme.onSurfaceVariant)
                             }
+                        }
+                    }
+                }
+            }
+        }
+
+        // ── Next backup countdown (only when scheduling is enabled) ──
+        if (scheduleEnabled) {
+            val intervalMs = remember(scheduleInterval) {
+                fieldmind.research.app.features.field.data.background.FieldMindBackgroundScheduler.intervalToMillis(scheduleInterval)
+            }
+            val backupDir = remember { backupDirectory(context) }
+            val lastBackupTimeMs = remember(backupDir, lastBackupLabel) {
+                backupDir.listFiles { f -> f.isFile && (f.extension == "fieldmind" || f.extension == "encrypted" || f.extension == "json") }
+                    ?.maxOfOrNull { it.lastModified() } ?: 0L
+            }
+            val nextBackupTime = lastBackupTimeMs + intervalMs
+            var now by remember { mutableLongStateOf(System.currentTimeMillis()) }
+
+            // Tick every second to keep the countdown live
+            LaunchedEffect(scheduleEnabled, scheduleInterval) {
+                while (true) {
+                    now = System.currentTimeMillis()
+                    kotlinx.coroutines.delay(1000)
+                }
+            }
+
+            val remainingMs = (nextBackupTime - now).coerceAtLeast(0L)
+            val countdownText = when {
+                remainingMs <= 0 -> "Due now"
+                lastBackupTimeMs == 0L -> "After first backup"
+                remainingMs >= 24 * 60 * 60 * 1000 -> {
+                    val days = remainingMs / (24 * 60 * 60 * 1000)
+                    val hours = (remainingMs % (24 * 60 * 60 * 1000)) / (60 * 60 * 1000)
+                    "${days}d ${hours}h"
+                }
+                remainingMs >= 60 * 60 * 1000 -> {
+                    val hours = remainingMs / (60 * 60 * 1000)
+                    val mins = (remainingMs % (60 * 60 * 1000)) / (60 * 1000)
+                    "${hours}h ${mins}m"
+                }
+                else -> {
+                    val mins = remainingMs / (60 * 1000)
+                    val secs = (remainingMs % (60 * 1000)) / 1000
+                    "${mins}m ${secs}s"
+                }
+            }
+            val countdownFraction = if (intervalMs > 0) (1f - remainingMs.toFloat() / intervalMs.toFloat()).coerceIn(0f, 1f) else 0f
+
+            Card(
+                shape = RoundedCornerShape(24.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.25f)),
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+            ) {
+                Row(
+                    Modifier.fillMaxWidth().padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(14.dp)
+                ) {
+                    Icon(
+                        FieldMindIcons.Timer,
+                        null,
+                        tint = MaterialTheme.colorScheme.tertiary,
+                        size = 22.dp
+                    )
+                    Column(Modifier.weight(1f)) {
+                        Text(
+                            if (lastBackupTimeMs > 0) "Next backup" else "First backup",
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.tertiary
+                        )
+                        Text(
+                            countdownText,
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        if (remainingMs > 0 && lastBackupTimeMs > 0) {
+                            Spacer(Modifier.height(4.dp))
+                            LinearProgressIndicator(
+                                progress = { countdownFraction },
+                                modifier = Modifier.fillMaxWidth().height(4.dp).clip(RoundedCornerShape(2.dp)),
+                                color = MaterialTheme.colorScheme.tertiary,
+                                trackColor = MaterialTheme.colorScheme.surfaceContainerHighest
+                            )
                         }
                     }
                 }

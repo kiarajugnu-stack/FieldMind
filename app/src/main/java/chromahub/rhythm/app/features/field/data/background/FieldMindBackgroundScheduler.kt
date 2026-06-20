@@ -22,12 +22,14 @@ object FieldMindBackgroundScheduler {
             workManager.cancelUniqueWork(AUTO_BACKUP_WORK)
             return
         }
-        val repeatDays = when (intervalLabel) {
-            "Daily" -> 1L
-            "Monthly" -> 30L
-            else -> 7L
+        val (duration, unit) = when (intervalLabel) {
+            "Every 6 hours" -> 6L to TimeUnit.HOURS
+            "Every 12 hours" -> 12L to TimeUnit.HOURS
+            "Daily" -> 1L to TimeUnit.DAYS
+            "Monthly" -> 30L to TimeUnit.DAYS
+            else -> 7L to TimeUnit.DAYS // Weekly fallback
         }
-        val request = PeriodicWorkRequestBuilder<FieldMindAutoBackupWorker>(repeatDays, TimeUnit.DAYS)
+        val request = PeriodicWorkRequestBuilder<FieldMindAutoBackupWorker>(duration, unit)
             .addTag(AUTO_BACKUP_WORK)
             .build()
         workManager.enqueueUniquePeriodicWork(AUTO_BACKUP_WORK, ExistingPeriodicWorkPolicy.UPDATE, request)
@@ -43,5 +45,17 @@ object FieldMindBackgroundScheduler {
             .addTag(DAILY_REMINDER_WORK)
             .build()
         workManager.enqueueUniquePeriodicWork(DAILY_REMINDER_WORK, ExistingPeriodicWorkPolicy.UPDATE, request)
+    }
+
+    /**
+     * Parse an interval label into milliseconds for countdown display.
+     */
+    fun intervalToMillis(intervalLabel: String): Long = when (intervalLabel) {
+        "Every 6 hours" -> 6L * 60 * 60 * 1000
+        "Every 12 hours" -> 12L * 60 * 60 * 1000
+        "Daily" -> 24L * 60 * 60 * 1000
+        "Weekly" -> 7L * 24 * 60 * 60 * 1000
+        "Monthly" -> 30L * 24 * 60 * 60 * 1000
+        else -> 7L * 24 * 60 * 60 * 1000
     }
 }

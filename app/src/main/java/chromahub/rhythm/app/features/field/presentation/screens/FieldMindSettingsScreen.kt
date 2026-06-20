@@ -727,7 +727,7 @@ fun BackupImportSettingsPage(viewModel: FieldMindViewModel, onBack: () -> Unit, 
                 ToggleItem("Auto backup", "Writes private archive JSON files on the selected schedule.", autoBackupEnabled, settings::setAutoBackupEnabled, FieldMindIcons.Archive)
                 if (autoBackupEnabled) {
                     HorizontalDivider(Modifier.padding(start = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
-                    ChoiceItemForm("Backup interval", listOf("Daily", "Weekly", "Monthly"), autoBackupInterval, FieldMindIcons.Today, settings::setAutoBackupInterval)
+                    ChoiceItemForm("Backup interval", listOf("Every 6 hours", "Every 12 hours", "Daily", "Weekly", "Monthly"), autoBackupInterval, FieldMindIcons.Today, settings::setAutoBackupInterval)
                 }
             }
         }
