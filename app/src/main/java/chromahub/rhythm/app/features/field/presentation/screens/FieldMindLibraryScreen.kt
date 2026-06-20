@@ -15,6 +15,10 @@ import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -57,6 +61,7 @@ import fieldmind.research.app.features.field.presentation.viewmodel.FieldMindVie
 import fieldmind.research.app.shared.presentation.components.icons.Icon
 import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon
 import fieldmind.research.app.features.field.background.FieldMindTimerManager
+import fieldmind.research.app.features.field.background.FieldMindTimerService
 import coil.compose.AsyncImage
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalUriHandler
@@ -709,16 +714,88 @@ private fun BulkImportDialog(viewModel: FieldMindViewModel, onDismiss: () -> Uni
 @Composable
 private fun ReadingTimerDialog(onDismiss: () -> Unit) {
     val haptics = rememberFieldMindHaptics()
-    var isRunning by remember { mutableStateOf(false) }
-    var elapsedSeconds by remember { mutableIntStateOf(0) }
-    var targetMinutes by remember { mutableIntStateOf(25) } // Pomodoro default
+    val context = LocalContext.current
+    var isRunning by rememberSaveable { mutableStateOf(false) }
+    var elapsedSeconds by rememberSaveable { mutableIntStateOf(0) }
+    var targetMinutes by rememberSaveable { mutableIntStateOf(25) } // Pomodoro default
+    var startTimestamp by rememberSaveable { mutableLongStateOf(0L) }
+    // Track whether service notification has been started
+    var notificationStarted by rememberSaveable { mutableStateOf(false) }
 
-    LaunchedEffect(isRunning) {
+    fun formatTimerTime(secs: Int): String {
+        val h = secs / 3600
+        val m = (secs % 3600) / 60
+        val s = secs % 60
+        return if (h > 0) "%d:%02d:%02d".format(h, m, s)
+        else "%02d:%02d".format(m, s)
+    }
+
+    // Restore state from saved timer if service was running
+    LaunchedEffect(Unit) {
+        val savedState = FieldMindTimerManager.getSavedTimerState(context)
+        if (savedState != null && savedState.type == FieldMindTimerService.TYPE_READING) {
+            isRunning = true
+            notificationStarted = true
+            elapsedSeconds = (savedState.elapsedMs / 1000).toInt()
+            // Recover session minutes from saved state name if possible
+            val savedMinutes = savedState.name.filter { it.isDigit() }.toIntOrNull()
+            if (savedMinutes != null && savedMinutes > 0) {
+                targetMinutes = savedMinutes
+            }
+        }
+    }
+
+    // Timer tick — uses elapsed time from system to handle background correctly
+    LaunchedEffect(isRunning, startTimestamp) {
         if (isRunning) {
+            if (startTimestamp == 0L) {
+                startTimestamp = System.currentTimeMillis()
+            }
             while (true) {
                 delay(1000)
                 if (!isRunning) break
-                elapsedSeconds++
+                val currentElapsed = ((System.currentTimeMillis() - startTimestamp) / 1000).toInt()
+                elapsedSeconds = currentElapsed
+                // Update notification periodically
+                if (notificationStarted) {
+                    FieldMindTimerManager.updateTimerNotification(
+                        context = context,
+                        title = "Reading Timer",
+                        text = formatTimerTime(elapsedSeconds),
+                        elapsedMs = elapsedSeconds * 1000L,
+                        timerType = FieldMindTimerService.TYPE_READING
+                    )
+                }
+            }
+        }
+    }
+
+    // Start/stop foreground service notification
+    LaunchedEffect(isRunning, notificationStarted) {
+        if (isRunning && !notificationStarted) {
+            notificationStarted = true
+            FieldMindTimerManager.startReadingTimer(context)
+            FieldMindTimerManager.updateTimerNotification(
+                context = context,
+                title = "Reading Timer",
+                text = formatTimerTime(elapsedSeconds),
+                elapsedMs = elapsedSeconds * 1000L,
+                timerType = FieldMindTimerService.TYPE_READING
+            )
+        } else if (!isRunning && notificationStarted) {
+            notificationStarted = false
+            FieldMindTimerManager.stopReadingTimer(context)
+            FieldMindTimerManager.clearSavedState(context)
+        }
+    }
+
+    // Cleanup on dialog dismiss
+    DisposableEffect(Unit) {
+        onDispose {
+            // Stop notification if timer is not running
+            if (!isRunning && notificationStarted) {
+                FieldMindTimerManager.stopReadingTimer(context)
+                FieldMindTimerManager.clearSavedState(context)
             }
         }
     }
@@ -729,38 +806,98 @@ private fun ReadingTimerDialog(onDismiss: () -> Unit) {
     val timeStr = if (hours > 0) "%d:%02d:%02d".format(hours, minutes, seconds)
     else "%02d:%02d".format(minutes, seconds)
 
-    DialogWrapper(onDismiss = onDismiss) {
+    DialogWrapper(onDismiss = {
+        if (!isRunning) {
+            FieldMindTimerManager.stopReadingTimer(context)
+            FieldMindTimerManager.clearSavedState(context)
+        }
+        onDismiss()
+    }) {
         DialogHeader(FieldMindIcons.Timer, "Reading Timer", "Focus on your source without distractions.", accent = FieldMindTheme.colors.source)
 
         // Timer display
         Box(
-            Modifier.fillMaxWidth().padding(vertical = 16.dp),
+            Modifier.fillMaxWidth().padding(vertical = 20.dp),
             contentAlignment = Alignment.Center
         ) {
-            Text(timeStr, style = MaterialTheme.typography.displaySmall, fontWeight = FontWeight.ExtraBold, color = FieldMindTheme.colors.source)
+            // Pulse animation while running
+            val pulseTransition = rememberInfiniteTransition(label = "readTimerPulse")
+            val pulseScale by pulseTransition.animateFloat(
+                1f, 1.04f,
+                infiniteRepeatable(tween(1200), RepeatMode.Reverse), label = "readPulseScale"
+            )
+            val pulseGlow by pulseTransition.animateFloat(
+                0f, 0.08f,
+                infiniteRepeatable(tween(1200), RepeatMode.Reverse), label = "readPulseGlow"
+            )
+
+            Box(
+                modifier = Modifier
+                    .size(160.dp)
+                    .graphicsLayer {
+                        scaleX = if (isRunning) pulseScale else 1f
+                        scaleY = if (isRunning) pulseScale else 1f
+                    },
+                contentAlignment = Alignment.Center
+            ) {
+                // Background ring
+                if (targetMinutes > 0) {
+                    val targetSeconds = targetMinutes * 60
+                    val progress = (elapsedSeconds.toFloat() / targetSeconds).coerceAtMost(1f)
+                    CircularProgressIndicator(
+                        progress = progress,
+                        modifier = Modifier.fillMaxSize(),
+                        color = FieldMindTheme.colors.source,
+                        trackColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                        strokeWidth = 4.dp
+                    )
+                }
+                Text(
+                    timeStr,
+                    style = MaterialTheme.typography.displaySmall,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = if (isRunning) FieldMindTheme.colors.source else MaterialTheme.colorScheme.onSurface
+                )
+            }
         }
 
         // Progress bar
         if (targetMinutes > 0) {
             val targetSeconds = targetMinutes * 60
             val progress = (elapsedSeconds.toFloat() / targetSeconds).coerceAtMost(1f)
-            LinearProgressIndicator(
-                progress = progress,
-                modifier = Modifier.fillMaxWidth().height(6.dp).clip(RoundedCornerShape(3.dp)),
-                color = FieldMindTheme.colors.source,
-                trackColor = MaterialTheme.colorScheme.surfaceContainerHighest
-            )
-            Text("${(progress * 100).toInt()}% of ${targetMinutes}min goal", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 4.dp))
+            Column {
+                LinearProgressIndicator(
+                    progress = progress,
+                    modifier = Modifier.fillMaxWidth().height(6.dp).clip(RoundedCornerShape(3.dp)),
+                    color = FieldMindTheme.colors.source,
+                    trackColor = MaterialTheme.colorScheme.surfaceContainerHighest
+                )
+                Text(
+                    "${(progress * 100).toInt()}% of ${targetMinutes}min goal",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(top = 4.dp)
+                )
+            }
         }
 
         // Target selector
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-            Text("Goal:", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Row(
+            Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                "Goal:",
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
             listOf(10, 15, 20, 25, 30, 45, 60).forEach { mins ->
                 FilterChip(
                     selected = targetMinutes == mins,
                     onClick = { if (!isRunning) { targetMinutes = mins; haptics.light() } },
-                    label = { Text("${mins}m") }
+                    label = { Text("${mins}m") },
+                    shape = RoundedCornerShape(12.dp)
                 )
             }
         }
@@ -769,22 +906,40 @@ private fun ReadingTimerDialog(onDismiss: () -> Unit) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             if (isRunning) {
                 Button(
-                    onClick = { isRunning = false; haptics.confirm() },
+                    onClick = {
+                        isRunning = false
+                        startTimestamp = 0L
+                        haptics.confirm()
+                    },
                     modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(14.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.errorContainer, contentColor = MaterialTheme.colorScheme.onErrorContainer)
+                    shape = RoundedCornerShape(16.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = FieldMindTheme.colors.flashcard.copy(alpha = 0.18f)
+                    )
                 ) {
-                    Icon(FieldMindIcons.Pause, null, size = 18.dp); Spacer(Modifier.size(6.dp)); Text("Pause")
+                    Icon(FieldMindIcons.Pause, null, size = 18.dp, tint = FieldMindTheme.colors.flashcard)
+                    Spacer(Modifier.size(6.dp))
+                    Text("Pause", color = FieldMindTheme.colors.flashcard)
                 }
             } else {
                 Button(
                     onClick = {
-                        if (elapsedSeconds == 0) isRunning = true
-                        else elapsedSeconds = 0
+                        if (elapsedSeconds > 0) {
+                            elapsedSeconds = 0
+                            startTimestamp = 0L
+                            notificationStarted = false
+                            FieldMindTimerManager.stopReadingTimer(context)
+                            FieldMindTimerManager.clearSavedState(context)
+                        }
+                        isRunning = true
+                        startTimestamp = System.currentTimeMillis()
                         haptics.confirm()
                     },
                     modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(14.dp)
+                    shape = RoundedCornerShape(16.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = FieldMindTheme.colors.source
+                    )
                 ) {
                     Icon(if (elapsedSeconds == 0) FieldMindIcons.Play else FieldMindIcons.Stop, null, size = 18.dp)
                     Spacer(Modifier.size(6.dp))
@@ -792,11 +947,22 @@ private fun ReadingTimerDialog(onDismiss: () -> Unit) {
                 }
             }
             OutlinedButton(
-                onClick = { isRunning = false; elapsedSeconds = 0; haptics.light() },
+                onClick = {
+                    isRunning = false
+                    elapsedSeconds = 0
+                    startTimestamp = 0L
+                    notificationStarted = false
+                    FieldMindTimerManager.stopReadingTimer(context)
+                    FieldMindTimerManager.clearSavedState(context)
+                    haptics.light()
+                    onDismiss()
+                },
                 modifier = Modifier.weight(1f),
-                shape = RoundedCornerShape(14.dp)
+                shape = RoundedCornerShape(16.dp)
             ) {
-                Icon(FieldMindIcons.Close, null, size = 18.dp); Spacer(Modifier.size(6.dp)); Text("Stop")
+                Icon(FieldMindIcons.Close, null, size = 18.dp)
+                Spacer(Modifier.size(6.dp))
+                Text("Close")
             }
         }
 
@@ -809,12 +975,25 @@ private fun ReadingTimerDialog(onDismiss: () -> Unit) {
                 elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
             ) {
                 Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Text("Session summary", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Text("You read for ${readMin} minute${if (readMin != 1) "s" else ""}.", style = MaterialTheme.typography.bodyMedium)
+                    Text(
+                        "Session summary",
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        "You read for $readMin minute${if (readMin != 1) "s" else ""}.",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
                     if (targetMinutes > 0 && readMin >= targetMinutes) {
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                             Icon(FieldMindIcons.Done, null, tint = FieldMindTheme.colors.positive, size = 16.dp)
-                            Text("Goal reached!", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold, color = FieldMindTheme.colors.positive)
+                            Text(
+                                "Goal reached!",
+                                style = MaterialTheme.typography.bodySmall,
+                                fontWeight = FontWeight.Bold,
+                                color = FieldMindTheme.colors.positive
+                            )
                         }
                     }
                 }
@@ -822,6 +1001,7 @@ private fun ReadingTimerDialog(onDismiss: () -> Unit) {
         }
     }
 }
+
 
 // ══════════════════════════════════════════════════════════════════════
 //  ORIGINAL PANELS — Notes, Reading, Flashcards, Learn (unchanged)

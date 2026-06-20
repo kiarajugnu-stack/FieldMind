@@ -42,6 +42,8 @@ import fieldmind.research.app.shared.data.model.AppSettings
 import fieldmind.research.app.shared.presentation.components.icons.Icon
 import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon
 import fieldmind.research.app.features.field.presentation.components.FieldMindMotion
+import fieldmind.research.app.features.field.presentation.components.LocalPrivacyTypingEnabled
+import androidx.compose.runtime.CompositionLocalProvider
 
 private fun formatElapsed(startedAt: Long): String {
     val ms = System.currentTimeMillis() - startedAt
@@ -89,6 +91,7 @@ sealed class FieldMindScreen(val route: String, val label: String, val icon: Mat
     data object SettingsLocalModel : FieldMindScreen("field_settings_local_model", "Local Model", FieldMindIcons.Download)
     data object SettingsBackup : FieldMindScreen("field_settings_backup", "Backup & Import", FieldMindIcons.Archive)
     data object SettingsSecurity : FieldMindScreen("field_settings_security", "Security", FieldMindIcons.Lock)
+    data object SettingsScreenVisibility : FieldMindScreen("field_settings_screen_visibility", "Screen Visibility", FieldMindIcons.Visibility)
     data object SettingsAbout : FieldMindScreen("field_settings_about", "About", FieldMindIcons.Info)
     data object SettingsUnits : FieldMindScreen("field_settings_units", "Units", FieldMindIcons.Settings)
     data object SettingsWeather : FieldMindScreen("field_settings_weather", "Weather", FieldMindIcons.Weather)
@@ -146,8 +149,11 @@ fun FieldMindApp(appSettings: AppSettings, viewModel: FieldMindViewModel) {
             isUnlocked = appUnlocked,
             onUnlock = { appUnlocked = true }
         ) {
-            FieldMindSnackbarProvider { _ ->
-                FieldMindNavigation(viewModel = viewModel, onResetOnboarding = { appSettings.setOnboardingCompleted(false); appUnlocked = false })
+            val privacyTyping by viewModel.fieldSettings.privacyTypingEnabled.collectAsState()
+            CompositionLocalProvider(LocalPrivacyTypingEnabled provides privacyTyping) {
+                FieldMindSnackbarProvider { _ ->
+                    FieldMindNavigation(viewModel = viewModel, onResetOnboarding = { appSettings.setOnboardingCompleted(false); appUnlocked = false })
+                }
             }
         }
     }
@@ -584,10 +590,10 @@ private fun FieldMindNavHost(
 composable(FieldMindScreen.Hypotheses.route) { QuestionsScreen(viewModel = viewModel, onOpenDetail = openDetail) }
 composable(FieldMindScreen.DataTools.route) { DataToolsHubScreen(viewModel = viewModel, onBack = { navController.popBackStack() }, onNavigate = { navController.navigateToDestination(it.route) }, onOpenDetail = openDetail) }
 composable(FieldMindScreen.Analysis.route) { ProjectsScreen(viewModel = viewModel, startTab = 0, onOpenDetail = openDetail, onNavigate = { navController.navigateToDestination(it.route) }) }
-composable(FieldMindScreen.Reports.route) { ProjectsScreen(viewModel = viewModel, startTab = 4, onOpenDetail = openDetail, onNavigate = { navController.navigateToDestination(it.route) }) }
+composable(FieldMindScreen.Reports.route) { FieldMindReportScreen(viewModel = viewModel, onBack = { navController.popBackStack() }) }
         composable(FieldMindScreen.Search.route) { ArchiveScreen(viewModel = viewModel, onOpenDetail = openDetail, onOpenReader = openReader) }
         composable(FieldMindScreen.MapScreen.route) { MapFieldScreen(viewModel = viewModel, onNavigate = { navController.navigateToDestination(it.route) }, onOpenDetail = openDetail) }
-        composable(FieldMindScreen.ExportStudio.route) { BackupExportScreen(viewModel = viewModel) }
+        composable(FieldMindScreen.ExportStudio.route) { BackupAndRestoreScreen(viewModel = viewModel, onBack = { navController.popBackStack() }) }
         composable(FieldMindScreen.Changelog.route) { FieldMindChangelogScreen(onBack = { navController.popBackStack() }) }
         composable(FieldMindScreen.Progress.route) { InsightsScreen(viewModel = viewModel, onNavigate = { navController.navigateToDestination(it.route) }, onOpenDetail = openDetail) }
         composable(FieldMindScreen.Flashcards.route) { FlashcardSessionScreen(viewModel = viewModel, onBack = { navController.popBackStack() }) }
@@ -606,10 +612,11 @@ composable(FieldMindScreen.Reports.route) { ProjectsScreen(viewModel = viewModel
                 onOpenWeather = { navController.navigateToDestination(FieldMindScreen.SettingsWeather.route) },
                 onOpenAi = { navController.navigateToDestination(FieldMindScreen.SettingsAi.route) },
                 onOpenLocalModel = { navController.navigateToDestination(FieldMindScreen.SettingsLocalModel.route) },
-                onOpenBackup = { navController.navigateToDestination(FieldMindScreen.SettingsBackup.route) },
+                onOpenBackup = { navController.navigateToDestination(FieldMindScreen.ExportStudio.route) },
                 onOpenSecurity = { navController.navigateToDestination(FieldMindScreen.SettingsSecurity.route) },
                 onOpenChangelog = { navController.navigateToDestination(FieldMindScreen.Changelog.route) },
                 onOpenUnits = { navController.navigateToDestination(FieldMindScreen.SettingsUnits.route) },
+                onOpenScreenVisibility = { navController.navigateToDestination(FieldMindScreen.SettingsScreenVisibility.route) },
                 onOpenMap = { navController.navigateToDestination(FieldMindScreen.SettingsMap.route) },
                 onOpenDataIntegrity = { navController.navigateToDestination(FieldMindScreen.SettingsDataIntegrity.route) },
                 onOpenDeveloper = { navController.navigateToDestination(FieldMindScreen.SettingsDeveloper.route) },
@@ -623,8 +630,12 @@ composable(FieldMindScreen.Reports.route) { ProjectsScreen(viewModel = viewModel
         composable(FieldMindScreen.SettingsCapture.route) { CaptureDefaultsSettingsPage(viewModel = viewModel, onBack = { navController.popBackStack() }) }
         composable(FieldMindScreen.SettingsAi.route) { AiAssistantSettingsPage(viewModel = viewModel, onBack = { navController.popBackStack() }) }
         composable(FieldMindScreen.SettingsLocalModel.route) { LocalModelSettingsPage(viewModel = viewModel, onBack = { navController.popBackStack() }) }
-        composable(FieldMindScreen.SettingsBackup.route) { BackupImportSettingsPage(viewModel = viewModel, onBack = { navController.popBackStack() }, onOpenExport = { navController.navigateToDestination(FieldMindScreen.ExportStudio.route) }) }
-        composable(FieldMindScreen.SettingsSecurity.route) { SecuritySettingsPage(viewModel = viewModel, onBack = { navController.popBackStack() }) }
+        composable(FieldMindScreen.SettingsBackup.route) { BackupImportSettingsPage(viewModel = viewModel, onBack = { navController.popBackStack() }, onOpenExport = { navController.navigateToDestination(FieldMindScreen.ExportStudio.route) }) }        composable(FieldMindScreen.SettingsSecurity.route) {
+            SecuritySettingsPage(viewModel = viewModel, onBack = { navController.popBackStack() })
+        }
+        composable(FieldMindScreen.SettingsScreenVisibility.route) {
+            ScreenVisibilitySettingsPage(viewModel = viewModel, onBack = { navController.popBackStack() })
+        }
         composable(FieldMindScreen.SettingsAbout.route) { AboutPage(onBack = { navController.popBackStack() }, onOpenChangelog = { navController.navigateToDestination(FieldMindScreen.Changelog.route) }) }
         composable(FieldMindScreen.SettingsUnits.route) { UnitsFormatSettingsPage(viewModel = viewModel, onBack = { navController.popBackStack() }) }
         composable(FieldMindScreen.SettingsWeather.route) { WeatherSettingsPage(viewModel = viewModel, onBack = { navController.popBackStack() }) }
@@ -654,7 +665,12 @@ composable(FieldMindScreen.SpeciesTool.route) { SpeciesToolScreen(viewModel = vi
         composable(FieldMindScreen.SiteLogTool.route) { SiteLogToolScreen(viewModel = viewModel, onBack = { navController.popBackStack() }) }
         composable(FieldMindScreen.ComparisonTable.route) { ComparisonTableScreen(viewModel = viewModel, onBack = { navController.popBackStack() }) }
         composable(FieldMindScreen.TimerTool.route) { TimerToolScreen(onBack = { navController.popBackStack() }) }
-        composable(FieldMindScreen.FieldLog.route) { FieldLogScreen(viewModel = viewModel, onBack = { navController.popBackStack() }, onOpenDetail = openDetail) }
+        composable(FieldMindScreen.FieldLog.route) { FieldLogScreen(
+                        viewModel = viewModel,
+                        onBack = { navController.popBackStack() },
+                        onOpenDetail = openDetail,
+                        onOpenExport = { navController.navigateToDestination(FieldMindScreen.ExportStudio.route) }
+                    ) }
         composable("field_detail/{kind}/{id}") { entry ->
             val kind = entry.arguments?.getString("kind") ?: "observation"
             val id = entry.arguments?.getString("id")?.toLongOrNull() ?: 0L
