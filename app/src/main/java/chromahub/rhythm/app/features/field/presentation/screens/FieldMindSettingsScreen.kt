@@ -214,7 +214,7 @@ fun ProfileSettingsPage(viewModel: FieldMindViewModel, onBack: () -> Unit) {
             SettingsGroupCard {
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Text("FieldMind has no app server: profile, observations, sources, and local model settings are stored on this device unless you export or share them.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    OutlinedTextField(value = profileName, onValueChange = settings::setProfileName, label = { Text("Display name") }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(18.dp), singleLine = true, keyboardOptions = KeyboardOptions.Default.withPrivacyTyping(LocalPrivacyTypingEnabled.current)
+                    OutlinedTextField(value = profileName, onValueChange = settings::setProfileName, label = { Text("Display name") }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(18.dp), singleLine = true, keyboardOptions = KeyboardOptions.Default.withPrivacyTyping(LocalPrivacyTypingEnabled.current),
                                         trailingIcon = {
                                             if (LocalPrivacyTypingEnabled.current) {
                                                 PrivacyTypingIndicator()
@@ -352,7 +352,7 @@ fun AiAssistantSettingsPage(viewModel: FieldMindViewModel, onBack: () -> Unit) {
                         ChoiceItemForm("Provider", listOf("Gemini", "OpenAI"), provider, FieldMindIcons.Sparkle, settings::setAiProvider)
 
                         if (provider == "OpenAI") {
-                            OutlinedTextField(value = openAiKey, onValueChange = settings::setOpenAiApiKey, label = { Text("OpenAI API key") }, visualTransformation = PasswordVisualTransformation(), modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(18.dp), singleLine = true, supportingText = { Text(if (openAiKey.isBlank()) "No OpenAI key saved." else "OpenAI key saved locally.") }, keyboardOptions = KeyboardOptions.Default.withPrivacyTyping(LocalPrivacyTypingEnabled.current)
+                            OutlinedTextField(value = openAiKey, onValueChange = settings::setOpenAiApiKey, label = { Text("OpenAI API key") }, visualTransformation = PasswordVisualTransformation(), modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(18.dp), singleLine = true, supportingText = { Text(if (openAiKey.isBlank()) "No OpenAI key saved." else "OpenAI key saved locally.") }, keyboardOptions = KeyboardOptions.Default.withPrivacyTyping(LocalPrivacyTypingEnabled.current),
                                                 trailingIcon = {
                                                     if (LocalPrivacyTypingEnabled.current) {
                                                         PrivacyTypingIndicator()
@@ -362,7 +362,7 @@ fun AiAssistantSettingsPage(viewModel: FieldMindViewModel, onBack: () -> Unit) {
                             Text("Model", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             OptionPickerField(label = "OpenAI model", selected = openAiModel, options = listOf("gpt-4.1-mini", "gpt-4.1", "gpt-4o-mini"), onSelected = { settings.setOpenAiModel(it) }, icon = FieldMindIcons.Bolt)
                         } else {
-                            OutlinedTextField(value = key, onValueChange = settings::setGeminiApiKey, label = { Text("Gemini API key") }, visualTransformation = PasswordVisualTransformation(), modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(18.dp), singleLine = true, supportingText = { Text(if (key.isBlank()) "No key saved — get one at aistudio.google.com." else "Key saved locally.") }, keyboardOptions = KeyboardOptions.Default.withPrivacyTyping(LocalPrivacyTypingEnabled.current)
+                            OutlinedTextField(value = key, onValueChange = settings::setGeminiApiKey, label = { Text("Gemini API key") }, visualTransformation = PasswordVisualTransformation(), modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(18.dp), singleLine = true, supportingText = { Text(if (key.isBlank()) "No key saved — get one at aistudio.google.com." else "Key saved locally.") }, keyboardOptions = KeyboardOptions.Default.withPrivacyTyping(LocalPrivacyTypingEnabled.current),
                                                 trailingIcon = {
                                                     if (LocalPrivacyTypingEnabled.current) {
                                                         PrivacyTypingIndicator()
@@ -1402,7 +1402,7 @@ fun ScreenVisibilitySettingsPage(viewModel: FieldMindViewModel, onBack: () -> Un
                             settings.setScreenVisibility(updated)
                         })
                     }
-                    if (title != visibilityToggles.last().first) {
+                    if (item.title != visibilityToggles.last().title) {
                         HorizontalDivider(Modifier.padding(start = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
                     }
                 }
