@@ -45,6 +45,7 @@ import androidx.core.content.FileProvider
 import fieldmind.research.app.features.field.data.database.entity.*
 import fieldmind.research.app.features.field.data.export.FieldMindExport
 import fieldmind.research.app.features.field.data.export.FieldMindExportMediaPacker
+import fieldmind.research.app.features.field.data.export.FieldMindExportEncryption
 import fieldmind.research.app.features.field.presentation.components.*
 import fieldmind.research.app.features.field.presentation.theme.FieldMindTheme
 import fieldmind.research.app.features.field.presentation.viewmodel.FieldMindViewModel
@@ -147,10 +148,18 @@ fun BackupAndRestoreScreen(
     // Import state
     var importFileUri by remember { mutableStateOf<Uri?>(null) }
     var importFileName by remember { mutableStateOf("") }
+    var importFileSize by remember { mutableStateOf("") }
     var importPreview by remember { mutableStateOf<FieldMindExport.ArchivePreview?>(null) }
     var importMode by remember { mutableStateOf("Merge") }
     var isImporting by remember { mutableStateOf(false) }
     var importedPackage by remember { mutableStateOf<FieldMindExportMediaPacker.ExtractedPackage?>(null) }
+    var showImportResultDialog by remember { mutableStateOf(false) }
+    var importResult by remember { mutableStateOf<FieldMindExport.ArchivePreview?>(null) }
+    var importStepText by remember { mutableStateOf("") }
+    var importProgress by remember { mutableFloatStateOf(0f) }
+    var isEncryptedFile by remember { mutableStateOf(false) }
+    var importPassword by remember { mutableStateOf("") }
+    var showPasswordPrompt by remember { mutableStateOf(false) }
 
     // Backup tab state
     var backupIncludeMedia by remember { mutableStateOf(true) }
@@ -158,6 +167,8 @@ fun BackupAndRestoreScreen(
     var backupPassword by remember { mutableStateOf("") }
     var backupScheduleEnabled by remember { mutableStateOf(autoBackupEnabled) }
     var backupInterval by remember { mutableStateOf(autoBackupInterval) }
+    var backupPasswordConfirm by remember { mutableStateOf("") }
+    var passwordsMatch by remember { mutableStateOf(true) }
 
     // Folder picker launcher
     val folderPickerLauncher = rememberLauncherForActivityResult(
@@ -186,17 +197,35 @@ fun BackupAndRestoreScreen(
                     if (nameIndex >= 0) importFileName = it.getString(nameIndex)
                 }
             }
-            // Parse preview
-            scope.launch {
-                try {
-                    val raw = withContext(Dispatchers.IO) {
-                        context.contentResolver.openInputStream(uri)?.bufferedReader()?.readText() ?: ""
+            // Read file size
+            val cursor = context.contentResolver.query(uri, null, null, null, null)
+            cursor?.use {
+                if (it.moveToFirst()) {
+                    val sizeIndex = it.getColumnIndex(android.provider.OpenableColumns.SIZE)
+                    if (sizeIndex >= 0) {
+                        val size = it.getLong(sizeIndex)
+                        importFileSize = formatFileSize(size)
                     }
-                    val preview = FieldMindExport.previewArchiveJson(raw)
-                    importPreview = preview
-                } catch (e: Exception) {
-                    showFastSnackbar(snackbar, scope, "Could not parse archive: ${e.localizedMessage}")
-                    importPreview = null
+                }
+            }
+            // Check if encrypted
+            isEncryptedFile = importFileName.endsWith(".encrypted")
+            if (isEncryptedFile) {
+                // Show password prompt for encrypted files
+                showPasswordPrompt = true
+            } else {
+                // Parse preview directly
+                scope.launch {
+                    try {
+                        val raw = withContext(Dispatchers.IO) {
+                            context.contentResolver.openInputStream(uri)?.bufferedReader()?.readText() ?: ""
+                        }
+                        val preview = FieldMindExport.previewArchiveJson(raw)
+                        importPreview = preview
+                    } catch (e: Exception) {
+                        showFastSnackbar(snackbar, scope, "Could not parse archive: ${e.localizedMessage}")
+                        importPreview = null
+                    }
                 }
             }
         }
@@ -296,7 +325,6 @@ fun BackupAndRestoreScreen(
                                     try {
                                         exportProgress = 0.1f
                                         withContext(Dispatchers.IO) {
-                                            // Build archive JSON
                                             exportStepText = "Building ${selectedFormat} export…"
                                             val json = FieldMindExport.archiveJson(
                                                 observations = if (exportScope == ExportScopeType.ALL || exportScope == ExportScopeType.OBSERVATIONS) observations else emptyList(),
@@ -319,48 +347,24 @@ fun BackupAndRestoreScreen(
                                             val exportDir = File(context.cacheDir, "exports").apply { mkdirs() }
                                             val exportFile = File(exportDir, fileName)
 
-                                            // Write based on format
                                             when (selectedFormat) {
                                                 "JSON" -> exportFile.writeText(json)
-                                                "CSV" -> {
-                                                    val csvObs = FieldMindExport.observationsCsv(observations)
-                                                    exportFile.writeText(csvObs)
-                                                }
-                                                "Markdown" -> {
-                                                    val md = observations.joinToString("\n\n---\n\n") { FieldMindExport.singleObservationMarkdown(it) }
-                                                    exportFile.writeText(md)
-                                                }
-                                                "HTML" -> {
-                                                    val html = FieldMindExport.pdfReadyHtml(projects, observations, sources, reports)
-                                                    exportFile.writeText(html)
-                                                }
-                                                "PDF" -> {
-                                                    val md = observations.joinToString("\n") { FieldMindExport.singleObservationMarkdown(it) }
-                                                    val pdfBytes = FieldMindExport.simplePdfBytes("FieldMind Export", md)
-                                                    exportFile.writeBytes(pdfBytes)
-                                                }
-                                                "PNG" -> {
-                                                    val pngBytes = FieldMindExport.dashboardPngBytes(observations, sources, projects, notes)
-                                                    exportFile.writeBytes(pngBytes)
-                                                }
-                                                "SVG" -> {
-                                                    val svg = FieldMindExport.dashboardSvg(observations, sources, projects, notes)
-                                                    exportFile.writeText(svg)
-                                                }
-                                                "                                                        .fieldmind" -> {
+                                                "CSV" -> exportFile.writeText(FieldMindExport.observationsCsv(observations))
+                                                "Markdown" -> exportFile.writeText(observations.joinToString("\n\n---\n\n") { FieldMindExport.singleObservationMarkdown(it) })
+                                                "HTML" -> exportFile.writeText(FieldMindExport.pdfReadyHtml(projects, observations, sources, reports))
+                                                "PDF" -> exportFile.writeBytes(FieldMindExport.simplePdfBytes("FieldMind Export", observations.joinToString("\n") { FieldMindExport.singleObservationMarkdown(it) }))
+                                                "PNG" -> exportFile.writeBytes(FieldMindExport.dashboardPngBytes(observations, sources, projects, notes))
+                                                "SVG" -> exportFile.writeText(FieldMindExport.dashboardSvg(observations, sources, projects, notes))
+                                                ".fieldmind" -> {
                                                     exportStepText = "Packing media attachments…"
                                                     val result = FieldMindExportMediaPacker.buildPackage(
-                                                        context = context,
-                                                        archiveJson = json,
-                                                        observations = observations,
-                                                        notes = notes,
-                                                        projects = projects,
-                                                        sources = sources,
-                                                        attachments = emptyMap(),
-                                                        outputDir = exportDir
+                                                        context = context, archiveJson = json,
+                                                        observations = observations, notes = notes,
+                                                        projects = projects, sources = sources,
+                                                        attachments = emptyMap(), outputDir = exportDir
                                                     )
-                                                    // Rename package file to expected export filename
                                                     result.packageFile.renameTo(exportFile)
+                                                }
                                             }
 
                                             exportProgress = 0.8f
@@ -439,6 +443,7 @@ fun BackupAndRestoreScreen(
                                                         outputDir = exportDir
                                                     )
                                                     result.packageFile.renameTo(exportFile)
+                                                }
                                             }
                                         }
 
@@ -487,32 +492,56 @@ fun BackupAndRestoreScreen(
                                 importPreview = null
                             },
                             onImport = {
-                                scope.launch {
+                                                scope.launch {
                                     if (importFileUri == null) return@launch
                                     isImporting = true
+                                    importStepText = "Reading archive…"
+                                    importProgress = 0.1f
+                                    var decryptedTempFile: File? = null
                                     try {
                                         val raw = withContext(Dispatchers.IO) {
-                                            val isFieldMind = importFileName.endsWith(".fieldmind")
+                                            importStepText = "Extracting data…"
+                                            importProgress = 0.3f
+                                            val isFieldMind = importFileName.endsWith(".fieldmind") || importFileName.endsWith(".encrypted")
+                                            val uriToRead = if (importFileName.endsWith(".encrypted")) {
+                                                // Decrypt first
+                                                importStepText = "Decrypting with password…"
+                                                importProgress = 0.2f
+                                                val tempDir = File(context.cacheDir, "import_decrypt")
+                                                tempDir.mkdirs()
+                                                val encryptedFile = File(context.cacheDir, "import_encrypted_${System.currentTimeMillis()}")
+                                                context.contentResolver.openInputStream(importFileUri!!)?.use { input ->
+                                                    encryptedFile.outputStream().use { output -> input.copyTo(output) }
+                                                }
+                                                val decrypted = FieldMindExportEncryption.decryptToFile(encryptedFile, importPassword, tempDir)
+                                                decryptedTempFile = decrypted
+                                                encryptedFile.delete()
+                                                Uri.fromFile(decrypted)
+                                            } else {
+                                                importFileUri!!
+                                            }
                                             if (isFieldMind) {
-                                                val extracted = FieldMindExportMediaPacker.extractPackage(context, importFileUri!!)
+                                                val extracted = FieldMindExportMediaPacker.extractPackage(context, uriToRead)
                                                 importedPackage = extracted
                                                 extracted?.archiveJson ?: run {
-                                                    context.contentResolver.openInputStream(importFileUri!!)?.bufferedReader()?.readText() ?: ""
+                                                    context.contentResolver.openInputStream(uriToRead)?.bufferedReader()?.readText() ?: ""
                                                 }
                                             } else {
-                                                context.contentResolver.openInputStream(importFileUri!!)?.bufferedReader()?.readText() ?: ""
+                                                context.contentResolver.openInputStream(uriToRead)?.bufferedReader()?.readText() ?: ""
                                             }
                                         }
+                                        importProgress = 0.6f
+                                        importStepText = "Restoring records…"
                                         if (raw.isNotBlank()) {
                                             viewModel.restoreArchiveJson(raw) { result ->
                                                 isImporting = false
                                                 result.onSuccess { restored ->
-                                                    showFastSnackbar(snackbar, scope, "Restored ${restored.total} records from backup.")
-                                                    importFileUri = null
-                                                    importFileName = ""
-                                                    importPreview = null
+                                                    importResult = restored
+                                                    showImportResultDialog = true
+                                                    importProgress = 1f
                                                 }.onFailure { e ->
                                                     showFastSnackbar(snackbar, scope, "Restore failed: ${e.localizedMessage}")
+                                                    isImporting = false
                                                 }
                                             }
                                         } else {
@@ -523,8 +552,14 @@ fun BackupAndRestoreScreen(
                                         isImporting = false
                                         showFastSnackbar(snackbar, scope, "Import failed: ${e.localizedMessage}")
                                     } finally {
+                                        decryptedTempFile?.delete()
                                         importedPackage?.let { FieldMindExportMediaPacker.cleanupExtractedPackage(it) }
                                         importedPackage = null
+                                        if (!showImportResultDialog) {
+                                            importFileUri = null
+                                            importFileName = ""
+                                            importPreview = null
+                                        }
                                     }
                                 }
                             }
@@ -562,8 +597,19 @@ fun BackupAndRestoreScreen(
                                             val json = FieldMindExport.archiveJson(observations, notes, questions, hypotheses, projects, sources, dataRecords, reports, flashcards)
                                             val dateStamp = SimpleDateFormat("yyyy-MM-dd_HHmmss", Locale.getDefault()).format(Date())
                                             val backupDir = backupDirectory(context)
-                                            val backupFile = File(backupDir, "fieldmind-backup-$dateStamp.json")
-                                            backupFile.writeText(json)
+                                            val baseFile = File(backupDir, "fieldmind-backup-$dateStamp")
+                                            
+                                            if (backupEncrypt && backupPassword.isNotBlank()) {
+                                                // Write JSON, then encrypt
+                                                val jsonFile = File(backupDir, "${baseFile.name}.json")
+                                                jsonFile.writeText(json)
+                                                val encryptedFile = FieldMindExportEncryption.encryptFile(jsonFile, backupPassword)
+                                                jsonFile.delete() // Remove unencrypted copy
+                                                encryptedFile.renameTo(File(backupDir, "${baseFile.name}.encrypted"))
+                                            } else {
+                                                val backupFile = File(backupDir, "${baseFile.name}.json")
+                                                backupFile.writeText(json)
+                                            }
                                         }
                                         lastBackupRefresh++
                                         showFastSnackbar(snackbar, scope, "Backup saved to device storage")
@@ -579,6 +625,142 @@ fun BackupAndRestoreScreen(
                 }
             }
         }
+    }
+
+    // ── Password prompt dialog ──
+    if (showPasswordPrompt) {
+        AlertDialog(
+            onDismissRequest = {
+                showPasswordPrompt = false
+                importFileUri = null
+                importFileName = ""
+            },
+            icon = { Icon(FieldMindIcons.Lock, null, size = 28.dp) },
+            title = { Text("Encrypted file", fontWeight = FontWeight.Bold) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text("This backup is password-protected. Enter the password to decrypt it.")
+                    OutlinedTextField(
+                        value = importPassword,
+                        onValueChange = { importPassword = it },
+                        label = { Text("Password") },
+                        placeholder = { Text("Enter backup password") },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(18.dp),
+                        singleLine = true
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showPasswordPrompt = false
+                        // Parse preview with decryption
+                        scope.launch {
+                            try {
+                                val uri = importFileUri!!
+                                val raw = withContext(Dispatchers.IO) {
+                                    val tempDir = File(context.cacheDir, "import_decrypt")
+                                    tempDir.mkdirs()
+                                    val encryptedFile = File(context.cacheDir, "import_encrypted_${System.currentTimeMillis()}")
+                                    context.contentResolver.openInputStream(uri)?.use { input ->
+                                        encryptedFile.outputStream().use { output -> input.copyTo(output) }
+                                    }
+                                    val decrypted = FieldMindExportEncryption.decryptToFile(encryptedFile, importPassword, tempDir)
+                                    encryptedFile.delete()
+                                    val isFieldMind = importFileName.replace(".encrypted", "").endsWith(".fieldmind")
+                                    if (isFieldMind) {
+                                        val extracted = FieldMindExportMediaPacker.extractPackage(context, Uri.fromFile(decrypted))
+                                        importedPackage = extracted
+                                        extracted?.archiveJson ?: ""
+                                    } else {
+                                        decrypted.readText()
+                                    }
+                                }
+                                if (raw.isNotBlank()) {
+                                    val preview = FieldMindExport.previewArchiveJson(raw)
+                                    importPreview = preview
+                                }
+                            } catch (e: Exception) {
+                                showFastSnackbar(snackbar, scope, "Decryption failed: ${e.localizedMessage}")
+                                importPreview = null
+                            }
+                        }
+                    },
+                    enabled = importPassword.isNotBlank()
+                ) { Text("Decrypt") }
+            },
+            dismissButton = {
+                TextButton(onClick = {
+                    showPasswordPrompt = false
+                    importFileUri = null
+                    importFileName = ""
+                }) { Text("Cancel") }
+            }
+        )
+    }
+
+    // ── Import result dialog ──
+    if (showImportResultDialog && importResult != null) {
+        val result = importResult!!
+        AlertDialog(
+            onDismissRequest = {
+                showImportResultDialog = false
+                importFileUri = null
+                importFileName = ""
+                importPreview = null
+            },
+            icon = { Icon(FieldMindIcons.Check, null, size = 28.dp) },
+            title = { Text("Restore complete", fontWeight = FontWeight.Bold) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text("Successfully restored ${result.total} records.")
+                    Row(
+                        Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Column(Modifier.weight(1f)) {
+                            Text("${result.observations}", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.primary)
+                            Text("Observations", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                        Column(Modifier.weight(1f)) {
+                            Text("${result.notes}", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.primary)
+                            Text("Notes", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                        Column(Modifier.weight(1f)) {
+                            Text("${result.projects}", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.primary)
+                            Text("Projects", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                    }
+                    Surface(
+                        shape = RoundedCornerShape(12.dp),
+                        color = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.4f)
+                    ) {
+                        Row(
+                            Modifier.padding(12.dp).fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(FieldMindIcons.Info, null, tint = MaterialTheme.colorScheme.tertiary, size = 18.dp)
+                            Text(
+                                "Your data has been restored. You may need to refresh the current view.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onTertiaryContainer
+                            )
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                Button(onClick = {
+                    showImportResultDialog = false
+                    importFileUri = null
+                    importFileName = ""
+                    importPreview = null
+                    lastBackupRefresh++
+                }) { Text("Done") }
+            }
+        )
     }
 }
 
@@ -1381,10 +1563,32 @@ private fun BackupTabContent(
                         onValueChange = onPasswordChange,
                         label = { Text("Backup password") },
                         placeholder = { Text("Enter a strong password") },
-                        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
                         shape = RoundedCornerShape(18.dp),
                         singleLine = true
                     )
+                    // Password strength indicator
+                    val strength = remember(password) { FieldMindExportEncryption.PasswordStrength.evaluate(password) }
+                    if (password.isNotBlank()) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            LinearProgressIndicator(
+                                progress = { strength.score / 5f },
+                                modifier = Modifier.weight(1f).height(6.dp).clip(RoundedCornerShape(3.dp)),
+                                color = Color(strength.color),
+                                trackColor = MaterialTheme.colorScheme.surfaceContainerHighest
+                            )
+                            Text(
+                                strength.label,
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.SemiBold,
+                                color = Color(strength.color)
+                            )
+                        }
+                    }
                     Spacer(Modifier.height(8.dp))
                 }
 
@@ -1551,7 +1755,7 @@ private fun formatFileSize(bytes: Long): String = when {
 private fun backupDirectory(context: Context): File = File(context.filesDir, "fieldmind/backups").apply { mkdirs() }
 
 private fun lastBackupSummary(context: Context): String {
-    val latest = backupDirectory(context).listFiles { file -> file.isFile && file.extension == "json" }
+    val latest = backupDirectory(context).listFiles { file -> file.isFile && (file.extension == "json" || file.extension == "encrypted") }
         ?.maxByOrNull { it.lastModified() }
     return latest?.let {
         SimpleDateFormat("MMM d, yyyy • h:mm a", Locale.getDefault()).format(Date(it.lastModified()))
