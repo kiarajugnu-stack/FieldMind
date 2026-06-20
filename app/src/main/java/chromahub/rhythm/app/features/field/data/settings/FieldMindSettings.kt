@@ -395,6 +395,8 @@ class FieldMindSettings private constructor(context: Context) {
     fun setDeveloperMode(value: Boolean) = edit(KEY_DEVELOPER_MODE, value) { _developerMode.value = value }
     fun setDebugLogging(value: Boolean) = edit(KEY_DEBUG_LOGGING, value) { _debugLogging.value = value }
     fun setDataIntegrityCheckOnLaunch(value: Boolean) = edit(KEY_DATA_INTEGRITY_CHECK, value) { _dataIntegrityCheckOnLaunch.value = value }
+    fun setLockTimeout(value: String) = edit(KEY_LOCK_TIMEOUT, value) { _lockTimeout.value = value }
+    fun setAutoLockOnBackground(value: Boolean) = edit(KEY_AUTO_LOCK_BACKGROUND, value) { _autoLockOnBackground.value = value }
 
     // ── Onboarding / interests ──
     private val _userInterests = MutableStateFlow(UserInterests.fromJson(prefs.getString(KEY_USER_INTERESTS, null)))
@@ -546,6 +548,7 @@ class FieldMindSettings private constructor(context: Context) {
         private const val KEY_APP_PIN_HASH = "app_pin_hash"
         private const val KEY_USER_INTERESTS = "user_interests"
         private const val KEY_SCREEN_VISIBILITY = "screen_visibility"
+        private const val KEY_EXTENDED_TOUR_DONE = "onboarding_extended_tour_done"
         // ── Privacy & screen protection ──
         private const val KEY_SCREEN_CAPTURE_PROTECTION = "screen_capture_protection"
         private const val KEY_ALWAYS_ON_SCREEN = "always_on_screen"

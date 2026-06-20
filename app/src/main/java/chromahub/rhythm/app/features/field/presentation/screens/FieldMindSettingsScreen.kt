@@ -493,8 +493,6 @@ fun SecuritySettingsPage(viewModel: FieldMindViewModel, onBack: () -> Unit) {
     val privacyTyping by settings.privacyTypingEnabled.collectAsState()
     val appPinEnabled by settings.appPinEnabled.collectAsState()
     val appPinHash by settings.appPinHash.collectAsState()
-    val lockTimeout by settings.lockTimeout.collectAsState()
-    val autoLockBg by settings.autoLockOnBackground.collectAsState()
     var showPinSetup by remember { mutableStateOf(false) }
     var pinInput by remember { mutableStateOf("") }
     var pinConfirm by remember { mutableStateOf("") }
@@ -632,17 +630,6 @@ fun SecuritySettingsPage(viewModel: FieldMindViewModel, onBack: () -> Unit) {
         item {
             SettingsGroupCard {
                 ToggleItem("Privacy typing", "Prevents keyboards from learning your typing patterns. Gboard shows an incognito indicator when active.", privacyTyping, settings::setPrivacyTypingEnabled, FieldMindIcons.Lock)
-            }
-        }
-
-        // ── Lock timeout & auto-lock (only for device biometric lock) ──
-        if (privacy) {
-            item {
-                SettingsGroupCard {
-                    ChoiceItemForm("Lock timeout", listOf("Immediate", "1 minute", "5 minutes", "15 minutes", "When screen off"), lockTimeout, FieldMindIcons.Timer, settings::setLockTimeout)
-                    HorizontalDivider(Modifier.padding(start = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
-                    ToggleItem("Auto-lock on background", "Lock when app goes to background.", autoLockBg, settings::setAutoLockOnBackground, FieldMindIcons.Lock)
-                }
             }
         }
 
@@ -1994,7 +1981,7 @@ fun SpeciesIdentificationSettingsPage(
 
                         Spacer(Modifier.height(4.dp))
 
-                        // ── Perenual API key ──
+                        // ���─ Perenual API key ──
                         Text("Perenual API (plant & botany data)", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.primary)
                         Text(
                             "Free tier: 100 requests/day, 3,000+ species. Get a key at perenual.com (free signup). Used to fetch plant details, care guides, and images.",
