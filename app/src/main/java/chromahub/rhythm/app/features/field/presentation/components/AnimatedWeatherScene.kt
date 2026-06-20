@@ -3780,7 +3780,9 @@ private fun ThunderstormScene(
         val drift = (cloudDrift * 0.3f) % 1f
 
         // ── Towering cumulonimbus clouds (rear layer) ──
-        for ((i, (cloudCx, cy)) in cloudPositions.withIndex()) {
+        for (entry in cloudPositions.withIndex()) {
+            val i = entry.index
+            val (cloudCx, cy) = entry.value
             val baseX = ((cloudCx + drift * 0.8f + i * 0.15f) % 1f) * size.width
             val scaleMul = 0.8f + i * 0.15f
             val isLit = cloudGlowIndex == i && cloudGlowIntensity > 0f

@@ -592,8 +592,8 @@ fun ResearchSessionScreen(
                                         style = MaterialTheme.typography.titleSmall,
                                         fontWeight = FontWeight.Bold
                                     )
-                                    val elapsedStr = if (session.durationMs > 0) {
-                                        formatTime(session.durationMs)
+                                    val elapsedStr = if (session.totalDurationMs > 0) {
+                                        formatTime(session.totalDurationMs)
                                     } else ""
                                     val obsStr = "${session.observationCount} obs"
                                     val dateStr = java.text.SimpleDateFormat("MMM d, yyyy", java.util.Locale.getDefault()).format(java.util.Date(session.startedAt))
