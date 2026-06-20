@@ -463,19 +463,3 @@ private fun categoryColor(category: String): Color = when (category.lowercase())
     "weather" -> Color(0xFF1565C0); "geology" -> Color(0xFF795548); "water" -> Color(0xFF00838F); "reading insight" -> Color(0xFFF57F17)
     "fungi" -> Color(0xFF4E342E); "reptile" -> Color(0xFF558B2F); else -> Color(0xFF546E7A)
 }
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(
-            value,
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.ExtraBold,
-            color = color
-        )
-        Text(
-            label,
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis
-        )
-    }
-}

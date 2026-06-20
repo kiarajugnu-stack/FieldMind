@@ -1301,7 +1301,7 @@ private fun SpeciesFieldPanel(
                     ) {
                         Icon(FieldMindIcons.Camera, null, size = 16.dp)
                         Spacer(Modifier.size(6.dp))
-                        Text("Add", maxLines = 1)
+                        Text("Add More", maxLines = 1)
                     }
                 }
             }

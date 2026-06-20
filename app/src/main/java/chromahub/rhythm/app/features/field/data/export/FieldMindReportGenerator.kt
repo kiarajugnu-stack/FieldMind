@@ -303,6 +303,7 @@ object FieldMindReportGenerator {
         // Category breakdown
         val categoryCounts = observations.groupBy { it.category }.mapValues { it.value.size }
             .entries.sortedByDescending { it.value }.take(10)
+            .map { it.key to it.value }
 
         // Confidence breakdown
         val confidenceCounts = observations.groupBy { it.confidenceLevel }.mapValues { it.value.size }
@@ -311,6 +312,7 @@ object FieldMindReportGenerator {
         val tagCounts = observations.flatMap { obs ->
             obs.tags.split(",").map { it.trim() }.filter { it.isNotBlank() }
         }.groupingBy { it }.eachCount().entries.sortedByDescending { it.value }.take(15)
+            .map { it.key to it.value }
 
         // Location analysis
         val topLocation = observations.map { it.manualLocation }.filter { it.isNotBlank() }

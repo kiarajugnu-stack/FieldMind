@@ -428,7 +428,7 @@ fun BackupAndRestoreScreen(
                                                 }
                                             }
 
-                                            // Capture export record data before leaving IO scope
+                                            // Build export record before leaving IO scope
                                             val recordFileName = "fieldmind-export-$dateStamp.$ext"
                                             val recordFileSize = File(File(context.cacheDir, "exports"), recordFileName).length()
                                             val recordFormat = selectedFormat
@@ -438,20 +438,28 @@ fun BackupAndRestoreScreen(
                                                 "projects" to projects.size
                                             )
 
-                                            exportProgress = 1f
-                                        }
-
-                                        exportHistory = listOf(
-                                            ExportRecord(
+                                            val newRecord = ExportRecord(
                                                 format = recordFormat,
                                                 fileName = recordFileName,
                                                 fileSizeBytes = recordFileSize,
                                                 entityCounts = recordEntityCounts,
                                                 destination = recordDest
                                             )
-                                        ) + exportHistory.take(19)
 
-                                        showFastSnackbar(snackbar, scope, "Export complete — $recordFileName")
+                                            exportProgress = 1f
+
+                                            // Update export history from IO scope
+                                            // (runOnUiThread not needed since we're just setting state from coroutine)
+                                            kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
+                                                exportHistory = listOf(newRecord) + exportHistory.take(19)
+                                            }
+
+                                            // Capture the file name for the snackbar (shown after withContext completes)
+                                            val exportFileName = recordFileName
+                                            kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
+                                                showFastSnackbar(snackbar, scope, "Export complete — $exportFileName")
+                                            }
+                                        }
                                     } catch (e: Exception) {
                                         showFastSnackbar(snackbar, scope, "Export failed: ${e.localizedMessage}")
                                     } finally {
