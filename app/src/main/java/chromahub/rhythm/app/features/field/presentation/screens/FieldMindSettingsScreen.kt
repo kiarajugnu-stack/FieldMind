@@ -73,7 +73,7 @@ fun FieldMindSettingsScreen(
         item {
             StandardScreenHeader(
                 title = "Settings",
-                subtitle = "Offline-first setup, profile, capture, local AI, export, and privacy.",
+                subtitle = "Offline-first setup, profile, capture, local AI, backup, and privacy.",
                 icon = FieldMindIcons.Settings,
                 trailing = {
                     BackButton(onClick = onBack)
@@ -102,14 +102,14 @@ fun FieldMindSettingsScreen(
         item { SettingsNavCard("Map settings", "Map type, default zoom, location marker", FieldMindIcons.Map, FieldMindTheme.colors.data) { onOpenMap?.invoke() } }
         item { SettingsNavCard("AI assistant", "Gemini, OpenAI, provider settings", FieldMindIcons.Sparkle, FieldMindTheme.colors.flashcard) { onOpenAi?.invoke() } }
         item { SettingsNavCard("Local model", "Download offline model for flashcards", FieldMindIcons.Download, FieldMindTheme.colors.hypothesis) { onOpenLocalModel?.invoke() } }
-        item { SettingsNavCard("Backup & import", "Auto-backup, interval, and restore", FieldMindIcons.Archive, FieldMindTheme.colors.data) { onOpenBackup?.invoke() } }
+        item { SettingsNavCard("Backup & Restore", "Export, import, backup with folder picker, encryption, and format selection", FieldMindIcons.Archive, FieldMindTheme.colors.data) { onOpenBackup?.invoke() } }
         item { SettingsNavCard("Security", "Privacy lock, lock timeout, auto-lock", FieldMindIcons.Lock, FieldMindTheme.colors.confidenceVerify) { onOpenSecurity?.invoke() } }
         item { SettingsNavCard("Data integrity", "Orphaned records, database health", FieldMindIcons.Archive, FieldMindTheme.colors.hypothesis) { onOpenDataIntegrity?.invoke() } }
         item { SettingsNavCard("Developer", "Debug logging, dev tools, version info", FieldMindIcons.Sparkle, FieldMindTheme.colors.flashcard) { onOpenDeveloper?.invoke() } }
         item { SettingsNavCard("Species packs", "Download regional model packs for species ID", FieldMindIcons.Download, FieldMindTheme.colors.observation) { onOpenSpeciesPacks?.invoke() } }
         item { SettingsNavCard("Species identification", "Image analysis, API key, and model URL configuration", FieldMindIcons.Nature, FieldMindTheme.colors.observation) { onOpenSpeciesId?.invoke() } }
         item { SettingsNavCard("Auto generation", "Automatic flashcards & questions from observations", FieldMindIcons.Sparkle, FieldMindTheme.colors.flashcard) { onOpenAutoGen?.invoke() } }
-        item { SettingsNavCard("Export Studio", "Export as PDF, CSV, JSON, HTML, SVG", FieldMindIcons.Export, FieldMindTheme.colors.report) { onOpenExport?.invoke() } }
+
         item { SettingsNavCard("What’s new", "FieldMind-specific redesign notes and migration changes", FieldMindIcons.Info, FieldMindTheme.colors.info) { onOpenChangelog?.invoke() } }
         item { SettingsNavCard("About", "Credits, acknowledgements, and version", FieldMindIcons.Info, FieldMindTheme.colors.source) { onOpenAbout?.invoke() } }
 
@@ -479,7 +479,7 @@ fun BackupImportSettingsPage(viewModel: FieldMindViewModel, onBack: () -> Unit, 
             FilledTonalButton(onClick = onOpenExport, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp)) {
                 Icon(FieldMindIcons.Export, null, size = 18.dp)
                 Spacer(Modifier.size(8.dp))
-                Text("Open Export Studio")
+                Text("Open Backup & Restore")
             }
         }
     }

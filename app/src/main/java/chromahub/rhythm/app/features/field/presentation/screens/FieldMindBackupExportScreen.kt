@@ -303,7 +303,7 @@ fun BackupAndRestoreScreen(
                             scope = exportScope,
                             onScopeChange = { exportScope = it },
                             selectedFormat = selectedFormat,
-                            onFormatChange = { selectedFormat = it },
+                            onFormatChange = { selectedFormat = it; settings.setDefaultExportFormat(it) },
                             includeMedia = includeMedia,
                             onIncludeMediaChange = { includeMedia = it },
                             destinationUri = exportDestinationUri,
