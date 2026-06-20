@@ -55,7 +55,10 @@ fun FieldMindAppLock(
     content: @Composable () -> Unit
 ) {
     val privacyEnabled by settings.privacyLockEnabled.collectAsState()
-    if (!privacyEnabled || isUnlocked) {
+    val appPinEnabled by settings.appPinEnabled.collectAsState()
+    val appPinHash by settings.appPinHash.collectAsState()
+    val hasPin = appPinEnabled && appPinHash.isNotBlank()
+    if ((!privacyEnabled && !hasPin) || isUnlocked) {
         content()
         return
     }
@@ -68,6 +71,9 @@ fun FieldMindAppLock(
     var usePinLock by remember { mutableStateOf(!hasBiometric && !hasDeviceCredential) }
     var pin by remember { mutableStateOf("") }
     var pinError by remember { mutableStateOf(false) }
+    var pinAttempts by remember { mutableIntStateOf(0) }
+    var pinLockedUntil by remember { mutableLongStateOf(0L) }
+    val isPinLocked = pinLockedUntil > System.currentTimeMillis()
     var authMode by remember { mutableStateOf("") } // "", "biometric", "pin"
 
     val unlockLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
@@ -120,10 +126,6 @@ fun FieldMindAppLock(
         }
     }
 
-    // In-app PIN fallback when no device/biometric is set
-    val savedPin = remember { context.getSharedPreferences("fieldmind_privacy", Context.MODE_PRIVATE).getString("app_pin", "") ?: "" }
-    val hasPin = savedPin.isNotBlank()
-
     Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background), contentAlignment = Alignment.Center) {
         Card(
             modifier = Modifier.fillMaxWidth(0.88f).animateContentSize(),
@@ -161,11 +163,17 @@ fun FieldMindAppLock(
                             if (it.length <= 6) {
                                 pin = it
                                 pinError = false
-                                if (it.length >= 4 && it == savedPin) {
+                                if (it.length >= 4 && settings.verifyAppPin(it)) {
+                                    pinAttempts = 0
                                     onUnlock()
                                 } else if (it.length >= 4) {
+                                    pinAttempts++
                                     pinError = true
                                     pin = ""
+                                    if (pinAttempts >= 3) {
+                                        pinLockedUntil = System.currentTimeMillis() + 30_000
+                                        pinAttempts = 0
+                                    }
                                 }
                             }
                         },

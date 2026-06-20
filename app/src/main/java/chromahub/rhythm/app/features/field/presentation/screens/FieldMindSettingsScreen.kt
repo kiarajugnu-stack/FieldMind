@@ -66,7 +66,8 @@ fun FieldMindSettingsScreen(
     onOpenDeveloper: (() -> Unit)? = null,
     onOpenSpeciesPacks: (() -> Unit)? = null,
     onOpenSpeciesId: (() -> Unit)? = null,
-    onOpenAutoGen: (() -> Unit)? = null
+    onOpenAutoGen: (() -> Unit)? = null,
+    onOpenScreenVisibility: (() -> Unit)? = null
 ) {
     BackHandler(enabled = true) { onBack() }
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(20.dp, 20.dp, 20.dp, 40.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
@@ -103,7 +104,8 @@ fun FieldMindSettingsScreen(
         item { SettingsNavCard("AI assistant", "Gemini, OpenAI, provider settings", FieldMindIcons.Sparkle, FieldMindTheme.colors.flashcard) { onOpenAi?.invoke() } }
         item { SettingsNavCard("Local model", "Download offline model for flashcards", FieldMindIcons.Download, FieldMindTheme.colors.hypothesis) { onOpenLocalModel?.invoke() } }
         item { SettingsNavCard("Backup & Restore", "Export, import, backup with folder picker, encryption, and format selection", FieldMindIcons.Archive, FieldMindTheme.colors.data) { onOpenBackup?.invoke() } }
-        item { SettingsNavCard("Security", "Privacy lock, lock timeout, auto-lock", FieldMindIcons.Lock, FieldMindTheme.colors.confidenceVerify) { onOpenSecurity?.invoke() } }
+        item { SettingsNavCard("Security", "App lock, PIN lock, privacy typing, auto-lock", FieldMindIcons.Lock, FieldMindTheme.colors.confidenceVerify) { onOpenSecurity?.invoke() } }
+        item { SettingsNavCard("Screen visibility", "Show/hide navigation tabs", FieldMindIcons.Visibility, FieldMindTheme.colors.info) { onOpenScreenVisibility?.invoke() } }
         item { SettingsNavCard("Data integrity", "Orphaned records, database health", FieldMindIcons.Archive, FieldMindTheme.colors.hypothesis) { onOpenDataIntegrity?.invoke() } }
         item { SettingsNavCard("Developer", "Debug logging, dev tools, version info", FieldMindIcons.Sparkle, FieldMindTheme.colors.flashcard) { onOpenDeveloper?.invoke() } }
         item { SettingsNavCard("Species packs", "Download regional model packs for species ID", FieldMindIcons.Download, FieldMindTheme.colors.observation) { onOpenSpeciesPacks?.invoke() } }
@@ -415,20 +417,141 @@ fun SecuritySettingsPage(viewModel: FieldMindViewModel, onBack: () -> Unit) {
     val settings = viewModel.fieldSettings
     val privacy by settings.privacyLockEnabled.collectAsState()
     val privacyTyping by settings.privacyTypingEnabled.collectAsState()
+    val appPinEnabled by settings.appPinEnabled.collectAsState()
+    val appPinHash by settings.appPinHash.collectAsState()
     val lockTimeout by settings.lockTimeout.collectAsState()
     val autoLockBg by settings.autoLockOnBackground.collectAsState()
+    var showPinSetup by remember { mutableStateOf(false) }
+    var pinInput by remember { mutableStateOf("") }
+    var pinConfirm by remember { mutableStateOf("") }
+    var pinError by remember { mutableStateOf(false) }
+    var showCurrentPinDialog by remember { mutableStateOf(false) }
+    var currentPinInput by remember { mutableStateOf("") }
+    var currentPinError by remember { mutableStateOf(false) }
 
     SettingsSubPage("Security", icon = FieldMindIcons.Lock, onBack = onBack) {
+        // ── Device biometric lock ──
         item {
             SettingsGroupCard {
-                ToggleItem("App lock", "Require biometric or device credential to open FieldMind.", privacy, settings::setPrivacyLockEnabled, FieldMindIcons.Lock)
+                ToggleItem("Device biometric lock", "Require fingerprint, face, or device PIN to open FieldMind.", privacy, settings::setPrivacyLockEnabled, FieldMindIcons.Lock)
             }
         }
+
+        // ── In-app PIN lock (independent, no device lock required) ──
         item {
             SettingsGroupCard {
-                ToggleItem("Privacy typing", "Prevents keyboards from learning your typing patterns and showing predictive text in text fields. Gboard shows an incognito indicator when active.", privacyTyping, settings::setPrivacyTypingEnabled, FieldMindIcons.Lock)
+                if (!showPinSetup) {
+                    if (appPinEnabled && appPinHash.isNotBlank()) {
+                        Row(
+                            Modifier.fillMaxWidth().clickable { showPinSetup = true }.padding(16.dp),
+                            horizontalArrangement = Arrangement.spacedBy(14.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Box(Modifier.size(40.dp).clip(RoundedCornerShape(12.dp)).background(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)), contentAlignment = Alignment.Center) {
+                                Icon(FieldMindIcons.Lock, null, tint = MaterialTheme.colorScheme.primary, size = 22.dp)
+                            }
+                            Column(Modifier.weight(1f)) {
+                                Text("App PIN lock", fontWeight = FontWeight.SemiBold)
+                                Text("Self-contained 4-6 digit PIN, no device lock needed", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
+                            Switch(checked = true, onCheckedChange = { enabled ->
+                                if (enabled) {
+                                    showPinSetup = true
+                                } else {
+                                    showCurrentPinDialog = true
+                                }
+                            })
+                        }
+                    } else {
+                        Row(
+                            Modifier.fillMaxWidth().clickable { showPinSetup = true }.padding(16.dp),
+                            horizontalArrangement = Arrangement.spacedBy(14.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Box(Modifier.size(40.dp).clip(RoundedCornerShape(12.dp)).background(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)), contentAlignment = Alignment.Center) {
+                                Icon(FieldMindIcons.Lock, null, tint = MaterialTheme.colorScheme.primary, size = 22.dp)
+                            }
+                            Column(Modifier.weight(1f)) {
+                                Text("App PIN lock", fontWeight = FontWeight.SemiBold)
+                                Text("Self-contained 4-6 digit PIN, no device lock needed", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
+                            Switch(checked = false, onCheckedChange = { showPinSetup = true })
+                        }
+                    }
+                }
+
+                // ── PIN setup form ──
+                if (showPinSetup) {
+                    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Text(
+                            if (appPinHash.isNotBlank()) "Change PIN" else "Set a 4-6 digit PIN",
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Bold
+                        )
+                        OutlinedTextField(
+                            value = pinInput,
+                            onValueChange = { if (it.length <= 6) { pinInput = it; pinError = false } },
+                            label = { Text("Enter PIN") },
+                            singleLine = true,
+                            isError = pinError,
+                            visualTransformation = PasswordVisualTransformation(),
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                            supportingText = if (pinError) {{ Text("PINs don't match. Try again.") }} else null,
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(18.dp),
+                            textStyle = MaterialTheme.typography.headlineSmall.copy(letterSpacing = 8.sp, textAlign = TextAlign.Center)
+                        )
+                        OutlinedTextField(
+                            value = pinConfirm,
+                            onValueChange = { if (it.length <= 6) { pinConfirm = it; pinError = false } },
+                            label = { Text("Confirm PIN") },
+                            singleLine = true,
+                            isError = pinError,
+                            visualTransformation = PasswordVisualTransformation(),
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(18.dp),
+                            textStyle = MaterialTheme.typography.headlineSmall.copy(letterSpacing = 8.sp, textAlign = TextAlign.Center)
+                        )
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                            OutlinedButton(
+                                onClick = {
+                                    showPinSetup = false
+                                    pinInput = ""; pinConfirm = ""; pinError = false
+                                },
+                                modifier = Modifier.weight(1f),
+                                shape = RoundedCornerShape(14.dp)
+                            ) { Text("Cancel") }
+                            Button(
+                                onClick = {
+                                    if (pinInput.length >= 4 && pinInput == pinConfirm) {
+                                        val hash = settings.hashAppPin(pinInput)
+                                        settings.setAppPinHash(hash)
+                                        settings.setAppPinEnabled(true)
+                                        showPinSetup = false
+                                        pinInput = ""; pinConfirm = ""; pinError = false
+                                    } else {
+                                        pinError = true
+                                    }
+                                },
+                                enabled = pinInput.length >= 4 && pinConfirm.length >= 4,
+                                modifier = Modifier.weight(1f),
+                                shape = RoundedCornerShape(14.dp)
+                            ) { Text("Save PIN") }
+                        }
+                    }
+                }
             }
         }
+
+        // ── Privacy typing ──
+        item {
+            SettingsGroupCard {
+                ToggleItem("Privacy typing", "Prevents keyboards from learning your typing patterns. Gboard shows an incognito indicator when active.", privacyTyping, settings::setPrivacyTypingEnabled, FieldMindIcons.Lock)
+            }
+        }
+
+        // ── Lock timeout & auto-lock (only for device biometric lock) ──
         if (privacy) {
             item {
                 SettingsGroupCard {
@@ -438,15 +561,78 @@ fun SecuritySettingsPage(viewModel: FieldMindViewModel, onBack: () -> Unit) {
                 }
             }
         }
+
+        // ── Info cards ──
         item {
             Card(shape = RoundedCornerShape(22.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)) {
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("About app lock", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.primary)
-                    Text("When enabled, FieldMind requires biometric authentication (fingerprint, face) or your device PIN/pattern/password each time you open the app.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Text("Your research data is stored entirely on this device. No data is sent to any server.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("Privacy features", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.primary)
+                    Text("• Device biometric lock — uses Android's built-in security (fingerprint, face, PIN)", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("• App PIN lock — self-contained 4-6 digit PIN, works even if device has no lock set", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("• Privacy typing — tells keyboards not to learn from what you type in FieldMind", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("• Data encryption — encrypted backups with password protection", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("Your data stays on this device. No data is sent to any server.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
         }
+    }
+
+    // ── Confirm current PIN before disabling ──
+    if (showCurrentPinDialog) {
+        AlertDialog(
+            onDismissRequest = {
+                showCurrentPinDialog = false
+                currentPinInput = ""; currentPinError = false
+            },
+            icon = { Icon(FieldMindIcons.Lock, null, size = 28.dp) },
+            title = { Text("Enter current PIN", fontWeight = FontWeight.Bold) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text("Enter your current PIN to disable the app PIN lock.")
+                    OutlinedTextField(
+                        value = currentPinInput,
+                        onValueChange = {
+                            if (it.length <= 6) {
+                                currentPinInput = it
+                                currentPinError = false
+                            }
+                        },
+                        label = { Text("Current PIN") },
+                        singleLine = true,
+                        isError = currentPinError,
+                        visualTransformation = PasswordVisualTransformation(),
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(18.dp),
+                        textStyle = MaterialTheme.typography.headlineSmall.copy(letterSpacing = 8.sp, textAlign = TextAlign.Center)
+                    )
+                    if (currentPinError) {
+                        Text("Incorrect PIN", color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+                    }
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        if (settings.verifyAppPin(currentPinInput)) {
+                            settings.setAppPinEnabled(false)
+                            settings.setAppPinHash("")
+                            showCurrentPinDialog = false
+                            currentPinInput = ""; currentPinError = false
+                        } else {
+                            currentPinError = true
+                        }
+                    },
+                    enabled = currentPinInput.length >= 4
+                ) { Text("Disable") }
+            },
+            dismissButton = {
+                TextButton(onClick = {
+                    showCurrentPinDialog = false
+                    currentPinInput = ""; currentPinError = false
+                }) { Text("Cancel") }
+            }
+        )
     }
 }
 
@@ -1030,6 +1216,114 @@ private fun IntegrityStat(value: String, label: String) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(value, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.primary)
         Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════════
+//  Screen Visibility Settings Page
+// ══════════════════════════════════════════════════════════════════════
+
+@Composable
+fun ScreenVisibilitySettingsPage(viewModel: FieldMindViewModel, onBack: () -> Unit) {
+    val settings = viewModel.fieldSettings
+    val screenVis by settings.screenVisibility.collectAsState()
+    val colors = FieldMindTheme.colors
+
+    val visibilityToggles = listOf(
+        Triple("Capture / Observe", "Observation capture screen in bottom nav", screenVis.showCapture, FieldMindIcons.Capture, colors.observation),
+        Triple("Projects", "Project workspace and management", screenVis.showProjects, FieldMindIcons.Project, colors.project),
+        Triple("Insights", "Research insights, health scores, graphs", screenVis.showInsights, FieldMindIcons.Graph, colors.info),
+        Triple("Library", "Sources, notes, flashcards, reading", screenVis.showLibrary, FieldMindIcons.Book, colors.source),
+        Triple("Map", "Offline map with drawing tools", screenVis.showMap, FieldMindIcons.Map, colors.data),
+        Triple("Weather database", "Historical weather data screen", screenVis.showWeather, FieldMindIcons.Weather, colors.info),
+        Triple("Species browser", "Taxonomic browser and species catalog", screenVis.showSpeciesBrowser, FieldMindIcons.Nature, colors.observation),
+        Triple("Flashcards", "Flashcard review sessions", screenVis.showFlashcards, FieldMindIcons.Flashcard, colors.flashcard),
+        Triple("Export studio", "Data export and report builder", screenVis.showExport, FieldMindIcons.Export, colors.data),
+        Triple("Field mode", "Dedicated field research mode", screenVis.showFieldMode, FieldMindIcons.Nature, colors.observation)
+    )
+
+    SettingsSubPage("Screen visibility", icon = FieldMindIcons.Visibility, onBack = onBack) {
+        item {
+            Card(
+                shape = RoundedCornerShape(22.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)),
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+            ) {
+                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Icon(FieldMindIcons.Info, null, tint = MaterialTheme.colorScheme.primary, size = 20.dp)
+                        Text("Hide screens you don't use to keep navigation clean. Hidden screens are still accessible from settings.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                }
+            }
+        }
+        item {
+            SettingsGroupCard {
+                visibilityToggles.forEach { (title, desc, checked, icon, accent) ->
+                    Row(
+                        Modifier.fillMaxWidth().clickable {
+                            val cur = screenVis
+                            val updated = when (icon) {
+                                FieldMindIcons.Capture -> cur.copy(showCapture = !checked)
+                                FieldMindIcons.Project -> cur.copy(showProjects = !checked)
+                                FieldMindIcons.Graph -> cur.copy(showInsights = !checked)
+                                FieldMindIcons.Book -> cur.copy(showLibrary = !checked)
+                                FieldMindIcons.Map -> cur.copy(showMap = !checked)
+                                FieldMindIcons.Weather -> cur.copy(showWeather = !checked)
+                                FieldMindIcons.Nature -> {
+                                    if (title.startsWith("Species")) cur.copy(showSpeciesBrowser = !checked)
+                                    else cur.copy(showFieldMode = !checked)
+                                }
+                                FieldMindIcons.Flashcard -> cur.copy(showFlashcards = !checked)
+                                FieldMindIcons.Export -> cur.copy(showExport = !checked)
+                                else -> cur
+                            }
+                            settings.setScreenVisibility(updated)
+                        }.padding(16.dp),
+                        horizontalArrangement = Arrangement.spacedBy(14.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(Modifier.size(40.dp).clip(RoundedCornerShape(12.dp)).background(accent.copy(alpha = 0.14f)), contentAlignment = Alignment.Center) {
+                            Icon(icon = icon, contentDescription = null, tint = accent, size = 22.dp)
+                        }
+                        Column(Modifier.weight(1f)) {
+                            Text(title, fontWeight = FontWeight.SemiBold)
+                            Text(desc, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                        Switch(checked = checked, onCheckedChange = {
+                            val cur = screenVis
+                            val updated = when (icon) {
+                                FieldMindIcons.Capture -> cur.copy(showCapture = it)
+                                FieldMindIcons.Project -> cur.copy(showProjects = it)
+                                FieldMindIcons.Graph -> cur.copy(showInsights = it)
+                                FieldMindIcons.Book -> cur.copy(showLibrary = it)
+                                FieldMindIcons.Map -> cur.copy(showMap = it)
+                                FieldMindIcons.Weather -> cur.copy(showWeather = it)
+                                FieldMindIcons.Nature -> {
+                                    if (title.startsWith("Species")) cur.copy(showSpeciesBrowser = it)
+                                    else cur.copy(showFieldMode = it)
+                                }
+                                FieldMindIcons.Flashcard -> cur.copy(showFlashcards = it)
+                                FieldMindIcons.Export -> cur.copy(showExport = it)
+                                else -> cur
+                            }
+                            settings.setScreenVisibility(updated)
+                        })
+                    }
+                    if (title != visibilityToggles.last().first) {
+                        HorizontalDivider(Modifier.padding(start = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+                    }
+                }
+            }
+        }
+        item {
+            Card(shape = RoundedCornerShape(22.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)) {
+                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("Navigation impact", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.primary)
+                    Text("Disabling the Capture, Projects, Insights, or Library tabs removes them from the bottom navigation bar. The screens remain accessible via deep links and search.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+        }
     }
 }
 

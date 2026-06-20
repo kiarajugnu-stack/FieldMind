@@ -406,6 +406,34 @@ class FieldMindSettings private constructor(context: Context) {
         _screenVisibility.value = value
     }
 
+    // ── In-app PIN/password lock ──
+    private val _appPinEnabled = MutableStateFlow(prefs.getBoolean(KEY_APP_PIN_ENABLED, false))
+    val appPinEnabled: StateFlow<Boolean> = _appPinEnabled.asStateFlow()
+
+    private val _appPinHash = MutableStateFlow(prefs.getString(KEY_APP_PIN_HASH, "") ?: "")
+    val appPinHash: StateFlow<String> = _appPinHash.asStateFlow()
+
+    fun setAppPinEnabled(value: Boolean) = edit(KEY_APP_PIN_ENABLED, value) { _appPinEnabled.value = value }
+
+    fun setAppPinHash(value: String) = edit(KEY_APP_PIN_HASH, value) { _appPinHash.value = value }
+
+    fun verifyAppPin(input: String): Boolean {
+        val hash = _appPinHash.value
+        if (hash.isBlank() || input.isBlank()) return false
+        val inputHash = android.util.Base64.encodeToString(
+            java.security.MessageDigest.getInstance("SHA-256").digest(input.toByteArray()),
+            android.util.Base64.NO_WRAP
+        )
+        return inputHash == hash
+    }
+
+    fun hashAppPin(input: String): String {
+        return android.util.Base64.encodeToString(
+            java.security.MessageDigest.getInstance("SHA-256").digest(input.toByteArray()),
+            android.util.Base64.NO_WRAP
+        )
+    }
+
     fun setOnboardingExtendedTourCompleted(value: Boolean) = edit(KEY_EXTENDED_TOUR_DONE, value) { _onboardingExtendedTourCompleted.value = value }
 
     // ── Species identification setters ──
@@ -495,6 +523,8 @@ class FieldMindSettings private constructor(context: Context) {
         // ── Perenual API keys ──
         private const val KEY_PERENUAL_API_KEY = "perenual_api_key"
         // ── Onboarding keys ──
+        private const val KEY_APP_PIN_ENABLED = "app_pin_enabled"
+        private const val KEY_APP_PIN_HASH = "app_pin_hash"
         private const val KEY_USER_INTERESTS = "user_interests"
         private const val KEY_SCREEN_VISIBILITY = "screen_visibility"
         private const val KEY_EXTENDED_TOUR_DONE = "onboarding_extended_tour_done"
