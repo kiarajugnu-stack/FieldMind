@@ -632,7 +632,8 @@ fun BackupAndRestoreScreen(
             title = { Text("Encrypted file", fontWeight = FontWeight.Bold) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Text("This backup is password-protected. Enter the password to decrypt it.")                        OutlinedTextField(
+                    Text("This backup is password-protected. Enter the password to decrypt it.")
+                    OutlinedTextField(
                         value = importPassword,
                         onValueChange = { importPassword = it },
                         label = { Text("Password") },
