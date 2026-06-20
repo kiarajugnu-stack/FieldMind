@@ -3,4 +3,10 @@
     android:drawable="@drawable/fieldmind_logo"
     android:scaleGravity="center"
     android:scaleHeight="5%"
-    android:scaleWidth="5%" />
+    android:scaleWidth="5%">
+    <!-- Tint for monochrome themed icon rendering (Android 13+) -->
+    <bitmap
+        android:src="@drawable/fieldmind_logo"
+        android:tint="@android:color/white"
+        android:tintMode="src_in" />
+</scale>
