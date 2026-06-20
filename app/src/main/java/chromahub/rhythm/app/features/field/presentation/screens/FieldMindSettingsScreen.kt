@@ -1398,7 +1398,7 @@ fun ScreenVisibilitySettingsPage(viewModel: FieldMindViewModel, onBack: () -> Un
         ScreenVisibilityItem("Species browser", "Taxonomic browser and species catalog", screenVis.showSpeciesBrowser, FieldMindIcons.Nature, colors.observation),
         ScreenVisibilityItem("Flashcards", "Flashcard review sessions", screenVis.showFlashcards, FieldMindIcons.Flashcard, colors.flashcard),
         ScreenVisibilityItem("Export studio", "Data export and report builder", screenVis.showExport, FieldMindIcons.Export, colors.data),
-        ScreenVisibilityItem("Field mode", "Dedicated field research mode", screenVis.showFieldMode, FieldMindIcons.Nature, colors.observation)
+
     )
 
     SettingsSubPage("Screen visibility", icon = FieldMindIcons.Visibility, onBack = onBack) {
@@ -1429,10 +1429,7 @@ fun ScreenVisibilitySettingsPage(viewModel: FieldMindViewModel, onBack: () -> Un
                                 FieldMindIcons.Book -> cur.copy(showLibrary = !item.isEnabled)
                                 FieldMindIcons.Map -> cur.copy(showMap = !item.isEnabled)
                                 FieldMindIcons.Weather -> cur.copy(showWeather = !item.isEnabled)
-                                FieldMindIcons.Nature -> {
-                                    if (item.title.startsWith("Species")) cur.copy(showSpeciesBrowser = !item.isEnabled)
-                                    else cur.copy(showFieldMode = !item.isEnabled)
-                                }
+                                FieldMindIcons.Nature -> cur.copy(showSpeciesBrowser = !item.isEnabled)
                                 FieldMindIcons.Flashcard -> cur.copy(showFlashcards = !item.isEnabled)
                                 FieldMindIcons.Export -> cur.copy(showExport = !item.isEnabled)
                                 else -> cur
@@ -1458,10 +1455,7 @@ fun ScreenVisibilitySettingsPage(viewModel: FieldMindViewModel, onBack: () -> Un
                                 FieldMindIcons.Book -> cur.copy(showLibrary = it)
                                 FieldMindIcons.Map -> cur.copy(showMap = it)
                                 FieldMindIcons.Weather -> cur.copy(showWeather = it)
-                                FieldMindIcons.Nature -> {
-                                    if (item.title.startsWith("Species")) cur.copy(showSpeciesBrowser = it)
-                                    else cur.copy(showFieldMode = it)
-                                }
+                                FieldMindIcons.Nature -> cur.copy(showSpeciesBrowser = it)
                                 FieldMindIcons.Flashcard -> cur.copy(showFlashcards = it)
                                 FieldMindIcons.Export -> cur.copy(showExport = it)
                                 else -> cur
@@ -1661,7 +1655,7 @@ private fun SettingsTileGroup(title: String, content: @Composable ColumnScope.()
 
 // ══════════════════════════════════════════════════════════════════════
 //  Species Pack Management Page
-// ══════════════════════════════════════════════════════════════════════
+// ════════════════════════════════════════��═════════════════════════════
 
 @Composable
 fun SpeciesPackSettingsPage(onBack: () -> Unit) {
