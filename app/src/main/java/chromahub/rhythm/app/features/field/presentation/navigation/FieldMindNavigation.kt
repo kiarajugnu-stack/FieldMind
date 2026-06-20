@@ -630,7 +630,8 @@ composable(FieldMindScreen.Reports.route) { FieldMindReportScreen(viewModel = vi
         composable(FieldMindScreen.SettingsCapture.route) { CaptureDefaultsSettingsPage(viewModel = viewModel, onBack = { navController.popBackStack() }) }
         composable(FieldMindScreen.SettingsAi.route) { AiAssistantSettingsPage(viewModel = viewModel, onBack = { navController.popBackStack() }) }
         composable(FieldMindScreen.SettingsLocalModel.route) { LocalModelSettingsPage(viewModel = viewModel, onBack = { navController.popBackStack() }) }
-        composable(FieldMindScreen.SettingsBackup.route) { BackupImportSettingsPage(viewModel = viewModel, onBack = { navController.popBackStack() }, onOpenExport = { navController.navigateToDestination(FieldMindScreen.ExportStudio.route) }) }        composable(FieldMindScreen.SettingsSecurity.route) {
+        composable(FieldMindScreen.SettingsBackup.route) { BackupImportSettingsPage(viewModel = viewModel, onBack = { navController.popBackStack() }, onOpenExport = { navController.navigateToDestination(FieldMindScreen.ExportStudio.route) }) }
+        composable(FieldMindScreen.SettingsSecurity.route) {
             SecuritySettingsPage(viewModel = viewModel, onBack = { navController.popBackStack() })
         }
         composable(FieldMindScreen.SettingsScreenVisibility.route) {

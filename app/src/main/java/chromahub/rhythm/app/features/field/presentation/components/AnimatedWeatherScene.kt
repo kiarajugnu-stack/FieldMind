@@ -1356,7 +1356,7 @@ private fun ClearSkyScene(
             drawBirds(birdProgress, timeOfDay, isDark)
 
             // Rainbow — soft atmospheric arc behind the mountains, visible during sunny times
-            drawRainbow(palette, compact)
+            drawRainbow(palette, compact, timeOfDay)
 
             // Ground terrain (with wind-affected trees)
             drawGround(palette, weatherCode = 0, isDay = true, isDark = isDark, compact = compact, treeMorph = treeSway)
@@ -1575,7 +1575,7 @@ private fun EveningScene(
         }
 
         // ── Rainbow — soft atmospheric arc behind the mountains (dawn after rain) ──
-        drawRainbow(palette, compact)
+        drawRainbow(palette, compact, timeOfDay)
 
         // ── Evening sea view — animated ocean with reflections ──
         drawEveningSea(palette, isDawn, waveProgress)
@@ -2840,9 +2840,12 @@ private fun DrawScope.drawShootingStar(
 
 private fun DrawScope.drawRainbow(
     palette: WeatherPalette,
-    compact: Boolean
+    compact: Boolean,
+    timeOfDay: TimeOfDay = TimeOfDay.Midday
 ) {
     if (compact) return
+    // Rainbows don't appear at night or twilight
+    if (timeOfDay == TimeOfDay.Night || timeOfDay == TimeOfDay.Twilight) return
 
     val horizonY = size.height * 0.82f
     val rainbowCx = size.width * 0.50f
