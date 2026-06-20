@@ -587,7 +587,7 @@ composable(FieldMindScreen.Analysis.route) { ProjectsScreen(viewModel = viewMode
 composable(FieldMindScreen.Reports.route) { ProjectsScreen(viewModel = viewModel, startTab = 4, onOpenDetail = openDetail, onNavigate = { navController.navigateToDestination(it.route) }) }
         composable(FieldMindScreen.Search.route) { ArchiveScreen(viewModel = viewModel, onOpenDetail = openDetail, onOpenReader = openReader) }
         composable(FieldMindScreen.MapScreen.route) { MapFieldScreen(viewModel = viewModel, onNavigate = { navController.navigateToDestination(it.route) }, onOpenDetail = openDetail) }
-        composable(FieldMindScreen.ExportStudio.route) { BackupExportScreen(viewModel = viewModel) }
+        composable(FieldMindScreen.ExportStudio.route) { BackupAndRestoreScreen(viewModel = viewModel, onBack = { navController.popBackStack() }) }
         composable(FieldMindScreen.Changelog.route) { FieldMindChangelogScreen(onBack = { navController.popBackStack() }) }
         composable(FieldMindScreen.Progress.route) { InsightsScreen(viewModel = viewModel, onNavigate = { navController.navigateToDestination(it.route) }, onOpenDetail = openDetail) }
         composable(FieldMindScreen.Flashcards.route) { FlashcardSessionScreen(viewModel = viewModel, onBack = { navController.popBackStack() }) }
