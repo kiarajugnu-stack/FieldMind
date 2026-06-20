@@ -2153,7 +2153,7 @@
     <string name="cd_selected">Selected</string>
     <string name="cd_remove">Remove</string>
     <string name="cd_delete_playlist">Delete playlist</string>
-    <string name="cd_rhythm_logo">Rhythm Logo</string>
+    <string name="cd_rhythm_logo">FieldMind Logo</string>
     <string name="cd_report_bug">Report Bug</string>
     <string name="cd_telegram_support">Telegram Support</string>
     <string name="cd_view_github_profile">View GitHub Profile</string>
@@ -2441,7 +2441,7 @@
     <string name="button_export">Export</string>
     <string name="text_file">File</string>
     <string name="text_paste">Paste</string>
-    <string name="logo_content_desc">Rhythm Logo</string>
+    <string name="logo_content_desc">FieldMind Logo</string>
 
     <!-- PlaceholderScreens - Settings Labels -->
     <string name="settings_about_lyrics">About Lyrics Sources</string>
@@ -2712,7 +2712,7 @@
     <string name="updates_status_disabled">Updates Disabled</string>
     <string name="updates_status_manual">Manual Check</string>
     <string name="updates_status_up_to_date">Up to Date</string>
-    <string name="updates_rhythm_logo_cd">Rhythm Logo</string>
+    <string name="updates_rhythm_logo_cd">FieldMind Logo</string>
     <string name="updates_version_prefix">V %1$s</string>
     <string name="updates_released_prefix">Released: %1$s</string>
     <string name="updates_unknown_error">Unknown error occurred</string>
