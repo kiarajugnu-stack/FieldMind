@@ -661,8 +661,15 @@ fun FieldMindCameraV2(
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
-                            // Close button (discard this photo)
+                            // Close button (save photo without metadata, then close dialog)
                             IconButton(onClick = {
+                                val uri = pendingCaptureUri
+                                val mime = pendingCaptureMime
+                                if (uri != null) {
+                                    onPhotoCaptured(uri, mime ?: "image/jpeg")
+                                }
+                                pendingCaptureUri = null
+                                pendingCaptureMime = null
                                 showCaptureDialog = false
                             }, modifier = Modifier.size(36.dp)) {
                                 Icon(FieldMindIcons.Close, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, size = 20.dp)
@@ -787,12 +794,15 @@ fun FieldMindCameraV2(
                             Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
-                            // Keep Shooting — saves photo (with metadata) and stays in camera
+                            // Keep Shooting — saves photo (via onPhotoCaptured) + optional metadata (via onSpeciesCaptured), stays in camera
                             OutlinedButton(
                                 onClick = {
                                     val uri = pendingCaptureUri
                                     val mime = pendingCaptureMime
                                     if (uri != null) {
+                                        // ALWAYS call onPhotoCaptured so all callers get the photo
+                                        onPhotoCaptured(uri, mime ?: "image/jpeg")
+                                        // Also call onSpeciesCaptured for callers that want metadata (defaults to no-op)
                                         onSpeciesCaptured(
                                             uri, mime ?: "image/jpeg",
                                             postSpeciesName, postCategory, postConfidence.toString(), postNotes
@@ -818,12 +828,15 @@ fun FieldMindCameraV2(
                                 Text("Keep shooting", maxLines = 1)
                             }
 
-                            // Done — saves photo and closes camera
+                            // Done — saves photo, closes camera
                             Button(
                                 onClick = {
                                     val uri = pendingCaptureUri
                                     val mime = pendingCaptureMime
                                     if (uri != null) {
+                                        // ALWAYS call onPhotoCaptured so all callers get the photo
+                                        onPhotoCaptured(uri, mime ?: "image/jpeg")
+                                        // Also call onSpeciesCaptured for callers that want metadata (defaults to no-op)
                                         onSpeciesCaptured(
                                             uri, mime ?: "image/jpeg",
                                             postSpeciesName, postCategory, postConfidence.toString(), postNotes

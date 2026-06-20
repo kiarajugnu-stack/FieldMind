@@ -803,10 +803,7 @@ fun ObserveScreen(
                     )
                 },
                 onSpeciesCaptured = { uri, mimeType, speciesName, category, confidence, notes ->
-                    // Add photo as attachment and pre-fill species details
-                    addAttachment(
-                        DraftEvidenceAttachment("Photo", uri, speciesName.ifBlank { "Camera photo" }, mimeType = mimeType)
-                    )
+                    // Photo already added via onPhotoCaptured above — just pre-fill form fields with species metadata
                     if (speciesName.isNotBlank()) {
                         session = session.copy(
                             speciesName = speciesName,
