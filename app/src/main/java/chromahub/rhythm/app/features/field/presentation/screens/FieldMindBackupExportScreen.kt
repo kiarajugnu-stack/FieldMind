@@ -29,6 +29,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -630,15 +631,15 @@ fun BackupAndRestoreScreen(
             title = { Text("Encrypted file", fontWeight = FontWeight.Bold) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Text("This backup is password-protected. Enter the password to decrypt it.")
-                    OutlinedTextField(
+                    Text("This backup is password-protected. Enter the password to decrypt it.")                        OutlinedTextField(
                         value = importPassword,
                         onValueChange = { importPassword = it },
                         label = { Text("Password") },
                         placeholder = { Text("Enter backup password") },
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(18.dp),
-                        singleLine = true
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions.Default.withPrivacyTyping(LocalPrivacyTypingEnabled.current)
                     )
                 }
             },
@@ -1501,7 +1502,8 @@ private fun BackupTabContent(
                         placeholder = { Text("Enter a strong password") },
                         modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
                         shape = RoundedCornerShape(18.dp),
-                        singleLine = true
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions.Default.withPrivacyTyping(LocalPrivacyTypingEnabled.current)
                     )
                     val strength = remember(password) { FieldMindExportEncryption.PasswordStrength.evaluate(password) }
                     if (password.isNotBlank()) {

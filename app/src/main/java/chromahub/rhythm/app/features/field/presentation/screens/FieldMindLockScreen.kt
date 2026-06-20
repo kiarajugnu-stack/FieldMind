@@ -35,6 +35,8 @@ import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentActivity
 import fieldmind.research.app.features.field.data.settings.FieldMindSettings
 import fieldmind.research.app.features.field.presentation.components.FieldMindIcons
+import fieldmind.research.app.features.field.presentation.components.LocalPrivacyTypingEnabled
+import fieldmind.research.app.features.field.presentation.components.withPrivacyTyping
 import fieldmind.research.app.shared.presentation.components.icons.Icon
 // ══════════════════════════════════════════════════════════════════════
 //  App Lock / Privacy Gate
@@ -181,7 +183,7 @@ fun FieldMindAppLock(
                         label = { Text("PIN") },
                         singleLine = true,
                         isError = pinError,
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done),
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done).withPrivacyTyping(LocalPrivacyTypingEnabled.current),
                         supportingText = if (pinError) {{ Text("Incorrect PIN. Try again.") }} else null,
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(18.dp),
