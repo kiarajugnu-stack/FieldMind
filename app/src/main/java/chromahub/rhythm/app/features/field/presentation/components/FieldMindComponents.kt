@@ -67,6 +67,8 @@ import fieldmind.research.app.features.field.presentation.theme.FieldMindTheme
 import fieldmind.research.app.shared.presentation.components.icons.Icon
 import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon
 import kotlinx.coroutines.delay
+import fieldmind.research.app.features.field.presentation.components.LocalPrivacyTypingEnabled
+import fieldmind.research.app.features.field.presentation.components.withPrivacyTyping
 // FieldMindIcons is in the same package (components.FieldMindIcons)
 // FieldMindIcons is in the same package (components.FieldMindIcons)
 
@@ -853,13 +855,15 @@ fun FieldTextField(
     keyboardType: KeyboardType = KeyboardType.Text
 ) {
     val displayLabel = if (required) "$label *" else label
+    val privacyTyping = LocalPrivacyTypingEnabled.current
+    val baseOptions = if (keyboardType != KeyboardType.Text) KeyboardOptions(keyboardType = keyboardType) else KeyboardOptions.Default
     OutlinedTextField(
         value = value,
         onValueChange = onValueChange,
         label = { Text(displayLabel) },
         minLines = minLines,
         isError = error != null,
-        keyboardOptions = if (keyboardType != KeyboardType.Text) KeyboardOptions(keyboardType = keyboardType) else KeyboardOptions.Default,
+        keyboardOptions = baseOptions.withPrivacyTyping(privacyTyping),
         supportingText = {
             when {
                 error != null -> Text(error, color = MaterialTheme.colorScheme.error)

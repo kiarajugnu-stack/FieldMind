@@ -414,6 +414,7 @@ fun LocalModelSettingsPage(viewModel: FieldMindViewModel, onBack: () -> Unit) {
 fun SecuritySettingsPage(viewModel: FieldMindViewModel, onBack: () -> Unit) {
     val settings = viewModel.fieldSettings
     val privacy by settings.privacyLockEnabled.collectAsState()
+    val privacyTyping by settings.privacyTypingEnabled.collectAsState()
     val lockTimeout by settings.lockTimeout.collectAsState()
     val autoLockBg by settings.autoLockOnBackground.collectAsState()
 
@@ -421,6 +422,11 @@ fun SecuritySettingsPage(viewModel: FieldMindViewModel, onBack: () -> Unit) {
         item {
             SettingsGroupCard {
                 ToggleItem("App lock", "Require biometric or device credential to open FieldMind.", privacy, settings::setPrivacyLockEnabled, FieldMindIcons.Lock)
+            }
+        }
+        item {
+            SettingsGroupCard {
+                ToggleItem("Privacy typing", "Prevents keyboards from learning your typing patterns and showing predictive text in text fields. Gboard shows an incognito indicator when active.", privacyTyping, settings::setPrivacyTypingEnabled, FieldMindIcons.Lock)
             }
         }
         if (privacy) {

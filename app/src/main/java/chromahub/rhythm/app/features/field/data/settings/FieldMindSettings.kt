@@ -144,6 +144,9 @@ class FieldMindSettings private constructor(context: Context) {
     private val _privacyLockEnabled = MutableStateFlow(prefs.getBoolean(KEY_PRIVACY_LOCK, false))
     val privacyLockEnabled: StateFlow<Boolean> = _privacyLockEnabled.asStateFlow()
 
+    private val _privacyTypingEnabled = MutableStateFlow(prefs.getBoolean(KEY_PRIVACY_TYPING, false))
+    val privacyTypingEnabled: StateFlow<Boolean> = _privacyTypingEnabled.asStateFlow()
+
     private val _dynamicColorEnabled = MutableStateFlow(prefs.getBoolean(KEY_DYNAMIC_COLOR, false))
     /** When true, use Material You wallpaper colors instead of the FieldMind brand palette. */
     val dynamicColorEnabled: StateFlow<Boolean> = _dynamicColorEnabled.asStateFlow()
@@ -313,6 +316,7 @@ class FieldMindSettings private constructor(context: Context) {
     fun setStreaksEnabled(value: Boolean) = edit(KEY_STREAKS, value) { _streaksEnabled.value = value }
     fun setDefaultExportFormat(value: String) = edit(KEY_EXPORT_FORMAT, value) { _defaultExportFormat.value = value }
     fun setPrivacyLockEnabled(value: Boolean) = edit(KEY_PRIVACY_LOCK, value) { _privacyLockEnabled.value = value }
+    fun setPrivacyTypingEnabled(value: Boolean) = edit(KEY_PRIVACY_TYPING, value) { _privacyTypingEnabled.value = value }
     fun setDynamicColorEnabled(value: Boolean) = edit(KEY_DYNAMIC_COLOR, value) { _dynamicColorEnabled.value = value }
     fun setThemeMode(value: String) = edit(KEY_THEME_MODE, value) { _themeMode.value = value }
     fun setProfileName(value: String) = edit(KEY_PROFILE_NAME, value.trim()) { _profileName.value = value.trim() }
@@ -440,6 +444,7 @@ class FieldMindSettings private constructor(context: Context) {
         private const val KEY_STREAKS = "streaks"
         private const val KEY_EXPORT_FORMAT = "export_format"
         private const val KEY_PRIVACY_LOCK = "privacy_lock"
+        private const val KEY_PRIVACY_TYPING = "privacy_typing"
         private const val KEY_DYNAMIC_COLOR = "dynamic_color"
         private const val KEY_THEME_MODE = "theme_mode"
         private const val KEY_PROFILE_NAME = "profile_name"

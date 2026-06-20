@@ -42,6 +42,8 @@ import fieldmind.research.app.shared.data.model.AppSettings
 import fieldmind.research.app.shared.presentation.components.icons.Icon
 import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon
 import fieldmind.research.app.features.field.presentation.components.FieldMindMotion
+import fieldmind.research.app.features.field.presentation.components.LocalPrivacyTypingEnabled
+import androidx.compose.runtime.CompositionLocalProvider
 
 private fun formatElapsed(startedAt: Long): String {
     val ms = System.currentTimeMillis() - startedAt
@@ -146,8 +148,11 @@ fun FieldMindApp(appSettings: AppSettings, viewModel: FieldMindViewModel) {
             isUnlocked = appUnlocked,
             onUnlock = { appUnlocked = true }
         ) {
-            FieldMindSnackbarProvider { _ ->
-                FieldMindNavigation(viewModel = viewModel, onResetOnboarding = { appSettings.setOnboardingCompleted(false); appUnlocked = false })
+            val privacyTyping by viewModel.fieldSettings.privacyTypingEnabled.collectAsState()
+            CompositionLocalProvider(LocalPrivacyTypingEnabled provides privacyTyping) {
+                FieldMindSnackbarProvider { _ ->
+                    FieldMindNavigation(viewModel = viewModel, onResetOnboarding = { appSettings.setOnboardingCompleted(false); appUnlocked = false })
+                }
             }
         }
     }
