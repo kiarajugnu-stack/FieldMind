@@ -36,6 +36,7 @@ import androidx.fragment.app.FragmentActivity
 import fieldmind.research.app.features.field.data.settings.FieldMindSettings
 import fieldmind.research.app.features.field.presentation.components.FieldMindIcons
 import fieldmind.research.app.features.field.presentation.components.LocalPrivacyTypingEnabled
+import fieldmind.research.app.features.field.presentation.components.PrivacyTypingIndicator
 import fieldmind.research.app.features.field.presentation.components.withPrivacyTyping
 import fieldmind.research.app.shared.presentation.components.icons.Icon
 // ══════════════════════════════════════════════════════════════════════
@@ -187,7 +188,12 @@ fun FieldMindAppLock(
                         supportingText = if (pinError) {{ Text("Incorrect PIN. Try again.") }} else null,
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(18.dp),
-                        textStyle = MaterialTheme.typography.headlineSmall.copy(textAlign = TextAlign.Center, letterSpacing = 8.sp)
+                        textStyle = MaterialTheme.typography.headlineSmall.copy(textAlign = TextAlign.Center, letterSpacing = 8.sp),
+                        trailingIcon = {
+                            if (LocalPrivacyTypingEnabled.current) {
+                                PrivacyTypingIndicator()
+                            }
+                        }
                     )
                 }
 

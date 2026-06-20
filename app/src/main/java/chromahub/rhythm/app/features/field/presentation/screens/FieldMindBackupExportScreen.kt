@@ -428,7 +428,8 @@ fun BackupAndRestoreScreen(
                                 }
                             },
                             onChooseFolder = { folderPickerLauncher.launch(null) },
-                            destinationUri = exportDestinationUri
+                            destinationUri = exportDestinationUri,
+                            onSwitchToImport = { activeTab = BackupTab.IMPORT }
                         )
 
                         BackupTab.IMPORT -> ImportTabContent(
@@ -639,7 +640,12 @@ fun BackupAndRestoreScreen(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(18.dp),
                         singleLine = true,
-                        keyboardOptions = KeyboardOptions.Default.withPrivacyTyping(LocalPrivacyTypingEnabled.current)
+                        keyboardOptions = KeyboardOptions.Default.withPrivacyTyping(LocalPrivacyTypingEnabled.current),
+                        trailingIcon = {
+                            if (LocalPrivacyTypingEnabled.current) {
+                                PrivacyTypingIndicator()
+                            }
+                        }
                     )
                 }
             },
@@ -1070,7 +1076,8 @@ private fun ExportTabContent(
     exportStepText: String,
     onExport: (format: String, action: String) -> Unit,
     onChooseFolder: () -> Unit,
-    destinationUri: Uri?
+    destinationUri: Uri?,
+    onSwitchToImport: (() -> Unit)? = null
 ) {
     val totalEntities = entityCounts.values.sum()
     val colors = FieldMindTheme.colors
@@ -1188,6 +1195,65 @@ private fun ExportTabContent(
                 modifier = Modifier.weight(1f), shape = RoundedCornerShape(16.dp),
                 enabled = !isExporting && totalEntities > 0
             ) { Icon(FieldMindIcons.Save, null, size = 18.dp); Spacer(Modifier.width(6.dp)); Text("Save") }
+        }
+
+        // ── Import callout ──
+        if (onSwitchToImport != null) {
+            Card(
+                shape = RoundedCornerShape(24.dp),
+                colors = CardDefaults.cardColors(containerColor = FieldMindTheme.colors.observation.copy(alpha = 0.08f)),
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { onSwitchToImport() }
+            ) {
+                Row(
+                    Modifier.fillMaxWidth().padding(18.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(14.dp)
+                ) {
+                    Box(
+                        Modifier
+                            .size(48.dp)
+                            .clip(RoundedCornerShape(14.dp))
+                            .background(FieldMindTheme.colors.observation.copy(alpha = 0.18f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            FieldMindIcons.Download,
+                            null,
+                            tint = FieldMindTheme.colors.observation,
+                            size = 26.dp
+                        )
+                    }
+                    Column(Modifier.weight(1f)) {
+                        Text(
+                            "Need to restore data?",
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = FieldMindTheme.colors.observation
+                        )
+                        Text(
+                            "Import a .json or .fieldmind backup to recover your observations, notes, and projects.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+                    FilledTonalButton(
+                        onClick = { onSwitchToImport() },
+                        shape = RoundedCornerShape(14.dp),
+                        colors = ButtonDefaults.filledTonalButtonColors(
+                            containerColor = FieldMindTheme.colors.observation.copy(alpha = 0.18f)
+                        )
+                    ) {
+                        Icon(FieldMindIcons.Download, null, size = 16.dp)
+                        Spacer(Modifier.width(4.dp))
+                        Text("Import", fontWeight = FontWeight.SemiBold)
+                    }
+                }
+            }
         }
     }
 }
@@ -1503,7 +1569,12 @@ private fun BackupTabContent(
                         modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
                         shape = RoundedCornerShape(18.dp),
                         singleLine = true,
-                        keyboardOptions = KeyboardOptions.Default.withPrivacyTyping(LocalPrivacyTypingEnabled.current)
+                        keyboardOptions = KeyboardOptions.Default.withPrivacyTyping(LocalPrivacyTypingEnabled.current),
+                        trailingIcon = {
+                            if (LocalPrivacyTypingEnabled.current) {
+                                PrivacyTypingIndicator()
+                            }
+                        }
                     )
                     val strength = remember(password) { FieldMindExportEncryption.PasswordStrength.evaluate(password) }
                     if (password.isNotBlank()) {

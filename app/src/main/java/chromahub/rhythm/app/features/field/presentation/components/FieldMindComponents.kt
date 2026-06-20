@@ -864,6 +864,11 @@ fun FieldTextField(
         minLines = minLines,
         isError = error != null,
         keyboardOptions = baseOptions.withPrivacyTyping(privacyTyping),
+        trailingIcon = {
+            if (privacyTyping) {
+                PrivacyTypingIndicator()
+            }
+        },
         supportingText = {
             when {
                 error != null -> Text(error, color = MaterialTheme.colorScheme.error)
