@@ -254,6 +254,35 @@ fun InsightsScreen(
 
             item { ResearchProfileCard(profileName, profileRole, profileFocus, todayCount, weekCount, goal) }
 
+            // ── Quick actions: Add observation ──
+            item {
+                Card(
+                    modifier = Modifier.fillMaxWidth().clickable { onNavigate(FieldMindScreen.Observe) },
+                    shape = RoundedCornerShape(24.dp),
+                    colors = CardDefaults.cardColors(containerColor = FieldMindTheme.colors.observation.copy(alpha = 0.1f)),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                ) {
+                    Row(
+                        Modifier.fillMaxWidth().padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(14.dp)
+                    ) {
+                        Box(
+                            Modifier.size(44.dp).clip(RoundedCornerShape(14.dp))
+                                .background(FieldMindTheme.colors.observation.copy(alpha = 0.18f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(FieldMindIcons.Add, null, tint = FieldMindTheme.colors.observation, size = 24.dp)
+                        }
+                        Column(Modifier.weight(1f)) {
+                            Text("Add observation", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+                            Text("Quick-capture a new observation from the field", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                        Icon(FieldMindIcons.Forward, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, size = 22.dp)
+                    }
+                }
+            }
+
             if (observations.isEmpty()) {
                 item {
                     EmptyState(
