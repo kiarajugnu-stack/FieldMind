@@ -368,8 +368,6 @@ class FieldMindSettings private constructor(context: Context) {
     fun setAlwaysOnScreenDuration(value: String) = edit(KEY_ALWAYS_ON_SCREEN_DURATION, value) { _alwaysOnScreenDuration.value = value }
     fun setClipboardAutoCleanupEnabled(value: Boolean) = edit(KEY_CLIPBOARD_CLEANUP, value) { _clipboardAutoCleanupEnabled.value = value }
     fun setClipboardCleanupDelay(value: String) = edit(KEY_CLIPBOARD_CLEANUP_DELAY, value) { _clipboardCleanupDelay.value = value }
-    fun setLockTimeout(value: String) = edit(KEY_LOCK_TIMEOUT, value) { _lockTimeout.value = value }
-    fun setAutoLockOnBackground(value: Boolean) = edit(KEY_AUTO_LOCK_BACKGROUND, value) { _autoLockOnBackground.value = value }
     fun setWeatherShowCloudAnimation(value: Boolean) = edit(KEY_WEATHER_SHOW_CLOUD_ANIMATION, value) { _weatherShowCloudAnimation.value = value }
     fun setWeatherProvider(value: String) = edit(KEY_WEATHER_PROVIDER, value) { _weatherProvider.value = value }
     fun setWeatherProviders(value: String) = edit(KEY_WEATHER_PROVIDERS, value) {
@@ -397,8 +395,6 @@ class FieldMindSettings private constructor(context: Context) {
     fun setDeveloperMode(value: Boolean) = edit(KEY_DEVELOPER_MODE, value) { _developerMode.value = value }
     fun setDebugLogging(value: Boolean) = edit(KEY_DEBUG_LOGGING, value) { _debugLogging.value = value }
     fun setDataIntegrityCheckOnLaunch(value: Boolean) = edit(KEY_DATA_INTEGRITY_CHECK, value) { _dataIntegrityCheckOnLaunch.value = value }
-    fun setLockTimeout(value: String) = edit(KEY_LOCK_TIMEOUT, value) { _lockTimeout.value = value }
-    fun setAutoLockOnBackground(value: Boolean) = edit(KEY_AUTO_LOCK_BACKGROUND, value) { _autoLockOnBackground.value = value }
 
     // ── Onboarding / interests ──
     private val _userInterests = MutableStateFlow(UserInterests.fromJson(prefs.getString(KEY_USER_INTERESTS, null)))
@@ -556,7 +552,5 @@ class FieldMindSettings private constructor(context: Context) {
         private const val KEY_ALWAYS_ON_SCREEN_DURATION = "always_on_screen_duration"
         private const val KEY_CLIPBOARD_CLEANUP = "clipboard_cleanup"
         private const val KEY_CLIPBOARD_CLEANUP_DELAY = "clipboard_cleanup_delay"
-        private const val KEY_EXTENDED_TOUR_DONE = "extended_tour_done"
-        private const val KEY_EXTENDED_TOUR_DONE = "onboarding_extended_tour_done"
     }
 }

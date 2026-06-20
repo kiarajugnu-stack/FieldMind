@@ -351,7 +351,6 @@ fun BackupAndRestoreScreen(
                                             val dateStamp = SimpleDateFormat("yyyy-MM-dd_HHmm", Locale.getDefault()).format(Date())
                                             val ext = when (format) {
                                                 "Markdown" -> "md"
-                                                ".fieldmind" -> "fieldmind"
                                                 else -> format.lowercase()
                                             }
                                             val fileName = "fieldmind-export-$dateStamp.$ext"
@@ -363,18 +362,6 @@ fun BackupAndRestoreScreen(
                                                 "Markdown" -> exportFile.writeText(
                                                     observations.joinToString("\n\n---\n\n") { FieldMindExport.singleObservationMarkdown(it) }
                                                 )
-                                                ".fieldmind" -> {
-                                                    // Pack with encryption if enabled
-                                                    val packed = if (backupEncrypt) {
-                                                        FieldMindExportMediaPacker.buildPackageEncrypted(
-                                                            json = json,
-                                                            password = backupPassword.ifBlank { "default" }
-                                                        )
-                                                    } else {
-                                                        FieldMindExportMediaPacker.buildPackage(json = json)
-                                                    }
-                                                    exportFile.writeBytes(packed)
-                                                }
                                                 "JSON" -> exportFile.writeText(json)
                                             }
 
