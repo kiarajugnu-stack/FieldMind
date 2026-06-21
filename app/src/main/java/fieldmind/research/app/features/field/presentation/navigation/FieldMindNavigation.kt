@@ -23,6 +23,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.text.font.FontWeight
@@ -55,6 +56,7 @@ import androidx.compose.ui.geometry.Size
 
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.HazeStyle
+import dev.chrisbanes.haze.HazeTint
 import dev.chrisbanes.haze.haze
 import dev.chrisbanes.haze.hazeChild
 
@@ -386,8 +388,19 @@ fun FieldMindNavigation(viewModel: FieldMindViewModel, requestedDestination: Str
                                     state = hazeState,
                                     style = HazeStyle(
                                         blurRadius = 24.dp,
-                                        tint = MaterialTheme.colorScheme.surfaceContainer.copy(
-                                            alpha = if (isSystemInDarkTheme()) 0.78f else 0.85f
+                                        noiseFactor = 0.04f,
+                                        tints = listOf(
+                                            HazeTint(
+                                                color = MaterialTheme.colorScheme.surfaceContainer.copy(
+                                                    alpha = if (isSystemInDarkTheme()) 0.78f else 0.85f
+                                                )
+                                            ),
+                                            HazeTint(
+                                                brush = Brush.verticalGradient(
+                                                    0.0f to Color.White.copy(alpha = 0.05f),
+                                                    0.15f to Color.Transparent
+                                                )
+                                            )
                                         )
                                     )
                                 )
