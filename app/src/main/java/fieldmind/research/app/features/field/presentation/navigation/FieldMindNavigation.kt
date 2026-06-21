@@ -53,7 +53,6 @@ import fieldmind.research.app.features.field.presentation.components.LocalPrivac
 import fieldmind.research.app.features.field.presentation.components.PrivacyTextInputWrapper
 import androidx.compose.runtime.CompositionLocalProvider
 
-
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.HazeStyle
 import dev.chrisbanes.haze.HazeTint
