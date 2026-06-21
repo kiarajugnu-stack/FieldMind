@@ -45,6 +45,9 @@ import fieldmind.research.app.shared.data.model.AppSettings
 import fieldmind.research.app.shared.presentation.components.icons.Icon
 import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon
 import androidx.compose.foundation.Canvas
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import fieldmind.research.app.features.field.presentation.components.FieldMindMotion
 import fieldmind.research.app.features.field.presentation.components.LocalPrivacyTypingEnabled
 import fieldmind.research.app.features.field.presentation.components.PrivacyTextInputWrapper
