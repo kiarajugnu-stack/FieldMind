@@ -23,7 +23,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntOffset
@@ -49,7 +48,6 @@ import fieldmind.research.app.features.field.presentation.components.FieldMindMo
 import fieldmind.research.app.features.field.presentation.components.LocalPrivacyTypingEnabled
 import fieldmind.research.app.features.field.presentation.components.PrivacyTextInputWrapper
 import androidx.compose.runtime.CompositionLocalProvider
-import android.os.Build
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -358,9 +356,9 @@ fun FieldMindNavigation(viewModel: FieldMindViewModel, requestedDestination: Str
                             .fillMaxWidth()
                             .navigationBarsPadding()
                             .padding(horizontal = 16.dp, vertical = 10.dp)
-                    ) {
-                        // Glassmorphic nav pill with blur effect
-                        val isBlurSupported = remember { Build.VERSION.SDK_INT >= 31 }
+                    ) {                        // Glassmorphic nav pill — semi-transparent surface with border
+                        // for the frosted glass aesthetic. The animated blob indicator
+                        // (drawn by LiquidNavRow) provides the liquid micro-interaction.
                         Surface(
                             shape = RoundedCornerShape(34.dp),
                             color = MaterialTheme.colorScheme.surfaceContainer.copy(
@@ -378,14 +376,6 @@ fun FieldMindNavigation(viewModel: FieldMindViewModel, requestedDestination: Str
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(66.dp)
-                                .then(
-                                    if (isBlurSupported) Modifier.graphicsLayer {
-                                        // Use RenderEffect for frosted glass look on API 31+
-                                        renderEffect = android.graphics.RenderEffect
-                                            .createBlurEffect(24f, 24f, android.graphics.Shader.TileMode.CLAMP)
-                                            
-                                    } else Modifier
-                                )
                         ) {
                             LiquidNavRow(
                                 visibleTabs = visibleTabs,
