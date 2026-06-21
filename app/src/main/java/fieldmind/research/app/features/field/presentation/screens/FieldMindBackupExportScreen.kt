@@ -685,7 +685,9 @@ fun BackupAndRestoreScreen(
                                         }
                                     }
                                 }
-                            }
+                            },
+                            showConflictDialog = showConflictDialog,
+                            onShowConflictDialog = { showConflictDialog = it }
                         )
 
                         BackupTab.BACKUP -> BackupTabContent(
@@ -2057,6 +2059,7 @@ private class ExportHistoryStore(context: Context) {
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
+@Composable
 private fun ImportTabContent(
     selectedFileUri: Uri?,
     fileName: String,
@@ -2067,7 +2070,10 @@ private fun ImportTabContent(
     isImporting: Boolean,
     onPickFile: () -> Unit,
     onClearFile: () -> Unit,
-    onImport: () -> Unit    ) {
+    onImport: () -> Unit,
+    showConflictDialog: Boolean = false,
+    onShowConflictDialog: (Boolean) -> Unit = {}
+) {
 
 
     Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
@@ -2247,7 +2253,7 @@ private fun ImportTabContent(
                             shape = RoundedCornerShape(12.dp),
                             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.4f)),
                             elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-                            modifier = Modifier.clickable { showConflictDialog = true }
+                            modifier = Modifier.clickable { onShowConflictDialog(true) }
                         ) {
                             Row(
                                 Modifier.padding(12.dp).fillMaxWidth(),
