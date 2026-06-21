@@ -1314,6 +1314,14 @@ private fun OnboardingAiFeaturesPage(
     onBack: () -> Unit
 ) {
     var showContent by remember { mutableStateOf(false) }
+    var geminiKey by remember { mutableStateOf("") }
+    var openaiKey by remember { mutableStateOf("") }
+    var selectedProvider by remember { mutableStateOf("None") }
+    var testingConnection by remember { mutableStateOf(false) }
+    var testResult by remember { mutableStateOf<Boolean?>(null) }
+    var enableSpeciesId by remember { mutableStateOf(true) }
+    var enablePrivacyLock by remember { mutableStateOf(true) }
+    
     LaunchedEffect(Unit) { showContent = true }
 
     Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
@@ -1333,25 +1341,119 @@ private fun OnboardingAiFeaturesPage(
                     }
                 }
 
+                // AI Assistant Configuration
+                AnimatedVisibility(visible = showContent, enter = fadeIn(FieldMindMotion.expressiveFloat)) {
+                    Card(
+                        shape = RoundedCornerShape(20.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                    ) {
+                        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                            Row(verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                                Box(Modifier.size(40.dp).clip(RoundedCornerShape(12.dp)).background(FieldMindTheme.colors.observation.copy(alpha = 0.14f)), contentAlignment = Alignment.Center) {
+                                    Icon(FieldMindIcons.Sparkle, null, tint = FieldMindTheme.colors.observation, size = 22.dp)
+                                }
+                                Column(Modifier.weight(1f)) {
+                                    Text("AI Assistant", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                                    Text("Auto-suggest species & analyze observations", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                }
+                            }
+                            
+                            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                                Text("AI Provider", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold)
+                                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    listOf("None", "Gemini", "OpenAI").forEach { provider ->
+                                        Surface(
+                                            onClick = { selectedProvider = provider },
+                                            shape = RoundedCornerShape(12.dp),
+                                            color = if (selectedProvider == provider) FieldMindTheme.colors.observation.copy(alpha = 0.14f) else MaterialTheme.colorScheme.surfaceContainerHigh,
+                                            border = if (selectedProvider == provider) BorderStroke(1.5.dp, FieldMindTheme.colors.observation) else null,
+                                            modifier = Modifier.weight(1f)
+                                        ) {
+                                            Text(provider, modifier = Modifier.padding(vertical = 10.dp), style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
+                                        }
+                                    }
+                                }
+                            }
+                            
+                            if (selectedProvider == "Gemini") {
+                                TextField(
+                                    value = geminiKey,
+                                    onValueChange = { geminiKey = it },
+                                    label = { Text("Gemini API Key") },
+                                    placeholder = { Text("sk-...") },
+                                    visualTransformation = PasswordVisualTransformation(),
+                                    modifier = Modifier.fillMaxWidth(),
+                                    shape = RoundedCornerShape(12.dp),
+                                    singleLine = true,
+                                    colors = TextFieldDefaults.colors(focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh, unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh)
+                                )
+                            }
+                            if (selectedProvider == "OpenAI") {
+                                TextField(
+                                    value = openaiKey,
+                                    onValueChange = { openaiKey = it },
+                                    label = { Text("OpenAI API Key") },
+                                    placeholder = { Text("sk-...") },
+                                    visualTransformation = PasswordVisualTransformation(),
+                                    modifier = Modifier.fillMaxWidth(),
+                                    shape = RoundedCornerShape(12.dp),
+                                    singleLine = true,
+                                    colors = TextFieldDefaults.colors(focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh, unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh)
+                                )
+                            }
+                            
+                            if (selectedProvider != "None") {
+                                Button(
+                                    onClick = { testingConnection = true; testResult = null },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    shape = RoundedCornerShape(12.dp),
+                                    enabled = (selectedProvider == "Gemini" && geminiKey.isNotBlank()) || (selectedProvider == "OpenAI" && openaiKey.isNotBlank())
+                                ) {
+                                    if (testingConnection) {
+                                        CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp, color = MaterialTheme.colorScheme.onPrimary)
+                                        Spacer(Modifier.width(8.dp))
+                                    }
+                                    Text("Test Connection")
+                                }
+                                
+                                testResult?.let { isValid ->
+                                    Surface(shape = RoundedCornerShape(10.dp), color = if (isValid) FieldMindTheme.colors.positive.copy(alpha = 0.15f) else MaterialTheme.colorScheme.error.copy(alpha = 0.15f)) {
+                                        Row(Modifier.fillMaxWidth().padding(10.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                            Icon(if (isValid) MaterialSymbolIcon("check_circle") else MaterialSymbolIcon("error"), null, size = 18.dp, tint = if (isValid) FieldMindTheme.colors.positive else MaterialTheme.colorScheme.error)
+                                            Text(if (isValid) "API key validated" else "Invalid API key", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold)
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Additional Features
                 listOf(
-                    Triple("AI Assistant", "Use Gemini or OpenAI to auto-suggest species, analyze observations, and draft reports. Configure API keys in Settings.", FieldMindIcons.Sparkle),
-                    Triple("Species Identification", "Offline-first AI that identifies species from photos. Gets smarter over time as you confirm matches.", FieldMindIcons.Nature),
-                    Triple("Privacy Lock", "Secure your research data with biometric or PIN lock. Auto-locks when the app goes to background.", FieldMindIcons.Lock)
-                ).forEach { (title, desc, icon) ->
+                    Pair("Species Identification", enableSpeciesId) { enableSpeciesId = it },
+                    Pair("Privacy Lock", enablePrivacyLock) { enablePrivacyLock = it }
+                ).forEach { (title, enabled) ->
                     AnimatedVisibility(visible = showContent, enter = fadeIn(FieldMindMotion.expressiveFloat)) {
                         Card(
                             shape = RoundedCornerShape(20.dp),
                             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
                             elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
                         ) {
-                            Row(Modifier.padding(16.dp), verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+                            Row(
+                                Modifier.fillMaxWidth().padding(16.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
                                 Box(Modifier.size(40.dp).clip(RoundedCornerShape(12.dp)).background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)), contentAlignment = Alignment.Center) {
-                                    Icon(icon, null, tint = MaterialTheme.colorScheme.primary, size = 22.dp)
+                                    Icon(if (title.contains("Species")) FieldMindIcons.Nature else FieldMindIcons.Lock, null, tint = MaterialTheme.colorScheme.primary, size = 22.dp)
                                 }
                                 Column(Modifier.weight(1f)) {
                                     Text(title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
-                                    Text(desc, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                    Text(if (title.contains("Species")) "Offline AI species ID from photos" else "Biometric or PIN lock for privacy", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                 }
+                                Switch(checked = enabled, onCheckedChange = { (list.find { it.first == title }?.second as? ((Boolean) -> Unit))?.invoke(it) })
                             }
                         }
                     }
@@ -1376,11 +1478,16 @@ private fun OnboardingAiFeaturesPage(
 // ══════════════════════════════════════════════════════════════════════
 
 @Composable
-private fun OnboardingBackupPage(
+private fun OnboardingBackupOptionsPage(
     onNext: () -> Unit,
     onBack: () -> Unit
 ) {
     var showContent by remember { mutableStateOf(false) }
+    var cloudSyncEnabled by remember { mutableStateOf(true) }
+    var localArchiveEnabled by remember { mutableStateOf(true) }
+    var autoBackupInterval by remember { mutableStateOf("Daily") }
+    var encryptLocal by remember { mutableStateOf(true) }
+    
     LaunchedEffect(Unit) { showContent = true }
 
     Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
@@ -1395,9 +1502,160 @@ private fun OnboardingBackupPage(
                 Spacer(Modifier.height(8.dp))
                 AnimatedVisibility(visible = showContent, enter = fadeIn() + slideInVertically { it / 3 }) {
                     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                        Text("Backup & reminders", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.ExtraBold)
-                        Text("Keep your research safe and stay on track.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text("Backup & Sync", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.ExtraBold)
+                        Text("Choose how to protect your research data.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
+                }
+
+                // Cloud Sync
+                AnimatedVisibility(visible = showContent, enter = fadeIn(FieldMindMotion.expressiveFloat)) {
+                    Card(
+                        shape = RoundedCornerShape(20.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                    ) {
+                        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                            Row(
+                                Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                Box(Modifier.size(40.dp).clip(RoundedCornerShape(12.dp)).background(FieldMindTheme.colors.positive.copy(alpha = 0.14f)), contentAlignment = Alignment.Center) {
+                                    Icon(FieldMindIcons.Cloud, null, tint = FieldMindTheme.colors.positive, size = 22.dp)
+                                }
+                                Column(Modifier.weight(1f)) {
+                                    Text("Cloud Sync", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                                    Text("Automatically back up to cloud", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                }
+                                Switch(checked = cloudSyncEnabled, onCheckedChange = { cloudSyncEnabled = it })
+                            }
+                            
+                            if (cloudSyncEnabled) {
+                                Column(Modifier.fillMaxWidth().padding(start = 52.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                                    Text("Backup Interval", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                        listOf("Hourly", "Daily", "Weekly").forEach { interval ->
+                                            Surface(
+                                                onClick = { autoBackupInterval = interval },
+                                                shape = RoundedCornerShape(10.dp),
+                                                color = if (autoBackupInterval == interval) FieldMindTheme.colors.positive.copy(alpha = 0.14f) else MaterialTheme.colorScheme.surfaceContainerHigh,
+                                                border = if (autoBackupInterval == interval) BorderStroke(1.5.dp, FieldMindTheme.colors.positive) else null,
+                                                modifier = Modifier.weight(1f)
+                                            ) {
+                                                Text(interval, modifier = Modifier.padding(vertical = 8.dp), style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
+                                            }
+                                        }
+                                    }
+                                    Text("Last backup: Just now", style = MaterialTheme.typography.labelSmall, color = FieldMindTheme.colors.positive, fontWeight = FontWeight.Bold)
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Local Archive
+                AnimatedVisibility(visible = showContent, enter = fadeIn(FieldMindMotion.expressiveFloat)) {
+                    Card(
+                        shape = RoundedCornerShape(20.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                    ) {
+                        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                            Row(
+                                Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                Box(Modifier.size(40.dp).clip(RoundedCornerShape(12.dp)).background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)), contentAlignment = Alignment.Center) {
+                                    Icon(FieldMindIcons.Storage, null, tint = MaterialTheme.colorScheme.primary, size = 22.dp)
+                                }
+                                Column(Modifier.weight(1f)) {
+                                    Text("Local Archive", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                                    Text("Save encrypted files on device", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                }
+                                Switch(checked = localArchiveEnabled, onCheckedChange = { localArchiveEnabled = it })
+                            }
+                            
+                            if (localArchiveEnabled) {
+                                Surface(
+                                    onClick = { /* TODO: Open folder selector */ },
+                                    shape = RoundedCornerShape(12.dp),
+                                    color = MaterialTheme.colorScheme.surfaceContainerLow,
+                                    modifier = Modifier.fillMaxWidth().padding(start = 52.dp)
+                                ) {
+                                    Row(
+                                        Modifier.fillMaxWidth().padding(12.dp),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.SpaceBetween
+                                    ) {
+                                        Text("/storage/fieldmind/archives", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1f))
+                                        Icon(MaterialSymbolIcon("arrow_outward"), null, size = 16.dp, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                                    }
+                                }
+                                
+                                Row(
+                                    Modifier.fillMaxWidth().padding(start = 52.dp, top = 8.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                ) {
+                                    Surface(
+                                        onClick = { encryptLocal = !encryptLocal },
+                                        shape = RoundedCornerShape(10.dp),
+                                        color = if (encryptLocal) MaterialTheme.colorScheme.primary.copy(alpha = 0.1f) else MaterialTheme.colorScheme.surfaceContainerHigh,
+                                        border = if (encryptLocal) BorderStroke(1.5.dp, MaterialTheme.colorScheme.primary) else null
+                                    ) {
+                                        Row(Modifier.padding(8.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                            Icon(FieldMindIcons.Lock, null, size = 14.dp, tint = if (encryptLocal) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant)
+                                            Text("Encrypt", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, color = if (encryptLocal) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant)
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Export Options
+                AnimatedVisibility(visible = showContent, enter = fadeIn(FieldMindMotion.expressiveFloat)) {
+                    Card(
+                        shape = RoundedCornerShape(20.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                    ) {
+                        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                            Row(verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                                Box(Modifier.size(40.dp).clip(RoundedCornerShape(12.dp)).background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)), contentAlignment = Alignment.Center) {
+                                    Icon(FieldMindIcons.Share, null, tint = MaterialTheme.colorScheme.primary, size = 22.dp)
+                                }
+                                Column(Modifier.weight(1f)) {
+                                    Text("Export Options", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                                    Text("Export as PDF, CSV, or images", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                }
+                            }
+                            Row(Modifier.fillMaxWidth().padding(start = 52.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                listOf("PDF", "CSV", "Images").forEach { format ->
+                                    Surface(shape = RoundedCornerShape(10.dp), color = MaterialTheme.colorScheme.surfaceContainerLow) {
+                                        Text(format, modifier = Modifier.padding(vertical = 8.dp, horizontal = 12.dp), style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            Row(
+                Modifier.fillMaxWidth().padding(top = 12.dp, bottom = 16.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                OutlinedButton(onClick = onBack, shape = RoundedCornerShape(16.dp)) { Text("Back") }
+                Spacer(Modifier.weight(1f))
+                Button(onClick = onNext, shape = RoundedCornerShape(16.dp)) { Text("Finish") }
+            }
+        }
+    }
+}
                 }
                 listOf(
                     Triple("Auto-backup", "Schedule automatic backups of all your observations, projects, and settings. Configurable frequency.", FieldMindIcons.Export),
@@ -1734,6 +1992,35 @@ private fun OnboardingFinalPage(
                 }
 
                 AnimatedVisibility(visible = showContent, enter = fadeIn(FieldMindMotion.expressiveFloat) + slideInVertically { it / 5 }) {
+                    Card(
+                        shape = RoundedCornerShape(24.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                    ) {
+                        Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                                Box(Modifier.size(36.dp).clip(RoundedCornerShape(10.dp)).background(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)), contentAlignment = Alignment.Center) {
+                                    Icon(FieldMindIcons.Share, null, tint = MaterialTheme.colorScheme.primary, size = 20.dp)
+                                }
+                                Text("Have existing research?", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                            }
+                            Text(
+                                "Import your observations from CSV or JSON files to continue your research in FieldMind.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Button(
+                                onClick = { /* TODO: Open import dialog */ },
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(12.dp)
+                            ) {
+                                Text("Import Data")
+                            }
+                        }
+                    }
+                }
+
+                AnimatedVisibility(visible = showContent, enter = fadeIn(FieldMindMotion.expressiveFloat) + slideInVertically { it / 6 }) {
                     Card(
                         shape = RoundedCornerShape(24.dp),
                         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
