@@ -230,6 +230,7 @@ The `FieldMindAutoBackupWorker` calls `archiveJson()` WITHOUT these entity types
 | **Phase D** — Fix `restoreArchiveJson()` to import EvidenceAttachmentEntity + cross-refs | ❌ Pending | ViewModel's restore function needs verification |
 | **Phase E** — Add TagEntity + CrossRefs to export/import | ❌ Pending | TagEntity, ObservationTagCrossRef, and other cross-ref tables need dedicated JSON arrays |
 | **Phase F** — Fix auto-backup worker to include all entity types | ❌ Pending | Auto-backup needs to pass species, weatherCatalog, researchSessions, tasks |
+u
 
 ## Summary of Issues by User Complaint
 
