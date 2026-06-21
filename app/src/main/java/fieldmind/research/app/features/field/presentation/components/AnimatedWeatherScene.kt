@@ -3588,7 +3588,7 @@ private fun SnowScene(
         label = "snowTreeSway"
     )
 
-    data class Snowflake(val x: Float, val speed: Float, val baseSize: Float, val swayAmount: Float)
+    data class Snowflake(val x: Float, val speed: Float, val baseSize: Float, val swayAmount: Float, val rotationSpeed: Float)
     val snowflakes = remember {
         val rng = Random(123)
         List(flakeCount) {
@@ -3596,41 +3596,89 @@ private fun SnowScene(
                 x = rng.nextFloat(),
                 speed = 0.4f + rng.nextFloat() * 0.6f,
                 baseSize = 0.3f + rng.nextFloat() * 0.7f,
-                swayAmount = 0.2f + rng.nextFloat() * 0.8f
+                swayAmount = 0.2f + rng.nextFloat() * 0.8f,
+                rotationSpeed = 0.5f + rng.nextFloat() * 1.5f  // Per-flake rotation
             )
         }
+    }
+
+    // Physics-based snow particle system with Perlin noise drift
+    val particleSystem = remember(flakeCount) {
+        PhysicsParticleSystem(
+            canvasWidth = 1f,
+            canvasHeight = 1f,
+            maxParticles = flakeCount,
+            gravity = if (isHeavy) 0.08f else 0.05f,  // Snow falls slower than rain
+            windForce = if (isHeavy) 0.12f else 0.08f,
+            dragCoefficient = if (isHeavy) 0.035f else 0.04f  // Snow has more air resistance
+        )
     }
 
     val flakeColor = if (isDark) Color(0xFFC8D8E8).copy(alpha = 0.6f) else Color.White.copy(alpha = 0.7f)
 
     Canvas(modifier = modifier.fillMaxSize()) {
-        // ── Snowfall with depth-based sizing and drift ──
-        for (flake in snowflakes) {
+        // Update physics system with wind influence
+        particleSystem.update(deltaTime = 0.016f, windGust = windDrift * 0.2f)
+
+        // Emit new snow particles continuously
+        if (particleSystem.getParticleCount() < flakeCount * 0.8f) {
+            particleSystem.emitAtTop(
+                count = 3,
+                vx = windDrift * 0.1f,
+                vy = if (isHeavy) 0.8f else 0.5f,
+                size = 0.012f,
+                massRange = if (isHeavy) 0.6f to 1.0f else 0.7f to 1.1f
+            )
+        }
+
+        // ── Snowfall with physics-based Perlin noise drift and per-flake rotation ──
+        for ((index, flake) in snowflakes.withIndex()) {
             val t = (snowProgress * flake.speed * 2f) % 1f
             val py = (t * (size.height + 30f)) - 15f
 
-            // Horizontal drift — layered sine waves for natural sway
-            val driftX = sin(windDrift * 2f + flake.x * 10f) * size.width * 0.06f * flake.swayAmount +
-                sin(windDrift * 5f + flake.x * 20f) * size.width * 0.02f * flake.swayAmount
-            val px = (flake.x * size.width + driftX + t * size.width * 0.02f) % (size.width + 20f) - 10f
+            // Perlin noise-based drift for more natural, organic motion
+            val perlinDrift = perlinNoise(flake.x * 5f, t * 3f, windDrift * 2f)
+            val driftX = perlinDrift * size.width * 0.08f * flake.swayAmount +
+                sin(windDrift * 2.5f + flake.x * 10f) * size.width * 0.03f * flake.swayAmount
+            val px = (flake.x * size.width + driftX + t * size.width * 0.01f) % (size.width + 20f) - 10f
 
-            // Depth-based sizing — larger flakes appear closer
+            // Depth-based sizing — larger flakes appear closer, size affects speed
             val depth = 0.3f + flake.baseSize * 0.7f
             val flakeSize = (1f + flake.baseSize * 3f) * (0.7f + sizeOscillation * 0.3f)
+
+            // Per-flake rotation for spinning effect
+            val rotation = (snowProgress * flake.rotationSpeed * 2f + flake.x * 6.28f) % 6.28f
 
             // Alpha variation for natural look
             val alpha = flakeColor.alpha * (0.5f + depth * 0.5f) * (0.6f + 0.4f * sin(t * 10f))
 
-            // Draw flake
+            // Draw flake with rotation visualization (by drawing rotated 6-pointed star)
             drawCircle(
                 color = flakeColor.copy(alpha = alpha.coerceIn(0f, 0.9f)),
                 radius = flakeSize,
                 center = Offset(px, py)
             )
 
+            // Draw rotation arms (creates appearance of spinning snowflake)
+            if (flakeSize > 1f && !compact) {
+                repeat(6) { arm ->
+                    val armAngle = (rotation + (arm * 1.047f)) // 60 degrees apart
+                    val armLen = flakeSize * 1.2f
+                    val armX = cos(armAngle) * armLen
+                    val armY = sin(armAngle) * armLen
+                    drawLine(
+                        color = flakeColor.copy(alpha = alpha * 0.4f),
+                        start = Offset(px, py),
+                        end = Offset(px + armX, py + armY),
+                        strokeWidth = flakeSize * 0.3f,
+                        cap = StrokeCap.Round
+                    )
+                }
+            }
+
             // Sparkle highlight on larger flakes
             if (flake.baseSize > 0.5f && !compact) {
-                val sparkle = sin(sparkleGlow * 2f + flake.x * 20f) * 0.5f + 0.5f
+                val sparkle = sin(sparkleGlow * 2f + flake.x * 20f + rotation) * 0.5f + 0.5f
                 val highlightAlpha = sparkle * 0.3f * alpha
                 if (highlightAlpha > 0.05f) {
                     drawCircle(
