@@ -372,7 +372,9 @@ fun BackupAndRestoreScreen(
                                             }
                                             // Collect cross-references and settings for v3 archive
                                             val crossRefs = viewModel.collectAllCrossRefs()
-                                            val settingsJson = viewModel.fieldSettings.toExportJson()
+                                            var settingsJson = viewModel.fieldSettings.toExportJson()
+                                            // Include PhashDatabase and GeoFenceRegions in settings
+                                            settingsJson = viewModel.mergeExtraBackupData(context, settingsJson)
                                             val json = FieldMindExport.archiveJson(
                                                 observations = exportObs, notes = exportNotes,
                                                 questions = questions, hypotheses = hypotheses,
@@ -652,7 +654,8 @@ fun BackupAndRestoreScreen(
                                                 }
                                             }
                                             val crossRefs = viewModel.collectAllCrossRefs()
-                                            val settingsJson = viewModel.fieldSettings.toExportJson()
+                                            var settingsJson = viewModel.fieldSettings.toExportJson()
+                                            settingsJson = viewModel.mergeExtraBackupData(context, settingsJson)
                                             val json = FieldMindExport.archiveJson(
                                                 backupObs, backupNotes, questions, hypotheses, projects, sources,
                                                 dataRecords, reports, flashcards, species, weatherCatalog,
@@ -914,7 +917,8 @@ fun BackupAndRestoreScreen(
                                     evidAttachAll.addAll(atts)
                                 }
                                 val crossRefs = viewModel.collectAllCrossRefs()
-                                val settingsJson = viewModel.fieldSettings.toExportJson()
+                                var settingsJson = viewModel.fieldSettings.toExportJson()
+                                settingsJson = viewModel.mergeExtraBackupData(context, settingsJson)
                                 val json = FieldMindExport.archiveJson(
                                     observations, notes, questions, hypotheses, projects, sources,
                                     dataRecords, reports, flashcards, species, weatherCatalog,

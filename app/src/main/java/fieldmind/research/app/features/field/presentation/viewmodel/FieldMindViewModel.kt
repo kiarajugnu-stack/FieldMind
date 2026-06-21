@@ -740,12 +740,26 @@ class FieldMindViewModel(application: Application) : AndroidViewModel(applicatio
             }
 
             // ════════════════════════════════════════════════════════════════════
-            //  Phase 3: Restore Settings from archive
+            //  Phase 3: Restore Settings + PhashDatabase + GeoFenceRegions
             // ════════════════════════════════════════════════════════════════════
             if (bundle.settingsJson.isNotBlank()) {
                 try {
                     val settingsObj = org.json.JSONObject(bundle.settingsJson)
                     fieldSettings.applyFromJson(settingsObj)
+
+                    // ── Restore PhashDatabase species identification history ──
+                    if (settingsObj.has("phashData")) {
+                        val phashJson = settingsObj.optString("phashData", "")
+                        val phashDb = fieldmind.research.app.features.field.data.vision.PhashDatabase(getApplication())
+                        phashDb.restoreFromJson(phashJson)
+                    }
+
+                    // ── Restore GeoFenceRegions (researcher-defined study sites) ──
+                    if (settingsObj.has("geoFenceData")) {
+                        val geoFenceJson = settingsObj.optString("geoFenceData", "")
+                        val geoFence = fieldmind.research.app.features.field.data.location.GeoFenceReminder(getApplication())
+                        geoFence.restoreRegionsFromJson(geoFenceJson)
+                    }
                 } catch (_: Exception) {
                     // Non-critical: settings restore failure shouldn't block data import
                 }
@@ -1002,6 +1016,30 @@ class FieldMindViewModel(application: Application) : AndroidViewModel(applicatio
     val tasks: StateFlow<List<TaskEntity>> = repository.tasks.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
     fun observeTasksForProject(projectId: Long) = repository.observeTasksForProject(projectId)
     val weatherCatalog: StateFlow<List<WeatherCatalogEntity>> = repository.weatherCatalog.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    // ── Extra backup data (PhashDatabase + GeoFenceRegions) ──
+    /**
+     * Merge PhashDatabase and GeoFenceRegions data into the settings JSON
+     * before passing it to [FieldMindExport.archiveJson].
+     */
+    fun mergeExtraBackupData(context: android.content.Context, settingsJson: String): String {
+        return try {
+            val obj = org.json.JSONObject(settingsJson)
+            val phashDb = fieldmind.research.app.features.field.data.vision.PhashDatabase(context)
+            val phashJson = phashDb.exportEntriesJson()
+            if (phashJson.isNotBlank() && phashJson != "[]") {
+                obj.put("phashData", phashJson)
+            }
+            val geoFence = fieldmind.research.app.features.field.data.location.GeoFenceReminder(context)
+            val geoFenceJson = geoFence.exportRegionsJson()
+            if (geoFenceJson.isNotBlank() && geoFenceJson != "[]") {
+                obj.put("geoFenceData", geoFenceJson)
+            }
+            obj.toString(2)
+        } catch (_: Exception) {
+            settingsJson
+        }
+    }
 
     // ── Cross-reference collection for backup/export ──
     /**

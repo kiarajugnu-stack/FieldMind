@@ -65,7 +65,21 @@ class FieldMindAutoBackupWorker(context: Context, params: WorkerParameters) : Co
             }
         }
 
-        val settingsJson = settings.toExportJson()
+        // ── Collect PhashDatabase and GeoFenceRegions for backup ──
+        val phashDb = fieldmind.research.app.features.field.data.vision.PhashDatabase(applicationContext)
+        val geoFence = fieldmind.research.app.features.field.data.location.GeoFenceReminder(applicationContext)
+
+        // Merge extra data into settings JSON
+        val settingsObj = org.json.JSONObject(settings.toExportJson())
+        val phashJson = phashDb.exportEntriesJson()
+        if (phashJson.isNotBlank() && phashJson != "[]") {
+            settingsObj.put("phashData", phashJson)
+        }
+        val geoFenceJson = geoFence.exportRegionsJson()
+        if (geoFenceJson.isNotBlank() && geoFenceJson != "[]") {
+            settingsObj.put("geoFenceData", geoFenceJson)
+        }
+        val settingsJson = settingsObj.toString(2)
 
         val archiveJson = FieldMindExport.archiveJson(
             observations = observations,
