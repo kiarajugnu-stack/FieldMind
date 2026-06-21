@@ -508,21 +508,21 @@ fun BackupAndRestoreScreen(
                                                     throw java.io.IOException("Save failed: ${e.localizedMessage}")
                                                 }
                                             }
+                                            // Record export history — track actual file after encryption
+                                            val _exportFile = if (exportEncrypt && exportPassword.isNotBlank() && format in listOf(".fieldmind", ".zip")) {
+                                                File(exportDir, exportFile.name.replace(".fieldmind", ".encrypted").replace(".zip", ".encrypted"))
+                                            } else {
+                                                exportFile
+                                            }
+                                            exportHistoryStore.add(ExportRecord(
+                                                format = if (exportEncrypt && exportPassword.isNotBlank()) "Encrypted" else format,
+                                                fileName = _exportFile.name,
+                                                fileSizeBytes = _exportFile.length(),
+                                                exportedAt = System.currentTimeMillis(),
+                                                destination = if (action == "share") "Shared via intent" else "Saved to folder",
+                                                entityCounts = mapOf("Observations" to observations.size, "Notes" to notes.size, "Projects" to projects.size)
+                                            ))
                                         }
-                                        // Record export history — track actual file after encryption
-                                        val _exportFile = if (exportEncrypt && exportPassword.isNotBlank() && format in listOf(".fieldmind", ".zip")) {
-                                            File(exportDir, exportFile.name.replace(".fieldmind", ".encrypted").replace(".zip", ".encrypted"))
-                                        } else {
-                                            exportFile
-                                        }
-                                        exportHistoryStore.add(ExportRecord(
-                                            format = if (exportEncrypt && exportPassword.isNotBlank()) "Encrypted" else format,
-                                            fileName = _exportFile.name,
-                                            fileSizeBytes = _exportFile.length(),
-                                            exportedAt = System.currentTimeMillis(),
-                                            destination = if (action == "share") "Shared via intent" else "Saved to folder",
-                                            entityCounts = mapOf("Observations" to observations.size, "Notes" to notes.size, "Projects" to projects.size)
-                                        ))
                                     exportHistory = exportHistoryStore.load()
                                     showFastSnackbar(snackbar, scope, "Export complete")
                                 } catch (e: Exception) {
@@ -747,20 +747,20 @@ fun BackupAndRestoreScreen(
                                                     }
                                                 } catch (_: Exception) { }
                                             }
+                                            // Record backup history (inside IO block so vars are in scope)
+                                            val _backupFile = if (backupEncrypt && backupPassword.isNotBlank())
+                                                File(backupDir, "$baseName.encrypted")
+                                            else
+                                                fieldmindFile
+                                            exportHistoryStore.add(ExportRecord(
+                                                format = if (backupEncrypt && backupPassword.isNotBlank()) "Encrypted" else ".fieldmind",
+                                                fileName = _backupFile.name,
+                                                fileSizeBytes = _backupFile.length(),
+                                                exportedAt = System.currentTimeMillis(),
+                                                destination = "Backup saved",
+                                                entityCounts = mapOf("Observations" to observations.size, "Notes" to notes.size, "Projects" to projects.size)
+                                            ))
                                         }
-                                        // Record backup history (inside IO block so vars are in scope)
-                                        val _backupFile = if (backupEncrypt && backupPassword.isNotBlank())
-                                            File(backupDir, "$baseName.encrypted")
-                                        else
-                                            fieldmindFile
-                                        exportHistoryStore.add(ExportRecord(
-                                            format = if (backupEncrypt && backupPassword.isNotBlank()) "Encrypted" else ".fieldmind",
-                                            fileName = _backupFile.name,
-                                            fileSizeBytes = _backupFile.length(),
-                                            exportedAt = System.currentTimeMillis(),
-                                            destination = "Backup saved",
-                                            entityCounts = mapOf("Observations" to observations.size, "Notes" to notes.size, "Projects" to projects.size)
-                                        ))
                                     exportHistory = exportHistoryStore.load()
                                     lastBackupRefresh++
                                     showFastSnackbar(snackbar, scope, "Backup saved")
@@ -2089,7 +2089,7 @@ private fun ImportTabContent(
     }
 }
 
-// ══════════════════════════════════════════════════════════════════════
+// ═════════════════════════════════════════════════════════════���════════
 //  Backup Tab
 // ══════════════════════════════════════════════════════════════════════
 
