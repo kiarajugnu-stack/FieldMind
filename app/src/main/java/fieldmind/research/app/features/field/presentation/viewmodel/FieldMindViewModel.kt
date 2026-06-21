@@ -463,6 +463,9 @@ class FieldMindViewModel(application: Application) : AndroidViewModel(applicatio
             bundle.researchSessions.forEach { repository.addResearchSession(it) }
             bundle.tasks.forEach { repository.addTask(it) }
 
+            // ── Import TagEntity from archive (v3+) ──
+            bundle.tags.forEach { repository.addTag(it) }
+
             // ── Import EvidenceAttachmentEntity directly from JSON archive (v3+) ──
             // These are attachments embedded in the archive JSON itself (not from .fieldmind media
             // files). They contain the original URIs which may or may not still be valid.

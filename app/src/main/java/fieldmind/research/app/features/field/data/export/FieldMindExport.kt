@@ -24,9 +24,11 @@ object FieldMindExport {
         val species: Int = 0,
         val weatherCatalog: Int = 0,
         val researchSessions: Int = 0,
-        val tasks: Int = 0
+        val tasks: Int = 0,
+        val tags: Int = 0,
+        val teamMembers: Int = 0
     ) {
-        val total: Int get() = observations + notes + questions + hypotheses + projects + sources + dataRecords + reports + flashcards + species + weatherCatalog + researchSessions + tasks
+        val total: Int get() = observations + notes + questions + hypotheses + projects + sources + dataRecords + reports + flashcards + species + weatherCatalog + researchSessions + tasks + tags + teamMembers
         fun summary(): String = listOf(
             "$observations observations",
             "$notes notes",
@@ -40,7 +42,9 @@ object FieldMindExport {
             "$species species",
             "$weatherCatalog weather records",
             "$researchSessions research sessions",
-            "$tasks tasks"
+            "$tasks tasks",
+            "$tags tags",
+            "$teamMembers team members"
         ).joinToString(" • ")
     }
 
@@ -65,6 +69,8 @@ object FieldMindExport {
         val weatherCatalog: List<WeatherCatalogEntity> = emptyList(),
         val researchSessions: List<ResearchSessionEntity> = emptyList(),
         val tasks: List<TaskEntity> = emptyList(),
+        val tags: List<TagEntity> = emptyList(),
+        val teamMembers: List<TeamMemberEntity> = emptyList(),
         val evidenceAttachments: List<EvidenceAttachmentEntity> = emptyList(),
         val crossReferences: List<CrossReferenceEntry> = emptyList(),
         val settingsJson: String = ""
@@ -500,6 +506,33 @@ object FieldMindExport {
             }.filter { it.type.isNotBlank() }
         } else emptyList()
 
+        // ═══ Tags — NEW in v3 ═══
+        val tags = if (isV3) {
+            root.optJSONArray("tags").toObjects { o ->
+                TagEntity(
+                    id = o.optLong("id", 0L),
+                    name = o.optString("name", "Imported tag"),
+                    normalizedName = o.optString("normalizedName", o.optString("name", "imported tag").trim().lowercase()),
+                    color = o.optLong("color", 0xFF5F7F52),
+                    createdAt = o.optLong("createdAt", System.currentTimeMillis())
+                )
+            }
+        } else emptyList()
+
+        // ═══ TeamMembers — NEW in v3 ═══
+        val teamMembers = if (isV3) {
+            root.optJSONArray("teamMembers").toObjects { o ->
+                TeamMemberEntity(
+                    id = o.optLong("id", 0L),
+                    name = o.optString("name", "Imported member"),
+                    role = o.optString("role"),
+                    projectId = o.optNullableLong("projectId"),
+                    email = o.optString("email"),
+                    createdAt = o.optLong("createdAt", System.currentTimeMillis())
+                )
+            }
+        } else emptyList()
+
         // ═══ Settings — v3+ only ═══
         val settingsJson = if (isV3 && root.has("settings")) {
             root.optJSONObject("settings")?.toString(2) ?: ""
@@ -509,13 +542,13 @@ object FieldMindExport {
             observations.size, notes.size, questions.size, hypotheses.size,
             projects.size, sources.size, dataRecords.size, reports.size,
             flashcards.size, species.size, weatherCatalog.size,
-            researchSessions.size, tasks.size
+            researchSessions.size, tasks.size, tags.size, teamMembers.size
         )
         require(preview.total > 0) { "The archive did not contain importable FieldMind records." }
         return ArchiveImportBundle(
             preview, observations, notes, questions, hypotheses, projects,
             sources, dataRecords, reports, flashcards, species, weatherCatalog,
-            researchSessions, tasks, evidenceAttachments, crossReferences, settingsJson
+            researchSessions, tasks, tags, teamMembers, evidenceAttachments, crossReferences, settingsJson
         )
     }
 
@@ -989,6 +1022,8 @@ ${report.nextSteps}
         weatherCatalog: List<WeatherCatalogEntity> = emptyList(),
         researchSessions: List<ResearchSessionEntity> = emptyList(),
         tasks: List<TaskEntity> = emptyList(),
+        tags: List<TagEntity> = emptyList(),
+        teamMembers: List<TeamMemberEntity> = emptyList(),
         evidenceAttachments: List<EvidenceAttachmentEntity> = emptyList(),
         crossReferences: List<CrossReferenceEntry> = emptyList(),
         settingsJson: String = "",
@@ -999,7 +1034,7 @@ ${report.nextSteps}
         appendLine("  \"exportedAt\": ${System.currentTimeMillis()},")
         appendLine("  \"appName\": \"FieldMind\",")
         appendLine("  \"appVersion\": \"4.3.0\",")
-        appendLine("  \"counts\": {\"observations\": ${observations.size}, \"notes\": ${notes.size}, \"questions\": ${questions.size}, \"hypotheses\": ${hypotheses.size}, \"projects\": ${projects.size}, \"sources\": ${sources.size}, \"dataRecords\": ${dataRecords.size}, \"reports\": ${reports.size}, \"flashcards\": ${flashcards.size}, \"species\": ${species.size}, \"weatherCatalog\": ${weatherCatalog.size}, \"researchSessions\": ${researchSessions.size}, \"tasks\": ${tasks.size}, \"evidenceAttachments\": ${evidenceAttachments.size}, \"crossReferences\": ${crossReferences.size}, \"hasSettings\": ${if (settingsJson.isNotBlank()) "true" else "false"}},")
+        appendLine("  \"counts\": {\"observations\": ${observations.size}, \"notes\": ${notes.size}, \"questions\": ${questions.size}, \"hypotheses\": ${hypotheses.size}, \"projects\": ${projects.size}, \"sources\": ${sources.size}, \"dataRecords\": ${dataRecords.size}, \"reports\": ${reports.size}, \"flashcards\": ${flashcards.size}, \"species\": ${species.size}, \"weatherCatalog\": ${weatherCatalog.size}, \"researchSessions\": ${researchSessions.size}, \"tasks\": ${tasks.size}, \"tags\": ${tags.size}, \"teamMembers\": ${teamMembers.size}, \"evidenceAttachments\": ${evidenceAttachments.size}, \"crossReferences\": ${crossReferences.size}, \"hasSettings\": ${if (settingsJson.isNotBlank()) "true" else "false"}},")
         // ═══ Observations — ALL 37 fields ═══
         appendJsonArray("observations", observations) { o -> """
         {"id":${o.id},"date":"${json(o.date)}","time":"${json(o.time)}","subject":"${json(o.subject)}","category":"${json(o.category)}","factsOnlyNotes":"${json(o.factsOnlyNotes)}","evidenceSummary":"${json(o.evidenceSummary)}","tags":"${json(o.tags)}","projectId":${o.projectId ?: "null"},"timestamp":${o.timestamp},"latitude":${o.latitude ?: "null"},"longitude":${o.longitude ?: "null"},"manualLocation":"${json(o.manualLocation)}","confidenceLevel":"${json(o.confidenceLevel)}","moodOrContext":"${json(o.moodOrContext)}","structuredDetailsJson":"${json(o.structuredDetailsJson)}","startedAt":${o.startedAt ?: "null"},"endedAt":${o.endedAt ?: "null"},"durationMs":${o.durationMs ?: "null"},"changeObservedAt":${o.changeObservedAt ?: "null"},"changeDurationMs":${o.changeDurationMs ?: "null"},"timeNote":"${json(o.timeNote)}","weatherTemperature":${o.weatherTemperature ?: "null"},"weatherCondition":"${json(o.weatherCondition)}","weatherHumidity":${o.weatherHumidity ?: "null"},"weatherWindSpeed":${o.weatherWindSpeed ?: "null"},"weatherCloudCover":${o.weatherCloudCover ?: "null"},"weatherPressure":${o.weatherPressure ?: "null"},"weatherSnapshotAt":${o.weatherSnapshotAt ?: "null"},"qualityScore":${o.qualityScore},"parentObservationId":${o.parentObservationId ?: "null"},"followUpScheduledAt":${o.followUpScheduledAt ?: "null"},"status":"${json(o.status)}"}
@@ -1065,6 +1100,16 @@ ${report.nextSteps}
         // ═══ EvidenceAttachments — NEW: always included in v3 ═══
         appendJsonArray("evidenceAttachments", evidenceAttachments) { a -> """
         {"id":${a.id},"observationId":${a.observationId},"type":"${json(a.type)}","uri":"${json(a.uri)}","localPath":${a.localPath?.let { "\"${json(it)}\"" } ?: "null"},"caption":"${json(a.caption)}","status":"${json(a.status)}","createdAt":${a.createdAt}}
+        """.trimIndent() }
+        appendLine(",")
+        // ═══ Tags — NEW in v3 ═══
+        appendJsonArray("tags", tags) { t -> """
+        {"id":${t.id},"name":"${json(t.name)}","normalizedName":"${json(t.normalizedName)}","color":${t.color},"createdAt":${t.createdAt}}
+        """.trimIndent() }
+        appendLine(",")
+        // ═══ TeamMembers — NEW in v3 ═══
+        appendJsonArray("teamMembers", teamMembers) { m -> """
+        {"id":${m.id},"name":"${json(m.name)}","role":"${json(m.role)}","projectId":${m.projectId ?: "null"},"email":"${json(m.email)}","createdAt":${m.createdAt}}
         """.trimIndent() }
         appendLine(",")
         // ═══ Cross-References — all many-to-many links preserved in v3 ═══
