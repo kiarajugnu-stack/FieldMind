@@ -306,7 +306,9 @@ fun FieldMindNavigation(viewModel: FieldMindViewModel, requestedDestination: Str
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val expanded = maxWidth >= 840.dp
         if (expanded) {
-            Row(Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding().haze(state = hazeState)) {
+            Row(Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding()) {
+                // Tablet rail — glassmorphic side panel. .hazeChild blurs the
+                // NavHost content behind the rail (captured via .haze() below).
                 if (!hideChrome) {
                     Surface(
                         shape = RoundedCornerShape(size = 24.dp),
@@ -331,13 +333,7 @@ fun FieldMindNavigation(viewModel: FieldMindViewModel, requestedDestination: Str
                                     tints = listOf(
                                         HazeTint(
                                             color = MaterialTheme.colorScheme.surfaceContainer.copy(
-                                                alpha = if (isSystemInDarkTheme()) 0.78f else 0.85f
-                                            )
-                                        ),
-                                        HazeTint(
-                                            brush = Brush.verticalGradient(
-                                                0.0f to Color.White.copy(alpha = 0.05f),
-                                                0.15f to Color.Transparent
+                                                alpha = if (isSystemInDarkTheme()) 0.88f else 0.93f
                                             )
                                         )
                                     )
@@ -360,7 +356,13 @@ fun FieldMindNavigation(viewModel: FieldMindViewModel, requestedDestination: Str
                         }
                     }
                 }
-                FieldMindNavHost(navController, viewModel, onResetOnboarding, Modifier.weight(1f))
+                // Content — blur source (captured by Haze for the rail's glass)
+                FieldMindNavHost(
+                    navController = navController,
+                    viewModel = viewModel,
+                    onResetOnboarding = onResetOnboarding,
+                    modifier = Modifier.weight(1f).haze(state = hazeState)
+                )
             }
         } else {
             // ── True floating overlay nav bar with liquid glass effect ──
