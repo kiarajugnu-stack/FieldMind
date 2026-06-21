@@ -351,7 +351,7 @@ fun BackupAndRestoreScreen(
                             onEncryptChange = { exportEncrypt = it },
                             password = exportPassword,
                             onPasswordChange = { exportPassword = it },
-                            onExport = { format, action ->
+                            onExport = { format, action, scope ->
                                 scope.launch {
                                     isExporting = true
                                     exportProgress = 0f
@@ -615,6 +615,9 @@ fun BackupAndRestoreScreen(
                             encrypt = backupEncrypt,
                             onEncryptChange = { backupEncrypt = it },
                             password = backupPassword,
+                            passwordConfirm = backupPasswordConfirm,
+                            onPasswordConfirmChange = { val newVal = it; backupPasswordConfirm = newVal; passwordsMatch = newVal == backupPassword },
+                            passwordsMatch = passwordsMatch,
                             onPasswordChange = { backupPassword = it },
                             scheduleEnabled = backupScheduleEnabled,
                             onScheduleChange = {
@@ -1108,7 +1111,7 @@ private fun HeroStatusCard(
                 }
                 // Enable/disable button
                 Surface(
-                    onClick = { /* Placeholder: toggle auto-backup */ },
+                    onClick = { settings.setAutoBackupEnabled(!autoBackupEnabled) },
                     shape = RoundedCornerShape(16.dp),
                     color = if (autoBackupEnabled) colors.positive.copy(alpha = 0.18f)
                     else MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.12f)
@@ -1242,20 +1245,19 @@ private fun ExportTabContent(
     isExporting: Boolean,
     exportProgress: Float,
     exportStepText: String,
-    onExport: (format: String, action: String) -> Unit,
+    onExport: (format: String, action: String, scope: String) -> Unit,
     onChooseFolder: () -> Unit,
     destinationUri: Uri?,
     onSwitchToImport: (() -> Unit)? = null,
     gpsPrivacy: String = "Exact",
     onGpsPrivacyChange: (String) -> Unit = {},
     excludeMedia: Boolean = false,
-    onExcludeMediaChange: (Boolean) -> Unit = {},
-    clearClipboard: Boolean = false,
-    onClearClipboardChange: (Boolean) -> Unit = {},
-    encrypt: Boolean = false,
-    onEncryptChange: (Boolean) -> Unit = {},
-    password: String = "",
-    onPasswordChange: (String) -> Unit = {}
+    onExcludeMediaChange: (Boolean) -> Unit = {},            clearClipboard: Boolean = false,
+            onClearClipboardChange: (Boolean) -> Unit = {},
+            encrypt: Boolean = false,
+            onEncryptChange: (Boolean) -> Unit = {},
+            password: String = "",
+            onPasswordChange: (String) -> Unit = {}
 ) {
     val totalEntities = entityCounts.values.sum()
     val colors = FieldMindTheme.colors
@@ -1396,7 +1398,7 @@ private fun ExportTabContent(
                         }, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2, overflow = TextOverflow.Ellipsis)
                     }
                 }
-                // Estimated size (placeholder)
+                // Estimated size
                 val estimatedSize = remember(entityCounts, selectedExportFormat) {
                     val total = entityCounts.values.sum()
                     val bytes = total * when (selectedExportFormat) {
@@ -1496,12 +1498,12 @@ private fun ExportTabContent(
         // ── Action buttons ──
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             OutlinedButton(
-                onClick = { onExport(selectedExportFormat, "share") },
+                onClick = { onExport(selectedExportFormat, "share", exportScope) },
                 modifier = Modifier.weight(1f), shape = RoundedCornerShape(16.dp),
                 enabled = !isExporting && totalEntities > 0
             ) { Icon(FieldMindIcons.Export, null, size = 18.dp); Spacer(Modifier.width(6.dp)); Text("Share") }
             Button(
-                onClick = { onExport(selectedExportFormat, "save") },
+                onClick = { onExport(selectedExportFormat, "save", exportScope) },
                 modifier = Modifier.weight(1f), shape = RoundedCornerShape(16.dp),
                 enabled = !isExporting && totalEntities > 0 && destinationUri != null
             ) { Icon(FieldMindIcons.Save, null, size = 18.dp); Spacer(Modifier.width(6.dp)); Text("Save") }
@@ -1723,7 +1725,32 @@ private fun ExportHistorySection(
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
                     elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
                     modifier = Modifier.clickable {
-                        // Placeholder: re-share or open file
+                        // Re-share: open share intent via FileProvider
+                        try {
+                            val shareUri = FileProvider.getUriForFile(
+                                context,
+                                "${context.packageName}.provider",
+                                file
+                            )
+                            val mimeType = when (ext) {
+                                "pdf" -> "application/pdf"
+                                "png" -> "image/png"
+                                "svg" -> "image/svg+xml"
+                                "csv" -> "text/csv"
+                                "html" -> "text/html"
+                                "md" -> "text/markdown"
+                                "json" -> "application/json"
+                                "fieldmind", "encrypted" -> "application/octet-stream"
+                                else -> "application/octet-stream"
+                            }
+                            val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                                type = mimeType
+                                putExtra(Intent.EXTRA_STREAM, shareUri)
+                                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                            }
+                            context.startActivity(Intent.createChooser(shareIntent, "Share ${file.name}"))
+                        } catch (_: Exception) { }
                     }
                 ) {
                     Row(
@@ -1744,7 +1771,32 @@ private fun ExportHistorySection(
                         }
                         Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                             IconButton(onClick = {
-                                // Placeholder: share file via FileProvider
+                                // Share via FileProvider
+                                try {
+                                    val shareUri = FileProvider.getUriForFile(
+                                        context,
+                                        "${context.packageName}.provider",
+                                        file
+                                    )
+                                    val mimeType = when (ext) {
+                                        "pdf" -> "application/pdf"
+                                        "png" -> "image/png"
+                                        "svg" -> "image/svg+xml"
+                                        "csv" -> "text/csv"
+                                        "html" -> "text/html"
+                                        "md" -> "text/markdown"
+                                        "json" -> "application/json"
+                                        "fieldmind", "encrypted" -> "application/octet-stream"
+                                        else -> "application/octet-stream"
+                                    }
+                                    val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                                        type = mimeType
+                                        putExtra(Intent.EXTRA_STREAM, shareUri)
+                                        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                    }
+                                    context.startActivity(Intent.createChooser(shareIntent, "Share ${file.name}"))
+                                } catch (_: Exception) { }
                             }, modifier = Modifier.size(32.dp)) {
                                 Icon(FieldMindIcons.Share, "Share", tint = MaterialTheme.colorScheme.onSurfaceVariant, size = 18.dp)
                             }
@@ -1993,6 +2045,9 @@ private fun BackupTabContent(
     onEncryptChange: (Boolean) -> Unit,
     password: String,
     onPasswordChange: (String) -> Unit,
+    passwordConfirm: String = "",
+    onPasswordConfirmChange: (String) -> Unit = {},
+    passwordsMatch: Boolean = true,
     scheduleEnabled: Boolean,
     onScheduleChange: (Boolean) -> Unit,
     scheduleInterval: String,
@@ -2120,6 +2175,22 @@ private fun BackupTabContent(
                         ) {
                             LinearProgressIndicator(
                                 progress = { strength.score / 5f },
+n                    OutlinedTextField(
+                        value = passwordConfirm,
+                        onValueChange = onPasswordConfirmChange,
+                        label = { Text("Confirm password") },
+                        placeholder = { Text("Re-enter password") },
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
+                        shape = RoundedCornerShape(18.dp),
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions.Default.withPrivacyTyping(LocalPrivacyTypingEnabled.current),
+                        trailingIcon = {
+                            if (LocalPrivacyTypingEnabled.current) {
+                                PrivacyTypingIndicator()
+                            }
+                        },
+                        isError = passwordConfirm.isNotEmpty() && !passwordsMatch
+                    )
                                 modifier = Modifier.weight(1f).height(6.dp).clip(RoundedCornerShape(3.dp)),
                                 color = Color(strength.color),
                                 trackColor = MaterialTheme.colorScheme.surfaceContainerHighest
@@ -2128,6 +2199,26 @@ private fun BackupTabContent(
                         }
                     }
                     Spacer(Modifier.height(8.dp))
+n                    if (passwordConfirm.isNotBlank() || passwordsMatch) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 2.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Icon(
+                                if (passwordsMatch) FieldMindIcons.Check else FieldMindIcons.Close,
+                                null,
+                                tint = if (passwordsMatch) Color(0xFF2E7D32) else MaterialTheme.colorScheme.error,
+                                size = 16.dp
+                            )
+                            Text(
+                                if (passwordsMatch) "Passwords match" else "Passwords do not match",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = if (passwordsMatch) Color(0xFF2E7D32) else MaterialTheme.colorScheme.error,
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
+                    }
                 }
 
                 HorizontalDivider(Modifier.padding(start = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
