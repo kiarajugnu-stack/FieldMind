@@ -467,27 +467,96 @@ class FieldMindViewModel(application: Application) : AndroidViewModel(applicatio
             // cleanupExtractedPackage() which runs in the caller's finally block.
             if (mediaFiles.isNotEmpty()) {
                 val appContext = getApplication<android.app.Application>()
+
+                // ── Group media entries by entity type and old ID ──
+                val obsMedia = mutableMapOf<Long, MutableList<FieldMindExportMediaPacker.MediaEntry>>()
+                val noteMedia = mutableMapOf<Long, MutableList<FieldMindExportMediaPacker.MediaEntry>>()
+                val projectMedia = mutableMapOf<Long, MutableList<FieldMindExportMediaPacker.MediaEntry>>()
+                val sourceMedia = mutableMapOf<Long, MutableList<FieldMindExportMediaPacker.MediaEntry>>()
+
                 mediaFiles.forEach { media ->
                     when (media.entityType) {
-                        "observation" -> {
-                            val newObsId = oldToNewObsId[media.entityId]
-                            if (newObsId != null) {
-                                val (permUri, permPath) = copyMediaToPermanentLocation(appContext, media, newObsId)
-                                repository.addAttachment(
-                                    EvidenceAttachmentEntity(
-                                        observationId = newObsId,
-                                        type = media.mimeType,
-                                        uri = permUri,
-                                        localPath = permPath,
-                                        caption = media.caption
-                                    )
+                        "observation" -> obsMedia.getOrPut(media.entityId) { mutableListOf() }.add(media)
+                        "note" -> noteMedia.getOrPut(media.entityId) { mutableListOf() }.add(media)
+                        "project" -> projectMedia.getOrPut(media.entityId) { mutableListOf() }.add(media)
+                        "source" -> sourceMedia.getOrPut(media.entityId) { mutableListOf() }.add(media)
+                    }
+                }
+
+                // ── Observations: create EvidenceAttachmentEntity for each media file ──
+                obsMedia.forEach { (oldId, entries) ->
+                    val newId = oldToNewObsId[oldId] ?: return@forEach
+                    entries.forEach { media ->
+                        val (permUri, permPath) = copyMediaToPermanentLocation(appContext, media, newId)
+                        repository.addAttachment(
+                            EvidenceAttachmentEntity(
+                                observationId = newId,
+                                type = media.mimeType,
+                                uri = permUri,
+                                localPath = permPath,
+                                caption = media.caption
+                            )
+                        )
+                    }
+                }
+
+                // ── Notes: reconstruct attachmentUris (type|caption|uri)\n... ──
+                noteMedia.forEach { (oldId, entries) ->
+                    val newId = oldToNewNoteId[oldId] ?: return@forEach
+                    val newLines = entries.map { media ->
+                        val (permUri, _) = copyMediaToPermanentLocation(appContext, media, newId)
+                        val type = inferAttachmentType(media)
+                        "$type|${media.caption}|$permUri"
+                    }
+                    if (newLines.isNotEmpty()) {
+                        // Fetch the imported note and update its attachmentUris
+                        val noteEntity = bundle.notes.firstOrNull { it.id == oldId }
+                        if (noteEntity != null) {
+                            repository.updateNote(
+                                noteEntity.copy(
+                                    attachmentUris = newLines.joinToString("\n"),
+                                    id = newId
                                 )
-                            }
+                            )
                         }
-                        // Note/Project/Source: attachment URIs are embedded in text fields
-                        // (attachmentUris / fileUri). These are imported with stale device URIs
-                        // from the JSON. Relinking them requires reconstructing the field content
-                        // which is a follow-up enhancement.
+                    }
+                }
+
+                // ── Projects: reconstruct attachmentUris (comma-separated URIs) ──
+                projectMedia.forEach { (oldId, entries) ->
+                    val newId = oldToNewProjId[oldId] ?: return@forEach
+                    val newUris = entries.map { media ->
+                        val (permUri, _) = copyMediaToPermanentLocation(appContext, media, newId)
+                        permUri
+                    }
+                    if (newUris.isNotEmpty()) {
+                        val projectEntity = bundle.projects.firstOrNull { it.id == oldId }
+                        if (projectEntity != null) {
+                            repository.updateProject(
+                                projectEntity.copy(
+                                    attachmentUris = newUris.joinToString(","),
+                                    id = newId
+                                )
+                            )
+                        }
+                    }
+                }
+
+                // ── Sources: update fileUri (single URI per source) ──
+                sourceMedia.forEach { (oldId, entries) ->
+                    val newId = oldToNewSrcId[oldId] ?: return@forEach
+                    entries.forEach { media ->
+                        val (permUri, _) = copyMediaToPermanentLocation(appContext, media, newId)
+                        val sourceEntity = bundle.sources.firstOrNull { it.id == oldId }
+                        if (sourceEntity != null) {
+                            repository.updateSourceFile(
+                                sourceEntity.copy(
+                                    fileUri = permUri,
+                                    id = newId
+                                ),
+                                fileUri = permUri
+                            )
+                        }
                     }
                 }
             }
@@ -875,6 +944,37 @@ class FieldMindViewModel(application: Application) : AndroidViewModel(applicatio
                         android.util.Log.d("FieldMindVM", "Daily auto-generation cap ($AUTO_GEN_DAILY_CAP) reached — pausing until tomorrow")
                     }
                 }
+        }
+    }
+
+    /**
+     * Infer an attachment type label from a MediaEntry for note attachmentUris reconstruction.
+     * Falls back to [mimeType] or infers from the file extension.
+     */
+    private fun inferAttachmentType(media: FieldMindExportMediaPacker.MediaEntry): String {
+        if (media.mimeType.isNotBlank() && media.mimeType != "application/octet-stream") {
+            return when {
+                media.mimeType.startsWith("image/") -> "Photo"
+                media.mimeType.startsWith("video/") -> "Video"
+                media.mimeType.startsWith("audio/") -> "Audio"
+                else -> media.mimeType
+            }
+        }
+        // Infer from file extension
+        val name = media.fileName.lowercase()
+        return when {
+            name.endsWith(".jpg") || name.endsWith(".jpeg") ||
+            name.endsWith(".png") || name.endsWith(".webp") ||
+            name.endsWith(".gif") || name.endsWith(".heic") ||
+            name.endsWith(".bmp") -> "Photo"
+            name.endsWith(".mp4") || name.endsWith(".mov") ||
+            name.endsWith(".avi") || name.endsWith(".mkv") ||
+            name.endsWith(".webm") || name.endsWith(".3gp") -> "Video"
+            name.endsWith(".m4a") || name.endsWith(".mp3") ||
+            name.endsWith(".wav") || name.endsWith(".ogg") ||
+            name.endsWith(".flac") || name.endsWith(".aac") -> "Audio"
+            name.endsWith(".pdf") -> "File"
+            else -> "File"
         }
     }
 
