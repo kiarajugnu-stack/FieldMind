@@ -284,7 +284,7 @@ fun FieldMindNavigation(viewModel: FieldMindViewModel, requestedDestination: Str
     }
 
     BoxWithConstraints(Modifier.fillMaxSize()) {
-        val expanded = maxWidth >= 720.dp
+        val expanded = maxWidth >= 840.dp
         if (expanded) {
             Row(Modifier.fillMaxSize()) {
                 if (!hideChrome) {
@@ -320,19 +320,14 @@ fun FieldMindNavigation(viewModel: FieldMindViewModel, requestedDestination: Str
             // overlaid at the bottom and the NavHost gets matching bottom
             // padding so content isn't obscured.
             Box(Modifier.fillMaxSize()) {
-                // Content — fills full screen, padded at bottom to clear pill
+                // Content — fills full screen edge-to-edge; no bottom padding so
+                // the glassmorphic pill overlays content naturally.
+                // Each tab screen handles its own bottom clear space via contentPadding.
                 FieldMindNavHost(
                     navController = navController,
                     viewModel = viewModel,
                     onResetOnboarding = onResetOnboarding,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .then(
-                            if (!hideChrome)
-                                Modifier.padding(bottom = 88.dp) // pill height + margins
-                            else
-                                Modifier
-                        )
+                    modifier = Modifier.fillMaxSize()
                 )
 
                 // Floating pill — layered above content, no system background

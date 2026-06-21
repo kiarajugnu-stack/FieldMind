@@ -74,7 +74,7 @@ fun DataToolsHubScreen(
     val dataRecords by viewModel.dataRecords.collectAsState()
     var showAllRecords by remember { mutableStateOf(false) }
 
-    Box(Modifier.fillMaxSize()) {
+    Box(Modifier.fillMaxSize().statusBarsPadding()) {
         LazyColumn(
             Modifier.fillMaxSize(),
             contentPadding = PaddingValues(20.dp, 20.dp, 20.dp, 96.dp),
