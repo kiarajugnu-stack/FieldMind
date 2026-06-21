@@ -135,7 +135,7 @@ fun QuestionsScreen(
     val testedCount = hypotheses.count { it.resultStatus != "Unknown" }
 
     LazyColumn(
-        Modifier.fillMaxSize(),
+        Modifier.fillMaxSize().statusBarsPadding(),
         contentPadding = PaddingValues(20.dp, 20.dp, 20.dp, 96.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {

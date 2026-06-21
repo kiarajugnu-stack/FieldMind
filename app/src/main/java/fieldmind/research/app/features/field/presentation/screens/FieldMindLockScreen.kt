@@ -131,7 +131,7 @@ fun FieldMindAppLock(
         }
     }
 
-    Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background), contentAlignment = Alignment.Center) {
+    Box(Modifier.fillMaxSize().statusBarsPadding().background(MaterialTheme.colorScheme.background), contentAlignment = Alignment.Center) {
         Card(
             modifier = Modifier.fillMaxWidth(0.88f).animateContentSize(),
             shape = RoundedCornerShape(32.dp),

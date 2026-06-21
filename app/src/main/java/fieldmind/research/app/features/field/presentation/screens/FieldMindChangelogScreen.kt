@@ -417,7 +417,7 @@ private val fieldMindChangelog = listOf(
 @Composable
 fun FieldMindChangelogScreen(onBack: () -> Unit) {
     LazyColumn(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier.fillMaxSize().statusBarsPadding(),
         contentPadding = PaddingValues(20.dp, 20.dp, 20.dp, 40.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {

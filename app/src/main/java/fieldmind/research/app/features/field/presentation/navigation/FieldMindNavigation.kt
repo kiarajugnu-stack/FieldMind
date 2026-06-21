@@ -286,13 +286,25 @@ fun FieldMindNavigation(viewModel: FieldMindViewModel, requestedDestination: Str
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val expanded = maxWidth >= 840.dp
         if (expanded) {
-            Row(Modifier.fillMaxSize()) {
+            Row(Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding()) {
                 if (!hideChrome) {
                     Surface(
-                        shape = RoundedCornerShape(topEnd = 24.dp, bottomEnd = 24.dp),
-                        color = MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.88f),
-                        tonalElevation = 2.dp,
-                        modifier = Modifier.padding(6.dp)
+                        shape = RoundedCornerShape(size = 24.dp),
+                        color = MaterialTheme.colorScheme.surfaceContainer.copy(
+                            alpha = if (isSystemInDarkTheme()) 0.72f else 0.78f
+                        ),
+                        tonalElevation = 0.dp,
+                        shadowElevation = 8.dp,
+                        border = androidx.compose.foundation.BorderStroke(
+                            width = 0.6.dp,
+                            color = if (isSystemInDarkTheme())
+                                MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f)
+                            else
+                                MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.25f)
+                        ),
+                        modifier = Modifier
+                            .padding(start = 8.dp, top = 8.dp, bottom = 8.dp)
+                            .width(IntrinsicSize.Min)
                     ) {
                         NavigationRail(
                             header = {
