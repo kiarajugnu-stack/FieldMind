@@ -149,12 +149,7 @@ fun ProjectsScreen(
             subtitle = "19 templates + multi-workspace collab. Queries, data tools, reports, and async teams.",
             icon = FieldMindIcons.Projects,
             heroColor = FieldMindTheme.colors.project,
-            modifier = Modifier.padding(horizontal = 20.dp, vertical = 16.dp),
-            trailing = {
-                IconButton(onClick = { searchQuery = if (searchQuery.isEmpty()) "search" else "" }, modifier = Modifier.size(40.dp)) {
-                    Icon(FieldMindIcons.Search, contentDescription = "Search", size = 20.dp, tint = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-            }
+            modifier = Modifier.padding(horizontal = 20.dp, vertical = 16.dp)
         )
         FieldMindSubNavBar(
             tabs = workspaceSubNavTabs,
@@ -323,9 +318,7 @@ private fun ResearchHubOverviewTab(
 
         // ── 7. Projects List ──
         val filteredProjects = if (searchQuery.isBlank()) projects else projects.filter { project ->
-            project.title.contains(searchQuery, ignoreCase = true) || 
-            project.description.contains(searchQuery, ignoreCase = true) ||
-            project.category.contains(searchQuery, ignoreCase = true)
+            project.title.contains(searchQuery, ignoreCase = true)
         }
         
         if (totalProjects == 0) {
@@ -483,7 +476,7 @@ private fun TemplatesGrid(templates: List<ProjectTemplateDef>, onSelect: (Projec
     }
 }
 
-// ══════════════════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════════��═══════
 //  Project Creation Form — Full spec with all fields
 // ══════════════════════════════════════════════════════════════════════
 

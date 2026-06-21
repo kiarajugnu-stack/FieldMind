@@ -250,23 +250,46 @@ fun FieldMindOnboardingScreen(
                     onNext = { currentPage = 7 },
                     onBack = { currentPage = 5 }
                 )
-                7 -> OnboardingBackupPage(
-                    onNext = { currentPage = 8 },
-                    onBack = { currentPage = 6 }
-                )
-                8 -> OnboardingDataToolsPage(
-                    onFinish = { currentPage = 9 },
-                    onBack = { currentPage = 7 }
-                )
-                9 -> OnboardingSpeciesIdPage(
-                    onNext = { currentPage = 10 },
-                    onBack = { currentPage = 8 },
-                    onFinish = { finishOnboarding() }
-                )
-                10 -> OnboardingFinalPage(
-                    onFinish = { finishOnboarding() },
-                    onBack = { currentPage = 9 }
-                )
+                7 -> {
+                    // Backup page - placeholder
+                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text("Backup & Sync", style = MaterialTheme.typography.headlineMedium)
+                            Text("Coming Soon", style = MaterialTheme.typography.bodyMedium)
+                            Button(onClick = { currentPage = 8 }) { Text("Continue") }
+                        }
+                    }
+                }
+                8 -> {
+                    // Data tools page - placeholder
+                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text("Data Tools", style = MaterialTheme.typography.headlineMedium)
+                            Text("Coming Soon", style = MaterialTheme.typography.bodyMedium)
+                            Button(onClick = { currentPage = 9 }) { Text("Continue") }
+                        }
+                    }
+                }
+                9 -> {
+                    // Species ID page - placeholder
+                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text("Species ID", style = MaterialTheme.typography.headlineMedium)
+                            Text("Coming Soon", style = MaterialTheme.typography.bodyMedium)
+                            Button(onClick = { finishOnboarding() }) { Text("Finish") }
+                        }
+                    }
+                }
+                10 -> {
+                    // Final page - placeholder
+                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text("Welcome to FieldMind", style = MaterialTheme.typography.headlineMedium)
+                            Text("All set!", style = MaterialTheme.typography.bodyMedium)
+                            Button(onClick = { finishOnboarding() }) { Text("Finish") }
+                        }
+                    }
+                }
             }
         }
 
@@ -344,7 +367,7 @@ fun FieldMindOnboardingScreen(
 
 // ══════════════════════════════════════════════════════════════════════
 //  Page Indicator Dots
-// ══════════════════════════════════════════════════════════════════════
+// ══════════════════════════════���═══════════════════════════════════════
 
 @Composable
 private fun PageIndicator(current: Int, total: Int, modifier: Modifier = Modifier) {

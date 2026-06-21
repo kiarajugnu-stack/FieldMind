@@ -389,8 +389,7 @@ private fun SourcePanel(viewModel: FieldMindViewModel, items: List<SourceEntity>
             if (isExpanded) {
                 val filteredSources = if (searchQuery.isBlank()) sources else sources.filter { source ->
                     source.title.contains(searchQuery, ignoreCase = true) ||
-                    source.authors.contains(searchQuery, ignoreCase = true) ||
-                    source.doi.contains(searchQuery, ignoreCase = true)
+                    source.url.contains(searchQuery, ignoreCase = true)
                 }
                 if (filteredSources.isEmpty() && searchQuery.isNotBlank()) {
                     item { Text("No sources match your search", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(16.dp)) }
