@@ -104,7 +104,8 @@ fun OsmMapView(
     val avgLon = allPoints.map { it.second }.average()
     val latSpread = (allPoints.maxOf { it.first } - allPoints.minOf { it.first }).coerceAtLeast(0.01)
     val lonSpread = (allPoints.maxOf { it.second } - allPoints.minOf { it.second }).coerceAtLeast(0.01)
-    val zoom = (14.0 - log2(maxOf(latSpread, lonSpread).coerceAtLeast(0.01))).coerceIn(4.0, 18.0)
+    // Zoom out by 50% for preview (reduce zoom level by ~0.7 to fit more context around the point)
+    val zoom = (14.0 - log2(maxOf(latSpread, lonSpread).coerceAtLeast(0.01)) - 0.7).coerceIn(4.0, 18.0)
 
     // Configure osmdroid once
     remember {
