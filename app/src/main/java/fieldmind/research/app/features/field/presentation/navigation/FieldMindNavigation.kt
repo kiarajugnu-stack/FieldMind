@@ -51,6 +51,7 @@ import androidx.compose.ui.geometry.Size
 import fieldmind.research.app.features.field.presentation.components.FieldMindMotion
 import fieldmind.research.app.features.field.presentation.components.LocalPrivacyTypingEnabled
 import fieldmind.research.app.features.field.presentation.components.PrivacyTextInputWrapper
+import fieldmind.research.app.features.field.presentation.components.liquidGlassRefraction
 import androidx.compose.runtime.CompositionLocalProvider
 
 import dev.chrisbanes.haze.HazeState
@@ -308,51 +309,59 @@ fun FieldMindNavigation(viewModel: FieldMindViewModel, requestedDestination: Str
         val expanded = maxWidth >= 840.dp
         if (expanded) {
             Row(Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding()) {
-                // Tablet rail — glassmorphic side panel. .hazeChild blurs the
-                // NavHost content behind the rail (captured via .haze() below).
+                // Tablet rail — liquid-glass side panel. .hazeChild blurs the
+                // NavHost content behind the rail (captured via .haze() below);
+                // .liquidGlassRefraction() applies GPU displacement & specular.
                 if (!hideChrome) {
-                    Surface(
-                        shape = RoundedCornerShape(size = 24.dp),
-                        color = Color.Transparent,
-                        tonalElevation = 0.dp,
-                        shadowElevation = 8.dp,
-                        border = androidx.compose.foundation.BorderStroke(
-                            width = 0.6.dp,
-                            color = if (isSystemInDarkTheme())
-                                MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f)
-                            else
-                                MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.25f)
-                        ),
+                    Box(
                         modifier = Modifier
                             .padding(start = 8.dp, top = 8.dp, bottom = 8.dp)
                             .width(IntrinsicSize.Min)
-                            .hazeChild(
-                                state = hazeState,
-                                style = HazeStyle(
-                                    blurRadius = 24.dp,
-                                    noiseFactor = 0.04f,
-                                    tints = listOf(
-                                        HazeTint(
-                                            color = MaterialTheme.colorScheme.surfaceContainer.copy(
-                                                alpha = if (isSystemInDarkTheme()) 0.88f else 0.93f
+                            .clip(RoundedCornerShape(24.dp))
+                            .liquidGlassRefraction()
+                    ) {
+                        Surface(
+                            shape = RoundedCornerShape(size = 24.dp),
+                            color = Color.Transparent,
+                            tonalElevation = 0.dp,
+                            shadowElevation = 8.dp,
+                            border = androidx.compose.foundation.BorderStroke(
+                                width = 0.6.dp,
+                                color = if (isSystemInDarkTheme())
+                                    MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f)
+                                else
+                                    MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.25f)
+                            ),
+                            modifier = Modifier
+                                .matchParentSize()
+                                .hazeChild(
+                                    state = hazeState,
+                                    style = HazeStyle(
+                                        blurRadius = 24.dp,
+                                        noiseFactor = 0.04f,
+                                        tints = listOf(
+                                            HazeTint(
+                                                color = MaterialTheme.colorScheme.surfaceContainer.copy(
+                                                    alpha = if (isSystemInDarkTheme()) 0.88f else 0.93f
+                                                )
                                             )
                                         )
                                     )
                                 )
-                            )
-                    ) {
-                        NavigationRail(
-                            header = {
-                                Spacer(Modifier.height(8.dp))
-                            }
                         ) {
-                            visibleTabs.forEach { screen ->
-                                val selected = isSelected(screen)
-                                RailNavTabItem(
-                                    screen = screen,
-                                    selected = selected,
-                                    onClick = { haptics.light(); navigateToTab(screen.route) }
-                                )
+                            NavigationRail(
+                                header = {
+                                    Spacer(Modifier.height(8.dp))
+                                }
+                            ) {
+                                visibleTabs.forEach { screen ->
+                                    val selected = isSelected(screen)
+                                    RailNavTabItem(
+                                        screen = screen,
+                                        selected = selected,
+                                        onClick = { haptics.light(); navigateToTab(screen.route) }
+                                    )
+                                }
                             }
                         }
                     }
@@ -384,7 +393,7 @@ fun FieldMindNavigation(viewModel: FieldMindViewModel, requestedDestination: Str
                     modifier = Modifier.fillMaxSize().haze(state = hazeState)
                 )
 
-                // Floating pill — glassmorphic with liquid blob indicator
+                // Floating pill — liquid glass with Haze blur + GPU refraction
                 if (!hideChrome) {
                     Box(
                         modifier = Modifier
@@ -393,48 +402,58 @@ fun FieldMindNavigation(viewModel: FieldMindViewModel, requestedDestination: Str
                             .navigationBarsPadding()
                             .padding(horizontal = 16.dp, vertical = 10.dp)
                     ) {
-                        // Glassmorphic nav pill — real backdrop blur via Haze with
-                        // semi-transparent surface. The animated blob indicator
-                        // (drawn by LiquidNavRow) provides the liquid micro-interaction.
-                        // shadowElevation provides clean shadow depth without drawBehind glows.
-                        Surface(
-                            shape = RoundedCornerShape(34.dp),
-                            color = Color.Transparent,
-                            tonalElevation = 0.dp,
-                            shadowElevation = 16.dp,
-                            border = androidx.compose.foundation.BorderStroke(
-                                width = 0.6.dp,
-                                color = if (isSystemInDarkTheme())
-                                    MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.25f)
-                                else
-                                    MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f)
-                            ),
+                        // Refraction envelope — applies AGSL displacement shader to
+                        // the already-blurred pill, creating a premium liquid-glass look
+                        // with specular highlights, Fresnel edge glow, and organic motion.
+                        Box(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(66.dp)
-                                .hazeChild(
-                                    state = hazeState,
-                                    style = HazeStyle(
-                                        blurRadius = 24.dp,
-                                        noiseFactor = 0.04f,
-                                        tints = listOf(
-                                            HazeTint(
-                                                color = MaterialTheme.colorScheme.surfaceContainer.copy(
-                                                    alpha = if (isSystemInDarkTheme()) 0.88f else 0.93f
+                                .clip(RoundedCornerShape(34.dp))
+                                .liquidGlassRefraction()
+                        ) {
+                            // Glassmorphic nav pill — real backdrop blur via Haze with
+                            // semi-transparent surface. The animated blob indicator
+                            // (drawn by LiquidNavRow) provides the liquid micro-interaction.
+                            // shadowElevation provides clean shadow depth without drawBehind glows.
+                            Surface(
+                                shape = RoundedCornerShape(34.dp),
+                                color = Color.Transparent,
+                                tonalElevation = 0.dp,
+                                shadowElevation = 16.dp,
+                                border = androidx.compose.foundation.BorderStroke(
+                                    width = 0.6.dp,
+                                    color = if (isSystemInDarkTheme())
+                                        MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.25f)
+                                    else
+                                        MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f)
+                                ),
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .hazeChild(
+                                        state = hazeState,
+                                        style = HazeStyle(
+                                            blurRadius = 24.dp,
+                                            noiseFactor = 0.04f,
+                                            tints = listOf(
+                                                HazeTint(
+                                                    color = MaterialTheme.colorScheme.surfaceContainer.copy(
+                                                        alpha = if (isSystemInDarkTheme()) 0.88f else 0.93f
+                                                    )
                                                 )
                                             )
                                         )
                                     )
+                            ) {
+                                LiquidNavRow(
+                                    visibleTabs = visibleTabs,
+                                    isSelected = { screen -> isSelected(screen) },
+                                    onTabClick = { screen ->
+                                        haptics.light()
+                                        navigateToTab(screen.route)
+                                    }
                                 )
-                        ) {
-                            LiquidNavRow(
-                                visibleTabs = visibleTabs,
-                                isSelected = { screen -> isSelected(screen) },
-                                onTabClick = { screen ->
-                                    haptics.light()
-                                    navigateToTab(screen.route)
-                                }
-                            )
+                            }
                         }
                     }
                 }
