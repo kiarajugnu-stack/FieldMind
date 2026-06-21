@@ -79,6 +79,32 @@ class FieldMindAutoBackupWorker(context: Context, params: WorkerParameters) : Co
         if (geoFenceJson.isNotBlank() && geoFenceJson != "[]") {
             settingsObj.put("geoFenceData", geoFenceJson)
         }
+
+        // ── Streak data ──
+        val streakPrefs = applicationContext.getSharedPreferences("fieldmind_streak", android.content.Context.MODE_PRIVATE)
+        val lastDate = streakPrefs.getString("last_streak_date", null)
+        val currentStreak = streakPrefs.getInt("current_streak", 0)
+        val bestStreak = streakPrefs.getInt("best_streak", 0)
+        if (lastDate != null || currentStreak > 0 || bestStreak > 0) {
+            settingsObj.put("streakData", org.json.JSONObject().apply {
+                if (lastDate != null) put("lastDate", lastDate)
+                put("current", currentStreak)
+                put("best", bestStreak)
+            })
+        }
+
+        // ── Achievement unlock state ──
+        val achievementPrefs = applicationContext.getSharedPreferences("fieldmind_achievements_v2", android.content.Context.MODE_PRIVATE)
+        val unlockedAchievements = org.json.JSONObject()
+        achievementPrefs.all.forEach { (key, value) ->
+            if (value is Boolean && value) {
+                unlockedAchievements.put(key, true)
+            }
+        }
+        if (unlockedAchievements.length() > 0) {
+            settingsObj.put("achievementData", unlockedAchievements)
+        }
+
         val settingsJson = settingsObj.toString(2)
 
         val archiveJson = FieldMindExport.archiveJson(

@@ -760,6 +760,38 @@ class FieldMindViewModel(application: Application) : AndroidViewModel(applicatio
                         val geoFence = fieldmind.research.app.features.field.data.location.GeoFenceReminder(getApplication())
                         geoFence.restoreRegionsFromJson(geoFenceJson)
                     }
+
+                    // ── Restore streak data (current/best observation streak) ──
+                    if (settingsObj.has("streakData")) {
+                        val streakObj = settingsObj.optJSONObject("streakData")
+                        if (streakObj != null) {
+                            val streakPrefs = getApplication<android.app.Application>()
+                                .getSharedPreferences("fieldmind_streak", android.content.Context.MODE_PRIVATE)
+                            streakPrefs.edit().apply {
+                                if (streakObj.has("lastDate")) putString("last_streak_date", streakObj.optString("lastDate", ""))
+                                putInt("current_streak", streakObj.optInt("current", 0))
+                                putInt("best_streak", streakObj.optInt("best", 0))
+                                apply()
+                            }
+                        }
+                    }
+
+                    // ── Restore achievement unlock state ──
+                    if (settingsObj.has("achievementData")) {
+                        val achievementObj = settingsObj.optJSONObject("achievementData")
+                        if (achievementObj != null) {
+                            val achievementPrefs = getApplication<android.app.Application>()
+                                .getSharedPreferences("fieldmind_achievements_v2", android.content.Context.MODE_PRIVATE)
+                            achievementPrefs.edit().apply {
+                                // Clear existing and restore from backup
+                                clear()
+                                achievementObj.keys().forEachRemaining { key ->
+                                    putBoolean(key, achievementObj.optBoolean(key, false))
+                                }
+                                apply()
+                            }
+                        }
+                    }
                 } catch (_: Exception) {
                     // Non-critical: settings restore failure shouldn't block data import
                 }
@@ -1017,24 +1049,57 @@ class FieldMindViewModel(application: Application) : AndroidViewModel(applicatio
     fun observeTasksForProject(projectId: Long) = repository.observeTasksForProject(projectId)
     val weatherCatalog: StateFlow<List<WeatherCatalogEntity>> = repository.weatherCatalog.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
-    // ── Extra backup data (PhashDatabase + GeoFenceRegions) ──
+    // ── Extra backup data (PhashDatabase + GeoFenceRegions + Streaks + Achievements) ──
     /**
-     * Merge PhashDatabase and GeoFenceRegions data into the settings JSON
-     * before passing it to [FieldMindExport.archiveJson].
+     * Merge PhashDatabase, GeoFenceRegions, streak data, and achievement unlock
+     * state into the settings JSON before passing it to [FieldMindExport.archiveJson].
      */
     fun mergeExtraBackupData(context: android.content.Context, settingsJson: String): String {
         return try {
             val obj = org.json.JSONObject(settingsJson)
+
+            // PhashDatabase (species identification history)
             val phashDb = fieldmind.research.app.features.field.data.vision.PhashDatabase(context)
             val phashJson = phashDb.exportEntriesJson()
             if (phashJson.isNotBlank() && phashJson != "[]") {
                 obj.put("phashData", phashJson)
             }
+
+            // GeoFenceRegions (researcher-defined study sites)
             val geoFence = fieldmind.research.app.features.field.data.location.GeoFenceReminder(context)
             val geoFenceJson = geoFence.exportRegionsJson()
             if (geoFenceJson.isNotBlank() && geoFenceJson != "[]") {
                 obj.put("geoFenceData", geoFenceJson)
             }
+
+            // Streak data (current/best streak from FieldMindStreakWorker)
+            val streakPrefs = context.getSharedPreferences("fieldmind_streak", android.content.Context.MODE_PRIVATE)
+            val lastDate = streakPrefs.getString("last_streak_date", null)
+            val currentStreak = streakPrefs.getInt("current_streak", 0)
+            val bestStreak = streakPrefs.getInt("best_streak", 0)
+            if (lastDate != null || currentStreak > 0 || bestStreak > 0) {
+                val streakObj = org.json.JSONObject().apply {
+                    if (lastDate != null) put("lastDate", lastDate)
+                    put("current", currentStreak)
+                    put("best", bestStreak)
+                }
+                obj.put("streakData", streakObj)
+            }
+
+            // Achievement unlock flags (which achievements the user has been notified about)
+            val achievementPrefs = context.getSharedPreferences("fieldmind_achievements_v2", android.content.Context.MODE_PRIVATE)
+            val unlockedAchievements = org.json.JSONObject()
+            var hasAny = false
+            achievementPrefs.all.forEach { (key, value) ->
+                if (value is Boolean && value) {
+                    unlockedAchievements.put(key, true)
+                    hasAny = true
+                }
+            }
+            if (hasAny) {
+                obj.put("achievementData", unlockedAchievements)
+            }
+
             obj.toString(2)
         } catch (_: Exception) {
             settingsJson
