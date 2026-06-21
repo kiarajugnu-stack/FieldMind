@@ -1441,41 +1441,44 @@ private fun ExportTabContent(
                     Icon(FieldMindIcons.Archive, null, tint = MaterialTheme.colorScheme.primary, size = 20.dp)
                     Text("Export format", fontWeight = FontWeight.SemiBold)
                 }
-                // 4-column icon grid
-                FlowRow(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    exportFormats.forEach { fmt ->
-                        val isSelected = selectedExportFormat == fmt.name
-                        Surface(
-                            onClick = { selectedExportFormat = fmt.name },
-                            modifier = Modifier.fillMaxWidth(0.235f),
-                            shape = RoundedCornerShape(16.dp),
-                            color = if (isSelected) fmt.color.copy(alpha = 0.14f) else MaterialTheme.colorScheme.surfaceContainerHigh,
-                            border = if (isSelected) BorderStroke(1.5.dp, fmt.color) else null
+                // 4-column icon grid — even spacing with equal-width items
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    exportFormats.chunked(4).forEach { row ->
+                        Row(
+                            Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            Column(
-                                Modifier.padding(10.dp).heightIn(min = 80.dp),
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.spacedBy(4.dp)
-                            ) {
-                                Box(
-                                    Modifier.size(36.dp).clip(RoundedCornerShape(10.dp))
-                                        .background(if (isSelected) fmt.color.copy(alpha = 0.18f) else MaterialTheme.colorScheme.surfaceContainerHighest),
-                                    contentAlignment = Alignment.Center
+                            row.forEach { fmt ->
+                                val isSelected = selectedExportFormat == fmt.name
+                                Surface(
+                                    onClick = { selectedExportFormat = fmt.name },
+                                    modifier = Modifier.weight(1f),
+                                    shape = RoundedCornerShape(16.dp),
+                                    color = if (isSelected) fmt.color.copy(alpha = 0.14f) else MaterialTheme.colorScheme.surfaceContainerHigh,
+                                    border = if (isSelected) BorderStroke(1.5.dp, fmt.color) else null
                                 ) {
-                                    Icon(fmt.icon, null, tint = fmt.color, size = 20.dp)
-                                }
-                                Text(fmt.name, style = MaterialTheme.typography.labelSmall, fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                                Text(fmt.desc, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2, overflow = TextOverflow.Ellipsis, textAlign = TextAlign.Center)
-                                if (isSelected) {
-                                    Box(
-                                        Modifier.size(18.dp).clip(CircleShape).background(fmt.color),
-                                        contentAlignment = Alignment.Center
+                                    Column(
+                                        Modifier.padding(10.dp).heightIn(min = 80.dp),
+                                        horizontalAlignment = Alignment.CenterHorizontally,
+                                        verticalArrangement = Arrangement.spacedBy(4.dp)
                                     ) {
-                                        Icon(FieldMindIcons.Check, null, tint = MaterialTheme.colorScheme.onPrimary, size = 12.dp)
+                                        Box(
+                                            Modifier.size(36.dp).clip(RoundedCornerShape(10.dp))
+                                                .background(if (isSelected) fmt.color.copy(alpha = 0.18f) else MaterialTheme.colorScheme.surfaceContainerHighest),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Icon(fmt.icon, null, tint = fmt.color, size = 20.dp)
+                                        }
+                                        Text(fmt.name, style = MaterialTheme.typography.labelSmall, fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                        Text(fmt.desc, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2, overflow = TextOverflow.Ellipsis, textAlign = TextAlign.Center)
+                                        if (isSelected) {
+                                            Box(
+                                                Modifier.size(18.dp).clip(CircleShape).background(fmt.color),
+                                                contentAlignment = Alignment.Center
+                                            ) {
+                                                Icon(FieldMindIcons.Check, null, tint = MaterialTheme.colorScheme.onPrimary, size = 12.dp)
+                                            }
+                                        }
                                     }
                                 }
                             }
