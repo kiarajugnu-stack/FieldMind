@@ -7,7 +7,11 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import org.xmlpull.v1.XmlPullParser
+import org.xmlpull.v1.XmlPullParserFactory
+import java.io.StringReader
 import java.util.concurrent.TimeUnit
+import java.util.zip.ZipInputStream
 
 /**
  * Open-Meteo provider (free, no API key required, 10,000 requests/day).
@@ -52,6 +56,16 @@ class OpenMeteoProvider : WeatherProvider {
 
     private val gson = Gson()
 
+    /** Detect the response format from the config's extra params. */
+    private fun detectFormat(config: OpenMeteoConfig?): String {
+        val extra = config?.extraParams?.lowercase() ?: return "json"
+        return when {
+            "format=csv" in extra -> "csv"
+            "format=xlsx" in extra || "format=xls" in extra -> "xlsx"
+            else -> "json"
+        }
+    }
+
     override suspend fun fetchWeather(
         latitude: Double,
         longitude: Double,
@@ -74,7 +88,6 @@ class OpenMeteoProvider : WeatherProvider {
 
             val request = Request.Builder()
                 .url(url)
-                // Open-Meteo accepts the user-agent but doesn't require one
                 .header("User-Agent", "FieldMind/1.0 (field-research-app; open-meteo-provider)")
                 .get()
                 .build()
@@ -85,16 +98,35 @@ class OpenMeteoProvider : WeatherProvider {
                 return@withContext null
             }
 
-            val body = response.body?.string() ?: return@withContext null
-            val parsed = gson.fromJson(body, OpenMeteoFullResponse::class.java)
+            // Detect response format from config's extraParams
+            val format = detectFormat(config)
 
-            val curr = parsed.current
-            val daily = parsed.daily
+            // Parse response body according to format (each branch consumes the body once)
+            var jsonBody: String? = null
+            val parsed: OpenMeteoFullResponse? = when (format) {
+                "csv" -> {
+                    val body = response.body?.string() ?: return@withContext null
+                    parseCsvResponse(body)
+                }
+                "xlsx" -> {
+                    val bytes = response.body?.bytes() ?: return@withContext null
+                    parseXlsxResponse(bytes)
+                }
+                else -> {
+                    response.body?.string()?.let {
+                        jsonBody = it
+                        gson.fromJson(it, OpenMeteoFullResponse::class.java)
+                    }
+                }
+            }
 
-            if (curr == null) {
+            val curr = parsed?.current
+            val daily = parsed?.daily
+
+            // Legacy JSON fallback: only for JSON format, and only if parsing returned nothing
+            if (curr == null && parsed == null && format == "json" && jsonBody != null) {
                 Log.w("OpenMeteo", "No 'current' object in API response for $latitude,$longitude")
-                // Try legacy format
-                val legacy = gson.fromJson(body, OpenMeteoLegacyResponse::class.java)
+                val legacy = gson.fromJson(jsonBody, OpenMeteoLegacyResponse::class.java)
                 val lw = legacy.currentWeather ?: return@withContext null
                 return@withContext WeatherSnapshot(
                     temperature = lw.temperature,
@@ -105,13 +137,13 @@ class OpenMeteoProvider : WeatherProvider {
                 )
             }
 
-            val temp = curr.temperature
-            val code = curr.weatherCode ?: 0
-            val humidity = curr.humidity
-            val windSpeed = curr.windSpeed
-            val windDir = curr.windDirection
-            val cloudCover = curr.cloudCover
-            val pressure = curr.pressure
+            val temp = curr?.temperature
+            val code = curr?.weatherCode ?: 0
+            val humidity = curr?.humidity
+            val windSpeed = curr?.windSpeed
+            val windDir = curr?.windDirection
+            val cloudCover = curr?.cloudCover
+            val pressure = curr?.pressure
             val sunrise = daily?.sunrise?.firstOrNull { it.isNotBlank() }
             val sunset = daily?.sunset?.firstOrNull { it.isNotBlank() }
 
@@ -156,6 +188,314 @@ class OpenMeteoProvider : WeatherProvider {
             Log.e("OpenMeteo", "fetchWeather failed for $latitude,$longitude", e)
             null
         }
+    }
+
+    // ── CSV Parser ──
+
+    /** Parse a single CSV line, handling quoted fields and escaped quotes. */
+    private fun parseCsvLine(line: String): List<String> {
+        val result = mutableListOf<String>()
+        val current = StringBuilder()
+        var inQuotes = false
+        var i = 0
+        while (i < line.length) {
+            val c = line[i]
+            when {
+                c == '"' && !inQuotes -> inQuotes = true
+                c == '"' && inQuotes -> {
+                    // Check for escaped quote ("")
+                    if (i + 1 < line.length && line[i + 1] == '"') {
+                        current.append('"')
+                        i++ // skip the second quote
+                    } else {
+                        inQuotes = false
+                    }
+                }
+                c == ',' && !inQuotes -> {
+                    result.add(current.toString().trim())
+                    current.clear()
+                }
+                else -> current.append(c)
+            }
+            i++
+        }
+        result.add(current.toString().trim())
+        return result
+    }
+
+    /**
+     * Parse an Open-Meteo CSV response body into [OpenMeteoFullResponse].
+     * The CSV format uses the same column names as the JSON response keys.
+     */
+    private fun parseCsvResponse(body: String): OpenMeteoFullResponse? {
+        val lines = body.trim().lines().filter { it.isNotBlank() }
+        if (lines.size < 2) return null
+
+        val headers = parseCsvLine(lines[0])
+        val rows = lines.drop(1).map { line ->
+            val values = parseCsvLine(line)
+            headers.zip(values).toMap()
+        }
+        if (rows.isEmpty()) return null
+
+        return parseCsvRows(rows)
+    }
+
+    // ── XLSX Parser ──
+
+    /**
+     * Parse an Open-Meteo XLSX (binary) response into [OpenMeteoFullResponse].
+     * XLSX files are ZIP archives containing XML. We extract and parse
+     * the sheet data and shared strings using Android's built-in XmlPullParser.
+     */
+    private fun parseXlsxResponse(bytes: ByteArray): OpenMeteoFullResponse? {
+        try {
+            // Read shared strings and sheet XML from the ZIP
+            var sharedStrings = listOf<String>()
+            var sheetXml: String? = null
+
+            val zis = ZipInputStream(bytes.inputStream())
+            var entry = zis.nextEntry
+            while (entry != null) {
+                when (entry.name) {
+                    "xl/sharedStrings.xml" -> {
+                        sharedStrings = parseXlsxSharedStrings(zis.readBytes().toString(Charsets.UTF_8))
+                    }
+                    "xl/worksheets/sheet1.xml" -> {
+                        sheetXml = zis.readBytes().toString(Charsets.UTF_8)
+                    }
+                }
+                zis.closeEntry()
+                entry = zis.nextEntry
+            }
+            zis.close()
+
+            val xml = sheetXml ?: return null
+
+            // Parse the sheet XML to extract rows and cells
+            val factory = XmlPullParserFactory.newInstance()
+            val parser = factory.newPullParser()
+            parser.setInput(StringReader(xml))
+
+            // Map column ref (A, B, C...) to index
+            fun colIndex(ref: String): Int {
+                val letters = ref.takeWhile { it.isLetter() }
+                var idx = 0
+                for (ch in letters) {
+                    idx = idx * 26 + (ch.code - 'A'.code + 1)
+                }
+                return idx - 1
+            }
+
+            // Extract numeric value from cell ref (e.g., "A1" -> 1)
+            fun rowNum(ref: String): Int {
+                return ref.dropWhile { it.isLetter() }.toIntOrNull() ?: 0
+            }
+
+            // Parse rows
+            val rows = mutableListOf<MutableMap<Int, String>>()
+            var currentRow: MutableMap<Int, String>? = null
+            var eventType = parser.eventType
+
+            while (eventType != XmlPullParser.END_DOCUMENT) {
+                if (eventType == XmlPullParser.START_TAG) {
+                    when (parser.name) {
+                        "row" -> {
+                            currentRow = mutableMapOf()
+                        }
+                        "c" -> {
+                            val ref = parser.getAttributeValue(null, "r") ?: ""
+                            val type = parser.getAttributeValue(null, "t") ?: ""
+                            val colIdx = colIndex(ref)
+
+                            // Read the cell value
+                            var value: String? = null
+                            var depth = 1
+                            while (depth > 0) {
+                                eventType = parser.next()
+                                when (eventType) {
+                                    XmlPullParser.START_TAG -> {
+                                        if (parser.name == "v") {
+                                            value = parser.nextText()
+                                        }
+                                        depth++
+                                    }
+                                    XmlPullParser.END_TAG -> depth--
+                                }
+                            }
+
+                            if (value != null) {
+                                // If type is "s" (shared string), look up the string table
+                                val resolved = if (type == "s") {
+                                    sharedStrings.getOrElse(value.toIntOrNull() ?: -1) { value }
+                                } else value
+                                currentRow?.put(colIdx, resolved)
+                            }
+                        }
+                    }
+                } else if (eventType == XmlPullParser.END_TAG && parser.name == "row") {
+                    currentRow?.let { rows.add(it) }
+                    currentRow = null
+                }
+                eventType = parser.next()
+            }
+
+            // Convert parsed rows to the CSV-style table
+            if (rows.isEmpty()) return null
+
+            // Build headers from the first row
+            val headerMap = mutableMapOf<Int, String>()
+            // Expected column order from Open-Meteo
+            val expectedCurrentVars = listOf(
+                "temperature_2m", "relative_humidity_2m", "weather_code",
+                "cloud_cover", "surface_pressure", "wind_speed_10m", "wind_direction_10m"
+            )
+            val expectedDailyVars = listOf(
+                "time", "temperature_2m_max", "temperature_2m_min", "weather_code",
+                "precipitation_sum", "wind_speed_10m_max",
+                "apparent_temperature_max", "apparent_temperature_min",
+                "sunrise", "sunset"
+            )
+
+            // Try to determine headers: check if first row cells look like column names
+            val firstRowData = rows.first()
+            // Check if first row contains known variable names
+            val isHeaderRow = firstRowData.values.any { it in expectedCurrentVars || it in expectedDailyVars }
+
+            val dataRows = if (isHeaderRow) {
+                // First row is headers, subsequent rows are data
+                for ((col, name) in firstRowData) {
+                    headerMap[col] = name
+                }
+                rows.drop(1)
+            } else {
+                // No header row - use default position-based mapping
+                // Column order: time, temperature_2m, humidity, weather_code, cloud_cover, pressure, wind_speed_10m, wind_direction_10m, ...
+                rows
+            }
+
+            // Build CSV-like rows as maps
+            val csvRows = dataRows.map { row ->
+                val map = mutableMapOf<String, String>()
+                for ((colIdx, value) in row) {
+                    val name = headerMap[colIdx] ?: "col_$colIdx"
+                    map[name] = value
+                }
+                map
+            }
+
+            // Parse using the same logic as CSV
+            return parseCsvRows(csvRows)
+        } catch (e: Exception) {
+            Log.e("OpenMeteo", "Failed to parse XLSX response", e)
+            return null
+        }
+    }
+
+    /** Parse shared strings XML from XLSX. */
+    private fun parseXlsxSharedStrings(xml: String): List<String> {
+        val strings = mutableListOf<String>()
+        try {
+            val factory = XmlPullParserFactory.newInstance()
+            val parser = factory.newPullParser()
+            parser.setInput(StringReader(xml))
+
+            var eventType = parser.eventType
+            while (eventType != XmlPullParser.END_DOCUMENT) {
+                if (eventType == XmlPullParser.START_TAG && parser.name == "t") {
+                    strings.add(parser.nextText())
+                }
+                eventType = parser.next()
+            }
+        } catch (e: Exception) {
+            Log.w("OpenMeteo", "Failed to parse XLSX shared strings", e)
+        }
+        return strings
+    }
+
+    /** Shared CSV/XLSX row-to-response logic. */
+    private fun parseCsvRows(rows: List<Map<String, String>>): OpenMeteoFullResponse {
+        fun <T> getValue(row: Map<String, String>, key: String, parse: (String) -> T): T? {
+            val raw = row[key]?.takeIf { it.isNotBlank() && it != "null" }
+            return try { raw?.let(parse) } catch (_: Exception) { null }
+        }
+        fun getDouble(row: Map<String, String>, key: String) = getValue(row, key) { it.toDouble() }
+        fun getInt(row: Map<String, String>, key: String) = getValue(row, key) { it.toInt() }
+        fun getString(row: Map<String, String>, key: String) = row[key]?.takeIf { it.isNotBlank() && it != "null" }
+
+        // Extract daily data
+        val dailyTimes = mutableListOf<String>()
+        val dailyTempMax = mutableListOf<Double>()
+        val dailyTempMin = mutableListOf<Double>()
+        val dailyWeatherCode = mutableListOf<Int>()
+        val dailyPrecip = mutableListOf<Double>()
+        val dailyWindMax = mutableListOf<Double>()
+        val dailyApparentMax = mutableListOf<Double>()
+        val dailyApparentMin = mutableListOf<Double>()
+        val dailySunrise = mutableListOf<String>()
+        val dailySunset = mutableListOf<String>()
+
+        var currentData: OpenMeteoCurrent? = null
+
+        for (row in rows) {
+            val time = getString(row, "time") ?: continue
+            val isDaily = time.length <= 10 && "-" in time
+
+            if (isDaily) {
+                dailyTimes.add(time)
+                dailyTempMax.add(getDouble(row, "temperature_2m_max") ?: 0.0)
+                dailyTempMin.add(getDouble(row, "temperature_2m_min") ?: 0.0)
+                dailyWeatherCode.add(getInt(row, "weather_code") ?: 0)
+                dailyPrecip.add(getDouble(row, "precipitation_sum") ?: 0.0)
+                dailyWindMax.add(getDouble(row, "wind_speed_10m_max") ?: 0.0)
+                dailyApparentMax.add(getDouble(row, "apparent_temperature_max") ?: 0.0)
+                dailyApparentMin.add(getDouble(row, "apparent_temperature_min") ?: 0.0)
+                dailySunrise.add(getString(row, "sunrise") ?: "")
+                dailySunset.add(getString(row, "sunset") ?: "")
+            } else if (currentData == null) {
+                // First non-daily row = current conditions
+                currentData = OpenMeteoCurrent(
+                    temperature = getDouble(row, "temperature_2m"),
+                    humidity = getInt(row, "relative_humidity_2m"),
+                    weatherCode = getInt(row, "weather_code"),
+                    cloudCover = getInt(row, "cloud_cover"),
+                    pressure = getDouble(row, "surface_pressure"),
+                    windSpeed = getDouble(row, "wind_speed_10m"),
+                    windDirection = getInt(row, "wind_direction_10m")
+                )
+            }
+        }
+
+        // If we didn't find current data from a non-daily row, use the first row
+        if (currentData == null && rows.isNotEmpty()) {
+            val first = rows.first()
+            currentData = OpenMeteoCurrent(
+                temperature = getDouble(first, "temperature_2m"),
+                humidity = getInt(first, "relative_humidity_2m"),
+                weatherCode = getInt(first, "weather_code"),
+                cloudCover = getInt(first, "cloud_cover"),
+                pressure = getDouble(first, "surface_pressure"),
+                windSpeed = getDouble(first, "wind_speed_10m"),
+                windDirection = getInt(first, "wind_direction_10m")
+            )
+        }
+
+        val daily = if (dailyTimes.isNotEmpty()) {
+            OpenMeteoDaily(
+                time = dailyTimes,
+                tempMax = dailyTempMax,
+                tempMin = dailyTempMin,
+                weatherCode = dailyWeatherCode,
+                precipitationSum = dailyPrecip,
+                windSpeedMax = dailyWindMax,
+                apparentTempMax = dailyApparentMax,
+                apparentTempMin = dailyApparentMin,
+                sunrise = dailySunrise,
+                sunset = dailySunset
+            )
+        } else null
+
+        return OpenMeteoFullResponse(current = currentData, daily = daily)
     }
 }
 
