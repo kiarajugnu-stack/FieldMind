@@ -285,7 +285,7 @@ fun BackupAndRestoreScreen(
             Modifier
                 .fillMaxSize()
                 .padding(padding),
-            contentPadding = PaddingValues(20.dp, 20.dp, 20.dp, 24.dp),
+            contentPadding = PaddingValues(20.dp, 20.dp, 20.dp, 8.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             // ── Header ──
