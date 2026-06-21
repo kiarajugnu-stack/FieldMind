@@ -91,7 +91,8 @@ private val exportFormats = listOf(
     FormatOption("Markdown", "Readable text for docs & notes", FieldMindIcons.Article, androidx.compose.ui.graphics.Color(0xFF2E7D32), "document"),
     FormatOption("HTML", "Print-ready web layout", FieldMindIcons.Article, androidx.compose.ui.graphics.Color(0xFF1565C0), "document"),
     FormatOption("PDF", "Portable document format", FieldMindIcons.Report, androidx.compose.ui.graphics.Color(0xFF1F6B4C), "document"),
-    FormatOption(".fieldmind", "Package with images & encryption", FieldMindIcons.Archive, androidx.compose.ui.graphics.Color(0xFF1F6B4C), "package")
+    FormatOption(".fieldmind", "Package with images & encryption", FieldMindIcons.Archive, androidx.compose.ui.graphics.Color(0xFF1F6B4C), "package"),
+    FormatOption(".zip", "Compressed archive for smaller backups", FieldMindIcons.Archive, androidx.compose.ui.graphics.Color(0xFFD97706), "compressed")
 )
 
 data class ExportRecord(
@@ -225,7 +226,7 @@ fun BackupAndRestoreScreen(
         }
     }
 
-    // File picker launcher (import)
+    // File picker launcher (import) - accepts .fieldmind, .zip, .json, .encrypted, and all binary files
     val filePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocument()
     ) { uri: Uri? ->

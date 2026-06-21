@@ -1629,11 +1629,10 @@ private fun OnboardingBackupOptionsPage(
                                 }
                                 Column(Modifier.weight(1f)) {
                                     Text("Export Options", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
-                                    Text("Export as PDF, CSV, or images", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                    Text("Export as PDF, CSV, ZIP, JSON, or images", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                 }
-                            }
-                            Row(Modifier.fillMaxWidth().padding(start = 52.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                listOf("PDF", "CSV", "Images").forEach { format ->
+                                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    listOf("PDF", "CSV", "ZIP", "JSON").forEach { format ->
                                     Surface(shape = RoundedCornerShape(10.dp), color = MaterialTheme.colorScheme.surfaceContainerLow) {
                                         Text(format, modifier = Modifier.padding(vertical = 8.dp, horizontal = 12.dp), style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
                                     }
