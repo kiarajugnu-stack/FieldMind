@@ -226,12 +226,28 @@ class OpenMeteoProvider : WeatherProvider {
     /**
      * Parse an Open-Meteo CSV response body into [OpenMeteoFullResponse].
      * The CSV format uses the same column names as the JSON response keys.
+     *
+     * Handles duplicate column headers (e.g. "weather_code" appears in both
+     * current and daily parameter groups) by appending "_2", "_3" suffixes
+     * so each column key is unique and accessible via fallback lookup.
      */
     private fun parseCsvResponse(body: String): OpenMeteoFullResponse? {
         val lines = body.trim().lines().filter { it.isNotBlank() }
         if (lines.size < 2) return null
 
-        val headers = parseCsvLine(lines[0])
+        val rawHeaders = parseCsvLine(lines[0])
+        // Make duplicate column headers unique by appending "_2", "_3" suffixes
+        val seen = mutableSetOf<String>()
+        val headers = rawHeaders.map { header ->
+            var unique = header
+            var counter = 1
+            while (unique in seen) {
+                counter++
+                unique = "${header}_$counter"
+            }
+            seen.add(unique)
+            unique
+        }
         val rows = lines.drop(1).map { line ->
             val values = parseCsvLine(line)
             headers.zip(values).toMap()
@@ -343,8 +359,9 @@ class OpenMeteoProvider : WeatherProvider {
             // Convert parsed rows to the CSV-style table
             if (rows.isEmpty()) return null
 
-            // Build headers from the first row
+            // Build headers from the first row, handling duplicate names
             val headerMap = mutableMapOf<Int, String>()
+            val seenHeaderNames = mutableSetOf<String>()
             // Expected column order from Open-Meteo
             val expectedCurrentVars = listOf(
                 "temperature_2m", "relative_humidity_2m", "weather_code",
@@ -364,8 +381,16 @@ class OpenMeteoProvider : WeatherProvider {
 
             val dataRows = if (isHeaderRow) {
                 // First row is headers, subsequent rows are data
+                // Rename duplicate headers with _2, _3 suffixes (same as CSV parser)
                 for ((col, name) in firstRowData) {
-                    headerMap[col] = name
+                    var uniqueName = name
+                    var counter = 1
+                    while (uniqueName in seenHeaderNames) {
+                        counter++
+                        uniqueName = "${name}_$counter"
+                    }
+                    seenHeaderNames.add(uniqueName)
+                    headerMap[col] = uniqueName
                 }
                 rows.drop(1)
             } else {
@@ -415,13 +440,22 @@ class OpenMeteoProvider : WeatherProvider {
 
     /** Shared CSV/XLSX row-to-response logic. */
     private fun parseCsvRows(rows: List<Map<String, String>>): OpenMeteoFullResponse {
+        /**
+         * Get a value from the row map, falling back to suffixed keys for duplicate
+         * column headers (e.g. "weather_code_2" if "weather_code" is blank).
+         */
         fun <T> getValue(row: Map<String, String>, key: String, parse: (String) -> T): T? {
             val raw = row[key]?.takeIf { it.isNotBlank() && it != "null" }
+                ?: row["${key}_2"]?.takeIf { it.isNotBlank() && it != "null" }
+                ?: row["${key}_3"]?.takeIf { it.isNotBlank() && it != "null" }
             return try { raw?.let(parse) } catch (_: Exception) { null }
         }
         fun getDouble(row: Map<String, String>, key: String) = getValue(row, key) { it.toDouble() }
         fun getInt(row: Map<String, String>, key: String) = getValue(row, key) { it.toInt() }
-        fun getString(row: Map<String, String>, key: String) = row[key]?.takeIf { it.isNotBlank() && it != "null" }
+        fun getString(row: Map<String, String>, key: String) = 
+            row[key]?.takeIf { it.isNotBlank() && it != "null" }
+                ?: row["${key}_2"]?.takeIf { it.isNotBlank() && it != "null" }
+                ?: row["${key}_3"]?.takeIf { it.isNotBlank() && it != "null" }
 
         // Extract daily data
         val dailyTimes = mutableListOf<String>()

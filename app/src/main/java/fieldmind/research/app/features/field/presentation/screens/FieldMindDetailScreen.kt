@@ -2606,7 +2606,7 @@ private fun ResearchSessionDetailContent(
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clickable { onOpenDetail("observations", obs.id) },
+                        .clickable { onOpenDetail("observation", obs.id) },
                     colors = CardDefaults.cardColors(containerColor = colors.surface),
                     shape = RoundedCornerShape(12.dp),
                     elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
