@@ -82,6 +82,7 @@ interface FieldMindDao {
     @Query("SELECT t.name AS name, COUNT(x.observationId) AS observationCount FROM field_tags t INNER JOIN field_observation_tags x ON x.tagId = t.id GROUP BY t.id ORDER BY observationCount DESC, t.name ASC") fun observeCommonTagStatistics(): Flow<List<TagStatistic>>
 
     @Query("SELECT * FROM field_evidence_attachments WHERE observationId = :observationId AND deletedAt IS NULL ORDER BY createdAt DESC") fun observeAttachmentsForObservation(observationId: Long): Flow<List<EvidenceAttachmentEntity>>
+    @Query("SELECT a.* FROM field_evidence_attachments a WHERE a.deletedAt IS NULL AND a.observationId NOT IN (SELECT id FROM field_observations WHERE deletedAt IS NULL)") fun observeOrphanedAttachments(): Flow<List<EvidenceAttachmentEntity>>
     @Query("SELECT id, observationId, type, caption, uri FROM field_evidence_attachments WHERE deletedAt IS NULL AND (caption LIKE '%' || :query || '%' OR uri LIKE '%' || :query || '%' OR localPath LIKE '%' || :query || '%' OR type LIKE '%' || :query || '%') ORDER BY updatedAt DESC") fun searchAttachmentCaptions(query: String): Flow<List<AttachmentSearchResult>>
     @Query("UPDATE field_evidence_attachments SET deletedAt = :deletedAt, updatedAt = :deletedAt WHERE id = :id") suspend fun softDeleteAttachment(id: Long, deletedAt: Long)
 
