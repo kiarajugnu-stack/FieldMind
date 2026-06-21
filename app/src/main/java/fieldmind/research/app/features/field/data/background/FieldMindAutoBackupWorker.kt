@@ -35,6 +35,11 @@ class FieldMindAutoBackupWorker(context: Context, params: WorkerParameters) : Co
         val dataRecords = repository.dataRecords.first()
         val reports = repository.reports.first()
         val flashcards = repository.flashcards.first()
+        // ── Added missing entity types (was missing from auto-backup) ──
+        val species = repository.species.first()
+        val weatherCatalog = repository.weatherCatalog.first()
+        val researchSessions = repository.researchSessions.first()
+        val tasks = repository.tasks.first()
 
         val archiveJson = FieldMindExport.archiveJson(
             observations = observations,
@@ -45,7 +50,11 @@ class FieldMindAutoBackupWorker(context: Context, params: WorkerParameters) : Co
             sources = sources,
             dataRecords = dataRecords,
             reports = reports,
-            flashcards = flashcards
+            flashcards = flashcards,
+            species = species,
+            weatherCatalog = weatherCatalog,
+            researchSessions = researchSessions,
+            tasks = tasks
         )
 
         // Build .fieldmind package with media attachments

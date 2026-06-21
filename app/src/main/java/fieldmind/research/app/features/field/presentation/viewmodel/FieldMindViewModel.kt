@@ -462,6 +462,16 @@ class FieldMindViewModel(application: Application) : AndroidViewModel(applicatio
             bundle.researchSessions.forEach { repository.addResearchSession(it) }
             bundle.tasks.forEach { repository.addTask(it) }
 
+            // ── Import EvidenceAttachmentEntity directly from JSON archive (v3+) ──
+            // These are attachments embedded in the archive JSON itself (not from .fieldmind media
+            // files). They contain the original URIs which may or may not still be valid.
+            bundle.evidenceAttachments.forEach { att ->
+                val newObsId = oldToNewObsId[att.observationId]
+                if (newObsId != null) {
+                    repository.addAttachment(att.copy(observationId = newObsId))
+                }
+            }
+
             // Phase 2: Relink extracted media files to the newly imported entities.
             // Copy temp files to a permanent app-local directory so they survive
             // cleanupExtractedPackage() which runs in the caller's finally block.
@@ -514,7 +524,7 @@ class FieldMindViewModel(application: Application) : AndroidViewModel(applicatio
                         if (noteEntity != null) {
                             repository.updateNote(
                                 noteEntity.copy(
-                                    attachmentUris = newLines.joinToString("\\n"),
+                                    attachmentUris = newLines.joinToString("\n"),
                                     id = newId
                                 )
                             )

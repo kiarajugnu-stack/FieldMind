@@ -362,6 +362,14 @@ fun BackupAndRestoreScreen(
                                             // Apply export privacy transforms before building the archive
                                             val exportObs = FieldMindExport.applyGpsPrivacy(observations, exportGpsPrivacy)
                                             val exportNotes = if (exportExcludeMedia) FieldMindExport.applyMediaExclusion(notes) else notes
+                                            // Collect evidence attachments for all observations (v3 archive JSON)
+                                            val evidAttachAll = mutableListOf<EvidenceAttachmentEntity>()
+                                            if (!exportExcludeMedia) {
+                                                exportObs.forEach { obs ->
+                                                    val atts = viewModel.attachmentsForObservation(obs.id).first()
+                                                    evidAttachAll.addAll(atts)
+                                                }
+                                            }
                                             val json = FieldMindExport.archiveJson(
                                                 observations = exportObs, notes = exportNotes,
                                                 questions = questions, hypotheses = hypotheses,
@@ -371,7 +379,8 @@ fun BackupAndRestoreScreen(
                                                 species = species,
                                                 weatherCatalog = weatherCatalog,
                                                 researchSessions = researchSessions,
-                                                tasks = tasks
+                                                tasks = tasks,
+                                                evidenceAttachments = evidAttachAll
                                             )
                                             val dateStamp = SimpleDateFormat("yyyy-MM-dd_HHmm", Locale.getDefault()).format(Date())
                                             val ext = when (format) {
@@ -629,7 +638,20 @@ fun BackupAndRestoreScreen(
                                             // Apply export privacy transforms to backup data
                                             val backupObs = FieldMindExport.applyGpsPrivacy(observations, exportGpsPrivacy)
                                             val backupNotes = if (exportExcludeMedia) FieldMindExport.applyMediaExclusion(notes) else notes
-                                            val json = FieldMindExport.archiveJson(backupObs, backupNotes, questions, hypotheses, projects, sources, dataRecords, reports, flashcards, species, weatherCatalog, researchSessions, tasks)
+                                            // Collect evidence attachments for all observations (v3 archive JSON)
+                                            val evidAttachAll = mutableListOf<EvidenceAttachmentEntity>()
+                                            if (!exportExcludeMedia) {
+                                                backupObs.forEach { obs ->
+                                                    val atts = viewModel.attachmentsForObservation(obs.id).first()
+                                                    evidAttachAll.addAll(atts)
+                                                }
+                                            }
+                                            val json = FieldMindExport.archiveJson(
+                                                backupObs, backupNotes, questions, hypotheses, projects, sources,
+                                                dataRecords, reports, flashcards, species, weatherCatalog,
+                                                researchSessions, tasks,
+                                                evidenceAttachments = evidAttachAll
+                                            )
                                             val dateStamp = SimpleDateFormat("yyyy-MM-dd_HHmmss", Locale.getDefault()).format(Date())
                                             val backupDir = backupDirectory(context)
                                             val baseName = "fieldmind-backup-$dateStamp"
@@ -876,7 +898,18 @@ fun BackupAndRestoreScreen(
                             val exportFile = File(exportDir, fileName)
 
                             withContext(Dispatchers.IO) {
-                                val json = FieldMindExport.archiveJson(observations, notes, questions, hypotheses, projects, sources, dataRecords, reports, flashcards, species, weatherCatalog, researchSessions, tasks)
+                                // Collect evidence attachments for v3 archive JSON
+                                val evidAttachAll = mutableListOf<EvidenceAttachmentEntity>()
+                                observations.forEach { obs ->
+                                    val atts = viewModel.attachmentsForObservation(obs.id).first()
+                                    evidAttachAll.addAll(atts)
+                                }
+                                val json = FieldMindExport.archiveJson(
+                                    observations, notes, questions, hypotheses, projects, sources,
+                                    dataRecords, reports, flashcards, species, weatherCatalog,
+                                    researchSessions, tasks,
+                                    evidenceAttachments = evidAttachAll
+                                )
                                 when (shareDialogFormat) {
                                     "JSON" -> exportFile.writeText(json)
                                     "CSV" -> exportFile.writeText(FieldMindExport.observationsCsv(observations))
