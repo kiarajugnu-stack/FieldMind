@@ -204,32 +204,7 @@ fun BackupAndRestoreScreen(
 
     // Export history state
     val exportHistoryStore = remember { ExportHistoryStore(context) }
-    var exportHistory by remember { mutableStateOf(emptyList<ExportRecord>()) 
-// Record export history — track actual file after encryption
-                                        val _exportFile = if (exportEncrypt && exportPassword.isNotBlank() && format in listOf(".fieldmind", ".zip")) {
-                                            File(exportDir, exportFile.name.replace(".fieldmind", ".encrypted").replace(".zip", ".encrypted"))
-                                        } else exportFile
-                                        exportHistoryStore.add(ExportRecord(
-                                            format = if (exportEncrypt && exportPassword.isNotBlank()) "Encrypted" else format,
-                                            fileName = _exportFile.name,
-                                            fileSizeBytes = _exportFile.length(),
-                                            exportedAt = System.currentTimeMillis(),
-                                            destination = if (action == "share") "Shared via intent" else "Saved to folder",
-                                            entityCounts = mapOf("Observations" to observations.size, "Notes" to notes.size, "Projects" to projects.size)
-                                        ))
-// Record backup history (inside IO block so vars are in scope)
-                                        val _backupFile = if (backupEncrypt && backupPassword.isNotBlank())
-                                            File(backupDir, baseName + ".encrypted")
-                                        else
-                                            fieldmindFile
-                                        exportHistoryStore.add(ExportRecord(
-                                            format = if (backupEncrypt && backupPassword.isNotBlank()) "Encrypted" else ".fieldmind",
-                                            fileName = _backupFile.name,
-                                            fileSizeBytes = _backupFile.length(),
-                                            exportedAt = System.currentTimeMillis(),
-                                            destination = "Backup saved",
-                                            entityCounts = mapOf("Observations" to observations.size, "Notes" to notes.size, "Projects" to projects.size)
-                                        ))}
+    var exportHistory by remember { mutableStateOf(emptyList<ExportRecord>()) }
     LaunchedEffect(lastBackupRefresh) {
         withContext(Dispatchers.IO) {
             exportHistory = exportHistoryStore.load()
@@ -534,7 +509,18 @@ fun BackupAndRestoreScreen(
                                                 }
                                             }
                                         }
-                                        
+                                        // Record export history — track actual file after encryption
+                                        val _exportFile = if (exportEncrypt && exportPassword.isNotBlank() && format in listOf(".fieldmind", ".zip")) {
+                                            File(exportDir, exportFile.name.replace(".fieldmind", ".encrypted").replace(".zip", ".encrypted"))
+                                        } else exportFile
+                                        exportHistoryStore.add(ExportRecord(
+                                            format = if (exportEncrypt && exportPassword.isNotBlank()) "Encrypted" else format,
+                                            fileName = _exportFile.name,
+                                            fileSizeBytes = _exportFile.length(),
+                                            exportedAt = System.currentTimeMillis(),
+                                            destination = if (action == "share") "Shared via intent" else "Saved to folder",
+                                            entityCounts = mapOf("Observations" to observations.size, "Notes" to notes.size, "Projects" to projects.size)
+                                        ))
                                     exportHistory = exportHistoryStore.load()
                                     showFastSnackbar(snackbar, scope, "Export complete")
                                 } catch (e: Exception) {
@@ -760,7 +746,19 @@ fun BackupAndRestoreScreen(
                                                 } catch (_: Exception) { }
                                             }
                                         }
-                                        
+                                        // Record backup history (inside IO block so vars are in scope)
+                                        val _backupFile = if (backupEncrypt && backupPassword.isNotBlank())
+                                            File(backupDir, baseName + ".encrypted")
+                                        else
+                                            fieldmindFile
+                                        exportHistoryStore.add(ExportRecord(
+                                            format = if (backupEncrypt && backupPassword.isNotBlank()) "Encrypted" else ".fieldmind",
+                                            fileName = _backupFile.name,
+                                            fileSizeBytes = _backupFile.length(),
+                                            exportedAt = System.currentTimeMillis(),
+                                            destination = "Backup saved",
+                                            entityCounts = mapOf("Observations" to observations.size, "Notes" to notes.size, "Projects" to projects.size)
+                                        ))
                                     exportHistory = exportHistoryStore.load()
                                     lastBackupRefresh++
                                     showFastSnackbar(snackbar, scope, "Backup saved")
@@ -2231,14 +2229,6 @@ private fun BackupTabContent(
                         ) {
                             LinearProgressIndicator(
                                 progress = { strength.score / 5f },
-                                modifier = Modifier.weight(1f).height(6.dp).clip(RoundedCornerShape(3.dp)),
-                                color = Color(strength.color),
-                                trackColor = MaterialTheme.colorScheme.surfaceContainerHighest
-                            )
-                            Text(strength.label, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, color = Color(strength.color))
-                        }
-                    }
-                    Spacer(Modifier.height(8.dp))
                     OutlinedTextField(
                         value = passwordConfirm,
                         onValueChange = onPasswordConfirmChange,
@@ -2255,6 +2245,14 @@ private fun BackupTabContent(
                         },
                         isError = passwordConfirm.isNotEmpty() && !passwordsMatch
                     )
+                                modifier = Modifier.weight(1f).height(6.dp).clip(RoundedCornerShape(3.dp)),
+                                color = Color(strength.color),
+                                trackColor = MaterialTheme.colorScheme.surfaceContainerHighest
+                            )
+                            Text(strength.label, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, color = Color(strength.color))
+                        }
+                    }
+                    Spacer(Modifier.height(8.dp))
                     if (passwordConfirm.isNotBlank() || passwordsMatch) {
                         Row(
                             modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 2.dp),
