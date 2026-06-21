@@ -330,7 +330,7 @@ plugins {
 }
 
 android {
-    namespace = "chromahub.rhythm.app"
+    namespace = "fieldmind.research.app"
     compileSdk = <latest>
     
     defaultConfig {

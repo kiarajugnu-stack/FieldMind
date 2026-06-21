@@ -167,7 +167,7 @@ fun SongItem(
 ### File Organization
 
 ```
-app/src/main/java/chromahub/rhythm/app/
+app/src/main/java/fieldmind/research/app/
 ├── features/
 │   └── local/
 │       ├── data/          # Data layer
