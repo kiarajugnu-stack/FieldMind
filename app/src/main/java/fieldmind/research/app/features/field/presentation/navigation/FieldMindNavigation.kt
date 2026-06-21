@@ -305,13 +305,11 @@ fun FieldMindNavigation(viewModel: FieldMindViewModel, requestedDestination: Str
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val expanded = maxWidth >= 840.dp
         if (expanded) {
-            Row(Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding()) {
+            Row(Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding().haze(state = hazeState)) {
                 if (!hideChrome) {
                     Surface(
                         shape = RoundedCornerShape(size = 24.dp),
-                        color = MaterialTheme.colorScheme.surfaceContainer.copy(
-                            alpha = if (isSystemInDarkTheme()) 0.72f else 0.78f
-                        ),
+                        color = Color.Transparent,
                         tonalElevation = 0.dp,
                         shadowElevation = 8.dp,
                         border = androidx.compose.foundation.BorderStroke(
@@ -324,6 +322,26 @@ fun FieldMindNavigation(viewModel: FieldMindViewModel, requestedDestination: Str
                         modifier = Modifier
                             .padding(start = 8.dp, top = 8.dp, bottom = 8.dp)
                             .width(IntrinsicSize.Min)
+                            .hazeChild(
+                                state = hazeState,
+                                style = HazeStyle(
+                                    blurRadius = 24.dp,
+                                    noiseFactor = 0.04f,
+                                    tints = listOf(
+                                        HazeTint(
+                                            color = MaterialTheme.colorScheme.surfaceContainer.copy(
+                                                alpha = if (isSystemInDarkTheme()) 0.78f else 0.85f
+                                            )
+                                        ),
+                                        HazeTint(
+                                            brush = Brush.verticalGradient(
+                                                0.0f to Color.White.copy(alpha = 0.05f),
+                                                0.15f to Color.Transparent
+                                            )
+                                        )
+                                    )
+                                )
+                            )
                     ) {
                         NavigationRail(
                             header = {
