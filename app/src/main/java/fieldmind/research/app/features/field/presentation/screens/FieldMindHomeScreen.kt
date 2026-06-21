@@ -1048,7 +1048,7 @@ private fun timeOfDay(): String {
     }
 }
 
-// ══════════════════════════════════════════════════════════════════════
+// ═��════════════════════════════════════════════════════════════════════
 //  Live Weather Dashboard Widget — Live Open-Meteo weather with animations
 // ══════════════════════════════════════════════════════════════════════
 
@@ -2034,7 +2034,7 @@ private fun ResearchSessionCtaCard(
     
     val colors = FieldMindTheme.colors
     Card(
-        modifier = Modifier.fillMaxWidth().animateContentSize(),
+        modifier = Modifier.fillMaxWidth().animateContentSize().clickable { haptics.light(); onStartSession() },
         shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(
             containerColor = if (isActive) colors.observation.copy(alpha = 0.14f) else colors.positive.copy(alpha = 0.08f)
@@ -2070,17 +2070,12 @@ private fun ResearchSessionCtaCard(
                     color = (if (isActive) colors.observation else colors.positive).copy(alpha = 0.78f)
                 )
             }
-            Button(
-                onClick = { haptics.confirm(); onStartSession() },
-                shape = RoundedCornerShape(14.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = if (isActive) colors.observation else colors.positive
-                )
-            ) {
-                Icon(if (isActive) FieldMindIcons.Capture else FieldMindIcons.Add, null, size = 18.dp)
-                Spacer(Modifier.size(4.dp))
-                Text(if (isActive) "Continue" else "Start")
-            }
+            Icon(
+                FieldMindIcons.ChevronRight,
+                null,
+                tint = (if (isActive) colors.observation else colors.positive).copy(alpha = 0.5f),
+                size = 24.dp
+            )
         }
     }
 }
