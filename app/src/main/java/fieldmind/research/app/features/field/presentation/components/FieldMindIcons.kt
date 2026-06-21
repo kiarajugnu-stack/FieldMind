@@ -87,6 +87,7 @@ object FieldMindIcons {
     val FlashAuto = MaterialSymbolIcon("flash_auto")
     val FlashOff = MaterialSymbolIcon("flash_off")
     val FlipCamera = MaterialSymbolIcon("flip_camera_android")
+    val Replay = MaterialSymbolIcon("replay")
     val Timer = MaterialSymbolIcon("timer")
     val Session = MaterialSymbolIcon("stop_circle")
     val List = MaterialSymbolIcon("list")
@@ -96,6 +97,7 @@ object FieldMindIcons {
     val Record = MaterialSymbolIcon("radio_button_checked")
     val Copy = MaterialSymbolIcon("content_copy")
     val RadioUnchecked = MaterialSymbolIcon("radio_button_unchecked")
+    val Refresh = MaterialSymbolIcon("refresh")
 
     // Observation category icons
     val Bird = MaterialSymbolIcon("raven")

@@ -747,6 +747,9 @@ private fun ReadingTimerDialog(onDismiss: () -> Unit) {
             isRunning = true
             notificationStarted = true
             elapsedSeconds = (savedState.elapsedMs / 1000).toInt()
+            // CRITICAL: set startTimestamp so elapsed time continues from where it was
+            // Without this, the timer tick would use startTimestamp=0 and reset from zero
+            startTimestamp = System.currentTimeMillis() - savedState.elapsedMs
             // Recover session minutes from saved state name if possible
             val savedMinutes = savedState.name.filter { it.isDigit() }.toIntOrNull()
             if (savedMinutes != null && savedMinutes > 0) {
@@ -756,10 +759,19 @@ private fun ReadingTimerDialog(onDismiss: () -> Unit) {
     }
 
     // Timer tick — uses elapsed time from system to handle background correctly
+    // Self-corrects stale startTimestamp on dialog re-entry via saved timer state
     LaunchedEffect(isRunning, startTimestamp) {
         if (isRunning) {
             if (startTimestamp == 0L) {
                 startTimestamp = System.currentTimeMillis()
+            }
+            // If startTimestamp is stale (e.g. dialog dismissed and re-opened while
+            // the timer was running in the background), restore from saved state
+            if (System.currentTimeMillis() - startTimestamp > 3000L) {
+                val savedState = FieldMindTimerManager.getSavedTimerState(context)
+                if (savedState != null && savedState.type == FieldMindTimerService.TYPE_READING && savedState.elapsedMs > 0L) {
+                    startTimestamp = System.currentTimeMillis() - savedState.elapsedMs
+                }
             }
             while (true) {
                 delay(1000)

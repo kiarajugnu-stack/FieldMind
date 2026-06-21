@@ -298,7 +298,7 @@ private fun renderOverlays(
             }
             is MapOverlay.PolygonOverlay -> {
                 val polygon = Polygon().apply {
-                    points = overlay.points.map { GeoPoint(it.first, it.second) }
+                    setPoints(overlay.points.map { GeoPoint(it.first, it.second) })
                     fillPaint.color = Color.argb(
                         60,
                         Color.red(overlay.color.toInt()),
@@ -336,7 +336,7 @@ private fun renderOverlays(
         }
         if (drawingMode == DrawingMode.DrawPolygon) {
             val previewPoly = Polygon().apply {
-                points = pendingPoints.map { GeoPoint(it.first, it.second) }
+                setPoints(pendingPoints.map { GeoPoint(it.first, it.second) })
                 fillPaint.color = Color.argb(40, 255, 152, 0)
                 outlinePaint.color = Color.parseColor("#FF9800")
                 outlinePaint.strokeWidth = 3f

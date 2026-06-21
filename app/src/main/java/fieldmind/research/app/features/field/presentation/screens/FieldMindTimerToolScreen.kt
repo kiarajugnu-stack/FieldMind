@@ -31,7 +31,6 @@ import fieldmind.research.app.features.field.background.FieldMindTimerService
 import fieldmind.research.app.features.field.presentation.components.*
 import fieldmind.research.app.features.field.presentation.theme.FieldMindTheme
 import fieldmind.research.app.shared.presentation.components.icons.Icon
-import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon
 import kotlinx.coroutines.delay
 
 // ══════════════════════════════════════════════════════════════════════
@@ -76,8 +75,21 @@ fun TimerToolScreen(
     }
 
     // Timer tick — updates every 100ms
+    // Self-corrects stale baseStart on screen re-entry via saved timer state
     LaunchedEffect(isRunning, isPaused, baseStart, pausedAccumulated, timerMode, countdownTotalMs) {
         if (isRunning && !isPaused) {
+            // If baseStart is stale (e.g. after navigation away and back),
+            // use saved state to prevent the timer jumping forward by the
+            // time the composable was not ticking. The >3s threshold ensures
+            // this only fires on re-entry, not on ordinary pause/resume where
+            // baseStart is set to System.currentTimeMillis().
+            if (System.currentTimeMillis() - baseStart > 3000L) {
+                val savedState = FieldMindTimerManager.getSavedTimerState(context)
+                if (savedState != null && savedState.type == FieldMindTimerService.TYPE_READING && savedState.elapsedMs > 0L) {
+                    pausedAccumulated = savedState.elapsedMs
+                    baseStart = System.currentTimeMillis()
+                }
+            }
             while (isRunning && !isPaused) {
                 delay(100)
                 val totalSinceBase = pausedAccumulated + (System.currentTimeMillis() - baseStart)
@@ -227,7 +239,7 @@ fun TimerToolScreen(
                         selected = timerMode == TimerMode.TIMER,
                         onClick = { if (!isRunning) { timerMode = TimerMode.TIMER; resetTimer() } },
                         label = { Text("Timer") },
-                        leadingIcon = { Icon(MaterialSymbolIcon("hourglass_empty"), null, size = 16.dp) },
+                        leadingIcon = { Icon(FieldMindIcons.Timer, null, size = 16.dp) },
                         modifier = Modifier.weight(1f),
                         shape = RoundedCornerShape(14.dp)
                     )
@@ -455,7 +467,7 @@ fun TimerToolScreen(
                                 enabled = isRunning || isPaused || countdownFinished
                             ) {
                                 Icon(
-                                    MaterialSymbolIcon("restart_alt"),
+                                    FieldMindIcons.Replay,
                                     "Reset",
                                     tint = MaterialTheme.colorScheme.error,
                                     size = 24.dp
