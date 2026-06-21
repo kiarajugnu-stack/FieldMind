@@ -155,8 +155,10 @@ fun BackupAndRestoreScreen(
     // Backup folder URI from settings (reactive) — must be declared before exportDestinationUri
     val backupFolderUri by settings.backupFolderUri.collectAsState()
 
-    // Export state
-    var exportDestinationUri by remember(backupFolderUri) { mutableStateOf<Uri?>(backupFolderUri.takeIf { it.isNotBlank() }?.let(Uri::parse)) }
+    // Export uses the same folder as Backup
+    val exportDestinationUri: Uri? = remember(backupFolderUri) {
+        backupFolderUri.takeIf { it.isNotBlank() }?.let(Uri::parse)
+    }
     var isExporting by remember { mutableStateOf(false) }
     var exportProgress by remember { mutableFloatStateOf(0f) }
     var exportStepText by remember { mutableStateOf("") }
@@ -197,20 +199,7 @@ fun BackupAndRestoreScreen(
     var shareDialogFormat by remember { mutableStateOf(".fieldmind") }
     var includeMedia by remember { mutableStateOf(false) }
 
-    // Folder picker launcher (export folder)
-    val folderPickerLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.OpenDocumentTree()
-    ) { uri: Uri? ->
-        exportDestinationUri = uri
-        if (uri != null) {
-            val takeFlags = android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION or
-                android.content.Intent.FLAG_GRANT_WRITE_URI_PERMISSION
-            context.contentResolver.takePersistableUriPermission(uri, takeFlags)
-            settings.setBackupFolderUri(uri.toString())
-        }
-    }
-
-    // Folder picker launcher (backup folder - persisted)
+    // Folder picker launcher (shared by Export + Backup tabs)
     val backupFolderPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocumentTree()
     ) { uri: Uri? ->
@@ -218,7 +207,6 @@ fun BackupAndRestoreScreen(
             val takeFlags = android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION or
                 android.content.Intent.FLAG_GRANT_WRITE_URI_PERMISSION
             context.contentResolver.takePersistableUriPermission(uri, takeFlags)
-            // Persist the folder URI - will update backupFolderUri via Flow
             settings.setBackupFolderUri(uri.toString())
         }
     }
@@ -501,7 +489,7 @@ fun BackupAndRestoreScreen(
                                     }
                                 }
                             },
-                            onChooseFolder = { folderPickerLauncher.launch(null) },
+                            onChooseFolder = { backupFolderPickerLauncher.launch(null) },
                             destinationUri = exportDestinationUri,
                             onSwitchToImport = { activeTab = BackupTab.IMPORT }
                         )
@@ -605,6 +593,9 @@ fun BackupAndRestoreScreen(
                         BackupTab.BACKUP -> BackupTabContent(
                             backupFolderUri = backupFolderUri,
                             onChooseBackupFolder = { backupFolderPickerLauncher.launch(null) },
+                            isExporting = isExporting,
+                            exportProgress = exportProgress,
+                            exportStepText = exportStepText,
                             encrypt = backupEncrypt,
                             onEncryptChange = { backupEncrypt = it },
                             password = backupPassword,
@@ -1185,8 +1176,8 @@ private fun ExportTabContent(
     Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
         // ── Primary actions ──
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            LargeBackupActionCard("Export / Save Backup", "Create a full .fieldmind, .zip, JSON, or readable export.", FieldMindIcons.Export, Modifier.weight(1f)) { onExport(selectedExportFormat, "save") }
-            LargeBackupActionCard("Import / Restore", "Preview and restore .fieldmind, .zip, or JSON archives.", FieldMindIcons.Download, Modifier.weight(1f)) { onSwitchToImport?.invoke() }
+            LargeBackupActionCard("Export / Save Backup", "Full .fieldmind, .zip, JSON, or readable export.", FieldMindIcons.Export, Modifier.weight(1f)) { onExport(selectedExportFormat, "save") }
+            LargeBackupActionCard("Quick Share", "Export and share via email, messaging, or cloud.", FieldMindIcons.Share, Modifier.weight(1f)) { onExport(selectedExportFormat, "share") }
         }
 
         // ── Export formats ──
@@ -1255,10 +1246,7 @@ private fun ExportTabContent(
             gpsPrivacy = gpsPrivacy,
             onGpsPrivacyChange = onGpsPrivacyChange,
             excludeMedia = excludeMedia,
-            onExcludeMediaChange = onExcludeMediaChange,
-            clearClipboard = clearClipboard,
-            onClearClipboardChange = onClearClipboardChange,
-            showClearClipboard = true
+            onExcludeMediaChange = onExcludeMediaChange
         )
 
         // ── Export encryption ──
@@ -1377,10 +1365,7 @@ private fun ExportPrivacyOptionsCard(
     gpsPrivacy: String,
     onGpsPrivacyChange: (String) -> Unit,
     excludeMedia: Boolean,
-    onExcludeMediaChange: (Boolean) -> Unit,
-    clearClipboard: Boolean,
-    onClearClipboardChange: (Boolean) -> Unit,
-    showClearClipboard: Boolean
+    onExcludeMediaChange: (Boolean) -> Unit
 ) {
     val gpsModes = listOf(
         Triple("Exact", "Full coordinates", "Include precise latitude and longitude"),
@@ -1394,16 +1379,26 @@ private fun ExportPrivacyOptionsCard(
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            // Header
+            // Header — tap to expand/collapse
+            var showPrivacyOptions by remember { mutableStateOf(false) }
             Row(
+                Modifier.fillMaxWidth().clickable { showPrivacyOptions = !showPrivacyOptions },
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 Icon(FieldMindIcons.Lock, null, tint = MaterialTheme.colorScheme.primary, size = 20.dp)
-                Text("Privacy options", fontWeight = FontWeight.SemiBold)
+                Text("Privacy options", fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
+                Icon(
+                    if (showPrivacyOptions) FieldMindIcons.ExpandLess else FieldMindIcons.ExpandMore,
+                    null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    size = 22.dp
+                )
             }
 
-            // GPS precision selector
+            AnimatedVisibility(visible = showPrivacyOptions) {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    // GPS precision selector
             Text(
                 "GPS precision in export",
                 style = MaterialTheme.typography.labelMedium,
@@ -1470,9 +1465,10 @@ private fun ExportPrivacyOptionsCard(
                 }
                 Switch(checked = excludeMedia, onCheckedChange = onExcludeMediaChange)
             }
+                } // end AnimatedVisibility Column
+            }
 
-            // Clear clipboard toggle — only shown on Export tab
-            // REMOVED: clear clipboard is a privacy feature that belongs in Security settings, not export
+
         }
     }
 }
@@ -1501,12 +1497,7 @@ private fun ImportTabContent(
     onPickFile: () -> Unit,
     onClearFile: () -> Unit,
     onImport: () -> Unit    ) {
-    val pulsateTransition = rememberInfiniteTransition(label = "pulsate")
-    val dashAlpha by pulsateTransition.animateFloat(
-        1f, 0.4f,
-        infiniteRepeatable(tween(1200), RepeatMode.Reverse),
-        label = "dashPulse"
-    )
+
 
     Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
         // ── File drop zone ──
@@ -1529,7 +1520,7 @@ private fun ImportTabContent(
                     Icon(
                         FieldMindIcons.Download,
                         null,
-                        tint = MaterialTheme.colorScheme.primary.copy(alpha = dashAlpha),
+                        tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f),
                         size = 48.dp
                     )
                     Text(
@@ -1721,6 +1712,9 @@ private fun BackupTabContent(
     lastBackupLabel: String,
     entityCounts: Map<String, Int>,
     onCreateBackup: () -> Unit,
+    isExporting: Boolean = false,
+    exportProgress: Float = 0f,
+    exportStepText: String = "",
     gpsPrivacy: String = "Exact",
     onGpsPrivacyChange: (String) -> Unit = {},
     excludeMedia: Boolean = false,
@@ -1776,11 +1770,21 @@ private fun BackupTabContent(
             gpsPrivacy = gpsPrivacy,
             onGpsPrivacyChange = onGpsPrivacyChange,
             excludeMedia = excludeMedia,
-            onExcludeMediaChange = onExcludeMediaChange,
-            clearClipboard = false,
-            onClearClipboardChange = {},
-            showClearClipboard = false
+            onExcludeMediaChange = onExcludeMediaChange
         )
+
+        // ── Backup progress ──
+        AnimatedVisibility(visible = isExporting) {
+            Card(shape = RoundedCornerShape(24.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f)), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)) {
+                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
+                        Text(exportStepText, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
+                    }
+                    LinearProgressIndicator(progress = { exportProgress }, modifier = Modifier.fillMaxWidth().height(4.dp).clip(RoundedCornerShape(2.dp)))
+                }
+            }
+        }
 
         // ── Backup options ──
         Card(
@@ -2110,13 +2114,7 @@ private fun ShareDialogContent(
     onDismiss: () -> Unit
 ) {
     val totalEntities = entityCounts.values.sum()
-    val pulsateTransition = rememberInfiniteTransition(label = "sharePulse")
-    val glowAlpha: Float by pulsateTransition.animateFloat(
-        initialValue = 0.6f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(tween(800), RepeatMode.Reverse),
-        label = "shareGlow"
-    )
+    // Static glow (pulse animation removed)
 
     Column(
         Modifier
@@ -2250,7 +2248,7 @@ private fun ShareDialogContent(
         ) {
             Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Icon(FieldMindIcons.Info, null, tint = formatColor.copy(alpha = glowAlpha), size = 18.dp)
+                    Icon(FieldMindIcons.Info, null, tint = formatColor.copy(alpha = 0.8f), size = 18.dp)
                     Text("Preview", fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.titleSmall)
                 }
                 Row(
