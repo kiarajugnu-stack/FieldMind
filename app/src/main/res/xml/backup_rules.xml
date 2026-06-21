@@ -7,7 +7,7 @@
 -->
 <full-backup-content>
     <!-- Include our app's shared preferences -->
-    <include domain="sharedpref" path="rhythm_preferences.xml"/>
+    <include domain="sharedpref" path="fieldmind_preferences.xml"/>
     
     <!-- Exclude any sensitive data if needed -->
     <!-- <exclude domain="sharedpref" path="sensitive_data.xml"/> -->

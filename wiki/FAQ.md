@@ -7,9 +7,9 @@ Common questions about Rhythm Music Player.
 ### Where can I download Rhythm?
 
 Download from:
-- **[F-Droid](https://f-droid.org/packages/chromahub.rhythm.app)** (official F-Droid repository)
+- **[F-Droid](https://f-droid.org/packages/fieldmind.research.app)** (official F-Droid repository)
 - **[GitHub Releases](https://github.com/cromaguy/Rhythm/releases/latest)** (direct APK)
-- **[IzzyOnDroid F-Droid Repo](https://apt.izzysoft.de/fdroid/index/apk/chromahub.rhythm.app)**
+- **[IzzyOnDroid F-Droid Repo](https://apt.izzysoft.de/fdroid/index/apk/fieldmind.research.app)**
 - **[Obtainium](https://apps.obtainium.imranr.dev/redirect?r=obtainium://add/https://github.com/cromaguy/Rhythm/)**
 
 ### Is Rhythm available on Google Play Store?

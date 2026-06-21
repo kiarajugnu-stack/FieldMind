@@ -148,7 +148,7 @@ Open in Android Studio and run on a device or emulator targeting API 26+.
 
 ```
 app/
-├── src/main/java/chromahub/rhythm/app/
+├── src/main/java/fieldmind/research/app/
 │   ├── activities/           # Main activity, crash handler
 │   ├── features/field/
 │   │   ├── background/       # Timer service, notifications

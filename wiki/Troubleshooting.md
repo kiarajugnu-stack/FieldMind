@@ -465,13 +465,13 @@ For developers or persistent issues:
 
 ```bash
 # Capture Rhythm logs
-adb logcat | grep "chromahub.rhythm"
+adb logcat | grep "fieldmind.research"
 
 # Save to file
 adb logcat -d > rhythm_log.txt
 
 # Filter for errors only
-adb logcat *:E | grep "chromahub.rhythm"
+adb logcat *:E | grep "fieldmind.research"
 ```
 
 Share logs in [GitHub Issues](https://github.com/cromaguy/Rhythm/issues) for debugging.

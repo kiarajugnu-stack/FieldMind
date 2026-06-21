@@ -257,7 +257,7 @@ If permissions are messed up:
 #### Using ADB (Advanced)
 ```bash
 # List all permissions for Rhythm
-adb shell dumpsys package chromahub.rhythm.app | grep permission
+adb shell dumpsys package fieldmind.research.app | grep permission
 
 # Check runtime permissions
 adb shell pm list permissions -g

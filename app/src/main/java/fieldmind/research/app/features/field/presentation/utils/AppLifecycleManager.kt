@@ -1,4 +1,4 @@
-package chromahub.rhythm.app.features.field.presentation.utils
+package fieldmind.research.app.features.field.presentation.utils
 
 import android.app.Activity
 import android.os.Handler

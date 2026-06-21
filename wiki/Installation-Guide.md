@@ -95,7 +95,7 @@ This guide covers all methods to download and install Rhythm Music Player on you
 
 ### Method 5: OpenAPK
 
-1. Visit [OpenAPK Rhythm page](https://www.openapk.net/rhythm/chromahub.rhythm.app/)
+1. Visit [OpenAPK Rhythm page](https://www.openapk.net/rhythm/fieldmind.research.app/)
 2. Download the latest version
 3. Install the APK file
 
@@ -169,7 +169,7 @@ After installation:
 - APKs from GitHub Releases are directly from the developer
 - F-Droid builds are reproducible and verified
 - Never install Rhythm from unofficial sources
-- Verify the package name: `chromahub.rhythm.app`
+- Verify the package name: `fieldmind.research.app`
 
 ---
 

@@ -1,4 +1,4 @@
-package chromahub.rhythm.app.features.field.presentation.components
+package fieldmind.research.app.features.field.presentation.components
 
 import android.content.ClipData
 import android.content.ClipboardManager

@@ -1,4 +1,4 @@
-package chromahub.rhythm.app.features.field.presentation.components
+package fieldmind.research.app.features.field.presentation.components
 
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.KeyboardType

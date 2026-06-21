@@ -1,5 +1,13 @@
 # Gradle Build Configuration — AGENTS.md
 
+## DOX Framework
+
+This file is a child of the DOX hierarchy defined in `master.md`. It follows the root `AGENTS.md` as its parent DOX rail.
+
+**DOX chain:** `master.md` ← `AGENTS.md` (root) ← `gradle/AGENTS.md` (this file)
+
+Read `master.md` and root `AGENTS.md` first, then this file for Gradle-specific contracts.
+
 ## Purpose
 
 Centralized Gradle build system configuration for the FieldMind Android project. Manages dependency versions, plugin versions, and the Gradle wrapper.
