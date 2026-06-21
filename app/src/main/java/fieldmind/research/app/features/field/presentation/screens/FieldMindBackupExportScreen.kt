@@ -23,6 +23,7 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -362,7 +363,7 @@ fun BackupAndRestoreScreen(
                             onEncryptChange = { exportEncrypt = it },
                             password = exportPassword,
                             onPasswordChange = { exportPassword = it },
-                            onExport = { format, action, scope ->
+                            onExport = { format, action, scopeStr ->
                                 scope.launch {
                                     isExporting = true
                                     exportProgress = 0f
@@ -519,15 +520,14 @@ fun BackupAndRestoreScreen(
                                             destination = if (action == "share") "Shared via intent" else "Saved to folder",
                                             entityCounts = mapOf("Observations" to observations.size, "Notes" to notes.size, "Projects" to projects.size)
                                         ))
-                                    }
                                     exportHistory = exportHistoryStore.load()
                                     showFastSnackbar(snackbar, scope, "Export complete")
-                                    } catch (e: Exception) {
-                                        showFastSnackbar(snackbar, scope, "Export failed: ${e.localizedMessage}")
-                                    } finally {
-                                        isExporting = false
-                                        exportProgress = 0f
-                                    }
+                                } catch (e: Exception) {
+                                    showFastSnackbar(snackbar, scope, "Export failed: ${e.localizedMessage}")
+                                } finally {
+                                    isExporting = false
+                                    exportProgress = 0f
+                                }
                                 }
                             },
                             onChooseFolder = { backupFolderPickerLauncher.launch(null) },
@@ -758,15 +758,14 @@ fun BackupAndRestoreScreen(
                                             destination = "Backup saved",
                                             entityCounts = mapOf("Observations" to observations.size, "Notes" to notes.size, "Projects" to projects.size)
                                         ))
-                                    }
                                     exportHistory = exportHistoryStore.load()
                                     lastBackupRefresh++
                                     showFastSnackbar(snackbar, scope, "Backup saved")
-                                    } catch (e: Exception) {
-                                        showFastSnackbar(snackbar, scope, "Backup failed: ${e.localizedMessage}")
-                                    } finally {
-                                        isExporting = false
-                                    }
+                                } catch (e: Exception) {
+                                    showFastSnackbar(snackbar, scope, "Backup failed: ${e.localizedMessage}")
+                                } finally {
+                                    isExporting = false
+                                }
                                 }
                             }
                         )
@@ -1598,7 +1597,7 @@ private fun ExportTabContent(
                         CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
                         Text(exportStepText, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
                     }
-                    LinearProgressIndicator(progress = { exportProgress }, modifier = Modifier.fillMaxWidth().height(4.dp).clip(RoundedCornerShape(2.dp)))
+                    LinearProgressIndicator(progress = exportProgress, modifier = Modifier.fillMaxWidth().height(4.dp).clip(RoundedCornerShape(2.dp)))
                 }
             }
         }
@@ -2177,7 +2176,7 @@ private fun BackupTabContent(
                         CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
                         Text(exportStepText, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
                     }
-                    LinearProgressIndicator(progress = { exportProgress }, modifier = Modifier.fillMaxWidth().height(4.dp).clip(RoundedCornerShape(2.dp)))
+                    LinearProgressIndicator(progress = exportProgress, modifier = Modifier.fillMaxWidth().height(4.dp).clip(RoundedCornerShape(2.dp)))
                 }
             }
         }
@@ -2195,7 +2194,7 @@ private fun BackupTabContent(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(14.dp)
                 ) {
-                    Icon(FieldMindIcons.Lock, null, tint = if (encrypt) colors.warning else MaterialTheme.colorScheme.onSurfaceVariant, size = 22.dp)
+                    Icon(FieldMindIcons.Lock, null, tint = if (encrypt) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant, size = 22.dp)
                     Column(Modifier.weight(1f)) {
                         Text("Encrypt backup", fontWeight = FontWeight.SemiBold)
                         Text("Password-protect your backup file", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -2228,7 +2227,7 @@ private fun BackupTabContent(
                         ) {
                             LinearProgressIndicator(
                                 progress = { strength.score / 5f },
-n                    OutlinedTextField(
+                    OutlinedTextField(
                         value = passwordConfirm,
                         onValueChange = onPasswordConfirmChange,
                         label = { Text("Confirm password") },
@@ -2252,7 +2251,7 @@ n                    OutlinedTextField(
                         }
                     }
                     Spacer(Modifier.height(8.dp))
-n                    if (passwordConfirm.isNotBlank() || passwordsMatch) {
+                    if (passwordConfirm.isNotBlank() || passwordsMatch) {
                         Row(
                             modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 2.dp),
                             verticalAlignment = Alignment.CenterVertically,
