@@ -584,7 +584,11 @@ fun BackupAndRestoreScreen(
                             },
                             onChooseFolder = { backupFolderPickerLauncher.launch(null) },
                             destinationUri = exportDestinationUri,
-                            onSwitchToImport = { activeTab = BackupTab.IMPORT }
+                            onSwitchToImport = { activeTab = BackupTab.IMPORT },
+                            showSharePreview = showSharePreview,
+                            onShowSharePreview = { showSharePreview = it },
+                            showConflictDialog = showConflictDialog,
+                            onShowConflictDialog = { showConflictDialog = it }
                         )
 
                         BackupTab.IMPORT -> ImportTabContent(
@@ -1538,12 +1542,17 @@ private fun ExportTabContent(
     gpsPrivacy: String = "Exact",
     onGpsPrivacyChange: (String) -> Unit = {},
     excludeMedia: Boolean = false,
-    onExcludeMediaChange: (Boolean) -> Unit = {},            clearClipboard: Boolean = false,
-            onClearClipboardChange: (Boolean) -> Unit = {},
-            encrypt: Boolean = false,
-            onEncryptChange: (Boolean) -> Unit = {},
-            password: String = "",
-            onPasswordChange: (String) -> Unit = {}
+    onExcludeMediaChange: (Boolean) -> Unit = {},
+    clearClipboard: Boolean = false,
+    onClearClipboardChange: (Boolean) -> Unit = {},
+    encrypt: Boolean = false,
+    onEncryptChange: (Boolean) -> Unit = {},
+    password: String = "",
+    onPasswordChange: (String) -> Unit = {},
+    showSharePreview: Boolean = false,
+    onShowSharePreview: (Boolean) -> Unit = {},
+    showConflictDialog: Boolean = false,
+    onShowConflictDialog: (Boolean) -> Unit = {}
 ) {
     val totalEntities = entityCounts.values.sum()
     val colors = FieldMindTheme.colors
@@ -1788,7 +1797,7 @@ private fun ExportTabContent(
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             OutlinedButton(
                 onClick = { 
-                    showSharePreview = true
+                    onShowSharePreview(true)
                 },
                 modifier = Modifier.weight(1f), shape = RoundedCornerShape(16.dp),
                 enabled = !isExporting && totalEntities > 0
