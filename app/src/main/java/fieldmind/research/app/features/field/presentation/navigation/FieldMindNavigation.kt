@@ -413,7 +413,7 @@ private fun LiquidNavRow(
 
     // ── Animate the indicator position with spring physics for liquid feel ──
     val animatedPosition = remember { Animatable(0f) }
-    val animSpec = spring(
+    val animSpec = spring<Float>(
         dampingRatio = Spring.DampingRatioMediumBouncy,
         stiffness = Spring.StiffnessLow
     )
@@ -423,6 +423,9 @@ private fun LiquidNavRow(
 
     // ── Item widths tracked via onGloballyPositioned ──
     val itemWidths = remember { mutableStateListOf<Float>() }
+
+    // Capture color scheme in composable scope (Canvas DrawScope is not composable)
+    val blobColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
 
     Box(
         modifier = Modifier
@@ -442,7 +445,7 @@ private fun LiquidNavRow(
                 val indicatorY = (size.height - indicatorHeight) / 2f
 
                 drawRoundRect(
-                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
+                    color = blobColor,
                     topLeft = Offset(centerX - indicatorWidth / 2f, indicatorY),
                     size = Size(indicatorWidth, indicatorHeight),
                     cornerRadius = CornerRadius(indicatorHeight / 2f, indicatorHeight / 2f)
@@ -457,8 +460,9 @@ private fun LiquidNavRow(
             verticalAlignment = Alignment.CenterVertically
         ) {
             visibleTabs.forEachIndexed { index, screen ->
-                val selected = isSelected(screen)                            val tabWidth = remember { mutableFloatStateOf(0f) }
-                            var isPressed by remember { mutableStateOf(false) }
+                val selected = isSelected(screen)
+                val tabWidth = remember { mutableFloatStateOf(0f) }
+                var isPressed by remember { mutableStateOf(false) }
 
                             val pressScale by animateFloatAsState(
                                 targetValue = if (isPressed && !selected) 0.92f else 1f,
