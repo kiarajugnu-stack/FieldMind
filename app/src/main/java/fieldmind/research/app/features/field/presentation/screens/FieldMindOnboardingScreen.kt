@@ -83,6 +83,7 @@ fun FieldMindOnboardingScreen(
     var showFinishDialog by remember { mutableStateOf(false) }
     var showContinueTour by remember { mutableStateOf(false) }
     var showExtendedTour by remember { mutableStateOf(false) }
+    var finalScreenVisibility by remember { mutableStateOf(ScreenVisibility.fromInterests(interests)) }
 
     val context = LocalContext.current
 
@@ -129,6 +130,7 @@ fun FieldMindOnboardingScreen(
             }.joinToString(", ").ifEmpty { "Wildlife & ecology" }
         )
         settings.setUserInterests(interests)
+        settings.setScreenVisibility(finalScreenVisibility) // Save screen visibility settings
         settings.setThemeMode(selectedTheme)
         settings.setDynamicColorEnabled(useDynamicColors)
         settings.setTempUnit(tempUnit)
@@ -237,6 +239,7 @@ fun FieldMindOnboardingScreen(
                     visibility = ScreenVisibility.fromInterests(interests),
                     interests = interests,
                     onApply = { vis ->
+                        finalScreenVisibility = vis
                         settings.setScreenVisibility(vis)
                         currentPage = 6
                     },
