@@ -124,6 +124,14 @@ fun MapFieldScreen(
                             Text("PRO Feature", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
                         }
                         Spacer(Modifier.weight(1f))
+                        if (points.isNotEmpty()) {
+                            Surface(
+                                onClick = { fullScreen = true },
+                                shape = RoundedCornerShape(14.dp),
+                                color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                                modifier = Modifier.size(44.dp)
+                            ) { Box(contentAlignment = Alignment.Center) { Icon(icon = MaterialSymbolIcon("fullscreen"), contentDescription = "Fullscreen map", size = 22.dp) } }
+                        }
                     }
                     ScrollableTabRow(
                         selectedTabIndex = activeTab.ordinal,
