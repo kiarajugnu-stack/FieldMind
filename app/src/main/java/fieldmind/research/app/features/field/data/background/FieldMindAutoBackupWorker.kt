@@ -40,6 +40,7 @@ class FieldMindAutoBackupWorker(context: Context, params: WorkerParameters) : Co
         val weatherCatalog = repository.weatherCatalog.first()
         val researchSessions = repository.researchSessions.first()
         val tasks = repository.tasks.first()
+        val tags = repository.tags.first()
 
         // ── Collect cross-references for backup ──
         val crossRefDao = FieldMindDatabase.getInstance(applicationContext).fieldMindDao()
@@ -122,6 +123,7 @@ class FieldMindAutoBackupWorker(context: Context, params: WorkerParameters) : Co
             weatherCatalog = weatherCatalog,
             researchSessions = researchSessions,
             tasks = tasks,
+            tags = tags,
             crossReferences = crossRefs,
             settingsJson = settingsJson
         )

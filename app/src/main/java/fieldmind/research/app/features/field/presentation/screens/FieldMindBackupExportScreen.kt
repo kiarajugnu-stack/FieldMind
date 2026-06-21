@@ -23,6 +23,7 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -60,6 +61,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
 import java.io.File
 import java.io.IOException
 import java.text.SimpleDateFormat
@@ -88,7 +91,7 @@ private val exportFormats = listOf(
     FormatOption("Markdown", "Readable text for docs & notes", FieldMindIcons.Article, androidx.compose.ui.graphics.Color(0xFF558B2F), "document"),
     FormatOption("HTML", "Print-ready web layout", FieldMindIcons.Article, androidx.compose.ui.graphics.Color(0xFFE65100), "document"),
     FormatOption("PDF", "Portable document format", FieldMindIcons.Report, androidx.compose.ui.graphics.Color(0xFF6A1B9A), "document"),
-    FormatOption("PNG", "Dashboard snapshot image", FieldMindIcons.Graph, androidx.compose.ui.graphics.Color(0xFF2E7D32), "image"),
+    FormatOption("PNG", "Dashboard snapshot image", FieldMindIcons.Graph, androidx.compose.ui.graphics.Color(0xFF4CAF50), "image"),
     FormatOption("SVG", "Scalable vector graphic", FieldMindIcons.Graph, androidx.compose.ui.graphics.Color(0xFF00838F), "image"),
     FormatOption(".fieldmind", "Package with images & encryption", FieldMindIcons.Archive, androidx.compose.ui.graphics.Color(0xFF1B5E20), "package")
 )
@@ -199,6 +202,15 @@ fun BackupAndRestoreScreen(
     var shareDialogFormat by remember { mutableStateOf(".fieldmind") }
     var includeMedia by remember { mutableStateOf(false) }
 
+    // Export history state
+    val exportHistoryStore = remember { ExportHistoryStore(context) }
+    var exportHistory by remember { mutableStateOf(emptyList<ExportRecord>()) }
+    LaunchedEffect(lastBackupRefresh) {
+        withContext(Dispatchers.IO) {
+            exportHistory = exportHistoryStore.load()
+        }
+    }
+
     // Folder picker launcher (shared by Export + Backup tabs)
     val backupFolderPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocumentTree()
@@ -302,7 +314,8 @@ fun BackupAndRestoreScreen(
                         "questions" to questions.size,
                         "projects" to projects.size,
                         "sources" to sources.size
-                    )
+                    ),
+                    onAutoBackupToggle = { settings.setAutoBackupEnabled(it) }
                 )
             }
 
@@ -351,7 +364,7 @@ fun BackupAndRestoreScreen(
                             onEncryptChange = { exportEncrypt = it },
                             password = exportPassword,
                             onPasswordChange = { exportPassword = it },
-                            onExport = { format, action ->
+                            onExport = { format, action, scopeStr ->
                                 scope.launch {
                                     isExporting = true
                                     exportProgress = 0f
@@ -496,13 +509,28 @@ fun BackupAndRestoreScreen(
                                                 }
                                             }
                                         }
-                                        showFastSnackbar(snackbar, scope, "Export complete")
-                                    } catch (e: Exception) {
-                                        showFastSnackbar(snackbar, scope, "Export failed: ${e.localizedMessage}")
-                                    } finally {
-                                        isExporting = false
-                                        exportProgress = 0f
-                                    }
+                                        // Record export history — track actual file after encryption
+                                        val _exportFile = if (exportEncrypt && exportPassword.isNotBlank() && format in listOf(".fieldmind", ".zip")) {
+                                            File(exportDir, exportFile.name.replace(".fieldmind", ".encrypted").replace(".zip", ".encrypted"))
+                                        } else {
+                                            exportFile
+                                        }
+                                        exportHistoryStore.add(ExportRecord(
+                                            format = if (exportEncrypt && exportPassword.isNotBlank()) "Encrypted" else format,
+                                            fileName = _exportFile.name,
+                                            fileSizeBytes = _exportFile.length(),
+                                            exportedAt = System.currentTimeMillis(),
+                                            destination = if (action == "share") "Shared via intent" else "Saved to folder",
+                                            entityCounts = mapOf("Observations" to observations.size, "Notes" to notes.size, "Projects" to projects.size)
+                                        ))
+                                    exportHistory = exportHistoryStore.load()
+                                    showFastSnackbar(snackbar, scope, "Export complete")
+                                } catch (e: Exception) {
+                                    showFastSnackbar(snackbar, scope, "Export failed: ${e.localizedMessage}")
+                                } finally {
+                                    isExporting = false
+                                    exportProgress = 0f
+                                }
                                 }
                             },
                             onChooseFolder = { backupFolderPickerLauncher.launch(null) },
@@ -513,6 +541,7 @@ fun BackupAndRestoreScreen(
                         BackupTab.IMPORT -> ImportTabContent(
                             selectedFileUri = importFileUri,
                             fileName = importFileName,
+                            importFileSize = importFileSize,
                             preview = importPreview,
                             importMode = importMode,
                             onModeChange = { importMode = it },
@@ -615,6 +644,9 @@ fun BackupAndRestoreScreen(
                             encrypt = backupEncrypt,
                             onEncryptChange = { backupEncrypt = it },
                             password = backupPassword,
+                            passwordConfirm = backupPasswordConfirm,
+                            onPasswordConfirmChange = { val newVal = it; backupPasswordConfirm = newVal; passwordsMatch = newVal == backupPassword },
+                            passwordsMatch = passwordsMatch,
                             onPasswordChange = { backupPassword = it },
                             scheduleEnabled = backupScheduleEnabled,
                             onScheduleChange = {
@@ -716,13 +748,27 @@ fun BackupAndRestoreScreen(
                                                 } catch (_: Exception) { }
                                             }
                                         }
-                                        lastBackupRefresh++
-                                        showFastSnackbar(snackbar, scope, "Backup saved")
-                                    } catch (e: Exception) {
-                                        showFastSnackbar(snackbar, scope, "Backup failed: ${e.localizedMessage}")
-                                    } finally {
-                                        isExporting = false
-                                    }
+                                        // Record backup history (inside IO block so vars are in scope)
+                                        val _backupFile = if (backupEncrypt && backupPassword.isNotBlank())
+                                            File(backupDir, "$baseName.encrypted")
+                                        else
+                                            fieldmindFile
+                                        exportHistoryStore.add(ExportRecord(
+                                            format = if (backupEncrypt && backupPassword.isNotBlank()) "Encrypted" else ".fieldmind",
+                                            fileName = _backupFile.name,
+                                            fileSizeBytes = _backupFile.length(),
+                                            exportedAt = System.currentTimeMillis(),
+                                            destination = "Backup saved",
+                                            entityCounts = mapOf("Observations" to observations.size, "Notes" to notes.size, "Projects" to projects.size)
+                                        ))
+                                    exportHistory = exportHistoryStore.load()
+                                    lastBackupRefresh++
+                                    showFastSnackbar(snackbar, scope, "Backup saved")
+                                } catch (e: Exception) {
+                                    showFastSnackbar(snackbar, scope, "Backup failed: ${e.localizedMessage}")
+                                } finally {
+                                    isExporting = false
+                                }
                                 }
                             }
                         )
@@ -732,7 +778,76 @@ fun BackupAndRestoreScreen(
 
             // ── Export History Section ──
             item {
-                ExportHistorySection(lastBackupRefresh = lastBackupRefresh, context = context)
+                SectionHeader("Recent exports", "Your latest export and backup files")
+            }
+            if (exportHistory.isEmpty()) {
+                item {
+                    Card(
+                        shape = RoundedCornerShape(24.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                    ) {
+                        Row(
+                            Modifier.fillMaxWidth().padding(20.dp),
+                            horizontalArrangement = Arrangement.Center,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(FieldMindIcons.Export, null, tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f), size = 24.dp)
+                            Spacer(Modifier.width(10.dp))
+                            Text(
+                                "No exports yet. Create your first export above.",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                            )
+                        }
+                    }
+                }
+            } else {
+                items(exportHistory, key = { it.id }) { record ->
+                    ExportHistoryItemCard(
+                        record = record,
+                        context = context,
+                        onShare = {
+                            try {
+                                val backupDir = File(context.filesDir, "fieldmind/backups")
+                                val exportDir = File(context.cacheDir, "exports")
+                                val file = (backupDir.listFiles()?.find { it.name == record.fileName }
+                                    ?: exportDir.listFiles()?.find { it.name == record.fileName })
+                                if (file != null && file.exists()) {
+                                    val shareUri = FileProvider.getUriForFile(context, "${context.packageName}.provider", file)
+                                    val mimeType = when {
+                                        record.fileName.endsWith(".pdf") -> "application/pdf"
+                                        record.fileName.endsWith(".png") -> "image/png"
+                                        record.fileName.endsWith(".svg") -> "image/svg+xml"
+                                        record.fileName.endsWith(".csv") -> "text/csv"
+                                        record.fileName.endsWith(".html") -> "text/html"
+                                        record.fileName.endsWith(".md") -> "text/markdown"
+                                        record.fileName.endsWith(".json") -> "application/json"
+                                        else -> "application/octet-stream"
+                                    }
+                                    context.startActivity(Intent.createChooser(Intent(Intent.ACTION_SEND).apply {
+                                        type = mimeType
+                                        putExtra(Intent.EXTRA_STREAM, shareUri)
+                                        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                    }, "Share ${record.fileName}"))
+                                }
+                            } catch (_: Exception) { }
+                        },
+                        onDelete = {
+                            scope.launch {
+                                withContext(Dispatchers.IO) {
+                                    val backupDir = File(context.filesDir, "fieldmind/backups")
+                                    val exportDir = File(context.cacheDir, "exports")
+                                    (backupDir.listFiles()?.find { it.name == record.fileName }
+                                        ?: exportDir.listFiles()?.find { it.name == record.fileName })?.delete()
+                                    exportHistoryStore.remove(record.id)
+                                    exportHistory = exportHistoryStore.load()
+                                }
+                            }
+                        }
+                    )
+                }
             }
         }
     }
@@ -1028,7 +1143,8 @@ private fun HeroStatusCard(
     lastBackupLabel: String,
     autoBackupEnabled: Boolean,
     autoBackupInterval: String,
-    entityCounts: Map<String, Int>
+    entityCounts: Map<String, Int>,
+    onAutoBackupToggle: (Boolean) -> Unit = {}
 ) {
     val colors = FieldMindTheme.colors
     val totalRecords = entityCounts.values.sum()
@@ -1106,31 +1222,26 @@ private fun HeroStatusCard(
                         color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.72f)
                     )
                 }
-                // Enable/disable button
-                Surface(
-                    onClick = { /* Placeholder: toggle auto-backup */ },
-                    shape = RoundedCornerShape(16.dp),
-                    color = if (autoBackupEnabled) colors.positive.copy(alpha = 0.18f)
-                    else MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.12f)
+                // Auto-backup toggle as proper Switch
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.semantics { contentDescription = "Toggle auto-backup: ${if (autoBackupEnabled) "enabled" else "disabled"}" }
                 ) {
-                    Row(
-                        Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
-                        horizontalArrangement = Arrangement.spacedBy(6.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            if (autoBackupEnabled) FieldMindIcons.Check else FieldMindIcons.Add,
-                            null,
-                            tint = if (autoBackupEnabled) colors.positive else MaterialTheme.colorScheme.onPrimaryContainer,
-                            size = 18.dp
+                    Text(
+                        if (autoBackupEnabled) "ON" else "OFF",
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = if (autoBackupEnabled) colors.positive else MaterialTheme.colorScheme.onPrimaryContainer
+                    )
+                    Switch(
+                        checked = autoBackupEnabled,
+                        onCheckedChange = { onAutoBackupToggle(it) },
+                        colors = SwitchDefaults.colors(
+                            checkedThumbColor = colors.positive,
+                            checkedTrackColor = colors.positive.copy(alpha = 0.3f)
                         )
-                        Text(
-                            if (autoBackupEnabled) "Configure" else "Enable auto-backup",
-                            style = MaterialTheme.typography.labelMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = if (autoBackupEnabled) colors.positive else MaterialTheme.colorScheme.onPrimaryContainer
-                        )
-                    }
+                    )
                 }
             }
 
@@ -1242,20 +1353,19 @@ private fun ExportTabContent(
     isExporting: Boolean,
     exportProgress: Float,
     exportStepText: String,
-    onExport: (format: String, action: String) -> Unit,
+    onExport: (format: String, action: String, scope: String) -> Unit,
     onChooseFolder: () -> Unit,
     destinationUri: Uri?,
     onSwitchToImport: (() -> Unit)? = null,
     gpsPrivacy: String = "Exact",
     onGpsPrivacyChange: (String) -> Unit = {},
     excludeMedia: Boolean = false,
-    onExcludeMediaChange: (Boolean) -> Unit = {},
-    clearClipboard: Boolean = false,
-    onClearClipboardChange: (Boolean) -> Unit = {},
-    encrypt: Boolean = false,
-    onEncryptChange: (Boolean) -> Unit = {},
-    password: String = "",
-    onPasswordChange: (String) -> Unit = {}
+    onExcludeMediaChange: (Boolean) -> Unit = {},            clearClipboard: Boolean = false,
+            onClearClipboardChange: (Boolean) -> Unit = {},
+            encrypt: Boolean = false,
+            onEncryptChange: (Boolean) -> Unit = {},
+            password: String = "",
+            onPasswordChange: (String) -> Unit = {}
 ) {
     val totalEntities = entityCounts.values.sum()
     val colors = FieldMindTheme.colors
@@ -1334,41 +1444,44 @@ private fun ExportTabContent(
                     Icon(FieldMindIcons.Archive, null, tint = MaterialTheme.colorScheme.primary, size = 20.dp)
                     Text("Export format", fontWeight = FontWeight.SemiBold)
                 }
-                // 4-column icon grid
-                FlowRow(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    exportFormats.forEach { fmt ->
-                        val isSelected = selectedExportFormat == fmt.name
-                        Surface(
-                            onClick = { selectedExportFormat = fmt.name },
-                            modifier = Modifier.fillMaxWidth(0.235f),
-                            shape = RoundedCornerShape(16.dp),
-                            color = if (isSelected) fmt.color.copy(alpha = 0.14f) else MaterialTheme.colorScheme.surfaceContainerHigh,
-                            border = if (isSelected) BorderStroke(1.5.dp, fmt.color) else null
+                // 4-column icon grid — even spacing with equal-width items
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    exportFormats.chunked(4).forEach { row ->
+                        Row(
+                            Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            Column(
-                                Modifier.padding(10.dp).heightIn(min = 80.dp),
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.spacedBy(4.dp)
-                            ) {
-                                Box(
-                                    Modifier.size(36.dp).clip(RoundedCornerShape(10.dp))
-                                        .background(if (isSelected) fmt.color.copy(alpha = 0.18f) else MaterialTheme.colorScheme.surfaceContainerHighest),
-                                    contentAlignment = Alignment.Center
+                            row.forEach { fmt ->
+                                val isSelected = selectedExportFormat == fmt.name
+                                Surface(
+                                    onClick = { selectedExportFormat = fmt.name },
+                                    modifier = Modifier.weight(1f),
+                                    shape = RoundedCornerShape(16.dp),
+                                    color = if (isSelected) fmt.color.copy(alpha = 0.14f) else MaterialTheme.colorScheme.surfaceContainerHigh,
+                                    border = if (isSelected) BorderStroke(1.5.dp, fmt.color) else null
                                 ) {
-                                    Icon(fmt.icon, null, tint = fmt.color, size = 20.dp)
-                                }
-                                Text(fmt.name, style = MaterialTheme.typography.labelSmall, fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                                Text(fmt.desc, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2, overflow = TextOverflow.Ellipsis, textAlign = TextAlign.Center)
-                                if (isSelected) {
-                                    Box(
-                                        Modifier.size(18.dp).clip(CircleShape).background(fmt.color),
-                                        contentAlignment = Alignment.Center
+                                    Column(
+                                        Modifier.padding(10.dp).heightIn(min = 80.dp),
+                                        horizontalAlignment = Alignment.CenterHorizontally,
+                                        verticalArrangement = Arrangement.spacedBy(4.dp)
                                     ) {
-                                        Icon(FieldMindIcons.Check, null, tint = MaterialTheme.colorScheme.onPrimary, size = 12.dp)
+                                        Box(
+                                            Modifier.size(36.dp).clip(RoundedCornerShape(10.dp))
+                                                .background(if (isSelected) fmt.color.copy(alpha = 0.18f) else MaterialTheme.colorScheme.surfaceContainerHighest),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Icon(fmt.icon, null, tint = fmt.color, size = 20.dp)
+                                        }
+                                        Text(fmt.name, style = MaterialTheme.typography.labelSmall, fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                        Text(fmt.desc, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2, overflow = TextOverflow.Ellipsis, textAlign = TextAlign.Center)
+                                        if (isSelected) {
+                                            Box(
+                                                Modifier.size(18.dp).clip(CircleShape).background(fmt.color),
+                                                contentAlignment = Alignment.Center
+                                            ) {
+                                                Icon(FieldMindIcons.Check, null, tint = MaterialTheme.colorScheme.onPrimary, size = 12.dp)
+                                            }
+                                        }
                                     }
                                 }
                             }
@@ -1396,7 +1509,7 @@ private fun ExportTabContent(
                         }, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2, overflow = TextOverflow.Ellipsis)
                     }
                 }
-                // Estimated size (placeholder)
+                // Estimated size
                 val estimatedSize = remember(entityCounts, selectedExportFormat) {
                     val total = entityCounts.values.sum()
                     val bytes = total * when (selectedExportFormat) {
@@ -1488,7 +1601,7 @@ private fun ExportTabContent(
                         CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
                         Text(exportStepText, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
                     }
-                    LinearProgressIndicator(progress = { exportProgress }, modifier = Modifier.fillMaxWidth().height(4.dp).clip(RoundedCornerShape(2.dp)))
+                    LinearProgressIndicator(progress = exportProgress, modifier = Modifier.fillMaxWidth().height(4.dp).clip(RoundedCornerShape(2.dp)))
                 }
             }
         }
@@ -1496,12 +1609,12 @@ private fun ExportTabContent(
         // ── Action buttons ──
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             OutlinedButton(
-                onClick = { onExport(selectedExportFormat, "share") },
+                onClick = { onExport(selectedExportFormat, "share", exportScope) },
                 modifier = Modifier.weight(1f), shape = RoundedCornerShape(16.dp),
                 enabled = !isExporting && totalEntities > 0
             ) { Icon(FieldMindIcons.Export, null, size = 18.dp); Spacer(Modifier.width(6.dp)); Text("Share") }
             Button(
-                onClick = { onExport(selectedExportFormat, "save") },
+                onClick = { onExport(selectedExportFormat, "save", exportScope) },
                 modifier = Modifier.weight(1f), shape = RoundedCornerShape(16.dp),
                 enabled = !isExporting && totalEntities > 0 && destinationUri != null
             ) { Icon(FieldMindIcons.Save, null, size = 18.dp); Spacer(Modifier.width(6.dp)); Text("Save") }
@@ -1633,139 +1746,112 @@ private fun createFileInTree(context: Context, treeUri: Uri, mimeType: String, d
 }
 
 // ══════════════════════════════════════════════════════════════════════
-//  Export History Section
+//  Export History Item Card
 // ══════════════════════════════════════════════════════════════════════
 
 @Composable
-private fun ExportHistorySection(
-    lastBackupRefresh: Int,
-    context: Context
+private fun ExportHistoryItemCard(
+    record: ExportRecord,
+    context: Context,
+    onShare: () -> Unit,
+    onDelete: () -> Unit
 ) {
-    val backupDir = remember(lastBackupRefresh) { backupDirectory(context) }
-    val exportDir = remember(lastBackupRefresh) { File(context.cacheDir, "exports") }
-    var exportFiles by remember { mutableStateOf(listOf<File>()) }
-
-    LaunchedEffect(lastBackupRefresh) {
-        withContext(Dispatchers.IO) {
-            val files = mutableListOf<File>()
-            // Collect from backup dir
-            backupDir.listFiles()?.filter { it.isFile && it.length() > 0 }?.let { files.addAll(it) }
-            // Collect from export cache
-            if (exportDir.exists()) {
-                exportDir.listFiles()?.filter { it.isFile && it.length() > 0 }?.let { files.addAll(it) }
-            }
-            // Sort by newest first, take last 10
-            exportFiles = files.sortedByDescending { it.lastModified() }.take(10)
-        }
+    val dateStr = remember(record.exportedAt) {
+        SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()).format(Date(record.exportedAt))
+    }
+    val formatColor = exportFormats.find {
+        it.name.equals(record.format, ignoreCase = true) ||
+        (record.format == "Encrypted" && it.name == ".fieldmind")
+    }?.color ?: MaterialTheme.colorScheme.primary
+    val formatIcon = when {
+        record.format == "Encrypted" || record.format == ".fieldmind" -> FieldMindIcons.Archive
+        record.format == "JSON" -> FieldMindIcons.Archive
+        record.format == "CSV" -> FieldMindIcons.Data
+        record.format == "Markdown" || record.format == "HTML" -> FieldMindIcons.Article
+        record.format == "PDF" -> FieldMindIcons.Report
+        record.format == "PNG" || record.format == "SVG" -> FieldMindIcons.Graph
+        else -> FieldMindIcons.File
     }
 
-    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        SectionHeader("Recent exports", "Your latest export and backup files")
-
-        if (exportFiles.isEmpty()) {
-            Card(
-                shape = RoundedCornerShape(24.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
-                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    Card(
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+        modifier = Modifier.clickable { onShare() }
+    ) {
+        Row(
+            Modifier.fillMaxWidth().padding(14.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Box(
+                Modifier.size(40.dp).clip(RoundedCornerShape(12.dp))
+                    .background(formatColor.copy(alpha = 0.14f)),
+                contentAlignment = Alignment.Center
             ) {
-                Row(
-                    Modifier.fillMaxWidth().padding(20.dp),
-                    horizontalArrangement = Arrangement.Center,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(FieldMindIcons.Export, null, tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f), size = 24.dp)
-                    Spacer(Modifier.width(10.dp))
+                Icon(formatIcon, null, tint = formatColor, size = 22.dp)
+            }
+            Column(Modifier.weight(1f)) {
+                Text(record.fileName, fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.bodyMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(
+                    "${record.format} • ${formatFileSize(record.fileSizeBytes)} • $dateStr",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                if (record.destination.isNotBlank()) {
                     Text(
-                        "No exports yet. Create your first export above.",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                        record.destination,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
                     )
                 }
             }
-        } else {
-            exportFiles.forEach { file ->
-                val ext = file.extension
-                val formatName = when {
-                    ext == "fieldmind" -> ".fieldmind"
-                    ext == "encrypted" -> "🔒 Encrypted"
-                    ext == "json" -> "JSON"
-                    ext == "csv" -> "CSV"
-                    ext == "md" -> "Markdown"
-                    ext == "html" -> "HTML"
-                    ext == "pdf" -> "PDF"
-                    ext == "png" -> "PNG"
-                    ext == "svg" -> "SVG"
-                    else -> ext.uppercase()
+            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                IconButton(onClick = onShare, modifier = Modifier.size(32.dp)) {
+                    Icon(FieldMindIcons.Share, "Share", tint = MaterialTheme.colorScheme.onSurfaceVariant, size = 18.dp)
                 }
-                val formatIcon = when {
-                    ext == "fieldmind" || ext == "encrypted" -> FieldMindIcons.Archive
-                    ext == "json" -> FieldMindIcons.Archive
-                    ext == "csv" -> FieldMindIcons.Data
-                    ext == "md" || ext == "html" -> FieldMindIcons.Article
-                    ext == "pdf" -> FieldMindIcons.Report
-                    ext == "png" || ext == "svg" -> FieldMindIcons.Graph
-                    else -> FieldMindIcons.File
-                }
-                val formatColor = exportFormats.find { 
-                    it.name.lowercase() == ext || 
-                    (ext == "fieldmind" && it.name == ".fieldmind") ||
-                    (ext == "md" && it.name == "Markdown") ||
-                    (ext == "encrypted" && it.name == ".fieldmind")
-                }?.color ?: MaterialTheme.colorScheme.primary
-                val fileSize = formatFileSize(file.length())
-                val fileDate = remember(file.lastModified()) {
-                    val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
-                    sdf.format(Date(file.lastModified()))
-                }
-
-                Card(
-                    shape = RoundedCornerShape(20.dp),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-                    modifier = Modifier.clickable {
-                        // Placeholder: re-share or open file
-                    }
-                ) {
-                    Row(
-                        Modifier.fillMaxWidth().padding(14.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        Box(
-                            Modifier.size(40.dp).clip(RoundedCornerShape(12.dp))
-                                .background(formatColor.copy(alpha = 0.14f)),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(formatIcon, null, tint = formatColor, size = 22.dp)
-                        }
-                        Column(Modifier.weight(1f)) {
-                            Text(formatName, fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.bodyMedium)
-                            Text("$fileSize • $fileDate", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        }
-                        Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                            IconButton(onClick = {
-                                // Placeholder: share file via FileProvider
-                            }, modifier = Modifier.size(32.dp)) {
-                                Icon(FieldMindIcons.Share, "Share", tint = MaterialTheme.colorScheme.onSurfaceVariant, size = 18.dp)
-                            }
-                            IconButton(onClick = {
-                                // Placeholder: delete file
-                                file.delete()
-                                // Refresh
-                                val files2 = mutableListOf<File>()
-                                backupDir.listFiles()?.filter { it.isFile && it.length() > 0 }?.let { files2.addAll(it) }
-                                if (exportDir.exists()) {
-                                    exportDir.listFiles()?.filter { it.isFile && it.length() > 0 }?.let { files2.addAll(it) }
-                                }
-                                exportFiles = files2.sortedByDescending { it.lastModified() }.take(10)
-                            }, modifier = Modifier.size(32.dp)) {
-                                Icon(FieldMindIcons.Close, "Delete", tint = MaterialTheme.colorScheme.error, size = 18.dp)
-                            }
-                        }
-                    }
+                IconButton(onClick = onDelete, modifier = Modifier.size(32.dp)) {
+                    Icon(FieldMindIcons.Close, "Delete", tint = MaterialTheme.colorScheme.error, size = 18.dp)
                 }
             }
         }
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════════
+//  Export History Store
+// ══════════════════════════════════════════════════════════════════════
+
+/**
+ * SharedPreferences-backed store for export history records.
+ */
+private class ExportHistoryStore(context: Context) {
+    private val prefs = context.getSharedPreferences("fieldmind_export_history", Context.MODE_PRIVATE)
+    private val gson = Gson()
+    private val type = object : TypeToken<List<ExportRecord>>() {}.type
+
+    fun load(): List<ExportRecord> {
+        val json = prefs.getString("records", "[]") ?: "[]"
+        return try {
+            gson.fromJson(json, type) ?: emptyList()
+        } catch (_: Exception) { emptyList() }
+    }
+
+    fun add(record: ExportRecord) {
+        val records = load().toMutableList()
+        records.add(0, record)
+        if (records.size > 50) records.removeAt(records.lastIndex)
+        prefs.edit().putString("records", gson.toJson(records)).apply()
+    }
+
+    fun remove(id: String) {
+        val records = load().toMutableList()
+        records.removeAll { it.id == id }
+        prefs.edit().putString("records", gson.toJson(records)).apply()
+    }
+
+    fun clear() {
+        prefs.edit().remove("records").apply()
     }
 }
 
@@ -1778,6 +1864,7 @@ private fun ExportHistorySection(
 private fun ImportTabContent(
     selectedFileUri: Uri?,
     fileName: String,
+    importFileSize: String = "",
     preview: FieldMindExport.ArchivePreview?,
     importMode: String,
     onModeChange: (String) -> Unit,
@@ -1796,6 +1883,10 @@ private fun ImportTabContent(
                 elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
                 modifier = Modifier
                     .fillMaxWidth()
+                    .border(
+                        BorderStroke(1.5.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)),
+                        RoundedCornerShape(24.dp)
+                    )
                     .clickable { onPickFile() }
             ) {
                 Column(
@@ -1847,13 +1938,30 @@ private fun ImportTabContent(
                             Icon(FieldMindIcons.Archive, null, tint = FieldMindTheme.colors.positive, size = 24.dp)
                         }
                         Column(Modifier.weight(1f)) {
-                            Text(fileName, fontWeight = FontWeight.SemiBold)
-                            preview?.let {
-                                Text(
-                                    "${it.total} records • ${it.observations} obs, ${it.projects} projects",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
+                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                Text(fileName, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                if (fileName.endsWith(".encrypted")) {
+                                    Surface(shape = RoundedCornerShape(6.dp), color = MaterialTheme.colorScheme.error.copy(alpha = 0.15f)) {
+                                        Text("[Encrypted]", modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp), style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.error)
+                                    }
+                                } else {
+                                    val badge = when {
+                                        fileName.endsWith(".fieldmind") -> "PKG"
+                                        fileName.endsWith(".zip") -> "ZIP"
+                                        fileName.endsWith(".json") -> "JSON"
+                                        else -> fileName.substringAfterLast(".").uppercase()
+                                    }
+                                    Surface(shape = RoundedCornerShape(6.dp), color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)) {
+                                        Text(badge, modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp), style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
+                                    }
+                                }
+                            }
+                            Spacer(Modifier.height(4.dp))
+                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Text(importFileSize, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                preview?.let {
+                                    Text("${it.total} records", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.primary)
+                                }
                             }
                         }
                         IconButton(onClick = onClearFile) {
@@ -1993,6 +2101,9 @@ private fun BackupTabContent(
     onEncryptChange: (Boolean) -> Unit,
     password: String,
     onPasswordChange: (String) -> Unit,
+    passwordConfirm: String = "",
+    onPasswordConfirmChange: (String) -> Unit = {},
+    passwordsMatch: Boolean = true,
     scheduleEnabled: Boolean,
     onScheduleChange: (Boolean) -> Unit,
     scheduleInterval: String,
@@ -2069,7 +2180,7 @@ private fun BackupTabContent(
                         CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
                         Text(exportStepText, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
                     }
-                    LinearProgressIndicator(progress = { exportProgress }, modifier = Modifier.fillMaxWidth().height(4.dp).clip(RoundedCornerShape(2.dp)))
+                    LinearProgressIndicator(progress = exportProgress, modifier = Modifier.fillMaxWidth().height(4.dp).clip(RoundedCornerShape(2.dp)))
                 }
             }
         }
@@ -2087,7 +2198,7 @@ private fun BackupTabContent(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(14.dp)
                 ) {
-                    Icon(FieldMindIcons.Lock, null, tint = if (encrypt) colors.warning else MaterialTheme.colorScheme.onSurfaceVariant, size = 22.dp)
+                    Icon(FieldMindIcons.Lock, null, tint = if (encrypt) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant, size = 22.dp)
                     Column(Modifier.weight(1f)) {
                         Text("Encrypt backup", fontWeight = FontWeight.SemiBold)
                         Text("Password-protect your backup file", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -2127,7 +2238,43 @@ private fun BackupTabContent(
                             Text(strength.label, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, color = Color(strength.color))
                         }
                     }
+                    OutlinedTextField(
+                        value = passwordConfirm,
+                        onValueChange = onPasswordConfirmChange,
+                        label = { Text("Confirm password") },
+                        placeholder = { Text("Re-enter password") },
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
+                        shape = RoundedCornerShape(18.dp),
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions.Default.withPrivacyTyping(LocalPrivacyTypingEnabled.current),
+                        trailingIcon = {
+                            if (LocalPrivacyTypingEnabled.current) {
+                                PrivacyTypingIndicator()
+                            }
+                        },
+                        isError = passwordConfirm.isNotEmpty() && !passwordsMatch
+                    )
                     Spacer(Modifier.height(8.dp))
+                    if (passwordConfirm.isNotBlank() || passwordsMatch) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 2.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Icon(
+                                if (passwordsMatch) FieldMindIcons.Check else FieldMindIcons.Close,
+                                null,
+                                tint = if (passwordsMatch) colors.positive else MaterialTheme.colorScheme.error,
+                                size = 16.dp
+                            )
+                            Text(
+                                if (passwordsMatch) "Passwords match" else "Passwords do not match",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = if (passwordsMatch) colors.positive else MaterialTheme.colorScheme.error,
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
+                    }
                 }
 
                 HorizontalDivider(Modifier.padding(start = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
@@ -2147,26 +2294,14 @@ private fun BackupTabContent(
                 }
 
                 if (scheduleEnabled) {
-                    Row(
-                        Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, bottom = 16.dp),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        listOf("Every 6 hours", "Every 12 hours", "Daily", "Weekly", "Monthly").forEach { interval ->
-                            val selected = scheduleInterval == interval
-                            Surface(
-                                onClick = { onScheduleIntervalChange(interval) },
-                                shape = RoundedCornerShape(12.dp),
-                                color = if (selected) MaterialTheme.colorScheme.primaryContainer
-                                else MaterialTheme.colorScheme.surfaceContainerHigh
-                            ) {
-                                Text(interval, modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                                    style = MaterialTheme.typography.labelMedium,
-                                    fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
-                                    color = if (selected) MaterialTheme.colorScheme.onPrimaryContainer
-                                    else MaterialTheme.colorScheme.onSurfaceVariant)
-                            }
-                        }
+                    Box(Modifier.padding(start = 16.dp, end = 16.dp, bottom = 16.dp)) {
+                        OptionPickerField(
+                            label = "Interval",
+                            selected = scheduleInterval,
+                            options = listOf("Every 6 hours", "Every 12 hours", "Daily", "Weekly", "Monthly"),
+                            onSelected = onScheduleIntervalChange,
+                            icon = FieldMindIcons.Today
+                        )
                     }
                 }
             }

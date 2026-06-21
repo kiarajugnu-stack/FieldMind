@@ -51,6 +51,7 @@ class FieldMindRepository(private val dao: FieldMindDao) {
     suspend fun updateReport(entity: ReportEntity) = dao.updateReport(entity.copy(updatedAt = System.currentTimeMillis()))
     suspend fun addFlashcard(entity: FlashcardEntity): Long = dao.insertFlashcard(entity)
     suspend fun updateFlashcard(entity: FlashcardEntity) = dao.updateFlashcard(entity.copy(updatedAt = System.currentTimeMillis()))
+    suspend fun addTag(entity: TagEntity): Long = dao.insertTag(entity)
     suspend fun addAttachment(entity: EvidenceAttachmentEntity): Long = dao.insertEvidenceAttachment(entity)
 
     suspend fun deleteObservation(id: Long) = dao.softDeleteObservation(id, System.currentTimeMillis())
