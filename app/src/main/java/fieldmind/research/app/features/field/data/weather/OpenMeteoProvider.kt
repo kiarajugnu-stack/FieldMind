@@ -56,8 +56,16 @@ class OpenMeteoProvider : WeatherProvider {
 
     private val gson = Gson()
 
-    /** Detect the response format from the config's extra params. */
+    /**
+     * Detect the response format from the config.
+     * Priority: responseFormat override > extraParams format= > json default.
+     */
     private fun detectFormat(config: OpenMeteoConfig?): String {
+        // Check explicit responseFormat field first (set via settings UI)
+        config?.responseFormat?.let {
+            if (it in listOf("csv", "xlsx", "xls")) return it
+        }
+        // Fall back to extraParams
         val extra = config?.extraParams?.lowercase() ?: return "json"
         return when {
             "format=csv" in extra -> "csv"
@@ -83,8 +91,10 @@ class OpenMeteoProvider : WeatherProvider {
                 "?latitude=$latitude&longitude=$longitude" +
                 "&current=$currentParams" +
                 "&daily=$dailyParams" +
-                "&timezone=$timezone" + "" +
-                (config?.extraParams?.let { "&$it" } ?: "")
+                "&timezone=$timezone" +
+                (config?.extraParams?.let { "&$it" } ?: "") +
+                // Append format= from responseFormat field (set via settings UI)
+                (config?.responseFormat?.let { if (it != "json") "&format=$it" else "" } ?: "")
 
             val request = Request.Builder()
                 .url(url)
@@ -543,7 +553,13 @@ data class OpenMeteoConfig(
     val currentParams: String? = null,
     val dailyParams: String? = null,
     val timezone: String? = null,
-    val extraParams: String? = null
+    val extraParams: String? = null,
+    /**
+     * Response format override: "json", "csv", or "xlsx".
+     * When set, this takes precedence over any "format=" in [extraParams].
+     * Set via the weather settings UI format selector.
+     */
+    val responseFormat: String? = null
 )
 
 // ── Response models ──
